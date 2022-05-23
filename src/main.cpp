@@ -1084,6 +1084,9 @@ int main(int argc, char *argv[])
 		if (!SDLOpen())
 			exit(1);
 	}
+
+	StopTextInput();
+
 #ifndef ANDROID
 	if (firstRun && Engine::Ref().GetScale() == 1)
 	{
