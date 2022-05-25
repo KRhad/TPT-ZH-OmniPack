@@ -3732,6 +3732,12 @@ int search_ui(pixel *vid_buf)
 			fillrect(vid_buf, 0, 30, XRES+BARSIZE, YRES+MENUSIZE-30, 0, 0, 0, 150);
 			drawtext(vid_buf, (XRES+BARSIZE-textwidth(errorMsg.c_str()))/2, (YRES+MENUSIZE)/2, errorMsg.c_str(), 255, 255, 255, 255);
 		}
+		else if (!search_ids[0])
+		{
+			std::string errorMsg = "\boNo saves found";
+			fillrect(vid_buf, 0, 30, XRES+BARSIZE, YRES+MENUSIZE-30, 0, 0, 0, 150);
+			drawtext(vid_buf, (XRES+BARSIZE-textwidth(errorMsg.c_str()))/2, (YRES+MENUSIZE)/2, errorMsg.c_str(), 255, 255, 255, 255);
+		}
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
 
 		ui_edit_process(mx, my, b, bq, &ed);
