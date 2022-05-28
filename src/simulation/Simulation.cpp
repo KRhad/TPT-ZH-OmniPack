@@ -2176,7 +2176,7 @@ bool Simulation::UpdateParticle(int i)
 		//checking stagnant is cool, but then it doesn't update when you change it later.
 		if (water_equal_test && elements[t].Falldown == 2 && RNG::Ref().chance(1, 400))
 		{
-			if (!flood_water(x, y, i))
+			if (flood_water(x, y, i))
 				return false;
 		}
 		if (!DoMove(i, x, y, fin_xf, fin_yf))
