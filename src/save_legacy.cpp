@@ -511,7 +511,6 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 	//Read particle data
 	if(partsData && partsPosData)
 	{
-		int fieldDescriptor;
 		int posCount, posTotal, partsPosDataIndex = 0;
 		int saved_x, saved_y;
 		if(fullW * fullH * 3 > partsPosDataLen)
@@ -538,8 +537,8 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 					int type = 0, ctype = 0, tmp = 0, tmp2 = 0, dcolor = 0;
 					x = saved_x + fullX;
 					y = saved_y + fullY;
-					fieldDescriptor = partsData[i+1];
-					fieldDescriptor |= partsData[i+2] << 8;
+					unsigned int fieldDescriptor = (unsigned int)(partsData[i+1]);
+					fieldDescriptor |= (unsigned int)(partsData[i+2]) << 8;
 					if(x >= XRES || x < 0 || y >= YRES || y < 0)
 					{
 						fprintf(stderr, "Out of range [%d]: %d %d, [%d, %d], [%d, %d]\n", i, x, y, (unsigned)partsData[i+1], (unsigned)partsData[i+2], (unsigned)partsData[i+3], (unsigned)partsData[i+4]);
@@ -601,7 +600,15 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 					{
 						i++;
 					}
-					
+
+					// fieldDesc3
+					if (fieldDescriptor & 0x8000)
+					{
+						if (i >= partsDataLen)
+							goto fail;
+						fieldDescriptor |= (unsigned int)(partsData[i++]) << 16;
+					}
+
 					//Skip life
 					if(fieldDescriptor & 0x02)
 					{
@@ -691,6 +698,8 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 					if (fieldDescriptor & 0x2000)
 					{
 						i += 4;
+						if (fieldDescriptor & 0x10000)
+							i += 4;
 						if (i > partsDataLen) goto fail;
 					}
 

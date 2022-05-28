@@ -32,8 +32,8 @@
 #define MINOR_VERSION 2
 #define BUILD_NUM 350
 //VersionInfoEnd
-#define FAKE_SAVE_VERSION 96
-#define FAKE_MINOR_VER 2
+#define FAKE_SAVE_VERSION 97
+#define FAKE_MINOR_VER 0
 
 #define MOD_VERSION 48
 #define MOD_MINOR_VERSION 1
