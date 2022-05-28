@@ -2044,9 +2044,9 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 					sim->air->vy[ny][nx] = 0;
 				}
 			for (int i = 0; i < sim->parts_lastActiveIndex; i++)
-				if (parts[i].type == PT_QRTZ || parts[i].type == PT_GLAS || parts[i].type == PT_TUNG)
+				if (Save::PressureInTmp3(parts[i].type))
 				{
-					parts[i].pavg[0] = parts[i].pavg[1] = 0;
+					parts[i].tmp3 = 0;
 				}
 		}
 		break;

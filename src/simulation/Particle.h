@@ -26,10 +26,11 @@ struct particle
 	int life, ctype;
 	float x, y, vx, vy;
 	float temp;
-	float pavg[2];
 	int flags;
 	int tmp;
 	int tmp2;
+	int tmp3;
+	int tmp4;
 	ARGBColour dcolour;
 
 	/** Returns a list of properties, their type and offset within the structure that can be changed

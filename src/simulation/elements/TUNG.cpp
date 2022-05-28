@@ -59,15 +59,15 @@ int TUNG_update(UPDATE_FUNC_ARGS)
 		parts[i].vy += RNG::Ref().between(-50, 50);
 		return 1;
 	}
-	parts[i].pavg[0] = parts[i].pavg[1];
-	parts[i].pavg[1] = sim->air->pv[y/CELL][x/CELL];
-	float diff = parts[i].pavg[1] - parts[i].pavg[0];
-	if (diff > 0.50f || diff < -0.50f)
+	int press = int(sim->air->pv[y/CELL][x/CELL] * 64);
+	int diff = press - parts[i].tmp3;
+	if (diff > 32 || diff < -32)
 	{
 		part_change_type(i,x,y,PT_BRMT);
 		parts[i].ctype = PT_TUNG;
 		return 1;
 	}
+	parts[i].tmp3 = press;
 	return 0;
 }
 
@@ -97,7 +97,7 @@ int TUNG_graphics(GRAPHICS_FUNC_ARGS)
 
 void TUNG_create(ELEMENT_CREATE_FUNC_ARGS)
 {
-	sim->parts[i].pavg[1] = sim->air->pv[y/CELL][x/CELL];
+	sim->parts[i].tmp3 = int(sim->air->pv[y/CELL][x/CELL] * 64);
 }
 
 void TUNG_init_element(ELEMENT_INIT_FUNC_ARGS)

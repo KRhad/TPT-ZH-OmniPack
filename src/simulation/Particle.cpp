@@ -15,10 +15,10 @@ std::vector<StructProperty> particle::properties = {
 	{ "flags"  , StructProperty::UInteger    , (intptr_t)(offsetof(particle, flags  )) },
 	{ "tmp"    , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp    )) },
 	{ "tmp2"   , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp2   )) },
+	{ "tmp3"   , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp3   )) },
+	{ "tmp4"   , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp4   )) },
 	{ "dcolour", StructProperty::UInteger    , (intptr_t)(offsetof(particle, dcolour)) },
 	{ "dcolor" , StructProperty::UInteger    , (intptr_t)(offsetof(particle, dcolour)) },
-	{ "pavg0"  , StructProperty::Float       , (intptr_t)(offsetof(particle, pavg[0])) },
-	{ "pavg1"  , StructProperty::Float       , (intptr_t)(offsetof(particle, pavg[1])) },
 };
 
 std::vector<StructProperty> const &particle::GetProperties()
@@ -103,15 +103,15 @@ int Particle_GetOffset(const char * key, int * format)
 		offset = offsetof(particle, flags);
 		*format = 3;
 	}
-	else if (!strcmp(key, "pavg0"))
+	else if (!strcmp(key, "tmp3"))
 	{
-		offset = offsetof(particle, pavg[0]);
-		*format = 1;
+		offset = offsetof(particle, tmp3);
+		*format = 0;
 	}
-	else if (!strcmp(key, "pavg1"))
+	else if (!strcmp(key, "tmp4"))
 	{
-		offset = offsetof(particle, pavg[1]);
-		*format = 1;
+		offset = offsetof(particle, tmp4);
+		*format = 0;
 	}
 	else
 	{

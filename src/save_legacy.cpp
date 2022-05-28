@@ -687,7 +687,7 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 						}
 					}
 
-					//Skip pavg (moving solids)
+					//Skip tmp3/tmp4
 					if (fieldDescriptor & 0x2000)
 					{
 						i += 4;

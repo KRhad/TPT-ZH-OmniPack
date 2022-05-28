@@ -803,61 +803,61 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, c
 						}
 					}
 				}
-				else if (strcmp(console3, "pavg0")==0)
+				else if (strcmp(console3, "tmp3")==0)
 				{
 					if (strcmp(console4, "all")==0)
 					{
-						f = (float)atof(console5);
+						j = atoi(console5);
 						for (i=0; i<NPART; i++)
 						{
 							if (parts[i].type)
-								parts[i].pavg[0] = f;
+								parts[i].tmp3 = j;
 						}
 					}
 					else if (console_parse_type(console4, &j, console_error, sim))
 					{
-						f = (float)atof(console5);
+						k = atoi(console5);
 						for (i=0; i<NPART; i++)
 						{
 							if (parts[i].type == j)
-								parts[i].pavg[0]= f;
+								parts[i].tmp3 = k;
 						}
 					}
 					else
 					{
 						if (console_parse_partref(console4, &i, console_error))
 						{
-							f = (float)atof(console5);
-							parts[i].pavg[0] = f;
+							j = atoi(console5);
+							parts[i].tmp3 = j;
 						}
 					}
 				}
-				else if (strcmp(console3, "pavg1")==0)
+				else if (strcmp(console3, "tmp4")==0)
 				{
 					if (strcmp(console4, "all")==0)
 					{
-						f = (float)atof(console5);
+						j = atoi(console5);
 						for (i=0; i<NPART; i++)
 						{
 							if (parts[i].type)
-								parts[i].pavg[1] = f;
+								parts[i].tmp4 = j;
 						}
 					}
 					else if (console_parse_type(console4, &j, console_error, sim))
 					{
-						f = (float)atof(console5);
+						k = atoi(console5);
 						for (i=0; i<NPART; i++)
 						{
 							if (parts[i].type == j)
-								parts[i].pavg[1]= f;
+								parts[i].tmp4 = k;
 						}
 					}
 					else
 					{
 						if (console_parse_partref(console4, &i, console_error))
 						{
-							f = (float)atof(console5);
-							parts[i].pavg[1] = f;
+							j = atoi(console5);
+							parts[i].tmp4 = j;
 						}
 					}
 				}

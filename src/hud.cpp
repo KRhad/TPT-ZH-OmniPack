@@ -115,7 +115,7 @@ void SetRightHudText(Simulation * sim, int x, int y)
 				}
 				else if (currentHud[14] && currentHud[11] && (underType == PT_PIPE || underType == PT_PPIP) && sim->IsElement(TYP(parts[underID].ctype)))
 				{
-					nametext << ElementResolve(sim, underType, 0) << " (" << ElementResolve(sim, TYP(parts[underID].ctype), parts[underID].pavg[1]) << ")";
+					nametext << ElementResolve(sim, underType, 0) << " (" << ElementResolve(sim, TYP(parts[underID].ctype), parts[underID].tmp4) << ")";
 				}
 				else if (currentHud[11])
 				{
@@ -213,7 +213,7 @@ void SetRightHudText(Simulation * sim, int x, int y)
 			}
 			if (currentHud[51])
 			{
-				sprintf(tempstring,"pavg[0]: %f, pavg[1]: %f, ",parts[underID].pavg[0],parts[underID].pavg[1]);
+				sprintf(tempstring,"tmp3: %d, tmp4: %d, ",parts[underID].tmp3,parts[underID].tmp4);
 				strappend(heattext,tempstring);
 			}
 #ifndef NOMOD

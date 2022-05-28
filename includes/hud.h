@@ -97,7 +97,7 @@ const hud hud_menu[] =
 	{"WALL", COLPACK(0x000000), 2, "Show wall names"},
 	{"LIFE", COLPACK(0x000000), 2, "Show the name of life particles instead of LIFE([NAME])"},
 	{"FILT", COLPACK(0x000000), 2, "Show FILT tmp modes in the HUD"},
-	{"PAVG", COLPACK(0x000000), 2, "Show pavg[0] and pavg[1], used by VIRS and PIPE to store extra info"},
+	{"TMP34", COLPACK(0x000000), 2, "Show tmp3 and tmp4, used by VIRS and PIPE to store extra info"},
 	{"EMAP", COLPACK(0x000000), 3, "Show the value of emap, used in conductive walls"},
 	{"TMPX", COLPACK(0x000000), 2, "Show a particle's tmp2 value for all elements"},
 };

@@ -17,19 +17,19 @@
 
 int GLAS_update(UPDATE_FUNC_ARGS)
 {
-	parts[i].pavg[0] = sim->parts[i].pavg[1];
-	parts[i].pavg[1] = sim->air->pv[y/CELL][x/CELL];
-	float diff = sim->parts[i].pavg[1] - sim->parts[i].pavg[0];
-	if (diff > 0.25f || diff < -0.25f)
+	int press = int(sim->air->pv[y/CELL][x/CELL] * 64);
+	int diff = press - parts[i].tmp3;
+	if (diff > 16 || diff < -16)
 	{
-		part_change_type(i,x,y,PT_BGLA);
+		sim->part_change_type(i, x, y, PT_BGLA);
 	}
+	parts[i].tmp3 = press;
 	return 0;
 }
 
 void GLAS_create(ELEMENT_CREATE_FUNC_ARGS)
 {
-	sim->parts[i].pavg[1] = sim->air->pv[y/CELL][x/CELL];
+	sim->parts[i].tmp3 = int(sim->air->pv[y/CELL][x/CELL] * 64);
 }
 
 void GLAS_init_element(ELEMENT_INIT_FUNC_ARGS)

@@ -218,6 +218,7 @@ public:
 	static bool TypeInCtype(int type, int ctype);
 	static bool TypeInTmp(int type);
 	static bool TypeInTmp2(int type, int tmp2);
+	static bool PressureInTmp3(int type);
 
 private:
 	unsigned char *saveData;

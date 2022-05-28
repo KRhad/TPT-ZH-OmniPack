@@ -20,13 +20,14 @@ int QRTZ_update(UPDATE_FUNC_ARGS)
 	int r, tmp, trade, rx, ry, np, t = parts[i].type;
 	if (t == PT_QRTZ)
 	{
-		parts[i].pavg[0] = parts[i].pavg[1];
-		parts[i].pavg[1] = sim->air->pv[y/CELL][x/CELL];
-		if (parts[i].pavg[1]-parts[i].pavg[0] > 0.05*(parts[i].temp/3) || parts[i].pavg[1]-parts[i].pavg[0] < -0.05*(parts[i].temp/3))
+		int press = int(sim->air->pv[y/CELL][x/CELL] * 64);
+		auto diffTolerance = parts[i].temp * 1.0666f;
+		if (press - parts[i].tmp3 > diffTolerance || press - parts[i].tmp3 < -diffTolerance)
 		{
 			part_change_type(i,x,y,PT_PQRT);
 			parts[i].life = 5; //timer before it can grow or diffuse again
 		}
+		parts[i].tmp3 = press;
 	}
 	if (parts[i].life > 5)
 		parts[i].life = 5;
@@ -137,7 +138,7 @@ int QRTZ_graphics(GRAPHICS_FUNC_ARGS)
 void QRTZ_create(ELEMENT_CREATE_FUNC_ARGS)
 {
 	sim->parts[i].tmp2 = RNG::Ref().between(0, 10);
-	sim->parts[i].pavg[1] = sim->air->pv[y/CELL][x/CELL];
+	sim->parts[i].tmp3 = int(sim->air->pv[y/CELL][x/CELL] * 64);
 }
 
 void QRTZ_init_element(ELEMENT_INIT_FUNC_ARGS)

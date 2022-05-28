@@ -43,9 +43,9 @@ int PWHT_flood(UPDATE_FUNC_ARGS)
 	else if (parts[i].ctype == 11)
 		prop = particle::PropertyByName("flags");
 	else if (parts[i].ctype == 12)
-		prop = particle::PropertyByName("pavg0");
+		prop = particle::PropertyByName("tmp3");
 	else if (parts[i].ctype == 13)
-		prop = particle::PropertyByName("pavg1");
+		prop = particle::PropertyByName("tmp4");
 	else
 	{
 		parts[i].ctype = 0;

@@ -27,7 +27,7 @@ void rotate(float *x, float *y, float angle)
 int MOVS_update(UPDATE_FUNC_ARGS)
 {
 	int bn = parts[i].tmp2, type, bounce = 2;
-	float tmp = parts[i].pavg[0], tmp2 = parts[i].pavg[1];
+	float tmp3 = parts[i].tmp3, tmp4 = parts[i].tmp4;
 
 	MovingSolid *movingSolid = static_cast<MOVS_ElementDataContainer&>(*sim->elementData[PT_MOVS]).GetMovingSolid(bn);
 	if (!movingSolid || (parts[i].flags&FLAG_DISAPPEAR))
@@ -44,44 +44,44 @@ int MOVS_update(UPDATE_FUNC_ARGS)
 	//determine rotated x and y coordinates relative to center (if rotation is on)
 	else
 	{
-		tmp = parts[i].pavg[0];
-		tmp2 = parts[i].pavg[1];
+		tmp3 = parts[i].tmp3;
+		tmp4 = parts[i].tmp4;
 		if (sim->msRotation)
-			rotate(&tmp, &tmp2, movingSolid->rotationOld);
+			rotate(&tmp3, &tmp4, movingSolid->rotationOld);
 	}
 	//kill moving solid control particle with a lot of pressure (other ones disappear at 30 pressure)
-	if (!tmp && !tmp2 && (sim->air->pv[y/CELL][x/CELL] > 10 || sim->air->pv[y/CELL][x/CELL] < -10))
+	if (!tmp3 && !tmp4 && (sim->air->pv[y/CELL][x/CELL] > 10 || sim->air->pv[y/CELL][x/CELL] < -10))
 	{
 		sim->part_kill(i);
 		return 1;
 	}
 	type = TYP(pmap[y+1][x]);
 	//bottom side collision
-	if (tmp2 > 0 && type && y+1 < YRES && ((type != PT_MOVS && !sim->EvalMove(PT_MOVS, x, y+1)) || (type == PT_MOVS && parts[ID(pmap[y+1][x])].tmp2 != bn) || sim->IsWallBlocking(x, y+1, PT_MOVS)))
+	if (tmp4 > 0 && type && y+1 < YRES && ((type != PT_MOVS && !sim->EvalMove(PT_MOVS, x, y+1)) || (type == PT_MOVS && parts[ID(pmap[y+1][x])].tmp2 != bn) || sim->IsWallBlocking(x, y+1, PT_MOVS)))
 	{
-		parts[i].vy -= tmp2*bounce;
-		movingSolid->rotation -= tmp/50000;
+		parts[i].vy -= tmp4*bounce;
+		movingSolid->rotation -= tmp3/50000;
 	}
 	type = TYP(pmap[y-1][x]);
 	//top side collision
-	if (tmp2 < 0 && type && y-1 >= 0 && ((type != PT_MOVS && !sim->EvalMove(PT_MOVS, x, y-1)) || (type == PT_MOVS && parts[ID(pmap[y-1][x])].tmp2 != bn) || sim->IsWallBlocking(x, y-1, PT_MOVS)))
+	if (tmp4 < 0 && type && y-1 >= 0 && ((type != PT_MOVS && !sim->EvalMove(PT_MOVS, x, y-1)) || (type == PT_MOVS && parts[ID(pmap[y-1][x])].tmp2 != bn) || sim->IsWallBlocking(x, y-1, PT_MOVS)))
 	{
-		parts[i].vy -= tmp2*bounce;
-		movingSolid->rotation -= tmp/50000;
+		parts[i].vy -= tmp4*bounce;
+		movingSolid->rotation -= tmp3/50000;
 	}
 	type = TYP(pmap[y][x+1]);
 	//right side collision
-	if (tmp > 0 && type && x+1 < XRES && ((type != PT_MOVS && !sim->EvalMove(PT_MOVS, x+1, y)) || (type == PT_MOVS && parts[ID(pmap[y][x+1])].tmp2 != bn) || sim->IsWallBlocking(x+1, y, PT_MOVS)))
+	if (tmp3 > 0 && type && x+1 < XRES && ((type != PT_MOVS && !sim->EvalMove(PT_MOVS, x+1, y)) || (type == PT_MOVS && parts[ID(pmap[y][x+1])].tmp2 != bn) || sim->IsWallBlocking(x+1, y, PT_MOVS)))
 	{
-		parts[i].vx -= tmp*bounce;
-		movingSolid->rotation -= tmp/50000;
+		parts[i].vx -= tmp3*bounce;
+		movingSolid->rotation -= tmp3/50000;
 	}
 	type = TYP(pmap[y][x-1]);
 	//left side collision
-	if (tmp < 0 && type && x-1 >= 0 && ((type != PT_MOVS && !sim->EvalMove(PT_MOVS, x-1, y)) || (type == PT_MOVS && parts[ID(pmap[y][x-1])].tmp2 != bn) || sim->IsWallBlocking(x-1, y, PT_MOVS)))
+	if (tmp3 < 0 && type && x-1 >= 0 && ((type != PT_MOVS && !sim->EvalMove(PT_MOVS, x-1, y)) || (type == PT_MOVS && parts[ID(pmap[y][x-1])].tmp2 != bn) || sim->IsWallBlocking(x-1, y, PT_MOVS)))
 	{
-		parts[i].vx -= tmp*bounce;
-		movingSolid->rotation -= tmp/50000;
+		parts[i].vx -= tmp3*bounce;
+		movingSolid->rotation -= tmp3/50000;
 	}
 	return 0;
 }
@@ -106,8 +106,8 @@ void MOVS_create(ELEMENT_CREATE_FUNC_ARGS)
 	else
 	{
 		parts[i].tmp2 = 255;
-		parts[i].pavg[0] = RNG::Ref().between(-10, 10);
-		parts[i].pavg[1] = RNG::Ref().between(-10, 10);
+		parts[i].tmp3 = RNG::Ref().between(-10, 10);
+		parts[i].tmp4 = RNG::Ref().between(-10, 10);
 	}
 }
 

@@ -212,7 +212,7 @@ void luacon_open()
 	
 	luaL_dostring (l, "ffi = require(\"ffi\")\n\
 ffi.cdef[[\n\
-typedef struct { int type; int life, ctype; float x, y, vx, vy; float temp; float pavg[2]; int flags; int tmp; int tmp2; unsigned int dcolour; } particle;\n\
+typedef struct { int type; int life, ctype; float x, y, vx, vy; float temp; int flags; int tmp; int tmp2; int tmp3; int tmp4; unsigned int dcolour; } particle;\n\
 ]]\n\
 tpt.parts = ffi.cast(\"particle *\", tpt.partsdata)\n\
 ffi = nil\n\

@@ -91,8 +91,8 @@ public:
 			return;
 
 		parts[i].tmp2 = numBalls;
-		parts[i].pavg[0] = 0;
-		parts[i].pavg[1] = 0;
+		parts[i].tmp3 = 0;
+		parts[i].tmp4 = 0;
 		MovingSolid *movingSolid = GetMovingSolid(numBalls++);
 		if (movingSolid)
 		{
@@ -113,8 +113,8 @@ public:
 		if (movingSolid && movingSolid->index)
 		{
 			parts[i].tmp2 = bn;
-			parts[i].pavg[0] = x - parts[movingSolid->index-1].x;
-			parts[i].pavg[1] = y - parts[movingSolid->index-1].y;
+			parts[i].tmp3 = x - parts[movingSolid->index-1].x;
+			parts[i].tmp4 = y - parts[movingSolid->index-1].y;
 			movingSolid->particleCount++;
 		}
 	}
@@ -193,20 +193,20 @@ public:
 					continue;
 				if (movingSolid->index)
 				{
-					float tmp = parts[i].pavg[0];
-					float tmp2 = parts[i].pavg[1];
+					float tmp3 = parts[i].tmp3;
+					float tmp4 = parts[i].tmp4;
 					if (sim->msRotation)
-						rotate(&tmp, &tmp2, movingSolid->rotationOld);
-					float nx = parts[movingSolid->index-1].x + tmp;
-					float ny = parts[movingSolid->index-1].y + tmp2;
+						rotate(&tmp3, &tmp4, movingSolid->rotationOld);
+					float nx = parts[movingSolid->index-1].x + tmp3;
+					float ny = parts[movingSolid->index-1].y + tmp4;
 					sim->Move(i,(int)(parts[i].x+.5f),(int)(parts[i].y+.5f),nx,ny);
 
 					if (sim->msRotation)
 					{
-						rotate(&tmp, &tmp2, .02f);
-						if (parts[movingSolid->index-1].x + tmp != nx || parts[movingSolid->index-1].y + tmp2 != ny)
+						rotate(&tmp3, &tmp4, .02f);
+						if (parts[movingSolid->index-1].x + tmp3 != nx || parts[movingSolid->index-1].y + tmp4 != ny)
 						{
-							int j = sim->part_create(-1, (int)(parts[movingSolid->index-1].x + tmp), (int)(parts[movingSolid->index-1].y + tmp2), parts[i].type);
+							int j = sim->part_create(-1, (int)(parts[movingSolid->index-1].x + tmp3), (int)(parts[movingSolid->index-1].y + tmp4), parts[i].type);
 							if (j >= 0)
 							{
 								parts[j].flags |= FLAG_DISAPPEAR;

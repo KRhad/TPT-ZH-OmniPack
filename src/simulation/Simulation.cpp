@@ -441,22 +441,8 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 		case PT_SOAP:
 			soapList.insert(std::pair<unsigned int, unsigned int>(n, i));
 			break;
-
-		// List of elements that load pavg with a multiplicative bias of 2**6
-		// (or not at all if pressure is not loaded).
-		// If you change this list, change it in GameSave::serialiseOPS and GameSave::readOPS too!
-		case PT_QRTZ:
-		case PT_GLAS:
-		case PT_TUNG:
-			if (!includePressure)
-			{
-				parts[i].pavg[0] = 0;
-				parts[i].pavg[1] = 0;
-			}
-			break;
-
 #ifndef NOMOD
-		// special handling for MOVS: ensure it is valid, and fix issues with signed values in pavg
+		// special handling for MOVS: ensure it is valid, and fix issues with signed values in tmp3/tmp4
 		case PT_MOVS:
 			if ((parts[i].flags&FLAG_DISAPPEAR) || parts[i].tmp2 < 0 || parts[i].tmp2 >= MAX_MOVING_SOLIDS)
 				parts[i].tmp2 = MAX_MOVING_SOLIDS;
@@ -469,15 +455,15 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 					// Increase ball particle count
 					movingSolid->particleCount++;
 					// Set center "controlling" particle
-					if (parts[i].pavg[0] == 0 && parts[i].pavg[1] == 0)
+					if (parts[i].tmp3 == 0 && parts[i].tmp4 == 0)
 						movingSolid->index = i+1;
 				}
 			}
 
-			if (parts[i].pavg[0] > 32768)
-				parts[i].pavg[0] -= 65536;
-			if (parts[i].pavg[1] > 32768)
-				parts[i].pavg[1] -= 65536;
+			if (parts[i].tmp3 > 32768)
+				parts[i].tmp3 -= 65536;
+			if (parts[i].tmp4 > 32768)
+				parts[i].tmp4 -= 65536;
 			break;
 		case PT_ANIM:
 			if (animDataPos >= save->ANIMdata.size())
@@ -490,6 +476,11 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 			static_cast<ANIM_ElementDataContainer&>(*elementData[PT_ANIM]).SetAllColors(i, data.second, data.first + 1);
 			break;
 #endif
+		}
+
+		if (Save::PressureInTmp3(parts[i].type) && !includePressure)
+		{
+			parts[i].tmp3 = 0;
 		}
 	}
 
@@ -2096,8 +2087,8 @@ bool Simulation::UpdateParticle(int i)
 				parts[ID(r)].ctype = parts[i].type;
 				parts[ID(r)].temp = parts[i].temp;
 				parts[ID(r)].tmp2 = parts[i].life;
-				parts[ID(r)].pavg[0] = (float)parts[i].tmp;
-				parts[ID(r)].pavg[1] = (float)parts[i].ctype;
+				parts[ID(r)].tmp3 = parts[i].tmp;
+				parts[ID(r)].tmp4 = parts[i].ctype;
 				part_kill(i);
 				return true;
 			}

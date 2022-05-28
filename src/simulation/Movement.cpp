@@ -97,7 +97,7 @@ void Simulation::CreateCherenkovPhoton(int pp)
 	parts[i].x = parts[pp].x;
 	parts[i].y = parts[pp].y;
 	parts[i].temp = parts[ID(pmap[ny][nx])].temp;
-	parts[i].pavg[0] = parts[i].pavg[1] = 0.0f;
+	parts[i].tmp3 = parts[i].tmp4 = 0;
 
 	int lr = RNG::Ref().between(1, 2);
 	if (lr)
