@@ -135,10 +135,11 @@ void Simulation::RecountElements()
 			elementCount[parts[i].type]++;
 }
 
-bool Simulation::LoadSave(int loadX, int loadY, Save *save, int replace, bool includePressure)
+bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int replace, bool includePressure)
 {
-	if (!save)
+	if (!originalSave)
 		return false;
+	auto save = std::unique_ptr<Save>(new Save(*originalSave));
 	if (!save->expanded)
 		save->ParseSave();
 
@@ -167,9 +168,8 @@ bool Simulation::LoadSave(int loadX, int loadY, Save *save, int replace, bool in
 
 	if (save->palette.size())
 	{
-		for (std::vector<Save::PaletteItem>::iterator iter = save->palette.begin(), end = save->palette.end(); iter != end; ++iter)
+		for (auto &pi : save->palette)
 		{
-			Save::PaletteItem pi = *iter;
 			if (pi.second <= 0 || pi.second >= PT_NUM)
 				continue;
 			int myId = 0;
@@ -195,9 +195,8 @@ bool Simulation::LoadSave(int loadX, int loadY, Save *save, int replace, bool in
 	if (save->MOVSdata.size())
 	{
 		int numBalls = static_cast<MOVS_ElementDataContainer&>(*elementData[PT_MOVS]).GetNumBalls();
-		for (std::vector<Save::MOVSdataItem>::iterator iter = save->MOVSdata.begin(), end = save->MOVSdata.end(); iter != end; ++iter)
+		for (auto &data : save->MOVSdata)
 		{
-			Save::MOVSdataItem data = *iter;
 			int bn = data.first;
 			if (bn >= 0 && bn < MAX_MOVING_SOLIDS)
 			{
@@ -1152,7 +1151,7 @@ void Simulation::part_delete(int x, int y)
 		part_kill(ID(pmap[y][x]));
 }
 
-std::string Simulation::ElementResolve(int type, int ctype)
+std::string Simulation::ElementResolve(int type, int ctype) const
 {
 	if (type == PT_LIFE)
 	{

@@ -25,6 +25,7 @@ config.log
 *.user
 *.cflags
 *.cxxflags
+compile_commands.json
 
 # KDevelop project files
 *.kdev4

@@ -82,7 +82,7 @@ public:
 	void Tick();
 	std::string ParticleDebug(int mode, int x, int y);
 	
-	bool LoadSave(int loadX, int loadY, Save *save, int replace, bool includePressure=true);
+	bool LoadSave(int loadX, int loadY, const Save *originalSave, int replace, bool includePressure=true);
 	Save * CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool includePressure=true);
 
 	bool flood_water(int x, int y, int i);
@@ -146,7 +146,7 @@ public:
 	{
 		return (x>=0 && y>=0 && x<XRES && y<YRES);
 	}
-	std::string ElementResolve(int type, int ctype);
+	std::string ElementResolve(int type, int ctype) const;
 
 	// Most of the time, part_alloc and part_free should not be used directly unless you really know what you're doing. 
 	// Use part_create and part_kill instead.

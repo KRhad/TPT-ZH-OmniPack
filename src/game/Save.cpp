@@ -129,7 +129,13 @@ Save::Save(const Save & save):
 	}
 	particlesCount = save.particlesCount;
 	authors = save.authors;
-	saveData = NULL;
+
+	if (save.saveData)
+	{
+		saveData = new unsigned char[save.saveSize];
+		std::copy(&save.saveData[0], &save.saveData[save.saveSize], &saveData[0]);
+		saveSize = save.saveSize;
+	}
 }
 
 Save::~Save()
@@ -247,7 +253,7 @@ unsigned int Save::GetSaveSize()
 	return saveSize;
 }
 
-int Save::FixType(int type)
+int Save::FixType(int type) const
 {
 	// invalid element, we don't care about it
 	if (type < 0 || type > PT_NUM)

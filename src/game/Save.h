@@ -197,7 +197,7 @@ public:
 
 	// converts mod elements from older saves into the new correct id's, since as new elements are added to tpt the id's go up
 	// Newer saves use palette instead, this is only for old saves
-	int FixType(int type);
+	int FixType(int type) const;
 
 	Matrix::vector2d Translate(Matrix::vector2d translate);
 	void Transform(Matrix::matrix2d transform, Matrix::vector2d translate);
