@@ -524,7 +524,7 @@ int simulation_partProperty(lua_State * l)
 			return 0;
 	}
 
-	auto &properties = particle::GetProperties();
+	auto &properties = particle::GetProperties(true);
 	auto prop = properties.end();
 
 	//Get field

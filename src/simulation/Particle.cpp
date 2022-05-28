@@ -18,11 +18,30 @@ std::vector<StructProperty> particle::properties = {
 	{ "tmp3"   , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp3   )) },
 	{ "tmp4"   , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp4   )) },
 	{ "dcolour", StructProperty::UInteger    , (intptr_t)(offsetof(particle, dcolour)) },
-	{ "dcolor" , StructProperty::UInteger    , (intptr_t)(offsetof(particle, dcolour)) },
 };
 
-std::vector<StructProperty> const &particle::GetProperties()
+
+std::vector<StructProperty> particle::aliasProperties;
+
+std::vector<StructProperty> const &particle::GetProperties(bool includeAliases)
 {
+	if (includeAliases)
+	{
+		if (aliasProperties.size() == 0)
+		{
+			static std::vector<StructProperty> aliases = {
+				{ "pavg0"  , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp3	)) },
+				{ "pavg1"  , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp4	)) },
+				{ "dcolour", StructProperty::UInteger    , (intptr_t)(offsetof(particle, dcolour)) },
+			};
+
+			aliasProperties.reserve(properties.size() + aliasProperties.size());
+			aliasProperties.insert (aliasProperties.end(), properties.begin(), properties.end());
+			aliasProperties.insert (aliasProperties.end(), aliases.begin(), aliases.end());
+		}
+
+		return aliasProperties;
+	}
 	return properties;
 }
 

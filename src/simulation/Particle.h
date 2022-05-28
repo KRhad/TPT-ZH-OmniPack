@@ -35,11 +35,12 @@ struct particle
 
 	/** Returns a list of properties, their type and offset within the structure that can be changed
 	 by higher-level processes referring to them by name such as Lua or the property tool **/
-	static std::vector<StructProperty> const &GetProperties();
+	static std::vector<StructProperty> const &GetProperties(bool includeAliases = false);
 	static StructProperty PropertyByName(const std::string& Name);
 
 private:
 	static std::vector<StructProperty> properties;
+	static std::vector<StructProperty> aliasProperties;
 };
 using particle = struct particle;
 
