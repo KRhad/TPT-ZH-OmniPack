@@ -28,7 +28,7 @@ class OptionsUI : public ui::Window
 	Checkbox *forceIntegerScalingCheckbox;
 	Dropdown *filteringDropdown;
 
-	Checkbox *fastQuitCheckbox, *updatesCheckbox, *momentumScrollingCheckbox, *stickyCategoriesCheckbox, *savePressureCheckbox, *circleCheckbox;
+	Checkbox *fastQuitCheckbox, *updatesCheckbox, *momentumScrollingCheckbox, *stickyCategoriesCheckbox, *savePressureCheckbox, *circleCheckbox, *incompatibleCheckbox;
 	Button *dataFolderButton, *migrationButton;
 
 	Simulation * sim;
@@ -58,6 +58,7 @@ class OptionsUI : public ui::Window
 	void MomentumChecked(bool checked);
 	void StickyCatsChecked(bool checked);
 	void CircleChecked(bool checked);
+	void IncompatibleChecked(bool checked);
 	void DataFolderClicked();
 	void MigrationClicked();
 

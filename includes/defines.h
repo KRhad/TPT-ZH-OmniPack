@@ -193,6 +193,7 @@ extern int realistic;
 extern bool explUnlocked;
 extern int old_menu;
 extern int decobox_hidden;
+extern bool loadIncompatibleSaves;
 
 extern int drawinfo;
 extern int currentTime;

@@ -280,6 +280,17 @@ OptionsUI::OptionsUI(Simulation *sim):
 	descLabel->SetColor(COLRGB(150, 150, 150));
 	scrollArea->AddComponent(descLabel);
 
+#ifndef ANDROID
+	prev = incompatibleCheckbox = new Checkbox(prev->Below(Point(0, 15)), Point(Checkbox::AUTOSIZE, checkboxHeight), "Load incompatible saves");
+	incompatibleCheckbox->UseCheckIcon(useCheckIcon);
+	incompatibleCheckbox->SetCallback([&](bool checked) { this->IncompatibleChecked(checked); });
+	scrollArea->AddComponent(incompatibleCheckbox);
+
+	descLabel = new Label(prev->Below(Point(15, 0)), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Saves from the future may load completely garbled");
+	descLabel->SetColor(COLRGB(150, 150, 150));
+	scrollArea->AddComponent(descLabel);
+#endif
+
 #ifndef TOUCHUI
 	prev = dataFolderButton = new Button(prev->Below(Point(0, 17)), Point(Button::AUTOSIZE, Button::AUTOSIZE), "Open Data Folder");
 	dataFolderButton->SetCallback([&](int mb) { this->DataFolderClicked(); });
@@ -345,6 +356,7 @@ void OptionsUI::InitializeOptions()
 	updatesCheckbox->SetChecked(doUpdates);
 	savePressureCheckbox->SetChecked(sim->includePressure);
 	circleCheckbox->SetChecked(perfectCircleBrush);
+	incompatibleCheckbox->SetChecked(loadIncompatibleSaves);
 }
 
 void OptionsUI::HeatSimChecked(bool checked)
@@ -522,6 +534,11 @@ void OptionsUI::StickyCatsChecked(bool checked)
 void OptionsUI::CircleChecked(bool checked)
 {
 	perfectCircleBrush = checked;
+}
+
+void OptionsUI::IncompatibleChecked(bool checked)
+{
+	loadIncompatibleSaves = checked;
 }
 
 void OptionsUI::DataFolderClicked()

@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <climits>
 #include <stdexcept>
 #include <bzlib.h>
 #include "defines.h"
@@ -419,6 +420,36 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 			if(bson_iterator_type(&iter)==BSON_INT)
 			{
 				modsave = bson_iterator_int(&iter);
+			}
+			else
+			{
+				fprintf(stderr, "Wrong type for %s\n", bson_iterator_key(&iter));
+			}
+		}
+		else if (!strcmp(bson_iterator_key(&iter), "minimumVersion"))
+		{
+			if (bson_iterator_type(&iter) == BSON_OBJECT)
+			{
+				int major = INT_MAX, minor = INT_MAX;
+				bson_iterator subiter;
+				bson_iterator_subiterator(&iter, &subiter);
+				while (bson_iterator_next(&subiter))
+				{
+					if (bson_iterator_type(&subiter) == BSON_INT)
+					{
+						if (!strcmp(bson_iterator_key(&subiter), "major"))
+							major = bson_iterator_int(&subiter);
+						else if (!strcmp(bson_iterator_key(&subiter), "minor"))
+							minor = bson_iterator_int(&subiter);
+						else
+							fprintf(stderr, "Wrong type for %s\n", bson_iterator_key(&iter));
+					}
+				}
+				if (major > FAKE_SAVE_VERSION || (major == FAKE_SAVE_VERSION && minor > FAKE_MINOR_VER))
+				{
+					if (!loadIncompatibleSaves)
+						goto fail;
+				}
 			}
 			else
 			{

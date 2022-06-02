@@ -137,6 +137,7 @@ int realistic = 0;
 bool explUnlocked = false;
 int old_menu = 0;
 bool doUpdates = true;
+bool loadIncompatibleSaves = false;
 
 int drawinfo = 0;
 int elapsedTime = 0;

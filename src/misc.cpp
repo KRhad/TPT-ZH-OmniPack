@@ -309,6 +309,8 @@ void save_presets()
 		cJSON_AddNumberToObject(root, "alt_find", 1);
 	cJSON_AddNumberToObject(root, "dateformat", dateformat);
 	cJSON_AddNumberToObject(root, "decobox_hidden", decobox_hidden);
+	if (loadIncompatibleSaves)
+		cJSON_AddNumberToObject(root, "loadIncompatibleSaves", 1);
 
 	cJSON_AddItemToObject(root, "SavePreview", tmpobj=cJSON_CreateObject());
 	cJSON_AddNumberToObject(tmpobj, "scrollSpeed", scrollSpeed);
@@ -666,6 +668,8 @@ void load_presets(void)
 			dateformat = tmpobj->valueint;
 		if ((tmpobj = cJSON_GetObjectItem(root, "decobox_hidden")))
 			decobox_hidden = tmpobj->valueint;
+		if ((tmpobj = cJSON_GetObjectItem(root, "loadIncompatibleSaves")))
+			loadIncompatibleSaves = true;
 
 		itemobj = cJSON_GetObjectItem(root, "SavePreview");
 		if (itemobj)

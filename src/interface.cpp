@@ -4360,7 +4360,6 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 			//draw_image(vid_buf, save_pic_thumb, 51, 51, XRES/2, YRES/2, 255);	
 		}
 		free(thumb_imgdata);
-		//rescale_img(full_save, imgw, imgh, &thumb_w, &thumb_h, 2);
 	}
 
 	Request *saveDataDownload, *saveInfoDownload, *thumbnailDownload = NULL, *commentsDownload = NULL;
@@ -4428,30 +4427,21 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 		{
 			if (saveDataDownload->CheckDone())
 			{
-				int imgh, imgw, status;
+				int status;
 				std::string data = saveDataDownload->Finish(&status);
 				saveDataDownload = nullptr;
 				saveDone = saveTotal = data.length();
 				if (status == 200)
 				{
-					pixel *full_save;
 					if (data.empty())
 					{
 						error_ui(vid_buf, 0, "Save data is empty (may be corrupt)");
-						break;
+						openable = 0;
+						if (queue_open || instant_open)
+							break;
 					}
-					full_save = prerender_save((char*)data.c_str(), data.length(), &imgw, &imgh);
-					if (full_save)
-					{
-						//save_pic = rescale_img(full_save, imgw, imgh, &thumb_w, &thumb_h, 2);
-						data_ready = 1;
-						free(full_save);
-					}
-					else
-					{
-						error_ui(vid_buf, 0, "Save may be from a newer version");
-						break;
-					}
+
+					data_ready = 1;
 				}
 				save = new Save(data.c_str(), data.length());
 			}
@@ -5159,12 +5149,13 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				{
 					queue_open = 0;
 
-					clear_save_info();
 					error_ui(vid_buf, 0, std::string("An error occurred when parsing the save: ") + e.what());
 					if (instant_open)
 						break;
+					openable = 0;
 				}
 				delete save;
+				save = nullptr;
 			}
 			else
 			{
@@ -5172,7 +5163,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				drawtext(vid_buf, 50+(XRES/4)-textwidth("Loading...")/2, 50+(YRES/4), "Loading...", 255, 255, 255, 128);
 			}
 		}
-		if (!info_ready || !data_ready)
+		if ((!info_ready || !data_ready) && openable)
 		{
 			info_box(vid_buf, "Loading");
 		}

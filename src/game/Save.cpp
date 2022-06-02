@@ -741,7 +741,10 @@ void Save::ParseSaveOPS()
 				{
 					std::stringstream errorMessage;
 					errorMessage << "Save from a newer version: Requires version " << major << "." << minor;
-					logMessages.push_back(errorMessage.str());
+					if (loadIncompatibleSaves)
+						logMessages.push_back(errorMessage.str());
+					else
+						throw ParseException(errorMessage.str());
 				}
 			}
 			else
