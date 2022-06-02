@@ -2212,11 +2212,13 @@ void Save::BuildSave()
 				if ((tmp3 || tmp4) && (!PressureInTmp3(particles[i].type) || hasPressure))
 				{
 					fieldDesc |= 1 << 13;
+#if SAVE_VERSION >= 97
 					if ((tmp3 >> 16) || (tmp4 >> 16))
 					{
 						fieldDesc |= 1 << 15;
 						fieldDesc |= 1 << 16;
 					}
+#endif
 				}
 
 				// Extra type byte if necessary
