@@ -201,20 +201,6 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 			parts[i].ctype = 1;
 			parts[i].life = 10;
 		}
-		for (rx=-2; rx<3; rx++)
-			for (ry=-2; ry<3; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
-				{
-					r = pmap[y+ry][x+rx];
-					if (!r)
-						continue;
-
-					if (TYP(r) == PT_OIL)
-					{
-						parts[i].vx = parts[ID(r)].vx = (parts[i].vx*0.5f + parts[ID(r)].vx)/2;
-						parts[i].vy = parts[ID(r)].vy = ((parts[i].vy-0.1f)*0.5f + parts[ID(r)].vy)/2;
-					}
-				}
 	}
 	
 	for (rx=-2; rx<3; rx++)
