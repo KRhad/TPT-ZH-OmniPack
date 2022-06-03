@@ -238,7 +238,6 @@ void Request::Start()
 
 		curl_easy_setopt(easy, CURLOPT_PRIVATE, (void *) this);
 		curl_easy_setopt(easy, CURLOPT_USERAGENT, user_agent.c_str());
-		curl_easy_setopt(easy, CURLOPT_NOSIGNAL, 1L);
 
 		curl_easy_setopt(easy, CURLOPT_WRITEDATA, (void *) this);
 		curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, Request::WriteDataHandler);
