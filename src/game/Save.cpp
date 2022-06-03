@@ -1307,6 +1307,19 @@ void Save::ParseSaveOPS()
 							particles[newIndex].tmp = builtinGol[particles[newIndex].ctype].color2;
 						}
 					}
+					if (PressureInTmp3(particles[newIndex].type))
+					{
+						// pavg[1] used to be saved as a u16, which PressureInTmp3 elements then treated as
+						// an i16. tmp3 is now saved as a u32, or as a u16 if it's small enough. PressureInTmp3
+						// elements will never use the upper 16 bits, and should still treat the lower 16 bits
+						// as an i16, so they need sign extension.
+						auto tmp3 = (unsigned int)(particles[newIndex].tmp3);
+						if (tmp3 & 0x8000U)
+						{
+							tmp3 |= 0xFFFF0000U;
+							particles[newIndex].tmp3 = int(tmp3);
+						}
+					}
 					// Note: PSv was used in version 77.0 and every version before, add something in PSv too if the element is that old
 
 					newIndex++;
@@ -2216,10 +2229,11 @@ void Save::BuildSave()
 				{
 					fieldDesc |= 1 << 13;
 #if SAVE_VERSION >= 97
-					if ((tmp3 >> 16) || (tmp4 >> 16))
+					if (((tmp3 >> 16) || (tmp4 >> 16)) && !PressureInTmp3(particles[i].type))
 					{
 						fieldDesc |= 1 << 15;
 						fieldDesc |= 1 << 16;
+						RESTRICTVERSION(97, 0);
 					}
 #endif
 				}
@@ -2250,7 +2264,6 @@ void Save::BuildSave()
 				// Additional fieldDesc byte if necessary
 				if (fieldDesc & (1 << 15))
 				{
-					RESTRICTVERSION(97, 0);
 					fieldDesc3Loc = partsDataLen++;
 				}
 
