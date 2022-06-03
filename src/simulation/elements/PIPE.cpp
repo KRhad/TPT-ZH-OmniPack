@@ -45,15 +45,38 @@
 
 signed char pos_1_rx[] = { -1,-1,-1, 0, 0, 1, 1, 1 };
 signed char pos_1_ry[] = { -1, 0, 1,-1, 1,-1, 0, 1 };
-int pos_1_patch90[] = { 2, 4, 7, 1, 6, 0, 3, 5 };
 
-void PIPE_patch90(particle &part)
+static void transformPatch(particle &part, const int (&patch)[8])
 {
-	auto oldDirForward = (part.tmp & 0x00001C00) >> 10;
-	auto newDirForward = pos_1_patch90[oldDirForward];
-	auto oldDirReverse = (part.tmp & 0x0001C000) >> 14;
-	auto newDirReverse = pos_1_patch90[oldDirReverse];
-	part.tmp = (part.tmp & 0xFFFE23FF) | (newDirForward << 10) | (newDirReverse << 14);
+	if (part.tmp & 0x00000200) part.tmp = (part.tmp & 0xFFFFE3FF) | (patch[(part.tmp & 0x00001C00) >> 10] << 10);
+	if (part.tmp & 0x00002000) part.tmp = (part.tmp & 0xFFFE3FFF) | (patch[(part.tmp & 0x0001C000) >> 14] << 14);
+}
+
+void PIPE_patchR(particle &part)
+{
+	// 035 -> 210
+	// 1 6 -> 4 3
+	// 247 -> 765
+	const int patchR[] = { 2, 4, 7, 1, 6, 0, 3, 5 };
+	transformPatch(part, patchR);
+}
+
+void PIPE_patchH(particle &part)
+{
+	// 035 -> 530
+	// 1 6 -> 6 1
+	// 247 -> 742
+	const int patchH[] = { 5, 6, 7, 3, 4, 0, 1, 2 };
+	transformPatch(part, patchH);
+}
+
+void PIPE_patchV(particle &part)
+{
+	// 035 -> 247
+	// 1 6 -> 1 6
+	// 247 -> 035
+	const int patchV[] = { 2, 1, 0, 4, 3, 7, 6, 5 };
+	transformPatch(part, patchV);
 }
 
 unsigned int prevColor(unsigned int flags)

@@ -2950,8 +2950,10 @@ void Save::Transform(matrix2d transform, vector2d translate, vector2d translateR
 	float **velocityYNew = Allocate2DArray<float>(newBlockWidth, newBlockHeight, 0.0f);
 	float **ambientHeatNew = Allocate2DArray<float>(newBlockWidth, newBlockHeight, 0.0f);
 
-	// * Patch pipes if the transform is (looks close enough to) a 90-degree counter-clockwise rotation.
-	bool patchPipe90 = fabsf(transform.a * transform.d - transform.b * transform.c - 1) < 1e-3 && fabs(atan2f(transform.b, transform.a) - (0.5f * M_PI)) < 1e-3;
+	// Match these up with the matrices provided in GameView::OnKeyPress.
+	bool patchPipeR = transform.a ==  0 && transform.b ==  1 && transform.c == -1 && transform.d ==  0;
+	bool patchPipeH = transform.a == -1 && transform.b ==  0 && transform.c ==  0 && transform.d ==  1;
+	bool patchPipeV = transform.a ==  1 && transform.b ==  0 && transform.c ==  0 && transform.d == -1;
 
 	// rotate and translate signs, parts, walls
 	for (size_t i = 0; i < signs.size(); i++)
@@ -2986,8 +2988,15 @@ void Save::Transform(matrix2d transform, vector2d translate, vector2d translateR
 		vel = m2d_multiply_v2d(transform, vel);
 		particles[i].vx = vel.x;
 		particles[i].vy = vel.y;
-		if (patchPipe90 && (particles[i].type == PT_PIPE || particles[i].type == PT_PPIP))
-			PIPE_patch90(particles[i]);
+		if (particles[i].type == PT_PIPE || particles[i].type == PT_PPIP)
+		{
+			if (patchPipeR)
+				PIPE_patchR(particles[i]);
+			if (patchPipeH)
+				PIPE_patchH(particles[i]);
+			if (patchPipeV)
+				PIPE_patchV(particles[i]);
+		}
 	}
 
 	// translate walls and other grid items when the stamp is shifted more than 4 pixels in any direction
