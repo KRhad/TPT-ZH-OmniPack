@@ -1534,7 +1534,7 @@ bool Simulation::UpdateParticle(int i)
 	bool transitionOccurred = false;
 
 	//this kills any particle out of the screen, or in a wall where it isn't supposed to go
-	if (OutOfBounds(x, y) ||
+	if (x < CELL || y < CELL || x >= XRES - CELL || y >= YRES-CELL ||
 		( bmap[y/CELL][x/CELL] &&
 		  ( bmap[y/CELL][x/CELL] == WL_WALL ||
 		   (bmap[y/CELL][x/CELL] == WL_WALLELEC) ||
@@ -1664,26 +1664,16 @@ bool Simulation::UpdateParticle(int i)
 			if (nx || ny)
 			{
 				int r;
-				if (!OutOfBounds(x+nx, y+ny))
-				{
-					surround[surround_particle] = r = pmap[y+ny][x+nx];
-					surround_particle++;
+				surround[surround_particle] = r = pmap[y+ny][x+nx];
+				surround_particle++;
 
-					//there is empty space
-					if (!TYP(r))
-						surround_space++;
-
-					//there is nothing or a different particle
-					if (TYP(r) != t)
-						nt++;
-				}
-				else
-				{
-					surround[surround_particle] = 0;
-					surround_particle++;
+				//there is empty space
+				if (!TYP(r))
 					surround_space++;
+
+				//there is nothing or a different particle
+				if (TYP(r) != t)
 					nt++;
-				}
 			}
 		}
 

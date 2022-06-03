@@ -219,7 +219,7 @@ public:
 					parts[i].vx = movingSolid->vx;
 					parts[i].vy = movingSolid->vy;
 				}
-				if (sim->OutOfBounds((int)(parts[i].x+.5f), (int)(parts[i].y+.5f)))//kill_part if particle is out of bounds
+				if (!sim->InBounds((int)(parts[i].x+.5f), (int)(parts[i].y+.5f)))//kill_part if particle is out of bounds
 					sim->part_kill(i);
 			}
 		}

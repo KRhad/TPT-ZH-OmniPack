@@ -124,7 +124,6 @@ public:
 
 	// movement, functions implemented in Movement.cpp
 	unsigned char can_move[PT_NUM][PT_NUM];
-	bool OutOfBounds(int x, int y);
 	bool IsWallBlocking(int x, int y, int type);
 	bool GetNormalInterp(int pt, float x0, float y0, float dx, float dy, float *nx, float *ny);
 	void InitCanMove();

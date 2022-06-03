@@ -6,14 +6,6 @@
 #include "simulation/elements/FILT.h"
 #include "simulation/elements/PRTI.h"
 
-bool Simulation::OutOfBounds(int x, int y)
-{
-	if (GetEdgeMode() != 3)
-		return (x < CELL || x >= XRES-CELL || y < CELL || y >= YRES-CELL);
-	else
-		return (x < 0 || x >= XRES || y < 0 || y >= YRES);
-}
-
 bool Simulation::IsWallBlocking(int x, int y, int type)
 {
 	if (bmap[y/CELL][x/CELL])
@@ -924,7 +916,7 @@ int Simulation::Move(int i, int x, int y, float nxf, float nyf)
 			photons[y][x] = 0;
 
 		//kill particle if particle is out of bounds
-		if (OutOfBounds(nx, ny))
+		if (!InBounds(nx, ny))
 		{
 			part_kill(i);
 			return -1;
