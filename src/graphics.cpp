@@ -1884,63 +1884,23 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 				}
 				else if(!(color_mode & COLOR_BASC))	//Don't get special effects for BASIC colour mode
 				{
-#ifdef LUACONSOLE
-					if (lua_gr_func[t])
+					int (*graphicsFunc) (GRAPHICS_FUNC_ARGS) = sim->elements[t].Graphics;
+					if (graphicsFunc == nullptr)
+						graphicsFunc = graphics_DEFAULT;
+
+					// That's a lot of args, a struct might be better
+					if (graphicsFunc(sim, &(parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb))
 					{
-						if (luacon_graphics_update(t,i, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb))
-						{
-							graphicscache[t].isready = 1;
-							graphicscache[t].pixel_mode = pixel_mode;
-							graphicscache[t].cola = cola;
-							graphicscache[t].colr = colr;
-							graphicscache[t].colg = colg;
-							graphicscache[t].colb = colb;
-							graphicscache[t].firea = firea;
-							graphicscache[t].firer = firer;
-							graphicscache[t].fireg = fireg;
-							graphicscache[t].fireb = fireb;
-						}
-					}
-					else if (sim->elements[t].Graphics)
-					{
-#else
-					if (sim->elements[t].Graphics)
-					{
-#endif
-						// That's a lot of args, a struct might be better
-						if ((*(sim->elements[t].Graphics))(sim, &(parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb))
-						{
-							graphicscache[t].isready = 1;
-							graphicscache[t].pixel_mode = pixel_mode;
-							graphicscache[t].cola = cola;
-							graphicscache[t].colr = colr;
-							graphicscache[t].colg = colg;
-							graphicscache[t].colb = colb;
-							graphicscache[t].firea = firea;
-							graphicscache[t].firer = firer;
-							graphicscache[t].fireg = fireg;
-							graphicscache[t].fireb = fireb;
-						}
-#ifdef LUACONSOLE
-					}
-#else
-					}
-#endif
-					else
-					{
-						if(graphics_DEFAULT(sim, &(parts[i]), nx, ny, &pixel_mode, &cola, &colr, &colg, &colb, &firea, &firer, &fireg, &fireb))
-						{
-							graphicscache[t].isready = 1;
-							graphicscache[t].pixel_mode = pixel_mode;
-							graphicscache[t].cola = cola;
-							graphicscache[t].colr = colr;
-							graphicscache[t].colg = colg;
-							graphicscache[t].colb = colb;
-							graphicscache[t].firea = firea;
-							graphicscache[t].firer = firer;
-							graphicscache[t].fireg = fireg;
-							graphicscache[t].fireb = fireb;
-						}
+						graphicscache[t].isready = 1;
+						graphicscache[t].pixel_mode = pixel_mode;
+						graphicscache[t].cola = cola;
+						graphicscache[t].colr = colr;
+						graphicscache[t].colg = colg;
+						graphicscache[t].colb = colb;
+						graphicscache[t].firea = firea;
+						graphicscache[t].firer = firer;
+						graphicscache[t].fireg = fireg;
+						graphicscache[t].fireb = fireb;
 					}
 				}
 				if(sim->elements[t].Properties & PROP_HOT_GLOW && parts[i].temp > (sim->elements[t].HighTemperatureTransitionThreshold-800.0f))

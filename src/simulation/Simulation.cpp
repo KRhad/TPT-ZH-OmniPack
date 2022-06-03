@@ -78,6 +78,7 @@ Simulation::Simulation():
 
 	Clear();
 	InitElements();
+	std::copy(&elements[0], &elements[PT_NUM], &origElements[0]);
 	InitCanMove();
 }
 
@@ -1744,17 +1745,7 @@ bool Simulation::UpdateParticle(int i)
 			return true;
 	}
 
-	//call the particle update function, if there is one
 #ifdef LUACONSOLE
-	if (lua_el_mode[parts[i].type] == 3)
-	{
-		if (luacon_part_update(t, i, x, y, surround_space, nt) || t != (unsigned int)parts[i].type)
-			return true;
-		// Need to update variables, in case they've been changed by Lua
-		x = (int)(parts[i].x+0.5f);
-		y = (int)(parts[i].y+0.5f);
-	}
-
 	if (lua_el_mode[t] != 2)
 	{
 #endif
@@ -1783,29 +1774,19 @@ bool Simulation::UpdateParticle(int i)
 					return true;
 			}
 		}
-		if (elements[t].Update)
-		{
-			if ((*(elements[t].Update))(this, i, x, y, surround_space, nt))
-				return true;
-			else if (t == PT_WARP)
-			{
-				// Warp does some movement in its update func, update variables to avoid incorrect data in pmap
-				x = (int)(parts[i].x+0.5f);
-				y = (int)(parts[i].y+0.5f);
-			}
-		}
 #ifdef LUACONSOLE
 	}
+#endif
 
-	if (lua_el_mode[parts[i].type] && lua_el_mode[parts[i].type] != 3)
+	//call the particle update function, if there is one
+	if (elements[t].Update)
 	{
-		if (luacon_part_update(t, i, x, y, surround_space, nt) || t != (unsigned int)parts[i].type)
+		if ((*(elements[t].Update))(this, i, x, y, surround_space, nt))
 			return true;
-		// Need to update variables, in case they've been changed by Lua
 		x = (int)(parts[i].x+0.5f);
 		y = (int)(parts[i].y+0.5f);
 	}
-#endif
+
 	if (legacy_enable)//if heat sim is off
 		update_legacy_all(this, i, x, y,surround_space, nt);
 

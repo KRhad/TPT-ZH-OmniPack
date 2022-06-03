@@ -39,6 +39,7 @@ public:
 	particle parts[NPART];
 	int elementCount[PT_NUM];
 	Element elements[PT_NUM];
+	Element origElements[PT_NUM];
 	std::unique_ptr<ElementDataContainer> elementData[PT_NUM];
 	int pfree;
 	int parts_lastActiveIndex;
@@ -63,7 +64,6 @@ public:
 	Simulation();
 	~Simulation();
 	void InitElements();
-	void InitElement(char* name, int id);
 	void Clear();
 	void RecountElements();
 	int part_create(int p, int x, int y, int t, int v = -1);

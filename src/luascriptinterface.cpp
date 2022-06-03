@@ -3110,11 +3110,13 @@ int elements_element(lua_State * l)
 		{
 			lua_el_func[id].Assign(l, -1);
 			lua_el_mode[id] = 1;
+			luaSim->elements[id].Update = luaUpdateWrapper;
 		}
 		else if (lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
 			lua_el_func[id].Clear();
 			lua_el_mode[id] = 0;
+			luaSim->elements[id].Update = luaSim->origElements[id].Update;
 		}
 		lua_pop(l, 1);
 
@@ -3122,11 +3124,12 @@ int elements_element(lua_State * l)
 		if (lua_type(l, -1) == LUA_TFUNCTION)
 		{
 			lua_gr_func[id].Assign(l, -1);
+			luaSim->elements[id].Graphics = luaGraphicsWrapper;
 		}
 		else if (lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
 			lua_gr_func[id].Clear();
-			luaSim->elements[id].Graphics = nullptr;
+			luaSim->elements[id].Graphics = luaSim->origElements[id].Graphics;
 		}
 		lua_pop(l, 1);
 
@@ -3139,7 +3142,7 @@ int elements_element(lua_State * l)
 		else if (lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
 			luaCtypeDrawHandlers[id].Clear();
-			luaSim->elements[id].CtypeDraw = nullptr;
+			luaSim->elements[id].CtypeDraw = luaSim->origElements[id].CtypeDraw;
 		}
 		lua_pop(l, 1);
 
@@ -3152,7 +3155,7 @@ int elements_element(lua_State * l)
 		else if (lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
 			luaCreateHandlers[id].Clear();
-			luaSim->elements[id].Func_Create = nullptr;
+			luaSim->elements[id].Func_Create = luaSim->origElements[id].Func_Create;
 		}
 		lua_pop(l, 1);
 
@@ -3165,7 +3168,7 @@ int elements_element(lua_State * l)
 		else if (lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
 			luaCreateAllowedHandlers[id].Clear();
-			luaSim->elements[id].Func_Create_Allowed = nullptr;
+			luaSim->elements[id].Func_Create_Allowed = luaSim->origElements[id].Func_Create_Allowed;
 		}
 		lua_pop(l, 1);
 
@@ -3178,7 +3181,7 @@ int elements_element(lua_State * l)
 		else if (lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
 			luaChangeTypeHandlers[id].Clear();
-			luaSim->elements[id].Func_ChangeType = nullptr;
+			luaSim->elements[id].Func_ChangeType = luaSim->origElements[id].Func_ChangeType;
 		}
 		lua_pop(l, 1);
 
@@ -3288,11 +3291,13 @@ int elements_property(lua_State * l)
 				}
 
 				lua_el_func[id].Assign(l, 3);
+				luaSim->elements[id].Update = luaUpdateWrapper;
 			}
 			else if (lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, 3))
 			{
 				lua_el_func[id].Clear();
 				lua_el_mode[id] = 0;
+				luaSim->elements[id].Update = luaSim->origElements[id].Update;
 			}
 		}
 		else if (propertyName == "Graphics")
@@ -3301,11 +3306,12 @@ int elements_property(lua_State * l)
 			{
 				lua_gr_func[id].Assign(l, 3);
 				graphicscache[id].isready = 0;
+				luaSim->elements[id].Graphics = luaGraphicsWrapper;
 			}
 			else if (lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, 3))
 			{
 				lua_gr_func[id].Clear();
-				luaSim->elements[id].Graphics = nullptr;
+				luaSim->elements[id].Graphics = luaSim->origElements[id].Graphics;;
 			}
 			graphicscache[id].isready = 0;
 		}
@@ -3319,7 +3325,7 @@ int elements_property(lua_State * l)
 			else if (lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, 3))
 			{
 				luaCtypeDrawHandlers[id].Clear();
-				luaSim->elements[id].CtypeDraw = nullptr;
+				luaSim->elements[id].CtypeDraw = luaSim->origElements[id].CtypeDraw;
 			}
 			return 0;
 		}
@@ -3333,7 +3339,7 @@ int elements_property(lua_State * l)
 			else if (lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, 3))
 			{
 				luaCreateHandlers[id].Clear();
-				luaSim->elements[id].Func_Create = nullptr;
+				luaSim->elements[id].Func_Create = luaSim->origElements[id].Func_Create;
 			}
 			return 0;
 		}
@@ -3347,7 +3353,7 @@ int elements_property(lua_State * l)
 			else if (lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, 3))
 			{
 				luaCreateAllowedHandlers[id].Clear();
-				luaSim->elements[id].Func_Create_Allowed = nullptr;
+				luaSim->elements[id].Func_Create_Allowed = luaSim->origElements[id].Func_Create_Allowed;
 			}
 		}
 		else if (propertyName == "ChangeType")
@@ -3360,7 +3366,7 @@ int elements_property(lua_State * l)
 			else if (lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, 3))
 			{
 				luaChangeTypeHandlers[id].Clear();
-				luaSim->elements[id].Func_ChangeType = nullptr;
+				luaSim->elements[id].Func_ChangeType = luaSim->origElements[id].Func_ChangeType;
 			}
 		}
 		else if (propertyName == "DefaultProperties")

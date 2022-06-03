@@ -818,72 +818,94 @@ void lua_hook(lua_State *L, lua_Debug *ar)
 	}
 }
 
-int luacon_part_update(unsigned int t, int i, int x, int y, int surround_space, int nt)
+int luaUpdateWrapper(UPDATE_FUNC_ARGS)
 {
-	int retval = 0, callret;
-	if(lua_el_func[t]){
-		lua_rawgeti(l, LUA_REGISTRYINDEX, lua_el_func[t]);
+	auto *builtinUpdate = luaSim->origElements[parts[i].type].Update;
+	if (builtinUpdate && lua_el_mode[parts[i].type] == 1)
+	{
+		if (builtinUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+			return 1;
+		x = (int)(parts[i].x+0.5f);
+		y = (int)(parts[i].y+0.5f);
+	}
+
+	if (lua_el_func[parts[i].type])
+	{
+		int retval = 0, callret;
+		lua_rawgeti(l, LUA_REGISTRYINDEX, lua_el_func[parts[i].type]);
 		lua_pushinteger(l, i);
 		lua_pushinteger(l, x);
 		lua_pushinteger(l, y);
 		lua_pushinteger(l, surround_space);
 		lua_pushinteger(l, nt);
-		loop_time = Platform::GetTime();
 		callret = lua_pcall(l, 5, 1, 0);
 		if (callret)
+			luacon_log(luacon_geterror());
+		if(lua_isboolean(l, -1)){
+			retval = lua_toboolean(l, -1);
+		}
+		lua_pop(l, 1);
+		if (retval)
 		{
-			luacon_log("In particle update: " + luacon_geterror());
+			return 1;
+		}
+		x = (int)(parts[i].x+0.5f);
+		y = (int)(parts[i].y+0.5f);
+	}
+	if (builtinUpdate && lua_el_mode[parts[i].type] == 3)
+	{
+		if (builtinUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+			return 1;
+		x = (int)(parts[i].x+0.5f);
+		y = (int)(parts[i].y+0.5f);
+	}
+	return 0;
+}
+
+int luaGraphicsWrapper(GRAPHICS_FUNC_ARGS)
+{
+	if (lua_gr_func[cpart->type])
+	{
+		int cache = 0, callret;
+		int i = cpart - parts; // pointer arithmetic be like
+		lua_rawgeti(l, LUA_REGISTRYINDEX, lua_gr_func[cpart->type]);
+		lua_pushinteger(l, i);
+		lua_pushinteger(l, *colr);
+		lua_pushinteger(l, *colg);
+		lua_pushinteger(l, *colb);
+		callret = lua_pcall(l, 4, 10, 0);
+		if (callret)
+		{
+			luacon_log(luacon_geterror());
+			lua_pop(l, 1);
 		}
 		else
 		{
-			if (lua_isboolean(l, -1))
-				retval = lua_toboolean(l, -1);
-		}
-		lua_pop(l, 1);
-	}
-	return retval;
-}
-
-int luacon_graphics_update(int t, int i, int *pixel_mode, int *cola, int *colr, int *colg, int *colb, int *firea, int *firer, int *fireg, int *fireb)
-{
-	int cache = 0, callret;
-	lua_rawgeti(l, LUA_REGISTRYINDEX, lua_gr_func[t]);
-	lua_pushinteger(l, i);
-	lua_pushinteger(l, *colr);
-	lua_pushinteger(l, *colg);
-	lua_pushinteger(l, *colb);
-	loop_time = Platform::GetTime();
-	callret = lua_pcall(l, 4, 10, 0);
-	if (callret)
-	{
-		luacon_log("In graphics function: " + luacon_geterror());
-		lua_pop(l, 1);
-	}
-	else
-	{
-		bool valid = true;
-		for (int i = -10; i < 0; i++)
-			if (!lua_isnumber(l, i) && !lua_isnil(l, i))
+			bool valid = true;
+			for (int i = -10; i < 0; i++)
+				if (!lua_isnumber(l, i) && !lua_isnil(l, i))
+				{
+					valid = false;
+					break;
+				}
+			if (valid)
 			{
-				valid = false;
-				break;
+				cache = luaL_optint(l, -10, 0);
+				*pixel_mode = luaL_optint(l, -9, *pixel_mode);
+				*cola = luaL_optint(l, -8, *cola);
+				*colr = luaL_optint(l, -7, *colr);
+				*colg = luaL_optint(l, -6, *colg);
+				*colb = luaL_optint(l, -5, *colb);
+				*firea = luaL_optint(l, -4, *firea);
+				*firer = luaL_optint(l, -3, *firer);
+				*fireg = luaL_optint(l, -2, *fireg);
+				*fireb = luaL_optint(l, -1, *fireb);
 			}
-		if (valid)
-		{
-			cache = luaL_optint(l, -10, 0);
-			*pixel_mode = luaL_optint(l, -9, *pixel_mode);
-			*cola = luaL_optint(l, -8, *cola);
-			*colr = luaL_optint(l, -7, *colr);
-			*colg = luaL_optint(l, -6, *colg);
-			*colb = luaL_optint(l, -5, *colb);
-			*firea = luaL_optint(l, -4, *firea);
-			*firer = luaL_optint(l, -3, *firer);
-			*fireg = luaL_optint(l, -2, *fireg);
-			*fireb = luaL_optint(l, -1, *fireb);
+			lua_pop(l, 10);
 		}
-		lua_pop(l, 10);
+		return cache;
 	}
-	return cache;
+	return 0;
 }
 
 bool luaCtypeDrawWrapper(CTYPEDRAW_FUNC_ARGS)
