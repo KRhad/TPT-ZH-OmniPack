@@ -628,25 +628,6 @@ int Simulation::TryMove(int i, int x, int y, int nx, int ny)
 		return 0;
 	}
 
-	if (parts[i].type == PT_SPNG)
-	{
-		int vx = (int)parts[i].vx, vy = (int)parts[i].vy, x2, y2;
-		int vx2 = vx, vy2 = vy;
-		unsigned int r2;
-		if (vx > 0) vx2 = -1; else if (vx < 0) vx2 = 1;
-		if (vy > 0) vy2 = -1; else if (vy < 0) vy2 = 1;
-		x2 = x + vx2;
-		y2 = y + vy2;
-		r2 = pmap[y2][x2];
-		while (TYP(r2) && (TYP(r2) != PT_SPNG) && !(elements[TYP(r2)].Properties & PROP_INDESTRUCTIBLE) && (vx2 || vy2))
-		{
-			parts[ID(r2)].x += vx;
-			parts[ID(r2)].y += vy;
-			x2 += vx2;
-			y2 += vy2;
-			r2 = pmap[y2][x2];
-		}
-	}
 	if (e == 2) //if occupy same space
 	{
 		switch (parts[i].type)
@@ -881,14 +862,16 @@ int Simulation::TryMove(int i, int x, int y, int nx, int ny)
 			return 1;
 		}
 
-		if (!OutOfBounds((int)(parts[e].x+0.5f)+x-nx, (int)(parts[e].y+0.5f)+y-ny))
-		{
-			if (!OutOfBounds(nx, ny) && ID(pmap[ny][nx]) == e)
-				pmap[ny][nx] = 0;
-			parts[e].x += x-nx;
-			parts[e].y += y-ny;
-			pmap[(int)(parts[e].y+0.5f)][(int)(parts[e].x+0.5f)] = PMAP(e, parts[e].type);
-		}
+		if (ID(pmap[ny][nx]) == e)
+			pmap[ny][nx] = 0;
+		parts[e].x += float(x - nx);
+		parts[e].y += float(y - ny);
+		int rx = int(parts[e].x + 0.5f);
+		int ry = int(parts[e].y + 0.5f);
+		// This check will never fail unless the pmap array has already been corrupted via another bug
+		// In that case, r's position is inaccurate (not actually at nx/ny) and rx/ry may be out of bounds
+		if (InBounds(rx, ry))
+			pmap[ry][rx] = PMAP(e, parts[e].type);
 	}
 	return 1;
 }
