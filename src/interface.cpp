@@ -348,43 +348,67 @@ void ui_edit_process(int mx, int my, int mb, int mbq, ui_edit *ed)
 				ed->cursor = l;
 			break;
 		case SDLK_LEFT:
+		{
+			int leftAmt = 1;
+			if (sdl_mod & (KMOD_CTRL|KMOD_GUI))
+			{
+				int start, end;
+				const char *spaces = " .,!?\n";
+				findWordPosition(ed->str, ed->cursor-1, &start, &end, spaces);
+				if (start < ed->cursor)
+					leftAmt = ed->cursor - start;
+			}
+
 			if (sdl_mod & (KMOD_LSHIFT|KMOD_RSHIFT))
 			{
 				if (ed->cursor)
-					ed->cursor--;
+					ed->cursor -= leftAmt;
 				else if (ed->cursorstart < ed->cursor && ed->cursorstart)
-					ed->cursorstart--;
+					ed->cursorstart -= leftAmt;
 			}
 			else
 			{
 				if (ed->cursor > 0)
-					ed->cursor--;
+					ed->cursor -= leftAmt;
 				if (ed->cursor > 0 && ed->str[ed->cursor-1] == '\b')
 				{
-					ed->cursor--;
+					ed->cursor -= leftAmt;
 				}
 				ed->cursorstart = ed->cursor;
 			}
 			break;
+		}
 		case SDLK_RIGHT:
+		{
+			int rightAmt = 1;
+			if (sdl_mod & (KMOD_CTRL|KMOD_GUI))
+			{
+				int start, end;
+				const char *spaces = " .,!?\n";
+				findWordPosition(ed->str, ed->cursor+1, &start, &end, spaces);
+				if (end > ed->cursor)
+					rightAmt = end - ed->cursor;
+			}
+
 			if (sdl_mod & (KMOD_LSHIFT|KMOD_RSHIFT))
 			{
 				if (ed->cursor < l)
-					ed->cursor++;
+					ed->cursor += rightAmt;
 				else if (ed->cursorstart > ed->cursor && ed->cursorstart < l)
-					ed->cursorstart++;
+					ed->cursorstart += rightAmt;
 			}
 			else
 			{
 				if (ed->cursor < l && ed->str[ed->cursor] == '\b')
 				{
-					ed->cursor++;
+					ed->cursor += rightAmt;
 				}
 				if (ed->cursor < l)
-					ed->cursor++;
+					ed->cursor += rightAmt;
 				ed->cursorstart = ed->cursor;
 			}
 			break;
+		}
 		case SDLK_DELETE:
 			if (ed->highlightlength)
 			{
