@@ -2462,6 +2462,13 @@ void Save::BuildSave()
 				{
 					RESTRICTVERSION(96, 0);
 				}
+#if SAVE_VERSION >= 97
+				if (particles[i].type == PT_GLAS && particles[i].life > 0)
+				{
+					RESTRICTVERSION(97, 0);
+				}
+#endif
+
 				// Get the pmap entry for the next particle in the same position
 				i = partsPosLink[i];
 			}
