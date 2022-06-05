@@ -102,6 +102,10 @@ int LITH_update(UPDATE_FUNC_ARGS)
 						break;
 						
 					case PT_SPRK:
+						if (parts_avg(i, ID(neighborData), PT_INSL) == PT_INSL)
+						{
+							break;
+						}
 						if (hydrogenationFactor + carbonationFactor >= 5)
 						{
 							continue; // too impure to do battery things.
@@ -113,6 +117,10 @@ int LITH_update(UPDATE_FUNC_ARGS)
 						break;
 						
 					case PT_NSCN:
+						if (parts_avg(i, ID(neighborData), PT_INSL) == PT_INSL)
+						{
+							break;
+						}
 						if (neighbor.life == 0 && storedEnergy > 0 && !burnTimer)
 						{
 							sim->part_change_type(ID(neighborData), x + rx, y + ry, PT_SPRK);
