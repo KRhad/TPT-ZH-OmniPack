@@ -2534,7 +2534,8 @@ int graphics_drawText(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Engine::Ref().GetTop()->GetVid()->DrawString(x, y, text, r, g, b, a);
+	Point adjPos = Engine::Ref().GetTop()->GetPosition();
+	Engine::Ref().GetTop()->GetVid()->DrawString(x - adjPos.X, y - adjPos.Y, text, r, g, b, a);
 	return 0;
 }
 
@@ -2559,7 +2560,8 @@ int graphics_drawLine(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Engine::Ref().GetTop()->GetVid()->DrawLine(x1, y1, x2, y2, r, g, b, a);
+	Point adjPos = Engine::Ref().GetTop()->GetPosition();
+	Engine::Ref().GetTop()->GetVid()->DrawLine(x1 - adjPos.X, y1 - adjPos.Y, x2 - adjPos.X, y2 - adjPos.Y, r, g, b, a);
 	return 0;
 }
 
@@ -2584,7 +2586,8 @@ int graphics_drawRect(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Engine::Ref().GetTop()->GetVid()->DrawRect(x, y, w, h, r, g, b, a);
+	Point adjPos = Engine::Ref().GetTop()->GetPosition();
+	Engine::Ref().GetTop()->GetVid()->DrawRect(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
 	return 0;
 }
 
@@ -2609,7 +2612,8 @@ int graphics_fillRect(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Engine::Ref().GetTop()->GetVid()->FillRect(x, y, w, h, r, g, b, a);
+	Point adjPos = Engine::Ref().GetTop()->GetPosition();
+	Engine::Ref().GetTop()->GetVid()->FillRect(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
 	return 0;
 }
 
@@ -2634,7 +2638,8 @@ int graphics_drawCircle(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Engine::Ref().GetTop()->GetVid()->DrawCircle(x, y, w, h, r, g, b, a);
+	Point adjPos = Engine::Ref().GetTop()->GetPosition();
+	Engine::Ref().GetTop()->GetVid()->DrawCircle(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
 	return 0;
 }
 
@@ -2659,7 +2664,8 @@ int graphics_fillCircle(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Engine::Ref().GetTop()->GetVid()->FillCircle(x, y, w, h, r, g, b, a);
+	Point adjPos = Engine::Ref().GetTop()->GetPosition();
+	Engine::Ref().GetTop()->GetVid()->FillCircle(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
 	return 0;
 }
 
