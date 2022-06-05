@@ -54,8 +54,7 @@ int WARP_update(UPDATE_FUNC_ARGS)
 int WARP_graphics(GRAPHICS_FUNC_ARGS)
 {
 	*colr = *colg = *colb = *cola = 0;
-	if (!(finding & ~0x8))
-		*pixel_mode &= ~PMODE;
+	*pixel_mode |= NO_DECO;
 	return 0;
 }
 
