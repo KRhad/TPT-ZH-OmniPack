@@ -19,7 +19,6 @@ int PSNS_update(UPDATE_FUNC_ARGS)
 {
 	if ((parts[i].tmp == 0 && sim->air->pv[y/CELL][x/CELL] > parts[i].temp - 273.15f) || (parts[i].tmp == 2 && sim->air->pv[y/CELL][x/CELL] < parts[i].temp - 273.15f))
 	{
-		parts[i].life = 0;
 		for (int rx = -2; rx <= 2; rx++)
 			for (int ry = -2; ry <= 2; ry++)
 				if (BOUNDS_CHECK && (rx || ry))
@@ -39,7 +38,6 @@ int PSNS_update(UPDATE_FUNC_ARGS)
 	}
 	if (parts[i].tmp == 1) 
 	{
-		parts[i].life = 0;
 		bool setFilt = true;
 		float photonWl = sim->air->pv[y / CELL][x / CELL];
 		if (setFilt)
