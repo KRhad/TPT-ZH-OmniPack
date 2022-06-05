@@ -293,6 +293,10 @@ int FIRE_update(UPDATE_FUNC_ARGS)
 						if (rx > 1 || rx < -1) // Trend veins vertical
 							parts[i].tmp = 1;
 					}
+					else if (parts[i].ctype == PT_SALT && rt == PT_GLAS)
+					{
+						parts[ID(r)].life = 10;
+					}
 				}
 
 				if ((surround_space || sim->elements[rt].Explosive) &&
