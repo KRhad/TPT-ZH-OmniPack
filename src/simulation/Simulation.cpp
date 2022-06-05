@@ -2064,8 +2064,18 @@ bool Simulation::UpdateParticle(int i)
 				return true;
 			}
 
-			if TYP(r)
-				parts[i].ctype &= elements[TYP(r)].PhotonReflectWavelengths;
+			if (t == PT_PHOT)
+			{
+				auto mask = elements[TYP(r)].PhotonReflectWavelengths;
+				if (TYP(r) == PT_LITH)
+				{
+					int wl_bin = parts[ID(r)].ctype / 4;
+					if (wl_bin < 0) wl_bin = 0;
+					if (wl_bin > 25) wl_bin = 25;
+					mask = (0x1F << wl_bin);
+				}
+				parts[i].ctype &= mask;
+			}
 
 			if (GetNormalInterp(t, parts[i].x, parts[i].y, parts[i].vx, parts[i].vy, &nrx, &nry))
 			{
