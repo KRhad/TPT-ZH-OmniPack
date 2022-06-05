@@ -43,7 +43,7 @@ void OIL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 42;
 	elem->Latent = 0;
-	elem->Description = "Flammable, turns into GAS at low pressure or high temperature. Can be formed with NEUT and NITR.";
+	elem->Description = "Flammable, turns into GAS at low pressure or high temperature.";
 
 	elem->Properties = TYPE_LIQUID|PROP_NEUTPASS;
 
