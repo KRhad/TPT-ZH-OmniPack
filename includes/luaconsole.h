@@ -93,8 +93,6 @@ extern int getPartIndex_curIdx;
 
 //TPT Interface
 int luatpt_getelement(lua_State *l);
-int luatpt_element_func(lua_State *l);
-int luatpt_graphics_func(lua_State *l);
 int luatpt_drawtext(lua_State* l);
 int luatpt_create(lua_State* l);
 int luatpt_setpause(lua_State* l);

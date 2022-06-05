@@ -136,8 +136,6 @@ void luacon_open()
 		{"get_clipboard",&platform_clipboardCopy},
 		{"set_clipboard",&platform_clipboardPaste},
 		{"element",&luatpt_getelement},
-		{"element_func",&luatpt_element_func},
-		{"graphics_func",&luatpt_graphics_func},
 		{"perfectCircleBrush",&luatpt_perfectCircle},
 		{"load",&simulation_loadSave},
 		{"bubble",&luatpt_bubble},
@@ -1079,80 +1077,6 @@ int luatpt_getelement(lua_State *l)
 		lua_pushinteger(l, t);
 	}
 	return 1;
-}
-
-int luatpt_element_func(lua_State *l)
-{
-	if (lua_isfunction(l, 1))
-	{
-		int element = luaL_optint(l, 2, 0);
-		int replace = luaL_optint(l, 3, 0);
-		if (luaSim->IsElement(element))
-		{
-			lua_el_func[element].Assign(l, 1);
-			if (replace == 2)
-				lua_el_mode[element] = 3; // update before
-			else if (replace)
-				lua_el_mode[element] = 2; // replace
-			else
-				lua_el_mode[element] = 1; // update after
-			return 0;
-		}
-		else
-		{
-			return luaL_error(l, "Invalid element");
-		}
-	}
-	else if (lua_isnil(l, 1))
-	{
-		int element = luaL_optint(l, 2, 0);
-		if (luaSim->IsElement(element))
-		{
-			lua_el_func[element].Clear();
-			lua_el_mode[element] = 0;
-		}
-		else
-		{
-			return luaL_error(l, "Invalid element");
-		}
-	}
-	else
-		return luaL_error(l, "Not a function");
-	return 0;
-}
-
-int luatpt_graphics_func(lua_State *l)
-{
-	if (lua_isfunction(l, 1))
-	{
-		int element = luaL_optint(l, 2, 0);
-		if (luaSim->IsElement(element))
-		{
-			lua_gr_func[element].Assign(l, 1);
-			graphicscache[element].isready = 0;
-			return 0;
-		}
-		else
-		{
-			return luaL_error(l, "Invalid element");
-		}
-	}
-	else if (lua_isnil(l, 1))
-	{
-		int element = luaL_optint(l, 2, 0);
-		if (luaSim->IsElement(element))
-		{
-			lua_gr_func[element].Clear();
-			graphicscache[element].isready = 0;
-		}
-		else
-		{
-			return luaL_error(l, "Invalid element");
-		}
-	}
-	else
-		return luaL_error(l, "Not a function");
-	return 0;
 }
 
 int luatpt_error(lua_State* l)
