@@ -14,9 +14,6 @@
 #include "graphics/VideoBuffer.h"
 
 Renderer::Renderer():
-	recording(false),
-	recordingIndex(0),
-	recordingFolder(0),
 	renderModes(std::set<unsigned int>()),
 	displayModes(std::set<unsigned int>()),
 	colorMode(0)
@@ -37,6 +34,7 @@ std::string Renderer::TakeScreenshot(bool includeUI, int format)
 	vid->CopyBufferFrom(vid_buf, XRES+BARSIZE, YRES+MENUSIZE, w, h);
 
 	std::vector<char> screenshotData;
+	time_t screenshotTime = time(nullptr);
 	std::string fileExtension = "";
 	if (format == 0)
 	{
@@ -55,12 +53,24 @@ std::string Renderer::TakeScreenshot(bool includeUI, int format)
 	}
 	delete vid;
 
-	std::stringstream fileName;
-	fileName << "powdertoy-" << time(NULL) << fileExtension;
+	// Optional suffix to distinguish screenshots taken at the exact same time
+	std::string suffix = "";
+	if (screenshotTime == lastScreenshotTime)
+	{
+		screenshotIndex++;
+		suffix = " (" + Format::NumberToString<int>(screenshotIndex) + ")";
+	}
+	else
+	{
+		screenshotIndex = 1;
+	}
+	std::string date = Format::UnixtimeToDate(screenshotTime, "%Y-%m-%d %H.%M.%S");
+	std::string filename = "screenshot " + date + suffix + fileExtension;
+
 	try
 	{
 		std::ofstream screenshot;
-		screenshot.open(fileName.str(), std::ios::binary);
+		screenshot.open(filename, std::ios::binary);
 		if (screenshot.is_open())
 		{
 			screenshot.write(&screenshotData[0], screenshotData.size());
@@ -74,7 +84,10 @@ std::string Renderer::TakeScreenshot(bool includeUI, int format)
 		std::cout << "Error saving screenshot: " << e.what() << std::endl;
 		return "";
 	}
-	return fileName.str();
+
+	lastScreenshotTime = screenshotTime;
+
+	return filename;
 }
 
 void Renderer::RecordingTick()

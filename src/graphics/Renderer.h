@@ -1,6 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include <ctime>
 #include <set>
 #include <string>
 #include "common/Singleton.h"
@@ -31,9 +32,11 @@ struct RenderPreset
 // This class is mostly unused at the moment, but is used for controlling render / display modes
 class Renderer : public Singleton<Renderer>
 {
-	bool recording;
-	int recordingIndex;
-	int recordingFolder;
+	bool recording = false;
+	int screenshotIndex = 1;
+	time_t lastScreenshotTime = 0;
+	int recordingIndex = 0;
+	int recordingFolder = 0;
 
 	std::set<unsigned int> renderModes;
 	std::set<unsigned int> displayModes;
