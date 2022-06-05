@@ -102,7 +102,7 @@ void SDL_Quit_Wrapper()
 }
 
 int sdl_opened = 0;
-void RecreateWindow();
+bool RecreateWindow();
 void SDLInit()
 {
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=3796
@@ -122,7 +122,11 @@ int SDLOpen()
 		return 0;
 	}
 
-	RecreateWindow();
+	if (!RecreateWindow())
+	{
+		fprintf(stderr, "Creating SDL window: %s\n", SDL_GetError());
+		exit(-1);
+	}
 
 	if (!sdl_opened)
 	{
@@ -211,7 +215,7 @@ void SDLSetScreen(bool resizable_, int pixelFilteringMode_, bool fullscreen_, bo
 	SDL_SetWindowResizable(sdl_window, resizable ? SDL_TRUE : SDL_FALSE);
 }
 
-void RecreateWindow()
+bool RecreateWindow()
 {
 	unsigned int flags = 0;
 	if (fullscreen)
@@ -231,7 +235,21 @@ void RecreateWindow()
 
 	sdl_window = SDL_CreateWindow("Jacob1'sMod", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 	        VIDXRES * Engine::Ref().GetScale(), VIDYRES * Engine::Ref().GetScale(), flags);
+	if (!sdl_window)
+		return false;
 	sdl_renderer = SDL_CreateRenderer(sdl_window, -1, 0);
+	if (!sdl_renderer)
+	{
+		fprintf(stderr, "SDL_CreateRenderer failed; available renderers:\n");
+		int num = SDL_GetNumRenderDrivers();
+		for (int i = 0; i < num; ++i)
+		{
+			SDL_RendererInfo info;
+			SDL_GetRenderDriverInfo(i, &info);
+			fprintf(stderr, " - %s\n", info.name);
+		}
+		return false;
+	}
 	SDL_RenderSetLogicalSize(sdl_renderer, VIDXRES, VIDYRES);
 	SDL_RenderSetIntegerScale(sdl_renderer, forceIntegerScaling && fullscreen ? SDL_TRUE : SDL_FALSE);
 
@@ -254,6 +272,8 @@ void RecreateWindow()
 
 	if (!firstRun)
 		LoadWindowPosition();
+
+	return true;
 }
 
 void SDLBlit(pixel * vid)
