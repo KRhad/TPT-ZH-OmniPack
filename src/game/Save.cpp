@@ -516,6 +516,9 @@ void Save::ParseSaveOPS()
 		throw ParseException("Incorrect CELL size");
 	}
 
+	if (blockW <= 0 || blockH <= 0)
+		throw ParseException("Save too small");
+
 	// Too large/off screen
 	if (blockX+blockW > XRES/CELL || blockY+blockH > YRES/CELL)
 	{
