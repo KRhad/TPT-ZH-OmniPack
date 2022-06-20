@@ -1164,7 +1164,7 @@ message when uploading saves with stasis wall or LDTC. Fix ctrl+backspace
 issue when text is already highlighted in legacy interfaces. Add "No saves
 found" message to online save browser. No longer automatically load / render
 incompatible saves by default. Add new "load incompatible saves" option.
-ctrl+click a uesrname in save browser opens profile on the website again.
+ctrl+click a username in save browser opens profile on the website again.
 Remove obscure and broken feature where moving SPNG drags stuff behind itself.
 Remove inaccessible "Empty" edge mode. Both of these removed features are buggy
 and may have been crash-inducing. gfx. API now matches vanilla coordinate

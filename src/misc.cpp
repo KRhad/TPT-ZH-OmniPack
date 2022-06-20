@@ -562,8 +562,8 @@ void load_presets(void)
 			}
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "AmbientAirTemp")))
 				globalSim->air->SetAmbientAirTempPref(tmpobj->valuedouble);
-#ifndef TOUCHUI
-			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "NewtonianGravity")) && tmpobj->valuestring && !strcmp(tmpobj->valuestring, "1"))
+#ifndef ANDROID
+			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "NewtonianGravity")) && tmpobj->valueint == 1)
 				globalSim->grav->StartAsync();
 #endif
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "AmbientHeat")))
