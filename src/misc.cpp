@@ -214,6 +214,7 @@ void save_presets()
 	else
 		cJSON_AddFalseToObject(simulationobj, "LoadPressure");
 	cJSON_AddNumberToObject(simulationobj, "DecoSpace", globalSim->decoSpace);
+	cJSON_AddNumberToObject(simulationobj, "RealisticHeat", realistic);
 
 	//Tpt++ install check, prevents annoyingness
 	cJSON_AddTrueToObject(root, "InstallCheck");
@@ -299,8 +300,12 @@ void save_presets()
 
 	//additional settings from my mod
 	cJSON_AddNumberToObject(root, "heatmode", heatmode);
+	if (heatmode == 2)
+	{
+		cJSON_AddNumberToObject(root, "HeatModeLowerBound", lowesttemp);
+		cJSON_AddNumberToObject(root, "HeatModeUpperBound", highesttemp);
+	}
 	cJSON_AddNumberToObject(root, "autosave", autosave);
-	cJSON_AddNumberToObject(root, "realistic", realistic);
 	if (explUnlocked)
 		cJSON_AddNumberToObject(root, "EXPL_unlocked", 1);
 	if (old_menu)
@@ -576,6 +581,8 @@ void load_presets(void)
 				globalSim->includePressure = tmpobj->valueint;
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "DecoSpace")))
 				globalSim->decoSpace = tmpobj->valueint;
+			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "RealisticHeat")))
+				realistic = tmpobj->valueint;
 		}
 
 		//read console history
@@ -650,8 +657,13 @@ void load_presets(void)
 		//Read some extra mod settings
 		if ((tmpobj = cJSON_GetObjectItem(root, "heatmode")))
 			heatmode = tmpobj->valueint;
-		if ((tmpobj = cJSON_GetObjectItem(root, "autosave")))
-			autosave = tmpobj->valueint;
+		if (heatmode == 2)
+		{
+			if ((tmpobj = cJSON_GetObjectItem(root, "HeatModeLowerBound")))
+				lowesttemp = tmpobj->valueint;
+			if ((tmpobj = cJSON_GetObjectItem(root, "HeatModeUpperBound")))
+				highesttemp = tmpobj->valueint;
+		}
 		if ((tmpobj = cJSON_GetObjectItem(root, "autosave")))
 			autosave = tmpobj->valueint;
 #ifndef NOMOD
