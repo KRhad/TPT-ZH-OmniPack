@@ -1171,3 +1171,8 @@ and may have been crash-inducing. gfx. API now matches vanilla coordinate
 behavior when inside Lua Windows. Update to script manager 3.12. Implement
 ctrl+backspace/delete in legacy interfaces. Update with all changes made to
 vanilla tpt in the last few months.
+
+Version 49.1 2022-07-16
+Fix Newtonian Gravity setting not loading properly on startup. Make realistic
+heat and manual find mode's min / max temps save and load from powder.pref.
+Update to tptmp v2.0.23 (stability improvements, account age limit).
