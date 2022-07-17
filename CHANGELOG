@@ -1176,3 +1176,7 @@ Version 49.1 2022-07-16
 Fix Newtonian Gravity setting not loading properly on startup. Make realistic
 heat and manual find mode's min / max temps save and load from powder.pref.
 Update to tptmp v2.0.23 (stability improvements, account age limit).
+
+Version 49.2 2022-07-17
+Update to TPTMP v2.0.24. This version contains no relevant changes for this
+mod.
