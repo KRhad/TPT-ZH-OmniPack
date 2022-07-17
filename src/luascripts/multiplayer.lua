@@ -71,6 +71,22 @@ require_preload__["tptmp.client"] = function()
 			return
 		end
 	
+		-- * Prevent c1k's mod from deleting us.
+		if tpt.version.modid == 6 then
+			local protect_from_malware = {
+				[ "scripts/downloaded/2 LBPHacker-TPTMulti.lua" ] = true,
+				[ "scripts/downloaded/219 Maticzpl-Notifications.lua" ] = true,
+			}
+	
+			local real_remove = os.remove
+			function os.remove(path)
+				if path and protect_from_malware[path] then
+					return nil, "malware :/"
+				end
+				return real_remove(path)
+			end
+		end
+	
 		local hooks_enabled = false
 		local window_status = "hidden"
 		local window_hide_mode = "hidden"
@@ -2074,7 +2090,7 @@ require_preload__["tptmp.client.config"] = function()
 
 	local common_config = require("tptmp.common.config")
 	
-	local versionstr = "v2.0.23"
+	local versionstr = "v2.0.24"
 	
 	local config = {
 		-- ***********************************************************************
