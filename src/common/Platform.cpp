@@ -79,6 +79,7 @@ char *ExecutableName()
 		char *realloced_fn = (char*)realloc(fn, max);
 		assert(realloced_fn != NULL);
 		fn = realloced_fn;
+		_NSGetExecutablePath(fn, &max);
 	}
 	if (realpath(fn, name) == NULL)
 	{
