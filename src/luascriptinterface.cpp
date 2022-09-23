@@ -1243,8 +1243,7 @@ int simulation_deleteStamp(lua_State* l)
 	}
 	if (stampNum < 0)
 	{
-		luaL_checkint(l, 1);
-		stampNum = luaL_optint(l, 1, -1);
+		stampNum = luaL_checkint(l, 1);
 		if (stampNum < 0 || stampNum >= stamp_count)
 			return luaL_error(l, "Invalid stamp ID: %d", stampNum);
 	}

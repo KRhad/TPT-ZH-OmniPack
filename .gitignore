@@ -25,6 +25,7 @@ config.log
 *.user
 *.cflags
 *.cxxflags
+/.qtc_clangd
 compile_commands.json
 
 # KDevelop project files
