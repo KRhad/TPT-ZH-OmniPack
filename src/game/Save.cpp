@@ -2467,6 +2467,10 @@ void Save::BuildSave()
 				{
 					RESTRICTVERSION(97, 0);
 				}
+				if (PressureInTmp3(particles[i].type))
+				{
+					RESTRICTVERSION(97, 0);
+				}
 #endif
 
 				// Get the pmap entry for the next particle in the same position
