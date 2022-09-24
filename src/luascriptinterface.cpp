@@ -235,6 +235,7 @@ void initSimulationAPI(lua_State * l)
 		{"partProperty", simulation_partProperty},
 		{"partPosition", simulation_partPosition},
 		{"partKill", simulation_partKill},
+		{"partExists", simulation_partExists},
 		{"pressure", simulation_pressure},
 		{"ambientHeat", simulation_ambientHeat},
 		{"velocityX", simulation_velocityX},
@@ -578,6 +579,13 @@ int simulation_partKill(lua_State * l)
 			luaSim->part_kill(lua_tointeger(l, 1));
 	}
 	return 0;
+}
+
+int simulation_partExists(lua_State* l)
+{
+	int i = luaL_checkinteger(l, 1);
+	lua_pushboolean(l, i >= 0 && i < NPART && luaSim->parts[i].type);
+	return 1;
 }
 
 int simulation_pressure(lua_State* l)
@@ -2725,6 +2733,7 @@ void initElementsAPI(lua_State * l)
 		{"element", elements_element},
 		{"property", elements_property},
 		{"free", elements_free},
+		{"exists", elements_exists},
 		{"loadDefault", elements_loadDefault},
 		{NULL, NULL}
 	};
@@ -3442,6 +3451,11 @@ int elements_free(lua_State * l)
 	return 0;
 }
 
+int elements_exists(lua_State * l)
+{
+	lua_pushboolean(l, luaSim->IsElement(luaL_checkinteger(l, 1)));
+	return 1;
+}
 
 void initPlatformAPI(lua_State * l)
 {

@@ -30,6 +30,7 @@ int simulation_partID(lua_State * l);
 int simulation_partProperty(lua_State * l);
 int simulation_partPosition(lua_State * l);
 int simulation_partKill(lua_State * l);
+int simulation_partExists(lua_State * l);
 int simulation_pressure(lua_State* l);
 int simulation_ambientHeat(lua_State* l);
 int simulation_velocityX(lua_State* l);
@@ -141,6 +142,7 @@ int elements_element(lua_State * l);
 int elements_property(lua_State * l);
 int elements_loadDefault(lua_State * l);
 int elements_free(lua_State * l);
+int elements_exists(lua_State * l);
 
 void initPlatformAPI(lua_State * l);
 int platform_platform(lua_State * l);
