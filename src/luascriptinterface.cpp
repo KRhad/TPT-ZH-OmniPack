@@ -448,7 +448,11 @@ int simulation_partCreate(lua_State * l)
 	}
 	int type = lua_tointeger(l, 4);
 	int v = -1;
-	if (type&~PMAPMASK)
+	if (lua_gettop(l) >= 5)
+	{
+		v = lua_tointeger(l, 5);
+	}
+	else if (type&~PMAPMASK)
 	{
 		v = ID(type);
 		type = TYP(type);
