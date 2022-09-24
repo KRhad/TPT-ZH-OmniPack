@@ -54,7 +54,7 @@ int LuaProgressBar::status(lua_State * l)
 	int args = lua_gettop(l);
 	if(args)
 	{
-		progressBar->SetStatus(lua_tostring(l, 1));
+		progressBar->SetStatus(luaL_checkstring(l, 1));
 		return 0;
 	}
 	else
