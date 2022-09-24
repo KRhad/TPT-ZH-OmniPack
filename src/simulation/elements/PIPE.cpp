@@ -561,8 +561,6 @@ int PIPE_update(UPDATE_FUNC_ARGS)
 	return 0;
 }
 
-// Temp particle used for graphics
-particle tpart;
 int PIPE_graphics(GRAPHICS_FUNC_ARGS)
 {
 	int t = TYP(cpart->ctype);
@@ -584,26 +582,31 @@ int PIPE_graphics(GRAPHICS_FUNC_ARGS)
 		}
 		else
 		{
-			// Emulate the graphics of stored particle
-			tpart.type = t;
-			tpart.temp = cpart->temp;
-			tpart.life = cpart->tmp2;
-			tpart.tmp = cpart->tmp3;
-			tpart.ctype = cpart->tmp4;
-			if (t == PT_PHOT && tpart.ctype == 0x40000000)
-				tpart.ctype = 0x3FFFFFFF;
+			// Temp particle used for graphics.
+			particle tpart = *cpart;
+
+			// Emulate the graphics of stored particle.
+			memset(cpart, 0, sizeof(particle));
+			cpart->type = t;
+			cpart->temp = tpart.temp;
+			cpart->life = tpart.tmp2;
+			cpart->tmp = tpart.tmp3;
+			cpart->ctype = tpart.tmp4;
 
 			*colr = PIXR(sim->elements[t].Colour);
 			*colg = PIXG(sim->elements[t].Colour);
 			*colb = PIXB(sim->elements[t].Colour);
 			if (sim->elements[t].Graphics)
 			{
-				(*(sim->elements[t].Graphics))(sim, &tpart, nx, ny, pixel_mode, cola, colr, colg, colb, firea, firer, fireg, fireb);
+				(*(sim->elements[t].Graphics))(sim, cpart, nx, ny, pixel_mode, cola, colr, colg, colb, firea, firer, fireg, fireb);
 			}
 			else
 			{
-				graphics_DEFAULT(sim, &tpart, nx, ny, pixel_mode, cola, colr, colg, colb, firea, firer, fireg, fireb);
+				graphics_DEFAULT(sim, cpart, nx, ny, pixel_mode, cola, colr, colg, colb, firea, firer, fireg, fireb);
 			}
+
+			// Restore original particle data.
+			*cpart = tpart;
 		}
 	}
 	else
@@ -679,6 +682,4 @@ void PIPE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Update = &PIPE_update;
 	elem->Graphics = &PIPE_graphics;
 	elem->Init = &PIPE_init_element;
-
-	memset(&tpart, 0, sizeof(particle));
 }
