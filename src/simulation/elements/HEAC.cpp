@@ -17,13 +17,9 @@
 #include <functional>
 #include "simulation/ElementsCommon.h"
 
-struct IsInsulator : public std::binary_function<Simulation*,int,bool> {
-	bool operator() (Simulation* a, int b)
-	{
-		return b && (a->elements[TYP(b)].HeatConduct == 0 || (TYP(b) == PT_HSWC && a->parts[ID(b)].life != 10));
-	}
+static const auto isInsulator = [](Simulation* a, int b) -> bool {
+	return b && (a->elements[TYP(b)].HeatConduct == 0 || (TYP(b) == PT_HSWC && a->parts[ID(b)].life != 10));
 };
-IsInsulator isInsulator = IsInsulator();
 
 // If this is used elsewhere (GOLD), it should be moved into Simulation.h
 template<class BinaryPredicate>
@@ -101,7 +97,7 @@ int HEAC_update(UPDATE_FUNC_ARGS)
 		{
 			rry = ry * rad;
 			rrx = rx * rad;
-			if (x+rrx >= 0 && x+rrx < XRES && y+rry >= 0 && y+rry < YRES && !CheckLine<IsInsulator>(sim, x, y, x+rrx, y+rry, isInsulator))
+			if (x+rrx >= 0 && x+rrx < XRES && y+rry >= 0 && y+rry < YRES && !CheckLine(sim, x, y, x+rrx, y+rry, isInsulator))
 			{
 				r = pmap[y+rry][x+rrx];
 				if (r && sim->elements[TYP(r)].HeatConduct > 0 && (TYP(r) != PT_HSWC || parts[ID(r)].life == 10))
@@ -129,7 +125,7 @@ int HEAC_update(UPDATE_FUNC_ARGS)
 			{
 				rry = ry * rad;
 				rrx = rx * rad;
-				if (x+rrx >= 0 && x+rrx < XRES && y+rry >= 0 && y+rry < YRES && !CheckLine<IsInsulator>(sim, x, y, x+rrx, y+rry, isInsulator))
+				if (x+rrx >= 0 && x+rrx < XRES && y+rry >= 0 && y+rry < YRES && !CheckLine(sim, x, y, x+rrx, y+rry, isInsulator))
 				{
 					r = pmap[y+rry][x+rrx];
 					if (r && sim->elements[TYP(r)].HeatConduct > 0 && (TYP(r) != PT_HSWC || parts[ID(r)].life == 10))
