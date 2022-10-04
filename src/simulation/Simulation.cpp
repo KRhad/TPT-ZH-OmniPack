@@ -567,6 +567,8 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 		//if (save->ambientAirTempPresent)
 		//	air->SetAmbientAirTemp(save->ambientAirTemp);
 		gravityMode = save->gravityMode;
+		customGravityX = save->customGravityX;
+		customGravityY = save->customGravityY;
 		saveEdgeMode = save->edgeMode;
 		if (save->msRotationPresent)
 			msRotation = save->msRotation;
@@ -855,6 +857,8 @@ Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool
 #endif
 	newSave->paused = sys_pause;
 	newSave->gravityMode = gravityMode;
+	newSave->customGravityX = customGravityX;
+	newSave->customGravityY = customGravityY;
 	newSave->airMode = airMode;
 	newSave->ambientAirTemp = air->GetAmbientAirTemp();
 	newSave->edgeMode = edgeMode;
@@ -1184,23 +1188,40 @@ void Simulation::ClearArea(int x, int y, int w, int h)
 
 void Simulation::GetGravityField(int x, int y, float particleGrav, float newtonGrav, float & pGravX, float & pGravY)
 {
-	pGravX = newtonGrav * grav->gravx[(y / CELL) * (XRES / CELL) + (x / CELL)];
-	pGravY = newtonGrav * grav->gravy[(y / CELL) * (XRES / CELL) + (x / CELL)];
 	switch (gravityMode)
 	{
-		default:
-		case 0: //normal, vertical gravity
-			pGravY += particleGrav;
-			break;
-		case 1: //no gravity
-			break;
-		case 2: //radial gravity
-			if (x - XCNTR != 0 || y - YCNTR != 0)
-			{
-				float pGravMult = particleGrav / sqrtf((x - XCNTR) * (x - XCNTR) + (y - YCNTR) * (y - YCNTR));
-				pGravX -= pGravMult * (float)(x - XCNTR);
-				pGravY -= pGravMult * (float)(y - YCNTR);
-			}
+	default:
+	case 0: //normal, vertical gravity
+		pGravX = 0;
+		pGravY = particleGrav;
+		break;
+	case 1: //no gravity
+		pGravX = 0;
+		pGravY = 0;
+		break;
+	case 2: //radial gravity
+	{
+		pGravX = 0;
+		pGravY = 0;
+		auto dx = float(x - XCNTR);
+		auto dy = float(y - YCNTR);
+		if (dx || dy)
+		{
+			auto pGravD = 0.01f - hypotf(dx, dy);
+			pGravX = particleGrav * (dx / pGravD);
+			pGravY = particleGrav * (dy / pGravD);
+		}
+	}
+	break;
+	case 3: //custom gravity
+		pGravX = particleGrav * customGravityX;
+		pGravY = particleGrav * customGravityY;
+		break;
+	}
+	if (newtonGrav)
+	{
+		pGravX += newtonGrav * grav->gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
+		pGravY += newtonGrav * grav->gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
 	}
 }
 
@@ -1531,7 +1552,6 @@ bool Simulation::UpdateParticle(int i)
 	unsigned int t = (unsigned int)parts[i].type;
 	int x = (int)(parts[i].x+0.5f);
 	int y = (int)(parts[i].y+0.5f);
-	float pGravX, pGravY, pGravD;
 	bool transitionOccurred = false;
 
 	//this kills any particle out of the screen, or in a wall where it isn't supposed to go
@@ -1602,34 +1622,10 @@ bool Simulation::UpdateParticle(int i)
 			}
 		}
 	}
-	pGravX = pGravY = 0;
-	if (!(elements[t].Properties & TYPE_SOLID))
+	float pGravX = 0, pGravY = 0;
+	if (!(elements[t].Properties & TYPE_SOLID) && (elements[t].Gravity || elements[t].NewtonianGravity))
 	{
-		if (elements[t].Gravity)
-		{
-			//Gravity mode by Moach
-			switch (gravityMode)
-			{
-			default:
-			case 0:
-				pGravX = 0.0f;
-				pGravY = elements[t].Gravity;
-				break;
-			case 1:
-				pGravX = pGravY = 0.0f;
-				break;
-			case 2:
-				pGravD = 0.01f - hypotf(((float)x - XCNTR), ((float)y - YCNTR));
-				pGravX = elements[t].Gravity * ((float)(x - XCNTR) / pGravD);
-				pGravY = elements[t].Gravity * ((float)(y - YCNTR) / pGravD);
-			}
-		}
-		if (elements[t].NewtonianGravity)
-		{
-			//Get some gravity from the gravity map
-			pGravX += elements[t].NewtonianGravity * grav->gravx[(y/CELL)*(XRES/CELL)+(x/CELL)];
-			pGravY += elements[t].NewtonianGravity * grav->gravy[(y/CELL)*(XRES/CELL)+(x/CELL)];
-		}
+		GetGravityField(x, y, elements[t].Gravity, elements[t].NewtonianGravity, pGravX, pGravY);
 	}
 
 	//velocity updates for the particle
@@ -2267,23 +2263,7 @@ bool Simulation::UpdateParticle(int i)
 					for (int j = 0; j < rt; j++)
 					{
 						// Calculate overall gravity direction
-						switch (gravityMode)
-						{
-							default:
-							case 0:
-								pGravX = 0.0f;
-								pGravY = ptGrav;
-								break;
-							case 1:
-								pGravX = pGravY = 0.0f;
-								break;
-							case 2:
-								pGravD = 0.01f - hypotf(((float)nx - XCNTR), ((float)ny - YCNTR));
-								pGravX = ptGrav * ((float)(nx - XCNTR) / pGravD);
-								pGravY = ptGrav * ((float)(ny - YCNTR) / pGravD);
-						}
-						pGravX += grav->gravx[(ny/CELL)*(XRES/CELL)+(nx/CELL)];
-						pGravY += grav->gravy[(ny/CELL)*(XRES/CELL)+(nx/CELL)];
+						GetGravityField(nx, ny, ptGrav, 1.0f, pGravX, pGravY);
 						// Scale gravity vector so that the largest component is 1 pixel
 						if (fabsf(pGravY)>fabsf(pGravX))
 							mv = fabsf(pGravY);
@@ -2338,23 +2318,7 @@ bool Simulation::UpdateParticle(int i)
 						for (int j = 0; j < rt; j++)
 						{
 							// Calculate overall gravity direction
-							switch (gravityMode)
-							{
-								default:
-								case 0:
-									pGravX = 0.0f;
-									pGravY = ptGrav;
-									break;
-								case 1:
-									pGravX = pGravY = 0.0f;
-									break;
-								case 2:
-									pGravD = 0.01f - hypotf(((float)nx - XCNTR), ((float)ny - YCNTR));
-									pGravX = ptGrav * ((float)(nx - XCNTR) / pGravD);
-									pGravY = ptGrav * ((float)(ny - YCNTR) / pGravD);
-							}
-							pGravX += grav->gravx[(ny/CELL)*(XRES/CELL)+(nx/CELL)];
-							pGravY += grav->gravy[(ny/CELL)*(XRES/CELL)+(nx/CELL)];
+							GetGravityField(nx, ny, ptGrav, 1.0f, pGravX, pGravY);
 							// Scale gravity vector so that the largest component is 1 pixel
 							if (fabsf(pGravY)>fabsf(pGravX))
 								mv = fabsf(pGravY);

@@ -273,6 +273,7 @@ void initSimulationAPI(lua_State * l)
 		{"gravityGrid", simulation_gravityGrid},
 		{"edgeMode", simulation_edgeMode},
 		{"gravityMode", simulation_gravityMode},
+		{"customGravity", simulation_customGravity},
 		{"airMode", simulation_airMode},
 		{"waterEqualization", simulation_waterEqualization},
 		{"waterEqualisation", simulation_waterEqualization},
@@ -1391,6 +1392,26 @@ int simulation_gravityMode(lua_State * l)
 		return 1;
 	}
 	luaSim->gravityMode = luaL_optint(l, 1, 0);
+	return 0;
+}
+
+int simulation_customGravity(lua_State * l)
+{
+	int acount = lua_gettop(l);
+	if (acount == 0)
+	{
+		lua_pushnumber(l, luaSim->customGravityX);
+		lua_pushnumber(l, luaSim->customGravityY);
+		return 2;
+	}
+	else if (acount == 1)
+	{
+		luaSim->customGravityX = 0.0f;
+		luaSim->customGravityY = luaL_optnumber(l, 1, 0.0f);
+		return 0;
+	}
+	luaSim->customGravityX = luaL_optnumber(l, 1, 0.0f);
+	luaSim->customGravityY = luaL_optnumber(l, 2, 0.0f);
 	return 0;
 }
 

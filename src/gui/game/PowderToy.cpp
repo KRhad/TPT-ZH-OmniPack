@@ -2073,6 +2073,9 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			case 2:
 				toolTip = "Gravity: Radial";
 				break;
+			case 3:
+				toolTip = "Gravity: Custom";
+				break;
 			}
 			UpdateToolTip(toolTip, Point(XCNTR - gfx::VideoBuffer::TextSize(toolTip.c_str()).X / 2, YCNTR - 10), INFOTIP, 255);
 		}

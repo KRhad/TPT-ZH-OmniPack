@@ -53,7 +53,7 @@ public:
 	void Clear();
 	void ClearAirH();
 
-	void UpdateAirHeat(bool isVertical);
+	void UpdateAirHeat(Simulation * sim);
 	void UpdateAir();
 
 	void RecalculateBlockAirMaps(Simulation * sim);

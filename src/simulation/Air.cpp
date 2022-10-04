@@ -72,7 +72,7 @@ void Air::ClearAirH()
 	std::fill(&hv[0][0], &hv[0][0]+((XRES/CELL)*(YRES/CELL)), GetAmbientAirTemp());
 }
 
-void Air::UpdateAirHeat(bool isVertical)
+void Air::UpdateAirHeat(Simulation *sim)
 {
 	if (!aheat_enable)
 		return;
@@ -149,12 +149,16 @@ void Air::UpdateAirHeat(bool isVertical)
 			}
 			pv[y][x] += (dh - hv[y][x]) / 5000.0f;
 
-			// Vertical gravity only for the time being
-			if (isVertical)
+			if (x>=2 && x<XRES/CELL-2 && y>=2 && y<YRES/CELL-2)
 			{
-				float airdiff = hv[y-1][x] - hv[y][x];
-				if (airdiff > 0 && !(bmap_blockairh[y-1][x]&0x8))
-					vy[y][x] -= airdiff/5000.0f;
+				float convGravX, convGravY;
+				sim->GetGravityField(x*CELL, y*CELL, -1.0f, -1.0f, convGravX, convGravY);
+				auto weight = ((hv[y][x] - hv[y][x-1]) * convGravX + (hv[y][x] - hv[y-1][x]) * convGravY) / 5000.0f;
+				if (weight > 0 && !(bmap_blockairh[y-1][x]&0x8))
+				{
+					vx[y][x] += weight * convGravX;
+					vy[y][x] += weight * convGravY;
+				}
 			}
 			ohv[y][x] = dh;
 		}

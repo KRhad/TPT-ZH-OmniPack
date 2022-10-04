@@ -826,9 +826,19 @@ int Simulation::TryMove(int i, int x, int y, int nx, int ny)
 		}
 		break;
 	case PT_CNCT:
-		// Check below CNCT for another CNCT or ROCK
-		if (y < ny && (TYP(pmap[y+1][x]) == PT_CNCT || TYP(pmap[y+1][x]) == PT_ROCK))
-			return 0;
+		{
+			float cnctGravX, cnctGravY; // Calculate offset from gravity
+			GetGravityField(x, y, elements[PT_CNCT].Gravity, elements[PT_CNCT].Gravity, cnctGravX, cnctGravY);
+			int offsetX = 0, offsetY = 0;
+			if (cnctGravX > 0.0f) offsetX++;
+			else if (cnctGravX < 0.0f) offsetX--;
+			if (cnctGravY > 0.0f) offsetY++;
+			else if (cnctGravY < 0.0f) offsetY--;
+			if ((offsetX != 0) != (offsetY != 0) && // Is this a different position (avoid diagonals, doesn't work well)
+				((nx - x) * offsetX > 0 || (ny - y) * offsetY > 0) && // Is the destination particle below the moving particle
+				(TYP(pmap[y+offsetY][x+offsetX]) == PT_CNCT || TYP(pmap[y+offsetY][x+offsetX]) == PT_ROCK)) //check below CNCT for another CNCT or ROCK
+				return 0;
+		}
 		break;
 	case PT_GBMB:
 		if (parts[i].life > 0)

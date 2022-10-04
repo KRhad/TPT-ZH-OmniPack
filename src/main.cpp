@@ -225,6 +225,8 @@ void NewSim()
 	clear_save_info();
 	legacy_enable = 0;
 	globalSim->gravityMode = 0;
+	globalSim->customGravityX = 0.0f;
+	globalSim->customGravityY = 0.0f;
 	airMode = 0;
 }
 
@@ -1312,7 +1314,7 @@ int main_loop_temp(int b, int bq, int sdl_key, int scan, int x, int y, bool shif
 		if (!sys_pause||framerender)
 		{
 			globalSim->air->UpdateAir();
-			globalSim->air->UpdateAirHeat(globalSim->gravityMode == 0);
+			globalSim->air->UpdateAirHeat(globalSim);
 		}
 
 		if (globalSim->grav->gravWallChanged)

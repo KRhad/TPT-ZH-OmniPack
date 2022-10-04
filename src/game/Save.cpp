@@ -79,6 +79,8 @@ Save::Save(const Save & save):
 	waterEEnabled(save.waterEEnabled),
 	paused(save.paused),
 	gravityMode(save.gravityMode),
+	customGravityX(save.customGravityX),
+	customGravityY(save.customGravityY),
 	airMode(save.airMode),
 	ambientAirTemp(save.ambientAirTemp),
 	ambientAirTempPresent(save.ambientAirTempPresent),
@@ -210,6 +212,8 @@ void Save::InitVars()
 	aheatEnable = false;
 	paused = false;
 	gravityMode = 0;
+	customGravityX = 0.0f;
+	customGravityY = 0.0f;
 	airMode = 0;
 	ambientAirTemp = R_TEMP + 273.15;
 	edgeMode = 0;
@@ -580,6 +584,8 @@ void Save::ParseSaveOPS()
 		msRotationPresent = CheckBsonFieldBool(iter, "msrotation", &msRotation) || msRotationPresent;
 		hudEnablePresent = CheckBsonFieldBool(iter, "hud_enable", &hudEnable) || hudEnablePresent;
 		CheckBsonFieldInt(iter, "gravityMode", &gravityMode);
+		CheckBsonFieldFloat(iter, "customGravityX", &customGravityX);
+		CheckBsonFieldFloat(iter, "customGravityY", &customGravityY);
 		CheckBsonFieldInt(iter, "airMode", &airMode);
 		ambientAirTempPresent = CheckBsonFieldFloat(iter, "ambientAirTemp", &ambientAirTemp) || ambientAirTempPresent;
 		CheckBsonFieldInt(iter, "edgeMode", &edgeMode);
@@ -2581,10 +2587,6 @@ void Save::BuildSave()
 		}
 	}
 
-	// Mark save as incompatible with latest release
-	if (minimumMajorVersion > SAVE_VERSION || (minimumMajorVersion == SAVE_VERSION && minimumMinorVersion > MINOR_VERSION))
-		fromNewerVersion = true;
-
 	bson b;
 	b.data = NULL;
 	auto bson_deleter = [](bson * b) { bson_destroy(b); };
@@ -2632,6 +2634,14 @@ void Save::BuildSave()
 		bson_append_bool(&b, "hud_enable", hudEnable);
 	bson_append_bool(&b, "aheat_enable", aheatEnable);
 	bson_append_int(&b, "edgeMode", edgeMode);
+	if (gravityMode == 3)
+	{
+		bson_append_double(&b, "customGravityX", double(customGravityX));
+		bson_append_double(&b, "customGravityY", double(customGravityY));
+#if SAVE_VERSION >= 97
+		RESTRICTVERSION(97, 0);
+#endif
+	}
 
 	if (stkm.hasData())
 	{
@@ -2781,7 +2791,11 @@ void Save::BuildSave()
 	if (bson_finish(&b) == BSON_ERROR)
 		throw BuildException("Error building bson data");
 	//bson_print(&b);
-	
+
+	// Mark save as incompatible with latest release
+	if (minimumMajorVersion > SAVE_VERSION || (minimumMajorVersion == SAVE_VERSION && minimumMinorVersion > MINOR_VERSION))
+		fromNewerVersion = true;
+
 	unsigned char *finalData = (unsigned char*)bson_data(&b);
 	unsigned int finalDataLen = bson_size(&b);
 	auto outputData = std::unique_ptr<unsigned char[]>(new unsigned char[finalDataLen*2+12]);

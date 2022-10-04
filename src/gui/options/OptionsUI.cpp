@@ -26,6 +26,7 @@
 #include "simulation/Simulation.h"
 #include "gui/dialogs/ConfirmPrompt.h"
 #include "gui/dialogs/InfoPrompt.h"
+#include "gui/gravity/GravityWindow.h"
 #include "gui/prop/PropWindow.h" // for ParseFloat
 
 OptionsUI::OptionsUI(Simulation *sim):
@@ -121,7 +122,7 @@ OptionsUI::OptionsUI(Simulation *sim):
 	airTempDisplay->SetEnabled(false);
 	scrollArea->AddComponent(airTempDisplay);
 
-	prev = gravityDropdown = new Dropdown(prev->Below(Point(0, 4)), Point(Dropdown::AUTOSIZE, Dropdown::AUTOSIZE), {"Vertical", "Off", "Radial"});
+	prev = gravityDropdown = new Dropdown(prev->Below(Point(0, 4)), Point(Dropdown::AUTOSIZE, Dropdown::AUTOSIZE), {"Vertical", "Off", "Radial", "Custom"});
 	gravityDropdown->SetCallback([&](unsigned int option) { this->GravitySelected(option); });
 	scrollArea->AddComponent(gravityDropdown);
 
@@ -451,6 +452,10 @@ void OptionsUI::UpdateAmbientAirTempPreview(float airTemp, bool isValid)
 void OptionsUI::GravitySelected(unsigned int option)
 {
 	sim->gravityMode = option;
+	if (option == 3)
+	{
+		Engine::Ref().ShowWindow(new GravityWindow(sim, 0.05f, 40));
+	}
 }
 
 void OptionsUI::EdgeModeSelected(unsigned int option)

@@ -67,6 +67,7 @@ int simulation_prettyPowders(lua_State * l);
 int simulation_gravityGrid(lua_State * l);
 int simulation_edgeMode(lua_State * l);
 int simulation_gravityMode(lua_State * l);
+int simulation_customGravity(lua_State * l);
 int simulation_airMode(lua_State * l);
 int simulation_waterEqualization(lua_State * l);
 int simulation_ambientAirTemp(lua_State * l);

@@ -165,9 +165,15 @@ public:
 			case 1:
 				break;
 			case 2:
+			{
 				float pGravD = 0.01f - hypotf((parts[movingSolid->index-1].x - XCNTR), (parts[movingSolid->index-1].y - YCNTR));
 				movingSolid->vx = movingSolid->vx + .2f * ((parts[movingSolid->index-1].x - XCNTR) / pGravD);
 				movingSolid->vy = movingSolid->vy + .2f * ((parts[movingSolid->index-1].y - YCNTR) / pGravD);
+				break;
+			}
+			case 3:
+				movingSolid->vx = movingSolid->vx + sim->customGravityX / 5.f;
+				movingSolid->vy = movingSolid->vy + sim->customGravityY / 5.f;
 				break;
 			}
 			movingSolid->rotationOld = movingSolid->rotation;

@@ -149,6 +149,8 @@ public:
 	bool waterEEnabled;
 	bool paused;
 	int gravityMode;
+	float customGravityX;
+	float customGravityY;
 	int airMode;
 	float ambientAirTemp;
 	bool ambientAirTempPresent = false;

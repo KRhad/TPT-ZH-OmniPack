@@ -51,6 +51,8 @@ public:
 
 	// settings
 	int gravityMode = 0;
+	float customGravityX = 0.0f;
+	float customGravityY = 0.0f;
 	signed char edgeMode;
 	signed char saveEdgeMode;
 	bool msRotation; //for moving solids

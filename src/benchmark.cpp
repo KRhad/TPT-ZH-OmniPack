@@ -97,7 +97,7 @@ void benchmark_run()
 					BENCHMARK_RUN()
 					{
 						sim->air->UpdateAir();
-						sim->air->UpdateAirHeat(sim->gravityMode == 0);
+						sim->air->UpdateAirHeat(sim);
 						sim->Tick();
 					}
 				}
@@ -223,7 +223,7 @@ void benchmark_run()
 		BENCHMARK_START(benchmark_repeat_count, 1600)
 		{
 			sim->air->UpdateAir();
-			sim->air->UpdateAirHeat(sim->gravityMode == 0);
+			sim->air->UpdateAirHeat(sim);
 		}
 		BENCHMARK_END()
 	}

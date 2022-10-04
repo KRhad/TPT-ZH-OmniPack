@@ -16,16 +16,24 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 		gel_scale = parts[i].tmp*2.55f;
 
 	//some heat convection for liquids
-	if ((elements[t].Properties&TYPE_LIQUID) && (t!=PT_GEL || gel_scale > RNG::Ref().between(1, 255)) && y-2 >= 0 && y-2 < YRES)
+	if ((elements[t].Properties&TYPE_LIQUID) && (t!=PT_GEL || gel_scale > RNG::Ref().between(1, 255)))
 	{
-		r = pmap[y-2][x];
-		if (!(!r || parts[i].type != TYP(r)))
+		float convGravX, convGravY;
+		GetGravityField(x, y, -2.0f, -2.0f, convGravX, convGravY);
+		auto offsetX = int(std::round(convGravX + x));
+		auto offsetY = int(std::round(convGravY + y));
+		//some heat convection for liquids
+		if ((offsetX != x || offsetY != y) && offsetX >= 0 && offsetX < XRES && offsetY >= 0 && offsetY < YRES)
 		{
-			if (parts[i].temp>parts[ID(r)].temp)
+			r = pmap[offsetY][offsetX];
+			if (!(!r || parts[i].type != TYP(r)))
 			{
-				swappage = parts[i].temp;
-				parts[i].temp = parts[ID(r)].temp;
-				parts[ID(r)].temp = swappage;
+				if (parts[i].temp>parts[ID(r)].temp)
+				{
+					swappage = parts[i].temp;
+					parts[i].temp = parts[ID(r)].temp;
+					parts[ID(r)].temp = swappage;
+				}
 			}
 		}
 	}

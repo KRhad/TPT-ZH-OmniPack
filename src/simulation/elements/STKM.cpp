@@ -102,8 +102,12 @@ int STKM_ElementDataContainer::Run(Stickman *playerp, UPDATE_FUNC_ARGS)
 			gravd = 0.01f - hypotf((parts[i].x - XCNTR), (parts[i].y - YCNTR));
 			gvx = ((float)(parts[i].x - XCNTR) / gravd);
 			gvy = ((float)(parts[i].y - YCNTR) / gravd);
+			break;
 		}
-		break;
+		case 3:
+			gvx = sim->customGravityX;
+			gvy = sim->customGravityY;
+			break;
 	}
 
 	gvx += sim->grav->gravx[((int)parts[i].y/CELL)*(XRES/CELL) + ((int)parts[i].x/CELL)];
