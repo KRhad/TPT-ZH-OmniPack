@@ -30,7 +30,6 @@ GravityWindow::GravityWindow(Simulation *sim, float scale, int radius):
 	std::stringstream gravityText;
 	gravityText.precision(1);
 	gravityText << std::fixed << "X:" << x << " Y:" << y << " Total:" << std::hypot(x, y);
-	// TODO always show decimal place
 	Point labelPos = Point((size.X - gfx::VideoBuffer::TextSize(gravityText.str()).X) / 2, (radius * 5 / 2) + 29);
 	labelValues = new Label(labelPos, Point(size.X, 16), gravityText.str());
 	AddComponent(labelValues);

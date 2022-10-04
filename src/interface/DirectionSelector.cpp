@@ -10,10 +10,7 @@ DirectionSelector::DirectionSelector(Point position, float scale, int radius, in
 	snapPointRadius(snapPointRadius),
 	snapPointEffectRadius(snapPointEffectRadius),
 	autoReturn(false),
-	/*backgroundColor(COLARGB(63, 0, 0, 0)),
-	foregroundColor(COLARGB(127, 63, 63, 63)),
-	borderColor(COLRGB(255, 255, 255)),
-	snapPointColor(COLARGB(127, 63, 63, 63)),*/
+	backgroundColor(COLARGB(255, 0, 0, 0)),
 	updateCallback(nullptr),
 	changeCallback(nullptr),
 	mouseDown(false),

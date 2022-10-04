@@ -36,9 +36,6 @@ class DirectionSelector : public Component
 	bool autoReturn;
 
 	ARGBColour backgroundColor;
-	/*ARGBColour foregroundColor;
-	ARGBColour borderColor;
-	ARGBColour snapPointColor;*/
 
 public:
 	using DirectionSelectorCallback = std::function<void(float x, float y)>;
@@ -72,9 +69,6 @@ public:
 	inline void DisableAutoReturn() { autoReturn = false; }
 
 	inline void SetBackgroundColor(ARGBColour color) { backgroundColor = color; }
-	/*inline void SetForegroundColor(ARGBColour color) { foregroundColor = color; }
-	inline void SetBorderColor(ARGBColour color) { borderColor = color; }
-	inline void SetSnapPointColor(ARGBColour color) { snapPointColor = color; }*/
 
 	float GetXValue();
 	float GetYValue();
