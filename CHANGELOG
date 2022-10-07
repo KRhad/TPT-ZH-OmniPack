@@ -1180,3 +1180,12 @@ Update to tptmp v2.0.23 (stability improvements, account age limit).
 Version 49.2 2022-07-17
 Update to TPTMP v2.0.24. This version contains no relevant changes for this
 mod.
+
+Version 50.0 2022-10-07
+Fix being unable to view second page and beyond if front page has 15 or less 
+saves. Fix Platform::ExecutableName on mac if path is longer than 64 
+characters. Partial update to the latest tpt++ source code, including: 
+Add sim.partExists and elem.exists, add real v parameter to sim.partCreate, 
+Fix PIPE graphics hack giving Lua graphics functions bad particle IDs, Fix 
+exception when passing nil to some functions in interface api, Add custom 
+gravity mode and replace hardcoded gravity interactions.
