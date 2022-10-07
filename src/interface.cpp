@@ -3324,6 +3324,7 @@ int search_ui(pixel *vid_buf)
 	ui_edit ed;
 	ui_richtext motd;
 	int searchFailureCode = -1;
+	bool isFrontPage = false;
 
 
 	Request *saveListDownload = NULL;
@@ -3489,7 +3490,7 @@ int search_ui(pixel *vid_buf)
 			drawtext(vid_buf, 4+xOffset, YRES+MENUSIZE-16, "\x96", 255, 255, 255, 255);
 			drawrect(vid_buf, 1+xOffset, YRES+MENUSIZE-20, 16, 16, 255, 255, 255, 255);
 		}
-		else if (page_count > exp_res && !(search_own || search_fav || search_date))
+		else if (page_count > exp_res || isFrontPage)
 		{
 			if (p1_extra)
 				drawtext(vid_buf, 5+xOffset, YRES+MENUSIZE-15, "\x86", 255, 255, 255, 255);
@@ -3497,7 +3498,7 @@ int search_ui(pixel *vid_buf)
 				drawtext(vid_buf, 5+xOffset, YRES+MENUSIZE-15, "\xEF", 255, 255, 255, 255);
 			drawrect(vid_buf, 1+xOffset, YRES+MENUSIZE-20, 15, 15, 255, 255, 255, 255);
 		}
-		if (page_count > exp_res)
+		if (page_count > exp_res || isFrontPage)
 		{
 			drawtext(vid_buf, XRES-15+xOffset, YRES+MENUSIZE-16, "\x95", 255, 255, 255, 255);
 			drawrect(vid_buf, XRES-18+xOffset, YRES+MENUSIZE-20, 16, 16, 255, 255, 255, 255);
@@ -3514,7 +3515,7 @@ int search_ui(pixel *vid_buf)
 		}
 		if ((!b && bq && mx>=XRES-18+xOffset && mx<=XRES-1+xOffset && my>=YRES+MENUSIZE-20 && my<YRES+MENUSIZE-4) || sdl_wheel<0)
 		{
-			if (page_count>exp_res)
+			if (page_count>exp_res || isFrontPage)
 			{
 				search_page ++;
 				page_count = exp_res;
@@ -3792,7 +3793,7 @@ int search_ui(pixel *vid_buf)
 					uih = 1; // not sure what this does
 					bq = 0;
 				}
-				else if (touchOffset < -(XRES+BARSIZE)/3 && page_count>exp_res)
+				else if (touchOffset < -(XRES+BARSIZE)/3 && (page_count>exp_res || isFrontPage))
 				{
 					search_page++;
 					page_count = exp_res;
@@ -3813,7 +3814,7 @@ int search_ui(pixel *vid_buf)
 					touchOffset = 0;
 					touchDragged = true;
 				}
-				else if (touchOffset < 0 && page_count<=exp_res)
+				else if (touchOffset < 0 && (page_count<=exp_res && !isFrontPage))
 				{
 					touchOffset = 0;
 					touchDragged = true;
@@ -3971,6 +3972,8 @@ int search_ui(pixel *vid_buf)
 			std::string resultsStr = saveListDownload->Finish(&status);
 			const char *results = resultsStr.c_str();
 			is_p1 = (exp_res < GRID_X*GRID_Y);
+			// Separage from is_p1 because is_p1 works strangely, and also some temporary artifacts show when switching from page 2 to page 1 if it tracks fp like this
+			isFrontPage = (exp_res < GRID_X*GRID_Y) || (search_page == 0 && !(search_own || search_date || search_fav || last));
 			touchOffset = 0;
 			if (status == 200)
 			{
