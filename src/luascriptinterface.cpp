@@ -36,6 +36,7 @@
 #include "lua/LuaCheckbox.h"
 #include "lua/LuaLabel.h"
 #include "lua/LuaProgressBar.h"
+#include "lua/LuaSDLKeys.h"
 #include "lua/LuaSlider.h"
 #include "lua/LuaSmartRef.h"
 #include "lua/LuaTCPSocket.h"
@@ -2388,6 +2389,7 @@ void initInterfaceAPI(lua_State * l)
 
 	//Ren shortcut
 	lua_getglobal(l, "interface");
+	initLuaSDLKeys(l);
 	lua_setglobal(l, "ui");
 
 	Luna<LuaWindow>::Register(l);

@@ -7,7 +7,7 @@
 #include "simulation/StructProperty.h"
 #include "simulation/SimulationData.h"
 
-// idea from mniip, makes things much simpler 
+// idea from mniip, makes things much simpler
 #define SETCONST(L, NAME)\
 	lua_pushinteger(L, NAME);\
 	lua_setfield(L, -2, #NAME)
