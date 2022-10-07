@@ -1,4 +1,5 @@
 #include "DirectionSelector.h"
+#include "common/tpt-minmax.h"
 #include "graphics/VideoBuffer.h"
 
 DirectionSelector::DirectionSelector(Point position, float scale, int radius, int handleRadius, int snapPointRadius, int snapPointEffectRadius):
@@ -125,7 +126,7 @@ void DirectionSelector::OnDraw(gfx::VideoBuffer* vid)
 		);
 	}
 
-	vid->FillCircle(center.X + value.offset.X, center.Y + value.offset.Y, radius / 4, radius / 4, COLR(color) / 4, COLG(color) / 4, COLB(color) / 4, mouseHover ? std::min((int)(COLA(color) * .75), 255) : COLA(color) / 2);
+	vid->FillCircle(center.X + value.offset.X, center.Y + value.offset.Y, radius / 4, radius / 4, COLR(color) / 4, COLG(color) / 4, COLB(color) / 4, mouseHover ? tpt::min((int)(COLA(color) * .75), 255) : COLA(color) / 2);
 	vid->DrawCircle(center.X + value.offset.X, center.Y + value.offset.Y, radius / 4, radius / 4, COLR(color), COLG(color), COLB(color), COLA(color));
 }
 
