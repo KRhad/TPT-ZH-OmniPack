@@ -228,10 +228,7 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 						{
 							pt = (c_heat - elements[t].Latent)/c_Cm;
 
-							if (RNG::Ref().chance(1, 6))
-								t = PT_SALT;
-							else
-								t = PT_WTRV;
+							t = RNG::Ref().chance(1, 4) ? PT_SALT : PT_WTRV;
 						}
 						else
 						{
@@ -241,10 +238,7 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 					}
 					else
 					{
-						if (RNG::Ref().chance(1, 6))
-							t = PT_SALT;
-						else
-							t = PT_WTRV;
+						t = RNG::Ref().chance(1, 4) ? PT_SALT : PT_WTRV;
 					}
 				}
 				else if (t == PT_BRMT)
@@ -301,10 +295,7 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 				}
 				else if (t == PT_WTRV)
 				{
-					if (pt<273.0f)
-						t = PT_RIME;
-					else
-						t = PT_DSTW;
+					t = (pt < 273.0f) ? PT_RIME : PT_DSTW;
 				}
 				else if (t == PT_LAVA)
 				{

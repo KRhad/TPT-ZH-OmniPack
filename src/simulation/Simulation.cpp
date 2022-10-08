@@ -1328,17 +1328,11 @@ void Simulation::RecalcFreeParticles(bool doLifeDec)
 
 	if (lastPartUnused == -1)
 	{
-		if (parts_lastActiveIndex >= NPART - 1)
-			pfree = -1;
-		else
-			pfree = parts_lastActiveIndex + 1;
+		pfree = (parts_lastActiveIndex >= NPART - 1) ? -1 : parts_lastActiveIndex + 1;
 	}
 	else
 	{
-		if (parts_lastActiveIndex >= NPART - 1)
-			parts[lastPartUnused].life = -1;
-		else
-			parts[lastPartUnused].life = parts_lastActiveIndex + 1;
+		parts[lastPartUnused].life = (parts_lastActiveIndex >= NPART - 1) ? -1 : parts_lastActiveIndex + 1;
 	}
 	parts_lastActiveIndex = lastPartUsed;
 }
@@ -1554,22 +1548,28 @@ bool Simulation::UpdateParticle(int i)
 	int y = (int)(parts[i].y+0.5f);
 	bool transitionOccurred = false;
 
-	//this kills any particle out of the screen, or in a wall where it isn't supposed to go
-	if (x < CELL || y < CELL || x >= XRES - CELL || y >= YRES-CELL ||
-		( bmap[y/CELL][x/CELL] &&
-		  ( bmap[y/CELL][x/CELL] == WL_WALL ||
-		   (bmap[y/CELL][x/CELL] == WL_WALLELEC) ||
-		   (bmap[y/CELL][x/CELL] == WL_ALLOWAIR) ||
-		   (bmap[y/CELL][x/CELL] == WL_DESTROYALL) ||
-		   (bmap[y/CELL][x/CELL] == WL_ALLOWLIQUID && !(elements[t].Properties&TYPE_LIQUID)) ||
-		   (bmap[y/CELL][x/CELL] == WL_ALLOWPOWDER && !(elements[t].Properties&TYPE_PART)) ||
-		   (bmap[y/CELL][x/CELL] == WL_ALLOWGAS && !(elements[t].Properties&TYPE_GAS)) || //&&  elements[t].Falldown!=0 && t!=PT_FIRE && t!=PT_SMKE && t!=PT_HFLM) ||
-		   (bmap[y/CELL][x/CELL] == WL_ALLOWENERGY && !(elements[t].Properties&TYPE_ENERGY)) ||
-		   (bmap[y/CELL][x/CELL] == WL_EWALL && !emap[y/CELL][x/CELL])
+	// Kill a particle off screen
+	if (x < CELL || y < CELL || x >= XRES-CELL || y >= YRES-CELL)
+	{
+		part_kill(i);
+		return true;
+	}
+
+	// Kill a particle in a wall where it isn't supposed to go
+	if (bmap[y/CELL][x/CELL] &&
+		(bmap[y/CELL][x/CELL] == WL_WALL ||
+			bmap[y/CELL][x/CELL] == WL_WALLELEC ||
+			bmap[y/CELL][x/CELL] == WL_ALLOWAIR ||
+			bmap[y/CELL][x/CELL] == WL_DESTROYALL ||
+			(bmap[y/CELL][x/CELL] == WL_ALLOWLIQUID && !(elements[t].Properties&TYPE_LIQUID)) ||
+			(bmap[y/CELL][x/CELL] == WL_ALLOWPOWDER && !(elements[t].Properties&TYPE_PART)) ||
+			(bmap[y/CELL][x/CELL] == WL_ALLOWGAS && !(elements[t].Properties&TYPE_GAS)) || //&&  elements[t].Falldown!=0 && t!=PT_FIRE && t!=PT_SMKE && t!=PT_HFLM) ||
+			(bmap[y/CELL][x/CELL] == WL_ALLOWENERGY && !(elements[t].Properties&TYPE_ENERGY)) ||
+			(bmap[y/CELL][x/CELL] == WL_EWALL && !emap[y/CELL][x/CELL])
 #ifdef NOMOD
 		  ) && t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH))
 #else
-		  ) && t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH && t != PT_MOVS))
+		  ) && t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH && t != PT_MOVS)
 #endif
 	{
 		part_kill(i);
@@ -1664,13 +1664,8 @@ bool Simulation::UpdateParticle(int i)
 				surround[surround_particle] = r = pmap[y+ny][x+nx];
 				surround_particle++;
 
-				//there is empty space
-				if (!TYP(r))
-					surround_space++;
-
-				//there is nothing or a different particle
-				if (TYP(r) != t)
-					nt++;
+				surround_space += (!TYP(r)); // count empty space
+				nt += (TYP(r) != t); // count empty space and particles of different type
 			}
 		}
 
@@ -2172,10 +2167,7 @@ bool Simulation::UpdateParticle(int i)
 					// but no point trying this if particle is stuck in a block of identical particles
 					float dx = parts[i].vx - parts[i].vy*r;
 					float dy = parts[i].vy + parts[i].vx*r;
-					if (fabsf(dy) > fabsf(dx))
-						mv = fabsf(dy);
-					else
-						mv = fabsf(dx);
+					mv = tpt::max(fabsf(dx), fabsf(dy));
 					dx /= mv;
 					dy /= mv;
 					if (DoMove(i, x, y, clear_xf+dx, clear_yf+dy))
@@ -2226,10 +2218,7 @@ bool Simulation::UpdateParticle(int i)
 						if (TYP(pmap[clear_y][j]) != t || (bmap[clear_y/CELL][j/CELL] && bmap[clear_y/CELL][j/CELL] != WL_STREAM))
 							break;
 					}
-					if (parts[i].vy > 0)
-						r = 1;
-					else
-						r = -1;
+					r = (parts[i].vy>0) ? 1 : -1;
 					if (s == 1)
 						for (int j=ny+r; j>=0 && j<YRES && j>=ny-rt && j<ny+rt; j+=r)
 						{
@@ -2250,10 +2239,9 @@ bool Simulation::UpdateParticle(int i)
 					int rt;
 					s = 0;
 					// stagnant is true if FLAG_STAGNANT was set for this particle in previous frame
-					if (!stagnant || nt) //nt is if there is an something else besides the current particle type, around the particle
-						rt = 30;//slight less water lag, although it changes how it moves a lot
-					else
-						rt = 10;
+					// nt is if there is something else besides the current particle type around the particle
+					// 30 gives slightly less water lag, although it changes how it moves a lot
+					rt = (!stagnant || nt) ? 30 : 10;
 					// clear_xf, clear_yf is the last known position that the particle should almost certainly be able to move to
 					nxf = clear_xf;
 					nyf = clear_yf;
@@ -2265,10 +2253,7 @@ bool Simulation::UpdateParticle(int i)
 						// Calculate overall gravity direction
 						GetGravityField(nx, ny, ptGrav, 1.0f, pGravX, pGravY);
 						// Scale gravity vector so that the largest component is 1 pixel
-						if (fabsf(pGravY)>fabsf(pGravX))
-							mv = fabsf(pGravY);
-						else
-							mv = fabsf(pGravX);
+						mv = tpt::max(fabsf(pGravX), fabsf(pGravY));
 						if (mv<0.0001f) break;
 						pGravX /= mv;
 						pGravY /= mv;
@@ -2320,10 +2305,7 @@ bool Simulation::UpdateParticle(int i)
 							// Calculate overall gravity direction
 							GetGravityField(nx, ny, ptGrav, 1.0f, pGravX, pGravY);
 							// Scale gravity vector so that the largest component is 1 pixel
-							if (fabsf(pGravY)>fabsf(pGravX))
-								mv = fabsf(pGravY);
-							else
-								mv = fabsf(pGravX);
+							mv = tpt::max(fabsf(pGravX), fabsf(pGravY));
 							if (mv<0.0001f) break;
 							pGravX /= mv;
 							pGravY /= mv;
@@ -2632,10 +2614,7 @@ int Simulation::CreatePartFlags(int x, int y, int c, int flags)
 		part_delete(x, y);
 	}
 	// Normal draw
-	else
-		if (part_create(-2, x, y, TYP(c), ID(c)) == -1)
-			return 1;
-	return 0;
+	return (part_create(-2, x, y, TYP(c), ID(c)) == -1);
 }
 
 void Simulation::CreateLine(int x1, int y1, int x2, int y2, int c, int flags, Brush* brush)
@@ -2663,10 +2642,7 @@ void Simulation::CreateLine(int x1, int y1, int x2, int y2, int c, int flags, Br
 	}
 	dx = x2 - x1;
 	dy = abs(y2 - y1);
-	if (dx)
-		de = dy/(float)dx;
-	else
-		de = 0.0f;
+	de = dx ? dy/(float)dx : 0.0f;
 	y = y1;
 	sy = (y1<y2) ? 1 : -1;
 	for (x=x1; x<=x2; x++)
@@ -2890,10 +2866,7 @@ void Simulation::CreateWallLine(int x1, int y1, int x2, int y2, int rx, int ry, 
 	}
 	dx = x2 - x1;
 	dy = abs(y2 - y1);
-	if (dx)
-		de = dy/(float)dx;
-	else
-		de = 0.0f;
+	de = dx ? dy/(float)dx : 0.0f;
 	y = y1;
 	sy = (y1<y2) ? 1 : -1;
 	for (x=x1; x<=x2; x++)
@@ -3219,10 +3192,7 @@ void Simulation::CreateToolLine(int x1, int y1, int x2, int y2, int tool, float 
 	}
 	dx = x2 - x1;
 	dy = abs(y2 - y1);
-	if (dx)
-		de = dy/(float)dx;
-	else
-		de = 0.0f;
+	de = dx ? dy/(float)dx : 0.0f;
 	y = y1;
 	sy = (y1<y2) ? 1 : -1;
 	for (x=x1; x<=x2; x++)
@@ -3357,10 +3327,7 @@ void Simulation::CreatePropLine(int x1, int y1, int x2, int y2, StructProperty p
 	}
 	dx = x2 - x1;
 	dy = abs(y2 - y1);
-	if (dx)
-		de = dy / (float)dx;
-	else
-		de = 0.0f;
+	de = dx ? dy/(float)dx : 0.0f;
 	y = y1;
 	sy = (y1<y2) ? 1 : -1;
 	for (x = x1; x <= x2; x++)
@@ -3708,10 +3675,7 @@ void Simulation::CreateDecoLine(int x1, int y1, int x2, int y2, int tool, ARGBCo
 	}
 	dx = x2 - x1;
 	dy = abs(y2 - y1);
-	if (dx)
-		de = dy/(float)dx;
-	else
-		de = 0.0f;
+	de = dx ? dy/(float)dx : 0.0f;
 	y = y1;
 	sy = (y1<y2) ? 1 : -1;
 	for (x=x1; x<=x2; x++)

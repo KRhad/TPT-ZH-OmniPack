@@ -30,19 +30,9 @@ bool Simulation::IsWallBlocking(int x, int y, int type)
 // create photons when PHOT moves through GLOW
 void Simulation::CreateGainPhoton(int pp)
 {
-	int lr = RNG::Ref().between(1, 2);
-
-	float xx, yy;
-	if (lr)
-	{
-		xx = parts[pp].x - 0.3f*parts[pp].vy;
-		yy = parts[pp].y + 0.3f*parts[pp].vx;
-	}
-	else
-	{
-		xx = parts[pp].x + 0.3f*parts[pp].vy;
-		yy = parts[pp].y - 0.3f*parts[pp].vx;
-	}
+	int lr = 2*RNG::Ref().between(0, 1) - 1; // -1 or 1
+	float xx = parts[pp].x - lr * 0.3 * parts[pp].vy;
+	float yy = parts[pp].y + lr * 0.3 * parts[pp].vx;
 
 	int nx = (int)(xx + 0.5f);
 	int ny = (int)(yy + 0.5f);
@@ -680,11 +670,7 @@ int Simulation::TryMove(int i, int x, int y, int nx, int ny)
 				break;
 			case PT_INVIS:
 			{
-				float pressureResistance;
-				if (parts[ID(r)].tmp > 0)
-					pressureResistance = (float)parts[ID(r)].tmp;
-				else
-					pressureResistance = 4.0f;
+				float pressureResistance = (parts[ID(r)].tmp > 0) ? (float)parts[ID(r)].tmp : 4.0f;
 
 				if (air->pv[ny/CELL][nx/CELL] >= -pressureResistance && air->pv[ny/CELL][nx/CELL] <= pressureResistance)
 				{
