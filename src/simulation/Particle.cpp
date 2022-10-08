@@ -20,29 +20,19 @@ std::vector<StructProperty> particle::properties = {
 	{ "dcolour", StructProperty::UInteger    , (intptr_t)(offsetof(particle, dcolour)) },
 };
 
-
-std::vector<StructProperty> particle::aliasProperties;
-
-std::vector<StructProperty> const &particle::GetProperties(bool includeAliases)
+std::vector<StructProperty> const &particle::GetProperties()
 {
-	if (includeAliases)
-	{
-		if (aliasProperties.size() == 0)
-		{
-			static std::vector<StructProperty> aliases = {
-				{ "pavg0"  , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp3	)) },
-				{ "pavg1"  , StructProperty::Integer     , (intptr_t)(offsetof(particle, tmp4	)) },
-				{ "dcolour", StructProperty::UInteger    , (intptr_t)(offsetof(particle, dcolour)) },
-			};
-
-			aliasProperties.reserve(properties.size() + aliasProperties.size());
-			aliasProperties.insert (aliasProperties.end(), properties.begin(), properties.end());
-			aliasProperties.insert (aliasProperties.end(), aliases.begin(), aliases.end());
-		}
-
-		return aliasProperties;
-	}
 	return properties;
+}
+
+std::vector<StructPropertyAlias> const &particle::GetPropertyAliases()
+{
+	static std::vector<StructPropertyAlias> aliases = {
+		{ "pavg0" , "tmp3"    },
+		{ "pavg1" , "tmp4"    },
+		{ "dcolor", "dcolour" },
+	};
+	return aliases;
 }
 
 StructProperty particle::PropertyByName(const std::string& Name)
@@ -55,86 +45,40 @@ StructProperty particle::PropertyByName(const std::string& Name)
 	return *prop;
 }
 
-int Particle_GetOffset(const char * key, int * format)
+int Particle_GetOffset(std::string key, int * format)
 {
-	int offset;
-	if (!strcmp(key, "type"))
+	int offset = -1;
+	for (auto &alias : particle::GetPropertyAliases())
 	{
-		offset = offsetof(particle, type);
-		*format = 2;
+		if (key == alias.from)
+		{
+			key = alias.to;
+		}
 	}
-	else if (!strcmp(key, "life"))
+	for (auto &prop : particle::GetProperties())
 	{
-		offset = offsetof(particle, life);
-		*format = 0;
-	}
-	else if (!strcmp(key, "ctype"))
-	{
-		offset = offsetof(particle, ctype);
-		*format = 0;
-	}
-	else if (!strcmp(key, "temp"))
-	{
-		offset = offsetof(particle, temp);
-		*format = 1;
-	}
-	else if (!strcmp(key, "tmp"))
-	{
-		offset = offsetof(particle, tmp);
-		*format = 0;
-	}
-	else if (!strcmp(key, "tmp2"))
-	{
-		offset = offsetof(particle, tmp2);
-		*format = 0;
-	}
-	else if (!strcmp(key, "vy"))
-	{
-		offset = offsetof(particle, vy);
-		*format = 1;
-	}
-	else if (!strcmp(key, "vx"))
-	{
-		offset = offsetof(particle, vx);
-		*format = 1;
-	}
-	else if (!strcmp(key, "x"))
-	{
-		offset = offsetof(particle, x);
-		*format = 1;
-	}
-	else if (!strcmp(key, "y")) {
-		offset = offsetof(particle, y);
-		*format = 1;
-	}
-	else if (!strcmp(key, "dcolour"))
-	{
-		offset = offsetof(particle, dcolour);
-		*format = 3;
-	}
-	else if (!strcmp(key, "dcolor"))
-	{
-		offset = offsetof(particle, dcolour);
-		*format = 3;
-	}
-	else if (!strcmp(key, "flags"))
-	{
-		offset = offsetof(particle, flags);
-		*format = 3;
-	}
-	else if (!strcmp(key, "tmp3"))
-	{
-		offset = offsetof(particle, tmp3);
-		*format = 0;
-	}
-	else if (!strcmp(key, "tmp4"))
-	{
-		offset = offsetof(particle, tmp4);
-		*format = 0;
-	}
-	else
-	{
-		offset = -1;
+		if (key == prop.Name)
+		{
+			offset = prop.Offset;
+			switch (prop.Type)
+			{
+			case StructProperty::ParticleType:
+				*format = (key == "type") ? 2 : 0; // FormatElement is tightly coupled with "type"
+				break;
+
+			case StructProperty::Integer:
+			case StructProperty::UInteger:
+				*format = 3;
+				break;
+
+			case StructProperty::Float:
+				*format = 1;
+				break;
+
+			default:
+				break;
+			}
+		}
 	}
 	return offset;
 }

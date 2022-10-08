@@ -145,6 +145,9 @@ int elements_loadDefault(lua_State * l);
 int elements_free(lua_State * l);
 int elements_exists(lua_State * l);
 
+void GetDefaultProperties(lua_State * l, int id);
+void SetDefaultProperties(lua_State * l, int id, int stackPos);
+
 void initPlatformAPI(lua_State * l);
 int platform_platform(lua_State * l);
 int platform_build(lua_State * l);

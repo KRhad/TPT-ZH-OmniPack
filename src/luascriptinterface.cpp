@@ -351,6 +351,11 @@ void initSimulationAPI(lua_State * l)
 		lua_pushinteger(l, particlePropertiesCount++);
 		lua_setfield(l, -2, ("FIELD_" + Format::ToUpper(prop.Name)).c_str());
 	}
+	for (auto &alias : particle::GetPropertyAliases())
+	{
+		lua_getfield(l, -1, ("FIELD_" + Format::ToUpper(alias.to)).c_str());
+		lua_setfield(l, -2, ("FIELD_" + Format::ToUpper(alias.from)).c_str());
+	}
 
 	lua_newtable(l);
 	for (int i = 1; i <= MAXSIGNS; i++)
@@ -531,7 +536,7 @@ int simulation_partProperty(lua_State * l)
 			return 0;
 	}
 
-	auto &properties = particle::GetProperties(true);
+	auto &properties = particle::GetProperties();
 	auto prop = properties.end();
 
 	//Get field
@@ -544,12 +549,19 @@ int simulation_partProperty(lua_State * l)
 	}
 	else if (lua_type(l, 2) == LUA_TSTRING)
 	{
-		const char* fieldName = lua_tostring(l, 2);
+		std::string fieldName = lua_tostring(l, 2);
+		for (auto &alias : particle::GetPropertyAliases())
+		{
+			if (fieldName == alias.from)
+			{
+				fieldName = alias.to;
+			}
+		}
 		prop = std::find_if(properties.begin(), properties.end(), [&fieldName](StructProperty const &p) {
 			return p.Name == fieldName;
 		});
 		if (prop == properties.end())
-			return luaL_error(l, "Unknown field (%s)", fieldName);
+			return luaL_error(l, "Unknown field (%s)", fieldName.c_str());
 	}
 	else
 	{
@@ -3227,19 +3239,7 @@ int elements_element(lua_State * l)
 		lua_pop(l, 1);
 
 		lua_getfield(l, -1, "DefaultProperties");
-		if (lua_type(l, -1) == LUA_TTABLE)
-		{
-			for (auto &prop : particle::GetProperties())
-			{
-				lua_getfield(l, -1, prop.Name.c_str());
-				if (lua_type(l, -1) != LUA_TNIL)
-				{
-					auto propertyAddress = reinterpret_cast<intptr_t>((reinterpret_cast<unsigned char*>(&luaSim->elements[id].DefaultProperties)) + prop.Offset);
-					LuaSetProperty(l, prop, propertyAddress, -1);
-				}
-				lua_pop(l, 1);
-			}
-		}
+		SetDefaultProperties(l, id, -1);
 		lua_pop(l, 1);
 
 		FillMenus();
@@ -3262,14 +3262,7 @@ int elements_element(lua_State * l)
 		lua_pushstring(l, luaSim->elements[id].Identifier.c_str());
 		lua_setfield(l, -2, "Identifier");
 
-		lua_newtable(l);
-		int tableIdx = lua_gettop(l);
-		for (auto &prop : particle::GetProperties())
-		{
-			auto propertyAddress = reinterpret_cast<intptr_t>((reinterpret_cast<unsigned char*>(&luaSim->elements[id].DefaultProperties)) + prop.Offset);
-			LuaGetProperty(l, prop, propertyAddress);
-			lua_setfield(l, tableIdx, prop.Name.c_str());
-		}
+		GetDefaultProperties(l, id);
 		lua_setfield(l, -2, "DefaultProperties");
 
 		return 1;
@@ -3412,20 +3405,12 @@ int elements_property(lua_State * l)
 		}
 		else if (propertyName == "DefaultProperties")
 		{
-			luaL_checktype(l, 3, LUA_TTABLE);
-			for (auto &prop : particle::GetProperties())
-			{
-				lua_getfield(l, -1, prop.Name.c_str());
-				if (lua_type(l, -1) != LUA_TNIL)
-				{
-					auto propertyAddress = reinterpret_cast<intptr_t>((reinterpret_cast<unsigned char*>(&luaSim->elements[id].DefaultProperties)) + prop.Offset);
-					LuaSetProperty(l, prop, propertyAddress, -1);
-				}
-				lua_pop(l, 1);
-			}
+			SetDefaultProperties(l, id, 3);
 		}
 		else
+		{
 			return luaL_error(l, "Invalid element property");
+		}
 	}
 	else
 	{
@@ -3442,14 +3427,7 @@ int elements_property(lua_State * l)
 		}
 		else if (propertyName == "DefaultProperties")
 		{
-			lua_newtable(l);
-			int tableIdx = lua_gettop(l);
-			for (auto &prop : particle::GetProperties())
-			{
-				auto propertyAddress = reinterpret_cast<intptr_t>((reinterpret_cast<unsigned char*>(&luaSim->elements[id].DefaultProperties)) + prop.Offset);
-				LuaGetProperty(l, prop, propertyAddress);
-				lua_setfield(l, tableIdx, prop.Name.c_str());
-			}
+			GetDefaultProperties(l, id);
 			return 1;
 		}
 		else
@@ -3482,6 +3460,50 @@ int elements_exists(lua_State * l)
 {
 	lua_pushboolean(l, luaSim->IsElement(luaL_checkinteger(l, 1)));
 	return 1;
+}
+
+void GetDefaultProperties(lua_State * l, int id)
+{
+	lua_newtable(l);
+	for (auto &prop : particle::GetProperties())
+	{
+		auto propertyAddress = reinterpret_cast<intptr_t>((reinterpret_cast<unsigned char*>(&luaSim->elements[id].DefaultProperties)) + prop.Offset);
+		LuaGetProperty(l, prop, propertyAddress);
+		lua_setfield(l, -2, prop.Name.c_str());
+	}
+	for (auto &alias : particle::GetPropertyAliases())
+	{
+		lua_getfield(l, -1, alias.to.c_str());
+		lua_setfield(l, -2, alias.from.c_str());
+	}
+}
+
+void SetDefaultProperties(lua_State * l, int id, int stackPos)
+{
+	if (lua_type(l, stackPos) == LUA_TTABLE)
+	{
+		for (auto &prop : particle::GetProperties())
+		{
+			lua_getfield(l, stackPos, prop.Name.c_str());
+			if (lua_type(l, -1) == LUA_TNIL)
+			{
+				for (auto &alias : particle::GetPropertyAliases())
+				{
+					if (alias.to == prop.Name)
+					{
+						lua_pop(l, 1);
+						lua_getfield(l, stackPos, alias.from.c_str());
+					}
+				}
+			}
+			if (lua_type(l, -1) != LUA_TNIL)
+			{
+				auto propertyAddress = reinterpret_cast<intptr_t>((reinterpret_cast<unsigned char*>(&luaSim->elements[id].DefaultProperties)) + prop.Offset);
+				LuaSetProperty(l, prop, propertyAddress, -1);
+			}
+			lua_pop(l, 1);
+		}
+	}
 }
 
 void initPlatformAPI(lua_State * l)
