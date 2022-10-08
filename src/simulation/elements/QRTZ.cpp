@@ -72,7 +72,8 @@ int QRTZ_update(UPDATE_FUNC_ARGS)
 							parts[np].tmp2 = parts[i].tmp2;
 							if (RNG::Ref().chance(1, 2))
 							{
-								parts[np].tmp2 = std::clamp(parts[np].tmp2 + RNG::Ref().between(-1, 1), 0, 10);
+								int tmp2 = parts[np].tmp2 + RNG::Ref().between(-1, 1);
+								parts[np].tmp2 = tmp2 < 0 ? 0 : tmp2 > 10? 10 : tmp2;
 							}
 							parts[i].tmp--;
 							if (t == PT_PQRT)
