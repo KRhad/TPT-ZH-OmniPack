@@ -18,6 +18,7 @@ class PowderToy : public ui::Window
 public:
 	enum StampState { NONE, LOAD, COPY, CUT, SAVE };
 	enum DrawState { POINTS, LINE, RECT, FILL };
+	enum MouseupReason { mouseUpNormal, mouseUpBlur, mouseUpDrawEnd };
 
 private:
 	Point mouse;

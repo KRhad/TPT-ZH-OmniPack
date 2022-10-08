@@ -2402,6 +2402,9 @@ void initInterfaceAPI(lua_State * l)
 	//Ren shortcut
 	lua_getglobal(l, "interface");
 	initLuaSDLKeys(l);
+	lua_pushinteger(l, PowderToy::mouseUpNormal); lua_setfield(l, -2, "MOUSE_UP_NORMAL");
+	lua_pushinteger(l, PowderToy::mouseUpBlur); lua_setfield(l, -2, "MOUSE_UP_BLUR");
+	lua_pushinteger(l, PowderToy::mouseUpDrawEnd); lua_setfield(l, -2, "MOUSE_UP_DRAW_END");
 	lua_setglobal(l, "ui");
 
 	Luna<LuaWindow>::Register(l);

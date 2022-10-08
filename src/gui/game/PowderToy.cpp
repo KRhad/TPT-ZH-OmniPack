@@ -1489,7 +1489,7 @@ void PowderToy::OnMouseMove(int x, int y, Point difference)
 			isMouseDown = false;
 			drawState = POINTS;
 			// special lua mouseevent for moving in / out of zoom window
-			MouseUpEvent ev = MouseUpEvent(x, y, 0, 2);
+			MouseUpEvent ev = MouseUpEvent(x, y, 0, mouseUpDrawEnd);
 			HandleEvent(LuaEvents::mouseup, &ev);
 		}
 		mouseInZoom = tmpMouseInZoom;
@@ -1620,7 +1620,7 @@ void PowderToy::OnMouseDown(int x, int y, unsigned char button)
 bool PowderToy::BeforeMouseUp(int x, int y, unsigned char button)
 {
 	// lua mouse event, cancel mouse action if the function returns false
-	MouseUpEvent ev = MouseUpEvent(x, y, button, 0);
+	MouseUpEvent ev = MouseUpEvent(x, y, button, mouseUpNormal);
 	return HandleEvent(LuaEvents::mouseup, &ev);
 }
 
@@ -2675,7 +2675,7 @@ void PowderToy::OnDefocus()
 	BlurEvent ev = BlurEvent();
 	HandleEvent(LuaEvents::blur, &ev);
 	// Send fake mouseup event to Lua
-	MouseUpEvent ev2 = MouseUpEvent(0, 0, 0, 1);
+	MouseUpEvent ev2 = MouseUpEvent(0, 0, 0, mouseUpBlur);
 	HandleEvent(LuaEvents::mouseup, &ev2);
 }
 
