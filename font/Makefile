@@ -1,6 +1,6 @@
 
 editor: editor.c
-	gcc -oeditor -DSCALE=1 -DFONTEDITOR editor.c fontdata.cpp -lSDL -lm -O3 -ffast-math -march=k8 -Wall -Wno-unused-result
+	gcc -oeditor -DSCALE=1 -DFONTEDITOR editor.c fontdata.cpp `sdl2-config --cflags --libs` -lm -O3 -ffast-math -march=k8 -Wall -Wno-unused-result
 	
 editor.exe: editor.c
 	i686-w64-mingw32-gcc -oeditor.exe -DSCALE=1 -DFONTEDITOR editor.c fontdata.cpp -lmingw32 -lm -lSDLmain -lSDL -O3 -ffast-math -march=k8 -Wall -mwindows -Wno-unused-result

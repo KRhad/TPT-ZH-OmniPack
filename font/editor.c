@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #define CELLW	12
 #define CELLH	10
@@ -121,7 +121,9 @@ void drawcell(unsigned *vid, int i, int j, int c, int m)
  *                       SDL OUTPUT                        *
  ***********************************************************/
 
-SDL_Surface *sdl_scrn;
+SDL_Window * sdl_window = NULL;
+SDL_Renderer * sdl_renderer = NULL;
+SDL_Texture * sdl_texture = NULL;
 int sdl_key;
 void sdl_open(void)
 {
@@ -131,34 +133,31 @@ void sdl_open(void)
 		exit(1);
 	}
 	atexit(SDL_Quit);
-	sdl_scrn = SDL_SetVideoMode(XRES*SCALE, YRES*SCALE + 40*SCALE, 32, SDL_SWSURFACE);
-	if (!sdl_scrn)
+	if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
 	{
-		fprintf(stderr, "Creating window: %s\n", SDL_GetError());
+		fprintf(stderr, "Initializing SDL (video subsystem): %s\n", SDL_GetError());
 		exit(1);
 	}
+	sdl_window = SDL_CreateWindow("Jacob1'sMod", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, XRES*SCALE, YRES*SCALE, 0);
+	if (!sdl_window)
+	{
+		fprintf(stderr, "Initializing SDL (creating window): %s\n", SDL_GetError());
+		exit(1);
+	}
+	sdl_renderer = SDL_CreateRenderer(sdl_window, -1, 0);
+	if (!sdl_renderer)
+	{
+		fprintf(stderr, "Initializing SDL (creating renderer): %s\n", SDL_GetError());
+		exit(1);
+	}
+	sdl_texture = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, XRES*SCALE, YRES*SCALE);
 }
 
-void sdl_blit(int x, int y, int w, int h, unsigned int *src, int pitch)
+void sdl_blit(unsigned int *vid)
 {
-	unsigned *dst,i,j,k;
-	if (SDL_MUSTLOCK(sdl_scrn))
-		if (SDL_LockSurface(sdl_scrn)<0)
-			return;
-	dst = (unsigned *)sdl_scrn->pixels+y*sdl_scrn->pitch/4+x;
-	for (j = 0;j < h; j++)
-	{
-		for (k = 0; k < SCALE; k++)
-	{
-			for (i = 0; i < w*SCALE; i++)
-				dst[i] = src[i/SCALE];
-			dst += sdl_scrn->pitch/4;
-		}
-		src += pitch/4;
-	}
-	if (SDL_MUSTLOCK(sdl_scrn))
-		SDL_UnlockSurface(sdl_scrn);
-	SDL_UpdateRect(sdl_scrn,0,0,0,0);
+	SDL_UpdateTexture(sdl_texture, NULL, vid, XRES * SCALE * sizeof (Uint32));
+	SDL_RenderCopy(sdl_renderer, sdl_texture, NULL, NULL);
+	SDL_RenderPresent(sdl_renderer);
 }
 
 int frame_idx = 0;
@@ -231,7 +230,6 @@ int main(int argc, char *argv[])
 	}
 
 	sdl_open();
-	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	while (!sdl_poll())
 	{
 		if (sdl_key=='q' || sdl_key==SDLK_ESCAPE)
@@ -384,7 +382,7 @@ int main(int argc, char *argv[])
 		drawtext(vid_buf, 32, 192+36*CELLH, hex, 255, 255, 255);
 #endif
 
-		sdl_blit(0, 0, XRES, YRES, vid_buf, XRES*4);
+		sdl_blit(vid_buf);
 		SDL_Delay(10);
 	}
 
