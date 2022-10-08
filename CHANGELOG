@@ -1189,3 +1189,9 @@ Add sim.partExists and elem.exists, add real v parameter to sim.partCreate,
 Fix PIPE graphics hack giving Lua graphics functions bad particle IDs, Fix 
 exception when passing nil to some functions in interface api, Add custom 
 gravity mode and replace hardcoded gravity interactions.
+
+Version 50.1 2022-10-07
+Additional code syncing from vanilla, including: Expose SDL keycodes,
+scancodes, and button codes to Lua. Add PowderCoin icon to font. Make QRTZ
+slightly change color while growing. This version also includes code
+optimizations by savask, which improves performance by 8%.
