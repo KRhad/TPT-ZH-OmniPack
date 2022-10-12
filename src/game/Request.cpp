@@ -90,10 +90,10 @@ Request::~Request()
 #endif
 }
 
-void Request::AddHeader(std::string name, std::string value)
+void Request::AddHeader(std::string header)
 {
 #ifndef NOHTTP
-	headers = curl_slist_append(headers, (name + ": " + value).c_str());
+	headers = curl_slist_append(headers, header.c_str());
 #endif
 }
 
@@ -143,14 +143,30 @@ void Request::AuthHeaders(std::string ID, std::string session)
 	{
 		if (session.size())
 		{
-			AddHeader("X-Auth-User-Id", ID);
-			AddHeader("X-Auth-Session-Key", session);
+			AddHeader("X-Auth-User-Id: " + ID);
+			AddHeader("X-Auth-Session-Key: " + session);
 		}
 		else
 		{
-			AddHeader("X-Auth-User", ID);
+			AddHeader("X-Auth-User: " + ID);
 		}
 	}
+}
+
+#ifndef NOHTTP
+size_t Request::HeaderDataHandler(char *ptr, size_t size, size_t count, void *userdata)
+{
+	Request *req = (Request *)userdata;
+	auto actual_size = size * count;
+	if (actual_size >= 2 && ptr[actual_size - 2] == '\r' && ptr[actual_size - 1] == '\n')
+	{
+		if (actual_size > 2) // don't include header list terminator (but include the status line)
+		{
+			req->response_headers.push_back(std::string(ptr, ptr + actual_size - 2));
+		}
+		return actual_size;
+	}
+	return 0;
 }
 
 size_t Request::WriteDataHandler(char *ptr, size_t size, size_t count, void *userdata)
@@ -160,6 +176,7 @@ size_t Request::WriteDataHandler(char *ptr, size_t size, size_t count, void *use
 	req->response_body.append(ptr, actual_size);
 	return actual_size;
 }
+#endif
 
 // start the request thread
 void Request::Start()
@@ -239,6 +256,9 @@ void Request::Start()
 		curl_easy_setopt(easy, CURLOPT_PRIVATE, (void *) this);
 		curl_easy_setopt(easy, CURLOPT_USERAGENT, user_agent.c_str());
 
+		curl_easy_setopt(easy, CURLOPT_HEADERDATA, (void *)this);
+		curl_easy_setopt(easy, CURLOPT_HEADERFUNCTION, Request::HeaderDataHandler);
+
 		curl_easy_setopt(easy, CURLOPT_WRITEDATA, (void *) this);
 		curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, Request::WriteDataHandler);
 	}
@@ -253,7 +273,7 @@ void Request::Start()
 
 
 // finish the request (if called before the request is done, this will block)
-std::string Request::Finish(int *status_out)
+std::string Request::Finish(int *status_out, std::vector<std::string> *headers_out)
 {
 #ifndef NOHTTP
 	if (CheckCanceled())
@@ -271,6 +291,10 @@ std::string Request::Finish(int *status_out)
 		if (status_out)
 		{
 			*status_out = status;
+		}
+		if (headers_out)
+		{
+			*headers_out = std::move(response_headers);
 		}
 		response_out = std::move(response_body);
 	}

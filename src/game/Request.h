@@ -6,6 +6,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <string>
+#include <vector>
 
 // minor hacks so I can avoid including curl in the header file. This causes problems with mingw
 typedef void CURL;
@@ -18,6 +19,7 @@ class RequestManager;
 class Request
 {
 	std::string uri;
+	std::vector<std::string> response_headers;
 	std::string response_body;
 
 	CURL *easy;
@@ -41,18 +43,19 @@ class Request
 
 	std::condition_variable done_cv;
 
+	static size_t HeaderDataHandler(char * ptr, size_t size, size_t count, void * userdata);
 	static size_t WriteDataHandler(char * ptr, size_t size, size_t count, void * userdata);
 
 public:
 	Request(std::string uri);
 	virtual ~Request();
 
-	void AddHeader(std::string name, std::string value);
+	void AddHeader(std::string header);
 	void AddPostData(std::map<std::string, std::string> data);
 	void AuthHeaders(std::string ID, std::string session);
 
 	void Start();
-	std::string Finish(int *status);
+	std::string Finish(int *status, std::vector<std::string> *headers_out = nullptr);
 	void Cancel();
 
 	void CheckProgress(int *total, int *done);
