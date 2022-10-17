@@ -1195,3 +1195,6 @@ Additional code syncing from vanilla, including: Expose SDL keycodes,
 scancodes, and button codes to Lua. Add PowderCoin icon to font. Make QRTZ
 slightly change color while growing. This version also includes code
 optimizations by savask, which improves performance by 8%.
+
+Version 50.2 2022-10-16
+Fix replace mode

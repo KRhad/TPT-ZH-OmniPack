@@ -2613,8 +2613,13 @@ int Simulation::CreatePartFlags(int x, int y, int c, int flags)
 	{
 		part_delete(x, y);
 	}
-	// Normal draw
-	return (part_create(-2, x, y, TYP(c), ID(c)) == -1);
+	else
+	{
+		// Normal draw
+		return (part_create(-2, x, y, TYP(c), ID(c)) == -1);
+	}
+
+	return 0;
 }
 
 void Simulation::CreateLine(int x1, int y1, int x2, int y2, int c, int flags, Brush* brush)
