@@ -27,7 +27,7 @@ void Event::PushBoolean(lua_State * l, bool flag)
 void Event::PushString(lua_State * l, std::string str)
 {
 #ifdef LUACONSOLE
-	lua_pushstring(l, str.c_str());
+	tpt_lua_pushString(l, str);
 #endif
 }
 
@@ -131,13 +131,13 @@ int LuaEvents::RegisterEventHook(lua_State *l, std::string eventName)
 {
 	if (lua_isfunction(l, 2))
 	{
-		lua_pushstring(l, eventName.c_str());
+		tpt_lua_pushString(l, eventName);
 		lua_rawget(l, LUA_REGISTRYINDEX);
 		if (!lua_istable(l, -1))
 		{
 			lua_pop(l, 1);
 			lua_newtable(l);
-			lua_pushstring(l, eventName.c_str());
+			tpt_lua_pushString(l, eventName);
 			lua_pushvalue(l, -2);
 			lua_rawset(l, LUA_REGISTRYINDEX);
 		}
@@ -154,13 +154,13 @@ int LuaEvents::UnregisterEventHook(lua_State *l, std::string eventName)
 {
 	if (lua_isfunction(l, 2))
 	{
-		lua_pushstring(l, eventName.c_str());
+		tpt_lua_pushString(l, eventName);
 		lua_rawget(l, LUA_REGISTRYINDEX);
 		if (!lua_istable(l, -1))
 		{
 			lua_pop(l, -1);
 			lua_newtable(l);
-			lua_pushstring(l, eventName.c_str());
+			tpt_lua_pushString(l, eventName);
 			lua_pushvalue(l, -2);
 			lua_rawset(l, LUA_REGISTRYINDEX);
 		}
@@ -190,13 +190,13 @@ bool LuaEvents::HandleEvent(lua_State *l, Event *event, std::string eventName)
 {
 	loop_time = Platform::GetTime();
 	bool cont = true;
-	lua_pushstring(l, eventName.c_str());
+	tpt_lua_pushString(l, eventName);
 	lua_rawget(l, LUA_REGISTRYINDEX);
 	if (!lua_istable(l, -1))
 	{
 		lua_pop(l, 1);
 		lua_newtable(l);
-		lua_pushstring(l, eventName.c_str());
+		tpt_lua_pushString(l, eventName);
 		lua_pushvalue(l, -2);
 		lua_rawset(l, LUA_REGISTRYINDEX);
 	}

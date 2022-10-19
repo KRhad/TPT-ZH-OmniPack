@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstddef>
 #include "Particle.h"
+#include "misc.h"
 
 std::vector<StructProperty> particle::properties = {
 	{ "type"   , StructProperty::ParticleType, (intptr_t)(offsetof(particle, type   )) },
@@ -63,7 +64,7 @@ int Particle_GetOffset(std::string key, int * format)
 			switch (prop.Type)
 			{
 			case StructProperty::ParticleType:
-				*format = (key == "type") ? 2 : 0; // FormatElement is tightly coupled with "type"
+				*format = byteStringEqualsLiteral(key, "type") ? 2 : 0; // FormatElement is tightly coupled with "type"
 				break;
 
 			case StructProperty::Integer:

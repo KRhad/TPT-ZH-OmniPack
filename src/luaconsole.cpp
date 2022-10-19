@@ -208,7 +208,7 @@ void luacon_open()
 	lua_pushlightuserdata(l, parts);
 	lua_setfield(l, tptProperties, "partsdata");
 	
-	luaL_dostring (l, "ffi = require(\"ffi\")\n\
+	tpt_lua_dostring (l, "ffi = require(\"ffi\")\n\
 ffi.cdef[[\n\
 typedef struct { int type; int life, ctype; float x, y, vx, vy; float temp; int flags; int tmp; int tmp2; int tmp3; int tmp4; unsigned int dcolour; } particle;\n\
 ]]\n\
@@ -216,7 +216,7 @@ tpt.parts = ffi.cast(\"particle *\", tpt.partsdata)\n\
 ffi = nil\n\
 tpt.partsdata = nil");
 	//Since ffi is REALLY REALLY dangrous, we'll remove it from the environment completely (TODO)
-	//lua_pushstring(l, "parts");
+	//lua_pushliteral(l, "parts");
 	//tptPartsCData = lua_gettable(l, tptProperties);
 #else
 	lua_newtable(l);
@@ -383,7 +383,7 @@ int luacon_partread(lua_State* l)
 	int format, offset, tempinteger;
 	float tempfloat;
 	int i;
-	const char * key = luaL_optstring(l, 2, "");
+	std::string key = tpt_lua_optString(l, 2, "");
 	offset = Particle_GetOffset(key, &format);
 
 	i = cIndex;
@@ -392,7 +392,7 @@ int luacon_partread(lua_State* l)
 	{
 		if (i < 0 || i >= NPART)
 			return luaL_error(l, "Out of range");
-		else if (!strcmp(key, "id"))
+		else if (byteStringEqualsLiteral(key, "id"))
 		{
 			lua_pushnumber(l, i);
 			return 1;
@@ -421,7 +421,7 @@ int luacon_partwrite(lua_State* l)
 {
 	int format, offset;
 	int i;
-	const char * key = luaL_optstring(l, 2, "");
+	std::string key = tpt_lua_optString(l, 2, "");
 	offset = Particle_GetOffset(key, &format);
 	
 	i = cIndex;
@@ -470,13 +470,13 @@ int luacon_partswrite(lua_State* l)
 
 int luacon_transitionread(lua_State* l)
 {
-	std::string key = luaL_optstring(l, 2, "");
+	std::string key = tpt_lua_optString(l, 2, "");
 	if (legacyTransitionNames.find(key) == legacyTransitionNames.end())
 		return luaL_error(l, "Invalid property");
 	StructProperty prop = legacyTransitionNames[key];
 
 	// Get Raw Index value for element
-	lua_pushstring(l, "id");
+	lua_pushliteral(l, "id");
 	lua_rawget(l, 1);
 	int i = lua_tointeger(l, lua_gettop(l));
 	lua_pop(l, 1);
@@ -491,13 +491,13 @@ int luacon_transitionread(lua_State* l)
 
 int luacon_transitionwrite(lua_State* l)
 {
-	std::string key = luaL_optstring(l, 2, "");
+	std::string key = tpt_lua_optString(l, 2, "");
 	if (legacyTransitionNames.find(key) == legacyTransitionNames.end())
 		return luaL_error(l, "Invalid property");
 	StructProperty prop = legacyTransitionNames[key];
 
 	//Get Raw Index value for element
-	lua_pushstring(l, "id");
+	lua_pushliteral(l, "id");
 	lua_rawget(l, 1);
 	int i = lua_tointeger(l, lua_gettop(l));
 	lua_pop(l, 1);
@@ -521,13 +521,13 @@ int luacon_transitionwrite(lua_State* l)
 
 int luacon_elementread(lua_State* l)
 {
-	std::string key = luaL_optstring(l, 2, "");
+	std::string key = tpt_lua_optString(l, 2, "");
 	if (legacyPropNames.find(key) == legacyPropNames.end())
 		return luaL_error(l, "Invalid property");
 	StructProperty prop = legacyPropNames[key];
 
 	// Get Raw Index value for element
-	lua_pushstring(l, "id");
+	lua_pushliteral(l, "id");
 	lua_rawget(l, 1);
 	int i = lua_tointeger (l, lua_gettop(l));
 	lua_pop(l, 1);
@@ -542,13 +542,13 @@ int luacon_elementread(lua_State* l)
 
 int luacon_elementwrite(lua_State* l)
 {
-	std::string key = luaL_optstring(l, 2, "");
+	std::string key = tpt_lua_optString(l, 2, "");
 	if (legacyPropNames.find(key) == legacyPropNames.end())
 		return luaL_error(l, "Invalid property");
 	StructProperty prop = legacyPropNames[key];
 
 	// Get Raw Index value for element
-	lua_pushstring(l, "id");
+	lua_pushliteral(l, "id");
 	lua_rawget(l, 1);
 	int i = lua_tointeger (l, lua_gettop(l));
 	lua_pop(l, 1);
@@ -572,22 +572,22 @@ int luacon_elementwrite(lua_State* l)
 
 int luacon_tptIndex(lua_State *l)
 {
-	std::string key = luaL_checkstring(l, 2);
-	if (!key.compare("selectedl"))
-		return lua_pushstring(l, activeTools[0]->GetIdentifier().c_str()), 1;
-	if (!key.compare("selectedr"))
-		return lua_pushstring(l, activeTools[1]->GetIdentifier().c_str()), 1;
-	if (!key.compare("selecteda"))
-		return lua_pushstring(l, activeTools[2]->GetIdentifier().c_str()), 1;
-	if (!key.compare("selectedreplace"))
-		return lua_pushstring(l, activeTools[2]->GetIdentifier().c_str()), 1;
-	if (!key.compare("brushx"))
+	std::string key = tpt_lua_checkString(l, 2);
+	if (byteStringEqualsLiteral(key, "selectedl"))
+		return tpt_lua_pushString(l, activeTools[0]->GetIdentifier()), 1;
+	if (byteStringEqualsLiteral(key, "selectedr"))
+		return tpt_lua_pushString(l, activeTools[1]->GetIdentifier()), 1;
+	if (byteStringEqualsLiteral(key, "selecteda"))
+		return tpt_lua_pushString(l, activeTools[2]->GetIdentifier()), 1;
+	if (byteStringEqualsLiteral(key, "selectedreplace"))
+		return tpt_lua_pushString(l, activeTools[2]->GetIdentifier()), 1;
+	if (byteStringEqualsLiteral(key, "brushx"))
 		return lua_pushnumber(l, currentBrush->GetRadius().X), 1;
-	if (!key.compare("brushy"))
+	if (byteStringEqualsLiteral(key, "brushy"))
 		return lua_pushnumber(l, currentBrush->GetRadius().Y), 1;
-	if (!key.compare("brushID"))
+	if (byteStringEqualsLiteral(key, "brushID"))
 		return lua_pushnumber(l, currentBrush->GetShape()), 1;
-	else if (!key.compare("decoSpace"))
+	if (byteStringEqualsLiteral(key, "decoSpace"))
 		return lua_pushnumber(l, luaSim->decoSpace), 1;
 
 	//if not a special key, return the value in the table
@@ -596,46 +596,46 @@ int luacon_tptIndex(lua_State *l)
 
 int luacon_tptNewIndex(lua_State *l)
 {
-	std::string key = luaL_checkstring(l, 2);
-	if (!key.compare("selectedl"))
+	std::string key = tpt_lua_checkString(l, 2);
+	if (byteStringEqualsLiteral(key, "selectedl"))
 	{
-		Tool* t = GetToolFromIdentifier(luaL_checkstring(l, 3));
+		Tool* t = GetToolFromIdentifier(tpt_lua_checkString(l, 3));
 		if (t && t->GetType() != INVALID_TOOL)
 			activeTools[0] = t;
 		else
 			luaL_error(l, "Invalid tool identifier: %s", lua_tostring(l, 3));
 	}
-	else if (!key.compare("selectedr"))
+	else if (byteStringEqualsLiteral(key, "selectedr"))
 	{
-		Tool* t = GetToolFromIdentifier(luaL_checkstring(l, 3));
+		Tool* t = GetToolFromIdentifier(tpt_lua_checkString(l, 3));
 		if (t && t->GetType() != INVALID_TOOL)
 			activeTools[1] = t;
 		else
 			luaL_error(l, "Invalid tool identifier: %s", lua_tostring(l, 3));
 	}
-	else if (!key.compare("selecteda"))
+	else if (byteStringEqualsLiteral(key, "selecteda"))
 	{
-		Tool* t = GetToolFromIdentifier(luaL_checkstring(l, 3));
+		Tool* t = GetToolFromIdentifier(tpt_lua_checkString(l, 3));
 		if (t && t->GetType() != INVALID_TOOL)
 			activeTools[2] = t;
 		else
 			luaL_error(l, "Invalid tool identifier: %s", lua_tostring(l, 3));
 	}
-	else if (!key.compare("selectedreplace"))
+	else if (byteStringEqualsLiteral(key, "selectedreplace"))
 	{
-		Tool* t = GetToolFromIdentifier(luaL_checkstring(l, 3));
+		Tool* t = GetToolFromIdentifier(tpt_lua_checkString(l, 3));
 		if (t && t->GetType() != INVALID_TOOL)
 			activeTools[2] = t;
 		else
 			luaL_error(l, "Invalid tool identifier: %s", lua_tostring(l, 3));
 	}
-	else if (!key.compare("brushx"))
+	else if (byteStringEqualsLiteral(key, "brushx"))
 		currentBrush->SetRadius(Point(luaL_checkinteger(l, 3), currentBrush->GetRadius().Y));
-	else if (!key.compare("brushy"))
+	else if (byteStringEqualsLiteral(key, "brushy"))
 		currentBrush->SetRadius(Point(currentBrush->GetRadius().X, luaL_checkinteger(l, 3)));
-	else if (!key.compare("brushID"))
+	else if (byteStringEqualsLiteral(key, "brushID"))
 		currentBrush->SetShape(luaL_checkinteger(l, 3)%BRUSH_NUM);
-	else if (!key.compare("decoSpace"))
+	else if (byteStringEqualsLiteral(key, "decoSpace"))
 	{
 		int decoSpace = luaL_checkinteger(l, 3);
 		if (decoSpace < 0 || decoSpace > 3)
@@ -674,13 +674,13 @@ int luaL_tostring(lua_State *L, int n)
 	switch (lua_type(L, n))
 	{
 		case LUA_TNUMBER:
-			lua_pushstring(L, lua_tostring(L, n));
+			tpt_lua_pushString(L, tpt_lua_toString(L, n));
 			break;
 		case LUA_TSTRING:
 			lua_pushvalue(L, n);
 			break;
 		case LUA_TBOOLEAN:
-			lua_pushstring(L, (lua_toboolean(L, n) ? "true" : "false"));
+			tpt_lua_pushString(L, (lua_toboolean(L, n) ? "true" : "false"));
 			break;
 		case LUA_TNIL:
 			lua_pushliteral(L, "nil");
@@ -701,105 +701,96 @@ void luacon_log(std::string log)
 	std::cout << log << std::endl;
 }
 
-char *lastCode = NULL;
-char *logs = NULL; //logs from tpt.log are temporarily stored here
-int luacon_eval(const char *command, char **result)
+std::string lastCode;
+
+// logs from tpt.logs() and print()
+std::string logs;
+bool hasLogs = false;
+
+int luacon_eval(const char *command, std::string *result)
 {
 	int level = lua_gettop(l), ret = -1;
-	char *text = NULL;
-	if (logs)
+	std::string text;
+	bool hasText = false;
+	logs = "";
+	hasLogs = false;
+	if (lastCode.length())
 	{
-		free(logs);
-		logs = NULL;
-	}
-	if (lastCode)
-	{
-		char *tmplastCode = (char*)malloc(strlen(lastCode)+strlen(command)+3);
-		sprintf(tmplastCode, "%s\n%s", lastCode, command);
-		free(lastCode);
-		lastCode = tmplastCode;
+		lastCode = lastCode + "\n" + command;
 	}
 	else
 	{
-		lastCode = (char*)malloc(strlen(command)+1);
-		sprintf(lastCode, "%s", command);
+		lastCode = command;
 	}
-	char *tmp = (char*)malloc(strlen(lastCode) + 8);
-	sprintf(tmp, "return %s", lastCode);
+	std::string returnTest = "return " + lastCode;
 	loop_time = Platform::GetTime();
-	luaL_loadbuffer(l, tmp, strlen(tmp), "@console");
-	free(tmp);
+	luaL_loadbuffer(l, returnTest.c_str(), returnTest.length(), "@console");
 	if (lua_type(l, -1) != LUA_TFUNCTION)
 	{
 		lua_pop(l, 1);
-		luaL_loadbuffer(l, lastCode, strlen(lastCode), "@console");
+		luaL_loadbuffer(l, lastCode.c_str(), lastCode.length(), "@console");
 	}
 	if (lua_type(l, -1) != LUA_TFUNCTION)
 	{
 		std::string err = luacon_geterror();
-		*result = mystrdup(err.c_str());
+		*result = err;
 		if (err.find("near '<eof>'") != err.npos)
 		{
-			free(*result);
-			*result = mystrdup("...");
+			*result = "...";
 		}
 		else
 		{
-			free(lastCode);
-			lastCode = NULL;
+			lastCode = "";
 		}
 		return 0;
 	}
 	else
 	{
-		free(lastCode);
-		lastCode = NULL;
+		lastCode = "";
 		ret = lua_pcall(l, 0, LUA_MULTRET, 0);
-		if(ret)
+		if (ret)
 			return ret;
 		else
 		{
-			for(level++;level<=lua_gettop(l);level++)
+			for (level++; level <= lua_gettop(l); level++)
 			{
 				luaL_tostring(l, level);
-				if(text)
+				std::string retVal = tpt_lua_optString(l, -1, "");
+				if (hasText)
 				{
-					char *text2 = (char*)malloc(strlen(luaL_optstring(l, -1, "")) + strlen(text) + 3);
-					sprintf(text2, "%s, %s", text, luaL_optstring(l, -1, ""));
-					free(text);
-					text = mystrdup(text2);
-					free(text2);
+					text = text + ", " + retVal;
 				}
 				else
 				{
-					text = mystrdup(luaL_optstring(l, -1, ""));
+					text = retVal;
+					hasText = true;
 				}
 				lua_pop(l, 1);
 			}
-			if (logs)
+			if (hasLogs)
 			{
-				if (!text)
-					text = mystrdup(logs);
+				if (hasText)
+				{
+					text = logs + "; " + text;
+				}
 				else
 				{
-					char *tmp2 = (char*)malloc(strlen(logs)+strlen(text)+3);
-					sprintf(tmp2, "%s; %s", logs, text);
-					free(text);
-					text = tmp2;
+					text = logs;
+					hasText = true;
 				}
-				free(logs);
-				logs = NULL;
+				logs = "";
+				hasLogs = false;
 			}
-			if (text)
+			if (hasText)
 			{
-				if (*result)
+				if (result->length())
 				{
-					char *tmp2 = (char*)malloc(strlen(*result)+strlen(text)+3);
-					sprintf(tmp2, "%s; %s", *result, text);
-					*result = tmp2;
+					*result = *result + "; " + text;
 				}
 				else
-					*result = mystrdup(text);
+				{
+					*result = text;
+				}
 			}
 		}
 	}
@@ -994,7 +985,7 @@ void luaChangeTypeWrapper(ELEMENT_CHANGETYPE_FUNC_ARGS)
 std::string luacon_geterror()
 {
 	luaL_tostring(l, -1);
-	const char* err = luaL_optstring(l, -1, "failed to execute");
+	std::string err = tpt_lua_optString(l, -1, "failed to execute");
 	lua_pop(l, 1);
 	return err;
 }
@@ -1016,15 +1007,11 @@ void luacon_close()
 		component_and_ref.first->owner_ref = component_and_ref.second;
 	}
 	lua_close(l);
-	if (lastCode)
-		free(lastCode);
-	if (logs)
-		free(logs);
 	if (LuaCode)
 		free(LuaCode);
 }
 
-int process_command_lua(pixel *vid_buf, const char *command, char **result)
+int process_command_lua(pixel *vid_buf, const char *command, std::string *result)
 {
 	if (command && strlen(command))
 	{
@@ -1059,20 +1046,20 @@ int luatpt_test(lua_State* l)
 int luatpt_getelement(lua_State *l)
 {
 	int t;
-	const char* name;
+	std::string name;
 	if (lua_isnumber(l, 1))
 	{
 		t = luaL_optint(l, 1, 1);
 		if (!luaSim->IsElementOrNone(t))
 			return luaL_error(l, "Unrecognised element number '%d'", t);
-		name = luaSim->elements[TYP(t)].Name.c_str();
-		lua_pushstring(l, name);
+		name = luaSim->elements[TYP(t)].Name;
+		tpt_lua_pushString(l, name);
 	}
 	else
 	{
 		luaL_checktype(l, 1, LUA_TSTRING);
-		name = luaL_optstring(l, 1, "");
-		if (!console_parse_type(name, &t, NULL, luaSim))
+		name = tpt_lua_optString(l, 1, "");
+		if (!console_parse_type(name.c_str(), &t, NULL, luaSim))
 			return luaL_error(l, "Unrecognised element '%s'", name);
 		lua_pushinteger(l, t);
 	}
@@ -1081,18 +1068,18 @@ int luatpt_getelement(lua_State *l)
 
 int luatpt_error(lua_State* l)
 {
-	std::string error = luaL_optstring(l, 1, "Error text");
+	std::string error = tpt_lua_optString(l, 1, "Error text");
 	error_ui(lua_vid_buf, 0, error);
 	return 0;
 }
 
 int luatpt_drawtext(lua_State* l)
 {
-	const char *string;
+	std::string string;
 	int textx, texty, textred, textgreen, textblue, textalpha;
 	textx = luaL_optint(l, 1, 0);
 	texty = luaL_optint(l, 2, 0);
-	string = luaL_optstring(l, 3, "");
+	string = tpt_lua_optString(l, 3, "");
 	textred = luaL_optint(l, 4, 255);
 	textgreen = luaL_optint(l, 5, 255);
 	textblue = luaL_optint(l, 6, 255);
@@ -1109,7 +1096,7 @@ int luatpt_drawtext(lua_State* l)
 	if (textalpha<0) textalpha = 0;
 	else if (textalpha>255) textalpha = 255;
 
-	drawtext(lua_vid_buf, textx, texty, string, textred, textgreen, textblue, textalpha);
+	drawtext(lua_vid_buf, textx, texty, string.c_str(), textred, textgreen, textblue, textalpha);
 	return 0;
 }
 
@@ -1128,9 +1115,9 @@ int luatpt_create(lua_State* l)
 		}
 		else
 		{
-			const char* name = luaL_optstring(l, 3, "dust");
-			if (!console_parse_type(name, &t, NULL, luaSim))
-				return luaL_error(l,"Unrecognised element '%s'", name);
+			std::string name = tpt_lua_optString(l, 3, "dust");
+			if (!console_parse_type(name.c_str(), &t, NULL, luaSim))
+				return luaL_error(l, "Unrecognised element '%s'", name.c_str());
 		}
 		retid = luaSim->part_create(-1, x, y, t);
 		// failing to create a particle often happens (e.g. if space is already occupied) and isn't usually important, so don't raise an error
@@ -1189,45 +1176,41 @@ int luatpt_setconsole(lua_State* l)
 
 int luatpt_log(lua_State* l)
 {
-	char *buffer = NULL, *buffer2 = NULL;
+	std::string buffer;
+	bool hasBuffer = false;
 	int args = lua_gettop(l), i;
-	for(i = 1; i <= args; i++)
+	for (i = 1; i <= args; i++)
 	{
 		luaL_tostring(l, -1);
-		if(buffer)
+		std::string logVal = tpt_lua_optString(l, -1, "");
+		if (hasBuffer)
 		{
-			buffer2 = (char*)malloc(strlen(luaL_optstring(l, -1, "")) + strlen(buffer) + 3);
-			sprintf(buffer2, "%s, %s", luaL_optstring(l, -1, ""), buffer);
-			free(buffer);
-			buffer = buffer2;
+			buffer = logVal + ", " + buffer;
 		}
 		else
 		{
-			buffer = mystrdup(luaL_optstring(l, -1, ""));
+			buffer = logVal;
+			hasBuffer = true;
 		}
 		lua_pop(l, 2);
 	}
-	if (!buffer)
-		buffer = mystrdup("");
+
 	if (console_mode)
 	{
-		if(logs)
+		if (hasLogs)
 		{
-			buffer2 = (char*)malloc(strlen(logs)+strlen(buffer)+3);
-			sprintf(buffer2, "%s; %s", logs, buffer);
-			free(logs);
-			logs = buffer2;
+			logs += "; " + buffer;
 		}
 		else
 		{
 			logs = buffer;
+			hasLogs = true;
 		}
 		return 0;
 	}
 	else
 	{
 		luacon_log(buffer);
-		free(buffer);
 		return 0;
 	}
 }
@@ -1300,7 +1283,7 @@ int luatpt_set_velocity(lua_State* l)
 {
 	int x, y, width, height;
 	float value;
-	char *direction = (char*)luaL_optstring(l, 1, "");
+	std::string direction = tpt_lua_optString(l, 1, "");
 	x = abs(luaL_optint(l, 2, 0));
 	y = abs(luaL_optint(l, 3, 0));
 	width = abs(luaL_optint(l, 4, XRES/CELL));
@@ -1311,12 +1294,12 @@ int luatpt_set_velocity(lua_State* l)
 	else if(value < -256.0f)
 		value = -256.0f;
 
-	if (!strcmp(direction,"x"))
+	if (byteStringEqualsLiteral(direction, "x"))
 		set_map(x, y, width, height, value, 3);
-	else if (!strcmp(direction,"y"))
+	else if (byteStringEqualsLiteral(direction, "y"))
 		set_map(x, y, width, height, value, 4);
 	else
-		return luaL_error(l, "Invalid direction: %s", direction);
+		return luaL_error(l, "Invalid direction: %s", direction.c_str());
 	return 0;
 }
 
@@ -1406,16 +1389,16 @@ int luatpt_reset_spark(lua_State* l)
 
 int luatpt_set_property(lua_State* l)
 {
-	const char *prop, *name;
+	std::string prop;
 	int r, i, x, y, w, h, t = 0, format, nx, ny, partsel = 0, acount;
 	float f = 0.0f;
 	int offset;
 	acount = lua_gettop(l);
-	prop = luaL_optstring(l, 1, "");
+	prop = tpt_lua_optString(l, 1, "");
 
 	offset = Particle_GetOffset(prop, &format);
 	if (offset == -1)
-		return luaL_error(l, "Invalid property '%s'", prop);
+		return luaL_error(l, "Invalid property '%s'", prop.c_str());
 	else if (format == 3)
 		format = 0;
 
@@ -1423,9 +1406,9 @@ int luatpt_set_property(lua_State* l)
 	{
 		if (!lua_isnumber(l, acount) && lua_isstring(l, acount))
 		{
-			name = luaL_optstring(l, acount, "none");
-			if (!console_parse_type(name, &partsel, NULL, luaSim))
-				return luaL_error(l, "Unrecognised element '%s'", name);
+			std::string name = tpt_lua_optString(l, acount, "none");
+			if (!console_parse_type(name.c_str(), &partsel, NULL, luaSim))
+				return luaL_error(l, "Unrecognised element '%s'", name.c_str());
 		}
 	}
 	if (lua_isnumber(l, 2))
@@ -1440,9 +1423,9 @@ int luatpt_set_property(lua_State* l)
 	}
 	else if (lua_isstring(l, 2))
 	{
-		name = luaL_checklstring(l, 2, nullptr);
-		if (!console_parse_type(name, &t, nullptr, luaSim))
-			return luaL_error(l, "Unrecognised element '%s'", name);
+		std::string name = tpt_lua_checkString(l, 2);
+		if (!console_parse_type(name.c_str(), &t, nullptr, luaSim))
+			return luaL_error(l, "Unrecognised element '%s'", name.c_str());
 	}
 	else
 		luaL_error(l, "Expected number or element name as argument 2");
@@ -1525,7 +1508,7 @@ int luatpt_set_property(lua_State* l)
 int luatpt_get_property(lua_State* l)
 {
 	int i, r, y;
-	const char *prop = luaL_optstring(l, 1, "");
+	std::string prop = tpt_lua_optString(l, 1, "");
 	i = luaL_optint(l, 2, 0);
 	y = luaL_optint(l, 3, -1);
 	if (y!=-1 && y < YRES && y >= 0 && i < XRES && i >= 0)
@@ -1535,7 +1518,7 @@ int luatpt_get_property(lua_State* l)
 			r = photons[y][i];
 		if (!r)
 		{
-			if (!strcmp(prop,"type"))
+			if (byteStringEqualsLiteral(prop, "type"))
 			{
 				lua_pushinteger(l, 0);
 				return 1;
@@ -1556,7 +1539,7 @@ int luatpt_get_property(lua_State* l)
 
 		if (offset == -1)
 		{
-			if (!strcmp(prop,"id"))
+			if (byteStringEqualsLiteral(prop, "id"))
 			{
 				lua_pushnumber(l, i);
 				return 1;
@@ -1579,7 +1562,7 @@ int luatpt_get_property(lua_State* l)
 		}
 		return 1;
 	}
-	else if (!strcmp(prop,"type"))
+	else if (byteStringEqualsLiteral(prop, "type"))
 	{
 		lua_pushinteger(l, 0);
 		return 1;
@@ -1713,8 +1696,8 @@ int luatpt_drawline(lua_State* l)
 int luatpt_textwidth(lua_State* l)
 {
 	int strwidth = 0;
-	const char* string = (char*)luaL_optstring(l, 1, "");
-	strwidth = textwidth(string);
+	std::string string = tpt_lua_optString(l, 1, "");
+	strwidth = textwidth(string.c_str());
 	lua_pushinteger(l, strwidth);
 	return 1;
 }
@@ -1723,10 +1706,10 @@ int luatpt_get_name(lua_State* l)
 {
 	if (svf_login)
 	{
-		lua_pushstring(l, svf_user);
+		tpt_lua_pushString(l, svf_user);
 		return 1;
 	}
-	lua_pushstring(l, "");
+	tpt_lua_pushString(l, "");
 	return 1;
 }
 
@@ -1751,21 +1734,21 @@ int luatpt_delete(lua_State* l)
 
 int luatpt_input(lua_State* l)
 {
-	const char *title = luaL_optstring(l, 1, "Title");
-	const char *prompt = luaL_optstring(l, 2, "Enter some text:");
-	const char *text = luaL_optstring(l, 3, "");
-	const char *shadow = luaL_optstring(l, 4, "");
+	std::string title = tpt_lua_optString(l, 1, "Title");
+	std::string prompt = tpt_lua_optString(l, 2, "Enter some text:");
+	std::string text = tpt_lua_optString(l, 3, "");
+	std::string shadow = tpt_lua_optString(l, 4, "");
 
-	char *result = input_ui(lua_vid_buf, title, prompt, text, shadow);
-	lua_pushstring(l, result);
+	char *result = input_ui(lua_vid_buf, title.c_str(), prompt.c_str(), text.c_str(), shadow.c_str());
+	tpt_lua_pushString(l, result);
 	free(result);
 	return 1;
 }
 
 int luatpt_message_box(lua_State* l)
 {
-	const char *title = luaL_optstring(l, 1, "Title");
-	const char *text = luaL_optstring(l, 2, "Message");
+	std::string title = tpt_lua_optString(l, 1, "Title");
+	std::string text = tpt_lua_optString(l, 2, "Message");
 
 	info_ui(lua_vid_buf, title, text);
 	return 0;
@@ -1773,11 +1756,11 @@ int luatpt_message_box(lua_State* l)
 
 int luatpt_confirm(lua_State* l)
 {
-	const char *title = luaL_optstring(l, 1, "Title");
-	const char *text = luaL_optstring(l, 2, "Message");
-	const char *buttonText = luaL_optstring(l, 3, "Confirm");
+	std::string title = tpt_lua_optString(l, 1, "Title");
+	std::string text = tpt_lua_optString(l, 2, "Message");
+	std::string buttonText = tpt_lua_optString(l, 3, "Confirm");
 
-	bool ret = confirm_ui(lua_vid_buf, title, text, buttonText);
+	bool ret = confirm_ui(lua_vid_buf, title.c_str(), text.c_str(), buttonText.c_str());
 	lua_pushboolean(l, ret ? 1 : 0);
 	return 1;
 }
@@ -2030,7 +2013,7 @@ int luatpt_setdrawcap(lua_State* l)
 int luatpt_getscript(lua_State* l)
 {
 	int scriptID = luaL_checkinteger(l, 1);
-	const char *filename = luaL_checkstring(l, 2);
+	std::string filename = tpt_lua_checkString(l, 2);
 	int runScript = luaL_optint(l, 3, 0);
 	int confirmPrompt = luaL_optint(l, 4, 1);
 
@@ -2041,7 +2024,7 @@ int luatpt_getscript(lua_State* l)
 
 	int ret;
 	std::string scriptData = Request::Simple(url.str(), &ret);
-	if (scriptData.empty() || !filename)
+	if (scriptData.empty())
 	{
 		return luaL_error(l, "Server did not return data");
 	}
@@ -2055,14 +2038,14 @@ int luatpt_getscript(lua_State* l)
 		return luaL_error(l, "Invalid Script ID");
 	}
 
-	FILE *outputfile = fopen(filename, "r");
+	FILE *outputfile = fopen(filename.c_str(), "r");
 	if (outputfile)
 	{
 		fclose(outputfile);
 		outputfile = NULL;
-		if (!confirmPrompt || confirm_ui(lua_vid_buf, "File already exists, overwrite?", filename, "Overwrite"))
+		if (!confirmPrompt || confirm_ui(lua_vid_buf, "File already exists, overwrite?", filename.c_str(), "Overwrite"))
 		{
-			outputfile = fopen(filename, "wb");
+			outputfile = fopen(filename.c_str(), "wb");
 		}
 		else
 		{
@@ -2071,7 +2054,7 @@ int luatpt_getscript(lua_State* l)
 	}
 	else
 	{
-		outputfile = fopen(filename, "wb");
+		outputfile = fopen(filename.c_str(), "wb");
 	}
 	if (!outputfile)
 	{
@@ -2085,7 +2068,7 @@ int luatpt_getscript(lua_State* l)
 	{
 		std::stringstream luaCommand;
 		luaCommand << "dofile('" << filename << "')";
-		luaL_dostring(l, luaCommand.str().c_str());
+		tpt_lua_dostring(l, luaCommand.str());
 	}
 
 	return 0;
@@ -2110,7 +2093,7 @@ int luatpt_screenshot(lua_State* l)
 	if (fileType < 0 || fileType > 2)
 		return luaL_error(l, "Invalid screenshot format");
 	std::string filename = Renderer::Ref().TakeScreenshot(captureUI, fileType);
-	lua_pushstring(l, filename.c_str());
+	tpt_lua_pushString(l, filename);
 	return 1;
 }
 
@@ -2294,9 +2277,9 @@ int luatpt_indestructible(lua_State* l)
 	}
 	else
 	{
-		const char* name = luaL_optstring(l, 1, "dust");
-		if (!console_parse_type(name, &el, NULL, luaSim))
-			return luaL_error(l, "Unrecognised element '%s'", name);
+		std::string name = tpt_lua_optString(l, 1, "dust");
+		if (!console_parse_type(name.c_str(), &el, NULL, luaSim))
+			return luaL_error(l, "Unrecognised element '%s'", name.c_str());
 	}
 	ind = luaL_optint(l, 2, 1);
 	if (ind)

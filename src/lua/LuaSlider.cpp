@@ -78,7 +78,7 @@ void LuaSlider::triggerOnValueChanged()
 		lua_pushinteger(l, slider->GetValue());
 		if (lua_pcall(l, 2, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }

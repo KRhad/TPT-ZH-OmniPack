@@ -1110,13 +1110,13 @@ int main(int argc, char *argv[])
 
 #ifdef LUACONSOLE
 	lua_vid_buf = the_game->GetVid()->GetVid();
-	char *autorun_result = NULL;
+	std::string autorun_result;
 	luacon_openeventcompat();
 	if (Platform::FileExists("autorun.lua") && luacon_eval("dofile(\"autorun.lua\")", &autorun_result)) //Autorun lua script
 	{
 		luacon_log(luacon_geterror());
 	}
-	if (autorun_result)
+	if (!autorun_result.empty())
 	{
 		luacon_log(autorun_result);
 	}
@@ -1136,8 +1136,6 @@ int main(int argc, char *argv[])
 	if (!Platform::FileExists("scripts/downloaded/2 LBPHacker-TPTMulti.lua") &&
 			!Platform::FileExists("scripts/downloaded/2 cracker64-TPTMulti.lua"))
 		luacon_openmultiplayer();
-	if (autorun_result)
-		free(autorun_result);
 #endif
 	for (int i = 0; i < 10; i++)
 	{

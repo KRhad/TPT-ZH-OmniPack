@@ -68,10 +68,10 @@ SIMULATION API
 
 int simulation_signIndex(lua_State *l)
 {
-	std::string key = luaL_checkstring(l, 2);
+	std::string key = tpt_lua_checkString(l, 2);
 
 	//Get Raw Index value for element. Maybe there is a way to get the sign index some other way?
-	lua_pushstring(l, "id");
+	lua_pushliteral(l, "id");
 	lua_rawget(l, 1);
 	int id = lua_tointeger(l, lua_gettop(l))-1;
 
@@ -86,11 +86,11 @@ int simulation_signIndex(lua_State *l)
 	}
 
 	if (!key.compare("text"))
-		return lua_pushstring(l, signs[id].GetText().c_str()), 1;
+		return tpt_lua_pushString(l, signs[id].GetText()), 1;
 	else if (!key.compare("displayText"))
-		return lua_pushstring(l, signs[id].GetDisplayText(luaSim).c_str()), 1;
+		return tpt_lua_pushString(l, signs[id].GetDisplayText(luaSim)), 1;
 	else if (!key.compare("linkText"))
-		return lua_pushstring(l, signs[id].GetLinkText().c_str()), 1;
+		return tpt_lua_pushString(l, signs[id].GetLinkText()), 1;
 	else if (!key.compare("justification"))
 		return lua_pushnumber(l, signs[id].GetJustification()), 1;
 	else if (!key.compare("x"))
@@ -131,10 +131,10 @@ int simulation_signIndex(lua_State *l)
 
 int simulation_signNewIndex(lua_State *l)
 {
-	std::string key = luaL_checkstring(l, 2);
+	std::string key = tpt_lua_checkString(l, 2);
 
 	//Get Raw Index value for element. Maybe there is a way to get the sign index some other way?
-	lua_pushstring(l, "id");
+	lua_pushliteral(l, "id");
 	lua_rawget(l, 1);
 	int id = lua_tointeger(l, lua_gettop(l))-1;
 
@@ -146,7 +146,7 @@ int simulation_signNewIndex(lua_State *l)
 
 	if (!key.compare("text"))
 	{
-		const char *temp = luaL_checkstring(l, 3);
+		std::string temp = tpt_lua_checkString(l, 3);
 		std::string cleaned = Format::CleanString(temp, false, true, true).substr(0, 45);
 		if (!cleaned.empty())
 			signs[id].SetText(cleaned);
@@ -196,7 +196,7 @@ int simulation_newsign(lua_State *l)
 		lua_pushnumber(l, -1);
 		return 1;
 	}
-	const char* temp = luaL_checkstring(l, 1);
+	std::string temp = tpt_lua_checkString(l, 1);
 	int x = luaL_checkinteger(l, 2);
 	int y = luaL_checkinteger(l, 3);
 	int ju = luaL_optinteger(l, 4, 1);
@@ -549,7 +549,7 @@ int simulation_partProperty(lua_State * l)
 	}
 	else if (lua_type(l, 2) == LUA_TSTRING)
 	{
-		std::string fieldName = lua_tostring(l, 2);
+		std::string fieldName = tpt_lua_toString(l, 2);
 		for (auto &alias : particle::GetPropertyAliases())
 		{
 			if (fieldName == alias.from)
@@ -1184,7 +1184,7 @@ int simulation_saveStamp(lua_State* l)
 	int h = luaL_optint(l,4,YRES);
 	int includePressure = luaL_optint(l,5,1);
 	char *name = stamp_save(x, y, w, h, includePressure);
-	lua_pushstring(l, name);
+	tpt_lua_pushString(l, name);
 	return 1;
 }
 
@@ -1198,9 +1198,9 @@ int simulation_loadStamp(lua_State* l)
 	// Load from 10 char name, or full filename
 	if (lua_isstring(l, 1))
 	{
-		const char* filename = luaL_optstring(l, 1, "");
+		std::string filename = tpt_lua_optString(l, 1, "");
 		for (int i = 0; i < stamp_count; i++)
-			if (!strcmp(stamps[i].name, filename))
+			if (stamps[i].name == filename)
 			{
 				save = stamp_load(i, 0);
 				break;
@@ -1208,7 +1208,7 @@ int simulation_loadStamp(lua_State* l)
 		if (!save)
 		{
 			int size;
-			char *load_data = (char*)file_load(filename, &size);
+			char *load_data = (char*)file_load(filename.c_str(), &size);
 			if (load_data)
 				save = new Save(load_data, size);
 			free(load_data);
@@ -1243,7 +1243,7 @@ int simulation_loadStamp(lua_State* l)
 	catch (ParseException & e)
 	{
 		lua_pushnil(l);
-		lua_pushstring(l, e.message.c_str());
+		tpt_lua_pushString(l, e.message);
 		pushed = 2;
 	}
 	delete save;
@@ -1259,9 +1259,9 @@ int simulation_deleteStamp(lua_State* l)
 
 	if (lua_isstring(l, 1))
 	{
-		const char* filename = luaL_optstring(l, 1, "");
+		std::string filename = tpt_lua_optString(l, 1, "");
 		for (int i = 0; i < stamp_count; i++)
-			if (!strcmp(stamps[i].name, filename))
+			if (stamps[i].name == filename)
 			{
 				stampNum = i;
 				break;
@@ -1763,9 +1763,9 @@ int simulation_listCustomGol(lua_State *l)
 	for (auto &cgol : static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).GetCustomGOL())
 	{
 		lua_newtable(l);
-		lua_pushstring(l, cgol.nameString.c_str());
+		tpt_lua_pushString(l, cgol.nameString);
 		lua_setfield(l, -2, "name");
-		lua_pushstring(l, cgol.ruleString.c_str());
+		tpt_lua_pushString(l, cgol.ruleString);
 		lua_setfield(l, -2, "rulestr");
 		lua_pushnumber(l, cgol.rule);
 		lua_setfield(l, -2, "rule");
@@ -1789,10 +1789,10 @@ int simulation_addCustomGol(lua_State *l)
 	}
 	else
 	{
-		cgol.ruleString = luaL_checkstring(l, 1);
+		cgol.ruleString = tpt_lua_checkString(l, 1);
 		cgol.rule = ParseGOLString(cgol.ruleString);
 	}
-	cgol.nameString = luaL_checkstring(l, 2);
+	cgol.nameString = tpt_lua_checkString(l, 2);
 	cgol.color1 = COLMODALPHA(luaL_checkinteger(l, 3), 0);
 	cgol.color2 = COLMODALPHA(luaL_checkinteger(l, 4), 0);
 
@@ -1811,7 +1811,7 @@ int simulation_addCustomGol(lua_State *l)
 
 int simulation_removeCustomGol(lua_State *l)
 {
-	std::string ruleString = luaL_checkstring(l, 1);
+	std::string ruleString = tpt_lua_checkString(l, 1);
 	auto cgol = static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).GetCustomGOLByName(ruleString);
 	if (!cgol)
 	{
@@ -1829,7 +1829,7 @@ int simulation_stickman(lua_State *l)
 {
 	bool set = lua_gettop(l) > 2 && !lua_isnil(l, 3);
 	int num = luaL_checkint(l, 1);
-	const char* property = luaL_checkstring(l, 2);
+	std::string property = tpt_lua_checkString(l, 2);
 	double value = 0, ret = -1;
 	int offset = luaL_optint(l, 4, 0);
 	if (set)
@@ -1845,28 +1845,28 @@ int simulation_stickman(lua_State *l)
 	else
 		stick = static_cast<FIGH_ElementDataContainer&>(*luaSim->elementData[PT_FIGH]).Get((unsigned char)(num-3));
 
-	if (!strcmp(property, "comm"))
+	if (byteStringEqualsLiteral(property, "comm"))
 	{
 		if (set)
 			stick->comm = (char)value;
 		else
 			ret = stick->comm;
 	}
-	else if (!strcmp(property, "pcomm"))
+	else if (byteStringEqualsLiteral(property, "pcomm"))
 	{
 		if (set)
 			stick->pcomm = (char)value;
 		else
 			ret = stick->pcomm;
 	}
-	else if (!strcmp(property, "elem"))
+	else if (byteStringEqualsLiteral(property, "elem"))
 	{
 		if (set)
 			stick->elem = (int)value;
 		else
 			ret = stick->elem;
 	}
-	else if (!strcmp(property, "legs"))
+	else if (byteStringEqualsLiteral(property, "legs"))
 	{
 		if (offset >= 0 && offset < 16)
 		{
@@ -1876,7 +1876,7 @@ int simulation_stickman(lua_State *l)
 				ret = stick->legs[offset];
 		}
 	}
-	else if (!strcmp(property, "accs"))
+	else if (byteStringEqualsLiteral(property, "accs"))
 	{
 		if (offset >= 0 && offset < 8)
 		{
@@ -1886,28 +1886,28 @@ int simulation_stickman(lua_State *l)
 				ret = stick->accs[offset];
 		}
 	}
-	else if (!strcmp(property, "spwn"))
+	else if (byteStringEqualsLiteral(property, "spwn"))
 	{
 		if (set)
 			stick->spwn = value ? 1 : 0;
 		else
 			ret = stick->spwn;
 	}
-	else if (!strcmp(property, "frames"))
+	else if (byteStringEqualsLiteral(property, "frames"))
 	{
 		if (set)
 			stick->frames = (unsigned int)value;
 		else
 			ret = stick->frames;
 	}
-	else if (!strcmp(property, "spawnID"))
+	else if (byteStringEqualsLiteral(property, "spawnID"))
 	{
 		if (set)
 			stick->spawnID = (int)value;
 		else
 			ret = stick->spawnID;
 	}
-	else if (!strcmp(property, "rocketBoots"))
+	else if (byteStringEqualsLiteral(property, "rocketBoots"))
 	{
 		if (set)
 			stick->rocketBoots = value ? 1 : 0;
@@ -2262,21 +2262,21 @@ void initFileSystemAPI(lua_State * l)
 
 int fileSystem_list(lua_State * l)
 {
-	const char * directoryName = luaL_checkstring(l, 1);
+	std::string directoryName = tpt_lua_checkString(l, 1);
 	DIR * directory;
 	struct dirent * entry;
 
 	int index = 1;
 	lua_newtable(l);
 
-	directory = opendir(directoryName);
+	directory = opendir(directoryName.c_str());
 	if (directory != NULL)
 	{
 		while ((entry = readdir(directory)))
 		{
 			if(strncmp(entry->d_name, "..", 3) && strncmp(entry->d_name, ".", 2))
 			{
-				lua_pushstring(l, entry->d_name);
+				tpt_lua_pushString(l, entry->d_name);
 				lua_rawseti(l, -2, index++);
 			}
 		}
@@ -2292,7 +2292,7 @@ int fileSystem_list(lua_State * l)
 
 int fileSystem_exists(lua_State * l)
 {
-	const char * filename = luaL_checkstring(l, 1);
+	std::string filename = tpt_lua_checkString(l, 1);
 
 	bool ret = Platform::Stat(filename);
 	lua_pushboolean(l, ret);
@@ -2301,7 +2301,7 @@ int fileSystem_exists(lua_State * l)
 
 int fileSystem_isFile(lua_State * l)
 {
-	const char * filename = luaL_checkstring(l, 1);
+	std::string filename = tpt_lua_checkString(l, 1);
 
 	bool ret = Platform::FileExists(filename);
 	lua_pushboolean(l, ret);
@@ -2310,7 +2310,7 @@ int fileSystem_isFile(lua_State * l)
 
 int fileSystem_isDirectory(lua_State * l)
 {
-	const char * dirname = luaL_checkstring(l, 1);
+	std::string dirname = tpt_lua_checkString(l, 1);
 
 	bool ret = Platform::DirectoryExists(dirname);
 	lua_pushboolean(l, ret);
@@ -2319,7 +2319,7 @@ int fileSystem_isDirectory(lua_State * l)
 
 int fileSystem_makeDirectory(lua_State * l)
 {
-	const char * dirname = luaL_checkstring(l, 1);
+	std::string dirname = tpt_lua_checkString(l, 1);
 
 	bool ret = Platform::MakeDirectory(dirname);
 	lua_pushboolean(l, ret);
@@ -2328,7 +2328,7 @@ int fileSystem_makeDirectory(lua_State * l)
 
 int fileSystem_removeDirectory(lua_State * l)
 {
-	const char * directory = luaL_checkstring(l, 1);
+	std::string directory = tpt_lua_checkString(l, 1);
 
 	bool ret = Platform::DeleteDirectory(directory);
 	lua_pushboolean(l, ret);
@@ -2337,7 +2337,7 @@ int fileSystem_removeDirectory(lua_State * l)
 
 int fileSystem_removeFile(lua_State * l)
 {
-	const char * filename = luaL_checkstring(l, 1);
+	std::string filename = tpt_lua_checkString(l, 1);
 
 	bool ret = Platform::DeleteFile(filename);
 	lua_pushboolean(l, ret);
@@ -2346,11 +2346,11 @@ int fileSystem_removeFile(lua_State * l)
 
 int fileSystem_move(lua_State * l)
 {
-	const char * filename = luaL_checkstring(l, 1);
-	const char * newFilename = luaL_checkstring(l, 2);
+	std::string filename = tpt_lua_checkString(l, 1);
+	std::string newFilename = tpt_lua_checkString(l, 2);
 	int ret = 0;
 
-	ret = rename(filename, newFilename);
+	ret = rename(filename.c_str(), newFilename.c_str());
 
 	lua_pushboolean(l, ret == 0);
 	return 1;
@@ -2358,22 +2358,21 @@ int fileSystem_move(lua_State * l)
 
 int fileSystem_copy(lua_State * l)
 {
-	const char * filename = luaL_checkstring(l, 1);
-	const char * newFilename = luaL_checkstring(l, 2);
+	std::string filename = tpt_lua_checkString(l, 1);
+	std::string newFilename = tpt_lua_checkString(l, 2);
 	int ret = 1;
 
 	char buf[BUFSIZ];
 	size_t size;
 
-	FILE* source = fopen(filename, "rb");
+	FILE* source = fopen(filename.c_str(), "rb");
 	if (source)
 	{
-		FILE* dest = fopen(newFilename, "wb");
+		FILE* dest = fopen(newFilename.c_str(), "wb");
 		if (dest)
 		{
-			while ((size = fread(buf, 1, BUFSIZ, source))) {
+			while ((size = fread(buf, 1, BUFSIZ, source)))
 				fwrite(buf, 1, size, dest);
-			}
 
 			fclose(dest);
 			ret = 0;
@@ -2555,7 +2554,7 @@ void initGraphicsAPI(lua_State * l)
 #include "graphics/VideoBuffer.h"
 int graphics_textSize(lua_State * l)
 {
-	char* text = (char*)luaL_optstring(l, 1, "");
+	std::string text = tpt_lua_optString(l, 1, "");
 
 	Point size = gfx::VideoBuffer::TextSize(text);
 	lua_pushinteger(l, size.X);
@@ -2568,7 +2567,7 @@ int graphics_drawText(lua_State * l)
 	int x, y, r, g, b, a;
 	x = lua_tointeger(l, 1);
 	y = lua_tointeger(l, 2);
-	const char* text = luaL_optstring(l, 3, "");
+	std::string text = tpt_lua_optString(l, 3, "");
 	r = luaL_optint(l, 4, 255);
 	g = luaL_optint(l, 5, 255);
 	b = luaL_optint(l, 6, 255);
@@ -2750,7 +2749,7 @@ int graphics_getHexColor(lua_State * l)
 
 int graphics_toolTip(lua_State *l)
 {
-	std::string toolTip = luaL_checklstring(l, 1, NULL);
+	std::string toolTip = tpt_lua_checkString(l, 1);
 	int x = luaL_checkinteger(l, 2);
 	int y = luaL_checkinteger(l, 3);
 	int alpha = luaL_optint(l, 4, 255);
@@ -2889,7 +2888,7 @@ void LuaGetProperty(lua_State* l, StructProperty property, intptr_t propertyAddr
 	case StructProperty::BString:
 	case StructProperty::String:
 	{
-		lua_pushstring(l, (*((std::string*)propertyAddress)).c_str());
+		tpt_lua_pushString(l, (*((std::string*)propertyAddress)));
 		break;
 	}
 	case StructProperty::Colour:
@@ -2924,7 +2923,7 @@ void LuaSetProperty(lua_State* l, StructProperty property, intptr_t propertyAddr
 		break;
 	case StructProperty::BString:
 	case StructProperty::String:
-		*((std::string*)((unsigned char*)propertyAddress)) = std::string(luaL_checkstring(l, 3));
+		*((std::string*)((unsigned char*)propertyAddress)) = tpt_lua_checkString(l, 3);
 		break;
 	case StructProperty::Colour:
 #if PIXELSIZE == 4
@@ -2950,7 +2949,7 @@ void elements_setProperty(lua_State * l, int id, int format, int offset)
 			*((float*)(((unsigned char*)&luaSim->elements[id])+offset)) = (float)luaL_checknumber(l, 3);
 			break;
 		case 2: //String
-			*((std::string*)(((unsigned char*)&luaSim->elements[id]) + offset)) = std::string(luaL_checkstring(l, 3));
+			*((std::string*)(((unsigned char*)&luaSim->elements[id]) + offset)) = tpt_lua_checkString(l, 3);
 			break;
 		case 3: //Unsigned char (HeatConduct)
 			*((unsigned char*)(((unsigned char*)&luaSim->elements[id])+offset)) = (unsigned char)luaL_checkinteger(l, 3);
@@ -2986,7 +2985,7 @@ void elements_writeProperty(lua_State *l, int id, int format, int offset)
 			lua_pushnumber(l, *((float*)(((unsigned char*)&luaSim->elements[id])+offset)));
 			break;
 		case 2: //String
-			lua_pushstring(l, (*((std::string*)(((unsigned char*)&luaSim->elements[id])+offset))).c_str());
+			tpt_lua_pushString(l, (*((std::string*)(((unsigned char*)&luaSim->elements[id])+offset))));
 			break;
 		case 3: //Unsigned char (HeatConduct)
 			lua_pushinteger(l, *((unsigned char*)(((unsigned char*)&luaSim->elements[id])+offset)));
@@ -3069,8 +3068,8 @@ int elements_allocate(lua_State * l)
 {
 	luaL_checktype(l, 1, LUA_TSTRING);
 	luaL_checktype(l, 2, LUA_TSTRING);
-	std::string group = std::string(lua_tostring(l, 1));
-	std::string id = std::string(lua_tostring(l, 2));
+	std::string group = std::string(tpt_lua_toString(l, 1));
+	std::string id = std::string(tpt_lua_toString(l, 2));
 	
 	std::transform(group.begin(), group.end(), group.begin(), ::toupper);
 	std::transform(id.begin(), id.end(), id.begin(), ::toupper);
@@ -3262,7 +3261,7 @@ int elements_element(lua_State * l)
 			lua_setfield(l, -2, prop.Name.c_str());
 		}
 
-		lua_pushstring(l, luaSim->elements[id].Identifier.c_str());
+		tpt_lua_pushString(l, luaSim->elements[id].Identifier);
 		lua_setfield(l, -2, "Identifier");
 
 		GetDefaultProperties(l, id);
@@ -3278,7 +3277,7 @@ int elements_property(lua_State * l)
 	if (!luaSim->IsElementOrNone(id))
 		return luaL_error(l, "Invalid element");
 
-	std::string propertyName = luaL_checkstring(l, 2);
+	std::string propertyName = tpt_lua_checkString(l, 2);
 
 	auto &properties = Element::GetProperties();
 	auto prop = std::find_if(properties.begin(), properties.end(), [&propertyName](StructProperty const &p) {
@@ -3425,7 +3424,7 @@ int elements_property(lua_State * l)
 		}
 		else if (propertyName == "Identifier")
 		{
-			lua_pushstring(l, luaSim->elements[id].Identifier.c_str());
+			tpt_lua_pushString(l, luaSim->elements[id].Identifier);
 			return 1;
 		}
 		else if (propertyName == "DefaultProperties")
@@ -3532,19 +3531,19 @@ void initPlatformAPI(lua_State * l)
 
 int platform_platform(lua_State * l)
 {
-	lua_pushstring(l, IDENT_PLATFORM);
+	tpt_lua_pushString(l, IDENT_PLATFORM);
 	return 1;
 }
 
 int platform_build(lua_State * l)
 {
-	lua_pushstring(l, IDENT_BUILD);
+	tpt_lua_pushString(l, IDENT_BUILD);
 	return 1;
 }
 
 int platform_releaseType(lua_State * l)
 {
-	lua_pushstring(l, IDENT_RELTYPE);
+	tpt_lua_pushString(l, IDENT_RELTYPE);
 	return 1;
 }
 
@@ -3552,7 +3551,7 @@ int platform_exeName(lua_State * l)
 {
 	char *name = Platform::ExecutableName();
 	if (name)
-		lua_pushstring(l, name);
+		tpt_lua_pushString(l, name);
 	else
 		luaL_error(l, "Error, could not get executable name");
 	free(name);
@@ -3568,7 +3567,7 @@ int platform_restart(lua_State * l)
 
 int platform_openLink(lua_State * l)
 {
-	const char * uri = luaL_checkstring(l, 1);
+	std::string uri = tpt_lua_checkString(l, 1);
 	Platform::OpenLink(uri);
 	return 0;
 }
@@ -3576,20 +3575,20 @@ int platform_openLink(lua_State * l)
 int platform_clipboardCopy(lua_State * l)
 {
 	std::string text = Engine::Ref().ClipboardPull();
-	lua_pushstring(l, text.c_str());
+	tpt_lua_pushString(l, text);
 	return 1;
 }
 
 int platform_clipboardPaste(lua_State * l)
 {
 	luaL_checktype(l, 1, LUA_TSTRING);
-	Engine::Ref().ClipboardPush(luaL_optstring(l, 1, ""));
+	Engine::Ref().ClipboardPush(tpt_lua_optString(l, 1, ""));
 	return 0;
 }
 
 int platform_showOnScreenKeyboard(lua_State * l)
 {
-	const char *startText = luaL_optstring(l, 1, "");
+	std::string startText = tpt_lua_optString(l, 1, "");
 	int acount = lua_gettop(l);
 	bool autoCorrect = false;
 	if (acount > 1)
@@ -3597,7 +3596,7 @@ int platform_showOnScreenKeyboard(lua_State * l)
 		luaL_checktype(l, 2, LUA_TBOOLEAN);
 		autoCorrect = lua_toboolean(l, 2);
 	}
-	Platform::ShowOnScreenKeyboard(startText, autoCorrect);
+	Platform::ShowOnScreenKeyboard(startText.c_str(), autoCorrect);
 	return 0;
 }
 
@@ -3609,9 +3608,9 @@ int platform_getOnScreenKeyboardInput(lua_State * l)
 	int limit = luaL_optint(l, 2, 1024);
 	if (limit < 0 || limit > 2048)
 		luaL_error(l, "Error, string size too long");
-	const char *startText = luaL_optstring(l, 1, "");
+	std::string startText = tpt_lua_optString(l, 1, "");
 	char *buff = (char*)calloc(limit+1, sizeof(char));
-	strncpy(buff, startText, limit);
+	strncpy(buff, startText.c_str(), limit);
 	bool autoCorrect = false;
 	if (acount > 2)
 	{
@@ -3619,7 +3618,7 @@ int platform_getOnScreenKeyboardInput(lua_State * l)
 		autoCorrect = lua_toboolean(l, 3);
 	}
 	Platform::GetOnScreenKeyboardInput(buff, limit, autoCorrect);
-	lua_pushstring(l, buff);
+	tpt_lua_pushString(l, buff);
 	free(buff);
 	return 1;
 }
@@ -3809,7 +3808,7 @@ int http_request_finish(lua_State *l)
 
 int http_request(lua_State *l, bool isPost)
 {
-	std::string uri(luaL_checkstring(l, 1));
+	std::string uri = tpt_lua_checkString(l, 1);
 
 	std::map<std::string, std::string> post_data;
 	if (isPost)
@@ -3820,7 +3819,7 @@ int http_request(lua_State *l, bool isPost)
 			while (lua_next(l, 2))
 			{
 				lua_pushvalue(l, -2);
-				post_data.emplace(lua_tostring(l, -1), lua_tostring(l, -2));
+				post_data.emplace(tpt_lua_toString(l, -1), tpt_lua_toString(l, -2));
 				lua_pop(l, 2);
 			}
 		}
@@ -3836,7 +3835,7 @@ int http_request(lua_State *l, bool isPost)
 			for (auto i = 0U; i < size; ++i)
 			{
 				lua_rawgeti(l, headersIndex, i + 1);
-				headers.push_back(lua_tostring(l, -1));
+				headers.push_back(tpt_lua_toString(l, -1));
 				lua_pop(l, 1);
 			}
 		}
@@ -3847,7 +3846,7 @@ int http_request(lua_State *l, bool isPost)
 			while (lua_next(l, headersIndex))
 			{
 				lua_pushvalue(l, -2);
-				headers.push_back(lua_tostring(l, -1) + std::string(": ") + lua_tostring(l, -2));
+				headers.push_back(tpt_lua_toString(l, -1) + std::string(": ") + tpt_lua_toString(l, -2));
 				lua_pop(l, 2);
 			}
 		}
@@ -3901,6 +3900,55 @@ void initHttpAPI(lua_State *l)
 void initSocketAPI(lua_State * l)
 {
 	LuaTCPSocket::Open(l);
+}
+
+void tpt_lua_pushString(lua_State *L, const std::string &str)
+{
+	lua_pushlstring(L, str.data(), str.size());
+}
+
+std::string tpt_lua_toString(lua_State *L, int index)
+{
+	size_t size;
+	if (auto *data = lua_tolstring(L, index, &size))
+	{
+		return std::string(data, size);
+	}
+	return {};
+}
+
+std::string tpt_lua_checkString(lua_State *L, int index)
+{
+	size_t size;
+	if (auto *data = luaL_checklstring(L, index, &size))
+	{
+		return std::string(data, size);
+	}
+	return {};
+}
+
+std::string tpt_lua_optString(lua_State *L, int index, std::string defaultValue)
+{
+	if (lua_isnoneornil(L, index))
+	{
+		return defaultValue;
+	}
+	return tpt_lua_checkString(L, index);
+}
+
+int tpt_lua_loadstring(lua_State *L, const std::string &str)
+{
+	return luaL_loadbuffer(L, str.data(), str.size(), str.data());
+}
+
+int tpt_lua_dostring(lua_State *L, const std::string &str)
+{
+	return tpt_lua_loadstring(L, str) || lua_pcall(L, 0, LUA_MULTRET, 0);
+}
+
+bool tpt_lua_equalsString(lua_State *L, int index, const char *data, size_t size)
+{
+	return lua_isstring(L, index) && lua_objlen(L, index) == size && !memcmp(lua_tostring(L, index), data, size);
 }
 
 #endif

@@ -956,3 +956,7 @@ void membwand(void * destv, void * srcv, size_t destsize, size_t srcsize)
 	}
 }
 
+bool byteStringEqualsString(const std::string &str, const char *data, size_t size)
+{
+	return str.size() == size && !memcmp(str.data(), data, size);
+}

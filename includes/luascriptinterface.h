@@ -171,5 +171,23 @@ int http_post(lua_State *l);
 
 void initSocketAPI(lua_State * l);
 
+void tpt_lua_pushString(lua_State *L, const std::string &str);
+
+std::string tpt_lua_toString(lua_State *L, int index);
+
+std::string tpt_lua_checkString(lua_State *L, int index);
+
+std::string tpt_lua_optString(lua_State *L, int index, std::string defaultValue = {});
+
+int tpt_lua_loadstring(lua_State *L, const std::string &str);
+int tpt_lua_dostring(lua_State *L, const std::string &str);
+
+bool tpt_lua_equalsString(lua_State *L, int index, const char *data, size_t size);
+template<size_t N>
+bool tpt_lua_equalsLiteral(lua_State *L, int index, const char (&lit)[N])
+{
+	return tpt_lua_equalsString(L, index, lit, N - 1U);
+}
+
 #endif
 #endif

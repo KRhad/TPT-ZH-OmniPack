@@ -194,7 +194,7 @@ bool console_parse_hex(char *txt, int *val, char *err)
 	return true;
 }
 
-int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, char **result)
+int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, std::string *result)
 {
 	int y,x,nx,ny,i,j,k,m;
 	float f;
@@ -282,11 +282,7 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, c
 								if (strcmp(pch,"else")==0)
 									do_next = 0;
 								else
-								{
 									do_next = process_command_old(sim, vid_buf, pch, result);
-									if (result)
-										free(result);
-								}
 							}
 							else if (strcmp(pch,"endif")==0 || strcmp(pch,"else")==0)
 								do_next = 1;
@@ -867,6 +863,6 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, c
 			else
 				strcpy(console_error, "Invalid Command");
 	}
-	*result = mystrdup(console_error);
+	*result = console_error;
 	return 1;
 }

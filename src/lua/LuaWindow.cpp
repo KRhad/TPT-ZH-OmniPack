@@ -237,7 +237,7 @@ void LuaWindow::triggerOnInitialized()
 		lua_rawgeti(l, LUA_REGISTRYINDEX, onInitializedFunction);
 		if (lua_pcall(l, 0, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -249,7 +249,7 @@ void LuaWindow::triggerOnExit()
 		lua_rawgeti(l, LUA_REGISTRYINDEX, onExitFunction);
 		if (lua_pcall(l, 0, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -262,7 +262,7 @@ void LuaWindow::triggerOnTick(uint32_t ticks)
 		lua_pushnumber(l, ticks);
 		if (lua_pcall(l, 1, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -274,7 +274,7 @@ void LuaWindow::triggerOnDraw()
 		lua_rawgeti(l, LUA_REGISTRYINDEX, onDrawFunction);
 		if (lua_pcall(l, 0, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -286,7 +286,7 @@ void LuaWindow::triggerOnFocus()
 		lua_rawgeti(l, LUA_REGISTRYINDEX, onFocusFunction);
 		if (lua_pcall(l, 0, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -298,7 +298,7 @@ void LuaWindow::triggerOnBlur()
 		lua_rawgeti(l, LUA_REGISTRYINDEX, onBlurFunction);
 		if (lua_pcall(l, 0, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -310,7 +310,7 @@ void LuaWindow::triggerOnTryExit()
 		lua_rawgeti(l, LUA_REGISTRYINDEX, onTryExitFunction);
 		if (lua_pcall(l, 0, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -322,7 +322,7 @@ void LuaWindow::triggerOnTryOkay()
 		lua_rawgeti(l, LUA_REGISTRYINDEX, onTryOkayFunction);
 		if (lua_pcall(l, 0, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -338,7 +338,7 @@ void LuaWindow::triggerOnMouseMove(int x, int y, Point difference)
 		lua_pushinteger(l, difference.Y);
 		if (lua_pcall(l, 4, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -353,7 +353,7 @@ void LuaWindow::triggerOnMouseDown(int x, int y, unsigned char button)
 		lua_pushinteger(l, button);
 		if (lua_pcall(l, 3, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -368,7 +368,7 @@ void LuaWindow::triggerOnMouseUp(int x, int y, unsigned char button)
 		lua_pushinteger(l, button);
 		if (lua_pcall(l, 3, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -383,7 +383,7 @@ void LuaWindow::triggerOnMouseWheel(int x, int y, int d)
 		lua_pushinteger(l, d);
 		if (lua_pcall(l, 3, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -400,7 +400,7 @@ void LuaWindow::triggerOnKeyPress(int key, int scan, bool repeat, bool shift, bo
 		lua_pushboolean(l, alt);
 		if (lua_pcall(l, 5, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -417,7 +417,7 @@ void LuaWindow::triggerOnKeyRelease(int key, int scan, bool repeat, bool shift, 
 		lua_pushboolean(l, alt);
 		if (lua_pcall(l, 5, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }

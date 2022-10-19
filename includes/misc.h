@@ -63,6 +63,13 @@ Tool* GetToolFromIdentifier(std::string const &identifier);
 
 void membwand(void * dest, void * src, size_t destsize, size_t srcsize);
 
+bool byteStringEqualsString(const std::string &str, const char *data, size_t size);
+template<size_t N>
+bool byteStringEqualsLiteral(const std::string &str, const char (&lit)[N])
+{
+	return byteStringEqualsString(str, lit, N - 1U);
+}
+
 extern bool doingUpdate;
 
 #endif

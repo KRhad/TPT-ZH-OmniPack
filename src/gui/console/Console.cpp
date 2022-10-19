@@ -134,7 +134,7 @@ void Console::Submit(std::string command)
 
 std::string Console::RunCommand(std::string command)
 {
-	char *result = nullptr;
+	std::string result;
 	int ret;
 #ifdef LUACONSOLE
 	ret = process_command_lua(vid_buf, command.c_str(), &result);
@@ -149,8 +149,6 @@ std::string Console::RunCommand(std::string command)
 	{
 		Engine::Ref().Shutdown();
 	}
-	if (!result)
-		return "";
 	return result;
 }
 

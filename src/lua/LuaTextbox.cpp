@@ -28,8 +28,8 @@ LuaTextbox::LuaTextbox(lua_State * l) :
 	int posY = luaL_optinteger(l, 2, 0);
 	int sizeX = luaL_optinteger(l, 3, 10);
 	int sizeY = luaL_optinteger(l, 4, 10);
-	std::string text = luaL_optstring(l, 5, "");
-	std::string placeholder = luaL_optstring(l, 6, "");
+	std::string text = tpt_lua_optString(l, 5, "");
+	std::string placeholder = tpt_lua_optString(l, 6, "");
 
 	textbox = new Textbox(Point(posX, posY), Point(sizeX, sizeY), text);
 	textbox->SetPlaceholder(placeholder);
@@ -67,7 +67,7 @@ void LuaTextbox::triggerOnTextChanged()
 		lua_rawgeti(l, LUA_REGISTRYINDEX, owner_ref);
 		if (lua_pcall(l, 1, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
@@ -77,12 +77,12 @@ int LuaTextbox::text(lua_State * l)
 	int args = lua_gettop(l);
 	if(args)
 	{
-		textbox->SetText(luaL_checkstring(l, 1));
+		textbox->SetText(tpt_lua_checkString(l, 1));
 		return 0;
 	}
 	else
 	{
-		lua_pushstring(l, textbox->GetText().c_str());
+		tpt_lua_pushString(l, textbox->GetText());
 		return 1;
 	}
 }

@@ -26,7 +26,7 @@ LuaLabel::LuaLabel(lua_State * l) :
 	int posY = luaL_optinteger(l, 2, 0);
 	int sizeX = luaL_optinteger(l, 3, 10);
 	int sizeY = luaL_optinteger(l, 4, 10);
-	std::string text = luaL_optstring(l, 5, "");
+	std::string text = tpt_lua_optString(l, 5, "");
 	Point textSize = gfx::VideoBuffer::TextSize(text);
 	textSize += Point(5, 0);
 	posX += (sizeX - textSize.X) / 2;
@@ -42,12 +42,12 @@ int LuaLabel::text(lua_State * l)
 	int args = lua_gettop(l);
 	if(args)
 	{
-		label->SetText(luaL_checkstring(l, 1));
+		label->SetText(tpt_lua_checkString(l, 1));
 		return 0;
 	}
 	else
 	{
-		lua_pushstring(l, label->GetText().c_str());
+		tpt_lua_pushString(l, label->GetText());
 		return 1;
 	}
 }

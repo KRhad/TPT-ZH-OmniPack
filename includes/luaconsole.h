@@ -67,7 +67,7 @@ void luaopen_eventcompat(lua_State *l);
 int luaopen_bit(lua_State *L);
 void luacon_step(int mx, int my);
 void luacon_log(std::string log);
-int luacon_eval(const char *command, char **result);
+int luacon_eval(const char *command, std::string *result);
 int luaUpdateWrapper(UPDATE_FUNC_ARGS);
 int luaGraphicsWrapper(GRAPHICS_FUNC_ARGS);
 bool luaCtypeDrawWrapper(CTYPEDRAW_FUNC_ARGS);
@@ -86,7 +86,7 @@ int luacon_transitionread(lua_State* l);
 int luacon_transitionwrite(lua_State* l);
 int luacon_tptIndex(lua_State *l);
 int luacon_tptNewIndex(lua_State *l);
-int process_command_lua(pixel *vid_buf, const char *command, char **result);
+int process_command_lua(pixel *vid_buf, const char *command, std::string *result);
 void lua_hook(lua_State *L, lua_Debug *ar);
 
 extern int getPartIndex_curIdx;

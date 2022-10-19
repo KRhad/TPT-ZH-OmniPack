@@ -27,8 +27,8 @@ LuaButton::LuaButton(lua_State * l) :
 	int posY = luaL_optinteger(l, 2, 0);
 	int sizeX = luaL_optinteger(l, 3, 10);
 	int sizeY = luaL_optinteger(l, 4, 10);
-	std::string text = luaL_optstring(l, 5, "");
-	std::string toolTip = luaL_optstring(l, 6, "");
+	std::string text = tpt_lua_optString(l, 5, "");
+	std::string toolTip = tpt_lua_optString(l, 6, "");
 
 	button = new Button(Point(posX, posY), Point(sizeX, sizeY), text);
 	button->SetTooltipText(toolTip);
@@ -62,12 +62,12 @@ int LuaButton::text(lua_State * l)
 	int args = lua_gettop(l);
 	if(args)
 	{
-		button->SetText(luaL_checkstring(l, 1));
+		button->SetText(tpt_lua_checkString(l, 1));
 		return 0;
 	}
 	else
 	{
-		lua_pushstring(l, button->GetText().c_str());
+		tpt_lua_pushString(l, button->GetText());
 		return 1;
 	}
 }
@@ -80,7 +80,7 @@ void LuaButton::triggerAction()
 		lua_rawgeti(l, LUA_REGISTRYINDEX, owner_ref);
 		if (lua_pcall(l, 1, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }

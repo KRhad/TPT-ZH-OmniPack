@@ -26,7 +26,7 @@ LuaCheckbox::LuaCheckbox(lua_State * l) :
 	int posY = luaL_optinteger(l, 2, 0);
 	int sizeX = luaL_optinteger(l, 3, 10);
 	int sizeY = luaL_optinteger(l, 4, 10);
-	std::string text = luaL_optstring(l, 5, "");
+	std::string text = tpt_lua_optString(l, 5, "");
 
 	checkbox = new Checkbox(Point(posX, posY), Point(sizeX, sizeY), text);
 	component = checkbox;
@@ -58,12 +58,12 @@ int LuaCheckbox::text(lua_State * l)
 	int args = lua_gettop(l);
 	if(args)
 	{
-		checkbox->SetText(luaL_checkstring(l, 1));
+		checkbox->SetText(tpt_lua_checkString(l, 1));
 		return 0;
 	}
 	else
 	{
-		lua_pushstring(l, checkbox->GetText().c_str());
+		tpt_lua_pushString(l, checkbox->GetText());
 		return 1;
 	}
 }
@@ -77,7 +77,7 @@ void LuaCheckbox::triggerAction()
 		lua_pushboolean(l, checkbox->IsChecked());
 		if (lua_pcall(l, 2, 0, 0))
 		{
-			luacon_log(lua_tostring(l, -1));
+			luacon_log(tpt_lua_toString(l, -1));
 		}
 	}
 }
