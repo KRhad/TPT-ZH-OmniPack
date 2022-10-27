@@ -123,8 +123,8 @@ char search_expr[256] = "";
 
 char server_motd[512] = "";
 
-char *tag_names[TAG_MAX];
-int tag_votes[TAG_MAX];
+std::vector<std::string> tag_names;
+std::vector<int> tag_votes;
 
 int hud_menunum = 0;
 int dateformat = 7;
@@ -3331,6 +3331,11 @@ int search_ui(pixel *vid_buf)
 	int search = 0;
 	std::list<thumbDownloadInfo> thumbDownloads;
 
+	std::stringstream tagListUrl;
+	tagListUrl << SCHEME << SERVER << "/Browse/Tags.json?Start=0&Count=24";
+	Request *tagListDownload = new Request(tagListUrl.str());
+	tagListDownload->Start();
+
 	if (!v_buf)
 		return 0;
 	memset(v_buf, 0, ((YRES+MENUSIZE)*(XRES+BARSIZE))*PIXELSIZE);
@@ -3410,7 +3415,7 @@ int search_ui(pixel *vid_buf)
 		drawtext(vid_buf, 51+xOffset, 11, "\x8F", 255, 255, 255, 255);
 		drawrect(vid_buf, 48+xOffset, 8, XRES-182, 16, 192, 192, 192, 255);
 
-		if (!svf_login || search_fav)
+		if (!svf_login)
 		{
 			search_own = 0;
 			drawrect(vid_buf, XRES-64+16+xOffset, 8, 56, 16, 96, 96, 96, 255);
@@ -3536,13 +3541,13 @@ int search_ui(pixel *vid_buf)
 				for (gi=0; gi<(GRID_X+1); gi++)
 				{
 					pos = gi+(GRID_X+1)*gj;
-					if (pos>TAG_MAX || !tag_names[pos])
+					if (pos >= (int)tag_names.size())
 						break;
 					if (tag_votes[0])
 						i = 127+(128*tag_votes[pos])/tag_votes[0];
 					else
 						i = 192;
-					w = textwidth(tag_names[pos]);
+					w = textwidth(tag_names[pos].c_str());
 					if (w>XRES/(GRID_X+1)-5)
 						w = XRES/(GRID_X+1)-5;
 					gx = (XRES/(GRID_X+1))*gi+xOffset+touchOffset;
@@ -3554,7 +3559,7 @@ int search_ui(pixel *vid_buf)
 					}
 					else
 						j = i;
-					drawtextmax(vid_buf, gx+(XRES/(GRID_X+1)-w)/2, gy, XRES/(GRID_X+1)-5, tag_names[pos], j, j, i, 255);
+					drawtextmax(vid_buf, gx+(XRES/(GRID_X+1)-w)/2, gy, XRES/(GRID_X+1)-5, tag_names[pos].c_str(), j, j, i, 255);
 				}
 		}
 
@@ -3745,7 +3750,7 @@ int search_ui(pixel *vid_buf)
 			drawtext(vid_buf, gx+(w-textwidth(search_owners[mp]))/2, gy+YRES/GRID_Z+16, search_owners[mp], 128, 128, 128, 255);
 		}
 #endif
-		if (saveListDownload && saveListDownload->CheckStarted())
+		if ((saveListDownload && saveListDownload->CheckStarted()) || (tagListDownload && tagListDownload->CheckStarted()))
 		{
 			fillrect(vid_buf, 0, 30, XRES+BARSIZE, YRES+MENUSIZE-30, 0, 0, 0, 150);
 			drawtext(vid_buf, (XRES+BARSIZE-textwidth("Loading ..."))/2, (YRES+MENUSIZE)/2, "Loading ...", 255, 255, 255, 255);
@@ -3833,7 +3838,7 @@ int search_ui(pixel *vid_buf)
 #endif
 		if (!b && bq && !touchDragged)
 		{
-			if (mx>=XRES-64+16+xOffset && mx<=XRES-8+16+xOffset && my>=8 && my<=24 && svf_login && !search_fav)
+			if (mx>=XRES-64+16+xOffset && mx<=XRES-8+16+xOffset && my>=8 && my<=24 && svf_login)
 			{
 				search_own = !search_own;
 			}
@@ -3844,7 +3849,6 @@ int search_ui(pixel *vid_buf)
 			else if (mx>=XRES-134+xOffset && mx<=XRES-134+16+xOffset && my>=8 && my<=24 && svf_login)
 			{
 				search_fav = !search_fav;
-				search_own = 0;
 				search_date = 0;
 			}
 			else if (dp!=-1)
@@ -3876,7 +3880,7 @@ int search_ui(pixel *vid_buf)
 			}
 			else if (tp!=-1)
 			{
-				strncpy(ed.str, tag_names[tp], 255);
+				strncpy(ed.str, tag_names[tp].c_str(), 255);
 			}
 			else if (mp!=-1 && st)
 			{
@@ -4026,6 +4030,22 @@ int search_ui(pixel *vid_buf)
 				saveListDownload = nullptr;
 			}
 		}
+		if (tagListDownload && tagListDownload->CheckStarted() && tagListDownload->CheckDone())
+		{
+			int status, resultCount;
+			std::string tagsListStr = tagListDownload->Finish(&status);
+			auto tagsList = parse_tags(tagsListStr.c_str(), resultCount);
+
+			tag_names.clear();
+			tag_votes.clear();
+			for (auto tagInfo : tagsList)
+			{
+				tag_names.push_back(tagInfo.first);
+				tag_votes.push_back(tagInfo.second);
+			}
+
+			tagListDownload = nullptr;
+		}
 
 		for (auto iter = thumbDownloads.begin(), end = thumbDownloads.end(); iter != end;)
 		{
@@ -4057,6 +4077,8 @@ finish:
 		free(last);
 	if (saveListDownload)
 		saveListDownload->Cancel();
+	if (tagListDownload)
+		tagListDownload->Cancel();
 	for (auto requestPair : thumbDownloads)
 	{
 		free(requestPair.imgId);
@@ -5383,7 +5405,7 @@ int info_parse(const char *info_data, save_info *info)
 
 int search_results(char *str, int votes)
 {
-	int i,j;
+	int i;
 	char *p,*q,*r,*s,*vu,*vd,*pu,*sd;
 
 	for (i=0; i<GRID_X*GRID_Y; i++)
@@ -5415,19 +5437,12 @@ int search_results(char *str, int votes)
 			search_thsizes[i] = 0;
 		}
 	}
-	for (j=0; j<TAG_MAX; j++)
-		if (tag_names[j])
-		{
-			free(tag_names[j]);
-			tag_names[j] = NULL;
-		}
 	server_motd[0] = 0;
 
 	if (!str || !*str)
 		return 0;
 
 	i = 0;
-	j = 0;
 	s = NULL;
 	do_open = 0;
 	while (1)
@@ -5587,21 +5602,7 @@ int search_results(char *str, int votes)
 		}
 		else if (!strncmp(str, "TAG ", 4))
 		{
-			if (j >= TAG_MAX)
-			{
-				str = p;
-				continue;
-			}
-			q = strchr(str+4, ' ');
-			if (!q)
-			{
-				str = p;
-				continue;
-			}
-			*(q++) = 0;
-			tag_names[j] = mystrdup(str+4);
-			tag_votes[j] = atoi(q);
-			j++;
+			// deleted in favor of Tags.json
 		}
 		else
 		{
@@ -5669,6 +5670,32 @@ int search_results(char *str, int votes)
 	if (*str)
 		i++;
 	return i;
+}
+
+/** Parse tag data returned by Tags.json */
+std::vector<std::pair<std::string, int>> parse_tags(const char *tagsList, int & resultCount)
+{
+	auto ret = std::vector<std::pair<std::string, int>>();
+	cJSON *root;
+	if ((root = cJSON_Parse(tagsList)))
+	{
+		cJSON *actualCount = cJSON_GetObjectItem(root, "TagTotal");
+		resultCount = actualCount->valueint;
+
+		cJSON *tagList = cJSON_GetObjectItem(root, "Tags");
+		int tagsSize = cJSON_GetArraySize(tagList);
+		for (int i = 0; i < tagsSize; i++)
+		{
+			auto tagItem = cJSON_GetArrayItem(tagList, i);
+			int tagCount = cJSON_GetObjectItem(tagItem, "Count")->valueint;
+			std::string tag = cJSON_GetObjectItem(tagItem, "Tag")->valuestring;
+
+			ret.push_back(std::pair<std::string, int>(tag, tagCount));
+		}
+	}
+	cJSON_Delete(root);
+
+	return ret;
 }
 
 int execute_tagop(pixel *vid_buf, const char *op, char *tag)

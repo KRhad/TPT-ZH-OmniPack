@@ -184,8 +184,8 @@ extern int search_page;
 extern int p1_extra;
 extern char search_expr[256];
 
-extern char *tag_names[TAG_MAX];
-extern int tag_votes[TAG_MAX];
+extern std::vector<std::string> tag_names;
+extern std::vector<int> tag_votes;
 
 extern int hud_menunum;
 extern int dateformat;
@@ -273,6 +273,8 @@ void catalogue_ui(pixel * vid_buf);
 int info_parse(const char *info_data, save_info *info);
 
 int search_results(char *str, int votes);
+
+std::vector<std::pair<std::string, int>> parse_tags(const char *tagsList, int & resultCount);
 
 int execute_tagop(pixel *vid_buf, const char *op, char *tag);
 

@@ -103,8 +103,6 @@ const int menuIconWidth = 17;
 
 #define GRAV_DIFF
 
-#define TAG_MAX 256
-
 #define CELL    4
 #define ISTP    (CELL/2)
 #define CFDS	(4.0f/CELL)
