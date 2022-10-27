@@ -1,22 +1,14 @@
 #ifdef LUACONSOLE
 
-#include <dirent.h>
 #include <string>
-#ifdef WIN
-#include <direct.h>
-#else
-#include <unistd.h>
-#endif
 #include <sys/stat.h>
 
 #include "defines.h"
-#include "EventLoopSDL.h"
 #include "graphics.h"
 #include "interface.h"
 #include "luascriptinterface.h"
 #include "powder.h"
 #include "powdergraphics.h"
-#include "save_legacy.h"
 #include "hud.h"
 
 #include "common/Format.h"
@@ -2263,31 +2255,18 @@ void initFileSystemAPI(lua_State * l)
 int fileSystem_list(lua_State * l)
 {
 	std::string directoryName = tpt_lua_checkString(l, 1);
-	DIR * directory;
-	struct dirent * entry;
-
-	int index = 1;
 	lua_newtable(l);
-
-	directory = opendir(directoryName.c_str());
-	if (directory != NULL)
+	int index = 0;
+	for (auto &name : Platform::DirectorySearch(directoryName, "", {}))
 	{
-		while ((entry = readdir(directory)))
+		if (name != "." && name != "..")
 		{
-			if(strncmp(entry->d_name, "..", 3) && strncmp(entry->d_name, ".", 2))
-			{
-				tpt_lua_pushString(l, entry->d_name);
-				lua_rawseti(l, -2, index++);
-			}
+			index += 1;
+			tpt_lua_pushString(l, name);
+			lua_rawseti(l, -2, index);
 		}
-		closedir(directory);
 	}
-	else
-	{
-		lua_pushnil(l);
-	}
-
-	return 1;
+		return 1;
 }
 
 int fileSystem_exists(lua_State * l)

@@ -15,14 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/tpt-minmax.h"
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <regex.h>
 #include <sys/types.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <sstream>
 #include <cmath>
@@ -32,14 +30,11 @@
 #include "defines.h"
 #include "interface.h"
 #include "graphics.h"
-#include "powdergraphics.h"
 #include "powder.h"
 #include "hud.h"
 #include "cJSON.h"
-#include "update.h"
 
 #include "common/Format.h"
-#include "common/Platform.h"
 #include "game/Brush.h"
 #include "game/Favorite.h"
 #include "game/Menus.h"

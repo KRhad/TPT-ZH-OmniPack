@@ -341,7 +341,7 @@ def findLibs(env, conf):
 		FatalError("pthreads development library not found or not installed")
 
 	if msvc:
-		if not conf.CheckHeader('dirent.h') or not conf.CheckHeader('fftw3.h') or not conf.CheckHeader('sched.h') or not conf.CheckHeader('zlib.h'):
+		if not conf.CheckHeader('fftw3.h') or not conf.CheckHeader('sched.h') or not conf.CheckHeader('zlib.h'):
 			FatalError("Required headers not found")
 	else:
 		#Look for libm

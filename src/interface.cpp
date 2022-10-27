@@ -26,7 +26,6 @@
 #include <set>
 #include <cmath>
 #include <ctime>
-#include <dirent.h>
 #ifdef WIN
 #include <direct.h>
 #define getcwd _getcwd

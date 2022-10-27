@@ -6,7 +6,6 @@
 #include <fstream>
 #include <sstream>
 #include <stack>
-#include <dirent.h>
 #include <sys/stat.h>
 
 #ifdef WIN
@@ -23,6 +22,7 @@
 #define chdir _chdir //chdir is deprecated in visual studio
 #endif
 #else
+#include <dirent.h>
 #include <unistd.h>
 #include <ctime>
 #endif
@@ -671,10 +671,10 @@ std::vector<std::string> DirectorySearch(std::string directory, std::string sear
 {
 	// Get full file listing
 	// Normalise directory string, ensure / or \ is present
-	if (*directory.rbegin() != '/' && *directory.rbegin() != '\\')
+	if (!directory.size() || (directory.back() != '/' && directory.back() != '\\'))
 		directory += PATH_SEP;
 	std::vector<std::string> directoryList;
-#if defined(WIN) && !defined(__GNUC__)
+#ifdef WIN
 	//Windows
 	struct _finddata_t currentFile;
 	intptr_t findFileHandle;
@@ -689,14 +689,11 @@ std::vector<std::string> DirectorySearch(std::string directory, std::string sear
 	}
 	do
 	{
-		std::string currentFileName = std::string(currentFile.name);
-		if(currentFileName.length()>4)
-			directoryList.push_back(currentFileName);
+		directoryList.push_back(currentFile.name);
 	}
 	while (_findnext(findFileHandle, &currentFile) == 0);
 	_findclose(findFileHandle);
 #else
-	//Linux or MinGW
 	struct dirent * directoryEntry;
 	DIR *directoryHandle = opendir(directory.c_str());
 	if(!directoryHandle)
@@ -708,19 +705,17 @@ std::vector<std::string> DirectorySearch(std::string directory, std::string sear
 	}
 	while ((directoryEntry = readdir(directoryHandle)))
 	{
-		std::string currentFileName = std::string(directoryEntry->d_name);
-		if(currentFileName.length()>4)
-			directoryList.push_back(currentFileName);
+		directoryList.push_back(directoryEntry->d_name);
 	}
 	closedir(directoryHandle);
 #endif
 
 	std::vector<std::string> searchResults;
-	for (std::string filename : directoryList)
+	for (std::string &filename : directoryList)
 	{
 		std::string originalFilename = filename;
 		bool extensionMatch = !extensions.size();
-		for (std::string extension : extensions)
+		for (std::string &extension : extensions)
 		{
 			size_t filenameLength = filename.length() - extension.length();
 			if (filename.find(extension, filenameLength) == filenameLength)
