@@ -1567,7 +1567,7 @@ bool Simulation::UpdateParticle(int i)
 			(bmap[y/CELL][x/CELL] == WL_ALLOWENERGY && !(elements[t].Properties&TYPE_ENERGY)) ||
 			(bmap[y/CELL][x/CELL] == WL_EWALL && !emap[y/CELL][x/CELL])
 #ifdef NOMOD
-		  ) && t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH))
+		  ) && t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH)
 #else
 		  ) && t!=PT_STKM && t!=PT_STKM2 && t!=PT_FIGH && t != PT_MOVS)
 #endif
