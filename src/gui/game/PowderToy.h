@@ -31,6 +31,10 @@ private:
 	int numNotifications;
 	Button * AddNotification(std::string message, std::function<void(int)> callback);
 
+	std::string vanillaMotd;
+	std::string starcatcherMotd;
+	int motdToggle = 0;
+
 	// website stuff
 	Request *versionCheck = nullptr;
 	Request *sessionCheck = nullptr; // really a tpt++ version check but it does session too and has nice things
@@ -137,6 +141,7 @@ public:
 	bool IsMouseInZoom(Point mouse);
 	void SetInfoTip(std::string infotip);
 	ToolTip *GetQTip(std::string qtip, int y);
+	std::string GetMotd();
 
 	// drawing stuff
 	void UpdateDrawMode();

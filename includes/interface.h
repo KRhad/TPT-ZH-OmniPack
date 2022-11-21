@@ -22,6 +22,7 @@
 #include "graphics/Pixel.h"
 #include "graphics/ARGBColour.h"
 
+class Request;
 class Save;
 class Tool;
 
@@ -226,7 +227,7 @@ void ui_copytext_draw(pixel *vid_buf, ui_copytext *ed);
 void ui_copytext_process(int mx, int my, int mb, int mbq, ui_copytext *ed);
 
 void ui_richtext_draw(pixel *vid_buf, ui_richtext *ed);
-void ui_richtext_settext(char *text, ui_richtext *ed);
+void ui_richtext_settext(const char *text, ui_richtext *ed);
 void ui_richtext_process(int mx, int my, int mb, int mbq, ui_richtext *ed);
 
 void error_ui(pixel *vid_buf, int err, std::string txt);
@@ -272,9 +273,11 @@ void catalogue_ui(pixel * vid_buf);
 
 int info_parse(const char *info_data, save_info *info);
 
-int search_results(char *str, int votes);
-
 std::vector<std::pair<std::string, int>> parse_tags(const char *tagsList, int & resultCount);
+
+Request * search_saves(int start, int count, std::string query, std::string sort, std::string category);
+void clear_search_results();
+void parse_search_results(const char *search_results, int & resultSize);
 
 int execute_tagop(pixel *vid_buf, const char *op, char *tag);
 

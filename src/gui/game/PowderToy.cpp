@@ -983,6 +983,16 @@ Button * PowderToy::AddNotification(std::string message, std::function<void(int)
 	return notificationButton;
 }
 
+std::string PowderToy::GetMotd()
+{
+	if (starcatcherMotd.empty())
+		return vanillaMotd;
+	else if (vanillaMotd.empty())
+		return starcatcherMotd;
+
+	return motdToggle++ % 2 == 0 ? vanillaMotd : starcatcherMotd;
+}
+
 void PowderToy::LoadRenderPreset(int preset)
 {
 	if (Renderer::Ref().LoadRenderPreset(preset))
@@ -1053,7 +1063,7 @@ void PowderToy::OnTick(uint32_t ticks)
 			{
 				datastream >> root;
 
-				//std::string motd = root["MessageOfTheDay"].asString();
+				starcatcherMotd = root["MessageOfTheDay"].asString();
 
 				Json::Value updates = root["Updates"];
 				Json::Value stable = updates["Stable"];
@@ -1134,7 +1144,7 @@ void PowderToy::OnTick(uint32_t ticks)
 					svf_mod = 0;
 				}
 
-				//std::string motd = root["MessageOfTheDay"].asString();
+				vanillaMotd = root["MessageOfTheDay"].asString();
 
 				Json::Value notifications = root["Notifications"];
 				for (int i = 0; i < (int)notifications.size(); i++)

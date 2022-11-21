@@ -121,8 +121,6 @@ int search_page = 0;
 int p1_extra = 0;
 char search_expr[256] = "";
 
-char server_motd[512] = "";
-
 std::vector<std::string> tag_names;
 std::vector<int> tag_votes;
 
@@ -1020,12 +1018,12 @@ int markup_getregion(char *text, char *action, char *data, char *atext){
 	}	
 }
 
-void ui_richtext_settext(char *text, ui_richtext *ed)
+void ui_richtext_settext(const char *text, ui_richtext *ed)
 {
 	int pos = 0, action = 0, ppos = 0, ipos = 0;
 	memset(ed->printstr, 0, 512);
 	memset(ed->str, 0, 512);
-	strcpy(ed->str, text);
+	strncpy(ed->str, text, 512);
 	//strcpy(ed->printstr, text);
 	for(action = 0; action < 6; action++){
 		ed->action[action] = 0;	
@@ -3305,7 +3303,7 @@ struct thumbDownloadInfo
 int search_ui(pixel *vid_buf)
 {
 	int uih=0,nyu,nyd,b=1,bq,mx=0,my=0,mxq=0,myq=0,mmt=0,gi,gj,gx,gy,pos,i,mp,dp,dap,own,last_own=search_own,last_fav=search_fav,page_count=0,last_page=0,last_date=0,j,w,h,st=0,lv;
-	int is_p1=0, exp_res=GRID_X*GRID_Y, tp, last_p1_extra=0, motdswap = rand()%2;
+	int tp, last_p1_extra=0;
 #ifdef TOUCHUI
 	const int xOffset = 10;
 	int initialOffset = 0;
@@ -3320,7 +3318,8 @@ int search_ui(pixel *vid_buf)
 	pixel *v_buf = (pixel *)malloc(((YRES+MENUSIZE)*(XRES+BARSIZE))*PIXELSIZE);
 	pixel *bthumb_rsdata = NULL;
 	float ry;
-	ui_edit ed;
+	ui_edit ed, page_num_ed;
+	std::string motdText = the_game->GetMotd();
 	ui_richtext motd;
 	int searchFailureCode = -1;
 	bool isFrontPage = false;
@@ -3366,7 +3365,18 @@ int search_ui(pixel *vid_buf)
 	ui_edit_init(&ed, 65+xOffset, 13, XRES-200, 14);
 	strcpy(ed.def, "[search terms]");
 	ed.cursor = ed.cursorstart = strlen(search_expr);
-	strcpy(ed.str, search_expr);
+	strncpy(ed.str, search_expr, 256);
+
+	int last_search_page = search_page;
+	unsigned long last_scroll_timestamp = 0, last_result_fetch_timestamp = 0, last_page_textbox_timestamp = 0;
+	int scroll_wait_ms = 600, scroll_wait_direction = 0, expected_scroll_wait_direction = 0;
+	auto updatePageNumTextbox = [&page_num_ed, &last_search_page]() {
+		std::string search_page_str = Format::NumberToString<int>(search_page + 1);
+		strncpy(page_num_ed.str, search_page_str.c_str(), 1023);
+		last_search_page = search_page;
+	};
+	ui_edit_init(&page_num_ed, 283, YRES + 28, 45, 16);
+	updatePageNumTextbox();
 
 	motd.x = 20;
 	motd.y = 33;
@@ -3415,7 +3425,7 @@ int search_ui(pixel *vid_buf)
 		drawtext(vid_buf, 51+xOffset, 11, "\x8F", 255, 255, 255, 255);
 		drawrect(vid_buf, 48+xOffset, 8, XRES-182, 16, 192, 192, 192, 255);
 
-		if (!svf_login)
+		if (!svf_login || search_fav)
 		{
 			search_own = 0;
 			drawrect(vid_buf, XRES-64+16+xOffset, 8, 56, 16, 96, 96, 96, 255);
@@ -3455,16 +3465,7 @@ int search_ui(pixel *vid_buf)
 			drawtext(vid_buf, XRES-130+xOffset, 11, "\xCC", 192, 160, 32, 255);
 		}
 
-		if(search_fav)
-		{
-			search_date = 0;
-			drawrect(vid_buf, XRES-129+16+xOffset, 8, 60, 16, 96, 96, 96, 255);
-			drawtext(vid_buf, XRES-126+16+xOffset, 11, "\xA9", 44, 48, 32, 255);
-			drawtext(vid_buf, XRES-126+16+xOffset, 11, "\xA8", 32, 44, 32, 255);
-			drawtext(vid_buf, XRES-126+16+xOffset, 11, "\xA7", 128, 128, 128, 255);
-			drawtext(vid_buf, XRES-111+16+xOffset, 13, "By votes", 128, 128, 128, 255);
-		}
-		else if (search_date)
+		if (search_date)
 		{
 			fillrect(vid_buf, XRES-130+16+xOffset, 7, 62, 18, 255, 255, 255, 255);
 			drawtext(vid_buf, XRES-126+16+xOffset, 11, "\xA6", 32, 32, 32, 255);
@@ -3483,18 +3484,21 @@ int search_ui(pixel *vid_buf)
 
 		if (page_count)
 		{
-			char pagecount[17];
-			sprintf(pagecount,"Page %i",search_page+1);
-			drawtext(vid_buf, (XRES-textwidth(pagecount))/2+xOffset, YRES+MENUSIZE-10, pagecount, 255, 255, 255, 255);
+			ui_edit_draw(vid_buf, &page_num_ed);
+			drawrect(vid_buf, page_num_ed.x - 3, page_num_ed.y - 5, page_num_ed.w + 3, page_num_ed.h, 192, 192, 192, 255);
+
+			drawtext(vid_buf, page_num_ed.x - textwidth("Page "), page_num_ed.y, "Page", 255, 255, 255, 255);
+			drawtext(vid_buf, page_num_ed.x + page_num_ed.w + 3, page_num_ed.y, ("of " + Format::NumberToString<int>(page_count)).c_str(), 255, 255, 255, 255);
 		}
 
 #ifndef TOUCHUI
+		bool page_buttons_enabled = true;
 		if (search_page)
 		{
 			drawtext(vid_buf, 4+xOffset, YRES+MENUSIZE-16, "\x96", 255, 255, 255, 255);
 			drawrect(vid_buf, 1+xOffset, YRES+MENUSIZE-20, 16, 16, 255, 255, 255, 255);
 		}
-		else if (page_count > exp_res || isFrontPage)
+		else if (isFrontPage)
 		{
 			if (p1_extra)
 				drawtext(vid_buf, 5+xOffset, YRES+MENUSIZE-15, "\x86", 255, 255, 255, 255);
@@ -3502,35 +3506,53 @@ int search_ui(pixel *vid_buf)
 				drawtext(vid_buf, 5+xOffset, YRES+MENUSIZE-15, "\xEF", 255, 255, 255, 255);
 			drawrect(vid_buf, 1+xOffset, YRES+MENUSIZE-20, 15, 15, 255, 255, 255, 255);
 		}
-		if (page_count > exp_res || isFrontPage)
+		if (search_page + 1 < page_count)
 		{
 			drawtext(vid_buf, XRES-15+xOffset, YRES+MENUSIZE-16, "\x95", 255, 255, 255, 255);
 			drawrect(vid_buf, XRES-18+xOffset, YRES+MENUSIZE-20, 16, 16, 255, 255, 255, 255);
 		}
+#else
+		bool page_buttons_enabled = false;
+#endif
 
-		if ((!b && bq && mx>=1+xOffset && mx<=17+xOffset && my>=YRES+MENUSIZE-20 && my<YRES+MENUSIZE-4) || sdl_wheel>0)
+		if ((page_buttons_enabled && !b && bq && mx>=1+xOffset && mx<=17+xOffset && my>=YRES+MENUSIZE-20 && my<YRES+MENUSIZE-4)
+				|| (sdl_wheel > 0 && last_scroll_timestamp + scroll_wait_ms < Platform::GetTime()))
 		{
 			if (search_page)
+			{
 				search_page--;
+				last_scroll_timestamp = Platform::GetTime();
+				expected_scroll_wait_direction = -1;
+				updatePageNumTextbox();
+			}
 			else if (!(search_own || search_fav || search_date) && !sdl_wheel)
 				p1_extra = !p1_extra;
 			sdl_wheel = 0;
 			uih = 1;
 		}
-		if ((!b && bq && mx>=XRES-18+xOffset && mx<=XRES-1+xOffset && my>=YRES+MENUSIZE-20 && my<YRES+MENUSIZE-4) || sdl_wheel<0)
+		if ((page_buttons_enabled && !b && bq && mx>=XRES-18+xOffset && mx<=XRES-1+xOffset && my>=YRES+MENUSIZE-20 && my<YRES+MENUSIZE-4)
+				|| (sdl_wheel<0 && last_scroll_timestamp + scroll_wait_ms < Platform::GetTime()))
 		{
-			if (page_count>exp_res || isFrontPage)
+			if (search_page + 1 < page_count)
 			{
 				search_page ++;
-				page_count = exp_res;
+				last_scroll_timestamp = Platform::GetTime();
+				expected_scroll_wait_direction = 1;
+				updatePageNumTextbox();
 			}
 			sdl_wheel = 0;
 			uih = 1;
 		}
-#endif
+		if ((last_result_fetch_timestamp && !(saveListDownload && saveListDownload->CheckStarted()) && last_result_fetch_timestamp + 1000 < Platform::GetTime())
+				|| (expected_scroll_wait_direction && expected_scroll_wait_direction != scroll_wait_direction))
+		{
+			scroll_wait_ms = 600;
+			last_result_fetch_timestamp = 0;
+			scroll_wait_direction = expected_scroll_wait_direction;
+		}
 
 		tp = -1;
-		if (is_p1)
+		if (isFrontPage)
 		{	
 			//Message of the day
 			ui_richtext_process(mx, my, b, bq, &motd);
@@ -3569,7 +3591,7 @@ int search_ui(pixel *vid_buf)
 		for (gj=0; gj<GRID_Y; gj++)
 			for (gi=0; gi<GRID_X; gi++)
 			{
-				if (is_p1)
+				if (isFrontPage)
 				{
 					pos = gi+GRID_X*(gj-GRID_Y+GRID_P);
 					if (pos<0)
@@ -3579,28 +3601,28 @@ int search_ui(pixel *vid_buf)
 					pos = gi+GRID_X*gj;
 				if (!search_ids[pos])
 					break;
-				gx = ((XRES/GRID_X)*gi) + (XRES/GRID_X-XRES/GRID_S)/2+xOffset+touchOffset;
-				gy = ((((YRES-(MENUSIZE-20))+15)/GRID_Y)*gj) + ((YRES-(MENUSIZE-20))/GRID_Y-(YRES-(MENUSIZE-20))/GRID_S+10)/2 + 18;
+				gx = ((XRES/GRID_X)*gi) + (XRES/GRID_X-XRES/GRID_S)/2 + xOffset + touchOffset + (gi * 3 - 2);
+				gy = ((((YRES-(MENUSIZE-20))+15)/GRID_Y)*gj) + ((YRES-(MENUSIZE-20))/GRID_Y-(YRES-(MENUSIZE-20))/GRID_S+10)/2 + 13;
 				if (textwidth(search_names[pos]) > XRES/GRID_X-10)
 				{
 					char *tmp = (char*)malloc(strlen(search_names[pos])+4);
 					strcpy(tmp, search_names[pos]);
 					j = textwidthx(tmp, XRES/GRID_X-15);
 					strcpy(tmp+j, "...");
-					drawtext(vid_buf, gx+XRES/(GRID_S*2)-textwidth(tmp)/2, gy+YRES/GRID_S+7, tmp, 192, 192, 192, 255);
+					drawtext(vid_buf, gx+XRES/(GRID_S*2)-textwidth(tmp)/2, gy+YRES/GRID_S+4, tmp, 192, 192, 192, 255);
 					free(tmp);
 				}
 				else
-					drawtext(vid_buf, gx+XRES/(GRID_S*2)-textwidth(search_names[pos])/2, gy+YRES/GRID_S+7, search_names[pos], 192, 192, 192, 255);
+					drawtext(vid_buf, gx+XRES/(GRID_S*2)-textwidth(search_names[pos])/2, gy+YRES/GRID_S+4, search_names[pos], 192, 192, 192, 255);
 				j = textwidth(search_owners[pos]);
 				if (mx>=gx+XRES/(GRID_S*2)-j/2 && mx<=gx+XRES/(GRID_S*2)+j/2 &&
-						my>=gy+YRES/GRID_S+18 && my<=gy+YRES/GRID_S+29)
+						my>=gy+YRES/GRID_S+14 && my<=gy+YRES/GRID_S+24)
 				{
 					st = 1;
-					drawtext(vid_buf, gx+XRES/(GRID_S*2)-j/2, gy+YRES/GRID_S+20, search_owners[pos], 128, 128, 160, 255);
+					drawtext(vid_buf, gx+XRES/(GRID_S*2)-j/2, gy+YRES/GRID_S+15, search_owners[pos], 200, 230, 255, 255);
 				}
 				else
-					drawtext(vid_buf, gx+XRES/(GRID_S*2)-j/2, gy+YRES/GRID_S+20, search_owners[pos], 128, 128, 128, 255);
+					drawtext(vid_buf, gx+XRES/(GRID_S*2)-j/2, gy+YRES/GRID_S+15, search_owners[pos], 100, 130, 160, 255);
 				if (search_thumbs[pos]&&thumb_drawn[pos]==0)
 				{
 					//render_thumb(search_thumbs[pos], search_thsizes[pos], 1, v_buf, gx, gy, GRID_S);
@@ -3616,14 +3638,14 @@ int search_ui(pixel *vid_buf)
 					thumb_drawn[pos] = 1;
 				}
 				own = (svf_login && (!strcmp(svf_user, search_owners[pos]) || svf_admin || svf_mod));
-				if (mx>=gx-2 && mx<=gx+XRES/GRID_S+3 && my>=gy && my<=gy+YRES/GRID_S+29)
+				if (mx>=gx-2 && mx<=gx+XRES/GRID_S+3 && my>=gy && my<=gy+YRES/GRID_S+24)
 					mp = pos;
 				if ((own || search_fav) && mx>=gx+XRES/GRID_S-4 && mx<=gx+XRES/GRID_S+6 && my>=gy-6 && my<=gy+4)
 				{
 					mp = -1;
 					dp = pos;
 				}
-				if (!search_dates[pos] && mx>=gx-6 && mx<=gx+4 && my>=gy+YRES/GRID_S-4 && my<=gy+YRES/GRID_S+6)
+				if (!search_dates[pos] && mx>=gx-6 && mx<=gx+4 && my>=gy+YRES/GRID_S-5 && my<=gy+YRES/GRID_S+5)
 				{
 					mp = -1;
 					dap = pos;
@@ -3649,13 +3671,13 @@ int search_ui(pixel *vid_buf)
 					drawtext(vid_buf, gx-6, gy-6, "\xCD", 255, 255, 255, 255);
 					drawtext(vid_buf, gx-6, gy-6, "\xCE", 212, 151, 81, 255);
 				}
-				if (!search_dates[pos])
+				if (!search_dates[pos] && (dap == pos || mp == pos))
 				{
-					fillrect(vid_buf, gx-5, gy+YRES/GRID_S-3, 7, 8, 255, 255, 255, 255);
+					fillrect(vid_buf, gx-5, gy+YRES/GRID_S-4, 7, 8, 255, 255, 255, 255);
 					if (dap == pos) {
-						drawtext(vid_buf, gx-6, gy+YRES/GRID_S-4, "\xA6", 200, 100, 80, 255);
+						drawtext(vid_buf, gx-6, gy+YRES/GRID_S-5, "\xA6", 200, 100, 80, 255);
 					} else {
-						drawtext(vid_buf, gx-6, gy+YRES/GRID_S-4, "\xA6", 160, 70, 50, 255);
+						drawtext(vid_buf, gx-6, gy+YRES/GRID_S-5, "\xA6", 160, 70, 50, 255);
 					}
 					//drawtext(vid_buf, gx-6, gy-6, "\xCE", 212, 151, 81, 255);
 				}
@@ -3715,7 +3737,7 @@ int search_ui(pixel *vid_buf)
 		{
 			gi = mp % GRID_X;
 			gj = mp / GRID_X;
-			if (is_p1)
+			if (isFrontPage)
 				gj += GRID_Y-GRID_P;
 			gx = ((XRES/GRID_X)*gi) + (XRES/GRID_X-XRES/GRID_S)/2+xOffset+touchOffset;
 			gy = (((YRES+15)/GRID_Y)*gj) + (YRES/GRID_Y-YRES/GRID_S+10)/2 + 18;
@@ -3747,12 +3769,12 @@ int search_ui(pixel *vid_buf)
 				nmp = mp;
 			}
 			drawtext(vid_buf, gx+(w-i)/2, gy+YRES/GRID_Z+4, search_names[mp], 192, 192, 192, 255);
-			drawtext(vid_buf, gx+(w-textwidth(search_owners[mp]))/2, gy+YRES/GRID_Z+16, search_owners[mp], 128, 128, 128, 255);
+			drawtext(vid_buf, gx+(w-textwidth(search_owners[mp]))/2, gy+YRES/GRID_Z+14, search_owners[mp], 128, 128, 128, 255);
 		}
 #endif
 		if ((saveListDownload && saveListDownload->CheckStarted()) || (tagListDownload && tagListDownload->CheckStarted()))
 		{
-			fillrect(vid_buf, 0, 30, XRES+BARSIZE, YRES+MENUSIZE-30, 0, 0, 0, 150);
+			fillrect(vid_buf, 0, 26, XRES+BARSIZE, YRES+MENUSIZE-26, 0, 0, 0, 150);
 			drawtext(vid_buf, (XRES+BARSIZE-textwidth("Loading ..."))/2, (YRES+MENUSIZE)/2, "Loading ...", 255, 255, 255, 255);
 		}
 		else if (searchFailureCode != -1)
@@ -3770,6 +3792,7 @@ int search_ui(pixel *vid_buf)
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
 
 		ui_edit_process(mx, my, b, bq, &ed);
+		ui_edit_process(mx, my, b, bq, &page_num_ed);
 
 		if (sdl_key==SDLK_RETURN)
 		{
@@ -3794,13 +3817,14 @@ int search_ui(pixel *vid_buf)
 				if (touchOffset > (XRES+BARSIZE)/3 && search_page)
 				{
 					search_page--;
+					updatePageNumTextbox();
 					uih = 1; // not sure what this does
 					bq = 0;
 				}
-				else if (touchOffset < -(XRES+BARSIZE)/3 && (page_count>exp_res || isFrontPage))
+				else if (touchOffset < -(XRES+BARSIZE)/3 && search_page + 1 < page_count)
 				{
 					search_page++;
-					page_count = exp_res;
+					updatePageNumTextbox();
 					uih = 1; // not sure what this does
 					bq = 0;
 				}
@@ -3818,7 +3842,7 @@ int search_ui(pixel *vid_buf)
 					touchOffset = 0;
 					touchDragged = true;
 				}
-				else if (touchOffset < 0 && (page_count<=exp_res && !isFrontPage))
+				else if (touchOffset < 0 && search_page + 1 >= page_count)
 				{
 					touchOffset = 0;
 					touchDragged = true;
@@ -3838,18 +3862,18 @@ int search_ui(pixel *vid_buf)
 #endif
 		if (!b && bq && !touchDragged)
 		{
-			if (mx>=XRES-64+16+xOffset && mx<=XRES-8+16+xOffset && my>=8 && my<=24 && svf_login)
+			if (mx>=XRES-64+16+xOffset && mx<=XRES-8+16+xOffset && my>=8 && my<=24 && svf_login && !search_fav)
 			{
 				search_own = !search_own;
 			}
-			else if (mx>=XRES-129+16+xOffset && mx<=XRES-65+16+xOffset && my>=8 && my<=24 && !search_fav)
+			else if (mx>=XRES-129+16+xOffset && mx<=XRES-65+16+xOffset && my>=8 && my<=24)
 			{
 				search_date = !search_date;
 			}
 			else if (mx>=XRES-134+xOffset && mx<=XRES-134+16+xOffset && my>=8 && my<=24 && svf_login)
 			{
 				search_fav = !search_fav;
-				search_date = 0;
+				search_own = 0;
 			}
 			else if (dp!=-1)
 			{
@@ -3910,7 +3934,7 @@ int search_ui(pixel *vid_buf)
 			if ((strcmp(last, ed.str) && (strcmp(ed.str, "") || strlen(ed.str) > 3)) || last_own!=search_own || last_fav!=search_fav || last_date!=search_date)
 			{
 				search_page = 0;
-				page_count = 0;
+				updatePageNumTextbox();
 			}
 			free(last);
 			last = NULL;
@@ -3918,9 +3942,39 @@ int search_ui(pixel *vid_buf)
 		else
 			search = 0;
 
+		// If user entered a new page
+		if (strlen(page_num_ed.str))
+		{
+			int user_search_page = Format::StringToNumber<int>(page_num_ed.str) - 1;
+			if (user_search_page != last_search_page)
+			{
+				last_search_page = user_search_page;
+				last_page_textbox_timestamp = Platform::GetTime();
+			}
+		}
+		// Reset if page num textbox is empty and not focused
+		else if (!page_num_ed.focus)
+		{
+			updatePageNumTextbox();
+		}
+
+		// Do search after 1 second
+		if (last_page_textbox_timestamp && last_page_textbox_timestamp + 600 < Platform::GetTime())
+		{
+			search_page = last_search_page;
+			if (search_page < 0)
+				search_page = 0;
+			else if (search_page >= page_count - 1)
+				search_page = page_count - 1;
+			if (search_page != last_search_page)
+				updatePageNumTextbox();
+
+			search = 1;
+			last_page_textbox_timestamp = 0;
+		}
+
 		if (search && (!saveListDownload || !saveListDownload->CheckStarted()))
 		{
-			std::stringstream uri;
 			int start, count;
 			last = mystrdup(ed.str);
 			last_own = search_own;
@@ -3934,37 +3988,27 @@ int search_ui(pixel *vid_buf)
 			{
 				if (search_page)
 				{
-					start = (search_page-1)*GRID_X*GRID_Y + GRID_X*GRID_P;
-					count = GRID_X*GRID_Y;
+					start = search_page * GRID_X * GRID_Y;
+					count = GRID_X * GRID_Y;
 				}
 				else
 				{
 					start = 0;
-					count = p1_extra ? GRID_X*GRID_Y : GRID_X*GRID_P;
+					count = p1_extra ? GRID_X * GRID_Y : GRID_X * GRID_P;
 				}
 			}
 			else
 			{
-				start = search_page*GRID_X*GRID_Y;
-				count = GRID_X*GRID_Y;
+				start = search_page * GRID_X * GRID_Y;
+				count = GRID_X * GRID_Y;
 			}
-			exp_res = count; //-1 so that it can know if there is an extra save and show the next page button
-			uri << SCHEME << SERVER << "/Search.api?Start=" << start << "&Count=" << count+1 << "&ShowVotes=true";
-			if (byvotes)
-				uri << "&t=" << ((GRID_Y-GRID_P)*YRES)/(GRID_Y*14)*GRID_X; //what does this even mean? ...
-			uri << "&Query=" << Format::URLEncode(last);
-			if (search_own)
-				uri << Format::URLEncode(" user:") + Format::URLEncode(svf_user);
-			if (search_fav)
-				uri << Format::URLEncode(" cat:favs");
-			if (search_date)
-				uri << Format::URLEncode(" sort:date");
 
-			if (saveListDownload)
-				saveListDownload->Cancel();
-			saveListDownload = new Request(uri.str());
-			if (svf_login)
-				saveListDownload->AuthHeaders(svf_user_id, svf_session_id);
+			std::string category = "";
+			if (search_fav)
+				category = "Favourites";
+			if (search_own && svf_login)
+				category = "by:" + std::string(svf_user);
+			saveListDownload = search_saves(start, count, last, search_date ? "date" : "votes", category);
 			saveListDownload->Start();
 			search = 0;
 		}
@@ -3974,26 +4018,27 @@ int search_ui(pixel *vid_buf)
 			int status;
 			std::string resultsStr = saveListDownload->Finish(&status);
 			const char *results = resultsStr.c_str();
-			is_p1 = (exp_res < GRID_X*GRID_Y);
-			// Separage from is_p1 because is_p1 works strangely, and also some temporary artifacts show when switching from page 2 to page 1 if it tracks fp like this
-			isFrontPage = (exp_res < GRID_X*GRID_Y) || (search_page == 0 && !(search_own || search_date || search_fav || last));
+			bool byVotes = !(search_own || search_date || search_fav || (last && strlen(last)));
+			isFrontPage = search_page == 0 && byVotes;
 			touchOffset = 0;
 			if (status == 200)
 			{
-				page_count = search_results((char*)results, true);
+				int resultsSize;
+				clear_search_results();
+				parse_search_results(results, resultsSize);
+				page_count = resultsSize / (GRID_X * GRID_Y) + 1 + (byVotes ? 1 : 0);
+				int page_count_width = textwidth(Format::NumberToString(page_count).c_str());
+				page_num_ed.w = page_count_width + 15;
+				last_result_fetch_timestamp = Platform::GetTime();
+				scroll_wait_ms = scroll_wait_ms >> 1;
+
 				memset(thumb_drawn, 0, sizeof(thumb_drawn));
 				memset(v_buf, 0, ((YRES+MENUSIZE)*(XRES+BARSIZE))*PIXELSIZE);
 #ifndef TOUCHUI
 				nmp = -1;
 #endif
-				
-				if (is_p1)
-				{
-					if (motdswap)
-						sprintf(server_motd,"Links: \bt{a:https://powdertoy.co.uk|Powder Toy main page}\bg, \bt{a:https://powdertoy.co.uk/Discussions/Categories/Index.html|Forums}\bg, \bt{a:https://github.com/ThePowderToy/The-Powder-Toy|Official TPT github}\bg, \bt{a:https://github.com/jacob1/The-Powder-Toy/tree/c++|Jacob1's Mod github}");
-					motdswap = !motdswap;
-				}
-				ui_richtext_settext(server_motd, &motd);
+
+				ui_richtext_settext(motdText.c_str(), &motd);
 				motd.x = (XRES-textwidth(motd.printstr))/2;
 				searchFailureCode = -1;
 			}
@@ -4090,7 +4135,7 @@ finish:
 		bthumb_rsdata = NULL;
 	}
 
-	search_results((char*)"", 0);
+	clear_search_results();
 
 	free(v_buf);
 	return 0;
@@ -5403,12 +5448,38 @@ int info_parse(const char *info_data, save_info *info)
 	}
 }
 
-int search_results(char *str, int votes)
+Request * search_saves(int start, int count, std::string query, std::string sort, std::string category)
 {
-	int i;
-	char *p,*q,*r,*s,*vu,*vd,*pu,*sd;
+	std::stringstream urlStream;
+	urlStream << SCHEME << SERVER << "/Browse.json?Start=" << start << "&Count=" << count;
+	if (query.length() || sort.length())
+	{
+		urlStream << "&Search_Query=";
+		if (query.length())
+			urlStream << Format::URLEncode(query);
+		if (sort == "date")
+		{
+			if (query.length())
+				urlStream << Format::URLEncode(" ");
+			urlStream << Format::URLEncode("sort:") << Format::URLEncode(sort);
+		}
+	}
+	if (category.length())
+	{
+		urlStream << "&Category=" << Format::URLEncode(category);
+	}
 
-	for (i=0; i<GRID_X*GRID_Y; i++)
+	std::cout << urlStream.str() << std::endl;
+
+	Request *ret = new Request(urlStream.str());
+	if (svf_login)
+		ret->AuthHeaders(svf_user_id, svf_session_id);
+	return ret;
+}
+
+void clear_search_results()
+{
+	for (int i = 0; i < GRID_X * GRID_Y; i++)
 	{
 		if (search_ids[i])
 		{
@@ -5436,240 +5507,46 @@ int search_results(char *str, int votes)
 			search_thumbs[i] = NULL;
 			search_thsizes[i] = 0;
 		}
+		search_votes[i] = 0;
 	}
-	server_motd[0] = 0;
+}
 
-	if (!str || !*str)
-		return 0;
-
-	i = 0;
-	s = NULL;
-	do_open = 0;
-	while (1)
+void parse_search_results(const char *search_results, int & resultSize)
+{
+	cJSON *root;
+	if ((root = cJSON_Parse(search_results)))
 	{
-		if (!*str)
-			break;
-		p = strchr(str, '\n');
-		if (!p)
-			p = str + strlen(str);
-		else
-			*(p++) = 0;
-		if (!strncmp(str, "OPEN ", 5))
+		resultSize = cJSON_GetObjectItem(root, "Count")->valueint;
+		cJSON *saves = cJSON_GetObjectItem(root, "Saves");
+		int savesSize = cJSON_GetArraySize(saves);
+		for (int i = 0; i < savesSize && i < GRID_X * GRID_Y; i++)
 		{
-			do_open = 1;
-			if (i>=GRID_X*GRID_Y)
-				break;
-			if (votes)
-			{
-				pu = strchr(str+5, ' ');
-				if (!pu)
-					return i;
-				*(pu++) = 0;
-				s = strchr(pu, ' ');
-				if (!s)
-					return i;
-				*(s++) = 0;
-				vu = strchr(s, ' ');
-				if (!vu)
-					return i;
-				*(vu++) = 0;
-				vd = strchr(vu, ' ');
-				if (!vd)
-					return i;
-				*(vd++) = 0;
-				q = strchr(vd, ' ');
-			}
-			else
-			{
-				pu = strchr(str+5, ' ');
-				if (!pu)
-					return i;
-				*(pu++) = 0;
-				vu = strchr(pu, ' ');
-				if (!vu)
-					return i;
-				*(vu++) = 0;
-				vd = strchr(vu, ' ');
-				if (!vd)
-					return i;
-				*(vd++) = 0;
-				q = strchr(vd, ' ');
-			}
-			if (!q)
-				return i;
-			*(q++) = 0;
-			r = strchr(q, ' ');
-			if (!r)
-				return i;
-			*(r++) = 0;
-			search_ids[i] = mystrdup(str+5);
+			auto savesItem = cJSON_GetArrayItem(saves, i);
 
-			search_publish[i] = atoi(pu);
-			search_scoreup[i] = atoi(vu);
-			search_scoredown[i] = atoi(vd);
+			int saveID = cJSON_GetObjectItem(savesItem, "ID")->valueint;
+			//int createdDate = cJSON_GetObjectItem(savesItem, "Created")->valueint;
+			//int updatedDate = cJSON_GetObjectItem(savesItem, "Updated")->valueint;
+			int scoreUp = cJSON_GetObjectItem(savesItem, "ScoreUp")->valueint;
+			int scoreDown = cJSON_GetObjectItem(savesItem, "ScoreDown")->valueint;
+			const char *username = cJSON_GetObjectItem(savesItem, "Username")->valuestring;
+			const char *saveName = cJSON_GetObjectItem(savesItem, "Name")->valuestring;
+			int version = cJSON_GetObjectItem(savesItem, "Version")->valueint;
+			int published = cJSON_GetObjectItem(savesItem, "Published")->valueint;
 
-			search_owners[i] = mystrdup(q);
-			search_names[i] = mystrdup(r);
 
-			if (s)
-				search_votes[i] = atoi(s);
-			thumb_cache_find(str+5, search_thumbs+i, search_thsizes+i);
-			i++;
+			search_ids[i] = mystrdup(Format::NumberToString(saveID).c_str());
+			if (version != 0)
+				search_dates[i] = mystrdup(Format::NumberToString(version).c_str());
+
+			search_publish[i] = published;
+			search_scoreup[i] = scoreUp;
+			search_scoredown[i] = scoreDown;
+			search_votes[i] = scoreUp - scoreDown;
+
+			search_owners[i] = mystrdup(username);
+			search_names[i] = mystrdup(saveName);
 		}
-		else if (!strncmp(str, "HISTORY ", 8))
-		{
-			char * id_d_temp = NULL;
-			if (i>=GRID_X*GRID_Y)
-				break;
-			if (votes)
-			{
-				sd = strchr(str+8, ' ');
-				if (!sd)
-					return i;
-				*(sd++) = 0;
-				pu = strchr(sd, ' ');
-				if (!pu)
-					return i;
-				*(pu++) = 0;
-				s = strchr(pu, ' ');
-				if (!s)
-					return i;
-				*(s++) = 0;
-				vu = strchr(s, ' ');
-				if (!vu)
-					return i;
-				*(vu++) = 0;
-				vd = strchr(vu, ' ');
-				if (!vd)
-					return i;
-				*(vd++) = 0;
-				q = strchr(vd, ' ');
-			}
-			else
-			{
-				sd = strchr(str+8, ' ');
-				if (!sd)
-					return i;
-				*(sd++) = 0;
-				pu = strchr(sd, ' ');
-				if (!pu)
-					return i;
-				*(pu++) = 0;
-				vu = strchr(pu, ' ');
-				if (!vu)
-					return i;
-				*(vu++) = 0;
-				vd = strchr(vu, ' ');
-				if (!vd)
-					return i;
-				*(vd++) = 0;
-				q = strchr(vd, ' ');
-			}
-			if (!q)
-				return i;
-			*(q++) = 0;
-			r = strchr(q, ' ');
-			if (!r)
-				return i;
-			*(r++) = 0;
-			search_ids[i] = mystrdup(str+8);
-
-			search_dates[i] = mystrdup(sd);
-
-			search_publish[i] = atoi(pu);
-			search_scoreup[i] = atoi(vu);
-			search_scoredown[i] = atoi(vd);
-
-			search_owners[i] = mystrdup(q);
-			search_names[i] = mystrdup(r);
-
-			if (s)
-				search_votes[i] = atoi(s);
-				
-			//Build thumb cache ID and find
-			id_d_temp = (char*)malloc(strlen(search_ids[i])+strlen(search_dates[i])+2);
-			strcpy(id_d_temp, search_ids[i]);
-			strappend(id_d_temp, "_");
-			strappend(id_d_temp, search_dates[i]);
-			thumb_cache_find(id_d_temp, search_thumbs+i, search_thsizes+i);
-			free(id_d_temp);
-			
-			i++;
-		}
-		else if (!strncmp(str, "MOTD ", 5))
-		{
-			strncpy(server_motd, str+5, 511);
-		}
-		else if (!strncmp(str, "TAG ", 4))
-		{
-			// deleted in favor of Tags.json
-		}
-		else
-		{
-			if (i>=GRID_X*GRID_Y)
-				break;
-			if (votes)
-			{
-				pu = strchr(str, ' ');
-				if (!pu)
-					return i;
-				*(pu++) = 0;
-				s = strchr(pu, ' ');
-				if (!s)
-					return i;
-				*(s++) = 0;
-				vu = strchr(s, ' ');
-				if (!vu)
-					return i;
-				*(vu++) = 0;
-				vd = strchr(vu, ' ');
-				if (!vd)
-					return i;
-				*(vd++) = 0;
-				q = strchr(vd, ' ');
-			}
-			else
-			{
-				pu = strchr(str, ' ');
-				if (!pu)
-					return i;
-				*(pu++) = 0;
-				vu = strchr(pu, ' ');
-				if (!vu)
-					return i;
-				*(vu++) = 0;
-				vd = strchr(vu, ' ');
-				if (!vd)
-					return i;
-				*(vd++) = 0;
-				q = strchr(vd, ' ');
-			}
-			if (!q)
-				return i;
-			*(q++) = 0;
-			r = strchr(q, ' ');
-			if (!r)
-				return i;
-			*(r++) = 0;
-			search_ids[i] = mystrdup(str);
-
-			search_publish[i] = atoi(pu);
-			search_scoreup[i] = atoi(vu);
-			search_scoredown[i] = atoi(vd);
-
-			search_owners[i] = mystrdup(q);
-			search_names[i] = mystrdup(r);
-
-			if (s)
-				search_votes[i] = atoi(s);
-			thumb_cache_find(str, search_thumbs+i, search_thsizes+i);
-			i++;
-		}
-		str = p;
 	}
-	if (*str)
-		i++;
-	return i;
 }
 
 /** Parse tag data returned by Tags.json */
