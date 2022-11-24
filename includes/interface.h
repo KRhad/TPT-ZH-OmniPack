@@ -283,18 +283,18 @@ int execute_tagop(pixel *vid_buf, const char *op, char *tag);
 
 int execute_save(pixel *vid_buf, Save *save);
 
-int execute_delete(pixel *vid_buf, char *id);
-
-int execute_report(pixel *vid_buf, char *id, char *reason);
-int execute_bug(pixel *vid_buf, std::string feedback);
+bool execute_report(pixel *vid_buf, std::string id, char *reason);
+bool execute_bug(pixel *vid_buf, std::string feedback);
 
 bool ParseServerReturn(char *result, int status, bool json);
 
 bool execute_submit(pixel *vid_buf, char *id, char *message);
 
-void execute_fav(pixel *vid_buf, char *id);
-
-void execute_unfav(pixel *vid_buf, char *id);
+bool execute_fav(pixel *vid_buf, std::string id);
+bool execute_unfav(pixel *vid_buf, std::string id);
+bool execute_delete(pixel *vid_buf, std::string id);
+bool execute_unpublish(pixel *vid_buf, std::string id);
+bool execute_publish(pixel *vid_buf, std::string id);
 
 int report_ui(pixel *vid_buf, char *save_id, bool bug);
 

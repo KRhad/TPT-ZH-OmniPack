@@ -113,6 +113,7 @@ char *search_names[GRID_X*GRID_Y];
 char *search_owners[GRID_X*GRID_Y];
 void *search_thumbs[GRID_X*GRID_Y];
 int   search_thsizes[GRID_X*GRID_Y];
+bool  search_checked[GRID_X*GRID_Y];
 
 int search_own = 0;
 int search_fav = 0;
@@ -3302,8 +3303,11 @@ struct thumbDownloadInfo
 
 int search_ui(pixel *vid_buf)
 {
-	int uih=0,nyu,nyd,b=1,bq,mx=0,my=0,mxq=0,myq=0,mmt=0,gi,gj,gx,gy,pos,i,mp,dp,dap,own,last_own=search_own,last_fav=search_fav,page_count=0,last_page=0,last_date=0,j,w,h,st=0,lv;
+	int uih=0,nyu,nyd,b=1,bq,mx=0,my=0,mxq=0,myq=0,mmt=0,gi,gj,gx,gy,pos,i,mp,dp,dap,checkp,own,last_own=search_own,last_fav=search_fav,page_count=0,last_page=0,last_date=0,j,w,h,st=0,lv;
 	int tp, last_p1_extra=0;
+	int num_selected = 0, num_published_selected = 0, num_unpublished_selected = 0;
+	bool own_selected = true;
+	std::string selection_buttons[4] = {"Delete", "Unpublish", "Favorite", "Clear Selection"};
 #ifdef TOUCHUI
 	const int xOffset = 10;
 	int initialOffset = 0;
@@ -3482,21 +3486,41 @@ int search_ui(pixel *vid_buf)
 
 		ui_edit_draw(vid_buf, &ed);
 
-		if (page_count)
+		if (num_selected)
 		{
-			ui_edit_draw(vid_buf, &page_num_ed);
-			drawrect(vid_buf, page_num_ed.x - 3, page_num_ed.y - 5, page_num_ed.w + 3, page_num_ed.h, 192, 192, 192, 255);
+			int x = 102;
+			for (int i = 0; i < 4; i++, x += 105)
+			{
+				auto text = selection_buttons[i];
+				if (i == 1 && num_published_selected == 0)
+					text = "Publish";
+				if (i == 2 && search_fav)
+					text = "Unfavorite";
+				auto text_size = textwidth(text.c_str());
 
-			drawtext(vid_buf, page_num_ed.x - textwidth("Page "), page_num_ed.y, "Page", 255, 255, 255, 255);
-			drawtext(vid_buf, page_num_ed.x + page_num_ed.w + 3, page_num_ed.y, ("of " + Format::NumberToString<int>(page_count)).c_str(), 255, 255, 255, 255);
+				int col = own_selected || i >= 2 ? 255 : 120;
+				drawrect(vid_buf, x, YRES + MENUSIZE - 18, 100, 15, col, col, col, 255);
+				drawtext(vid_buf, x + (105 - text_size) / 2, YRES + MENUSIZE - 14, text.c_str(), col, col, col, 255);
+			}
+		}
+		else
+		{
+			if (page_count)
+			{
+				ui_edit_draw(vid_buf, &page_num_ed);
+				drawrect(vid_buf, page_num_ed.x - 3, page_num_ed.y - 5, page_num_ed.w + 3, page_num_ed.h, 192, 192, 192, 255);
+
+				drawtext(vid_buf, page_num_ed.x - textwidth("Page "), page_num_ed.y, "Page", 255, 255, 255, 255);
+				drawtext(vid_buf, page_num_ed.x + page_num_ed.w + 3, page_num_ed.y, ("of " + Format::NumberToString<int>(page_count)).c_str(), 255, 255, 255, 255);
+			}
 		}
 
 #ifndef TOUCHUI
 		bool page_buttons_enabled = true;
 		if (search_page)
 		{
-			drawtext(vid_buf, 4+xOffset, YRES+MENUSIZE-16, "\x96", 255, 255, 255, 255);
-			drawrect(vid_buf, 1+xOffset, YRES+MENUSIZE-20, 16, 16, 255, 255, 255, 255);
+			drawtext(vid_buf, 4+xOffset, YRES+MENUSIZE-15, "\x96 Prev", 255, 255, 255, 255);
+			drawrect(vid_buf, 1+xOffset, YRES+MENUSIZE-19, 42, 16, 255, 255, 255, 255);
 		}
 		else if (isFrontPage)
 		{
@@ -3508,14 +3532,14 @@ int search_ui(pixel *vid_buf)
 		}
 		if (search_page + 1 < page_count)
 		{
-			drawtext(vid_buf, XRES-15+xOffset, YRES+MENUSIZE-16, "\x95", 255, 255, 255, 255);
-			drawrect(vid_buf, XRES-18+xOffset, YRES+MENUSIZE-20, 16, 16, 255, 255, 255, 255);
+			drawtext(vid_buf, XRES-24+xOffset, YRES+MENUSIZE-15, "Next \x95", 255, 255, 255, 255);
+			drawrect(vid_buf, XRES-27+xOffset, YRES+MENUSIZE-19, 42, 16, 255, 255, 255, 255);
 		}
 #else
 		bool page_buttons_enabled = false;
 #endif
 
-		if ((page_buttons_enabled && !b && bq && mx>=1+xOffset && mx<=17+xOffset && my>=YRES+MENUSIZE-20 && my<YRES+MENUSIZE-4)
+		if ((page_buttons_enabled && !b && bq && mx>=1+xOffset && mx<=43+xOffset && my>=YRES+MENUSIZE-19 && my<=YRES+MENUSIZE-3)
 				|| (sdl_wheel > 0 && last_scroll_timestamp + scroll_wait_ms < Platform::GetTime()))
 		{
 			if (search_page)
@@ -3530,7 +3554,7 @@ int search_ui(pixel *vid_buf)
 			sdl_wheel = 0;
 			uih = 1;
 		}
-		if ((page_buttons_enabled && !b && bq && mx>=XRES-18+xOffset && mx<=XRES-1+xOffset && my>=YRES+MENUSIZE-20 && my<YRES+MENUSIZE-4)
+		if ((page_buttons_enabled && !b && bq && mx>=XRES-27+xOffset && mx<=XRES+15+xOffset && my>=YRES+MENUSIZE-19 && my<=YRES+MENUSIZE-3)
 				|| (sdl_wheel<0 && last_scroll_timestamp + scroll_wait_ms < Platform::GetTime()))
 		{
 			if (search_page + 1 < page_count)
@@ -3585,9 +3609,11 @@ int search_ui(pixel *vid_buf)
 				}
 		}
 
-		mp = dp = -1;
+		mp = dp = checkp = -1;
 		dap = -1;
 		st = 0;
+		num_selected = num_published_selected = num_unpublished_selected = 0;
+		own_selected = true;
 		for (gj=0; gj<GRID_Y; gj++)
 			for (gi=0; gi<GRID_X; gi++)
 			{
@@ -3625,6 +3651,9 @@ int search_ui(pixel *vid_buf)
 					drawtext(vid_buf, gx+XRES/(GRID_S*2)-j/2, gy+YRES/GRID_S+15, search_owners[pos], 100, 130, 160, 255);
 				if (search_thumbs[pos]&&thumb_drawn[pos]==0)
 				{
+					fillrect(v_buf, gx - 8, gy - 5, XRES/GRID_S + 22, YRES/GRID_S + 29, 0, 0, 0, 255);
+					if (search_checked[pos])
+						fillrect(v_buf, gx - 8, gy - 5, XRES/GRID_S + 22, YRES/GRID_S + 29, 100, 170, 255, 100);
 					//render_thumb(search_thumbs[pos], search_thsizes[pos], 1, v_buf, gx, gy, GRID_S);
 					int finh, finw;
 					pixel *thumb_rsdata = NULL;
@@ -3650,6 +3679,21 @@ int search_ui(pixel *vid_buf)
 					mp = -1;
 					dap = pos;
 				}
+				if (!search_dates[pos] && mx >= gx + XRES/GRID_S - 17 && mx <= gx + XRES/GRID_S - 3 && my >= gy + 4 && my <= gy + 18)
+				{
+					checkp = pos;
+				}
+				if (search_checked[pos])
+				{
+					num_selected++;
+					if (!own)
+						own_selected = false;
+					if (search_publish[pos])
+						num_published_selected++;
+					else
+						num_unpublished_selected++;
+				}
+
 				drawrect(vid_buf, gx-2+(XRES/GRID_S)+5, gy-2, 6, YRES/GRID_S+3, 128, 128, 128, 255);
 				fillrect(vid_buf, gx-2+(XRES/GRID_S)+5, gy-2, 6, 1+(YRES/GRID_S+3)/2, 0, 107, 10, 255);
 				fillrect(vid_buf, gx-2+(XRES/GRID_S)+5, gy-2+((YRES/GRID_S+3)/2), 6, 1+(YRES/GRID_S+3)/2, 107, 10, 0, 255);
@@ -3680,6 +3724,12 @@ int search_ui(pixel *vid_buf)
 						drawtext(vid_buf, gx-6, gy+YRES/GRID_S-5, "\xA6", 160, 70, 50, 255);
 					}
 					//drawtext(vid_buf, gx-6, gy-6, "\xCE", 212, 151, 81, 255);
+				}
+				if (mp == pos)
+				{
+					int bColor = checkp == pos ? 100 : 0;
+					fillrect(vid_buf, gx+XRES/GRID_S-17, gy + 4, 14, 14, bColor, bColor, bColor, 255);
+					drawrect(vid_buf, gx+XRES/GRID_S-17, gy + 4, 14, 14, 230, 230, 230, 255);
 				}
 				if (true)
 				{
@@ -3733,7 +3783,7 @@ int search_ui(pixel *vid_buf)
 			}
 
 #ifndef TOUCHUI
-		if (mp!=-1 && mmt>=TIMEOUT/5 && !st && my<YRES+MENUSIZE-25)
+		if (mp!=-1 && checkp == -1 && mmt>=TIMEOUT/5 && !st && my<YRES+MENUSIZE-25)
 		{
 			gi = mp % GRID_X;
 			gj = mp / GRID_X;
@@ -3889,7 +3939,10 @@ int search_ui(pixel *vid_buf)
 				} else {
 					if (confirm_ui(vid_buf, "Do you want to delete?", search_names[dp], "Delete"))
 					{
-						execute_delete(vid_buf, search_ids[dp]);
+						if (!execute_delete(vid_buf, search_ids[dp]))
+						{
+							info_ui(vid_buf, "Success", "Save permanently deleted");
+						}
 						if (last)
 						{
 							free(last);
@@ -3901,6 +3954,11 @@ int search_ui(pixel *vid_buf)
 			else if (dap!=-1)
 			{
 				sprintf(ed.str, "history:%s", search_ids[dap]);
+			}
+			else if (checkp != -1)
+			{
+				search_checked[checkp] = !search_checked[checkp];
+				thumb_drawn[checkp] = false;
 			}
 			else if (tp!=-1)
 			{
@@ -3919,12 +3977,135 @@ int search_ui(pixel *vid_buf)
 			}
 		}
 
+		bool retrigger_search = false;
+		if (num_selected)
+		{
+			int x = 102;
+			for (int i = 0; i < 4; i++, x += 105)
+			{
+				if (!b &&  bq && mx >= x && mx <= x+100 && my >= YRES + MENUSIZE - 18 && my <= YRES + MENUSIZE - 3)
+				{
+					if (i == 3)
+					{
+						for (int i = 0; i < GRID_X * GRID_Y; i++)
+						{
+							if (search_checked[i])
+							{
+								search_checked[i] = 0;
+								thumb_drawn[i] = false;
+							}
+						}
+						break;
+					}
+					auto s = num_selected == 1 ? "" : "s";
+					std::string top_message;
+					std::stringstream body;
+					switch (i)
+					{
+					case 0:
+						top_message = "Delete Saves";
+						body << "Are you sure you want to delete " << num_selected << " save" << s << "?";
+						break;
+					case 1:
+						s = (num_published_selected ? num_published_selected : num_unpublished_selected) == 1 ? "" : "s";
+						top_message = num_published_selected ? "Unpublish Saves" : "Publish Saves";
+						body << "Are you sure you want to ";
+						body << (num_published_selected ? "unpublish" : "publish");
+						body << " " << (num_published_selected ? num_published_selected : num_unpublished_selected);
+						body << " save" << s << "?";
+						if (num_published_selected && num_unpublished_selected)
+						{
+							s = num_unpublished_selected == 1 ? "" : "s";
+							body << " (" << num_unpublished_selected << " save" << s << " already unpublished)";
+						}
+						break;
+					case 2:
+						top_message = "Favorite Saves";
+						body << "Are you sure you want to ";
+						body << (search_fav ? "remove" : "add");
+						body << " " << num_selected << " save" << s << " ";
+						body << (search_fav ? "from" : "to");
+						body << " your favorites?";
+						break;
+					}
+					bool confirmed = confirm_ui(vid_buf, top_message.c_str(), body.str().c_str(), "Confirm");
+					if (confirmed)
+					{
+						pixel *backup_vid_buf = (pixel *)malloc(((YRES+MENUSIZE)*(XRES+BARSIZE))*PIXELSIZE);
+						if (!backup_vid_buf)
+						{
+							error_ui(vid_buf, 0, "Failed to perform action, cannot allocate memory");
+						}
+						else
+						{
+							memcpy(backup_vid_buf, vid_buf, ((XRES+BARSIZE)*(YRES+MENUSIZE))*PIXELSIZE);
+
+							for (int pos = 0; pos < GRID_X * GRID_Y; pos++)
+							{
+								if (pos != 0)
+									memcpy(vid_buf, backup_vid_buf, ((XRES+BARSIZE)*(YRES+MENUSIZE))*PIXELSIZE);
+								if (!search_checked[pos])
+									continue;
+								if (i == 1 && num_published_selected && num_unpublished_selected && !search_publish[pos])
+									continue;
+
+								std::stringstream info_message;
+								switch (i)
+								{
+								case 0:
+									info_message << "Deleting";
+									break;
+								case 1:
+									if (num_published_selected)
+										info_message << "Unpublishing";
+									else
+										info_message << "Publishing";
+									break;
+								case 2:
+									if (search_fav)
+										info_message << "Unfavoriting";
+									else
+										info_message << "Favoriting";
+									break;
+								}
+								info_message << " save id:" << search_ids[pos] << " (" << search_names[pos] << ")";
+
+								info_box(vid_buf, info_message.str().c_str());
+								bool ret;
+								switch (i)
+								{
+								case 0:
+									ret = execute_delete(vid_buf, search_ids[pos]);
+									break;
+								case 1:
+									if (num_published_selected)
+										ret = execute_unpublish(vid_buf, search_ids[pos]);
+									else
+										ret = execute_publish(vid_buf, search_ids[pos]);
+									break;
+								case 2:
+									if (search_fav)
+										ret = execute_unfav(vid_buf, search_ids[pos]);
+									else
+										ret = execute_fav(vid_buf, search_ids[pos]);
+									break;
+								}
+								if (ret)
+									break;
+							}
+						}
+						retrigger_search = true;
+					}
+				}
+			}
+		}
+
 		if (do_open == 1)
 		{
 			mp = 0;
 		}
 
-		if (!last)
+		if (!last || retrigger_search)
 		{
 			search = 1;
 		}
@@ -4204,7 +4385,7 @@ int report_ui(pixel* vid_buf, char *save_id, bool bug)
 					ret = execute_bug(vid_buf, ed.str);
 				else
 					ret = execute_report(vid_buf, save_id, ed.str);
-				if (ret)
+				if (!ret)
 				{
 					if (bug)
 						info_ui(vid_buf, "Success", "Feedback has been sent");
@@ -5024,23 +5205,13 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				fillrect(vid_buf, 200, YRES+MENUSIZE-68, 50, 18, 255, 255, 255, 40);
 				if (!b && bq) {
 					//Button Clicked
-					if (myown || !info->publish) {
-						if (confirm_ui(vid_buf, "Are you sure you wish to delete this?", "You will not be able recover it.", "Delete")) {
-							fillrect(vid_buf, -1, -1, XRES+BARSIZE, YRES+MENUSIZE, 0, 0, 0, 192);
-							info_box(vid_buf, "Deleting...");
-							if (execute_delete(vid_buf, save_id)) {
-								retval = 0;
-								break;
-							}
-						}
-					} else {
-						if (confirm_ui(vid_buf, "Are you sure?", "This save will be removed from the search index.", "Remove")) {
-							fillrect(vid_buf, -1, -1, XRES+BARSIZE, YRES+MENUSIZE, 0, 0, 0, 192);
-							info_box(vid_buf, "Removing...");
-							if (execute_delete(vid_buf, save_id)) {
-								retval = 0;
-								break;
-							}
+					if (confirm_ui(vid_buf, "Are you sure you wish to delete this?", "You will not be able recover it.", "Delete")) {
+						fillrect(vid_buf, -1, -1, XRES+BARSIZE, YRES+MENUSIZE, 0, 0, 0, 192);
+						info_box(vid_buf, "Deleting...");
+						if (!execute_delete(vid_buf, save_id)) {
+							retval = 0;
+							info_ui(vid_buf, "Success", "Save permanently deleted");
+							break;
 						}
 					}
 				}
@@ -5508,6 +5679,7 @@ void clear_search_results()
 			search_thsizes[i] = 0;
 		}
 		search_votes[i] = 0;
+		search_checked[i] = 0;
 	}
 }
 
@@ -5578,7 +5750,7 @@ std::vector<std::pair<std::string, int>> parse_tags(const char *tagsList, int & 
 int execute_tagop(pixel *vid_buf, const char *op, char *tag)
 {
 	int status;
-	std::string result = Request::SimpleAuth(SCHEME SERVER "/Tag.api?Op=" + std::string(op), &status, svf_user_id, svf_session_id, {
+	std::string result = Request::SimpleAuth(SCHEME SERVER "/Tag.api?Op=" + std::string(op) + "&Key=" + svf_session_key, &status, svf_user_id, svf_session_id, {
 		{ "ID", svf_id },
 		{ "Tag", tag }
 	});
@@ -5628,7 +5800,7 @@ int execute_save(pixel *vid_buf, Save *save)
 	}
 
 	int status;
-	std::string result = Request::SimpleAuth(SCHEME SERVER "/Save.api", &status, svf_user_id, svf_session_id, postData);
+	std::string result = Request::SimpleAuth(SCHEME SERVER "/Save.api?Key=" + std::string(svf_session_key), &status, svf_user_id, svf_session_id, postData);
 
 	the_game->SetReloadPoint(save);
 
@@ -5661,32 +5833,6 @@ int execute_save(pixel *vid_buf, Save *save)
 
 	svf_own = 1;
 	return 0;
-}
-
-int execute_delete(pixel *vid_buf, char *id)
-{
-	int status;
-	std::string result = Request::SimpleAuth(SCHEME SERVER "/Delete.api", &status, svf_user_id, svf_session_id, {
-		{ "ID", id }
-	});
-
-	if (status != 200)
-	{
-		error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
-		return 0;
-	}
-	if (result.find("INFO: ", 0, 6) != result.npos)
-	{
-		info_ui(vid_buf, "Info", result.substr(6));
-		return 0;
-	}
-	if (result.find("OK", 0, 2) == result.npos)
-	{
-		error_ui(vid_buf, 0, result);
-		return 0;
-	}
-
-	return 1;
 }
 
 bool ParseServerReturn(char *result, int status, bool json)
@@ -5754,12 +5900,12 @@ bool execute_submit(pixel *vid_buf, char *id, char *message)
 	int status;
 
 	std::stringstream url;
-	url <<  SCHEME << SERVER << "/Browse/Comments.json?ID=" << id;
+	url <<  SCHEME << SERVER << "/Browse/Comments.json?ID=" << id << "&Key=" << svf_session_key;
 	Request *comment = new Request(url.str());
 	comment->AuthHeaders(svf_user_id, svf_session_id);
 	comment->AddPostData({
-		 { "Comment", message }
-	 });
+		{ "Comment", message }
+	});
 	comment->Start();
 	std::string result = comment->Finish(&status);
 
@@ -5768,85 +5914,77 @@ bool execute_submit(pixel *vid_buf, char *id, char *message)
 	return ret;
 }
 
-int execute_report(pixel *vid_buf, char *id, char *reason)
+bool execute_report(pixel *vid_buf, std::string id, char *reason)
 {
 	int status;
-	std::string result = Request::SimpleAuth(SCHEME SERVER "/Report.api", &status, svf_user_id, svf_session_id, {
-		{ "ID", id },
-		{ "Reason", reason }
+	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/Report.json?ID=" + id + "&Key=" + svf_session_key, &status, svf_user_id, svf_session_id, {
+		{ "Reason", reason },
 	});
 
-	if (status != 200)
-	{
-		error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
-		return 0;
-	}
-	if (result.find("OK", 0, 2) == result.npos)
-	{
-		error_ui(vid_buf, 0, result);
-		return 0;
-	}
-
-	return 1;
+	return ParseServerReturn((char*)result.c_str(), status, true);
 }
 
-int execute_bug(pixel *vid_buf, std::string feedback)
+bool execute_bug(pixel *vid_buf, std::string feedback)
 {
 	int status;
 	std::string result = Request::SimpleAuth(UPDATESCHEME "starcatcher.us/TPT/bagelreport.lua", &status, svf_user, "", {
 		{ "bug", feedback }
+	});
+
+	if (status != 200)
+	{
+		error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
+		return true;
+	}
+	if (result.find("OK", 0, 2) == result.npos)
+	{
+		error_ui(vid_buf, 0, result);
+		return true;
+	}
+
+	return false;
+}
+
+bool execute_fav(pixel *vid_buf, std::string id)
+{
+	int status;
+	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/Favourite.json?ID=" + id + "&Key=" + svf_session_key, &status, svf_user_id, svf_session_id);
+
+	return ParseServerReturn((char*)result.c_str(), status, true);
+}
+
+bool execute_unfav(pixel *vid_buf, std::string id)
+{
+	int status;
+	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/Favourite.json?ID=" + id + "&Mode=Remove&Key=" + svf_session_key, &status, svf_user_id, svf_session_id);
+
+	return ParseServerReturn((char*)result.c_str(), status, true);
+}
+
+bool execute_delete(pixel *vid_buf, std::string id)
+{
+	int status;
+	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/Delete.json?ID=" + id + "&Mode=Delete&Key=" + svf_session_key, &status, svf_user_id, svf_session_id);
+
+	return ParseServerReturn((char*)result.c_str(), status, true);
+}
+
+bool execute_unpublish(pixel *vid_buf, std::string id)
+{
+	int status;
+	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/Delete.json?ID=" + id + "&Mode=Unpublish&Key=" + svf_session_key, &status, svf_user_id, svf_session_id);
+
+	return ParseServerReturn((char*)result.c_str(), status, true);
+}
+
+bool execute_publish(pixel *vid_buf, std::string id)
+{
+	int status;
+	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/View.json?ID=" + id + "&Key=" + svf_session_key, &status, svf_user_id, svf_session_id, {
+		 { "ActionPublish", "bagels" },
 	 });
 
-	if (status != 200)
-	{
-		error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
-		return 0;
-	}
-	if (result.find("OK", 0, 2) == result.npos)
-	{
-		error_ui(vid_buf, 0, result);
-		return 0;
-	}
-
-	return 1;
-}
-
-void execute_fav(pixel *vid_buf, char *id)
-{
-	int status;
-	std::string result = Request::SimpleAuth(SCHEME SERVER "/Favourite.api", &status, svf_user_id, svf_session_id, {
-		{ "ID", id }
-	});
-
-	if (status != 200)
-	{
-		error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
-		return;
-	}
-	if (result.find("OK", 0, 2) == result.npos)
-	{
-		error_ui(vid_buf, 0, result);
-		return;
-	}
-}
-
-void execute_unfav(pixel *vid_buf, char *id)
-{
-	int status;
-	std::string result = Request::SimpleAuth(SCHEME SERVER "/Favourite.api?Action=Remove", &status, svf_user_id, svf_session_id, {
-		{ "ID", id }
-	});
-
-	if (status != 200)
-	{
-		error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
-		return;
-	}
-	if (result.find("OK", 0, 2) == result.npos)
-	{
-		error_ui(vid_buf, 0, result);
-		return;
-	}
+	return ParseServerReturn((char*)result.c_str(), status, true);
 }
 
 ui_edit box_R;
