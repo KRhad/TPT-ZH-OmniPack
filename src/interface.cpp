@@ -114,6 +114,8 @@ char *search_owners[GRID_X*GRID_Y];
 void *search_thumbs[GRID_X*GRID_Y];
 int   search_thsizes[GRID_X*GRID_Y];
 bool  search_checked[GRID_X*GRID_Y];
+unsigned long save_held_timestamp = 0;
+bool save_held_timestamp_triggered = false;
 
 int search_own = 0;
 int search_fav = 0;
@@ -3668,7 +3670,11 @@ int search_ui(pixel *vid_buf)
 				}
 				own = (svf_login && (!strcmp(svf_user, search_owners[pos]) || svf_admin || svf_mod));
 				if (mx>=gx-2 && mx<=gx+XRES/GRID_S+3 && my>=gy && my<=gy+YRES/GRID_S+24)
+				{
 					mp = pos;
+					if (b && !bq)
+						save_held_timestamp = Platform::GetTime();
+				}
 				if ((own || search_fav) && mx>=gx+XRES/GRID_S-4 && mx<=gx+XRES/GRID_S+6 && my>=gy-6 && my<=gy+4)
 				{
 					mp = -1;
@@ -3679,10 +3685,12 @@ int search_ui(pixel *vid_buf)
 					mp = -1;
 					dap = pos;
 				}
+#ifndef TOUCHUI
 				if (!search_dates[pos] && mx >= gx + XRES/GRID_S - 17 && mx <= gx + XRES/GRID_S - 3 && my >= gy + 4 && my <= gy + 18)
 				{
 					checkp = pos;
 				}
+#endif
 				if (search_checked[pos])
 				{
 					num_selected++;
@@ -3725,12 +3733,14 @@ int search_ui(pixel *vid_buf)
 					}
 					//drawtext(vid_buf, gx-6, gy-6, "\xCE", 212, 151, 81, 255);
 				}
+#ifndef TOUCHUI
 				if (mp == pos)
 				{
 					int bColor = checkp == pos ? 100 : 0;
 					fillrect(vid_buf, gx+XRES/GRID_S-17, gy + 4, 14, 14, bColor, bColor, bColor, 255);
 					drawrect(vid_buf, gx+XRES/GRID_S-17, gy + 4, 14, 14, 230, 230, 230, 255);
 				}
+#endif
 				if (true)
 				{
 					char ts[64];
@@ -3910,7 +3920,12 @@ int search_ui(pixel *vid_buf)
 			initialOffset = mx;
 		}
 #endif
+
+#ifdef TOUCHUI
+		if (!b && bq && !touchDragged && !num_selected)
+#else
 		if (!b && bq && !touchDragged)
+#endif
 		{
 			if (mx>=XRES-64+16+xOffset && mx<=XRES-8+16+xOffset && my>=8 && my<=24 && svf_login && !search_fav)
 			{
@@ -3968,7 +3983,7 @@ int search_ui(pixel *vid_buf)
 			{
 				sprintf(ed.str, "user:%s", search_owners[mp]);
 			}
-			else if ((mp!=-1 && !st && !uih) || do_open==1)
+			else if ((mp!=-1 && !st && !uih && !save_held_timestamp_triggered) || do_open==1)
 			{
 				strcpy(search_expr, ed.str);
 				if (open_ui(vid_buf, search_ids[mp], search_dates[mp]?search_dates[mp]:NULL, sdl_mod&(KMOD_CTRL|KMOD_GUI)) || do_open==1) {
@@ -3976,6 +3991,21 @@ int search_ui(pixel *vid_buf)
 				}
 			}
 		}
+
+#ifdef TOUCHUI
+		// holding down for 600ms selects saves
+		if (b && mp != -1 && !save_held_timestamp_triggered && save_held_timestamp && Platform::GetTime() - (num_selected ? 0 : 600) > save_held_timestamp)
+		{
+			search_checked[mp] = !search_checked[mp];
+			thumb_drawn[mp] = false;
+			save_held_timestamp_triggered = true;
+		}
+		else if (!b)
+		{
+			save_held_timestamp = 0;
+			save_held_timestamp_triggered = false;
+		}
+#endif
 
 		bool retrigger_search = false;
 		if (num_selected)
