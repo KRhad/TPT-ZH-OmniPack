@@ -18,6 +18,7 @@
 #define INTERFACE_H
 #include <vector>
 #include <string>
+#include <ctime>
 #include "defines.h"
 #include "graphics/Pixel.h"
 #include "graphics/ARGBColour.h"
@@ -89,10 +90,12 @@ typedef struct ui_copytext ui_copytext;
 #define NUM_COMMENTS 200
 struct save_info
 {
-	char *title;
 	char *name;
 	char *author;
-	char *date;
+	long createdDate;
+	long updatedDate;
+	char *createdDateStr;
+	char *updatedDateStr;
 	char *description;
 	int publish;
 	int voteup;
@@ -103,6 +106,7 @@ struct save_info
 	int myfav;
 	char *tags;
 	int comment_count;
+	int loaded_comment_count;
 	//char *comments[NUM_COMMENTS];
 	ui_label comments[NUM_COMMENTS];
 	char *commentauthors[NUM_COMMENTS];
@@ -302,7 +306,7 @@ void init_color_boxes();
 
 void decoration_editor(pixel *vid_buf, int b, int bq, int mx, int my);
 
-void converttotime(const char *timestamp, char **timestring, int show_day, int show_year, int show_time);
+void converttotime(time_t timestamp, char **timestring, int show_day, int show_year, int show_time);
 
 void clear_save_info();
 

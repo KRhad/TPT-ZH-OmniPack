@@ -2810,7 +2810,7 @@ void menu_draw_text(Tool* over, int y)
 		else if (toolID == FAV_DATE)
 		{
 			char *time;
-			converttotime("1300000000", &time, -1, -1, -1);
+			converttotime(1300000000, &time, -1, -1, -1);
 			toolTip << time;
 		}
 	}
@@ -4457,15 +4457,15 @@ int report_ui(pixel* vid_buf, char *save_id, bool bug)
 	return 0;
 }
 
-void converttotime(const char *timestamp, char **timestring, int show_day, int show_year, int show_time)
+void converttotime(time_t timestamp, char **timestring, int show_day, int show_year, int show_time)
 {
 	int curr_tm_year, curr_tm_yday;
 	char *tempstring = (char*)calloc(63,sizeof(char*));
 	struct tm * stamptime, * currtime;
-	time_t stamptime2 = atoi(timestamp), currtime2 = time(NULL);
+	time_t currtime2 = time(NULL);
 	currtime = localtime(&currtime2);
 	curr_tm_year = currtime->tm_year; curr_tm_yday = currtime->tm_yday;
-	stamptime = localtime(&stamptime2);
+	stamptime = localtime(&timestamp);
 	*timestring = (char*)calloc(63,sizeof(char*));
 
 	if (dateformat >= 12 && (show_day || show_year))
@@ -4676,7 +4676,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 		saveDataDownload = new Request(uri.str());
 
 		uri.str("");
-		uri << STATICSCHEME << STATICSERVER << "/" << save_id << "_" << save_date << ".info";
+		uri << SCHEME << SERVER << "/Browse/View.json?ID=" << save_id << "&Date=" << save_date;
 		saveInfoDownload = new Request(uri.str());
 
 		if (!instant_open)
@@ -4694,7 +4694,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 		saveDataDownload = new Request(uri.str());
 
 		uri.str("");
-		uri << STATICSCHEME << STATICSERVER << "/" << save_id << ".info";
+		uri << SCHEME << SERVER << "/Browse/View.json?ID=" << save_id;
 		saveInfoDownload = new Request(uri.str());
 
 		if (!instant_open)
@@ -4771,16 +4771,18 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 					}
 					else if (!fake404save && !strlen(info->author))
 					{
-						if (info->title) free(info->title);
 						if (info->name) free(info->name);
 						if (info->author) free(info->author);
-						if (info->date) free(info->date);
+						if (info->createdDateStr) free(info->createdDateStr);
+						if (info->createdDateStr) free(info->updatedDateStr);
 						if (info->description) free(info->description);
 						if (info->tags) free(info->tags);
-						info->title = mystrdup("Save doesn't exist");
 						info->name = mystrdup("Save doesn't exist");
 						info->author = mystrdup("FourOhFour");
-						info->date = mystrdup("December 2010");
+						info->createdDate = 0;
+						info->updatedDate = 0;
+						info->createdDateStr = mystrdup("December 2010");
+						info->updatedDateStr = mystrdup("December 2010");
 						info->description = mystrdup("I DUNNO LOL");
 						info->tags = mystrdup("");
 
@@ -4853,12 +4855,12 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				if (!comment_data.empty() && (root = cJSON_Parse(comment_data.c_str())))
 				{
 					if (comment_page == 0)
-						info->comment_count = cJSON_GetArraySize(root);
+						info->loaded_comment_count = cJSON_GetArraySize(root);
 					else
-						info->comment_count += cJSON_GetArraySize(root);
-					if (info->comment_count > NUM_COMMENTS)
-						info->comment_count = NUM_COMMENTS;
-					for (int i = comment_page*20; i < info->comment_count; i++)
+						info->loaded_comment_count += cJSON_GetArraySize(root);
+					if (info->loaded_comment_count > NUM_COMMENTS)
+						info->loaded_comment_count = NUM_COMMENTS;
+					for (int i = comment_page*20; i < info->loaded_comment_count; i++)
 					{
 						commentobj = cJSON_GetArrayItem(root, i%20);
 						if (commentobj)
@@ -4875,7 +4877,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 							if((tmpobj = cJSON_GetObjectItem(commentobj, "UserID")) && tmpobj->type == cJSON_String) { info->commentauthorIDs[i] = (char*)calloc(16,sizeof(char*)); strncpy(info->commentauthorIDs[i], tmpobj->valuestring, 16); }
 							//if((tmpobj = cJSON_GetObjectItem(commentobj, "Gravatar")) && tmpobj->type == cJSON_String) { info->commentauthors[i] = (char*)calloc(63,sizeof(char*)); strncpy(info->commentauthors[i], tmpobj->valuestring, 63); }
 							if((tmpobj = cJSON_GetObjectItem(commentobj, "Text")) && tmpobj->type == cJSON_String)  { strncpy(info->comments[i].str, tmpobj->valuestring, 1023); }
-							if((tmpobj = cJSON_GetObjectItem(commentobj, "Timestamp")) && tmpobj->type == cJSON_String) { converttotime(tmpobj->valuestring, &info->commenttimestamps[i], -1, -1, -1); }
+							if((tmpobj = cJSON_GetObjectItem(commentobj, "Timestamp")) && tmpobj->type == cJSON_String) { converttotime(atoi(tmpobj->valuestring), &info->commenttimestamps[i], -1, -1, -1); }
 						}
 					}
 					cJSON_Delete(root);
@@ -4902,11 +4904,30 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 			}
 			if (info_ready && !hasdrawninfo) {
 				//Render all the save information
-				cix = drawtext(vid_buf, 60, (YRES/2)+60, info->name, 255, 255, 255, 255);
-				cix = drawtext(vid_buf, 60, (YRES/2)+72, "Author:", 255, 255, 255, 155);
+
+				int authorWidth = textwidth("Author: ");
+				int dateWidth = textwidth("Date ");
+				int mainWidth = textwidth(info->author) + textwidth("Created: ") + textwidth(info->updatedDateStr) + 12;
+				int viewCounterWidth = textwidth(viewcountbuffer) + textwidth("Views:") + 4;
+				int minimumSpace = (XRES/2) - 12 - mainWidth - viewCounterWidth;
+
+				drawtext(vid_buf, 60, (YRES/2)+60, info->name, 255, 255, 255, 255);
+				cix = 56;
+				if (minimumSpace - authorWidth > 0)
+					cix = drawtext(vid_buf, cix+4, (YRES/2)+72, "Author:", 255, 255, 255, 155);
 				cix = drawtext(vid_buf, cix+4, (YRES/2)+72, info->author, 255, 255, 255, 255);
-				cix = drawtext(vid_buf, cix+4, (YRES/2)+72, "Date Updated:", 255, 255, 255, 155);
-				cix = drawtext(vid_buf, cix+4, (YRES/2)+72, info->date, 255, 255, 255, 255);
+
+				// determine string based on if this save has history, and available text width
+				std::string dateStr;
+				if (info->updatedDate > info->createdDate)
+					dateStr = "Updated:";
+				else
+					dateStr = "Created:";
+				if (minimumSpace - authorWidth - dateWidth > 0)
+					dateStr = "Date " + dateStr;
+				cix = drawtext(vid_buf, cix+4, (YRES/2)+72, dateStr.c_str(), 255, 255, 255, 155);
+				cix = drawtext(vid_buf, cix+4, (YRES/2)+72, info->updatedDateStr, 255, 255, 255, 255);
+
 				if(info->downloadcount){
 					drawtext(vid_buf, 48+(XRES/2)-textwidth(viewcountbuffer)-textwidth("Views:")-4, (YRES/2)+72, "Views:", 255, 255, 255, 155);
 					drawtext(vid_buf, 48+(XRES/2)-textwidth(viewcountbuffer), (YRES/2)+72, viewcountbuffer, 255, 255, 255, 255);
@@ -4958,7 +4979,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				ccy = 0;
 				info->comments[0].y = 72+comment_scroll;
 				clearrect(vid_buf, 52+(XRES/2), 51, XRES+BARSIZE-100-((XRES/2)+2), YRES+MENUSIZE-101);
-				for (cc=0; cc<info->comment_count; cc++)
+				for (cc=0; cc<info->loaded_comment_count; cc++)
 				{
 					 //Try not to draw off the screen
 					if (ccy + 72 + comment_scroll<YRES+MENUSIZE-56)
@@ -5042,12 +5063,12 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 							if (cc < NUM_COMMENTS-1)
 								info->comments[cc+1].y = info->comments[cc].y + change + 22;
 
-							if (ccy+comment_scroll < 50 && cc == info->comment_count-1 && commentsDownloadStarted) // disable scrolling until more comments have loaded
+							if (ccy+comment_scroll < 50 && cc == info->loaded_comment_count-1 && commentsDownloadStarted) // disable scrolling until more comments have loaded
 							{
 								disable_scrolling = 1;
 								scroll_velocity = 0.0f;
 							}
-							if (ccy+comment_scroll < 0 && cc == info->comment_count-1 && !commentsDownloadStarted) // reset to top of comments
+							if (ccy+comment_scroll < 0 && cc == info->loaded_comment_count-1 && !commentsDownloadStarted) // reset to top of comments
 							{
 								comment_scroll = 0;
 								comment_scroll_float = 0.0f;
@@ -5057,7 +5078,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 							//draw the line that separates comments
 							if (ccy+52+comment_scroll<YRES+MENUSIZE-56 && ccy+comment_scroll>-2)
 							{
-								draw_line(vid_buf, 50+(XRES/2)+2, ccy+52+comment_scroll, XRES+BARSIZE-51, ccy+52+comment_scroll, (cc == info->comment_count-1 && (info->comment_count%20))?175:100, 100, 100, XRES+BARSIZE);
+								draw_line(vid_buf, 50+(XRES/2)+2, ccy+52+comment_scroll, XRES+BARSIZE-51, ccy+52+comment_scroll, (cc == info->loaded_comment_count-1 && (info->loaded_comment_count%20))?175:100, 100, 100, XRES+BARSIZE);
 							}
 						}
 					}
@@ -5067,7 +5088,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 							commentNum = cc;
 						break;
 					}
-					if (cc == info->comment_count-1 && !commentsDownloadStarted && comment_page < NUM_COMMENTS/20 && !(info->comment_count%20))
+					if (cc == info->loaded_comment_count-1 && !commentsDownloadStarted && comment_page < NUM_COMMENTS/20 && !(info->loaded_comment_count%20))
 					{
 						std::stringstream uri;
 						uri << SCHEME << SERVER << "/Browse/Comments.json?ID=" << save_id << "&Start=" << (comment_page+1)*20 << "&Count=20";
@@ -5081,9 +5102,9 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				}
 
 				if (!commentNum)
-					commentNum = info->comment_count;
+					commentNum = info->loaded_comment_count;
 				char pageText[128];
-				sprintf(pageText, "Page %i of %i%s", commentNum/20+1, info->comment_count/20+1, (info->comment_count%20)?"":"+");
+				sprintf(pageText, "Page %i of %i", commentNum/20+1, info->comment_count/20+1);
 				drawtext(vid_buf, XRES+BARSIZE-190, YRES+MENUSIZE-43, pageText, 255, 255, 255, 255);
 
 				//memcpy(old_vid, vid_buf, ((XRES+BARSIZE)*(YRES+MENUSIZE))*PIXELSIZE);
@@ -5283,7 +5304,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 							if (info->commenttimestamps[i]) { free(info->commenttimestamps[i]); info->commenttimestamps[i] = NULL; }
 						}
 						comment_page = 0;
-						info->comment_count = 0;
+						info->loaded_comment_count = 0;
 						comment_scroll = 0;
 						comment_scroll_float = 0.0f;
 						scroll_velocity = 0.0f;
@@ -5425,7 +5446,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 					{
 						DefaultSaveInfo();
 						authors["published"] = info->publish;
-						authors["date"] = info->date; // this is WRONG but we don't get any better info until I use the new api
+						authors["date"] = (double)info->updatedDate;
 					}
 					else
 					{
@@ -5511,7 +5532,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 		thumbnailDownload->Cancel();
 	if (commentsDownload)
 		commentsDownload->Cancel();
-	info_parse("", info);
+	info_parse(nullptr, info);
 	free(info);
 	free(old_vid);
 	if (thumb_data) free(thumb_data);
@@ -5522,16 +5543,13 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 
 int info_parse(const char *info_data, save_info *info)
 {
-	int i,j;
-	char *p, *q;
-
-	if (info->title) free(info->title);
 	if (info->name) free(info->name);
 	if (info->author) free(info->author);
-	if (info->date) free(info->date);
+	if (info->createdDateStr) free(info->createdDateStr);
+	if (info->createdDateStr) free(info->updatedDateStr);
 	if (info->description) free(info->description);
 	if (info->tags) free(info->tags);
-	for (i=0;i<NUM_COMMENTS;i++)
+	for (int i = 0; i < NUM_COMMENTS; i++)
 	{
 		if (info->commentauthors[i]) free(info->commentauthors[i]);
 		if (info->commentauthorsunformatted[i]) free(info->commentauthorsunformatted[i]);
@@ -5539,7 +5557,7 @@ int info_parse(const char *info_data, save_info *info)
 		if (info->commenttimestamps[i]) free(info->commenttimestamps[i]);
 	}
 	memset(info, 0, sizeof(save_info));
-	for (i = 0; i < NUM_COMMENTS; i++)
+	for (int i = 0; i < NUM_COMMENTS; i++)
 	{
 		ui_label_init(&info->comments[i], 61+(XRES/2), 0, XRES+BARSIZE-107-(XRES/2), 0);
 	}
@@ -5547,106 +5565,60 @@ int info_parse(const char *info_data, save_info *info)
 	if (!info_data || !*info_data)
 		return 0;
 
-	i = 0;
-	j = 0;
-	do_open = 0;
-	while (1)
+	cJSON *root;
+	if ((root = cJSON_Parse(info_data)))
 	{
-		if (!*info_data)
-			break;
-		p = (char*)strchr(info_data, '\n');
-		if (!p)
-			p = (char*)(info_data + strlen(info_data));
-		else
-			*(p++) = 0;
+		//int saveID = cJSON_GetObjectItem(root, "ID")->valueint;
+		int scoreUp = cJSON_GetObjectItem(root, "ScoreUp")->valueint;
+		int scoreDown = cJSON_GetObjectItem(root, "ScoreDown")->valueint;
+		int scoreMine = cJSON_GetObjectItem(root, "ScoreMine")->valueint;
+		std::string username = cJSON_GetObjectItem(root, "Username")->valuestring;
+		std::string name = cJSON_GetObjectItem(root, "Name")->valuestring;
+		std::string description = cJSON_GetObjectItem(root, "Description")->valuestring;
+		int createdDate = cJSON_GetObjectItem(root, "DateCreated")->valueint;
+		int updatedDate = cJSON_GetObjectItem(root, "Date")->valueint;
+		bool published = cJSON_GetObjectItem(root, "Published")->valueint == 1;
+		bool favorite = cJSON_GetObjectItem(root, "Favourite")->valueint == 1;
+		int numComments = cJSON_GetObjectItem(root, "Comments")->valueint;
+		bool numViews = cJSON_GetObjectItem(root, "Views")->valueint;
+		//bool version = cJSON_GetObjectItem(root, "Version")->valueint;
 
-		if (!strncmp(info_data, "TITLE ", 6))
+		std::stringstream tagStream;
+		cJSON *tags = cJSON_GetObjectItem(root, "Tags");
+		if (tags)
 		{
-			info->title = mystrdup(info_data+6);
-			j++;
-		}
-		else if (!strncmp(info_data, "NAME ", 5))
-		{
-			info->name = mystrdup(info_data+5);
-			j++;
-		}
-		else if (!strncmp(info_data, "AUTHOR ", 7))
-		{
-			info->author = mystrdup(info_data+7);
-			j++;
-		}
-		else if (!strncmp(info_data, "DATE ", 5))
-		{
-			info->date = mystrdup(info_data+5);
-			j++;
-		}
-		else if (!strncmp(info_data, "DESCRIPTION ", 12))
-		{
-			info->description = mystrdup(info_data+12);
-			j++;
-		}
-		else if (!strncmp(info_data, "VOTEUP ", 7))
-		{
-			info->voteup = atoi(info_data+7);
-			j++;
-		}
-		else if (!strncmp(info_data, "VOTEDOWN ", 9))
-		{
-			info->votedown = atoi(info_data+9);
-			j++;
-		}
-		else if (!strncmp(info_data, "VOTE ", 5))
-		{
-			info->vote = atoi(info_data+5);
-			j++;
-		}
-		else if (!strncmp(info_data, "MYVOTE ", 7))
-		{
-			info->myvote = atoi(info_data+7);
-			j++;
-		}
-		else if (!strncmp(info_data, "DOWNLOADS ", 10))
-		{
-			info->downloadcount = atoi(info_data+10);
-			j++;
-		}
-		else if (!strncmp(info_data, "MYFAV ", 6))
-		{
-			info->myfav = atoi(info_data+6);
-			j++;
-		}
-		else if (!strncmp(info_data, "PUBLISH ", 8))
-		{
-			info->publish = atoi(info_data+8);
-			j++;
-		}
-		else if (!strncmp(info_data, "TAGS ", 5))
-		{
-			info->tags = mystrdup(info_data+5);
-			j++;
-		}
-		else if (!strncmp(info_data, "COMMENT ", 8))
-		{
-			if (info->comment_count>=NUM_COMMENTS) {
-				info_data = p;
-				continue;
-			} else {
-				q = (char*)strchr(info_data+8, ' ');
-				*(q++) = 0;
-				info->commentauthors[info->comment_count] = mystrdup(info_data+8);
-				info->commentauthorsunformatted[info->comment_count] = mystrdup(info_data+8);
-				strncpy(info->comments[info->comment_count].str,q, 1023);
-				info->comment_count++;
+			int numTags = cJSON_GetArraySize(tags);
+			for (int i = 0; i < numTags; i++)
+			{
+				if (i != 0)
+					tagStream << " ";
+				tagStream << cJSON_GetArrayItem(tags, i)->valuestring;
 			}
-			j++;
 		}
-		info_data = p;
+
+
+		info->name = mystrdup(name.c_str());
+		info->description = mystrdup(description.c_str());
+		info->author = mystrdup(username.c_str());
+		converttotime(createdDate, &info->createdDateStr, 2, 2, 2);
+		converttotime(updatedDate, &info->updatedDateStr, 2, 2, 2);
+		info->createdDate = createdDate;
+		info->updatedDate = updatedDate;
+		info->voteup = scoreUp;
+		info->votedown = scoreDown;
+		info->vote = scoreUp - scoreDown;
+		info->myvote = scoreMine;
+		info->comment_count = numComments;
+		info->loaded_comment_count = 0;
+		info->downloadcount = numViews;
+		info->myfav = favorite;
+		info->publish = published;
+		info->tags = mystrdup(tagStream.str().c_str());
 	}
-	if (j>=8) {
-		return 1;
-	} else {
-		return -1;
-	}
+
+	do_open = 0;
+
+	return 1;
 }
 
 Request * search_saves(int start, int count, std::string query, std::string sort, std::string category)
@@ -5669,8 +5641,6 @@ Request * search_saves(int start, int count, std::string query, std::string sort
 	{
 		urlStream << "&Category=" << Format::URLEncode(category);
 	}
-
-	std::cout << urlStream.str() << std::endl;
 
 	Request *ret = new Request(urlStream.str());
 	if (svf_login)

@@ -310,15 +310,14 @@ void SetLeftHudText(Simulation * sim, float FPSB2)
 	if (currentHud[36] || currentHud[37] || currentHud[38])
 	{
 		time_t time2 = time(0);
-		char time[256], *timestr = NULL;
-		sprintf(time,"%li", (long)time2);
+		char *timestr = NULL;
 
 		if (strlen(uitext))
 		{
 			uitext[strlen(uitext)-1] = ',';
 			strappend(uitext," ");
 		}
-		converttotime(time,&timestr,currentHud[36],currentHud[38],currentHud[37]);
+		converttotime(time2,&timestr,currentHud[36],currentHud[38],currentHud[37]);
 		strappend(uitext,timestr);
 		strappend(uitext,", ");
 		free(timestr);
