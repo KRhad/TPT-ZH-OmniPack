@@ -334,6 +334,7 @@ void ui_edit_process(int mx, int my, int mb, int mbq, ui_edit *ed)
 	}
 	if (ed->focus && sdl_key)
 	{
+		ed->numClicks = 0;
 		l = strlen(ed->str);
 		switch (sdl_key)
 		{
@@ -534,9 +535,6 @@ void ui_edit_process(int mx, int my, int mb, int mbq, ui_edit *ed)
 			{
 				if (!(c >= ' ' && c < 127 && l < ed->limit))
 					break;
-			}
-			for (std::string::value_type c : sdl_textinput)
-			{
 				if (ed->highlightlength)
 				{
 					memmove(ed->str+ed->highlightstart, ed->str+ed->highlightstart+ed->highlightlength, l-ed->highlightstart);
