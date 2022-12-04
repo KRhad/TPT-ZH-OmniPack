@@ -20,6 +20,10 @@
 #ifdef _MSC_VER
 #undef chdir
 #define chdir _chdir //chdir is deprecated in visual studio
+#undef DeleteFile
+#ifndef PATH_MAX
+#define PATH_MAX MAX_PATH
+#endif
 #endif
 #else
 #include <dirent.h>

@@ -43,6 +43,10 @@
 #include "simulation/elements/LIFE.h"
 #include "simulation/elements/STKM.h"
 
+#ifdef _MSC_VER
+#undef DeleteFile
+#endif
+
 static int32_t int32_truncate(double n)
 {
 	if (n >= 0x1p31)

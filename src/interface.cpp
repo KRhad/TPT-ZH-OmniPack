@@ -35,7 +35,6 @@
 #else
 #include <windows.h>
 #endif
-#include <shellapi.h>
 #endif
 #if defined(LIN) || defined(MACOSX)
 #include <sys/stat.h>
