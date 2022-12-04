@@ -87,7 +87,6 @@ struct ui_copytext
 };
 typedef struct ui_copytext ui_copytext;
 
-#define NUM_COMMENTS 200
 struct save_info
 {
 	char *name;
@@ -107,12 +106,12 @@ struct save_info
 	char *tags;
 	int comment_count;
 	int loaded_comment_count;
-	//char *comments[NUM_COMMENTS];
-	ui_label comments[NUM_COMMENTS];
-	char *commentauthors[NUM_COMMENTS];
-	char *commentauthorsunformatted[NUM_COMMENTS];
-	char *commentauthorIDs[NUM_COMMENTS];
-	char *commenttimestamps[NUM_COMMENTS];
+	std::vector<ui_label> comments;
+	std::vector<int> expectedCommentHeight;
+	std::vector<std::string> commentauthors;
+	std::vector<std::string> commentauthorsunformatted;
+	std::vector<std::string> commentauthorIDs;
+	std::vector<std::string> commenttimestamps;
 };
 typedef struct save_info save_info;
 

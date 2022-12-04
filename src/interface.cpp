@@ -1857,8 +1857,10 @@ bool login_ui(pixel *vid_buf)
 					}
 					else
 						error_ui(vid_buf, 0, "Could not read Error response");
+					cJSON_Delete(root);
 					goto fail;
 				}
+				cJSON_Delete(root);
 			}
 			else
 			{
@@ -2810,6 +2812,7 @@ void menu_draw_text(Tool* over, int y)
 			char *time;
 			converttotime(1300000000, &time, -1, -1, -1);
 			toolTip << time;
+			free(time);
 		}
 	}
 	else
@@ -3662,7 +3665,7 @@ int search_ui(pixel *vid_buf)
 						thumb_rsdata = resample_img(thumb_imgdata, finw, finh, XRES/GRID_S, YRES/GRID_S);
 						draw_image(v_buf, thumb_rsdata, gx-touchOffset, gy, XRES/GRID_S, YRES/GRID_S, 255);
 						free(thumb_imgdata);
-						free(thumb_rsdata);
+						delete[] thumb_rsdata;
 					}
 					thumb_drawn[pos] = 1;
 				}
@@ -3812,7 +3815,7 @@ int search_ui(pixel *vid_buf)
 			drawrect(vid_buf, gx-2, gy-3, w+4, h, 160, 160, 192, 255);
 			if (search_thumbs[mp]){
 				if(mp != nmp && bthumb_rsdata){
-					free(bthumb_rsdata);
+					delete[] bthumb_rsdata;
 					bthumb_rsdata = NULL;
 				}
 				if(!bthumb_rsdata){
@@ -4281,6 +4284,10 @@ int search_ui(pixel *vid_buf)
 					req->Start();
 					thumbDownloads.push_back(thumbDownloadInfo(req, imgID, pos));
 				}
+				else if (imgID)
+				{
+					free(imgID);
+				}
 				saveListDownload = nullptr;
 			}
 		}
@@ -4340,7 +4347,7 @@ finish:
 	}
 			
 	if(bthumb_rsdata){
-		free(bthumb_rsdata);
+		delete[] bthumb_rsdata;
 		bthumb_rsdata = NULL;
 	}
 
@@ -4842,41 +4849,39 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 			if (status == 200)
 			{
 				cJSON *root, *commentobj, *tmpobj;
-				for (int i = comment_page*20; i < comment_page*20+20 && i < NUM_COMMENTS; i++)
-				{
-					info->comments[i].str[0] = 0;
-					if (info->commentauthors[i]) { free(info->commentauthors[i]); info->commentauthors[i] = NULL; }
-					if (info->commentauthorsunformatted[i]) { free(info->commentauthorsunformatted[i]); info->commentauthorsunformatted[i] = NULL; }
-					if (info->commentauthorIDs[i]) { free(info->commentauthorIDs[i]); info->commentauthorIDs[i] = NULL; }
-					if (info->commenttimestamps[i]) { free(info->commenttimestamps[i]); info->commenttimestamps[i] = NULL; }
-				}
 				if (!comment_data.empty() && (root = cJSON_Parse(comment_data.c_str())))
 				{
 					if (comment_page == 0)
 						info->loaded_comment_count = cJSON_GetArraySize(root);
 					else
 						info->loaded_comment_count += cJSON_GetArraySize(root);
-					if (info->loaded_comment_count > NUM_COMMENTS)
-						info->loaded_comment_count = NUM_COMMENTS;
 					for (int i = comment_page*20; i < info->loaded_comment_count; i++)
 					{
+						std::string author, authorunformatted, authorID, comment, timestamp;
 						commentobj = cJSON_GetArrayItem(root, i%20);
 						if (commentobj)
 						{
 							if ((tmpobj = cJSON_GetObjectItem(commentobj, "FormattedUsername")) && tmpobj->type == cJSON_String)
 							{
-								info->commentauthors[i] = (char*)calloc(63,sizeof(char*));
 								if (!strcmp(tmpobj->valuestring, "jacobot"))
-									sprintf(info->commentauthors[i], "\bt%s", tmpobj->valuestring);
+									author = std::string("\bt") + tmpobj->valuestring;
 								else
-									strncpy(info->commentauthors[i], tmpobj->valuestring, 63);
+									author = tmpobj->valuestring;
 							}
-							if((tmpobj = cJSON_GetObjectItem(commentobj, "Username")) && tmpobj->type == cJSON_String) { info->commentauthorsunformatted[i] = (char*)calloc(63,sizeof(char*)); strncpy(info->commentauthorsunformatted[i], tmpobj->valuestring, 63); }
-							if((tmpobj = cJSON_GetObjectItem(commentobj, "UserID")) && tmpobj->type == cJSON_String) { info->commentauthorIDs[i] = (char*)calloc(16,sizeof(char*)); strncpy(info->commentauthorIDs[i], tmpobj->valuestring, 16); }
-							//if((tmpobj = cJSON_GetObjectItem(commentobj, "Gravatar")) && tmpobj->type == cJSON_String) { info->commentauthors[i] = (char*)calloc(63,sizeof(char*)); strncpy(info->commentauthors[i], tmpobj->valuestring, 63); }
-							if((tmpobj = cJSON_GetObjectItem(commentobj, "Text")) && tmpobj->type == cJSON_String)  { strncpy(info->comments[i].str, tmpobj->valuestring, 1023); }
-							if((tmpobj = cJSON_GetObjectItem(commentobj, "Timestamp")) && tmpobj->type == cJSON_String) { converttotime(atoi(tmpobj->valuestring), &info->commenttimestamps[i], -1, -1, -1); }
+							if((tmpobj = cJSON_GetObjectItem(commentobj, "Username")) && tmpobj->type == cJSON_String) { authorunformatted = tmpobj->valuestring; }
+							if((tmpobj = cJSON_GetObjectItem(commentobj, "UserID")) && tmpobj->type == cJSON_String) { authorID = tmpobj->valuestring; }
+							//if((tmpobj = cJSON_GetObjectItem(commentobj, "Gravatar")) && tmpobj->type == cJSON_String) { gravatar? = tmpobj->valuestring; }
+							if((tmpobj = cJSON_GetObjectItem(commentobj, "Text")) && tmpobj->type == cJSON_String)  { comment = tmpobj->valuestring; }
+							if((tmpobj = cJSON_GetObjectItem(commentobj, "Timestamp")) && tmpobj->type == cJSON_String) { char * timestring; converttotime(atoi(tmpobj->valuestring), &timestring, -1, -1, -1); timestamp = timestring; free(timestring); }
 						}
+						info->commentauthors.push_back(author);
+						info->commentauthorsunformatted.push_back(authorunformatted);
+						info->commentauthorIDs.push_back(authorID);
+						info->comments.push_back(ui_label());
+						ui_label_init(&info->comments[i], 61+(XRES/2), 0, XRES+BARSIZE-107-(XRES/2), 0);
+						strncpy(info->comments[i].str, comment.c_str(), 1023);
+						info->expectedCommentHeight.push_back(0);
+						info->commenttimestamps.push_back(timestamp);
 					}
 					cJSON_Delete(root);
 				}
@@ -4888,14 +4893,14 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 		{
 			if (save_pic_thumb!=NULL && !hasdrawncthumb) {
 				draw_image(vid_buf, save_pic_thumb, 51, 51, XRES/2, YRES/2, 255);
-				free(save_pic_thumb);
+				delete[] save_pic_thumb;
 				save_pic_thumb = NULL;
 				hasdrawncthumb = 1;
 				memcpy(old_vid, vid_buf, ((XRES+BARSIZE)*(YRES+MENUSIZE))*PIXELSIZE);
 			}
 			if (thumb_data_ready && !hasdrawnthumb) {
 				draw_image(vid_buf, save_pic, 51, 51, XRES/2, YRES/2, 255);
-				free(save_pic);
+				delete[] save_pic;
 				save_pic = NULL;
 				hasdrawnthumb = 1;
 				memcpy(old_vid, vid_buf, ((XRES+BARSIZE)*(YRES+MENUSIZE))*PIXELSIZE);
@@ -4975,41 +4980,42 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 			{
 				int commentNum = 0;
 				ccy = 0;
-				info->comments[0].y = 72+comment_scroll;
+				if (info->loaded_comment_count)
+					info->comments[0].y = 72+comment_scroll;
 				clearrect(vid_buf, 52+(XRES/2), 51, XRES+BARSIZE-100-((XRES/2)+2), YRES+MENUSIZE-101);
 				for (cc=0; cc<info->loaded_comment_count; cc++)
 				{
 					 //Try not to draw off the screen
 					if (ccy + 72 + comment_scroll<YRES+MENUSIZE-56)
 					{
-						if (ccy+comment_scroll >= 0 && info->commentauthors[cc]) //Don't draw above the screen either
+						if (ccy+comment_scroll >= 0) //Don't draw above the screen either
 						{
 							int r = 255, g = 255, bl = 255;
-							if (!strcmp(info->commentauthors[cc], svf_user))
+							if (info->commentauthors[cc] == svf_user)
 							{
 								bl = 100;
 							}
-							else if (!strcmp(info->commentauthors[cc], info->author))
+							else if (info->commentauthors[cc] == info->author)
 							{
 								g = 100;
 								bl = 100;
 							}
 
-							if (show_ids && info->commentauthorIDs[cc]) //Draw author id
+							if (show_ids) //Draw author id
 							{
-								drawtext(vid_buf, 265+(XRES/2)-textwidth(info->commentauthorIDs[cc]), ccy+60+comment_scroll, info->commentauthorIDs[cc], 255, 255, 0, 255);
-								if (!b && bq && mx > 265+(XRES/2)-textwidth(info->commentauthorIDs[cc]) && mx < 265+(XRES/2) && my > ccy+58+comment_scroll && my < ccy+70+comment_scroll && my < YRES+MENUSIZE-76-ed.h+2)
+								drawtext(vid_buf, 265+(XRES/2)-textwidth(info->commentauthorIDs[cc].c_str()), ccy+60+comment_scroll, info->commentauthorIDs[cc].c_str(), 255, 255, 0, 255);
+								if (!b && bq && mx > 265+(XRES/2)-textwidth(info->commentauthorIDs[cc].c_str()) && mx < 265+(XRES/2) && my > ccy+58+comment_scroll && my < ccy+70+comment_scroll && my < YRES+MENUSIZE-76-ed.h+2)
 									show_ids = 0;
 							}
-							else if (info->commenttimestamps[cc]) //, or draw timestamp
+							else //, or draw timestamp
 							{
-								drawtext(vid_buf, 265+(XRES/2)-textwidth(info->commenttimestamps[cc]), ccy+60+comment_scroll, info->commenttimestamps[cc], 255, 255, 0, 255);
-								if (!b && bq && mx > 265+(XRES/2)-textwidth(info->commenttimestamps[cc]) && mx < 265+(XRES/2) && my > ccy+58+comment_scroll && my < ccy+70+comment_scroll && my < YRES+MENUSIZE-76-ed.h+2)
+								drawtext(vid_buf, 265+(XRES/2)-textwidth(info->commenttimestamps[cc].c_str()), ccy+60+comment_scroll, info->commenttimestamps[cc].c_str(), 255, 255, 0, 255);
+								if (!b && bq && mx > 265+(XRES/2)-textwidth(info->commenttimestamps[cc].c_str()) && mx < 265+(XRES/2) && my > ccy+58+comment_scroll && my < ccy+70+comment_scroll && my < YRES+MENUSIZE-76-ed.h+2)
 									show_ids = 1;
 							}
-							drawtext(vid_buf, 61+(XRES/2), ccy+60+comment_scroll, info->commentauthors[cc], r, g, bl, 255); //Draw author
+							drawtext(vid_buf, 61+(XRES/2), ccy+60+comment_scroll, info->commentauthors[cc].c_str(), r, g, bl, 255); //Draw author
 
-							if (!b && bq && mx > 61+(XRES/2) && mx < 61+(XRES/2)+textwidth(info->commentauthors[cc]) && my > ccy+58+comment_scroll && my < ccy+70+comment_scroll && my < YRES+MENUSIZE-76-ed.h+2)
+							if (!b && bq && mx > 61+(XRES/2) && mx < 61+(XRES/2)+textwidth(info->commentauthors[cc].c_str()) && my > ccy+58+comment_scroll && my < ccy+70+comment_scroll && my < YRES+MENUSIZE-76-ed.h+2)
 							{
 								if (sdl_mod & (KMOD_CTRL|KMOD_GUI)) //open profile
 								{
@@ -5019,7 +5025,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 								}
 								else if (sdl_mod & KMOD_SHIFT) //, or search for a user's saves
 								{
-									sprintf(search_expr,"user:%s", info->commentauthorsunformatted[cc]);
+									sprintf(search_expr,"user:%s", info->commentauthorsunformatted[cc].c_str());
 									search_own = 0;
 									search_page = 0;
 									search_ui(vid_buf);
@@ -5028,9 +5034,9 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 								}
 								else //copy name to comment box
 								{
-									if (strlen(ed.str) + strlen(info->commentauthorsunformatted[cc]) < 1023)
+									if (strlen(ed.str) + info->commentauthorsunformatted[cc].length() < 1023)
 									{
-										strappend(ed.str, info->commentauthorsunformatted[cc]);
+										strappend(ed.str, info->commentauthorsunformatted[cc].c_str());
 										strappend(ed.str, ": ");
 #ifndef TOUCHUI
 										dofocus = 1;
@@ -5049,16 +5055,24 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 							else                        // else set how much can be drawn until it goes off the screen
 								info->comments[cc].maxHeight = YRES+MENUSIZE-41 - (ccy + 72 + comment_scroll);
 
-							change = ui_label_draw(vid_buf, &info->comments[cc]); // draw the comment
+							// If comment is above screen, don't try to render it
+							if (info->expectedCommentHeight[cc] && ccy + info->expectedCommentHeight[cc] + comment_scroll < -2)
+							{
+								change = info->expectedCommentHeight[cc];
+							}
+							else
+							{
+								info->expectedCommentHeight[cc] = change = ui_label_draw(vid_buf, &info->comments[cc]); // draw the comment
 #ifndef TOUCHUI
-							ui_label_process(mx, my, b, bq, &info->comments[cc]); // process copying
+								ui_label_process(mx, my, b, bq, &info->comments[cc]); // process copying
 #endif
+							}
 
 							if (svf_login && !b && bq && mx > 50+(XRES/2)+1 && mx < 50 + XRES+BARSIZE-100 && my > commentboxy - 2 && my < commentboxy + ed.h+2) // defocus comments that are under textbox
 								info->comments[cc].focus = info->comments[cc].cursor = info->comments[cc].cursorstart = info->comments[cc].numClicks = 0;
 
 							ccy += change + 10;
-							if (cc < NUM_COMMENTS-1)
+							if (cc < info->loaded_comment_count - 1)
 								info->comments[cc+1].y = info->comments[cc].y + change + 22;
 
 							if (ccy+comment_scroll < 50 && cc == info->loaded_comment_count-1 && commentsDownloadStarted) // disable scrolling until more comments have loaded
@@ -5086,7 +5100,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 							commentNum = cc;
 						break;
 					}
-					if (cc == info->loaded_comment_count-1 && !commentsDownloadStarted && comment_page < NUM_COMMENTS/20 && !(info->loaded_comment_count%20))
+					if (cc == info->loaded_comment_count-1 && !commentsDownloadStarted && !(info->loaded_comment_count%20))
 					{
 						std::stringstream uri;
 						uri << SCHEME << SERVER << "/Browse/Comments.json?ID=" << save_id << "&Start=" << (comment_page+1)*20 << "&Count=20";
@@ -5293,14 +5307,8 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 						commentsDownload = new Request(uri.str());
 						commentsDownload->Start();
 
-						for (int i = 0; i < NUM_COMMENTS; i++)
-						{
+						for (int i = 0; i < info->loaded_comment_count; i++)
 							info->comments[i].str[0] = 0;
-							if (info->commentauthors[i]) { free(info->commentauthors[i]); info->commentauthors[i] = NULL; }
-							if (info->commentauthorsunformatted[i]) { free(info->commentauthorsunformatted[i]); info->commentauthorsunformatted[i] = NULL; }
-							if (info->commentauthorIDs[i]) { free(info->commentauthorIDs[i]); info->commentauthorIDs[i] = NULL; }
-							if (info->commenttimestamps[i]) { free(info->commenttimestamps[i]); info->commenttimestamps[i] = NULL; }
-						}
 						comment_page = 0;
 						info->loaded_comment_count = 0;
 						comment_scroll = 0;
@@ -5454,6 +5462,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 
 					the_game->SetReloadPoint(save);
 					delete save;
+					save = nullptr;
 					break;
 				}
 				catch (ParseException & e)
@@ -5533,9 +5542,13 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 	info_parse(nullptr, info);
 	free(info);
 	free(old_vid);
-	if (thumb_data) free(thumb_data);
-	if (save_pic) free(save_pic);
-	if (save_pic_thumb) free(save_pic_thumb);
+	if (thumb_data)
+		free(thumb_data);
+	if (save_pic)
+		delete[] save_pic;
+	if (save_pic_thumb)
+		delete[] save_pic_thumb;
+	delete save;
 	return retval;
 }
 
@@ -5544,21 +5557,16 @@ int info_parse(const char *info_data, save_info *info)
 	if (info->name) free(info->name);
 	if (info->author) free(info->author);
 	if (info->createdDateStr) free(info->createdDateStr);
-	if (info->createdDateStr) free(info->updatedDateStr);
+	if (info->updatedDateStr) free(info->updatedDateStr);
 	if (info->description) free(info->description);
 	if (info->tags) free(info->tags);
-	for (int i = 0; i < NUM_COMMENTS; i++)
-	{
-		if (info->commentauthors[i]) free(info->commentauthors[i]);
-		if (info->commentauthorsunformatted[i]) free(info->commentauthorsunformatted[i]);
-		if (info->commentauthorIDs[i]) free(info->commentauthorIDs[i]);
-		if (info->commenttimestamps[i]) free(info->commenttimestamps[i]);
-	}
-	memset(info, 0, sizeof(save_info));
-	for (int i = 0; i < NUM_COMMENTS; i++)
-	{
-		ui_label_init(&info->comments[i], 61+(XRES/2), 0, XRES+BARSIZE-107-(XRES/2), 0);
-	}
+	info->name = info->author = info->createdDateStr = info->updatedDateStr = info->description = info->tags = nullptr;
+	info->comments.clear();
+	info->expectedCommentHeight.clear();
+	info->commentauthors.clear();
+	info->commentauthorsunformatted.clear();
+	info->commentauthorIDs.clear();
+	info->commenttimestamps.clear();
 
 	if (!info_data || !*info_data)
 		return 0;
@@ -5613,6 +5621,7 @@ int info_parse(const char *info_data, save_info *info)
 		info->publish = published;
 		info->tags = mystrdup(tagStream.str().c_str());
 	}
+	cJSON_Delete(root);
 
 	do_open = 0;
 
@@ -5716,6 +5725,7 @@ void parse_search_results(const char *search_results, int & resultSize)
 			search_owners[i] = mystrdup(username);
 			search_names[i] = mystrdup(saveName);
 		}
+		cJSON_Delete(root);
 	}
 }
 
@@ -5739,8 +5749,8 @@ std::vector<std::pair<std::string, int>> parse_tags(const char *tagsList, int & 
 
 			ret.push_back(std::pair<std::string, int>(tag, tagCount));
 		}
+		cJSON_Delete(root);
 	}
-	cJSON_Delete(root);
 
 	return ret;
 }
