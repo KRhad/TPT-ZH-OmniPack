@@ -1198,3 +1198,23 @@ optimizations by savask, which improves performance by 8%.
 
 Version 50.2 2022-10-16
 Fix replace mode
+
+Version 51.0 2022-12-04
+Fix \0 not being an accepted character in lua string arguments, most useful for
+color codes in text drawing functions. Overhaul all api calls in the save
+browser to use their modern variants such as Browse.json instead of legacy
+apis. These new apis also enables new features present in vanilla tpt for the
+past decade, namely: show the number of pages in a search and a textbox to
+choose which page to jump to; show the number of comment pages on a save; show
+save update/create date in your local timezone; and allow sorting favorites by
+date. Add ability to multi-select saves and delete/(un)publish/(un)favorite
+them. Remove limit of viewing 200 comments on a save. Fix lag when scrolling
+down too far in the comments section. Adjust delay when scrolling through
+pages, when scrolling quickly the delay eventually drops to 0. This fixes the
+inconsistent delay when scrolling up vs. down in the search browser. Adjust
+positioning of many objects in the search browser, several awkward spacing
+issues have been fixed and usernames are colored blue like in vanilla, and
+save history icon only shows on hover. Fix issue in save preview where really
+long usernames or date strings could overlap the view counter. Fix issue in
+legacy textboxes where quickly typing after double clicking a word would
+incorrectly highlight text.
