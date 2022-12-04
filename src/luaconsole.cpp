@@ -1060,7 +1060,7 @@ int luatpt_getelement(lua_State *l)
 		luaL_checktype(l, 1, LUA_TSTRING);
 		name = tpt_lua_optString(l, 1, "");
 		if (!console_parse_type(name.c_str(), &t, NULL, luaSim))
-			return luaL_error(l, "Unrecognised element '%s'", name);
+			return luaL_error(l, "Unrecognised element '%s'", name.c_str());
 		lua_pushinteger(l, t);
 	}
 	return 1;
