@@ -4236,25 +4236,34 @@ int search_ui(pixel *vid_buf)
 			{
 				int resultsSize;
 				clear_search_results();
-				parse_search_results(results, resultsSize);
-				page_count = resultsSize / (GRID_X * GRID_Y) + 1 + (byVotes ? 1 : 0);
-				int page_count_width = textwidth(Format::NumberToString(page_count).c_str());
-				page_num_ed.w = page_count_width + 15;
-				last_result_fetch_timestamp = Platform::GetTime();
-				scroll_wait_ms = scroll_wait_ms >> 1;
+				if (parse_search_results(results, resultsSize))
+				{
+					page_count = resultsSize / (GRID_X * GRID_Y) + 1 + (byVotes ? 1 : 0);
+					int page_count_width = textwidth(Format::NumberToString(page_count).c_str());
+					page_num_ed.w = page_count_width + 15;
+					last_result_fetch_timestamp = Platform::GetTime();
+					scroll_wait_ms = scroll_wait_ms >> 1;
 
-				memset(thumb_drawn, 0, sizeof(thumb_drawn));
-				memset(v_buf, 0, ((YRES+MENUSIZE)*(XRES+BARSIZE))*PIXELSIZE);
+					memset(thumb_drawn, 0, sizeof(thumb_drawn));
+					memset(v_buf, 0, ((YRES+MENUSIZE)*(XRES+BARSIZE))*PIXELSIZE);
 #ifndef TOUCHUI
-				nmp = -1;
+					nmp = -1;
 #endif
 
-				ui_richtext_settext(motdText.c_str(), &motd);
-				motd.x = (XRES-textwidth(motd.printstr))/2;
-				searchFailureCode = -1;
+					ui_richtext_settext(motdText.c_str(), &motd);
+					motd.x = (XRES-textwidth(motd.printstr))/2;
+					searchFailureCode = -1;
+				}
+				else
+				{
+					clear_search_results();
+					searchFailureCode = 603;
+				}
 			}
 			else
+			{
 				searchFailureCode = status;
+			}
 			for (auto requestPair : thumbDownloads)
 			{
 				free(requestPair.imgId);
@@ -4768,9 +4777,14 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				{
 					info_ready = info_parse(info_data.c_str(), info);
 					sprintf(viewcountbuffer, "%d", info->downloadcount);
-					if (info_ready <= 0)
+					if (info_ready == 0)
 					{
 						error_ui(vid_buf, 0, "Save info not found");
+						break;
+					}
+					else if (info_ready < 0)
+					{
+						error_ui(vid_buf, 0, "Failed to parse save info");
 						break;
 					}
 					else if (!fake404save && !strlen(info->author))
@@ -5570,37 +5584,37 @@ int info_parse(const char *info_data, save_info *info)
 	if (!info_data || !*info_data)
 		return 0;
 
-	cJSON *root;
-	if ((root = cJSON_Parse(info_data)))
+	do_open = 0;
+
+	try
 	{
-		//int saveID = cJSON_GetObjectItem(root, "ID")->valueint;
-		int scoreUp = cJSON_GetObjectItem(root, "ScoreUp")->valueint;
-		int scoreDown = cJSON_GetObjectItem(root, "ScoreDown")->valueint;
-		int scoreMine = cJSON_GetObjectItem(root, "ScoreMine")->valueint;
-		std::string username = cJSON_GetObjectItem(root, "Username")->valuestring;
-		std::string name = cJSON_GetObjectItem(root, "Name")->valuestring;
-		std::string description = cJSON_GetObjectItem(root, "Description")->valuestring;
-		int createdDate = cJSON_GetObjectItem(root, "DateCreated")->valueint;
-		int updatedDate = cJSON_GetObjectItem(root, "Date")->valueint;
-		bool published = cJSON_GetObjectItem(root, "Published")->valueint == 1;
-		bool favorite = cJSON_GetObjectItem(root, "Favourite")->valueint == 1;
-		int numComments = cJSON_GetObjectItem(root, "Comments")->valueint;
-		bool numViews = cJSON_GetObjectItem(root, "Views")->valueint;
-		//bool version = cJSON_GetObjectItem(root, "Version")->valueint;
+		std::istringstream datastream(info_data);
+		Json::Value root;
+		datastream >> root;
 
+		//int saveID = root["ID"].asInt();
+		int scoreUp = root["ScoreUp"].asInt();
+		int scoreDown = root["ScoreDown"].asInt();
+		int scoreMine = root["ScoreMine"].asInt();
+		std::string username = root["Username"].asString();
+		std::string name = root["Name"].asString();
+		std::string description = root["Description"].asString();
+		int createdDate = root["DateCreated"].asInt();
+		int updatedDate = root["Date"].asInt();
+		bool published = root["Published"].asBool();
+		bool favorite = root["Favourite"].asBool();
+		int numComments = root["Comments"].asInt();
+		int numViews = root["Views"].asInt();
+		//int version = root["Version"].asInt();
+
+		Json::Value tagsArray = root["Tags"];
 		std::stringstream tagStream;
-		cJSON *tags = cJSON_GetObjectItem(root, "Tags");
-		if (tags)
+		for (Json::UInt i = 0; i < tagsArray.size(); i++)
 		{
-			int numTags = cJSON_GetArraySize(tags);
-			for (int i = 0; i < numTags; i++)
-			{
-				if (i != 0)
-					tagStream << " ";
-				tagStream << cJSON_GetArrayItem(tags, i)->valuestring;
-			}
+			if (i != 0)
+				tagStream << " ";
+			tagStream << tagsArray[i].asString();
 		}
-
 
 		info->name = mystrdup(name.c_str());
 		info->description = mystrdup(description.c_str());
@@ -5619,8 +5633,13 @@ int info_parse(const char *info_data, save_info *info)
 		info->myfav = favorite;
 		info->publish = published;
 		info->tags = mystrdup(tagStream.str().c_str());
+
 	}
-	cJSON_Delete(root);
+	catch (std::exception & e)
+	{
+		std::cerr << e.what() << std::endl;
+		return -1;
+	}
 
 	do_open = 0;
 
@@ -5689,28 +5708,29 @@ void clear_search_results()
 	}
 }
 
-void parse_search_results(const char *search_results, int & resultSize)
+bool parse_search_results(const char *search_results, int & resultSize)
 {
-	cJSON *root;
-	if ((root = cJSON_Parse(search_results)))
+	try
 	{
-		resultSize = cJSON_GetObjectItem(root, "Count")->valueint;
-		cJSON *saves = cJSON_GetObjectItem(root, "Saves");
-		int savesSize = cJSON_GetArraySize(saves);
-		for (int i = 0; i < savesSize && i < GRID_X * GRID_Y; i++)
+		std::istringstream datastream(search_results);
+		Json::Value root;
+		datastream >> root;
+
+		resultSize = root["Count"].asInt();
+		Json::Value savesArray = root["Saves"];
+		for (Json::UInt i = 0; i < savesArray.size(); i++)
 		{
-			auto savesItem = cJSON_GetArrayItem(saves, i);
+			Json::Value save = savesArray[i];
 
-			int saveID = cJSON_GetObjectItem(savesItem, "ID")->valueint;
-			//int createdDate = cJSON_GetObjectItem(savesItem, "Created")->valueint;
-			//int updatedDate = cJSON_GetObjectItem(savesItem, "Updated")->valueint;
-			int scoreUp = cJSON_GetObjectItem(savesItem, "ScoreUp")->valueint;
-			int scoreDown = cJSON_GetObjectItem(savesItem, "ScoreDown")->valueint;
-			const char *username = cJSON_GetObjectItem(savesItem, "Username")->valuestring;
-			const char *saveName = cJSON_GetObjectItem(savesItem, "Name")->valuestring;
-			int version = cJSON_GetObjectItem(savesItem, "Version")->valueint;
-			int published = cJSON_GetObjectItem(savesItem, "Published")->valueint;
-
+			int saveID = save["ID"].asInt();
+			//int createdDate = save["Created"].asInt();
+			//int updatedDate = save["Updated"].asInt();
+			int scoreUp = save["ScoreUp"].asInt();
+			int scoreDown = save["ScoreDown"].asInt();
+			std::string username = save["Username"].asString();
+			std::string saveName = save["Name"].asString();
+			int version = save["Version"].asInt();
+			int published = save["Published"].asInt();
 
 			search_ids[i] = mystrdup(Format::NumberToString(saveID).c_str());
 			if (version != 0)
@@ -5721,10 +5741,16 @@ void parse_search_results(const char *search_results, int & resultSize)
 			search_scoredown[i] = scoreDown;
 			search_votes[i] = scoreUp - scoreDown;
 
-			search_owners[i] = mystrdup(username);
-			search_names[i] = mystrdup(saveName);
+			search_owners[i] = mystrdup(username.c_str());
+			search_names[i] = mystrdup(saveName.c_str());
 		}
-		cJSON_Delete(root);
+
+		return true;
+	}
+	catch (std::exception & e)
+	{
+		std::cerr << e.what() << std::endl;
+		return false;
 	}
 }
 
@@ -5732,23 +5758,30 @@ void parse_search_results(const char *search_results, int & resultSize)
 std::vector<std::pair<std::string, int>> parse_tags(const char *tagsList, int & resultCount)
 {
 	auto ret = std::vector<std::pair<std::string, int>>();
-	cJSON *root;
-	if ((root = cJSON_Parse(tagsList)))
+
+
+	try
 	{
-		cJSON *actualCount = cJSON_GetObjectItem(root, "TagTotal");
-		resultCount = actualCount->valueint;
+		std::istringstream datastream(tagsList);
+		Json::Value root;
+		datastream >> root;
 
-		cJSON *tagList = cJSON_GetObjectItem(root, "Tags");
-		int tagsSize = cJSON_GetArraySize(tagList);
-		for (int i = 0; i < tagsSize; i++)
+		resultCount = root["TagTotal"].asInt();
+		Json::Value tagsArray = root["Tags"];
+		for (Json::UInt i = 0; i < tagsArray.size(); i++)
 		{
-			auto tagItem = cJSON_GetArrayItem(tagList, i);
-			int tagCount = cJSON_GetObjectItem(tagItem, "Count")->valueint;
-			std::string tag = cJSON_GetObjectItem(tagItem, "Tag")->valuestring;
+			Json::Value tagInfo = tagsArray[i];
 
-			ret.push_back(std::pair<std::string, int>(tag, tagCount));
+			int count = tagInfo["Count"].asInt();
+			std::string tag = tagInfo["Tag"].asString();
+
+			ret.push_back(std::pair<std::string, int>(tag, count));
 		}
-		cJSON_Delete(root);
+	}
+	catch (std::exception & e)
+	{
+		std::cerr << e.what() << std::endl;
+		return ret;
 	}
 
 	return ret;

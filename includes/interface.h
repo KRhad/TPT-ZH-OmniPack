@@ -280,7 +280,7 @@ std::vector<std::pair<std::string, int>> parse_tags(const char *tagsList, int & 
 
 Request * search_saves(int start, int count, std::string query, std::string sort, std::string category);
 void clear_search_results();
-void parse_search_results(const char *search_results, int & resultSize);
+bool parse_search_results(const char *search_results, int & resultSize);
 
 int execute_tagop(pixel *vid_buf, const char *op, char *tag);
 

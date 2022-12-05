@@ -985,6 +985,9 @@ Button * PowderToy::AddNotification(std::string message, std::function<void(int)
 
 std::string PowderToy::GetMotd()
 {
+	if (starcatcherMotd.empty() && vanillaMotd.empty())
+		return "Links: \bt{a:https://powdertoy.co.uk|Powder Toy main page}\bg, \bt{a:https://powdertoy.co.uk/Discussions/Categories/Index.html|Forums}\bg, \bt{a:https://github.com/The-Powder-Toy/The-Powder-Toy|Official TPT github}\bg, \bt{a:https://github.com/jacob1/The-Powder-Toy/tree/c++|Jacob1\'s Mod github}";
+
 	if (starcatcherMotd.empty())
 		return vanillaMotd;
 	else if (vanillaMotd.empty())
