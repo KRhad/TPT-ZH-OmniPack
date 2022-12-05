@@ -1217,4 +1217,5 @@ issues have been fixed and usernames are colored blue like in vanilla, and
 save history icon only shows on hover. Fix issue in save preview where really
 long usernames or date strings could overlap the view counter. Fix issue in
 legacy textboxes where quickly typing after double clicking a word would
-incorrectly highlight text.
+incorrectly highlight text. Fix save name not being shown for online saves when
+not logged in.

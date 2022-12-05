@@ -1248,6 +1248,8 @@ void PowderToy::OnTick(uint32_t ticks)
 		// button text
 		if (svf_fileopen)
 			saveButtonText += svf_filename;
+		else if (svf_open)
+			saveButtonText += svf_name;
 		else
 			saveButtonText += "[save to disk]";
 
