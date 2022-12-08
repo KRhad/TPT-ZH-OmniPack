@@ -1219,3 +1219,13 @@ long usernames or date strings could overlap the view counter. Fix issue in
 legacy textboxes where quickly typing after double clicking a word would
 incorrectly highlight text. Fix save name not being shown for online saves when
 not logged in.
+
+Version 51.1 2022-12-07
+Sync all of the latest changes from the vanilla development branch. Use 
+new-style interfaces for all prompts from the Lua console, plus the ctrl+q quit 
+prompt. Re-enable profile viewer in save preview when ctrl+click on a username. 
+Fix avatar not showing for self in profile viewer because edit avatar button 
+was drawn on top of it. Fix bug where elements may be selected when rapidly 
+moving mouse in and out of the window with mouse held down. Fix mac updates. 
+Fix comment usernames / data showing incorrectly after submitting a comment. 
+Fix crash when searching before the initial front page load has completed.
