@@ -230,7 +230,7 @@ void ui_copytext_draw(pixel *vid_buf, ui_copytext *ed);
 void ui_copytext_process(int mx, int my, int mb, int mbq, ui_copytext *ed);
 
 void ui_richtext_draw(pixel *vid_buf, ui_richtext *ed);
-void ui_richtext_settext(const char *text, ui_richtext *ed);
+void ui_richtext_settext(std::string text, ui_richtext *ed);
 void ui_richtext_process(int mx, int my, int mb, int mbq, ui_richtext *ed);
 
 void error_ui(pixel *vid_buf, int err, std::string txt);

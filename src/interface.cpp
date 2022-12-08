@@ -1018,12 +1018,12 @@ int markup_getregion(char *text, char *action, char *data, char *atext){
 	}	
 }
 
-void ui_richtext_settext(const char *text, ui_richtext *ed)
+void ui_richtext_settext(std::string text, ui_richtext *ed)
 {
 	int pos = 0, action = 0, ppos = 0, ipos = 0;
 	memset(ed->printstr, 0, 512);
 	memset(ed->str, 0, 512);
-	strncpy(ed->str, text, 512);
+	strncpy(ed->str, text.c_str(), 512);
 	//strcpy(ed->printstr, text);
 	for(action = 0; action < 6; action++){
 		ed->action[action] = 0;	
@@ -3379,9 +3379,11 @@ int search_ui(pixel *vid_buf)
 	auto updatePageNumTextbox = [&page_num_ed, &last_search_page]() {
 		std::string search_page_str = Format::NumberToString<int>(search_page + 1);
 		strncpy(page_num_ed.str, search_page_str.c_str(), 1023);
+		page_num_ed.cursor = page_num_ed.cursorstart = 0;
 		last_search_page = search_page;
 	};
 	ui_edit_init(&page_num_ed, 283, YRES + 28, 45, 16);
+	page_num_ed.focus = 0;
 	updatePageNumTextbox();
 
 	motd.x = 20;
@@ -3865,7 +3867,7 @@ int search_ui(pixel *vid_buf)
 		}
 		if (sdl_key==SDLK_ESCAPE)
 		{
-			strcpy(search_expr, ed.str);
+			strncpy(search_expr, ed.str, 255);
 			goto finish;
 		}
 
@@ -3985,7 +3987,7 @@ int search_ui(pixel *vid_buf)
 			}
 			else if ((mp!=-1 && !st && !uih && !save_held_timestamp_triggered) || do_open==1)
 			{
-				strcpy(search_expr, ed.str);
+				strncpy(search_expr, ed.str, 255);
 				if (open_ui(vid_buf, search_ids[mp], search_dates[mp]?search_dates[mp]:NULL, sdl_mod&(KMOD_CTRL|KMOD_GUI)) || do_open==1) {
 					goto finish;
 				}
@@ -4232,7 +4234,8 @@ int search_ui(pixel *vid_buf)
 			std::string resultsStr = saveListDownload->Finish(&status);
 			const char *results = resultsStr.c_str();
 			bool byVotes = !(search_own || search_date || search_fav || (last && strlen(last)));
-			isFrontPage = search_page == 0 && byVotes;
+			if (!search)
+				isFrontPage = search_page == 0 && byVotes;
 			touchOffset = 0;
 			if (status == 200)
 			{
@@ -4252,7 +4255,7 @@ int search_ui(pixel *vid_buf)
 					nmp = -1;
 #endif
 
-					ui_richtext_settext(motdText.c_str(), &motd);
+					ui_richtext_settext(motdText, &motd);
 					motd.x = (XRES-textwidth(motd.printstr))/2;
 					searchFailureCode = -1;
 				}
@@ -4346,7 +4349,7 @@ int search_ui(pixel *vid_buf)
 		}
 	}
 
-	strcpy(search_expr, ed.str);
+	strncpy(search_expr, ed.str, 255);
 finish:
 	if (last)
 		free(last);
