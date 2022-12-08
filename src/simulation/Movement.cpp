@@ -253,6 +253,10 @@ bool Simulation::GetNormalInterp(int pt, float x0, float y0, float dx, float dy,
 	{
 		x = (int)(x0 + 0.5f);
 		y = (int)(y0 + 0.5f);
+		if (x < 0 || y < 0 || x >= XRES || y >= YRES)
+		{
+			return 0;
+		}
 		if (IsBoundary(pt, x, y))
 			break;
 		x0 += dx;
