@@ -114,6 +114,10 @@ void Engine::CloseWindowDelayed()
 		}
 		else
 			top = NULL;
+
+		// Limit to one window close per frame in secondary loops .. kind of a hack to prevent crashing
+		if (secondaryEngineLoop)
+			break;
 	}
 }
 

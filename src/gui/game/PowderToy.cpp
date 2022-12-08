@@ -657,7 +657,7 @@ void PowderToy::ConfirmUpdate(std::string changelog, std::string file)
 	ConfirmPrompt *confirm = new ConfirmPrompt([file](bool wasConfirmed) {
 		if (wasConfirmed)
 		{
-#ifdef ANDROID
+#if defined(ANDROID) || defined(MACOSX)
 				Platform::OpenLink(file);
 #else
 				UpdateProgress * update = new UpdateProgress(file, svf_user, [](char *data, int len)
@@ -1999,6 +1999,8 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 	switch (scan)
 	{
 	case SDL_SCANCODE_Q:
+		if (ctrl)
+			break;
 	case SDL_SCANCODE_ESCAPE:
 	{
 		if (this->Subwindows.size() && insideRenderOptions)

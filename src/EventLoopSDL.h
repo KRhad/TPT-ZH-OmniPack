@@ -36,7 +36,7 @@ namespace ui
 }
 int EventProcess(SDL_Event event, ui::Window * eventHandler);
 int SDLPoll();
-void MainLoop();
+void MainLoop(bool secondaryLoop = false);
 void limit_fps();
 
 

@@ -31,6 +31,7 @@
 
 #include "legacy_console.h"
 #include "defines.h"
+#include "EventLoopSDL.h"
 #include "graphics.h"
 #include "interface.h"
 #include "luaconsole.h"
@@ -46,6 +47,9 @@
 #include "game/Menus.h"
 #include "game/ToolTip.h"
 #include "graphics/Renderer.h"
+#include "gui/dialogs/ConfirmPrompt.h"
+#include "gui/dialogs/ErrorPrompt.h"
+#include "gui/dialogs/InfoPrompt.h"
 #include "gui/game/PowderToy.h"
 #include "lua/LuaComponent.h"
 #include "lua/LuaSmartRef.h"
@@ -799,10 +803,16 @@ int luacon_eval(const char *command, std::string *result)
 
 void lua_hook(lua_State *L, lua_Debug *ar)
 {
-	if(ar->event == LUA_HOOKCOUNT && Platform::GetTime() - loop_time > 3000)
+	if (ar->event == LUA_HOOKCOUNT && Platform::GetTime() - loop_time > 3000)
 	{
-		if (confirm_ui(lua_vid_buf,"Infinite Loop","The Lua code might have an infinite loop. Press OK to stop it","OK"))
-			luaL_error(l,"Error: Infinite loop");
+		bool wasConfirmed = false;
+		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+			wasConfirmed = confirmed;
+		}, "Infinite Loop", "The Lua code might have an infinite loop. Press OK to stop it", "OK"));
+		MainLoop(true);
+		if (!wasConfirmed)
+			return;
+		luaL_error(l,"Error: Infinite loop");
 		loop_time = Platform::GetTime();
 	}
 }
@@ -1069,7 +1079,10 @@ int luatpt_getelement(lua_State *l)
 int luatpt_error(lua_State* l)
 {
 	std::string error = tpt_lua_optString(l, 1, "Error text");
-	error_ui(lua_vid_buf, 0, error);
+
+	Engine::Ref().ShowWindow(new ErrorPrompt(error));
+	MainLoop(true);
+
 	return 0;
 }
 
@@ -1750,7 +1763,8 @@ int luatpt_message_box(lua_State* l)
 	std::string title = tpt_lua_optString(l, 1, "Title");
 	std::string text = tpt_lua_optString(l, 2, "Message");
 
-	info_ui(lua_vid_buf, title, text);
+	Engine::Ref().ShowWindow(new InfoPrompt(title, text, "OK"));
+	MainLoop(true);
 	return 0;
 }
 
@@ -1760,8 +1774,13 @@ int luatpt_confirm(lua_State* l)
 	std::string text = tpt_lua_optString(l, 2, "Message");
 	std::string buttonText = tpt_lua_optString(l, 3, "Confirm");
 
-	bool ret = confirm_ui(lua_vid_buf, title.c_str(), text.c_str(), buttonText.c_str());
-	lua_pushboolean(l, ret ? 1 : 0);
+	bool wasConfirmed = false;
+	Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+		wasConfirmed = confirmed;
+	}, title, text, buttonText));
+	MainLoop(true);
+
+	lua_pushboolean(l, wasConfirmed ? 1 : 0);
 	return 1;
 }
 
@@ -2019,8 +2038,16 @@ int luatpt_getscript(lua_State* l)
 
 	std::stringstream url;
 	url << "https://starcatcher.us/scripts/main.lua?get=" << scriptID;
-	if (confirmPrompt && !confirm_ui(lua_vid_buf, "Do you want to install script?", url.str().c_str(), "Install"))
-		return 0;
+	if (confirmPrompt)
+	{
+		bool wasConfirmed = false;
+		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+			wasConfirmed = confirmed;
+		}, "Do you want to install script?", url.str().c_str(), "Install"));
+		MainLoop(true);
+		if (!wasConfirmed)
+			return 0;
+	}
 
 	int ret;
 	std::string scriptData = Request::Simple(url.str(), &ret);
@@ -2043,19 +2070,20 @@ int luatpt_getscript(lua_State* l)
 	{
 		fclose(outputfile);
 		outputfile = NULL;
-		if (!confirmPrompt || confirm_ui(lua_vid_buf, "File already exists, overwrite?", filename.c_str(), "Overwrite"))
+		if (confirmPrompt)
 		{
-			outputfile = fopen(filename.c_str(), "wb");
-		}
-		else
-		{
-			return 0;
+			bool wasConfirmed = false;
+			Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+				wasConfirmed = confirmed;
+			}, "File already exists, overwrite?", filename.c_str(), "Overwrite"));
+			MainLoop(true);
+			if (!wasConfirmed)
+				return 0;
+
 		}
 	}
-	else
-	{
-		outputfile = fopen(filename.c_str(), "wb");
-	}
+
+	outputfile = fopen(filename.c_str(), "wb");
 	if (!outputfile)
 	{
 		return luaL_error(l, "Unable to write to file");
@@ -2103,7 +2131,12 @@ int luatpt_record(lua_State* l)
 		return luaL_typerror(l, 1, lua_typename(l, LUA_TBOOLEAN));
 	bool record = lua_toboolean(l, -1);
 	if (record)
-		record = confirm_ui(vid_buf, "Recording", "You're about to start recording all drawn frames. This will use a lot of disk space", "Confirm");
+	{
+		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+			record = confirmed;
+		}, "Recording", "You're about to start recording all drawn frames. This will use a lot of disk space", "Confirm"));
+		MainLoop(true);
+	}
 	if (!record)
 	{
 		Renderer::Ref().StopRecording();
@@ -2317,13 +2350,15 @@ void ReadLuaCode()
 {
 	if (!Platform::FileExists("luacode.txt"))
 	{
-		error_ui(lua_vid_buf, 0, "Place some code in luacode.txt");
+		Engine::Ref().ShowWindow(new ErrorPrompt("Place some code in luacode.txt"));
+		MainLoop(true);
 		return;
 	}
 	char* code = (char*)file_load("luacode.txt", &LuaCodeLen);
 	if (!code)
 	{
-		error_ui(lua_vid_buf, 0, "Error reading luacode.txt");
+		Engine::Ref().ShowWindow(new ErrorPrompt("Error reading luacode.txt"));
+		MainLoop(true);
 		return;
 	}
 	if (LuaCode)
@@ -2334,7 +2369,8 @@ void ReadLuaCode()
 	// lua bytecode starts with byte 27, don't allow since can't be read and can do strange things
 	if (code[0] == '\x1b')
 	{
-		error_ui(lua_vid_buf, 0, "Lua bytecode detected");
+		Engine::Ref().ShowWindow(new ErrorPrompt("Lua bytecode detected"));
+		MainLoop(true);
 		return;
 	}
 	LuaCode = code;
@@ -2349,22 +2385,30 @@ void ExecuteEmbededLuaCode()
 		ranLuaCode = true;
 		if (!previewCode)
 		{
-			error_ui(lua_vid_buf, 0, "Could not write code to newluacode.txt");
+			Engine::Ref().ShowWindow(new ErrorPrompt("Could not write code to newluacode.txt"));
+			MainLoop(true);
 			return;
 		}
 		fwrite(LuaCode, LuaCodeLen, 1, previewCode);
 		fclose(previewCode);
-		bool runCode = confirm_ui(lua_vid_buf, "Lua code", "Run the lua code in newluacode.txt?", "Run");
+
+		bool runCode = false;
+		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+			runCode = confirmed;
+		}, "Lua Code", "Run the lua code in newluacode.txt?", "Run"));
+		MainLoop(true);
+		if (!runCode)
+			return;
+
 		// lua bytecode starts with byte 27, don't allow since can't be read and can do strange things
 		if (LuaCode[0] == '\x1b')
 		{
-			error_ui(lua_vid_buf, 0, "Lua bytecode detected");
+			Engine::Ref().ShowWindow(new ErrorPrompt("Lua bytecode detected"));
+			MainLoop(true);
 			free(LuaCode);
 			LuaCode = NULL;
 			return;
 		}
-		if (!runCode)
-			return;
 
 		//whitelist of functions we allow. Hopefully safe but just in case we write it to newluacode.txt above and ask the user to check it
 		if (luaL_dostring(l,"\n\

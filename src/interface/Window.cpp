@@ -50,7 +50,8 @@ void Window::Resize(Point position, Point size)
 	if (this->position.Y == CENTERED)
 		this->position.Y = (YRES+MENUSIZE-size.Y)/2;
 	// If we are moving or shrinking this window, we need to restore the old video buffer from before showing ourselves
-	Engine::Ref().RestorePreviousBuffer();
+	if (Engine::Ref().GetTop() == this)
+		Engine::Ref().RestorePreviousBuffer();
 	videoBuffer = new gfx::VideoBuffer(size.X, size.Y);
 }
 

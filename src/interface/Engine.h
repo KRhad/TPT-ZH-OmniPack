@@ -22,6 +22,7 @@ public:
 	void CloseWindow(ui::Window *window);
 	void CloseTop();
 	ui::Window * GetTop() { return top; }
+	int GetStackSize() { return windows.size(); }
 	void RestorePreviousBuffer();
 	void ProcessWindowUpdates();
 
@@ -63,6 +64,8 @@ public:
 	std::string ClipboardPull();
 	int GetModifiers();
 
+	bool IsSecondaryEngineLoop() { return secondaryEngineLoop; }
+	void SetSecondaryEngineLoop(bool secondaryLoop) { secondaryEngineLoop = secondaryLoop; };
 private:
 	void ShowWindowDelayed();
 	void CloseWindowDelayed();
@@ -86,6 +89,8 @@ private:
 	int drawLimit = 0;
 
 	bool fastQuit = false;
+
+	bool secondaryEngineLoop = false;
 };
 
 #endif

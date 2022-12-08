@@ -35,7 +35,6 @@ ProfileViewer::ProfileViewer(std::string profileName):
 	avatarDownload->Start();
 	
 	scrollArea = new ui::ScrollWindow(Point(0, 0), this->size - Point(0, 16));
-	scrollArea->SetOnDraw([this](gfx::VideoBuffer *buf) { OnSubwindowDraw(buf); });
 	this->AddSubwindow(scrollArea);
 
 	usernameLabel = new Label(Point(7, 6), Point(Label::AUTOSIZE, Label::AUTOSIZE), name);
@@ -242,7 +241,7 @@ void ProfileViewer::ResizeArea(int biographyLabelHeight)
 	scrollArea->SetScrollSize(yPos);
 }
 
-void ProfileViewer::OnSubwindowDraw(gfx::VideoBuffer *buf)
+void ProfileViewer::OnDrawAfterSubwindows(gfx::VideoBuffer *buf)
 {
 	if (avatar)
 		buf->DrawImage(avatar, 210, 10-scrollArea->GetScrollPosition(), 40, 40);

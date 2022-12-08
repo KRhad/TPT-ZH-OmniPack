@@ -4187,6 +4187,8 @@ int search_ui(pixel *vid_buf)
 		if (search && (!saveListDownload || !saveListDownload->CheckStarted()))
 		{
 			int start, count;
+			if (last)
+				free(last);
 			last = mystrdup(ed.str);
 			last_own = search_own;
 			last_date = search_date;
@@ -4296,8 +4298,8 @@ int search_ui(pixel *vid_buf)
 				{
 					free(imgID);
 				}
-				saveListDownload = nullptr;
 			}
+			saveListDownload = nullptr;
 		}
 		if (tagListDownload && tagListDownload->CheckStarted() && tagListDownload->CheckDone())
 		{
@@ -4331,6 +4333,10 @@ int search_ui(pixel *vid_buf)
 					int pos = iter->pos;
 					search_thumbs[pos] = thumb;
 					search_thsizes[pos] = len;
+				}
+				else if (thumb)
+				{
+					free(thumb);
 				}
 				free(iter->imgId);
 				iter = thumbDownloads.erase(iter);
@@ -4601,7 +4607,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 	ui_edit ed;
 	ui_copytext ctb;
 
-	const char *profileToOpen = "";
+	std::string profileToOpen;
 	bool fake404save = false;
 
 	std::string commentWarning;
@@ -5032,9 +5038,9 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 							{
 								if (sdl_mod & (KMOD_CTRL|KMOD_GUI)) //open profile
 								{
-									std::string link = std::string(SCHEME SERVER "/User.html?Name=") + info->commentauthorsunformatted[cc];
-									Platform::OpenLink(link);
-									//profileToOpen = info->commentauthorsunformatted[cc];
+									//std::string link = std::string(SCHEME SERVER "/User.html?Name=") + info->commentauthorsunformatted[cc];
+									//Platform::OpenLink(link);
+									profileToOpen = info->commentauthorsunformatted[cc];
 								}
 								else if (sdl_mod & KMOD_SHIFT) //, or search for a user's saves
 								{
@@ -5501,6 +5507,14 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 			info_box(vid_buf, "Loading");
 		}
 
+
+		if (!profileToOpen.empty())
+		{
+			Engine::Ref().ShowWindow(new ProfileViewer(profileToOpen));
+			MainLoop(true);
+			profileToOpen = "";
+		}
+
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
 		memcpy(vid_buf, old_vid, ((XRES+BARSIZE)*(YRES+MENUSIZE))*PIXELSIZE);
 		if (info_ready && svf_login) {
@@ -5522,17 +5536,6 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 
 		if (lasttime<TIMEOUT)
 			lasttime++;
-
-		if (strcmp(profileToOpen, ""))
-		{
-			ProfileViewer *temp = new ProfileViewer(profileToOpen);
-			Engine *moreTemp = new Engine();
-			moreTemp->ShowWindow(temp);
-			//moreTemp->MainLoop();
-			MainLoop();
-			delete moreTemp;
-			profileToOpen = "";
-		}
 	}
 	//Prevent those mouse clicks being passed down.
 	while (!sdl_poll())

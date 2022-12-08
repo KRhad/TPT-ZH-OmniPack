@@ -15,6 +15,7 @@
 #include "common/Platform.h"
 #include "common/tpt-minmax.h"
 #include "interface/Engine.h"
+#include "gui/dialogs/ConfirmPrompt.h"
 #include "gui/game/PowderToy.h" // for the_game->DeFocus(), remove once all interfaces get modernized
 
 
@@ -321,6 +322,7 @@ bool hasMouseMoved = false;
 bool doManualMouseCalculation = false;
 bool capturingMouse = false;
 Point lastMousePosition;
+bool inOldInterface = false;
 
 // When the mouse hasn't moved yet, sdl will always report (0, 0) as the position in events
 // By using SDL_GetGlobalMouseState, we can get the real mouse position
@@ -353,7 +355,20 @@ int EventProcess(SDL_Event event, ui::Window * eventHandler)
 			return true;
 		else if (event.key.keysym.sym == 'q' && (sdl_mod & (KMOD_CTRL | KMOD_GUI)))
 		{
-			if (confirm_ui(vid_buf, "You are about to quit", "Are you sure you want to quit?", "Quit"))
+			bool wasConfirmed = false;
+			// Two separate quit dialogs ... remove some day
+			if (inOldInterface)
+			{
+				wasConfirmed = confirm_ui(vid_buf, "You are about to quit", "Are you sure you want to quit?", "Quit");
+			}
+			else
+			{
+				Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+					wasConfirmed = confirmed;
+				}, "You are about to quit", "Are you sure you want to quit?", "Quit"));
+				MainLoop(true);
+			}
+			if (wasConfirmed)
 			{
 				Engine::Ref().Shutdown();
 				return 1;
@@ -463,11 +478,17 @@ int EventProcess(SDL_Event event, ui::Window * eventHandler)
 }
 
 uint32_t lastTick, drawingTimer;
-bool inOldInterface = false;
-void MainLoop()
+void MainLoop(bool secondaryLoop)
 {
 	SDL_Event event;
 	Engine &engine = Engine::Ref();
+	bool isSecondaryEngineLoop = engine.IsSecondaryEngineLoop();
+	if (secondaryLoop)
+	{
+		engine.ProcessWindowUpdates();
+		engine.SetSecondaryEngineLoop(true);
+	}
+	int currentStackSize = engine.GetStackSize();
 	while (engine.Running())
 	{
 		ui::Window * top = engine.GetTop();
@@ -535,7 +556,15 @@ void MainLoop()
 		limit_fps();
 
 		engine.ProcessWindowUpdates();
+		if (secondaryLoop && engine.GetStackSize() < currentStackSize)
+			break;
 		inOldInterface = false;
+	}
+
+
+	if (secondaryLoop)
+	{
+		engine.SetSecondaryEngineLoop(isSecondaryEngineLoop);
 	}
 }
 
@@ -770,8 +799,8 @@ int mouse_get_state(int *x, int *y)
 	//return (int)CalculateMousePosition(x, y);
 	*x = lastMousePosition.X;
 	*y = lastMousePosition.Y;
-	if (*x < 0 || *y < 0 || *x >= VIDXRES || *y >= VIDYRES)
-		return 0;
+	//if (*x < 0 || *y < 0 || *x >= VIDXRES || *y >= VIDYRES)
+	//	return 0;
 	return SDL_GetMouseState(nullptr, nullptr);
 }
 
