@@ -186,7 +186,8 @@ void SetRightHudText(Simulation * sim, int x, int y)
 			if (currentHud[53] || (currentHud[21] &&
 					(underType == PT_CRAY || underType == PT_DRAY || underType == PT_EXOT || underType == PT_LIGH || underType == PT_SOAP || underType == PT_TRON ||
 					 underType == PT_VIBR || underType == PT_VIRS || underType == PT_WARP || underType == PT_LCRY || underType == PT_CBNW || underType == PT_TSNS ||
-					 underType == PT_DTEC || underType == PT_LSNS || underType == PT_PSTN || underType == PT_LDTC || underType == PT_VSNS|| underType == PT_LITH)))
+					 underType == PT_DTEC || underType == PT_LSNS || underType == PT_PSTN || underType == PT_LDTC || underType == PT_VSNS|| underType == PT_LITH ||
+					 underType == PT_CONV)))
 			{
 				sprintf(tempstring,"Tmp2: %d, ",parts[underID].tmp2);
 				strappend(heattext,tempstring);

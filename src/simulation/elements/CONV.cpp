@@ -48,9 +48,9 @@ int CONV_update(UPDATE_FUNC_ARGS)
 				if (BOUNDS_CHECK)
 				{
 					int r = photons[y+ry][x+rx];
-					if (!r || (restrictElement && TYP(r) != restrictElement))
+					if (!r || (restrictElement && ((TYP(r) == restrictElement) == (parts[i].tmp2 == 1))))
 						r = pmap[y+ry][x+rx];
-					if (!r || (restrictElement && TYP(r) != restrictElement))
+					if (!r || (restrictElement && ((TYP(r) == restrictElement) == (parts[i].tmp2 == 1))))
 						continue;
 					if (TYP(r) != PT_CONV && !(sim->elements[TYP(r)].Properties&PROP_INDESTRUCTIBLE) && TYP(r) != ctype)
 					{
