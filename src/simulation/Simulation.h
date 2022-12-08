@@ -201,7 +201,7 @@ private:
 	unsigned DirectionToMap(float dx, float dy, int t);
 	bool IsBlocking(int t, int x, int y);
 	bool IsBoundary(int pt, int x, int y);
-	bool FindNextBoundary(int pt, int *x, int *y, int dm, int *em);
+	bool FindNextBoundary(int pt, int *x, int *y, int dm, int *em, bool reverse);
 	bool GetNormal(int pt, int x, int y, float dx, float dy, float *nx, float *ny);
 
 	int TryMove(int i, int x, int y, int nx, int ny);

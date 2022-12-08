@@ -167,7 +167,7 @@ bool Simulation::IsBoundary(int pt, int x, int y)
 	return true;
 }
 
-bool Simulation::FindNextBoundary(int pt, int *x, int *y, int dm, int *em)
+bool Simulation::FindNextBoundary(int pt, int *x, int *y, int dm, int *em, bool reverse)
 {
 	static int dx[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
 	static int dy[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
@@ -176,20 +176,24 @@ bool Simulation::FindNextBoundary(int pt, int *x, int *y, int dm, int *em)
 	if (*x <= 0 || *x >= XRES-1 || *y <= 0 || *y >= YRES-1)
 		return false;
 
-	int i0;
 	if (*em != -1)
 	{
-		i0 = *em;
-		dm &= de[i0];
+		dm &= de[*em];
 	}
-	else
-		i0 = 0;
 
-	int i;
-	for (int ii = 0; ii < 8; ii++)
+	unsigned int mask = 0;
+	for (int i = 0; i < 8; ++i)
 	{
-		i = (ii + i0) & 7;
-		if ((dm & (1 << i)) && IsBoundary(pt, *x+dx[i], *y+dy[i]))
+		if ((dm & (1U << i)) && IsBlocking(pt, *x + dx[i], *y + dy[i]))
+		{
+			mask |= (1U << i);
+		}
+	}
+
+	for (int i = 0; i < 8; ++i)
+	{
+		int n = (i + (reverse ? 1 : -1)) & 7;
+		if (((mask & (1U << i))) && !(mask & (1U << n)))
 		{
 			*x += dx[i];
 			*y += dy[i];
@@ -220,9 +224,9 @@ bool Simulation::GetNormal(int pt, int x, int y, float dx, float dy, float *nx, 
 	for (int i = 0; i < SURF_RANGE; i++)
 	{
 		if (lv)
-			lv = FindNextBoundary(pt, &lx, &ly, ldm, &lm);
+			lv = FindNextBoundary(pt, &lx, &ly, ldm, &lm, true);
 		if (rv)
-			rv = FindNextBoundary(pt, &rx, &ry, rdm, &rm);
+			rv = FindNextBoundary(pt, &rx, &ry, rdm, &rm, false);
 		j += lv + rv;
 		if (!lv && !rv)
 			break;
