@@ -5326,8 +5326,13 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 						commentsDownload = new Request(uri.str());
 						commentsDownload->Start();
 
-						for (int i = 0; i < info->loaded_comment_count; i++)
-							info->comments[i].str[0] = 0;
+						info->comments.clear();
+						info->expectedCommentHeight.clear();
+						info->commentauthors.clear();
+						info->commentauthorsunformatted.clear();
+						info->commentauthorIDs.clear();
+						info->commenttimestamps.clear();
+
 						comment_page = 0;
 						info->loaded_comment_count = 0;
 						comment_scroll = 0;
