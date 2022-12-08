@@ -35,6 +35,7 @@ class Request
 	bool added_to_multi;
 	int status;
 
+	std::string verb;
 	struct curl_slist *headers;
 
 	curl_mime *post_fields;
@@ -50,6 +51,7 @@ public:
 	Request(std::string uri);
 	virtual ~Request();
 
+	void Verb(std::string newVerb);
 	void AddHeader(std::string header);
 	void AddPostData(std::map<std::string, std::string> data);
 	void AuthHeaders(std::string ID, std::string session);

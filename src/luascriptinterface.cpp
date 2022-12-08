@@ -3696,7 +3696,7 @@ private:
 	}
 
 public:
-	static int Make(lua_State *l, const std::string &uri, bool isPost, RequestType type, const std::map<std::string, std::string> &post_data, const std::vector<std::string> &headers)
+	static int Make(lua_State *l, const std::string &uri, bool isPost, const std::string &verb, RequestType type, const std::map<std::string, std::string> &post_data, const std::vector<std::string> &headers)
 	{
 		if (type == getAuthToken && !svf_login)
 		{
@@ -3712,6 +3712,10 @@ public:
 		new(rh) RequestHandle();
 		rh->type = type;
 		rh->request = new Request(uri);
+		if (verb.size())
+		{
+			rh->request->Verb(verb);
+		}
 		for (auto &header : headers)
 		{
 			rh->request->AddHeader(header);
@@ -3871,8 +3875,14 @@ int http_request(lua_State *l, bool isPost)
 	std::string uri = tpt_lua_checkString(l, 1);
 
 	std::map<std::string, std::string> post_data;
+	auto headersIndex = 2;
+	auto verbIndex = 3;
+
 	if (isPost)
 	{
+		headersIndex += 1;
+		verbIndex += 1;
+
 		if (lua_istable(l, 2))
 		{
 			lua_pushnil(l);
@@ -3886,7 +3896,6 @@ int http_request(lua_State *l, bool isPost)
 	}
 
 	std::vector<std::string> headers;
-	auto headersIndex = isPost ? 3 : 2;
 	if (lua_istable(l, headersIndex))
 	{
 		auto size = lua_objlen(l, headersIndex);
@@ -3911,7 +3920,9 @@ int http_request(lua_State *l, bool isPost)
 			}
 		}
 	}
-	return RequestHandle::Make(l, uri, isPost, RequestHandle::normal, post_data, headers);
+
+	auto verb = tpt_lua_optString(l, verbIndex, "");
+	return RequestHandle::Make(l, uri, isPost, verb, RequestHandle::normal, post_data, headers);
 }
 
 int http_get(lua_State *l)
@@ -3926,7 +3937,7 @@ int http_post(lua_State *l)
 
 int http_get_auth_token(lua_State *l)
 {
-	return RequestHandle::Make(l, SCHEME SERVER "/ExternalAuth.api?Action=Get&Audience=" + Format::URLEncode(tpt_lua_checkString(l, 1)), false, RequestHandle::getAuthToken, {}, {});
+	return RequestHandle::Make(l, SCHEME SERVER "/ExternalAuth.api?Action=Get&Audience=" + Format::URLEncode(tpt_lua_checkString(l, 1)), false, {}, RequestHandle::getAuthToken, {}, {});
 }
 
 void initHttpAPI(lua_State *l)

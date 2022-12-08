@@ -90,6 +90,13 @@ Request::~Request()
 #endif
 }
 
+void Request::Verb(std::string newVerb)
+{
+#ifndef NOHTTP
+	verb = newVerb;
+#endif
+}
+
 void Request::AddHeader(std::string header)
 {
 #ifndef NOHTTP
@@ -230,6 +237,10 @@ void Request::Start()
 		}
 #endif
 
+		if (verb.size())
+		{
+			curl_easy_setopt(easy, CURLOPT_CUSTOMREQUEST, verb.c_str());
+		}
 		curl_easy_setopt(easy, CURLOPT_FOLLOWLOCATION, 1L);
 #ifdef ENFORCE_HTTPS
 		curl_easy_setopt(easy, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
