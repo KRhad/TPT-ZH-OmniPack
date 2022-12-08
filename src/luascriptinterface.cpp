@@ -3653,10 +3653,83 @@ int event_getmodifiers(lua_State * l)
 
 class RequestHandle
 {
+public:
+	enum RequestType
+	{
+		normal,
+		getAuthToken,
+	};
+
+private:
 	Request *request;
 	bool dead;
+	RequestType type;
+
+	RequestHandle() = default;
+
+	void FinishGetAuthToken(std::string &data, int &status_out, std::vector<std::string> &headers)
+	{
+		headers.clear();
+		std::istringstream ss(data);
+		Json::Value root;
+		try
+		{
+			ss >> root;
+			auto status = root["Status"].asString();
+			if (status == "OK")
+			{
+				status_out = 200;
+				data = root["Token"].asString();
+			}
+			else
+			{
+				status_out = 403;
+				data = status;
+			}
+		}
+		catch (std::exception &e)
+		{
+			std::cerr << "bad auth response: " << e.what() << std::endl;
+			status_out = 600;
+			data.clear();
+		}
+	}
 
 public:
+	static int Make(lua_State *l, const std::string &uri, bool isPost, RequestType type, const std::map<std::string, std::string> &post_data, const std::vector<std::string> &headers)
+	{
+		if (type == getAuthToken && !svf_login)
+		{
+			lua_pushnil(l);
+			lua_pushliteral(l, "not authenticated");
+			return 2;
+		}
+		auto *rh = (RequestHandle *)lua_newuserdata(l, sizeof(RequestHandle));
+		if (!rh)
+		{
+			return 0;
+		}
+		new(rh) RequestHandle();
+		rh->type = type;
+		rh->request = new Request(uri);
+		for (auto &header : headers)
+		{
+			rh->request->AddHeader(header);
+		}
+		if (isPost)
+		{
+			rh->request->AddPostData(post_data);
+		}
+		if (type == getAuthToken)
+		{
+			rh->request->AuthHeaders(svf_user_id, svf_session_id);
+		}
+		rh->request->Start();
+		luaL_newmetatable(l, "HTTPRequest");
+		lua_setmetatable(l, -2);
+		return 1;
+	}
+
 	RequestHandle(std::string &uri, std::map<std::string, std::string> &post_data, std::vector<std::string> &headers)
 	{
 		dead = false;
@@ -3712,6 +3785,10 @@ public:
 			if (request->CheckDone())
 			{
 				data = request->Finish(&status_out, &headers);
+				if (type == getAuthToken && status_out == 200)
+				{
+					FinishGetAuthToken(data, status_out, headers);
+				}
 				dead = true;
 			}
 		}
@@ -3834,15 +3911,7 @@ int http_request(lua_State *l, bool isPost)
 			}
 		}
 	}
-	auto *rh = (RequestHandle *)lua_newuserdata(l, sizeof(RequestHandle));
-	if (!rh)
-	{
-		return 0;
-	}
-	new(rh) RequestHandle(uri, post_data, headers);
-	luaL_newmetatable(l, "HTTPRequest");
-	lua_setmetatable(l, -2);
-	return 1;
+	return RequestHandle::Make(l, uri, isPost, RequestHandle::normal, post_data, headers);
 }
 
 int http_get(lua_State *l)
@@ -3853,6 +3922,11 @@ int http_get(lua_State *l)
 int http_post(lua_State *l)
 {
 	return http_request(l, true);
+}
+
+int http_get_auth_token(lua_State *l)
+{
+	return RequestHandle::Make(l, SCHEME SERVER "/ExternalAuth.api?Action=Get&Audience=" + Format::URLEncode(tpt_lua_checkString(l, 1)), false, RequestHandle::getAuthToken, {}, {});
 }
 
 void initHttpAPI(lua_State *l)
@@ -3875,6 +3949,7 @@ void initHttpAPI(lua_State *l)
 	struct luaL_Reg httpAPIMethods [] = {
 		{"get", http_get},
 		{"post", http_post},
+		{"getAuthToken", http_get_auth_token},
 		{NULL, NULL}
 	};
 	luaL_register(l, "http", httpAPIMethods);
