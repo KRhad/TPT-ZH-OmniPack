@@ -168,6 +168,8 @@ void luacon_open()
 	initEventAPI(l);
 	initHttpAPI(l);
 	initSocketAPI(l);
+	initBZ2API(l);
+
 	lua_getglobal(l, "tpt");
 
 	tptProperties = lua_gettop(l);

@@ -11,6 +11,7 @@
 #include "powdergraphics.h"
 #include "hud.h"
 
+#include "bzip2/bz2wrap.h"
 #include "common/Format.h"
 #include "common/Platform.h"
 #include "game/Authors.h"
@@ -3969,6 +3970,68 @@ void initHttpAPI(lua_State *l)
 void initSocketAPI(lua_State * l)
 {
 	LuaTCPSocket::Open(l);
+}
+
+void initBZ2API(lua_State *l)
+{
+	luaL_Reg reg[] = {
+		{ "compress", bz2_compress_wrapper },
+		{ "decompress", bz2_decompress_wrapper },
+		{ NULL, NULL },
+	};
+	lua_newtable(l);
+	luaL_register(l, NULL, reg);
+#define BZ2_CONST(k, v) lua_pushinteger(l, int(v)); lua_setfield(l, -2, k)
+	BZ2_CONST("compressOk", BZ2WCompressOk);
+	BZ2_CONST("compressNomem", BZ2WCompressNomem);
+	BZ2_CONST("compressLimit", BZ2WCompressLimit);
+	BZ2_CONST("decompressOk", BZ2WDecompressOk);
+	BZ2_CONST("decompressNomem", BZ2WDecompressNomem);
+	BZ2_CONST("decompressLimit", BZ2WDecompressLimit);
+	BZ2_CONST("decompressType", BZ2WDecompressType);
+	BZ2_CONST("decompressBad", BZ2WDecompressBad);
+	BZ2_CONST("decompressEof", BZ2WDecompressEof);
+#undef BZ2_CONST
+	lua_setglobal(l, "bz2");
+}
+
+int bz2_compress_wrapper(lua_State *l)
+{
+	auto src = tpt_lua_checkString(l, 1);
+	auto maxSize = size_t(luaL_optinteger(l, 2, 0));
+	std::vector<char> dest;
+	auto result = BZ2WCompress(dest, src.data(), src.size(), maxSize);
+#define RETURN_ERR(str) lua_pushnil(l); lua_pushinteger(l, int(result)); lua_pushliteral(l, str); return 3
+	switch (result)
+	{
+	case BZ2WCompressOk: break;
+	case BZ2WCompressNomem: RETURN_ERR("out of memory");
+	case BZ2WCompressLimit: RETURN_ERR("size limit exceeded");
+	}
+#undef RETURN_ERR
+	tpt_lua_pushString(l, std::string(dest.begin(), dest.end()));
+	return 1;
+}
+
+int bz2_decompress_wrapper(lua_State *l)
+{
+	auto src = tpt_lua_checkString(l, 1);
+	auto maxSize = size_t(luaL_optinteger(l, 2, 0));
+	std::vector<char> dest;
+	auto result = BZ2WDecompress(dest, src.data(), src.size(), maxSize);
+#define RETURN_ERR(str) lua_pushnil(l); lua_pushinteger(l, int(result)); lua_pushliteral(l, str); return 3
+	switch (result)
+	{
+	case BZ2WDecompressOk: break;
+	case BZ2WDecompressNomem: RETURN_ERR("out of memory");
+	case BZ2WDecompressLimit: RETURN_ERR("size limit exceeded");
+	case BZ2WDecompressType:
+	case BZ2WDecompressBad:
+	case BZ2WDecompressEof: RETURN_ERR("corrupted stream");
+	}
+#undef RETURN_ERR
+	tpt_lua_pushString(l, std::string(dest.begin(), dest.end()));
+	return 1;
 }
 
 void tpt_lua_pushString(lua_State *L, const std::string &str)

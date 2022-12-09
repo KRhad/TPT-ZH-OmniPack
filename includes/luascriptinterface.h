@@ -172,6 +172,10 @@ int http_get_auth_token(lua_State *l);
 
 void initSocketAPI(lua_State * l);
 
+void initBZ2API(lua_State *l);
+int bz2_compress_wrapper(lua_State *l);
+int bz2_decompress_wrapper(lua_State *l);
+
 void tpt_lua_pushString(lua_State *L, const std::string &str);
 
 std::string tpt_lua_toString(lua_State *L, int index);
