@@ -3306,7 +3306,7 @@ struct thumbDownloadInfo
 int search_ui(pixel *vid_buf)
 {
 	int uih=0,nyu,nyd,b=1,bq,mx=0,my=0,mxq=0,myq=0,mmt=0,gi,gj,gx,gy,pos,i,mp,dp,dap,checkp,own,last_own=search_own,last_fav=search_fav,page_count=0,last_page=0,last_date=0,j,w,h,st=0,lv;
-	int tp, last_p1_extra=0;
+	int tp, last_p1_extra=0, next_p1_extra=0;
 	int num_selected = 0, num_published_selected = 0, num_unpublished_selected = 0;
 	bool own_selected = true;
 	std::string selection_buttons[4] = {"Delete", "Unpublish", "Favorite", "Clear Selection"};
@@ -3528,7 +3528,7 @@ int search_ui(pixel *vid_buf)
 		}
 		else if (isFrontPage)
 		{
-			if (p1_extra)
+			if (next_p1_extra)
 				drawtext(vid_buf, 5+xOffset, YRES+MENUSIZE-15, "\x86", 255, 255, 255, 255);
 			else
 				drawtext(vid_buf, 5+xOffset, YRES+MENUSIZE-15, "\xEF", 255, 255, 255, 255);
@@ -3553,8 +3553,8 @@ int search_ui(pixel *vid_buf)
 				expected_scroll_wait_direction = -1;
 				updatePageNumTextbox();
 			}
-			else if (!(search_own || search_fav || search_date) && !sdl_wheel)
-				p1_extra = !p1_extra;
+			else if (!(search_own || search_fav || search_date) && !sdl_wheel && mx<=17+xOffset)
+				next_p1_extra = !next_p1_extra;
 			sdl_wheel = 0;
 			uih = 1;
 		}
@@ -3580,7 +3580,7 @@ int search_ui(pixel *vid_buf)
 		}
 
 		tp = -1;
-		if (isFrontPage)
+		if (isFrontPage && !p1_extra)
 		{	
 			//Message of the day
 			ui_richtext_process(mx, my, b, bq, &motd);
@@ -3621,7 +3621,7 @@ int search_ui(pixel *vid_buf)
 		for (gj=0; gj<GRID_Y; gj++)
 			for (gi=0; gi<GRID_X; gi++)
 			{
-				if (isFrontPage)
+				if (isFrontPage && !p1_extra)
 				{
 					pos = gi+GRID_X*(gj-GRID_Y+GRID_P);
 					if (pos<0)
@@ -3799,7 +3799,7 @@ int search_ui(pixel *vid_buf)
 		{
 			gi = mp % GRID_X;
 			gj = mp / GRID_X;
-			if (isFrontPage)
+			if (isFrontPage && !p1_extra)
 				gj += GRID_Y-GRID_P;
 			gx = ((XRES/GRID_X)*gi) + (XRES/GRID_X-XRES/GRID_S)/2+xOffset+touchOffset;
 			gy = (((YRES+15)/GRID_Y)*gj) + (YRES/GRID_Y-YRES/GRID_S+10)/2 + 18;
@@ -4141,7 +4141,7 @@ int search_ui(pixel *vid_buf)
 		{
 			search = 1;
 		}
-		else if ((strcmp(last, ed.str) && (!strcmp(ed.str, "") || strlen(ed.str) > 3)) || last_own!=search_own || last_date!=search_date || last_page!=search_page || last_fav!=search_fav || last_p1_extra!=p1_extra)
+		else if ((strcmp(last, ed.str) && (!strcmp(ed.str, "") || strlen(ed.str) > 3)) || last_own!=search_own || last_date!=search_date || last_page!=search_page || last_fav!=search_fav || last_p1_extra!=next_p1_extra)
 		{
 			search = 1;
 			if ((strcmp(last, ed.str) && (strcmp(ed.str, "") || strlen(ed.str) > 3)) || last_own!=search_own || last_fav!=search_fav || last_date!=search_date)
@@ -4196,7 +4196,7 @@ int search_ui(pixel *vid_buf)
 			last_date = search_date;
 			last_page = search_page;
 			last_fav = search_fav;
-			last_p1_extra = p1_extra;
+			last_p1_extra = next_p1_extra;
 
 			bool byvotes = !search_own && !search_date && !search_fav && !*last;
 			if (byvotes)
@@ -4209,7 +4209,7 @@ int search_ui(pixel *vid_buf)
 				else
 				{
 					start = 0;
-					count = p1_extra ? GRID_X * GRID_Y : GRID_X * GRID_P;
+					count = next_p1_extra ? GRID_X * GRID_Y : GRID_X * GRID_P;
 				}
 			}
 			else
@@ -4236,6 +4236,7 @@ int search_ui(pixel *vid_buf)
 			bool byVotes = !(search_own || search_date || search_fav || (last && strlen(last)));
 			if (!search)
 				isFrontPage = search_page == 0 && byVotes;
+			p1_extra = next_p1_extra;
 			touchOffset = 0;
 			if (status == 200)
 			{
