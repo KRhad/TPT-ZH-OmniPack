@@ -109,6 +109,18 @@ public:
 	int PushToStack(lua_State *l) override { return 0; }
 };
 
+class BeforeSimEvent : public Event
+{
+public:
+	int PushToStack(lua_State *l) override { return 0; }
+};
+
+class AfterSimEvent : public Event
+{
+public:
+	int PushToStack(lua_State *l) override { return 0; }
+};
+
 
 class LuaEvents
 {
@@ -127,7 +139,9 @@ public:
 		mousewheel,
 		tick,
 		blur,
-		close
+		close,
+		beforesim,
+		aftersim
 	};
 };
 
