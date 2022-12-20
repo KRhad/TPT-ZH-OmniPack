@@ -1337,7 +1337,9 @@ void Simulation::RecalcFreeParticles(bool doLifeDec)
 
 void Simulation::UpdateBefore()
 {
+#ifdef LUACONSOLE
 	HandleEvent(LuaEvents::beforesim, new BeforeSimEvent());
+#endif
 
 	//update wallmaps
 	for (int y = 0; y < YRES/CELL; y++)
@@ -1452,7 +1454,9 @@ void Simulation::UpdateAfter()
 		}
 	}
 
+#ifdef LUACONSOLE
 	HandleEvent(LuaEvents::aftersim, new AfterSimEvent());
+#endif
 }
 
 void Simulation::Tick()
