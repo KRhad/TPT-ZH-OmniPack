@@ -2736,6 +2736,11 @@ int Simulation::FloodParts(int x, int y, int fullc, int replace, int flags)
 	if (!FloodFillPmapCheck(x, y, replace) || ((flags&BRUSH_SPECIFIC_DELETE) && ((ElementTool*)activeTools[2])->GetID() != replace))
 		return 0;
 
+	// Bitmap for checking where we've already looked
+	auto bitmapPtr = std::unique_ptr<char[]>(new char[XRES * YRES]);
+	char *bitmap = bitmapPtr.get();
+	std::fill(&bitmap[0], &bitmap[XRES * YRES], 0);
+
 	try
 	{
 		CoordStack& cs = getCoordStackSingleton();
@@ -2748,7 +2753,7 @@ int Simulation::FloodParts(int x, int y, int fullc, int replace, int flags)
 			// go left as far as possible
 			while (c?x1>CELL:x1>0)
 			{
-				if (!FloodFillPmapCheck(x1-1, y, replace) || (c != 0 && IsWallBlocking(x1-1, y, c)))
+				if (bitmap[(y * XRES) + x1 - 1] || !FloodFillPmapCheck(x1-1, y, replace) || (c != 0 && IsWallBlocking(x1-1, y, c)))
 				{
 					break;
 				}
@@ -2757,7 +2762,7 @@ int Simulation::FloodParts(int x, int y, int fullc, int replace, int flags)
 			// go right as far as possible
 			while (c?x2<XRES-CELL-1:x2<XRES-1)
 			{
-				if (!FloodFillPmapCheck(x2+1, y, replace) || (c != 0 && IsWallBlocking(x2+1, y, c)))
+				if (bitmap[(y * XRES) + x2 + 1] || !FloodFillPmapCheck(x2+1, y, replace) || (c != 0 && IsWallBlocking(x2+1, y, c)))
 				{
 					break;
 				}
@@ -2784,18 +2789,20 @@ int Simulation::FloodParts(int x, int y, int fullc, int replace, int flags)
 				}
 				else if (CreateParts(x, y, fullc, flags, true))
 					created_something = 1;
+
+				bitmap[(y * XRES) + x] = 1;
 			}
 
 			if (c ? y>CELL : y>0)
 				for (x=x1; x<=x2; x++)
-					if (FloodFillPmapCheck(x, y-1, replace) && (c == 0 || !IsWallBlocking(x, y-1, c)))
+					if (!bitmap[((y - 1) * XRES) + x] && FloodFillPmapCheck(x, y-1, replace) && (c == 0 || !IsWallBlocking(x, y-1, c)))
 					{
 						cs.push(x, y-1);
 					}
 
 			if (c ? y<YRES-CELL-1 : y<YRES-1)
 				for (x=x1; x<=x2; x++)
-					if (FloodFillPmapCheck(x, y+1, replace) && (c == 0 || !IsWallBlocking(x, y+1, c)))
+					if (!bitmap[((y + 1) * XRES) + x] && FloodFillPmapCheck(x, y+1, replace) && (c == 0 || !IsWallBlocking(x, y+1, c)))
 					{
 						cs.push(x, y+1);
 					}
