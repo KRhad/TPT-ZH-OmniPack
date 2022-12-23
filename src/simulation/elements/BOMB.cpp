@@ -30,8 +30,7 @@ int BOMB_update(UPDATE_FUNC_ARGS)
 				{
 					int rad = 8, nt;
 					int nxi, nxj;
-					//TODO: this looks like a bad idea
-					pmap[y][x] = 0;
+					sim->part_kill(i);
 					for (nxj=-rad; nxj<=rad; nxj++)
 						for (nxi=-rad; nxi<=rad; nxi++)
 							if ((std::pow((float)nxi,2.0f))/(std::pow((float)rad,2.0f))+(std::pow((float)nxj,2.0f))/(std::pow((float)rad,2.0f))<=1)
@@ -70,7 +69,6 @@ int BOMB_update(UPDATE_FUNC_ARGS)
 									parts[nb].vy = RNG::Ref().between(-20, 20);
 								}
 							}
-					sim->part_kill(i);
 					return 1;
 				}
 			}
