@@ -85,6 +85,8 @@ int simulation_replaceModeFlags(lua_State *l);
 int simulation_listCustomGol(lua_State *l);
 int simulation_addCustomGol(lua_State *l);
 int simulation_removeCustomGol(lua_State *l);
+int simulation_lastUpdatedID(lua_State *l);
+int simulation_updateUpTo(lua_State *l);
 int simulation_stickman(lua_State * l);
 
 void initRendererAPI(lua_State * l);

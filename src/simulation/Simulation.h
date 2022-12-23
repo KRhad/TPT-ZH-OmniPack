@@ -44,6 +44,7 @@ public:
 	int pfree;
 	int parts_lastActiveIndex;
 	int debug_currentParticle;
+	int debug_mostRecentlyUpdated = -1; // -1 when between full update loops
 	bool forceStackingCheck;
 	
 	Air *air;

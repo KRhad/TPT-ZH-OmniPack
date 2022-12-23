@@ -292,6 +292,8 @@ void initSimulationAPI(lua_State * l)
 		{"listCustomGol", simulation_listCustomGol},
 		{"addCustomGol", simulation_addCustomGol},
 		{"removeCustomGol", simulation_removeCustomGol},
+		{"lastUpdatedID", simulation_lastUpdatedID},
+		{"updateUpTo", simulation_updateUpTo},
 		{NULL, NULL}
 	};
 	luaL_register(l, "simulation", simulationAPIMethods);
@@ -1819,6 +1821,55 @@ int simulation_removeCustomGol(lua_State *l)
 	FillMenus();
 	lua_pushboolean(l, true);
 	return 1;
+}
+
+int simulation_lastUpdatedID(lua_State *l)
+{
+	if (luaSim->debug_mostRecentlyUpdated != -1)
+	{
+		lua_pushinteger(l, luaSim->debug_mostRecentlyUpdated);
+	}
+	else
+	{
+		lua_pushnil(l);
+	}
+	return 1;
+}
+
+int simulation_updateUpTo(lua_State *l)
+{
+	int upTo = NPART - 1;
+	if (lua_gettop(l) > 0)
+	{
+		upTo = luaL_checkinteger(l, 1);
+	}
+	if (upTo < 0 || upTo >= NPART)
+	{
+		return luaL_error(l, "ID not in valid range");
+	}
+	if (upTo < luaSim->debug_currentParticle)
+	{
+		upTo = NPART - 1;
+	}
+	if (luaSim->debug_currentParticle == 0)
+	{
+		framerender = 1;
+		luaSim->UpdateBefore();
+		framerender = 0;
+	}
+	luaSim->UpdateParticles(luaSim->debug_currentParticle, upTo);
+	if (upTo < NPART - 1)
+	{
+		luaSim->debug_currentParticle = upTo + 1;
+	}
+	else
+	{
+		framerender = 1;
+		luaSim->UpdateAfter();
+		framerender = 0;
+		luaSim->debug_currentParticle = 0;
+	}
+	return 0;
 }
 
 //function added only for tptmp really

@@ -1438,12 +1438,16 @@ void Simulation::UpdateParticles(int start, int end)
 	for (int i = start; i <= end && i <= parts_lastActiveIndex; i++)
 		if (parts[i].type)
 		{
+			debug_mostRecentlyUpdated = i;
+
 			UpdateParticle(i);
 		}
 }
 
 void Simulation::UpdateAfter()
 {
+	debug_mostRecentlyUpdated = -1;
+
 	// For elements with extra data, run special update functions
 	// Used only for moving solids
 	for (int t = 1; t < PT_NUM; t++)
@@ -1457,6 +1461,28 @@ void Simulation::UpdateAfter()
 #ifdef LUACONSOLE
 	HandleEvent(LuaEvents::aftersim, new AfterSimEvent());
 #endif
+
+	// Only update air if not paused
+	if (!sys_pause||framerender)
+	{
+		globalSim->air->UpdateAir();
+		globalSim->air->UpdateAirHeat(globalSim);
+	}
+
+	if (globalSim->grav->gravWallChanged)
+	{
+		globalSim->grav->CalculateMask();
+		globalSim->grav->gravWallChanged = false;
+	}
+
+	if (!sys_pause||framerender)
+	{
+		globalSim->grav->UpdateAsync(); //Check for updated velocity maps from gravity thread
+		memset(globalSim->grav->gravmap, 0, (XRES/CELL)*(YRES/CELL)*sizeof(float)); //Clear the old gravmap
+	}
+
+	if (framerender)
+		framerender--;
 }
 
 void Simulation::Tick()
@@ -1500,9 +1526,9 @@ std::string Simulation::ParticleDebug(int mode, int x, int y)
 		if (!NUM_PARTS)
 			return "";
 		i = debug_currentParticle;
-		while (i < NPART && !globalSim->parts[i].type)
+		while (i < NPART - 1 && !globalSim->parts[i].type)
 			i++;
-		if (i == NPART)
+		if (i == NPART - 1)
 			logmessage << "End of particles reached, updated sim";
 		else
 			logmessage << "Updated particle #" << i;
@@ -1512,7 +1538,7 @@ std::string Simulation::ParticleDebug(int mode, int x, int y)
 	{
 		if (x < 0 || x >= XRES || y < 0 || y >= YRES || !pmap[y][x] || (i = ID(pmap[y][x])) < debug_currentParticle)
 		{
-			i = NPART;
+			i = NPART - 1;
 			logmessage << "Updated particles from #" << debug_currentParticle << " to end, updated sim";
 		}
 		else
