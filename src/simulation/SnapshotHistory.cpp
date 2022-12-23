@@ -193,10 +193,10 @@ void SnapshotHistory::TakeSnapshot(Simulation * sim)
 }
 
 
-void SnapshotHistory::HistoryRestore(Simulation * sim)
+bool SnapshotHistory::HistoryRestore(Simulation * sim)
 {
 	if (!history.size() || historyPosition <= 0)
-		return;
+		return false;
 	// When undoing, save the current state as a final redo
 	// This way ctrl+y will always bring you back to the point right before your last ctrl+z
 	if (historyPosition == history.size())
@@ -217,12 +217,14 @@ void SnapshotHistory::HistoryRestore(Simulation * sim)
 		historyCurrent = history[historyPosition].delta->Restore(*historyCurrent);
 	}
 	Snapshot::Restore(sim, *historyCurrent);
+
+	return true;
 }
 
-void SnapshotHistory::HistoryForward(Simulation *sim)
+bool SnapshotHistory::HistoryForward(Simulation *sim)
 {
 	if (historyPosition >= history.size())
-		return;
+		return false;
 
 	historyPosition++;
 	// Restore special snapshot taken on first undo
@@ -242,4 +244,6 @@ void SnapshotHistory::HistoryForward(Simulation *sim)
 		historyCurrent = history[historyPosition - 1].delta->Forward(*historyCurrent);
 	}
 	Snapshot::Restore(sim, *historyCurrent);
+
+	return true;
 }

@@ -22,8 +22,8 @@ public:
 
 	// manage snapshots list
 	static void TakeSnapshot(Simulation * sim);
-	static void HistoryRestore(Simulation * sim);
-	static void HistoryForward(Simulation *sim);
+	static bool HistoryRestore(Simulation * sim);
+	static bool HistoryForward(Simulation *sim);
 
 	static void SetUndoHistoryLimit(unsigned int newLimit) { undoHistoryLimit = std::min(newLimit, (unsigned int)200); }
 	static unsigned int GetUndoHistoryLimit() { return undoHistoryLimit; }
