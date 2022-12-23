@@ -2266,7 +2266,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			}
 			else if (shift)
 			{
-				logmessage = sim->ParticleDebug(1, mouse.X, mouse.Y);
+				logmessage = sim->ParticleDebug(1, cursor.X, cursor.Y);
 			}
 			else if (ctrl)
 			{

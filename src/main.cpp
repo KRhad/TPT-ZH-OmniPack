@@ -649,62 +649,6 @@ char http_proxy_string[256] = "";
 
 unsigned short last_major=0, last_minor=0, last_build=0, update_flag=0;
 
-// Particle debugging function
-void ParticleDebug(int mode, int x, int y)
-{
-	int debug_currentParticle = globalSim->debug_currentParticle;
-	int i;
-	std::stringstream logmessage;
-
-	// update one particle at a time
-	if (mode == 0)
-	{
-		if (!NUM_PARTS)
-			return;
-		i = debug_currentParticle;
-		while (i < NPART && !globalSim->parts[i].type)
-			i++;
-		if (i == NPART)
-			logmessage << "End of particles reached, updated sim";
-		else
-			logmessage << "Updated particle #" << i;
-	}
-	// update all particles up to particle under mouse (or to end of sim)
-	else if (mode == 1)
-	{
-		if (x < 0 || x >= XRES || y < 0 || y >= YRES || !pmap[y][x] || (i = ID(pmap[y][x])) < debug_currentParticle)
-		{
-			i = NPART;
-			logmessage << "Updated particles from #" << debug_currentParticle << " to end, updated sim";
-		}
-		else
-			logmessage << "Updated particles #" << debug_currentParticle << " through #" << i;
-	}
-#ifdef LUACONSOLE
-	luacon_log(logmessage.str());
-#endif
-
-	// call simulation functions run before updating particles if we are updating #0
-	if (debug_currentParticle == 0)
-	{
-		framerender = 1;
-		globalSim->RecalcFreeParticles(true);
-		globalSim->UpdateBefore();
-		framerender = 0;
-	}
-	// update the particles
-	globalSim->UpdateParticles(debug_currentParticle, i);
-	if (i < NPART-1)
-		globalSim->debug_currentParticle = i+1;
-	// we reached the end, call simulation functions run after updating particles
-	else
-	{
-		globalSim->UpdateAfter();
-		globalSim->currentTick++;
-		globalSim->debug_currentParticle = 0;
-	}
-}
-
 #ifdef RENDERER
 int main(int argc, char *argv[])
 {
@@ -1307,28 +1251,6 @@ int main_loop_temp(int b, int bq, int sdl_key, int scan, int x, int y, bool shif
 		}
 		if (the_game->ZoomWindowShown())
 			render_zoom(vid_buf);
-
-		// Only update air if not paused
-		if (!sys_pause||framerender)
-		{
-			globalSim->air->UpdateAir();
-			globalSim->air->UpdateAirHeat(globalSim);
-		}
-
-		if (globalSim->grav->gravWallChanged)
-		{
-			globalSim->grav->CalculateMask();
-			globalSim->grav->gravWallChanged = false;
-		}
-		
-		if (!sys_pause||framerender)
-		{
-			globalSim->grav->UpdateAsync(); //Check for updated velocity maps from gravity thread
-			memset(globalSim->grav->gravmap, 0, (XRES/CELL)*(YRES/CELL)*sizeof(float)); //Clear the old gravmap
-		}
-
-		if (framerender)
-			framerender--;
 
 		memset(vid_buf+((XRES+BARSIZE)*YRES), 0, (PIXELSIZE*(XRES+BARSIZE))*MENUSIZE);//clear menu areas
 		clearrect(vid_buf, XRES, 1, BARSIZE, YRES-1);
