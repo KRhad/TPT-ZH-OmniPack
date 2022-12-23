@@ -127,9 +127,10 @@ int FIRE_update(UPDATE_FUNC_ARGS)
 		}
 		break;
 	case PT_LAVA:
+	{
+		float pres = sim->air->pv[y / CELL][x / CELL];
 		if (parts[i].ctype == PT_ROCK)
 		{
-			float pres = sim->air->pv[y / CELL][x / CELL];
 			if (pres <= -9)
 			{
 				parts[i].ctype = PT_STNE;
@@ -170,12 +171,13 @@ int FIRE_update(UPDATE_FUNC_ARGS)
 				}
 			}
 		}
-		else if ((parts[i].ctype == PT_STNE || !parts[i].ctype) && sim->air->pv[y / CELL][x / CELL] >= 30.0f && (parts[i].temp > 1943.15f || sim->air->pv[y / CELL][x / CELL] < 120.0f)) // Form ROCK with pressure, if it will stay molten or not immediately break
+		else if ((parts[i].ctype == PT_STNE || !parts[i].ctype) && pres >= 30.0f && (parts[i].temp > sim->elements[PT_ROCK].HighTemperatureTransitionThreshold || pres < sim->elements[PT_ROCK].HighPressureTransitionThreshold)) // Form ROCK with pressure, if it will stay molten or not immediately break
 		{
 			parts[i].tmp2 = RNG::Ref().between(0, 10); // Provide tmp2 for color noise
 			parts[i].ctype = PT_ROCK;
 		}
 		break;
+	}
 	default:
 		break;
 	}
