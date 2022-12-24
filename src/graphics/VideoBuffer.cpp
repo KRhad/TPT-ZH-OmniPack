@@ -409,7 +409,7 @@ int VideoBuffer::DrawString(int x, int y, const std::string &s, int r, int g, in
 	if (a == 0)
 		return x;
 	int startX = x;
-	bool highlight = false, modifiedColor = false, didNewline = false;
+	bool highlight = false, underline = false, modifiedColor = false, didNewline = false;
 	int oldR = r, oldG = g, oldB = b;
 	for (size_t i = 0; i < s.length(); i++)
 	{
@@ -496,6 +496,9 @@ int VideoBuffer::DrawString(int x, int y, const std::string &s, int r, int g, in
 				g = 10;
 				r = 100;
 				break;
+			case 'U':
+				underline = !underline;
+				break;
 			}
 			i++;
 			break;
@@ -509,6 +512,10 @@ int VideoBuffer::DrawString(int x, int y, const std::string &s, int r, int g, in
 			else if (highlight)
 			{
 				FillRect(oldX, y-2, font_data[font_ptrs[(unsigned char)s[i]]], FONT_H+2, 0, 0, 255, 127);
+			}
+			if (underline)
+			{
+				DrawLine(oldX, y + FONT_H, x - 1, y + FONT_H, r, g, b, a);
 			}
 			didNewline = false;
 		}

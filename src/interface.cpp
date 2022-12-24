@@ -513,6 +513,8 @@ void ui_edit_process(int mx, int my, int mb, int mbq, ui_edit *ed)
 					break;
 				if (sdl_key=='w' || sdl_key=='g' || sdl_key=='o' || sdl_key=='r' || sdl_key=='l' || sdl_key=='b' || sdl_key=='t')// || sdl_key=='p')
 					ch = sdl_key;
+				else if (sdl_key=='u')
+					ch = 'U';
 				else
 					break;
 				if (ed->highlightlength)

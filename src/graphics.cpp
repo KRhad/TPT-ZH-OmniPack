@@ -633,7 +633,7 @@ int addchar(pixel *vid, int x, int y, int c, int r, int g, int b, int a)
 int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a, bool noColor)
 {
 	int sx = x;
-	bool highlight = false;
+	bool highlight = false, underline = false;
 	int oR = r, oG = g, oB = b;
 	for (; *s; s++)
 	{
@@ -715,6 +715,9 @@ int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a
 					g = 10;
 					r = 100;
 					break;
+				case 'U':
+					underline = !underline;
+					break;
 				}
 			}
 			s++;
@@ -725,7 +728,12 @@ int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a
 			{
 				fillrect(vid, x-1, y-3, font_data[font_ptrs[(int)(*(unsigned char *)s)]]+1, FONT_H+3, 0, 0, 255, 127);
 			}
-			x = drawchar(vid, x, y, *(unsigned char *)s, r, g, b, a);
+			int newX = drawchar(vid, x, y, *(unsigned char *)s, r, g, b, a);
+			if (underline)
+			{
+				blend_line(vid, x, y + FONT_H, newX - 1, y + FONT_H, r, g, b, a);
+			}
+			x = newX;
 		}
 	}
 	return x;
@@ -787,6 +795,7 @@ int drawtextwrap(pixel *vid, int x, int y, int w, int h, const char *s, int r, i
 	int charspace;
 	int invert = 0;
 	int oR = r, oG = g, oB = b;
+	bool underline = false;
 	while (*s)
 	{
 		wordlen = strcspn(s," .,!?\n");
@@ -834,6 +843,7 @@ int drawtextwrap(pixel *vid, int x, int y, int w, int h, const char *s, int r, i
 			}
 			else if (*s == '\b')
 			{
+				bool colorCode = true;
 				switch (s[1])
 				{
 				case 'w':
@@ -869,8 +879,15 @@ int drawtextwrap(pixel *vid, int x, int y, int w, int h, const char *s, int r, i
 					g = 83;
 					b = 211;
 					break;
+				case 'U':
+					underline = !underline;
+					colorCode = false;
+					break;
+				default:
+					colorCode = false;
+					break;
 				}
-				if(invert)
+				if (invert && colorCode)
 				{
 					r = 255-r;
 					g = 255-g;
@@ -891,10 +908,14 @@ int drawtextwrap(pixel *vid, int x, int y, int w, int h, const char *s, int r, i
 				}
 				if ((h > 0 && rh > h) || (h < 0 && rh > YRES+MENUSIZE-110)) // the second part is hacky, since this will only be used for comments anyway
 					goto textwrapend;
+				int newX;
 				if (rh + h < 0)
-					x = drawchar(vid, x, y, *(unsigned char *)s, 0, 0, 0, 0);
+					newX = drawchar(vid, x, y, *(unsigned char *)s, 0, 0, 0, 0);
 				else
-					x = drawchar(vid, x, y, *(unsigned char *)s, r, g, b, a);
+					newX = drawchar(vid, x, y, *(unsigned char *)s, r, g, b, a);
+				if (underline)
+					blend_line(vid, x, y + FONT_H, newX - 1, y + FONT_H, r, g, b, a);
+				x = newX;
 			}
 		}
 	}
