@@ -1229,3 +1229,11 @@ was drawn on top of it. Fix bug where elements may be selected when rapidly
 moving mouse in and out of the window with mouse held down. Fix mac updates. 
 Fix comment usernames / data showing incorrectly after submitting a comment. 
 Fix crash when searching before the initial front page load has completed.
+
+Version 52.0 2022-12-26
+Fix front page expansion button. Update to tptmp v2.0.25. Add new temperature
+scales uption from xphere07, which allows you to change the default scale -
+C, F, or K, that is used in the HUD, prop tool, and console. The default is
+Celsius. Custom HUDs will automatically update to use the new "default scale"
+option, rather than scale-specific displays. Various changes and updates from
+tpt++, including numerous new Lua APIs.
