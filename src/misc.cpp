@@ -775,10 +775,14 @@ void load_presets(void)
 			// With the addition of temperature scale, turn off Celsius/Fahrenheit/Kelvin displays in hud and turn on default scale display
 			if (last_modbuild <= 149)
 			{
-				currentHud[14] = 1;
-				currentHud[15] = 0;
-				currentHud[16] = 0;
-				currentHud[17] = 0;
+				normalHud[14] = 1;
+				normalHud[15] = 0;
+				normalHud[16] = 0;
+				normalHud[17] = 0;
+				debugHud[14] = 1;
+				debugHud[15] = 0;
+				debugHud[16] = 0;
+				debugHud[17] = 0;
 			}
 		}
 	}
