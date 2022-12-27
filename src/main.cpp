@@ -647,7 +647,7 @@ bool thumb_cache_find(char *id, void **thumb, int *size)
 
 char http_proxy_string[256] = "";
 
-unsigned short last_major=0, last_minor=0, last_build=0, update_flag=0;
+unsigned short last_major=0, last_minor=0, last_build=0, last_modbuild=0, update_flag=0;
 
 #ifdef RENDERER
 int main(int argc, char *argv[])

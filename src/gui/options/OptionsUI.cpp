@@ -143,12 +143,20 @@ OptionsUI::OptionsUI(Simulation *sim):
 	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Smudge Tool Color Space:");
 	scrollArea->AddComponent(descLabel);
 
+	prev = temperatureScaleDropdown = new Dropdown(prev->Below(Point(0, 4)), Point(Dropdown::AUTOSIZE, Dropdown::AUTOSIZE), {"Kelvin", "Celsius", "Fahrenheit"});
+	temperatureScaleDropdown->SetCallback([&](unsigned int option) { this->TemperatureScaleSelected(option); });
+	scrollArea->AddComponent(temperatureScaleDropdown);
+
+	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Temperature Scale:");
+	scrollArea->AddComponent(descLabel);
+
 	// set dropdown widths to width of largest one
 	int maxWidth = airSimDropdown->GetSize().X;
 	maxWidth = tpt::max(maxWidth, gravityDropdown->GetSize().X);
 	maxWidth = tpt::max(maxWidth, edgeModeDropdown->GetSize().X);
 	maxWidth = tpt::max(maxWidth, decoSpaceDropdown->GetSize().X);
-	maxWidth = tpt::max(maxWidth, 70); // space for air temp textbox
+	maxWidth = tpt::max(maxWidth, temperatureScaleDropdown->GetSize().X);
+	maxWidth = tpt::max(maxWidth, gfx::VideoBuffer::TextSize("17538.53F").X + airTempDisplay->GetSize().X + 12); // space for air temp textbox
 	int xPos = scrollArea->GetUsableWidth() - 5 - maxWidth;
 	airSimDropdown->SetPosition(Point(xPos, airSimDropdown->GetPosition().Y));
 	airSimDropdown->SetSize(Point(maxWidth, airSimDropdown->GetSize().Y));
@@ -161,6 +169,8 @@ OptionsUI::OptionsUI(Simulation *sim):
 	edgeModeDropdown->SetSize(Point(maxWidth, edgeModeDropdown->GetSize().Y));
 	decoSpaceDropdown->SetPosition(Point(xPos, decoSpaceDropdown->GetPosition().Y));
 	decoSpaceDropdown->SetSize(Point(maxWidth, decoSpaceDropdown->GetSize().Y));
+	temperatureScaleDropdown->SetPosition(Point(xPos, temperatureScaleDropdown->GetPosition().Y));
+	temperatureScaleDropdown->SetSize(Point(maxWidth, temperatureScaleDropdown->GetSize().Y));
 
 #ifndef TOUCHUI
 	std::vector<std::string> scaleOptions;
@@ -330,12 +340,11 @@ void OptionsUI::InitializeOptions()
 
 	airSimDropdown->SetSelectedOption(airMode);
 	UpdateAmbientAirTempPreview(sim->air->GetAmbientAirTemp(), true);
-	std::stringstream ss;
-	ss << std::fixed << std::setprecision(2) << sim->air->GetAmbientAirTemp();
-	airTempTextbox->SetText(ss.str());
+	airTempTextbox->SetText(Format::TemperatureToString(sim->air->GetAmbientAirTemp(), globalSim->temperatureScale));
 	gravityDropdown->SetSelectedOption(sim->gravityMode);
 	edgeModeDropdown->SetSelectedOption(sim->edgeMode);
 	decoSpaceDropdown->SetSelectedOption(sim->decoSpace);
+	temperatureScaleDropdown->SetSelectedOption(sim->temperatureScale);
 
 #ifdef TOUCHUI
 	decorationCheckbox->SetChecked(decorations_enable);
@@ -396,7 +405,16 @@ void OptionsUI::AirSimSelected(unsigned int option)
 void OptionsUI::UpdateAirTemp(std::string temp, bool isDefocus)
 {
 	float airTemp;
-	bool isValid = PropWindow::ParseFloat(temp, &airTemp, true);
+	bool isValid;
+	try
+	{
+		airTemp = Format::StringToTemperature(temp, globalSim->temperatureScale);
+		isValid = true;
+	}
+	catch (const std::exception & e)
+	{
+		isValid = false;
+	}
 
 	// While defocusing, correct out of range temperatures and empty textboxes
 	if (isDefocus)
@@ -415,13 +433,11 @@ void OptionsUI::UpdateAirTemp(std::string temp, bool isDefocus)
 			airTemp = MIN_TEMP;
 		else if (airTemp > MAX_TEMP)
 			airTemp = MAX_TEMP;
-		else
-			return;
+		//else
+		//	return;
 
 		// Update textbox with the new value
-		std::stringstream ss;
-		ss << std::fixed << std::setprecision(2) << airTemp;
-		airTempTextbox->SetText(ss.str());
+		airTempTextbox->SetText(Format::TemperatureToString(airTemp, globalSim->temperatureScale));
 	}
 	// Out of range temperatures are invalid, preview should go away
 	else if (airTemp < MIN_TEMP || airTemp > MAX_TEMP)
@@ -477,6 +493,12 @@ void OptionsUI::EdgeModeSelected(unsigned int option)
 void OptionsUI::DecoSpaceSelected(unsigned int option)
 {
 	sim->decoSpace = option;
+}
+
+void OptionsUI::TemperatureScaleSelected(unsigned int option)
+{
+	sim->temperatureScale = option;
+	airTempTextbox->SetText(Format::TemperatureToString(sim->air->GetAmbientAirTemp(), option));
 }
 
 
@@ -598,7 +620,7 @@ void OptionsUI::OnDraw(gfx::VideoBuffer *buf)
 
 void OptionsUI::OnSubwindowDraw(gfx::VideoBuffer *buf)
 {
-	buf->DrawLine(0, decoSpaceDropdown->Below(Point(0, 5)).Y, scrollArea->GetUsableWidth() - 1, decoSpaceDropdown->Below(Point(0, 5)).Y, 200, 200, 200, 255);
+	buf->DrawLine(0, temperatureScaleDropdown->Below(Point(0, 5)).Y, scrollArea->GetUsableWidth() - 1, temperatureScaleDropdown->Below(Point(0, 5)).Y, 200, 200, 200, 255);
 #ifndef TOUCHUI
 	buf->DrawLine(0, altFullscreenCheckbox->Below(Point(0, 17)).Y, scrollArea->GetUsableWidth() - 1, altFullscreenCheckbox->Below(Point(0, 17)).Y, 200, 200, 200, 255);
 #endif

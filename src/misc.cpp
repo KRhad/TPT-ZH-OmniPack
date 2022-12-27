@@ -195,7 +195,8 @@ void save_presets()
 		cJSON_AddTrueToObject(graphicsobj, "Decorations");
 	else
 		cJSON_AddFalseToObject(graphicsobj, "Decorations");
-	
+	cJSON_AddNumberToObject(graphicsobj, "TemperatureScale", globalSim->temperatureScale);
+
 	//Tpt++ Simulation setting(s)
 	cJSON_AddItemToObject(root, "Simulation", simulationobj=cJSON_CreateObject());
 	cJSON_AddNumberToObject(simulationobj, "EdgeMode", globalSim->edgeMode);
@@ -442,6 +443,8 @@ void load_presets(void)
 				last_minor = (unsigned short)tmpobj->valueint;
 			if ((tmpobj = cJSON_GetObjectItem(versionobj, "build")))
 				last_build = (unsigned short)tmpobj->valueint;
+			if ((tmpobj = cJSON_GetObjectItem(versionobj, "modbuild")))
+				last_modbuild = (unsigned short)tmpobj->valueint;
 			if ((tmpobj = cJSON_GetObjectItem(versionobj, "update")) && tmpobj->type == cJSON_True)
 				update_flag = 1;
 			else
@@ -547,6 +550,8 @@ void load_presets(void)
 				drawgrav_enable = tmpobj->valueint;
 			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "DebugMode")) && tmpobj->type == cJSON_True)
 				DEBUG_MODE = tmpobj->valueint;
+			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "TemperatureScale")))
+				globalSim->temperatureScale = tmpobj->valueint;
 		}
 
 		//Read simulation settings
@@ -766,6 +771,14 @@ void load_presets(void)
 			{
 				scrollSpeed = 15;
 				scrollDeceleration = 0.98f;
+			}
+			// With the addition of temperature scale, turn off Celsius/Fahrenheit/Kelvin displays in hud and turn on default scale display
+			if (last_modbuild <= 149)
+			{
+				currentHud[14] = 1;
+				currentHud[15] = 0;
+				currentHud[16] = 0;
+				currentHud[17] = 0;
 			}
 		}
 	}

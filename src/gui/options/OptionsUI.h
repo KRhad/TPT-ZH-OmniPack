@@ -18,7 +18,7 @@ class OptionsUI : public ui::Window
 	ui::ScrollWindow *scrollArea;
 
 	Checkbox *heatSimCheckbox, *ambientCheckbox, *newtonianCheckbox, *waterEqalizationCheckbox, *decorationCheckbox;
-	Dropdown *airSimDropdown, *gravityDropdown, *edgeModeDropdown, *decoSpaceDropdown;
+	Dropdown *airSimDropdown, *gravityDropdown, *edgeModeDropdown, *decoSpaceDropdown, *temperatureScaleDropdown;
 	Textbox *airTempTextbox;
 	Button *airTempDisplay;
 
@@ -46,6 +46,7 @@ class OptionsUI : public ui::Window
 	unsigned int oldEdgeMode;
 	void EdgeModeSelected(unsigned int option);
 	void DecoSpaceSelected(unsigned int option);
+	void TemperatureScaleSelected(unsigned int option);
 	void ScaleSelected(unsigned int option);
 	void ResizableChecked(bool checked);
 	void FilteringSelected(unsigned int option);

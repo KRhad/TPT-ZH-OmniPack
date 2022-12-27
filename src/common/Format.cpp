@@ -506,3 +506,65 @@ unsigned long Format::CalculateCRC(unsigned char * data, int len)
 {
 	return update_crc(0xffffffffL, data, len) ^ 0xffffffffL;
 }
+
+std::string Format::TemperatureToString(float temp, int scale, int precision)
+{
+	std::stringstream ret;
+	ret << std::fixed;
+	ret.precision(precision);
+	switch (scale)
+	{
+	case 1:
+		ret << (temp - 273.15f) << "C";
+		break;
+	case 2:
+		ret << (temp - 273.15f) * 1.8f + 32.0f << "F";
+		break;
+	default:
+		ret << temp << "K";
+		break;
+	}
+
+	return ret.str();
+}
+
+float Format::StringToTemperature(const std::string &str, int defaultScale)
+{
+	int scale = defaultScale;
+	bool hasScaleChar = false;
+	if (str.size())
+	{
+		char last = str.at(str.size() - 1);
+		if (last == 'K')
+		{
+			scale = 0;
+			hasScaleChar = true;
+		}
+		else if (last == 'C')
+		{
+			scale = 1;
+			hasScaleChar = true;
+		}
+		else if (last == 'F')
+		{
+			scale = 2;
+			hasScaleChar = true;
+		}
+	}
+	if (!str.size())
+	{
+		throw std::out_of_range("empty string");
+	}
+	float out = Format::StringToNumberThrowing<float>(hasScaleChar ? str.substr(0, str.size() - 1) : str);
+	switch (scale)
+	{
+	case 1:
+		out = out + 273.15;
+		break;
+	case 2:
+		out = (out - 32.0f) / 1.8f + 273.15f;
+		break;
+	}
+
+	return out;
+}

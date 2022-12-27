@@ -9,6 +9,7 @@
 #include "luaconsole.h"
 #include "powder.h"
 
+#include "common/Format.h"
 #include "common/tpt-minmax.h"
 #include "game/Menus.h"
 #include "simulation/Simulation.h"
@@ -113,10 +114,6 @@ void SetRightHudText(Simulation * sim, int x, int y)
 					else
 						nametext << "FILT (unknown mode)";
 				}
-				else if (currentHud[14] && currentHud[11] && (underType == PT_PIPE || underType == PT_PPIP) && sim->IsElement(TYP(parts[underID].ctype)))
-				{
-					nametext << ElementResolve(sim, underType, 0) << " (" << ElementResolve(sim, TYP(parts[underID].ctype), parts[underID].tmp4) << ")";
-				}
 				else if (currentHud[11])
 				{
 					int tctype = parts[underID].ctype;
@@ -155,19 +152,28 @@ void SetRightHudText(Simulation * sim, int x, int y)
 			if (!nametext.str().empty())
 				nametext << ", ";
 			strncpy(heattext, nametext.str().c_str(), 50);
-			if (currentHud[15])
+			if (currentHud[14])
 			{
-				sprintf(tempstring,"Temp: %0.*f C, ",currentHud[18],parts[underID].temp-273.15f);
+				std::string tempStr = Format::TemperatureToString(parts[underID].temp, sim->temperatureScale, currentHud[18]);
+				sprintf(tempstring,"Temp: %s, ", tempStr.c_str());
 				strappend(heattext,tempstring);
 			}
-			if (currentHud[16])
+			if (currentHud[15] && (!currentHud[14] || sim->temperatureScale != 1))
 			{
-				sprintf(tempstring,"Temp: %0.*f F, ",currentHud[18],((parts[underID].temp-273.15f)*9/5)+32);
+				std::string tempStr = Format::TemperatureToString(parts[underID].temp, 1, currentHud[18]);
+				sprintf(tempstring,"Temp: %s, ", tempStr.c_str());
 				strappend(heattext,tempstring);
 			}
-			if (currentHud[17])
+			if (currentHud[16] && (!currentHud[14] || sim->temperatureScale != 2))
 			{
-				sprintf(tempstring,"Temp: %0.*f K, ",currentHud[18],parts[underID].temp);
+				std::string tempStr = Format::TemperatureToString(parts[underID].temp, 2, currentHud[18]);
+				sprintf(tempstring,"Temp: %s, ", tempStr.c_str());
+				strappend(heattext,tempstring);
+			}
+			if (currentHud[17] && (!currentHud[14] || sim->temperatureScale != 0))
+			{
+				std::string tempStr = Format::TemperatureToString(parts[underID].temp, 0, currentHud[18]);
+				sprintf(tempstring,"Temp: %s, ", tempStr.c_str());
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[19])

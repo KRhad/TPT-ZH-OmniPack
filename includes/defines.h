@@ -246,7 +246,7 @@ extern int scrollSpeed;
 extern int scrollSpeedMomentum;
 extern float scrollDeceleration;
 
-extern unsigned short last_major, last_minor, update_flag, last_build;
+extern unsigned short last_major, last_minor, update_flag, last_build, last_modbuild;
 
 extern char http_proxy_string[256];
 

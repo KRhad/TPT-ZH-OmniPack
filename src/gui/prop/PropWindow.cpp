@@ -121,7 +121,9 @@ void PropWindow::LoadFromPropTool()
 
 	// Parse the value out of propTool->propValue
 	std::string value;
-	if (prop->Type == StructProperty::Float)
+	if (prop->Name == "temp")
+		value = Format::TemperatureToString(propTool->propValue.Float, globalSim->temperatureScale);
+	else if (prop->Type == StructProperty::Float)
 		value = Format::NumberToString<float>(propTool->propValue.Float);
 	else if (prop->Type == StructProperty::UInteger)
 		value = Format::NumberToString<unsigned int>(propTool->propValue.UInteger);
@@ -176,24 +178,24 @@ bool PropWindow::ParseInteger(const std::string& value, bool isHex)
 
 bool PropWindow::ParseFloat(const std::string& value, float* out, bool isTemp)
 {
-	// Special handling for temperature, allow using celcius or farenheit
-	bool isCelcius = false, isFarenheit = false;
 	if (isTemp)
 	{
-		if (value[value.length() - 1] == 'C')
-			isCelcius = true;
-		else if (value[value.length() - 1] == 'F')
-			isFarenheit = true;
+		try
+		{
+			float val = Format::StringToTemperature(value, globalSim->temperatureScale);
+			*out = val;
+			return true;
+		}
+		catch (const std::exception &e)
+		{
+			return false;
+		}
 	}
 
 	bool isParsed = false;
-	auto val = ParseNumber<float>((isCelcius || isFarenheit) ? value.substr(0, value.length() - 1) : value, false, isParsed);
+	auto val = ParseNumber<float>(value, false, isParsed);
 	if (isParsed)
 	{
-		if (isCelcius)
-			val += 273.15f;
-		else if (isFarenheit)
-			val = (val - 32) * 5 / 9 + 273.15f;
 		*out = val;
 		return true;
 	}

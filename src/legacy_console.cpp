@@ -21,6 +21,7 @@
 #include "interface.h"
 #include "powder.h"
 #include "legacy_console.h"
+#include "common/Format.h"
 #include "simulation/Simulation.h"
 #include "simulation/WallNumbers.h"
 #include "simulation/ElementDataContainer.h"
@@ -102,26 +103,15 @@ int console_parse_coords(const char *txt, int *x, int *y, char *err)
 //takes things like 100C or 212F into account
 float console_parse_temp(std::string temperature)
 {
-	float value;
-	bool isCelcius = false, isFahrenheit = false;
-	
-	char last = toupper(temperature[temperature.length()-1]);
-	if (last == 'C')
-		isCelcius = true;
-	else if (last == 'F')
-		isFahrenheit = true;
-	if (isCelcius || isFahrenheit)
-		temperature = temperature.substr(0, temperature.length()-1);
-	std::stringstream parser(temperature);
-	parser >> value;
-	if (!parser.eof())
+	try
+	{
+		float temp = Format::StringToTemperature(temperature, globalSim->temperatureScale);
+		return restrict_flt(temp, MIN_TEMP, MAX_TEMP);
+	}
+	catch (const std::exception &e)
+	{
 		return -1;
-
-	if (isCelcius)
-		value += 273.15f;
-	else if (isFahrenheit)
-		value = (value-32.0f)*5/9+273.15f;
-	return restrict_flt(value, MIN_TEMP, MAX_TEMP);
+	}
 }
 
 //takes a string of either coords or a particle number, and puts the particle number into *which

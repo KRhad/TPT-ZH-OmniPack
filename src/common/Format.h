@@ -26,6 +26,16 @@ namespace Format
 		return (ss >> number)?number:0;
 	}
 
+	template <typename T> T StringToNumberThrowing(const std::string & text)
+	{
+		std::stringstream ss(text);
+		T number;
+		ss >> number;
+		if (ss.eof())
+			return number;
+		throw std::runtime_error("Not a number");
+	}
+
 	std::string ToLower(std::string text);
 	std::string ToUpper(std::string text);
 
@@ -40,4 +50,6 @@ namespace Format
 	std::vector<char> VideoBufferToPTI(const gfx::VideoBuffer & vidBuf);
 	gfx::VideoBuffer * PTIToVideoBuffer(std::vector<char> & data);
 	unsigned long CalculateCRC(unsigned char * data, int length);
+	std::string TemperatureToString(float temp, int scale, int precision = 2);
+	float StringToTemperature(const std::string & str, int defaultScale);
 }
