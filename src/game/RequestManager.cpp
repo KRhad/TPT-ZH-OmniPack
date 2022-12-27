@@ -28,9 +28,11 @@ void RequestManager::Shutdown()
 	{
 		worker_thread.join();
 
+#ifndef DEBUG
 		curl_multi_cleanup(multi);
 		multi = NULL;
 		curl_global_cleanup();
+#endif
 	}
 }
 
