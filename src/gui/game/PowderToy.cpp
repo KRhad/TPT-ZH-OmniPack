@@ -1293,8 +1293,9 @@ void PowderToy::OnTick(uint32_t ticks)
 	bool votesAllowed = svf_login && svf_open && svf_own == 0;
 	upvoteButton->SetEnabled(votesAllowed && voteDownload == NULL);
 	downvoteButton->SetEnabled(votesAllowed && voteDownload == NULL);
-	upvoteButton->SetBackgroundColor(svf_myvote == 1 ? COLMODALPHA(upvoteButton->GetColor(), ui::Style::HighlightAlphaHover) : 0);
-	downvoteButton->SetBackgroundColor(svf_myvote == -1 ? COLMODALPHA(downvoteButton->GetColor(), ui::Style::HighlightAlphaHover) : 0);
+	int alphaLevel = votesAllowed ? ui::Style::HighlightAlphaHover : ui::Style::HighlightAlpha;
+	upvoteButton->SetBackgroundColor(svf_myvote == 1 ? COLMODALPHA(upvoteButton->GetColor(), alphaLevel) : 0);
+	downvoteButton->SetBackgroundColor(svf_myvote == -1 ? COLMODALPHA(downvoteButton->GetColor(), alphaLevel) : 0);
 	if (svf_myvote == 1)
 	{
 		upvoteButton->SetTooltipText("You like this");
