@@ -66,6 +66,8 @@ int LIFE_graphics(GRAPHICS_FUNC_ARGS)
 
 void LIFE_create(ELEMENT_CREATE_FUNC_ARGS)
 {
+	if (v == -1)
+		v = 0;
 	// * 0x200000: No need to look for colours, they'll be set later anyway.
 	bool skipLookup = v & 0x200000;
 	v &= 0x1FFFFF;
