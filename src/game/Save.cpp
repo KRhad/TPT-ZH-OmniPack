@@ -1991,8 +1991,8 @@ void Save::ParseSavePSv()
 		}
 	}
 
-	if (pos >= size)
-		throw ParseException("Ran past data buffer");
+	if (pos == size) // no sign data, "version 1" PSv
+		return;
 	int signLen = data[pos++];
 	for (int i = 0; i < signLen; i++)
 	{
