@@ -5840,7 +5840,8 @@ int execute_save(pixel *vid_buf, Save *save)
 		{ "Name", svf_name },
 		{ "Description", svf_description },
 		{ "Data:save.bin", std::string((char*)save->GetSaveData(), (int)save->GetSaveSize()) },
-		{ "Publish", (svf_publish == 1) ? "Public" : "Private" }
+		{ "Publish", (svf_publish == 1) ? "Public" : "Private" },
+		{ "Key", svf_session_key }
 	};
 	if (svf_id[0])
 	{
@@ -5854,7 +5855,7 @@ int execute_save(pixel *vid_buf, Save *save)
 	}
 
 	int status;
-	std::string result = Request::SimpleAuth(SCHEME SERVER "/Save.api?Key=" + std::string(svf_session_key), &status, svf_user_id, svf_session_id, postData);
+	std::string result = Request::SimpleAuth(SCHEME SERVER "/Save.api", &status, svf_user_id, svf_session_id, postData);
 
 	the_game->SetReloadPoint(save);
 
@@ -5954,11 +5955,12 @@ bool execute_submit(pixel *vid_buf, char *id, char *message)
 	int status;
 
 	std::stringstream url;
-	url <<  SCHEME << SERVER << "/Browse/Comments.json?ID=" << id << "&Key=" << svf_session_key;
+	url <<  SCHEME << SERVER << "/Browse/Comments.json?ID=" << id;
 	Request *comment = new Request(url.str());
 	comment->AuthHeaders(svf_user_id, svf_session_id);
 	comment->AddPostData({
-		{ "Comment", message }
+		{ "Comment", message },
+		{ "Key", svf_session_key }
 	});
 	comment->Start();
 	std::string result = comment->Finish(&status);

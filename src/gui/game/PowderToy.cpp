@@ -440,7 +440,8 @@ void PowderToy::DoVoteBtn(bool up)
 	voteDownload->AuthHeaders(svf_user_id, svf_session_id);
 	voteDownload->AddPostData({
 		{ "ID", svf_id },
-		{ "Action", isReset ? "Reset" : (up ? "Up" : "Down") }
+		{ "Action", isReset ? "Reset" : (up ? "Up" : "Down") },
+		{ "Key", svf_session_key }
 	});
 	voteDownload->Start();
 	svf_myvote = isReset ? 0 : (up ? 1 : -1); // will be reset later upon error
