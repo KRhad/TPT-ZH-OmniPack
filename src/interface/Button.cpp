@@ -174,7 +174,7 @@ void Button::OnDraw(gfx::VideoBuffer* vid)
 		// Mouse over button, not held down
 		else
 		{
-			if (state == INVERTED || backgroundColor)
+			if (state == INVERTED)
 			{
 				backColor = COLMODALPHA(color, Style::InvertAlphaHover);
 				realTextColor = COLRGB(255 - COLR(textColor), 255 - COLG(textColor), 255 - COLB(textColor));

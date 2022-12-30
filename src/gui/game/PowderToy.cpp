@@ -435,14 +435,15 @@ void PowderToy::DoVoteBtn(bool up)
 		SetInfoTip("Error: could not vote");
 		return;
 	}
+	bool isReset = (up && svf_myvote == 1) || (!up && svf_myvote == -1);
 	voteDownload = new Request(SCHEME SERVER "/Vote.api");
 	voteDownload->AuthHeaders(svf_user_id, svf_session_id);
-	std::map<std::string, std::string> postData;
-	postData.insert(std::pair<std::string, std::string>("ID", svf_id));
-	postData.insert(std::pair<std::string, std::string>("Action", up ? "Up" : "Down"));
-	voteDownload->AddPostData(postData);
+	voteDownload->AddPostData({
+		{ "ID", svf_id },
+		{ "Action", isReset ? "Reset" : (up ? "Up" : "Down") }
+	});
 	voteDownload->Start();
-	svf_myvote = up ? 1 : -1; // will be reset later upon error
+	svf_myvote = isReset ? 0 : (up ? 1 : -1); // will be reset later upon error
 }
 
 void PowderToy::OpenTagsBtn()
@@ -1182,6 +1183,8 @@ void PowderToy::OnTick(uint32_t ticks)
 		std::string ret = voteDownload->Finish(&status);
 		if (ParseServerReturn((char*)ret.c_str(), status, false))
 			svf_myvote = 0;
+		else if (svf_myvote == 0)
+			SetInfoTip("Cleared Vote");
 		else
 			SetInfoTip("Voted Successfully");
 		voteDownload = NULL;
@@ -1287,11 +1290,11 @@ void PowderToy::OnTick(uint32_t ticks)
 	saveButton->SetTooltipText(saveButtonTip);
 	saveButton->SetEnabled(canReupload);
 
-	bool votesAllowed = svf_login && svf_open && svf_own == 0 && svf_myvote == 0;
+	bool votesAllowed = svf_login && svf_open && svf_own == 0;
 	upvoteButton->SetEnabled(votesAllowed && voteDownload == NULL);
 	downvoteButton->SetEnabled(votesAllowed && voteDownload == NULL);
-	upvoteButton->SetBackgroundColor(svf_myvote == 1 ? COLMODALPHA(upvoteButton->GetColor(), ui::Style::HighlightAlpha) : 0);
-	downvoteButton->SetBackgroundColor(svf_myvote == -1 ? COLMODALPHA(upvoteButton->GetColor(), ui::Style::HighlightAlpha) : 0);
+	upvoteButton->SetBackgroundColor(svf_myvote == 1 ? COLMODALPHA(upvoteButton->GetColor(), ui::Style::HighlightAlphaHover) : 0);
+	downvoteButton->SetBackgroundColor(svf_myvote == -1 ? COLMODALPHA(downvoteButton->GetColor(), ui::Style::HighlightAlphaHover) : 0);
 	if (svf_myvote == 1)
 	{
 		upvoteButton->SetTooltipText("You like this");
