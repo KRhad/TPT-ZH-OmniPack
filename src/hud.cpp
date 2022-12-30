@@ -422,7 +422,7 @@ void DrawHud(int introTextAlpha, int qTipAlpha)
 	{
 		heatx = XRES-16-heatlength;
 		heaty = 16;
-		alpha = std::min((int)((285 - qTipAlpha)*.5f), 127);
+		alpha = std::min((int)(introTextInvert/2), std::min((int)((285 - qTipAlpha)*.5f), 127));
 	}
 	if (strlen(heattext) > 0)
 	{
