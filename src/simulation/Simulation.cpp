@@ -1817,6 +1817,7 @@ bool Simulation::UpdateParticle(int i)
 	if (parts[i].type == PT_NONE)
 		return true;
 
+#ifndef NOMOD
 	if (parts[i].flags&FLAG_EXPLODE)
 	{
 		if (RNG::Ref().chance(1, 10))
@@ -1846,6 +1847,7 @@ bool Simulation::UpdateParticle(int i)
 			return true;
 		}
 	}
+#endif
 
 	if (transitionOccurred)
 		return false;

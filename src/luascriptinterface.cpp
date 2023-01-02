@@ -2868,8 +2868,10 @@ void initElementsAPI(lua_State * l)
 	lua_pushinteger(l, 0); lua_setfield(l, -2, "FLAG_WATEREQUAL");
 	lua_pushinteger(l, 0); lua_setfield(l, -2, "FLAG_MOVABLE"); //removed this constant, sponge moves again and no reason for other elements to be allowed to
 	SETCONST(l, FLAG_PHOTDECO);
+#ifndef NOMOD
 	SETCONST(l, FLAG_EXPLODE);
 	SETCONST(l, FLAG_DISAPPEAR);
+#endif
 	lua_pushinteger(l, 0);
 	lua_setfield(l, -2, "ST_NONE");
 	lua_pushinteger(l, 0);
