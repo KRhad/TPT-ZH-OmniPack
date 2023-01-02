@@ -15,6 +15,7 @@
 #include "common/Platform.h"
 #include "common/tpt-minmax.h"
 #include "interface/Engine.h"
+#include "gui/dialogs/ConfirmPrompt.h"
 #include "gui/game/PowderToy.h" // for the_game->DeFocus(), remove once all interfaces get modernized
 
 
@@ -24,6 +25,7 @@ bool resizable = false;
 int pixelFilteringMode = 0;
 bool fullscreen = false;
 bool altFullscreen = false;
+bool inOldInterface = false;
 
 unsigned short sdl_mod;
 std::string sdl_textinput = "";
@@ -202,7 +204,6 @@ int EventProcess(SDL_Event event, ui::Window * eventHandler)
 }
 
 uint32_t lastTick, drawingTimer;
-bool inOldInterface = false;
 void MainLoop(bool secondaryLoop)
 {
 	SDL_Event event;
