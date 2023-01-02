@@ -339,6 +339,13 @@ void luacon_openeventcompat()
 	luaopen_eventcompat(l);
 }
 
+void luacon_openstickmancontrol()
+{
+#ifdef TOUCHUI
+	luaopen_stickmancontrol(l);
+#endif
+}
+
 std::map<std::string, StructProperty> legacyPropNames;
 std::map<std::string, StructProperty> legacyTransitionNames;
 void initLegacyProps()
