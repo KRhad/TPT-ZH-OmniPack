@@ -138,8 +138,7 @@ int graphics_toolTip(lua_State * l);
 
 void LuaGetProperty(lua_State* l, StructProperty property, intptr_t propertyAddress);
 void LuaSetProperty(lua_State* l, StructProperty property, intptr_t propertyAddress, int stackPos);
-void elements_setProperty(lua_State * l, int id, int format, int offset);
-void elements_writeProperty(lua_State *l, int id, int format, int offset);
+void LuaSetParticleProperty(lua_State* l, int particleID, StructProperty property, intptr_t propertyAddress, int stackPos);
 
 void initElementsAPI(lua_State * l);
 int elements_allocate(lua_State * l);

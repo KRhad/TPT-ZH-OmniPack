@@ -495,9 +495,9 @@ int simulation_partPosition(lua_State * l)
 {
 	int particleID = lua_tointeger(l, 1);
 	int argCount = lua_gettop(l);
-	if(particleID < 0 || particleID >= NPART || !parts[particleID].type)
+	if (particleID < 0 || particleID >= NPART || !parts[particleID].type)
 	{
-		if(argCount == 1)
+		if (argCount == 1)
 		{
 			lua_pushnil(l);
 			lua_pushnil(l);
@@ -507,10 +507,12 @@ int simulation_partPosition(lua_State * l)
 		}
 	}
 	
-	if(argCount == 3)
+	if (argCount == 3)
 	{
-		parts[particleID].x = (float)lua_tonumber(l, 2);
-		parts[particleID].y = (float)lua_tonumber(l, 3);
+		float x = luaSim->parts[particleID].x;
+		float y = luaSim->parts[particleID].y;
+		luaSim->Move(particleID, (int)(x + 0.5f), (int)(y + 0.5f), lua_tonumber(l, 2), lua_tonumber(l, 3));
+
 		return 0;
 	}
 	else
@@ -534,7 +536,9 @@ int simulation_partProperty(lua_State * l)
 			return 1;
 		}
 		else
+		{
 			return 0;
+		}
 	}
 
 	auto &properties = particle::GetProperties();
@@ -574,10 +578,7 @@ int simulation_partProperty(lua_State * l)
 
 	if (argCount == 3)
 	{
-		if (prop == properties.begin() + 0) // i.e. it's .type
-			luaSim->part_change_type_force(particleID, luaL_checkinteger(l, 3));
-		else
-			LuaSetProperty(l, *prop, propertyAddress, 3);
+		LuaSetParticleProperty(l, particleID, *prop, propertyAddress, 3);
 		return 0;
 	}
 	else
@@ -2988,72 +2989,24 @@ void LuaSetProperty(lua_State* l, StructProperty property, intptr_t propertyAddr
 	}
 }
 
-// deprecated
-void elements_setProperty(lua_State * l, int id, int format, int offset)
+void LuaSetParticleProperty(lua_State* l, int particleID, StructProperty property, intptr_t propertyAddress, int stackPos)
 {
-	switch(format)
+	if (property.Name == "type")
 	{
-		case 0: //Int
-			*((int*)(((unsigned char*)&luaSim->elements[id])+offset)) = luaL_checkinteger(l, 3);
-			break;
-		case 1: //Float
-			*((float*)(((unsigned char*)&luaSim->elements[id])+offset)) = (float)luaL_checknumber(l, 3);
-			break;
-		case 2: //String
-			*((std::string*)(((unsigned char*)&luaSim->elements[id]) + offset)) = tpt_lua_checkString(l, 3);
-			break;
-		case 3: //Unsigned char (HeatConduct)
-			*((unsigned char*)(((unsigned char*)&luaSim->elements[id])+offset)) = (unsigned char)luaL_checkinteger(l, 3);
-			break;
-		case 4: //Color (Color)
-		{
-#if PIXELSIZE == 4
-			unsigned int col = (unsigned int)luaL_checknumber(l, 3);
-			*((unsigned int*)(((unsigned char*)&luaSim->elements[id])+offset)) = col;
-#else
-			*((unsigned short*)(((unsigned char*)&luaSim->elements[id])+offset)) = luaL_checkinteger(l, 3);
-#endif
-			break;
-		}
-		case 5: //Unsigned int (Properties, PhotonReflectWavelength, Latent)
-			*((unsigned int*)(((unsigned char*)&luaSim->elements[id])+offset)) = luaL_checkinteger(l, 3);
-			break;
-		case 6: // old state (removed)
-		default:
-			break;
+		luaSim->part_change_type(particleID, int(luaSim->parts[particleID].x+0.5f), int(luaSim->parts[particleID].y+0.5f), luaL_checkinteger(l, 3));
 	}
-}
-
-// deprecated
-void elements_writeProperty(lua_State *l, int id, int format, int offset)
-{
-	switch(format)
+	else if (property.Name == "x" || property.Name == "y")
 	{
-		case 0: //Int
-			lua_pushinteger(l, *((int*)(((unsigned char*)&luaSim->elements[id])+offset)));
-			break;
-		case 1: //Float
-			lua_pushnumber(l, *((float*)(((unsigned char*)&luaSim->elements[id])+offset)));
-			break;
-		case 2: //String
-			tpt_lua_pushString(l, (*((std::string*)(((unsigned char*)&luaSim->elements[id])+offset))));
-			break;
-		case 3: //Unsigned char (HeatConduct)
-			lua_pushinteger(l, *((unsigned char*)(((unsigned char*)&luaSim->elements[id])+offset)));
-			break;
-		case 4: //Color (Color)
-#if PIXELSIZE == 4
-			lua_pushinteger(l, *((unsigned int*)(((unsigned char*)&luaSim->elements[id])+offset)));
-#else
-			lua_pushinteger(l, *((unsigned short*)(((unsigned char*)&luaSim->elements[id])+offset)));
-#endif
-			break;
-		case 5: //Unsigned int (Properties, PhotonReflectWavelengths, Latent)
-			lua_pushinteger(l, *((unsigned int*)(((unsigned char*)&luaSim->elements[id])+offset)));
-			break;
-		case 6: // old state (removed)
-		default:
-			lua_pushnil(l);
+		float val = luaL_checknumber(l, 3);
+		float x = luaSim->parts[particleID].x;
+		float y = luaSim->parts[particleID].y;
+		float nx = property.Name == "x" ? val : x;
+		float ny = property.Name == "y" ? val : y;
+		luaSim->Move(particleID, (int)(x + 0.5f), (int)(y + 0.5f), nx, ny);
+	}
+	else
+	{
+		LuaSetProperty(l, property, propertyAddress, 3);
 	}
 }
 

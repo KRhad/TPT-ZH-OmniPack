@@ -386,72 +386,71 @@ void initLegacyProps()
 #ifndef FFI
 int luacon_partread(lua_State* l)
 {
-	int format, offset, tempinteger;
-	float tempfloat;
-	int i;
-	std::string key = tpt_lua_optString(l, 2, "");
-	offset = Particle_GetOffset(key, &format);
+	int i = cIndex;
+	if (i < 0 || i >= NPART)
+		return luaL_error(l, "Out of range");
+	if (!luaSim->parts[i].type)
+		return luaL_error(l, "Dead particle");
 
-	i = cIndex;
-	
-	if (i < 0 || i >= NPART || offset==-1)
+	auto &properties = particle::GetProperties();
+	auto prop = properties.end();
+
+	std::string fieldName = tpt_lua_toString(l, 2);
+	if (fieldName == "id")
 	{
-		if (i < 0 || i >= NPART)
-			return luaL_error(l, "Out of range");
-		else if (byteStringEqualsLiteral(key, "id"))
+		lua_pushnumber(l, i);
+		return 1;
+	}
+	for (auto &alias : particle::GetPropertyAliases())
+	{
+		if (fieldName == alias.from)
 		{
-			lua_pushnumber(l, i);
-			return 1;
+			fieldName = alias.to;
 		}
-		else
-			return luaL_error(l, "Invalid property");
 	}
+	prop = std::find_if(properties.begin(), properties.end(), [&fieldName](StructProperty const &p) {
+		return p.Name == fieldName;
+	});
+	if (prop == properties.end())
+		return luaL_error(l, "Invalid property");
 
-	switch(format)
-	{
-	case 0:
-	case 2:
-	case 3:
-		tempinteger = *((int*)(((char*)&parts[i])+offset));
-		lua_pushnumber(l, tempinteger);
-		break;
-	case 1:
-		tempfloat = *((float*)(((char*)&parts[i])+offset));
-		lua_pushnumber(l, tempfloat);
-		break;
-	}
+	//Calculate memory address of property
+	intptr_t propertyAddress = (intptr_t)(((unsigned char*)&luaSim->parts[i]) + prop->Offset);
+
+	LuaGetProperty(l, *prop, propertyAddress);
 	return 1;
 }
 
 int luacon_partwrite(lua_State* l)
 {
-	int format, offset;
-	int i;
-	std::string key = tpt_lua_optString(l, 2, "");
-	offset = Particle_GetOffset(key, &format);
-	
-	i = cIndex;
-	
+	int i = cIndex;
 	if (i < 0 || i >= NPART)
 		return luaL_error(l, "Out of range");
-	else if (!parts[i].type)
+	if (!luaSim->parts[i].type)
 		return luaL_error(l, "Dead particle");
-	else if (offset == -1)
+
+	auto &properties = particle::GetProperties();
+	auto prop = properties.end();
+
+	std::string fieldName = tpt_lua_toString(l, 2);
+	for (auto &alias : particle::GetPropertyAliases())
+	{
+		if (fieldName == alias.from)
+		{
+			fieldName = alias.to;
+		}
+	}
+	prop = std::find_if(properties.begin(), properties.end(), [&fieldName](StructProperty const &p) {
+		return p.Name == fieldName;
+	});
+	if (prop == properties.end())
 		return luaL_error(l, "Invalid property");
 
-	switch(format)
-	{
-	case 0:
-	case 3:
-		*((int*)(((char*)&parts[i])+offset)) = luaL_optinteger(l, 3, 0);
-		break;
-	case 1:
-		*((float*)(((char*)&parts[i])+offset)) = (float)luaL_optnumber(l, 3, 0);
-		break;
-	case 2:
-		luaSim->part_change_type_force(i, luaL_optinteger(l, 3, 0));
-	}
-	return 1;
+	//Calculate memory address of property
+	intptr_t propertyAddress = (intptr_t)(((unsigned char*)&luaSim->parts[i]) + prop->Offset);
+
+	LuaSetParticleProperty(l, i, *prop, propertyAddress, 3);
+	return 0;
 }
 
 int luacon_partsread(lua_State* l)
@@ -561,13 +560,8 @@ int luacon_elementwrite(lua_State* l)
 	if (!luaSim->IsElement(i))
 		return luaL_error(l, "Invalid property");
 
-	if (prop.Name == "type")
-		luaSim->part_change_type_force(i, luaL_checkinteger(l, 3));
-	else
-	{
-		auto propertyAddress = reinterpret_cast<intptr_t>((reinterpret_cast<unsigned char*>(&luaSim->elements[i])) + prop.Offset);
-		LuaSetProperty(l, prop, propertyAddress, 3);
-	}
+	auto propertyAddress = reinterpret_cast<intptr_t>((reinterpret_cast<unsigned char*>(&luaSim->elements[i])) + prop.Offset);
+	LuaSetProperty(l, prop, propertyAddress, 3);
 
 	FillMenus();
 	luaSim->InitCanMove();
@@ -1416,6 +1410,8 @@ int luatpt_set_property(lua_State* l)
 		return luaL_error(l, "Invalid property '%s'", prop.c_str());
 	else if (format == 3)
 		format = 0;
+	bool isX = byteStringEqualsLiteral(prop, "x");
+	bool isY = byteStringEqualsLiteral(prop, "y");
 
 	if (acount > 2)
 	{
@@ -1477,7 +1473,15 @@ int luatpt_set_property(lua_State* l)
 				ny = (int)(parts[i].y + .5f);
 				if (nx >= x && nx < x+w && ny >= y && ny < y+h && (!partsel || partsel == parts[i].type))
 				{
-					if (format == 1)
+					if (isX || isY)
+					{
+						float x = luaSim->parts[i].x;
+						float y = luaSim->parts[i].y;
+						float nx = isX ? f : x;
+						float ny = isY ? f : y;
+						luaSim->Move(i, (int)(x + 0.5f), (int)(y + 0.5f), nx, ny);
+					}
+					else if (format == 1)
 						*((float*)(((unsigned char*)&parts[i])+offset)) = f;
 					else if (format == 0)
 						*((int*)(((unsigned char*)&parts[i])+offset)) = t;
@@ -1510,7 +1514,15 @@ int luatpt_set_property(lua_State* l)
 		if (partsel && partsel != parts[i].type)
 			return 0;
 
-		if (format == 1)
+		if (isX || isY)
+		{
+			float x = luaSim->parts[i].x;
+			float y = luaSim->parts[i].y;
+			float nx = isX ? f : x;
+			float ny = isY ? f : y;
+			luaSim->Move(i, (int)(x + 0.5f), (int)(y + 0.5f), nx, ny);
+		}
+		else if (format == 1)
 			*((float*)(((unsigned char*)&parts[i])+offset)) = f;
 		else if (format == 0)
 			*((int*)(((unsigned char*)&parts[i])+offset)) = t;
