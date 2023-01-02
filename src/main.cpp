@@ -1002,7 +1002,7 @@ int main(int argc, char *argv[])
 				i++;
 			}
 		}
-		else if (!strcmp(argv[i], "disable-bluescreen") || !strcmp(argv[i], "nobluescreen"))
+		else if (!strcmp(argv[i], "disable-bluescreen"))
 		{
 			disableSignals = true;
 		}
