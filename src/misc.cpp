@@ -757,7 +757,7 @@ void load_presets(void)
 		free(prefdata);
 
 		// settings that need to be changed on specific updates can go here
-		if (update_flag)
+		//if (update_flag)
 		{
 #ifdef WIN
 			if (last_build == 322)
