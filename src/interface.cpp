@@ -3655,11 +3655,11 @@ int search_ui(pixel *vid_buf)
 				}
 				else
 					drawtext(vid_buf, gx+XRES/(GRID_S*2)-j/2, gy+YRES/GRID_S+15, search_owners[pos], 100, 130, 160, 255);
-				if (search_thumbs[pos]&&thumb_drawn[pos]==0)
+				if (search_thumbs[pos] && thumb_drawn[pos] == 0)
 				{
-					fillrect(v_buf, gx - 8, gy - 5, XRES/GRID_S + 22, YRES/GRID_S + 29, 0, 0, 0, 255);
+					fillrect(v_buf, gx - 8 - touchOffset, gy - 5, XRES/GRID_S + 22, YRES/GRID_S + 29, 0, 0, 0, 255);
 					if (search_checked[pos])
-						fillrect(v_buf, gx - 8, gy - 5, XRES/GRID_S + 22, YRES/GRID_S + 29, 100, 170, 255, 100);
+						fillrect(v_buf, gx - 8 - touchOffset, gy - 5, XRES/GRID_S + 22, YRES/GRID_S + 29, 100, 170, 255, 100);
 					//render_thumb(search_thumbs[pos], search_thsizes[pos], 1, v_buf, gx, gy, GRID_S);
 					int finh, finw;
 					pixel *thumb_rsdata = NULL;
@@ -3916,7 +3916,7 @@ int search_ui(pixel *vid_buf)
 			}
 		}
 		// Delay a frame before setting this to false
-		 if (touchDragged && !bq)
+		if (touchDragged && !bq)
 			touchDragged = false;
 		if (b && !bq && my >= 30 && do_open == 0)
 		{
@@ -4000,9 +4000,19 @@ int search_ui(pixel *vid_buf)
 		// holding down for 600ms selects saves
 		if (b && mp != -1 && !save_held_timestamp_triggered && save_held_timestamp && Platform::GetTime() - (num_selected ? 0 : 600) > save_held_timestamp)
 		{
-			search_checked[mp] = !search_checked[mp];
-			thumb_drawn[mp] = false;
-			save_held_timestamp_triggered = true;
+			if (std::abs(touchOffset) < 120)
+			{
+				search_checked[mp] = !search_checked[mp];
+				thumb_drawn[mp] = false;
+				save_held_timestamp_triggered = true;
+				dragging = false;
+				touchOffset = 0;
+			}
+			else
+			{
+				save_held_timestamp = 0;
+				save_held_timestamp_triggered = false;
+			}
 		}
 		else if (!b)
 		{
