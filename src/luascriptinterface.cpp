@@ -296,6 +296,7 @@ void initSimulationAPI(lua_State * l)
 		{"removeCustomGol", simulation_removeCustomGol},
 		{"lastUpdatedID", simulation_lastUpdatedID},
 		{"updateUpTo", simulation_updateUpTo},
+		{"temperatureScale", simulation_temperatureScale},
 		{NULL, NULL}
 	};
 	luaL_register(l, "simulation", simulationAPIMethods);
@@ -1886,6 +1887,20 @@ int simulation_updateUpTo(lua_State *l)
 		framerender = 0;
 		luaSim->debug_currentParticle = 0;
 	}
+	return 0;
+}
+
+int simulation_temperatureScale(lua_State *l)
+{
+	if (lua_gettop(l) == 0)
+	{
+		lua_pushinteger(l, luaSim->temperatureScale);
+		return 1;
+	}
+	int temperatureScale = luaL_checkinteger(l, 1);
+	if (temperatureScale < 0 || temperatureScale > 2)
+		return luaL_error(l, "Invalid temperature scale");
+	luaSim->temperatureScale = temperatureScale;
 	return 0;
 }
 
