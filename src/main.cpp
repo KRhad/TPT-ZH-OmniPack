@@ -1081,6 +1081,7 @@ int main(int argc, char *argv[])
 			!Platform::FileExists("scripts/downloaded/2 cracker64-TPTMulti.lua"))
 		luacon_openmultiplayer();
 #endif
+	luacon_openstickmancontrol();
 	for (int i = 0; i < 10; i++)
 	{
 		sprintf(tabNames[i], "Untitled Simulation %i", i+1);

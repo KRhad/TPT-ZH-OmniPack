@@ -366,7 +366,9 @@ void OptionsUI::InitializeOptions()
 	updatesCheckbox->SetChecked(doUpdates);
 	savePressureCheckbox->SetChecked(sim->includePressure);
 	circleCheckbox->SetChecked(perfectCircleBrush);
+#ifndef ANDROID
 	incompatibleCheckbox->SetChecked(loadIncompatibleSaves);
+#endif
 }
 
 void OptionsUI::HeatSimChecked(bool checked)
