@@ -21,6 +21,7 @@ GravityWindow::GravityWindow(Simulation *sim, float scale, int radius):
 	int buttonHeight = 15;
 #else
 	int buttonHeight = 25;
+	Resize(position, size + Point(0, 10));
 #endif
 
 	Label * tempLabel = new Label(Point(4, 1), Point(size.X - 8, 22), "Custom Gravity");
