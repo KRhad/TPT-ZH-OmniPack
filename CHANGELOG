@@ -1241,3 +1241,7 @@ tpt++, including numerous new Lua APIs.
 Version 52.0 2022-12-06 (build 150)
 Fix custom HUD options not actually being reset, causing temperature scale
 option to not affect HUD without manual changes.
+
+Version 53.0 2023-01-03
+Update to TPT 97.0 (nearly everything was already in, but some last minute beta
+changes are now included). Update to tptmp v2.0.28
