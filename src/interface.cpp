@@ -2404,8 +2404,8 @@ int save_name_ui(pixel *vid_buf)
 		if (b && !bq && (mx < x0 || my < y0 || mx > x0+420 || my > y0+110+YRES/4)
 			&& !(mx >= ctb.x && mx <= ctb.x + ctb.width && my >= ctb.y && my <= ctb.y + ctb.height)
 		)
-#endif
 			break;
+#endif
 		if (sdl_key == SDLK_ESCAPE)
 		{
 			break;
