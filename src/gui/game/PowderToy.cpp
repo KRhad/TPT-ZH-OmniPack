@@ -1297,21 +1297,8 @@ void PowderToy::OnTick(uint32_t ticks)
 	int alphaLevel = votesAllowed ? ui::Style::HighlightAlphaHover : ui::Style::HighlightAlpha;
 	upvoteButton->SetBackgroundColor(svf_myvote == 1 ? COLMODALPHA(upvoteButton->GetColor(), alphaLevel) : 0);
 	downvoteButton->SetBackgroundColor(svf_myvote == -1 ? COLMODALPHA(downvoteButton->GetColor(), alphaLevel) : 0);
-	if (svf_myvote == 1)
-	{
-		upvoteButton->SetTooltipText("You like this");
-		downvoteButton->SetTooltipText("You like this");
-	}
-	else if (svf_myvote == -1)
-	{
-		upvoteButton->SetTooltipText("You dislike this");
-		downvoteButton->SetTooltipText("You dislike this");
-	}
-	else
-	{
-		upvoteButton->SetTooltipText("Like this save");
-		downvoteButton->SetTooltipText("Dislike this save");
-	}
+	upvoteButton->SetTooltipText("Like this save");
+	downvoteButton->SetTooltipText("Dislike this save");
 
 #ifndef TOUCHUI
 	if (svf_tags[0])
