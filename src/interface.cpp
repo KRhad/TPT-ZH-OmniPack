@@ -3330,7 +3330,7 @@ int search_ui(pixel *vid_buf)
 	std::string motdText = the_game->GetMotd();
 	ui_richtext motd;
 	int searchFailureCode = -1;
-	bool isFrontPage = false;
+	bool isFrontPage = false, isNextSearchFrontPage = false;
 
 
 	Request *saveListDownload = NULL;
@@ -4210,8 +4210,9 @@ int search_ui(pixel *vid_buf)
 			last_fav = search_fav;
 			last_p1_extra = next_p1_extra;
 
-			bool byvotes = !search_own && !search_date && !search_fav && !*last;
-			if (byvotes)
+			bool byVotes = !search_own && !search_date && !search_fav && !*last;
+			isNextSearchFrontPage = search_page == 0 && byVotes;
+			if (byVotes)
 			{
 				if (search_page)
 				{
@@ -4246,8 +4247,7 @@ int search_ui(pixel *vid_buf)
 			std::string resultsStr = saveListDownload->Finish(&status);
 			const char *results = resultsStr.c_str();
 			bool byVotes = !(search_own || search_date || search_fav || (last && strlen(last)));
-			if (!search)
-				isFrontPage = search_page == 0 && byVotes;
+			isFrontPage = isNextSearchFrontPage;
 			p1_extra = next_p1_extra;
 			touchOffset = 0;
 			if (status == 200)
