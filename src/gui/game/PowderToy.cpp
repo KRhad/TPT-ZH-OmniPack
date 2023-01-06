@@ -1075,14 +1075,18 @@ void PowderToy::OnTick(uint32_t ticks)
 				int major = stable["Major"].asInt();
 				int minor = stable["Minor"].asInt();
 				int buildnum = stable["Build"].asInt();
-				std::string file = UPDATESCHEME UPDATESERVER + stable["File"].asString();
 				std::string changelog = stable["Changelog"].asString();
+#ifdef ANDROID
+				std::string file = stable["File"].asString();
+				if (buildnum > MOBILE_BUILD)
+				{
+					std::stringstream changelogStream;
+					changelogStream << "\bbYour version: " << MOBILE_MAJOR << "." << MOBILE_MINOR << " (" << MOBILE_BUILD << ")\nNew version: " << major << "." << minor << " (" << buildnum << ")\n\n\bwChangeLog:\n";
+#else
+				std::string file = UPDATESCHEME UPDATESERVER + stable["File"].asString();
 				if (buildnum > MOD_BUILD_VERSION)
 				{
 					std::stringstream changelogStream;
-#ifdef ANDROID
-					changelogStream << "\bbYour version: " << MOBILE_MAJOR << "." << MOBILE_MINOR << " (" << MOBILE_BUILD << ")\nNew version: " << major << "." << minor << " (" << buildnum << ")\n\n\bwChangeLog:\n";
-#else
 					changelogStream << "\bbYour version: " << MOD_VERSION << "." << MOD_MINOR_VERSION << " (" << MOD_BUILD_VERSION << ")\nNew version: " << major << "." << minor << " (" << buildnum << ")\n\n\bwChangeLog:\n";
 #endif
 					changelogStream << changelog;
