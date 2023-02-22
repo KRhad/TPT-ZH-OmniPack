@@ -276,6 +276,9 @@ void Request::Start()
 
 		curl_easy_setopt(easy, CURLOPT_PRIVATE, (void *) this);
 		curl_easy_setopt(easy, CURLOPT_USERAGENT, user_agent.c_str());
+#ifdef DEBUG
+		curl_easy_setopt(easy, CURLOPT_NOSIGNAL, 1L);
+#endif
 
 		curl_easy_setopt(easy, CURLOPT_HEADERDATA, (void *)this);
 		curl_easy_setopt(easy, CURLOPT_HEADERFUNCTION, Request::HeaderDataHandler);
