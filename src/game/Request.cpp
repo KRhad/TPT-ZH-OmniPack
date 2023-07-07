@@ -6,10 +6,6 @@
 #include "common/Platform.h"
 
 
-#if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 55, 0)
-# define REQUEST_USE_CURL_OFFSET_T
-#endif
-
 #if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 56, 0)
 # define REQUEST_USE_CURL_MIMEPOST
 #endif

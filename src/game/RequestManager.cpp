@@ -7,6 +7,11 @@
 #include "Request.h"
 #include "common/Platform.h"
 
+
+#if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 55, 0)
+# define REQUEST_USE_CURL_OFFSET_T
+#endif
+
 const int curl_multi_wait_timeout_ms = 100;
 const long curl_max_host_connections = 6;
 
