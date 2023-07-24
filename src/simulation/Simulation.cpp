@@ -1039,7 +1039,7 @@ int Simulation::part_create(int p, int x, int y, int t, int v)
 }
 
 // changes the type of particle number i, to t. This also changes pmap at the same time.
-bool Simulation::part_change_type(int i, int x, int y, int t)
+bool Simulation::part_change_type(int i, int x, int y, int t, bool ignore_indestructible)
 {
 	if (x<0 || y<0 || x>=XRES || y>=YRES || i>=NPART || t<0 || t>=PT_NUM)
 		return false;
@@ -1051,7 +1051,7 @@ bool Simulation::part_change_type(int i, int x, int y, int t)
 		part_kill(i);
 		return true;
 	}
-	if (elements[parts[i].type].Properties&PROP_INDESTRUCTIBLE)
+	if (elements[parts[i].type].Properties&PROP_INDESTRUCTIBLE && !ignore_indestructible)
 		return false;
 	if (elements[t].Func_Create_Allowed)
 	{

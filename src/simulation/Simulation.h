@@ -73,7 +73,7 @@ public:
 	int part_create(int p, int x, int y, int t, int v = -1);
 	void part_kill(int i);
 	void part_delete(int x, int y);
-	bool part_change_type(int i, int x, int y, int t);
+	bool part_change_type(int i, int x, int y, int t, bool ignore_indestructible=false);
 	void part_change_type_force(int i, int t);
 	void ClearArea(int x, int y, int w, int h);
 	void GetGravityField(int x, int y, float particleGrav, float newtonGrav, float & pGravX, float & pGravY);
