@@ -438,7 +438,7 @@ int simulation_partChangeType(lua_State * l)
 	int partIndex = lua_tointeger(l, 1);
 	if (partIndex < 0 || partIndex >= NPART || !parts[partIndex].type)
 		return 0;
-	globalSim->part_change_type(partIndex, (int)(parts[partIndex].x+0.5f), (int)(parts[partIndex].y+0.5f), lua_tointeger(l, 2), true);
+	luaSim->part_change_type(partIndex, (int)(parts[partIndex].x+0.5f), (int)(parts[partIndex].y+0.5f), lua_tointeger(l, 2), true);
 	return 0;
 }
 

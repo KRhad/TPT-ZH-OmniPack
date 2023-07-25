@@ -133,6 +133,7 @@ void Textbox::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, 
 		case SDL_SCANCODE_X:
 			if (readOnly)
 				break;
+			Label::CopySelection();
 			DeleteHighlight(true);
 			break;
 		case SDL_SCANCODE_BACKSPACE:

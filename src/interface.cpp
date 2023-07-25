@@ -468,7 +468,7 @@ void ui_edit_process(int mx, int my, int mb, int mbq, ui_edit *ed)
 			ed->cursorstart = ed->cursor;
 			break;
 		default:
-			if(sdl_mod & (KMOD_CTRL|KMOD_GUI) && sdl_key=='c')//copy
+			if (sdl_mod & (KMOD_CTRL|KMOD_GUI) && (sdl_key=='c' || sdl_key=='x'))//copy or cut
 			{
 				if (ed->highlightlength)
 				{
@@ -476,8 +476,14 @@ void ui_edit_process(int mx, int my, int mb, int mbq, ui_edit *ed)
 					strncpy(highlightstr, &str[ed->highlightstart], ed->highlightlength);
 					highlightstr[ed->highlightlength] = 0;
 					Engine::Ref().ClipboardPush(highlightstr);
+
+					if (sdl_key=='x')
+					{
+						memmove(ed->str+ed->highlightstart, ed->str+ed->highlightstart+ed->highlightlength, l-ed->highlightstart);
+						ed->cursor = ed->highlightstart;
+					}
 				}
-				else if (l)
+				else if (l && sdl_key == 'c')
 					Engine::Ref().ClipboardPush(ed->str);
 				break;
 			}

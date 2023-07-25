@@ -33,6 +33,7 @@ protected:
 	void UpdateDisplayText(bool updateCursor = false, bool firstClick = false);
 	void MoveCursor(unsigned int *cursor, int amount);
 	virtual bool ShowCursor() { return false; }
+	void CopySelection();
 
 public:
 	Label(Point position, Point size, std::string text, bool multiline = false, bool noCutoff = false);

@@ -60,6 +60,16 @@ std::string Label::GetText()
 	return fixed;
 }
 
+void Label::CopySelection()
+{
+	int start = (cursor > cursorStart) ? cursorStart : cursor;
+	int len = std::abs((int)(cursor-cursorStart));
+	std::string copyStr = text.substr(start, len);
+	copyStr.erase(std::remove(copyStr.begin(), copyStr.end(), '\r'), copyStr.end()); //strip special newlines
+	if (copyStr.length())
+		Engine::Ref().ClipboardPush(copyStr);
+}
+
 void Label::SelectAll()
 {
 	cursorStart = 0;
@@ -342,12 +352,7 @@ void Label::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bo
 		{
 		case SDL_SCANCODE_C:
 		{
-			int start = (cursor > cursorStart) ? cursorStart : cursor;
-			int len = std::abs((int)(cursor-cursorStart));
-			std::string copyStr = text.substr(start, len);
-			copyStr.erase(std::remove(copyStr.begin(), copyStr.end(), '\r'), copyStr.end()); //strip special newlines
-			if (copyStr.length())
-				Engine::Ref().ClipboardPush(copyStr);
+			CopySelection();
 			break;
 		}
 		case SDL_SCANCODE_A:
