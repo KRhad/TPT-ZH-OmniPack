@@ -63,12 +63,19 @@ Gravity::~Gravity()
 void Gravity::Clear()
 {
 	int size = (XRES / CELL) * (YRES / CELL);
-	std::fill(gravy, gravy + size, 0.0f);
-	std::fill(gravx, gravx + size, 0.0f);
-	std::fill(gravp, gravp + size, 0.0f);
-	std::fill(gravmap, gravmap + size, 0.0f);
-	std::fill(gravmask, gravmask + size, 0xFFFFFFFF);
+	std::fill(&gravy[0], &gravy[size], 0.0f);
+	std::fill(&gravx[0], &gravx[size], 0.0f);
+	std::fill(&gravp[0], &gravp[size], 0.0f);
+	std::fill(&gravmap[0], &gravmap[size], 0.0f);
+	std::fill(&gravmask[0], &gravmask[size], 0xFFFFFFFF);
 
+#ifndef GRAVFFT
+	std::fill(&th_ogravmap[0], &th_ogravmap[size], 0.0f);
+	std::fill(&th_gravmap[0], &th_gravmap[size], 0.0f);
+	std::fill(&th_gravy[0], &th_gravy[size], 0.0f);
+	std::fill(&th_gravx[0], &th_gravx[size], 0.0f);
+	std::fill(&th_gravp[0], &th_gravp[size], 0.0f);
+#endif
 	ignoreNextResult = true;
 	gravWallChanged = true;
 }
