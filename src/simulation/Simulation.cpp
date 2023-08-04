@@ -637,6 +637,7 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 		if (save->luaCode.length())
 		{
 			LuaCode = mystrdup(save->luaCode.c_str());
+			LuaCodeLen = save->luaCode.size();
 			ranLuaCode = false;
 		}
 #endif
