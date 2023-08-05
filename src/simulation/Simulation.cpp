@@ -151,10 +151,10 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 	loadY = blockY*CELL;
 	unsigned int pmapmask = (1 << save->pmapbits) - 1;
 
-	if (save->ambientAirTempPresent)
-		air->SetAmbientAirTemp(save->ambientAirTemp);
 	if (replace >= 1)
 	{
+		if (save->ambientAirTempPresent)
+			air->SetAmbientAirTemp(save->ambientAirTemp);
 		clear_sim();
 		erase_bframe();
 		instantActivation = false;
