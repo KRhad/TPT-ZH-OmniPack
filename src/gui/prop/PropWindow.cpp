@@ -240,8 +240,8 @@ bool PropWindow::ParseValue(std::string value)
 			return true;
 	}
 
-	// For type and ctype, try parsing an element name
-	if (properties[selectedProperty].Type == StructProperty::ParticleType)
+	// For type, ctype, and any other int field, try parsing an element name
+	if (properties[selectedProperty].Type == StructProperty::ParticleType || properties[selectedProperty].Type == StructProperty::Integer)
 	{
 		int elNumber;
 		int success = console_parse_type(value.c_str(), &elNumber, nullptr, globalSim);
