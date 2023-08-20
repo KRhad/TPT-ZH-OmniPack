@@ -81,7 +81,7 @@ const wallType wallTypes[] =
 	{"ENERGY WALL",     "DEFAULT_WL_ENRGY", COLPACK(0xFFAA00), COLPACK(0xAA5500), 4,  "Allows energy particles, blocks all other particles."},
 	{"AIRBLOCK WALL",   "DEFAULT_WL_NOAIR", COLPACK(0xDCDCDC), COLPACK(0x000000), 1,  "Allows all particles, but blocks air."},
 	{"ERASEALL",        "DEFAULT_WL_ERASEA",COLPACK(0x808080), COLPACK(0x000000), -1, "Erases walls, particles, and signs."},
-	{"STASIS WALL",     "DEFAULT_WL_STASIS",COLPACK(0x800080), COLPACK(0x000000), 0,  "Freezes particles inside the wall in place"},
+	{"STASIS WALL",     "DEFAULT_WL_STASIS",COLPACK(0x800080), COLPACK(0x000000), 0,  "Freezes particles inside the wall in place until powered"},
 };
 
 #endif
