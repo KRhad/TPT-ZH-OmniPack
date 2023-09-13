@@ -215,9 +215,9 @@ def findLibs(env, conf):
 	#Windows specific libs
 	if platform == "Windows":
 		if msvc:
-			libChecks = ['shell32', 'wsock32', 'user32', 'Advapi32', 'ws2_32', 'Wldap32', 'crypt32']
+			libChecks = ['shell32', 'wsock32', 'user32', 'Advapi32', 'ws2_32', 'Wldap32', 'crypt32', 'Ole32']
 			if GetOption('static'):
-				libChecks += ['imm32', 'version', 'Ole32', 'OleAut32', 'SetupApi']
+				libChecks += ['imm32', 'version', 'OleAut32', 'SetupApi']
 			for i in libChecks:
 				if not conf.CheckLib(i):
 					FatalError("Error: some windows libraries not found or not installed, make sure your compiler is set up correctly")
