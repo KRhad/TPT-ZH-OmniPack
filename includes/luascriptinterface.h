@@ -135,6 +135,7 @@ int graphics_drawCircle(lua_State * l);
 int graphics_fillCircle(lua_State * l);
 int graphics_getColors(lua_State * l);
 int graphics_getHexColor(lua_State * l);
+int graphics_setClipRect(lua_State * l);
 int graphics_toolTip(lua_State * l);
 
 void LuaGetProperty(lua_State* l, StructProperty property, intptr_t propertyAddress);

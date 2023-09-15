@@ -2605,6 +2605,7 @@ void initGraphicsAPI(lua_State * l)
 		{"fillCircle", graphics_fillCircle},
 		{"getColors", graphics_getColors},
 		{"getHexColor", graphics_getHexColor},
+		{"setClipRect", graphics_setClipRect},
 		{"toolTip", graphics_toolTip},
 		{NULL, NULL}
 	};
@@ -2812,6 +2813,32 @@ int graphics_getHexColor(lua_State * l)
 
 	lua_pushinteger(l, color);
 	return 1;
+}
+
+int graphics_setClipRect(lua_State * l)
+{
+	int x = luaL_optinteger(l, 1, 0);
+	int y = luaL_optinteger(l, 2, 0);
+	int w = luaL_optinteger(l, 3, VIDXRES);
+	int h = luaL_optinteger(l, 4, VIDYRES);
+
+	if (x < 0 || y < 0 || w < 0 || h < 0)
+		return luaL_error(l, "Arguments cannot be negative");
+	if (x + w > VIDXRES || y + h > VIDYRES)
+		return luaL_error(l, "Size must be within window bounds");
+
+	set_clip_rect(x, y, w, h);
+	Point upperLeft = Point(x, y);
+	Point bottomRight = Point(x + w, y + h);
+	Engine::Ref().GetTop()->GetVid()->SwapClipRect(upperLeft, bottomRight);
+
+	lua_pushinteger(l, upperLeft.X);
+	lua_pushinteger(l, upperLeft.Y);
+	lua_pushinteger(l, bottomRight.X);
+	lua_pushinteger(l, bottomRight.Y);
+	return 4;
+
+	return 0;
 }
 
 int graphics_toolTip(lua_State *l)

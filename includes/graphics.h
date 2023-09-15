@@ -46,6 +46,11 @@ extern int plasma_data_points;
 extern pixel plasma_data_colours[];
 extern float plasma_data_pos[];
 
+extern int clip_rect_x1;
+extern int clip_rect_y1;
+extern int clip_rect_x2;
+extern int clip_rect_y2;
+
 struct gcache_item
 {
 	int isready;
@@ -177,6 +182,9 @@ class Brush;
 void render_cursor(pixel *vid, int x, int y, Tool* t, Brush* brush);
 
 int draw_debug_info(pixel* vid, Simulation * sim, int lx, int ly, int cx, int cy, int line_x, int line_y);
+
+void reset_clip_rect();
+void set_clip_rect(int x, int y, int w, int h);
 
 #endif
 

@@ -76,6 +76,11 @@ int plasma_data_points = 5;
 pixel plasma_data_colours[] = {PIXPACK(0xAFFFFF), PIXPACK(0xAFFFFF), PIXPACK(0x301060), PIXPACK(0x301040), PIXPACK(0x000000)};
 float plasma_data_pos[] = {1.0f, 0.9f, 0.5f, 0.25, 0.0f};
 
+int clip_rect_x1 = 0;
+int clip_rect_y1 = 0;
+int clip_rect_x2 = VIDXRES;
+int clip_rect_y2 = VIDYRES;
+
 
 
 //an easy way to draw a blob
@@ -95,17 +100,7 @@ void drawblob(pixel *vid, int x, int y, unsigned char cr, unsigned char cg, unsi
 //draws the background and correctly colored text for each button
 void draw_tool_button(pixel *vid_buf, int x, int y, pixel color, std::string name)
 {
-#ifdef OpenGL
-	fillrect(vid_buf, x, y, 28, 16, PIXR(color), PIXG(color), PIXB(color), 255);
-#else
-	for (int j = 1; j < 15; j++)
-	{
-		for (int i = x >= 0 ? 1 : -x; i < 27; i++)
-		{
-			vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
-		}
-	}
-#endif
+	fillrect(vid_buf, x, y, 27, 15, PIXR(color), PIXG(color), PIXB(color), 255);
 
 	int textColor = 0;
 	if (PIXB(color) + 3*PIXG(color) + 2*PIXR(color) < 544)
@@ -129,10 +124,10 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 		{
 			for (j=4; j<12; j++)
 			{
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+6)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+7)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+21)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+22)] = PIXPACK(0xFF0000);
+				drawpixel(vid_buf, x+j+6, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x+j+7, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x-j+21, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x-j+22, y+j, 0xFF, 0, 0, 255);
 			}
 		}
 	}
@@ -146,30 +141,30 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 		{
 			for (j=1; j<15; j+=2)
 				for (i=1+(1&(j>>1)); i<27; i+=2)
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+					drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 		}
 		else if (ds==2)
 		{
 			for (j=1; j<15; j+=2)
 				for (i=1; i<27; i+=2)
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+					drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 		}
 		else if (ds==3)
 		{
 			for (j=1; j<15; j++)
 				for (i=1; i<27; i++)
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+					drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 		}
 		else if (ds==4)
 		{
 			for (j=1; j<15; j++)
 				for (i=1; i<27; i++)
 					if(i%CELL == j%CELL)
-						vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+						drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 					else if  (i%CELL == (j%CELL)+1 || (i%CELL == 0 && j%CELL == CELL-1))
-						vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = glowColor;
-					else 
-						vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = PIXPACK(0x202020);
+						drawpixel(vid_buf, x+i, y+j, PIXR(glowColor), PIXG(glowColor), PIXB(glowColor), 255);
+					else
+						drawpixel(vid_buf, x+i, y+j, 0x20, 0x20, 0x20, 255);
 		}
 		else
 		switch (toolID)
@@ -181,11 +176,11 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 				{
 					if (!(i%2) && !(j%2))
 					{
-						vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+						drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 					}
 					else
 					{
-						vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = PIXPACK(0x808080);
+						drawpixel(vid_buf, x+i, y+j, 0x80, 0x80, 0x80, 255);
 					}
 				}
 			}
@@ -197,14 +192,14 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 				{
 					if (!(i&j&1))
 					{
-						vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+						drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 					}
 				}
 				for (; i<27; i++)
 				{
 					if (i&j&1)
 					{
-						vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+						drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 					}
 				}
 			}
@@ -217,14 +212,14 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 				{
 					if (i&j&1)
 					{
-						vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+						drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 					}
 				}
 				for (; i<27; i++)
 				{
 					if (!(i&j&1))
 					{
-						vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+						drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 					}
 				}
 			}
@@ -234,7 +229,10 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 			{
 				for (i=1; i<27; i++)
 				{
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = i==1||i==26||j==1||j==14 ? PIXPACK(0xA0A0A0) : PIXPACK(0x000000);
+					if (i==1||i==26||j==1||j==14)
+						drawpixel(vid_buf, x+i, y+j, 0xA0, 0xA0, 0xA0, 255);
+					else
+						drawpixel(vid_buf, x+i, y+j, 0, 0, 0, 255);
 					drawtext(vid_buf, x+4, y+3, "\x8D", 255, 255, 255, 255);
 				}
 			}
@@ -248,24 +246,24 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 			{
 				for (i=1+(1&(j>>1)); i<13; i+=2)
 				{
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+					drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 				}
 			}
 			for (j=1; j<15; j++)
 			{
 				for (i=14; i<27; i++)
 				{
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+					drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 				}
 			}
 
 			//X in middle
 			for (j=4; j<12; j++)
 			{
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+6)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+7)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+21)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+22)] = PIXPACK(0xFF0000);
+				drawpixel(vid_buf, x+j+6, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x+j+7, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x-j+21, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x-j+22, y+j, 0xFF, 0, 0, 255);
 			}
 			break;
 		case WL_ERASEALL:
@@ -285,22 +283,23 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 					if (b < 15) bd = 1;
 					rc = std::max(0,r); gc = std::max(0,g); bc = std::max(0,b);
 					rc = std::min(150,rc); gc = std::min(200,gc); bc = std::min(200,bc);
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = PIXRGB(rc, gc, bc);
+					drawpixel(vid_buf, x+i, y+j, rc, gc, bc, 255);
 				}
 			}
 
 			//double X in middle
 			for (j=4; j<12; j++)
 			{
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+0)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+1)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+15)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+16)] = PIXPACK(0xFF0000);
 
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+11)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+12)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+26)] = PIXPACK(0xFF0000);
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+27)] = PIXPACK(0xFF0000);
+				drawpixel(vid_buf, x+j+0, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x+j+1, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x-j+15, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x-j+16, y+j, 0xFF, 0, 0, 255);
+
+				drawpixel(vid_buf, x+j+11, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x+j+12, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x-j+26, y+j, 0xFF, 0, 0, 255);
+				drawpixel(vid_buf, x-j+27, y+j, 0xFF, 0, 0, 255);
 			}
 			break;
 		default:
@@ -315,7 +314,10 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 			{
 				for (i=1; i<27; i++)
 				{
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = i==1||i==26||j==1||j==14 ? PIXPACK(0xA0A0A0) : PIXPACK(0x000000);
+					if (i==1||i==26||j==1||j==14)
+						drawpixel(vid_buf, x+i, y+j, 0xA0, 0xA0, 0xA0, 255);
+					else
+						drawpixel(vid_buf, x+i, y+j, 0, 0, 0, 255);
 				}
 			}
 			drawtext(vid_buf, x+9, y+5, "\xA1", 32, 64, 128, 255);
@@ -326,33 +328,35 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 	}
 	else if (current->GetType() == DECO_TOOL)
 	{
-		pixel color = PIXPACK(decoTypes[toolID].color);
+		ARGBColour color = decoTypes[toolID].color;
 		for (j=1; j<15; j++)
 		{
 			for (i=1; i<27; i++)
 			{
 				if (toolID == DECO_LIGHTEN)
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = PIXRGB(PIXR(color)-10*j, PIXG(color)-10*j, PIXB(color)-10*j);
+					drawpixel(vid_buf, x+i, y+j, COLR(color)-10*j, COLG(color)-10*j, COLB(color)-10*j, 255);
 				else if (toolID == DECO_DARKEN)
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = PIXRGB(PIXR(color)+10*j, PIXG(color)+10*j, PIXB(color)+10*j);
+					drawpixel(vid_buf, x+i, y+j, COLR(color)+10*j, COLG(color)+10*j, COLB(color)+10*j, 255);
 				else if (toolID == DECO_SMUDGE)
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = PIXRGB(PIXR(color), PIXG(color)-5*i, PIXB(color)+5*i);
+					drawpixel(vid_buf, x+i, y+j, COLR(color), COLG(color)-5*i, COLB(color)+5*i, 255);
 				else if (toolID == DECO_DRAW || toolID == DECO_CLEAR)
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = PIXPACK(decocolor);
+					drawpixel(vid_buf, x+i, y+j, COLR(decocolor), COLG(decocolor), COLB(decocolor), 255);
 				else
-					vid_buf[(XRES+BARSIZE)*(y+j)+(x+i)] = color;
+					drawpixel(vid_buf, x+i, y+j, PIXR(color), PIXG(color), PIXB(color), 255);
 			}
 		}
 
 		if (toolID == DECO_CLEAR)
 		{
-			color = PIXRGB((COLR(decocolor)+127)%256, (COLG(decocolor)+127)%256, (COLB(decocolor)+127)%256);
+			int cr = (COLR(decocolor)+127)%256;
+			int cg = (COLG(decocolor)+127)%256;
+			int cb = (COLB(decocolor)+127)%256;
 			for (j=4; j<12; j++)
 			{
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+6)] = color;
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x+j+7)] = color;
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+21)] = color;
-				vid_buf[(XRES+BARSIZE)*(y+j)+(x-j+22)] = color;
+				drawpixel(vid_buf, x+j+6, y+j, cr, cg, cb, 255);
+				drawpixel(vid_buf, x+j+7, y+j, cr, cg, cb, 255);
+				drawpixel(vid_buf, x-j+21, y+j, cr, cg, cb, 255);
+				drawpixel(vid_buf, x-j+22, y+j, cr, cg, cb, 255);
 			}
 		}
 		else if (toolID == DECO_ADD)
@@ -538,7 +542,7 @@ void drawpixel(pixel *vid, int x, int y, int r, int g, int b, int a)
 {
 #ifdef PIXALPHA
 	pixel t;
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
+	if (x < clip_rect_x1 || y < clip_rect_y1 || x >= clip_rect_x2 || y >= clip_rect_y2)
 		return;
 	if (a!=255)
 	{
@@ -551,7 +555,7 @@ void drawpixel(pixel *vid, int x, int y, int r, int g, int b, int a)
 	vid[y*(XRES+BARSIZE)+x] = PIXRGBA(r,g,b,a);
 #else
 	pixel t;
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE || a == 0)
+	if (x < clip_rect_x1 || y < clip_rect_y1 || x >= clip_rect_x2 || y >= clip_rect_y2 || a == 0)
 		return;
 	if (a!=255)
 	{
@@ -1430,7 +1434,7 @@ void blendpixel(pixel *vid, int x, int y, int r, int g, int b, int a)
 {
 #ifdef PIXALPHA
 	pixel t;
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
+	if (x < clip_rect_x1 || y < clip_rect_y1 || x >= clip_rect_x2 || y >= clip_rect_y2)
 		return;
 	if (a!=255)
 	{
@@ -1443,7 +1447,7 @@ void blendpixel(pixel *vid, int x, int y, int r, int g, int b, int a)
 	vid[y*(XRES+BARSIZE)+x] = PIXRGBA(r,g,b,a);
 #else
 	pixel t;
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
+	if (x < clip_rect_x1 || y < clip_rect_y1 || x >= clip_rect_x2 || y >= clip_rect_y2 || a == 0)
 		return;
 	if (a!=255)
 	{
@@ -1642,7 +1646,7 @@ void draw_line(pixel *vid, int x1, int y1, int x2, int y2, int r, int g, int b, 
 void addpixel(pixel *vid, int x, int y, int r, int g, int b, int a)
 {
 	pixel t;
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
+	if (x < clip_rect_x1 || y < clip_rect_y1 || x >= clip_rect_x2 || y >= clip_rect_y2)
 		return;
 	t = vid[y*(XRES+BARSIZE)+x];
 	r = (a*r + 255*PIXR(t)) >> 8;
@@ -1661,7 +1665,7 @@ void addpixel(pixel *vid, int x, int y, int r, int g, int b, int a)
 void xor_pixel(int x, int y, pixel *vid)
 {
 	int c;
-	if (x<0 || y<0 || x>=XRES || y>=YRES)
+	if (x < clip_rect_x1 || y < clip_rect_y1 || x >= clip_rect_x2 || y >= clip_rect_y2)
 		return;
 	c = vid[y*(XRES+BARSIZE)+x];
 	c = PIXB(c) + 3*PIXG(c) + 2*PIXR(c);
@@ -2181,7 +2185,7 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 				}
 				if(pixel_mode & PMODE_FLAT)
 				{
-					vid[ny*(XRES+BARSIZE)+nx] = PIXRGB(colr,colg,colb);
+					drawpixel(vid, nx, ny, colr, colg, colb, 255);
 				}
 				if(pixel_mode & PMODE_BLEND)
 				{
@@ -3377,4 +3381,20 @@ int draw_debug_info(pixel* vid, Simulation * sim, int lx, int ly, int cx, int cy
 		drawtext(vid, 10, YRES-22, infobuf, 255, 255, 255, 255);
 	}
 	return 0;
+}
+
+void reset_clip_rect()
+{
+	clip_rect_x1 = 0;
+	clip_rect_y1 = 0;
+	clip_rect_x2 = VIDXRES;
+	clip_rect_y2 = VIDYRES;
+}
+
+void set_clip_rect(int x, int y, int w, int h)
+{
+	clip_rect_x1 = x;
+	clip_rect_y1 = y;
+	clip_rect_x2 = x + w;
+	clip_rect_y2 = y + h;
 }

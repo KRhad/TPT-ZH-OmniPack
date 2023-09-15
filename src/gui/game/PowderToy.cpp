@@ -7,6 +7,7 @@
 
 #include "defines.h"
 #include "EventLoopSDL.h" // for two mouse_get_state that should be removed ...
+#include "graphics.h"
 #include "hud.h"
 #include "interface.h"
 #include "IntroText.h"
@@ -1439,6 +1440,9 @@ void PowderToy::OnDraw(gfx::VideoBuffer *buf)
 		}*/
 	}
 	Renderer::Ref().RecordingTick();
+
+	reset_clip_rect();
+	buf->ResetClipRect();
 }
 
 bool PowderToy::BeforeMouseMove(int x, int y, Point difference)

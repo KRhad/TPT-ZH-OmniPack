@@ -10,7 +10,9 @@ namespace gfx
 
 VideoBuffer::VideoBuffer(int width, int height):
 	width(width),
-	height(height)
+	height(height),
+	clipRect1(0, 0),
+	clipRect2(width, height)
 {
 	vid = new pixel[width*height];
 	Clear();
@@ -89,11 +91,11 @@ void VideoBuffer::CopyBufferFrom(pixel* vidFrom, int vidWidth, int vidHeight, in
 		return;
 
 	// Copy from buffer is wider than our buffer
-	if (w > width)
-		w = width;
-	for (int i = 0; i < h && i < height; i++)
+	if (w > clipRect2.X)
+		w = clipRect2.X;
+	for (int i = 0; i < h && i < clipRect2.Y; i++)
 	{
-		std::copy(&vidFrom[vidWidth*i], &vidFrom[vidWidth*i + w], &vid[width*i]);
+		std::copy(&vidFrom[vidWidth*i], &vidFrom[vidWidth*i + w], &vid[clipRect2.X*i]);
 	}
 }
 
@@ -101,6 +103,8 @@ void VideoBuffer::CopyBufferFrom(pixel* vidFrom, int vidWidth, int vidHeight, in
 void VideoBuffer::DrawPixel(int x, int y, int r, int g, int b, int a)
 {
 	if (a == 0)
+		return;
+	if (x < clipRect1.X || y < clipRect1.Y || x >= clipRect2.X || y >= clipRect2.Y)
 		return;
 	if (a != 255)
 	{
@@ -118,18 +122,11 @@ void VideoBuffer::DrawPixel(int x, int y, ARGBColour color)
 	DrawPixel(x, y, COLR(color), COLG(color), COLB(color), COLA(color));
 }
 
-void VideoBuffer::DrawPixelSafe(int x, int y, int r, int g, int b, int a)
-{
-	if (x < 0 || y < 0 || x >= width || y >= height)
-		return;
-	DrawPixel(x, y, r, g, b, a);
-}
-
 //This function does NO bounds checking
 void VideoBuffer::XorPixel(int x, int y)
 {
-	//if (x < 0 || y < 0 || x >= width || y >= height || a == 0)
-	//	return;
+	if (x < clipRect1.X || y < clipRect1.Y || x >= clipRect2.X || y >= clipRect2.Y)
+		return;
 	int c = vid[y*width+x];
 	c = PIXB(c) + 3 * PIXG(c) + 2 * PIXR(c);
 	if (c < 512)
@@ -161,8 +158,7 @@ void VideoBuffer::DrawLine(int x1, int y1, int x2, int y2, int r, int g, int b, 
 	e = (dy<<2) - dx;
 	for (int i = 0; i <= dx; i++)
 	{
-		if (x >= 0 && y >= 0 && x < width && y < height)
-			DrawPixel(x, y, r, g, b, a);
+		DrawPixel(x, y, r, g, b, a);
 		if (e >= 0)
 		{
 			if (reverseXY)
@@ -207,8 +203,7 @@ void VideoBuffer::XorLine(int x1, int y1, int x2, int y2)
 	e = (dy<<2) - dx;
 	for (int i = 0; i <= dx; i++)
 	{
-		if (x >= 0 && y >= 0 && x < width && y < height)
-			XorPixel(x, y);
+		XorPixel(x, y);
 		if (e >= 0)
 		{
 			if (reverseXY)
@@ -311,7 +306,7 @@ void VideoBuffer::DrawCircle(int x, int y, int rx, int ry, int r, int g, int b, 
 	if (!rx)
 	{
 		for (int j = -ry; j <= ry; j++)
-			DrawPixelSafe(x, y + j, r, g, b, a);
+			DrawPixel(x, y + j, r, g, b, a);
 		return;
 	}
 	for (int i = x - rx; i <= x; i++)
@@ -325,13 +320,13 @@ void VideoBuffer::DrawCircle(int x, int y, int rx, int ry, int r, int g, int b, 
 		for (int j = tempy; j <= oldy; j++)
 		{
 			int i2 = 2 * x - i, j2 = 2 * y - j;
-			DrawPixelSafe(i, j, r, g, b, a);
+			DrawPixel(i, j, r, g, b, a);
 			if (i2 != i)
-				DrawPixelSafe(i2, j, r, g, b, a);
+				DrawPixel(i2, j, r, g, b, a);
 			if (j2 != j)
-				DrawPixelSafe(i, j2, r, g, b, a);
+				DrawPixel(i, j2, r, g, b, a);
 			if (i2 != i && j2 != j)
-				DrawPixelSafe(i2, j2, r, g, b, a);
+				DrawPixel(i2, j2, r, g, b, a);
 		}
 	}
 }
@@ -342,7 +337,7 @@ void VideoBuffer::FillCircle(int x, int y, int rx, int ry, int r, int g, int b, 
 	if (!rx)
 	{
 		for (int j = -ry; j <= ry; j++)
-			DrawPixelSafe(x, y + j, r, g, b, a);
+			DrawPixel(x, y + j, r, g, b, a);
 		return;
 	}
 	for (int i = x - rx; i <= x; i++)
@@ -353,9 +348,9 @@ void VideoBuffer::FillCircle(int x, int y, int rx, int ry, int r, int g, int b, 
 		int jmax = 2 * y - tempy;
 		for (int j = tempy; j <= jmax; j++)
 		{
-			DrawPixelSafe(i, j, r, g, b, a);
+			DrawPixel(i, j, r, g, b, a);
 			if (i != x)
-				DrawPixelSafe(2 * x - i, j, r, g, b, a);
+				DrawPixel(2 * x - i, j, r, g, b, a);
 		}
 	}
 }
@@ -583,26 +578,26 @@ void VideoBuffer::DrawImage(pixel *img, int x, int y, int w, int h, int a)
 	if (!img)
 		return;
 	// Adjust height to prevent drawing off the bottom
-	if (y + h > height)
-		h = ((height)-y)-1;
+	if (y + h > clipRect2.Y)
+		h = ((clipRect2.Y)-y)-1;
 	// Too big
-	if (x + w > width)
+	if (x + w > clipRect2.X)
 		return;
 
 	// Starts off the top of the video buffer, adjust
-	if (y < 0 && -y < h)
+	if (y < clipRect1.Y && clipRect1.Y - y < h)
 	{
-		img += -y*w;
-		h += y;
-		y = 0;
+		img += clipRect1.Y - y * w;
+		h += y - clipRect1.Y;
+		y = clipRect1.Y;
 	}
 	// Starts off the left side of the video buffer, adjust
-	if (x < 0 && -x < w)
+	if (x < clipRect1.X && clipRect1.X - x < w)
 	{
-		startX = -x;
+		startX = clipRect1.X - x;
 	}
 
-	if (!h || y < 0 || !w)
+	if (!h || y < clipRect1.Y || !w)
 		return;
 	if (a >= 255)
 		for (int j = 0; j < h; j++)
@@ -630,6 +625,22 @@ void VideoBuffer::DrawImage(pixel *img, int x, int y, int w, int h, int a)
 			}
 		}
 	}
+}
+
+void VideoBuffer::SwapClipRect(Point & upperLeft, Point & bottomRight)
+{
+	Point clipRect1 = upperLeft;
+	Point clipRect2 = bottomRight;
+	upperLeft = this->clipRect1;
+	bottomRight = this->clipRect2;
+	this->clipRect1 = clipRect1;
+	this->clipRect2 = clipRect2;
+}
+
+void VideoBuffer::ResetClipRect()
+{
+	clipRect1 = Point(0, 0);
+	clipRect2 = Point(width, height);
 }
 
 }

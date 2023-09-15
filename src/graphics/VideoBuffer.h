@@ -16,7 +16,7 @@ class VideoBuffer
 	int width;
 	int height;
 
-	void DrawPixelSafe(int x, int y, int r, int g, int b, int a);
+	Point clipRect1, clipRect2;
 
 public:
 	VideoBuffer(int width, int height);
@@ -54,6 +54,9 @@ public:
 	int GetWidth() const { return width; }
 	int GetHeight() const { return height; }
 	Point GetSize() const { return Point(width, height); }
+
+	void SwapClipRect(Point & upperLeft, Point & bottomRight);
+	void ResetClipRect();
 };
 
 }
