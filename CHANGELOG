@@ -1245,3 +1245,12 @@ option to not affect HUD without manual changes.
 Version 53.0 2023-01-03
 Update to TPT 97.0 (nearly everything was already in, but some last minute beta
 changes are now included). Update to tptmp v2.0.28
+
+Version 54.0 2023-09-15
+Update to script manager 3.13 and tptmp v2.0.33. Adjust tooltips on vote
+buttons. Fix improper front page display when you begin searching before front
+page finishes loading. Fix Lua scripts being unable to change DMND's type.
+Proper ctrl+x support in textboxes. Fix mod feature that allows you to embed
+Lua code in saves. Fix ambient air temp from stamps overwriting preference
+value. Allow using element names for any integer field in PROP tool. Implement
+gfx.setClipRect (very little attempt was made to mirror vanilla behavior).
