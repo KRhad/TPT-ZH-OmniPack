@@ -1065,17 +1065,16 @@ int main(int argc, char *argv[])
 		luacon_log(autorun_result);
 	}
 
-	if (Platform::FileExists("scriptmanager.lua")) //Script manager updates
+	// Check if script manager isn't running (was not in autorun.lua) and run our version
+	if (luacon_eval("MANAGER == nil", &autorun_result))
 	{
-		if (luacon_eval("dofile(\"scriptmanager.lua\")", &autorun_result))
-		{
-			//scriptmanager.lua errored, log error and open the included one
-			luacon_log(luacon_geterror());
-			luacon_openscriptmanager();
-		}
+		luacon_log(luacon_geterror());
 	}
-	else
+	else if (autorun_result == "true")
+	{
 		luacon_openscriptmanager();
+	}
+
 	// TPTMP through the script manager, use that version instead
 	if (!Platform::FileExists("scripts/downloaded/2 LBPHacker-TPTMulti.lua") &&
 			!Platform::FileExists("scripts/downloaded/2 cracker64-TPTMulti.lua"))

@@ -238,3 +238,13 @@ function tpt.graphics_func(f, element)
 	if f == nil then f = false end
 	elem.property(element, "Graphics", f)
 end
+
+-- This code handles legacy script manager updates, to ensure they work properly, and scriptmanager.lua is no longer in use
+fs.removeFile("scriptmanager.lua")
+local platform_restart = platform.restart
+function platform.restart(saveTab)
+	if fs.exists("scriptmanager.lua") then
+		fs.move("scriptmanager.lua", "autorun.lua")
+	end
+	platform_restart(saveTab)
+end
