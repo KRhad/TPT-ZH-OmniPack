@@ -1254,3 +1254,7 @@ Proper ctrl+x support in textboxes. Fix mod feature that allows you to embed
 Lua code in saves. Fix ambient air temp from stamps overwriting preference
 value. Allow using element names for any integer field in PROP tool. Implement
 gfx.setClipRect (very little attempt was made to mirror vanilla behavior).
+
+Version 54.1 2023-09-21
+Update to script manager 3.14. Fix bug preventing script manager updates from
+working if you already had script manager in autorun.lua.
