@@ -1168,6 +1168,25 @@ std::string Simulation::ElementResolve(int type, int ctype) const
 
 void Simulation::ClearArea(int x, int y, int w, int h)
 {
+	if (x < 0)
+	{
+		w += x;
+		x = 0;
+	}
+	if (y < 0)
+	{
+		h += y;
+		y = 0;
+	}
+	if (x + w >= XRES)
+	{
+		w = XRES - x;
+	}
+	if (y + h >= YRES)
+	{
+		h = YRES - y;
+	}
+
 	float fx = x - .5f, fy = y - .5f;
 	for (int i = 0; i <= parts_lastActiveIndex; i++)
 	{
