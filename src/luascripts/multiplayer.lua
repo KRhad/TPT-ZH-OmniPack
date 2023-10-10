@@ -1164,7 +1164,7 @@ require_preload__["tptmp.client.client"] = function()
 		self:member_prefix_()
 		local x, y = self:read_xy_12_()
 		local w, h = self:read_xy_12_()
-		sim.clearRect(x, y, w, h)
+		util.clear_rect(x, y, w, h)
 	end
 	
 	function client_i:handle_canceldraw_68_()
@@ -2146,7 +2146,7 @@ require_preload__["tptmp.client.config"] = function()
 
 	local common_config = require("tptmp.common.config")
 	
-	local versionstr = "v2.0.33"
+	local versionstr = "v2.0.34"
 	
 	local config = {
 		-- ***********************************************************************
@@ -4450,7 +4450,7 @@ require_preload__["tptmp.client.side_button"] = function()
 		local text = "<<"
 		local tw, th = gfx.textSize(text)
 		local tx = pos_x + math.ceil((width - tw) / 2)
-		local ty = pos_y + math.floor((height - th) / 2)
+		local ty = pos_y + math.ceil((height - th) / 2)
 		return setmetatable({
 			text_ = text,
 			tx_ = tx,
@@ -5124,6 +5124,9 @@ require_preload__["tptmp.client.util"] = function()
 	end
 	
 	local function create_parts_any(x, y, rx, ry, xtype, brush, member)
+		if not inside_rect(0, 0, sim.XRES, sim.YRES, x, y) then
+			return
+		end
 		if line_only[xtype] or no_create[xtype] then
 			return
 		end
@@ -5168,6 +5171,10 @@ require_preload__["tptmp.client.util"] = function()
 	end
 	
 	local function create_line_any(x1, y1, x2, y2, rx, ry, xtype, brush, member, cont)
+		if not inside_rect(0, 0, sim.XRES, sim.YRES, x1, y1) or
+		   not inside_rect(0, 0, sim.XRES, sim.YRES, x2, y2) then
+			return
+		end
 		if no_create[xtype] or no_shape[xtype] or (jacobsmod and xtype == tpt.element("ball") and not member.kmod_s) then
 			return
 		end
@@ -5267,6 +5274,10 @@ require_preload__["tptmp.client.util"] = function()
 	end
 	
 	local function create_box_any(x1, y1, x2, y2, xtype, member)
+		if not inside_rect(0, 0, sim.XRES, sim.YRES, x1, y1) or
+		   not inside_rect(0, 0, sim.XRES, sim.YRES, x2, y2) then
+			return
+		end
 		if line_only[xtype] or no_create[xtype] or no_shape[xtype] then
 			return
 		end
@@ -5303,6 +5314,9 @@ require_preload__["tptmp.client.util"] = function()
 	end
 	
 	local function flood_any(x, y, xtype, part_flood_hint, wall_flood_hint, member)
+		if not inside_rect(0, 0, sim.XRES, sim.YRES, x, y) then
+			return
+		end
 		if line_only[xtype] or no_create[xtype] or no_flood[xtype] then
 			return
 		end
@@ -5332,6 +5346,13 @@ require_preload__["tptmp.client.util"] = function()
 		if member.bmode ~= 0 then
 			tpt.selectedreplace = selectedreplace
 		end
+	end
+	
+	local function clear_rect(x, y, w, h)
+		if not inside_rect(0, 0, sim.XRES, sim.YRES, x + w, y + h) then
+			return
+		end
+		sim.clearRect(x, y, w, h)
 	end
 	
 	local function corners_to_rect(x1, y1, x2, y2)
@@ -5418,6 +5439,7 @@ require_preload__["tptmp.client.util"] = function()
 		create_line_any = create_line_any,
 		create_box_any = create_box_any,
 		flood_any = flood_any,
+		clear_rect = clear_rect,
 		from_tool = from_tool,
 		to_tool = to_tool,
 		create_override = create_override,
@@ -6848,7 +6870,7 @@ require_preload__["tptmp.common.config"] = function()
 		-- ***********************************************************************
 	
 		-- * Protocol version, between 0 and 254. 255 is reserved for future use.
-		version = 28,
+		version = 29,
 	
 		-- * Client-to-server message size limit, between 0 and 255, the latter
 		--   limit being imposted by the protocol.
