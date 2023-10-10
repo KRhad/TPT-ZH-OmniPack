@@ -287,9 +287,12 @@ void Label::MoveCursor(unsigned int *cursor, int amount)
 
 	offset += amount;
 	//adjust for strange characters
-	if (cur+offset-1 >= 0 && (text[cur+offset-1] == '\b' || text[cur+offset] == '\r'))
+	int checkOffset = cur+offset-1, checkOffset2 = cur+offset-3+(sign>0)*2;
+	if (checkOffset >= 0 && checkOffset < (int)text.length() && text[checkOffset] == '\b')
 		offset += sign;
-	else if (cur+offset-3+(sign>0)*2 >= 0 && text[cur+offset-3+(sign>0)*2] == '\x0F') //when moving right, check 1 behind, when moving left, check 3 behind
+	else if (checkOffset >= 0 && checkOffset + 1 < (int)text.length() && text[checkOffset + 1] == '\r')
+		offset += sign;
+	else if (checkOffset2 >= 0 && checkOffset2 < (int)text.length() && text[checkOffset2] == '\x0F') //when moving right, check 1 behind, when moving left, check 3 behind
 		offset += sign*3;
 
 	//make sure it's in bounds
