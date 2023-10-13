@@ -144,7 +144,11 @@ std::string Format::CleanString(std::string dirtyString, bool ascii, bool color,
 			break;
 		}
 		default:
-			if (numeric && (dirtyString[i] < '0' || dirtyString[i] > '9'))
+			if (icons && dirtyString[i] >= (char)0x80 && dirtyString[i] <= (char)0xF0)
+			{
+				break;
+			}
+			else if (numeric && (dirtyString[i] < '0' || dirtyString[i] > '9'))
 			{
 				dirtyString.erase(i, 1);
 				i--;
