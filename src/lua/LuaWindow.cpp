@@ -81,7 +81,7 @@ LuaWindow::LuaWindow(lua_State * l) :
 		{
 			selfManaged = true;
 		}
-		void OnDraw(gfx::VideoBuffer *buf) override
+		void OnDrawBeforeComponents(gfx::VideoBuffer *buf) override
 		{
 			//buf->ClearRect(position.X-2, position.Y-2, size.X+4, size.Y+4);
 			//buf->DrawRect(position.X, position.Y, size.X, size.Y, 255, 255, 255, 255);
