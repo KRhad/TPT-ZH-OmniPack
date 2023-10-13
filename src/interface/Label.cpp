@@ -33,7 +33,7 @@ Label::Label(Point position_, Point size_, std::string text_, bool multiline_, b
 	autosizeX = (size.X == AUTOSIZE);
 	autosizeY = (size.Y == AUTOSIZE);
 	// remove non ascii chars, and newlines for non multiline labels
-	text = Format::CleanString(text, true, false, !multiline);
+	text = Format::CleanString(text, true, false, !multiline, false, true);
 	UpdateDisplayText();
 }
 
@@ -171,7 +171,8 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 		//loop through a word
 		for (; --wordlen>=-1 && i < text.length(); i++)
 		{
-			switch (text[i])
+			char c = text[i];
+			switch (c)
 			{
 			case '\n':
 				if (multiline)
@@ -201,10 +202,17 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 			case '\x01':
 			case '\r':
 				break;
+			case '\xEE':
+			{
+				c = Format::ConvertFontIcon(text, i);
+				i += 2;
+				if (c == 0)
+					continue;
+			}
 			default:
 				bool hasCharacter = posX != 0;
 				//normal character, add to the current width and check if it's too long
-				posX += gfx::VideoBuffer::CharSize(text[i]);
+				posX += gfx::VideoBuffer::CharSize(c);
 				if (hasCharacter && !autosizeX && posX+4 >= size.X && !noCutoff)
 				{
 					if (multiline)

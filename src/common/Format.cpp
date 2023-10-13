@@ -87,7 +87,7 @@ std::string Format::UnixtimeToDateMini(time_t unixtime)
 
 
 // Strips stuff from a string. Can strip all non ascii characters (excluding color and newlines), strip all color, strip all newlines, or strip all non 0-9 characters
-std::string Format::CleanString(std::string dirtyString, bool ascii, bool color, bool newlines, bool numeric)
+std::string Format::CleanString(std::string dirtyString, bool ascii, bool color, bool newlines, bool numeric, bool icons)
 {
 	for (size_t i = 0; i < dirtyString.size(); i++)
 	{
@@ -130,6 +130,19 @@ std::string Format::CleanString(std::string dirtyString, bool ascii, bool color,
 			if (newlines)
 				dirtyString[i] = ' ';
 			break;
+		case '\xEE':
+		{
+			if (!icons || ConvertFontIcon(dirtyString, i) == 0)
+			{
+				dirtyString.erase(i, 3);
+				i--;
+			}
+			else
+			{
+				i += 2;
+			}
+			break;
+		}
 		default:
 			if (numeric && (dirtyString[i] < '0' || dirtyString[i] > '9'))
 			{
@@ -148,9 +161,42 @@ std::string Format::CleanString(std::string dirtyString, bool ascii, bool color,
 	return dirtyString;
 }
 
-std::string Format::CleanString(const char * dirtyData, bool ascii, bool color, bool newlines, bool numeric)
+std::string Format::CleanString(const char * dirtyData, bool ascii, bool color, bool newlines, bool numeric, bool icons)
 {
-	return Format::CleanString(std::string(dirtyData), ascii, color, newlines, numeric);
+	return Format::CleanString(std::string(dirtyData), ascii, color, newlines, numeric, icons);
+}
+
+char Format::ConvertFontIcon(const std::string &s, size_t pos)
+{
+	if (pos + 2 < s.length() && (s[pos + 1] == '\x80' || s[pos + 1] == '\x81') && s[pos + 2] >= '\x80' && s[pos + 2] < '\xC0')
+	{
+		char c = s[pos + 2];
+		if (s[pos + 1] == '\x80')
+		{
+			// Delete icon is deliberately swapped in my mod
+			if (c == (char)0x85)
+				return 0x86;
+			else if (c == (char)0x86)
+				return 0x85;
+			return c;
+		}
+		else
+		{
+			c += 0x40;
+			// Some of the later icons aren't ordered the same as vanilla does
+			if (c >= (char)0xE2 && c < (char)0xE6)
+				c++;
+			else if (c == (char)0xE7)
+				return 0xE2;
+			else if (c == (char)0xEA)
+				return 0xF0;
+			else if (c >= (char)0xE6)
+				return 0;
+			return c;
+		}
+	}
+
+	return 0;
 }
 
 std::vector<char> Format::VideoBufferToBMP(const gfx::VideoBuffer & vidBuf)

@@ -3,6 +3,7 @@
 #include <cstdlib>
 #define INCLUDE_FONTDATA
 #include "font.h"
+#include "common/Format.h"
 #include "common/tpt-minmax.h"
 
 namespace gfx
@@ -408,7 +409,8 @@ int VideoBuffer::DrawString(int x, int y, const std::string &s, int r, int g, in
 	int oldR = r, oldG = g, oldB = b;
 	for (size_t i = 0; i < s.length(); i++)
 	{
-		switch (s[i])
+		char c = s[i];
+		switch (c)
 		{
 		case '\r':
 			didNewline = true;
@@ -497,16 +499,23 @@ int VideoBuffer::DrawString(int x, int y, const std::string &s, int r, int g, in
 			}
 			i++;
 			break;
+		case '\xEE':
+		{
+			c = Format::ConvertFontIcon(s, i);
+			i += 2;
+			if (c == 0)
+				continue;
+		}
 		default:
 			int oldX = x;
-			x = DrawChar(x, y, s[i], r, g, b, a, modifiedColor);
-			if (didNewline && s[i] == ' ')
+			x = DrawChar(x, y, c, r, g, b, a, modifiedColor);
+			if (didNewline && c == ' ')
 			{
 				x = oldX;
 			}
 			else if (highlight)
 			{
-				FillRect(oldX, y-2, font_data[font_ptrs[(unsigned char)s[i]]], FONT_H+2, 0, 0, 255, 127);
+				FillRect(oldX, y-2, font_data[font_ptrs[(unsigned char)c]], FONT_H+2, 0, 0, 255, 127);
 			}
 			if (underline)
 			{
@@ -540,7 +549,8 @@ Point VideoBuffer::TextSize(std::string s)
 	int height = FONT_H;
 	for (size_t i = 0; i < s.length(); i++)
 	{
-		switch (s[i])
+		char c = s[i];
+		switch (c)
 		{
 		case '\n':
 		case '\r':
@@ -563,8 +573,15 @@ Point VideoBuffer::TextSize(std::string s)
 				break;
 			i++;
 			break;
+		case '\xEE':
+		{
+			c = Format::ConvertFontIcon(s, i);
+			i += 2;
+			if (c == 0)
+				continue;
+		}
 		default:
-			x += CharSize(static_cast<unsigned char>(s[i]));
+			x += CharSize(static_cast<unsigned char>(c));
 		}
 	}
 	if (x > width)

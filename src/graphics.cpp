@@ -34,6 +34,7 @@
 #include "luaconsole.h"
 #include "hud.h"
 
+#include "common/Format.h"
 #include "common/tpt-math.h"
 #include "game/Brush.h"
 #include "game/Menus.h"
@@ -641,7 +642,8 @@ int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a
 	int oR = r, oG = g, oB = b;
 	for (; *s; s++)
 	{
-		if (*s == '\n' || *s == '\r')
+		char c = *s;
+		if (c == '\n' || c == '\r')
 		{
 			x = sx;
 			y += FONT_H+2;
@@ -650,7 +652,7 @@ int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a
 				fillrect(vid, x-1, y-3, font_data[font_ptrs[' ']]+1, FONT_H+3, 0, 0, 255, 127);
 			}
 		}
-		else if (*s == '\x0F')
+		else if (c == '\x0F')
 		{
 			if (!s[1] || !s[2] || !s[3])
 				break;
@@ -665,17 +667,17 @@ int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a
 			}
 			s += 3;
 		}
-		else if (*s == '\x0E')
+		else if (c == '\x0E')
 		{
 			r = oR;
 			g = oG;
 			b = oB;
 		}
-		else if (*s == '\x01')
+		else if (c == '\x01')
 		{
 			highlight = !highlight;
 		}
-		else if (*s == '\b')
+		else if (c == '\b')
 		{
 			if (!noColor)
 			{
@@ -728,11 +730,18 @@ int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a
 		}
 		else
 		{
+			if (c == '\xEE')
+			{
+				c = Format::ConvertFontIcon(s, 0);
+				s += 2;
+				if (c == 0)
+					continue;
+			}
 			if (highlight)
 			{
-				fillrect(vid, x-1, y-3, font_data[font_ptrs[(int)(*(unsigned char *)s)]]+1, FONT_H+3, 0, 0, 255, 127);
+				fillrect(vid, x-1, y-3, font_data[font_ptrs[(unsigned char)c]]+1, FONT_H+3, 0, 0, 255, 127);
 			}
-			int newX = drawchar(vid, x, y, *(unsigned char *)s, r, g, b, a);
+			int newX = drawchar(vid, x, y, (unsigned char)c, r, g, b, a);
 			if (underline)
 			{
 				blend_line(vid, x, y + FONT_H, newX - 1, y + FONT_H, r, g, b, a);

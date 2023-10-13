@@ -42,8 +42,9 @@ namespace Format
 	std::string URLEncode(std::string value);
 	std::string UnixtimeToDate(time_t unixtime, std::string dateFomat = "%d %b %Y");
 	std::string UnixtimeToDateMini(time_t unixtime);
-	std::string CleanString(std::string dirtyString, bool ascii, bool color, bool newlines, bool numeric = false);
-	std::string CleanString(const char * dirtyData, bool ascii, bool color, bool newlines, bool numeric = false);
+	std::string CleanString(std::string dirtyString, bool ascii, bool color, bool newlines, bool numeric = false, bool icons = false);
+	std::string CleanString(const char * dirtyData, bool ascii, bool color, bool newlines, bool numeric = false, bool icons = false);
+	char ConvertFontIcon(const std::string &s, size_t pos);
 	std::vector<char> VideoBufferToPNG(const gfx::VideoBuffer & vidBuf);
 	std::vector<char> VideoBufferToBMP(const gfx::VideoBuffer & vidBuf);
 	std::vector<char> VideoBufferToPPM(const gfx::VideoBuffer & vidBuf);
