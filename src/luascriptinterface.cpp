@@ -2827,15 +2827,19 @@ int graphics_setClipRect(lua_State * l)
 	if (x + w > VIDXRES || y + h > VIDYRES)
 		return luaL_error(l, "Size must be within window bounds");
 
+	Point parentWindowPos = Engine::Ref().GetTop()->GetPosition();
+	Point parentWindowSize = Engine::Ref().GetTop()->GetSize();
 	set_clip_rect(x, y, w, h);
-	Point upperLeft = Point(x, y);
-	Point bottomRight = Point(x + w, y + h);
+	x -= parentWindowPos.X;
+	y -= parentWindowPos.Y;
+	Point upperLeft = Point(tpt::max(x - parentWindowPos.X, 0), tpt::max(y - parentWindowPos.Y, 0));
+	Point bottomRight = Point(tpt::min(w, parentWindowSize.X), tpt::min(h, parentWindowSize.Y));
 	Engine::Ref().GetTop()->GetVid()->SwapClipRect(upperLeft, bottomRight);
 
-	lua_pushinteger(l, upperLeft.X);
-	lua_pushinteger(l, upperLeft.Y);
-	lua_pushinteger(l, bottomRight.X);
-	lua_pushinteger(l, bottomRight.Y);
+	lua_pushinteger(l, upperLeft.X + parentWindowPos.X);
+	lua_pushinteger(l, upperLeft.Y + parentWindowPos.Y);
+	lua_pushinteger(l, bottomRight.X + parentWindowPos.X);
+	lua_pushinteger(l, bottomRight.Y + parentWindowPos.Y);
 	return 4;
 
 	return 0;
