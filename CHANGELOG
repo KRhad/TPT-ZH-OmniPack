@@ -1262,3 +1262,10 @@ working if you already had script manager in autorun.lua.
 Version 54.2 2023-10-09
 Update to tptmp v2.0.34. tpt++: Fix crash when calling sim.clearRect with
 out-of-bounds coordinates.
+
+Version 54.3 2023-10-13
+Update to tptmp v2.0.36. Fix LuaWindow's OnDraw event being sent after
+components are drawn and not before. Fix gfx.setClipRect not having correct
+coordinates inside Lua windows. Fix icons not rendering in the console. Add
+workaround so that tpt++ icon ranges render in this mod. This allows certain
+Lua scripts that use icons to work without special icon compatibility code.
