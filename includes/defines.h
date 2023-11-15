@@ -264,6 +264,7 @@ Save *stamp_load(int i, int reorder);
 #endif
 int tab_load(int tabNum, bool del = false, bool showException = true);
 void stamp_init();
+void stamp_join_if_running();
 void rescan_stamps();
 void del_stamp(int d);
 void ctrlzSnapshot();

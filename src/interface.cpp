@@ -1909,6 +1909,8 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 			break;
 	}
 
+	stamp_join_if_running();
+
 	while (!sdl_poll())
 	{
 		bq = b;
@@ -6689,7 +6691,11 @@ void catalogue_ui(pixel * vid_buf)
 
 	ui_edit_init(&ed, x0+11, y0+29, xsize-20, 0);
 	strcpy(ed.def, "[search]");
+#ifdef TOUCHUI
 	ed.focus = 0;
+#else
+	ed.focus = 1;
+#endif
 	ed.nx = 0;
 
 	saves = get_local_saves(LOCAL_SAVE_DIR PATH_SEP, NULL, &rescount);

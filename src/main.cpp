@@ -363,6 +363,7 @@ char* stamp_save(int x, int y, int w, int h, bool includePressure)
 
 	delete save;
 
+	stamp_join_if_running();
 	if (stamps[STAMP_MAX-1].thumb)
 		free(stamps[STAMP_MAX-1].thumb);
 	memmove(stamps+1, stamps, sizeof(struct stamp)*(STAMP_MAX-1));
@@ -507,11 +508,31 @@ int tab_load(int tabNum, bool del, bool showException)
 	return 0;
 }
 
+std::thread stamp_thumb_thread;
+bool stamp_thread_started = false;
+
+void stamp_gen_thumb_thread()
+{
+	for (int i = 0; i < STAMP_MAX; i++)
+	{
+		if (stamps[i].name[0])
+			stamp_gen_thumb(i);
+	}
+}
+
+void stamp_join_if_running()
+{
+	if (stamp_thread_started)
+		stamp_thumb_thread.join();
+	stamp_thread_started = false;
+}
+
 void stamp_init()
 {
 	int i;
 	FILE *f;
 
+	stamp_join_if_running();
 	memset(stamps, 0, sizeof(stamps));
 
 	f=fopen("stamps" PATH_SEP "stamps.def", "rb");
@@ -523,9 +544,11 @@ void stamp_init()
 		if (readsize != 10 || !stamps[i].name[0])
 			break;
 		stamp_count++;
-		stamp_gen_thumb(i);
 	}
 	fclose(f);
+
+	stamp_thumb_thread = std::thread([]() { stamp_gen_thumb_thread(); });
+	stamp_thread_started = true;
 }
 
 void rescan_stamps()
@@ -550,6 +573,7 @@ void rescan_stamps()
 			fwrite(stampID.c_str(), stampID.length(), 1, f);
 		fclose(f);
 
+		stamp_join_if_running();
 		for (int i = 0; i < STAMP_MAX; i++)
 			if (stamps[i].thumb)
 				free(stamps[i].thumb);
@@ -560,6 +584,7 @@ void rescan_stamps()
 
 void stamps_free()
 {
+	stamp_join_if_running();
 	for (int i = 0; i < STAMP_MAX; i++)
 		if (stamps[i].thumb)
 		{
