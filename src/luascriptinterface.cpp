@@ -2326,6 +2326,7 @@ void initFileSystemAPI(lua_State * l)
 		{"exists", fileSystem_exists},
 		{"isFile", fileSystem_isFile},
 		{"isDirectory", fileSystem_isDirectory},
+		{"isLink", fileSystem_isLink},
 		{"makeDirectory", fileSystem_makeDirectory},
 		{"removeDirectory", fileSystem_removeDirectory},
 		{"removeFile", fileSystem_removeFile},
@@ -2384,6 +2385,15 @@ int fileSystem_isDirectory(lua_State * l)
 	return 1;
 }
 
+int fileSystem_isLink(lua_State * l)
+{
+	std::string dirname = tpt_lua_checkString(l, 1);
+
+	bool ret = Platform::IsLink(dirname);
+	lua_pushboolean(l, ret);
+	return 1;
+}
+
 int fileSystem_makeDirectory(lua_State * l)
 {
 	std::string dirname = tpt_lua_checkString(l, 1);
@@ -2415,11 +2425,9 @@ int fileSystem_move(lua_State * l)
 {
 	std::string filename = tpt_lua_checkString(l, 1);
 	std::string newFilename = tpt_lua_checkString(l, 2);
-	int ret = 0;
+	bool replace = lua_toboolean(l, 3);
 
-	ret = rename(filename.c_str(), newFilename.c_str());
-
-	lua_pushboolean(l, ret == 0);
+	lua_pushboolean(l, Platform::RenameFile(filename, newFilename, replace));
 	return 1;
 }
 

@@ -18,8 +18,6 @@
 #include <io.h>
 #endif
 #ifdef _MSC_VER
-#undef chdir
-#define chdir _chdir //chdir is deprecated in visual studio
 #undef DeleteFile
 #ifndef PATH_MAX
 #define PATH_MAX MAX_PATH
@@ -60,9 +58,28 @@ std::string sharedCwd;
 
 std::string GetCwd()
 {
+#ifdef WIN
+	std::string cwd;
+	auto cwdPtr = std::unique_ptr<wchar_t, decltype(&free)>(_wgetcwd(NULL, 0), free);
+	if (cwdPtr)
+	{
+		cwd = WinNarrow(cwdPtr.get());
+	}
+	return cwd;
+#else
 	char cwdTemp[PATH_MAX];
 	getcwd(cwdTemp, PATH_MAX);
 	return cwdTemp;
+#endif
+}
+
+bool ChangeDir(std::string toDir)
+{
+#ifdef WIN
+	return _wchdir(WinWiden(toDir).c_str()) == 0;
+#else
+	return chdir(toDir.c_str()) == 0;
+#endif
 }
 
 char *ExecutableName()
@@ -164,7 +181,7 @@ void OpenLink(std::string uri)
 #ifdef ANDROID
 	SDL_ANDROID_OpenExternalWebBrowser(uri.c_str());
 #elif WIN
-	if ((int)ShellExecute(NULL, NULL, uri.c_str(), NULL, NULL, SW_SHOWNORMAL) <= 32)
+	if (int(INT_PTR(ShellExecuteW(NULL, NULL, WinWiden(uri).c_str(), NULL, NULL, SW_SHOWNORMAL))) <= 32)
 		ret = 1;
 #elif MACOSX
 	std::string command = "open \"" + uri + "\"";
@@ -582,7 +599,7 @@ bool Stat(std::string filename)
 {
 #ifdef WIN
 	struct _stat s;
-	if (_stat(filename.c_str(), &s) == 0)
+	if (_wstat(WinWiden(filename).c_str(), &s) == 0)
 #else
 	struct stat s;
 	if (stat(filename.c_str(), &s) == 0)
@@ -600,7 +617,7 @@ bool FileExists(std::string filename)
 {
 #ifdef WIN
 	struct _stat s;
-	if (_stat(filename.c_str(), &s) == 0)
+	if (_wstat(WinWiden(filename).c_str(), &s) == 0)
 #else
 	struct stat s;
 	if (stat(filename.c_str(), &s) == 0)
@@ -625,7 +642,7 @@ bool DirectoryExists(std::string directory)
 {
 #ifdef WIN
 	struct _stat s;
-	if (_stat(directory.c_str(), &s) == 0)
+	if (_wstat(WinWiden(directory).c_str(), &s) == 0)
 #else
 	struct stat s;
 	if (stat(directory.c_str(), &s) == 0)
@@ -646,15 +663,68 @@ bool DirectoryExists(std::string directory)
 	}
 }
 
+bool IsLink(std::string path)
+{
+	struct stat s;
+#ifdef WIN
+	if (_wstat(WinWiden(path).c_str(), &s) == 0)
+#else
+	if (stat(path.c_str(), &s) == 0)
+#endif
+	{
+#ifdef WIN
+	if (GetFileAttributesW(WinWiden(path).c_str()) & FILE_ATTRIBUTE_REPARSE_POINT)
+#else
+		if (s.st_mode & S_IFLNK)
+#endif
+		{
+			return true; // Is path
+		}
+		else
+		{
+			return false; // Is file or something else
+		}
+	}
+	else
+	{
+		return false; // Doesn't exist
+	}
+}
+
 bool DeleteFile(std::string filename)
 {
+#ifdef WIN
+	return _wremove(WinWiden(filename).c_str()) == 0;
+#else
 	return std::remove(filename.c_str()) == 0;
+#endif
+}
+
+bool RenameFile(std::string filename, std::string newFilename, bool replace)
+{
+#ifdef WIN
+	if (replace)
+	{
+		// TODO: we rely on errno but errors from this are available through GetLastError(); fix
+		return MoveFileExW(WinWiden(filename).c_str(), WinWiden(newFilename).c_str(), MOVEFILE_REPLACE_EXISTING);
+	}
+	return _wrename(WinWiden(filename).c_str(), WinWiden(newFilename).c_str()) == 0;
+#else
+	// TODO: Make atomic :( Could use renameat2 with RENAME_NOREPLACE on linux and
+	// renamex_np with RENAME_EXCL on darwin, but both require filesystem support;
+	// I don't think it's worth it for now. -- LBPHacker
+	if (!replace && FileExists(newFilename))
+	{
+		return false;
+	}
+	return rename(filename.c_str(), newFilename.c_str()) == 0;
+#endif
 }
 
 bool DeleteDirectory(std::string folder)
 {
 #ifdef WIN
-	return _rmdir(folder.c_str()) == 0;
+	return _wrmdir(WinWiden(folder).c_str()) == 0;
 #else
 	return rmdir(folder.c_str()) == 0;
 #endif
@@ -663,7 +733,7 @@ bool DeleteDirectory(std::string folder)
 bool MakeDirectory(std::string dir)
 {
 #ifdef WIN
-	return _mkdir(dir.c_str()) == 0;
+	return _wmkdir(WinWiden(dir).c_str()) == 0;
 #else
 	return mkdir(dir.c_str(), 0755) == 0;
 #endif
@@ -870,7 +940,7 @@ std::string DoMigration(std::string fromDir, std::string toDir)
 	}
 
 	// chdir into the new directory
-	chdir(toDir.c_str());
+	Platform::ChangeDir(toDir);
 
 	if (scripts.size())
 		rescan_stamps();

@@ -40,8 +40,6 @@
 #ifdef WIN
 #include <direct.h>
 #ifdef _MSC_VER
-#undef chdir
-#define chdir _chdir //chdir is deprecated in visual studio
 #endif
 #else
 #include <sys/stat.h>
@@ -843,7 +841,7 @@ int main(int argc, char *argv[])
 	{
 		if (!strncmp(argv[i], "ddir", 5) && i+1<argc)
 		{
-			int ret = chdir(argv[i+1]);
+			int ret = Platform::ChangeDir(argv[i+1]);
 			if (ret)
 				std::cout << "Error, could not change directory\n";
 			else
@@ -880,7 +878,7 @@ int main(int argc, char *argv[])
 #endif
 		{
 			if (ddir)
-				chdir(ddir);
+				Platform::ChangeDir(ddir);
 		}
 
 		if (ddir)

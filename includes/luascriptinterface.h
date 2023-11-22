@@ -110,6 +110,7 @@ int fileSystem_list(lua_State * l);
 int fileSystem_exists(lua_State * l);
 int fileSystem_isFile(lua_State * l);
 int fileSystem_isDirectory(lua_State * l);
+int fileSystem_isLink(lua_State * l);
 int fileSystem_makeDirectory(lua_State * l);
 int fileSystem_removeDirectory(lua_State * l);
 int fileSystem_removeFile(lua_State * l);

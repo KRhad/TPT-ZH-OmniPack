@@ -3266,7 +3266,7 @@ void QuickoptionsMenu(pixel *vid_buf, int b, int bq, int x, int y)
 					{
 						sprintf(name, "tabs%s%d.stm", PATH_SEP, i+1);
 						sprintf(newname, "tabs%s%d.stm", PATH_SEP, i);
-						rename(name, newname);
+						Platform::RenameFile(name, newname, true);
 						strncpy(tabNames[i-1], tabNames[i], 254);
 						tabThumbnails[i-1] = tabThumbnails[i];
 					}

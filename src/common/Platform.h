@@ -7,6 +7,7 @@
 namespace Platform
 {
 	std::string GetCwd();
+	bool ChangeDir(std::string toDir);
 	char *ExecutableName();
 	void DoRestart(bool saveTab, bool disableSignals);
 	void OpenLink(std::string uri);
@@ -23,11 +24,17 @@ namespace Platform
 	bool Stat(std::string filename);
 	bool FileExists(std::string filename);
 	bool DirectoryExists(std::string directory);
+	bool IsLink(std::string path);
 
 	/**
 	 * @return true on success
 	 */
 	bool DeleteFile(std::string filename);
+
+	/**
+	 * @return true on success
+	 */
+	bool RenameFile(std::string filename, std::string newFilename, bool replace);
 
 	/**
 	 * @return true on success
