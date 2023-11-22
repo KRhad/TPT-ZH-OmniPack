@@ -24,7 +24,7 @@ bool Simulation::IsWallBlocking(int x, int y, int type)
 		else if (wall == WL_EWALL && !emap[y/CELL][x/CELL])
 			return true;
 		else if (wall == WL_DETECT && (elements[type].Properties & TYPE_SOLID))
-			return -1;
+			return true;
 	}
 	return false;
 }

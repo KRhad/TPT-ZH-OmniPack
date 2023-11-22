@@ -665,10 +665,11 @@ bool DirectoryExists(std::string directory)
 
 bool IsLink(std::string path)
 {
-	struct stat s;
 #ifdef WIN
+	struct _stat s;
 	if (_wstat(WinWiden(path).c_str(), &s) == 0)
 #else
+	struct stat s;
 	if (stat(path.c_str(), &s) == 0)
 #endif
 	{
