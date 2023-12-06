@@ -3259,9 +3259,9 @@ bool Save::TypeInCtype(int type, int ctype)
 {
 	if (ctype < 0 || ctype >= PT_NUM)
 		return false;
-	if (type == PT_CLNE || type == PT_PCLN || type == PT_BCLN || type == PT_PBCN || type == PT_STOR || type == PT_CONV
-	        || type == PT_STKM || type == PT_STKM2 || type == PT_FIGH || type == PT_LAVA || type == PT_SPRK
-	        || type == PT_PSTN || type == PT_CRAY || type == PT_DTEC || type == PT_DRAY || type == PT_LDTC)
+	if (type == PT_CLNE || type == PT_PCLN || type == PT_BCLN || type == PT_PBCN || type == PT_STOR || type == PT_CONV || type == PT_STKM
+			|| type == PT_STKM2 || type == PT_FIGH || type == PT_LAVA || type == PT_SPRK || type == PT_PSTN || type == PT_CRAY
+			|| type == PT_DTEC || type == PT_DRAY || type == PT_LDTC || type == PT_PIPE || type == PT_PPIP)
 		return true;
 	return false;
 }
