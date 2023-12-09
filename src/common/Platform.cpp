@@ -49,6 +49,7 @@
 
 #include "Platform.h"
 #include "defines.h"
+#include "game/Stamps.h"
 
 namespace Platform
 {
@@ -943,8 +944,8 @@ std::string DoMigration(std::string fromDir, std::string toDir)
 	// chdir into the new directory
 	Platform::ChangeDir(toDir);
 
-	if (scripts.size())
-		rescan_stamps();
+	if (stamps.size())
+		Stamps::Ref().Rescan();
 
 	logFile << std::endl << std::endl << "Migration complete. Results: " << result.str();
 	logFile.close();

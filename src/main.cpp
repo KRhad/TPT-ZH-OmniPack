@@ -228,153 +228,10 @@ void NewSim()
 	airMode = 0;
 }
 
-// stamps library
-
-stamp stamps[STAMP_MAX];//[STAMP_X*STAMP_Y];
-
-int stamp_count = 0;
-
-unsigned last_time=0, last_name=0;
-void stamp_gen_name(char *fn)
-{
-	unsigned t=(unsigned)time(NULL);
-
-	if (last_time!=t)
-	{
-		last_time=t;
-		last_name=0;
-	}
-	else
-		last_name++;
-
-	sprintf(fn, "%08x%02x", last_time, last_name);
-}
-
-void stamp_update(void)
-{
-	FILE *f;
-	int i;
-	f=fopen("stamps" PATH_SEP "stamps.def", "wb");
-	if (!f)
-		return;
-	for (i=0; i<STAMP_MAX; i++)
-	{
-		if (!stamps[i].name[0])
-			break;
-		if (stamps[i].dodelete!=1)
-		{
-			fwrite(stamps[i].name, 1, 10, f);
-		}
-		else
-		{
-			char name[30] = {0};
-			sprintf(name,"stamps%s%s.stm",PATH_SEP,stamps[i].name);
-			remove(name);
-		}
-	}
-	fclose(f);
-}
-
-void stamp_gen_thumb(int i)
-{
-	char fn[64];
-	void *data;
-	int size, factor_x, factor_y;
-	pixel *tmp;
-
-	if (stamps[i].thumb)
-	{
-		free(stamps[i].thumb);
-		stamps[i].thumb = NULL;
-	}
-
-	sprintf(fn, "stamps" PATH_SEP "%s.stm", stamps[i].name);
-	data = file_load(fn, &size);
-
-	if (data)
-	{
-		stamps[i].thumb = prerender_save(data, size, &(stamps[i].thumb_w), &(stamps[i].thumb_h));
-		if (stamps[i].thumb && (stamps[i].thumb_w>XRES/GRID_S || stamps[i].thumb_h>YRES/GRID_S))
-		{
-			factor_x = (int)ceil((float)stamps[i].thumb_w/(float)(XRES/GRID_S));
-			factor_y = (int)ceil((float)stamps[i].thumb_h/(float)(YRES/GRID_S));
-			if (factor_y > factor_x)
-				factor_x = factor_y;
-			tmp = rescale_img(stamps[i].thumb, stamps[i].thumb_w, stamps[i].thumb_h, &(stamps[i].thumb_w), &(stamps[i].thumb_h), factor_x);
-			free(stamps[i].thumb);
-			stamps[i].thumb = tmp;
-		}
-	}
-
-	free(data);
-}
 
 int clipboard_ready = 0;
 void *clipboard_data = 0;
 int clipboard_length = 0;
-
-char* stamp_save(int x, int y, int w, int h, bool includePressure)
-{
-	FILE *f;
-	char fn[64], sn[16];
-
-	// Generate filename
-	stamp_gen_name(sn);
-	sprintf(fn, "stamps" PATH_SEP "%s.stm", sn);
-
-	Json::Value stampInfo;
-	stampInfo["type"] = "stamp";
-	stampInfo["username"] = svf_user;
-	stampInfo["name"] = fn;
-	stampInfo["date"] = (Json::Value::UInt64)time(NULL);
-	if (authors.size())
-	{
-		// This is a stamp, always append full authorship info (even if same user)
-		stampInfo["links"].append(authors);
-	}
-
-	Save *save = globalSim->CreateSave(x, y, x+w, y+h, includePressure);
-	save->authors = stampInfo;
-	try
-	{
-		save->BuildSave();
-	}
-	catch (BuildException & e)
-	{
-		ErrorPrompt *error = new ErrorPrompt("Error building stamp: " + std::string(e.what()));
-		Engine::Ref().ShowWindow(error);
-		delete save;
-		return NULL;
-	}
-
-#ifdef WIN
-	_mkdir("stamps");
-#else
-	mkdir("stamps", 0755);
-#endif
-
-	f = fopen(fn, "wb");
-	if (!f)
-		return NULL;
-	fwrite(save->GetSaveData(), save->GetSaveSize(), 1, f);
-	fclose(f);
-
-	delete save;
-
-	stamp_join_if_running();
-	if (stamps[STAMP_MAX-1].thumb)
-		free(stamps[STAMP_MAX-1].thumb);
-	memmove(stamps+1, stamps, sizeof(struct stamp)*(STAMP_MAX-1));
-	memset(stamps, 0, sizeof(struct stamp));
-	if (stamp_count<STAMP_MAX)
-		stamp_count++;
-
-	strcpy(stamps[0].name, sn);
-	stamp_gen_thumb(0);
-
-	stamp_update();
-	return mystrdup(sn);
-}
 
 void tab_save(int num)
 {
@@ -438,34 +295,6 @@ void tab_save(int num)
 	tabThumbnails[num-1] = rescale_img(vid_buf, XRES+BARSIZE, YRES, &fileSize, &fileSize, 3);
 }
 
-Save *stamp_load(int i, int reorder)
-{
-	char fn[64];
-	struct stamp tmp;
-
-	if (!stamps[i].thumb || !stamps[i].name[0])
-		return NULL;
-
-	sprintf(fn, "stamps" PATH_SEP "%s.stm", stamps[i].name);
-	int size;
-	char *data = (char*)file_load(fn, &size);
-	if (!data)
-		return NULL;
-	Save *save = new Save(data, size);
-	free(data);
-
-	if (reorder && i>0)
-	{
-		memcpy(&tmp, stamps+i, sizeof(struct stamp));
-		memmove(stamps+1, stamps, sizeof(struct stamp)*i);
-		memcpy(stamps, &tmp, sizeof(struct stamp));
-
-		stamp_update();
-	}
-
-	return save;
-}
-
 int tab_load(int tabNum, bool del, bool showException)
 {
 	char *saveData;
@@ -504,99 +333,6 @@ int tab_load(int tabNum, bool del, bool showException)
 		return ret;
 	}
 	return 0;
-}
-
-std::thread stamp_thumb_thread;
-bool stamp_thread_started = false;
-
-void stamp_gen_thumb_thread()
-{
-	for (int i = 0; i < STAMP_MAX; i++)
-	{
-		if (stamps[i].name[0])
-			stamp_gen_thumb(i);
-	}
-}
-
-void stamp_join_if_running()
-{
-	if (stamp_thread_started)
-		stamp_thumb_thread.join();
-	stamp_thread_started = false;
-}
-
-void stamp_init()
-{
-	int i;
-	FILE *f;
-
-	stamp_join_if_running();
-	memset(stamps, 0, sizeof(stamps));
-
-	f=fopen("stamps" PATH_SEP "stamps.def", "rb");
-	if (!f)
-		return;
-	for (i=0; i<STAMP_MAX; i++)
-	{
-		int readsize = fread(stamps[i].name, 1, 10, f);
-		if (readsize != 10 || !stamps[i].name[0])
-			break;
-		stamp_count++;
-	}
-	fclose(f);
-
-	stamp_thumb_thread = std::thread([]() { stamp_gen_thumb_thread(); });
-	stamp_thread_started = true;
-}
-
-void rescan_stamps()
-{
-	std::list<std::string> stampIDs;
-	std::vector<std::string> stampList = Platform::DirectorySearch("stamps", "", { ".stm" });
-	for (auto &stamp : stampList)
-	{
-		if (stamp.length() == 14)
-			stampIDs.push_back(stamp.substr(0, 10));
-	}
-	stampIDs.sort(std::greater<std::string>());
-
-	FILE *f = fopen("stamps" PATH_SEP "stamps.def", "wb");
-	if (!f)
-	{
-		error_ui(vid_buf, 0, "Could not open stamps.def");
-	}
-	else
-	{
-		for (auto & stampID : stampIDs)
-			fwrite(stampID.c_str(), stampID.length(), 1, f);
-		fclose(f);
-
-		stamp_join_if_running();
-		for (int i = 0; i < STAMP_MAX; i++)
-			if (stamps[i].thumb)
-				free(stamps[i].thumb);
-		stamp_count = 0;
-		stamp_init();
-	}
-}
-
-void stamps_free()
-{
-	stamp_join_if_running();
-	for (int i = 0; i < STAMP_MAX; i++)
-		if (stamps[i].thumb)
-		{
-			free(stamps[i].thumb);
-			stamps[i].thumb = NULL;
-		}
-}
-
-void del_stamp(int d)
-{
-	stamps[d].dodelete = 1;
-	stamp_update();
-	stamp_count = 0;
-	stamp_init();
 }
 
 void thumb_cache_inval(char *id);
@@ -1039,8 +775,6 @@ int main(int argc, char *argv[])
 			freopen("stderr.log", "w", stderr);
 		}
 	}
-
-	stamp_init();
 
 #ifndef NOHTTP
 	if (!disableNetwork)
@@ -1720,6 +1454,5 @@ void main_end_hack()
 		remove(name);
 	}
 	Platform::DeleteDirectory("tabs");
-	stamps_free();
 }
 #endif

@@ -20,6 +20,7 @@
 #include "game/Request.h"
 #include "game/Save.h"
 #include "game/Sign.h"
+#include "game/Stamps.h"
 #include "game/ToolTip.h"
 #include "gui/game/PowderToy.h"
 #include "graphics/ARGBColour.h"
@@ -1186,7 +1187,7 @@ int simulation_saveStamp(lua_State* l)
 	int w = luaL_optint(l,3,XRES);
 	int h = luaL_optint(l,4,YRES);
 	int includePressure = luaL_optint(l,5,1);
-	char *name = stamp_save(x, y, w, h, includePressure);
+	std::string name = Stamps::Ref().Generate(luaSim, x, y, w, h, includePressure);
 	tpt_lua_pushString(l, name);
 	return 1;
 }
@@ -1202,12 +1203,7 @@ int simulation_loadStamp(lua_State* l)
 	if (lua_isstring(l, 1))
 	{
 		std::string filename = tpt_lua_optString(l, 1, "");
-		for (int i = 0; i < stamp_count; i++)
-			if (stamps[i].name == filename)
-			{
-				save = stamp_load(i, 0);
-				break;
-			}
+		save = Stamps::Ref().Load(filename, 0);
 		if (!save)
 		{
 			int size;
@@ -1220,9 +1216,9 @@ int simulation_loadStamp(lua_State* l)
 	if (!save && lua_isnumber(l, 1))
 	{
 		int i = luaL_optint(l, 1, 0);
-		if (i < 0 || i >= stamp_count)
+		if (i < 0 || i >= (int)Stamps::Ref().GetNumStamps())
 			return luaL_error(l, "Invalid stamp ID: %d", i);
-		save = stamp_load(i, 0);
+		save = Stamps::Ref().Load(i, 0);
 	}
 	if (!save)
 	{
@@ -1263,17 +1259,12 @@ int simulation_deleteStamp(lua_State* l)
 	if (lua_isstring(l, 1))
 	{
 		std::string filename = tpt_lua_optString(l, 1, "");
-		for (int i = 0; i < stamp_count; i++)
-			if (stamps[i].name == filename)
-			{
-				stampNum = i;
-				break;
-			}
+		stampNum = Stamps::Ref().GetStampId(filename);
 	}
-	if (stampNum < 0)
+	if (lua_isnumber(l, 1))
 	{
-		stampNum = luaL_checkint(l, 1);
-		if (stampNum < 0 || stampNum >= stamp_count)
+		stampNum = luaL_optint(l, 1, -1);
+		if (stampNum < 0 || stampNum >= (int)Stamps::Ref().GetNumStamps())
 			return luaL_error(l, "Invalid stamp ID: %d", stampNum);
 	}
 
@@ -1284,7 +1275,7 @@ int simulation_deleteStamp(lua_State* l)
 	}
 	else
 	{
-		del_stamp(stampNum);
+		Stamps::Ref().Delete(stampNum);
 		return 0;
 	}
 }

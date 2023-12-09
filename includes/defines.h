@@ -234,8 +234,6 @@ extern bool REPLACE_MODE;
 extern bool SPECIFIC_DELETE;
 extern int GRID_MODE;
 extern int DEBUG_MODE;
-extern stamp stamps[STAMP_MAX];
-extern int stamp_count;
 
 extern int ptsaveOpenID;
 extern int saveURIOpen;
@@ -256,17 +254,8 @@ void thumb_cache_add(char *id, void *thumb, int size);
 bool thumb_cache_find(char *id, void **thumb, int *size);
 void clear_sim();
 void NewSim();
-char* stamp_save(int x, int y, int w, int h, bool includePressure);
 void tab_save(int num);
-#ifdef __cplusplus
-class Save;
-Save *stamp_load(int i, int reorder);
-#endif
 int tab_load(int tabNum, bool del = false, bool showException = true);
-void stamp_init();
-void stamp_join_if_running();
-void rescan_stamps();
-void del_stamp(int d);
 void ctrlzSnapshot();
 
 extern bool sendNewEvents;

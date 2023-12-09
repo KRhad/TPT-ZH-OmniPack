@@ -19,6 +19,7 @@
 #include "BSON.h"
 #include "json/json.h"
 #include "simulation/ElementNumbers.h"
+#include "simulation/SimulationData.h"
 #include "graphics/Pixel.h"
 
 //builds a thumb or something? idk

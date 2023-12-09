@@ -66,6 +66,7 @@
 #include "game/Menus.h"
 #include "game/Save.h"
 #include "game/Sign.h"
+#include "game/Stamps.h"
 #include "game/ToolTip.h"
 #include "interface/Engine.h"
 #include "json/json.h"
@@ -1897,10 +1898,12 @@ fail:
 
 int stamp_ui(pixel *vid_buf, int *reorder)
 {
-	int b=1,bq,mx,my,d=-1,i,j,k,x,gx,gy,y,w,h,r=-1,stamp_page=0,per_page=GRID_X*GRID_Y,page_count,numdelete=0,lastdelete;
+	int b=1,bq,mx,my,d=-1,i,j,k,x,gx,gy,y,w,h,r=-1,stamp_page=0,per_page=GRID_X*GRID_Y,page_count;
 	char page_info[64];
+	std::set<unsigned int> toDelete;
+	int numStamps = Stamps::Ref().GetNumStamps();
 	// stamp_count-1 to avoid an extra page when there are per_page stamps on each page
-	page_count = (stamp_count-1)/per_page+1;
+	page_count = (numStamps-1)/per_page+1;
 
 	while (!sdl_poll())
 	{
@@ -1909,7 +1912,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 			break;
 	}
 
-	stamp_join_if_running();
+	Stamps::Ref().WaitForThumbs(false);
 
 	while (!sdl_poll())
 	{
@@ -1920,7 +1923,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 		k = stamp_page*per_page;//0;
 		r = -1;
 		d = -1;
-		if (!stamps[k].name[0])
+		if (!numStamps)
 		{
 #ifndef TOUCHUI
 			drawtext(vid_buf, (XRES-textwidth("Use 's' to save stamps"))/2, YRES/2-6, "Use 's' to save stamps", 255, 255, 255, 255);
@@ -1931,27 +1934,28 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 		for (j=0; j<GRID_Y; j++)
 			for (i=0; i<GRID_X; i++)
 			{
-				if (stamps[k].name[0])
+				Stamp stamp = Stamps::Ref().GetStamp(k);
+				if (stamp.name.length())
 				{
 					gx = ((XRES/GRID_X)*i) + (XRES/GRID_X-XRES/GRID_S)/2;
 					gy = ((((YRES-MENUSIZE+20)+15)/GRID_Y)*j) + ((YRES-MENUSIZE+20)/GRID_Y-(YRES-MENUSIZE+20)/GRID_S+10)/2 + 18;
 					x = (XRES*i)/GRID_X + XRES/(GRID_X*2);
 					y = (YRES*j)/GRID_Y + YRES/(GRID_Y*2);
 					gy -= 20;
-					w = stamps[k].thumb_w;
-					h = stamps[k].thumb_h;
+					w = stamp.thumb_w;
+					h = stamp.thumb_h;
 					x -= w/2;
 					y -= h/2;
-					if (stamps[k].thumb)
+					if (stamp.thumb)
 					{
-						draw_image(vid_buf, stamps[k].thumb, gx+(((XRES/GRID_S)/2)-(w/2)), gy+(((YRES/GRID_S)/2)-(h/2)), w, h, 255);
+						draw_image(vid_buf, stamp.thumb, gx+(((XRES/GRID_S)/2)-(w/2)), gy+(((YRES/GRID_S)/2)-(h/2)), w, h, 255);
 						xor_rect(vid_buf, gx+(((XRES/GRID_S)/2)-(w/2)), gy+(((YRES/GRID_S)/2)-(h/2)), w, h);
 					}
 					else
 					{
 						drawtext(vid_buf, gx+8, gy+((YRES/GRID_S)/2)-4, "Error loading stamp", 255, 255, 255, 255);
 					}
-					if ((mx>=gx+XRES/GRID_S-4 && mx<(gx+XRES/GRID_S)+6 && my>=gy-6 && my<gy+4) || stamps[k].dodelete)
+					if ((mx>=gx+XRES/GRID_S-4 && mx<(gx+XRES/GRID_S)+6 && my>=gy-6 && my<gy+4) || stamp.dodelete)
 					{
 						if (mx>=gx+XRES/GRID_S-4 && mx<(gx+XRES/GRID_S)+6 && my>=gy-6 && my<gy+4)
 							d = k;
@@ -1960,7 +1964,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 					}
 					else
 					{
-						if (mx>=gx && mx<gx+(XRES/GRID_S) && my>=gy && my<gy+(YRES/GRID_S) && stamps[k].thumb)
+						if (mx>=gx && mx<gx+(XRES/GRID_S) && my>=gy && my<gy+(YRES/GRID_S) && stamp.thumb)
 						{
 							r = k;
 							drawrect(vid_buf, gx-2, gy-2, XRES/GRID_S+3, YRES/GRID_S+3, 128, 128, 210, 255);
@@ -1971,25 +1975,27 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 						}
 						drawtext(vid_buf, gx+XRES/GRID_S-3, gy-4, "\x85", 150, 48, 32, 255);
 					}
-					drawtext(vid_buf, gx+XRES/(GRID_S*2)-textwidth(stamps[k].name)/2, gy+YRES/GRID_S+7, stamps[k].name, 192, 192, 192, 255);
+					drawtext(vid_buf, gx+XRES/(GRID_S*2)-textwidth(stamp.name.c_str())/2, gy+YRES/GRID_S+7, stamp.name.c_str(), 192, 192, 192, 255);
 					drawtext(vid_buf, gx+XRES/GRID_S-3, gy-4, "\x86", 255, 255, 255, 255);
 				}
 				k++;
 			}
 
-		if (numdelete)
+		if (toDelete.size())
 		{
 			drawrect(vid_buf,(XRES/2)-19,YRES+MENUSIZE-18,37,16,255,255,255,255);
 			drawtext(vid_buf, (XRES/2)-14, YRES+MENUSIZE-14, "Delete", 255, 255, 255, 255);
 			if (b == 1 && bq == 0 && mx > (XRES/2)-20 && mx < (XRES/2)+19 && my > YRES+MENUSIZE-19 && my < YRES+MENUSIZE-1)
 			{
-				sprintf(page_info, "%d stamp%s", numdelete, (numdelete == 1)?"":"s");
+				sprintf(page_info, "%d stamp%s", (int)toDelete.size(), (toDelete.size() == 1)?"":"s");
 				if (confirm_ui(vid_buf, "Do you want to delete?", page_info, "Delete"))
-					del_stamp(lastdelete);
-				for (i=0; i<STAMP_MAX; i++)
-					stamps[i].dodelete = 0;
-				numdelete = 0;
-				d = lastdelete = -1;
+				{
+					for (unsigned int del : toDelete)
+						Stamps::Ref().Delete(del);
+					toDelete.clear();
+					numStamps = Stamps::Ref().GetNumStamps();
+					page_count = (numStamps - 1) / per_page + 1;
+				}
 			}
 		}
 		else
@@ -2012,25 +2018,21 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 		drawtext(vid_buf, XRES-60, YRES+MENUSIZE-14, "Rescan", 255, 255, 255, 255);
 		drawrect(vid_buf, XRES-65, YRES+MENUSIZE-18, 40, 16, 255, 255, 255, 255);
 
-		if (b==1&&bq==0&&d!=-1)
+		if (b==1 && bq==0 && d!=-1)
 		{
 			if (sdl_mod & (KMOD_CTRL|KMOD_GUI))
 			{
-				if (!stamps[d].dodelete)
-				{
-					stamps[d].dodelete = 1;
-					numdelete++;
-					lastdelete=d;
-				}
+				auto existing = toDelete.find(d);
+				if (existing == toDelete.end())
+					toDelete.insert(d);
 				else
-				{
-					stamps[d].dodelete = 0;
-					numdelete--;
-				}
+					toDelete.erase(existing);
 			}
-			else if (!numdelete && confirm_ui(vid_buf, "Do you want to delete?", stamps[d].name, "Delete"))
+			else if (!toDelete.size() && confirm_ui(vid_buf, "Do you want to delete?", Stamps::Ref().GetStamp(d).name.c_str(), "Delete"))
 			{
-				del_stamp(d);
+				Stamps::Ref().Delete(d);
+				numStamps = Stamps::Ref().GetNumStamps();
+				page_count = (numStamps - 1) / per_page + 1;
 			}
 		}
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
@@ -2061,8 +2063,12 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 		}
 		if (b && !bq && mx >= XRES-65 && mx <= XRES-25 && my >= YRES+MENUSIZE-18 && my < YRES+MENUSIZE-2 && confirm_ui(vid_buf, "Rescan stamps?", "Rescanning stamps will find all stamps in your stamps/ directory and overwrite stamps.def", "OK"))
 		{
-			rescan_stamps();
-			page_count = (stamp_count - 1) / per_page + 1;
+			info_box(vid_buf, "Rescanning ...");
+			Stamps::Ref().Rescan();
+			Stamps::Ref().WaitForThumbs(false);
+			stamp_page = 0;
+			numStamps = Stamps::Ref().GetNumStamps();
+			page_count = (numStamps - 1) / per_page + 1;
 		}
 
 		if (sdl_key==SDLK_RETURN)
@@ -2083,8 +2089,6 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 			break;
 	}
 
-	for (i=0; i<STAMP_MAX; i++)
-		stamps[i].dodelete = 0;
 	return r;
 }
 

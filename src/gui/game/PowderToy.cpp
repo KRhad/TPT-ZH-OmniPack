@@ -28,6 +28,7 @@
 #include "game/Menus.h"
 #include "game/Save.h"
 #include "game/Sign.h"
+#include "game/Stamps.h"
 #include "game/ToolTip.h"
 #include "graphics/Renderer.h"
 #include "graphics/VideoBuffer.h"
@@ -65,6 +66,8 @@ PowderToy::~PowderToy()
 	delete sim;
 	delete clipboardData;
 	delete reloadSave;
+
+	Stamps::Ref().Free();
 }
 
 PowderToy::PowderToy():
@@ -128,6 +131,8 @@ PowderToy::PowderToy():
 	globalSim = sim;
 
 	load_presets();
+
+	Stamps::Ref().Init();
 
 	InitMenusections();
 	FillMenus();
@@ -1797,8 +1802,7 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 				break;
 			}
 			case SAVE:
-				// function returns the stamp name which we don't want, so free it
-				free(stamp_save(savePos.X, savePos.Y, saveSize.X, saveSize.Y, !shiftHeld));
+				Stamps::Ref().Generate(sim, savePos.X, savePos.Y, saveSize.X, saveSize.Y, !shiftHeld);
 				break;
 			default:
 				break;
@@ -2341,13 +2345,13 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			int reorder = 1;
 			int stampID = stamp_ui(vid_buf, &reorder);
 			if (stampID >= 0)
-				stampData = stamp_load(stampID, reorder);
+				stampData = Stamps::Ref().Load(stampID, reorder);
 			else
-				stampData = NULL;
+				stampData = nullptr;
 		}
 		// else, open most recent stamp
 		else
-			stampData = stamp_load(0, 1);
+			stampData = Stamps::Ref().Load(0, false);
 
 		// if a stamp was actually loaded
 		if (stampData)
@@ -2364,7 +2368,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			else
 			{
 				delete stampData;
-				stampData = NULL;
+				stampData = nullptr;
 			}
 		}
 		break;
