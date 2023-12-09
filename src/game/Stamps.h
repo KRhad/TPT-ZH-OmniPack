@@ -1,9 +1,10 @@
  #pragma once
 
+#include <ctime>
+#include <deque>
+#include <set>
 #include <string>
 #include <thread>
-#include <deque>
-#include <ctime>
 #include "common/Singleton.h"
 #include "graphics/Pixel.h"
 
@@ -30,6 +31,7 @@ typedef struct Stamp Stamp;
 class Stamps : public Singleton<Stamps>
 {
 	std::deque<Stamp> stamps;
+	std::set<std::string> stampNames; // TEMP
 	Stamp noStamp = Stamp("");
 
 	std::thread genThumbThread;
@@ -38,6 +40,11 @@ class Stamps : public Singleton<Stamps>
 
 	time_t lastTime;
 	int lastTimeIndex;
+
+	bool InitAsJson();
+	bool InitAsDef(bool appendMode);
+	bool WriteStampsJson();
+	bool WriteStampsDef();
 
 	void ReprocessStamps();
 
@@ -55,6 +62,7 @@ public:
 	void Init();
 	void Free();
 	void Rescan();
+	bool Rename(unsigned int i, std::string newName);
 
 	Save * Load(unsigned int i, bool reorder);
 	Save * Load(std::string name, bool reorder);

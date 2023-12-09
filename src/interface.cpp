@@ -1430,7 +1430,11 @@ char *input_ui(pixel *vid_buf, const char *title, const char *prompt, const char
 	ui_edit ed;
 	ui_edit_init(&ed, x0+12, y0+50, xsize-20, 14);
 	strncpy(ed.def, shadow, 32);
+#ifndef TOUCHUI
+	ed.focus = 1;
+#else
 	ed.focus = 0;
+#endif
 	strncpy(ed.str, text, 254);
 
 	while (!sdl_poll())
@@ -1898,7 +1902,7 @@ fail:
 
 int stamp_ui(pixel *vid_buf, int *reorder)
 {
-	int b=1,bq,mx,my,d=-1,i,j,k,x,gx,gy,y,w,h,r=-1,stamp_page=0,per_page=GRID_X*GRID_Y,page_count;
+	int b=1,bq,mx,my,d=-1,i,j,k,x,gx,gy,y,w,h,r=-1,rnm=-1,stamp_page=0,per_page=GRID_X*GRID_Y,page_count;
 	char page_info[64];
 	std::set<unsigned int> toDelete;
 	int numStamps = Stamps::Ref().GetNumStamps();
@@ -1922,6 +1926,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 		clearrect(vid_buf, 0, 0, XRES+BARSIZE, YRES+MENUSIZE);
 		k = stamp_page*per_page;//0;
 		r = -1;
+		rnm = -1;
 		d = -1;
 		if (!numStamps)
 		{
@@ -1975,7 +1980,20 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 						}
 						drawtext(vid_buf, gx+XRES/GRID_S-3, gy-4, "\x85", 150, 48, 32, 255);
 					}
-					drawtext(vid_buf, gx+XRES/(GRID_S*2)-textwidth(stamp.name.c_str())/2, gy+YRES/GRID_S+7, stamp.name.c_str(), 192, 192, 192, 255);
+
+					std::string stampName = stamp.name;
+					if (textwidth(stampName.c_str()) > XRES / GRID_X)
+						stampName = stampName.substr(0, 15) + "...";
+
+					if (mx >= gx && mx < gx + (XRES / GRID_S) && my >= gy + YRES/GRID_S + 5 && my < gy + YRES / GRID_S + 19)
+					{
+						rnm = k;
+						drawtext(vid_buf, gx+XRES/(GRID_S*2)-textwidth(stampName.c_str())/2, gy+YRES/GRID_S+7, stampName.c_str(), 128, 128, 210, 255);
+					}
+					else
+					{
+						drawtext(vid_buf, gx+XRES/(GRID_S*2)-textwidth(stampName.c_str())/2, gy+YRES/GRID_S+7, stampName.c_str(), 192, 192, 192, 255);
+					}
 					drawtext(vid_buf, gx+XRES/GRID_S-3, gy-4, "\x86", 255, 255, 255, 255);
 				}
 				k++;
@@ -2035,6 +2053,14 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 				page_count = (numStamps - 1) / per_page + 1;
 			}
 		}
+
+		if (b == 1 && bq == 0 && rnm != -1)
+		{
+			char *newName = input_ui(vid_buf, "Rename stamp", ("Rename stamp \"" + Stamps::Ref().GetStamp(rnm).name + "\"").c_str(), "", "");
+			if (!Stamps::Ref().Rename(rnm, newName))
+				error_ui(vid_buf, 0, "Couldn't rename, stamp with that name already exists");
+		}
+
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
 
 		if (b==1&&r!=-1)
@@ -2061,7 +2087,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 			}
 			sdl_wheel = 0;
 		}
-		if (b && !bq && mx >= XRES-65 && mx <= XRES-25 && my >= YRES+MENUSIZE-18 && my < YRES+MENUSIZE-2 && confirm_ui(vid_buf, "Rescan stamps?", "Rescanning stamps will find all stamps in your stamps/ directory and overwrite stamps.def", "OK"))
+		if (b && !bq && mx >= XRES-65 && mx <= XRES-25 && my >= YRES+MENUSIZE-18 && my < YRES+MENUSIZE-2 && confirm_ui(vid_buf, "Rescan stamps?", "Rescanning stamps will find all stamps in your stamps/ directory and overwrite stamps.json and stamps.def", "OK"))
 		{
 			info_box(vid_buf, "Rescanning ...");
 			Stamps::Ref().Rescan();

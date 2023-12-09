@@ -913,6 +913,7 @@ std::string DoMigration(std::string fromDir, std::string toDir)
 
 	// Do actual migration
 	DeleteFile(fromDir + "stamps/stamps.def");
+	DeleteFile(fromDir + "stamps/stamps.json");
 	migrateList(stamps, "stamps", "Stamps");
 	migrateList(saves, "Saves", "Saves");
 	if (!scripts.empty())

@@ -14,6 +14,7 @@
 #include "common/Platform.h"
 #include "game/Save.h"
 #include "interface/Engine.h"
+#include "json/json.h"
 #include "simulation/Simulation.h"
 #include "gui/dialogs/ErrorPrompt.h"
 
@@ -41,23 +42,110 @@ void Stamps::Init()
 	WaitForThumbs(true);
 
 	Platform::MakeDirectory("stamps");
+
+	bool succ = InitAsJson();
+	if (!succ)
+		std::cout << "Couldn't find stamps.json" << std::endl;
+
+	succ = InitAsDef(succ);
+	if (!succ)
+		std::cout << "Couldn't find stamps.def" << std::endl;
+
+	thumbThreadCanceled = false;
+	thumbThreadRunning = true;
+	genThumbThread = std::thread([&]() { GenThumbThread(); });
+}
+
+bool Stamps::InitAsJson()
+{
+	int size;
+	char *stamp_data = (char*)file_load("stamps" PATH_SEP "stamps.json", &size);
+	if (!stamp_data)
+		return false;
+
+	std::istringstream datastream(stamp_data);
+	Json::Value root;
+	datastream >> root;
+
+	Json::Value recent = root["MostRecentlyUsedFirst"];
+	for (Json::UInt i = 0; i < recent.size(); i++)
+	{
+		stamps.push_back(Stamp(recent[i].asString()));
+		stampNames.insert(recent[i].asString());
+	}
+
+	return true;
+}
+
+bool Stamps::InitAsDef(bool appendMode)
+{
 	FILE *f = fopen("stamps" PATH_SEP "stamps.def", "rb");
 	if (!f)
-		return;
+		return false;
+	std::vector<Stamp> toAppend;
 	char name[11];
 	while (true)
 	{
 		int readsize = fread(name, 1, 10, f);
 		if (readsize != 10 || !name[0])
 			break;
-		stamps.push_back(Stamp(name));
+		if (appendMode)
+		{
+			if (stampNames.find(name) == stampNames.end())
+				toAppend.push_back(Stamp(name));
+		}
+		else
+		{
+			stamps.push_back(Stamp(name));
+		}
 	}
 	fclose(f);
 
-	thumbThreadCanceled = false;
-	thumbThreadRunning = true;
-	genThumbThread = std::thread([&]() { GenThumbThread(); });
+	if (appendMode)
+	{
+		stamps.insert(stamps.begin(), toAppend.begin(), toAppend.end());
+	}
+	return true;
 }
+
+bool Stamps::WriteStampsJson()
+{
+	Json::Value recent;
+	for (const auto & stamp : stamps)
+	{
+		recent.append(stamp.name);
+	}
+	Json::Value root;
+	root["MostRecentlyUsedFirst"] = recent;
+
+	std::ostringstream datastream;
+	datastream << root;
+
+	FILE *f = fopen("stamps" PATH_SEP "stamps.json", "wb");
+	if (!f)
+		return false;
+	fwrite(datastream.str().c_str(), 1, datastream.str().length(), f);
+	fclose(f);
+
+	return true;
+}
+
+bool Stamps::WriteStampsDef()
+{
+	FILE *f = fopen("stamps" PATH_SEP "stamps.def", "wb");
+	if (!f)
+		return false;
+
+	for (const auto & stamp : stamps)
+	{
+		if (stamp.name.length() == 10)
+			fwrite(stamp.name.c_str(), 1, 10, f);
+	}
+	fclose(f);
+
+	return true;
+}
+
 
 void Stamps::Free()
 {
@@ -82,21 +170,27 @@ void Stamps::Rescan()
 	}
 	stampIDs.sort(std::greater<std::string>());
 
-	FILE *f = fopen("stamps" PATH_SEP "stamps.def", "wb");
-	if (!f)
-	{
-		Engine::Ref().ShowWindow(new ErrorPrompt("Could not open stamps.def"));
-	}
-	else
-	{
-		for (auto & stampID : stampIDs)
-			fwrite(stampID.c_str(), stampID.length(), 1, f);
-		fclose(f);
+	bool succ = WriteStampsJson();
+	succ = WriteStampsDef() || succ;
+	if (!succ)
+		Engine::Ref().ShowWindow(new ErrorPrompt("Could not write stamps.json and stamps.def"));
 
-		// Re-init everything
-		Free();
-		Init();
-	}
+	// Re-init everything
+	Free();
+	Init();
+}
+
+bool Stamps::Rename(unsigned int i, std::string newName)
+{
+	if (i >= stamps.size())
+		return false;
+	if (!Platform::RenameFile(GetPath(stamps[i].name), GetPath(newName), false))
+		return false;
+	stamps[i].name = newName;
+
+	ReprocessStamps();
+
+	return true;
 }
 
 Save * Stamps::Load(unsigned int i, bool reorder)
@@ -200,9 +294,6 @@ void Stamps::Delete(unsigned int i)
 
 void Stamps::ReprocessStamps()
 {
-	FILE *f = fopen("stamps" PATH_SEP "stamps.def", "wb");
-	if (!f)
-		return;
 	for (const auto & stamp : stamps)
 	{
 		if (stamp.dodelete)
@@ -212,15 +303,13 @@ void Stamps::ReprocessStamps()
 
 			free(stamp.thumb);
 		}
-		else
-		{
-			fwrite(stamp.name.c_str(), 1, 10, f);
-		}
 	}
-	fclose(f);
 
 	auto it = std::remove_if(stamps.begin(), stamps.end(), [](const Stamp & s) { return s.dodelete; });
 	stamps.erase(it, stamps.end());
+
+	WriteStampsJson();
+	WriteStampsDef();
 }
 
 void Stamps::GenThumbThread()

@@ -63,11 +63,11 @@ PowderToy::~PowderToy()
 	HandleEvent(LuaEvents::close, &ev);
 
 	main_end_hack();
+	Stamps::Ref().Free();
 	delete sim;
 	delete clipboardData;
 	delete reloadSave;
 
-	Stamps::Ref().Free();
 }
 
 PowderToy::PowderToy():
