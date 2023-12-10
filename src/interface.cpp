@@ -7013,7 +7013,11 @@ void MissingElementsPrompt(MissingElements missingElements)
 	if (missingElements.identifiers.size() || missingElements.ids.size())
 	{
 		std::stringstream ss;
+#ifndef ANDROID
+		ss << "This save uses custom elements that are not currently available.";
+#else
 		ss << "This save uses custom elements that are not currently available. Make sure that you use the mod and/or have all the scripts the save requires to fully load";
+#endif
 		for (auto &[ identifier, id ] : missingElements.identifiers)
 		{
 			ss << "\n - " << identifier;
