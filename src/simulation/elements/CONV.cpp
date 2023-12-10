@@ -92,6 +92,7 @@ void CONV_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Converter. Converts everything into whatever it first touches.";
 
 	elem->Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
+	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

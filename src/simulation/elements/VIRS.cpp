@@ -149,6 +149,7 @@ void VIRS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Virus. Turns everything it touches into virus.";
 
 	elem->Properties = TYPE_LIQUID;
+	elem->CarriesTypeIn = 1U << FIELD_TMP2;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

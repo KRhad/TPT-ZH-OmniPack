@@ -667,6 +667,7 @@ void PIPE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "PIPE, moves particles around. Once the BRCK generates, erase some for the exit. Then the PIPE generates and is usable.";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

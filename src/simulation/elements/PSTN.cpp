@@ -385,6 +385,7 @@ void PSTN_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Piston, extends and pushes particles.";
 
 	elem->Properties = TYPE_SOLID;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

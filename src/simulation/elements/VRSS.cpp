@@ -55,6 +55,7 @@ void VRSS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Solid Virus. Turns everything it touches into virus.";
 
 	elem->Properties = TYPE_SOLID;
+	elem->CarriesTypeIn = 1U << FIELD_TMP2;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

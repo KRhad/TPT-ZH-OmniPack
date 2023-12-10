@@ -73,6 +73,7 @@ void LAVA_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Molten lava. Ignites flammable materials. Generated when metals and other materials melt, solidifies when cold.";
 
 	elem->Properties = TYPE_LIQUID|PROP_LIFE_DEC;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

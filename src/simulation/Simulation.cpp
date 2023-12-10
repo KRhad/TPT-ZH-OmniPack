@@ -166,6 +166,8 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 	{
 		partMap[i] = i;
 	}
+	auto &possiblyCarriesType = particle::PossiblyCarriesType();
+	auto &properties = particle::GetProperties();
 
 	if (save->palette.size())
 	{
@@ -301,6 +303,7 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 	for (unsigned int n = 0; n < NPART && n < save->particlesCount; n++)
 	{
 		particle tempPart = save->particles[n];
+		// Convert element type according to palette
 		if (tempPart.type > 0 && tempPart.type < PT_NUM)
 		{
 			if (hasPalette)
@@ -311,41 +314,22 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 		else
 			continue;
 
-		// These store type in ctype, but are special because they store extra information in the bits after type
-		if (tempPart.type == PT_CRAY || tempPart.type == PT_DRAY || tempPart.type == PT_CONV)
+		// Convert elements stored in other properties according to palette as well
+		for (auto index : possiblyCarriesType)
 		{
-			int ctype = tempPart.ctype & pmapmask;
-			int extra = tempPart.ctype >> save->pmapbits;
-			if (ctype >= 0 && ctype < PT_NUM)
-				ctype = partMap[ctype];
-			tempPart.ctype = PMAP(extra, ctype);
-		}
-		else if (tempPart.ctype > 0 && tempPart.ctype < PT_NUM && Save::TypeInCtype(tempPart.type, tempPart.ctype))
-		{
-			if (hasPalette)
-				tempPart.ctype = partMap[tempPart.ctype];
-			else
-				tempPart.ctype = save->FixType(tempPart.ctype);
-		}
-		// also stores extra bits past type (only STOR right now)
-		if (Save::TypeInTmp(tempPart.type))
-		{
-			int tmp = tempPart.tmp & pmapmask;
-			int extra = tempPart.tmp >> save->pmapbits;
-			if (hasPalette)
-				tmp = partMap[TYP(tmp)];
-			else
-				tmp = save->FixType(tmp);
-			tempPart.tmp = PMAP(extra, tmp);
-		}
-		if (Save::TypeInTmp2(tempPart.type, tempPart.tmp2))
-		{
-			if (tempPart.tmp2 > 0 && tempPart.tmp2 < PT_NUM)
+			if (elements[tempPart.type].CarriesTypeIn & (1U << index))
 			{
-				if (hasPalette)
-					tempPart.tmp2 = partMap[tempPart.tmp2];
-				else
-					tempPart.tmp2 = save->FixType(tempPart.tmp2);
+				auto *prop = reinterpret_cast<int *>(reinterpret_cast<char *>(&tempPart) + properties[index].Offset);
+				auto carriedType = *prop & int(pmapmask);
+				auto extra = *prop >> save->pmapbits;
+				if (carriedType >= 0 && carriedType < PT_NUM)
+				{
+					if (hasPalette)
+						carriedType = partMap[carriedType];
+					else
+						carriedType = save->FixType(carriedType);
+				}
+				*prop = PMAP(extra, carriedType);
 			}
 		}
 
@@ -686,6 +670,11 @@ Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool
 
 	Save * newSave = new Save(blockW, blockH);
 
+	// Palette stuff
+	newSave->SetSim(this);
+	auto &possiblyCarriesType = particle::PossiblyCarriesType();
+	auto &properties = particle::GetProperties();
+
 	includePressure ^= !this->includePressure;
 	
 	int storedParts = 0;
@@ -711,19 +700,7 @@ Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool
 			particle tempPart = parts[i];
 			tempPart.x -= blockX*CELL;
 			tempPart.y -= blockY*CELL;
-#ifndef NOMOD
-			if (!explUnlocked)
-			{
-				if (tempPart.type == PT_EXPL)
-					continue;
-				if (tempPart.ctype == PT_EXPL && Save::TypeInCtype(tempPart.type, tempPart.ctype))
-					tempPart.ctype = 0;
-				if (TYP(tempPart.tmp) == PT_EXPL && Save::TypeInTmp(tempPart.type))
-					tempPart.tmp = ID(tempPart.tmp);
-				if (tempPart.tmp2 == PT_EXPL && Save::TypeInTmp2(tempPart.type, tempPart.tmp2))
-					tempPart.tmp2 = 0;
-			}
-#endif
+
 			if (elements[tempPart.type].Enabled)
 			{
 				particleMap.insert(std::pair<unsigned int, unsigned int>(i, storedParts));
@@ -747,12 +724,14 @@ Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool
 				elementCount[tempPart.type]++;
 
 				paletteSet.insert(tempPart.type);
-				if (Save::TypeInCtype(tempPart.type, tempPart.ctype))
-					paletteSet.insert(tempPart.ctype);
-				if (Save::TypeInTmp(tempPart.type))
-					paletteSet.insert(TYP(tempPart.tmp));
-				if (Save::TypeInTmp2(tempPart.type, tempPart.tmp2))
-					paletteSet.insert(tempPart.tmp2);
+				for (auto index : possiblyCarriesType)
+				{
+					if (elements[tempPart.type].CarriesTypeIn & (1U << index))
+					{
+						auto *prop = reinterpret_cast<const int *>(reinterpret_cast<const char *>(&tempPart) + properties[index].Offset);
+						paletteSet.insert(TYP(*prop));
+					}
+				}
 			}
 		}
 	}

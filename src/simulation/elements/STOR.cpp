@@ -118,6 +118,7 @@ void STOR_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Storage. Captures and stores a single particle. Releases when charged with PSCN, also passes to PIPE.";
 
 	elem->Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
+	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

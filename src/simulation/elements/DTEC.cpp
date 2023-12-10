@@ -122,6 +122,7 @@ void DTEC_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Detector, creates a spark when something with its ctype is nearby.";
 
 	elem->Properties = TYPE_SOLID;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

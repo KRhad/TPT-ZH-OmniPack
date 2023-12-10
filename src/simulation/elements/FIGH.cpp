@@ -180,6 +180,7 @@ void FIGH_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Fighter. Tries to kill stickmen. You must first give it an element to kill him with.";
 
 	elem->Properties = PROP_NOCTYPEDRAW;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

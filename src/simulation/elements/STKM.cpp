@@ -775,6 +775,7 @@ void STKM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Stickman. Don't kill him! Control with the arrow keys.";
 
 	elem->Properties = PROP_NOCTYPEDRAW;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

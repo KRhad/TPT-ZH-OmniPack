@@ -97,6 +97,7 @@ Save::Save(const Save & save):
 	signs(save.signs),
 	stkm(save.stkm),
 	palette(save.palette),
+	sim(save.sim),
 	renderModes(save.renderModes),
 	renderModesPresent(save.renderModesPresent),
 	displayModes(save.displayModes),
@@ -2074,6 +2075,9 @@ void Save::BuildSave()
 	if (!wallData || !fanData || !pressData || !vxData || !vyData || !ambientData)
 		throw BuildException("Save error, out of memory (blockmaps)");
 
+	auto &possiblyCarriesType = particle::PossiblyCarriesType();
+	auto &properties = particle::GetProperties();
+
 	// Copy wall and fan data
 	unsigned int fanDataLen = 0, pressDataLen = 0, vxDataLen = 0, vyDataLen = 0, ambientDataLen = 0;
 	for (unsigned int x = 0; x < blockWidth; x++)
@@ -2431,19 +2435,18 @@ void Save::BuildSave()
 						RESTRICTVERSION(93, 0);
 					}
 				}
-				if (PMAPBITS > 8)
+				if (PMAPBITS > 8 && sim != nullptr)
 				{
-					if (TypeInCtype(particles[i].type, particles[i].ctype) && particles[i].ctype > 0xFF)
+					for (auto index : possiblyCarriesType)
 					{
-						RESTRICTVERSION(93, 0);
-					}
-					else if (TypeInTmp(particles[i].type) && particles[i].tmp > 0xFF)
-					{
-						RESTRICTVERSION(93, 0);
-					}
-					else if (TypeInTmp2(particles[i].type, particles[i].tmp2) && particles[i].tmp2 > 0xFF)
-					{
-						RESTRICTVERSION(93, 0);
+						if (sim->elements[particles[i].type].CarriesTypeIn & (1U << index))
+						{
+							auto *prop = reinterpret_cast<const int *>(reinterpret_cast<const char *>(&particles[i]) + properties[index].Offset);
+							if (TYP(*prop) > 0xFF)
+							{
+								RESTRICTVERSION(93, 0);
+							}
+						}
 					}
 				}
 				if (particles[i].type == PT_LDTC)
@@ -3253,32 +3256,6 @@ void Save::ConvertJsonToBson(bson *b, Json::Value j, int depth)
 			bson_append_finish_array(b);
 		}
 	}
-}
-
-bool Save::TypeInCtype(int type, int ctype)
-{
-	if (ctype < 0 || ctype >= PT_NUM)
-		return false;
-	if (type == PT_CLNE || type == PT_PCLN || type == PT_BCLN || type == PT_PBCN || type == PT_STOR || type == PT_CONV || type == PT_STKM
-			|| type == PT_STKM2 || type == PT_FIGH || type == PT_LAVA || type == PT_SPRK || type == PT_PSTN || type == PT_CRAY
-			|| type == PT_DTEC || type == PT_DRAY || type == PT_LDTC || type == PT_PIPE || type == PT_PPIP)
-		return true;
-	return false;
-}
-
-bool Save::TypeInTmp(int type)
-{
-	if (type == PT_STOR)
-		return true;
-	return false;
-}
-
-bool Save::TypeInTmp2(int type, int tmp2)
-{
-	if (type == PT_VIRS || type == PT_VRSG || type == PT_VRSS)
-		if (tmp2 >= 0 && tmp2 < PT_NUM)
-			return true;
-	return false;
 }
 
 bool Save::PressureInTmp3(int type)

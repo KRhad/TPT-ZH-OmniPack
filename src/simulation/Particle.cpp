@@ -1,6 +1,7 @@
 #include <algorithm>
-#include <cstring>
+#include <cassert>
 #include <cstddef>
+#include <cstring>
 #include "Particle.h"
 #include "misc.h"
 
@@ -44,6 +45,34 @@ StructProperty particle::PropertyByName(const std::string& Name)
 	if (prop == properties.end())
 		return properties[0];
 	return *prop;
+}
+
+std::vector<int> const &particle::PossiblyCarriesType()
+{
+	struct DoOnce
+	{
+		std::vector<int> indices = {
+			FIELD_LIFE,
+			FIELD_CTYPE,
+			FIELD_TMP,
+			FIELD_TMP2,
+			FIELD_TMP3,
+			FIELD_TMP4,
+		};
+
+		DoOnce()
+		{
+			auto &properties = GetProperties();
+			for (auto index : indices)
+			{
+				// code that depends on PossiblyCarriesType only knows how to set ints
+				assert(properties[index].Type == StructProperty::Integer ||
+					   properties[index].Type == StructProperty::ParticleType);
+			}
+		}
+	};
+	static DoOnce doOnce;
+	return doOnce.indices;
 }
 
 int Particle_GetOffset(std::string key, int * format)

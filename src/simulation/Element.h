@@ -77,6 +77,7 @@ public:
 	std::string Description;
 
 	unsigned int Properties;
+	unsigned int CarriesTypeIn;
 
 	float LowPressureTransitionThreshold;
 	int LowPressureTransitionElement;

@@ -28,6 +28,7 @@
 #include "game/Sign.h"
 #include "graphics/ARGBColour.h"
 #include "json/json.h"
+#include "simulation/Element.h"
 #include "simulation/ElementNumbers.h"
 #include "simulation/Particle.h"
 
@@ -102,6 +103,7 @@ public:
 	}
 };
 
+class Simulation;
 class Save
 {
 public:
@@ -172,6 +174,7 @@ public:
 
 	typedef std::pair<std::string, int> PaletteItem;
 	std::vector<PaletteItem> palette;
+	Simulation * sim = nullptr;
 
 	Json::Value authors;
 
@@ -193,6 +196,7 @@ public:
 	Save(int blockW, int blockH);
 	Save(const Save & save);
 	~Save();
+	void SetSim(Simulation *sim) { this->sim = sim; }
 
 	void ParseSave();
 	void BuildSave();
@@ -217,9 +221,6 @@ public:
 	 **/
 	unsigned int GetSaveSize();
 
-	static bool TypeInCtype(int type, int ctype);
-	static bool TypeInTmp(int type);
-	static bool TypeInTmp2(int type, int tmp2);
 	static bool PressureInTmp3(int type);
 
 private:

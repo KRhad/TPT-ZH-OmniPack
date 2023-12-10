@@ -165,6 +165,7 @@ void LDTC_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Linear detector. Scans in 8 directions for particles with its ctype and creates a spark on the opposite side.";
 
 	elem->Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

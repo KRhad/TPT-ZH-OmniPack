@@ -81,6 +81,7 @@ void STKM2_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "second stickman. Don't kill him! Control with wasd.";
 
 	elem->Properties = PROP_NOCTYPEDRAW;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

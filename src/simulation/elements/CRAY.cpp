@@ -177,6 +177,7 @@ void CRAY_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Particle Ray Emitter. Creates a beam of particles set by its ctype, with a range set by tmp.";
 
 	elem->Properties = TYPE_SOLID;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;
