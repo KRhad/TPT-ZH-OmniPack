@@ -77,6 +77,7 @@
 #include "simulation/GolNumbers.h"
 
 #include "gui/dialogs/ConfirmPrompt.h"
+#include "gui/dialogs/InfoPrompt.h"
 #include "gui/game/PowderToy.h"
 #include "gui/gol/GolWindow.h"
 #include "simulation/elements/ANIM.h"
@@ -5499,7 +5500,8 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				// Do Open!
 				try
 				{
-					globalSim->LoadSave(0, 0, save, 1);
+					auto missingElements = globalSim->LoadSave(0, 0, save, 1);
+					MissingElementsPrompt(missingElements);
 
 					svf_open = 1;
 					svf_own = svf_login && !strcmp(info->author, svf_user);
@@ -6870,7 +6872,9 @@ void catalogue_ui(pixel * vid_buf)
 							try
 							{
 								clear_save_info();
-								globalSim->LoadSave(0, 0, localSave, 1);
+								auto missingElements = globalSim->LoadSave(0, 0, localSave, 1);
+								MissingElementsPrompt(missingElements);
+
 								strncpy(svf_filename, csave->name, 255);
 								svf_fileopen = 1;
 								authors = localSave->authors;
@@ -7001,4 +7005,30 @@ void clear_save_info()
 	svf_author[0] = 0;
 	svf_tags[0] = 0;
 	the_game->SetReloadPoint(NULL);
+}
+
+void MissingElementsPrompt(MissingElements missingElements)
+{
+	auto remainingIds = missingElements.ids;
+	if (missingElements.identifiers.size() || missingElements.ids.size())
+	{
+		std::stringstream ss;
+		ss << "This save uses custom elements that are not currently available. Make sure that you use the mod and/or have all the scripts the save requires to fully load";
+		for (auto &[ identifier, id ] : missingElements.identifiers)
+		{
+			ss << "\n - " << identifier;
+			remainingIds.erase(id); // remove ids from the missing id set that are already covered by unknown identifiers
+		}
+
+		if (remainingIds.size())
+		{
+			ss << "\n\nA list of element IDs of missing custom elements with no identifier associated follows. This can only be fixed by the author of the save.\n";
+			for (auto id : remainingIds)
+			{
+				ss << "\n - " << id;
+			}
+		}
+
+		Engine::Ref().ShowWindow(new InfoPrompt("Missing custom elements", ss.str()));
+	}
 }

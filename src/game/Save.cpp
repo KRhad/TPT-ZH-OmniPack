@@ -26,6 +26,7 @@
 
 #include "common/Format.h"
 #include "common/Platform.h"
+#include "common/Version.h"
 #include "simulation/ElementNumbers.h"
 #include "simulation/GolNumbers.h"
 #include "simulation/SimulationData.h"
@@ -495,6 +496,7 @@ void Save::ParseSaveOPS()
 #endif
 	unsigned int blockX, blockY, blockW, blockH, fullX, fullY, fullW, fullH;
 	createdVersion = saveData[4];
+	Version version = { createdVersion, 0 };
 
 	bson b;
 	b.data = NULL;
@@ -799,16 +801,13 @@ void Save::ParseSaveOPS()
 				bson_iterator_subiterator(&iter, &subiter);
 				while (bson_iterator_next(&subiter))
 				{
-					if (!strcmp(bson_iterator_key(&subiter), "mobileBuildVersion"))
+					if (!strcmp(bson_iterator_key(&subiter), "mobileBuildVersion") && bson_iterator_type(&subiter) == BSON_INT)
 					{
-						if (bson_iterator_type(&subiter) == BSON_INT)
-						{
-							androidCreatedVersion =  bson_iterator_int(&subiter);
-						}
-						else
-						{
-							fprintf(stderr, "Wrong type for %s\n", bson_iterator_key(&iter));
-						}
+						androidCreatedVersion =  bson_iterator_int(&subiter);
+					}
+					else if (!strcmp(bson_iterator_key(&subiter), "minorVersion") && bson_iterator_type(&subiter) == BSON_INT)
+					{
+						version[1] = bson_iterator_int(&subiter);
 					}
 				}
 			}
@@ -903,6 +902,24 @@ void Save::ParseSaveOPS()
 		}
 	}
 
+	auto paletteRemap = [this, version](auto maxVersion, std::string from, std::string to) {
+		if (version <= maxVersion)
+		{
+			auto it = std::find_if(palette.begin(), palette.end(), [&from](auto &item) {
+				return item.first == from;
+			});
+			if (it != palette.end())
+			{
+				it->first = to;
+			}
+		}
+	};
+	paletteRemap(Version(87, 1), "DEFAULT_PT_TUGN", "DEFAULT_PT_TUNG");
+	paletteRemap(Version(90, 1), "DEFAULT_PT_REPL", "DEFAULT_PT_RPEL");
+	paletteRemap(Version(92, 0), "DEFAULT_PT_E180", "DEFAULT_PT_HEAC");
+	paletteRemap(Version(92, 0), "DEFAULT_PT_E181", "DEFAULT_PT_SAWD");
+	paletteRemap(Version(92, 0), "DEFAULT_PT_E182", "DEFAULT_PT_POLO");
+	paletteRemap(Version(93, 3), "DEFAULT_PT_RAYT", "DEFAULT_PT_LDTC");
 
 	// Read wall and fan data
 	if (wallData)

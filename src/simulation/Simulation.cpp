@@ -136,10 +136,10 @@ void Simulation::RecountElements()
 			elementCount[parts[i].type]++;
 }
 
-bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int replace, bool includePressure)
+MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int replace, bool includePressure)
 {
 	if (!originalSave)
-		return false;
+		return {};
 	auto save = std::unique_ptr<Save>(new Save(*originalSave));
 	if (!save->expanded)
 		save->ParseSave();
@@ -166,11 +166,19 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 	{
 		partMap[i] = i;
 	}
+	MissingElements missingElements;
 	auto &possiblyCarriesType = particle::PossiblyCarriesType();
 	auto &properties = particle::GetProperties();
 
 	if (save->palette.size())
 	{
+		if (save->createdVersion >= 98)
+		{
+			for(int i = 0; i < PT_NUM; i++)
+			{
+				partMap[i] = 0;
+			}
+		}
 		for (auto &pi : save->palette)
 		{
 			if (pi.second <= 0 || pi.second >= PT_NUM)
@@ -179,16 +187,33 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 			for (int i = 0; i < PT_NUM; i++)
 			{
 				if (elements[i].Enabled && elements[i].Identifier == pi.first)
+				{
 					myId = i;
+				}
 			}
-			// if this is a custom element, set the ID to the ID we found when comparing identifiers in the palette map
-			// set type to 0 if we couldn't find an element with that identifier present when loading,
-			//  unless this is a default element, in which case keep the current ID, because otherwise when an element is renamed it wouldn't show up anymore in older saves
-			if (myId != 0 || pi.first.find("DEFAULT_PT_") != 0)
+			if (myId)
+			{
 				partMap[pi.second] = myId;
+			}
+			else
+			{
+				missingElements.identifiers.insert(pi);
+			}
 		}
 		hasPalette = true;
 	}
+	auto paletteLookup = [&partMap, &missingElements](int type) {
+		if (type > 0 && type < PT_NUM)
+		{
+			auto carriedType = partMap[type];
+			if (!carriedType) // type is not 0 so this shouldn't be 0 either
+			{
+				missingElements.ids.insert(type);
+			}
+			type = carriedType;
+		}
+		return type;
+	};
 
 #ifndef NOMOD
 	// Solids is a map of the old .tmp2 it was saved with, to the new ball number it is getting
@@ -307,7 +332,7 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 		if (tempPart.type > 0 && tempPart.type < PT_NUM)
 		{
 			if (hasPalette)
-				tempPart.type = partMap[tempPart.type];
+				tempPart.type = paletteLookup(tempPart.type);
 			else
 				tempPart.type = save->FixType(tempPart.type);
 		}
@@ -322,13 +347,10 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 				auto *prop = reinterpret_cast<int *>(reinterpret_cast<char *>(&tempPart) + properties[index].Offset);
 				auto carriedType = *prop & int(pmapmask);
 				auto extra = *prop >> save->pmapbits;
-				if (carriedType >= 0 && carriedType < PT_NUM)
-				{
-					if (hasPalette)
-						carriedType = partMap[carriedType];
-					else
-						carriedType = save->FixType(carriedType);
-				}
+				if (hasPalette)
+					carriedType = paletteLookup(carriedType);
+				else
+					carriedType = save->FixType(carriedType);
 				*prop = PMAP(extra, carriedType);
 			}
 		}
@@ -638,7 +660,7 @@ bool Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int re
 	}
 #endif
 
-	return true;
+	return missingElements;
 }
 
 Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool includePressure)

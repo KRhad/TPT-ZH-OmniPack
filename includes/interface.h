@@ -22,6 +22,7 @@
 #include "defines.h"
 #include "graphics/Pixel.h"
 #include "graphics/ARGBColour.h"
+#include "simulation/MissingElements.h"
 
 class Request;
 class Save;
@@ -308,6 +309,8 @@ void decoration_editor(pixel *vid_buf, int b, int bq, int mx, int my);
 void converttotime(time_t timestamp, char **timestring, int show_day, int show_year, int show_time);
 
 void clear_save_info();
+
+void MissingElementsPrompt(MissingElements missingElements);
 
 #endif
 

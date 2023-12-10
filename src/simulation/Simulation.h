@@ -22,6 +22,7 @@
 #include "simulation/Air.h"
 #include "simulation/Element.h"
 #include "simulation/Gravity.h"
+#include "simulation/MissingElements.h"
 #include "simulation/SimulationData.h"
 #include "simulation/StructProperty.h"
 #include "powder.h"
@@ -86,7 +87,7 @@ public:
 	void Tick();
 	std::string ParticleDebug(int mode, int x, int y);
 	
-	bool LoadSave(int loadX, int loadY, const Save *originalSave, int replace, bool includePressure=true);
+	MissingElements LoadSave(int loadX, int loadY, const Save *originalSave, int replace, bool includePressure=true);
 	Save * CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool includePressure=true);
 
 	bool flood_water(int x, int y, int i);
