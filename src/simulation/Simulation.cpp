@@ -256,6 +256,8 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 		int x = int(tempPart->x + 0.5f);
 		int y = int(tempPart->y + 0.5f);
 		
+		auto &type = tempPart->type;
+
 		// Check various scenarios where we are unable to spawn the element, and set type to 0 to block spawning later
 		if (!InBounds(x, y))
 		{
@@ -263,26 +265,53 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 			continue;
 		}
 
-		int type = tempPart->type;
 		if (type < 0 && type >= PT_NUM)
 		{
-			tempPart->type = 0;
+			type = 0;
 			continue;
 		}
+
+		// Convert element type according to palette
+		if (type > 0 && type < PT_NUM)
+		{
+			if (hasPalette)
+				type = paletteLookup(type);
+			else
+				type = save->FixType(type);
+		}
+		else
+			continue;
+
+		// Convert elements stored in other properties according to palette as well
+		for (auto index : possiblyCarriesType)
+		{
+			if (elements[type].CarriesTypeIn & (1U << index))
+			{
+				auto *prop = reinterpret_cast<int *>(reinterpret_cast<char *>(&tempPart) + properties[index].Offset);
+				auto carriedType = *prop & int(pmapmask);
+				auto extra = *prop >> save->pmapbits;
+				if (hasPalette)
+					carriedType = paletteLookup(carriedType);
+				else
+					carriedType = save->FixType(carriedType);
+				*prop = PMAP(extra, carriedType);
+			}
+		}
+
 		// Ensure we can spawn this element
 		if ((type == PT_STKM || type == PT_STKM2 || type == PT_SPAWN || type == PT_SPAWN2) && elementCount[type] > 0)
 		{
-			tempPart->type = 0;
+			type = 0;
 			continue;
 		}
 		if (type == PT_FIGH && !static_cast<FIGH_ElementDataContainer&>(*elementData[PT_FIGH]).CanAlloc())
 		{
-			tempPart->type = 0;
+			type = 0;
 			continue;
 		}
 		if (!elements[type].Enabled)
 		{
-			tempPart->type = 0;
+			type = 0;
 			continue;
 		}
 
@@ -328,32 +357,8 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 	for (unsigned int n = 0; n < NPART && n < save->particlesCount; n++)
 	{
 		particle tempPart = save->particles[n];
-		// Convert element type according to palette
-		if (tempPart.type > 0 && tempPart.type < PT_NUM)
-		{
-			if (hasPalette)
-				tempPart.type = paletteLookup(tempPart.type);
-			else
-				tempPart.type = save->FixType(tempPart.type);
-		}
-		else
+		if (tempPart.type == 0)
 			continue;
-
-		// Convert elements stored in other properties according to palette as well
-		for (auto index : possiblyCarriesType)
-		{
-			if (elements[tempPart.type].CarriesTypeIn & (1U << index))
-			{
-				auto *prop = reinterpret_cast<int *>(reinterpret_cast<char *>(&tempPart) + properties[index].Offset);
-				auto carriedType = *prop & int(pmapmask);
-				auto extra = *prop >> save->pmapbits;
-				if (hasPalette)
-					carriedType = paletteLookup(carriedType);
-				else
-					carriedType = save->FixType(carriedType);
-				*prop = PMAP(extra, carriedType);
-			}
-		}
 
 		if (save->legacyHeatSave)
 		{
