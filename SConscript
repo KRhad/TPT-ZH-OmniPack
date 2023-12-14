@@ -379,6 +379,8 @@ if not GetOption('clean') and not GetOption('help'):
 
 if not msvc:
 	env.Append(CXXFLAGS=['-std=c++17'])
+else:
+	env.Append(CXXFLAGS=['/std:c++17'])
 
 
 #Add platform specific flags and defines
