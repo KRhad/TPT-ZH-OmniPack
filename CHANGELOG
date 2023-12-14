@@ -1269,3 +1269,15 @@ components are drawn and not before. Fix gfx.setClipRect not having correct
 coordinates inside Lua windows. Fix icons not rendering in the console. Add
 workaround so that tpt++ icon ranges render in this mod. This allows certain
 Lua scripts that use icons to work without special icon compatibility code.
+
+Version 55.0 2023-12-13
+Boost startup performance, by rendering stamp thumbnails in another thread. If
+you have a lot of stamps, this eliminates the freeze on startup. If stamps
+haven't rendered yet, it will hang when opening the stamp browser, instead.
+This update also removes the 5000 stamp limit, and adds support for
+stamps.json, which is the new stamp format in 98.0. stamps.def is still written
+out, for cross-compatibility with 97.0 clients. Clicking stamp name now brings
+up a prompt to let you rename the stamp. Renamed stamps won't show up in 97.0
+or prior versions of tpt. Fix issue where saves with PIPE/PPIP wouldn't load
+properly in TPT Snapshots (this issue will also be fixed in a future Snapshot).
+Updates from tpt++, from Jan/Feb 2023, plus the save palette code.
