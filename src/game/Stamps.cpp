@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <iomanip>
+#include <iostream>
 #include <list>
 #include <sstream>
 
