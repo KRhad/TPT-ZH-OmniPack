@@ -188,7 +188,6 @@ int LuaEvents::UnregisterEventHook(lua_State *l, std::string eventName)
 
 bool LuaEvents::HandleEvent(lua_State *l, Event *event, std::string eventName)
 {
-	loop_time = Platform::GetTime();
 	bool cont = true;
 	tpt_lua_pushString(l, eventName);
 	lua_rawget(l, LUA_REGISTRYINDEX);
@@ -205,12 +204,11 @@ bool LuaEvents::HandleEvent(lua_State *l, Event *event, std::string eventName)
 	{
 		lua_rawgeti(l, -1, i);
 		int numArgs = event->PushToStack(l);
-		int callret = lua_pcall(l, numArgs, 1, 0);
+		int callret = tpt_lua_pcall(l, numArgs, 1, 0);
 		if (callret)
 		{
 			if (luacon_geterror() == "Error: Script not responding")
 			{
-				loop_time = Platform::GetTime();
 				for (int j = i; j <= len - 1; j++)
 				{
 					lua_rawgeti(l, -2, j + 1);

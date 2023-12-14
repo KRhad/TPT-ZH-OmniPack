@@ -65,7 +65,7 @@ void LuaTextbox::triggerOnTextChanged()
 	{
 		lua_rawgeti(l, LUA_REGISTRYINDEX, onTextChangedFunction);
 		lua_rawgeti(l, LUA_REGISTRYINDEX, owner_ref);
-		if (lua_pcall(l, 1, 0, 0))
+		if (tpt_lua_pcall(l, 1, 0, 0))
 		{
 			luacon_log(tpt_lua_toString(l, -1));
 		}

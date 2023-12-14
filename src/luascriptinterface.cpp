@@ -4144,12 +4144,19 @@ int tpt_lua_loadstring(lua_State *L, const std::string &str)
 
 int tpt_lua_dostring(lua_State *L, const std::string &str)
 {
-	return tpt_lua_loadstring(L, str) || lua_pcall(L, 0, LUA_MULTRET, 0);
+	return tpt_lua_loadstring(L, str) || tpt_lua_pcall(L, 0, LUA_MULTRET, 0);
 }
 
 bool tpt_lua_equalsString(lua_State *L, int index, const char *data, size_t size)
 {
 	return lua_isstring(L, index) && lua_objlen(L, index) == size && !memcmp(lua_tostring(L, index), data, size);
+}
+
+long unsigned int luaExecutionStart = 0;
+int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc)
+{
+	luaExecutionStart = Platform::GetTime();
+	return lua_pcall(L, numArgs, numResults, errorFunc);
 }
 
 #endif

@@ -47,7 +47,6 @@ extern Simulation * luaSim;
 
 extern pixel *lua_vid_buf;
 extern std::deque<std::pair<std::string, int>> logHistory;
-extern unsigned long loop_time;
 
 class LuaSmartRef;
 extern int *lua_el_mode;

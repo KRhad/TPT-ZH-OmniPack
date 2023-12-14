@@ -74,8 +74,6 @@ int tptElements; //Table for TPT element names
 int tptParts, tptPartsMeta, tptElementTransitions, tptPartsCData, tptPartMeta, cIndex;
 LuaSmartRef *tptPart = nullptr;
 
-unsigned long loop_time = 0;
-
 void luacon_open()
 {
 	int i = 0;
@@ -732,7 +730,6 @@ int luacon_eval(const char *command, std::string *result)
 		lastCode = command;
 	}
 	std::string returnTest = "return " + lastCode;
-	loop_time = Platform::GetTime();
 	luaL_loadbuffer(l, returnTest.c_str(), returnTest.length(), "@console");
 	if (lua_type(l, -1) != LUA_TFUNCTION)
 	{
@@ -756,7 +753,7 @@ int luacon_eval(const char *command, std::string *result)
 	else
 	{
 		lastCode = "";
-		ret = lua_pcall(l, 0, LUA_MULTRET, 0);
+		ret = tpt_lua_pcall(l, 0, LUA_MULTRET, 0);
 		if (ret)
 			return ret;
 		else
@@ -808,7 +805,7 @@ int luacon_eval(const char *command, std::string *result)
 
 void lua_hook(lua_State *L, lua_Debug *ar)
 {
-	if (ar->event == LUA_HOOKCOUNT && Platform::GetTime() - loop_time > 3000)
+	if (ar->event == LUA_HOOKCOUNT && Platform::GetTime() - luaExecutionStart > 3000)
 	{
 		bool wasConfirmed = false;
 		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
@@ -818,7 +815,7 @@ void lua_hook(lua_State *L, lua_Debug *ar)
 		if (!wasConfirmed)
 			return;
 		luaL_error(l,"Error: Infinite loop");
-		loop_time = Platform::GetTime();
+		luaExecutionStart = Platform::GetTime();
 	}
 }
 
@@ -842,7 +839,7 @@ int luaUpdateWrapper(UPDATE_FUNC_ARGS)
 		lua_pushinteger(l, y);
 		lua_pushinteger(l, surround_space);
 		lua_pushinteger(l, nt);
-		callret = lua_pcall(l, 5, 1, 0);
+		callret = tpt_lua_pcall(l, 5, 1, 0);
 		if (callret)
 			luacon_log(luacon_geterror());
 		if(lua_isboolean(l, -1)){
@@ -877,7 +874,7 @@ int luaGraphicsWrapper(GRAPHICS_FUNC_ARGS)
 		lua_pushinteger(l, *colr);
 		lua_pushinteger(l, *colg);
 		lua_pushinteger(l, *colb);
-		callret = lua_pcall(l, 4, 10, 0);
+		callret = tpt_lua_pcall(l, 4, 10, 0);
 		if (callret)
 		{
 			luacon_log(luacon_geterror());
@@ -921,7 +918,7 @@ bool luaCtypeDrawWrapper(CTYPEDRAW_FUNC_ARGS)
 		lua_pushinteger(l, i);
 		lua_pushinteger(l, t);
 		lua_pushinteger(l, v);
-		if (lua_pcall(l, 3, 1, 0))
+		if (tpt_lua_pcall(l, 3, 1, 0))
 		{
 			luacon_log("In ctype draw: " + luacon_geterror());
 			lua_pop(l, 1);
@@ -946,7 +943,7 @@ void luaCreateWrapper(ELEMENT_CREATE_FUNC_ARGS)
 		lua_pushinteger(l, y);
 		lua_pushinteger(l, t);
 		lua_pushinteger(l, v);
-		if (lua_pcall(l, 5, 0, 0))
+		if (tpt_lua_pcall(l, 5, 0, 0))
 		{
 			luacon_log("In create func: " + luacon_geterror());
 			lua_pop(l, 1);
@@ -964,7 +961,7 @@ bool luaCreateAllowedWrapper(ELEMENT_CREATE_ALLOWED_FUNC_ARGS)
 		lua_pushinteger(l, x);
 		lua_pushinteger(l, y);
 		lua_pushinteger(l, t);
-		if (lua_pcall(l, 4, 1, 0))
+		if (tpt_lua_pcall(l, 4, 1, 0))
 		{
 			luacon_log("In create allowed: " + luacon_geterror());
 			lua_pop(l, 1);
@@ -989,7 +986,7 @@ void luaChangeTypeWrapper(ELEMENT_CHANGETYPE_FUNC_ARGS)
 		lua_pushinteger(l, y);
 		lua_pushinteger(l, from);
 		lua_pushinteger(l, to);
-		if (lua_pcall(l, 5, 0, 0))
+		if (tpt_lua_pcall(l, 5, 0, 0))
 		{
 			luacon_log("In change type: " + luacon_geterror());
 			lua_pop(l, 1);
@@ -2475,7 +2472,7 @@ void ExecuteEmbededLuaCode()
 			"))
 			luacon_log(luacon_geterror()); //if large above thing errored
 
-		loop_time = Platform::GetTime();
+		luaExecutionStart = Platform::GetTime();
 #if LUA_VERSION_NUM >= 502
 		if (luaL_dostring(l, "local code = loadfile(\"newluacode.txt\", nil, env) if code then code() end"))
 #else

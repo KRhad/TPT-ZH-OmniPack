@@ -19,6 +19,8 @@ class LuaComponent;
 extern std::map<LuaComponent *, LuaSmartRef> grabbed_components;
 extern int textInputRefcount;
 
+extern long unsigned int luaExecutionStart;
+
 int simulation_signIndex(lua_State *l);
 int simulation_signNewIndex(lua_State *l);
 int simulation_newsign(lua_State *l);
@@ -199,6 +201,8 @@ bool tpt_lua_equalsLiteral(lua_State *L, int index, const char (&lit)[N])
 {
 	return tpt_lua_equalsString(L, index, lit, N - 1U);
 }
+
+int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc);
 
 #endif
 #endif
