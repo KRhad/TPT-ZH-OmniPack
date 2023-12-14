@@ -2058,7 +2058,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 		if (b == 1 && bq == 0 && rnm != -1)
 		{
 			char *newName = input_ui(vid_buf, "Rename stamp", ("Rename stamp \"" + Stamps::Ref().GetStamp(rnm).name + "\"").c_str(), "", "");
-			if (!Stamps::Ref().Rename(rnm, newName))
+			if (strlen(newName) && !Stamps::Ref().Rename(rnm, newName))
 				error_ui(vid_buf, 0, "Couldn't rename, stamp with that name already exists");
 		}
 
