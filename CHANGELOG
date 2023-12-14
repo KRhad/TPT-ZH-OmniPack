@@ -1285,3 +1285,8 @@ Updates from tpt++, from Jan/Feb 2023, plus the save palette code.
 Version 55.1 2023-12-13
 Canceling stamp rename prompt will now no-op, instead of renaming stamp to
 ".stm"
+
+Version 55.2 2023-12-13
+Fix updater. Previous 55.x versions would act as if the update failed, even if
+it didn't, so you would have to restart the game to apply the update. Remove
+some "wrong type" console spam on startup.

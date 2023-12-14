@@ -745,8 +745,6 @@ void Save::ParseSaveOPS()
 							major = bson_iterator_int(&subiter);
 						else if (!strcmp(bson_iterator_key(&subiter), "minor"))
 							minor = bson_iterator_int(&subiter);
-						else
-							fprintf(stderr, "Wrong type for %s\n", bson_iterator_key(&iter));
 					}
 				}
 				if (major > FAKE_SAVE_VERSION || (major == FAKE_SAVE_VERSION && minor > FAKE_MINOR_VER))

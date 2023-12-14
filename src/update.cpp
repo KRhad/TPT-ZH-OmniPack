@@ -119,7 +119,7 @@ int update_start(char *data, unsigned int len)
 		goto fail;
 	}
 
-	if (Platform::RenameFile(temp, self, true))
+	if (!Platform::RenameFile(temp, self, true))
 	{
 		unlink(temp);
 		goto fail;
