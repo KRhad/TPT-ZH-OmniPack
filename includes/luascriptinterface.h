@@ -20,6 +20,7 @@ extern std::map<LuaComponent *, LuaSmartRef> grabbed_components;
 extern int textInputRefcount;
 
 extern long unsigned int luaExecutionStart;
+extern int luaHookTimeout;
 
 int simulation_signIndex(lua_State *l);
 int simulation_signNewIndex(lua_State *l);

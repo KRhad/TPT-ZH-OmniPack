@@ -33,6 +33,7 @@
 #include "powder.h"
 #include "hud.h"
 #include "cJSON.h"
+#include "luascriptinterface.h"
 
 #include "common/Format.h"
 #include "game/Brush.h"
@@ -312,6 +313,8 @@ void save_presets()
 	cJSON_AddNumberToObject(root, "decobox_hidden", decobox_hidden);
 	if (loadIncompatibleSaves)
 		cJSON_AddNumberToObject(root, "loadIncompatibleSaves", 1);
+	if (luaHookTimeout != 3000)
+		cJSON_AddNumberToObject(root, "LuaHookTimeout", luaHookTimeout);
 
 	cJSON_AddItemToObject(root, "SavePreview", tmpobj=cJSON_CreateObject());
 	cJSON_AddNumberToObject(tmpobj, "scrollSpeed", scrollSpeed);
@@ -682,6 +685,8 @@ void load_presets(void)
 			decobox_hidden = tmpobj->valueint;
 		if ((tmpobj = cJSON_GetObjectItem(root, "loadIncompatibleSaves")))
 			loadIncompatibleSaves = true;
+		if ((tmpobj = cJSON_GetObjectItem(root, "LuaHookTimeout")))
+			luaHookTimeout = tmpobj->valueint;
 
 		itemobj = cJSON_GetObjectItem(root, "SavePreview");
 		if (itemobj)

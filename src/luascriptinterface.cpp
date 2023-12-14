@@ -4153,6 +4153,7 @@ bool tpt_lua_equalsString(lua_State *L, int index, const char *data, size_t size
 }
 
 long unsigned int luaExecutionStart = 0;
+int luaHookTimeout = 3000;
 int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc)
 {
 	luaExecutionStart = Platform::GetTime();

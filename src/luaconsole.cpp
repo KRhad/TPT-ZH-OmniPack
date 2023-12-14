@@ -805,7 +805,7 @@ int luacon_eval(const char *command, std::string *result)
 
 void lua_hook(lua_State *L, lua_Debug *ar)
 {
-	if (ar->event == LUA_HOOKCOUNT && Platform::GetTime() - luaExecutionStart > 3000)
+	if (ar->event == LUA_HOOKCOUNT && int(Platform::GetTime() - luaExecutionStart) > luaHookTimeout)
 	{
 		bool wasConfirmed = false;
 		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
