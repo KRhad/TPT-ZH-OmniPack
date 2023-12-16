@@ -1290,3 +1290,6 @@ Version 55.2 2023-12-13
 Fix updater. Previous 55.x versions would act as if the update failed, even if
 it didn't, so you would have to restart the game to apply the update. Remove
 some "wrong type" console spam on startup.
+
+Version 55.3 2023-12-16
+Fix stamps not loading after upgrade.

@@ -90,6 +90,7 @@ bool Stamps::InitAsDef(bool appendMode)
 		int readsize = fread(name, 1, 10, f);
 		if (readsize != 10 || !name[0])
 			break;
+		name[10] = 0;
 		if (appendMode)
 		{
 			if (stampNames.find(name) == stampNames.end())
