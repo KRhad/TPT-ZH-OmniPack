@@ -93,6 +93,9 @@ int simulation_removeCustomGol(lua_State *l);
 int simulation_lastUpdatedID(lua_State *l);
 int simulation_updateUpTo(lua_State *l);
 int simulation_temperatureScale(lua_State *l);
+int simulation_randomseed(lua_State * l);
+int simulation_hash(lua_State * l);
+int simulation_ensureDeterminism(lua_State * l);
 int simulation_stickman(lua_State * l);
 
 void initRendererAPI(lua_State * l);

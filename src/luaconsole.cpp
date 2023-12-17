@@ -41,6 +41,7 @@
 
 #include "common/Format.h"
 #include "common/Platform.h"
+#include "common/tpt-rand.h"
 #include "interface/Engine.h"
 #include "game/Brush.h"
 #include "game/Request.h"
@@ -73,6 +74,49 @@ int tptPropertiesVersion;
 int tptElements; //Table for TPT element names
 int tptParts, tptPartsMeta, tptElementTransitions, tptPartsCData, tptPartMeta, cIndex;
 LuaSmartRef *tptPart = nullptr;
+
+static int mathRandom(lua_State *l)
+{
+	// only thing that matters is that the rng not be luacon_sim->rng when !inSimEvent
+	int lower, upper;
+	switch (lua_gettop(l))
+	{
+	case 0:
+		lua_pushnumber(l, RNG::Ref().uniform01());
+		return 1;
+
+	case 1:
+		lower = 1;
+		upper = luaL_checkinteger(l, 1);
+		break;
+
+	default:
+		lower = luaL_checkinteger(l, 1);
+		upper = luaL_checkinteger(l, 2);
+		break;
+	}
+	if (upper < lower)
+	{
+		luaL_error(l, "interval is empty");
+	}
+	if ((unsigned int)(upper) - (unsigned int)(lower) + 1U)
+	{
+		lua_pushinteger(l, RNG::Ref().between(lower, upper));
+	}
+	else
+	{
+		// The interval is *so* not empty that its size overflows 32-bit integers
+		// (only possible if it's exactly 0x100000000); don't use between.
+		lua_pushinteger(l, int(RNG::Ref()()));
+	}
+	return 1;
+}
+
+static int mathRandomseed(lua_State *l)
+{
+	RNG::Ref().seed(luaL_checkinteger(l, 1));
+	return 0;
+}
 
 void luacon_open()
 {
@@ -167,6 +211,13 @@ void luacon_open()
 	initHttpAPI(l);
 	initSocketAPI(l);
 	initBZ2API(l);
+
+	lua_getglobal(l, "math");
+	lua_pushcfunction(l, mathRandom);
+	lua_setfield(l, -2, "random");
+	lua_pushcfunction(l, mathRandomseed);
+	lua_setfield(l, -2, "randomseed");
+	lua_pop(l, 1);
 
 	lua_getglobal(l, "tpt");
 

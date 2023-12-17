@@ -27,17 +27,22 @@ unsigned int RNG::gen()
 	return next() & 0x7FFFFFFF;
 }
 
+unsigned int RNG::operator()()
+{
+	return next() & 0xFFFFFFFF;
+}
+
 int RNG::between(int lower, int upper)
 {
 	unsigned int r = next();
-	return static_cast<int>(r % (upper - lower + 1)) + lower;
+	return static_cast<int>(r % ((unsigned int)(upper) - (unsigned int)(lower) + 1U)) + lower;
 }
 
-bool RNG::chance(int nominator, unsigned int denominator)
+bool RNG::chance(int numerator, unsigned int denominator)
 {
-	if (nominator < 0)
+	if (numerator < 0)
 		return false;
-	return next() % denominator < static_cast<unsigned int>(nominator);
+	return next() % denominator < static_cast<unsigned int>(numerator);
 }
 
 float RNG::uniform01()

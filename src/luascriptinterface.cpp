@@ -14,6 +14,7 @@
 #include "bzip2/bz2wrap.h"
 #include "common/Format.h"
 #include "common/Platform.h"
+#include "common/tpt-rand.h"
 #include "game/Authors.h"
 #include "game/Brush.h"
 #include "game/Menus.h"
@@ -298,6 +299,9 @@ void initSimulationAPI(lua_State * l)
 		{"lastUpdatedID", simulation_lastUpdatedID},
 		{"updateUpTo", simulation_updateUpTo},
 		{"temperatureScale", simulation_temperatureScale},
+		{"randomseed", simulation_randomseed},
+		{"hash", simulation_hash},
+		{"ensureDeterminism", simulation_ensureDeterminism},
 		{NULL, NULL}
 	};
 	luaL_register(l, "simulation", simulationAPIMethods);
@@ -1893,6 +1897,40 @@ int simulation_temperatureScale(lua_State *l)
 		return luaL_error(l, "Invalid temperature scale");
 	luaSim->temperatureScale = temperatureScale;
 	return 0;
+}
+
+int simulation_randomseed(lua_State * l)
+{
+	if (lua_gettop(l))
+	{
+		RNG::Ref().state({
+			uint32_t(luaL_checkinteger(l, 1)) | (uint64_t(uint32_t(luaL_checkinteger(l, 2))) << 32),
+			uint32_t(luaL_checkinteger(l, 3)) | (uint64_t(uint32_t(luaL_checkinteger(l, 4))) << 32),
+		});
+		return 0;
+	}
+	auto s = RNG::Ref().state();
+	lua_pushinteger(l,  s[0]        & UINT32_C(0xFFFFFFFF));
+	lua_pushinteger(l, (s[0] >> 32) & UINT32_C(0xFFFFFFFF));
+	lua_pushinteger(l,  s[1]        & UINT32_C(0xFFFFFFFF));
+	lua_pushinteger(l, (s[1] >> 32) & UINT32_C(0xFFFFFFFF));
+	return 4;
+}
+
+int simulation_hash(lua_State * l)
+{
+	lua_pushinteger(l, Snapshot::Create(luaSim)->Hash());
+	return 1;
+}
+
+int simulation_ensureDeterminism(lua_State * l)
+{
+	if (lua_gettop(l))
+	{
+		return luaL_error(l, "Determinism not available");
+	}
+	lua_pushboolean(l, false);
+	return 1;
 }
 
 //function added only for tptmp really

@@ -1,6 +1,7 @@
 #ifndef SNAPSHOT
 #define SNAPSHOT
 
+#include <array>
 #include <deque>
 #include <memory>
 #include <vector>
@@ -32,32 +33,20 @@ public:
 
 	std::vector<unsigned char> BlockMap;
 	std::vector<unsigned char> ElecMap;
+	std::vector<unsigned char> BlockAir;
+	std::vector<unsigned char> BlockAirH;
 
 	std::vector<float> FanVelocityX;
 	std::vector<float> FanVelocityY;
 
 	std::vector<Sign> Signs;
 
+	uint64_t FrameCount;
+	std::array<uint64_t, 2> RngState;
+
 	Json::Value Authors;
 
-	Snapshot() :
-		AirPressure(),
-		AirVelocityX(),
-		AirVelocityY(),
-		AmbientHeat(),
-		Particles(),
-		GravVelocityX(),
-		GravVelocityY(),
-		GravValue(),
-		GravMap(),
-		BlockMap(),
-		ElecMap(),
-		FanVelocityX(),
-		FanVelocityY(),
-		Signs()
-	{
-
-	}
+	Snapshot() = default;
 
 	Snapshot(const Snapshot& other) :
 		AirPressure(other.AirPressure),
@@ -71,9 +60,13 @@ public:
 		GravMap(other.GravMap),
 		BlockMap(other.BlockMap),
 		ElecMap(other.ElecMap),
+		BlockAir(other.BlockAir),
+		BlockAirH(other.BlockAirH),
 		FanVelocityX(other.FanVelocityX),
 		FanVelocityY(other.FanVelocityY),
 		Signs(other.Signs),
+		FrameCount(other.FrameCount),
+		RngState(other.RngState),
 		Authors(other.Authors)
 	{
 		for (int i = 0; i < PT_NUM; i++)
@@ -84,6 +77,8 @@ public:
 			}
 		}
 	}
+
+	uint32_t Hash() const;
 
 	static std::unique_ptr<Snapshot> Create(Simulation * sim);
 	static void Restore(Simulation * sim, const Snapshot &snap);

@@ -54,8 +54,8 @@ void Air::Clear()
 	std::fill(&vx[0][0], &vx[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
 	std::fill(&fvy[0][0], &fvy[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
 	std::fill(&fvx[0][0], &fvx[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
-	std::fill(&bmap_blockair[0][0], &bmap_blockair[0][0]+((XRES/CELL)*(YRES/CELL)), 0);
-	std::fill(&bmap_blockairh[0][0], &bmap_blockairh[0][0]+((XRES/CELL)*(YRES/CELL)), 0);
+	std::fill(&blockair[0][0], &blockair[0][0]+((XRES/CELL)*(YRES/CELL)), 0);
+	std::fill(&blockairh[0][0], &blockairh[0][0]+((XRES/CELL)*(YRES/CELL)), 0);
 
 	float airTemp = GetAmbientAirTemp();
 	for (int x = 0; x < XRES/CELL; x++)
@@ -116,7 +116,7 @@ void Air::UpdateAirHeat(Simulation *sim)
 				for (int i = -1; i <= 1; i++)
 				{
 					if (y+j > 0 && y+j < YRES/CELL-2 && x+i > 0 && x+i < XRES/CELL-2 &&
-					        !(bmap_blockairh[y+j][x+i]&0x8))
+					        !(blockairh[y+j][x+i]&0x8))
 					{
 						f = kernel[i+1+(j+1)*3];
 						dh += hv[y+j][x+i]*f;
@@ -142,10 +142,10 @@ void Air::UpdateAirHeat(Simulation *sim)
 			{
 				float odh = dh;
 				dh *= 1.0f - AIR_VADV;
-				dh += AIR_VADV * (1.0f-txf) * (1.0f-tyf) * ((bmap_blockairh[tyi][txi]&0x8) ? odh : hv[tyi][txi]);
-				dh += AIR_VADV * txf * (1.0f-tyf) * ((bmap_blockairh[tyi][txi+1]&0x8) ? odh : hv[tyi][txi+1]);
-				dh += AIR_VADV * (1.0f-txf) * tyf * ((bmap_blockairh[tyi+1][txi]&0x8) ? odh : hv[tyi+1][txi]);
-				dh += AIR_VADV * txf * tyf * ((bmap_blockairh[tyi+1][txi+1]&0x8) ? odh : hv[tyi+1][txi+1]);
+				dh += AIR_VADV * (1.0f-txf) * (1.0f-tyf) * ((blockairh[tyi][txi]&0x8) ? odh : hv[tyi][txi]);
+				dh += AIR_VADV * txf * (1.0f-tyf) * ((blockairh[tyi][txi+1]&0x8) ? odh : hv[tyi][txi+1]);
+				dh += AIR_VADV * (1.0f-txf) * tyf * ((blockairh[tyi+1][txi]&0x8) ? odh : hv[tyi+1][txi]);
+				dh += AIR_VADV * txf * tyf * ((blockairh[tyi+1][txi+1]&0x8) ? odh : hv[tyi+1][txi+1]);
 			}
 			pv[y][x] += (dh - hv[y][x]) / 5000.0f;
 
@@ -154,7 +154,7 @@ void Air::UpdateAirHeat(Simulation *sim)
 				float convGravX, convGravY;
 				sim->GetGravityField(x*CELL, y*CELL, -1.0f, -1.0f, convGravX, convGravY);
 				auto weight = ((hv[y][x] - hv[y][x-1]) * convGravX + (hv[y][x] - hv[y-1][x]) * convGravY) / 5000.0f;
-				if (weight > 0 && !(bmap_blockairh[y-1][x]&0x8))
+				if (weight > 0 && !(blockairh[y-1][x]&0x8))
 				{
 					vx[y][x] += weight * convGravX;
 					vy[y][x] += weight * convGravY;
@@ -213,7 +213,7 @@ void Air::UpdateAir()
 	{
 		for (int i = 1; i < XRES/CELL; i++)
 		{
-			if (bmap_blockair[j][i])
+			if (blockair[j][i])
 			{
 				vx[j][i] = 0.0f;
 				vx[j][i-1] = 0.0f;
@@ -242,9 +242,9 @@ void Air::UpdateAir()
 			vy[y][x] *= AIR_VLOSS;
 			vx[y][x] += dx*AIR_TSTEPV;
 			vy[y][x] += dy*AIR_TSTEPV;
-			if (bmap_blockair[y][x] || bmap_blockair[y][x+1])
+			if (blockair[y][x] || blockair[y][x+1])
 				vx[y][x] = 0;
-			if (bmap_blockair[y][x] || bmap_blockair[y+1][x])
+			if (blockair[y][x] || blockair[y+1][x])
 				vy[y][x] = 0;
 		}
 
@@ -266,7 +266,7 @@ void Air::UpdateAir()
 				for (int i = -1; i <= 1; i++)
 					if (y+j>0 && y+j<YRES/CELL-1 &&
 							x+i>0 && x+i<XRES/CELL-1 &&
-							!bmap_blockair[y+j][x+i])
+							!blockair[y+j][x+i])
 					{
 						f = kernel[i+1+(j+1)*3];
 						dx += vx[y+j][x+i]*f;
@@ -305,7 +305,7 @@ void Air::UpdateAir()
 				{
 					txf += stepX;
 					tyf += stepY;
-					if (bmap_blockair[(int)(tyf+0.5f)][(int)(txf+0.5f)])
+					if (blockair[(int)(tyf+0.5f)][(int)(txf+0.5f)])
 					{
 						txf -= stepX;
 						tyf -= stepY;
@@ -323,7 +323,7 @@ void Air::UpdateAir()
 			tyi = (int)tyf;
 			txf -= txi;
 			tyf -= tyi;
-			if (!bmap_blockair[y][x] && txi >= 2 && txi <= XRES/CELL-3 && tyi >= 2 && tyi <= YRES/CELL-3)
+			if (!blockair[y][x] && txi >= 2 && txi <= XRES/CELL-3 && tyi >= 2 && tyi <= YRES/CELL-3)
 			{
 				dx *= 1.0f - AIR_VADV;
 				dy *= 1.0f - AIR_VADV;

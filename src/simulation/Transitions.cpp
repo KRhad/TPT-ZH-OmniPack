@@ -419,8 +419,8 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 	}
 	else
 	{
-		if (!(air->bmap_blockairh[y/CELL][x/CELL]&0x8))
-			air->bmap_blockairh[y/CELL][x/CELL]++;
+		if (!(air->blockairh[y/CELL][x/CELL]&0x8))
+			air->blockairh[y/CELL][x/CELL]++;
 
 		parts[i].temp = restrict_flt(parts[i].temp, MIN_TEMP, MAX_TEMP);
 		return false;

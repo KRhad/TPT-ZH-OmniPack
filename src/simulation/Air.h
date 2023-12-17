@@ -36,8 +36,8 @@ public:
 	float pv[YRES/CELL][XRES/CELL];
 	float vx[YRES/CELL][XRES/CELL];
 	float vy[YRES/CELL][XRES/CELL];
-	unsigned char bmap_blockair[YRES/CELL][XRES/CELL];
-	unsigned char bmap_blockairh[YRES/CELL][XRES/CELL];
+	unsigned char blockair[YRES/CELL][XRES/CELL];
+	unsigned char blockairh[YRES/CELL][XRES/CELL];
 
 	// Fan velocity
 	float fvx[YRES/CELL][XRES/CELL], fvy[YRES/CELL][XRES/CELL];
