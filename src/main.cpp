@@ -4,7 +4,7 @@
  * Copyright (c) 2008 - 2011 Stanislaw Skowronek.
  * Copyright (c) 2010 - 2011 Simon Robertshaw
  * Copyright (c) 2010 - 2011 Skresanov Savely
- * Copyright (c) 2010 - 2011 Bryan Hoyle
+ * Copyright (c) 2010 - 2011 Victoria Hoyle
  * Copyright (c) 2010 - 2011 Nathan Cousins
  * Copyright (c) 2010 - 2011 cracker64
  * Copyright (c) 2011 jacksonmj
