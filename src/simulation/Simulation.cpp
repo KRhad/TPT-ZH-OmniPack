@@ -360,6 +360,14 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 		if (tempPart.type == 0)
 			continue;
 
+		if (elements[tempPart.type].Func_Create_Allowed)
+		{
+			if (!(*(elements[tempPart.type].Func_Create_Allowed))(this, -3, int(tempPart.x + 0.5f), int(tempPart.y + 0.5f), tempPart.type))
+			{
+				continue;
+			}
+		}
+
 		if (save->legacyHeatSave)
 		{
 			tempPart.temp = elements[tempPart.type].DefaultProperties.temp;
