@@ -2407,7 +2407,7 @@ bool Simulation::UpdateParticle(int i)
 
 bool Simulation::flood_water(int x, int y, int i)
 {
-	int x1, x2, originalY = y;
+	int x1, x2, originalX = x, originalY = y;
 	int r = pmap[y][x];
 	if (!r)
 		return false;
@@ -2450,12 +2450,7 @@ bool Simulation::flood_water(int x, int y, int i)
 					else if (!EvalMove(parts[i].type, x, y - 1, nullptr))
 						continue;
 
-					int oldx = (int)(parts[i].x + 0.5f);
-					int oldy = (int)(parts[i].y + 0.5f);
-					pmap[y - 1][x] = pmap[oldy][oldx];
-					pmap[oldy][oldx] = 0;
-					parts[i].x = x;
-					parts[i].y = y - 1;
+					Move(i, originalX, originalY, x, y - 1);
 					return true;
 				}
 
