@@ -1265,7 +1265,7 @@ int simulation_deleteStamp(lua_State* l)
 		std::string filename = tpt_lua_optString(l, 1, "");
 		stampNum = Stamps::Ref().GetStampId(filename);
 	}
-	if (lua_isnumber(l, 1))
+	if (stampNum == -1 && lua_isnumber(l, 1))
 	{
 		stampNum = luaL_optint(l, 1, -1);
 		if (stampNum < 0 || stampNum >= (int)Stamps::Ref().GetNumStamps())
