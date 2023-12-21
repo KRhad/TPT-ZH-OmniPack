@@ -39,8 +39,8 @@
 
 #ifdef WIN
 #include <direct.h>
-#ifdef _MSC_VER
-#endif
+#include <io.h>
+#include <fcntl.h>
 #else
 #include <sys/stat.h>
 #include <unistd.h>
@@ -551,6 +551,13 @@ bool openProp = false;
 PowderToy *the_game;
 int main(int argc, char *argv[])
 {
+#ifdef WIN
+	_setmode(0, _O_BINARY);
+	_setmode(1, _O_BINARY);
+	SetConsoleCP(CP_UTF8);
+	SetConsoleOutputCP(CP_UTF8);
+#endif
+
 	SDLInit();
 
 	bool benchmark_enable = false;
