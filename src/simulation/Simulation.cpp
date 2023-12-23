@@ -2061,10 +2061,10 @@ bool Simulation::UpdateParticle(int i)
 					}
 					float nn = GLASS_IOR - GLASS_DISP*(r-30)/30.0f;
 					nn *= nn;
-					nrx = -nrx;
-					nry = -nry;
-					if (rt_glas && !lt_glas)
-						nn = 1.0f/nn;
+					bool enter = rt_glas && !lt_glas;
+					nrx = enter ? -nrx : nrx;
+					nry = enter ? -nry : nry;
+					nn = enter ? 1.0f/nn : nn;
 					float ct1 = parts[i].vx*nrx + parts[i].vy*nry;
 					float ct2 = 1.0f - (nn*nn)*(1.0f-(ct1*ct1));
 					if (ct2 < 0.0f)

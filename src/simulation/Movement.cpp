@@ -215,8 +215,8 @@ bool Simulation::GetNormal(int pt, int x, int y, float dx, float dy, float *nx, 
 	if (!IsBoundary(pt, x, y))
 		return false;
 
-	int ldm = DirectionToMap(-dy, dx, pt);
-	int rdm = DirectionToMap(dy, -dx, pt);
+	int ldm = (pt & REFRACT) ? 0xFF : DirectionToMap(-dy, dx, pt);
+	int rdm = (pt & REFRACT) ? 0xFF : DirectionToMap(dy, -dx, pt);
 	int lx = x, rx = x;
 	int ly = y, ry = y;
 	int lv = 1, rv = 1;
