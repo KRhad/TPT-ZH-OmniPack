@@ -84,7 +84,6 @@ void Air::UpdateAirHeat(Simulation *sim)
 	{
 		hv[i][0] = ambientAirTemp;
 		hv[i][1] = ambientAirTemp;
-		hv[i][XRES/CELL-3] = ambientAirTemp;
 		hv[i][XRES/CELL-2] = ambientAirTemp;
 		hv[i][XRES/CELL-1] = ambientAirTemp;
 	}
@@ -94,7 +93,6 @@ void Air::UpdateAirHeat(Simulation *sim)
 	{
 		hv[0][i] = ambientAirTemp;
 		hv[1][i] = ambientAirTemp;
-		hv[YRES/CELL-3][i] = ambientAirTemp;
 		hv[YRES/CELL-2][i] = ambientAirTemp;
 		hv[YRES/CELL-1][i] = ambientAirTemp;
 	}
@@ -177,7 +175,6 @@ void Air::UpdateAir()
 	{
 		pv[i][0] = pv[i][0]*0.8f;
 		pv[i][1] = pv[i][1]*0.8f;
-		pv[i][2] = pv[i][2]*0.8f;
 		pv[i][XRES/CELL-2] = pv[i][XRES/CELL-2]*0.8f;
 		pv[i][XRES/CELL-1] = pv[i][XRES/CELL-1]*0.8f;
 		vx[i][0] = vx[i][0]*0.9f;
@@ -195,7 +192,6 @@ void Air::UpdateAir()
 	{
 		pv[0][i] = pv[0][i]*0.8f;
 		pv[1][i] = pv[1][i]*0.8f;
-		pv[2][i] = pv[2][i]*0.8f;
 		pv[YRES/CELL-2][i] = pv[YRES/CELL-2][i]*0.8f;
 		pv[YRES/CELL-1][i] = pv[YRES/CELL-1][i]*0.8f;
 		vx[0][i] = vx[0][i]*0.9f;
@@ -209,42 +205,44 @@ void Air::UpdateAir()
 	}
 
 	// Clear some velocities near walls
-	for (int j = 1; j < YRES/CELL; j++)
+	for (int j = 1; j < YRES / CELL - 1; j++)
 	{
-		for (int i = 1; i < XRES/CELL; i++)
+		for (int i = 1; i < XRES / CELL - 1; i++)
 		{
 			if (blockair[j][i])
 			{
 				vx[j][i] = 0.0f;
 				vx[j][i-1] = 0.0f;
+				vx[j][i+1] = 0.0f;
 				vy[j][i] = 0.0f;
 				vy[j-1][i] = 0.0f;
+				vy[j+1][i] = 0.0f;
 			}
 		}
 	}
 
 	// Pressure adjustments from velocity
-	for (int y = 1; y < YRES/CELL; y++)
-		for (int x = 1; x < XRES/CELL; x++)
+	for (int y = 1; y < YRES / CELL - 1; y++)
+		for (int x = 1; x < XRES / CELL - 1; x++)
 		{
-			float dp = (vx[y][x-1] - vx[y][x]) + (vy[y-1][x] - vy[y][x]);
+			float dp = (vx[y][x-1] - vx[y][x+1]) + (vy[y-1][x] - vy[y+1][x]);
 			pv[y][x] *= AIR_PLOSS;
-			pv[y][x] += dp*AIR_TSTEPP;
+			pv[y][x] += dp * AIR_TSTEPP * 0.5f;
 		}
 
 	// Velocity adjustments from pressure
-	for (int y = 0; y < YRES/CELL-1; y++)
-		for (int x = 0; x < XRES/CELL-1; x++)
+	for (int y = 1; y < YRES/CELL-1; y++)
+		for (int x = 1; x < XRES/CELL-1; x++)
 		{
-			float dx = pv[y][x] - pv[y][x+1];
-			float dy = pv[y][x] - pv[y+1][x];
+			float dx = pv[y][x-1] - pv[y][x+1];
+			float dy = pv[y-1][x] - pv[y+1][x];
 			vx[y][x] *= AIR_VLOSS;
 			vy[y][x] *= AIR_VLOSS;
-			vx[y][x] += dx*AIR_TSTEPV;
-			vy[y][x] += dy*AIR_TSTEPV;
-			if (blockair[y][x] || blockair[y][x+1])
+			vx[y][x] += dx * AIR_TSTEPV * 0.5f;
+			vy[y][x] += dy * AIR_TSTEPV * 0.5f;
+			if (blockair[y][x-1] || blockair[y][x] || blockair[y][x+1])
 				vx[y][x] = 0;
-			if (blockair[y][x] || blockair[y+1][x])
+			if (blockair[y-1][x] || blockair[y][x] || blockair[y+1][x])
 				vy[y][x] = 0;
 		}
 
