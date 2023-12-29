@@ -1,6 +1,8 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
+#include "PostData.h"
+
 #include <map>
 #include "curl/system.h"
 #include <mutex>
@@ -38,9 +40,12 @@ class Request
 	std::string verb;
 	struct curl_slist *headers;
 
+	bool isPost = false;
 	curl_mime *post_fields;
 	curl_httppost *post_fields_first, *post_fields_last;
 	std::map<std::string, std::string> post_fields_map;
+	bool use_string_post_field = false;
+	std::string post_field_str;
 
 	std::condition_variable done_cv;
 
@@ -53,7 +58,7 @@ public:
 
 	void Verb(std::string newVerb);
 	void AddHeader(std::string header);
-	void AddPostData(std::map<std::string, std::string> data);
+	void AddPostData(PostData data);
 	void AuthHeaders(std::string ID, std::string session);
 
 	void Start();
@@ -67,8 +72,8 @@ public:
 
 	friend class RequestManager;
 
-	static std::string Simple(std::string uri, int *status, std::map<std::string, std::string> post_data = std::map<std::string, std::string>{});
-	static std::string SimpleAuth(std::string uri, int *status, std::string ID, std::string session, std::map<std::string, std::string> post_data = std::map<std::string, std::string>{});
+	static std::string Simple(std::string uri, int *status, FormData postData = {});
+	static std::string SimpleAuth(std::string uri, int *status, std::string ID, std::string session, FormData postData = {});
 
 	static std::string GetStatusCodeDesc(int code);
 };

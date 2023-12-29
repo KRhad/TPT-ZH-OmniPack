@@ -101,40 +101,47 @@ void Request::AddHeader(std::string header)
 }
 
 // add post data to a request
-void Request::AddPostData(std::map<std::string, std::string> data)
+void Request::AddPostData(PostData data)
 {
+	isPost = true;
 #ifndef NOHTTP
-	if (!data.size())
-	{
-		return;
-	}
-
 	if (easy)
 	{
+		if (std::holds_alternative<FormData>(data) && std::get<FormData>(data).size())
+		{
+			auto &formData = std::get<FormData>(data);
 #ifdef REQUEST_USE_CURL_MIMEPOST
-		if (!post_fields)
-		{
-			post_fields = curl_mime_init(easy);
-		}
+			if (!post_fields)
+			{
+				post_fields = curl_mime_init(easy);
+			}
 
-		for (auto &field : data)
-		{
-			curl_mimepart *part = curl_mime_addpart(post_fields);
-			curl_mime_data(part, &field.second[0], field.second.size());
-			size_t colonPos = field.first.find(':');
-			if (colonPos != field.first.npos)
+			for (auto &field : formData)
 			{
-				curl_mime_name(part, field.first.substr(0, colonPos).c_str());
-				curl_mime_filename(part, field.first.substr(colonPos + 1).c_str());
+				curl_mimepart *part = curl_mime_addpart(post_fields);
+				curl_mime_data(part, &field.second[0], field.second.size());
+				size_t colonPos = field.first.find(':');
+				if (colonPos != field.first.npos)
+				{
+					curl_mime_name(part, field.first.substr(0, colonPos).c_str());
+					curl_mime_filename(part, field.first.substr(colonPos + 1).c_str());
+				}
+				else
+				{
+					curl_mime_name(part, field.first.c_str());
+				}
 			}
-			else
-			{
-				curl_mime_name(part, field.first.c_str());
-			}
-		}
 #else
-		post_fields_map.insert(data.begin(), data.end());
+			post_fields_map.insert(formData.begin(), formData.end());
 #endif
+			use_string_post_field = false;
+		}
+		else if (std::holds_alternative<StringData>(data) && std::get<StringData>(data).size())
+		{
+			auto &stringData = std::get<StringData>(data);
+			post_field_str = stringData;
+			use_string_post_field = true;
+		}
 	}
 #endif
 }
@@ -192,46 +199,59 @@ void Request::Start()
 
 	if (easy)
 	{
+		if (use_string_post_field)
+		{
+			curl_easy_setopt(easy, CURLOPT_POSTFIELDS, &post_field_str[0]);
+			curl_easy_setopt(easy, CURLOPT_POSTFIELDSIZE_LARGE, curl_off_t(post_field_str.size()));
+		}
+		else
+		{
 #ifdef REQUEST_USE_CURL_MIMEPOST
-		if (post_fields)
-		{
-			curl_easy_setopt(easy, CURLOPT_MIMEPOST, post_fields);
-		}
-		else
-		{
-			curl_easy_setopt(easy, CURLOPT_HTTPGET, 1L);
-		}
-#else
-		if (!post_fields_map.empty())
-		{
-			for (auto &field : post_fields_map)
+			if (post_fields)
 			{
-				size_t colonPos = field.first.find(':');
-				if (colonPos != field.first.npos)
-				{
-					curl_formadd(&post_fields_first, &post_fields_last,
-						CURLFORM_COPYNAME, field.first.substr(0, colonPos).c_str(),
-						CURLFORM_BUFFER, field.first.substr(colonPos + 1).c_str(),
-						CURLFORM_BUFFERPTR, &field.second[0],
-						CURLFORM_BUFFERLENGTH, field.second.size(),
-					CURLFORM_END);
-				}
-				else
-				{
-					curl_formadd(&post_fields_first, &post_fields_last,
-						CURLFORM_COPYNAME, field.first.c_str(),
-						CURLFORM_PTRCONTENTS, &field.second[0],
-						CURLFORM_CONTENTLEN, field.second.size(),
-					CURLFORM_END);
-				}
+				curl_easy_setopt(easy, CURLOPT_MIMEPOST, post_fields);
 			}
-			curl_easy_setopt(easy, CURLOPT_HTTPPOST, post_fields_first);
-		}
-		else
-		{
-			curl_easy_setopt(easy, CURLOPT_HTTPGET, 1L);
-		}
+			else if (isPost)
+			{
+				curl_easy_setopt(easy, CURLOPT_POST, 1L);
+				curl_easy_setopt(easy, CURLOPT_POSTFIELDS, "");
+			}
+			else
+			{
+				curl_easy_setopt(easy, CURLOPT_HTTPGET, 1L);
+			}
+#else
+			if (!post_fields_map.empty())
+			{
+				for (auto &field : post_fields_map)
+				{
+					size_t colonPos = field.first.find(':');
+					if (colonPos != field.first.npos)
+					{
+						curl_formadd(&post_fields_first, &post_fields_last,
+							CURLFORM_COPYNAME, field.first.substr(0, colonPos).c_str(),
+							CURLFORM_BUFFER, field.first.substr(colonPos + 1).c_str(),
+							CURLFORM_BUFFERPTR, &field.second[0],
+							CURLFORM_BUFFERLENGTH, field.second.size(),
+						CURLFORM_END);
+					}
+					else
+					{
+						curl_formadd(&post_fields_first, &post_fields_last,
+							CURLFORM_COPYNAME, field.first.c_str(),
+							CURLFORM_PTRCONTENTS, &field.second[0],
+							CURLFORM_CONTENTLEN, field.second.size(),
+						CURLFORM_END);
+					}
+				}
+				curl_easy_setopt(easy, CURLOPT_HTTPPOST, post_fields_first);
+			}
+			else
+			{
+				curl_easy_setopt(easy, CURLOPT_HTTPGET, 1L);
+			}
 #endif
+		}
 
 		if (verb.size())
 		{
@@ -388,15 +408,15 @@ void Request::Cancel()
 #endif
 }
 
-std::string Request::Simple(std::string uri, int *status, std::map<std::string, std::string> post_data)
+std::string Request::Simple(std::string uri, int *status, FormData postData)
 {
-	return SimpleAuth(uri, status, "", "", post_data);
+	return SimpleAuth(uri, status, "", "", postData);
 }
 
-std::string Request::SimpleAuth(std::string uri, int *status, std::string ID, std::string session, std::map<std::string, std::string> post_data)
+std::string Request::SimpleAuth(std::string uri, int *status, std::string ID, std::string session, FormData postData)
 {
 	Request *request = new Request(uri);
-	request->AddPostData(post_data);
+	request->AddPostData(postData);
 	request->AuthHeaders(ID, session);
 	request->Start();
 	return request->Finish(status);

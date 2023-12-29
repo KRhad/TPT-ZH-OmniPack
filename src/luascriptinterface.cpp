@@ -3804,7 +3804,7 @@ private:
 	}
 
 public:
-	static int Make(lua_State *l, const std::string &uri, bool isPost, const std::string &verb, RequestType type, const std::map<std::string, std::string> &post_data, const std::vector<std::string> &headers)
+	static int Make(lua_State *l, const std::string &uri, bool isPost, const std::string &verb, RequestType type, const PostData &postData, const std::vector<std::string> &headers)
 	{
 		if (type == getAuthToken && !svf_login)
 		{
@@ -3830,7 +3830,7 @@ public:
 		}
 		if (isPost)
 		{
-			rh->request->AddPostData(post_data);
+			rh->request->AddPostData(postData);
 		}
 		if (type == getAuthToken)
 		{
@@ -3982,7 +3982,7 @@ int http_request(lua_State *l, bool isPost)
 {
 	std::string uri = tpt_lua_checkString(l, 1);
 
-	std::map<std::string, std::string> post_data;
+	PostData postData;
 	auto headersIndex = 2;
 	auto verbIndex = 3;
 
@@ -3991,13 +3991,19 @@ int http_request(lua_State *l, bool isPost)
 		headersIndex += 1;
 		verbIndex += 1;
 
-		if (lua_istable(l, 2))
+		if (lua_isstring(l, 2))
 		{
+			postData = tpt_lua_toString(l, 2);
+		}
+		else if (lua_istable(l, 2))
+		{
+			postData = FormData{};
+			auto &formData = std::get<FormData>(postData);
 			lua_pushnil(l);
 			while (lua_next(l, 2))
 			{
 				lua_pushvalue(l, -2);
-				post_data.emplace(tpt_lua_toString(l, -1), tpt_lua_toString(l, -2));
+				formData.emplace(tpt_lua_toString(l, -1), tpt_lua_toString(l, -2));
 				lua_pop(l, 2);
 			}
 		}
@@ -4030,7 +4036,7 @@ int http_request(lua_State *l, bool isPost)
 	}
 
 	auto verb = tpt_lua_optString(l, verbIndex, "");
-	return RequestHandle::Make(l, uri, isPost, verb, RequestHandle::normal, post_data, headers);
+	return RequestHandle::Make(l, uri, isPost, verb, RequestHandle::normal, postData, headers);
 }
 
 int http_get(lua_State *l)

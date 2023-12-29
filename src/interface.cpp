@@ -6008,7 +6008,7 @@ bool execute_submit(pixel *vid_buf, char *id, char *message)
 	url <<  SCHEME << SERVER << "/Browse/Comments.json?ID=" << id;
 	Request *comment = new Request(url.str());
 	comment->AuthHeaders(svf_user_id, svf_session_id);
-	comment->AddPostData({
+	comment->AddPostData(FormData{
 		{ "Comment", message },
 		{ "Key", svf_session_key }
 	});

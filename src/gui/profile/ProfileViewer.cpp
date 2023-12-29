@@ -206,7 +206,7 @@ void ProfileViewer::SaveProfile()
 {
 	profileSaveDownload = new Request(SCHEME SERVER "/Profile.json");
 	profileSaveDownload->AuthHeaders(svf_user_id, svf_session_id);
-	std::map<std::string, std::string> postData;
+	FormData postData;
 	postData.insert(std::pair<std::string, std::string>("Location", locationLabel->GetText()));
 	postData.insert(std::pair<std::string, std::string>("Biography", biographyLabel->GetText()));
 	//postData.insert(std::pair<std::string, std::string>("Website", websiteLabel->GetText()));
