@@ -3,6 +3,7 @@
 #include "defines.h"
 #include <curl/curl.h>
 #include "RequestManager.h"
+#include "common/Format.h"
 #include "common/Platform.h"
 
 
@@ -93,23 +94,23 @@ void Request::Verb(std::string newVerb)
 #endif
 }
 
-void Request::AddHeader(std::string header)
+void Request::AddHeader(http::Header header)
 {
 #ifndef NOHTTP
-	headers = curl_slist_append(headers, header.c_str());
+	headers = curl_slist_append(headers, (header.name + ": " + header.value).c_str());
 #endif
 }
 
 // add post data to a request
-void Request::AddPostData(PostData data)
+void Request::AddPostData(http::PostData data)
 {
 	isPost = true;
 #ifndef NOHTTP
 	if (easy)
 	{
-		if (std::holds_alternative<FormData>(data) && std::get<FormData>(data).size())
+		if (std::holds_alternative<http::FormData>(data) && std::get<http::FormData>(data).size())
 		{
-			auto &formData = std::get<FormData>(data);
+			auto &formData = std::get<http::FormData>(data);
 #ifdef REQUEST_USE_CURL_MIMEPOST
 			if (!post_fields)
 			{
@@ -119,16 +120,11 @@ void Request::AddPostData(PostData data)
 			for (auto &field : formData)
 			{
 				curl_mimepart *part = curl_mime_addpart(post_fields);
-				curl_mime_data(part, &field.second[0], field.second.size());
-				size_t colonPos = field.first.find(':');
-				if (colonPos != field.first.npos)
+				curl_mime_data(part, &field.value[0], field.value.size());
+				curl_mime_name(part, field.name.c_str());
+				if (field.filename.has_value())
 				{
-					curl_mime_name(part, field.first.substr(0, colonPos).c_str());
-					curl_mime_filename(part, field.first.substr(colonPos + 1).c_str());
-				}
-				else
-				{
-					curl_mime_name(part, field.first.c_str());
+					curl_mime_filename(part, field.filename->c_str());
 				}
 			}
 #else
@@ -136,9 +132,9 @@ void Request::AddPostData(PostData data)
 #endif
 			use_string_post_field = false;
 		}
-		else if (std::holds_alternative<StringData>(data) && std::get<StringData>(data).size())
+		else if (std::holds_alternative<http::StringData>(data) && std::get<http::StringData>(data).size())
 		{
-			auto &stringData = std::get<StringData>(data);
+			auto &stringData = std::get<http::StringData>(data);
 			post_field_str = stringData;
 			use_string_post_field = true;
 		}
@@ -153,12 +149,12 @@ void Request::AuthHeaders(std::string ID, std::string session)
 	{
 		if (session.size())
 		{
-			AddHeader("X-Auth-User-Id: " + ID);
-			AddHeader("X-Auth-Session-Key: " + session);
+			AddHeader({ "X-Auth-User-Id", ID });
+			AddHeader({ "X-Auth-Session-Key", session });
 		}
 		else
 		{
-			AddHeader("X-Auth-User: " + ID);
+			AddHeader({ "X-Auth-User", ID });
 		}
 	}
 }
@@ -170,10 +166,31 @@ size_t Request::HeaderDataHandler(char *ptr, size_t size, size_t count, void *us
 	auto actual_size = size * count;
 	if (actual_size >= 2 && ptr[actual_size - 2] == '\r' && ptr[actual_size - 1] == '\n')
 	{
-		if (actual_size > 2) // don't include header list terminator (but include the status line)
+		if (actual_size > 2 && req->gotStatusLine) // Don't include header list terminator or the status line.
 		{
-			req->response_headers.push_back(std::string(ptr, ptr + actual_size - 2));
+			std::string line = std::string(ptr, ptr + actual_size - 2);
+			size_t splitPos = line.find(":");
+			if (splitPos != line.npos)
+			{
+				std::string before = line.substr(0, splitPos);
+				std::string after = line.substr(splitPos + 1);
+
+				while (after.size() && (after.front() == ' ' || after.front() == '\t'))
+				{
+					after = after.substr(1);
+				}
+				while (after.size() && (after.back() == ' ' || after.back() == '\t'))
+				{
+					after = after.substr(0, after.size() - 1);
+				}
+				req->response_headers.push_back({ Format::ToLower(before), after });
+			}
+			else
+			{
+				std::cerr << "skipping weird header: " << line << std::endl;
+			}
 		}
+		req->gotStatusLine = true;
 		return actual_size;
 	}
 	return 0;
@@ -225,22 +242,21 @@ void Request::Start()
 			{
 				for (auto &field : post_fields_map)
 				{
-					size_t colonPos = field.first.find(':');
-					if (colonPos != field.first.npos)
+					if (field.filename.has_value())
 					{
 						curl_formadd(&post_fields_first, &post_fields_last,
-							CURLFORM_COPYNAME, field.first.substr(0, colonPos).c_str(),
-							CURLFORM_BUFFER, field.first.substr(colonPos + 1).c_str(),
-							CURLFORM_BUFFERPTR, &field.second[0],
-							CURLFORM_BUFFERLENGTH, field.second.size(),
+							CURLFORM_COPYNAME, field.name.c_str(),
+							CURLFORM_BUFFER, field.filename->c_str(),
+							CURLFORM_BUFFERPTR, &field.value[0],
+							CURLFORM_BUFFERLENGTH, field.value.size(),
 						CURLFORM_END);
 					}
 					else
 					{
 						curl_formadd(&post_fields_first, &post_fields_last,
-							CURLFORM_COPYNAME, field.first.c_str(),
-							CURLFORM_PTRCONTENTS, &field.second[0],
-							CURLFORM_CONTENTLEN, field.second.size(),
+							CURLFORM_COPYNAME, field.name.c_str(),
+							CURLFORM_PTRCONTENTS, &field.value[0],
+							CURLFORM_CONTENTLEN, field.value.size(),
 						CURLFORM_END);
 					}
 				}
@@ -313,7 +329,7 @@ void Request::Start()
 
 
 // finish the request (if called before the request is done, this will block)
-std::string Request::Finish(int *status_out, std::vector<std::string> *headers_out)
+std::string Request::Finish(int *status_out, std::vector<http::Header> *headers_out)
 {
 #ifndef NOHTTP
 	if (CheckCanceled())
@@ -408,12 +424,12 @@ void Request::Cancel()
 #endif
 }
 
-std::string Request::Simple(std::string uri, int *status, FormData postData)
+std::string Request::Simple(std::string uri, int *status, http::FormData postData)
 {
 	return SimpleAuth(uri, status, "", "", postData);
 }
 
-std::string Request::SimpleAuth(std::string uri, int *status, std::string ID, std::string session, FormData postData)
+std::string Request::SimpleAuth(std::string uri, int *status, std::string ID, std::string session, http::FormData postData)
 {
 	Request *request = new Request(uri);
 	request->AddPostData(postData);

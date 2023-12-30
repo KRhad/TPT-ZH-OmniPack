@@ -444,7 +444,7 @@ void PowderToy::DoVoteBtn(bool up)
 	bool isReset = (up && svf_myvote == 1) || (!up && svf_myvote == -1);
 	voteDownload = new Request(SCHEME SERVER "/Vote.api");
 	voteDownload->AuthHeaders(svf_user_id, svf_session_id);
-	voteDownload->AddPostData(FormData{
+	voteDownload->AddPostData(http::FormData{
 		{ "ID", svf_id },
 		{ "Action", isReset ? "Reset" : (up ? "Up" : "Down") },
 		{ "Key", svf_session_key }

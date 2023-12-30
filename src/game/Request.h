@@ -21,7 +21,8 @@ class RequestManager;
 class Request
 {
 	std::string uri;
-	std::vector<std::string> response_headers;
+	bool gotStatusLine = false;
+	std::vector<http::Header> response_headers;
 	std::string response_body;
 
 	CURL *easy;
@@ -57,12 +58,12 @@ public:
 	virtual ~Request();
 
 	void Verb(std::string newVerb);
-	void AddHeader(std::string header);
-	void AddPostData(PostData data);
+	void AddHeader(http::Header header);
+	void AddPostData(http::PostData data);
 	void AuthHeaders(std::string ID, std::string session);
 
 	void Start();
-	std::string Finish(int *status, std::vector<std::string> *headers_out = nullptr);
+	std::string Finish(int *status, std::vector<http::Header> *headers_out = nullptr);
 	void Cancel();
 
 	void CheckProgress(int *total, int *done);
@@ -72,8 +73,8 @@ public:
 
 	friend class RequestManager;
 
-	static std::string Simple(std::string uri, int *status, FormData postData = {});
-	static std::string SimpleAuth(std::string uri, int *status, std::string ID, std::string session, FormData postData = {});
+	static std::string Simple(std::string uri, int *status, http::FormData postData = {});
+	static std::string SimpleAuth(std::string uri, int *status, std::string ID, std::string session, http::FormData postData = {});
 
 	static std::string GetStatusCodeDesc(int code);
 };

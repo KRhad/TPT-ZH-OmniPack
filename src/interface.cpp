@@ -5886,16 +5886,16 @@ int execute_tagop(pixel *vid_buf, const char *op, char *tag)
 
 int execute_save(pixel *vid_buf, Save *save)
 {
-	std::map<std::string, std::string> postData = {
+	http::FormData postData = {
 		{ "Name", svf_name },
 		{ "Description", svf_description },
-		{ "Data:save.bin", std::string((char*)save->GetSaveData(), (int)save->GetSaveSize()) },
+		{ "Data", std::string((char*)save->GetSaveData(), (int)save->GetSaveSize()), "save.bin" },
 		{ "Publish", (svf_publish == 1) ? "Public" : "Private" },
 		{ "Key", svf_session_key }
 	};
 	if (svf_id[0])
 	{
-		postData.insert(std::pair<std::string, std::string>("ID", svf_id));
+		postData.push_back({ "ID", svf_id });
 	}
 
 	if (save->fromNewerVersion && svf_publish)
@@ -6008,7 +6008,7 @@ bool execute_submit(pixel *vid_buf, char *id, char *message)
 	url <<  SCHEME << SERVER << "/Browse/Comments.json?ID=" << id;
 	Request *comment = new Request(url.str());
 	comment->AuthHeaders(svf_user_id, svf_session_id);
-	comment->AddPostData(FormData{
+	comment->AddPostData(http::FormData{
 		{ "Comment", message },
 		{ "Key", svf_session_key }
 	});

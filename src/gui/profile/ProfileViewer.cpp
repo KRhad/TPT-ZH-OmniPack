@@ -206,11 +206,11 @@ void ProfileViewer::SaveProfile()
 {
 	profileSaveDownload = new Request(SCHEME SERVER "/Profile.json");
 	profileSaveDownload->AuthHeaders(svf_user_id, svf_session_id);
-	FormData postData;
-	postData.insert(std::pair<std::string, std::string>("Location", locationLabel->GetText()));
-	postData.insert(std::pair<std::string, std::string>("Biography", biographyLabel->GetText()));
-	//postData.insert(std::pair<std::string, std::string>("Website", websiteLabel->GetText()));
-	profileSaveDownload->AddPostData(postData);
+	profileSaveDownload->AddPostData(http::FormData{
+		{ "Location", locationLabel->GetText() },
+		{ "Biography", biographyLabel->GetText() },
+		// { "Website", websiteLabel->GetText() }
+	});
 
 	profileSaveDownload->Start();
 	int status;
