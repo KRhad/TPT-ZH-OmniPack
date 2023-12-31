@@ -19,7 +19,10 @@ namespace Matrix
 {
 
 vector2d v2d_zero = {0,0};
-matrix2d m2d_identity = {1,0,0,1};
+matrix2d m2d_identity = {1, 0, 0, 1};
+matrix2d m2d_mirror_x = {-1,0, 0, 1};
+matrix2d m2d_mirror_y = {1, 0, 0,-1};
+matrix2d m2d_ccw =      {0, 1,-1, 0};
 
 matrix2d m2d_multiply_m2d(matrix2d m1, matrix2d m2)
 {

@@ -44,5 +44,8 @@ namespace Matrix
 	
 	extern vector2d v2d_zero;
 	extern matrix2d m2d_identity;
+	extern matrix2d m2d_mirror_x;
+	extern matrix2d m2d_mirror_y;
+	extern matrix2d m2d_ccw;
 }
 #endif // TPTVECTOR_H

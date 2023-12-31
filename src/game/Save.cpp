@@ -140,6 +140,10 @@ Save::Save(const Save & save):
 		std::copy(&save.saveData[0], &save.saveData[save.saveSize], &saveData[0]);
 		saveSize = save.saveSize;
 	}
+	else
+	{
+		saveData = nullptr;
+	}
 }
 
 Save::~Save()

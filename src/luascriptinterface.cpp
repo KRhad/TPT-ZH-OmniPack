@@ -1201,7 +1201,9 @@ int simulation_loadStamp(lua_State* l)
 	Save *save = NULL;
 	int x = luaL_optint(l, 2, 0);
 	int y = luaL_optint(l, 3, 0);
-	int includePressure = luaL_optint(l, 4, 1);
+	bool hflip = lua_toboolean(l, 4);
+	int rotation = luaL_optint(l, 5, 0) & 3; // [0, 3] rotations
+	int includePressure = luaL_optint(l, 6, 1);
 
 	// Load from 10 char name, or full filename
 	if (lua_isstring(l, 1))
@@ -1231,11 +1233,31 @@ int simulation_loadStamp(lua_State* l)
 		return 2;
 	}
 
+	int quoX = x / CELL * CELL;
+	int quoY = y / CELL * CELL;
+	int remX = x % CELL;
+	int remY = y % CELL;
+	if (remX || remY || hflip || rotation)
+	{
+		Matrix::matrix2d transform = Matrix::m2d_identity;
+		Matrix::vector2d translate = { (float)remX, (float)remY };
+
+		if (hflip)
+		{
+			transform = m2d_multiply_m2d(Matrix::m2d_mirror_x, transform);
+		}
+		for (auto i = 0; i < rotation; ++i)
+		{
+			transform = m2d_multiply_m2d(Matrix::m2d_ccw, transform);
+		}
+		save->Transform(transform, translate);
+	}
+
 	int oldPause = sys_pause;
 	int pushed = 1;
 	try
 	{
-		luaSim->LoadSave(x, y, save, 0, includePressure);
+		luaSim->LoadSave(quoX, quoY, save, 0, includePressure);
 		if (save->authors.size())
 		{
 			save->authors["type"] = "luastamp";
