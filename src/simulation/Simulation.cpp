@@ -253,8 +253,8 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 		particle *tempPart = &save->particles[n];
 		tempPart->x += (float)loadX;
 		tempPart->y += (float)loadY;
-		int x = int(tempPart->x + 0.5f);
-		int y = int(tempPart->y + 0.5f);
+		int x = int(std::floor(tempPart->x + 0.5f));
+		int y = int(std::floor(tempPart->y + 0.5f));
 		
 		auto &type = tempPart->type;
 
