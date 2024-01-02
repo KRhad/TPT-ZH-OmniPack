@@ -2989,15 +2989,15 @@ void draw_rgba_image(pixel *vid, unsigned char *data, int x, int y, float alpha)
 
 void draw_image(pixel *vid, pixel *img, int x, int y, int w, int h, int a)
 {
-	int startX = 0;
+	int startX = 0, skipEnd = 0;
 	if (!img)
 		return;
 	// Adjust height to prevent drawing off the bottom
 	if (y + h > VIDYRES)
-		h = ((VIDYRES)-y)-1;
-	// Too big
+		h = ((VIDYRES) - y) - 1;
+	// Adjust width to prevent drawing off the right
 	if (x + w > VIDXRES)
-		return;
+		skipEnd = (x + w) - VIDXRES;
 
 	// Starts off the top of the screen, adjust
 	if (y < 0 && -y < h)
@@ -3018,11 +3018,12 @@ void draw_image(pixel *vid, pixel *img, int x, int y, int w, int h, int a)
 		for (int j = 0; j < h; j++)
 		{
 			img += startX;
-			for (int i = startX; i < w; i++)
+			for (int i = startX; i < w && x + i < VIDXRES; i++)
 			{
 				vid[(y+j)*(VIDXRES)+(x+i)] = *img;
 				img++;
 			}
+			img += skipEnd;
 		}
 	else
 	{
@@ -3030,7 +3031,7 @@ void draw_image(pixel *vid, pixel *img, int x, int y, int w, int h, int a)
 		for (int j = 0; j < h; j++)
 		{
 			img += startX;
-			for (int i = startX; i < w; i++)
+			for (int i = startX; i < w && x + i < VIDXRES; i++)
 			{
 				r = PIXR(*img);
 				g = PIXG(*img);
@@ -3038,6 +3039,7 @@ void draw_image(pixel *vid, pixel *img, int x, int y, int w, int h, int a)
 				blendpixel(vid, x+i, y+j, r, g, b, a);
 				img++;
 			}
+			img += skipEnd;
 		}
 	}
 }

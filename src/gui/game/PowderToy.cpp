@@ -896,7 +896,10 @@ void PowderToy::UpdateStampCoordinates(Point cursor, Point offset)
 	loadPos.X = cursor.X;
 	loadPos.Y = cursor.Y;
 	loadPos -= offset;
-	loadPos.Clamp(loadSize/2, Point(XRES, YRES)-loadSize/2);
+	// Stamps can now be pasted out of bounds
+	// Instead of clamping stamp borders in-bounds, clamp them to sim area instead (cursor is already guaranteed to be in the sim area, though)
+	loadPos.Clamp(Point(0, 0), Point(XRES - 1, YRES - 1));
+	//loadPos.Clamp(loadSize/2, Point(XRES, YRES)-loadSize/2);
 }
 
 void PowderToy::ResetStampState()
