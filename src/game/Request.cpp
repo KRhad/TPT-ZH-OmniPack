@@ -2,6 +2,7 @@
 #ifndef NOHTTP
 #include "defines.h"
 #include <curl/curl.h>
+#include <iostream>
 #include "RequestManager.h"
 #include "common/Format.h"
 #include "common/Platform.h"

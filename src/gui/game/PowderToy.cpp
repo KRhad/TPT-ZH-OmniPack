@@ -1067,10 +1067,10 @@ void PowderToy::OnTick(uint32_t ticks)
 	if (versionCheck && versionCheck->CheckDone())
 	{
 		int status = 200;
-		std::string ret = versionCheck->Finish(&status);
-		if (status == 200 && !ParseServerReturn((char*)ret.c_str(), status, true))
+		std::string result = versionCheck->Finish(&status);
+		if (status == 200 && !ParseServerReturn(result, status, true))
 		{
-			std::istringstream datastream(ret);
+			std::istringstream datastream(result);
 			Json::Value root;
 
 			try
@@ -1131,16 +1131,16 @@ void PowderToy::OnTick(uint32_t ticks)
 	if (sessionCheck && sessionCheck->CheckDone())
 	{
 		int status = 200;
-		std::string ret = sessionCheck->Finish(&status);
+		std::string result = sessionCheck->Finish(&status);
 		// ignore timeout errors or others, since the user didn't actually click anything
-		if (status != 200 || ParseServerReturn((char*)ret.c_str(), status, true))
+		if (status != 200 || ParseServerReturn(result, status, true))
 		{
 			// key icon changes to red
 			loginFinished = -1;
 		}
 		else
 		{
-			std::istringstream datastream(ret);
+			std::istringstream datastream(result);
 			Json::Value root;
 
 			try
@@ -1194,8 +1194,8 @@ void PowderToy::OnTick(uint32_t ticks)
 	if (voteDownload && voteDownload->CheckDone())
 	{
 		int status;
-		std::string ret = voteDownload->Finish(&status);
-		if (ParseServerReturn((char*)ret.c_str(), status, false))
+		std::string result = voteDownload->Finish(&status);
+		if (ParseServerReturn(result, status, false))
 			svf_myvote = 0;
 		else if (svf_myvote == 0)
 			SetInfoTip("Cleared Vote");

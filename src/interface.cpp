@@ -1749,7 +1749,7 @@ bool login_ui(pixel *vid_buf)
 			if (mx>=x0 && mx<x0+96 && my>=y0+64 && my<=y0+80)
 			{
 				if (svf_login)
-					goto fail;
+					goto logout;
 				else
 				{
 					Platform::OpenLink("https://powdertoy.co.uk/Register.html");
@@ -1887,6 +1887,14 @@ bool login_ui(pixel *vid_buf)
 			goto fail;
 		}
 		return true;
+	}
+
+logout:
+	{
+		// Make sure session is deleted
+		int status;
+		std::string data = Request::SimpleAuth("https://" SERVER "/Logout.json?Key=" + std::string(svf_session_key), &status, svf_user_id, svf_session_id);
+		ParseServerReturn(data, status, true);
 	}
 
 fail:
@@ -5940,10 +5948,10 @@ int execute_save(pixel *vid_buf, Save *save)
 	return 0;
 }
 
-bool ParseServerReturn(char *result, int status, bool json)
+bool ParseServerReturn(std::string result, int status, bool json)
 {
 	// no server response, return "Malformed Response"
-	if (status == 200 && !result)
+	if (status == 200 && !result.size())
 	{
 		status = 603;
 	}
@@ -5979,19 +5987,19 @@ bool ParseServerReturn(char *result, int status, bool json)
 		catch (std::exception &e)
 		{
 			// sometimes the server returns a 200 with the text "Error: 401"
-			if (strstr(result, "Error: ") == result)
+			if (result.substr(0, 7) == "Error: ")
 			{
-				status = atoi(result + 7);
+				status = Format::StringToNumber<int>(result.substr(7));
 				error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
 				return true;
 			}
-			error_ui(vid_buf, 0, "Could not read response");
+			error_ui(vid_buf, 0, "Could not read response: " + std::string(e.what()));
 			return true;
 		}
 	}
 	else
 	{
-		if (strncmp((const char *)result, "OK", 2))
+		if (result.substr(1, 2) != "OK")
 		{
 			error_ui(vid_buf, 0, result);
 			return true;
@@ -6016,7 +6024,7 @@ bool execute_submit(pixel *vid_buf, char *id, char *message)
 	std::string result = comment->Finish(&status);
 
 
-	bool ret = ParseServerReturn((char*)result.c_str(), status, true);
+	bool ret = ParseServerReturn(result, status, true);
 	return ret;
 }
 
@@ -6027,7 +6035,7 @@ bool execute_report(pixel *vid_buf, std::string id, char *reason)
 		{ "Reason", reason },
 	});
 
-	return ParseServerReturn((char*)result.c_str(), status, true);
+	return ParseServerReturn(result, status, true);
 }
 
 bool execute_bug(pixel *vid_buf, std::string feedback)
@@ -6056,7 +6064,7 @@ bool execute_fav(pixel *vid_buf, std::string id)
 	int status;
 	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/Favourite.json?ID=" + id + "&Key=" + svf_session_key, &status, svf_user_id, svf_session_id);
 
-	return ParseServerReturn((char*)result.c_str(), status, true);
+	return ParseServerReturn(result, status, true);
 }
 
 bool execute_unfav(pixel *vid_buf, std::string id)
@@ -6064,7 +6072,7 @@ bool execute_unfav(pixel *vid_buf, std::string id)
 	int status;
 	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/Favourite.json?ID=" + id + "&Mode=Remove&Key=" + svf_session_key, &status, svf_user_id, svf_session_id);
 
-	return ParseServerReturn((char*)result.c_str(), status, true);
+	return ParseServerReturn(result, status, true);
 }
 
 bool execute_delete(pixel *vid_buf, std::string id)
@@ -6072,7 +6080,7 @@ bool execute_delete(pixel *vid_buf, std::string id)
 	int status;
 	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/Delete.json?ID=" + id + "&Mode=Delete&Key=" + svf_session_key, &status, svf_user_id, svf_session_id);
 
-	return ParseServerReturn((char*)result.c_str(), status, true);
+	return ParseServerReturn(result, status, true);
 }
 
 bool execute_unpublish(pixel *vid_buf, std::string id)
@@ -6080,7 +6088,7 @@ bool execute_unpublish(pixel *vid_buf, std::string id)
 	int status;
 	std::string result = Request::SimpleAuth(SCHEME SERVER "/Browse/Delete.json?ID=" + id + "&Mode=Unpublish&Key=" + svf_session_key, &status, svf_user_id, svf_session_id);
 
-	return ParseServerReturn((char*)result.c_str(), status, true);
+	return ParseServerReturn(result, status, true);
 }
 
 bool execute_publish(pixel *vid_buf, std::string id)
@@ -6090,7 +6098,7 @@ bool execute_publish(pixel *vid_buf, std::string id)
 		 { "ActionPublish", "bagels" },
 	 });
 
-	return ParseServerReturn((char*)result.c_str(), status, true);
+	return ParseServerReturn(result, status, true);
 }
 
 ui_edit box_R;

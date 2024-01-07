@@ -214,8 +214,8 @@ void ProfileViewer::SaveProfile()
 
 	profileSaveDownload->Start();
 	int status;
-	std::string ret = profileSaveDownload->Finish(&status);
-	ParseServerReturn((char*)ret.c_str(), status, true);
+	std::string result = profileSaveDownload->Finish(&status);
+	ParseServerReturn(result, status, true);
 }
 
 void ProfileViewer::OpenProfile()

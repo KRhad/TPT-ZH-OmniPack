@@ -290,7 +290,7 @@ int execute_save(pixel *vid_buf, Save *save);
 bool execute_report(pixel *vid_buf, std::string id, char *reason);
 bool execute_bug(pixel *vid_buf, std::string feedback);
 
-bool ParseServerReturn(char *result, int status, bool json);
+bool ParseServerReturn(std::string result, int status, bool json);
 
 bool execute_submit(pixel *vid_buf, char *id, char *message);
 
