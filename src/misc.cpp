@@ -138,6 +138,14 @@ void cJSON_AddString(cJSON** obj, const char *name, int number)
 	cJSON_AddStringToObject(*obj, name, str.str().c_str());
 }
 
+void setBool(cJSON *root, const char *name, bool flag)
+{
+	if (flag)
+		cJSON_AddTrueToObject(root, name);
+	else
+		cJSON_AddFalseToObject(root, name);
+}
+
 bool doingUpdate = false;
 void save_presets()
 {
@@ -174,10 +182,7 @@ void save_presets()
 	//Tpt++ Renderer settings
 	cJSON_AddItemToObject(root, "Renderer", graphicsobj=cJSON_CreateObject());
 	cJSON_AddNumberToObject(graphicsobj, "ColourMode", Renderer::Ref().GetColorMode());
-	if (DEBUG_MODE)
-		cJSON_AddTrueToObject(graphicsobj, "DebugMode");
-	else
-		cJSON_AddFalseToObject(graphicsobj, "DebugMode");
+	setBool(graphicsobj, "DebugMode", DEBUG_MODE);
 	tmpobj = cJSON_CreateIntArray(NULL, 0);
 	std::set<unsigned int> displayModes = Renderer::Ref().GetDisplayModes();
 	for (std::set<unsigned int>::iterator it = displayModes.begin(), end = displayModes.end(); it != end; it++)
@@ -188,14 +193,8 @@ void save_presets()
 	for (std::set<unsigned int>::iterator it = renderModes.begin(), end = renderModes.end(); it != end; it++)
 		cJSON_AddItemToArray(tmpobj, cJSON_CreateNumber(*it));
 	cJSON_AddItemToObject(graphicsobj, "RenderModes", tmpobj);
-	if (drawgrav_enable)
-		cJSON_AddTrueToObject(graphicsobj, "GravityField");
-	else
-		cJSON_AddFalseToObject(graphicsobj, "GravityField");
-	if (decorations_enable)
-		cJSON_AddTrueToObject(graphicsobj, "Decorations");
-	else
-		cJSON_AddFalseToObject(graphicsobj, "Decorations");
+	setBool(graphicsobj, "GravityField", drawgrav_enable);
+	setBool(graphicsobj, "Decorations", decorations_enable);
 	cJSON_AddNumberToObject(graphicsobj, "TemperatureScale", globalSim->temperatureScale);
 
 	//Tpt++ Simulation setting(s)
@@ -206,10 +205,7 @@ void save_presets()
 	cJSON_AddNumberToObject(simulationobj, "AmbientHeat", aheat_enable);
 	cJSON_AddNumberToObject(simulationobj, "PrettyPowder", pretty_powder);
 	cJSON_AddNumberToObject(simulationobj, "UndoHistoryLimit", SnapshotHistory::GetUndoHistoryLimit());
-	if (globalSim->includePressure)
-		cJSON_AddTrueToObject(simulationobj, "LoadPressure");
-	else
-		cJSON_AddFalseToObject(simulationobj, "LoadPressure");
+	setBool(simulationobj, "LoadPressure", globalSim->includePressure);
 	cJSON_AddNumberToObject(simulationobj, "DecoSpace", globalSim->decoSpace);
 	cJSON_AddNumberToObject(simulationobj, "RealisticHeat", realistic);
 
@@ -239,14 +235,8 @@ void save_presets()
 	cJSON_AddNumberToObject(versionobj, "modminor", MOBILE_MINOR);
 	cJSON_AddNumberToObject(versionobj, "modbuild", MOBILE_BUILD);
 #endif
-	if (doingUpdate)
-		cJSON_AddTrueToObject(versionobj, "update");
-	else
-		cJSON_AddFalseToObject(versionobj, "update");
-	if (doUpdates)
-		cJSON_AddTrueToObject(versionobj, "updateChecks");
-	else
-		cJSON_AddFalseToObject(versionobj, "updateChecks");
+	setBool(versionobj, "update", doingUpdate);
+	setBool(versionobj, "updateChecks", doUpdates);
 
 	cJSON * favArr = cJSON_CreateArray();
 	std::vector<std::string> favorites = Favorite::Ref().BuildFavoritesList(true);
@@ -270,30 +260,23 @@ void save_presets()
 	//General settings
 	cJSON_AddStringToObject(root, "Proxy", http_proxy_string);
 	cJSON_AddNumberToObject(root, "Scale", Engine::Ref().GetScale());
-	if (Engine::Ref().IsResizable())
-		cJSON_AddTrueToObject(root, "Resizable");
-	if (Engine::Ref().GetPixelFilteringMode())
-		cJSON_AddTrueToObject(root, "ResizableMode");
-	if (Engine::Ref().IsFullscreen())
-		cJSON_AddTrueToObject(root, "Fullscreen");
-	if (Engine::Ref().IsAltFullscreen())
-		cJSON_AddTrueToObject(root, "AltFullscreen");
-	if (!Engine::Ref().IsForceIntegerScaling())
-		cJSON_AddFalseToObject(root, "ForceIntegerScaling");
-	if (!Engine::Ref().IsMomentumScroll())
-		cJSON_AddFalseToObject(root, "MomentumScroll");
-	if (Engine::Ref().IsFastQuit())
-		cJSON_AddTrueToObject(root, "FastQuit");
-	else
-		cJSON_AddFalseToObject(root, "FastQuit");
+
+
+	setBool(root, "Resizable", Engine::Ref().IsResizable());
+	setBool(root, "ResizableMode", Engine::Ref().GetPixelFilteringMode());
+	setBool(root, "Fullscreen", Engine::Ref().IsFullscreen());
+	setBool(root, "AltFullscreen", Engine::Ref().IsAltFullscreen());
+	setBool(root, "ForceIntegerScaling", Engine::Ref().IsForceIntegerScaling());
+	setBool(root, "MomentumScroll", Engine::Ref().IsMomentumScroll());
+	setBool(root, "FastQuit", Engine::Ref().IsFastQuit());
+	setBool(root, "MouseClickRequired", stickyCategories);
+	setBool(root, "PerfectCircleBrush", perfectCircleBrush);
+	setBool(root, "GraveExitsConsole", graveExitsConsole);
+
 	if (savedWindowX != INT_MAX)
 		cJSON_AddNumberToObject(root, "WindowX", savedWindowX);
 	if (savedWindowY != INT_MAX)
 		cJSON_AddNumberToObject(root, "WindowY", savedWindowY);
-	if (stickyCategories)
-		cJSON_AddTrueToObject(root, "MouseClickRequired");
-	if (perfectCircleBrush)
-		cJSON_AddTrueToObject(root, "PerfectCircleBrush");
 
 	//additional settings from my mod
 	cJSON_AddNumberToObject(root, "heatmode", heatmode);
@@ -656,6 +639,8 @@ void load_presets(void)
 			stickyCategories = tmpobj->valueint ? true : false;
 		if ((tmpobj = cJSON_GetObjectItem(root, "PerfectCircleBrush")))
 			perfectCircleBrush = tmpobj->valueint ? true : false;
+		if ((tmpobj = cJSON_GetObjectItem(root, "GraveExitsConsole")))
+			graveExitsConsole = tmpobj->valueint ? true : false;
 
 		//Read some extra mod settings
 		if ((tmpobj = cJSON_GetObjectItem(root, "heatmode")))

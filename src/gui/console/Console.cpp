@@ -289,7 +289,7 @@ void Console::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, 
 			commandTextbox->SetText("");
 		}
 	}
-	else if (!shift && scan == SDL_SCANCODE_GRAVE)
+	else if (graveExitsConsole && !shift && scan == SDL_SCANCODE_GRAVE)
 	{
 		this->toDelete = true;
 	}

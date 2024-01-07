@@ -149,6 +149,7 @@ int prevafktime = 0;
 int timesplayed = 0;
 
 bool console_mode = false;
+bool graveExitsConsole = true;
 bool REPLACE_MODE = false;
 bool SPECIFIC_DELETE = false;
 int GRID_MODE;

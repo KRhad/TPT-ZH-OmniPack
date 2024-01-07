@@ -291,6 +291,15 @@ OptionsUI::OptionsUI(Simulation *sim):
 	descLabel->SetColor(COLRGB(150, 150, 150));
 	scrollArea->AddComponent(descLabel);
 
+	prev = graveExitsConsole = new Checkbox(prev->Below(Point(0, 15)), Point(Checkbox::AUTOSIZE, checkboxHeight), "Key Under Esc Exits Console");
+	graveExitsConsole->UseCheckIcon(useCheckIcon);
+	graveExitsConsole->SetCallback([&](bool checked) { this->GraveChecked(checked); });
+	scrollArea->AddComponent(graveExitsConsole);
+
+	descLabel = new Label(prev->Below(Point(15, 0)), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Uncheck this if that key is 0 on your keyboard");
+	descLabel->SetColor(COLRGB(150, 150, 150));
+	scrollArea->AddComponent(descLabel);
+
 #ifndef ANDROID
 	prev = incompatibleCheckbox = new Checkbox(prev->Below(Point(0, 15)), Point(Checkbox::AUTOSIZE, checkboxHeight), "Load incompatible saves");
 	incompatibleCheckbox->UseCheckIcon(useCheckIcon);
@@ -366,6 +375,7 @@ void OptionsUI::InitializeOptions()
 	updatesCheckbox->SetChecked(doUpdates);
 	savePressureCheckbox->SetChecked(sim->includePressure);
 	circleCheckbox->SetChecked(perfectCircleBrush);
+	graveExitsConsole->SetChecked(::graveExitsConsole);
 #ifndef ANDROID
 	incompatibleCheckbox->SetChecked(loadIncompatibleSaves);
 #endif
@@ -563,6 +573,11 @@ void OptionsUI::StickyCatsChecked(bool checked)
 void OptionsUI::CircleChecked(bool checked)
 {
 	perfectCircleBrush = checked;
+}
+
+void OptionsUI::GraveChecked(bool checked)
+{
+	::graveExitsConsole = checked;
 }
 
 void OptionsUI::IncompatibleChecked(bool checked)

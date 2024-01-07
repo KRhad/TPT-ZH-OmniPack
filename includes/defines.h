@@ -228,6 +228,7 @@ struct stamp
 typedef struct stamp stamp;
 
 extern bool console_mode;
+extern bool graveExitsConsole;
 extern bool REPLACE_MODE;
 extern bool SPECIFIC_DELETE;
 extern int GRID_MODE;
