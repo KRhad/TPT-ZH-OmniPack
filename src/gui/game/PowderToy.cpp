@@ -616,7 +616,7 @@ void PowderToy::SaveStampBtn(bool alt)
 		int reorder = 1;
 		int stampID = stamp_ui(vid_buf, &reorder);
 		if (stampID >= 0)
-			stampData = stamp_load(stampID, reorder);
+			stampData = Stamps::Ref().Load(stampID, reorder);
 		else
 			stampData = NULL;
 
