@@ -118,6 +118,8 @@ public:
 	{
 		None, Up, Left, Down, Right
 	};
+
+	void Die(Simulation *sim, Stickman *playerp, int i);
 	int Run(Stickman *playerp, UPDATE_FUNC_ARGS);
 	void Interact(Simulation *sim, Stickman *playerp, int i, int x, int y);
 	void HandleKeyPress(StkmKeys key, bool stk2);
