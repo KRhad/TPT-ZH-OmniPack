@@ -26,7 +26,7 @@
 ** [ MIT license: http://www.opensource.org/licenses/mit-license.php ]
 */
 
-#ifdef LUACONSOLE
+#if defined(LUACONSOLE) && !defined(LUAJIT)
 
 #define LUA_BITOP_VERSION	"1.0.2"
 
