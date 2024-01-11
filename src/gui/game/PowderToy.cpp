@@ -662,27 +662,29 @@ void PowderToy::ConfirmUpdate(std::string changelog, std::string file)
 #else
 	std::string title = "\bwDo you want to update Jacob1's Mod?";
 #endif
-	ConfirmPrompt *confirm = new ConfirmPrompt([file](bool wasConfirmed) {
-		if (wasConfirmed)
+
+	auto prompt = new ConfirmPrompt(title, changelog, "\btUpdate");
+	prompt->SetCallback({ [&](bool confirmed) {
+		if (confirmed)
 		{
 #if defined(ANDROID) || defined(MACOSX)
-				Platform::OpenLink(file);
+			Platform::OpenLink(file);
 #else
-				UpdateProgress * update = new UpdateProgress(file, svf_user, [](char *data, int len)
+			UpdateProgress * update = new UpdateProgress(file, svf_user, [](char *data, int len)
+			{
+				if (!do_update(data, len))
+					Engine::Ref().Shutdown();
+				else
 				{
-					if (!do_update(data, len))
-						Engine::Ref().Shutdown();
-					else
-					{
-						ErrorPrompt *error = new ErrorPrompt("Update failed - try downloading a new version.");
-						Engine::Ref().ShowWindow(error);
-					}
-				});
-				Engine::Ref().ShowWindow(update);
+					ErrorPrompt *error = new ErrorPrompt("Update failed - try downloading a new version.");
+					Engine::Ref().ShowWindow(error);
+				}
+			});
+			Engine::Ref().ShowWindow(update);
 #endif
 		}
-	}, title, changelog, "\btUpdate");
-	Engine::Ref().ShowWindow(confirm);
+	} });
+	Engine::Ref().ShowWindow(prompt);
 }
 
 void PowderToy::UpdateDrawMode()
@@ -1237,11 +1239,14 @@ void PowderToy::OnTick(uint32_t ticks)
 		message << "Switching to " << scale << "x size mode since your screen was determined to be large enough: ";
 		message << screenWidth << "x" << screenHeight << " detected, " << VIDXRES * scale << "x" << VIDYRES * scale << " required";
 		message << "\nTo undo this, hit Cancel. You can change this in settings at any time.";
-		ConfirmPrompt *confirm = new ConfirmPrompt([](bool wasConfirmed) {
-			if (!wasConfirmed)
+
+		auto prompt = new ConfirmPrompt("Large screen detected", message.str());
+		prompt->SetCallback({ [&](bool confirmed) {
+			if (!confirmed)
 				Engine::Ref().SetScale(1);
-		}, "Large screen detected", message.str());
-		Engine::Ref().ShowWindow(confirm);
+		} });
+		Engine::Ref().ShowWindow(prompt);
+
 		showLargeScreenDialog = false;
 	}
 
@@ -1403,7 +1408,7 @@ void PowderToy::OnDraw(gfx::VideoBuffer *buf)
 {
 #ifdef LUACONSOLE
 	luacon_step(mouse.X, mouse.Y);
-	ExecuteEmbededLuaCode();
+	ConfirmRunEmbeddedLuaCode();
 #endif
 	if (insideRenderOptions)
 		return;
@@ -1819,7 +1824,7 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 	else if (insideRenderOptions)
 	{
 		if (this->Subwindows.size() && deletingRenderOptions)
-			this->Subwindows[0]->toDelete = true;
+			this->Subwindows[0]->Close(MouseOutside);
 	}
 	else if (isMouseDown)
 	{
@@ -2013,18 +2018,19 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		if (this->Subwindows.size() && insideRenderOptions)
 		{
 			deletingRenderOptions = false;
-			this->Subwindows[0]->toDelete = true;
+			this->Subwindows[0]->Close(Escape);
 			break;
 		}
 
-		ConfirmPrompt *confirm = new ConfirmPrompt([&](bool wasConfirmed) {
-			if (wasConfirmed)
+		auto prompt = new ConfirmPrompt("You are about to quit", "Are you sure you want to exit the game?", "Quit");
+		prompt->SetCallback({ [&](bool confirmed) {
+			if (confirmed)
 			{
 				this->ignoreQuits = false;
-				this->toDelete = true;
+				this->Close(Escape);
 			}
-		}, "You are about to quit", "Are you sure you want to exit the game?", "Quit");
-		Engine::Ref().ShowWindow(confirm);
+		} });
+		Engine::Ref().ShowWindow(prompt);
 		break;
 	}
 	case SDL_SCANCODE_F5:
@@ -2179,7 +2185,8 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		}
 		else
 		{
-			ConfirmPrompt *confirm = new ConfirmPrompt([](bool wasConfirmed) {
+			auto prompt = new ConfirmPrompt("Install Powder Toy", "You are about to install The Powder Toy", "Install");
+			prompt->SetCallback({ [&](bool wasConfirmed) {
 				if (wasConfirmed)
 				{
 					if (Platform::RegisterExtension())
@@ -2193,8 +2200,8 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 						Engine::Ref().ShowWindow(error);
 					}
 				}
-			}, "Install Powder Toy", "You are about to install The Powder Toy", "Install");
-			Engine::Ref().ShowWindow(confirm);
+			} });
+			Engine::Ref().ShowWindow(prompt);
 		}
 		break;
 	case SDL_SCANCODE_O:

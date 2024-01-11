@@ -2,6 +2,7 @@
 #define WINDOW_H
 
 #include <vector>
+#include "DeleteReason.h"
 #include "common/tpt-stdint.h"
 #include "common/Point.h"
 #include "common/SDL_keysym.h"
@@ -31,8 +32,6 @@ public:
 	void UpdateComponents();
 	bool IsFocused(const Component *other) const { return other == focused; }
 	bool IsClicked(const Component *other) const { return other == clicked; }
-
-	enum DeleteReason { NoDeleteReason, Enter, Escape, OkayButton, ExitButton, MouseOutside };
 
 	void DoExit(DeleteReason deleteReason); // calls OnExit, doesn't actually exit though
 	void DoFocus();
@@ -66,8 +65,9 @@ public:
 	bool DoesTextInbpt() { return doesTextInput; }
 	bool IsSelfManaged() { return selfManaged; }
 
-	DeleteReason deleteReason = NoDeleteReason;
-	bool toDelete;
+	void Close(DeleteReason deleteReason);
+	bool IsBeingClosed() { return toDelete; }
+	DeleteReason GetDeleteReason() { return deleteReason; }
 
 	static const int CENTERED = -1;
 
@@ -81,6 +81,8 @@ protected:
 	bool ignoreQuits;
 	bool hasBorder;
 	int transparency = 0;
+	DeleteReason deleteReason = NoDeleteReason;
+	bool toDelete;
 
 	virtual void OnExit(DeleteReason deleteReason) { }
 	virtual void OnTick(uint32_t ticks) { }

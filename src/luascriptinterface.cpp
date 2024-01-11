@@ -23,6 +23,10 @@
 #include "game/Sign.h"
 #include "game/Stamps.h"
 #include "game/ToolTip.h"
+#include "gui/dialogs/ConfirmPrompt.h"
+#include "gui/dialogs/ErrorPrompt.h"
+#include "gui/dialogs/InfoPrompt.h"
+#include "gui/dialogs/TextPrompt.h"
 #include "gui/game/PowderToy.h"
 #include "graphics/ARGBColour.h"
 #include "graphics/Renderer.h"
@@ -1320,7 +1324,7 @@ int simulation_loadSave(lua_State * l)
 	if (open_ui(lua_vid_buf, save_id, save_date, instant))
 	{
 		if (console_mode)
-			Engine::Ref().CloseTop();
+			Engine::Ref().CloseTop(Programatic);
 	}
 	return 0;
 }
@@ -2514,6 +2518,7 @@ int fileSystem_copy(lua_State * l)
 	return 1;
 }
 
+std::map<LuaComponent *, LuaSmartRef> grabbed_components;
 void initInterfaceAPI(lua_State * l)
 {
 	struct luaL_Reg interfaceAPIMethods [] = {
@@ -2524,6 +2529,10 @@ void initInterfaceAPI(lua_State * l)
 		{"grabTextInput", interface_grabTextInput},
 		{"dropTextInput", interface_dropTextInput},
 		{"textInputRect", interface_textInputRect},
+		{"beginMessageBox", interface_beginMessageBox},
+		{"beginThrowError", interface_beginThrowError},
+		{"beginInput", interface_beginInput},
+		{"beginConfirm", interface_beginConfirm},
 		{NULL, NULL}
 	};
 	luaL_register(l, "interface", interfaceAPIMethods);
@@ -2545,7 +2554,23 @@ void initInterfaceAPI(lua_State * l)
 	Luna<LuaProgressBar>::Register(l);
 }
 
-std::map<LuaComponent *, LuaSmartRef> grabbed_components;
+int interface_showWindow(lua_State * l)
+{
+	LuaWindow * window = Luna<LuaWindow>::check(l, 1);
+
+	if (window && Engine::Ref().GetTop() != window->GetWindow())
+		Engine::Ref().ShowWindow(window->GetWindow());
+	return 0;
+}
+
+int interface_closeWindow(lua_State * l)
+{
+	LuaWindow * window = Luna<LuaWindow>::check(l, 1);
+	if (window)
+		window->GetWindow()->Close(Programatic);
+	return 0;
+}
+
 int interface_addComponent(lua_State * l)
 {
 	void *opaque = nullptr;
@@ -2632,20 +2657,144 @@ int interface_textInputRect(lua_State * l)
 	return 0;
 }
 
-int interface_showWindow(lua_State * l)
-{
-	LuaWindow * window = Luna<LuaWindow>::check(l, 1);
+template<class Type>
+struct PickIfTypeHelper;
 
-	if (window && Engine::Ref().GetTop() != window->GetWindow())
-		Engine::Ref().ShowWindow(window->GetWindow());
+template<>
+struct PickIfTypeHelper<std::string>
+{
+	static constexpr auto LuaType = LUA_TSTRING;
+	static std::string Get(lua_State *l, int index) { return tpt_lua_checkString(l, index); }
+};
+
+template<>
+struct PickIfTypeHelper<bool>
+{
+	static constexpr auto LuaType = LUA_TBOOLEAN;
+	static bool Get(lua_State *l, int index) { return lua_toboolean(l, index); }
+};
+
+template<class Type>
+static Type PickIfType(lua_State *l, int index, Type defaultValue)
+{
+	return lua_type(l, index) == PickIfTypeHelper<Type>::LuaType ? PickIfTypeHelper<Type>::Get(l, index) : defaultValue;
+}
+
+int interface_beginMessageBox(lua_State * l)
+{
+	auto title = PickIfType(l, 1, std::string("Title"));
+	auto message = PickIfType(l, 2, std::string("Message"));
+	//auto large = PickIfType(l, 3, false); // unused in mod, because info prompts automatically size themselves
+	auto cb = std::make_shared<LuaSmartRef>(l);
+	cb->Assign(l, lua_gettop(l));
+	auto prompt = new InfoPrompt(title, message, "OK");
+	prompt->SetCallback({ [cb]() {
+		lua_State *l = ::l;
+		cb->Push(l);
+		if (lua_isfunction(l, -1))
+		{
+			if (tpt_lua_pcall(l, 0, 0, 0))
+			{
+				luacon_log(luacon_geterror());
+			}
+		}
+		else
+		{
+			lua_pop(l, 1);
+		}
+	} });
+	Engine::Ref().ShowWindow(prompt);
 	return 0;
 }
 
-int interface_closeWindow(lua_State * l)
+int interface_beginThrowError(lua_State * l)
 {
-	LuaWindow * window = Luna<LuaWindow>::check(l, 1);
-	if (window)
-		window->GetWindow()->toDelete = true;
+	auto errorMessage = PickIfType(l, 1, std::string("Error text"));
+	auto cb = std::make_shared<LuaSmartRef>(l);
+	cb->Assign(l, lua_gettop(l));
+	auto prompt = new ErrorPrompt(errorMessage);
+	prompt->SetCallback({ [cb]() {
+		lua_State *l = ::l;
+		cb->Push(l);
+		if (lua_isfunction(l, -1))
+		{
+			if (tpt_lua_pcall(l, 0, 0, 0))
+			{
+				luacon_log(luacon_geterror());
+			}
+		}
+		else
+		{
+			lua_pop(l, 1);
+		}
+	} });
+	Engine::Ref().ShowWindow(prompt);
+	return 0;
+}
+
+int interface_beginInput(lua_State * l)
+{
+	auto title = PickIfType(l, 1, std::string("Title"));
+	auto prompt = PickIfType(l, 2, std::string("Enter some text:"));
+	auto text = PickIfType(l, 3, std::string(""));
+	auto shadow = PickIfType(l, 4, std::string(""));
+	auto cb = std::make_shared<LuaSmartRef>(l); // * Bind to main lua state (might be different from l).
+	cb->Assign(l, lua_gettop(l));
+	auto handle = [cb](std::optional<std::string> input) {
+		lua_State *l = ::l;
+		cb->Push(l);
+		if (lua_isfunction(l, -1))
+		{
+			if (input)
+			{
+				tpt_lua_pushString(l, *input);
+			}
+			else
+			{
+				lua_pushnil(l);
+			}
+			if (tpt_lua_pcall(l, 1, 0, 0))
+			{
+				luacon_log(luacon_geterror());
+			}
+		}
+		else
+		{
+			lua_pop(l, 1);
+		}
+	};
+	auto textPrompt = new TextPrompt(title, prompt, text, shadow);
+	textPrompt->SetCallback({ handle });
+	Engine::Ref().ShowWindow(textPrompt);
+
+	return 0;
+}
+
+int interface_beginConfirm(lua_State * l)
+{
+	auto title = PickIfType(l, 1, std::string("Title"));
+	auto message = PickIfType(l, 2, std::string("Message"));
+	auto buttonText = PickIfType(l, 3, std::string("Confirm"));
+	auto cb = std::make_shared<LuaSmartRef>(l);
+	cb->Assign(l, lua_gettop(l));
+	auto prompt = new ConfirmPrompt(title, message, buttonText);
+	prompt->SetCallback({ [cb](bool wasConfirmed) {
+		lua_State *l = ::l;
+		cb->Push(l);
+		if (lua_isfunction(l, -1))
+		{
+			lua_pushboolean(l, wasConfirmed);
+			if (tpt_lua_pcall(l, 1, 0, 0))
+			{
+				luacon_log(luacon_geterror());
+			}
+		}
+		else
+		{
+			lua_pop(l, 1);
+		}
+	} });
+	Engine::Ref().ShowWindow(prompt);
 	return 0;
 }
 

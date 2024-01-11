@@ -607,14 +607,18 @@ void OptionsUI::MigrationClicked()
 {
 	std::string from = Platform::originalCwd;
 	std::string to = Platform::sharedCwd;
-	Engine::Ref().ShowWindow(new ConfirmPrompt([=](bool wasConfirmed) {
-		if (wasConfirmed)
+
+	std::string message = "This will migrate all stamps, saves, and scripts from\n\bt" + from + "\bw\nto the shared data directory at\n\bt" + to + "\bw\n\n" +
+						  "Files that already exist will not be overwritten.";
+	auto prompt = new ConfirmPrompt("Do Migration?", message);
+	prompt->SetCallback({ [&](bool confirmed) {
+		if (confirmed)
 		{
 			std::string ret = Platform::DoMigration(from, to);
 			Engine::Ref().ShowWindow(new InfoPrompt("Migration complete", ret));
 		}
-	}, "Do Migration?", "This will migrate all stamps, saves, and scripts from\n\bt" + from + "\bw\nto the shared data directory at\n\bt" + to + "\bw\n\n" +
-		"Files that already exist will not be overwritten."));
+	} });
+	Engine::Ref().ShowWindow(prompt);
 }
 
 void OptionsUI::OnDraw(gfx::VideoBuffer *buf)

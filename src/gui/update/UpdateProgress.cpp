@@ -32,7 +32,7 @@ void UpdateProgress::ShowError(std::string message)
 {
 	ErrorPrompt *error = new ErrorPrompt(message);
 	Engine::Ref().ShowWindow(error);
-	this->toDelete = true;
+	Close(NoDeleteReason);
 }
 
 void UpdateProgress::OnTick(uint32_t ticks)
@@ -79,7 +79,7 @@ void UpdateProgress::OnTick(uint32_t ticks)
 		}
 
 		callback(updateBuf, ulen);
-		this->toDelete = true;
+		Close(NoDeleteReason);
 		return;
 	}
 	// delay completion a frame so that progress bar shows 100%

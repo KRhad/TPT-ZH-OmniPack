@@ -3,10 +3,8 @@
 #include "interface/Label.h"
 #include "interface/Button.h"
 
-ConfirmPrompt::ConfirmPrompt(std::function<void(bool)> confirmAction, std::string title, std::string message, std::string OK, std::string cancel):
-	ui::Window(Point(CENTERED, CENTERED), Point(250, 55)),
-	confirmAction(confirmAction),
-	wasConfirmed(false)
+ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, std::string OK, std::string cancel):
+	ui::Window(Point(CENTERED, CENTERED), Point(250, 55))
 {
 #ifndef TOUCHUI
 	int buttonHeight = 15;
@@ -27,22 +25,19 @@ ConfirmPrompt::ConfirmPrompt(std::function<void(bool)> confirmAction, std::strin
 	this->AddComponent(cancelButton);
 
 	Button *okButton = new Button(Point(2 * this->size.X / 3, this->size.Y - buttonHeight), Point(this->size.X / 3 + 1, buttonHeight), OK);
-	okButton->SetCallback([&](int mb) { this->wasConfirmed = true; });
 	okButton->SetTextColor(COLRGB(140, 140, 255));
-	okButton->SetCloseButton(true);
+	okButton->SetConfirmButton(true);
 	this->AddComponent(okButton);
+}
+
+void ConfirmPrompt::OnExit(DeleteReason deleteReason)
+{
+	if (callback.confirm)
+		callback.confirm(deleteReason == Confirmed);
 }
 
 void ConfirmPrompt::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
 	if (key == SDLK_RETURN)
-	{
-		this->wasConfirmed = true;
-		this->toDelete = true;
-	}
-}
-
-ConfirmPrompt::~ConfirmPrompt()
-{
-	confirmAction(wasConfirmed);
+		this->Close(Confirmed);
 }

@@ -28,7 +28,7 @@ private:
 	std::function<void(int)> callback = nullptr;
 	TextAlign alignment;
 	State state;
-	bool isCloseButton;
+	bool isCloseButton, isConfirmButton;
 
 	// "hold" button does different actions when you hold it for one second
 	uint32_t timeHeldDown;
@@ -48,7 +48,8 @@ public:
 	void SetCallback(std::function<void(int)> callback) { this->callback = callback; }
 	void SetAlign(TextAlign align) { alignment = align; }
 	void SetState(State state_) { state = state_; }
-	void SetCloseButton(bool isCloseButton_) { isCloseButton = isCloseButton_; }
+	void SetCloseButton(bool isCloseButton) { this->isCloseButton = isCloseButton; }
+	void SetConfirmButton(bool isConfirmButton) { this->isConfirmButton = isConfirmButton; }
 
 	bool IsHeld() { return timeHeldDown > heldThreshold; }
 

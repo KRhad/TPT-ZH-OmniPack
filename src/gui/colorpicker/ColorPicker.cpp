@@ -286,7 +286,7 @@ void ColorPicker::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ct
 		return;
 	if (key == SDLK_RETURN)
 	{
-		this->toDelete = true;
+		this->Close(Confirmed);
 	}
 	else if (key == SDLK_TAB)
 	{

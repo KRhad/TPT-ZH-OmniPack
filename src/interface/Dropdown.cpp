@@ -118,7 +118,7 @@ void DropdownOptions::OnMouseUp(int x, int y, unsigned char button)
 		if (dropdown->callback)
 			dropdown->callback(dropdown->selectedOption);
 	}
-	this->toDelete  = true;
+	Close(Confirmed);
 }
 
 void DropdownOptions::OnDraw(gfx::VideoBuffer* vid)

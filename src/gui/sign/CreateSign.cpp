@@ -75,7 +75,7 @@ void CreateSign::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctr
 	if (key == SDLK_RETURN)
 	{
 		SaveSign();
-		this->toDelete = true;
+		Close(Confirmed);
 	}
 }
 

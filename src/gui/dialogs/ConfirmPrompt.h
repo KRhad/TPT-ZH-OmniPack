@@ -7,13 +7,18 @@
 
 class ConfirmPrompt : public ui::Window
 {
-	std::function<void(bool)> confirmAction;
-public:
-	ConfirmPrompt(std::function<void(bool)>, std::string title, std::string message, std::string OK = "OK", std::string cancel = "Cancel");
-	~ConfirmPrompt();
-	bool wasConfirmed;
-	void Action(bool isConfirmed);
+	struct ConfirmCallback
+	{
+		std::function<void(bool)> confirm;
+	};
+	ConfirmCallback callback;
 
+public:
+	ConfirmPrompt(std::string title, std::string message, std::string OK = "OK", std::string cancel = "Cancel");
+
+	void SetCallback(ConfirmCallback callback) { this->callback = callback; }
+
+	void OnExit(DeleteReason deleteReason) override;
 	void OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
 };
 

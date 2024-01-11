@@ -17,6 +17,7 @@ Button::Button(Point position, Point size_, std::string text_):
 	alignment(CENTER),
 	state(NORMAL),
 	isCloseButton(false),
+	isConfirmButton(false),
 	timeHeldDown(0),
 	didVibrate(false)
 {
@@ -95,7 +96,9 @@ void Button::OnMouseUp(int x, int y, unsigned char button)
 				callback(button);
 		}
 		if (isCloseButton && GetParent())
-			GetParent()->toDelete = true;
+			GetParent()->Close(ExitButton);
+		else if (isConfirmButton && GetParent())
+			GetParent()->Close(Confirmed);
 	}
 }
 

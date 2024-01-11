@@ -101,7 +101,7 @@ void PropWindow::UpdatePropTool()
 		if (isParsed)
 			propTool->prop = properties[selectedProperty];
 		propTool->invalidState = !isParsed;
-		this->toDelete = true;
+		Close(Confirmed);
 	}
 }
 

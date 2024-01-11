@@ -515,7 +515,7 @@ LuaWindow::~LuaWindow()
 	}
 	// Always false, this window will never be the active window. But, whatever
 	if (Engine::Ref().GetTop() == window)
-		window->toDelete = true;
+		window->Close(Programatic);
 	else
 		delete window;
 }

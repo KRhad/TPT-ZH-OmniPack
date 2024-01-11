@@ -143,6 +143,8 @@ int luatpt_setdebug(lua_State* l);
 int luatpt_setfpscap(lua_State* l);
 int luatpt_setdrawcap(lua_State* l);
 int luatpt_getscript(lua_State* l);
+int luatpt_installScriptManager(lua_State* l);
+int getScriptInner(lua_State* l, int scriptID, std::string filename, int runScript, int confirmPrompt);
 int luatpt_setwindowsize(lua_State* l);
 int luatpt_screenshot(lua_State* l);
 int luatpt_record(lua_State* l);
@@ -164,7 +166,8 @@ extern char* LuaCode;
 extern int LuaCodeLen;
 extern bool ranLuaCode;
 void ReadLuaCode();
-void ExecuteEmbededLuaCode();
+void ConfirmRunEmbeddedLuaCode();
+void RunEmbeddedLuaCode();
 #else
 #include "lua/LuaEvents.h"
 #endif

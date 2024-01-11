@@ -19,8 +19,7 @@ public:
 	bool IsShutdown() { return isShutdown; }
 
 	void ShowWindow(ui::Window *window);
-	void CloseWindow(ui::Window *window);
-	void CloseTop();
+	void CloseTop(DeleteReason deleteReason);
 	ui::Window * GetTop() { return top; }
 	int GetStackSize() { return windows.size(); }
 	void RestorePreviousBuffer();

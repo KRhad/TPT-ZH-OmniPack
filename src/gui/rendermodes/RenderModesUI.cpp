@@ -370,5 +370,5 @@ void RenderModesUI::OnDraw(gfx::VideoBuffer *buf)
 void RenderModesUI::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
 	if (key == SDLK_RETURN)
-		this->toDelete = true;
+		Close(Confirmed);
 }

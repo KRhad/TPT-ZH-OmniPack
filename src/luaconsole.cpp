@@ -175,6 +175,7 @@ void luacon_open()
 		{"setfpscap",&luatpt_setfpscap},
 		{"setdrawcap",&luatpt_setdrawcap},
 		{"getscript",&luatpt_getscript},
+		{"installScriptManager",&luatpt_installScriptManager},
 		{"setwindowsize",&luatpt_setwindowsize},
 		{"watertest",&luatpt_togglewater},
 		{"screenshot",&luatpt_screenshot},
@@ -859,10 +860,13 @@ void lua_hook(lua_State *L, lua_Debug *ar)
 	if (ar->event == LUA_HOOKCOUNT && int(Platform::GetTime() - luaExecutionStart) > luaHookTimeout)
 	{
 		bool wasConfirmed = false;
-		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+		auto prompt = new ConfirmPrompt("Infinite Loop", "The Lua code might have an infinite loop. Press OK to stop it", "OK");
+		prompt->SetCallback({ [&](bool confirmed) {
 			wasConfirmed = confirmed;
-		}, "Infinite Loop", "The Lua code might have an infinite loop. Press OK to stop it", "OK"));
+		} });
+		Engine::Ref().ShowWindow(prompt);
 		MainLoop(true);
+
 		if (!wasConfirmed)
 			return;
 		luaL_error(l,"Error: Infinite loop");
@@ -1233,7 +1237,7 @@ int luatpt_setconsole(lua_State* l)
 	{
 		// scripts can only run in main window or console window, so just assume console window is on top and close it
 		if (console_mode)
-			Engine::Ref().CloseTop();
+			Engine::Ref().CloseTop(Programatic);
 		else
 			the_game->OpenConsole();
 	}
@@ -1846,9 +1850,11 @@ int luatpt_confirm(lua_State* l)
 	std::string buttonText = tpt_lua_optString(l, 3, "Confirm");
 
 	bool wasConfirmed = false;
-	Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+	auto prompt = new ConfirmPrompt(title, text, buttonText);
+	prompt->SetCallback({ [&](bool confirmed) {
 		wasConfirmed = confirmed;
-	}, title, text, buttonText));
+	} });
+	Engine::Ref().ShowWindow(prompt);
 	MainLoop(true);
 
 	lua_pushboolean(l, wasConfirmed ? 1 : 0);
@@ -2107,14 +2113,26 @@ int luatpt_getscript(lua_State* l)
 	int runScript = luaL_optint(l, 3, 0);
 	int confirmPrompt = luaL_optint(l, 4, 1);
 
+	return getScriptInner(l, scriptID, filename, runScript, confirmPrompt);
+}
+
+int luatpt_installScriptManager(lua_State *l)
+{
+	return getScriptInner(l, 1, "autorun.lua", 1, 0);
+}
+
+int getScriptInner(lua_State *l, int scriptID, std::string filename, int runScript, int confirmPrompt)
+{
 	std::stringstream url;
 	url << "https://starcatcher.us/scripts/main.lua?get=" << scriptID;
 	if (confirmPrompt)
 	{
 		bool wasConfirmed = false;
-		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+		auto prompt = new ConfirmPrompt("Do you want to install script?", url.str().c_str(), "Install");
+		prompt->SetCallback({ [&](bool confirmed) {
 			wasConfirmed = confirmed;
-		}, "Do you want to install script?", url.str().c_str(), "Install"));
+		} });
+		Engine::Ref().ShowWindow(prompt);
 		MainLoop(true);
 		if (!wasConfirmed)
 			return 0;
@@ -2144,13 +2162,14 @@ int luatpt_getscript(lua_State* l)
 		if (confirmPrompt)
 		{
 			bool wasConfirmed = false;
-			Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+			auto prompt = new ConfirmPrompt("File already exists, overwrite?", filename.c_str(), "Overwrite");
+			prompt->SetCallback({ [&](bool confirmed) {
 				wasConfirmed = confirmed;
-			}, "File already exists, overwrite?", filename.c_str(), "Overwrite"));
+			} });
+			Engine::Ref().ShowWindow(prompt);
 			MainLoop(true);
 			if (!wasConfirmed)
 				return 0;
-
 		}
 	}
 
@@ -2201,13 +2220,6 @@ int luatpt_record(lua_State* l)
 	if (!lua_isboolean(l, -1))
 		return luaL_typerror(l, 1, lua_typename(l, LUA_TBOOLEAN));
 	bool record = lua_toboolean(l, -1);
-	if (record)
-	{
-		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
-			record = confirmed;
-		}, "Recording", "You're about to start recording all drawn frames. This will use a lot of disk space", "Confirm"));
-		MainLoop(true);
-	}
 	if (!record)
 	{
 		Renderer::Ref().StopRecording();
@@ -2422,14 +2434,12 @@ void ReadLuaCode()
 	if (!Platform::FileExists("luacode.txt"))
 	{
 		Engine::Ref().ShowWindow(new ErrorPrompt("Place some code in luacode.txt"));
-		MainLoop(true);
 		return;
 	}
 	char* code = (char*)file_load("luacode.txt", &LuaCodeLen);
 	if (!code)
 	{
 		Engine::Ref().ShowWindow(new ErrorPrompt("Error reading luacode.txt"));
-		MainLoop(true);
 		return;
 	}
 	if (LuaCode)
@@ -2441,14 +2451,13 @@ void ReadLuaCode()
 	if (code[0] == '\x1b')
 	{
 		Engine::Ref().ShowWindow(new ErrorPrompt("Lua bytecode detected"));
-		MainLoop(true);
 		return;
 	}
 	LuaCode = code;
 	ranLuaCode = false;
 }
 
-void ExecuteEmbededLuaCode()
+void ConfirmRunEmbeddedLuaCode()
 {
 	if (!ranLuaCode && LuaCode)
 	{
@@ -2457,81 +2466,83 @@ void ExecuteEmbededLuaCode()
 		if (!previewCode)
 		{
 			Engine::Ref().ShowWindow(new ErrorPrompt("Could not write code to newluacode.txt"));
-			MainLoop(true);
 			return;
 		}
 		fwrite(LuaCode, LuaCodeLen, 1, previewCode);
 		fclose(previewCode);
 
-		bool runCode = false;
-		Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
-			runCode = confirmed;
-		}, "Lua Code", "Run the lua code in newluacode.txt?", "Run"));
-		MainLoop(true);
-		if (!runCode)
-			return;
+		auto prompt = new ConfirmPrompt("Lua Code", "Run the lua code in newluacode.txt?", "Run");
+		prompt->SetCallback({ [&](bool confirmed) {
+			if (confirmed)
+				RunEmbeddedLuaCode();
+		} });
+		Engine::Ref().ShowWindow(prompt);
+	}
+}
 
-		// lua bytecode starts with byte 27, don't allow since can't be read and can do strange things
-		if (LuaCode[0] == '\x1b')
-		{
-			Engine::Ref().ShowWindow(new ErrorPrompt("Lua bytecode detected"));
-			MainLoop(true);
-			free(LuaCode);
-			LuaCode = NULL;
-			return;
-		}
+void RunEmbeddedLuaCode()
+{
+	// lua bytecode starts with byte 27, don't allow since can't be read and can do strange things
+	if (LuaCode[0] == '\x1b')
+	{
+		Engine::Ref().ShowWindow(new ErrorPrompt("Lua bytecode detected"));
+		free(LuaCode);
+		LuaCode = NULL;
+		return;
+	}
 
-		//whitelist of functions we allow. Hopefully safe but just in case we write it to newluacode.txt above and ask the user to check it
-		if (luaL_dostring(l,"\n\
-			env = {\n\
-				print = print,\n\
-				ipairs = ipairs,\n\
-				next = next,\n\
-				pairs = pairs,\n\
-				pcall = pcall,\n\
-				tonumber = tonumber,\n\
-				tostring = tostring,\n\
-				type = type,\n\
-				unpack = unpack,\n\
-				coroutine = { create = coroutine.create, resume = coroutine.resume, \n\
-					running = coroutine.running, status = coroutine.status, \n\
-					wrap = coroutine.wrap }, \n\
-				string = { byte = string.byte, char = string.char, find = string.find, \n\
-					format = string.format, gmatch = string.gmatch, gsub = string.gsub, \n\
-					len = string.len, lower = string.lower, match = string.match, \n\
-					rep = string.rep, reverse = string.reverse, sub = string.sub, \n\
-					upper = string.upper },\n\
-				table = { insert = table.insert, maxn = table.maxn, remove = table.remove, \n\
-					sort = table.sort },\n\
-				math = { abs = math.abs, acos = math.acos, asin = math.asin, \n\
-					atan = math.atan, atan2 = math.atan2, ceil = math.ceil, cos = math.cos, \n\
-					cosh = math.cosh, deg = math.deg, exp = math.exp, floor = math.floor, \n\
-					fmod = math.fmod, frexp = math.frexp, huge = math.huge, \n\
-					ldexp = math.ldexp, log = math.log, log10 = math.log10, max = math.max, \n\
-					min = math.min, modf = math.modf, pi = math.pi, pow = math.pow, \n\
-					rad = math.rad, random = math.random, randomseed = math.randomseed, sin = math.sin, sinh = math.sinh, \n\
-					sqrt = math.sqrt, tan = math.tan, tanh = math.tanh },\n\
-				os = { clock = os.clock, difftime = os.difftime, time = os.time, date = os.date, exit = os.exit },\n\
-				tpt = tpt,\n\
-				sim = sim, simulation = simulation,\n\
-				elem = elem, elements = elements,\n\
-				gfx = gfx, graphics = graphics,\n\
-				ren = ren, renderer = renderer,\n\
-				bit = bit,\n\
-				socket = { gettime = socket.gettime }} --[[I think socket.gettime() is safe?]]\n\
-				\n\
-			"))
-			luacon_log(luacon_geterror()); //if large above thing errored
+	//whitelist of functions we allow. Hopefully safe but just in case we write it to newluacode.txt above and ask the user to check it
+	if (luaL_dostring(l,"\n\
+		env = {\n\
+			print = print,\n\
+			ipairs = ipairs,\n\
+			next = next,\n\
+			pairs = pairs,\n\
+			pcall = pcall,\n\
+			tonumber = tonumber,\n\
+			tostring = tostring,\n\
+			type = type,\n\
+			unpack = unpack,\n\
+			coroutine = { create = coroutine.create, resume = coroutine.resume, \n\
+				running = coroutine.running, status = coroutine.status, \n\
+				wrap = coroutine.wrap }, \n\
+			string = { byte = string.byte, char = string.char, find = string.find, \n\
+				format = string.format, gmatch = string.gmatch, gsub = string.gsub, \n\
+				len = string.len, lower = string.lower, match = string.match, \n\
+				rep = string.rep, reverse = string.reverse, sub = string.sub, \n\
+				upper = string.upper },\n\
+			table = { insert = table.insert, maxn = table.maxn, remove = table.remove, \n\
+				sort = table.sort },\n\
+			math = { abs = math.abs, acos = math.acos, asin = math.asin, \n\
+				atan = math.atan, atan2 = math.atan2, ceil = math.ceil, cos = math.cos, \n\
+				cosh = math.cosh, deg = math.deg, exp = math.exp, floor = math.floor, \n\
+				fmod = math.fmod, frexp = math.frexp, huge = math.huge, \n\
+				ldexp = math.ldexp, log = math.log, log10 = math.log10, max = math.max, \n\
+				min = math.min, modf = math.modf, pi = math.pi, pow = math.pow, \n\
+				rad = math.rad, random = math.random, randomseed = math.randomseed, sin = math.sin, sinh = math.sinh, \n\
+				sqrt = math.sqrt, tan = math.tan, tanh = math.tanh },\n\
+			os = { clock = os.clock, difftime = os.difftime, time = os.time, date = os.date, exit = os.exit },\n\
+			tpt = tpt,\n\
+			sim = sim, simulation = simulation,\n\
+			elem = elem, elements = elements,\n\
+			gfx = gfx, graphics = graphics,\n\
+			ren = ren, renderer = renderer,\n\
+			bit = bit,\n\
+			socket = { gettime = socket.gettime }} --[[I think socket.gettime() is safe?]]\n\
+			\n\
+		"))
+	{
+		luacon_log(luacon_geterror()); //if large above thing errored
+	}
 
-		luaExecutionStart = Platform::GetTime();
+	luaExecutionStart = Platform::GetTime();
 #if LUA_VERSION_NUM >= 502
-		if (luaL_dostring(l, "local code = loadfile(\"newluacode.txt\", nil, env) if code then code() end"))
+	if (luaL_dostring(l, "local code = loadfile(\"newluacode.txt\", nil, env) if code then code() end"))
 #else
-		if (luaL_dostring(l, "local code = loadfile(\"newluacode.txt\") if code then setfenv(code, env) code() end"))
+	if (luaL_dostring(l, "local code = loadfile(\"newluacode.txt\") if code then setfenv(code, env) code() end"))
 #endif
-		{
-			luacon_log(luacon_geterror());
-		}
+	{
+		luacon_log(luacon_geterror());
 	}
 }
 

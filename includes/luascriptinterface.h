@@ -22,6 +22,8 @@ extern int textInputRefcount;
 extern long unsigned int luaExecutionStart;
 extern int luaHookTimeout;
 
+extern lua_State * l; // global lua state, used in some callbacks
+
 int simulation_signIndex(lua_State *l);
 int simulation_signNewIndex(lua_State *l);
 int simulation_newsign(lua_State *l);
@@ -131,6 +133,10 @@ int interface_removeComponent(lua_State * l);
 int interface_grabTextInput(lua_State * l);
 int interface_dropTextInput(lua_State * l);
 int interface_textInputRect(lua_State * l);
+int interface_beginMessageBox(lua_State * l);
+int interface_beginThrowError(lua_State * l);
+int interface_beginInput(lua_State * l);
+int interface_beginConfirm(lua_State * l);
 
 void initGraphicsAPI(lua_State * l);
 int graphics_textSize(lua_State * l);

@@ -77,7 +77,9 @@
 #include "simulation/GolNumbers.h"
 
 #include "gui/dialogs/ConfirmPrompt.h"
+#include "gui/dialogs/ErrorPrompt.h"
 #include "gui/dialogs/InfoPrompt.h"
+#include "gui/dialogs/TextPrompt.h"
 #include "gui/game/PowderToy.h"
 #include "gui/gol/GolWindow.h"
 #include "simulation/elements/ANIM.h"
@@ -2903,7 +2905,8 @@ void menu_select_element(int b, Tool* over)
 #ifdef LUACONSOLE
 				ReadLuaCode();
 #else
-				error_ui(vid_buf, 0, "Lua console not enabled");
+				auto *errorMsg = new ErrorPrompt("Lua console not enabled");
+				Engine::Ref().ShowWindow(errorMsg);
 #endif
 			else if (toolID == FAV_CUSTOMHUD)
 				active_menu = SC_HUD;
@@ -2967,11 +2970,23 @@ void menu_select_element(int b, Tool* over)
 				sprintf(hud_curr,"%i",currentHud[toolID-HUD_REALSTART]);
 				if (hud_menu[toolID].name.find("#") != hud_menu[toolID].name.npos)
 				{
-					int decimals = atoi(input_ui(vid_buf,hud_menu[toolID].name.c_str(),"Enter number of decimal places",hud_curr,""));
-					if (decimals <= 10)
-						currentHud[toolID-HUD_REALSTART] = decimals;
-					else
-						error_ui(vid_buf, 0, "# of Decimal places cannot be more than 10");
+					auto *prompt = new TextPrompt(hud_menu[toolID].name, "Enter number of decimal places", hud_curr, "");
+					prompt->SetCallback({ [toolID](std::optional<std::string> text) {
+						if (text)
+						{
+							int decimals = Format::StringToNumber<int>(*text);
+							if (decimals >= 0 && decimals <= 10)
+							{
+								currentHud[toolID - HUD_REALSTART] = decimals;
+							}
+							else
+							{
+								auto *errorMsg = new ErrorPrompt("# of Decimal places must be between 0 and 10");
+								Engine::Ref().ShowWindow(errorMsg);
+							}
+						}
+					} });
+					Engine::Ref().ShowWindow(prompt);
 				}
 				else
 					currentHud[toolID-HUD_REALSTART] = !currentHud[toolID-HUD_REALSTART];
@@ -3044,8 +3059,23 @@ void menu_select_element(int b, Tool* over)
 			if (toolID == FAV_HEAT)
 			{
 				heatmode = 2;
-				lowesttemp = atoi(input_ui(vid_buf,"Manual Heat Display","Enter a Minimum Temperature in Celcius","",""))+273;
-				highesttemp = atoi(input_ui(vid_buf,"Manual Heat Display","Enter a Maximum Temperature in Celcius","",""))+273;
+				auto *lowestPrompt = new TextPrompt("Manual Heat Display", "Enter a Minimum Temperature in Celcius", "", "");
+				lowestPrompt->SetCallback({ [](std::optional<std::string> lowestText) {
+					if (lowestText) {
+						int deseriedLowestTemp = Format::StringToNumber<int>(*lowestText) + 273;
+
+						// Beautiful nesting
+						auto *highestPrompt = new TextPrompt("Manual Heat Display", "Enter a Maximum Temperature in Celcius", "", "");
+						Engine::Ref().ShowWindow(highestPrompt);
+						highestPrompt->SetCallback({ [deseriedLowestTemp](std::optional<std::string> highestText) {
+							if (highestText) {
+								lowesttemp = deseriedLowestTemp;
+								highesttemp = Format::StringToNumber<int>(*highestText) + 273;
+							}
+						} });
+					}
+				} });
+				Engine::Ref().ShowWindow(lowestPrompt);
 			}
 			else if (toolID == FAV_DATE)
 			{
@@ -3075,15 +3105,17 @@ void menu_select_element(int b, Tool* over)
 			{
 				auto *cgol = static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).GetCustomGOLByRule(toolID);
 				int cgolRule = cgol->rule;
-				auto *confirmPrompt = new ConfirmPrompt([cgolRule](bool b) {
-					if (b)
+
+				auto prompt = new ConfirmPrompt("Remove custom GOL type", "Are you sure you want to remove " + cgol->nameString + "?");
+				prompt->SetCallback({ [cgolRule](bool confirmed) {
+					if (confirmed)
 					{
 						static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).RemoveCustomGOL(cgolRule);
 						FillMenus();
 						save_presets();
 					}
-				}, "Remove custom GOL type", "Are you sure you want to remove " + cgol->nameString + "?");
-				Engine::Ref().ShowWindow(confirmPrompt);
+				} });
+				Engine::Ref().ShowWindow(prompt);
 			}
 
 			FillMenus();
@@ -6372,14 +6404,13 @@ void decoration_editor(pixel *vid_buf, int b, int bq, int mx, int my)
 		//clear button
 		if (b && !bq && mx >= window_offset_x+230 && my >= 2+255+6 && mx <= window_offset_x + 230+26 && my <= 2+255+5+13)
 		{
-			ConfirmPrompt *confirm = new ConfirmPrompt([](bool wasConfirmed) {
-				if (wasConfirmed)
-				{
+			auto prompt = new ConfirmPrompt("Reset Decoration Layer", "Do you really want to erase everything?", "Erase");
+			prompt->SetCallback({ [&](bool confirmed) {
+				if (confirmed)
 					for (int i = 0; i < NPART; i++)
 						parts[i].dcolour = COLARGB(0, 0, 0, 0);
-				}
-			}, "Reset Decoration Layer", "Do you really want to erase everything?", "Erase");
-			Engine::Ref().ShowWindow(confirm);
+			} });
+			Engine::Ref().ShowWindow(prompt);
 		}
 		if (b && !bq && mx > (on_left?143:502) && my > 264 && mx < (on_left?203:562) && my < 280)
 		{

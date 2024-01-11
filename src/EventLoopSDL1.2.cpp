@@ -130,7 +130,7 @@ int EventProcess(SDL_Event event, ui::Window * eventHandler)
 		}
 
 		if (eventHandler && event.key.keysym.sym == SDLK_ESCAPE && eventHandler->CanQuit())
-			return true;
+			return 1;
 		else if (event.key.keysym.sym == 'q' && (sdl_mod & (KMOD_CTRL | KMOD_GUI)))
 		{
 			bool wasConfirmed = false;
@@ -141,9 +141,11 @@ int EventProcess(SDL_Event event, ui::Window * eventHandler)
 			}
 			else
 			{
-				Engine::Ref().ShowWindow(new ConfirmPrompt([&](bool confirmed) {
+				auto prompt = new ConfirmPrompt("You are about to quit", "Are you sure you want to quit?", "Quit");
+				prompt->SetCallback({ [&](bool confirmed) {
 					wasConfirmed = confirmed;
-				}, "You are about to quit", "Are you sure you want to quit?", "Quit"));
+				} });
+				Engine::Ref().ShowWindow(prompt);
 				MainLoop(true);
 			}
 			if (wasConfirmed)
@@ -240,7 +242,7 @@ void MainLoop(bool secondaryLoop)
 		{
 			int ret = EventProcess(event, top);
 			if (ret)
-				engine.CloseTop();
+				engine.CloseTop(Escape);
 		}
 
 		uint32_t currentTick = SDL_GetTicks();

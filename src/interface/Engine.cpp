@@ -72,25 +72,17 @@ void Engine::ShowWindowDelayed()
 	top->DoMouseMove(mx, my, 0, 0);
 }
 
-void Engine::CloseWindow(ui::Window *window)
-{
-	if (window == windows.top())
-	{
-		window->toDelete = true;
-	}
-}
-
-void Engine::CloseTop()
+void Engine::CloseTop(DeleteReason deleteReason)
 {
 	ui::Window *temp = windows.top();
-	temp->toDelete = true;
+	temp->Close(deleteReason);
 }
 
 void Engine::CloseWindowDelayed()
 {
-	while (top && (top->toDelete || isShutdown))
+	while (top && (top->IsBeingClosed() || isShutdown))
 	{
-		top->DoExit(top->deleteReason);
+		top->DoExit(top->GetDeleteReason());
 		if (!top->IsSelfManaged())
 			delete top;
 		else

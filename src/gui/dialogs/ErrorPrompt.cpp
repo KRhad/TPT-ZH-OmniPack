@@ -25,8 +25,14 @@ ErrorPrompt::ErrorPrompt(std::string message, std::string dismiss):
 	this->AddComponent(okButton);
 }
 
+void ErrorPrompt::OnExit(DeleteReason deleteReason)
+{
+	if (callback.dismiss)
+		callback.dismiss();
+}
+
 void ErrorPrompt::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
 	if (key == SDLK_RETURN)
-		this->toDelete = true;
+		this->Close(Confirmed);
 }

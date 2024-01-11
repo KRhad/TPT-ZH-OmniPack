@@ -10,7 +10,6 @@ namespace ui
 {
 
 Window::Window(Point position_, Point size_):
-	toDelete(false),
 	position(position_),
 	size(size_),
 	Components(std::vector<Component*>()),
@@ -18,6 +17,7 @@ Window::Window(Point position_, Point size_):
 	isMouseDown(false),
 	ignoreQuits(false),
 	hasBorder(true),
+	toDelete(false),
 	parent(nullptr),
 	mouseDownOutside(false),
 	focused(nullptr)
@@ -115,7 +115,7 @@ void Window::RemoveSubwindow(Window *other)
 	{
 		if ((*iter) == other)
 		{
-			(*iter)->toDelete = true;
+			(*iter)->Close(NoDeleteReason);
 		}
 	}
 }
@@ -378,8 +378,7 @@ void Window::DoMouseUp(int x, int y, unsigned char button)
 		mouseDownOutside = false;
 		if (hasBorder && (x < position.X || x > position.X+size.X || y < position.Y || y > position.Y+size.Y))
 		{
-			toDelete = true;
-			deleteReason = MouseOutside;
+			Close(MouseOutside);
 		}
 	}
 #endif
@@ -511,6 +510,12 @@ bool Window::InsideSubwindow(int x, int y)
 		}
 	}
 	return false;
+}
+
+void Window::Close(DeleteReason deleteReason)
+{
+	this->toDelete = true;
+	this->deleteReason = deleteReason;
 }
 
 }
