@@ -23,40 +23,38 @@ int CONV_update(UPDATE_FUNC_ARGS)
 	{
 		for (int rx = -1; rx <= 1; rx++)
 			for (int ry = -1; ry <= 1; ry++)
-				if (BOUNDS_CHECK)
+			{
+				int r = photons[y+ry][x+rx];
+				if (!r)
+					r = pmap[y+ry][x+rx];
+				if (!r)
+					continue;
+				int rt = TYP(r);
+				if (!(sim->elements[rt].Properties&PROP_CLONE) && !(sim->elements[rt].Properties&PROP_BREAKABLECLONE) &&
+					rt != PT_STKM && rt != PT_STKM2 && rt != PT_CONV)
 				{
-					int r = photons[y+ry][x+rx];
-					if (!r)
-						r = pmap[y+ry][x+rx];
-					if (!r)
-						continue;
-					int rt = TYP(r);
-					if (!(sim->elements[rt].Properties&PROP_CLONE) && !(sim->elements[rt].Properties&PROP_BREAKABLECLONE) &&
-					    rt != PT_STKM && rt != PT_STKM2 && rt != PT_CONV)
-					{
-						parts[i].ctype = rt;
-						if (rt == PT_LIFE)
-							parts[i].ctype |= PMAPID(parts[ID(r)].ctype);
-					}
+					parts[i].ctype = rt;
+					if (rt == PT_LIFE)
+						parts[i].ctype |= PMAPID(parts[ID(r)].ctype);
 				}
+			}
 	}
 	else
 	{
 		int restrictElement = sim->IsElement(parts[i].tmp) ? parts[i].tmp : 0;
 		for (int rx = -1; rx <= 1; rx++)
 			for (int ry = -1; ry <= 1; ry++)
-				if (BOUNDS_CHECK)
+			{
+				int r = photons[y+ry][x+rx];
+				if (!r || (restrictElement && ((TYP(r) == restrictElement) == (parts[i].tmp2 == 1))))
+					r = pmap[y+ry][x+rx];
+				if (!r || (restrictElement && ((TYP(r) == restrictElement) == (parts[i].tmp2 == 1))))
+					continue;
+				if (TYP(r) != PT_CONV && !(sim->elements[TYP(r)].Properties&PROP_INDESTRUCTIBLE) && TYP(r) != ctype)
 				{
-					int r = photons[y+ry][x+rx];
-					if (!r || (restrictElement && ((TYP(r) == restrictElement) == (parts[i].tmp2 == 1))))
-						r = pmap[y+ry][x+rx];
-					if (!r || (restrictElement && ((TYP(r) == restrictElement) == (parts[i].tmp2 == 1))))
-						continue;
-					if (TYP(r) != PT_CONV && !(sim->elements[TYP(r)].Properties&PROP_INDESTRUCTIBLE) && TYP(r) != ctype)
-					{
-						sim->part_create(ID(r), x+rx, y+ry, ctype, ctypeExtra);
-					}
+					sim->part_create(ID(r), x+rx, y+ry, ctype, ctypeExtra);
 				}
+			}
 	}
 	return 0;
 }

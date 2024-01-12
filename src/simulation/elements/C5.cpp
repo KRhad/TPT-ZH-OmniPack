@@ -17,12 +17,11 @@
 
 int C5_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if ((TYP(r)!=PT_C5 && parts[ID(r)].temp<100 && sim->elements[TYP(r)].HeatConduct && (TYP(r)!=PT_HSWC||parts[ID(r)].life==10)) || TYP(r)==PT_HFLM)
@@ -42,7 +41,7 @@ int C5_update(UPDATE_FUNC_ARGS)
 		float vy = (parts[i].tmp >> 16) / 255.0f;
 		float dx = ((parts[i].tmp2 << 16) >> 16) / 255.0f;
 		float dy = (parts[i].tmp2 >> 16) / 255.0f;
-		r = sim->part_create(-3, x, y, PT_PHOT);
+		int r = sim->part_create(-3, x, y, PT_PHOT);
 		if (r != -1)
 		{
 			parts[r].ctype = parts[i].ctype;

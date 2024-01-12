@@ -19,33 +19,31 @@
 
 int BIZR_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, nr, ng, nb, na;
-	float tr, tg, tb, ta, mr, mg, mb, ma;
 	if (parts[i].dcolour)
 	{
-		for (rx=-2; rx<3; rx++)
-			for (ry=-2; ry<3; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -2; rx <= 2; rx++)
+			for (int ry = -2; ry <= 2; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
 					if (TYP(r)!=PT_BIZR && TYP(r)!=PT_BIZRG  && TYP(r)!=PT_BIZRS)
 					{
-						ta = (float)COLA(parts[ID(r)].dcolour);
-						tr = (float)COLR(parts[ID(r)].dcolour);
-						tg = (float)COLG(parts[ID(r)].dcolour);
-						tb = (float)COLB(parts[ID(r)].dcolour);
+						float ta = (float)COLA(parts[ID(r)].dcolour);
+						float tr = (float)COLR(parts[ID(r)].dcolour);
+						float tg = (float)COLG(parts[ID(r)].dcolour);
+						float tb = (float)COLB(parts[ID(r)].dcolour);
 
-						ma = (float)COLA(parts[i].dcolour);
-						mr = (float)COLR(parts[i].dcolour);
-						mg = (float)COLG(parts[i].dcolour);
-						mb = (float)COLB(parts[i].dcolour);
+						float ma = (float)COLA(parts[i].dcolour);
+						float mr = (float)COLR(parts[i].dcolour);
+						float mg = (float)COLG(parts[i].dcolour);
+						float mb = (float)COLB(parts[i].dcolour);
 						
-						nr = (int)((tr*BLEND) + (mr*(1 - BLEND)));
-						ng = (int)((tg*BLEND) + (mg*(1 - BLEND)));
-						nb = (int)((tb*BLEND) + (mb*(1 - BLEND)));
-						na = (int)((ta*BLEND) + (ma*(1 - BLEND)));
+						int nr = (int)((tr*BLEND) + (mr*(1 - BLEND)));
+						int ng = (int)((tg*BLEND) + (mg*(1 - BLEND)));
+						int nb = (int)((tb*BLEND) + (mb*(1 - BLEND)));
+						int na = (int)((ta*BLEND) + (ma*(1 - BLEND)));
 						
 						parts[ID(r)].dcolour = COLARGB(na, nr, ng, nb);
 					}

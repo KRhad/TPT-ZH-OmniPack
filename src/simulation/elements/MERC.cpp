@@ -17,7 +17,6 @@
 
 int MERC_update(UPDATE_FUNC_ARGS)
 {
-	int r;
 	// Max number of particles that can be condensed into one
 	const int absorbScale = 10000;
 	// Obscure division by 0 fix
@@ -35,9 +34,9 @@ int MERC_update(UPDATE_FUNC_ARGS)
 	{
 		for (int rx = -1; rx <= 1; rx++)
 			for (int ry=-1; ry <= 1; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (!r || (parts[i].tmp >= maxtmp))
 						continue;
 					if (TYP(r)==PT_MERC && RNG::Ref().chance(1, 3))
@@ -53,9 +52,9 @@ int MERC_update(UPDATE_FUNC_ARGS)
 	else
 		for (int rx = -1; rx <= 1; rx++)
 			for (int ry = -1; ry <= 1; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (parts[i].tmp <= maxtmp)
 						continue;
 					//if nothing then create deut
@@ -73,9 +72,9 @@ int MERC_update(UPDATE_FUNC_ARGS)
 	{
 		int rx = RNG::Ref().between(-2, 2);
 		int ry = RNG::Ref().between(-2, 2);
-		if (BOUNDS_CHECK && (rx || ry))
+		if (rx || ry)
 		{
-			r = pmap[y+ry][x+rx];
+			int r = pmap[y+ry][x+rx];
 			if (!r)
 				continue;
 			//diffusion

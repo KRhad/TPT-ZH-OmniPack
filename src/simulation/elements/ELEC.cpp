@@ -17,83 +17,81 @@
 
 int ELEC_update(UPDATE_FUNC_ARGS)
 {
-	int r, nb;
 	for (int rx = -2; rx <= 2; rx++)
 		for (int ry = -2; ry <= 2; ry++)
-			if (BOUNDS_CHECK)
+		{
+			int r = pmap[y+ry][x+rx];
+			if (!r)
+				r = photons[y+ry][x+rx];
+			if (!r)
+				continue;
+			switch (TYP(r))
 			{
-				r = pmap[y+ry][x+rx];
-				if (!r)
-					r = photons[y+ry][x+rx];
-				if (!r)
-					continue;
-				switch (TYP(r))
-				{
-				case PT_GLAS:
-					for (int rrx = -1; rrx <= 1; rrx++)
-						for (int rry = -1; rry <= 1; rry++)
-							if (x+rx+rrx>=0 && y+ry+rry>=0 && x+rx+rrx<XRES && y+ry+rry<YRES)
+			case PT_GLAS:
+				for (int rrx = -1; rrx <= 1; rrx++)
+					for (int rry = -1; rry <= 1; rry++)
+						if (x+rx+rrx>=0 && y+ry+rry>=0 && x+rx+rrx<XRES && y+ry+rry<YRES)
+						{
+							int nb = sim->part_create(-1, x+rx+rrx, y+ry+rry, PT_EMBR);
+							if (nb!=-1)
 							{
-								nb = sim->part_create(-1, x+rx+rrx, y+ry+rry, PT_EMBR);
-								if (nb!=-1)
-								{
-									parts[nb].tmp = 0;
-									parts[nb].life = 50;
-									parts[nb].temp = parts[i].temp*0.8f;
-									parts[nb].vx = RNG::Ref().between(-10, 10);
-									parts[nb].vy = RNG::Ref().between(-10, 10);
-								}
+								parts[nb].tmp = 0;
+								parts[nb].life = 50;
+								parts[nb].temp = parts[i].temp*0.8f;
+								parts[nb].vx = RNG::Ref().between(-10, 10);
+								parts[nb].vy = RNG::Ref().between(-10, 10);
 							}
-					sim->part_kill(i);
-					return 1;
-				case PT_LCRY:
-					parts[ID(r)].tmp2 = RNG::Ref().between(5, 9);
-					break;
-				case PT_WATR:
-				case PT_DSTW:
-				case PT_SLTW:
-				case PT_CBNW:
-					if (RNG::Ref().chance(1, 3))
-					{
-						sim->part_create(ID(r), x+rx, y+ry, PT_O2);
-					}
-					else
-					{
-						sim->part_create(ID(r), x+rx, y+ry, PT_H2);
-					}
-					sim->part_kill(i);
-					return 1;
-				case PT_PROT:
-					if (parts[ID(r)].tmp2&0x1)
-						continue;
-				case PT_NEUT:
-					sim->part_change_type(ID(r), x+rx, y+ry, PT_H2);
-					parts[ID(r)].life = 0;
-					parts[ID(r)].ctype = 0;
-					sim->part_kill(i);
-					break;
-				case PT_DEUT:
-					if (parts[ID(r)].life < 6000)
-						parts[ID(r)].life += 1;
-					parts[ID(r)].temp = 0;
-					sim->part_kill(i);
-					return 1;
-				case PT_EXOT:
-					parts[ID(r)].tmp2 += 5;
-					parts[ID(r)].life = 1000;
-					break;
-				case PT_NONE: //seems to speed up ELEC even if it isn't used
-					break;
-				default:
-					if (sim->elements[TYP(r)].Properties & PROP_CONDUCTS && (TYP(r) != PT_NBLE || parts[i].temp < 2273.15f))
-					{
-						sim->spark_conductive_attempt(ID(r), x+rx, y+ry);
-						sim->part_kill(i);
-						return 1;
-					}
-					break;
+						}
+				sim->part_kill(i);
+				return 1;
+			case PT_LCRY:
+				parts[ID(r)].tmp2 = RNG::Ref().between(5, 9);
+				break;
+			case PT_WATR:
+			case PT_DSTW:
+			case PT_SLTW:
+			case PT_CBNW:
+				if (RNG::Ref().chance(1, 3))
+				{
+					sim->part_create(ID(r), x+rx, y+ry, PT_O2);
 				}
+				else
+				{
+					sim->part_create(ID(r), x+rx, y+ry, PT_H2);
+				}
+				sim->part_kill(i);
+				return 1;
+			case PT_PROT:
+				if (parts[ID(r)].tmp2&0x1)
+					continue;
+			case PT_NEUT:
+				sim->part_change_type(ID(r), x+rx, y+ry, PT_H2);
+				parts[ID(r)].life = 0;
+				parts[ID(r)].ctype = 0;
+				sim->part_kill(i);
+				break;
+			case PT_DEUT:
+				if (parts[ID(r)].life < 6000)
+					parts[ID(r)].life += 1;
+				parts[ID(r)].temp = 0;
+				sim->part_kill(i);
+				return 1;
+			case PT_EXOT:
+				parts[ID(r)].tmp2 += 5;
+				parts[ID(r)].life = 1000;
+				break;
+			case PT_NONE: //seems to speed up ELEC even if it isn't used
+				break;
+			default:
+				if (sim->elements[TYP(r)].Properties & PROP_CONDUCTS && (TYP(r) != PT_NBLE || parts[i].temp < 2273.15f))
+				{
+					sim->spark_conductive_attempt(ID(r), x+rx, y+ry);
+					sim->part_kill(i);
+					return 1;
+				}
+				break;
 			}
+		}
 	return 0;
 }
 

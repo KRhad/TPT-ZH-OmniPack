@@ -17,15 +17,14 @@
 
 int H2_update(UPDATE_FUNC_ARGS)
 {
-	int r,rx,ry,rt;
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				rt = TYP(r);
+				int rt = TYP(r);
 				if (sim->air->pv[y/CELL][x/CELL] > 8.0f && rt == PT_DESL) // This will not work. DESL turns to fire above 5.0 pressure
 				{
 					part_change_type(ID(r),x+rx,y+ry,PT_WATR);
@@ -87,7 +86,7 @@ int H2_update(UPDATE_FUNC_ARGS)
 				parts[j].temp = temp;
 				parts[j].tmp = 0x1;
 			}
-			rx = x + RNG::Ref().between(-1, 1), ry = y + RNG::Ref().between(-1, 1), rt = TYP(pmap[ry][rx]);
+			int rx = x + RNG::Ref().between(-1, 1), ry = y + RNG::Ref().between(-1, 1), rt = TYP(pmap[ry][rx]);
 			if (sim->can_move[PT_PLSM][rt] || rt == PT_H2)
 			{
 				j = sim->part_create(-3,rx,ry,PT_PLSM);

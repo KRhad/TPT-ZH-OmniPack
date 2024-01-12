@@ -33,11 +33,11 @@ int BCOL_update(UPDATE_FUNC_ARGS)
 	/*if(100-parts[i].life > parts[i].tmp2)
 		parts[i].tmp2 = 100-parts[i].life;
 	if(parts[i].tmp2 < 0) parts[i].tmp2 = 0;
-	for ( trade = 0; trade<4; trade ++)
+	for (int trade = 0; trade<4; trade ++)
 	{
-		rx = RNG::Ref().between(-2, 2);
-		ry = RNG::Ref().between(-2, 2);
-		if (BOUNDS_CHECK && (rx || ry))
+		int rx = RNG::Ref().between(-2, 2);
+		int ry = RNG::Ref().between(-2, 2);
+		if (rx || ry)
 		{
 			r = pmap[y+ry][x+rx];
 			if (!r)

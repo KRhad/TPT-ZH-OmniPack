@@ -17,7 +17,7 @@
 
 int LCRY_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, check, setto;
+	int check, setto;
 	switch (parts[i].tmp)
 	{
 	case 1:
@@ -53,11 +53,11 @@ int LCRY_update(UPDATE_FUNC_ARGS)
 		parts[i].life = 0;
 		return 0;
 	}
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -1; rx <= 1; rx++)
+		for (int ry = -1; ry <= 1; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if (TYP(r)==PT_LCRY && parts[ID(r)].tmp == check)

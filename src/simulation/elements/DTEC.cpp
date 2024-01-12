@@ -17,19 +17,19 @@
 
 int DTEC_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, rt, rd = parts[i].tmp2;
+	int rd = parts[i].tmp2;
 	if (rd > 25) parts[i].tmp2 = rd = 25;
 	if (parts[i].life)
 	{
 		parts[i].life = 0;
-		for (rx=-2; rx<3; rx++)
-			for (ry=-2; ry<3; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -2; rx <= 2; rx++)
+			for (int ry = -2; ry <= 2; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					rt = TYP(r);
+					int rt = TYP(r);
 					if (parts_avg(i,ID(r),PT_INSL) != PT_INSL)
 					{
 						if ((sim->elements[rt].Properties&PROP_CONDUCTS) && !(rt==PT_WATR||rt==PT_SLTW||rt==PT_NTCT||rt==PT_PTCT||rt==PT_INWR) && parts[ID(r)].life==0)
@@ -41,11 +41,11 @@ int DTEC_update(UPDATE_FUNC_ARGS)
 	}
 	bool setFilt = false;
 	int photonWl = 0;
-	for (rx=-rd; rx<rd+1; rx++)
-		for (ry=-rd; ry<rd+1; ry++)
+	for (int rx = -rd; rx < rd + 1; rx++)
+		for (int ry = -rd; ry < rd + 1; ry++)
 			if (x+rx>=0 && y+ry>=0 && x+rx<XRES && y+ry<YRES && (rx || ry))
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					r = photons[y+ry][x+rx];
 				if (!r)
@@ -60,16 +60,15 @@ int DTEC_update(UPDATE_FUNC_ARGS)
 			}
 	if (setFilt)
 	{
-		int nx, ny;
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					nx = x+rx;
-					ny = y+ry;
+					int nx = x+rx;
+					int ny = y+ry;
 					while (TYP(r)==PT_FILT)
 					{
 						parts[ID(r)].ctype = photonWl;

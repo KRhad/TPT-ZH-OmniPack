@@ -17,7 +17,7 @@
 
 int VIBR_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, transfer, trade, rndstore;
+	int rndstore = 0;
 	if (!parts[i].life) //if not exploding
 	{
 		//Heat absorption code
@@ -53,10 +53,10 @@ int VIBR_update(UPDATE_FUNC_ARGS)
 			rndstore = RNG::Ref().gen();
 		if (parts[i].life < 300)
 		{
-			rx = rndstore%3-1;
-			ry = (rndstore>>2)%3-1;
+			int rx = rndstore%3-1;
+			int ry = (rndstore>>2)%3-1;
 			rndstore = rndstore >> 4;
-			r = pmap[y+ry][x+rx];
+			int r = pmap[y+ry][x+rx];
 			if (TYP(r) && TYP(r) != PT_BREL && (sim->elements[TYP(r)].Properties&PROP_CONDUCTS) && !parts[ID(r)].life)
 			{
 				sim->spark_conductive(ID(r), x+rx, y+ry);
@@ -65,16 +65,13 @@ int VIBR_update(UPDATE_FUNC_ARGS)
 		//Release all heat
 		if (parts[i].life < 500)
 		{
-			rx = rndstore%7-3;
-			ry = (rndstore>>3)%7-3;
-			if(BOUNDS_CHECK)
+			int rx = rndstore%7-3;
+			int ry = (rndstore>>3)%7-3;
+			int r = pmap[y+ry][x+rx];
+			if (TYP(r) && TYP(r) != PT_VIBR && TYP(r) != PT_BVBR && sim->elements[TYP(r)].HeatConduct && (TYP(r)!=PT_HSWC||parts[ID(r)].life==10))
 			{
-				r = pmap[y+ry][x+rx];
-				if (TYP(r) && TYP(r) != PT_VIBR && TYP(r) != PT_BVBR && sim->elements[TYP(r)].HeatConduct && (TYP(r)!=PT_HSWC||parts[ID(r)].life==10))
-				{
-					parts[ID(r)].temp += parts[i].tmp*3;
-					parts[i].tmp = 0;
-				}
+				parts[ID(r)].temp += parts[i].tmp*3;
+				parts[i].tmp = 0;
 			}
 		}
 		//Explosion code
@@ -110,11 +107,11 @@ int VIBR_update(UPDATE_FUNC_ARGS)
 		}
 	}
 	//Neighbor check loop
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -1; rx <= 1; rx++)
+		for (int ry = -1; ry <= 1; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if (parts[i].life)
@@ -153,22 +150,22 @@ int VIBR_update(UPDATE_FUNC_ARGS)
 					sim->air->pv[y/CELL][x/CELL] -= 1;
 				}
 			}
-	for (trade = 0; trade < 9; trade++)
+	for (int trade = 0; trade < 9; trade++)
 	{
 		if (!(trade%2))
 			rndstore = RNG::Ref().gen();
-		rx = rndstore%7-3;
+		int rx = rndstore%7-3;
 		rndstore >>= 3;
-		ry = rndstore%7-3;
+		int ry = rndstore%7-3;
 		rndstore >>= 3;
-		if (BOUNDS_CHECK && (rx || ry))
+		if (rx || ry)
 		{
-			r = pmap[y+ry][x+rx];
+			int r = pmap[y+ry][x+rx];
 			if (TYP(r) != PT_VIBR && TYP(r) != PT_BVBR)
 				continue;
 			if (parts[i].tmp > parts[ID(r)].tmp)
 			{
-				transfer = parts[i].tmp - parts[ID(r)].tmp;
+				int transfer = parts[i].tmp - parts[ID(r)].tmp;
 				parts[ID(r)].tmp += transfer/2;
 				parts[i].tmp -= transfer/2;
 				break;

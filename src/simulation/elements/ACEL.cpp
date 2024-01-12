@@ -30,7 +30,7 @@ int ACEL_update(UPDATE_FUNC_ARGS)
 	parts[i].tmp = 0;
 	for (int rx = -1; rx <= 1; rx++)
 		for (int ry = -1; ry <= 1; ry++)
-			if (BOUNDS_CHECK && (!rx != !ry))
+			if (!rx != !ry)
 			{
 				int r = pmap[y+ry][x+rx];
 				if(!r)

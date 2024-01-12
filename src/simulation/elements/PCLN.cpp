@@ -18,18 +18,17 @@
 
 int PCLN_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, rt;
 	if (parts[i].ctype<=0 || parts[i].ctype>=PT_NUM || !sim->elements[parts[i].ctype].Enabled)
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK)
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					r = photons[y+ry][x+rx];
+					int r = photons[y+ry][x+rx];
 					if (!r)
 						r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					rt = TYP(r);
+					int rt = TYP(r);
 					if (!(sim->elements[rt].Properties & PROP_CLONE) &&
 						!(sim->elements[rt].Properties & PROP_BREAKABLECLONE) &&
 				        rt != PT_SPRK && rt != PT_NSCN && 
@@ -46,8 +45,8 @@ int PCLN_update(UPDATE_FUNC_ARGS)
 		//create photons a different way
 		if (parts[i].ctype == PT_PHOT)
 		{
-			for (rx=-1; rx<2; rx++)
-				for (ry=-1; ry<2; ry++)
+			for (int rx = -1; rx <= 1; rx++)
+				for (int ry = -1; ry <= 1; ry++)
 					if (rx || ry)
 					{
 						int r = sim->part_create(-1, x+rx, y+ry, PT_PHOT);
@@ -55,7 +54,7 @@ int PCLN_update(UPDATE_FUNC_ARGS)
 						{
 							parts[r].vx = rx*3.0f;
 							parts[r].vy = ry*3.0f;
-							if (r>i)
+							if (r > i)
 							{
 								// Make sure movement doesn't happen until next frame, to avoid gaps in the beams of photons produced
 								parts[r].flags |= FLAG_SKIPMOVE;
@@ -66,8 +65,8 @@ int PCLN_update(UPDATE_FUNC_ARGS)
 		//create life a different way
 		else if (parts[i].ctype == PT_LIFE)
 		{
-			for (rx=-1; rx<2; rx++)
-				for (ry=-1; ry<2; ry++)
+			for (int rx = -1; rx <= 1; rx++)
+				for (int ry = -1; ry <= 1; ry++)
 				{
 					sim->part_create(-1, x+rx, y+ry, PT_LIFE, parts[i].tmp);
 				}

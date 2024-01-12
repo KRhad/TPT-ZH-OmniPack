@@ -17,22 +17,21 @@
 
 int GOLD_update(UPDATE_FUNC_ARGS)
 {
-	int rx, ry, r, j, rndstore;
 	static int checkCoordsX[] = { -4, 4, 0, 0 };
 	static int checkCoordsY[] = { 0, 0, -4, 4 };
 	//Find nearby rusted iron (BMTL with tmp 1+)
-	for (j = 0; j < 8; j++)
+	for (int j = 0; j < 8; j++)
 	{
-		rndstore = RNG::Ref().gen();
-		rx = (rndstore % 9)-4;
+		int rndstore = RNG::Ref().gen();
+		int rx = (rndstore % 9)-4;
 		rndstore >>= 4;
-		ry = (rndstore % 9)-4;
-		if ((!rx != !ry) && BOUNDS_CHECK)
+		int ry = (rndstore % 9)-4;
+		if (!rx != !ry)
 		{
-			r = pmap[y+ry][x+rx];
+			int r = pmap[y+ry][x+rx];
 			if (!r)
 				continue;
-			if (TYP(r)==PT_BMTL && parts[ID(r)].tmp)
+			if (TYP(r) == PT_BMTL && parts[ID(r)].tmp)
 			{
 				parts[ID(r)].tmp = 0;
 				sim->part_change_type(ID(r), x+rx, y+ry, PT_IRON);
@@ -40,15 +39,15 @@ int GOLD_update(UPDATE_FUNC_ARGS)
 		}
 	}
 	//Find sparks
-	if(!parts[i].life)
+	if (!parts[i].life)
 	{
-		for (j = 0; j < 4; j++)
+		for (int j = 0; j < 4; j++)
 		{
-			rx = checkCoordsX[j];
-			ry = checkCoordsY[j];
-			if ((!rx != !ry) && BOUNDS_CHECK)
+			int rx = checkCoordsX[j];
+			int ry = checkCoordsY[j];
+			if (!rx != !ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if (TYP(r) == PT_SPRK && parts[ID(r)].life && parts[ID(r)].life < 4)

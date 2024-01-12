@@ -210,17 +210,16 @@ int PSTN_update(UPDATE_FUNC_ARGS)
 	int maxSize = parts[i].tmp ? parts[i].tmp : DEFAULT_LIMIT;
 	int armLimit = parts[i].tmp2 ? parts[i].tmp2 : DEFAULT_ARM_LIMIT;
 	int state = 0;
-	int r, nxx, nyy, nxi, nyi, rx, ry;
 	int directionX = 0, directionY = 0;
 	if (parts[i].life)
 		return 0;
 	if (state == PISTON_INACTIVE)
 	{
-		for (rx=-2; rx<3; rx++)
-			for (ry=-2; ry<3; ry++)
-				if (BOUNDS_CHECK && (rx || ry) && (!rx || !ry))
+		for (int rx = -2; rx <= 2; rx++)
+			for (int ry = -2; ry <= 2; ry++)
+				if ((rx || ry) && (!rx || !ry))
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
 					if (TYP(r)==PT_SPRK && parts[ID(r)].life==3)
@@ -234,11 +233,11 @@ int PSTN_update(UPDATE_FUNC_ARGS)
 	}
 	if (state == PISTON_EXTEND || state == PISTON_RETRACT)
 	{
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry) && (!rx || !ry))
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if ((rx || ry) && (!rx || !ry))
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
 					if (TYP(r) == PT_PSTN && !parts[ID(r)].life)
@@ -251,7 +250,8 @@ int PSTN_update(UPDATE_FUNC_ARGS)
 						int armCount = 0;
 						directionX = rx;
 						directionY = ry;
-						for (nxx = 0, nyy = 0, nxi = directionX, nyi = directionY; ; nyy += nyi, nxx += nxi)
+						int nxi = directionX, nyi = directionY;
+						for (int nxx = 0, nyy = 0; ; nyy += nyi, nxx += nxi)
 						{
 							if (!(x+nxx<XRES && y+nyy<YRES && x+nxx >= 0 && y+nyy >= 0))
 							{

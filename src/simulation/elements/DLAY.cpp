@@ -17,19 +17,18 @@
 
 int DLAY_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, oldl;
-	oldl = parts[i].life;
+	int oldl = parts[i].life;
 	if (parts[i].life>0)
 		parts[i].life--;
 	
 	if (parts[i].temp<= 1.0f+273.15f)
 		parts[i].temp = 1.0f+273.15f;
 
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r || parts_avg(ID(r), i,PT_INSL)==PT_INSL)
 					continue;
 				if (TYP(r)==PT_SPRK && parts[i].life==0 && parts[ID(r)].life>0 && parts[ID(r)].life<4 && parts[ID(r)].ctype==PT_PSCN)

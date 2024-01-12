@@ -44,7 +44,7 @@ int PRTI_update(UPDATE_FUNC_ARGS)
 			continue;
 		int rx = portal_rx[count];
 		int ry = portal_ry[count];
-		if (BOUNDS_CHECK && (rx || ry))
+		if (rx || ry)
 		{
 			int r = pmap[y+ry][x+rx];
 			if (!r || TYP(r) == PT_STOR)

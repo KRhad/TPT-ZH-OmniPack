@@ -18,12 +18,11 @@
 
 int ARAY_update(UPDATE_FUNC_ARGS)
 {
-	int nxx, nyy, docontinue, nxi, nyi;
 	int short_bray_life = parts[i].life > 0 ? parts[i].life : 30;
 	int long_bray_life = parts[i].life > 0 ? parts[i].life : 1020;
-	for (int rx=-1; rx <= 1; rx++)
-		for (int ry=-1; ry <= 1; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -1; rx <= 1; rx++)
+		for (int ry = -1; ry <= 1; ry++)
+			if (rx || ry)
 			{
 				int r = pmap[y+ry][x+rx];
 				if (!r)
@@ -34,7 +33,7 @@ int ARAY_update(UPDATE_FUNC_ARGS)
 					int destroy = (parts[ID(r)].ctype==PT_PSCN) ? 1 : 0;
 					int nostop = (parts[ID(r)].ctype==PT_INST) ? 1 : 0;
 					int colored = 0, rt;
-					for (docontinue = 1, nxx = 0, nyy = 0, nxi = rx*-1, nyi = ry*-1; docontinue; nyy+=nyi, nxx+=nxi)
+					for (int docontinue = 1, nxx = 0, nyy = 0, nxi = rx*-1, nyi = ry*-1; docontinue; nyy+=nyi, nxx+=nxi)
 					{
 						if (!(x+nxi+nxx<XRES && y+nyi+nyy<YRES && x+nxi+nxx >= 0 && y+nyi+nyy >= 0))
 							break;

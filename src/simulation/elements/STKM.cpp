@@ -359,7 +359,7 @@ int STKM_ElementDataContainer::Run(Stickman *playerp, UPDATE_FUNC_ARGS)
 	// Searching for particles near head
 	for (int rx = -2; rx < 3; rx++)
 		for (int ry = -2; ry < 3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+			if (rx || ry)
 			{
 				int r = pmap[y+ry][x+rx];
 				if (!r)

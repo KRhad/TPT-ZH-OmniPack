@@ -27,11 +27,12 @@ int COAL_update(UPDATE_FUNC_ARGS)
 		parts[i].life--;
 		sim->part_create(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), PT_FIRE);
 	}
-	if ((sim->air->pv[y/CELL][x/CELL] > 4.3f)&&parts[i].tmp>40)
-		parts[i].tmp=39;
-	else if (parts[i].tmp<40&&parts[i].tmp>0)
+	if ((sim->air->pv[y/CELL][x/CELL] > 4.3f) && parts[i].tmp > 40)
+		parts[i].tmp = 39;
+	else if (parts[i].tmp < 40 && parts[i].tmp > 0)
 		parts[i].tmp--;
-	else if (parts[i].tmp<=0) {
+	else if (parts[i].tmp <= 0)
+	{
 		sim->part_change_type(i, x, y, PT_BCOL);
 		return 1;
 	}
@@ -39,11 +40,11 @@ int COAL_update(UPDATE_FUNC_ARGS)
 	/*if(100-parts[i].life > parts[i].tmp2)
 		parts[i].tmp2 = 100-parts[i].life;
 	if(parts[i].tmp2 < 0) parts[i].tmp2 = 0;
-	for ( trade = 0; trade<4; trade ++)
+	for (int trade = 0; trade<4; trade ++)
 	{
-		rx = RNG::Ref().between(-2, 2);
-		ry = RNG::Ref().between(-2, 2);
-		if (BOUNDS_CHECK && (rx || ry))
+		int rx = RNG::Ref().between(-2, 2);
+		int ry = RNG::Ref().between(-2, 2);
+		if (rx || ry)
 		{
 			r = pmap[y+ry][x+rx];
 			if (!r)
@@ -66,7 +67,7 @@ int COAL_update(UPDATE_FUNC_ARGS)
 			}
 		}
 	}*/
-	if(parts[i].temp > parts[i].tmp2)
+	if (parts[i].temp > parts[i].tmp2)
 		parts[i].tmp2 = (int)parts[i].temp;
 	return 0;
 }

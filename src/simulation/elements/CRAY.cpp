@@ -47,25 +47,24 @@ int CRAY_update(UPDATE_FUNC_ARGS)
 	{
 		for (int rx = -1; rx <= 1; rx++)
 			for (int ry = -1; ry <= 1; ry++)
-				if (BOUNDS_CHECK)
+			{
+				int r = photons[y+ry][x+rx];
+				if (!r)
+					r = pmap[y+ry][x+rx];
+				if (!r)
+					continue;
+				if (TYP(r) != PT_CRAY && TYP(r) != PT_PSCN && TYP(r) != PT_INST && TYP(r) != PT_METL && TYP(r) != PT_SPRK)
 				{
-					int r = photons[y+ry][x+rx];
-					if (!r)
-						r = pmap[y+ry][x+rx];
-					if (!r)
-						continue;
-					if (TYP(r) != PT_CRAY && TYP(r) != PT_PSCN && TYP(r) != PT_INST && TYP(r) != PT_METL && TYP(r) != PT_SPRK)
-					{
-						parts[i].ctype = TYP(r);
-						parts[i].temp = parts[ID(r)].temp;
-					}
+					parts[i].ctype = TYP(r);
+					parts[i].temp = parts[ID(r)].temp;
 				}
+			}
 	}
 	else
 	{
 		for (int rx = -1; rx <= 1; rx++)
 			for (int ry = -1; ry <= 1; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+				if (rx || ry)
 				{
 					int r = pmap[y+ry][x+rx];
 					if (!TYP(r))

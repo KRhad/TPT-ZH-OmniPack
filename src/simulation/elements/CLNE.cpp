@@ -20,26 +20,24 @@ int CLNE_update(UPDATE_FUNC_ARGS)
 {
 	if (parts[i].ctype<=0 || parts[i].ctype>=PT_NUM || !sim->elements[parts[i].ctype].Enabled)
 	{
-		int r, rx, ry, rt;
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK)
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+			{
+				int r = photons[y+ry][x+rx];
+				if (!r)
+					r = pmap[y+ry][x+rx];
+				if (!r)
+					continue;
+				int rt = TYP(r);
+				if (!(sim->elements[rt].Properties & PROP_CLONE) &&
+					!(sim->elements[rt].Properties & PROP_BREAKABLECLONE) &&
+					rt!=PT_STKM && rt!=PT_STKM2)
 				{
-					r = photons[y+ry][x+rx];
-					if (!r)
-						r = pmap[y+ry][x+rx];
-					if (!r)
-						continue;
-					rt = TYP(r);
-					if (!(sim->elements[rt].Properties & PROP_CLONE) &&
-						!(sim->elements[rt].Properties & PROP_BREAKABLECLONE) &&
-				        rt!=PT_STKM && rt!=PT_STKM2)
-					{
-						parts[i].ctype = rt;
-						if (rt==PT_LIFE || rt==PT_LAVA)
-							parts[i].tmp = parts[ID(r)].ctype;
-					}
+					parts[i].ctype = rt;
+					if (rt==PT_LIFE || rt==PT_LAVA)
+						parts[i].tmp = parts[ID(r)].ctype;
 				}
+			}
 	}
 	else
 	{

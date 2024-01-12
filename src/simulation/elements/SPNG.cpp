@@ -17,16 +17,15 @@
 
 int SPNG_update(UPDATE_FUNC_ARGS)
 {
-	int r, trade, rx, ry, tmp, np;
 	int limit = 50;
 	if (parts[i].life<limit && sim->air->pv[y/CELL][x/CELL]<=3&&sim->air->pv[y/CELL][x/CELL]>=-3&&parts[i].temp<=374.0f)
 	{
 		int absorbChanceDenom = parts[i].life*10000/limit + 500;
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					switch (TYP(r))
 					{
 					case PT_WATR:
@@ -68,29 +67,29 @@ int SPNG_update(UPDATE_FUNC_ARGS)
 				}
 	}
 	else
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if ((!r)&&parts[i].life>=1)//if nothing then create water
 					{
-						np = sim->part_create(-1,x+rx,y+ry,PT_WATR);
+						int np = sim->part_create(-1,x+rx,y+ry,PT_WATR);
 						if (np>-1) parts[i].life--;
 					}
 				}
-	for ( trade = 0; trade<9; trade ++)
+	for (int trade = 0; trade < 9; trade++)
 	{
-		rx = RNG::Ref().between(-2, 2);
-		ry = RNG::Ref().between(-2, 2);
-		if (BOUNDS_CHECK && (rx || ry))
+		int rx = RNG::Ref().between(-2, 2);
+		int ry = RNG::Ref().between(-2, 2);
+		if (rx || ry)
 		{
-			r = pmap[y+ry][x+rx];
+			int r = pmap[y+ry][x+rx];
 			if (!r)
 				continue;
 			if (TYP(r)==PT_SPNG&&(parts[i].life>parts[ID(r)].life)&&parts[i].life>0)//diffusion
 			{
-				tmp = parts[i].life - parts[ID(r)].life;
+				int tmp = parts[i].life - parts[ID(r)].life;
 				if (tmp ==1)
 				{
 					parts[ID(r)].life ++;
@@ -106,14 +105,14 @@ int SPNG_update(UPDATE_FUNC_ARGS)
 			}
 		}
 	}
-	tmp = 0;
+	int tmp = 0;
 	if (parts[i].life>0)
 	{
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
 					if (TYP(r)==PT_FIRE)
@@ -131,14 +130,14 @@ int SPNG_update(UPDATE_FUNC_ARGS)
 	if (tmp>1)
 		tmp = tmp/2;
 	if (tmp || parts[i].temp>=374)
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if ((!r)&&parts[i].life>=1)//if nothing then create steam
 					{
-						np = sim->part_create(-1,x+rx,y+ry,PT_WTRV);
+						int np = sim->part_create(-1,x+rx,y+ry,PT_WTRV);
 						if (np>-1)
 						{
 							parts[np].temp = parts[i].temp;

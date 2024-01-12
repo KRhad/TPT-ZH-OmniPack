@@ -87,53 +87,53 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 	case PT_TESC:
 		if (parts[i].tmp>300)
 			parts[i].tmp=300;
-		for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-		if (BOUNDS_CHECK && (rx || ry))
-		{
-			r = pmap[y+ry][x+rx];
-			if (r)
-				continue;
-			if (parts[i].tmp> 4 && RNG::Ref().chance(1, parts[i].tmp * parts[i].tmp / 20 + 6))
-			{
-				int p=sim->part_create(-1, x+rx*2, y+ry*2, PT_LIGH);
-				if (p!=-1)
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					parts[p].life = RNG::Ref().between(0, (1 + parts[i].tmp / 15) + parts[i].tmp / 7);
-					if (parts[i].life>60)
-						parts[i].life=60;
-					parts[p].temp=parts[p].life*parts[i].tmp/2.5f;
-					parts[p].tmp2=1;
-					parts[p].tmp=(int)(atan2((float)-ry, (float)rx)/M_PI*360);
-					parts[i].temp-=parts[i].tmp*2+parts[i].temp/5; // slight self-cooling
-					if (fabs(sim->air->pv[y/CELL][x/CELL])!=0.0f)
+					r = pmap[y+ry][x+rx];
+					if (r)
+						continue;
+					if (parts[i].tmp> 4 && RNG::Ref().chance(1, parts[i].tmp * parts[i].tmp / 20 + 6))
 					{
-						if (fabs(sim->air->pv[y/CELL][x/CELL])<=0.5f)
-							sim->air->pv[y/CELL][x/CELL] = 0;
-						else
-							sim->air->pv[y/CELL][x/CELL] -= (sim->air->pv[y/CELL][x/CELL]>0) ? 0.5f : -0.5f;
+						int p=sim->part_create(-1, x+rx*2, y+ry*2, PT_LIGH);
+						if (p!=-1)
+						{
+							parts[p].life = RNG::Ref().between(0, (1 + parts[i].tmp / 15) + parts[i].tmp / 7);
+							if (parts[i].life>60)
+								parts[i].life=60;
+							parts[p].temp=parts[p].life*parts[i].tmp/2.5f;
+							parts[p].tmp2=1;
+							parts[p].tmp=(int)(atan2((float)-ry, (float)rx)/M_PI*360);
+							parts[i].temp-=parts[i].tmp*2+parts[i].temp/5; // slight self-cooling
+							if (fabs(sim->air->pv[y/CELL][x/CELL])!=0.0f)
+							{
+								if (fabs(sim->air->pv[y/CELL][x/CELL])<=0.5f)
+									sim->air->pv[y/CELL][x/CELL] = 0;
+								else
+									sim->air->pv[y/CELL][x/CELL] -= (sim->air->pv[y/CELL][x/CELL]>0) ? 0.5f : -0.5f;
+							}
+						}
 					}
 				}
-			}
-		}
 		break;
 	case PT_IRON:
-		for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-		if (BOUNDS_CHECK && (rx || ry))
-		{
-			r = pmap[y+ry][x+rx];
-			if (!r)
-				continue;
-			if (TYP(r) == PT_DSTW || TYP(r) == PT_SLTW || (TYP(r) == PT_WATR))
-			{
-				int rnd = RNG::Ref().between(0, 99);
-				if (!rnd)
-					part_change_type(ID(r), x+rx, y+ry, PT_O2);
-				else if (3 > rnd)
-					part_change_type(ID(r), x+rx, y+ry, PT_H2);
-			}
-		}
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
+				{
+					r = pmap[y+ry][x+rx];
+					if (!r)
+						continue;
+					if (TYP(r) == PT_DSTW || TYP(r) == PT_SLTW || (TYP(r) == PT_WATR))
+					{
+						int rnd = RNG::Ref().between(0, 99);
+						if (!rnd)
+							part_change_type(ID(r), x+rx, y+ry, PT_O2);
+						else if (3 > rnd)
+							part_change_type(ID(r), x+rx, y+ry, PT_H2);
+					}
+				}
 		break;
 	case PT_TUNG:
 		if (parts[i].temp < 3595.0)

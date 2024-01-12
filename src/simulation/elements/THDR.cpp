@@ -17,16 +17,15 @@
 
 int THDR_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, rt;
 	bool kill = false;
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				rt = TYP(r);
+				int rt = TYP(r);
 				if ((sim->elements[rt].Properties & PROP_CONDUCTS) && parts[ID(r)].life == 0 && !(rt == PT_WATR || rt == PT_SLTW) && parts[ID(r)].ctype != PT_SPRK)
 				{
 					sim->spark_conductive(ID(r), x + rx, y + ry);

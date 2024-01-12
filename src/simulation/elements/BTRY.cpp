@@ -17,17 +17,16 @@
 
 int BTRY_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, rt;
 	//if (parts[i].tmp)
 	//	update_POWERED(UPDATE_FUNC_SUBCALL_ARGS);
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry) && abs(rx)+abs(ry) < 4)
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if ((rx || ry) && abs(rx) + abs(ry) < 4)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				rt = TYP(r);
+				int rt = TYP(r);
 				if (parts_avg(i,ID(r),PT_INSL) != PT_INSL)
 				{
 					if (/*(parts[i].tmp == 0 || (parts[i].ctype != 0 && parts[i].life >= 10)) &&*/ (sim->elements[rt].Properties&PROP_CONDUCTS) /*&& !((rt==PT_METL||rt==PT_PSCN||rt==PT_NSCN)&&parts[i].tmp)*/ && !(rt==PT_WATR||rt==PT_SLTW||rt==PT_NTCT||rt==PT_PTCT||rt==PT_INWR) && parts[ID(r)].life==0)

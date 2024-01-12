@@ -20,8 +20,6 @@ int FIRE_update(UPDATE_FUNC_ARGS);
 
 int PHOT_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
-	float rr, rrr;
 	if (!(parts[i].ctype&0x3FFFFFFF))
 	{
 		sim->part_kill(i);
@@ -31,11 +29,11 @@ int PHOT_update(UPDATE_FUNC_ARGS)
 		if (RNG::Ref().chance(1, 10))
 			FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
 
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK)
+	for (int rx = -1; rx <= 1; rx++)
+		for (int ry = -1; ry <= 1; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if (TYP(r)==PT_ISOZ || TYP(r)==PT_ISZS)
@@ -45,7 +43,7 @@ int PHOT_update(UPDATE_FUNC_ARGS)
 						parts[i].vx *= 0.90f;
 						parts[i].vy *= 0.90f;
 						sim->part_create(ID(r), x+rx, y+ry, PT_PHOT);
-						rrr = RNG::Ref().between(0, 359) * M_PI / 180.0f;
+						float rrr = RNG::Ref().between(0, 359) * M_PI / 180.0f, rr;
 						if (TYP(r) == PT_ISOZ)
 							rr = RNG::Ref().between(128, 255) / 127.0f;
 						else

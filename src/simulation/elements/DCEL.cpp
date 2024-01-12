@@ -24,7 +24,7 @@ int DCEL_update(UPDATE_FUNC_ARGS)
 	parts[i].tmp = 0;
 	for (int rx = -1; rx <= 1; rx++)
 		for (int ry = -1; ry <= 1; ry++)
-			if (BOUNDS_CHECK && (rx || ry) && !(rx && ry))
+			if ((rx || ry) && !(rx && ry))
 			{
 				int r = pmap[y+ry][x+rx];
 				if (!r)
@@ -43,7 +43,7 @@ int DCEL_update(UPDATE_FUNC_ARGS)
 
 int DCEL_graphics(GRAPHICS_FUNC_ARGS)
 {
-	if(cpart->tmp)
+	if (cpart->tmp)
 		*pixel_mode |= PMODE_GLOW;
 	return 0;
 }

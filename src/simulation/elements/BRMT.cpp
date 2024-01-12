@@ -17,22 +17,21 @@
 
 int BRMT_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
 	if (parts[i].temp > 523.15f)//250.0f+273.15f
 	{
 		int tempFactor = 1000 - (int)((523.15f-parts[i].temp)*2);
 		if(tempFactor < 2)
 			tempFactor = 2;
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
 					if (TYP(r) == PT_BREL && RNG::Ref().chance(1, tempFactor))
 					{
-						if(RNG::Ref().chance(1, 2))
+						if (RNG::Ref().chance(1, 2))
 						{
 							sim->part_create(ID(r), x+rx, y+ry, PT_THRM);
 						}

@@ -57,9 +57,6 @@ void detach(int i)
 
 int SOAP_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, nr, ng, nb, na;
-	float tr, tg, tb, ta;
-	
 	//0x01 - bubble on/off
 	//0x02 - first mate yes/no
 	//0x04 - "back" mate yes/no
@@ -105,11 +102,11 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 
 		if (!(parts[i].ctype&2))
 		{
-			for (rx=-2; rx<3; rx++)
-				for (ry=-2; ry<3; ry++)
-					if (BOUNDS_CHECK && (rx || ry))
+			for (int rx = -2; rx <= 2; rx++)
+				for (int ry = -2; ry <= 2; ry++)
+					if (rx || ry)
 					{
-						r = pmap[y+ry][x+rx];
+						int r = pmap[y+ry][x+rx];
 						if (!r)
 							continue;
 
@@ -120,11 +117,11 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 		else
 		{
 			if (parts[i].life<=0)
-				for (rx=-2; rx<3; rx++)
-					for (ry=-2; ry<3; ry++)
-						if (BOUNDS_CHECK && (rx || ry))
+				for (int rx = -2; rx <= 2; rx++)
+					for (int ry = -2; ry <= 2; ry++)
+						if (rx || ry)
 						{
-							r = pmap[y+ry][x+rx];
+							int r = pmap[y+ry][x+rx];
 							if (!r && !bmap[(y+ry)/CELL][(x+rx)/CELL])
 								continue;
 
@@ -202,25 +199,25 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 			parts[i].life = 10;
 		}
 	}
-	
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if (TYP(r)!=PT_SOAP)
 				{
-					ta = (float)COLA(parts[ID(r)].dcolour);
-					tr = (float)COLR(parts[ID(r)].dcolour);
-					tg = (float)COLG(parts[ID(r)].dcolour);
-					tb = (float)COLB(parts[ID(r)].dcolour);
+					float ta = (float)COLA(parts[ID(r)].dcolour);
+					float tr = (float)COLR(parts[ID(r)].dcolour);
+					float tg = (float)COLG(parts[ID(r)].dcolour);
+					float tb = (float)COLB(parts[ID(r)].dcolour);
 					
-					na = (int)(ta*BLEND);
-					nr = (int)(tr*BLEND);
-					ng = (int)(tg*BLEND);
-					nb = (int)(tb*BLEND);
+					int na = (int)(ta*BLEND);
+					int nr = (int)(tr*BLEND);
+					int ng = (int)(tg*BLEND);
+					int nb = (int)(tb*BLEND);
 					
 					parts[ID(r)].dcolour = COLARGB(na, nr, ng, nb);
 				}

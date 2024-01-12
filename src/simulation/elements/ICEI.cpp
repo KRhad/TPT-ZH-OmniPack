@@ -17,16 +17,15 @@
 
 int ICE_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
 	if (parts[i].ctype == PT_FRZW)//get colder if it is from FRZW
 	{
 		parts[i].temp = restrict_flt(parts[i].temp-1.0f, MIN_TEMP, MAX_TEMP);
 	}
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -1; rx <= 1; rx++)
+		for (int ry = -1; ry <= 1; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if (TYP(r)==PT_SALT || TYP(r)==PT_SLTW)

@@ -42,16 +42,15 @@ int LIGH_nearest_part(Simulation * sim, int ci, int max_d)
 
 int contact_part(int i, int tp)
 {
-	int x=(int)parts[i].x, y=(int)parts[i].y;
-	int r,rx,ry;
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	int x = (int) parts[i].x, y = (int) parts[i].y;
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if (TYP(r)==tp)
+				if (TYP(r) == tp)
 					return ID(r);
 			}
 	return -1;
@@ -179,8 +178,7 @@ int LIGH_update(UPDATE_FUNC_ARGS)
 	 *
 	 * tmp - angle of lighting, measured in degrees counterclockwise from the positive x direction
 	 */
-	int r,rx,ry,rt, multipler, powderful=(int)(parts[i].temp*(1+parts[i].life/40)*LIGHTING_POWER);
-	float angle, angle2=-1;
+	int powderful=(int)(parts[i].temp*(1+parts[i].life/40)*LIGHTING_POWER);
 	FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
 	if (aheat_enable)
 	{
@@ -192,14 +190,14 @@ int LIGH_update(UPDATE_FUNC_ARGS)
 			sim->air->hv[y/CELL][x/CELL] = MAX_TEMP;
 	}
 
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				rt = TYP(r);
+				int rt = TYP(r);
 
 				if (sim->elements[rt].Properties & PROP_INDESTRUCTIBLE)
 				{
@@ -318,15 +316,15 @@ int LIGH_update(UPDATE_FUNC_ARGS)
 
 	//if (parts[i].tmp2==1/* || near!=-1*/)
 	//angle=0;//parts[i].tmp-30+RNG::Ref().between(0, 59);
-	angle = (float)((parts[i].tmp - RNG::Ref().between(-30, 30))%360);
-	multipler = (int)(parts[i].life * 1.5) + RNG::Ref().between(0, parts[i].life);
-	rx = (int)(cos(angle*M_PI/180)*multipler);
-	ry = (int)(-sin(angle*M_PI/180)*multipler);
+	float angle = (float)((parts[i].tmp - RNG::Ref().between(-30, 30))%360);
+	int multipler = (int)(parts[i].life * 1.5) + RNG::Ref().between(0, parts[i].life);
+	int rx = (int)(cos(angle*M_PI/180)*multipler);
+	int ry = (int)(-sin(angle*M_PI/180)*multipler);
 	create_line_par(sim, x, y, x+rx, y+ry, PT_LIGH, (int)parts[i].temp, parts[i].life, (int)angle, parts[i].tmp2, i);
 
 	if (parts[i].tmp2 == 2)// && pNear == -1)
 	{
-		angle2 = ((int)angle + RNG::Ref().between(-100, 100)) % 360;
+		float angle2 = ((int)angle + RNG::Ref().between(-100, 100)) % 360;
 		multipler = (int)(parts[i].life * 1.5) + RNG::Ref().between(0, parts[i].life);
 		rx = (int)(cos(angle2*M_PI/180)*multipler);
 		ry = (int)(-sin(angle2*M_PI/180)*multipler);

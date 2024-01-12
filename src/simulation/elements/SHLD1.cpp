@@ -17,12 +17,11 @@
 
 int SHLD1_update(UPDATE_FUNC_ARGS)
 {
-	int r, nnx, nny, rx, ry;
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -1; rx <= 1; rx++)
+		for (int ry = -1; ry <= 1; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				else if (TYP(r)==PT_SPRK&&parts[i].life==0)
@@ -32,8 +31,8 @@ int SHLD1_update(UPDATE_FUNC_ARGS)
 						part_change_type(i,x,y,PT_SHLD2);
 						parts[i].life = 7;
 					}
-					for (nnx=-1; nnx<2; nnx++)
-						for (nny=-1; nny<2; nny++)
+					for (int nnx = -1; nnx <= 1; nnx++)
+						for (int nny = -1; nny <= 1; nny++)
 						{
 							if (!pmap[y+ry+nny][x+rx+nnx])
 							{

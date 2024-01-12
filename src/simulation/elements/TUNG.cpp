@@ -21,19 +21,18 @@ int TUNG_update(UPDATE_FUNC_ARGS)
 	bool splode = false;
 	if(parts[i].temp > 2400.0)
 	{
-		int r, rx, ry;
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
-					if(TYP(r) == PT_O2)
+					int r = pmap[y+ry][x+rx];
+					if (TYP(r) == PT_O2)
 					{
 						splode = true;
 					}
 				}
 	}
-	if((parts[i].temp > MELTING_POINT && RNG::Ref().chance(1, 20)) || splode)
+	if ((parts[i].temp > MELTING_POINT && RNG::Ref().chance(1, 20)) || splode)
 	{
 		if (RNG::Ref().chance(1, 50))
 		{

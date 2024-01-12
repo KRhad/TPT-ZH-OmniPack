@@ -17,7 +17,7 @@
 
 int QRTZ_update(UPDATE_FUNC_ARGS)
 {
-	int r, tmp, trade, rx, ry, np, t = parts[i].type;
+	int t = parts[i].type;
 	if (t == PT_QRTZ)
 	{
 		int press = int(sim->air->pv[y/CELL][x/CELL] * 64);
@@ -33,11 +33,11 @@ int QRTZ_update(UPDATE_FUNC_ARGS)
 		parts[i].life = 5;
 	// absorb SLTW
 	if (parts[i].ctype != -1)
-		for (rx=-1; rx<2; rx++)
-			for (ry=-1; ry<2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+		for (int rx = -1; rx <= 1; rx++)
+			for (int ry = -1; ry <= 1; ry++)
+				if (rx || ry)
 				{
-					r = pmap[y+ry][x+rx];
+					int r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
 					else if (TYP(r)==PT_SLTW && RNG::Ref().chance(1, 500))
@@ -50,22 +50,21 @@ int QRTZ_update(UPDATE_FUNC_ARGS)
 	if (parts[i].tmp > 0 && (parts[i].vx*parts[i].vx + parts[i].vy*parts[i].vy)<0.2f && parts[i].life<=0)
 	{
 		bool stopgrow = false;
-		int rnd, sry, srx;
-		for (trade = 0; trade < 9; trade++)
+		for (int trade = 0; trade < 9; trade++)
 		{
-			rnd = RNG::Ref().between(0, 0x3FF);
-			rx = (rnd%5)-2;
-			srx = (rnd%3)-1;
+			int rnd = RNG::Ref().between(0, 0x3FF);
+			int rx = (rnd%5)-2;
+			int srx = (rnd%3)-1;
 			rnd >>= 3;
-			ry = (rnd%5)-2;
-			sry = (rnd%3)-1;
-			if (BOUNDS_CHECK && (rx || ry))
+			int ry = (rnd%5)-2;
+			int sry = (rnd%3)-1;
+			if (rx || ry)
 			{
 				if (!stopgrow)
 				{
 					if (!pmap[y+sry][x+srx] && parts[i].tmp != 0)
 					{
-						np = sim->part_create(-1,x+srx,y+sry,PT_QRTZ);
+						int np = sim->part_create(-1,x+srx,y+sry,PT_QRTZ);
 						if (np > -1)
 						{
 							parts[np].temp = parts[i].temp;
@@ -93,12 +92,12 @@ int QRTZ_update(UPDATE_FUNC_ARGS)
 						}
 					}
 				}
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if (TYP(r)==t && (parts[i].tmp > parts[ID(r)].tmp) && parts[ID(r)].tmp>=0)//diffusion
 				{
-					tmp = parts[i].tmp - parts[ID(r)].tmp;
+					int tmp = parts[i].tmp - parts[ID(r)].tmp;
 					if (tmp == 1)
 					{
 						parts[ID(r)].tmp ++;

@@ -17,12 +17,11 @@
 
 int CO2_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -1; rx <= 1; rx++)
+		for (int ry = -1; ry <= 1; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 				{
 					if (parts[i].ctype==5 && RNG::Ref().chance(1, 2000))
@@ -60,10 +59,9 @@ int CO2_update(UPDATE_FUNC_ARGS)
 	{
 		if (RNG::Ref().chance(1, 5))
 		{
-			int j;
 			sim->part_create(i,x,y,PT_O2);
 
-			j = sim->part_create(-3,x,y,PT_NEUT);
+			int j = sim->part_create(-3,x,y,PT_NEUT);
 			if (j != -1)
 				parts[j].temp = MAX_TEMP;
 			if (RNG::Ref().chance(1, 50))

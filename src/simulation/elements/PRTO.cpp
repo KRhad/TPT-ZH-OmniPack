@@ -39,7 +39,7 @@ int PRTO_update(UPDATE_FUNC_ARGS)
 	{
 		int rx = portal_rx[count];
 		int ry = portal_ry[count];
-		if (BOUNDS_CHECK && (rx || ry))
+		if (rx || ry)
 		{
 			if (!pmap[y+ry][x+rx])
 			{

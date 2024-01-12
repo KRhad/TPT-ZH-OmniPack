@@ -40,13 +40,12 @@ int FIRE_update(UPDATE_FUNC_ARGS);
 
 int NEUT_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
 	int pressureFactor = 3 + (int)sim->air->pv[y/CELL][x/CELL];
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK)
+	for (int rx = -1; rx <= 1; rx++)
+		for (int ry = -1; ry <= 1; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				switch (TYP(r))
 				{
 				case PT_WATR:

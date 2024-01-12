@@ -28,7 +28,7 @@ int WARP_update(UPDATE_FUNC_ARGS)
 	{
 		int rx = RNG::Ref().between(-1, 1);
 		int ry = RNG::Ref().between(-1, 1);
-		if (BOUNDS_CHECK && (rx || ry))
+		if (rx || ry)
 		{
 			int r = pmap[y+ry][x+rx];
 			if (!r)

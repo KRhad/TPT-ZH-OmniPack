@@ -33,6 +33,4 @@
 #include "powdergraphics.h"
 #include "game/Menus.h"
 
-#define BOUNDS_CHECK true
-
 #endif

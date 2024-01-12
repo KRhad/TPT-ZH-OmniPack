@@ -21,7 +21,7 @@ int PSNS_update(UPDATE_FUNC_ARGS)
 	{
 		for (int rx = -2; rx <= 2; rx++)
 			for (int ry = -2; ry <= 2; ry++)
-				if (BOUNDS_CHECK && (rx || ry))
+				if (rx || ry)
 				{
 					int r = pmap[y+ry][x+rx];
 					if (!r)
@@ -42,16 +42,15 @@ int PSNS_update(UPDATE_FUNC_ARGS)
 		float photonWl = sim->air->pv[y / CELL][x / CELL];
 		if (setFilt)
 		{
-			int nx, ny;
 			for (int rx = -1; rx < 2; rx++)
 				for (int ry = -1; ry < 2; ry++)
-					if (BOUNDS_CHECK && (rx || ry))
+					if (rx || ry)
 					{
 						int r = pmap[y + ry][x + rx];
 						if (!r)
 							continue;
-						nx = x + rx;
-						ny = y + ry;
+						int nx = x + rx;
+						int ny = y + ry;
 						while (TYP(r) == PT_FILT)
 						{
 							parts[ID(r)].ctype = 0x10000000 + roundl(photonWl) + 256;

@@ -17,9 +17,8 @@
 
 int SING_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, cry, crx, nb = -1, spawncount;
+	int nb = -1;
 	int singularity = -parts[i].life;
-	float angle, v;
 
 	if (sim->air->pv[y/CELL][x/CELL]<singularity)
 		sim->air->pv[y/CELL][x/CELL] += 0.1f*(singularity-sim->air->pv[y/CELL][x/CELL]);
@@ -36,17 +35,17 @@ int SING_update(UPDATE_FUNC_ARGS)
 	if (parts[i].life<1)
 	{
 		//Pop!
-		for (rx=-1; rx<2; rx++)
+		for (int rx = -1; rx <= 1; rx++)
 		{
-			crx = (x/CELL)+rx;
-			for (ry=-1; ry<2; ry++)
+			int crx = (x/CELL)+rx;
+			for (int ry = -1; ry <= 1; ry++)
 			{
-				cry = (y/CELL)+ry;
+				int cry = (y/CELL)+ry;
 				if (cry >= 0 && crx >= 0 && crx < (XRES/CELL) && cry < (YRES/CELL))
 					sim->air->pv[cry][crx] += (float)parts[i].tmp;
 			}
 		}
-		spawncount = std::abs(parts[i].tmp);
+		int spawncount = std::abs(parts[i].tmp);
 		spawncount = (spawncount>255) ? 3019 : (int)(std::pow((double)(spawncount/8), 2)*M_PI);
 		for (int j = 0; j < spawncount; j++)
 		{
@@ -66,8 +65,8 @@ int SING_update(UPDATE_FUNC_ARGS)
 			{
 				parts[nb].life = RNG::Ref().between(0, 299);
 				parts[nb].temp = MAX_TEMP/2;
-				angle = RNG::Ref().uniform01() * 2.0f * M_PI;
-				v = RNG::Ref().uniform01() * 5.0f;
+				float angle = RNG::Ref().uniform01() * 2.0f * M_PI;
+				float v = RNG::Ref().uniform01() * 5.0f;
 				parts[nb].vx = v*cosf(angle);
 				parts[nb].vy = v*sinf(angle);
 			}
@@ -77,11 +76,11 @@ int SING_update(UPDATE_FUNC_ARGS)
 		sim->part_kill(i);
 		return 1;
 	}
-	for (rx=-1; rx<2; rx++)
-		for (ry=-1; ry<2; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -1; rx <= 1; rx++)
+		for (int ry = -1; ry <= 1; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if (!(sim->elements[TYP(r)].Properties&PROP_INDESTRUCTIBLE) && RNG::Ref().chance(1, 3))

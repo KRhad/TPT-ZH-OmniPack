@@ -17,10 +17,9 @@
 
 int FUSE_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry;
 	if (parts[i].life <= 0)
 	{
-		r = sim->part_create(i, x, y, PT_PLSM);
+		int r = sim->part_create(i, x, y, PT_PLSM);
 		if (r > -1)
 			parts[r].life = 50;
 		return 1;
@@ -30,7 +29,7 @@ int FUSE_update(UPDATE_FUNC_ARGS)
 		parts[i].life--;
 		if (RNG::Ref().chance(1, 100))
 		{
-			r = sim->part_create(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), PT_PLSM);
+			int r = sim->part_create(-1, x + RNG::Ref().between(-1, 1), y + RNG::Ref().between(-1, 1), PT_PLSM);
 			if (r > -1)
 				parts[r].life = 50;
 		}
@@ -46,11 +45,11 @@ int FUSE_update(UPDATE_FUNC_ARGS)
 	else if (parts[i].tmp < 40)
 		parts[i].tmp--;
 
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
 				if (TYP(r)==PT_SPRK || (parts[i].temp>=(273.15+700.0f) && RNG::Ref().chance(1, 20)))

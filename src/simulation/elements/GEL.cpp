@@ -17,20 +17,17 @@
 
 int GEL_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, rt;
-	float dx, dy;
-	int absorbChanceDenom;
 	if (parts[i].tmp>100) parts[i].tmp = 100;
 	if (parts[i].tmp<0) parts[i].tmp = 0;
-	absorbChanceDenom = parts[i].tmp*10 + 500;
-	for (rx=-2; rx<3; rx++)
-		for (ry=-2; ry<3; ry++)
-			if (BOUNDS_CHECK && (rx || ry))
+	int absorbChanceDenom = parts[i].tmp*10 + 500;
+	for (int rx = -2; rx <= 2; rx++)
+		for (int ry = -2; ry <= 2; ry++)
+			if (rx || ry)
 			{
-				r = pmap[y+ry][x+rx];
+				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				rt = TYP(r);
+				int rt = TYP(r);
 
 				//Desaturation
 				switch (rt)
@@ -95,8 +92,8 @@ int GEL_update(UPDATE_FUNC_ARGS)
 					break;
 				}
 
-				dx = parts[i].x - parts[ID(r)].x;
-				dy = parts[i].y - parts[ID(r)].y;
+				float dx = parts[i].x - parts[ID(r)].x;
+				float dy = parts[i].y - parts[ID(r)].y;
 
 				//Stickness
 				if ((dx*dx + dy*dy)>1.5 && (rt == PT_GEL || !sim->elements[rt].Falldown || (fabs((float)rx)<2 && fabs((float)ry)<2)))
