@@ -54,10 +54,10 @@ void Snapshot::Restore(Simulation * sim, const Snapshot &snap)
 	std::copy(snap.AmbientHeat .begin(), snap.AmbientHeat .end(), &sim->air->hv       [0][0]);
 	std::copy(snap.BlockMap    .begin(), snap.BlockMap    .end(), &bmap               [0][0]);
 	std::copy(snap.ElecMap     .begin(), snap.ElecMap     .end(), &emap               [0][0]);
-	std::copy(snap.BlockAir    .begin(), snap.BlockAir    .end(), &bmap               [0][0]);
-	std::copy(snap.BlockAirH   .begin(), snap.BlockAirH   .end(), &emap               [0][0]);
-	std::copy(snap.FanVelocityX.begin(), snap.FanVelocityX.end(), &sim->air->blockair [0][0]);
-	std::copy(snap.FanVelocityY.begin(), snap.FanVelocityY.end(), &sim->air->blockairh[0][0]);
+	std::copy(snap.BlockAir    .begin(), snap.BlockAir    .end(), &sim->air->blockair [0][0]);
+	std::copy(snap.BlockAirH   .begin(), snap.BlockAirH   .end(), &sim->air->blockairh[0][0]);
+	std::copy(snap.FanVelocityX.begin(), snap.FanVelocityX.end(), &sim->air->fvx      [0][0]);
+	std::copy(snap.FanVelocityY.begin(), snap.FanVelocityY.end(), &sim->air->fvy      [0][0]);
 	std::copy(snap.Particles   .begin(), snap.Particles   .end(), &parts              [0]);
 
 	if (sim->grav->IsEnabled())
