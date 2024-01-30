@@ -324,15 +324,15 @@ void Textbox::OnDraw(gfx::VideoBuffer* vid)
 {
 	Label::OnDraw(vid);
 
-	ARGBColour borderColor;
+	ARGBColour borderColor, defaultColor = Style::Border;
 	if (!enabled)
-		borderColor = COLMULT(color, Style::DisabledMultiplier);
+		borderColor = COLMULT(defaultColor, Style::DisabledMultiplier);
 	else if (IsClicked())
-		borderColor = COLADD(color, Style::ClickedModifier);
+		borderColor = COLADD(defaultColor, Style::ClickedModifier);
 	else if (IsFocused())
-		borderColor = color;
+		borderColor = defaultColor;
 	else
-		borderColor = COLMULT(color, Style::DeselectedMultiplier);
+		borderColor = COLMULT(defaultColor, Style::DeselectedMultiplier);
 
 	if (!IsFocused() && !text.length() && placeholder.length())
 		vid->DrawString(position.X+3, position.Y+4, placeholder, COLMODALPHA(color, 170));

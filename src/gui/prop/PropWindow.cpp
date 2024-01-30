@@ -43,6 +43,9 @@ PropWindow::PropWindow():
 	this->AddComponent(propertyDropdown);
 
 	valueTextbox = new Textbox(propertyDropdown->Below(Point(0, 5)), Point(this->size.X-10, propertyDropdown->GetSize().Y), "");
+	valueTextbox->SetCallback([&]() {
+		this->UpdatePropTool(false);
+	});
 	this->AddComponent(valueTextbox);
 #ifndef TOUCHUI
 	FocusComponent(valueTextbox);
@@ -51,7 +54,7 @@ PropWindow::PropWindow():
 	Button *okButton = new Button(Point(0, this->size.Y - buttonHeight), Point(this->size.X, buttonHeight), "OK");
 	okButton->SetCloseButton(true);
 	okButton->SetCallback([&](int) {
-		this->UpdatePropTool();
+		this->UpdatePropTool(true);
 	});
 	this->AddComponent(okButton);
 
@@ -72,6 +75,7 @@ void PropWindow::DoKeyPress(int key, int scan, bool repeat, bool shift, bool ctr
 		{
 			selectedProperty--;
 			propertyDropdown->SetSelectedOption(selectedProperty);
+			UpdatePropTool(false);
 		}
 	}
 	else if (key == SDLK_DOWN)
@@ -80,11 +84,12 @@ void PropWindow::DoKeyPress(int key, int scan, bool repeat, bool shift, bool ctr
 		{
 			selectedProperty++;
 			propertyDropdown->SetSelectedOption(selectedProperty);
+			UpdatePropTool(false);
 		}
 	}
 	else if (key == SDLK_RETURN)
 	{
-		UpdatePropTool();
+		UpdatePropTool(true);
 	}
 	else
 	{
@@ -92,16 +97,27 @@ void PropWindow::DoKeyPress(int key, int scan, bool repeat, bool shift, bool ctr
 	}
 }
 
-void PropWindow::UpdatePropTool()
+void PropWindow::UpdatePropTool(bool close)
 {
+	propTool->prop = properties[selectedProperty];
 	std::string value = valueTextbox->GetText();
 	if (!value.empty())
 	{
-		bool isParsed = ParseValue(value);
-		if (isParsed)
-			propTool->prop = properties[selectedProperty];
-		propTool->invalidState = !isParsed;
-		Close(Confirmed);
+		bool isParsed = ParseValue(value, close);
+		if (close)
+		{
+			if (isParsed)
+			{
+				propTool->propValue = tempValue;
+			}
+			propTool->invalidState = !isParsed;
+			Close(Confirmed);
+		}
+		valueTextbox->SetColor(isParsed ? COLRGB(255, 255, 255) : COLRGB(255, 0, 0));
+	}
+	else
+	{
+		propTool->invalidState = true;
 	}
 }
 
@@ -158,7 +174,7 @@ bool PropWindow::ParseInteger(const std::string& value, bool isHex)
 		{
 			PropertyValue propValue;
 			propValue.UInteger = val;
-			propTool->propValue = propValue;
+			tempValue = propValue;
 			return true;
 		}
 	}
@@ -169,7 +185,7 @@ bool PropWindow::ParseInteger(const std::string& value, bool isHex)
 			return false;
 		if (isParsed)
 		{
-			propTool->propValue = { val };
+			tempValue = { val };
 			return true;
 		}
 	}
@@ -202,7 +218,7 @@ bool PropWindow::ParseFloat(const std::string& value, float* out, bool isTemp)
 	return false;
 }
 
-bool PropWindow::ParseValue(std::string value)
+bool PropWindow::ParseValue(std::string value, bool showError)
 {
 	// Try to parse a floating point number
 	if (properties[selectedProperty].Type == StructProperty::Float)
@@ -210,8 +226,8 @@ bool PropWindow::ParseValue(std::string value)
 		PropertyValue propValue;
 		bool ret = ParseFloat(value, &propValue.Float, properties[selectedProperty].Name == "temp");
 		if (ret)
-			propTool->propValue = propValue;
-		else
+			tempValue = propValue;
+		else if (showError)
 			Engine::Ref().ShowWindow(new ErrorPrompt("Invalid floating point number"));
 		return ret;
 	}
@@ -247,7 +263,7 @@ bool PropWindow::ParseValue(std::string value)
 		int success = console_parse_type(value.c_str(), &elNumber, nullptr, globalSim);
 		if (success)
 		{
-			propTool->propValue = { elNumber };
+			tempValue = { elNumber };
 			return true;
 		}
 	}
@@ -260,7 +276,7 @@ bool PropWindow::ParseValue(std::string value)
 			int v = ParseGOLString(upperValue);
 			if (v != -1)
 			{
-				propTool->propValue = { v };
+				tempValue = { v };
 				return true;
 			}
 		}
@@ -268,7 +284,7 @@ bool PropWindow::ParseValue(std::string value)
 		{
 			if (builtinGol[i].name == upperValue)
 			{
-				propTool->propValue = { i };
+				tempValue = { i };
 				return true;
 			}
 		}
@@ -276,15 +292,18 @@ bool PropWindow::ParseValue(std::string value)
 		{
 			if (cgol.nameString == upperValue)
 			{
-				propTool->propValue = { ID(cgol.rule) };
+				tempValue = { ID(cgol.rule) };
 				return true;
 			}
 		}
 	}
 
-	if (properties[selectedProperty].Type == StructProperty::ParticleType)
-		Engine::Ref().ShowWindow(new ErrorPrompt("Invalid element name"));
-	else
-		Engine::Ref().ShowWindow(new ErrorPrompt("Invalid number"));
+	if (showError)
+	{
+		if (properties[selectedProperty].Type == StructProperty::ParticleType)
+			Engine::Ref().ShowWindow(new ErrorPrompt("Invalid element name"));
+		else
+			Engine::Ref().ShowWindow(new ErrorPrompt("Invalid number"));
+	}
 	return false;
 }

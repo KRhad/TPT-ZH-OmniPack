@@ -14,17 +14,18 @@ class PropWindow : public ui::Window
 	Textbox *valueTextbox;
 
 	PropTool *propTool;
+	PropertyValue tempValue{};
 
 	std::vector<StructProperty> properties;
 	unsigned int selectedProperty = 0;
 
-	void UpdatePropTool();
+	void UpdatePropTool(bool close);
 	void LoadFromPropTool();
 
 	template<typename T>
 	static T ParseNumber(const std::string& num, bool isHex, bool &isParsed);
 	bool ParseInteger(const std::string& num, bool isHex);
-	bool ParseValue(std::string value);
+	bool ParseValue(std::string value, bool showError);
 	bool ParseFloat(const std::string& value, float* out, bool isTemp);
 public:
 	PropWindow();
