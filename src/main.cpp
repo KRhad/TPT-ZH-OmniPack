@@ -223,10 +223,10 @@ void NewSim()
 	clear_sim();
 	clear_save_info();
 	legacy_enable = 0;
-	globalSim->gravityMode = 0;
+	globalSim->gravityMode = GRAV_VERTICAL;
 	globalSim->customGravityX = 0.0f;
 	globalSim->customGravityY = 0.0f;
-	airMode = 0;
+	globalSim->air->airMode = 0;
 }
 
 

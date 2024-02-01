@@ -315,20 +315,28 @@ void initSimulationAPI(lua_State * l)
 	lua_setglobal(l, "sim");
 
 	//Static values
+	SETCONST(l, CELL);
+	SETCONST(l, XCELLS);
+	SETCONST(l, YCELLS);
+	SETCONST(l, NCELL);
 	SETCONST(l, XRES);
 	SETCONST(l, YRES);
-	SETCONST(l, CELL);
 	SETCONST(l, NT);
 	SETCONST(l, ST);
 	SETCONST(l, ITH);
 	SETCONST(l, ITL);
-	SETCONST(l, IPH);
-	SETCONST(l, IPL);
+	SETCONSTF(l, IPH);
+	SETCONSTF(l, IPL);
 	SETCONST(l, PT_NUM);
 	lua_pushinteger(l, 0); lua_setfield(l, -2, "NUM_PARTS");
 	SETCONST(l, R_TEMP);
 	SETCONST(l, MAX_TEMP);
 	SETCONST(l, MIN_TEMP);
+	SETCONSTF(l, MAX_PRESSURE);
+	SETCONSTF(l, MIN_PRESSURE);
+	SETCONST(l, ISTP);
+	SETCONSTF(l, CFDS);
+	SETCONSTF(l, SIM_MAXVELOCITY);
 
 	SETCONST(l, TOOL_HEAT);
 	SETCONST(l, TOOL_COOL);
@@ -354,6 +362,43 @@ void initSimulationAPI(lua_State * l)
 
 	SETCONST(l, PMAPBITS);
 	SETCONST(l, PMAPMASK);
+
+	SETCONST(l, CIRCLE_BRUSH);
+	SETCONST(l, SQUARE_BRUSH);
+	SETCONST(l, TRI_BRUSH);
+	SETCONST(l, BRUSH_NUM);
+
+	SETCONST(l, EDGE_VOID);
+	SETCONST(l, EDGE_SOLID);
+	SETCONST(l, EDGE_LOOP);
+	SETCONST(l, NUM_EDGE_MODES);
+
+	SETCONST(l, AIR_ON);
+	SETCONST(l, AIR_PRESSURE_OFF);
+	SETCONST(l, AIR_VELOCITY_OFF);
+	SETCONST(l, AIR_OFF);
+	SETCONST(l, AIR_NO_UPDATE);
+	SETCONST(l, NUM_AIR_MODES);
+
+	SETCONST(l, GRAV_VERTICAL);
+	SETCONST(l, GRAV_OFF);
+	SETCONST(l, GRAV_RADIAL);
+	SETCONST(l, GRAV_CUSTOM);
+	SETCONST(l, NUM_GRAV_MODES);
+
+	lua_newtable(l);
+	for (int i = 0; i < WALLCOUNT; i++)
+	{
+		tpt_lua_pushString(l, wallTypes[i].identifier);
+		lua_pushinteger(l, i);
+		lua_settable(l, -3);
+		lua_pushinteger(l, i);
+		tpt_lua_pushString(l, wallTypes[i].identifier);
+		lua_settable(l, -3);
+	}
+	lua_setfield(l, -2, "walls");
+	lua_pushinteger(l, WALLCOUNT);
+	lua_setfield(l, -2, "NUM_WALLS");
 
 	//Declare FIELD_BLAH constants
 	int particlePropertiesCount = 0;
@@ -1403,7 +1448,7 @@ int simulation_edgeMode(lua_State * l)
 	}
 
 	// set edge mode
-	int edgeMode = (char)luaL_optint(l, 1, 0);
+	int edgeMode = (char)luaL_optint(l, 1, EDGE_VOID);
 	if (temp)
 		luaSim->saveEdgeMode = edgeMode;
 	else
@@ -1412,7 +1457,7 @@ int simulation_edgeMode(lua_State * l)
 		luaSim->saveEdgeMode = -1;
 	}
 
-	if (luaSim->GetEdgeMode() == 1)
+	if (luaSim->GetEdgeMode() == EDGE_SOLID)
 		draw_bframe();
 	else
 		erase_bframe();
@@ -1428,7 +1473,7 @@ int simulation_gravityMode(lua_State * l)
 		lua_pushnumber(l, luaSim->gravityMode);
 		return 1;
 	}
-	luaSim->gravityMode = luaL_optint(l, 1, 0);
+	luaSim->gravityMode = luaL_optint(l, 1, GRAV_VERTICAL);
 	return 0;
 }
 
@@ -1457,10 +1502,10 @@ int simulation_airMode(lua_State * l)
 	int acount = lua_gettop(l);
 	if (acount == 0)
 	{
-		lua_pushnumber(l, airMode);
+		lua_pushnumber(l, luaSim->air->airMode);
 		return 1;
 	}
-	airMode = luaL_optint(l, 1, 0);
+	luaSim->air->airMode = luaL_optint(l, 1, AIR_ON);
 	return 0;
 }
 

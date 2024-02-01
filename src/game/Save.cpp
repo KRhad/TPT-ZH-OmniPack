@@ -217,12 +217,12 @@ void Save::InitVars()
 	gravityEnable = false;
 	aheatEnable = false;
 	paused = false;
-	gravityMode = 0;
+	gravityMode = GRAV_VERTICAL;
 	customGravityX = 0.0f;
 	customGravityY = 0.0f;
-	airMode = 0;
+	airMode = AIR_ON;
 	ambientAirTemp = R_TEMP + 273.15;
-	edgeMode = 0;
+	edgeMode = EDGE_VOID;
 	hasPressure = false;
 	hasAmbientHeat = false;
 	// jacob1's mod
@@ -2660,7 +2660,7 @@ void Save::BuildSave()
 		bson_append_bool(&b, "hud_enable", hudEnable);
 	bson_append_bool(&b, "aheat_enable", aheatEnable);
 	bson_append_int(&b, "edgeMode", edgeMode);
-	if (gravityMode == 3)
+	if (gravityMode == GRAV_CUSTOM)
 	{
 		bson_append_double(&b, "customGravityX", double(customGravityX));
 		bson_append_double(&b, "customGravityY", double(customGravityY));

@@ -354,7 +354,7 @@ void SetLeftHudText(Simulation * sim, float FPSB2)
 	}
 	if (currentHud[7])
 	{
-		sprintf(tempstring,"Air:%d ",airMode);
+		sprintf(tempstring,"Air:%d ", luaSim->air->airMode);
 		strappend(uitext,tempstring);
 	}
 	if (currentHud[39])

@@ -2093,17 +2093,17 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			switch (sim->gravityMode)
 			{
 			default:
-				sim->gravityMode = 0;
-			case 0:
+				sim->gravityMode = GRAV_VERTICAL;
+			case GRAV_VERTICAL:
 				toolTip = "Gravity: Vertical";
 				break;
-			case 1:
+			case GRAV_OFF:
 				toolTip = "Gravity: Off";
 				break;
-			case 2:
+			case GRAV_RADIAL:
 				toolTip = "Gravity: Radial";
 				break;
-			case 3:
+			case GRAV_CUSTOM:
 				toolTip = "Gravity: Custom";
 				break;
 			}
@@ -2132,26 +2132,26 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		}
 		else
 		{
-			++airMode;
+			++sim->air->airMode;
 
 			std::string toolTip;
-			switch (airMode)
+			switch (sim->air->airMode)
 			{
 			default:
-				airMode = 0;
-			case 0:
+				sim->air->airMode = AIR_ON;
+			case AIR_ON:
 				toolTip = "Air: On";
 				break;
-			case 1:
+			case AIR_PRESSURE_OFF:
 				toolTip = "Air: Pressure Off";
 				break;
-			case 2:
+			case AIR_VELOCITY_OFF:
 				toolTip = "Air: Velocity Off";
 				break;
-			case 3:
+			case AIR_OFF:
 				toolTip = "Air: Off";
 				break;
-			case 4:
+			case AIR_NO_UPDATE:
 				toolTip = "Air: No Update";
 				break;
 			}

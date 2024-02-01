@@ -52,11 +52,11 @@ public:
 	Gravity *grav;
 
 	// settings
-	int gravityMode = 0;
+	int gravityMode = GRAV_VERTICAL;
 	float customGravityX = 0.0f;
 	float customGravityY = 0.0f;
-	signed char edgeMode;
-	signed char saveEdgeMode;
+	signed char edgeMode = EDGE_VOID;
+	signed char saveEdgeMode = EDGE_VOID;
 	bool msRotation; //for moving solids
 	bool instantActivation; //electronics are instantly activated
 	bool includePressure = true;

@@ -34,7 +34,6 @@
 
 particle *parts;
 
-int airMode = 0;
 bool water_equal_test = 0;
 
 unsigned char bmap[YRES/CELL][XRES/CELL];

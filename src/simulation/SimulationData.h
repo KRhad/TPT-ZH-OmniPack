@@ -7,6 +7,9 @@
 #define O_MAX_TEMP 3500
 #define O_MIN_TEMP -273
 
+constexpr float MAX_PRESSURE = 256.0f;
+constexpr float MIN_PRESSURE = -256.0f;
+
 #define TYPE_PART			0x0000001 //1 Powders
 #define TYPE_LIQUID			0x0000002 //2 Liquids
 #define TYPE_SOLID			0x0000004 //4 Solids
@@ -40,6 +43,20 @@
 #define FLAG_EXPLODE	0x10 // EXPL explosion
 #define FLAG_DISAPPEAR	0x20 // Will disappear on next frame no matter what
 
+enum EdgeMode
+{
+	EDGE_VOID, EDGE_SOLID, EDGE_LOOP, NUM_EDGE_MODES
+};
+
+enum AirMode
+{
+	AIR_ON, AIR_PRESSURE_OFF, AIR_VELOCITY_OFF, AIR_OFF, AIR_NO_UPDATE, NUM_AIR_MODES
+};
+
+enum GravityMode
+{
+	GRAV_VERTICAL, GRAV_OFF, GRAV_RADIAL, GRAV_CUSTOM, NUM_GRAV_MODES
+};
 
 
 // Change this to change the amount of bits used to store type in pmap (and a few elements such as PIPE and CRAY)

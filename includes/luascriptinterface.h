@@ -12,6 +12,10 @@
 	lua_pushinteger(L, NAME);\
 	lua_setfield(L, -2, #NAME)
 
+#define SETCONSTF(L, NAME)\
+lua_pushnumber(L, NAME);\
+	lua_setfield(L, -2, #NAME)
+
 extern char custom_can_move[PT_NUM][PT_NUM];
 void custom_init_can_move();
 

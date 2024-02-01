@@ -38,8 +38,6 @@ void PPIP_flood_trigger(Simulation* sim, int x, int y, int sparkedBy);
 #define CHANNELS ((int)(MAX_TEMP-73)/100+2)
 extern const particle emptyparticle;
 
-extern int airMode;
-
 extern particle *parts;
 
 extern unsigned char bmap[YRES/CELL][XRES/CELL];

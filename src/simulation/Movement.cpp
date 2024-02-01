@@ -893,7 +893,7 @@ int Simulation::DoMove(int i, int x, int y, float nxf, float nyf)
 
 	if (parts[i].type == PT_NONE)
 		return 0;
-	if (GetEdgeMode() == 2)
+	if (GetEdgeMode() == EDGE_LOOP)
 	{
 		bool x_ok = (nx >= CELL && nx < XRES-CELL);
 		bool y_ok = (ny >= CELL && ny < YRES-CELL);

@@ -104,6 +104,9 @@ const int menuIconWidth = 17;
 #define GRAV_DIFF
 
 #define CELL    4
+constexpr int XCELLS = XRES / CELL;
+constexpr int YCELLS = YRES / CELL;
+constexpr int NCELL = XCELLS * YCELLS;
 #define ISTP    (CELL/2)
 #define CFDS	(4.0f/CELL)
 #define SIM_MAXVELOCITY 1e4f

@@ -159,19 +159,19 @@ public:
 			movingSolid->vy = movingSolid->vy/movingSolid->particleCount;
 			switch (sim->gravityMode)
 			{
-			case 0:
+			case GRAV_VERTICAL:
 				movingSolid->vy = movingSolid->vy + .2f;
 				break;
-			case 1:
+			case GRAV_OFF:
 				break;
-			case 2:
+			case GRAV_RADIAL:
 			{
 				float pGravD = 0.01f - hypotf((parts[movingSolid->index-1].x - XCNTR), (parts[movingSolid->index-1].y - YCNTR));
 				movingSolid->vx = movingSolid->vx + .2f * ((parts[movingSolid->index-1].x - XCNTR) / pGravD);
 				movingSolid->vy = movingSolid->vy + .2f * ((parts[movingSolid->index-1].y - YCNTR) / pGravD);
 				break;
 			}
-			case 3:
+			case GRAV_CUSTOM:
 				movingSolid->vx = movingSolid->vx + sim->customGravityX / 5.f;
 				movingSolid->vy = movingSolid->vy + sim->customGravityY / 5.f;
 				break;

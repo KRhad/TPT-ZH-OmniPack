@@ -58,8 +58,6 @@ Simulation::Simulation():
 	parts_lastActiveIndex(NPART-1),
 	debug_currentParticle(0),
 	forceStackingCheck(false),
-	edgeMode(0),
-	saveEdgeMode(0),
 	msRotation(true),
 #ifdef NOMOD
 	instantActivation(false),
@@ -116,7 +114,7 @@ void Simulation::Clear()
 	instantActivation = true;
 #endif
 	saveEdgeMode = -1;
-	if (edgeMode == 1)
+	if (edgeMode == EDGE_SOLID)
 		draw_bframe();
 }
 
@@ -582,7 +580,7 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 		water_equal_test = save->waterEEnabled;
 		if (!sys_pause || replace == 2)
 			sys_pause = save->paused;
-		airMode = save->airMode;
+		air->airMode = save->airMode;
 		//if (save->ambientAirTempPresent)
 		//	air->SetAmbientAirTemp(save->ambientAirTemp);
 		gravityMode = save->gravityMode;
@@ -874,7 +872,7 @@ Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool
 	newSave->gravityMode = gravityMode;
 	newSave->customGravityX = customGravityX;
 	newSave->customGravityY = customGravityY;
-	newSave->airMode = airMode;
+	newSave->airMode = air->airMode;
 	newSave->ambientAirTemp = air->GetAmbientAirTemp();
 	newSave->edgeMode = edgeMode;
 	newSave->legacyEnable = legacy_enable;
@@ -1223,15 +1221,15 @@ void Simulation::GetGravityField(int x, int y, float particleGrav, float newtonG
 	switch (gravityMode)
 	{
 	default:
-	case 0: //normal, vertical gravity
+	case GRAV_VERTICAL: //normal, vertical gravity
 		pGravX = 0;
 		pGravY = particleGrav;
 		break;
-	case 1: //no gravity
+	case GRAV_OFF: //no gravity
 		pGravX = 0;
 		pGravY = 0;
 		break;
-	case 2: //radial gravity
+	case GRAV_RADIAL: //radial gravity
 	{
 		pGravX = 0;
 		pGravY = 0;
@@ -1243,9 +1241,9 @@ void Simulation::GetGravityField(int x, int y, float particleGrav, float newtonG
 			pGravX = particleGrav * (dx / pGravD);
 			pGravY = particleGrav * (dy / pGravD);
 		}
+		break;
 	}
-	break;
-	case 3: //custom gravity
+	case GRAV_CUSTOM: //custom gravity
 		pGravX = particleGrav * customGravityX;
 		pGravY = particleGrav * customGravityY;
 		break;
@@ -1926,7 +1924,7 @@ bool Simulation::UpdateParticle(int i)
 			fin_yf += dy;
 			fin_x = (int)(fin_xf+0.5f);
 			fin_y = (int)(fin_yf+0.5f);
-			if (GetEdgeMode() == 2)
+			if (GetEdgeMode() == EDGE_LOOP)
 			{
 				bool x_ok = (fin_xf >= CELL-.5f && fin_xf < XRES-CELL-.5f);
 				bool y_ok = (fin_yf >= CELL-.5f && fin_yf < YRES-CELL-.5f);
@@ -1942,7 +1940,7 @@ bool Simulation::UpdateParticle(int i)
 				// nothing found
 				fin_xf = parts[i].x + parts[i].vx;
 				fin_yf = parts[i].y + parts[i].vy;
-				if (GetEdgeMode() == 2)
+				if (GetEdgeMode() == EDGE_LOOP)
 				{
 					bool x_ok = (fin_xf >= CELL-.5f && fin_xf < XRES-CELL-.5f);
 					bool y_ok = (fin_yf >= CELL-.5f && fin_yf < YRES-CELL-.5f);
@@ -1988,7 +1986,7 @@ bool Simulation::UpdateParticle(int i)
 		parts[i].y += parts[i].vy;
 		int nx = (int)((float)parts[i].x+0.5f);
 		int ny = (int)((float)parts[i].y+0.5f);
-		if (edgeMode == 2)
+		if (edgeMode == EDGE_LOOP)
 		{
 			bool x_ok = (nx >= CELL && nx < XRES-CELL);
 			bool y_ok = (ny >= CELL && ny < YRES-CELL);
@@ -2254,7 +2252,7 @@ bool Simulation::UpdateParticle(int i)
 						return false;
 					}
 				}
-				if (elements[t].Falldown>1 && !grav->IsEnabled() && gravityMode==0 && parts[i].vy>fabsf(parts[i].vx))
+				if (elements[t].Falldown>1 && !grav->IsEnabled() && gravityMode==GRAV_VERTICAL && parts[i].vy>fabsf(parts[i].vx))
 				{
 					int rt;
 					s = 0;

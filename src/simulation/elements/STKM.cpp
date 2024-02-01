@@ -97,13 +97,13 @@ int STKM_ElementDataContainer::Run(Stickman *playerp, UPDATE_FUNC_ARGS)
 	switch (sim->gravityMode)
 	{
 		default:
-		case 0:
+		case GRAV_VERTICAL:
 			gvy = 1;
 			break;
-		case 1:
+		case GRAV_OFF:
 			gvy = gvx = 0.0f;
 			break;
-		case 2:
+		case GRAV_RADIAL:
 		{
 			float gravd;
 			gravd = 0.01f - hypotf((parts[i].x - XCNTR), (parts[i].y - YCNTR));
@@ -111,7 +111,7 @@ int STKM_ElementDataContainer::Run(Stickman *playerp, UPDATE_FUNC_ARGS)
 			gvy = ((float)(parts[i].y - YCNTR) / gravd);
 			break;
 		}
-		case 3:
+		case GRAV_CUSTOM:
 			gvx = sim->customGravityX;
 			gvy = sim->customGravityY;
 			break;

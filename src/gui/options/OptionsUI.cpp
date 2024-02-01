@@ -347,9 +347,9 @@ void OptionsUI::InitializeOptions()
 	newtonianCheckbox->SetChecked(sim->grav->IsEnabled());
 	waterEqalizationCheckbox->SetChecked(water_equal_test);
 
-	airSimDropdown->SetSelectedOption(airMode);
+	airSimDropdown->SetSelectedOption(sim->air->airMode);
 	UpdateAmbientAirTempPreview(sim->air->GetAmbientAirTemp(), true);
-	airTempTextbox->SetText(Format::TemperatureToString(sim->air->GetAmbientAirTemp(), globalSim->temperatureScale));
+	airTempTextbox->SetText(Format::TemperatureToString(sim->air->GetAmbientAirTemp(), sim->temperatureScale));
 	gravityDropdown->SetSelectedOption(sim->gravityMode);
 	edgeModeDropdown->SetSelectedOption(sim->edgeMode);
 	decoSpaceDropdown->SetSelectedOption(sim->decoSpace);
@@ -411,7 +411,7 @@ void OptionsUI::WaterEqualizationChecked(bool checked)
 
 void OptionsUI::AirSimSelected(unsigned int option)
 {
-	airMode = option;
+	sim->air->airMode = option;
 }
 
 void OptionsUI::UpdateAirTemp(std::string temp, bool isDefocus)
@@ -420,7 +420,7 @@ void OptionsUI::UpdateAirTemp(std::string temp, bool isDefocus)
 	bool isValid;
 	try
 	{
-		airTemp = Format::StringToTemperature(temp, globalSim->temperatureScale);
+		airTemp = Format::StringToTemperature(temp, sim->temperatureScale);
 		isValid = true;
 	}
 	catch (const std::exception & e)
@@ -449,7 +449,7 @@ void OptionsUI::UpdateAirTemp(std::string temp, bool isDefocus)
 		//	return;
 
 		// Update textbox with the new value
-		airTempTextbox->SetText(Format::TemperatureToString(airTemp, globalSim->temperatureScale));
+		airTempTextbox->SetText(Format::TemperatureToString(airTemp, sim->temperatureScale));
 	}
 	// Out of range temperatures are invalid, preview should go away
 	else if (airTemp < MIN_TEMP || airTemp > MAX_TEMP)
@@ -480,7 +480,7 @@ void OptionsUI::UpdateAmbientAirTempPreview(float airTemp, bool isValid)
 void OptionsUI::GravitySelected(unsigned int option)
 {
 	sim->gravityMode = option;
-	if (option == 3)
+	if (option == GRAV_CUSTOM)
 	{
 		Engine::Ref().ShowWindow(new GravityWindow(sim, 0.05f, 40));
 	}

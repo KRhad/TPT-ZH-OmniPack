@@ -19,6 +19,7 @@
 #define AIR_H
 
 #include "defines.h"
+#include "SimulationData.h"
 
 class Simulation;
 
@@ -33,6 +34,8 @@ class Air
 	float ambientAirTempPref;
 
 public:
+	int airMode = AIR_ON;
+
 	float pv[YRES/CELL][XRES/CELL];
 	float vx[YRES/CELL][XRES/CELL];
 	float vy[YRES/CELL][XRES/CELL];
