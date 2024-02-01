@@ -98,7 +98,7 @@ void Tool::Click(Simulation *sim, Point position)
 
 }
 
-Tool* Tool::Sample(Simulation *sim, Point position)
+Tool * Tool::Sample(Simulation *sim, Point position, bool shiftHeld)
 {
 	if (position.Y < 0 || position.Y >= YRES || position.X < 0 || position.X >= XRES)
 		return this;
@@ -347,8 +347,11 @@ int PropTool::FloodFill(Simulation *sim, Brush *brush, Point position)
 	return 0;
 }
 
-Tool * PropTool::Sample(Simulation *sim, Point position)
+Tool * PropTool::Sample(Simulation *sim, Point position, bool shiftHeld)
 {
+	if (!shiftHeld)
+		return Tool::Sample(sim, position, shiftHeld);
+
 	if (position.Y < 0 || position.Y >= YRES || position.X < 0 || position.X >= XRES)
 		return this;
 
@@ -380,6 +383,8 @@ Tool * PropTool::Sample(Simulation *sim, Point position)
 			default:
 				break;
 		}
+
+		openProp = true; // tell main window to open the prop tool
 	}
 	return this;
 }
@@ -412,7 +417,7 @@ int DecoTool::FloodFill(Simulation *sim, Brush *brush, Point position)
 	sim->FloodDeco(vid_buf, position.X, position.Y, col, PIXCONV(rep));
 	return 1;
 }
-Tool* DecoTool::Sample(Simulation *sim, Point position)
+Tool * DecoTool::Sample(Simulation *sim, Point position, bool shiftHeld)
 {
 	if (position.Y < 0 || position.Y >= YRES || position.X < 0 || position.X >= XRES)
 		return this;
@@ -448,7 +453,7 @@ int InvalidTool::FloodFill(Simulation *sim, Brush *brush, Point position)
 {
 	return 0;
 }
-Tool* InvalidTool::Sample(Simulation *sim, Point position)
+Tool * InvalidTool::Sample(Simulation *sim, Point position, bool shiftHeld)
 {
 	return nullptr;
 }

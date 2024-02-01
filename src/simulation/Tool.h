@@ -49,7 +49,7 @@ public:
 	virtual void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos);
 	virtual int FloodFill(Simulation *sim, Brush *brush, Point position);
 	virtual void Click(Simulation *sim, Point position);
-	virtual Tool* Sample(Simulation *sim, Point position);
+	virtual Tool * Sample(Simulation *sim, Point position, bool shiftHeld);
 };
 
 class ElementTool : public Tool
@@ -129,7 +129,7 @@ public:
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
 	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
-	Tool *Sample(Simulation *sim, Point position) override;
+	Tool * Sample(Simulation *sim, Point position, bool shiftHeld) override;
 
 	StructProperty prop;
 	PropertyValue propValue;
@@ -146,7 +146,7 @@ public:
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
 	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
-	Tool* Sample(Simulation *sim, Point position) override;
+	Tool * Sample(Simulation *sim, Point position, bool shiftHeld) override;
 };
 
 class InvalidTool : public Tool
@@ -160,7 +160,7 @@ public:
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override final;
 	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override final;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override final;
-	Tool* Sample(Simulation *sim, Point position) override final;
+	Tool * Sample(Simulation *sim, Point position, bool shiftHeld) override final;
 };
 
 class DecoPresetTool : public InvalidTool
