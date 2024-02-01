@@ -129,6 +129,7 @@ public:
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
 	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
+	Tool *Sample(Simulation *sim, Point position) override;
 
 	StructProperty prop;
 	PropertyValue propValue;

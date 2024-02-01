@@ -347,6 +347,42 @@ int PropTool::FloodFill(Simulation *sim, Brush *brush, Point position)
 	return 0;
 }
 
+Tool * PropTool::Sample(Simulation *sim, Point position)
+{
+	if (position.Y < 0 || position.Y >= YRES || position.X < 0 || position.X >= XRES)
+		return this;
+
+	int sample = pmap[position.Y][position.X];
+	if (sample || (sample = photons[position.Y][position.X]))
+	{
+		particle part = parts[ID(sample)];
+		switch (prop.Type)
+		{
+			case StructProperty::Float:
+			{
+				float value = *((float*)(((char*)&part) + prop.Offset));
+				propValue.Float = value;
+				break;
+			}
+			case StructProperty::ParticleType:
+			case StructProperty::Integer:
+			{
+				int value = *((int*)(((char*)&part) + prop.Offset));
+				propValue.Integer = value;
+				break;
+			}
+			case StructProperty::UInteger:
+			{
+				unsigned int value = *((unsigned int*)(((char*)&part) + prop.Offset));
+				propValue.UInteger = value;
+				break;
+			}
+			default:
+				break;
+		}
+	}
+	return this;
+}
 
 DecoTool::DecoTool(int decoID):
 	Tool(DECO_TOOL, decoID, decoTypes[decoID].identifier, decoTypes[decoID].descs)
