@@ -162,6 +162,8 @@ void draw_walls(pixel *vid, Simulation * sim);
 
 void draw_find(Simulation * sim);
 
+bool find_matches(int i, Tool *activeTool);
+
 void render_signs(pixel *vid_buf, Simulation * sim);
 
 void render_fire(pixel *dst);

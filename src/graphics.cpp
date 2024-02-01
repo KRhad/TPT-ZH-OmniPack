@@ -2053,21 +2053,21 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 
 				if (finding && !(finding & 0x8))
 				{
-					if ((finding & 0x1) && ((parts[i].type != PT_LIFE && ((ElementTool*)activeTools[0])->GetID() == parts[i].type) || (parts[i].type == PT_LIFE && ((GolTool*)activeTools[0])->GetID() == parts[i].ctype)))
+					if ((finding & 0x1) && find_matches(i, activeTools[0]))
 					{
 						colr = firer = 255;
 						colg = colb = fireg = fireb = 0;
 						cola = firea = 255;
 						foundParticles++;
 					}
-					else if ((finding & 0x2) && ((parts[i].type != PT_LIFE && ((ElementTool*)activeTools[1])->GetID() == parts[i].type) || (parts[i].type == PT_LIFE && ((GolTool*)activeTools[1])->GetID() == parts[i].ctype)))
+					else if ((finding & 0x2) && find_matches(i, activeTools[1]))
 					{
 						colb = fireb = 255;
 						colr = colg = firer = fireg = 0;
 						cola = firea = 255;
 						foundParticles++;
 					}
-					else if ((finding & 0x4) && ((parts[i].type != PT_LIFE && ((ElementTool*)activeTools[2])->GetID() == parts[i].type) || (parts[i].type == PT_LIFE && ((GolTool*)activeTools[2])->GetID() == parts[i].ctype)))
+					else if ((finding & 0x4) && find_matches(i, activeTools[2]))
 					{
 						colg = fireg = 255;
 						colr = colb = firer = fireb = 0;
@@ -2504,17 +2504,17 @@ void draw_find(Simulation * sim)
 	{
 		if (!parts[i].type)
 			continue;
-		if ((finding & 0x1) && ((parts[i].type != PT_LIFE && ((ElementTool*)activeTools[0])->GetID() == parts[i].type) || (parts[i].type == PT_LIFE && ((GolTool*)activeTools[0])->GetID() == parts[i].ctype)))
+		if ((finding & 0x1) && find_matches(i, activeTools[0]))
 		{
 			drawpixel(vid_buf, (int)(parts[i].x+.5f), (int)(parts[i].y+.5f), 255, 0, 0, 255);
 			foundParticles++;
 		}
-		else if ((finding & 0x2) && ((parts[i].type != PT_LIFE && ((ElementTool*)activeTools[1])->GetID() == parts[i].type) || (parts[i].type == PT_LIFE && ((GolTool*)activeTools[1])->GetID() == parts[i].ctype)))
+		else if ((finding & 0x2) && find_matches(i, activeTools[1]))
 		{
 			drawpixel(vid_buf, (int)(parts[i].x+.5f), (int)(parts[i].y+.5f), 0, 0, 255, 255);
 			foundParticles++;
 		}
-		else if ((finding & 0x4) && ((parts[i].type != PT_LIFE && ((ElementTool*)activeTools[2])->GetID() == parts[i].type) || (parts[i].type == PT_LIFE && ((GolTool*)activeTools[2])->GetID() == parts[i].ctype)))
+		else if ((finding & 0x4) && find_matches(i, activeTools[2]))
 		{
 			drawpixel(vid_buf, (int)(parts[i].x+.5f), (int)(parts[i].y+.5f), 0, 255, 0, 255);
 			foundParticles++;
@@ -2533,6 +2533,47 @@ void draw_find(Simulation * sim)
 				fillrect(vid_buf, x*CELL-1, y*CELL-1, CELL+1, CELL+1, 0, 255, 0, 255);
 		}
 	}
+}
+
+/**
+ * Check if find tool matches particle i, based on the active tool. Has special cases for PROP tool to match selected property
+ */
+bool find_matches(int i, Tool *activeTool)
+{
+	if ((parts[i].type != PT_LIFE && ((ElementTool*)activeTool)->GetID() == parts[i].type) || (parts[i].type == PT_LIFE && ((GolTool*)activeTool)->GetID() == parts[i].ctype))
+	{
+		return true;
+	}
+
+	if (((ToolTool*)activeTool)->GetID() == TOOL_PROP && !((PropTool*)activeTool)->invalidState)
+	{
+		StructProperty propType = ((PropTool*)activeTool)->prop;
+		PropertyValue propValue = ((PropTool*)activeTool)->propValue;
+
+		bool matches = false;
+		switch (propType.Type)
+		{
+		case StructProperty::Float:
+			matches = *((float*)(((char*)&parts[i]) + propType.Offset)) == propValue.Float;
+			break;
+
+		case StructProperty::ParticleType:
+		case StructProperty::Integer:
+			matches = *((int*)(((char*)&parts[i]) + propType.Offset)) == propValue.Integer;
+			break;
+
+		case StructProperty::UInteger:
+			matches = *((unsigned int*)(((char*)&parts[i]) + propType.Offset)) == propValue.UInteger;
+			break;
+
+		default:
+			break;
+		}
+
+		return matches;
+	}
+
+	return false;
 }
 
 void draw_walls(pixel *vid, Simulation * sim)
