@@ -72,7 +72,7 @@ int VSNS_update(UPDATE_FUNC_ARGS)
 						if (TYP(r) == PT_FILT)
 						{
 							int vel = parts[ID(r)].ctype - 0x10000000;
-							if (vel >= 0 && vel < SIM_MAXVELOCITY)
+							if (vel >= 0 && vel < MAX_VELOCITY)
 							{
 								doDeserialization = true;
 								Vs = vel;
