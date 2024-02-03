@@ -2109,9 +2109,33 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			}
 			UpdateToolTip(toolTip, Point(XCNTR - gfx::VideoBuffer::TextSize(toolTip.c_str()).X / 2, YCNTR - 10), INFOTIP, 255);
 		}
-		 break;
+		break;
 	case SDL_SCANCODE_E:
-		element_search_ui(vid_buf, &activeTools[0], &activeTools[1]);
+		if (ctrlHeld)
+		{
+			sim->SetEdgeMode(++sim->edgeMode);
+
+			std::string toolTip;
+			switch (sim->edgeMode)
+			{
+			default:
+				sim->edgeMode = EDGE_VOID;
+			case EDGE_VOID:
+				toolTip = "Edge Mode: Void";
+				break;
+			case EDGE_SOLID:
+				toolTip = "Edge Mode: Solid";
+				break;
+			case EDGE_LOOP:
+				toolTip = "Edge Mode: Loop";
+				break;
+			}
+			UpdateToolTip(toolTip, Point(XCNTR - gfx::VideoBuffer::TextSize(toolTip.c_str()).X / 2, YCNTR - 10), INFOTIP, 255);
+		}
+		else
+		{
+			element_search_ui(vid_buf, &activeTools[0], &activeTools[1]);
+		}
 		break;
 	case SDL_SCANCODE_R:
 		if (state != LOAD)

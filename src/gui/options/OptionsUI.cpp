@@ -31,8 +31,7 @@
 
 OptionsUI::OptionsUI(Simulation *sim):
 	ui::Window(Point(CENTERED, CENTERED), Point(310, 350)),
-	sim(sim),
-	oldEdgeMode(sim->GetEdgeMode())
+	sim(sim)
 {
 #ifndef TOUCHUI
 	int checkboxHeight = 13;
@@ -351,7 +350,7 @@ void OptionsUI::InitializeOptions()
 	UpdateAmbientAirTempPreview(sim->air->GetAmbientAirTemp(), true);
 	airTempTextbox->SetText(Format::TemperatureToString(sim->air->GetAmbientAirTemp(), sim->temperatureScale));
 	gravityDropdown->SetSelectedOption(sim->gravityMode);
-	edgeModeDropdown->SetSelectedOption(sim->edgeMode);
+	edgeModeDropdown->SetSelectedOption(sim->GetEdgeMode());
 	decoSpaceDropdown->SetSelectedOption(sim->decoSpace);
 	temperatureScaleDropdown->SetSelectedOption(sim->temperatureScale);
 
@@ -488,19 +487,8 @@ void OptionsUI::GravitySelected(unsigned int option)
 
 void OptionsUI::EdgeModeSelected(unsigned int option)
 {
-	unsigned int edgeMode = option;
-	if (edgeMode == 1 && oldEdgeMode != 1)
-		draw_bframe();
-	else if (edgeMode != 1 && oldEdgeMode == 1)
-		erase_bframe();
-	if (edgeMode != oldEdgeMode)
-	{
-		sim->edgeMode = edgeMode;
-		sim->saveEdgeMode = -1;
-	}
-	oldEdgeMode = sim->GetEdgeMode();
+	sim->SetEdgeMode(option);
 }
-
 
 void OptionsUI::DecoSpaceSelected(unsigned int option)
 {
@@ -512,7 +500,6 @@ void OptionsUI::TemperatureScaleSelected(unsigned int option)
 	sim->temperatureScale = option;
 	airTempTextbox->SetText(Format::TemperatureToString(sim->air->GetAmbientAirTemp(), option));
 }
-
 
 void OptionsUI::ScaleSelected(unsigned int option)
 {

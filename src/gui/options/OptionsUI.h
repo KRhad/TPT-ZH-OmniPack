@@ -44,7 +44,6 @@ class OptionsUI : public ui::Window
 	void WaterEqualizationChecked(bool checked);
 	void AirSimSelected(unsigned int option);
 	void GravitySelected(unsigned int option);
-	unsigned int oldEdgeMode;
 	void EdgeModeSelected(unsigned int option);
 	void DecoSpaceSelected(unsigned int option);
 	void TemperatureScaleSelected(unsigned int option);

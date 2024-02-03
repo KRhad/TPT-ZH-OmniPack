@@ -1429,7 +1429,7 @@ int simulation_edgeMode(lua_State * l)
 {
 	int acount = lua_gettop(l);
 
-	// allow configuring the "temp" edge mode
+	// allow fetching the "temp" edge mode
 	bool temp = false;
 	if (acount > 1)
 	{
@@ -1449,18 +1449,7 @@ int simulation_edgeMode(lua_State * l)
 
 	// set edge mode
 	int edgeMode = (char)luaL_optint(l, 1, EDGE_VOID);
-	if (temp)
-		luaSim->saveEdgeMode = edgeMode;
-	else
-	{
-		luaSim->edgeMode = edgeMode;
-		luaSim->saveEdgeMode = -1;
-	}
-
-	if (luaSim->GetEdgeMode() == EDGE_SOLID)
-		draw_bframe();
-	else
-		erase_bframe();
+	luaSim->SetEdgeMode(edgeMode);
 
 	return 0;
 }

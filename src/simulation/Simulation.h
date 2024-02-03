@@ -191,10 +191,8 @@ public:
 			photons[y][x] = 0;
 	}
 
-	char GetEdgeMode()
-	{
-		return saveEdgeMode == -1 ? edgeMode : saveEdgeMode;
-	}
+	char GetEdgeMode();
+	void SetEdgeMode(char edgeMode);
 
 private:
 	// some movement functions are private

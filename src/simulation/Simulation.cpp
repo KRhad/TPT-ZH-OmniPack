@@ -1178,6 +1178,25 @@ std::string Simulation::ElementResolve(int type, int ctype) const
 	return "Empty";
 }
 
+char Simulation::GetEdgeMode()
+{
+	return saveEdgeMode == -1 ? edgeMode : saveEdgeMode;
+}
+
+void Simulation::SetEdgeMode(char edgeMode)
+{
+	if (edgeMode < 0 || edgeMode >= NUM_EDGE_MODES)
+		edgeMode = 0;
+
+	if (edgeMode == EDGE_SOLID)
+		draw_bframe();
+	else
+		erase_bframe();
+
+	this->edgeMode = edgeMode;
+	this->saveEdgeMode = -1;
+}
+
 void Simulation::ClearArea(int x, int y, int w, int h)
 {
 	if (x < 0)
