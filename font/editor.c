@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
 	{
 		if (sdl_key=='q' || sdl_key==SDLK_ESCAPE)
 			break;
-		else if ((sdl_key==' ' || sdl_key=='=') && c < 255)
+		else if ((sdl_key==' ' || sdl_key=='=' || sdl_key == SDLK_RIGHT) && c < 255)
 		{
 			if (inputColor)
 			{
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 			}
 			c++;
 		}
-		else if ((sdl_key=='\b' || sdl_key=='-') && c > 0)
+		else if ((sdl_key=='\b' || sdl_key=='-' || sdl_key == SDLK_LEFT) && c > 0)
 		{
 			if (inputColor)
 			{
