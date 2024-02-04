@@ -76,7 +76,10 @@ int PROT_update(UPDATE_FUNC_ARGS)
 		break;
 	case PT_NONE:
 		if (parts[i].life && !--parts[i].life)
+		{
 			sim->part_kill(i);
+			return 1;
+		}
 		break;
 	case PT_WIFI:
 	{
