@@ -153,10 +153,11 @@ constexpr int NCELL = XCELLS * YCELLS;
 
 #define SDEUT
 
-#define DEBUG_PARTS				0x0001
-#define DEBUG_ELEMENTPOPULATION	0x0002
-#define DEBUG_DRAWTOOL			0x0004
-#define DEBUG_PARTICLE_UPDATES	0x0008
+#define DEBUG_PARTS       0x0001
+#define DEBUG_ELEMENTPOP  0x0002
+#define DEBUG_LINES       0x0004
+#define DEBUG_PARTICLE    0x0008
+#define DEBUG_SURFNORM    0x0010
 
 extern bool firstRun;
 extern bool showLargeScreenDialog;

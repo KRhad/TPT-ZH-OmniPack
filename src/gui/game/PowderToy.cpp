@@ -2295,7 +2295,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 	case SDL_SCANCODE_F:
 	{
 		std::string logmessage = "";
-		if (debug_flags & DEBUG_PARTICLE_UPDATES)
+		if (debug_flags & DEBUG_PARTICLE)
 		{
 			SetPause(1);
 			if (alt)

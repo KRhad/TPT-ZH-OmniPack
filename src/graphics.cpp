@@ -3311,7 +3311,7 @@ float maxAverage = 0.0f; //for debug mode
 int draw_debug_info(pixel* vid, Simulation * sim, int lx, int ly, int cx, int cy, int line_x, int line_y)
 {
 	char infobuf[256];
-	if(debug_flags & DEBUG_DRAWTOOL)
+	if(debug_flags & DEBUG_LINES)
 	{
 		if (the_game->GetDrawState() == PowderToy::LINE && the_game->IsMouseDown()) //Line tool
 		{
@@ -3334,7 +3334,7 @@ int draw_debug_info(pixel* vid, Simulation * sim, int lx, int ly, int cx, int cy
 			drawtext_outline(vid, line_x+(lx<line_x?3:-textwidth(infobuf)-2), (line_y+ly)/2-3, infobuf, 255, 255, 255, 200, 0, 0, 0, 120);
 		}
 	}
-	if (debug_flags & DEBUG_ELEMENTPOPULATION)
+	if (debug_flags & DEBUG_ELEMENTPOP)
 	{
 		int yBottom = YRES-10;
 		int xStart = 10;
