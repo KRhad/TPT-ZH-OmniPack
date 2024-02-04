@@ -53,7 +53,7 @@ void RequestManager::Initialise(std::string Proxy)
 	std::stringstream userAgentBuilder;
 	userAgentBuilder << "PowderToy/" << SAVE_VERSION << "." << MINOR_VERSION << " ";
 	userAgentBuilder << "(" << IDENT_PLATFORM << "; " << IDENT_BUILD << "; M0) ";
-	userAgentBuilder << "TPTPP/" << SAVE_VERSION << "." << MINOR_VERSION << "." << BUILD_NUM << IDENT_RELTYPE << ".0";
+	userAgentBuilder << "TPTPP/" << API_VERSION_MAJOR << "." << API_VERSION_MINOR << "." << BUILD_NUM << IDENT_RELTYPE << "." << BUILD_NUM;
 #ifndef NOMOD
 	userAgentBuilder << " JMOD/" << MOD_VERSION << "." << MOD_MINOR_VERSION << "." << MOD_BUILD_VERSION << "." << MOD_SAVE_VERSION;
 #endif

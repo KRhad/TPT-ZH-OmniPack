@@ -241,7 +241,18 @@ void luacon_open()
 	lua_setfield(l, tptPropertiesVersion, "minor");
 	lua_pushinteger(l, BUILD_NUM);
 	lua_setfield(l, tptPropertiesVersion, "build");
-	lua_pushinteger(l, MOD_VERSION);
+	// I'm not expecting any forks of this mod to release that change major/minor version,
+	//  so upstream version is the same as major/minor version
+	lua_pushinteger(l, SAVE_VERSION);
+	lua_setfield(l, tptPropertiesVersion, "upstreamMajor");
+	lua_pushinteger(l, MINOR_VERSION);
+	lua_setfield(l, tptPropertiesVersion, "upstreamMinor");
+	lua_pushinteger(l, BUILD_NUM);
+	lua_setfield(l, tptPropertiesVersion, "upstreamBuild");
+	lua_pushboolean(l, false);
+	lua_setfield(l, tptPropertiesVersion, "snapshot");
+	lua_pushboolean(l, false);
+	lua_setfield(l, tptPropertiesVersion, "beta");
 #ifdef ANDROID
 	lua_pushinteger(l, MOBILE_MAJOR);
 	lua_setfield(l, tptPropertiesVersion, "mobilemajor");
@@ -250,6 +261,7 @@ void luacon_open()
 	lua_pushinteger(l, MOBILE_BUILD);
 	lua_setfield(l, tptPropertiesVersion, "mobilebuild");
 #endif
+	lua_pushinteger(l, MOD_VERSION);
 	lua_setfield(l, tptPropertiesVersion, "jacob1s_mod");
 	lua_pushinteger(l, MOD_MINOR_VERSION);
 	lua_setfield(l, tptPropertiesVersion, "jacob1s_mod_minor");
