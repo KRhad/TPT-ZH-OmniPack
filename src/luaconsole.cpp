@@ -270,23 +270,7 @@ void luacon_open()
 	lua_pushinteger(l, MOD_BUILD_VERSION);
 	lua_setfield(l, tptPropertiesVersion, "jacob1s_mod_build");
 	lua_setfield(l, tptProperties, "version");
-	
-#ifdef FFI
-	//LuaJIT's ffi gives us direct access to parts data, no need for nested metatables. HOWEVER, this is in no way safe, it's entirely possible for someone to try to read parts[-10]
-	lua_pushlightuserdata(l, parts);
-	lua_setfield(l, tptProperties, "partsdata");
-	
-	tpt_lua_dostring (l, "ffi = require(\"ffi\")\n\
-ffi.cdef[[\n\
-typedef struct { int type; int life, ctype; float x, y, vx, vy; float temp; int flags; int tmp; int tmp2; int tmp3; int tmp4; unsigned int dcolour; } particle;\n\
-]]\n\
-tpt.parts = ffi.cast(\"particle *\", tpt.partsdata)\n\
-ffi = nil\n\
-tpt.partsdata = nil");
-	//Since ffi is REALLY REALLY dangrous, we'll remove it from the environment completely (TODO)
-	//lua_pushliteral(l, "parts");
-	//tptPartsCData = lua_gettable(l, tptProperties);
-#else
+
 	lua_newtable(l);
 	tptParts = lua_gettop(l);
 	lua_newtable(l);
@@ -313,8 +297,7 @@ tpt.partsdata = nil");
 	tptPart = new LuaSmartRef(l);
 	tptPart->Assign(l, -1);
 	lua_pop(l, 1);
-#endif
-	
+
 	lua_newtable(l);
 	tptElements = lua_gettop(l);
 	for (i = 1; i < PT_NUM; i++)
