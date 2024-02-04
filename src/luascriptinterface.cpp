@@ -269,6 +269,7 @@ void initSimulationAPI(lua_State * l)
 		{"saveStamp", simulation_saveStamp},
 		{"loadStamp", simulation_loadStamp},
 		{"deleteStamp", simulation_deleteStamp},
+		{"listStamps", simulation_listStamps},
 		{"loadSave", simulation_loadSave},
 		{"reloadSave", simulation_reloadSave},
 		{"getSaveID", simulation_getSaveID},
@@ -1353,6 +1354,18 @@ int simulation_deleteStamp(lua_State* l)
 		Stamps::Ref().Delete(stampNum);
 		return 0;
 	}
+}
+
+int simulation_listStamps(lua_State *l)
+{
+	lua_newtable(l);
+	unsigned int numStamps = Stamps::Ref().GetNumStamps();
+	for (unsigned int i = 0; i < numStamps; i++)
+	{
+		tpt_lua_pushString(l, Stamps::Ref().GetStamp(i).name);
+		lua_rawseti(l, -2, i + 1);
+	}
+	return 1;
 }
 
 int simulation_loadSave(lua_State * l)
