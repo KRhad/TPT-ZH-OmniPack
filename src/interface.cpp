@@ -7049,7 +7049,7 @@ void clear_save_info()
 void MissingElementsPrompt(MissingElements missingElements)
 {
 	auto remainingIds = missingElements.ids;
-	if (missingElements.identifiers.size() || missingElements.ids.size())
+	if (missingElements)
 	{
 		std::stringstream ss;
 #ifndef ANDROID
