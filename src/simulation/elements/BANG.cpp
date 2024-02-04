@@ -39,7 +39,7 @@ int BANG_update(UPDATE_FUNC_ARGS)
 	}
 	else if (parts[i].tmp == 1)
 	{
-		if (ID(pmap[y][x]) == (unsigned)i)
+		if (pmap[y][x] && ID(pmap[y][x]) == (unsigned)i)
 		{
 			sim->FloodProp(x, y, particle::PropertyByName("tmp"), { 2 });
 		}

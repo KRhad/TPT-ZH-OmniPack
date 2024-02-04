@@ -181,13 +181,13 @@ public:
 	void pmap_remove(unsigned int i, int x, int y)
 	{
 		// NB: all arguments are assumed to be within bounds
-		if (ID(pmap[y][x]) == i)
+		if (pmap[y][x] && ID(pmap[y][x]) == i)
 			pmap[y][x] = 0;
 #ifndef NOMOD
-		else if (TYP(pmap[y][x]) == PT_PINV && (unsigned int)(ID(parts[ID(pmap[y][x])].tmp2)) == i)
+		else if (TYP(pmap[y][x]) == PT_PINV && parts[ID(pmap[y][x])].tmp2 && (unsigned int)(ID(parts[ID(pmap[y][x])].tmp2)) == i)
 			parts[ID(pmap[y][x])].tmp2 = 0;
 #endif
-		else if (ID(photons[y][x]) == i)
+		else if (photons[y][x] && ID(photons[y][x]) == i)
 			photons[y][x] = 0;
 	}
 
