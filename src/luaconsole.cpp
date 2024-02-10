@@ -142,12 +142,6 @@ void luacon_open()
 		{"get_wallmap",&luatpt_getwall},
 		{"set_elecmap",&luatpt_set_elecmap},
 		{"get_elecmap",&luatpt_get_elecmap},
-		{"drawpixel", &luatpt_drawpixel},
-		{"drawrect", &luatpt_drawrect},
-		{"fillrect", &luatpt_fillrect},
-		{"drawcircle", &luatpt_drawcircle},
-		{"fillcircle", &luatpt_fillcircle},
-		{"drawline", &luatpt_drawline},
 		{"textwidth", &luatpt_textwidth},
 		{"get_name", &luatpt_get_name},
 		{"delete", &luatpt_delete},
@@ -930,7 +924,7 @@ int luaGraphicsWrapper(GRAPHICS_FUNC_ARGS)
 		lua_pushinteger(l, *colr);
 		lua_pushinteger(l, *colg);
 		lua_pushinteger(l, *colb);
-		callret = tpt_lua_pcall(l, 4, 10, 0);
+		callret = tpt_lua_pcall(l, 4, 10, 0, eventTraitSimGraphics);
 		if (callret)
 		{
 			luacon_log(luacon_geterror());
@@ -1657,129 +1651,6 @@ int luatpt_get_property(lua_State* l)
 		return 1;
 	}
 	return luaL_error(l, "Particle does not exist");
-}
-
-int luatpt_drawpixel(lua_State* l)
-{
-	int x, y, r, g, b, a;
-	x = luaL_optint(l, 1, 0);
-	y = luaL_optint(l, 2, 0);
-	r = luaL_optint(l, 3, 255);
-	g = luaL_optint(l, 4, 255);
-	b = luaL_optint(l, 5, 255);
-	a = luaL_optint(l, 6, 255);
-
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
-		return luaL_error(l, "Screen coordinates out of range (%d,%d)", x, y);
-	if (r<0) r = 0;
-	else if (r>255) r = 255;
-	if (g<0) g = 0;
-	else if (g>255) g = 255;
-	if (b<0) b = 0;
-	else if (b>255) b = 255;
-	if (a<0) a = 0;
-	else if (a>255) a = 255;
-
-	drawpixel(lua_vid_buf, x, y, r, g, b, a);
-	return 0;
-}
-
-int luatpt_drawrect(lua_State* l)
-{
-	int x, y, w, h, r, g, b, a;
-	x = luaL_optint(l, 1, 0);
-	y = luaL_optint(l, 2, 0);
-	w = luaL_optint(l, 3, 10);
-	h = luaL_optint(l, 4, 10);
-	r = luaL_optint(l, 5, 255);
-	g = luaL_optint(l, 6, 255);
-	b = luaL_optint(l, 7, 255);
-	a = luaL_optint(l, 8, 255);
-
-	if (x<0 || y<0 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
-		return luaL_error(l, "Screen coordinates out of range (%d,%d)", x, y);
-	if(x+w > XRES+BARSIZE)
-		w = XRES+BARSIZE-x;
-	if(y+h > YRES+MENUSIZE)
-		h = YRES+MENUSIZE-y;
-	if (r<0) r = 0;
-	else if (r>255) r = 255;
-	if (g<0) g = 0;
-	else if (g>255) g = 255;
-	if (b<0) b = 0;
-	else if (b>255) b = 255;
-	if (a<0) a = 0;
-	else if (a>255) a = 255;
-
-	drawrect(lua_vid_buf, x, y, w, h, r, g, b, a);
-	return 0;
-}
-
-int luatpt_fillrect(lua_State* l)
-{
-	int x,y,w,h,r,g,b,a;
-	x = luaL_optint(l, 1, 0);
-	y = luaL_optint(l, 2, 0);
-	w = luaL_optint(l, 3, 10);
-	h = luaL_optint(l, 4, 10);
-	r = luaL_optint(l, 5, 255);
-	g = luaL_optint(l, 6, 255);
-	b = luaL_optint(l, 7, 255);
-	a = luaL_optint(l, 8, 255);
-
-	if (x<-1 || y<-1 || x>=XRES+BARSIZE || y>=YRES+MENUSIZE)
-		return luaL_error(l, "Screen coordinates out of range (%d,%d)", x, y);
-	if(x+w > XRES+BARSIZE)
-		w = XRES+BARSIZE-x;
-	if(y+h > YRES+MENUSIZE)
-		h = YRES+MENUSIZE-y;
-	if (r<0) r = 0;
-	else if (r>255) r = 255;
-	if (g<0) g = 0;
-	else if (g>255) g = 255;
-	if (b<0) b = 0;
-	else if (b>255) b = 255;
-	if (a<0) a = 0;
-	else if (a>255) a = 255;
-
-	fillrect(lua_vid_buf, x, y, w, h, r, g, b, a);
-	return 0;
-}
-
-int luatpt_drawcircle(lua_State* l)
-{
-	return graphics_drawCircle(l);
-}
-
-int luatpt_fillcircle(lua_State* l)
-{
-	return graphics_fillCircle(l);
-}
-
-int luatpt_drawline(lua_State* l)
-{
-	int x1,y1,x2,y2,r,g,b,a;
-	x1 = luaL_optint(l, 1, 0);
-	y1 = luaL_optint(l, 2, 0);
-	x2 = luaL_optint(l, 3, 10);
-	y2 = luaL_optint(l, 4, 10);
-	r = luaL_optint(l, 5, 255);
-	g = luaL_optint(l, 6, 255);
-	b = luaL_optint(l, 7, 255);
-	a = luaL_optint(l, 8, 255);
-
-	//Don't need to check coordinates, as they are checked in blendpixel
-	if (r<0) r = 0;
-	else if (r>255) r = 255;
-	if (g<0) g = 0;
-	else if (g>255) g = 255;
-	if (b<0) b = 0;
-	else if (b>255) b = 255;
-	if (a<0) a = 0;
-	else if (a>255) a = 255;
-
-	blend_line(lua_vid_buf, x1, y1, x2, y2, r, g, b, a);
-	return 0;
 }
 
 int luatpt_textwidth(lua_State* l)
@@ -2560,8 +2431,11 @@ void RunEmbeddedLuaCode()
 */
 bool HandleEvent(LuaEvents::EventTypes eventType, Event * event)
 {
+	EventTraits eventTrait = eventTraitNone;
+	if (eventType == LuaEvents::aftersimdraw || eventType == LuaEvents::beforesimdraw)
+		eventTrait = eventTraitSimGraphics;
 #ifdef LUACONSOLE
-	return LuaEvents::HandleEvent(l, event, "tptevents-" + Format::NumberToString<int>(eventType));
+	return LuaEvents::HandleEvent(l, event, "tptevents-" + Format::NumberToString<int>(eventType), eventTrait);
 #else
 	return true;
 #endif

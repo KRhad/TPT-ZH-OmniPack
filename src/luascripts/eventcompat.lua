@@ -248,3 +248,13 @@ function platform.restart(saveTab)
 	end
 	platform_restart(saveTab)
 end
+
+tpt.drawpixel = gfx.drawPixel
+function tpt.drawrect(x, y, w, h, r, g, b, a)
+	gfx.drawRect(x, y, w + 1, h + 1, r, g, b, a)
+end
+function tpt.fillrect(x, y, w, h, r, g, b, a)
+	gfx.fillRect(x + 1, y + 1, w - 1, h - 1, r, g, b, a)
+end
+tpt.drawline = gfx.drawLine
+tpt.drawtext = gfx.drawText

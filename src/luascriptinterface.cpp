@@ -30,6 +30,7 @@
 #include "gui/game/PowderToy.h"
 #include "graphics/ARGBColour.h"
 #include "graphics/Renderer.h"
+#include "graphics/VideoBuffer.h"
 #include "interface/Engine.h"
 #include "lua/LuaButton.h"
 #include "lua/LuaCheckbox.h"
@@ -2857,6 +2858,7 @@ void initGraphicsAPI(lua_State * l)
 	struct luaL_Reg graphicsAPIMethods [] = {
 		{"textSize", graphics_textSize},
 		{"drawText", graphics_drawText},
+		{"drawPixel", graphics_drawPixel},
 		{"drawLine", graphics_drawLine},
 		{"drawRect", graphics_drawRect},
 		{"fillRect", graphics_fillRect},
@@ -2909,8 +2911,52 @@ int graphics_drawText(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Point adjPos = Engine::Ref().GetTop()->GetPosition();
-	Engine::Ref().GetTop()->GetVid()->DrawString(x - adjPos.X, y - adjPos.Y, text, r, g, b, a);
+	if (eventTrait == eventTraitSimGraphics)
+	{
+		drawtext(vid_buf, x, y, text.c_str(), r, g, b, a);
+	}
+	else
+	{
+		Point adjPos = Engine::Ref().GetTop()->GetPosition();
+		Engine::Ref().GetTop()->GetVid()->DrawString(x - adjPos.X, y - adjPos.Y, text, r, g, b, a);
+	}
+	return 0;
+}
+
+int graphics_drawPixel(lua_State *l)
+{
+	int x = luaL_optint(l, 1, 0);
+	int y = luaL_optint(l, 2, 0);
+	int r = luaL_optint(l, 3, 255);
+	int g = luaL_optint(l, 4, 255);
+	int b = luaL_optint(l, 5, 255);
+	int a = luaL_optint(l, 6, 255);
+	if (r<0) r = 0;
+	else if (r>255) r = 255;
+	if (g<0) g = 0;
+	else if (g>255) g = 255;
+	if (b<0) b = 0;
+	else if (b>255) b = 255;
+	if (a<0) a = 0;
+	else if (a>255) a = 255;
+
+	if (eventTrait == eventTraitSimGraphics)
+	{
+		if (x < 0 || y < 0 || x >= VIDXRES || y >= VIDYRES)
+			return 0;
+
+		drawpixel(vid_buf, x, y, r, g, b, a);
+	}
+	else
+	{
+		auto top = Engine::Ref().GetTop();
+		if (x < 0 || y < 0 || x >= top->GetSize().X || y >= top->GetSize().Y)
+			return 0;
+
+		Point adjPos = top->GetPosition();
+		top->GetVid()->DrawPixel(x - adjPos.X, y - adjPos.Y, r, g, b, a);
+	}
+
 	return 0;
 }
 
@@ -2935,8 +2981,15 @@ int graphics_drawLine(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Point adjPos = Engine::Ref().GetTop()->GetPosition();
-	Engine::Ref().GetTop()->GetVid()->DrawLine(x1 - adjPos.X, y1 - adjPos.Y, x2 - adjPos.X, y2 - adjPos.Y, r, g, b, a);
+	if (eventTrait == eventTraitSimGraphics)
+	{
+		blend_line(vid_buf, x1, y1, x2, y2, r, g, b, a);
+	}
+	else
+	{
+		Point adjPos = Engine::Ref().GetTop()->GetPosition();
+		Engine::Ref().GetTop()->GetVid()->DrawLine(x1 - adjPos.X, y1 - adjPos.Y, x2 - adjPos.X, y2 - adjPos.Y, r, g, b, a);
+	}
 	return 0;
 }
 
@@ -2961,8 +3014,15 @@ int graphics_drawRect(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Point adjPos = Engine::Ref().GetTop()->GetPosition();
-	Engine::Ref().GetTop()->GetVid()->DrawRect(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
+	if (eventTrait == eventTraitSimGraphics)
+	{
+		drawrect(vid_buf, x, y, w - 1, h - 1, r, g, b, a);
+	}
+	else
+	{
+		Point adjPos = Engine::Ref().GetTop()->GetPosition();
+		Engine::Ref().GetTop()->GetVid()->DrawRect(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
+	}
 	return 0;
 }
 
@@ -2987,8 +3047,15 @@ int graphics_fillRect(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Point adjPos = Engine::Ref().GetTop()->GetPosition();
-	Engine::Ref().GetTop()->GetVid()->FillRect(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
+	if (eventTrait == eventTraitSimGraphics)
+	{
+		fillrect(vid_buf, x - 1, y - 1, w + 1, h + 1, r, g, b, a);
+	}
+	else
+	{
+		Point adjPos = Engine::Ref().GetTop()->GetPosition();
+		Engine::Ref().GetTop()->GetVid()->FillRect(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
+	}
 	return 0;
 }
 
@@ -3013,8 +3080,15 @@ int graphics_drawCircle(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Point adjPos = Engine::Ref().GetTop()->GetPosition();
-	Engine::Ref().GetTop()->GetVid()->DrawCircle(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
+	if (eventTrait == eventTraitSimGraphics)
+	{
+		drawcircle(vid_buf, x, y, w, h, r, g, b, a);
+	}
+	else
+	{
+		Point adjPos = Engine::Ref().GetTop()->GetPosition();
+		Engine::Ref().GetTop()->GetVid()->DrawCircle(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
+	}
 	return 0;
 }
 
@@ -3039,8 +3113,15 @@ int graphics_fillCircle(lua_State * l)
 	if (a<0) a = 0;
 	else if (a>255) a = 255;
 
-	Point adjPos = Engine::Ref().GetTop()->GetPosition();
-	Engine::Ref().GetTop()->GetVid()->FillCircle(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
+	if (eventTrait == eventTraitSimGraphics)
+	{
+		fillcircle(vid_buf, x, y, w, h, r, g, b, a);
+	}
+	else
+	{
+		Point adjPos = Engine::Ref().GetTop()->GetPosition();
+		Engine::Ref().GetTop()->GetVid()->FillCircle(x - adjPos.X, y - adjPos.Y, w, h, r, g, b, a);
+	}
 	return 0;
 }
 
@@ -3959,6 +4040,8 @@ void initEventAPI(lua_State * l)
 	lua_pushinteger(l, LuaEvents::close); lua_setfield(l, -2, "close");
 	lua_pushinteger(l, LuaEvents::beforesim); lua_setfield(l, -2, "beforesim");
 	lua_pushinteger(l, LuaEvents::aftersim); lua_setfield(l, -2, "aftersim");
+	lua_pushinteger(l, LuaEvents::beforesimdraw); lua_setfield(l, -2, "beforesimdraw");
+	lua_pushinteger(l, LuaEvents::aftersimdraw); lua_setfield(l, -2, "aftersimdraw");
 }
 
 int event_register(lua_State * l)
@@ -4484,10 +4567,17 @@ bool tpt_lua_equalsString(lua_State *L, int index, const char *data, size_t size
 
 long unsigned int luaExecutionStart = 0;
 int luaHookTimeout = 3000;
-int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc)
+int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc, EventTraits eventTrait)
 {
+	::eventTrait = eventTrait;
 	luaExecutionStart = Platform::GetTime();
 	return lua_pcall(L, numArgs, numResults, errorFunc);
+	::eventTrait = eventTraitNone;
+}
+
+int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc)
+{
+	return tpt_lua_pcall(L, numArgs, numResults, errorFunc, eventTraitNone);
 }
 
 #endif

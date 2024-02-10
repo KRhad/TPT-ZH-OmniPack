@@ -1,9 +1,18 @@
 #ifndef LUAEVENTS_H
 #define LUAEVENTS_H
 
+#include <cstdint>
 #include <string>
 
 struct lua_State;
+
+enum EventTraits : uint32_t
+{
+	eventTraitNone        = UINT32_C(0x00000000),
+	eventTraitSimGraphics = UINT32_C(0x00000001),
+};
+
+extern EventTraits eventTrait;
 
 class Event
 {
@@ -121,13 +130,25 @@ public:
 	int PushToStack(lua_State *l) override { return 0; }
 };
 
+class BeforeSimDrawEvent : public Event
+{
+public:
+	int PushToStack(lua_State *l) override { return 0; }
+};
+
+class AfterSimDrawEvent : public Event
+{
+public:
+	int PushToStack(lua_State *l) override { return 0; }
+};
+
 
 class LuaEvents
 {
 public:
 	static int RegisterEventHook(lua_State *l, std::string eventName);
 	static int UnregisterEventHook(lua_State *l, std::string eventName);
-	static bool HandleEvent(lua_State *l, Event * event, std::string eventName);
+	static bool HandleEvent(lua_State *l, Event * event, std::string eventName, EventTraits eventTrait);
 
 	enum EventTypes {
 		keypress,
@@ -141,7 +162,9 @@ public:
 		blur,
 		close,
 		beforesim,
-		aftersim
+		aftersim,
+		beforesimdraw,
+		aftersimdraw,
 	};
 };
 

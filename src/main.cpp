@@ -1014,6 +1014,9 @@ int main_loop_temp(int b, int bq, int sdl_key, int scan, int x, int y, bool shif
 				}
 			}
 		}
+#ifdef LUACONSOLE
+		HandleEvent(LuaEvents::aftersimdraw, new AfterSimDrawEvent());
+#endif
 		if (the_game->ZoomWindowShown())
 			render_zoom(vid_buf);
 

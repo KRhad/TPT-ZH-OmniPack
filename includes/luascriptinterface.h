@@ -146,6 +146,7 @@ int interface_beginConfirm(lua_State * l);
 void initGraphicsAPI(lua_State * l);
 int graphics_textSize(lua_State * l);
 int graphics_drawText(lua_State * l);
+int graphics_drawPixel(lua_State * l);
 int graphics_drawLine(lua_State * l);
 int graphics_drawRect(lua_State * l);
 int graphics_fillRect(lua_State * l);
@@ -217,6 +218,7 @@ bool tpt_lua_equalsLiteral(lua_State *L, int index, const char (&lit)[N])
 	return tpt_lua_equalsString(L, index, lit, N - 1U);
 }
 
+int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc, EventTraits eventTrait);
 int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc);
 
 #endif

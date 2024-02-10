@@ -10,6 +10,8 @@
 #include "common/Platform.h"
 #endif
 
+EventTraits eventTrait = eventTraitNone;
+
 void Event::PushInteger(lua_State * l, int num)
 {
 #ifdef LUACONSOLE
@@ -186,7 +188,7 @@ int LuaEvents::UnregisterEventHook(lua_State *l, std::string eventName)
 	return 0;
 }
 
-bool LuaEvents::HandleEvent(lua_State *l, Event *event, std::string eventName)
+bool LuaEvents::HandleEvent(lua_State *l, Event *event, std::string eventName, EventTraits eventTrait)
 {
 	bool cont = true;
 	tpt_lua_pushString(l, eventName);
@@ -204,7 +206,7 @@ bool LuaEvents::HandleEvent(lua_State *l, Event *event, std::string eventName)
 	{
 		lua_rawgeti(l, -1, i);
 		int numArgs = event->PushToStack(l);
-		int callret = tpt_lua_pcall(l, numArgs, 1, 0);
+		int callret = tpt_lua_pcall(l, numArgs, 1, 0, eventTrait);
 		if (callret)
 		{
 			if (luacon_geterror() == "Error: Script not responding")
@@ -230,6 +232,7 @@ bool LuaEvents::HandleEvent(lua_State *l, Event *event, std::string eventName)
 		len = lua_objlen(l, -1);
 	}
 	lua_pop(l, 1);
+
 	return cont;
 }
 
