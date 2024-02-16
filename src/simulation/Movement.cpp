@@ -383,7 +383,7 @@ void Simulation::InitCanMove()
 		if (destinationType == PT_GLAS || destinationType == PT_PHOT || destinationType == PT_FILT || destinationType == PT_H2
 		 || destinationType == PT_WATR || destinationType == PT_DSTW || destinationType == PT_SLTW || destinationType == PT_GLOW
 		 || destinationType == PT_ISOZ || destinationType == PT_ISZS || destinationType == PT_QRTZ || destinationType == PT_PQRT
-		 || destinationType == PT_INVIS|| destinationType == PT_BGLA || destinationType == PT_C5
+		 || destinationType == PT_INVIS|| destinationType == PT_BGLA || destinationType == PT_C5 || destinationType == PT_RSST
 #ifndef NOMOD
 		 || destinationType == PT_PINV
 #endif
@@ -435,6 +435,8 @@ void Simulation::InitCanMove()
 	can_move[PT_THDR][PT_THDR] = 2;
 	can_move[PT_EMBR][PT_EMBR] = 2;
 	can_move[PT_TRON][PT_SWCH] = 3;
+	can_move[PT_ELEC][PT_RSST] = 2;
+	can_move[PT_ELEC][PT_RSSS] = 2;
 
 #ifndef NOMOD
 	can_move[PT_RAZR][PT_CNCT] = 1;

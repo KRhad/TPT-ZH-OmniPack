@@ -29,7 +29,10 @@ int DLAY_update(UPDATE_FUNC_ARGS)
 			if (rx || ry)
 			{
 				int r = pmap[y+ry][x+rx];
-				if (!r || parts_avg(ID(r), i,PT_INSL)==PT_INSL)
+				if (!r)
+					continue;
+				int pavg = parts_avg(i, ID(r), PT_INSL);
+				if (pavg == PT_INSL || pavg == PT_RSSS)
 					continue;
 				if (TYP(r)==PT_SPRK && parts[i].life==0 && parts[ID(r)].life>0 && parts[ID(r)].life<4 && parts[ID(r)].ctype==PT_PSCN)
 				{

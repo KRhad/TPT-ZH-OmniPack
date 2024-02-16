@@ -97,6 +97,12 @@ int PROT_update(UPDATE_FUNC_ARGS)
 		parts[uID].temp = restrict_flt(parts[uID].temp + change, MIN_TEMP, MAX_TEMP);
 		break;
 	}
+	case PT_RSSS: //Destroy RSSS
+	{
+		sim->part_kill(uID);
+		sim->part_kill(i);
+		return 1;
+	}
 	default:
 		// Set off explosives (only when hot because it wasn't as fun when it made an entire save explode)
 		if (parts[i].temp > 273.15f + 500.0f && (sim->elements[utype].Flammable || sim->elements[utype].Explosive || utype == PT_BANG))

@@ -31,6 +31,12 @@ int GLOW_update(UPDATE_FUNC_ARGS)
 					parts[ID(r)].life = 10;
 					return 1;
 				}
+				else if (TYP(r) == PT_GEL) //GLOW + GEL = RSST
+				{
+					sim->part_kill(i);
+					sim->part_change_type(ID(r),x+rx,y+ry,PT_RSST);
+					return 1;
+				}
 			}
 	int ctype = (int)(sim->air->pv[y/CELL][x/CELL]*16);
 	if (ctype < 0)

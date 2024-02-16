@@ -23,6 +23,16 @@ int GRVT_update(UPDATE_FUNC_ARGS)
 	if (sim->parts[i].tmp <= -100)
 		sim->parts[i].tmp = -100;
 
+	int under = pmap[y][x];
+	int utype = TYP(under);
+
+	//Randomly kill GRVT inside RSSS
+	if((utype == PT_RSSS) && RNG::Ref().chance(1, 5))
+	{
+		sim->part_kill(i);
+		return 1;
+	}
+
 	sim->grav->gravmap[(y / CELL) * (XRES / CELL) + (x / CELL)] = 0.2f * sim->parts[i].tmp;
 	return 0;
 }

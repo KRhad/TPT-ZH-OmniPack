@@ -80,6 +80,15 @@ int ELEC_update(UPDATE_FUNC_ARGS)
 				parts[ID(r)].tmp2 += 5;
 				parts[ID(r)].life = 1000;
 				break;
+			case PT_RSST: //Destroy RSST
+				if (!rx && !ry)
+				{
+					sim->part_kill(ID(r));
+					sim->part_kill(i);
+
+					return 1;
+				}
+				break;
 			case PT_NONE: //seems to speed up ELEC even if it isn't used
 				break;
 			default:

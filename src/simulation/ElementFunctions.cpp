@@ -159,11 +159,15 @@ int update_POWERED(UPDATE_FUNC_ARGS)
 				if (!r)
 					continue;
 #ifdef NOMOD
-				if ((parts[i].type != PT_SWCH) || parts_avg(i,ID(r),PT_INSL)!=PT_INSL)
+				if (parts[i].type != PT_SWCH)
 #else
-				if ((parts[i].type != PT_SWCH && parts[i].type != PT_BUTN) || parts_avg(i,ID(r),PT_INSL)!=PT_INSL)
+				if (parts[i].type != PT_SWCH && parts[i].type != PT_BUTN)
 #endif
 				{
+					int pavg = parts_avg(i, ID(r), PT_INSL);
+					if (pavg == PT_INSL || pavg == PT_RSSS)
+						continue;
+
 					if (TYP(r)==parts[i].type && parts[i].type == PT_SWCH)
 					{
 						if (parts[i].life>=10&&parts[ID(r)].life>0&&parts[ID(r)].life<10)

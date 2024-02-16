@@ -102,7 +102,9 @@ int LITH_update(UPDATE_FUNC_ARGS)
 						break;
 						
 					case PT_SPRK:
-						if (parts_avg(i, ID(neighborData), PT_INSL) == PT_INSL)
+					{
+						int pavg = parts_avg(i, ID(neighborData), PT_INSL);
+						if (pavg == PT_INSL || pavg == PT_RSSS)
 						{
 							break;
 						}
@@ -115,9 +117,12 @@ int LITH_update(UPDATE_FUNC_ARGS)
 							charged = true;
 						}
 						break;
+					}
 						
 					case PT_NSCN:
-						if (parts_avg(i, ID(neighborData), PT_INSL) == PT_INSL)
+					{
+						int pavg = parts_avg(i, ID(neighborData), PT_INSL);
+						if (pavg == PT_INSL || pavg == PT_RSSS)
 						{
 							break;
 						}
@@ -129,6 +134,7 @@ int LITH_update(UPDATE_FUNC_ARGS)
 							discharged = true;
 						}
 						break;
+					}
 						
 					case PT_FIRE:
 						if (self.temp > 440.f && RNG::Ref().chance(1, 40) && hydrogenationFactor < 6)

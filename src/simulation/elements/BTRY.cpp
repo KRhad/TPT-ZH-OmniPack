@@ -27,7 +27,8 @@ int BTRY_update(UPDATE_FUNC_ARGS)
 				if (!r)
 					continue;
 				int rt = TYP(r);
-				if (parts_avg(i,ID(r),PT_INSL) != PT_INSL)
+				int pavg = parts_avg(i, ID(r), PT_INSL);
+				if (pavg != PT_INSL && pavg != PT_RSSS)
 				{
 					if (/*(parts[i].tmp == 0 || (parts[i].ctype != 0 && parts[i].life >= 10)) &&*/ (sim->elements[rt].Properties&PROP_CONDUCTS) /*&& !((rt==PT_METL||rt==PT_PSCN||rt==PT_NSCN)&&parts[i].tmp)*/ && !(rt==PT_WATR||rt==PT_SLTW||rt==PT_NTCT||rt==PT_PTCT||rt==PT_INWR) && parts[ID(r)].life==0)
 					{

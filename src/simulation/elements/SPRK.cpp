@@ -43,6 +43,11 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 		else if (ct == PT_SWCH || ct == PT_BUTN)
 #endif
 			parts[i].life = 14;
+		else if (ct == PT_RSST) //RSST disappears at the end of its spark cycle
+		{
+			sim->part_kill(i);
+			return 1;
+		}
 		part_change_type(i,x,y,ct);
 		return 0;
 	}
@@ -61,7 +66,8 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 		if (parts[i].life == 1)
 		{
 			nearp = nearestSparkablePart(sim, i);
-			if (nearp!=-1&&parts_avg(i, nearp, PT_INSL)!=PT_INSL)
+			int pavg = parts_avg(i, nearp, PT_INSL);
+			if (nearp != -1 && pavg != PT_INSL && pavg != PT_RSSS)
 			{
 				sim->CreateLine(x, y, (int)(parts[nearp].x+0.5f), (int)(parts[nearp].y+0.5f), PT_PLSM, 0);
 				parts[i].life = 20;
@@ -156,7 +162,7 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 				//pavg is the element in the middle of them both
 				receiver = TYP(r);
 				sender = ct;
-				pavg = parts_avg(ID(r), i,PT_INSL);
+				pavg = parts_avg(ID(r), i, PT_INSL);
 
 				//First, some checks usually for (de)activation of elements
 				switch (receiver)
@@ -166,7 +172,7 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 				case PT_BUTN:
 #endif
 					// make sparked SWCH and BUTN turn off correctly
-					if (!sim->instantActivation && pavg != PT_INSL && parts[i].life < 4)
+					if (!sim->instantActivation && pavg != PT_INSL && pavg != PT_RSSS && parts[i].life < 4)
 					{
 						if (sender == PT_PSCN && parts[ID(r)].life<10)
 						{
@@ -180,7 +186,7 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 					}
 					break;
 				case PT_SPRK:
-					if (pavg != PT_INSL && parts[i].life < 4)
+					if (pavg != PT_INSL && pavg != PT_RSSS && parts[i].life < 4)
 					{
 #ifdef NOMOD
 						if (parts[ID(r)].ctype == PT_SWCH)
@@ -224,7 +230,7 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 					}
 					break;
 				case PT_PPIP:
-					if (parts[i].life == 3 && pavg!=PT_INSL)
+					if (parts[i].life == 3 && pavg!=PT_INSL && pavg != PT_RSSS)
 					{
 						if (sender == PT_NSCN || sender == PT_PSCN || sender == PT_INST)
 							PPIP_flood_trigger(sim, x+rx, y+ry, sender);
@@ -233,7 +239,7 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 				case PT_NTCT:
 				case PT_PTCT:
 				case PT_INWR:
-					if (sender==PT_METL && pavg!=PT_INSL && parts[i].life<4)
+					if (sender==PT_METL && pavg!=PT_INSL && pavg != PT_RSSS && parts[i].life<4)
 					{
 						parts[ID(r)].temp = 473.0f;
 						if (receiver==PT_NTCT || receiver==PT_PTCT)
@@ -251,7 +257,7 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 					break;
 				}
 
-				if (pavg == PT_INSL) //Insulation blocks everything past here
+				if (pavg == PT_INSL || pavg == PT_RSSS) //Insulation blocks everything past here
 					continue;
 				if (!((sim->elements[receiver].Properties&PROP_CONDUCTS) || receiver==PT_INST || receiver==PT_QRTZ)) //Stop non-conducting receivers, allow INST and QRTZ as special cases
 					continue;
@@ -348,6 +354,15 @@ conduct:
 					if (parts[ID(r)].life==0 && parts[i].life<4)
 					{
 						INST_flood_spark(sim, x+rx, y+ry);
+					}
+				}
+				else if (receiver == PT_RSST)
+				{
+					if (parts[ID(r)].life==0 && parts[i].life<4)
+					{
+						sim->part_change_type(ID(r),x+rx,y+ry,PT_SPRK);
+						parts[ID(r)].life = 5;
+						parts[ID(r)].ctype = receiver;
 					}
 				}
 				else if (parts[ID(r)].life==0 && parts[i].life<4)
