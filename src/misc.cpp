@@ -48,6 +48,9 @@
 #include "gui/console/Console.h"
 #include "simulation/elements/LIFE.h"
 
+// tpt++ setting that isn't used but is preserved
+bool nativeClipboard = false;
+
 static char hex[] = "0123456789ABCDEF";
 
 unsigned clamp_flt(float f, float min, float max)
@@ -219,6 +222,9 @@ void save_presets()
 	save_console_history(&tmpobj, &resultsObj);
 	cJSON_AddItemToObject(consoleobj, "History", tmpobj);
 	cJSON_AddItemToObject(consoleobj, "HistoryResults", resultsObj);
+
+	cJSON_AddItemToObject(root, "NativeClipboard", tmpobj=cJSON_CreateObject());
+	setBool(tmpobj, "Enabled", nativeClipboard);
 
 	//Version Info
 	cJSON_AddItemToObject(root, "version", versionobj=cJSON_CreateObject());
@@ -579,6 +585,15 @@ void load_presets(void)
 			{
 				cJSON *resultsObj = cJSON_GetObjectItem(consoleobj, "HistoryResults");
 				load_console_history(tmpobj, resultsObj);
+			}
+		}
+
+		itemobj = cJSON_GetObjectItem(root, "NativeClipboard");
+		if (itemobj)
+		{
+			if ((tmpobj = cJSON_GetObjectItem(itemobj, "Enabled")))
+			{
+				nativeClipboard = tmpobj->valueint ? true : false;
 			}
 		}
 
