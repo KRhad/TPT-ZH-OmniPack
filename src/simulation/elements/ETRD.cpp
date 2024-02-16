@@ -88,7 +88,11 @@ int nearestSparkablePart(Simulation *sim, int targetId)
 		return -1;
 
 	particle *parts = sim->parts;
-	int foundDistance = XRES + YRES;
+	if (parts[targetId].tmp2 && parts[targetId].tmp > parts[targetId].tmp2) // Invalid range if max is set
+		return -1;
+
+	const int maxDistance = std::hypot(XRES, YRES);
+	int foundDistance = parts[targetId].tmp2 ? std::min(parts[targetId].tmp2, maxDistance) : maxDistance; // tmp2 sets max distance
 	int foundI = -1;
 	Point targetPos = Point((int)parts[targetId].x, (int)parts[targetId].y);
 
@@ -107,6 +111,10 @@ int nearestSparkablePart(Simulation *sim, int targetId)
 				ETRD_deltaWithLength delta = (*iter);
 				Point checkPos = targetPos + delta.d;
 				int checkDistance = delta.length;
+				if (parts[targetId].tmp >= checkDistance) // tmp sets min distance
+				{
+					continue;
+				}
 				if (foundDistance < checkDistance)
 				{
 					// deltaPos is sorted in order of ascending length, so foundDistance < checkDistance means all later items are further away.
@@ -131,8 +139,8 @@ int nearestSparkablePart(Simulation *sim, int targetId)
 				if (parts[i].type == PT_ETRD && !parts[i].life)
 				{
 					Point checkPos = Point((int)parts[i].x-targetPos.X, (int)parts[i].y-targetPos.Y);
-					int checkDistance = std::abs(checkPos.X) + std::abs(checkPos.Y);
-					if (checkDistance < foundDistance && i != targetId)
+					int checkDistance = std::hypot(checkPos.X, checkPos.Y);
+					if (checkDistance < foundDistance && checkDistance > parts[targetId].tmp && i != targetId) // tmp sets min distance
 					{
 						foundDistance = checkDistance;
 						foundI = i;
@@ -151,8 +159,8 @@ int nearestSparkablePart(Simulation *sim, int targetId)
 			{
 				countLife0++;
 				Point checkPos = Point((int)parts[i].x-targetPos.X, (int)parts[i].y-targetPos.Y);
-				int checkDistance = std::abs(checkPos.X) + std::abs(checkPos.Y);
-				if (checkDistance < foundDistance && i != targetId)
+				int checkDistance = std::hypot(checkPos.X, checkPos.Y);
+				if (checkDistance < foundDistance && checkDistance > parts[targetId].tmp && i != targetId) // tmp sets min distance
 				{
 					foundDistance = checkDistance;
 					foundI = i;
