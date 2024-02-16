@@ -105,6 +105,7 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 							parts[p].temp=parts[p].life*parts[i].tmp/2.5f;
 							parts[p].tmp2=1;
 							parts[p].tmp=(int)(atan2((float)-ry, (float)rx)/M_PI*360);
+							parts[p].dcolour = parts[i].dcolour;
 							parts[i].temp-=parts[i].tmp*2+parts[i].temp/5; // slight self-cooling
 							if (fabs(sim->air->pv[y/CELL][x/CELL])!=0.0f)
 							{

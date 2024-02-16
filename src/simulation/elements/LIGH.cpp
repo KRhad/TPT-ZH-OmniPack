@@ -63,6 +63,7 @@ int create_LIGH(Simulation *sim, int x, int y, int c, int temp, int life, int tm
 	{
 		parts[p].temp = (float)temp;
 		parts[p].tmp = tmp;
+		parts[p].dcolour = parts[i].dcolour;
 		if (last)
 		{
 			int nextSegmentLife = (int)(life/1.5 - RNG::Ref().between(0, 1));
@@ -341,7 +342,7 @@ int LIGH_graphics(GRAPHICS_FUNC_ARGS)
 	*firer = *colr = 235;
 	*fireg = *colg = 245;
 	*fireb = *colb = 255;
-	*pixel_mode |= PMODE_GLOW | FIRE_ADD;
+	*pixel_mode |= PMODE_GLOW | FIRE_ADD | DECO_FIRE;
 	return 1;
 }
 
