@@ -30,84 +30,85 @@ int PHOT_update(UPDATE_FUNC_ARGS)
 			FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
 
 	for (int rx = -1; rx <= 1; rx++)
+	{
 		for (int ry = -1; ry <= 1; ry++)
-			if (rx || ry)
+		{
+			int r = pmap[y+ry][x+rx];
+			if (!r)
+				continue;
+			if (TYP(r)==PT_ISOZ || TYP(r)==PT_ISZS)
 			{
-				int r = pmap[y+ry][x+rx];
-				if (!r)
-					continue;
-				if (TYP(r)==PT_ISOZ || TYP(r)==PT_ISZS)
+				if (RNG::Ref().chance(1, 400))
 				{
-					if (RNG::Ref().chance(1, 400))
-					{
-						parts[i].vx *= 0.90f;
-						parts[i].vy *= 0.90f;
-						sim->part_create(ID(r), x+rx, y+ry, PT_PHOT);
-						float rrr = RNG::Ref().between(0, 359) * M_PI / 180.0f, rr;
-						if (TYP(r) == PT_ISOZ)
-							rr = RNG::Ref().between(128, 255) / 127.0f;
-						else
-							rr = RNG::Ref().between(128, 255) / 127.0f;
-						parts[ID(r)].vx = rr*cosf(rrr);
-						parts[ID(r)].vy = rr*sinf(rrr);
-						sim->air->pv[y/CELL][x/CELL] -= 15.0f * CFDS;
-					}
-				}
-				else if (TYP(r) == PT_QRTZ || TYP(r) == PT_PQRT)
-				{
-					if (!ry && !rx)
-					{
-						float a = RNG::Ref().between(0, 359) * M_PI / 180.0f;
-						parts[i].vx = 3.0f*cosf(a);
-						parts[i].vy = 3.0f*sinf(a);
-						if (parts[i].ctype == 0x3FFFFFFF)
-							parts[i].ctype = 0x1F << RNG::Ref().between(0, 25);
-						if (parts[i].life)
-							parts[i].life++; //Delay death
-					}
-				}
-				else if (TYP(r) == PT_BGLA)
-				{
-					if (!ry && !rx)
-					{
-						float a = RNG::Ref().between(-50, 50) * 0.001f;
-						float rx = cosf(a), ry = sinf(a), vx, vy;
-						vx = rx * parts[i].vx + ry * parts[i].vy;
-						vy = rx * parts[i].vy - ry * parts[i].vx;
-						parts[i].vx = vx;
-						parts[i].vy = vy;
-					}
-				}
-				else if (TYP(r) == PT_RSST && !ry && !rx)//if on RSST, make it solid
-				{
-					int ct_under = parts[ID(r)].ctype;
-					int tmp_under = parts[ID(r)].tmp;
-
-					//If there's a correct ctype set, solidify RSST into it
-					if (ct_under > 0 && ct_under < PT_NUM)
-					{
-						sim->part_create(ID(r), x, y, ct_under);
-
-						//If there's a correct tmp set, use it for ctype
-						if (tmp_under > 0 && ct_under < PT_NUM)
-							parts[ID(r)].ctype = tmp_under;
-					}
+					parts[i].vx *= 0.90f;
+					parts[i].vy *= 0.90f;
+					sim->part_create(ID(r), x+rx, y+ry, PT_PHOT);
+					float rrr = RNG::Ref().between(0, 359) * M_PI / 180.0f, rr;
+					if (TYP(r) == PT_ISOZ)
+						rr = RNG::Ref().between(128, 255) / 127.0f;
 					else
-						sim->part_change_type(ID(r), x, y, PT_RSSS); //Default to RSSS if no ctype
-
-					sim->part_kill(i);
-
-					return 1;
-				}
-				else if (TYP(r) == PT_FILT)
-				{
-					if (parts[ID(r)].tmp == 9)
-					{
-						parts[i].vx += RNG::Ref().between(-500, 500) / 1000.0f;
-						parts[i].vy += RNG::Ref().between(-500, 500) / 1000.0f;
-					}
+						rr = RNG::Ref().between(128, 255) / 127.0f;
+					parts[ID(r)].vx = rr*cosf(rrr);
+					parts[ID(r)].vy = rr*sinf(rrr);
+					sim->air->pv[y/CELL][x/CELL] -= 15.0f * CFDS;
 				}
 			}
+			else if (TYP(r) == PT_QRTZ || TYP(r) == PT_PQRT)
+			{
+				if (!ry && !rx)
+				{
+					float a = RNG::Ref().between(0, 359) * M_PI / 180.0f;
+					parts[i].vx = 3.0f*cosf(a);
+					parts[i].vy = 3.0f*sinf(a);
+					if (parts[i].ctype == 0x3FFFFFFF)
+						parts[i].ctype = 0x1F << RNG::Ref().between(0, 25);
+					if (parts[i].life)
+						parts[i].life++; //Delay death
+				}
+			}
+			else if (TYP(r) == PT_BGLA)
+			{
+				if (!ry && !rx)
+				{
+					float a = RNG::Ref().between(-50, 50) * 0.001f;
+					float rx = cosf(a), ry = sinf(a), vx, vy;
+					vx = rx * parts[i].vx + ry * parts[i].vy;
+					vy = rx * parts[i].vy - ry * parts[i].vx;
+					parts[i].vx = vx;
+					parts[i].vy = vy;
+				}
+			}
+			else if (TYP(r) == PT_RSST && !ry && !rx)//if on RSST, make it solid
+			{
+				int ct_under = parts[ID(r)].ctype;
+				int tmp_under = parts[ID(r)].tmp;
+
+				//If there's a correct ctype set, solidify RSST into it
+				if (ct_under > 0 && ct_under < PT_NUM)
+				{
+					sim->part_create(ID(r), x, y, ct_under);
+
+					//If there's a correct tmp set, use it for ctype
+					if (tmp_under > 0 && ct_under < PT_NUM)
+						parts[ID(r)].ctype = tmp_under;
+				}
+				else
+					sim->part_change_type(ID(r), x, y, PT_RSSS); //Default to RSSS if no ctype
+
+				sim->part_kill(i);
+
+				return 1;
+			}
+			else if (TYP(r) == PT_FILT)
+			{
+				if (parts[ID(r)].tmp == 9)
+				{
+					parts[i].vx += RNG::Ref().between(-500, 500) / 1000.0f;
+					parts[i].vy += RNG::Ref().between(-500, 500) / 1000.0f;
+				}
+			}
+		}
+	}
 
 	return 0;
 }
