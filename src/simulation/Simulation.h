@@ -60,7 +60,7 @@ public:
 	bool msRotation; //for moving solids
 	bool instantActivation; //electronics are instantly activated
 	bool includePressure = true;
-	int decoSpace = 0;
+	int decoSpace = DECOSPACE_SRGB;
 	int temperatureScale = 1;
 
 	// misc Simulation variables

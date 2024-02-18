@@ -167,7 +167,7 @@ void Air::UpdateAirHeat(Simulation *sim)
 void Air::UpdateAir()
 {
 	// "No Update"
-	if (airMode == AIR_NO_UPDATE)
+	if (airMode == AIR_NOUPDATE)
 		return;
 
 	// Reduces pressure/velocity on the edges every frame
@@ -368,11 +368,11 @@ void Air::UpdateAir()
 			case AIR_ON:
 				break;
 			// "Pressure off"
-			case AIR_PRESSURE_OFF:
+			case AIR_PRESSUREOFF:
 				dp = 0.0f;
 				break;
 			// "Velocity off"
-			case AIR_VELOCITY_OFF:
+			case AIR_VELOCITYOFF:
 				dx = 0.0f;
 				dy = 0.0f;
 				break;

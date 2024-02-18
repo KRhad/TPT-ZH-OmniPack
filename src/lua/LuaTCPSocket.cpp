@@ -666,7 +666,7 @@ namespace LuaTCPSocket
 			{     "tcp", LuaTCPSocket::New     },
 #endif
 			{   "sleep", LuaTCPSocket::Sleep   },
-			{ "gettime", LuaTCPSocket::GetTime },
+			{ "getTime", LuaTCPSocket::GetTime },
 			{      NULL, NULL                  },
 		};
 		luaL_register(l, NULL, socketMethods);

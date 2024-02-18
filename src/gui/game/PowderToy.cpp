@@ -2086,7 +2086,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		break;
 	case SDL_SCANCODE_TAB:
 		if (!ctrl)
-			currentBrush->SetShape((currentBrush->GetShape()+1)%BRUSH_NUM);
+			currentBrush->SetShape((currentBrush->GetShape()+1) % NUM_DEFAULTBRUSHES);
 		break;
 	case SDL_SCANCODE_W:
 		if (sim->elementCount[PT_STKM2] <= 0 || ctrl)
@@ -2170,16 +2170,16 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			case AIR_ON:
 				toolTip = "Air: On";
 				break;
-			case AIR_PRESSURE_OFF:
+			case AIR_PRESSUREOFF:
 				toolTip = "Air: Pressure Off";
 				break;
-			case AIR_VELOCITY_OFF:
+			case AIR_VELOCITYOFF:
 				toolTip = "Air: Velocity Off";
 				break;
 			case AIR_OFF:
 				toolTip = "Air: Off";
 				break;
-			case AIR_NO_UPDATE:
+			case AIR_NOUPDATE:
 				toolTip = "Air: No Update";
 				break;
 			}

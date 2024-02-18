@@ -65,6 +65,7 @@ unsigned char fire_g[YRES/CELL][XRES/CELL];
 unsigned char fire_b[YRES/CELL][XRES/CELL];
 
 unsigned int fire_alpha[CELL*3][CELL*3];
+float fireIntensity;
 pixel *pers_bg;
 
 char * flm_data;
@@ -2965,17 +2966,17 @@ void render_fire(pixel *vid)
 
 void prepare_alpha(float intensity)
 {
-	int x,y,i,j;
-	float multiplier = 255.0f*intensity;
+	fireIntensity = intensity;
+	float multiplier = 255.0f * fireIntensity;
 	float temp[CELL*3][CELL*3];
 	memset(temp, 0, sizeof(temp));
-	for (x=0; x<CELL; x++)
-		for (y=0; y<CELL; y++)
-			for (i=-CELL; i<CELL; i++)
-				for (j=-CELL; j<CELL; j++)
+	for (int x = 0; x < CELL; x++)
+		for (int y = 0; y < CELL; y++)
+			for (int i = -CELL; i < CELL; i++)
+				for (int j = -CELL; j < CELL; j++)
 					temp[y+CELL+j][x+CELL+i] += expf(-0.1f*(i*i+j*j));
-	for (x=0; x<CELL*3; x++)
-		for (y=0; y<CELL*3; y++)
+	for (int x = 0; x < CELL * 3; x++)
+		for (int y = 0; y < CELL * 3; y++)
 			fire_alpha[y][x] = (int)(multiplier*temp[y][x]/(CELL*CELL));
 }
 

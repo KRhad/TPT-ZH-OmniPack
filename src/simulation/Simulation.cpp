@@ -1185,7 +1185,7 @@ char Simulation::GetEdgeMode()
 
 void Simulation::SetEdgeMode(char edgeMode)
 {
-	if (edgeMode < 0 || edgeMode >= NUM_EDGE_MODES)
+	if (edgeMode < 0 || edgeMode >= NUM_EDGEMODES)
 		edgeMode = 0;
 
 	if (edgeMode == EDGE_SOLID)
@@ -3627,21 +3627,21 @@ void Simulation::CreateDeco(int x, int y, int tool, ARGBColour color)
 
 						switch (decoSpace)
 						{
-						case 0: //sRGB
+						case DECOSPACE_SRGB:
 							pa = (pa <= 0.04045f) ? (pa / 12.92f) : pow((pa + 0.055f) / 1.055f, 2.4f);
 							pr = (pr <= 0.04045f) ? (pr / 12.92f) : pow((pr + 0.055f) / 1.055f, 2.4f);
 							pg = (pg <= 0.04045f) ? (pg / 12.92f) : pow((pg + 0.055f) / 1.055f, 2.4f);
 							pb = (pb <= 0.04045f) ? (pb / 12.92f) : pow((pb + 0.055f) / 1.055f, 2.4f);
 							break;
-						case 1: // linear
+						case DECOSPACE_LINEAR:
 							break;
-						case 2: // Gamma = 2.2
+						case DECOSPACE_GAMMA22:
 							pa = pow(pa, 2.2f);
 							pr = pow(pr, 2.2f);
 							pg = pow(pg, 2.2f);
 							pb = pow(pb, 2.2f);
 							break;
-						case 3: // Gamma = 1.8
+						case DECOSPACE_GAMMA18:
 							pa = pow(pa, 1.8f);
 							pr = pow(pr, 1.8f);
 							pg = pow(pg, 1.8f);
@@ -3664,21 +3664,21 @@ void Simulation::CreateDeco(int x, int y, int tool, ARGBColour color)
 			tb = tb / num;
 			switch (decoSpace)
 			{
-			case 0: // sRGB
+			case DECOSPACE_SRGB:
 				ta = (ta <= 0.0031308f) ? (ta * 12.92f) : (1.055f * pow(ta, 1.f / 2.4f) - 0.055f);
 				tr = (tr <= 0.0031308f) ? (tr * 12.92f) : (1.055f * pow(tr, 1.f / 2.4f) - 0.055f);
 				tg = (tg <= 0.0031308f) ? (tg * 12.92f) : (1.055f * pow(tg, 1.f / 2.4f) - 0.055f);
 				tb = (tb <= 0.0031308f) ? (tb * 12.92f) : (1.055f * pow(tb, 1.f / 2.4f) - 0.055f);
 				break;
-			case 1: // linear
+			case DECOSPACE_LINEAR:
 				break;
-			case 2: // Gamma = 2.2
+			case DECOSPACE_GAMMA22:
 				ta = pow(ta, 1 / 2.2f);
 				tr = pow(tr, 1 / 2.2f);
 				tg = pow(tg, 1 / 2.2f);
 				tb = pow(tb, 1 / 2.2f);
 				break;
-			case 3: // Gamma = 1.8
+			case DECOSPACE_GAMMA18:
 				ta = pow(ta, 1 / 1.8f);
 				tr = pow(tr, 1 / 1.8f);
 				tg = pow(tg, 1 / 1.8f);

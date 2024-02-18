@@ -3,8 +3,13 @@
 
 #include "common/Point.h"
 
-enum { CIRCLE_BRUSH, SQUARE_BRUSH, TRI_BRUSH};
-#define BRUSH_NUM 3
+enum
+{
+	CIRCLE_BRUSH,
+	SQUARE_BRUSH,
+	TRI_BRUSH,
+	NUM_DEFAULTBRUSHES
+};
 
 //TODO: maybe use bitmaps for actual drawing and support tpt++ custom brushes?
 class Brush
@@ -21,7 +26,7 @@ public:
 	Brush(Point radius_, int shape_) :
 		radius(radius_),
 		shape(shape_),
-		bitmap(NULL)
+		bitmap(nullptr)
 	{
 		GenerateBitmap();
 	}

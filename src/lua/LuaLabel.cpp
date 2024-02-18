@@ -7,7 +7,7 @@
 #include "graphics/VideoBuffer.h"
 #include "interface/Label.h"
 
-const char LuaLabel::className[] = "Label";
+const char LuaLabel::className[] = "label";
 
 #define method(class, name) {#name, &class::name}
 Luna<LuaLabel>::RegType LuaLabel::methods[] = {

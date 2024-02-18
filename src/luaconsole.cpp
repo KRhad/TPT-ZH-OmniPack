@@ -688,11 +688,11 @@ int luacon_tptNewIndex(lua_State *l)
 	else if (byteStringEqualsLiteral(key, "brushy"))
 		currentBrush->SetRadius(Point(currentBrush->GetRadius().X, luaL_checkinteger(l, 3)));
 	else if (byteStringEqualsLiteral(key, "brushID"))
-		currentBrush->SetShape(luaL_checkinteger(l, 3)%BRUSH_NUM);
+		currentBrush->SetShape(luaL_checkinteger(l, 3) % NUM_DEFAULTBRUSHES);
 	else if (byteStringEqualsLiteral(key, "decoSpace"))
 	{
 		int decoSpace = luaL_checkinteger(l, 3);
-		if (decoSpace < 0 || decoSpace > 3)
+		if (decoSpace < 0 || decoSpace > NUM_DECOSPACES)
 			decoSpace = 0;
 		luaSim->decoSpace = decoSpace;
 	}

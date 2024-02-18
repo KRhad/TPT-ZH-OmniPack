@@ -368,25 +368,25 @@ void initSimulationAPI(lua_State * l)
 	SETCONST(l, CIRCLE_BRUSH);
 	SETCONST(l, SQUARE_BRUSH);
 	SETCONST(l, TRI_BRUSH);
-	SETCONST(l, BRUSH_NUM);
+	SETCONST(l, NUM_DEFAULTBRUSHES);
 
 	SETCONST(l, EDGE_VOID);
 	SETCONST(l, EDGE_SOLID);
 	SETCONST(l, EDGE_LOOP);
-	SETCONST(l, NUM_EDGE_MODES);
+	SETCONST(l, NUM_EDGEMODES);
 
 	SETCONST(l, AIR_ON);
-	SETCONST(l, AIR_PRESSURE_OFF);
-	SETCONST(l, AIR_VELOCITY_OFF);
+	SETCONST(l, AIR_PRESSUREOFF);
+	SETCONST(l, AIR_VELOCITYOFF);
 	SETCONST(l, AIR_OFF);
-	SETCONST(l, AIR_NO_UPDATE);
-	SETCONST(l, NUM_AIR_MODES);
+	SETCONST(l, AIR_NOUPDATE);
+	SETCONST(l, NUM_AIRMODES);
 
 	SETCONST(l, GRAV_VERTICAL);
 	SETCONST(l, GRAV_OFF);
 	SETCONST(l, GRAV_RADIAL);
 	SETCONST(l, GRAV_CUSTOM);
-	SETCONST(l, NUM_GRAV_MODES);
+	SETCONST(l, NUM_GRAVMODES);
 
 	lua_newtable(l);
 	for (int i = 0; i < WALLCOUNT; i++)
@@ -850,7 +850,7 @@ int simulation_createParts(lua_State * l)
 	int c = luaL_optint(l,5,((ElementTool*)activeTools[0])->GetID());
 	int brush = luaL_optint(l,6,CIRCLE_BRUSH);
 	int flags = luaL_optint(l,7,get_brush_flags());
-	if (brush < 0 || brush >= BRUSH_NUM)
+	if (brush < 0 || brush >= NUM_DEFAULTBRUSHES)
 		return luaL_error(l, "Invalid brush id '%d'", brush);
 
 	Brush* tempBrush = new Brush(Point(rx, ry), brush);
@@ -871,7 +871,7 @@ int simulation_createLine(lua_State * l)
 	int c = luaL_optint(l,7,((ElementTool*)activeTools[0])->GetID());
 	int brush = luaL_optint(l,8,CIRCLE_BRUSH);
 	int flags = luaL_optint(l,9,get_brush_flags());
-	if (brush < 0 || brush >= BRUSH_NUM)
+	if (brush < 0 || brush >= NUM_DEFAULTBRUSHES)
 		return luaL_error(l, "Invalid brush id '%d'", brush);
 
 	Brush* tempBrush = new Brush(Point(rx, ry), brush);
@@ -996,7 +996,7 @@ int simulation_toolBrush(lua_State * l)
 	float strength = (float)luaL_optnumber(l, 7, 1.0f);
 	if (tool < 0 || tool >= TOOL_PROP)
 			return luaL_error(l, "Invalid tool id '%d'", tool);
-	if (brush < 0 || brush >= BRUSH_NUM)
+	if (brush < 0 || brush >= NUM_DEFAULTBRUSHES)
 		return luaL_error(l, "Invalid brush id '%d'", brush);
 
 	Brush* tempBrush = new Brush(Point(rx, ry), brush);
@@ -1022,7 +1022,7 @@ int simulation_toolLine(lua_State * l)
 		return luaL_error(l, "coordinates out of range (%d,%d),(%d,%d)", x1, y1, x2, y2);
 	if (tool < 0 || tool >= TOOL_PROP)
 			return luaL_error(l, "Invalid tool id '%d'", tool);
-	if (brush < 0 || brush >= BRUSH_NUM)
+	if (brush < 0 || brush >= NUM_DEFAULTBRUSHES)
 		return luaL_error(l, "Invalid brush id '%d'", brush);
 
 	Brush* tempBrush = new Brush(Point(rx, ry), brush);
@@ -1064,7 +1064,7 @@ int simulation_decoBrush(lua_State * l)
 
 	if (tool < 0 || tool >= DECOCOUNT)
 			return luaL_error(l, "Invalid tool id '%d'", tool);
-	if (brush < 0 || brush >= BRUSH_NUM)
+	if (brush < 0 || brush >= NUM_DEFAULTBRUSHES)
 		return luaL_error(l, "Invalid brush id '%d'", brush);
 
 	unsigned int color = COLARGB(a, r, g, b);
@@ -1093,7 +1093,7 @@ int simulation_decoLine(lua_State * l)
 		return luaL_error(l, "coordinates out of range (%d,%d),(%d,%d)", x1, y1, x2, y2);
 	if (tool < 0 || tool >= DECOCOUNT)
 			return luaL_error(l, "Invalid tool id '%d'", tool);
-	if (brush < 0 || brush >= BRUSH_NUM)
+	if (brush < 0 || brush >= NUM_DEFAULTBRUSHES)
 		return luaL_error(l, "Invalid brush id '%d'", brush);
 
 	unsigned int color = COLARGB(a, r, g, b);
@@ -1658,7 +1658,7 @@ int simulation_brush(lua_State * l)
 	}
 	int brushID = luaL_optint(l, 5, currentBrush->GetShape());
 
-	if (brushID < 0 || brushID >= BRUSH_NUM)
+	if (brushID < 0 || brushID >= NUM_DEFAULTBRUSHES)
 		return luaL_error(l, "Invalid brush id '%d'", brushID);
 	Point tempRadius = currentBrush->GetRadius();
 	int tempID = currentBrush->GetShape();
@@ -2591,6 +2591,7 @@ void initInterfaceAPI(lua_State * l)
 	lua_pushinteger(l, PowderToy::mouseUpNormal); lua_setfield(l, -2, "MOUSE_UP_NORMAL");
 	lua_pushinteger(l, PowderToy::mouseUpBlur); lua_setfield(l, -2, "MOUSE_UP_BLUR");
 	lua_pushinteger(l, PowderToy::mouseUpDrawEnd); lua_setfield(l, -2, "MOUSE_UP_DRAW_END");
+	lua_pushinteger(l, 4); lua_setfield(l, -2, "NUM_TOOLINDICES");
 	lua_setglobal(l, "ui");
 
 	Luna<LuaWindow>::Register(l);

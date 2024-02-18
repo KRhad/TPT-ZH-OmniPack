@@ -34,6 +34,7 @@ extern unsigned char fire_g[YRES/CELL][XRES/CELL];
 extern unsigned char fire_b[YRES/CELL][XRES/CELL];
 
 extern unsigned int fire_alpha[CELL*3][CELL*3];
+extern float fireIntensity;
 extern pixel *pers_bg;
 
 extern char * flm_data;
