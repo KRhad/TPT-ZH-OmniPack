@@ -12,6 +12,10 @@
 	lua_pushinteger(L, NAME);\
 	lua_setfield(L, -2, #NAME)
 
+#define SETCONSTAS(L, NAME, AS)\
+lua_pushinteger(L, NAME);\
+	lua_setfield(L, -2, AS)
+
 #define SETCONSTF(L, NAME)\
 lua_pushnumber(L, NAME);\
 	lua_setfield(L, -2, #NAME)
@@ -32,7 +36,7 @@ int simulation_signIndex(lua_State *l);
 int simulation_signNewIndex(lua_State *l);
 int simulation_newsign(lua_State *l);
 void initSimulationAPI(lua_State * l);
-int simulation_partNeighbours(lua_State * l);
+int simulation_partNeighbors(lua_State * l);
 int simulation_partChangeType(lua_State * l);
 int simulation_partCreate(lua_State * l);
 int simulation_partID(lua_State * l);
@@ -41,10 +45,17 @@ int simulation_partPosition(lua_State * l);
 int simulation_partKill(lua_State * l);
 int simulation_partExists(lua_State * l);
 int simulation_pressure(lua_State* l);
-int simulation_ambientHeat(lua_State* l);
 int simulation_velocityX(lua_State* l);
 int simulation_velocityY(lua_State* l);
-int simulation_gravMap(lua_State* l);
+int simulation_ambientHeat(lua_State* l);
+int simulation_gravityMass(lua_State * l);
+int simulation_wallMap(lua_State * l);
+int simulation_elecMap(lua_State * l);
+int simulation_fanVelocityX(lua_State * l);
+int simulation_fanVelocityY(lua_State * l);
+int simulation_ambientHeatSim(lua_State* l);
+int simulation_heatSim(lua_State* l);
+int simulation_newtonianGravity(lua_State* l);
 int simulation_createParts(lua_State * l);
 int simulation_createLine(lua_State * l);
 int simulation_createBox(lua_State * l);
@@ -103,6 +114,14 @@ int simulation_temperatureScale(lua_State *l);
 int simulation_randomseed(lua_State * l);
 int simulation_hash(lua_State * l);
 int simulation_ensureDeterminism(lua_State * l);
+int simulation_paused(lua_State * l);
+int simulation_stickman(lua_State * l);
+int simulation_partCount(lua_State * l);
+int simulation_decoSpace(lua_State * l);
+int simulation_gravityField(lua_State * l);
+int simulation_resetGravityField(lua_State * l);
+int simulation_resetSpark(lua_State * l);
+int simulation_resetVelocity(lua_State * l);
 int simulation_stickman(lua_State * l);
 
 void initRendererAPI(lua_State * l);
@@ -111,12 +130,15 @@ int renderer_displayModes(lua_State * l);
 int renderer_colorMode(lua_State * l);
 int renderer_decorations(lua_State * l);
 int renderer_grid(lua_State * l);
-int renderer_debugHUD(lua_State * l);
+int renderer_debugHud(lua_State * l);
+int renderer_hud(lua_State * l);
 int renderer_showBrush(lua_State * l);
 int renderer_depth3d(lua_State * l);
 int renderer_zoomEnabled(lua_State *l);
 int renderer_zoomWindowInfo(lua_State *l);
 int renderer_zoomScopeInfo(lua_State *l);
+int renderer_fireSize(lua_State *l);
+int renderer_useDisplayPreset(lua_State *l);
 
 void initFileSystemAPI(lua_State * l);
 int fileSystem_list(lua_State * l);
@@ -142,6 +164,17 @@ int interface_beginMessageBox(lua_State * l);
 int interface_beginThrowError(lua_State * l);
 int interface_beginInput(lua_State * l);
 int interface_beginConfirm(lua_State * l);
+int interface_activeMenu(lua_State * l);
+int interface_menuEnabled(lua_State * l);
+int interface_menuClick(lua_State * l);
+int interface_numMenus(lua_State * l);
+int interface_perfectCircleBrush(lua_State * l);
+int interface_console(lua_State * l);
+int interface_windowSize(lua_State * l);
+int interface_brushID(lua_State * l);
+int interface_brushRadius(lua_State * l);
+int interface_mousePosition(lua_State * l);
+int interface_activeTool(lua_State * l);
 
 void initGraphicsAPI(lua_State * l);
 int graphics_textSize(lua_State * l);
@@ -168,9 +201,11 @@ int elements_property(lua_State * l);
 int elements_loadDefault(lua_State * l);
 int elements_free(lua_State * l);
 int elements_exists(lua_State * l);
+int elements_getByName(lua_State * l);
 
 void GetDefaultProperties(lua_State * l, int id);
 void SetDefaultProperties(lua_State * l, int id, int stackPos);
+void ManageElementIdentifier(lua_State *l, int id, bool add);
 
 void initPlatformAPI(lua_State * l);
 int platform_platform(lua_State * l);

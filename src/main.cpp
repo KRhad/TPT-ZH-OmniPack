@@ -818,9 +818,8 @@ int main(int argc, char *argv[])
 	plasma_data = generate_gradient(plasma_data_colours, plasma_data_pos, plasma_data_points, 200);
 
 #ifdef LUACONSOLE
-	lua_vid_buf = the_game->GetVid()->GetVid();
 	std::string autorun_result;
-	luacon_openeventcompat();
+	luacon_opencompat();
 	if (Platform::FileExists("autorun.lua") && luacon_eval("dofile(\"autorun.lua\")", &autorun_result)) //Autorun lua script
 	{
 		luacon_log(luacon_geterror());

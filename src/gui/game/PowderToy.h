@@ -147,6 +147,7 @@ public:
 	void UpdateDrawMode();
 	void UpdateToolStrength();
 	DrawState GetDrawState() { return drawState; }
+	Point GetMousePos() { return mouse; }
 	bool IsMouseDown() { return isMouseDown; }
 	float GetToolStrength() { return toolStrength; }
 	Point GetInitialDrawPoint() { return initialDrawPoint; }

@@ -5,7 +5,7 @@ IDI_ICON ICON DISCARDABLE "icon.ico"
 IDI_DOC_ICON ICON DISCARDABLE "document.ico"
 IDI_TPTMP LUASCRIPT "../src/luascripts/multiplayer.lua"
 IDI_SCRIPTMANAGER LUASCRIPT "../src/luascripts/scriptmanager.lua"
-IDI_EVENTCOMPAT LUASCRIPT "../src/luascripts/eventcompat.lua"
+IDI_COMPAT LUASCRIPT "../src/luascripts/compat.lua"
 IDI_STICKMANCONTROL LUASCRIPT "../src/luascripts/stickmancontrol.lua"
 
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "winutf8.xml"
