@@ -74,8 +74,8 @@ private:
 			for (int rx = -maxLength; rx <= maxLength; rx++)
 			{
 				Point d(rx, ry);
-				if (std::hypot(d.X, d.Y) <= maxLength)
-					deltaPos.push_back(ETRD_deltaWithLength(d, std::abs(d.X) + std::abs(d.Y)));
+				if (std::abs(d.X) + std::abs(d.Y) <= maxLength)
+					deltaPos.push_back(ETRD_deltaWithLength(d, int(std::hypot(d.X, d.Y))));
 			}
 		std::stable_sort(deltaPos.begin(), deltaPos.end(), &ETRD_ElementDataContainer::compareFunc);
 	}

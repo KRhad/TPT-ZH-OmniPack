@@ -91,7 +91,7 @@ int nearestSparkablePart(Simulation *sim, int targetId)
 	if (parts[targetId].tmp2 && parts[targetId].tmp > parts[targetId].tmp2) // Invalid range if max is set
 		return -1;
 
-	const int maxDistance = std::hypot(XRES, YRES);
+	const int maxDistance = int(std::hypot(XRES, YRES));
 	int foundDistance = parts[targetId].tmp2 ? std::min(parts[targetId].tmp2, maxDistance) : maxDistance; // tmp2 sets max distance
 	int foundI = -1;
 	Point targetPos = Point((int)parts[targetId].x, (int)parts[targetId].y);
@@ -139,7 +139,7 @@ int nearestSparkablePart(Simulation *sim, int targetId)
 				if (parts[i].type == PT_ETRD && !parts[i].life)
 				{
 					Point checkPos = Point((int)parts[i].x-targetPos.X, (int)parts[i].y-targetPos.Y);
-					int checkDistance = std::hypot(checkPos.X, checkPos.Y);
+					int checkDistance = int(std::hypot(checkPos.X, checkPos.Y));
 					if (checkDistance < foundDistance && checkDistance > parts[targetId].tmp && i != targetId) // tmp sets min distance
 					{
 						foundDistance = checkDistance;
@@ -159,7 +159,7 @@ int nearestSparkablePart(Simulation *sim, int targetId)
 			{
 				countLife0++;
 				Point checkPos = Point((int)parts[i].x-targetPos.X, (int)parts[i].y-targetPos.Y);
-				int checkDistance = std::hypot(checkPos.X, checkPos.Y);
+				int checkDistance = int(std::hypot(checkPos.X, checkPos.Y));
 				if (checkDistance < foundDistance && checkDistance > parts[targetId].tmp && i != targetId) // tmp sets min distance
 				{
 					foundDistance = checkDistance;
