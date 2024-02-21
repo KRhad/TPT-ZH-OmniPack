@@ -1293,3 +1293,10 @@ some "wrong type" console spam on startup.
 
 Version 55.3 2023-12-16
 Fix stamps not loading after upgrade.
+
+Version 56.0 2024-02-20
+Update with all user-facing changes in the upcoming 98.0 release. This includes
+the new "resist" element. An overhaul of the Lua API was also done. Wiki
+documentation isn't complete yet, but all the existing functions should be
+preserved via a compatibility script. Fix regression with sim.deleteStamp not
+working if the stamp name is entirely numeric.
