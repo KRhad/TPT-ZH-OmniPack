@@ -8,7 +8,7 @@ class Simulation;
 class Sign
 {
 public:
-	enum Justification { Left = 0, Middle = 1, Right = 2, NoJustification = 3 };
+	enum Justification { Left, Middle, Right, NoJustification, Max };
 	enum Type { Normal = 0, SaveLink = 1, ThreadLink = 2, Spark = 3, SearchLink = 4 };
 
 private:

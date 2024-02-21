@@ -455,6 +455,12 @@ void initSimulationAPI(lua_State * l)
 	lua_setfield(l, -2, "new");
 	lua_pushcfunction(l, simulation_deletesign);
 	lua_setfield(l, -2, "delete");
+	SETCONSTAS(l, Sign::Left,            "JUSTMODE_LEFT"),
+	SETCONSTAS(l, Sign::Middle,          "JUSTMODE_MIDDLE"),
+	SETCONSTAS(l, Sign::Right,           "JUSTMODE_RIGHT"),
+	SETCONSTAS(l, Sign::NoJustification, "JUSTMODE_NONE" ),
+	SETCONSTAS(l, Sign::Max,             "NUM_JUSTMODES"),
+	SETCONSTAS(l, MAXSIGNS,              "MAX_SIGNS" ),
 	lua_setfield(l, -2, "signs");
 
 	for (auto moving = 0; moving < PT_NUM; ++moving)
