@@ -158,16 +158,15 @@ int update_POWERED(UPDATE_FUNC_ARGS)
 				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
+
+				int pavg = parts_avg(i, ID(r), PT_INSL);
+				bool insulated = pavg == PT_INSL || pavg == PT_RSSS;
 #ifdef NOMOD
-				if (parts[i].type != PT_SWCH)
+				if (parts[i].type != PT_SWCH || !insulated)
 #else
-				if (parts[i].type != PT_SWCH && parts[i].type != PT_BUTN)
+				if ((parts[i].type != PT_SWCH && parts[i].type != PT_BUTN) || !insulated)
 #endif
 				{
-					int pavg = parts_avg(i, ID(r), PT_INSL);
-					if (pavg == PT_INSL || pavg == PT_RSSS)
-						continue;
-
 					if (TYP(r)==parts[i].type && parts[i].type == PT_SWCH)
 					{
 						if (parts[i].life>=10&&parts[ID(r)].life>0&&parts[ID(r)].life<10)
