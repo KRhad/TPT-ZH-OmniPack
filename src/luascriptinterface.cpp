@@ -739,9 +739,9 @@ static int LuaBlockMapImpl(lua_State *L, ItemType minValue, ItemType maxValue, A
 		if (value > maxValue) value = maxValue;
 		if (value < minValue) value = minValue;
 	}
-	for (int x = pos.X; x < size.X; x++)
+	for (int x = pos.X; x < pos.X + size.X; x++)
 	{
-		for (int y = pos.Y;y < size.Y; y++)
+		for (int y = pos.Y; y < pos.Y + size.Y; y++)
 		{
 			Point p = Point{x, y};
 			accessor(p) = value;
