@@ -517,7 +517,7 @@ void MainLoop(bool secondaryLoop)
 		{
 			int ret = EventProcess(event, top);
 			if (ret)
-				engine.CloseTop(Escape);
+				engine.CloseTop(ui::Escape);
 		}
 		if (doManualMouseCalculation && !fullscreen)
 		{

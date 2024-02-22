@@ -1828,7 +1828,7 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 	else if (insideRenderOptions)
 	{
 		if (this->Subwindows.size() && deletingRenderOptions)
-			this->Subwindows[0]->Close(MouseOutside);
+			this->Subwindows[0]->Close(ui::MouseOutside);
 	}
 	else if (isMouseDown)
 	{
@@ -2022,7 +2022,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		if (this->Subwindows.size() && insideRenderOptions)
 		{
 			deletingRenderOptions = false;
-			this->Subwindows[0]->Close(Escape);
+			this->Subwindows[0]->Close(ui::Escape);
 			break;
 		}
 
@@ -2031,7 +2031,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			if (confirmed)
 			{
 				this->ignoreQuits = false;
-				this->Close(Escape);
+				this->Close(ui::Escape);
 			}
 		} });
 		Engine::Ref().ShowWindow(prompt);

@@ -3,6 +3,8 @@
 /**
  * @brief Reasons why a ui::Window was deleted
  */
+namespace ui
+{
 enum DeleteReason
 {
 	NoDeleteReason, // Unspecified
@@ -12,3 +14,4 @@ enum DeleteReason
 	MouseOutside,   // Mouse click outside the window borders,
 	Programatic     // Closed by Lua or via console command
 };
+}

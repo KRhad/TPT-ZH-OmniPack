@@ -26,7 +26,7 @@ InfoPrompt::InfoPrompt(std::string title, std::string message, std::string OK):
 	this->AddComponent(okButton);
 }
 
-void InfoPrompt::OnExit(DeleteReason deleteReason)
+void InfoPrompt::OnExit(ui::DeleteReason deleteReason)
 {
 	if (callback.dismiss)
 		callback.dismiss();
@@ -35,5 +35,5 @@ void InfoPrompt::OnExit(DeleteReason deleteReason)
 void InfoPrompt::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
 	if (key == SDLK_RETURN)
-		this->Close(Confirmed);
+		this->Close(ui::Confirmed);
 }

@@ -150,6 +150,6 @@ void GolWindow::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 	if (key == SDLK_RETURN)
 	{
 		if (AddGol())
-			Close(Confirmed);
+			Close(ui::Confirmed);
 	}
 }

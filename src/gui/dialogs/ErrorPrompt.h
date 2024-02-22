@@ -16,7 +16,7 @@ public:
 	ErrorPrompt(std::string message, std::string dismiss = "Dismiss");
 
 	void SetCallback(DismissCallback callback) { this->callback = callback; }
-	void OnExit(DeleteReason deleteReason) override;
+	void OnExit(ui::DeleteReason deleteReason) override;
 	void OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
 };
 

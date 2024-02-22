@@ -30,14 +30,14 @@ ConfirmPrompt::ConfirmPrompt(std::string title, std::string message, std::string
 	this->AddComponent(okButton);
 }
 
-void ConfirmPrompt::OnExit(DeleteReason deleteReason)
+void ConfirmPrompt::OnExit(ui::DeleteReason deleteReason)
 {
 	if (callback.confirm)
-		callback.confirm(deleteReason == Confirmed);
+		callback.confirm(deleteReason == ui::Confirmed);
 }
 
 void ConfirmPrompt::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
 	if (key == SDLK_RETURN)
-		this->Close(Confirmed);
+		this->Close(ui::Confirmed);
 }

@@ -18,7 +18,7 @@ public:
 
 	void SetCallback(ConfirmCallback callback) { this->callback = callback; }
 
-	void OnExit(DeleteReason deleteReason) override;
+	void OnExit(ui::DeleteReason deleteReason) override;
 	void OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
 };
 

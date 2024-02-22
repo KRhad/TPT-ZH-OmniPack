@@ -88,8 +88,8 @@ LuaWindow::LuaWindow(lua_State * l) :
 			luaWindow->triggerOnDraw();
 		}
 		//void OnInitialized() override { luaWindow->triggerOnInitialized(); } // commented out, vanilla doesn't actually call this function anymore!
-		void OnExit(DeleteReason deleteReason) override {
-			if (deleteReason == Escape || deleteReason == MouseOutside)
+		void OnExit(ui::DeleteReason deleteReason) override {
+			if (deleteReason == ui::Escape || deleteReason == ui::MouseOutside)
 				luaWindow->triggerOnTryExit();
 			luaWindow->triggerOnExit();
 			toDelete = false;
@@ -515,7 +515,7 @@ LuaWindow::~LuaWindow()
 	}
 	// Always false, this window will never be the active window. But, whatever
 	if (Engine::Ref().GetTop() == window)
-		window->Close(Programatic);
+		window->Close(ui::Programatic);
 	else
 		delete window;
 }

@@ -72,7 +72,7 @@ void Engine::ShowWindowDelayed()
 	top->DoMouseMove(mx, my, 0, 0);
 }
 
-void Engine::CloseTop(DeleteReason deleteReason)
+void Engine::CloseTop(ui::DeleteReason deleteReason)
 {
 	ui::Window *temp = windows.top();
 	temp->Close(deleteReason);

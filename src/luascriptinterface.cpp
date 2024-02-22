@@ -1410,7 +1410,7 @@ int simulation_loadSave(lua_State * l)
 	if (open_ui(the_game->GetVid()->GetVid(), save_id, save_date, instant))
 	{
 		if (console_mode)
-			Engine::Ref().CloseTop(Programatic);
+			Engine::Ref().CloseTop(ui::Programatic);
 	}
 	return 0;
 }
@@ -2807,7 +2807,7 @@ int interface_closeWindow(lua_State * l)
 {
 	LuaWindow * window = Luna<LuaWindow>::check(l, 1);
 	if (window)
-		window->GetWindow()->Close(Programatic);
+		window->GetWindow()->Close(ui::Programatic);
 	return 0;
 }
 
@@ -3126,7 +3126,7 @@ int interface_console(lua_State * l)
 	{
 		// scripts can only run in main window or console window, so just assume console window is on top and close it
 		if (console_mode)
-			Engine::Ref().CloseTop(Programatic);
+			Engine::Ref().CloseTop(ui::Programatic);
 		else
 			the_game->OpenConsole();
 	}

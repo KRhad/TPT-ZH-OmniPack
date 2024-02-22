@@ -111,7 +111,7 @@ void PropWindow::UpdatePropTool(bool close)
 				propTool->propValue = tempValue;
 			}
 			propTool->invalidState = !isParsed;
-			Close(Confirmed);
+			Close(ui::Confirmed);
 		}
 		valueTextbox->SetColor(isParsed ? COLRGB(255, 255, 255) : COLRGB(255, 0, 0));
 	}

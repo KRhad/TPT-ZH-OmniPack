@@ -32,11 +32,11 @@ TextPrompt::TextPrompt(std::string title, std::string prompt, std::string text, 
 	this->AddComponent(okButton);
 }
 
-void TextPrompt::OnExit(DeleteReason deleteReason)
+void TextPrompt::OnExit(ui::DeleteReason deleteReason)
 {
 	if (callback.input)
 	{
-		if (deleteReason == Confirmed)
+		if (deleteReason == ui::Confirmed)
 			callback.input(inputTextbox->GetText());
 		else
 			callback.input(std::nullopt);
@@ -46,5 +46,5 @@ void TextPrompt::OnExit(DeleteReason deleteReason)
 void TextPrompt::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
 	if (key == SDLK_RETURN)
-		this->Close(Confirmed);
+		this->Close(ui::Confirmed);
 }

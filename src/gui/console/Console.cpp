@@ -143,7 +143,7 @@ std::string Console::RunCommand(std::string command)
 #endif
 	if (ret == -1)
 	{
-		this->Close(Confirmed);
+		this->Close(ui::Confirmed);
 	}
 	else if (ret == -2)
 	{
@@ -291,7 +291,7 @@ void Console::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, 
 	}
 	else if (graveExitsConsole && !shift && scan == SDL_SCANCODE_GRAVE)
 	{
-		this->Close(Escape);
+		this->Close(ui::Escape);
 	}
 	else if (key == SDLK_UP)
 	{
