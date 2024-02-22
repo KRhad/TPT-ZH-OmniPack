@@ -13,9 +13,9 @@
 // minor hacks so I can avoid including curl in the header file. This causes problems with mingw
 typedef void CURL;
 struct curl_slist;
-struct curl_mime_s;
+struct curl_mime;
 struct curl_httppost;
-typedef struct curl_mime_s curl_mime;
+typedef struct curl_mime curl_mime;
 
 class RequestManager;
 class Request

@@ -66,7 +66,7 @@ AddSconsOption('nolua', False, False, "Disable Lua")
 AddSconsOption('luajit', False, False, "Enable LuaJIT")
 AddSconsOption('lua52', False, False, "Compile using lua 5.2")
 AddSconsOption('nofft', False, False, "Disable FFT")
-AddSconsOption('nohttp', False, False, "Disable FFT")
+AddSconsOption('nohttp', False, False, "Disable HTTP")
 AddSconsOption("output", False, True, "Executable output name")
 
 
@@ -218,6 +218,8 @@ def findLibs(env, conf):
 			libChecks = ['shell32', 'wsock32', 'user32', 'Advapi32', 'ws2_32', 'Wldap32', 'crypt32', 'Ole32']
 			if GetOption('static'):
 				libChecks += ['imm32', 'version', 'OleAut32', 'SetupApi']
+				if not GetOption('nohttp'):
+					libChecks += ['Normaliz']
 			for i in libChecks:
 				if not conf.CheckLib(i):
 					FatalError("Error: some windows libraries not found or not installed, make sure your compiler is set up correctly")
