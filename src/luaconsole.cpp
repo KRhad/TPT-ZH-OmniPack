@@ -385,7 +385,7 @@ void lua_hook(lua_State *L, lua_Debug *ar)
 	{
 		bool wasConfirmed = false;
 		auto prompt = new ConfirmPrompt("Infinite Loop", "The Lua code might have an infinite loop. Press OK to stop it", "OK");
-		prompt->SetCallback({ [&](bool confirmed) {
+		prompt->SetCallback({ [&wasConfirmed](bool confirmed) {
 			wasConfirmed = confirmed;
 		} });
 		Engine::Ref().ShowWindow(prompt);
@@ -700,7 +700,7 @@ int getScriptInner(lua_State *l, int scriptID, std::string filename, int runScri
 	{
 		bool wasConfirmed = false;
 		auto prompt = new ConfirmPrompt("Do you want to install script?", url.str().c_str(), "Install");
-		prompt->SetCallback({ [&](bool confirmed) {
+		prompt->SetCallback({ [&wasConfirmed](bool confirmed) {
 			wasConfirmed = confirmed;
 		} });
 		Engine::Ref().ShowWindow(prompt);
@@ -734,7 +734,7 @@ int getScriptInner(lua_State *l, int scriptID, std::string filename, int runScri
 		{
 			bool wasConfirmed = false;
 			auto prompt = new ConfirmPrompt("File already exists, overwrite?", filename.c_str(), "Overwrite");
-			prompt->SetCallback({ [&](bool confirmed) {
+			prompt->SetCallback({ [&wasConfirmed](bool confirmed) {
 				wasConfirmed = confirmed;
 			} });
 			Engine::Ref().ShowWindow(prompt);
@@ -985,7 +985,7 @@ void ConfirmRunEmbeddedLuaCode()
 		fclose(previewCode);
 
 		auto prompt = new ConfirmPrompt("Lua Code", "Run the lua code in newluacode.txt?", "Run");
-		prompt->SetCallback({ [&](bool confirmed) {
+		prompt->SetCallback({ [](bool confirmed) {
 			if (confirmed)
 				RunEmbeddedLuaCode();
 		} });

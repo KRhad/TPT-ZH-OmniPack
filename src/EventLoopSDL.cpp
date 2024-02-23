@@ -364,7 +364,7 @@ int EventProcess(SDL_Event event, ui::Window * eventHandler)
 			else
 			{
 				auto prompt = new ConfirmPrompt("You are about to quit", "Are you sure you want to quit?", "Quit");
-				prompt->SetCallback({ [&](bool confirmed) {
+				prompt->SetCallback({ [&wasConfirmed](bool confirmed) {
 					wasConfirmed = confirmed;
 				} });
 				Engine::Ref().ShowWindow(prompt);

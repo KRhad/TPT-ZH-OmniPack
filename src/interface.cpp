@@ -6405,7 +6405,7 @@ void decoration_editor(pixel *vid_buf, int b, int bq, int mx, int my)
 		if (b && !bq && mx >= window_offset_x+230 && my >= 2+255+6 && mx <= window_offset_x + 230+26 && my <= 2+255+5+13)
 		{
 			auto prompt = new ConfirmPrompt("Reset Decoration Layer", "Do you really want to erase everything?", "Erase");
-			prompt->SetCallback({ [&](bool confirmed) {
+			prompt->SetCallback({ [](bool confirmed) {
 				if (confirmed)
 					for (int i = 0; i < NPART; i++)
 						parts[i].dcolour = COLARGB(0, 0, 0, 0);

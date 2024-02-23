@@ -598,7 +598,7 @@ void OptionsUI::MigrationClicked()
 	std::string message = "This will migrate all stamps, saves, and scripts from\n\bt" + from + "\bw\nto the shared data directory at\n\bt" + to + "\bw\n\n" +
 						  "Files that already exist will not be overwritten.";
 	auto prompt = new ConfirmPrompt("Do Migration?", message);
-	prompt->SetCallback({ [&](bool confirmed) {
+	prompt->SetCallback({ [from, to](bool confirmed) {
 		if (confirmed)
 		{
 			std::string ret = Platform::DoMigration(from, to);

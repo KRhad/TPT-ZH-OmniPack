@@ -664,7 +664,7 @@ void PowderToy::ConfirmUpdate(std::string changelog, std::string file)
 #endif
 
 	auto prompt = new ConfirmPrompt(title, changelog, "\btUpdate");
-	prompt->SetCallback({ [&](bool confirmed) {
+	prompt->SetCallback({ [file](bool confirmed) {
 		if (confirmed)
 		{
 #if defined(ANDROID) || defined(MACOSX)
@@ -1241,7 +1241,7 @@ void PowderToy::OnTick(uint32_t ticks)
 		message << "\nTo undo this, hit Cancel. You can change this in settings at any time.";
 
 		auto prompt = new ConfirmPrompt("Large screen detected", message.str());
-		prompt->SetCallback({ [&](bool confirmed) {
+		prompt->SetCallback({ [](bool confirmed) {
 			if (!confirmed)
 				Engine::Ref().SetScale(1);
 		} });
@@ -2027,7 +2027,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		}
 
 		auto prompt = new ConfirmPrompt("You are about to quit", "Are you sure you want to exit the game?", "Quit");
-		prompt->SetCallback({ [&](bool confirmed) {
+		prompt->SetCallback({ [this](bool confirmed) {
 			if (confirmed)
 			{
 				this->ignoreQuits = false;
@@ -2214,7 +2214,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		else
 		{
 			auto prompt = new ConfirmPrompt("Install Powder Toy", "You are about to install The Powder Toy", "Install");
-			prompt->SetCallback({ [&](bool wasConfirmed) {
+			prompt->SetCallback({ [](bool wasConfirmed) {
 				if (wasConfirmed)
 				{
 					if (Platform::RegisterExtension())
