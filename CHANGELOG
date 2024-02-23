@@ -1304,3 +1304,7 @@ working if the stamp name is entirely numeric.
 Version 56.1 2024-02-22
 Fix sim.pressure and other functions that operate on the block map. Fix SWCH
 not responding to PSCN or NSCN.
+
+Version 56.1 (build 162)
+Fix updater and data dir migration tool both bluescreening when clicking
+Confirm. This update will have to be downloaded manually if using 56.0 or 56.1.
