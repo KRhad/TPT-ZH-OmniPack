@@ -22,7 +22,7 @@ int FIRE_update(UPDATE_FUNC_ARGS);
 
 int SPRK_update(UPDATE_FUNC_ARGS)
 {
-	int r, rx, ry, nearp, pavg, ct = parts[i].ctype, sender, receiver;
+	int r, rx, ry, pavg, ct = parts[i].ctype, sender, receiver;
 	FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
 
 	if (parts[i].life<=0)
@@ -65,9 +65,11 @@ int SPRK_update(UPDATE_FUNC_ARGS)
 	case PT_ETRD:
 		if (parts[i].life == 1)
 		{
-			nearp = nearestSparkablePart(sim, i);
+			int nearp = nearestSparkablePart(sim, i);
+			if (nearp == -1)
+				break;
 			int pavg = parts_avg(i, nearp, PT_INSL);
-			if (nearp != -1 && pavg != PT_INSL && pavg != PT_RSSS)
+			if (pavg != PT_INSL && pavg != PT_RSSS)
 			{
 				sim->CreateLine(x, y, (int)(parts[nearp].x+0.5f), (int)(parts[nearp].y+0.5f), PT_PLSM, 0);
 				parts[i].life = 20;
