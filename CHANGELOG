@@ -1308,3 +1308,9 @@ not responding to PSCN or NSCN.
 Version 56.1 (build 162)
 Fix updater and data dir migration tool both bluescreening when clicking
 Confirm. This update will have to be downloaded manually if using 56.0 or 56.1.
+
+Version 56.2
+Fix crash when sparking ETRD. Fix crash when opening certain saves. Fix a few
+minor memory leaks. Try to fix issue on Windows where the already-bluescreened
+game will crash a 2nd time when restarting itself. Make online save upload
+screen wider, so that save titles can be as long as tpt++.
