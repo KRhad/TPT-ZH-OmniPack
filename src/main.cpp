@@ -514,9 +514,15 @@ int main(int argc, char *argv[])
 }
 #else
 
-void SigHandler(int signal)
+void SigHandler(int sig)
 {
-	switch(signal){
+	signal(SIGSEGV, SIG_DFL);
+	signal(SIGFPE, SIG_DFL);
+	signal(SIGILL, SIG_DFL);
+	signal(SIGABRT, SIG_DFL);
+
+	switch (sig)
+	{
 	case SIGSEGV:
 		BlueScreen("Memory read/write error");
 		break;
