@@ -2449,7 +2449,8 @@ void render_before(pixel *part_vbuf, Simulation * sim)
 			memset(part_vbuf, 0, (XRES+BARSIZE)*YRES*PIXELSIZE);
 		}
 #ifdef LUACONSOLE
-		HandleEvent(LuaEvents::beforesimdraw, new BeforeSimDrawEvent());
+		auto ev = BeforeSimDrawEvent();
+		HandleEvent(LuaEvents::beforesimdraw, &ev);
 #endif
 		if (sim->grav->IsEnabled() && drawgrav_enable)
 			draw_grav(part_vbuf);

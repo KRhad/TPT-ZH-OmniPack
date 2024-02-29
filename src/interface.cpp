@@ -4691,7 +4691,6 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 	int nyd,nyu,lv;
 	float ryf, scroll_velocity = 0.0f;
 
-	save_info *info = (save_info*)calloc(sizeof(save_info), 1);
 	int lasttime = TIMEOUT, saveTotal, saveDone, infoTotal, infoDone, downloadDone, downloadTotal;
 	int info_ready = 0, data_ready = 0, thumb_data_ready = 0;
 	pixel *save_pic = NULL;
@@ -4709,6 +4708,15 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 	bool commentWarningShown = false;
 	size_t commentLen = 0; // used to not recheck comment for warnings
 	InitializeSwearing();
+
+	// init info and initialize vectors
+	save_info* info = (save_info*)calloc(sizeof(save_info), 1);
+	info->comments = std::vector<ui_label>();
+	info->expectedCommentHeight = std::vector<int>();
+	info->commentauthors = std::vector<std::string>();
+	info->commentauthorsunformatted = std::vector<std::string>();
+	info->commentauthorIDs = std::vector<std::string>();
+	info->commenttimestamps = std::vector<std::string>();
 
 	pixel *old_vid=(pixel *)calloc((XRES+BARSIZE)*(YRES+MENUSIZE), PIXELSIZE);
 	if (!old_vid || !info)

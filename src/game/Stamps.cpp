@@ -64,7 +64,8 @@ bool Stamps::InitAsJson()
 	if (!stamp_data)
 		return false;
 
-	std::istringstream datastream(stamp_data);
+	std::stringstream datastream;
+	datastream.write(stamp_data, size);
 	Json::Value root;
 	datastream >> root;
 
@@ -74,6 +75,8 @@ bool Stamps::InitAsJson()
 		stamps.push_back(Stamp(recent[i].asString()));
 		stampNames.insert(recent[i].asString());
 	}
+
+	free(stamp_data);
 
 	return true;
 }

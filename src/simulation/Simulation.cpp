@@ -248,18 +248,18 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 	bool doFullScan = false;
 	for (unsigned int n = 0; n < NPART && n < save->particlesCount; n++)
 	{
-		particle *tempPart = &save->particles[n];
-		tempPart->x += (float)loadX;
-		tempPart->y += (float)loadY;
-		int x = int(std::floor(tempPart->x + 0.5f));
-		int y = int(std::floor(tempPart->y + 0.5f));
+		particle &tempPart = save->particles[n]; // TODO should be & not *, see GameSave::MapPalette
+		tempPart.x += (float)loadX;
+		tempPart.y += (float)loadY;
+		int x = int(std::floor(tempPart.x + 0.5f));
+		int y = int(std::floor(tempPart.y + 0.5f));
 		
-		auto &type = tempPart->type;
+		auto &type = tempPart.type;
 
 		// Check various scenarios where we are unable to spawn the element, and set type to 0 to block spawning later
 		if (!InBounds(x, y))
 		{
-			tempPart->type = 0;
+			tempPart.type = 0;
 			continue;
 		}
 
@@ -286,8 +286,13 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 			if (elements[type].CarriesTypeIn & (1U << index))
 			{
 				auto *prop = reinterpret_cast<int *>(reinterpret_cast<char *>(&tempPart) + properties[index].Offset);
-				auto carriedType = *prop & int(pmapmask);
-				auto extra = *prop >> save->pmapbits;
+				int carriedType = *prop & int(pmapmask);
+				int extra = *prop >> save->pmapbits;
+				std::cout << carriedType << std::endl; // uninitialized
+				std::cout << extra << std::endl; // uninitialized
+				std::cout << properties[index].Offset << std::endl;
+				std::cout << index << std::endl;
+				//std::cout << carriedType << ", " << extra << ", " << properties[index].Offset << ", " << index << std::endl;
 				if (hasPalette)
 					carriedType = paletteLookup(carriedType);
 				else
@@ -1389,7 +1394,8 @@ void Simulation::RecalcFreeParticles(bool doLifeDec)
 void Simulation::UpdateBefore()
 {
 #ifdef LUACONSOLE
-	HandleEvent(LuaEvents::beforesim, new BeforeSimEvent());
+	auto ev = BeforeSimEvent();
+	HandleEvent(LuaEvents::beforesim, &ev);
 #endif
 
 	//update wallmaps
@@ -1510,7 +1516,8 @@ void Simulation::UpdateAfter()
 	}
 
 #ifdef LUACONSOLE
-	HandleEvent(LuaEvents::aftersim, new AfterSimEvent());
+	auto ev = AfterSimEvent();
+	HandleEvent(LuaEvents::aftersim, &ev);
 #endif
 
 	// Only update air if not paused
