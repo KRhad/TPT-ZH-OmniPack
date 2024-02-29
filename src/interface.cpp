@@ -2292,7 +2292,7 @@ void tag_list_ui(pixel *vid_buf)
 
 int save_name_ui(pixel *vid_buf)
 {
-	int x0=(XRES-420)/2,y0=(YRES-78-YRES/4)/2,b=1,bq,mx,my,ths,idtxtwidth,nd=0;
+	int x0=(XRES-470)/2,y0=(YRES-78-YRES/4)/2,b=1,bq,mx,my,ths,idtxtwidth,nd=0;
 	void *th;
 	pixel *old_vid=(pixel *)calloc((XRES+BARSIZE)*(YRES+MENUSIZE), PIXELSIZE);
 	ui_edit ed;
@@ -2316,12 +2316,12 @@ int save_name_ui(pixel *vid_buf)
 			break;
 	}
 
-	ui_edit_init(&ed, x0+25, y0+25, 158, 14);
+	ui_edit_init(&ed, x0+25, y0+25, 208, 14);
 	strcpy(ed.def, "[simulation name]");
 	ed.cursor = ed.cursorstart = strlen(svf_name);
 	strcpy(ed.str, svf_name);
 
-	ui_edit_init(&ed2, x0+13, y0+45, 170, 115);
+	ui_edit_init(&ed2, x0+13, y0+45, 220, 115);
 	strcpy(ed2.def, "[simulation description]");
 	ed2.focus = 0;
 	ed2.cursor = ed2.cursorstart = strlen(svf_description);
@@ -2341,13 +2341,13 @@ int save_name_ui(pixel *vid_buf)
 	cbPublish.focus = 0;
 	cbPublish.checked = svf_publish;
 
-	cbPaused.x = x0+110;
+	cbPaused.x = x0+175;
 	cbPaused.y = y0+74+YRES/4;
 	cbPaused.focus = 0;
 	cbPaused.checked = sys_pause || framerender;
 	
 	fillrect(vid_buf, -1, -1, XRES+BARSIZE+1, YRES+MENUSIZE+1, 0, 0, 0, 192);
-	draw_rgba_image(vid_buf, (unsigned char*)save_to_server_image, 0, 0, 0.7f);
+	draw_rgba_image(vid_buf, (unsigned char*)save_to_server_image, -30, 0, 0.7f);
 	
 	memcpy(old_vid, vid_buf, ((XRES+BARSIZE)*(YRES+MENUSIZE))*PIXELSIZE);
 
@@ -2356,22 +2356,22 @@ int save_name_ui(pixel *vid_buf)
 		bq = b;
 		b = mouse_get_state(&mx, &my);
 
-		drawrect(vid_buf, x0, y0, 420, 110+YRES/4, 192, 192, 192, 255); // rectangle around entire thing
-		clearrect(vid_buf, x0+1, y0+1, 419, 109+YRES/4);
+		drawrect(vid_buf, x0, y0, 470, 110+YRES/4, 192, 192, 192, 255); // rectangle around entire thing
+		clearrect(vid_buf, x0+1, y0+1, 469, 109+YRES/4);
 		if (strcmp(svf_name, ed.str) || !svf_own)
 			drawtext(vid_buf, x0+8, y0+8, "Upload new simulation:", 255, 255, 255, 255);
 		else
 			drawtext(vid_buf, x0+8, y0+8, "Modify simulation properties:", 255, 255, 255, 255);
 		drawtext(vid_buf, x0+9, y0+25, "\x82", 192, 192, 192, 255);
-		drawrect(vid_buf, x0+8, y0+20, 176, 16, 192, 192, 192, 255); //rectangle around title box
+		drawrect(vid_buf, x0+8, y0+20, 226, 16, 192, 192, 192, 255); //rectangle around title box
 
-		drawrect(vid_buf, x0+8, y0+40, 176, 124, 192, 192, 192, 255); //rectangle around description box
+		drawrect(vid_buf, x0+8, y0+40, 226, 124, 192, 192, 192, 255); //rectangle around description box
 
 		ui_edit_draw(vid_buf, &ed);
 		ui_edit_draw(vid_buf, &ed2);
 
-		drawrect(vid_buf, x0+(205-XRES/3)/2-2+205, y0+40, XRES/3+3, YRES/3+3, 128, 128, 128, 255); //rectangle around thumbnail
-		render_thumb(th, ths, 0, vid_buf, x0+(205-XRES/3)/2+205, y0+42, 3);
+		drawrect(vid_buf, x0+(205-XRES/3)/2-2+255, y0+40, XRES/3+3, YRES/3+3, 128, 128, 128, 255); //rectangle around thumbnail
+		render_thumb(th, ths, 0, vid_buf, x0+(205-XRES/3)/2+255, y0+42, 3);
 
 #ifndef NOMOD
 		if (!can_publish)
@@ -2382,15 +2382,15 @@ int save_name_ui(pixel *vid_buf)
 #endif
 
 		ui_checkbox_draw(vid_buf, &cbPublish);
-		drawtext(vid_buf, cbPublish.x+24, cbPublish.y+3, "Publish?", 192, 192, 192, 255);
+		drawtext(vid_buf, cbPublish.x+19, cbPublish.y+3, "Publish?", 192, 192, 192, 255);
 
 		ui_checkbox_draw(vid_buf, &cbPaused);
-		drawtext(vid_buf, cbPaused.x+24, cbPaused.y+3, "Paused?", 192, 192, 192, 255);
+		drawtext(vid_buf, cbPaused.x+19, cbPaused.y+3, "Paused?", 192, 192, 192, 255);
 
 		drawtext(vid_buf, x0+5, y0+99+YRES/4, "Save simulation", 255, 255, 255, 255);
-		drawrect(vid_buf, x0, y0+94+YRES/4, 192, 16, 192, 192, 192, 255);
+		drawrect(vid_buf, x0, y0+94+YRES/4, 242, 16, 192, 192, 192, 255);
 
-		draw_line(vid_buf, x0+192, y0, x0+192, y0+110+YRES/4, 150, 150, 150, XRES+BARSIZE);
+		draw_line(vid_buf, x0+242, y0, x0+242, y0+110+YRES/4, 150, 150, 150, XRES+BARSIZE);
 
 		if (svf_id[0])
 		{
@@ -2412,7 +2412,7 @@ int save_name_ui(pixel *vid_buf)
 		ui_checkbox_process(mx, my, b, bq, &cbPublish);
 		ui_checkbox_process(mx, my, b, bq, &cbPaused);
 
-		if ((b && !bq && mx>=x0 && mx<x0+192 && my>=y0+94+YRES/4 && my<y0+110+YRES/4) || sdl_key==SDLK_RETURN)
+		if ((b && !bq && mx>=x0 && mx<x0+242 && my>=y0+94+YRES/4 && my<y0+110+YRES/4) || sdl_key==SDLK_RETURN)
 		{
 			bool cont = true;
 			if (cbPublish.checked && strlen(svf_author) && strcmp(svf_user, svf_author))
@@ -2458,6 +2458,19 @@ int save_name_ui(pixel *vid_buf)
 		if (sdl_key == SDLK_ESCAPE)
 		{
 			break;
+		}
+		else if (sdl_key == SDLK_TAB)
+		{
+			if (ed.focus)
+			{
+				ed.focus = 0;
+				ed2.focus = 1;
+			}
+			else
+			{
+				ed.focus = 1;
+				ed2.focus = 0;
+			}
 		}
 	}
 	if (th) free(th);
