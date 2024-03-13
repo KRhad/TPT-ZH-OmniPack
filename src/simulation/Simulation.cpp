@@ -1827,7 +1827,7 @@ bool Simulation::UpdateParticle(int i)
 	}
 
 #ifdef LUACONSOLE
-	if (lua_el_mode[t] != 2)
+	if (lua_el_mode[t] != UPDATE_REPLACE)
 	{
 #endif
 		if (elements[t].Properties&PROP_POWERED)

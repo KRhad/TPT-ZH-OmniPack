@@ -42,6 +42,14 @@
 #define LUACON_EL_MODIFIED_GRAPHICS 0x2
 #define LUACON_EL_MODIFIED_MENUS 0x4
 
+enum UpdateMode
+{
+	UPDATE_AFTER,
+	UPDATE_REPLACE,
+	UPDATE_BEFORE,
+	NUM_UPDATEMODES,
+};
+
 class Simulation;
 extern Simulation * luaSim;
 

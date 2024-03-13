@@ -401,7 +401,7 @@ void lua_hook(lua_State *L, lua_Debug *ar)
 int luaUpdateWrapper(UPDATE_FUNC_ARGS)
 {
 	auto *builtinUpdate = luaSim->origElements[parts[i].type].Update;
-	if (builtinUpdate && lua_el_mode[parts[i].type] == 1)
+	if (builtinUpdate && lua_el_mode[parts[i].type] == UPDATE_AFTER)
 	{
 		if (builtinUpdate(UPDATE_FUNC_SUBCALL_ARGS))
 			return 1;
@@ -432,7 +432,7 @@ int luaUpdateWrapper(UPDATE_FUNC_ARGS)
 		x = (int)(parts[i].x+0.5f);
 		y = (int)(parts[i].y+0.5f);
 	}
-	if (builtinUpdate && lua_el_mode[parts[i].type] == 3)
+	if (builtinUpdate && lua_el_mode[parts[i].type] == UPDATE_BEFORE)
 	{
 		if (builtinUpdate(UPDATE_FUNC_SUBCALL_ARGS))
 			return 1;

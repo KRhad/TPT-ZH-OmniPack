@@ -386,10 +386,11 @@ void initSimulationAPI(lua_State * l)
 	SETCONST(l, PMAPBITS);
 	SETCONST(l, PMAPMASK);
 
-	SETCONST(l, CIRCLE_BRUSH);
-	SETCONST(l, SQUARE_BRUSH);
-	SETCONST(l, TRI_BRUSH);
+	SETCONSTAS(l, CIRCLE_BRUSH, "BRUSH_CIRCLE");
+	SETCONSTAS(l, SQUARE_BRUSH, "BRUSH_SQUARE");
+	SETCONSTAS(l, TRI_BRUSH, "BRUSH_TRIANGLE");
 	SETCONST(l, NUM_DEFAULTBRUSHES);
+	SETCONSTAS(l, NUM_DEFAULTBRUSHES, "BRUSH_NUM");
 
 	SETCONST(l, EDGE_VOID);
 	SETCONST(l, EDGE_SOLID);
@@ -3639,6 +3640,11 @@ void initElementsAPI(lua_State * l)
 	SETCONST(l, SC_SEARCH);
 	SETCONST(l, SC_TOTAL);
 
+	SETCONST(l, UPDATE_AFTER);
+	SETCONST(l, UPDATE_REPLACE);
+	SETCONST(l, UPDATE_BEFORE);
+	SETCONST(l, NUM_UPDATEMODES);
+
 	//Element identifiers
 	for (int i = 0; i < PT_NUM; i++)
 	{
@@ -3884,13 +3890,13 @@ int elements_element(lua_State * l)
 		if (lua_type(l, -1) == LUA_TFUNCTION)
 		{
 			lua_el_func[id].Assign(l, -1);
-			lua_el_mode[id] = 1;
+			lua_el_mode[id] = UPDATE_AFTER;
 			luaSim->elements[id].Update = luaUpdateWrapper;
 		}
 		else if (lua_type(l, -1) == LUA_TBOOLEAN && !lua_toboolean(l, -1))
 		{
 			lua_el_func[id].Clear();
-			lua_el_mode[id] = 0;
+			lua_el_mode[id] = UPDATE_AFTER;
 			luaSim->elements[id].Update = luaSim->origElements[id].Update;
 		}
 		lua_pop(l, 1);
@@ -4038,13 +4044,13 @@ int elements_property(lua_State * l)
 				switch (luaL_optint(l, 4, 0))
 				{
 				case 2:
-					lua_el_mode[id] = 3; //update before
+					lua_el_mode[id] = UPDATE_BEFORE; //update before
 					break;
 				case 1:
-					lua_el_mode[id] = 2; //replace
+					lua_el_mode[id] = UPDATE_REPLACE; //replace
 					break;
 				default:
-					lua_el_mode[id] = 1; //update after
+					lua_el_mode[id] = UPDATE_AFTER; //update after
 					break;
 				}
 
@@ -4054,7 +4060,7 @@ int elements_property(lua_State * l)
 			else if (lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, 3))
 			{
 				lua_el_func[id].Clear();
-				lua_el_mode[id] = 0;
+				lua_el_mode[id] = UPDATE_AFTER;
 				luaSim->elements[id].Update = luaSim->origElements[id].Update;
 			}
 		}
