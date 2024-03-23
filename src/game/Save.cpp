@@ -2260,14 +2260,12 @@ void Save::BuildSave()
 				if ((tmp3 || tmp4) && (!PressureInTmp3(particles[i].type) || hasPressure))
 				{
 					fieldDesc |= 1 << 13;
-#if SAVE_VERSION >= 97
 					if (((tmp3 >> 16) || (tmp4 >> 16)) && !PressureInTmp3(particles[i].type))
 					{
 						fieldDesc |= 1 << 15;
 						fieldDesc |= 1 << 16;
 						RESTRICTVERSION(97, 0);
 					}
-#endif
 				}
 
 				// Extra type byte if necessary
@@ -2490,7 +2488,6 @@ void Save::BuildSave()
 				{
 					RESTRICTVERSION(96, 0);
 				}
-#if SAVE_VERSION >= 97
 				if (particles[i].type == PT_GLAS && particles[i].life > 0)
 				{
 					RESTRICTVERSION(97, 0);
@@ -2503,7 +2500,14 @@ void Save::BuildSave()
 				{
 					RESTRICTVERSION(97, 0);
 				}
-#endif
+				if (particles[i].type == PT_RSST || particles[i].type == PT_RSSS)
+				{
+					RESTRICTVERSION(98, 0);
+				}
+				if (particles[i].type == PT_ETRD && (particles[i].tmp || particles[i].tmp2))
+				{
+					RESTRICTVERSION(98, 0);
+				}
 
 				// Get the pmap entry for the next particle in the same position
 				i = partsPosLink[i];
@@ -2664,9 +2668,7 @@ void Save::BuildSave()
 	{
 		bson_append_double(&b, "customGravityX", double(customGravityX));
 		bson_append_double(&b, "customGravityY", double(customGravityY));
-#if SAVE_VERSION >= 97
 		RESTRICTVERSION(97, 0);
-#endif
 	}
 
 	if (stkm.hasData())
