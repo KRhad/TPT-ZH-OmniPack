@@ -2933,7 +2933,10 @@ int interface_beginMessageBox(lua_State * l)
 	auto message = PickIfType(l, 2, std::string("Message"));
 	//auto large = PickIfType(l, 3, false); // unused in mod, because info prompts automatically size themselves
 	auto cb = std::make_shared<LuaSmartRef>(l);
-	cb->Assign(l, lua_gettop(l));
+	if (lua_gettop(l))
+	{
+		cb->Assign(l, lua_gettop(l));
+	}
 	auto prompt = new InfoPrompt(title, message, "OK");
 	prompt->SetCallback({ [cb]() {
 		lua_State *l = ::l;
@@ -2958,7 +2961,10 @@ int interface_beginThrowError(lua_State * l)
 {
 	auto errorMessage = PickIfType(l, 1, std::string("Error text"));
 	auto cb = std::make_shared<LuaSmartRef>(l);
-	cb->Assign(l, lua_gettop(l));
+	if (lua_gettop(l))
+	{
+		cb->Assign(l, lua_gettop(l));
+	}
 	auto prompt = new ErrorPrompt(errorMessage);
 	prompt->SetCallback({ [cb]() {
 		lua_State *l = ::l;
@@ -2986,7 +2992,10 @@ int interface_beginInput(lua_State * l)
 	auto text = PickIfType(l, 3, std::string(""));
 	auto shadow = PickIfType(l, 4, std::string(""));
 	auto cb = std::make_shared<LuaSmartRef>(l); // * Bind to main lua state (might be different from l).
-	cb->Assign(l, lua_gettop(l));
+	if (lua_gettop(l))
+	{
+		cb->Assign(l, lua_gettop(l));
+	}
 	auto handle = [cb](std::optional<std::string> input) {
 		lua_State *l = ::l;
 		cb->Push(l);
@@ -3023,7 +3032,10 @@ int interface_beginConfirm(lua_State * l)
 	auto message = PickIfType(l, 2, std::string("Message"));
 	auto buttonText = PickIfType(l, 3, std::string("Confirm"));
 	auto cb = std::make_shared<LuaSmartRef>(l);
-	cb->Assign(l, lua_gettop(l));
+	if (lua_gettop(l))
+	{
+		cb->Assign(l, lua_gettop(l));
+	}
 	auto prompt = new ConfirmPrompt(title, message, buttonText);
 	prompt->SetCallback({ [cb](bool wasConfirmed) {
 		lua_State *l = ::l;
