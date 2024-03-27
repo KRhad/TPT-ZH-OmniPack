@@ -1316,6 +1316,6 @@ game will crash a 2nd time when restarting itself. Make online save upload
 screen wider, so that save titles can be as long as tpt++.
 
 Version 57.0
-Change version number to 98.0. Add UPDATE_ and DECOSPACE_ Lua constants. This
-release is pretty much identical to the last one, as most beta bugs did not
-apply to this mod.
+Change version number to 98.0. Add UPDATE_ and DECOSPACE_ Lua constants. Update
+to tptmp v2.1.0. This release is pretty much identical to the last one, as most
+beta bugs did not apply to this mod.
