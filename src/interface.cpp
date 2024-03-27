@@ -3042,14 +3042,15 @@ void menu_select_element(int b, Tool* over)
 			{
 				auto *cgol = static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).GetCustomGOLByRule(toolID);
 				int cgolRule = cgol->rule;
-				auto *confirmPrompt = new ConfirmPrompt([cgolRule](bool b) {
+				auto *confirmPrompt = new ConfirmPrompt("Remove custom GOL type", "Do you want to remove " + cgol->nameString + "?");
+				confirmPrompt->SetCallback({ [cgolRule](bool b) {
 					if (b)
 					{
 						static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).RemoveCustomGOL(cgolRule);
 						FillMenus();
 						save_presets();
 					}
-				}, "Remove custom GOL type", "Do you want to remove " + cgol->nameString + "?");
+				} });
 				Engine::Ref().ShowWindow(confirmPrompt);
 			}
 #endif

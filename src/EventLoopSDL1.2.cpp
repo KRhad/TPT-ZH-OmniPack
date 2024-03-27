@@ -242,7 +242,7 @@ void MainLoop(bool secondaryLoop)
 		{
 			int ret = EventProcess(event, top);
 			if (ret)
-				engine.CloseTop(Escape);
+				engine.CloseTop(ui::Escape);
 		}
 
 		uint32_t currentTick = SDL_GetTicks();
