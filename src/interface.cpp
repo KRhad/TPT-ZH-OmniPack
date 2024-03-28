@@ -6053,7 +6053,7 @@ bool ParseServerReturn(std::string result, int status, bool json)
 	}
 	else
 	{
-		if (result.substr(1, 2) != "OK")
+		if (result.substr(0, 2) != "OK")
 		{
 			error_ui(vid_buf, 0, result);
 			return true;

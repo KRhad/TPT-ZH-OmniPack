@@ -1305,17 +1305,17 @@ Version 56.1 2024-02-22
 Fix sim.pressure and other functions that operate on the block map. Fix SWCH
 not responding to PSCN or NSCN.
 
-Version 56.1 (build 162)
+Version 56.1 (build 162) 2024-02-22
 Fix updater and data dir migration tool both bluescreening when clicking
 Confirm. This update will have to be downloaded manually if using 56.0 or 56.1.
 
-Version 56.2
+Version 56.2 2024-02-28
 Fix crash when sparking ETRD. Fix crash when opening certain saves. Fix a few
 minor memory leaks. Try to fix issue on Windows where the already-bluescreened
 game will crash a 2nd time when restarting itself. Make online save upload
 screen wider, so that save titles can be as long as tpt++.
 
-Version 57.0
+Version 57.0 2024-03-26
 Change version number to 98.0. Add UPDATE_ and DECOSPACE_ Lua constants. Update
 to tptmp v2.1.0. This release is pretty much identical to the last one, as most
 beta bugs did not apply to this mod.
