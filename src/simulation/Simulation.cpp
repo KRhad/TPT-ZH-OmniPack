@@ -134,7 +134,7 @@ void Simulation::RecountElements()
 			elementCount[parts[i].type]++;
 }
 
-MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int replace, bool includePressure)
+SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave, int replace, bool includePressure)
 {
 	if (!originalSave)
 		return {};
@@ -164,7 +164,7 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 	{
 		partMap[i] = i;
 	}
-	MissingElements missingElements;
+	SaveLoadData saveLoadData;
 	auto &possiblyCarriesType = particle::PossiblyCarriesType();
 	auto &properties = particle::GetProperties();
 
@@ -195,18 +195,18 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 			}
 			else
 			{
-				missingElements.identifiers.insert(pi);
+				saveLoadData.identifiers.insert(pi);
 			}
 		}
 		hasPalette = true;
 	}
-	auto paletteLookup = [&partMap, &missingElements](int type) {
+	auto paletteLookup = [&partMap, &saveLoadData](int type) {
 		if (type > 0 && type < PT_NUM)
 		{
 			auto carriedType = partMap[type];
 			if (!carriedType) // type is not 0 so this shouldn't be 0 either
 			{
-				missingElements.ids.insert(type);
+				saveLoadData.ids.insert(type);
 			}
 			type = carriedType;
 		}
@@ -676,7 +676,8 @@ MissingElements Simulation::LoadSave(int loadX, int loadY, const Save *originalS
 	}
 #endif
 
-	return missingElements;
+	saveLoadData.authors = save->authors;
+	return saveLoadData;
 }
 
 Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool includePressure)

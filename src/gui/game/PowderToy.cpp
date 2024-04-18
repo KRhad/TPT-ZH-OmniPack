@@ -1719,9 +1719,9 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 		try
 		{
 			Point realLoadPos = GetStampPos();
-			auto missingElements = sim->LoadSave(realLoadPos.X, realLoadPos.Y, stampData, 0, !shiftHeld);
+			auto saveLoadData = sim->LoadSave(realLoadPos.X, realLoadPos.Y, stampData, 0, !shiftHeld);
 #ifdef LUACONSOLE
-			if (missingElements)
+			if (saveLoadData.isMissingElements())
 				luacon_log("Paste content has missing custom elements");
 #endif
 			MergeStampAuthorInfo(stampData->authors);

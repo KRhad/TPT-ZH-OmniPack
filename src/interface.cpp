@@ -5562,8 +5562,8 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				// Do Open!
 				try
 				{
-					auto missingElements = globalSim->LoadSave(0, 0, save, 1);
-					MissingElementsPrompt(missingElements);
+					auto saveLoadData = globalSim->LoadSave(0, 0, save, 1);
+					MissingElementsPrompt(saveLoadData);
 
 					svf_open = 1;
 					svf_own = svf_login && !strcmp(info->author, svf_user);
@@ -5589,7 +5589,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 					svf_fileopen = 0;
 					retval = 1;
 
-					authors = save->authors;
+					authors = saveLoadData.authors;
 					if (!authors.size())
 					{
 						DefaultSaveInfo();
@@ -6933,12 +6933,12 @@ void catalogue_ui(pixel * vid_buf)
 							try
 							{
 								clear_save_info();
-								auto missingElements = globalSim->LoadSave(0, 0, localSave, 1);
-								MissingElementsPrompt(missingElements);
+								auto saveLoadData = globalSim->LoadSave(0, 0, localSave, 1);
+								MissingElementsPrompt(saveLoadData);
 
 								strncpy(svf_filename, csave->name, 255);
 								svf_fileopen = 1;
-								authors = localSave->authors;
+								authors = saveLoadData.authors;
 								the_game->SetReloadPoint(localSave);
 								success = true;
 							}
@@ -7068,10 +7068,10 @@ void clear_save_info()
 	the_game->SetReloadPoint(NULL);
 }
 
-void MissingElementsPrompt(MissingElements missingElements)
+void MissingElementsPrompt(SaveLoadData saveLoadData)
 {
-	auto remainingIds = missingElements.ids;
-	if (missingElements)
+	auto remainingIds = saveLoadData.ids;
+	if (saveLoadData.isMissingElements())
 	{
 		std::stringstream ss;
 #ifndef ANDROID
@@ -7079,7 +7079,7 @@ void MissingElementsPrompt(MissingElements missingElements)
 #else
 		ss << "This save uses custom elements that are not currently available. Make sure that you use the mod and/or have all the scripts the save requires to fully load";
 #endif
-		for (auto &[ identifier, id ] : missingElements.identifiers)
+		for (auto &[ identifier, id ] : saveLoadData.identifiers)
 		{
 			ss << "\n - " << identifier;
 			remainingIds.erase(id); // remove ids from the missing id set that are already covered by unknown identifiers

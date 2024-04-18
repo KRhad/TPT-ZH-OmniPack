@@ -22,7 +22,7 @@
 #include "defines.h"
 #include "graphics/Pixel.h"
 #include "graphics/ARGBColour.h"
-#include "simulation/MissingElements.h"
+#include "simulation/SaveLoadData.h"
 
 class Request;
 class Save;
@@ -310,7 +310,7 @@ void converttotime(time_t timestamp, char **timestring, int show_day, int show_y
 
 void clear_save_info();
 
-void MissingElementsPrompt(MissingElements missingElements);
+void MissingElementsPrompt(SaveLoadData saveLoadData);
 
 #endif
 
