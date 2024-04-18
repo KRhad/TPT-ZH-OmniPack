@@ -2148,7 +2148,7 @@ void tag_list_ui(pixel *vid_buf)
 		if (!b)
 			break;
 	}
-	fillrect(vid_buf, -1, -1, XRES+1, YRES+MENUSIZE+1, 0, 0, 0, 192);
+	fillrect(vid_buf, -1, -1, XRES+BARSIZE+1, YRES+MENUSIZE+1, 0, 0, 0, 192);
 	while (!sdl_poll())
 	{
 		bq = b;
