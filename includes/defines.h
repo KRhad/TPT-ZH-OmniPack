@@ -60,9 +60,11 @@
 
 #ifndef SERVER
 #define SERVER "powdertoy.co.uk"
+//#define SERVER "tptserv.starcatcher.us"
 #endif
 #ifndef STATICSERVER
 #define STATICSERVER "static.powdertoy.co.uk"
+//#define STATICSERVER "tptserv.starcatcher.us/Static"
 #endif
 #ifndef UPDATESERVER
 #define UPDATESERVER "starcatcher.us/TPT"

@@ -5776,17 +5776,15 @@ Request * search_saves(int start, int count, std::string query, std::string sort
 {
 	std::stringstream urlStream;
 	urlStream << SCHEME << SERVER << "/Browse.json?Start=" << start << "&Count=" << count;
-	if (query.length() || sort.length())
+	if (sort.length())
 	{
-		urlStream << "&Search_Query=";
-		if (query.length())
-			urlStream << Format::URLEncode(query);
-		if (sort == "date")
-		{
-			if (query.length())
-				urlStream << Format::URLEncode(" ");
-			urlStream << Format::URLEncode("sort:") << Format::URLEncode(sort);
-		}
+		if (!query.empty())
+			query += " ";
+		query += "sort:" + sort;
+	}
+	if (query.length())
+	{
+		urlStream << "&Search_Query=" << Format::URLEncode(query);
 	}
 	if (category.length())
 	{

@@ -288,11 +288,6 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 				auto *prop = reinterpret_cast<int *>(reinterpret_cast<char *>(&tempPart) + properties[index].Offset);
 				int carriedType = *prop & int(pmapmask);
 				int extra = *prop >> save->pmapbits;
-				std::cout << carriedType << std::endl; // uninitialized
-				std::cout << extra << std::endl; // uninitialized
-				std::cout << properties[index].Offset << std::endl;
-				std::cout << index << std::endl;
-				//std::cout << carriedType << ", " << extra << ", " << properties[index].Offset << ", " << index << std::endl;
 				if (hasPalette)
 					carriedType = paletteLookup(carriedType);
 				else
