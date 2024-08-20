@@ -92,7 +92,7 @@ void DMG_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->MenuSection = SC_FORCE;
 	elem->Enabled = 1;
 
-	elem->Advection = 0.6f;
+	elem->Advection = 0;
 	elem->AirDrag = 0.01f * CFDS;
 	elem->AirLoss = 0.98f;
 	elem->Loss = 0.95f;
