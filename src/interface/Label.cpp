@@ -204,10 +204,12 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 				break;
 			case '\xEE':
 			{
-				c = Format::ConvertFontIcon(text, i);
-				i += 2;
-				if (c == 0)
-					continue;
+				char convertedC = Format::ConvertFontIcon(text, i);
+				if (convertedC != 0)
+				{
+					c = convertedC;
+					i += 2;
+				}
 			}
 			default:
 				bool hasCharacter = posX != 0;

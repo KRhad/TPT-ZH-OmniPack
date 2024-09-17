@@ -733,10 +733,12 @@ int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a
 		{
 			if (c == '\xEE')
 			{
-				c = Format::ConvertFontIcon(s, 0);
-				s += 2;
-				if (c == 0)
-					continue;
+				char convertedC = Format::ConvertFontIcon(s, 0);
+				if (convertedC != 0)
+				{
+					c = convertedC;
+					s += 2;
+				}
 			}
 			if (highlight)
 			{

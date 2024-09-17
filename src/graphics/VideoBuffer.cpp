@@ -501,10 +501,12 @@ int VideoBuffer::DrawString(int x, int y, const std::string &s, int r, int g, in
 			break;
 		case '\xEE':
 		{
-			c = Format::ConvertFontIcon(s, i);
-			i += 2;
-			if (c == 0)
-				continue;
+			char convertedC = Format::ConvertFontIcon(s, i);
+			if (convertedC != 0)
+			{
+				c = convertedC;
+				i += 2;
+			}
 		}
 		default:
 			int oldX = x;
@@ -575,10 +577,12 @@ Point VideoBuffer::TextSize(std::string s)
 			break;
 		case '\xEE':
 		{
-			c = Format::ConvertFontIcon(s, i);
-			i += 2;
-			if (c == 0)
-				continue;
+			char convertedC = Format::ConvertFontIcon(s, i);
+			if (convertedC != 0)
+			{
+				c = convertedC;
+				i += 2;
+			}
 		}
 		default:
 			x += CharSize(static_cast<unsigned char>(c));
