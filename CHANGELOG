@@ -1322,3 +1322,7 @@ beta bugs did not apply to this mod.
 
 Version 57.1 2024-03-27
 Fix "Error: OK" when voting.
+
+Version 57.2 2024-09-17
+Fix some graphical glitches in tags UI. Change DMG to match vanilla movement,
+despite being glitchy. Update to Script Manager v3.15 with scrolling fixes.

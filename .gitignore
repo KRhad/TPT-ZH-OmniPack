@@ -16,6 +16,8 @@ config.log
 *.py
 *.png
 *.ppm
+/android/
+/.directory
 
 # QT Creator project files
 *.config
