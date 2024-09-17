@@ -5776,7 +5776,7 @@ Request * search_saves(int start, int count, std::string query, std::string sort
 {
 	std::stringstream urlStream;
 	urlStream << SCHEME << SERVER << "/Browse.json?Start=" << start << "&Count=" << count;
-	if (sort.length())
+	if (sort.length() && sort != "votes")
 	{
 		if (!query.empty())
 			query += " ";
