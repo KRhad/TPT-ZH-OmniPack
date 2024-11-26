@@ -24,17 +24,21 @@ int GLOW_update(UPDATE_FUNC_ARGS)
 				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
+
 				if (TYP(r) == PT_WATR && RNG::Ref().chance(1, 400))
 				{
 					sim->part_kill(i);
 					part_change_type(ID(r), x+rx, y+ry, PT_DEUT);
 					parts[ID(r)].life = 10;
+
 					return 1;
 				}
 				else if (TYP(r) == PT_GEL) //GLOW + GEL = RSST
 				{
 					sim->part_kill(i);
 					sim->part_change_type(ID(r),x+rx,y+ry,PT_RSST);
+					parts[ID(r)].tmp = 0;
+
 					return 1;
 				}
 			}

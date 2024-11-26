@@ -55,6 +55,7 @@ void RSSS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Solidified resist. Blocks pressure and insulates electricity. Liquefies on contact with neutrons.";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS;
+	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

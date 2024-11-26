@@ -205,7 +205,7 @@ int PTNM_update(UPDATE_FUNC_ARGS)
 						break;
 
 					case PT_RSST: // RSST -> BIZR
-						sim->part_change_type(ID(r), x + rx, y + ry, PT_BIZR);
+						sim->part_create(ID(r), x + rx, y + ry, PT_BIZR);
 						break;
 					}
 				}

@@ -187,7 +187,7 @@ int NEUT_update(UPDATE_FUNC_ARGS)
 						sim->part_create(ID(r), x, y, ct_under);
 
 						//If there's a correct tmp set, use it for ctype
-						if (tmp_under > 0 && ct_under < PT_NUM)
+						if ((tmp_under > 0) && (tmp_under < PT_NUM) && (sim->elements[ct_under].CarriesTypeIn & (1U << FIELD_CTYPE)))
 							parts[ID(r)].ctype = tmp_under;
 					}
 					else

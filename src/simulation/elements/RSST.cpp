@@ -29,7 +29,7 @@ int RSST_update(UPDATE_FUNC_ARGS)
 			// RSST + GUNP = FIRW
 			if(TYP(r) == PT_GUNP)
 			{
-				sim->part_change_type(i, x, y, PT_FIRW);
+				sim->part_create(i, x, y, PT_FIRW);
 				sim->part_kill(ID(r));
 				return 1;
 			}
@@ -37,7 +37,7 @@ int RSST_update(UPDATE_FUNC_ARGS)
 			// RSST + BCOL = FSEP
 			if(TYP(r) == PT_BCOL)
 			{
-				sim->part_change_type(i, x, y, PT_FSEP);
+				sim->part_create(i, x, y, PT_FSEP);
 				parts[i].life = 50;
 				sim->part_kill(ID(r));
 				return 1;
@@ -48,6 +48,13 @@ int RSST_update(UPDATE_FUNC_ARGS)
 			{
 				if(parts[ID(r)].ctype != PT_RSST)
 					parts[i].ctype = parts[ID(r)].ctype;
+			}
+
+			// Set RSST tmp from nearby breakable clone
+			if((TYP(r) == PT_BCLN) || (TYP(r) == PT_PBCN))
+			{
+				if(parts[ID(r)].ctype != PT_RSST)
+					parts[i].tmp = parts[ID(r)].ctype;
 			}
 		}
 	}
@@ -87,6 +94,7 @@ void RSST_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Resist. Solidifies on contact with photons, is destroyed by electrons and spark.";
 
 	elem->Properties = TYPE_LIQUID | PROP_PHOTPASS | PROP_CONDUCTS | PROP_LIFE_DEC | PROP_NEUTPASS;
+	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;
