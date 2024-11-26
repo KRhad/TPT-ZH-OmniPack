@@ -1850,6 +1850,8 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 	int orbd[4] = {0, 0, 0, 0}, orbl[4] = {0, 0, 0, 0};
 	float gradv, flicker;
 	unsigned int color_mode = Renderer::Ref().GetColorMode();
+	int drawing_budget = 1000000; //Serves as an upper bound for costly effects such as SPARK, FLARE and LFLARE
+
 	if (GRID_MODE)//draws the grid
 	{
 		for (ny=0; ny<YRES; ny++)
@@ -2264,13 +2266,14 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 				{
 					flicker = (float)(rand()%20);
 					gradv = 4*parts[i].life + flicker;
-					for (x = 0; gradv>0.5; x++) {
+					for (x = 0; (gradv>0.5) && (drawing_budget > 0); x++) {
 						addpixel(vid, nx+x, ny, colr, colg, colb, (int)gradv);
 						addpixel(vid, nx-x, ny, colr, colg, colb, (int)gradv);
 
 						addpixel(vid, nx, ny+x, colr, colg, colb, (int)gradv);
 						addpixel(vid, nx, ny-x, colr, colg, colb, (int)gradv);
 						gradv = gradv/1.5f;
+						drawing_budget--;
 					}
 				}
 				if(pixel_mode & PMODE_FLARE)
@@ -2287,12 +2290,13 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 					blendpixel(vid, nx-1, ny-1, colr, colg, colb, (int)gradv);
 					blendpixel(vid, nx+1, ny+1, colr, colg, colb, (int)gradv);
 					blendpixel(vid, nx-1, ny+1, colr, colg, colb, (int)gradv);
-					for (x = 1; gradv>0.5; x++) {
+					for (x = 1; (gradv>0.5) && (drawing_budget > 0); x++) {
 						addpixel(vid, nx+x, ny, colr, colg, colb, (int)gradv);
 						addpixel(vid, nx-x, ny, colr, colg, colb, (int)gradv);
 						addpixel(vid, nx, ny+x, colr, colg, colb, (int)gradv);
 						addpixel(vid, nx, ny-x, colr, colg, colb, (int)gradv);
 						gradv = gradv/1.2f;
+						drawing_budget--;
 					}
 				}
 				if(pixel_mode & PMODE_LFLARE)
@@ -2309,12 +2313,13 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 					blendpixel(vid, nx-1, ny-1, colr, colg, colb, (int)gradv);
 					blendpixel(vid, nx+1, ny+1, colr, colg, colb, (int)gradv);
 					blendpixel(vid, nx-1, ny+1, colr, colg, colb, (int)gradv);
-					for (x = 1; gradv>0.5; x++) {
+					for (x = 1; (gradv>0.5) && (drawing_budget > 0); x++) {
 						addpixel(vid, nx+x, ny, colr, colg, colb, (int)gradv);
 						addpixel(vid, nx-x, ny, colr, colg, colb, (int)gradv);
 						addpixel(vid, nx, ny+x, colr, colg, colb, (int)gradv);
 						addpixel(vid, nx, ny-x, colr, colg, colb, (int)gradv);
 						gradv = gradv/1.01f;
+						drawing_budget--;
 					}
 				}
 				if (pixel_mode & EFFECT_GRAVIN)
