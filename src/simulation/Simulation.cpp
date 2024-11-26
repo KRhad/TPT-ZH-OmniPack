@@ -160,10 +160,19 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 
 	bool hasPalette = false;
 	int partMap[PT_NUM];
+	bool ignoreMissingErrors[PT_NUM];
 	for(int i = 0; i < PT_NUM; i++)
 	{
 		partMap[i] = i;
+		ignoreMissingErrors[i] = false;
 	}
+	if (save->createdVersion < 99)
+	{
+		ignoreMissingErrors[PT_SNOW] = true;
+		ignoreMissingErrors[PT_RSST] = true;
+		ignoreMissingErrors[PT_RSSS] = true;
+	}
+
 	SaveLoadData saveLoadData;
 	auto &possiblyCarriesType = particle::PossiblyCarriesType();
 	auto &properties = particle::GetProperties();
@@ -200,12 +209,14 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 		}
 		hasPalette = true;
 	}
-	auto paletteLookup = [&partMap, &saveLoadData](int type) {
+	auto paletteLookup = [&partMap, &saveLoadData](int type, bool ignoreMissingErrors) {
 		if (type > 0 && type < PT_NUM)
 		{
 			auto carriedType = partMap[type];
 			if (!carriedType) // type is not 0 so this shouldn't be 0 either
 			{
+				if (ignoreMissingErrors)
+					return type;
 				saveLoadData.ids.insert(type);
 			}
 			type = carriedType;
@@ -273,7 +284,7 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 		if (type > 0 && type < PT_NUM)
 		{
 			if (hasPalette)
-				type = paletteLookup(type);
+				type = paletteLookup(type, false);
 			else
 				type = save->FixType(type);
 		}
@@ -289,7 +300,7 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 				int carriedType = *prop & int(pmapmask);
 				int extra = *prop >> save->pmapbits;
 				if (hasPalette)
-					carriedType = paletteLookup(carriedType);
+					carriedType = paletteLookup(carriedType, ignoreMissingErrors[tempPart.type]);
 				else
 					carriedType = save->FixType(carriedType);
 				*prop = PMAP(extra, carriedType);

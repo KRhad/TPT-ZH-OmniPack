@@ -50,6 +50,7 @@ void SNOW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Light particles. Created when ICE breaks under pressure.";
 
 	elem->Properties = TYPE_PART|PROP_NEUTPASS;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;
