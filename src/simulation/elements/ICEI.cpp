@@ -78,6 +78,7 @@ void ICEI_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Crushes under pressure. Cools down air.";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC|PROP_NEUTPASS;
+	elem->CarriesTypeIn = (1U << FIELD_CTYPE);
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

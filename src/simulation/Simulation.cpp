@@ -168,6 +168,7 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 	}
 	if (save->createdVersion < 99)
 	{
+		ignoreMissingErrors[PT_ICEI] = true;
 		ignoreMissingErrors[PT_SNOW] = true;
 		ignoreMissingErrors[PT_RSST] = true;
 		ignoreMissingErrors[PT_RSSS] = true;
