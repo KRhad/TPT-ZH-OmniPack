@@ -138,7 +138,7 @@ void PBCN_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Latent = 0;
 	elem->Description = "Powered breakable clone.";
 
-	elem->Properties = TYPE_SOLID | PROP_BREAKABLECLONE | PROP_POWERED | PROP_NOCTYPEDRAW;
+	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_BREAKABLECLONE | PROP_POWERED | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;

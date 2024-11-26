@@ -102,7 +102,7 @@ void GLOW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Latent = 0;
 	elem->Description = "Glow, Glows under pressure.";
 
-	elem->Properties = TYPE_LIQUID | PROP_LIFE_DEC;
+	elem->Properties = TYPE_LIQUID | PROP_PHOTPASS | PROP_LIFE_DEC;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

@@ -61,7 +61,7 @@ void ISZS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Latent = 0;
 	elem->Description = "Solid form of ISOZ, slowly decays into PHOT.";
 
-	elem->Properties = TYPE_SOLID;
+	elem->Properties = TYPE_SOLID | PROP_PHOTPASS;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

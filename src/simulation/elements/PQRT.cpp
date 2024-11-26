@@ -53,7 +53,7 @@ void PQRT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Latent = 0;
 	elem->Description = "Powdered quartz, broken form of QRTZ.";
 
-	elem->Properties = TYPE_PART| PROP_HOT_GLOW;
+	elem->Properties = TYPE_PART | PROP_PHOTPASS | PROP_HOT_GLOW;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

@@ -116,7 +116,7 @@ void C5_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Latent = 0;
 	elem->Description = "Cold explosive, set off by anything cold.";
 
-	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_LIFE_DEC;
+	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_NEUTPENETRATE | PROP_LIFE_DEC;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

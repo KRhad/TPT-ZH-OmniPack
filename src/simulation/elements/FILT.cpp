@@ -159,7 +159,7 @@ void FILT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Latent = 0;
 	elem->Description = "Filter for photons, changes the color.";
 
-	elem->Properties = TYPE_SOLID | PROP_NOAMBHEAT | PROP_LIFE_DEC;
+	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_NOAMBHEAT | PROP_LIFE_DEC;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

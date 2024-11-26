@@ -17,7 +17,7 @@ constexpr float MIN_PRESSURE = -256.0f;
 #define TYPE_ENERGY			0x0000010 //16 Energy (Thunder, Light, Neutrons etc.)
 #define STATE_FLAGS			0x000001F
 #define PROP_CONDUCTS		0x0000020 //32 Conducts electricity
-#define PROP_BLACK			0x0000040 //64 Absorbs Photons (not currently implemented or used, a photwl attribute might be better)
+#define PROP_PHOTPASS		0x0000040 //64 Photons pass through (may refract as in glass)
 #define PROP_NEUTPENETRATE	0x0000080 //128 Penetrated by neutrons
 #define PROP_NEUTABSORB		0x0000100 //256 Absorbs neutrons, reflect is default
 #define PROP_NEUTPASS		0x0000200 //512 Neutrons pass through, such as with glass

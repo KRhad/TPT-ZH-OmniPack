@@ -73,7 +73,7 @@ void INVIS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Latent = 0;
 	elem->Description = "Invisible to particles while under pressure.";
 
-	elem->Properties = TYPE_SOLID | PROP_NEUTPASS;
+	elem->Properties = TYPE_SOLID | PROP_NEUTPASS | PROP_PHOTPASS;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;
