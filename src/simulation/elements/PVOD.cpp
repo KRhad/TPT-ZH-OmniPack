@@ -65,5 +65,6 @@ void PVOD_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->Update = NULL;
 	elem->Graphics = &PVOD_graphics;
+	elem->CtypeDraw = &basicCtypeDraw;
 	elem->Init = &PVOD_init_element;
 }
