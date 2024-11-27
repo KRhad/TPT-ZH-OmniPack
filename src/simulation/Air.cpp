@@ -22,6 +22,9 @@
 #include "simulation/Simulation.h"
 #include "simulation/WallNumbers.h"
 
+// Used when updating temp or velocity from far away
+const float advDistanceMult = 0.7f;
+
 Air::Air()
 {
 	MakeKernel();
@@ -99,8 +102,6 @@ void Air::UpdateAirHeat(Simulation *sim)
 
 	float dh, dx, dy;
 	float f;
-	float txf, tyf;
-	int txi, tyi;
 	// Update ambient heat
 	for (int y = 0; y < YRES/CELL; y++)
 	{
@@ -130,35 +131,84 @@ void Air::UpdateAirHeat(Simulation *sim)
 					}
 				}
 			}
-			txf = x - dx*0.7f;
-			tyf = y - dy*0.7f;
-			txi = (int)txf;
-			tyi = (int)tyf;
-			txf -= txi;
-			tyf -= tyi;
-			if (txi >= 2 && txi < XRES/CELL-3 && tyi >= 2 && tyi < YRES/CELL-3)
-			{
-				float odh = dh;
-				dh *= 1.0f - AIR_VADV;
-				dh += AIR_VADV * (1.0f-txf) * (1.0f-tyf) * ((blockairh[tyi][txi]&0x8) ? odh : hv[tyi][txi]);
-				dh += AIR_VADV * txf * (1.0f-tyf) * ((blockairh[tyi][txi+1]&0x8) ? odh : hv[tyi][txi+1]);
-				dh += AIR_VADV * (1.0f-txf) * tyf * ((blockairh[tyi+1][txi]&0x8) ? odh : hv[tyi+1][txi]);
-				dh += AIR_VADV * txf * tyf * ((blockairh[tyi+1][txi+1]&0x8) ? odh : hv[tyi+1][txi+1]);
-			}
-			pv[y][x] += (dh - hv[y][x]) / 5000.0f;
 
-			if (x>=2 && x<XRES/CELL-2 && y>=2 && y<YRES/CELL-2)
+			// Trying to take air temp from far away.
+			// The code is almost identical to the "far away" velocity code from update_air
+			auto tx = x - dx*advDistanceMult;
+			auto ty = y - dy*advDistanceMult;
+			if ((dx*advDistanceMult>1.0f || dy*advDistanceMult>1.0f) && (tx>=2 && tx<XCELLS-2 && ty>=2 && ty<YCELLS-2))
+			{
+				float stepX, stepY;
+				int stepLimit;
+				if (std::abs(dx)>std::abs(dy))
+				{
+					stepX = (dx<0.0f) ? 1.f : -1.f;
+					stepY = -dy/fabsf(dx);
+					stepLimit = (int)(fabsf(dx*advDistanceMult));
+				}
+				else
+				{
+					stepY = (dy<0.0f) ? 1.f : -1.f;
+					stepX = -dx/fabsf(dy);
+					stepLimit = (int)(fabsf(dy*advDistanceMult));
+				}
+				tx = float(x);
+				ty = float(y);
+				auto step = 0;
+				for (; step<stepLimit; ++step)
+				{
+					tx += stepX;
+					ty += stepY;
+					if (blockairh[(int)(ty+0.5f)][(int)(tx+0.5f)]&0x8)
+					{
+						tx -= stepX;
+						ty -= stepY;
+						break;
+					}
+				}
+				if (step==stepLimit)
+				{
+					// No wall found
+					tx = x - dx*advDistanceMult;
+					ty = y - dy*advDistanceMult;
+				}
+			}
+			auto i = (int)tx;
+			auto j = (int)ty;
+			tx -= i;
+			ty -= j;
+			if (!(blockairh[y][x]&0x8) && i>=2 && i<=XCELLS-3 && j>=2 && j<=YCELLS-3)
+			{
+				auto odh = dh;
+				dh *= 1.0f - AIR_VADV;
+				dh += AIR_VADV*(1.0f-tx)*(1.0f-ty)*((blockairh[j][i]&0x8) ? odh : hv[j][i]);
+				dh += AIR_VADV*tx*(1.0f-ty)*((blockairh[j][i+1]&0x8) ? odh : hv[j][i+1]);
+				dh += AIR_VADV*(1.0f-tx)*ty*((blockairh[j+1][i]&0x8) ? odh : hv[j+1][i]);
+				dh += AIR_VADV*tx*ty*((blockairh[j+1][i+1]&0x8) ? odh : hv[j+1][i+1]);
+			}
+
+			// Temp caps
+			if (dh > MAX_TEMP) dh = MAX_TEMP;
+			if (dh < MIN_TEMP) dh = MIN_TEMP;
+
+			ohv[y][x] = dh;
+
+			// Air convection.
+			// We use the Boussinesq approximation, i.e. we assume density to be nonconstant only
+			// near the gravity term of the fluid equation, and we suppose that it depends linearly on the
+			// difference between the current temperature (hv[y][x]) and some "stationary" temperature (ambientAirTemp).
+			if (x>=2 && x<XCELLS-2 && y>=2 && y<YCELLS-2)
 			{
 				float convGravX, convGravY;
 				sim->GetGravityField(x*CELL, y*CELL, -1.0f, -1.0f, convGravX, convGravY);
-				auto weight = ((hv[y][x] - hv[y][x-1]) * convGravX + (hv[y][x] - hv[y-1][x]) * convGravY) / 5000.0f;
-				if (weight > 0 && !(blockairh[y-1][x]&0x8))
-				{
-					vx[y][x] += weight * convGravX;
-					vy[y][x] += weight * convGravY;
-				}
+				auto weight = (hv[y][x] - ambientAirTemp) / 10000.0f;
+
+				// Our approximation works best when the temperature difference is small, so we cap it from above.
+				if (weight > 0.1f) weight = 0.1f;
+
+				vx[y][x] += weight * convGravX;
+				vy[y][x] += weight * convGravY;
 			}
-			ohv[y][x] = dh;
 		}
 	}
 	memcpy(hv, ohv, sizeof(hv));
