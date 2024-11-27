@@ -1938,19 +1938,11 @@ bool PowderToy::BeforeKeyPress(int key, int scan, bool repeat, bool shift, bool 
 		ctrlHeld = true;
 		openBrowserButton->SetTooltipText("Open a simulation from your hard drive \bg(ctrl+o)");
 		UpdateToolStrength();
-		if (active_menu == SC_FAV2 && (Engine::Ref().GetModifiers() & KMOD_RCTRL) && (Engine::Ref().GetModifiers() & KMOD_RSHIFT))
-		{
-			active_menu = SC_CRACKER;
-		}
 	}
 	if (shift && !shiftHeld)
 	{
 		shiftHeld = true;
 		UpdateToolStrength();
-		if (active_menu == SC_FAV2 && (Engine::Ref().GetModifiers() & KMOD_RCTRL) && (Engine::Ref().GetModifiers() & KMOD_RSHIFT))
-		{
-			active_menu = SC_CRACKER;
-		}
 	}
 	if (alt && !altHeld)
 		altHeld = true;

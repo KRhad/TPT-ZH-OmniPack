@@ -82,8 +82,8 @@ void LOVE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Identifier = "DEFAULT_PT_LOVE";
 	elem->Name = "LOVE";
 	elem->Colour = COLPACK(0xFF30FF);
-	elem->MenuVisible = 1;
-	elem->MenuSection = SC_CRACKER;
+	elem->MenuVisible = 0;
+	elem->MenuSection = SC_SPECIAL;
 	elem->Enabled = 1;
 
 	elem->Advection = 0.0f;

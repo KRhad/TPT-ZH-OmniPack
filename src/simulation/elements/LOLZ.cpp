@@ -82,8 +82,8 @@ void LOLZ_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Identifier = "DEFAULT_PT_LOLZ";
 	elem->Name = "LOLZ";
 	elem->Colour = COLPACK(0x569212);
-	elem->MenuVisible = 1;
-	elem->MenuSection = SC_CRACKER;
+	elem->MenuVisible = 0;
+	elem->MenuSection = SC_SPECIAL;
 	elem->Enabled = 1;
 
 	elem->Advection = 0.0f;

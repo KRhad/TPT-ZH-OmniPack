@@ -23,8 +23,8 @@ void BIZRS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Identifier = "DEFAULT_PT_BIZRS";
 	elem->Name = "BIZS";
 	elem->Colour = COLPACK(0x00E455);
-	elem->MenuVisible = 1;
-	elem->MenuSection = SC_CRACKER;
+	elem->MenuVisible = 0;
+	elem->MenuSection = SC_SOLIDS;
 	elem->Enabled = 1;
 
 	elem->Advection = 0.0f;

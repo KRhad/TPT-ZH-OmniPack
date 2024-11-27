@@ -16,6 +16,7 @@ elem.ST_GAS             = 0
 elem.ST_LIQUID          = 0
 elem.ST_NONE            = 0
 elem.ST_SOLID           = 0
+elem.SC_CRACKER         = 0
 event.aftersimdraw      = event.AFTERSIMDRAW
 event.aftersim          = event.AFTERSIM
 event.beforesimdraw     = event.BEFORESIMDRAW

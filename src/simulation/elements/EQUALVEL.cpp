@@ -21,7 +21,7 @@ void EQUALVEL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Name = "EQVE";
 	elem->Colour = COLPACK(0xFFE0A0);
 	elem->MenuVisible = 0;
-	elem->MenuSection = SC_CRACKER;
+	elem->MenuSection = SC_SPECIAL;
 	elem->Enabled = 1;
 
 	elem->Advection = 0.7f;

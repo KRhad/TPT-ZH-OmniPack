@@ -18,25 +18,23 @@
 #define SC_FAV 14
 #ifdef NOMOD
 #define SC_DECO 15
-#define SC_CRACKER 16
-#define SC_OTHER 17
-#define SC_SEARCH 18
+#define SC_OTHER 16
+#define SC_SEARCH 17
 #ifdef TOUCHUI
-#define SC_TOTAL 19
-#else
 #define SC_TOTAL 18
+#else
+#define SC_TOTAL 17
 #endif
 
-#define SC_FAV2 17
-#define SC_HUD 17
+#define SC_FAV2 16
+#define SC_HUD 16
 #else
 #define SC_DECO 15
-#define SC_CRACKER 16
-#define SC_FAV2 17
-#define SC_HUD 18
-#define SC_OTHER 19
-#define SC_SEARCH 20
-#define SC_TOTAL 21
+#define SC_FAV2 16
+#define SC_HUD 17
+#define SC_OTHER 18
+#define SC_SEARCH 19
+#define SC_TOTAL 20
 #endif
 
 #include <vector>

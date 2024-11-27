@@ -43,8 +43,8 @@ void FRZW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Identifier = "DEFAULT_PT_FRZW";
 	elem->Name = "FRZW";
 	elem->Colour = COLPACK(0x1020C0);
-	elem->MenuVisible = 1;
-	elem->MenuSection = SC_CRACKER;
+	elem->MenuVisible = 0;
+	elem->MenuSection = SC_LIQUID;
 	elem->Enabled = 1;
 
 	elem->Advection = 0.6f;

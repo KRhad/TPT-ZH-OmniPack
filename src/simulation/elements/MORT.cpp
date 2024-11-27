@@ -26,8 +26,8 @@ void MORT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Identifier = "DEFAULT_PT_MORT";
 	elem->Name = "MORT";
 	elem->Colour = COLPACK(0xE0E0E0);
-	elem->MenuVisible = 1;
-	elem->MenuSection = SC_CRACKER;
+	elem->MenuVisible = 0;
+	elem->MenuSection = SC_SPECIAL;
 	elem->Enabled = 1;
 
 	elem->Advection = 0.0f;

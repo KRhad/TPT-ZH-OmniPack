@@ -66,7 +66,7 @@ void SHLD3_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Name = "SHD3";
 	elem->Colour = COLPACK(0x444444);
 	elem->MenuVisible = 0;
-	elem->MenuSection = SC_CRACKER;
+	elem->MenuSection = SC_SOLIDS;
 	elem->Enabled = 1;
 
 	elem->Advection = 0.0f;
