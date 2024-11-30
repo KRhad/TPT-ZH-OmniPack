@@ -353,7 +353,7 @@ int EventProcess(SDL_Event event, ui::Window * eventHandler)
 
 		if (eventHandler && event.key.keysym.sym == SDLK_ESCAPE && eventHandler->CanQuit())
 			return 1;
-		else if (event.key.keysym.sym == 'q' && (sdl_mod & (KMOD_CTRL | KMOD_GUI)))
+		else if (event.key.keysym.sym == 'q' && (sdl_mod & (KMOD_CTRL | KMOD_GUI)) && !(sdl_mod & KMOD_ALT))
 		{
 			bool wasConfirmed = false;
 			// Two separate quit dialogs ... remove some day
