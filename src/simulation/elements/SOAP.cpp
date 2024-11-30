@@ -15,6 +15,11 @@
 
 #include "simulation/ElementsCommon.h"
 
+static bool validIndex(int i)
+{
+	return i >= 0 && i < NPART;
+}
+
 void attach(int i1, int i2)
 {
 	if (!(parts[i2].ctype&4))
@@ -37,13 +42,13 @@ void attach(int i1, int i2)
 
 void detach(int i)
 {
-	if ((parts[i].ctype&2) == 2 && parts[i].tmp >= 0 && parts[i].tmp < NPART && parts[parts[i].tmp].type == PT_SOAP)
+	if ((parts[i].ctype&2) == 2 && validIndex(parts[i].tmp) && parts[parts[i].tmp].type == PT_SOAP)
 	{
 		if ((parts[parts[i].tmp].ctype&4) == 4)
 			parts[parts[i].tmp].ctype ^= 4;
 	}
 
-	if ((parts[i].ctype&4) == 4 && parts[i].tmp2 >= 0 && parts[i].tmp2 < NPART && parts[parts[i].tmp2].type == PT_SOAP)
+	if ((parts[i].ctype&4) == 4 && validIndex(parts[i].tmp2) && parts[parts[i].tmp2].type == PT_SOAP)
 	{
 		if ((parts[parts[i].tmp2].ctype&2) == 2)
 			parts[parts[i].tmp2].ctype ^= 2;
@@ -63,13 +68,13 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 
 	if (parts[i].ctype&1)
 	{
+		if (!validIndex(parts[i].tmp) || !validIndex(parts[i].tmp2))
+		{
+			parts[i].tmp = parts[i].tmp2 = parts[i].ctype = 0;
+			return 0;
+		}
 		if (parts[i].temp>SOAP_FREEZING)
 		{
-			if (parts[i].tmp < 0 || parts[i].tmp >= NPART || parts[i].tmp2 < 0 || parts[i].tmp2 >= NPART)
-			{
-				parts[i].tmp = parts[i].tmp2 = parts[i].ctype = 0;
-				return 0;
-			}
 			if (parts[i].life<=0)
 			{
 				//if only connected on one side
@@ -82,18 +87,22 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 						if (parts[target].ctype&2)
 						{
 							target = parts[target].tmp;
+							if (!validIndex(target))
+								break;
 							detach(target);
 						}
 						if (parts[target].ctype&4)
 						{
 							target = parts[target].tmp2;
+							if (!validIndex(target))
+								break;
 							detach(target);
 						}
 					}
 				}
 				if ((parts[i].ctype&6) != 6)
 					parts[i].ctype = 0;
-				if ((parts[i].ctype&6) == 6 && (parts[parts[i].tmp].ctype&6) == 6 && parts[parts[i].tmp].tmp == i)
+				if (validIndex(parts[i].tmp) && (parts[i].ctype&6) == 6 && (parts[parts[i].tmp].ctype&6) == 6 && parts[parts[i].tmp].tmp == i)
 					detach(i);
 			}
 			parts[i].vy = (parts[i].vy-0.1f)*0.5f;
@@ -142,7 +151,7 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 									int buf = parts[i].tmp;
 
 									parts[i].tmp = ID(r);
-									if (parts[buf].type == PT_SOAP)
+									if (validIndex(buf) && parts[buf].type == PT_SOAP)
 										parts[buf].tmp2 = ID(r);
 									parts[ID(r)].tmp2 = i;
 									parts[ID(r)].tmp = buf;
@@ -150,9 +159,9 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 								}
 								else if (parts[ID(r)].ctype == 7 && parts[i].tmp != ID(r) && parts[i].tmp2 != ID(r))
 								{
-									if (parts[parts[i].tmp].type == PT_SOAP)
+									if (validIndex(parts[i].tmp) && parts[parts[i].tmp].type == PT_SOAP)
 										parts[parts[i].tmp].tmp2 = parts[ID(r)].tmp2;
-									if (parts[parts[ID(r)].tmp2].type == PT_SOAP)
+									if (validIndex(parts[ID(r)].tmp2) && parts[parts[ID(r)].tmp2].type == PT_SOAP)
 										parts[parts[ID(r)].tmp2].tmp = parts[i].tmp;
 									parts[ID(r)].tmp2 = i;
 									parts[i].tmp = ID(r);
@@ -161,7 +170,7 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 						}
 		}
 
-		if(parts[i].ctype&2)
+		if(parts[i].ctype&2 && validIndex(parts[i].tmp))
 		{
 			float dx = parts[i].x - parts[parts[i].tmp].x;
 			float dy = parts[i].y - parts[parts[i].tmp].y;
@@ -173,11 +182,11 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 			parts[i].vy += dy*d;
 
 			if ((parts[parts[i].tmp].ctype&2) && (parts[parts[i].tmp].ctype&1) 
-				&& (parts[parts[i].tmp].tmp >= 0 && parts[parts[i].tmp].tmp < NPART) 
+				&& validIndex(parts[parts[i].tmp].tmp)
 				&& (parts[parts[parts[i].tmp].tmp].ctype&2) && (parts[parts[parts[i].tmp].tmp].ctype&1))
 			{
 				int ii = parts[parts[parts[i].tmp].tmp].tmp;
-				if (ii >= 0 && ii < NPART)
+				if (validIndex(ii))
 				{
 					dx = parts[ii].x - parts[parts[i].tmp].x;
 					dy = parts[ii].y - parts[parts[i].tmp].y;
