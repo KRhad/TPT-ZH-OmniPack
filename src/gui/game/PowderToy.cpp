@@ -871,8 +871,8 @@ void PowderToy::ReloadSave()
 	SnapshotHistory::TakeSnapshot(sim);
 	try
 	{
-		sim->LoadSave(0, 0, reloadSave, 1);
-		authors = reloadSave->authors;
+		auto saveLoadData = sim->LoadSave(0, 0, reloadSave, 1);
+		authors = saveLoadData.authors;
 		if (!authors.size())
 			DefaultSaveInfo();
 	}
@@ -1724,7 +1724,7 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 			if (saveLoadData.isMissingElements())
 				luacon_log("Paste content has missing custom elements");
 #endif
-			MergeStampAuthorInfo(stampData->authors);
+			MergeStampAuthorInfo(saveLoadData.authors);
 		}
 		catch (ParseException & e)
 		{

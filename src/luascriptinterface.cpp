@@ -1342,11 +1342,11 @@ int simulation_loadStamp(lua_State* l)
 	int pushed = 1;
 	try
 	{
-		luaSim->LoadSave(quoX, quoY, save, 0, includePressure);
-		if (save->authors.size())
+		auto saveLoadData = luaSim->LoadSave(quoX, quoY, save, 0, includePressure);
+		if (saveLoadData.authors.size())
 		{
-			save->authors["type"] = "luastamp";
-			MergeStampAuthorInfo(save->authors);
+			saveLoadData.authors["type"] = "luastamp";
+			MergeStampAuthorInfo(saveLoadData.authors);
 		}
 		lua_pushinteger(l, 1);
 	}
@@ -2282,8 +2282,8 @@ void initRendererAPI(lua_State * l)
 {
 	//Methods
 	struct luaL_Reg rendererAPIMethods [] = {
-		{"renderModes", renderer_renderModes},
-		{"displayModes", renderer_displayModes},
+		{"renderMode", renderer_renderMode},
+		{"displayMode", renderer_displayMode},
 		{"colorMode", renderer_colorMode},
 		{"decorations", renderer_decorations},
 		{"grid", renderer_grid},
@@ -2357,70 +2357,26 @@ void initRendererAPI(lua_State * l)
 }
 
 //get/set render modes list
-int renderer_renderModes(lua_State * l)
+int renderer_renderMode(lua_State * l)
 {
-	int args = lua_gettop(l);
-	if (args)
+	if (lua_gettop(l))
 	{
-		int size = 0;
-		luaL_checktype(l, 1, LUA_TTABLE);
-		size = lua_objlen(l, 1);
-
-		Renderer::Ref().ClearRenderModes();
-		for (int i = 1; i <= size; i++)
-		{
-			lua_rawgeti(l, 1, i);
-			Renderer::Ref().AddRenderMode(lua_tointeger(l, -1));
-			render_mode = Renderer::Ref().GetRenderModesRaw();
-			lua_pop(l, 1);
-		}
+		Renderer::Ref().SetRenderMode(luaL_checkinteger(l, 1));
 		return 0;
 	}
-	else
-	{
-		int i = 1;
-		std::set<unsigned int> renderModes = Renderer::Ref().GetRenderModes();
-		lua_newtable(l);
-		for (std::set<unsigned int>::iterator it = renderModes.begin(), end = renderModes.end(); it != end; it++)
-		{
-			lua_pushinteger(l, (*it));
-			lua_rawseti(l, -2, i++);
-		}
-		return 1;
-	}
+	lua_pushinteger(l, Renderer::Ref().GetRenderMode());
+	return 1;
 }
 
-int renderer_displayModes(lua_State * l)
+int renderer_displayMode(lua_State * l)
 {
-	int args = lua_gettop(l);
-	if (args)
+	if (lua_gettop(l))
 	{
-		int size = 0;
-		luaL_checktype(l, 1, LUA_TTABLE);
-		size = lua_objlen(l, 1);
-
-		Renderer::Ref().ClearDisplayModes();
-		for (int i = 1; i <= size; i++)
-		{
-			lua_rawgeti(l, 1, i);
-			Renderer::Ref().AddDisplayMode(lua_tointeger(l, -1));
-			display_mode = Renderer::Ref().GetDisplayModesRaw();
-			lua_pop(l, 1);
-		}
+		Renderer::Ref().SetDisplayMode(luaL_checkinteger(l, 1));
 		return 0;
 	}
-	else
-	{
-		int i = 1;
-		std::set<unsigned int> displayModes = Renderer::Ref().GetDisplayModes();
-		lua_newtable(l);
-		for (std::set<unsigned int>::iterator it = displayModes.begin(), end = displayModes.end(); it != end; it++)
-		{
-			lua_pushinteger(l, (*it));
-			lua_rawseti(l, -2, i++);
-		}
-		return 1;
-	}
+	lua_pushinteger(l, Renderer::Ref().GetDisplayMode());
+	return 1;
 }
 
 int renderer_colorMode(lua_State * l)

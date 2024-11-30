@@ -24,6 +24,7 @@ class RenderModesUI : public ui::Window
 	void InitializeRenderCheckbox(Checkbox *checkbox, unsigned int mode);
 	void InitializeDisplayCheckbox(Checkbox *checkbox, unsigned int mode);
 	void InitializeColorCheckbox(Checkbox *checkbox, unsigned int mode);
+	unsigned int CalculateRenderMode();
 	void SetCheckboxToolTip(Checkbox *checkbox, std::string tooltip);
 	Point CheckboxPos(Checkbox *prev1, Checkbox *prev2);
 	void InitializeCheckboxes();

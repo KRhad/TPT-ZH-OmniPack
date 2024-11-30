@@ -2,7 +2,6 @@
 #define RENDERER_H
 
 #include <ctime>
-#include <set>
 #include <string>
 #include "common/Singleton.h"
 
@@ -23,8 +22,8 @@ class Save;
 
 struct RenderPreset
 {
-	std::set<unsigned int> renderModes;
-	std::set<unsigned int> displayModes;
+	unsigned int renderMode;
+	unsigned int displayMode;
 	unsigned int colorMode;
 	std::string tooltip;
 };
@@ -38,8 +37,8 @@ class Renderer : public Singleton<Renderer>
 	int recordingIndex = 0;
 	int recordingFolder = 0;
 
-	std::set<unsigned int> renderModes;
-	std::set<unsigned int> displayModes;
+	unsigned int renderMode;
+	unsigned int displayMode;
 	unsigned int colorMode;
 
 	RenderPreset renderPresets[11];
@@ -59,25 +58,15 @@ public:
 
 	// render modes
 	bool HasRenderMode(unsigned int renderMode);
-	void AddRenderMode(unsigned int renderMode);
-	void RemoveRenderMode(unsigned int renderMode);
 	void ToggleRenderMode(unsigned int renderMode);
-	void ClearRenderModes();
-
-	std::set<unsigned int> GetRenderModes();
-	unsigned int GetRenderModesRaw();
-	void SetRenderModes(std::set<unsigned int> newRenderModes);
+	unsigned int GetRenderMode();
+	void SetRenderMode(unsigned int renderMode);
 
 	// display modes
 	bool HasDisplayMode(unsigned int displayMode);
-	void AddDisplayMode(unsigned int displayMode);
-	void RemoveDisplayMode(unsigned int displayMode);
 	void ToggleDisplayMode(unsigned int displayMode);
-	void ClearDisplayModes();
-
-	std::set<unsigned int> GetDisplayModes();
-	unsigned int GetDisplayModesRaw();
-	void SetDisplayModes(std::set<unsigned int> newDisplayModes);
+	unsigned int GetDisplayMode();
+	void SetDisplayMode(unsigned int displayMode);
 
 	// color modes
 	void SetColorMode(unsigned int color_mode);

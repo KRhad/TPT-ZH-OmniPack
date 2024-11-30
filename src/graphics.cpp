@@ -54,8 +54,6 @@
 
 #include "gui/game/PowderToy.h"
 
-unsigned int render_mode;
-unsigned int display_mode;
 gcache_item *graphicscache;
 
 pixel sampleColor = 0;
@@ -1498,6 +1496,7 @@ pixel HeatToColor(float temp)
 void draw_air(pixel *vid, Simulation * sim)
 {
 	pixel c;
+	unsigned int display_mode = Renderer::Ref().GetDisplayMode();
 	for (int y = 0; y < YRES/CELL; y++)
 		for (int x = 0; x < XRES/CELL; x++)
 		{
@@ -1818,7 +1817,7 @@ void draw_other(pixel *vid, Simulation * sim) // EMP effect
 {
 	if (!sys_pause || framerender)
 		static_cast<EMP_ElementDataContainer&>(*sim->elementData[PT_EMP]).Deactivate();
-	if (!(render_mode & EFFECT)) // not in nothing mode
+	if (!(Renderer::Ref().GetRenderMode() & EFFECT)) // not in nothing mode
 		return;
 
 	int emp_decor = static_cast<EMP_ElementDataContainer&>(*sim->elementData[PT_EMP]).emp_decor;
@@ -1849,6 +1848,8 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 	int deca, decr, decg, decb, cola, colr, colg, colb, firea, firer = 0, fireg = 0, fireb = 0, pixel_mode, q, t, nx, ny, x, y, caddress;
 	int orbd[4] = {0, 0, 0, 0}, orbl[4] = {0, 0, 0, 0};
 	float gradv, flicker;
+	unsigned int render_mode = Renderer::Ref().GetRenderMode();
+	unsigned int display_mode = Renderer::Ref().GetDisplayMode();
 	unsigned int color_mode = Renderer::Ref().GetColorMode();
 	int drawing_budget = 1000000; //Serves as an upper bound for costly effects such as SPARK, FLARE and LFLARE
 
@@ -2442,11 +2443,11 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 // draw the graphics that appear before update_particles is called
 void render_before(pixel *part_vbuf, Simulation * sim)
 {
-		if (display_mode & DISPLAY_AIR)//air only gets drawn in these modes
+		if (Renderer::Ref().GetDisplayMode() & DISPLAY_AIR)//air only gets drawn in these modes
 		{
 			draw_air(part_vbuf, sim);
 		}
-		else if (display_mode & DISPLAY_PERS)//save background for persistent, then clear
+		else if (Renderer::Ref().GetDisplayMode() & DISPLAY_PERS)//save background for persistent, then clear
 		{
 			memcpy(part_vbuf, pers_bg, (XRES+BARSIZE)*YRES*PIXELSIZE);
 			memset(part_vbuf+((XRES+BARSIZE)*YRES), 0, ((XRES+BARSIZE)*YRES*PIXELSIZE)-((XRES+BARSIZE)*YRES*PIXELSIZE));
@@ -2469,7 +2470,7 @@ int persist_counter = 0;
 void render_after(pixel *part_vbuf, pixel *vid_buf, Simulation * sim, Point mousePos)
 {
 	render_parts(part_vbuf, sim, mousePos); //draw particles
-	if (vid_buf && (display_mode & DISPLAY_PERS))
+	if (vid_buf && (Renderer::Ref().GetDisplayMode() & DISPLAY_PERS))
 	{
 		if (!persist_counter)
 		{
@@ -2482,7 +2483,7 @@ void render_after(pixel *part_vbuf, pixel *vid_buf, Simulation * sim, Point mous
 		persist_counter = (persist_counter+1) % 3;
 	}
 #ifndef OGLR
-	if (render_mode & FIREMODE)
+	if (Renderer::Ref().GetRenderMode() & FIREMODE)
 		render_fire(part_vbuf);
 #endif
 	draw_other(part_vbuf, sim);
@@ -2494,7 +2495,7 @@ void render_after(pixel *part_vbuf, pixel *vid_buf, Simulation * sim, Point mous
 	render_signs(part_vbuf, sim);
 
 #ifndef OGLR
-	if (vid_buf && sim->grav->IsEnabled() && (display_mode & DISPLAY_WARP))
+	if (vid_buf && sim->grav->IsEnabled() && (Renderer::Ref().GetDisplayMode() & DISPLAY_WARP))
 		render_gravlensing(part_vbuf, vid_buf);
 #endif
 
@@ -2747,7 +2748,7 @@ void draw_walls(pixel *vid, Simulation * sim)
 				}
 
 				// when in blob view, draw some blobs...
-				if (render_mode & PMODE_BLOB)
+				if (Renderer::Ref().GetRenderMode() & PMODE_BLOB)
 				{
 					switch (wallTypes[wt].drawstyle)
 					{

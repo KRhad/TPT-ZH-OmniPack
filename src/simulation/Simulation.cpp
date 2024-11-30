@@ -34,6 +34,7 @@
 #include "game/Menus.h" // for active_menu setting on save load, try to remove this later
 #include "game/Save.h"
 #include "game/Sign.h"
+#include "graphics/Renderer.h"
 #include "simulation/elements/ANIM.h"
 #include "simulation/elements/LIFE.h"
 #include "simulation/elements/MOVS.h"
@@ -683,6 +684,7 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 	}
 #endif
 
+	Renderer::Ref().LoadSave(save.get());
 	saveLoadData.authors = save->authors;
 	return saveLoadData;
 }
@@ -911,6 +913,8 @@ Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool
 	newSave->saveInfo.SetTags(svf_tags);
 	newSave->saveInfo.SetMyVote(svf_myvote);
 	newSave->saveInfoPresent = true;
+
+	Renderer::Ref().CreateSave(newSave);
 
 #ifdef LUACONSOLE
 	if (LuaCode)

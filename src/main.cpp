@@ -252,7 +252,6 @@ void tab_save(int num)
 	//build the tab
 	Save *tab = globalSim->CreateSave(0, 0, XRES, YRES, true);
 	tab->authors = tabInfo;
-	Renderer::Ref().CreateSave(tab);
 	try
 	{
 		tab->BuildSave();
@@ -315,9 +314,8 @@ int tab_load(int tabNum, bool del, bool showException)
 		bool ret = false;
 		try
 		{
-			globalSim->LoadSave(0, 0, save, 2);
-			Renderer::Ref().LoadSave(save);
-			authors = save->authors;
+			auto saveLoadData = globalSim->LoadSave(0, 0, save, 2);
+			authors = saveLoadData.authors;
 			the_game->SetReloadPoint(save);
 			ret = true;
 		}
@@ -579,10 +577,6 @@ int main(int argc, char *argv[])
 	// initialize hud with defaults before loading powder.pref
 	HudDefaults();
 	memcpy(currentHud,normalHud,sizeof(currentHud));
-
-	render_mode = Renderer::Ref().GetRenderModesRaw();
-	display_mode = Renderer::Ref().GetDisplayModesRaw();
-	Renderer::Ref().SetColorMode(COLOR_DEFAULT);
 
 	Platform::originalCwd = Platform::GetCwd();
 
@@ -908,7 +902,7 @@ int main_loop_temp(int b, int bq, int sdl_key, int scan, int x, int y, bool shif
 		if (x >= 0 && y >= 0 && x < XRES && y < YRES)
 			tmpMouseInZoom = (x != mx || y != my);
 
-		if (globalSim->grav->IsEnabled() && (display_mode & DISPLAY_WARP))
+		if (globalSim->grav->IsEnabled() && (Renderer::Ref().GetDisplayMode() & DISPLAY_WARP))
 		{
 			part_vbuf = part_vbuf_store;
 			memset(vid_buf, 0, (XRES+BARSIZE)*YRES*PIXELSIZE);
@@ -1055,8 +1049,8 @@ int main_loop_temp(int b, int bq, int sdl_key, int scan, int x, int y, bool shif
 
 			try
 			{
-				globalSim->LoadSave(0, 0, saveDataOpen, 1);
-				authors = saveDataOpen->authors;
+				auto saveLoadData = globalSim->LoadSave(0, 0, saveDataOpen, 1);
+				authors = saveLoadData.authors;
 				the_game->SetReloadPoint(saveDataOpen);
 			}
 			catch (ParseException & e)

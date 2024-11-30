@@ -179,10 +179,10 @@ public:
 	Json::Value authors;
 
 	// Even more jacob1's mod specific things
-	std::set<unsigned int> renderModes;
-	bool renderModesPresent;
-	std::set<unsigned int> displayModes;
-	bool displayModesPresent;
+	unsigned int renderMode;
+	bool renderModePresent;
+	unsigned int displayMode;
+	bool displayModePresent;
 	unsigned int colorMode;
 	bool colorModePresent;
 	typedef std::pair<unsigned char, unsigned char> MOVSdataItem;

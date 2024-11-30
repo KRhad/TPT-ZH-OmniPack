@@ -99,10 +99,10 @@ Save::Save(const Save & save):
 	stkm(save.stkm),
 	palette(save.palette),
 	sim(save.sim),
-	renderModes(save.renderModes),
-	renderModesPresent(save.renderModesPresent),
-	displayModes(save.displayModes),
-	displayModesPresent(save.displayModesPresent),
+	renderMode(save.renderMode),
+	renderModePresent(save.renderModePresent),
+	displayMode(save.displayMode),
+	displayModePresent(save.displayModePresent),
 	colorMode(save.colorMode),
 	colorModePresent(save.colorModePresent),
 	MOVSdata(save.MOVSdata),
@@ -238,10 +238,10 @@ void Save::InitVars()
 
 	saveInfoPresent = false;
 
-	renderModes = std::set<unsigned int>();
-	renderModesPresent = false;
-	displayModes = std::set<unsigned int>();
-	displayModesPresent = false;
+	renderMode = 0;
+	renderModePresent = false;
+	displayMode = 0;
+	displayModePresent = false;
 	colorMode = 0;
 	colorModePresent = false;
 
@@ -858,33 +858,15 @@ void Save::ParseSaveOPS()
 				fprintf(stderr, "Wrong type for %s\n", bson_iterator_key(&iter));
 			}
 		}
-		else if (!strcmp(bson_iterator_key(&iter), "render_modes"))
+		else if (!strcmp(bson_iterator_key(&iter), "render_mode") && bson_iterator_type(&iter) == BSON_INT)
 		{
-			bson_iterator subiter;
-			bson_iterator_subiterator(&iter, &subiter);
-			while (bson_iterator_next(&subiter))
-			{
-				if (bson_iterator_type(&subiter) == BSON_INT)
-				{
-					unsigned int renderMode = bson_iterator_int(&subiter);
-					renderModes.insert(renderMode);
-				}
-			}
-			renderModesPresent = true;
+			renderMode = bson_iterator_int(&iter);
+			renderModePresent = true;
 		}
-		else if (!strcmp(bson_iterator_key(&iter), "display_modes"))
+		else if (!strcmp(bson_iterator_key(&iter), "display_mode") && bson_iterator_type(&iter) == BSON_INT)
 		{
-			bson_iterator subiter;
-			bson_iterator_subiterator(&iter, &subiter);
-			while (bson_iterator_next(&subiter))
-			{
-				if (bson_iterator_type(&subiter) == BSON_INT)
-				{
-					unsigned int displayMode = bson_iterator_int(&subiter);
-					displayModes.insert(displayMode);
-				}
-			}
-			displayModesPresent = true;
+			displayMode = bson_iterator_int(&iter);
+			displayModePresent = true;
 		}
 		else if (!strcmp(bson_iterator_key(&iter), "color_mode") && bson_iterator_type(&iter) == BSON_INT)
 		{
@@ -2700,32 +2682,12 @@ void Save::BuildSave()
 	}
 
 	// Render modes (Jacob1's mod)
-	if (renderModesPresent && renderModes.size())
-	{
-		unsigned int renderModeBits = 0;
-		bson_append_start_array(&b, "render_modes");
-		for (unsigned int renderMode : renderModes)
-		{
-			bson_append_int(&b, "render_mode", renderMode);
-			renderModeBits |= renderMode;
-		}
-		bson_append_finish_array(&b);
-		bson_append_int(&b, "render_mode", renderModeBits);
-	}
+	if (renderModePresent)
+		bson_append_int(&b, "render_mode", renderMode);
 
 	// Display modes (Jacob1's mod)
-	if (displayModesPresent && displayModes.size())
-	{
-		unsigned int displayModeBits = 0;
-		bson_append_start_array(&b, "display_modes");
-		for (unsigned int displayMode : displayModes)
-		{
-			bson_append_int(&b, "display_mode", displayMode);
-			displayModeBits |= displayMode;
-		}
-		bson_append_finish_array(&b);
-		bson_append_int(&b, "display_mode", displayModeBits);
-	}
+	if (displayModePresent)
+		bson_append_int(&b, "display_mode", displayMode);
 
 	// other Jacob1's mod stuff
 	if (colorModePresent)

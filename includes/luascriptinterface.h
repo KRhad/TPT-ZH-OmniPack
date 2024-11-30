@@ -125,8 +125,8 @@ int simulation_resetVelocity(lua_State * l);
 int simulation_stickman(lua_State * l);
 
 void initRendererAPI(lua_State * l);
-int renderer_renderModes(lua_State * l);
-int renderer_displayModes(lua_State * l);
+int renderer_renderMode(lua_State * l);
+int renderer_displayMode(lua_State * l);
 int renderer_colorMode(lua_State * l);
 int renderer_decorations(lua_State * l);
 int renderer_grid(lua_State * l);

@@ -25,9 +25,6 @@ class Simulation;
 
 extern pixel sampleColor;
 
-extern unsigned int render_mode;
-extern unsigned int display_mode;
-
 
 extern unsigned char fire_r[YRES/CELL][XRES/CELL];
 extern unsigned char fire_g[YRES/CELL][XRES/CELL];

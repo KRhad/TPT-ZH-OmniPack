@@ -14,8 +14,8 @@
 
 RenderModesUI::RenderModesUI():
 	ui::Window(Point(0, YRES), Point(XRES, MENUSIZE)),
-	last_render_mode(render_mode),
-	last_display_mode(display_mode),
+	last_render_mode(Renderer::Ref().GetRenderMode()),
+	last_display_mode(Renderer::Ref().GetDisplayMode()),
 	last_color_mode(Renderer::Ref().GetColorMode()),
 	interfaceSwap(false),
 	renderCheckboxes(std::vector<std::pair<Checkbox*, unsigned int> >()),
@@ -66,11 +66,10 @@ void RenderModesUI::SwapInterface()
 
 void RenderModesUI::InitializeRenderCheckbox(Checkbox *checkbox, unsigned int mode)
 {
-	checkbox->SetCallback([mode](bool checked) {
-		if (checked)
-			Renderer::Ref().AddRenderMode(mode);
-		else
-			Renderer::Ref().RemoveRenderMode(mode);
+	checkbox->SetCallback([this, mode](bool checked) {
+		unsigned int renderMode = CalculateRenderMode();
+		Renderer::Ref().SetRenderMode(renderMode);
+		last_render_mode = renderMode;
 	});
 #ifdef TOUCHUI
 	checkbox->SetColor(COLRGB(255, 127, 255));
@@ -83,12 +82,15 @@ void RenderModesUI::InitializeRenderCheckbox(Checkbox *checkbox, unsigned int mo
 
 void RenderModesUI::InitializeDisplayCheckbox(Checkbox *checkbox, unsigned int mode)
 {
-	checkbox->SetCallback([mode](bool checked) {
+	checkbox->SetCallback([mode, this](bool checked) {
+		unsigned int displayMode = Renderer::Ref().GetDisplayMode();
+		if (mode & DISPLAY_AIR)
+			displayMode &= ~DISPLAY_AIR;
 		if (checked)
-			Renderer::Ref().AddDisplayMode(mode);
+			displayMode |= mode;
 		else
-			Renderer::Ref().RemoveDisplayMode(mode);
-		display_mode = Renderer::Ref().GetDisplayModesRaw();
+			displayMode &= ~mode;
+		Renderer::Ref().SetDisplayMode(displayMode);
 	});
 #ifdef TOUCHUI
 	checkbox->SetColor(COLRGB(127, 255, 255));
@@ -101,11 +103,12 @@ void RenderModesUI::InitializeDisplayCheckbox(Checkbox *checkbox, unsigned int m
 
 void RenderModesUI::InitializeColorCheckbox(Checkbox *checkbox, unsigned int mode)
 {
-	checkbox->SetCallback([mode](bool checked) {
+	checkbox->SetCallback([mode, this](bool checked) {
 		if (checked)
 			Renderer::Ref().SetColorMode(mode);
 		else
 			Renderer::Ref().SetColorMode(COLOR_DEFAULT);
+		last_color_mode = Renderer::Ref().GetColorMode();
 	});
 #ifdef TOUCHUI
 	checkbox->SetColor(COLRGB(255, 255, 127));
@@ -114,6 +117,20 @@ void RenderModesUI::InitializeColorCheckbox(Checkbox *checkbox, unsigned int mod
 		checkbox->SetChecked(true);
 	this->AddComponent(checkbox);
 	colorCheckboxes.push_back(std::pair<Checkbox*, unsigned int>(checkbox, mode));
+}
+
+unsigned int RenderModesUI::CalculateRenderMode()
+{
+	unsigned int mode = 0;
+	for (auto &renderCheckbox : renderCheckboxes)
+	{
+		if (renderCheckbox.first->IsChecked())
+		{
+			mode |= renderCheckbox.second;
+		}
+	}
+
+	return mode;
 }
 
 void RenderModesUI::SetCheckboxToolTip(Checkbox *checkbox, std::string tooltip)
@@ -316,7 +333,7 @@ void RenderModesUI::InitializeButtons()
 
 void RenderModesUI::OnTick(uint32_t ticks)
 {
-	if (render_mode != last_render_mode)
+	if (Renderer::Ref().GetRenderMode() != last_render_mode)
 	{
 		for (std::vector<std::pair<Checkbox*, unsigned int> >::iterator iter = renderCheckboxes.begin(), end = renderCheckboxes.end(); iter != end; iter++)
 		{
@@ -326,10 +343,10 @@ void RenderModesUI::OnTick(uint32_t ticks)
 			else
 				(*iter).first->SetChecked(false);
 		}
-		last_render_mode = render_mode;
+		last_render_mode = Renderer::Ref().GetRenderMode();
 	}
 
-	if (display_mode != last_display_mode)
+	if (Renderer::Ref().GetDisplayMode() != last_display_mode)
 	{
 		for (std::vector<std::pair<Checkbox*, unsigned int> >::iterator iter = displayCheckboxes.begin(), end = displayCheckboxes.end(); iter != end; iter++)
 		{
@@ -339,12 +356,11 @@ void RenderModesUI::OnTick(uint32_t ticks)
 			else
 				(*iter).first->SetChecked(false);
 		}
-		last_display_mode = display_mode;
+		last_display_mode = Renderer::Ref().GetDisplayMode();
 	}
 
 	if (Renderer::Ref().GetColorMode() != last_color_mode)
 	{
-		last_color_mode = Renderer::Ref().GetColorMode();
 		for (std::vector<std::pair<Checkbox*, unsigned int> >::iterator iter = colorCheckboxes.begin(), end = colorCheckboxes.end(); iter != end; iter++)
 		{
 			unsigned int mode = (*iter).second;
@@ -353,6 +369,7 @@ void RenderModesUI::OnTick(uint32_t ticks)
 			else
 				(*iter).first->SetChecked(false);
 		}
+		last_color_mode = Renderer::Ref().GetColorMode();
 	}
 }
 

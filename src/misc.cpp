@@ -185,17 +185,9 @@ void save_presets()
 	//Tpt++ Renderer settings
 	cJSON_AddItemToObject(root, "Renderer", graphicsobj=cJSON_CreateObject());
 	cJSON_AddNumberToObject(graphicsobj, "ColourMode", Renderer::Ref().GetColorMode());
+	cJSON_AddNumberToObject(graphicsobj, "DisplayMode", Renderer::Ref().GetDisplayMode());
+	cJSON_AddNumberToObject(graphicsobj, "RenderMode", Renderer::Ref().GetRenderMode());
 	setBool(graphicsobj, "DebugMode", DEBUG_MODE);
-	tmpobj = cJSON_CreateIntArray(NULL, 0);
-	std::set<unsigned int> displayModes = Renderer::Ref().GetDisplayModes();
-	for (std::set<unsigned int>::iterator it = displayModes.begin(), end = displayModes.end(); it != end; it++)
-		cJSON_AddItemToArray(tmpobj, cJSON_CreateNumber(*it));
-	cJSON_AddItemToObject(graphicsobj, "DisplayModes", tmpobj);
-	tmpobj = cJSON_CreateIntArray(NULL, 0);
-	std::set<unsigned int> renderModes = Renderer::Ref().GetRenderModes();
-	for (std::set<unsigned int>::iterator it = renderModes.begin(), end = renderModes.end(); it != end; it++)
-		cJSON_AddItemToArray(tmpobj, cJSON_CreateNumber(*it));
-	cJSON_AddItemToObject(graphicsobj, "RenderModes", tmpobj);
 	setBool(graphicsobj, "GravityField", drawgrav_enable);
 	setBool(graphicsobj, "Decorations", decorations_enable);
 	cJSON_AddNumberToObject(graphicsobj, "TemperatureScale", globalSim->temperatureScale);
@@ -491,16 +483,17 @@ void load_presets(void)
 
 		//Read display settings
 		graphicsobj = cJSON_GetObjectItem(root, "Renderer");
-		if(graphicsobj)
+		if (graphicsobj)
 		{
 			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "ColourMode")))
 				Renderer::Ref().SetColorMode(tmpobj->valueint);
-			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "DisplayModes")))
+			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "DisplayMode")))
+				Renderer::Ref().SetDisplayMode(tmpobj->valueint);
+			else if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "DisplayModes")))
 			{
 				int count = cJSON_GetArraySize(tmpobj);
 				cJSON * tempDisplayMode;
-				display_mode = 0;
-				Renderer::Ref().ClearDisplayModes();
+				unsigned int arrTotal = 0;
 				for (int i = 0; i < count; i++)
 				{
 					tempDisplayMode = cJSON_GetArrayItem(tmpobj, i);
@@ -511,15 +504,20 @@ void load_presets(void)
 						if (strMode && strlen(strMode))
 							mode = atoi(strMode);
 					}
-					Renderer::Ref().AddDisplayMode(mode);
+					arrTotal |= mode;
 				}
+				Renderer::Ref().SetDisplayMode(arrTotal);
+			}
+			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "RenderMode")))
+			{
+				unsigned int mode = (unsigned int) tmpobj->valuedouble;
+				Renderer::Ref().SetRenderMode(mode);
 			}
 			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "RenderModes")))
 			{
 				int count = cJSON_GetArraySize(tmpobj);
 				cJSON * tempRenderMode;
-				render_mode = 0;
-				Renderer::Ref().ClearRenderModes();
+				unsigned int arrTotal = 0;
 				for (int i = 0; i < count; i++)
 				{
 					tempRenderMode = cJSON_GetArrayItem(tmpobj, i);
@@ -533,8 +531,9 @@ void load_presets(void)
 					// temporary hack until I update the json library (first for loading current modes, second only needed for loading with valuestring)
 					if (mode == 2147483648u || mode == 2147483647u)
 						mode = 4278252144u;
-					Renderer::Ref().AddRenderMode(mode);
+					arrTotal |= mode;
 				}
+				Renderer::Ref().SetRenderMode(arrTotal);
 			}
 			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "Decorations")) && tmpobj->type == cJSON_True)
 				decorations_enable = true;

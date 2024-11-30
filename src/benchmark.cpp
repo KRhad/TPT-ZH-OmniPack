@@ -145,8 +145,6 @@ void benchmark_run()
 					benchmark_load_save(sim, save);
 					sys_pause = false;
 					framerender = 0;
-					display_mode = 0;
-					render_mode = RENDER_BASC;
 					decorations_enable = true;
 					sim->Tick();
 					BENCHMARK_RUN()
@@ -162,8 +160,6 @@ void benchmark_run()
 					benchmark_load_save(sim, save);
 					sys_pause = false;
 					framerender = 0;
-					display_mode = 0;
-					render_mode = RENDER_FIRE;
 					decorations_enable = true;
 					sim->Tick();
 					BENCHMARK_RUN()
