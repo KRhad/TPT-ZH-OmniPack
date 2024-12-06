@@ -210,7 +210,7 @@ int ui_edit_draw(pixel *vid_buf, ui_edit *ed)
 			drawtext(vid_buf, ed->x+ed->w-10, ed->y, "\xAA", deletecolor, deletecolor, deletecolor, 255);
 		}
 	}
-	else if (!ed->focus)
+	else if (!ed->focus || !ed->str[0])
 		drawtext(vid_buf, ed->x, ed->y, ed->def, 128, 128, 128, 255);
 	if (ed->focus && ed->numClicks < 2)
 	{
@@ -3483,7 +3483,11 @@ int search_ui(pixel *vid_buf)
 	strcpy(dateRange.str, dateRange.items[dateRange.selected].c_str());
 
 	ui_edit_init(&ed, 65+xOffset, 13, XRES-240, 14);
-	strcpy(ed.def, "[search terms]");
+#ifdef TOUCHUI
+	strcpy(ed.def, "[search terms], click search icon for help");
+#else
+	strcpy(ed.def, "[search terms], press F1 for help");
+#endif
 	ed.cursor = ed.cursorstart = strlen(search_expr);
 	strncpy(ed.str, search_expr, 256);
 
@@ -4059,6 +4063,10 @@ int search_ui(pixel *vid_buf)
 				search_fav = !search_fav;
 				search_own = 0;
 			}
+			else if (mx >= 50+xOffset && mx <= 50+xOffset+12 && my >= 11 && my <= 23)
+			{
+				show_search_help();
+			}
 			else if (dp!=-1)
 			{
 				if (search_fav){
@@ -4109,6 +4117,10 @@ int search_ui(pixel *vid_buf)
 					goto finish;
 				}
 			}
+		}
+		if (sdl_key == SDLK_F1)
+		{
+			show_search_help();
 		}
 
 #ifdef TOUCHUI
@@ -4503,6 +4515,39 @@ finish:
 
 	free(v_buf);
 	return 0;
+}
+
+void show_search_help()
+{
+	std::string info =
+		"Type in the search bar to begin automatically searching save titles and tags. Search terms are ORed together.\n"
+		"\n"
+		"Sorting: click the \bt\"By Votes\"\bw / \bt\"By Date\"\bw buttons to change the order saves are displayed in\n"
+		"Categories: If you're logged in, use \bt\"My Own\"\bw to view only your own saves, or click the Star icon to view your favorited saves\n"
+		"Date Range: Click the dropdown to the right of the search box to select the date range for your search\n"
+		"\n"
+		"Special search terms:\n"
+		"\btid:#######\bw - search by save id\n"
+		"\bthistory:#######\bw - see previous versions for a save id\n"
+		"\btuser:XXXXXX\bw - search for saves by a specific user\n"
+		"\btbefore:YYYY-MM-DD\bw - all saves originally created before a certain date. Month and Day portions are both optional\n"
+		"\btafter:YYYY-MM-DD\bw - all saves originally created after a certain date. Month and Day portions are both optional\n"
+		"\n"
+		"Advanced search:\n"
+		"Start a search with \bt~\bw to do an advanced search. This search works across save titles, descriptions, usernames, and tags, rather than only save titles and tags."
+		" It also concatenates search terms with AND instead of OR.\n"
+		"Use \bt|\bw to OR together search terms, for example \bg~bomb | nuke | explosive\bw\n"
+		"Use \bt!\bw to negate terms, for example \bg~city !destroyable !desert\bw\n"
+		"Use \bt\"\bw to create multi-word search terms, for example \bg~\"power plant\" uran | plut | polo\bw\n"
+		"Use \bt@title\bw to limit search to only save titles, for example \bg~@title subframe\bw\n"
+		"Use \bt@description\bw to limit search to only save descriptions, for example \bg~@description \"No description provided\"\bw\n"
+		"Use \bt@user\bw to limit search to only specific users, for example \bg~@user 117n00b | Catelite | Fluttershy @title laser\bw\n"
+		"Use \bt@tags\bw to limit search to just save tags, for example \bg~@tags resistcup @title printer | @description spider before:2024-06\bw\n"
+		"Parenthesis can be used to further complicate your searches. For example: \bg~(@user MG99 @description complete) | (@user goglesq @tags tutorial)\bw"
+		;
+	auto *prompt = new InfoPrompt("Search Help", info, "OK", true);
+	Engine::Ref().ShowWindow(prompt);
+	MainLoop(true);
 }
 
 int report_ui(pixel* vid_buf, char *save_id, bool bug)

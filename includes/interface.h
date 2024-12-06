@@ -270,6 +270,7 @@ void menu_draw_text(Tool* over, int y);
 void menu_select_element(int b, Tool* over);
 
 int search_ui(pixel *vid_buf);
+void show_search_help();
 
 int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open);
 

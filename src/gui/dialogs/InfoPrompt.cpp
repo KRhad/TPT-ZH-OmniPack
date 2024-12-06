@@ -3,7 +3,7 @@
 #include "interface/Label.h"
 #include "interface/Button.h"
 
-InfoPrompt::InfoPrompt(std::string title, std::string message, std::string OK):
+InfoPrompt::InfoPrompt(std::string title, std::string message, std::string OK, bool large):
 	ui::Window(Point(CENTERED, CENTERED), Point(250, 55))
 {
 #ifndef TOUCHUI
@@ -16,8 +16,8 @@ InfoPrompt::InfoPrompt(std::string title, std::string message, std::string OK):
 	titleLabel->SetColor(COLRGB(140, 140, 255));
 	this->AddComponent(titleLabel);
 
-	Label *messageLabel = new Label(titleLabel->Below(Point(0, 0)), Point(240, Label::AUTOSIZE), message, true);
-	this->Resize(Point(CENTERED, CENTERED), Point(250, messageLabel->GetSize().Y + 24 + buttonHeight));
+	Label *messageLabel = new Label(titleLabel->Below(Point(0, 0)), Point(240 + (large ? 300 : 0), Label::AUTOSIZE), message, true);
+	this->Resize(Point(CENTERED, CENTERED), Point(250 + (large ? 300 : 0), messageLabel->GetSize().Y + 24 + buttonHeight));
 	this->AddComponent(messageLabel);
 
 	Button *okButton = new Button(Point(0, this->size.Y - buttonHeight), Point(this->size.X, buttonHeight), OK);
