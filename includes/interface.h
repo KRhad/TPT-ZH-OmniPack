@@ -75,7 +75,7 @@ struct ui_list
 {
 	int x, y, w, h;
 	char str[256], def[33];
-	const char **items;
+	std::vector<std::string> items;
 	int selected, focus, count;
 };
 typedef struct ui_list ui_list;
@@ -279,7 +279,7 @@ int info_parse(const char *info_data, save_info *info);
 
 std::vector<std::pair<std::string, int>> parse_tags(const char *tagsList, int & resultCount);
 
-Request * search_saves(int start, int count, std::string query, std::string sort, std::string category);
+Request * search_saves(int start, int count, std::string query, std::string sort, std::string category, std::string dateRange);
 void clear_search_results();
 bool parse_search_results(const char *search_results, int & resultSize);
 

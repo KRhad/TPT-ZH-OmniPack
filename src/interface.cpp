@@ -783,7 +783,7 @@ void ui_list_process(pixel * vid_buf, int mx, int my, int mb, int mbq, ui_list *
 	{
 		ed->selected = -1;
 	}
-	if (mx > ed->x && mx < ed->x+ed->w && my > ed->y && my < ed->y+ed->h)
+	if (mx > ed->x && mx <= ed->x+ed->w && my > ed->y && my < ed->y+ed->h)
 	{
 		ed->focus = 1;
 		if (!mb && mbq)
@@ -791,6 +791,7 @@ void ui_list_process(pixel * vid_buf, int mx, int my, int mb, int mbq, ui_list *
 			ystart = ed->y-(ed->count*8);
 			if (ystart < 5)
 				ystart = 5;
+			fillrect(vid_buf, 0, 0, VIDXRES, VIDYRES, 0, 0, 0, 100);
 			while (!sdl_poll() && !selected)
 			{
 				mbq = mb;
@@ -805,11 +806,11 @@ void ui_list_process(pixel * vid_buf, int mx, int my, int mb, int mbq, ui_list *
 							selected = 1;
 						}
 						fillrect(vid_buf, ed->x, ystart + i * 16, ed->w, 16, 255, 255, 255, 25);
-						drawtext(vid_buf, ed->x + 4, ystart + i * 16 + 5, ed->items[i], 255, 255, 255, 255);
+						drawtext(vid_buf, ed->x + 4, ystart + i * 16 + 5, ed->items[i].c_str(), 255, 255, 255, 255);
 					}
 					else
 					{
-						drawtext(vid_buf, ed->x + 4, ystart + i * 16 + 5, ed->items[i], 192, 192, 192, 255);
+						drawtext(vid_buf, ed->x + 4, ystart + i * 16 + 5, ed->items[i].c_str(), 192, 192, 192, 255);
 					}
 					draw_line(vid_buf, ed->x, ystart + i * 16, ed->x+ed->w, ystart + i * 16, 128, 128, 128, XRES+BARSIZE);
 				}
@@ -826,7 +827,7 @@ void ui_list_process(pixel * vid_buf, int mx, int my, int mb, int mbq, ui_list *
 			}
 			
 			if (ed->selected!=-1)
-				strcpy(ed->str, ed->items[ed->selected]);
+				strcpy(ed->str, ed->items[ed->selected].c_str());
 		}
 	}
 	else
@@ -851,7 +852,7 @@ void ui_list_draw(pixel *vid_buf, ui_list *ed)
 	}
 	if(ed->selected!=-1)
 	{
-		drawtext(vid_buf, ed->x+4, ed->y+5, ed->items[ed->selected], 255, 255, 255, 255);
+		drawtext(vid_buf, ed->x+4, ed->y+5, ed->items[ed->selected].c_str(), 255, 255, 255, 255);
 	}
 	else
 	{
@@ -3405,6 +3406,7 @@ int search_ui(pixel *vid_buf)
 	int num_selected = 0, num_published_selected = 0, num_unpublished_selected = 0;
 	bool own_selected = true;
 	std::string selection_buttons[4] = {"Delete", "Unpublish", "Favorite", "Clear Selection"};
+	std::string last_date_range = "All";
 #ifdef TOUCHUI
 	const int xOffset = 10;
 	int initialOffset = 0;
@@ -3463,7 +3465,24 @@ int search_ui(pixel *vid_buf)
 			break;
 	}
 
-	ui_edit_init(&ed, 65+xOffset, 13, XRES-200, 14);
+	ui_list dateRange;
+	dateRange.x = XRES - 169 + 16 + xOffset;
+	dateRange.y = 8;
+	dateRange.w = 35;
+	dateRange.h = 16;
+	dateRange.selected = 0;
+	strcpy(dateRange.def, "");
+	dateRange.count = 5;
+	dateRange.items = {
+	    "All",
+	    "Day",
+	    "Week",
+	    "Month",
+	    "Year",
+	};
+	strcpy(dateRange.str, dateRange.items[dateRange.selected].c_str());
+
+	ui_edit_init(&ed, 65+xOffset, 13, XRES-240, 14);
 	strcpy(ed.def, "[search terms]");
 	ed.cursor = ed.cursorstart = strlen(search_expr);
 	strncpy(ed.str, search_expr, 256);
@@ -3526,7 +3545,7 @@ int search_ui(pixel *vid_buf)
 		else
 			drawtext(vid_buf, 51+xOffset, 11, "\x8E", 32, 64, 160, 255);
 		drawtext(vid_buf, 51+xOffset, 11, "\x8F", 255, 255, 255, 255);
-		drawrect(vid_buf, 48+xOffset, 8, XRES-182, 16, 192, 192, 192, 255);
+		drawrect(vid_buf, 48+xOffset, 8, XRES-222, 16, 192, 192, 192, 255);
 
 		if (!svf_login || search_fav)
 		{
@@ -3554,18 +3573,18 @@ int search_ui(pixel *vid_buf)
 		if(!svf_login)
 		{
 			search_fav = 0;
-			drawrect(vid_buf, XRES-134+xOffset, 8, 16, 16, 192, 192, 192, 255);
-			drawtext(vid_buf, XRES-130+xOffset, 11, "\xCC", 120, 120, 120, 255);
+			drawrect(vid_buf, XRES-174+xOffset, 8, 16, 16, 192, 192, 192, 255);
+			drawtext(vid_buf, XRES-170+xOffset, 11, "\xCC", 120, 120, 120, 255);
 		}
 		else if (search_fav)
 		{
-			fillrect(vid_buf, XRES-134+xOffset, 7, 18, 18, 255, 255, 255, 255);
-			drawtext(vid_buf, XRES-130+xOffset, 11, "\xCC", 192, 160, 64, 255);
+			fillrect(vid_buf, XRES-174+xOffset, 7, 18, 18, 255, 255, 255, 255);
+			drawtext(vid_buf, XRES-170+xOffset, 11, "\xCC", 192, 160, 64, 255);
 		}
 		else
 		{
-			drawrect(vid_buf, XRES-134+xOffset, 8, 16, 16, 192, 192, 192, 255);
-			drawtext(vid_buf, XRES-130+xOffset, 11, "\xCC", 192, 160, 32, 255);
+			drawrect(vid_buf, XRES-174+xOffset, 8, 16, 16, 192, 192, 192, 255);
+			drawtext(vid_buf, XRES-170+xOffset, 11, "\xCC", 192, 160, 32, 255);
 		}
 
 		if (search_date)
@@ -3582,6 +3601,8 @@ int search_ui(pixel *vid_buf)
 			drawtext(vid_buf, XRES-126+16+xOffset, 11, "\xA7", 255, 255, 255, 255);
 			drawtext(vid_buf, XRES-111+16+xOffset, 13, "By votes", 255, 255, 255, 255);
 		}
+
+		ui_list_draw(vid_buf, &dateRange);
 
 		ui_edit_draw(vid_buf, &ed);
 
@@ -3949,6 +3970,7 @@ int search_ui(pixel *vid_buf)
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
 
 		ui_edit_process(mx, my, b, bq, &ed);
+		ui_list_process(vid_buf, mx, my, b, bq, &dateRange);
 		ui_edit_process(mx, my, b, bq, &page_num_ed);
 
 		if (sdl_key==SDLK_RETURN)
@@ -4032,7 +4054,7 @@ int search_ui(pixel *vid_buf)
 			{
 				search_date = !search_date;
 			}
-			else if (mx>=XRES-134+xOffset && mx<=XRES-134+16+xOffset && my>=8 && my<=24 && svf_login)
+			else if (mx>=XRES-174+xOffset && mx<=XRES-174+16+xOffset && my>=8 && my<=24 && svf_login)
 			{
 				search_fav = !search_fav;
 				search_own = 0;
@@ -4246,10 +4268,12 @@ int search_ui(pixel *vid_buf)
 		{
 			search = 1;
 		}
-		else if ((strcmp(last, ed.str) && (!strcmp(ed.str, "") || strlen(ed.str) > 3)) || last_own!=search_own || last_date!=search_date || last_page!=search_page || last_fav!=search_fav || last_p1_extra!=next_p1_extra)
+		else if ((strcmp(last, ed.str) && (!strcmp(ed.str, "") || strlen(ed.str) > 3)) || last_own!=search_own || last_date!=search_date
+		         || last_page!=search_page || last_fav!=search_fav || last_p1_extra!=next_p1_extra || last_date_range != dateRange.str)
 		{
 			search = 1;
-			if ((strcmp(last, ed.str) && (strcmp(ed.str, "") || strlen(ed.str) > 3)) || last_own!=search_own || last_fav!=search_fav || last_date!=search_date)
+			if ((strcmp(last, ed.str) && (strcmp(ed.str, "") || strlen(ed.str) > 3)) || last_own!=search_own || last_fav!=search_fav
+			        || last_date!=search_date || last_date_range != dateRange.str)
 			{
 				search_page = 0;
 				updatePageNumTextbox();
@@ -4302,8 +4326,9 @@ int search_ui(pixel *vid_buf)
 			last_page = search_page;
 			last_fav = search_fav;
 			last_p1_extra = next_p1_extra;
+			last_date_range = dateRange.str;
 
-			bool byVotes = !search_own && !search_date && !search_fav && !*last;
+			bool byVotes = !search_own && !search_date && !search_fav && !*last && !strcmp(dateRange.str, "All");
 			isNextSearchFrontPage = search_page == 0 && byVotes;
 			if (byVotes)
 			{
@@ -4329,7 +4354,7 @@ int search_ui(pixel *vid_buf)
 				category = "Favourites";
 			if (search_own && svf_login)
 				category = "by:" + std::string(svf_user);
-			saveListDownload = search_saves(start, count, last, search_date ? "date" : "votes", category);
+			saveListDownload = search_saves(start, count, last, search_date ? "date" : "votes", category, dateRange.str);
 			saveListDownload->Start();
 			search = 0;
 		}
@@ -4339,7 +4364,7 @@ int search_ui(pixel *vid_buf)
 			int status;
 			std::string resultsStr = saveListDownload->Finish(&status);
 			const char *results = resultsStr.c_str();
-			bool byVotes = !(search_own || search_date || search_fav || (last && strlen(last)));
+			bool byVotes = !(search_own || search_date || search_fav || (last && strlen(last)) || strcmp(dateRange.str, "All"));
 			isFrontPage = isNextSearchFrontPage;
 			p1_extra = next_p1_extra;
 			touchOffset = 0;
@@ -5772,16 +5797,44 @@ int info_parse(const char *info_data, save_info *info)
 	return 1;
 }
 
-Request * search_saves(int start, int count, std::string query, std::string sort, std::string category)
+Request * search_saves(int start, int count, std::string query, std::string sort, std::string category, std::string dateRange)
 {
 	std::stringstream urlStream;
 	urlStream << SCHEME << SERVER << "/Browse.json?Start=" << start << "&Count=" << count;
+
+
+	if (dateRange != "All")
+	{
+		time_t currTime = time(NULL);
+
+		if (dateRange == "Day")
+			currTime -= 60*60*24; // One day
+		else if (dateRange == "Week")
+			currTime -= 60*60*24*7; // One week
+		else if (dateRange == "Month")
+			currTime -= 60*60*24*31; // One month
+		else if (dateRange == "Year")
+			currTime -= 60*60*24*365; // One year
+
+		tm currentTimeData = *localtime(&currTime);
+
+		std::stringstream dateRangeStream;
+		if (query.length())
+			dateRangeStream << " ";
+		dateRangeStream << "after:" << currentTimeData.tm_year + 1900 << "-"
+		          << (currentTimeData.tm_mon < 9 ? "0" : "") << currentTimeData.tm_mon + 1 << "-" <<
+		             (currentTimeData.tm_mday < 10 ? "0" : "") << currentTimeData.tm_mday;
+
+		query += dateRangeStream.str();
+	}
+
 	if (sort.length() && sort != "votes")
 	{
 		if (!query.empty())
 			query += " ";
 		query += "sort:" + sort;
 	}
+
 	if (query.length())
 	{
 		urlStream << "&Search_Query=" << Format::URLEncode(query);
@@ -5790,6 +5843,7 @@ Request * search_saves(int start, int count, std::string query, std::string sort
 	{
 		urlStream << "&Category=" << Format::URLEncode(category);
 	}
+
 
 	Request *ret = new Request(urlStream.str());
 	if (svf_login)
