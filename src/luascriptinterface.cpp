@@ -416,6 +416,12 @@ void initSimulationAPI(lua_State * l)
 	SETCONST(l, DECOSPACE_GAMMA18);
 	SETCONST(l, NUM_DECOSPACES);
 
+	SETCONSTAS(l, 0, "CANMOVE_BOUNCE");
+	SETCONSTAS(l, 1, "CANMOVE_SWAP");
+	SETCONSTAS(l, 2, "CANMOVE_ENTER");
+	SETCONSTAS(l, 3, "CANMOVE_BUILTIN");
+	SETCONSTAS(l, 4, "NUM_CANMOVEMODES");
+
 	lua_newtable(l);
 	for (int i = 0; i < WALLCOUNT; i++)
 	{
