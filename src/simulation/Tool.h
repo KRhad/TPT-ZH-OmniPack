@@ -17,12 +17,13 @@
 #ifndef TOOL_H
 #define TOOL_H
 
-#include <iostream>
+#include <string>
 #include "defines.h"
+#include "graphics/ARGBColour.h"
 #include "simulation/StructProperty.h"
 
 
-enum { ELEMENT_TOOL, WALL_TOOL, TOOL_TOOL, DECO_TOOL, GOL_TOOL, INVALID_TOOL, DECO_PRESET, FAV_MENU_BUTTON, HUD_MENU_BUTTON };
+enum { ELEMENT_TOOL, WALL_TOOL, TOOL_TOOL, DECO_TOOL, GOL_TOOL, INVALID_TOOL, DECO_PRESET, FAV_MENU_BUTTON, HUD_MENU_BUTTON, CUSTOM_TOOL };
 
 struct Point;
 class Brush;
@@ -30,26 +31,39 @@ class Simulation;
 class Tool
 {
 	std::string identifier;
+	std::string name;
 	std::string description;
+	ARGBColour color;
+	int MenuSection;
+	int MenuVisible;
+
 protected:
 	int type;
 	int toolID;
 public:
-	Tool(int toolID, std::string toolIdentifier, std::string description);
-	Tool(int toolType, int toolID, std::string toolIdentifier, std::string description);
+	Tool(int toolID, std::string toolIdentifier, std::string name, std::string description, ARGBColour color, int MenuSection,
+		 int MenuVisible = 1);
+	Tool(int toolType, int toolID, std::string toolIdentifier, std::string name, std::string description, ARGBColour color, int MenuSection,
+		 int MenuVisible = 1);
 	virtual ~Tool() {}
 
 	int GetType() { return type; }
 	int GetID() { return toolID; }
 	std::string GetIdentifier() { return identifier; }
+	std::string GetName() { return name; }
 	std::string GetDescription() { return description; }
+	ARGBColour GetColor() { return color; }
+	int GetMenuSection() { return MenuSection; }
+	int GetMenuVisible() { return MenuVisible; }
 
 	virtual int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength);
 	virtual void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength);
 	virtual void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos);
 	virtual int FloodFill(Simulation *sim, Brush *brush, Point position);
-	virtual void Click(Simulation *sim, Point position);
+	virtual void Click(Simulation *sim, Brush *brush, Point position);
+	virtual void Drag(Simulation *sim, Brush *brush, Point startPos, Point endPos);
 	virtual Tool * Sample(Simulation *sim, Point position, bool shiftHeld);
+	virtual void Select(int toolIndex);
 };
 
 class ElementTool : public Tool
@@ -68,14 +82,14 @@ public:
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
 	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
-	void Click(Simulation *sim, Point position) override;
+	void Click(Simulation *sim, Brush *brush, Point position) override;
 };
 
 class GolTool : public Tool
 {
 public:
 	GolTool(int golID);
-	GolTool(int ruleset, std::string name, std::string description);
+	GolTool(int ruleset, std::string name, std::string description, ARGBColour color);
 	int GetID();
 
 	int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength) override;
@@ -109,6 +123,7 @@ public:
 class ToolTool : public Tool
 {
 public:
+	ToolTool(int toolID, std::string name, ARGBColour color, std::string identifier, std::string description, int menuSection);
 	ToolTool(int toolID);
 	int GetID() { if (type == TOOL_TOOL) return toolID; else return -1; }
 
@@ -116,7 +131,7 @@ public:
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
 	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
-	void Click(Simulation *sim, Point position) override;
+	void Click(Simulation *sim, Brush *brush, Point position) override;
 };
 
 class PropTool : public ToolTool
@@ -152,7 +167,7 @@ public:
 class InvalidTool : public Tool
 {
 protected:
-	InvalidTool(int type, int ID, std::string identifier, std::string description);
+	InvalidTool(int type, int ID, std::string identifier, std::string name, std::string description, ARGBColour color, int menuSection);
 public:
 	int GetID() { return -1; }
 

@@ -232,6 +232,10 @@ public:
 	bool IsinsideRenderOptions() { return insideRenderOptions; }
 	void LoadRenderPreset(int preset);
 
+	bool IsCtrlHeld() { return ctrlHeld; }
+	bool IsShiftHeld() { return shiftHeld; }
+	bool IsAltHeld() { return altHeld; }
+
 #ifdef TOUCHUI
 	void ToggleEraseBtn(bool alt);
 	void OpenConsoleBtn(bool alt);

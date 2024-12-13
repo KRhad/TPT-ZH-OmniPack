@@ -1,4 +1,3 @@
-#include <sstream>
 #include "Tool.h"
 #include "defines.h"
 #include "GolNumbers.h"
@@ -16,18 +15,28 @@
 #include "gui/gol/GolWindow.h"
 #include "simulation/elements/LIFE.h"
 
-Tool::Tool(int toolID, std::string toolIdentifier, std::string description):
+Tool::Tool(int toolID, std::string toolIdentifier, std::string name, std::string description, ARGBColour color, int MenuSection,
+		   int MenuVisible):
 	identifier(toolIdentifier),
+	name(name),
 	description(description),
+	color(color),
+	MenuSection(MenuSection),
+	MenuVisible(MenuVisible),
 	type(INVALID_TOOL),
 	toolID(toolID)
 {
 
 }
 
-Tool::Tool(int toolType, int toolID, std::string toolIdentifier, std::string description):
+Tool::Tool(int toolType, int toolID, std::string toolIdentifier, std::string name, std::string description, ARGBColour color,
+		   int MenuSection, int MenuVisible):
 	identifier(toolIdentifier),
+	name(name),
 	description(description),
+	color(color),
+	MenuSection(MenuSection),
+	MenuVisible(MenuVisible),
 	type(toolType),
 	toolID(toolID)
 {
@@ -93,7 +102,12 @@ int Tool::FloodFill(Simulation *sim, Brush *brush, Point position)
 	}
 }
 
-void Tool::Click(Simulation *sim, Point position)
+void Tool::Click(Simulation *sim, Brush *brush, Point position)
+{
+
+}
+
+void Tool::Drag(Simulation *sim, Brush *brush, Point startPos, Point endPos)
 {
 
 }
@@ -135,9 +149,15 @@ Tool * Tool::Sample(Simulation *sim, Point position, bool shiftHeld)
 	return this;
 }
 
+void Tool::Select(int toolIndex)
+{
+
+}
+
 
 ElementTool::ElementTool(Simulation * sim, int elementID):
-	Tool(ELEMENT_TOOL, elementID, sim->elements[elementID].Identifier, sim->elements[elementID].Description)
+	Tool(ELEMENT_TOOL, elementID, sim->elements[elementID].Identifier, sim->elements[elementID].Name, sim->elements[elementID].Description,
+		   sim->elements[elementID].Colour, sim->elements[elementID].MenuSection, sim->elements[elementID].MenuVisible)
 {
 
 }
@@ -175,19 +195,20 @@ int PlopTool::FloodFill(Simulation *sim, Brush *brush, Point position)
 {
 	return 0;
 }
-void PlopTool::Click(Simulation *sim, Point position)
+void PlopTool::Click(Simulation *sim, Brush *brush, Point position)
 {
 	sim->part_create(-1, position.X, position.Y, toolID);
 }
 
 
 GolTool::GolTool(int golID):
-	Tool(GOL_TOOL, golID, "DEFAULT_PT_LIFE_" + builtinGol[golID].name, builtinGol[golID].description)
+	Tool(GOL_TOOL, golID, "DEFAULT_PT_LIFE_" + builtinGol[golID].name, builtinGol[golID].name, builtinGol[golID].description,
+		   builtinGol[golID].color, SC_LIFE)
 {
 
 }
-GolTool::GolTool(int ruleset, std::string name, std::string description):
-	Tool(GOL_TOOL, ruleset, "DEFAULT_PT_LIFECUST_" + name, description)
+GolTool::GolTool(int ruleset, std::string name, std::string description, ARGBColour color):
+	Tool(GOL_TOOL, ruleset, "DEFAULT_PT_LIFECUST_" + name, name, description, color, SC_LIFE)
 {
 
 }
@@ -219,7 +240,7 @@ int GolTool::FloodFill(Simulation *sim, Brush *brush, Point position)
 
 
 WallTool::WallTool(int wallID):
-	Tool(WALL_TOOL, wallID, wallTypes[wallID].identifier, wallTypes[wallID].descs)
+	Tool(WALL_TOOL, wallID, wallTypes[wallID].identifier, "", wallTypes[wallID].descs, wallTypes[wallID].colour, SC_WALL)
 {
 
 }
@@ -281,8 +302,13 @@ int StreamlineTool::FloodFill(Simulation *sim, Brush *brush, Point position)
 	return 0;
 }
 
+ToolTool::ToolTool(int toolID, std::string name, ARGBColour color, std::string identifier, std::string description, int menuSection):
+	Tool(TOOL_TOOL, toolID, identifier, name, description, color, menuSection)
+{
+
+}
 ToolTool::ToolTool(int toolID):
-	Tool(TOOL_TOOL, toolID, toolTypes[toolID].identifier, toolTypes[toolID].descs)
+	Tool(TOOL_TOOL, toolID, toolTypes[toolID].identifier, toolTypes[toolID].name, toolTypes[toolID].descs, toolTypes[toolID].color, SC_TOOL)
 {
 
 }
@@ -311,7 +337,7 @@ int ToolTool::FloodFill(Simulation *sim, Brush *brush, Point position)
 {
 	return 0;
 }
-void ToolTool::Click(Simulation *sim, Point position)
+void ToolTool::Click(Simulation *sim, Brush *brush, Point position)
 {
 	if (toolID == TOOL_SIGN)
 	{
@@ -390,7 +416,7 @@ Tool * PropTool::Sample(Simulation *sim, Point position, bool shiftHeld)
 }
 
 DecoTool::DecoTool(int decoID):
-	Tool(DECO_TOOL, decoID, decoTypes[decoID].identifier, decoTypes[decoID].descs)
+	Tool(DECO_TOOL, decoID, decoTypes[decoID].identifier, decoTypes[decoID].name, decoTypes[decoID].descs, decoTypes[decoID].color, SC_DECO)
 {
 
 }
@@ -432,8 +458,9 @@ Tool * DecoTool::Sample(Simulation *sim, Point position, bool shiftHeld)
 	return this;
 }
 
-InvalidTool::InvalidTool(int type, int toolID, std::string identifier, std::string description):
-	Tool(type, toolID, identifier, description)
+InvalidTool::InvalidTool(int type, int toolID, std::string identifier, std::string name, std::string description, ARGBColour color,
+						 int menuSection):
+	Tool(type, toolID, identifier, name, description, color, menuSection)
 {
 
 }
@@ -459,19 +486,22 @@ Tool * InvalidTool::Sample(Simulation *sim, Point position, bool shiftHeld)
 }
 
 DecoPresetTool::DecoPresetTool(int decoPresetID):
-InvalidTool(DECO_PRESET, decoPresetID, colorlist[decoPresetID].identifier, colorlist[decoPresetID].descs)
+	InvalidTool(DECO_PRESET, decoPresetID, colorlist[decoPresetID].identifier, "", colorlist[decoPresetID].descs,
+				colorlist[decoPresetID].colour, SC_DECO)
 {
 
 }
 
 FavTool::FavTool(int favID):
-	InvalidTool(FAV_MENU_BUTTON, favID, fav[favID].identifier, fav[favID].description)
+	InvalidTool(FAV_MENU_BUTTON, favID, fav[favID].identifier, fav[favID].name, fav[favID].description, fav[favID].colour, SC_FAV)
 {
 
 }
 
 HudTool::HudTool(int hudID):
-InvalidTool(HUD_MENU_BUTTON, hudID, "DEFAULT_HUD_" + hud_menu[hudID].name, hud_menu[hudID].description)
+	InvalidTool(HUD_MENU_BUTTON, hudID, "DEFAULT_HUD_" + hud_menu[hudID].name, hud_menu[hudID].name, hud_menu[hudID].description,
+				hud_menu[hudID].color != COLPACK(0x000000) ? hud_menu[hudID].color : globalSim->elements[((hudID)*53)%(PT_NORMAL_NUM-1)+1].Colour,
+				SC_HUD)
 {
 
 }

@@ -1052,13 +1052,14 @@ void PowderToy::OnTick(uint32_t ticks)
 		}
 		else if (drawState == LINE)
 		{
+			Point drawPoint2 = cursor;
+			if (altHeld)
+				drawPoint2 = LineSnapCoords(initialDrawPoint, cursor);
 			if (((ToolTool*)activeTools[toolIndex])->GetID() == TOOL_WIND)
 			{
-				Point drawPoint2 = cursor;
-				if (altHeld)
-					drawPoint2 = LineSnapCoords(initialDrawPoint, cursor);
 				activeTools[toolIndex]->DrawLine(sim, currentBrush, initialDrawPoint, drawPoint2, false, toolStrength);
 			}
+			activeTools[toolIndex]->Drag(sim, currentBrush, initialDrawPoint, cursor);
 		}
 		else if (drawState == FILL)
 		{
@@ -1835,7 +1836,7 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 		if (drawState == POINTS)
 		{
 			activeTools[toolIndex]->DrawLine(sim, currentBrush, lastDrawPoint, cursor, true, toolStrength);
-			activeTools[toolIndex]->Click(sim, cursor);
+			activeTools[toolIndex]->Click(sim, currentBrush, cursor);
 		}
 		else if (drawState == LINE)
 		{

@@ -207,6 +207,16 @@ void GetDefaultProperties(lua_State * l, int id);
 void SetDefaultProperties(lua_State * l, int id, int stackPos);
 void ManageElementIdentifier(lua_State *l, int id, bool add);
 
+extern int lastToolIndex;
+void initToolsAPI(lua_State * l);
+int tools_allocate(lua_State * l);
+int tools_property(lua_State * l);
+int tools_free(lua_State * l);
+int tools_exists(lua_State * l);
+int tools_isCustom(lua_State * l);
+Tool * GetToolByIndex(int index);
+void SetToolIndex(lua_State *l, std::string identifier, int index);
+
 void initPlatformAPI(lua_State * l);
 int platform_platform(lua_State * l);
 int platform_build(lua_State * l);

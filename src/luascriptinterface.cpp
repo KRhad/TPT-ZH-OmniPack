@@ -42,6 +42,7 @@
 #include "lua/LuaSmartRef.h"
 #include "lua/LuaTCPSocket.h"
 #include "lua/LuaTextbox.h"
+#include "lua/LuaTool.h"
 #include "lua/LuaWindow.h"
 #include "simulation/Simulation.h"
 #include "simulation/WallNumbers.h"
@@ -2800,7 +2801,7 @@ int interface_addComponent(lua_State * l)
 		luaL_typerror(l, 1, "Component");
 	if (luaComponent)
 	{
-		auto ok = grabbed_components.insert(std::make_pair(luaComponent, LuaSmartRef(l)));
+		auto ok = grabbed_components.insert(std::make_pair(luaComponent, LuaSmartRef()));
 		if (ok.second)
 		{
 			auto it = ok.first;
@@ -2894,7 +2895,7 @@ int interface_beginMessageBox(lua_State * l)
 	auto title = PickIfType(l, 1, std::string("Title"));
 	auto message = PickIfType(l, 2, std::string("Message"));
 	//auto large = PickIfType(l, 3, false); // unused in mod, because info prompts automatically size themselves
-	auto cb = std::make_shared<LuaSmartRef>(l);
+	auto cb = std::make_shared<LuaSmartRef>();
 	if (lua_gettop(l))
 	{
 		cb->Assign(l, lua_gettop(l));
@@ -2922,7 +2923,7 @@ int interface_beginMessageBox(lua_State * l)
 int interface_beginThrowError(lua_State * l)
 {
 	auto errorMessage = PickIfType(l, 1, std::string("Error text"));
-	auto cb = std::make_shared<LuaSmartRef>(l);
+	auto cb = std::make_shared<LuaSmartRef>();
 	if (lua_gettop(l))
 	{
 		cb->Assign(l, lua_gettop(l));
@@ -2953,7 +2954,7 @@ int interface_beginInput(lua_State * l)
 	auto prompt = PickIfType(l, 2, std::string("Enter some text:"));
 	auto text = PickIfType(l, 3, std::string(""));
 	auto shadow = PickIfType(l, 4, std::string(""));
-	auto cb = std::make_shared<LuaSmartRef>(l); // * Bind to main lua state (might be different from l).
+	auto cb = std::make_shared<LuaSmartRef>();
 	if (lua_gettop(l))
 	{
 		cb->Assign(l, lua_gettop(l));
@@ -2993,7 +2994,7 @@ int interface_beginConfirm(lua_State * l)
 	auto title = PickIfType(l, 1, std::string("Title"));
 	auto message = PickIfType(l, 2, std::string("Message"));
 	auto buttonText = PickIfType(l, 3, std::string("Confirm"));
-	auto cb = std::make_shared<LuaSmartRef>(l);
+	auto cb = std::make_shared<LuaSmartRef>();
 	if (lua_gettop(l))
 	{
 		cb->Assign(l, lua_gettop(l));
@@ -3191,6 +3192,7 @@ int interface_activeTool(lua_State * l)
 		return luaL_error(l, "Invalid tool identifier %s", identifier.c_str());
 	}
 	activeTools[index] = tool;
+	tool->Select(index);
 	return 0;
 }
 
@@ -3826,7 +3828,7 @@ int elements_allocate(lua_State * l)
 		luaSim->elements[newID].Enabled = true;
 		luaSim->elements[newID].Identifier = identifier;
 		luaSim->elements[newID].MenuSection = SC_OTHER;
-		menuSections[SC_OTHER]->AddTool(new Tool(INVALID_TOOL, identifier, ""));
+		menuSections[SC_OTHER]->AddTool(new Tool(INVALID_TOOL, identifier, "", "", 0, SC_OTHER, 0));
 
 		lua_getglobal(l, "elements");
 		lua_pushinteger(l, newID);
@@ -3839,6 +3841,7 @@ int elements_allocate(lua_State * l)
 			custom_can_move[newID][elem] = 0;
 		}
 		custom_init_can_move();
+		SetToolIndex(l, identifier, lastToolIndex++);
 	}
 
 	lua_pushinteger(l, newID);
@@ -4162,6 +4165,7 @@ int elements_free(lua_State * l)
 	lua_pushnil(l);
 	lua_setfield(l, -2, luaSim->elements[id].Identifier.c_str());
 	lua_pop(l, 1);
+	SetToolIndex(l, luaSim->elements[id].Identifier, -1);
 
 	return 0;
 }
@@ -4262,6 +4266,291 @@ void ManageElementIdentifier(lua_State *l, int id, bool add)
 		}
 		lua_pop(l, 1);
 	}
+}
+
+/*
+
+TOOLS API
+
+*/
+
+int lastToolIndex = 0;
+std::map<std::string, int> knownToolIndexes;
+
+void initToolsAPI(lua_State * l)
+{
+	//Methods
+	struct luaL_Reg toolsAPIMethods [] = {
+		{"allocate", tools_allocate},
+		{"property", tools_property},
+		{"free", tools_free},
+		{"exists", tools_exists},
+		{"isCustom", tools_isCustom},
+		{NULL, NULL}
+	};
+	luaL_register(l, "tools", toolsAPIMethods);
+
+	lua_newtable(l);
+	lua_setfield(l, -2, "index");
+	for (int i = 0; i < SC_TOTAL; i++)
+	{
+		for (auto *tool : menuSections[i]->tools)
+		{
+			SetToolIndex(l, tool->GetIdentifier(), lastToolIndex++);
+		}
+	}
+}
+
+int tools_allocate(lua_State * l)
+{
+	luaL_checktype(l, 1, LUA_TSTRING);
+	luaL_checktype(l, 2, LUA_TSTRING);
+	auto group = Format::ToUpper(tpt_lua_toString(l, 1));
+	auto name = Format::ToUpper(tpt_lua_toString(l, 2));
+	if (name.find("_") != name.npos)
+	{
+		return luaL_error(l, "The tool name may not contain '_'.");
+	}
+	if (group.find("_") != name.npos)
+	{
+		return luaL_error(l, "The group name may not contain '_'.");
+	}
+	if (group == "DEFAULT")
+	{
+		return luaL_error(l, "You cannot create tools in the 'DEFAULT' group.");
+	}
+	std::string identifier = group + "_TOOL_" + name;
+	if (knownToolIndexes.find(identifier) != knownToolIndexes.end())
+	{
+		return luaL_error(l, "Tool identifier already in use.");
+	}
+	int index = lastToolIndex++;
+	{
+		luaTools[index] = LuaToolData(index, name, COLRGB(255, 255, 255), identifier, "No description provided.", SC_TOOL, 1);
+		luaToolRefs[index] = CustomTool();
+	}
+	FillMenus();
+	lua_pushinteger(l, index);
+	SetToolIndex(l, identifier, index);
+	return 1;
+}
+
+template <typename T>
+struct DependentFalse : std::false_type
+{
+};
+
+bool IsCustom(int index)
+{
+	return luaTools.find(index)->second.index;
+}
+
+int tools_property(lua_State * l)
+{
+	int index = luaL_checkinteger(l, 1);
+	bool isCustom = IsCustom(index);
+	Tool *tool = GetToolByIndex(index);
+	if (!tool)
+	{
+		return luaL_error(l, "Invalid tool");
+	}
+	LuaToolData *luaToolData = &luaTools[index];
+	auto toolRefs = &luaToolRefs[index];
+
+	std::string propertyName = tpt_lua_checkString(l, 2);
+	auto handleCallback = [l, &toolRefs, &propertyName, &index](
+		auto customToolMember,
+		const char *luaPropertyName
+	) {
+		if (propertyName == luaPropertyName)
+		{
+			if (lua_gettop(l) > 2)
+			{
+				if (luaTools.find(index) == luaTools.end())
+				{
+					luaL_error(l, "Cannot change callbacks of default tools");
+				}
+				if (lua_type(l, 3) == LUA_TFUNCTION)
+				{
+					(toolRefs->*customToolMember).Assign(l, 3);
+				}
+				else if (lua_type(l, 3) == LUA_TBOOLEAN && !lua_toboolean(l, 3))
+				{
+					(toolRefs->*customToolMember).Clear();
+				}
+				return true;
+			}
+			luaL_error(l, "Invalid tool property");
+		}
+		return false;
+	};
+	if (handleCallback(&CustomTool::perform , "Perform" ) ||
+		handleCallback(&CustomTool::click   , "Click"   ) ||
+		handleCallback(&CustomTool::drag    , "Drag"    ) ||
+		handleCallback(&CustomTool::draw    , "Draw"    ) ||
+		handleCallback(&CustomTool::drawLine, "DrawLine") ||
+		handleCallback(&CustomTool::drawRect, "DrawRect") ||
+		handleCallback(&CustomTool::drawFill, "DrawFill") ||
+		handleCallback(&CustomTool::select  , "Select"  ))
+	{
+		return 0;
+	}
+
+	if (propertyName == "Identifier")
+	{
+		tpt_lua_pushString(l, luaToolData->identifier);
+		return 1;
+	}
+
+	// Had to separate this out into custom tool ver. and non-custom tool ver.
+	// Because Tool* objects are too temporary in my mod to set their values
+	if (isCustom)
+	{
+		int returnValueCount = 0;
+		auto handleProperty = [l, &luaToolData, &propertyName, &returnValueCount](
+			auto toolDataMember,
+			const char *luaPropertyName,
+			bool buildMenusIfChanged
+		) {
+			if (propertyName == luaPropertyName)
+			{
+				auto &thing = luaToolData->*toolDataMember;
+				using PropertyType = std::remove_reference_t<decltype(thing)>;
+				if (lua_gettop(l) > 2)
+				{
+					if      constexpr (std::is_same_v<PropertyType, std::string >) thing = tpt_lua_checkString(l, 3);
+					else if constexpr (std::is_same_v<PropertyType, bool        >) thing =lua_toboolean(l, 3);
+					else if constexpr (std::is_same_v<PropertyType, int         >) thing =luaL_checkinteger(l, 3);
+					else if constexpr (std::is_same_v<PropertyType, ARGBColour  >) thing =luaL_checkinteger(l, 3);
+					else static_assert(DependentFalse<PropertyType>::value);
+					if (buildMenusIfChanged)
+					{
+						FillMenus();
+					}
+				}
+				else
+				{
+					if      constexpr (std::is_same_v<PropertyType, std::string >) tpt_lua_pushString(l, thing);
+					else if constexpr (std::is_same_v<PropertyType, bool        >) lua_pushboolean(l, thing);
+					else if constexpr (std::is_same_v<PropertyType, int         >) lua_pushinteger(l, thing);
+					else if constexpr (std::is_same_v<PropertyType, ARGBColour  >) lua_pushinteger(l, thing);
+					else static_assert(DependentFalse<PropertyType>::value);
+					returnValueCount = 1;
+				}
+				return true;
+			}
+			return false;
+		};
+		if (handleProperty(&LuaToolData::name        , "Name",  true) ||
+			handleProperty(&LuaToolData::description , "Description",  true) ||
+			handleProperty(&LuaToolData::color       , "Colour"     ,  true) ||
+			handleProperty(&LuaToolData::color       , "Color"      ,  true) ||
+			handleProperty(&LuaToolData::menuSection , "MenuSection",  true) ||
+			handleProperty(&LuaToolData::menuVisible , "MenuVisible",  true))
+		{
+			return returnValueCount;
+		}
+	}
+	else
+	{
+		if (lua_gettop(l) > 2)
+		{
+			return luaL_error(l, "Can only change properties of custom tools");
+		}
+		auto handleProperty = [l, &tool, &propertyName](auto toolGetter, const char *luaPropertyName, bool buildMenusIfChanged) {
+			if (propertyName == luaPropertyName)
+			{
+				auto thing = (tool->*toolGetter)();
+				using PropertyType = std::remove_reference_t<decltype(thing)>;
+
+					if      constexpr (std::is_same_v<PropertyType, std::string >) tpt_lua_pushString(l, thing);
+					else if constexpr (std::is_same_v<PropertyType, bool        >) lua_pushboolean(l, thing);
+					else if constexpr (std::is_same_v<PropertyType, int         >) lua_pushinteger(l, thing);
+					else if constexpr (std::is_same_v<PropertyType, ARGBColour  >) lua_pushinteger(l, thing);
+					else static_assert(DependentFalse<PropertyType>::value);
+				return true;
+			}
+			return false;
+		};
+		if (handleProperty(&Tool::GetName        , "Name"       ,  true) ||
+			handleProperty(&Tool::GetDescription , "Description",  true) ||
+			handleProperty(&Tool::GetColor       , "Colour"     ,  true) ||
+			handleProperty(&Tool::GetColor       , "Color"      ,  true) ||
+			handleProperty(&Tool::GetMenuSection , "MenuSection",  true) ||
+			handleProperty(&Tool::GetMenuVisible , "MenuVisible",  true))
+		{
+			return 1;
+		}
+	}
+
+	return luaL_error(l, "Invalid tool property");
+}
+
+int tools_free(lua_State * l)
+{
+	int index = luaL_checkinteger(l, 1);
+	auto *tool = GetToolByIndex(index);
+	if (!tool)
+	{
+		return luaL_error(l, "Invalid tool");
+	}
+	if (!IsCustom(index))
+	{
+		return luaL_error(l, "Can only free custom tools");
+	}
+	luaTools.erase(index);
+	luaToolRefs.erase(index);
+	FillMenus();
+	return 0;
+}
+
+int tools_exists(lua_State * l)
+{
+	int index = luaL_checkinteger(l, 1);
+	lua_pushboolean(l, bool(GetToolByIndex(index)));
+	return 1;
+}
+
+int tools_isCustom(lua_State * l)
+{
+	int index = luaL_checkinteger(l, 1);
+	Tool *tool = GetToolByIndex(index);
+	if (!tool)
+	{
+		return luaL_error(l, "Invalid tool");
+	}
+	lua_pushboolean(l, IsCustom(index));
+	return 1;
+}
+
+Tool * GetToolByIndex(int index)
+{
+	for (auto entry : knownToolIndexes)
+	{
+		if (entry.second == index)
+			return GetToolFromIdentifier(entry.first);
+	}
+
+	return nullptr;
+}
+
+void SetToolIndex(lua_State *l, std::string identifier, int index)
+{
+	lua_getglobal(l, "tools");
+	lua_getfield(l, -1, "index");
+	tpt_lua_pushString(l, identifier);
+	if (index != -1)
+	{
+		lua_pushinteger(l, index);
+	}
+	else
+	{
+		lua_pushnil(l);
+	}
+	lua_settable(l, -3);
+	lua_pop(l, 2);
+
+	knownToolIndexes[identifier] = index;
 }
 
 void initPlatformAPI(lua_State * l)

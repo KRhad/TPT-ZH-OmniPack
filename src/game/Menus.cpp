@@ -1,8 +1,8 @@
 
-#include <sstream>
 #include "Menus.h"
 #include "Favorite.h"
 #include "hud.h"
+#include "lua/LuaTool.h"
 #include "simulation/Simulation.h"
 #include "simulation/Tool.h"
 #include "simulation/WallNumbers.h"
@@ -22,33 +22,33 @@ bool stickyCategories = false;
 
 void InitMenusections()
 {
-	menuSections[0] =  new MenuSection('\xC1', "Walls", true, false);
-	menuSections[1] =  new MenuSection('\xC2', "Electronics", true, false);
-	menuSections[2] =  new MenuSection('\xD6', "Powered Materials", true, false);
-	menuSections[3] =  new MenuSection('\x99', "Sensors", true, false);
-	menuSections[4] =  new MenuSection('\xE3', "Force Creating", true, false);
-	menuSections[5] =  new MenuSection('\xC3', "Explosives", true, false);
-	menuSections[6] =  new MenuSection('\xC5', "Gases", true, false);
-	menuSections[7] =  new MenuSection('\xC4', "Liquids", true, false);
-	menuSections[8] =  new MenuSection('\xD0', "Powders", true, false);
-	menuSections[9] =  new MenuSection('\xD1', "Solids", true, false);
-	menuSections[10] = new MenuSection('\xC6', "Radioactive", true, false);
-	menuSections[11] = new MenuSection('\xCC', "Special", true, false);
-	menuSections[12] = new MenuSection('\xD2', "Game of Life", true, false);
-	menuSections[13] = new MenuSection('\xD7', "Tools", true, false);
-	menuSections[14] = new MenuSection('\xE2', "Favorites & Recents", true, false);
+	menuSections[SC_WALL]      = new MenuSection('\xC1', "Walls", true, false);
+	menuSections[SC_ELEC]      = new MenuSection('\xC2', "Electronics", true, false);
+	menuSections[SC_POWERED]   = new MenuSection('\xD6', "Powered Materials", true, false);
+	menuSections[SC_SENSOR]    = new MenuSection('\x99', "Sensors", true, false);
+	menuSections[SC_FORCE]     = new MenuSection('\xE3', "Force Creating", true, false);
+	menuSections[SC_EXPLOSIVE] = new MenuSection('\xC3', "Explosives", true, false);
+	menuSections[SC_GAS]       = new MenuSection('\xC5', "Gases", true, false);
+	menuSections[SC_LIQUID]    = new MenuSection('\xC4', "Liquids", true, false);
+	menuSections[SC_POWDERS]   = new MenuSection('\xD0', "Powders", true, false);
+	menuSections[SC_SOLIDS]    = new MenuSection('\xD1', "Solids", true, false);
+	menuSections[SC_NUCLEAR]   = new MenuSection('\xC6', "Radioactive", true, false);
+	menuSections[SC_SPECIAL]   = new MenuSection('\xCC', "Special", true, false);
+	menuSections[SC_LIFE]      = new MenuSection('\xD2', "Game of Life", true, false);
+	menuSections[SC_TOOL]      = new MenuSection('\xD7', "Tools", true, false);
+	menuSections[SC_FAV]       = new MenuSection('\xE2', "Favorites & Recents", true, false);
 #ifdef NOMOD
-	menuSections[15] = new MenuSection('\xE5', "Deco", true, true);
-	menuSections[16] = new MenuSection('\xE2', "Other", false, false); //list of elements that are hidden or disabled, not in any menu
+	menuSections[SC_DECO]      = new MenuSection('\xE5', "Deco", true, true);
+	menuSections[SC_OTHER]     = new MenuSection('\xE2', "Other", false, false); //list of elements that are hidden or disabled, not in any menu
 #ifdef TOUCHUI
-	menuSections[17] = new MenuSection('\xE6', "Search", true, true);
+	menuSections[SC_SEARCH]    = new MenuSection('\xE6', "Search", true, true);
 #endif
 #else
-	menuSections[15] = new MenuSection('\xE5', "Deco", true, true);
-	menuSections[16] = new MenuSection('\xE2', "Favorite2", false, false);
-	menuSections[17] = new MenuSection('\xE2', "HUD", false, false);
-	menuSections[18] = new MenuSection('\xE2', "Other", false, false); //list of elements that are hidden or disabled, not in any menu
-	menuSections[19] = new MenuSection('\xE6', "Search", false, true);
+	menuSections[SC_DECO]      = new MenuSection('\xE5', "Deco", true, true);
+	menuSections[SC_FAV2]      = new MenuSection('\xE2', "Favorite2", false, false);
+	menuSections[SC_HUD]       = new MenuSection('\xE2', "HUD", false, false);
+	menuSections[SC_OTHER]     = new MenuSection('\xE2', "Other", false, false); //list of elements that are hidden or disabled, not in any menu
+	menuSections[SC_SEARCH]    = new MenuSection('\xE6', "Search", false, true);
 #endif
 }
 
@@ -140,7 +140,7 @@ void FillMenus()
 	}
 	for (auto &cgol : static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).GetCustomGOL())
 	{
-		menuSections[SC_LIFE]->AddTool(new GolTool(cgol.rule, cgol.nameString, "Custom GOL type: " + cgol.ruleString));
+		menuSections[SC_LIFE]->AddTool(new GolTool(cgol.rule, cgol.nameString, "Custom GOL type: " + cgol.ruleString, cgol.color1));
 	}
 
 	//Fill up wall menu
@@ -200,6 +200,16 @@ void FillMenus()
 		menuSections[SC_HUD]->AddTool(new HudTool(i));
 	}
 #endif
+
+	for (const auto &luaTool : luaTools)
+	{
+		// Create lua tool object from metadata
+		LuaTool *tool = luaTool.second.GetTool();
+		if (tool->GetMenuVisible() && tool->GetMenuSection() >= 0 && tool->GetMenuSection() < SC_TOTAL)
+			menuSections[tool->GetMenuSection()]->AddTool(tool);
+		else
+			menuSections[SC_OTHER]->AddTool(tool);
+	}
 
 	//restore active tools
 	if (activeTools[0])

@@ -117,7 +117,7 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 	int toolID = current->GetID();
 	if (current->GetType() == ELEMENT_TOOL)
 	{
-		draw_tool_button(vid_buf, x, y, PIXPACK(globalSim->elements[toolID].Colour), toolID == 0 ? "" : globalSim->elements[toolID].Name);
+		draw_tool_button(vid_buf, x, y, PIXPACK(current->GetColor()), toolID == 0 ? "" : current->GetName());
 
 		//special case for erase tool
 		if (!toolID)
@@ -324,7 +324,7 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 			drawtext(vid_buf, x+9, y+5, "\xA0", 255, 255, 255, 255);
 		}
 		else
-			draw_tool_button(vid_buf, x, y, PIXPACK(toolTypes[toolID].color), toolTypes[toolID].name);
+			draw_tool_button(vid_buf, x, y, PIXPACK(current->GetColor()), current->GetName());
 	}
 	else if (current->GetType() == DECO_TOOL)
 	{
@@ -368,33 +368,11 @@ int draw_tool_xy(pixel *vid_buf, int x, int y, Tool* current)
 		else if (toolID == DECO_DIVIDE)
 			drawtext(vid_buf, x+12, y+5, "/", COLR(decocolor), COLG(decocolor), COLB(decocolor), 255);
 	}
-	else if (current->GetType() == GOL_TOOL)
+	// No special logic or graphics for these
+	else if (current->GetType() == GOL_TOOL || current->GetType() == FAV_MENU_BUTTON || current->GetType() == HUD_MENU_BUTTON
+			  || current->GetType() == CUSTOM_TOOL)
 	{
-		if (toolID < NGOL)
-			draw_tool_button(vid_buf, x, y, PIXPACK(builtinGol[toolID].color), builtinGol[toolID].name);
-		else
-		{
-			auto *cgol = static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).GetCustomGOLByRule(toolID);
-			int color = 0;
-			std::string name;
-			if (cgol)
-			{
-				color = cgol->color1;
-				name = cgol->nameString;
-			}
-			draw_tool_button(vid_buf, x, y, PIXPACK(color), name);
-		}
-	}
-	else if (current->GetType() == FAV_MENU_BUTTON)
-	{
-		draw_tool_button(vid_buf, x, y, PIXPACK(fav[toolID].colour), fav[toolID].name);
-	}
-	else if (current->GetType() == HUD_MENU_BUTTON)
-	{
-		if (hud_menu[toolID].color != COLPACK(0x000000))
-			draw_tool_button(vid_buf, x, y, PIXPACK(hud_menu[toolID].color), hud_menu[toolID].name);
-		else
-			draw_tool_button(vid_buf, x, y, PIXPACK(globalSim->elements[((toolID)*53)%(PT_NORMAL_NUM-1)+1].Colour), hud_menu[toolID].name);
+		draw_tool_button(vid_buf, x, y, PIXPACK(current->GetColor()), current->GetName());
 	}
 	return 26;
 }

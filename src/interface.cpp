@@ -2885,6 +2885,12 @@ void menu_draw_text(Tool* over, int y)
 		UpdateToolTip(toolTip.str(), Point(XRES - textwidth(toolTip.str().c_str()) - BARSIZE, y), ELEMENTTIP, -1);
 }
 
+void do_select(int toolIndex, Tool *selected)
+{
+	activeTools[toolIndex] = selected;
+	activeTools[toolIndex]->Select(toolIndex);
+}
+
 void menu_select_element(int b, Tool* over)
 {
 	if (the_game->IsinsideRenderOptions())
@@ -3020,7 +3026,7 @@ void menu_select_element(int b, Tool* over)
 			{
 				if (activeTools[0]->GetIdentifier() != "DEFAULT_DECOR_SET")
 				{
-					activeTools[0] = GetToolFromIdentifier("DEFAULT_DECOR_SET");
+					do_select(0, GetToolFromIdentifier("DEFAULT_DECOR_SET"));
 				}
 			}
 			currR = COLR(decocolor), currG = COLG(decocolor), currB = COLB(decocolor), currA = COLA(decocolor);
@@ -3028,7 +3034,7 @@ void menu_select_element(int b, Tool* over)
 		}
 		else if ((sdl_mod & (KMOD_ALT)) && (sdl_mod & (KMOD_CTRL|KMOD_GUI)) && !(sdl_mod & (KMOD_SHIFT)) && ((ElementTool*)over)->GetID() >= 0)
 		{
-			activeTools[2] = over;
+			do_select(2, over);
 		}
 		else if ((sdl_mod & (KMOD_SHIFT)) && (sdl_mod & (KMOD_CTRL|KMOD_GUI)) && !(sdl_mod & (KMOD_ALT)))
 		{
@@ -3055,7 +3061,7 @@ void menu_select_element(int b, Tool* over)
 				Engine::Ref().ShowWindow(confirmPrompt);
 			}
 #endif
-			activeTools[0] = over;
+			do_select(0, over);
 			if (((ToolTool*)over)->GetID() == TOOL_PROP)
 				openProp = true;
 			if (((ToolTool*)over)->GetID() == TOOL_GOL)
@@ -3109,7 +3115,7 @@ void menu_select_element(int b, Tool* over)
 		}
 		else if ((sdl_mod & (KMOD_ALT)) && (sdl_mod & (KMOD_CTRL|KMOD_GUI)) && !(sdl_mod & (KMOD_SHIFT)) && ((ElementTool*)over)->GetID() >= 0)
 		{
-			activeTools[2] = over;
+			do_select(2, over);
 		}
 		else if ((sdl_mod & (KMOD_SHIFT)) && (sdl_mod & (KMOD_CTRL|KMOD_GUI)) && !(sdl_mod & (KMOD_ALT)))
 		{
@@ -3138,7 +3144,7 @@ void menu_select_element(int b, Tool* over)
 		}
 		else
 		{
-			activeTools[1] = over;
+			do_select(1, over);
 			if (((ToolTool*)over)->GetID() == TOOL_PROP)
 				openProp = true;
 			if (((ToolTool*)over)->GetID() == TOOL_GOL)

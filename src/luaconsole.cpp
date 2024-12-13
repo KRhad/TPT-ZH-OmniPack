@@ -144,6 +144,7 @@ void luacon_open()
 	initInterfaceAPI(l);
 	initGraphicsAPI(l);
 	initElementsAPI(l);
+	initToolsAPI(l);
 	initPlatformAPI(l);
 	initEventAPI(l);
 	initHttpAPI(l);
@@ -205,16 +206,16 @@ void luacon_open()
 	SETCONST(l, DEBUG_PARTICLE);
 	SETCONST(l, DEBUG_SURFNORM);
 
-	lua_gr_func_v = std::vector<LuaSmartRef>(PT_NUM, l);
+	lua_gr_func_v = std::vector<LuaSmartRef>(PT_NUM);
 	lua_gr_func = &lua_gr_func_v[0];
-	lua_el_func_v = std::vector<LuaSmartRef>(PT_NUM, l);
+	lua_el_func_v = std::vector<LuaSmartRef>(PT_NUM);
 	lua_el_func = &lua_el_func_v[0];
 	lua_el_mode = new int[PT_NUM];
 	std::fill(lua_el_mode, lua_el_mode + PT_NUM, 0);
-	luaCtypeDrawHandlers = std::vector<LuaSmartRef>(PT_NUM, l);
-	luaCreateHandlers = std::vector<LuaSmartRef>(PT_NUM, l);
-	luaCreateAllowedHandlers = std::vector<LuaSmartRef>(PT_NUM, l);
-	luaChangeTypeHandlers = std::vector<LuaSmartRef>(PT_NUM, l);
+	luaCtypeDrawHandlers = std::vector<LuaSmartRef>(PT_NUM);
+	luaCreateHandlers = std::vector<LuaSmartRef>(PT_NUM);
+	luaCreateAllowedHandlers = std::vector<LuaSmartRef>(PT_NUM);
+	luaChangeTypeHandlers = std::vector<LuaSmartRef>(PT_NUM);
 
 	lua_sethook(l, &lua_hook, LUA_MASKCOUNT, 4000000);
 }
