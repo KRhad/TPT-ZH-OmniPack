@@ -860,14 +860,11 @@ int Simulation::TryMove(int i, int x, int y, int nx, int ny)
 
 		if (pmap[ny][nx] && ID(pmap[ny][nx]) == e)
 			pmap[ny][nx] = 0;
-		parts[e].x += float(x - nx);
-		parts[e].y += float(y - ny);
+		parts[e].x = parts[i].x;
+		parts[e].y = parts[i].y;
 		int rx = int(parts[e].x + 0.5f);
 		int ry = int(parts[e].y + 0.5f);
-		// This check will never fail unless the pmap array has already been corrupted via another bug
-		// In that case, r's position is inaccurate (not actually at nx/ny) and rx/ry may be out of bounds
-		if (InBounds(rx, ry))
-			pmap[ry][rx] = PMAP(e, parts[e].type);
+		pmap[ry][rx] = PMAP(e, parts[e].type);
 	}
 	return 1;
 }
