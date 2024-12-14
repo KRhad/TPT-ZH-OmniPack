@@ -304,6 +304,7 @@ void initSimulationAPI(lua_State * l)
 		{"historyForward", simulation_historyForward},
 		{"replaceModeFlags", simulation_replaceModeFlags},
 		{"listCustomGol", simulation_listCustomGol},
+		{"listDefaultGol", simulation_listDefaultGol},
 		{"addCustomGol", simulation_addCustomGol},
 		{"removeCustomGol", simulation_removeCustomGol},
 		{"lastUpdatedID", simulation_lastUpdatedID},
@@ -1903,6 +1904,28 @@ int simulation_listCustomGol(lua_State *l)
 		lua_pushnumber(l, cgol.color1);
 		lua_setfield(l, -2, "color1");
 		lua_pushnumber(l, cgol.color2);
+		lua_setfield(l, -2, "color2");
+		lua_rawseti(l, -2, ++i);
+	}
+	return 1;
+}
+
+int simulation_listDefaultGol(lua_State *l)
+{
+	int i = 0;
+	lua_newtable(l);
+	for (auto &gol : builtinGol)
+	{
+		lua_newtable(l);
+		tpt_lua_pushString(l, gol.name);
+		lua_setfield(l, -2, "name");
+		tpt_lua_pushString(l, SerialiseGOLRule(gol.ruleset));
+		lua_setfield(l, -2, "rulestr");
+		lua_pushnumber(l, gol.ruleset);
+		lua_setfield(l, -2, "rule");
+		lua_pushnumber(l, COLMODALPHA(gol.color, 0));
+		lua_setfield(l, -2, "color1");
+		lua_pushnumber(l, COLMODALPHA(gol.color2, 0));
 		lua_setfield(l, -2, "color2");
 		lua_rawseti(l, -2, ++i);
 	}

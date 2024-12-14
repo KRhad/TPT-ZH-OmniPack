@@ -106,6 +106,7 @@ int simulation_historyRestore(lua_State *l);
 int simulation_historyForward(lua_State *l);
 int simulation_replaceModeFlags(lua_State *l);
 int simulation_listCustomGol(lua_State *l);
+int simulation_listDefaultGol(lua_State *l);
 int simulation_addCustomGol(lua_State *l);
 int simulation_removeCustomGol(lua_State *l);
 int simulation_lastUpdatedID(lua_State *l);
