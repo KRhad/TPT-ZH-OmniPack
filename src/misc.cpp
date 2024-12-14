@@ -267,6 +267,7 @@ void save_presets()
 	setBool(root, "ForceIntegerScaling", Engine::Ref().IsForceIntegerScaling());
 	setBool(root, "MomentumScroll", Engine::Ref().IsMomentumScroll());
 	setBool(root, "FastQuit", Engine::Ref().IsFastQuit());
+	setBool(root, "GlobalQuit", Engine::Ref().IsGlobalQuit());
 	setBool(root, "MouseClickRequired", stickyCategories);
 	setBool(root, "PerfectCircleBrush", perfectCircleBrush);
 	setBool(root, "GraveExitsConsole", graveExitsConsole);
@@ -645,6 +646,8 @@ void load_presets(void)
 			Engine::Ref().SetMomentumScroll(tmpobj->valueint ? true : false);
 		if ((tmpobj = cJSON_GetObjectItem(root, "FastQuit")))
 			Engine::Ref().SetFastQuit(tmpobj->valueint ? true : false);
+		if ((tmpobj = cJSON_GetObjectItem(root, "GlobalQuit")))
+			Engine::Ref().SetGlobalQuit(tmpobj->valueint ? true : false);
 		if ((tmpobj = cJSON_GetObjectItem(root, "WindowX")))
 			savedWindowX = tmpobj->valueint;
 		if ((tmpobj = cJSON_GetObjectItem(root, "WindowY")))

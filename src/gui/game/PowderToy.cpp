@@ -2008,7 +2008,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 	switch (scan)
 	{
 	case SDL_SCANCODE_Q:
-		if (ctrl)
+		if (ctrl && Engine::Ref().IsGlobalQuit())
 			break;
 	case SDL_SCANCODE_ESCAPE:
 	{

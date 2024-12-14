@@ -28,7 +28,7 @@ class OptionsUI : public ui::Window
 	Checkbox *forceIntegerScalingCheckbox;
 	Dropdown *filteringDropdown;
 
-	Checkbox *fastQuitCheckbox, *updatesCheckbox, *momentumScrollingCheckbox, *stickyCategoriesCheckbox, *savePressureCheckbox;
+	Checkbox *fastQuitCheckbox, *globalQuitCheckbox, *updatesCheckbox, *momentumScrollingCheckbox, *stickyCategoriesCheckbox, *savePressureCheckbox;
 	Checkbox *circleCheckbox, *graveExitsConsole, *incompatibleCheckbox;
 	Button *dataFolderButton, *migrationButton;
 
@@ -54,6 +54,7 @@ class OptionsUI : public ui::Window
 	void AltFullscreenChecked(bool checked);
 	void ForceIntegerScalingChecked(bool checked);
 	void FastQuitChecked(bool checked);
+	void GlobalQuitChecked(bool checked);
 	void UpdatesChecked(bool checked);
 	void SavePressureChecked(bool checked);
 	void MomentumChecked(bool checked);

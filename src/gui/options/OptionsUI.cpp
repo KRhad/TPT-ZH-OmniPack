@@ -241,6 +241,15 @@ OptionsUI::OptionsUI(Simulation *sim):
 	descLabel = new Label(fastQuitCheckbox->Below(Point(15, 0)), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Always exit completely when clicking \"X\"");
 	descLabel->SetColor(COLRGB(150, 150, 150));
 	scrollArea->AddComponent(descLabel);
+
+	prev = globalQuitCheckbox = new Checkbox(prev->Below(Point(0, 15)), Point(Checkbox::AUTOSIZE, checkboxHeight), "Global Quit");
+	globalQuitCheckbox->UseCheckIcon(useCheckIcon);
+	globalQuitCheckbox->SetCallback([&](bool checked) { this->GlobalQuitChecked(checked); });
+	scrollArea->AddComponent(globalQuitCheckbox);
+
+	descLabel = new Label(globalQuitCheckbox->Below(Point(15, 0)), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Ctrl+q works everywhere");
+	descLabel->SetColor(COLRGB(150, 150, 150));
+	scrollArea->AddComponent(descLabel);
 #endif
 
 	prev = updatesCheckbox = new Checkbox(Point(heatSimCheckbox->GetPosition().X, prev->Below(Point(0, 15)).Y), Point(Checkbox::AUTOSIZE, checkboxHeight), "Update Check");
@@ -370,6 +379,7 @@ void OptionsUI::InitializeOptions()
 
 #ifndef TOUCHUI
 	fastQuitCheckbox->SetChecked(Engine::Ref().IsFastQuit());
+	globalQuitCheckbox->SetChecked(Engine::Ref().IsGlobalQuit());
 	momentumScrollingCheckbox->SetChecked(Engine::Ref().IsMomentumScroll());
 	stickyCategoriesCheckbox->SetChecked(stickyCategories);
 #endif
@@ -539,6 +549,11 @@ void OptionsUI::ForceIntegerScalingChecked(bool checked)
 void OptionsUI::FastQuitChecked(bool checked)
 {
 	Engine::Ref().SetFastQuit(checked);
+}
+
+void OptionsUI::GlobalQuitChecked(bool checked)
+{
+	Engine::Ref().SetGlobalQuit(checked);
 }
 
 void OptionsUI::UpdatesChecked(bool checked)

@@ -59,6 +59,9 @@ public:
 	bool IsFastQuit() { return fastQuit; }
 	void SetFastQuit(bool fastQuit) { this->fastQuit = fastQuit; }
 
+	bool IsGlobalQuit() { return globalQuit; }
+	void SetGlobalQuit(bool globalQuit) { this->globalQuit = globalQuit; }
+
 	void ClipboardPush(std::string text);
 	std::string ClipboardPull();
 	int GetModifiers();
@@ -88,6 +91,7 @@ private:
 	int drawLimit = 0;
 
 	bool fastQuit = false;
+	bool globalQuit = true;
 
 	bool secondaryEngineLoop = false;
 };
