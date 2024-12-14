@@ -162,7 +162,8 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 	bool hasPalette = false;
 	int partMap[PT_NUM];
 	bool ignoreMissingErrors[PT_NUM];
-	for(int i = 0; i < PT_NUM; i++)
+	std::map<std::string, int> missingElementIdentifiers;
+	for (int i = 0; i < PT_NUM; i++)
 	{
 		partMap[i] = i;
 		ignoreMissingErrors[i] = false;
@@ -206,7 +207,7 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 			}
 			else
 			{
-				saveLoadData.identifiers.insert(pi);
+				missingElementIdentifiers.insert(pi);
 			}
 		}
 		hasPalette = true;
@@ -337,6 +338,14 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 			// Particle already exists in this location. Set photons to 0, then kill it and all stacked particles in the loop below
 			photons[y][x] = 0;
 			doFullScan = true;
+		}
+	}
+
+	for (const auto &pi : missingElementIdentifiers)
+	{
+		if (saveLoadData.ids.find(pi.second) != saveLoadData.ids.end())
+		{
+			saveLoadData.identifiers.insert(pi);
 		}
 	}
 
