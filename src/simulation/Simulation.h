@@ -160,7 +160,8 @@ public:
 			return -1;
 		int i = pfree;
 		pfree = parts[i].life;
-		if (i>parts_lastActiveIndex)
+		NUM_PARTS += 1;
+		if (i > parts_lastActiveIndex)
 			parts_lastActiveIndex = i;
 		return i;
 	}
@@ -169,6 +170,7 @@ public:
 		parts[i].type = 0;
 		parts[i].life = pfree;
 		pfree = i;
+		NUM_PARTS -= 1;
 	}
 	void pmap_add(int i, int x, int y, int t)
 	{

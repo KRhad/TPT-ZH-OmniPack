@@ -107,6 +107,7 @@ void Simulation::Clear()
 	}
 	std::fill(&elementCount[0], &elementCount[PT_NUM], 0);
 	pfree = 0;
+	NUM_PARTS = 0;
 	parts_lastActiveIndex = NPART-1;
 
 #ifdef NOMOD
@@ -394,12 +395,7 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 		}
 
 		// Allocate particle (this location is guaranteed to be empty due to "full scan" logic above)
-		if (pfree == -1)
-			break;
-		i = pfree;
-		pfree = parts[i].life;
-		if (i > parts_lastActiveIndex)
-			parts_lastActiveIndex = i;
+		i = part_alloc();
 		parts[i] = tempPart;
 		elementCount[tempPart.type]++;
 
