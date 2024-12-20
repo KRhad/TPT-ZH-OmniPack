@@ -1,6 +1,7 @@
 #ifdef LUACONSOLE
 
 #include <string>
+#include <iostream>
 #include <sys/stat.h>
 
 #include "defines.h"

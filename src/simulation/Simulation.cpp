@@ -14,6 +14,7 @@
  */
 
 #include <cmath>
+#include <iostream>
 
 //Simulation stuff
 #include "Simulation.h"

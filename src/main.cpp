@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 #include <math.h>
 #include "EventLoopSDL.h"
 #include "SDLCompat.h" // Required for windows versions to find SDL_Main
