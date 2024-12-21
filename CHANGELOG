@@ -1326,3 +1326,7 @@ Fix "Error: OK" when voting.
 Version 57.2 2024-10-05
 Fix some graphical glitches in tags UI. Change DMG to match vanilla movement,
 despite being glitchy. Update to Script Manager v3.15 with scrolling fixes.
+
+Version 58.0 2024-12-20
+Updates from tpt++ 99.0, including new changes to the online save browser and
+various other sim fixes. Update to tptmp v2.1.2.
