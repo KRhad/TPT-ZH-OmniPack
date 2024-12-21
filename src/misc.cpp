@@ -48,8 +48,9 @@
 #include "gui/console/Console.h"
 #include "simulation/elements/LIFE.h"
 
-// tpt++ setting that isn't used but is preserved
+// tpt++ settings that aren't used but are preserved
 bool nativeClipboard = false;
+bool separateRenderThread = true;
 
 static char hex[] = "0123456789ABCDEF";
 
@@ -191,6 +192,7 @@ void save_presets()
 	setBool(graphicsobj, "GravityField", drawgrav_enable);
 	setBool(graphicsobj, "Decorations", decorations_enable);
 	cJSON_AddNumberToObject(graphicsobj, "TemperatureScale", globalSim->temperatureScale);
+	setBool(graphicsobj, "SeparateThread", separateRenderThread);
 
 	//Tpt++ Simulation setting(s)
 	cJSON_AddItemToObject(root, "Simulation", simulationobj=cJSON_CreateObject());
@@ -544,6 +546,8 @@ void load_presets(void)
 				DEBUG_MODE = tmpobj->valueint;
 			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "TemperatureScale")))
 				globalSim->temperatureScale = tmpobj->valueint;
+			if ((tmpobj = cJSON_GetObjectItem(graphicsobj, "SeparateThread")) && tmpobj->type == cJSON_False)
+				separateRenderThread = false;
 		}
 
 		//Read simulation settings
