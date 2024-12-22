@@ -205,6 +205,8 @@ void luacon_open()
 	SETCONST(l, DEBUG_LINES);
 	SETCONST(l, DEBUG_PARTICLE);
 	SETCONST(l, DEBUG_SURFNORM);
+	SETCONST(l, DEBUG_SIMHUD);
+	SETCONST(l, DEBUG_RENHUD);
 
 	lua_gr_func_v = std::vector<LuaSmartRef>(PT_NUM);
 	lua_gr_func = &lua_gr_func_v[0];

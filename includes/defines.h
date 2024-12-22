@@ -160,6 +160,8 @@ constexpr int NCELL = XCELLS * YCELLS;
 #define DEBUG_LINES       0x0004
 #define DEBUG_PARTICLE    0x0008
 #define DEBUG_SURFNORM    0x0010
+#define DEBUG_SIMHUD      0x0020
+#define DEBUG_RENHUD      0x0040
 
 extern bool firstRun;
 extern bool redirectStd;
