@@ -322,7 +322,7 @@ OptionsUI::OptionsUI(Simulation *sim):
 #endif
 
 #ifndef TOUCHUI
-	prev = dataFolderButton = new Button(prev->Below(Point(0, 17)), Point(Button::AUTOSIZE, Button::AUTOSIZE), "Open Data Folder");
+	prev = dataFolderButton = new Button(prev->Below(Point(0, 19)), Point(Button::AUTOSIZE, Button::AUTOSIZE), "Open Data Folder");
 	dataFolderButton->SetCallback([&](int mb) { this->DataFolderClicked(); });
 	scrollArea->AddComponent(dataFolderButton);
 
@@ -334,10 +334,17 @@ OptionsUI::OptionsUI(Simulation *sim):
 		scrollArea->AddComponent(migrationButton);
 	}
 
-	scrollArea->SetScrollSize(prev->Below(Point(0, 5)).Y);
-#else
-	scrollArea->SetScrollSize(descLabel->Below(Point(0, 5)).Y);
+	prev = redirectStdCheckbox = new Checkbox(prev->Below(Point(0, 10)), Point(Checkbox::AUTOSIZE, checkboxHeight), "Save errors and other messages to a file");
+	redirectStdCheckbox->UseCheckIcon(useCheckIcon);
+	redirectStdCheckbox->SetCallback([&](bool checked) { this->RedirectChecked(checked); });
+	scrollArea->AddComponent(redirectStdCheckbox);
+
+	descLabel = new Label(prev->Below(Point(15, 0)), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Developers may ask for this when trying to fix problems");
+	descLabel->SetColor(COLRGB(150, 150, 150));
+	scrollArea->AddComponent(descLabel);
 #endif
+
+	scrollArea->SetScrollSize(descLabel->Below(Point(0, 5)).Y);
 
 #ifndef TOUCHUI
 	Button *okButton = new Button(Point(0, this->size.Y - okButtonHeight), Point(this->size.X+1, okButtonHeight), "OK");
@@ -388,6 +395,7 @@ void OptionsUI::InitializeOptions()
 	circleCheckbox->SetChecked(perfectCircleBrush);
 #ifndef TOUCHUI
 	graveExitsConsole->SetChecked(::graveExitsConsole);
+	redirectStdCheckbox->SetChecked(redirectStd);
 #endif
 #ifndef ANDROID
 	incompatibleCheckbox->SetChecked(loadIncompatibleSaves);
@@ -589,6 +597,11 @@ void OptionsUI::GraveChecked(bool checked)
 void OptionsUI::IncompatibleChecked(bool checked)
 {
 	loadIncompatibleSaves = checked;
+}
+
+void OptionsUI::RedirectChecked(bool checked)
+{
+	redirectStd = checked;
 }
 
 void OptionsUI::DataFolderClicked()

@@ -106,6 +106,7 @@ int saveURIOpen = 0;
 Save * saveDataOpen = NULL;
 
 bool firstRun = false;
+bool redirectStd = false;
 bool showLargeScreenDialog = false;
 int screenWidth = 0;
 int screenHeight = 0;
@@ -662,7 +663,7 @@ int main(int argc, char *argv[])
 	memset(parts, 0, sizeof(particle)*NPART);
 	clear_sim();
 
-	bool disableNetwork = false;
+	bool disableNetwork = false, doRedirectStd = redirectStd;
 	for (int i = 1; i < argc; i++)
 	{
 		if (!strncmp(argv[i], "scale:", 6))
@@ -780,8 +781,7 @@ int main(int argc, char *argv[])
 		}
 		else if (!strcmp(argv[i], "redirect"))
 		{
-			freopen("stdout.log", "w", stdout);
-			freopen("stderr.log", "w", stderr);
+			doRedirectStd = true;
 		}
 	}
 
@@ -789,6 +789,11 @@ int main(int argc, char *argv[])
 	if (!disableNetwork)
 		RequestManager::Ref().Initialise(http_proxy_string);
 #endif
+	if (doRedirectStd)
+	{
+		freopen("stdout.log", "w", stdout);
+		freopen("stderr.log", "w", stderr);
+	}
 
 	if (!SDLOpen())
 	{

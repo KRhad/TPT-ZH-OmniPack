@@ -31,6 +31,7 @@ class OptionsUI : public ui::Window
 	Checkbox *fastQuitCheckbox, *globalQuitCheckbox, *updatesCheckbox, *momentumScrollingCheckbox, *stickyCategoriesCheckbox, *savePressureCheckbox;
 	Checkbox *circleCheckbox, *graveExitsConsole, *incompatibleCheckbox;
 	Button *dataFolderButton, *migrationButton;
+	Checkbox *redirectStdCheckbox;
 
 	Simulation * sim;
 
@@ -62,6 +63,7 @@ class OptionsUI : public ui::Window
 	void CircleChecked(bool checked);
 	void GraveChecked(bool checked);
 	void IncompatibleChecked(bool checked);
+	void RedirectChecked(bool checked);
 	void DataFolderClicked();
 	void MigrationClicked();
 

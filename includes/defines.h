@@ -162,6 +162,7 @@ constexpr int NCELL = XCELLS * YCELLS;
 #define DEBUG_SURFNORM    0x0010
 
 extern bool firstRun;
+extern bool redirectStd;
 extern bool showLargeScreenDialog;
 extern int screenWidth;
 extern int screenHeight;

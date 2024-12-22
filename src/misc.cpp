@@ -273,6 +273,7 @@ void save_presets()
 	setBool(root, "MouseClickRequired", stickyCategories);
 	setBool(root, "PerfectCircleBrush", perfectCircleBrush);
 	setBool(root, "GraveExitsConsole", graveExitsConsole);
+	setBool(root, "RedirectStd", redirectStd);
 
 	if (savedWindowX != INT_MAX)
 		cJSON_AddNumberToObject(root, "WindowX", savedWindowX);
@@ -662,6 +663,8 @@ void load_presets(void)
 			perfectCircleBrush = tmpobj->valueint ? true : false;
 		if ((tmpobj = cJSON_GetObjectItem(root, "GraveExitsConsole")))
 			graveExitsConsole = tmpobj->valueint ? true : false;
+		if ((tmpobj = cJSON_GetObjectItem(root, "RedirectStd")))
+			redirectStd = tmpobj->valueint ? true : false;
 
 		//Read some extra mod settings
 		if ((tmpobj = cJSON_GetObjectItem(root, "heatmode")))
