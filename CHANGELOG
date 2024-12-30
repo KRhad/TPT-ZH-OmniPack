@@ -1330,3 +1330,9 @@ despite being glitchy. Update to Script Manager v3.15 with scrolling fixes.
 Version 58.0 2024-12-20
 Updates from tpt++ 99.0, including new changes to the online save browser and
 various other sim fixes. Update to tptmp v2.1.2.
+
+Version 58.1
+Misc unimportant tpt++ updates since the first 99.0 beta. Change internal
+version number to 99.0. Future updates may not fully mirror tpt++ changes, and
+might only be a smaller subset (primarily focusing on simulation changes). I'll
+post more about that on the forums.
