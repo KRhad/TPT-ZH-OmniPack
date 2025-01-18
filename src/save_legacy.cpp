@@ -576,6 +576,7 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 						goto fail;
 					}
 					int tempType = partsData[i];
+					i+=3; //Skip Type and Descriptor
 					if (fieldDescriptor & 0x4000)
 						tempType |= (((unsigned)partsData[++i]) << 8);
 
@@ -620,7 +621,6 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 					}
 					else
 						vidBuf[(fullY+y)*fullW+(fullX+x)] = PIXPACK(globalSim->elements[type].Colour);
-					i+=3; //Skip Type and Descriptor
 
 					//Skip temp
 					if(fieldDescriptor & 0x01)
@@ -734,7 +734,7 @@ pixel *prerender_save_OPS(void *save, int size, int *width, int *height)
 						if (i > partsDataLen) goto fail;
 					}
 
-					if (modsave)
+					if (modsave && modsave <= 20)
 					{
 						//Skip flags (instantly activated powered elements in my mod)
 						if(fieldDescriptor & 0x4000)

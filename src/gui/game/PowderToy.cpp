@@ -132,8 +132,6 @@ PowderToy::PowderToy():
 
 	load_presets();
 
-	Stamps::Ref().Init();
-
 	InitMenusections();
 	FillMenus();
 	regularTools[0] = "DEFAULT_PT_DUST";

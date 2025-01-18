@@ -84,6 +84,7 @@
 #include "game/ToolTip.h"
 #include "game/Request.h"
 #include "game/RequestManager.h"
+#include "game/Stamps.h"
 #include "simulation/Simulation.h"
 #include "simulation/SnapshotHistory.h"
 #include "simulation/Tool.h"
@@ -874,6 +875,8 @@ int main(int argc, char *argv[])
 		benchmark_run();
 		exit(0);
 	}
+
+	Stamps::Ref().Init();
 
 	UpdateToolTip(introText, Point(16, 20), INTROTIP, 10235);
 
