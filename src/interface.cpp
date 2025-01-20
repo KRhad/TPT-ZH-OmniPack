@@ -1973,11 +1973,13 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 					{
 						drawtext(vid_buf, gx+8, gy+((YRES/GRID_S)/2)-4, "Error loading stamp", 255, 255, 255, 255);
 					}
-					if ((mx>=gx+XRES/GRID_S-4 && mx<(gx+XRES/GRID_S)+6 && my>=gy-6 && my<gy+4) || stamp.dodelete)
+
+					bool isSelected = toDelete.find(k) != toDelete.end();
+					if ((mx>=gx+XRES/GRID_S-4 && mx<(gx+XRES/GRID_S)+6 && my>=gy-6 && my<gy+4) || stamp.dodelete || isSelected)
 					{
 						if (mx>=gx+XRES/GRID_S-4 && mx<(gx+XRES/GRID_S)+6 && my>=gy-6 && my<gy+4)
 							d = k;
-						drawrect(vid_buf, gx-2, gy-2, XRES/GRID_S+3, YRES/GRID_S+3, 128, 128, 128, 255);
+						drawrect(vid_buf, gx-2, gy-2, XRES/GRID_S+3, YRES/GRID_S+3, isSelected ? 200 : 128, 128, 128, 255);
 						drawtext(vid_buf, gx+XRES/GRID_S-3, gy-4, "\x85", 255, 48, 32, 255);
 					}
 					else
@@ -2051,7 +2053,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 
 		if (b==1 && bq==0 && d!=-1)
 		{
-			if (sdl_mod & (KMOD_CTRL|KMOD_GUI))
+			if ((sdl_mod & (KMOD_CTRL|KMOD_GUI)) || toDelete.size())
 			{
 				auto existing = toDelete.find(d);
 				if (existing == toDelete.end())
