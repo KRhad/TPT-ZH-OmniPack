@@ -55,12 +55,13 @@ void Engine::ShowWindowDelayed()
 	if (top)
 		top->DoDefocus();
 
+	fillrect(vid_buf, -1, -1, XRES+BARSIZE+1, YRES+MENUSIZE+1, 0, 0, 0, 100);
+
 	// Make a copy of the video buffer, for restoration when this window is closed
 	pixel *copy = new pixel[VIDXRES * VIDYRES * PIXELSIZE];
 	std::copy(&vid_buf[0], &vid_buf[VIDXRES * VIDYRES], &copy[0]);
 	buffers.push(copy);
 
-	fillrect(vid_buf, -1, -1, XRES+BARSIZE+1, YRES+MENUSIZE+1, 0, 0, 0, 100);
 	windows.push(nextTop);
 	top = nextTop;
 	nextTop = NULL;

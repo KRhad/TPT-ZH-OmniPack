@@ -334,8 +334,13 @@ void Textbox::OnDraw(gfx::VideoBuffer* vid)
 	else
 		borderColor = COLMULT(defaultColor, Style::DeselectedMultiplier);
 
-	if (!IsFocused() && !text.length() && placeholder.length())
-		vid->DrawString(position.X+3, position.Y+4, placeholder, COLMODALPHA(color, 170));
+	if (!text.length() && placeholder.length())
+	{
+		int pos = position.X + 3;
+		if (icon && !multiline)
+			pos += 13;
+		vid->DrawString(pos, position.Y+4, placeholder, COLMODALPHA(color, 170));
+	}
 	vid->DrawRect(position.X, position.Y, size.X, size.Y, borderColor);
 }
 

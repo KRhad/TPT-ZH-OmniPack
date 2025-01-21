@@ -154,6 +154,10 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 	//get back the original string by removing the inserted newlines
 	text.erase(std::remove(text.begin(), text.end(), '\r'), text.end());
 
+	// Adjust for icon
+	if (icon && !multiline)
+		posX += 13;
+
 	updatedCursor = CheckPlaceCursor(updateCursor, 0, posX, posY);
 	for (unsigned int i = 0; i < text.length();)
 	{
@@ -171,7 +175,7 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 		//loop through a word
 		for (; --wordlen>=-1 && i < text.length(); i++)
 		{
-			char c = text[i];
+			char c = passwordMask ? 0x8D : text[i];
 			switch (c)
 			{
 			case '\n':
@@ -452,10 +456,19 @@ void Label::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bo
 
 void Label::OnDraw(gfx::VideoBuffer* vid)
 {
+	int posX = position.X + 3;
+	if (icon && !multiline)
+	{
+		DrawIcon(icon, vid, { posX, position.Y + 4 });
+		posX += 13;
+	}
+
 	if (enabled)
 	{
 		//at some point there will be a redraw variable so this isn't done every frame
 		std::string mootext = text;
+		if (passwordMask)
+			mootext = std::string(text.length(), 0x8D);
 		if (cursor != cursorStart || numClicks > 1)
 		{
 			mootext.insert(cursorStart, "\x01");
@@ -465,10 +478,10 @@ void Label::OnDraw(gfx::VideoBuffer* vid)
 		{
 			mootext.insert(cursor+(cursor > cursorStart)*2, "\x02");
 		}
-		vid->DrawString(position.X+3, position.Y+4, mootext, color);
+		vid->DrawString(posX, position.Y+4, mootext, color);
 	}
 	else
-		vid->DrawString(position.X+3, position.Y+4, text, COLMULT(color, Style::DisabledMultiplier));
+		vid->DrawString(posX, position.Y+4, text, COLMULT(color, Style::DisabledMultiplier));
 }
 
 void Label::OnTick(uint32_t ticks)

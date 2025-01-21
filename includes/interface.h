@@ -250,8 +250,6 @@ char *input_ui(pixel *vid_buf, const char *title, const char *prompt, const char
 
 bool confirm_ui(pixel *vid_buf, const char *top, const char *msg, const char *btn);
 
-bool login_ui(pixel *vid_buf);
-
 int stamp_ui(pixel *vid_buf, int *reorder);
 
 void tag_list_ui(pixel *vid_buf);
@@ -292,6 +290,7 @@ bool execute_report(pixel *vid_buf, std::string id, char *reason);
 bool execute_bug(pixel *vid_buf, std::string feedback);
 
 bool ParseServerReturn(std::string result, int status, bool json);
+bool ParseServerReturn(std::string result, const int status, bool json, std::string &error);
 
 bool execute_submit(pixel *vid_buf, char *id, char *message);
 

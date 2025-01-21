@@ -47,6 +47,7 @@
 #include "gui/dialogs/InfoPrompt.h"
 #include "gui/dialogs/ErrorPrompt.h"
 #include "gui/gol/GolWindow.h"
+#include "gui/login/Login.h"
 #include "gui/options/OptionsUI.h"
 #include "gui/profile/ProfileViewer.h"
 #include "gui/prop/PropWindow.h"
@@ -477,17 +478,18 @@ void PowderToy::LoginBtn()
 	}
 	else
 	{
-		int ret = login_ui(vid_buf);
-		if (ret && svf_login)
-		{
-			if (sessionCheck)
+		Login *temp = new Login({ [&]() {
+			if (svf_login)
 			{
-				sessionCheck->Cancel();
-				sessionCheck = NULL;
+				if (sessionCheck)
+				{
+					sessionCheck->Cancel();
+					sessionCheck = NULL;
+				}
+				loginFinished = 1;
 			}
-			loginFinished = 1;
-		}
-		save_presets();
+		} });
+		Engine::Ref().ShowWindow(temp);
 	}
 }
 

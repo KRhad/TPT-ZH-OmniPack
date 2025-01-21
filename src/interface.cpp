@@ -1689,230 +1689,6 @@ bool confirm_ui(pixel *vid_buf, const char *top, const char *msg, const char *bt
 	return ret;
 }
 
-bool login_ui(pixel *vid_buf)
-{
-	int x0=(XRES+BARSIZE-192)/2,y0=(YRES+MENUSIZE-80)/2,b=1,bq,mx,my;
-	ui_edit ed1,ed2;
-	bool signIn = false;
-
-	while (!sdl_poll())
-	{
-		b = mouse_get_state(&mx, &my);
-		if (!b)
-			break;
-	}
-
-	ui_edit_init(&ed1, x0+25, y0+25, 158, 14);
-	strcpy(ed1.def, "[user name]");
-	ed1.cursor = ed1.cursorstart = strlen(svf_user);
-	strcpy(ed1.str, svf_user);
-	if (ed1.cursor)
-		ed1.focus = 0;
-	ed1.autoCorrect = false;
-
-	ui_edit_init(&ed2, x0+25, y0+45, 158, 14);
-	strcpy(ed2.def, "[password]");
-	ed2.hide = 1;
-	if (!ed1.cursor)
-		ed2.focus = 0;
-	ed2.autoCorrect = false;
-
-	fillrect(vid_buf, -1, -1, XRES+BARSIZE+1, YRES+MENUSIZE+1, 0, 0, 0, 192);
-	while (!sdl_poll())
-	{
-		bq = b;
-		b = mouse_get_state(&mx, &my);
-
-		drawrect(vid_buf, x0, y0, 192, 80, 192, 192, 192, 255);
-		clearrect(vid_buf, x0+1, y0+1, 191, 79);
-		drawtext(vid_buf, x0+8, y0+8, "Server login:", 255, 255, 255, 255);
-		drawtext(vid_buf, x0+12, y0+23, "\x8B", 32, 64, 128, 255);
-		drawtext(vid_buf, x0+12, y0+23, "\x8A", 255, 255, 255, 255);
-		drawrect(vid_buf, x0+8, y0+20, 176, 16, 192, 192, 192, 255);
-		drawtext(vid_buf, x0+11, y0+44, "\x8C", 160, 144, 32, 255);
-		drawtext(vid_buf, x0+11, y0+44, "\x84", 255, 255, 255, 255);
-		drawrect(vid_buf, x0+8, y0+40, 176, 16, 192, 192, 192, 255);
-		ui_edit_draw(vid_buf, &ed1);
-		ui_edit_draw(vid_buf, &ed2);
-		if (svf_login)
-			drawtext(vid_buf, x0+5, y0+69, "Sign out", 255, 255, 255, 255);
-		else
-			drawtext(vid_buf, x0+5, y0+69, "Register Online", 255, 255, 255, 255);
-		drawtext(vid_buf, x0+187-textwidth("Sign in"), y0+69, "Sign in", 255, 255, 55, 255);
-		drawrect(vid_buf, x0, y0+64, 192, 16, 192, 192, 192, 255);
-		drawrect(vid_buf, x0, y0+64, 96, 16, 192, 192, 192, 255);
-
-		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
-
-		ui_edit_process(mx, my, b, bq, &ed1);
-		ui_edit_process(mx, my, b, bq, &ed2);
-
-		if (b && !bq)
-		{
-			// sign out or "Register Online" button, depending on whether you are logged in
-			if (mx>=x0 && mx<x0+96 && my>=y0+64 && my<=y0+80)
-			{
-				if (svf_login)
-					goto logout;
-				else
-				{
-					Platform::OpenLink("https://powdertoy.co.uk/Register.html");
-				}
-			}
-			// sign in
-			if (mx>=x0+97 && mx<x0+192 && my>=y0+64 && my<=y0+80)
-			{
-				signIn = true;
-				break;
-			}
-#ifndef TOUCHUI
-			// out of bounds, exit without doing anything
-			if (mx < x0 || my < y0 || mx > x0+192 || my > y0+80)
-				return false;
-#endif
-		}
-
-		if (sdl_key == SDLK_RETURN)
-		{
-			if (!ed1.focus)
-			{
-				signIn = true;
-				break;
-			}
-			ed1.focus = 0;
-			ed2.focus = 1;
-		}
-		else if (sdl_key == SDLK_TAB)
-		{
-			ed2.focus = ed1.focus;
-			ed1.focus = !ed1.focus;
-		}
-		else if (sdl_key == SDLK_ESCAPE)
-		{
-			if (!ed1.focus && !ed2.focus)
-				return false;
-			ed1.focus = 0;
-			ed2.focus = 0;
-		}
-	}
-
-	if (!signIn)
-		return false;
-	if (strchr(ed1.str, '@'))
-	{
-		error_ui(vid_buf, 0, "Use your Powder Toy account to log in, not your email. If you don't have a Powder Toy account, you can create one at https://powdertoy.co.uk/Register.html");
-		return false;
-	}
-
-	strncpy(svf_user, ed1.str, 64);
-
-	// new scope because of goto warning
-	{
-		int status;
-		std::string data = Request::SimpleAuth("https://" SERVER "/Login.json", &status, svf_user_id, svf_session_id, {
-			{ "name", svf_user },
-			{ "pass", ed2.str },
-		});
-		if (status == 200 && !data.empty())
-		{
-			cJSON *root, *tmpobj;//, *notificationarray, *notificationobj;
-			if ((root = cJSON_Parse(data.c_str())))
-			{
-				tmpobj = cJSON_GetObjectItem(root, "Status");
-				if (tmpobj && tmpobj->type == cJSON_Number && tmpobj->valueint == 1)
-				{
-					if((tmpobj = cJSON_GetObjectItem(root, "Username")) && tmpobj->type == cJSON_String)
-						strncpy(svf_user, tmpobj->valuestring, 64);
-					if((tmpobj = cJSON_GetObjectItem(root, "UserID")) && tmpobj->type == cJSON_Number)
-						sprintf(svf_user_id, "%i", tmpobj->valueint);
-					if((tmpobj = cJSON_GetObjectItem(root, "SessionID")) && tmpobj->type == cJSON_String)
-						strncpy(svf_session_id, tmpobj->valuestring, 64);
-					if((tmpobj = cJSON_GetObjectItem(root, "SessionKey")) && tmpobj->type == cJSON_String)
-						strncpy(svf_session_key, tmpobj->valuestring, 64);
-					if((tmpobj = cJSON_GetObjectItem(root, "Elevation")) && tmpobj->type == cJSON_String)
-					{
-						char * elevation = tmpobj->valuestring;
-						if (!strcmp(elevation, "Mod"))
-						{
-							svf_admin = 0;
-							svf_mod = 1;
-						}
-						else if (!strcmp(elevation, "Admin"))
-						{
-							svf_admin = 1;
-							svf_mod = 0;
-						}
-						else
-						{
-							svf_admin = 0;
-							svf_mod = 0;
-						}
-					}
-					/*notificationarray = cJSON_GetObjectItem(root, "Notifications");
-					notificationobj = cJSON_GetArrayItem(notificationarray, 0);
-					while (notificationobj)
-					{
-						i++;
-						if((tmpobj = cJSON_GetObjectItem(notificationarray, "Text")) && tmpobj->type == cJSON_String)
-							if (strstr(tmpobj->valuestring, "message"))
-								svf_messages++;
-						notificationobj = cJSON_GetArrayItem(notificationarray, i);
-					}*/
-	
-					svf_login = 1;
-					save_presets();
-				}
-				else
-				{
-					tmpobj = cJSON_GetObjectItem(root, "Error");
-					if (tmpobj && tmpobj->type == cJSON_String)
-					{
-						if (strlen(tmpobj->valuestring))
-							error_ui(vid_buf, 0, tmpobj->valuestring);
-						else
-							error_ui(vid_buf, 0, "Unknown error while logging in");
-					}
-					else
-						error_ui(vid_buf, 0, "Could not read Error response");
-					cJSON_Delete(root);
-					goto fail;
-				}
-				cJSON_Delete(root);
-			}
-			else
-			{
-				error_ui(vid_buf, 0, "Could not read response");
-				goto fail;
-			}
-		}
-		else
-		{
-			error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
-			goto fail;
-		}
-		return true;
-	}
-
-logout:
-	{
-		// Make sure session is deleted
-		int status;
-		std::string data = Request::SimpleAuth("https://" SERVER "/Logout.json?Key=" + std::string(svf_session_key), &status, svf_user_id, svf_session_id);
-		ParseServerReturn(data, status, true);
-	}
-
-fail:
-	strcpy(svf_user, "");
-	strcpy(svf_user_id, "");
-	strcpy(svf_session_id, "");
-	svf_login = 0;
-	svf_own = 0;
-	svf_admin = 0;
-	svf_mod = 0;
-	save_presets();
-	return false;
-}
-
 int stamp_ui(pixel *vid_buf, int *reorder)
 {
 	int b=1,bq,mx,my,d=-1,i,j,k,x,gx,gy,y,w,h,r=-1,rnm=-1,stamp_page=0,per_page=GRID_X*GRID_Y,page_count;
@@ -6110,16 +5886,27 @@ int execute_save(pixel *vid_buf, Save *save)
 
 bool ParseServerReturn(std::string result, int status, bool json)
 {
+	std::string error;
+	bool ret = ParseServerReturn(result, status, json, error);
+	if (ret && !error.empty())
+		error_ui(vid_buf, 0, error);
+
+	return ret;
+}
+
+bool ParseServerReturn(std::string result, const int status, bool json, std::string &error)
+{
 	// no server response, return "Malformed Response"
 	if (status == 200 && !result.size())
 	{
-		status = 603;
+		error = "HTTP Error 603: " + Request::GetStatusCodeDesc(603);
+		return true;
 	}
 	if (status == 302)
 		return true;
 	if (status != 200)
 	{
-		error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
+		error = "HTTP Error " + Format::NumberToString(status) + ": " + Request::GetStatusCodeDesc(status);
 		return true;
 	}
 
@@ -6140,7 +5927,7 @@ bool ParseServerReturn(std::string result, int status, bool json)
 			if (status != 1)
 			{
 				std::string err = root.get("Error", "Unspecified Error").asString();
-				error_ui(vid_buf, 0, err);
+				error = err;
 				return true;
 			}
 		}
@@ -6149,11 +5936,12 @@ bool ParseServerReturn(std::string result, int status, bool json)
 			// sometimes the server returns a 200 with the text "Error: 401"
 			if (result.substr(0, 7) == "Error: ")
 			{
-				status = Format::StringToNumber<int>(result.substr(7));
-				error_ui(vid_buf, status, Request::GetStatusCodeDesc(status));
+				std::string errorCode = result.substr(7);
+				int errorStatus = Format::StringToNumber<int>(errorCode);
+				error = "HTTP Error " + errorCode + ": " + Request::GetStatusCodeDesc(errorStatus);
 				return true;
 			}
-			error_ui(vid_buf, 0, "Could not read response: " + std::string(e.what()));
+			error = "Could not read response: " + std::string(e.what());
 			return true;
 		}
 	}
@@ -6161,7 +5949,7 @@ bool ParseServerReturn(std::string result, int status, bool json)
 	{
 		if (result.substr(0, 2) != "OK")
 		{
-			error_ui(vid_buf, 0, result);
+			error = result;
 			return true;
 		}
 	}

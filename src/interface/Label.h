@@ -2,8 +2,9 @@
 #define LABEL_H
 
 #include <string>
-#include "common/Point.h"
 #include "Component.h"
+#include "common/Point.h"
+#include "interface/Icons.h"
 
 namespace gfx
 {
@@ -29,6 +30,8 @@ protected:
 	unsigned int numClicks, clickPosition;
 	bool autosizeX, autosizeY;
 	bool noCutoff;
+	bool passwordMask = false;
+	Icon icon = IconNone;
 
 	void UpdateDisplayText(bool updateCursor = false, bool firstClick = false);
 	void MoveCursor(unsigned int *cursor, int amount);
@@ -41,10 +44,14 @@ public:
 
 	void SetSize(Point size) override;
 
-	void SetText(std::string text_);
+	virtual void SetText(std::string text_);
 	std::string GetText();
 	bool IsMultiline() { return multiline; }
 	void SelectAll();
+	bool IsMasked() { return passwordMask; }
+	void SetMasked(bool masked) { this->passwordMask = masked; }
+	Icon GetIcon() { return icon; }
+	void SetIcon(Icon icon) { this->icon = icon; }
 
 	void OnMouseDown(int x, int y, unsigned char button) override;
 	void OnMouseUp(int x, int y, unsigned char button) override;
