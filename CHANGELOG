@@ -1336,3 +1336,9 @@ Misc unimportant tpt++ updates since the first 99.0 beta. Change internal
 version number to 99.0. Future updates may not fully mirror tpt++ changes, and
 might only be a smaller subset (primarily focusing on simulation changes). I'll
 post more about that on the forums.
+
+Version 58.2
+Update to TPT version 99.1. Various simulation fixes from TPT 99.1. Rewrite
+Login UI to modern interface style, now shows messages before / after logging
+in, similar to how vanilla TPT shows login errors. Make mass stamp deletion a
+little easier to use.

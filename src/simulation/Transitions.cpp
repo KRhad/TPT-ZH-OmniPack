@@ -26,9 +26,9 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 		if (offsetX != x || offsetY != y)
 		{
 			r = pmap[offsetY][offsetX];
-			if (!(!r || parts[i].type != TYP(r)))
+			if (r && parts[i].type == TYP(r))
 			{
-				if (parts[i].temp>parts[ID(r)].temp)
+				if (parts[i].temp > parts[ID(r)].temp)
 				{
 					swappage = parts[i].temp;
 					parts[i].temp = parts[ID(r)].temp;
