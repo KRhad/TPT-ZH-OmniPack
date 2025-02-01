@@ -181,7 +181,7 @@ int update_POWERED(UPDATE_FUNC_ARGS)
 					{
 #ifndef NOMOD
 						//Mod powered elements are always instantly activated
-						if ((parts[i].type == PT_PPTI || parts[i].type == PT_PPTO))
+						if ((parts[i].type == PT_PPTI || parts[i].type == PT_PPTO) && ID(pmap[y][x]) == (unsigned)i)
 						{
 							if (parts[ID(r)].life>2)
 							{
@@ -228,7 +228,7 @@ int update_POWERED(UPDATE_FUNC_ARGS)
 							}
 						}
 						//element is instantly activated (mod elements are always instantly activated)
-						else if (sim->instantActivation || parts[i].type == PT_BUTN || parts[i].type == PT_PINV)
+						else if ((sim->instantActivation || parts[i].type == PT_BUTN || parts[i].type == PT_PINV) && ID(pmap[y][x]) == (unsigned)i)
 						{
 							if (parts[ID(r)].ctype == PT_PSCN && parts[i].life < 10)
 							{
