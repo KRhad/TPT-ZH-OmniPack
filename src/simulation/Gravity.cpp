@@ -69,13 +69,12 @@ void Gravity::Clear()
 	std::fill(&gravmap[0], &gravmap[size], 0.0f);
 	std::fill(&gravmask[0], &gravmask[size], 0xFFFFFFFF);
 
-#ifndef GRAVFFT
 	std::fill(&th_ogravmap[0], &th_ogravmap[size], 0.0f);
 	std::fill(&th_gravmap[0], &th_gravmap[size], 0.0f);
 	std::fill(&th_gravy[0], &th_gravy[size], 0.0f);
 	std::fill(&th_gravx[0], &th_gravx[size], 0.0f);
 	std::fill(&th_gravp[0], &th_gravp[size], 0.0f);
-#endif
+
 	ignoreNextResult = true;
 	gravWallChanged = true;
 }
