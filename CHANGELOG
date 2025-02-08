@@ -1347,4 +1347,5 @@ custom elements.
 Version 58.3 2025-02-05
 Update to TPT version 99.2 Fix conduction failure when stacking certain powered
 electronics and conductors on top of each other. Fix Newtonian Gravity not
-working sometimes after reloading a save.
+working sometimes after reloading a save. Fix a few issues in certain
+tool-related Lua APIs.
