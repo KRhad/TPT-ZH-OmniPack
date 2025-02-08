@@ -58,7 +58,7 @@ public:
 
 	virtual int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength);
 	virtual void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength);
-	virtual void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos);
+	virtual void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength);
 	virtual int FloodFill(Simulation *sim, Brush *brush, Point position);
 	virtual void Click(Simulation *sim, Brush *brush, Point position);
 	virtual void Drag(Simulation *sim, Brush *brush, Point startPos, Point endPos);
@@ -80,7 +80,7 @@ public:
 
 	int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength) override;
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
-	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
+	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
 	void Click(Simulation *sim, Brush *brush, Point position) override;
 };
@@ -94,7 +94,7 @@ public:
 
 	int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength) override;
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
-	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
+	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
 };
 
@@ -106,7 +106,7 @@ public:
 
 	int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength) override;
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
-	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
+	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
 };
 
@@ -129,7 +129,7 @@ public:
 
 	int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength) override;
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
-	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
+	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
 	void Click(Simulation *sim, Brush *brush, Point position) override;
 };
@@ -142,7 +142,7 @@ public:
 
 	int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength) override;
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
-	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
+	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
 	Tool * Sample(Simulation *sim, Point position, bool shiftHeld) override;
 
@@ -159,7 +159,7 @@ public:
 
 	int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength) override;
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
-	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
+	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
 	Tool * Sample(Simulation *sim, Point position, bool shiftHeld) override;
 };
@@ -173,7 +173,7 @@ public:
 
 	int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength) override final;
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override final;
-	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override final;
+	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength) override final;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override final;
 	Tool * Sample(Simulation *sim, Point position, bool shiftHeld) override final;
 };

@@ -39,7 +39,7 @@ public:
 
 	int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength) override;
 	void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength) override;
-	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;
+	void DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength) override;
 	int FloodFill(Simulation *sim, Brush *brush, Point position) override;
 	void Click(Simulation *sim, Brush *brush, Point position) override;
 	void Drag(Simulation *sim, Brush *brush, Point startPos, Point endPos) override;

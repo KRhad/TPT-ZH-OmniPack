@@ -1034,17 +1034,20 @@ int simulation_toolBrush(lua_State * l)
 	int y = luaL_optint(l,2,-1);
 	int rx = luaL_optint(l,3,5);
 	int ry = luaL_optint(l,4,5);
-	int tool = luaL_optint(l,5,TOOL_HEAT);
+	int toolIndex = luaL_optint(l,5,-1);
 	int brush = luaL_optint(l,6,CIRCLE_BRUSH);
 	float strength = (float)luaL_optnumber(l, 7, 1.0f);
-	if (tool < 0 || tool >= TOOL_PROP)
-			return luaL_error(l, "Invalid tool id '%d'", tool);
 	if (brush < 0 || brush >= NUM_DEFAULTBRUSHES)
 		return luaL_error(l, "Invalid brush id '%d'", brush);
 
+	Tool *tool = GetToolByIndex(toolIndex);
+	if (!tool)
+		return luaL_error(l, "Invalid tool id '%d'", toolIndex);
+
 	Brush* tempBrush = new Brush(Point(rx, ry), brush);
-	luaSim->CreateToolBrush(x, y, tool, strength, tempBrush);
+	tool->DrawPoint(luaSim, tempBrush, { x, y }, strength);
 	delete tempBrush;
+
 	lua_pushinteger(l, 0);
 	return 1;
 }
@@ -1057,38 +1060,50 @@ int simulation_toolLine(lua_State * l)
 	int y2 = luaL_optint(l,4,-1);
 	int rx = luaL_optint(l,5,5);
 	int ry = luaL_optint(l,6,5);
-	int tool = luaL_optint(l,7,TOOL_HEAT);
+	int toolIndex = luaL_optint(l,7,-1);
 	int brush = luaL_optint(l,8,CIRCLE_BRUSH);
 	float strength = (float)luaL_optnumber(l, 9, 1.0f);
 
 	if (x1 < 0 || x2 < 0 || x1 >= XRES || x2 >= XRES || y1 < 0 || y2 < 0 || y1 >= YRES || y2 >= YRES)
 		return luaL_error(l, "coordinates out of range (%d,%d),(%d,%d)", x1, y1, x2, y2);
-	if (tool < 0 || tool >= TOOL_PROP)
-			return luaL_error(l, "Invalid tool id '%d'", tool);
 	if (brush < 0 || brush >= NUM_DEFAULTBRUSHES)
 		return luaL_error(l, "Invalid brush id '%d'", brush);
 
+	Tool *tool = GetToolByIndex(toolIndex);
+	if (!tool)
+		return luaL_error(l, "Invalid tool id '%d'", toolIndex);
+
 	Brush* tempBrush = new Brush(Point(rx, ry), brush);
-	luaSim->CreateToolLine(x1, y1, x2, y2, tool, strength, tempBrush);
+	tool->DrawLine(luaSim, tempBrush, { x1, y1 }, { x2, y2 }, true, strength);
 	delete tempBrush;
+
 	return 0;
 }
 
 int simulation_toolBox(lua_State * l)
 {
-	int x1 = luaL_optint(l,1,-1)/CELL;
-	int y1 = luaL_optint(l,2,-1)/CELL;
-	int x2 = luaL_optint(l,3,-1)/CELL;
-	int y2 = luaL_optint(l,4,-1)/CELL;
-	int tool = luaL_optint(l,5,TOOL_HEAT);
+	int x1 = luaL_optint(l,1,-1);
+	int y1 = luaL_optint(l,2,-1);
+	int x2 = luaL_optint(l,3,-1);
+	int y2 = luaL_optint(l,4,-1);
+	int toolIndex = luaL_optint(l,5,-1);
 	float strength = (float)luaL_optnumber(l, 6, 1.0f);
+
+	int brush = luaL_optint(l,7,CIRCLE_BRUSH);
+	int rx = luaL_optint(l,8,0);
+	int ry = luaL_optint(l,9,0);
 
 	if (x1 < 0 || x2 < 0 || x1 >= XRES || x2 >= XRES || y1 < 0 || y2 < 0 || y1 >= YRES || y2 >= YRES)
 		return luaL_error(l, "coordinates out of range (%d,%d),(%d,%d)", x1, y1, x2, y2);
-	if (tool < 0 || tool >= TOOL_PROP)
-			return luaL_error(l, "Invalid tool id '%d'", tool);
 
-	luaSim->CreateToolBox(x1, y1, x2, y2, tool, strength);
+	Tool *tool = GetToolByIndex(toolIndex);
+	if (!tool)
+		return luaL_error(l, "Invalid tool id '%d'", toolIndex);
+
+	Brush* tempBrush = new Brush(Point(rx, ry), brush);
+	tool->DrawRect(luaSim, tempBrush, { x1, y1 }, { x2, y2}, strength);
+	delete tempBrush;
+
 	return 0;
 }
 
@@ -4422,7 +4437,7 @@ int tools_property(lua_State * l)
 
 	if (propertyName == "Identifier")
 	{
-		tpt_lua_pushString(l, luaToolData->identifier);
+		tpt_lua_pushString(l, tool->GetIdentifier());
 		return 1;
 	}
 

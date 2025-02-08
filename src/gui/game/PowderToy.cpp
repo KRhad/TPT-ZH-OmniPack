@@ -1852,7 +1852,7 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 			if (altHeld)
 				cursor = RectSnapCoords(initialDrawPoint, cursor);
 			SnapshotHistory::TakeSnapshot(sim);
-			activeTools[toolIndex]->DrawRect(sim, currentBrush, initialDrawPoint, cursor);
+			activeTools[toolIndex]->DrawRect(sim, currentBrush, initialDrawPoint, cursor, toolStrength);
 		}
 		else if (drawState == FILL)
 		{

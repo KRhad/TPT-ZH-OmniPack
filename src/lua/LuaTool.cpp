@@ -331,7 +331,7 @@ void LuaTool::DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endP
 	}
 }
 
-void LuaTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos)
+void LuaTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength)
 {
 	if (luaToolRefs[index].drawRect)
 	{

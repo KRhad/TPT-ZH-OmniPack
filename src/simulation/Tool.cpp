@@ -65,7 +65,7 @@ void Tool::DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos,
 	sim->CreateLine(startPos.X, startPos.Y, endPos.X, endPos.Y, toolID, get_brush_flags(), brush);
 }
 
-void Tool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos)
+void Tool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength)
 {
 	switch (toolID)
 	{
@@ -186,7 +186,7 @@ void PlopTool::DrawLine(Simulation *sim, Brush *brush, Point startPos, Point end
 
 }
 
-void PlopTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos)
+void PlopTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength)
 {
 
 }
@@ -229,7 +229,7 @@ void GolTool::DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endP
 {
 	sim->CreateLine(startPos.X, startPos.Y, endPos.X, endPos.Y, PT_LIFE | PMAPID(toolID), get_brush_flags(), brush);
 }
-void GolTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos)
+void GolTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength)
 {
 	sim->CreateBox(startPos.X, startPos.Y, endPos.X, endPos.Y, PT_LIFE | PMAPID(toolID), get_brush_flags());
 }
@@ -274,7 +274,7 @@ void WallTool::DrawLine(Simulation *sim, Brush *brush, Point startPos, Point end
 		sim->CreateWallLine(startPos.X/CELL, startPos.Y/CELL, endPos.X/CELL, endPos.Y/CELL, brush->GetRadius().X/CELL, brush->GetRadius().Y/CELL, toolID);
 	}
 }
-void WallTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos)
+void WallTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength)
 {
 	sim->CreateWallBox(startPos.X/CELL, startPos.Y/CELL, endPos.X/CELL, endPos.Y/CELL, toolID);
 }
@@ -327,7 +327,7 @@ void ToolTool::DrawLine(Simulation *sim, Brush *brush, Point startPos, Point end
 		toolStrength = held ? 0.01f*toolStrength : 0.002f;
 	sim->CreateToolLine(startPos.X, startPos.Y, endPos.X, endPos.Y, toolID, toolStrength, brush);
 }
-void ToolTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos)
+void ToolTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength)
 {
 	if (toolID == TOOL_SIGN || toolID == TOOL_GOL)
 		return;
@@ -361,7 +361,7 @@ void PropTool::DrawLine(Simulation *sim, Brush *brush, Point startPos, Point end
 	if (!invalidState)
 		sim->CreatePropLine(startPos.X, startPos.Y, endPos.X, endPos.Y, prop, propValue, brush);
 }
-void PropTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos)
+void PropTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength)
 {
 	if (!invalidState)
 		sim->CreatePropBox(startPos.X, startPos.Y, endPos.X, endPos.Y, prop, propValue);
@@ -431,7 +431,7 @@ void DecoTool::DrawLine(Simulation *sim, Brush *brush, Point startPos, Point end
 	ARGBColour col = (toolID == DECO_CLEAR) ? COLARGB(0, 0, 0, 0) : decocolor;
 	sim->CreateDecoLine(startPos.X, startPos.Y, endPos.X, endPos.Y, toolID, col, brush);
 }
-void DecoTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos)
+void DecoTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength)
 {
 	ARGBColour col = (toolID == DECO_CLEAR) ? COLARGB(0, 0, 0, 0) : decocolor;
 	sim->CreateDecoBox(startPos.X, startPos.Y, endPos.X, endPos.Y, toolID, col);
@@ -472,7 +472,7 @@ void InvalidTool::DrawLine(Simulation *sim, Brush *brush, Point startPos, Point 
 {
 
 }
-void InvalidTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos)
+void InvalidTool::DrawRect(Simulation *sim, Brush *brush, Point startPos, Point endPos, float toolStrength)
 {
 
 }

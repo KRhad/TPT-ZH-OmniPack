@@ -196,7 +196,6 @@ extern bool show_tabs;
 class Tool;
 extern Tool* activeTools[3];
 #endif
-extern float toolStrength;
 extern int autosave;
 extern int realistic;
 extern bool explUnlocked;
