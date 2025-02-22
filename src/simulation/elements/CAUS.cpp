@@ -17,6 +17,7 @@
 
 int CAUS_update(UPDATE_FUNC_ARGS)
 {
+	bool converted = false;
 	for (int rx = -2; rx <= 2; rx++)
 		for (int ry = -2; ry <= 2; ry++)
 			if (rx || ry)
@@ -30,6 +31,7 @@ int CAUS_update(UPDATE_FUNC_ARGS)
 					{
 						sim->part_change_type(ID(r), x+rx, y+ry, PT_RFRG);
 						sim->part_change_type(i, x, y, PT_RFRG);
+						converted = true;
 					}
 				}
 				else if (TYP(r)!=PT_ACID && TYP(r)!=PT_CAUS && TYP(r)!=PT_RFRG && TYP(r)!=PT_RFGL)
@@ -55,7 +57,7 @@ int CAUS_update(UPDATE_FUNC_ARGS)
 					}
 				}
 			}
-	return 0;
+	return converted;
 }
 
 void CAUS_init_element(ELEMENT_INIT_FUNC_ARGS)

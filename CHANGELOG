@@ -1344,8 +1344,12 @@ in, similar to how vanilla TPT shows login errors. Make mass stamp deletion a
 little easier to use. Fix issues rendering or being unable to load stamps with
 custom elements.
 
-Version 58.3 2025-02-05
-Update to TPT version 99.2 Fix conduction failure when stacking certain powered
-electronics and conductors on top of each other. Fix Newtonian Gravity not
-working sometimes after reloading a save. Fix a few issues in certain
+Version 58.3 2025-02-08
+Update to TPT version 99.2. Fix conduction failure when stacking certain
+powered electronics and conductors on top of each other. Fix Newtonian Gravity
+not working sometimes after reloading a save. Fix a few issues in certain
 tool-related Lua APIs.
+
+Version 58.4 2025-02-21
+Change version number to 99.3. Backport minor airsim / CAUS changes from TPT
+99.3.

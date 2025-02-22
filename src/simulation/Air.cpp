@@ -177,7 +177,7 @@ void Air::UpdateAirHeat(Simulation *sim)
 			auto j = (int)ty;
 			tx -= i;
 			ty -= j;
-			if (!(blockairh[y][x]&0x8) && i>=2 && i<=XCELLS-3 && j>=2 && j<=YCELLS-3)
+			if (!(blockairh[y][x]&0x8) && i>=2 && i<XCELLS-3 && j>=2 && j<YCELLS-3)
 			{
 				auto odh = dh;
 				dh *= 1.0f - AIR_VADV;
@@ -371,7 +371,7 @@ void Air::UpdateAir()
 			tyi = (int)tyf;
 			txf -= txi;
 			tyf -= tyi;
-			if (!blockair[y][x] && txi >= 2 && txi <= XRES/CELL-3 && tyi >= 2 && tyi <= YRES/CELL-3)
+			if (!blockair[y][x] && txi >= 2 && txi < XRES/CELL-3 && tyi >= 2 && tyi < YRES/CELL-3)
 			{
 				dx *= 1.0f - AIR_VADV;
 				dy *= 1.0f - AIR_VADV;
