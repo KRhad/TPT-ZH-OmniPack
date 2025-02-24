@@ -11,6 +11,7 @@
 #include "interface/ScrollWindow.h"
 #include "interface/Style.h"
 #include "interface/Textbox.h"
+#include <cstring>
 
 std::deque<std::pair<std::string, std::string>> consoleHistory;
 std::string unsubmittedCommand;

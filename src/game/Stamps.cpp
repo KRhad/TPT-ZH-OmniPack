@@ -1,5 +1,6 @@
 #include "Stamps.h"
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <iomanip>
 #include <iostream>
@@ -355,8 +356,8 @@ void Stamps::GenThumb(Stamp & stamp)
 		stamp.thumb = prerender_save(data, size, &stamp.thumb_w, &stamp.thumb_h);
 		if (stamp.thumb && (stamp.thumb_w > XRES / GRID_S || stamp.thumb_h > YRES / GRID_S))
 		{
-			int factor_x = (int)ceil((float)stamp.thumb_w / (float)(XRES / GRID_S));
-			int factor_y = (int)ceil((float)stamp.thumb_h / (float)(YRES / GRID_S));
+			int factor_x = (int)std::ceil((float)stamp.thumb_w / (float)(XRES / GRID_S));
+			int factor_y = (int)std::ceil((float)stamp.thumb_h / (float)(YRES / GRID_S));
 			if (factor_y > factor_x)
 				factor_x = factor_y;
 			pixel *tmp = rescale_img(stamp.thumb, stamp.thumb_w, stamp.thumb_h, &stamp.thumb_w, &stamp.thumb_h, factor_x);

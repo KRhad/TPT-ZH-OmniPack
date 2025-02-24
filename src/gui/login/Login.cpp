@@ -8,6 +8,7 @@
 #include "interface/Textbox.h"
 #include "interface/RichLabel.h"
 #include "json/json.h"
+#include <cstring>
 
 Login::Login(LoginCallback callback):
 	ui::Window(Point(CENTERED, CENTERED), Point(220, 120)),
