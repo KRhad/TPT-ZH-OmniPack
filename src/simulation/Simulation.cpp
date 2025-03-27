@@ -1934,7 +1934,7 @@ bool Simulation::UpdateParticle(int i)
 	float mv = std::max(fabsf(parts[i].vx), fabsf(parts[i].vy));
 	int fin_x, fin_y, clear_x, clear_y;
 	float fin_xf, fin_yf, clear_xf, clear_yf;
-	if (mv < ISTP)
+	if (mv < ISTP || std::isnan(mv))
 	{
 		clear_x = x;
 		clear_y = y;
