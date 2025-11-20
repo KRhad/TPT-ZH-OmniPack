@@ -1176,7 +1176,7 @@ int int_pair_cmp (const void * a, const void * b)
 }
 
 #include "simulation/Simulation.h"
-void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRight)
+void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRight, Tool ** selectedAlt)
 {
 	int windowHeight = 300, windowWidth = 240;
 	int x0 = (XRES-windowWidth)/2, y0 = (YRES-windowHeight)/2, b = 1, mx, my;
@@ -1185,6 +1185,7 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 	int_pair tempInts[PT_NUM];
 	int selectedl = -1;
 	int selectedr = -1;
+	int selecteda = -1;
 	int firstResult = -1, hover = -1;
 
 	ui_edit ed;
@@ -1199,6 +1200,8 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 	{
 		bq = b;
 		b = mouse_get_state(&mx, &my);
+		bool isCtrlAlt = (sdl_mod & KMOD_ALT) && (sdl_mod & (KMOD_CTRL|KMOD_GUI)) && !(sdl_mod & KMOD_SHIFT);
+		bool isCtrlShift = !(sdl_mod & KMOD_ALT) && (sdl_mod & (KMOD_CTRL|KMOD_GUI)) && (sdl_mod & KMOD_SHIFT);
 
 		clearrect(vid_buf, x0-1, y0-1, windowWidth+3, windowHeight+3);
 		drawrect(vid_buf, x0, y0, windowWidth, windowHeight, 192, 192, 192, 255);
@@ -1241,7 +1244,12 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 				toolx += draw_tool_xy(vid_buf, toolx+xoff, tooly+yoff, foundTool)+5;
 				if (!bq && mx>=xoff+toolx-32 && mx<xoff+toolx && my>=yoff+tooly && my<yoff+tooly+15)
 				{
-					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 255, 55, 55, 255);
+					if (isCtrlShift)
+						drawtext(vid_buf, xoff+toolx-32, yoff+tooly-1, "\xED", 255, 205, 50, 255);
+					else if (isCtrlAlt)
+						drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 0, 255, 255, 255);
+					else
+						drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 255, 55, 55, 255);
 					hover = i;
 				}
 				else if (i == selectedl || foundTool == *selectedLeft)
@@ -1251,6 +1259,10 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 				else if (i==selectedr || foundTool == *selectedRight)
 				{
 					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 55, 55, 255, 255);
+				}
+				else if (i==selecteda || foundTool == *selectedAlt)
+				{
+					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 0, 255, 255, 255);
 				}
 				if (Favorite::Ref().IsFavorite(foundTool->GetIdentifier()))
 					drawtext(vid_buf, xoff+toolx-32, yoff+tooly-1, "\xED", 255, 205, 50, 255);
@@ -1303,7 +1315,12 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 				toolx += draw_tool_xy(vid_buf, toolx+xoff, tooly+yoff, foundTool)+5;
 				if (!bq && mx>=xoff+toolx-32 && mx<xoff+toolx && my>=yoff+tooly && my<yoff+tooly+15)
 				{
-					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 255, 55, 55, 255);
+					if (isCtrlShift)
+						drawtext(vid_buf, xoff+toolx-32, yoff+tooly-1, "\xED", 255, 205, 50, 255);
+					else if (isCtrlAlt)
+						drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 0, 255, 255, 255);
+					else
+						drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 255, 55, 55, 255);
 					hover = tempInts[i].second;
 				}
 				else if (tempInts[i].second == selectedl || foundTool == *selectedLeft)
@@ -1313,6 +1330,10 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 				else if (tempInts[i].second == selectedr || foundTool == *selectedRight)
 				{
 					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 55, 55, 255, 255);
+				}
+				else if (tempInts[i].second == selecteda || foundTool == *selectedAlt)
+				{
+					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 0, 255, 255, 255);
 				}
 				if(toolx > ed.w-4)
 				{
@@ -1326,17 +1347,38 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 		
 		if(b==1 && hover!=-1)
 		{
-			selectedl = hover;
+			if (isCtrlShift)
+			{
+				Favorite::Ref().AddFavorite(globalSim->elements[hover].Identifier);
+				save_presets();
+				FillMenus();
+			}
+			else
+			{
+				if (isCtrlAlt)
+					selecteda = hover;
+				else
+					selectedl = hover;
 #ifndef TOUCHUI
-			break;
+				break;
 #endif
+			}
 		}
 		if(b==4 && hover!=-1)
 		{
-			selectedr = hover;
+			if (isCtrlShift)
+			{
+				Favorite::Ref().RemoveFavorite(globalSim->elements[hover].Identifier);
+				save_presets();
+				FillMenus();
+			}
+			else
+			{
+				selectedr = hover;
 #ifndef TOUCHUI
-			break;
+				break;
 #endif
+			}
 		}
 		if (hover != -1)
 		{
@@ -1349,9 +1391,9 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 		
 		drawtext(vid_buf, x0+5, y0+windowHeight-12, "Dismiss", 255, 255, 255, 255);
 		drawrect(vid_buf, x0, y0+windowHeight-16, windowWidth, 16, 192, 192, 192, 255);
-		fillrect(vid_buf, -1, YRES-11, XRES + 1, 12, 0, 0, 0, 255);
+		fillrect(vid_buf, -1, YRES-12, XRES + 1, 12, 0, 0, 0, 255);
 		if (toolTipAlpha)
-			drawtext(vid_buf, 10, YRES-9, toolTip.c_str(), 255, 255, 255, toolTipAlpha > 51 ? 255 : toolTipAlpha*5);
+			drawtext(vid_buf, 10, YRES-10, toolTip.c_str(), 255, 255, 255, toolTipAlpha > 51 ? 255 : toolTipAlpha*5);
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
 
 		if (b && !bq)
@@ -1361,6 +1403,7 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 #ifndef TOUCHUI
 				selectedl = -1;
 				selectedr = -1;
+				selecteda = -1;
 #endif
 				break;
 			}
@@ -1372,7 +1415,7 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 
 		if (sdl_key==SDLK_RETURN)
 		{
-			if(selectedl==-1)
+			if (selectedl==-1)
 				selectedl = firstResult;
 			break;
 		}
@@ -1381,6 +1424,7 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 #ifndef TOUCHUI
 			selectedl = -1;
 			selectedr = -1;
+			selecteda = -1;
 #endif
 			break;
 		}
@@ -1388,33 +1432,20 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 
 	if (selectedl != -1)
 	{
-		if ((sdl_mod & (KMOD_CTRL|KMOD_GUI)) && (sdl_mod & KMOD_SHIFT) && !(sdl_mod & KMOD_ALT))
-		{
-			Favorite::Ref().AddFavorite(globalSim->elements[selectedl].Identifier);
-			save_presets();
-		}
-		else
-		{
-			*selectedLeft = GetToolFromIdentifier(globalSim->elements[selectedl].Identifier);
-			Favorite::Ref().AddRecent(globalSim->elements[selectedl].Identifier);
-		}
+		*selectedLeft = GetToolFromIdentifier(globalSim->elements[selectedl].Identifier);
+		Favorite::Ref().AddRecent(globalSim->elements[selectedl].Identifier);
 		FillMenus();
 	}
 	if (selectedr != -1)
 	{
-		if ((sdl_mod & (KMOD_CTRL|KMOD_GUI)) && (sdl_mod & KMOD_SHIFT) && !(sdl_mod & KMOD_ALT))
-		{
-			if (Favorite::Ref().IsFavorite(globalSim->elements[selectedr].Identifier))
-			{
-				Favorite::Ref().RemoveFavorite(globalSim->elements[selectedr].Identifier);
-				save_presets();
-			}
-		}
-		else
-		{
-			*selectedRight = GetToolFromIdentifier(globalSim->elements[selectedr].Identifier);
-			Favorite::Ref().AddRecent(globalSim->elements[selectedr].Identifier);
-		}
+		*selectedRight = GetToolFromIdentifier(globalSim->elements[selectedr].Identifier);
+		Favorite::Ref().AddRecent(globalSim->elements[selectedr].Identifier);
+		FillMenus();
+	}
+	if (selecteda != -1)
+	{
+		*selectedAlt = GetToolFromIdentifier(globalSim->elements[selecteda].Identifier);
+		Favorite::Ref().AddRecent(globalSim->elements[selecteda].Identifier);
 		FillMenus();
 	}
 	

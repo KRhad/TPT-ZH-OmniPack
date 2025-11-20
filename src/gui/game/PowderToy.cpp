@@ -2131,7 +2131,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		}
 		else
 		{
-			element_search_ui(vid_buf, &activeTools[0], &activeTools[1]);
+			element_search_ui(vid_buf, &activeTools[0], &activeTools[1], &activeTools[2]);
 		}
 		break;
 	case SDL_SCANCODE_R:

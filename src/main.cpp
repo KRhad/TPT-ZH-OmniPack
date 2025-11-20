@@ -1149,7 +1149,7 @@ int main_loop_temp(int b, int bq, int sdl_key, int scan, int x, int y, bool shif
 
 					if (hover == SC_SEARCH)
 					{
-						element_search_ui(vid_buf, &activeTools[0], &activeTools[1]);
+						element_search_ui(vid_buf, &activeTools[0], &activeTools[1], &activeTools[2]);
 						active_menu = last_active_menu;
 					}
 				}

@@ -236,7 +236,7 @@ void ui_richtext_process(int mx, int my, int mb, int mbq, ui_richtext *ed);
 
 void error_ui(pixel *vid_buf, int err, std::string txt);
 
-void element_search_ui(pixel *vid_buf, Tool** sl, Tool** sr);
+void element_search_ui(pixel *vid_buf, Tool** sl, Tool** sr, Tool** sa);
 
 void info_ui(pixel *vid_buf, std::string top, std::string txt);
 
