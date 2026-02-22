@@ -311,7 +311,7 @@ void initSimulationAPI(lua_State * l)
 		{"lastUpdatedID", simulation_lastUpdatedID},
 		{"updateUpTo", simulation_updateUpTo},
 		{"temperatureScale", simulation_temperatureScale},
-		{"randomseed", simulation_randomseed},
+		{"randomSeed", simulation_randomseed},
 		{"hash", simulation_hash},
 		{"ensureDeterminism", simulation_ensureDeterminism},
 		{"paused", simulation_paused},
@@ -3162,10 +3162,11 @@ int interface_windowSize(lua_State * l)
 		lua_pushboolean(l, Engine::Ref().IsFullscreen());
 		return 2;
 	}
-	int scale = luaL_optint(l, 1, 1), fullscreen = luaL_optint(l, 2, 0);
-	if (scale < 1 || scale > 5)
+	int scale = luaL_optint(l, 1, 1);
+	bool fullscreen = lua_toboolean(l, 2);
+	if (scale < 1 || scale > 10)
 		scale = 1;
-	if (fullscreen != 1)
+	if (fullscreen != true)
 		fullscreen = 0;
 	Engine::Ref().SetScale(scale);
 	Engine::Ref().SetFullscreen(fullscreen);
