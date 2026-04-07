@@ -46,6 +46,7 @@ public:
 void PIPE_patchR(particle &part);
 void PIPE_patchH(particle &part);
 void PIPE_patchV(particle &part);
+void PIPE_transfer_part_to_pipe(particle *part, particle *pipe);
 void PIPE_transfer_pipe_to_part(Simulation *sim, particle *pipe, particle *part, bool STOR=false);
 
 #endif

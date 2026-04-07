@@ -2156,12 +2156,7 @@ bool Simulation::UpdateParticle(int i)
 
 			if ((TYP(r)==PT_PIPE || TYP(r) == PT_PPIP) && !TYP(parts[ID(r)].ctype))
 			{
-				parts[ID(r)].ctype = parts[i].type;
-				parts[ID(r)].temp = parts[i].temp;
-				parts[ID(r)].tmp2 = parts[i].life;
-				parts[ID(r)].tmp3 = parts[i].tmp;
-				parts[ID(r)].tmp4 = parts[i].ctype;
-				part_kill(i);
+				PIPE_transfer_part_to_pipe(parts+i, parts+(ID(r)));
 				return true;
 			}
 
