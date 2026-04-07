@@ -43,7 +43,7 @@ void CNCT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Concrete, stronger than stone.";
+	elem->Description = "Concrete. Can stack on itself or ROCK, collapses with pressure.";
 
 	elem->Properties = TYPE_PART|PROP_HOT_GLOW;
 

@@ -151,7 +151,7 @@ void DEUT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Deuterium oxide. Volume changes with temp, radioactive with neutrons.";
+	elem->Description = "Deuterium oxide. Gets more concentrated when cold, explodes with neutrons or protons.";
 
 	elem->Properties = TYPE_LIQUID|PROP_NEUTPASS;
 

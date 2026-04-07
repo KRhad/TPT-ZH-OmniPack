@@ -180,7 +180,7 @@ void PHOT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 900.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Photons. Refracts through glass, scattered by quartz, and color-changed by different elements. Ignites flammable materials.";
+	elem->Description = "Photons. Refract through glass, and different elements change its color. Can ignite flammable materials.";
 
 	elem->Properties = TYPE_ENERGY | PROP_PHOTPASS | PROP_LIFE_DEC | PROP_LIFE_KILL_DEC;
 

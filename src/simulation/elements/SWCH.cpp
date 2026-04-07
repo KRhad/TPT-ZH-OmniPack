@@ -75,7 +75,7 @@ void SWCH_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Only conducts when switched on. (PSCN switches on, NSCN switches off)";
+	elem->Description = "Switch. Only conducts when switched on. (PSCN switches on, NSCN switches off)";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

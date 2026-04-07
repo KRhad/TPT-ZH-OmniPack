@@ -44,7 +44,7 @@ void NSCN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "N-Type Silicon, Will not transfer current to P-Type Silicon.";
+	elem->Description = "N-Type Silicon, Will not transfer current to P-Type Silicon. Disables powered materials.";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

@@ -43,7 +43,7 @@ void INSL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Insulator, does not conduct heat and blocks electricity.";
+	elem->Description = "Insulator. Blocks heat, electricity, and radiation.";
 
 	elem->Properties = TYPE_SOLID;
 

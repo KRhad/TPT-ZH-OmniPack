@@ -71,7 +71,7 @@ void INVIS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 164;
 	elem->Latent = 0;
-	elem->Description = "Invisible to particles while under pressure.";
+	elem->Description = "Invisible under pressure, allowing particles through.";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS | PROP_PHOTPASS;
 

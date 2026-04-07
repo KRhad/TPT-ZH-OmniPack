@@ -157,7 +157,7 @@ void FILT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Filter for photons, changes the color.";
+	elem->Description = "Filter. Changes color of PHOT and BIZR. Color depends on temperature.";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_NOAMBHEAT | PROP_LIFE_DEC;
 

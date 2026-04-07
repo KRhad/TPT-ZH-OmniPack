@@ -59,7 +59,7 @@ void ETRD_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Electrode. Creates a surface that allows Plasma arcs. (Use sparingly)";
+	elem->Description = "Electrode. Creates plasma arcs with electricity. (Use sparingly)";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

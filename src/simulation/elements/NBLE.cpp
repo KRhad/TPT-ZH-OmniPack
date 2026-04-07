@@ -91,7 +91,7 @@ void NBLE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 2.0f + 273.15f;
 	elem->HeatConduct = 106;
 	elem->Latent = 0;
-	elem->Description = "Noble Gas. Diffuses and conductive. Ionizes into plasma when introduced to electricity.";
+	elem->Description = "Noble Gas. Ionizes into plasma when sparked. Diffuses.";
 
 	elem->Properties = TYPE_GAS|PROP_CONDUCTS|PROP_LIFE_DEC;
 
