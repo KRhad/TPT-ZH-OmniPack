@@ -85,6 +85,10 @@ void PPIP_flood_trigger(Simulation* sim, int x, int y, int sparkedBy)
 	int coord_stack_size = 0;
 	int x1, x2;
 
+	unsigned int t = TYP(pmap[y][x]);
+	if (t != PT_PIPE && t != PT_PPIP)
+		return;
+
 	// Separate flags for on and off in case PPIP is sparked by PSCN and NSCN on the same frame
 	// - then PSCN can override NSCN and behaviour is not dependent on particle order
 	int prop = 0;
@@ -94,8 +98,10 @@ void PPIP_flood_trigger(Simulation* sim, int x, int y, int sparkedBy)
 		prop = PPIP_TMPFLAG_TRIGGER_OFF << 3;
 	else if (sparkedBy == PT_INST)
 		prop = PPIP_TMPFLAG_TRIGGER_REVERSE << 3;
+	else if (sparkedBy == PT_HEAC)
+		prop = PFLAG_CAN_CONDUCT; // Special case for HEAC near pipe
 
-	if (prop == 0 || TYP(pmap[y][x]) != PT_PPIP || (parts[ID(pmap[y][x])].tmp & prop))
+	if (prop == 0 || (t != PT_PPIP && sparkedBy != PT_HEAC) || (parts[ID(pmap[y][x])].tmp & prop))
 		return;
 
 	coord_stack = (unsigned short(*)[2])malloc(sizeof(unsigned short)*2*coord_stack_limit);
@@ -112,7 +118,7 @@ void PPIP_flood_trigger(Simulation* sim, int x, int y, int sparkedBy)
 		// go left as far as possible
 		while (x1 >=CELL)
 		{
-			if (TYP(pmap[y][x1-1]) != PT_PPIP)
+			if (TYP(pmap[y][x1-1]) != t)
 			{
 				break;
 			}
@@ -121,7 +127,7 @@ void PPIP_flood_trigger(Simulation* sim, int x, int y, int sparkedBy)
 		// go right as far as possible
 		while (x2 < XRES - CELL)
 		{
-			if (TYP(pmap[y][x2+1]) != PT_PPIP)
+			if (TYP(pmap[y][x2+1]) != t)
 			{
 				break;
 			}
@@ -130,7 +136,7 @@ void PPIP_flood_trigger(Simulation* sim, int x, int y, int sparkedBy)
 		// fill span
 		for (x = x1; x <= x2; x++)
 		{
-			if (!(parts[ID(pmap[y][x])].tmp & prop))
+			if (!(parts[ID(pmap[y][x])].tmp & prop) && sparkedBy != PT_HEAC)
 				static_cast<PPIP_ElementDataContainer&>(*sim->elementData[PT_PPIP]).ppip_changed = 1;
 			parts[ID(pmap[y][x])].tmp |= prop;
 		}
@@ -140,7 +146,7 @@ void PPIP_flood_trigger(Simulation* sim, int x, int y, int sparkedBy)
 		// Don't need to check x bounds here, because already limited to [CELL, XRES-CELL]
 		if (y >= CELL+1)
 			for (x = x1-1; x <= x2 + 1; x++)
-				if (TYP(pmap[y-1][x])==PT_PPIP && !(parts[ID(pmap[y-1][x])].tmp & prop))
+				if (TYP(pmap[y-1][x]) == t && !(parts[ID(pmap[y-1][x])].tmp & prop))
 				{
 					coord_stack[coord_stack_size][0] = x;
 					coord_stack[coord_stack_size][1] = y-1;
@@ -153,7 +159,7 @@ void PPIP_flood_trigger(Simulation* sim, int x, int y, int sparkedBy)
 				}
 		if (y < YRES - CELL - 1)
 			for (x = x1 - 1; x <= x2 + 1; x++)
-				if (TYP(pmap[y+1][x]) == PT_PPIP && !(parts[ID(pmap[y+1][x])].tmp & prop))
+				if (TYP(pmap[y+1][x]) == t && !(parts[ID(pmap[y+1][x])].tmp & prop))
 				{
 					coord_stack[coord_stack_size][0] = x;
 					coord_stack[coord_stack_size][1] = y+1;
@@ -389,6 +395,7 @@ int PIPE_update(UPDATE_FUNC_ARGS)
 			int lastneighbor = -1;
 			int neighborcount = 0;
 			int count = 0;
+			bool heatPipe = false;
 			// Make automatic pipe pattern
 			for (int rx = -1; rx <= 1; rx++)
 				for (int ry = -1; ry <= 1; ry++)
@@ -398,6 +405,11 @@ int PIPE_update(UPDATE_FUNC_ARGS)
 						int r = pmap[y+ry][x+rx];
 						if (!r)
 							continue;
+						if (TYP(r) == PT_HEAC)
+						{
+							heatPipe = true;
+							continue;
+						}
 						if (TYP(r) != PT_PIPE && TYP(r) != PT_PPIP)
 							continue;
 						unsigned int next = nextColor(parts[i].tmp);
@@ -426,6 +438,8 @@ int PIPE_update(UPDATE_FUNC_ARGS)
 					}
 			if (neighborcount == 1)
 				parts[lastneighbor].tmp |= 0x100;
+			if (heatPipe)
+				PPIP_flood_trigger(sim, x, y, PT_HEAC);
 		}
 		else
 		{
