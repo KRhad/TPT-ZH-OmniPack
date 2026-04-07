@@ -182,11 +182,19 @@ void PIPE_transfer_pipe_to_part(Simulation *sim, particle *pipe, particle *part,
 	{
 		part->type = TYP(pipe->tmp);
 		pipe->tmp = 0;
+		part->dcolour = COLARGB(0, 0, 0, 0);
 	}
 	else
 	{
 		part->type = TYP(pipe->ctype);
 		pipe->ctype = 0;
+
+		// If deco originated from particle, and not PIPE, then copy it
+		if (pipe->tmp & PFLAG_PARTICLE_DECO)
+		{
+			part->dcolour = pipe->dcolour;
+			pipe->dcolour = COLARGB(0, 0, 0, 0);
+		}
 	}
 	part->temp = pipe->temp;
 	part->life = pipe->tmp2;
@@ -200,7 +208,6 @@ void PIPE_transfer_pipe_to_part(Simulation *sim, particle *pipe, particle *part,
 	}
 	part->tmp2 = 0;
 	part->flags = 0;
-	part->dcolour = COLARGB(0, 0, 0, 0);
 }
 
 void PIPE_transfer_part_to_pipe(particle *part, particle *pipe)
@@ -213,6 +220,12 @@ void PIPE_transfer_part_to_pipe(particle *part, particle *pipe)
 	pipe->tmp2 = part->life;
 	pipe->tmp3 = part->tmp;
 	pipe->tmp4 = part->ctype;
+
+	if (part->dcolour && !pipe->dcolour)
+	{
+		pipe->dcolour = part->dcolour;
+		pipe->tmp |= PFLAG_PARTICLE_DECO;
+	}
 }
 
 void PIPE_transfer_pipe_to_pipe(particle *src, particle *dest, bool STOR=false)
@@ -227,6 +240,18 @@ void PIPE_transfer_pipe_to_pipe(particle *src, particle *dest, bool STOR=false)
 	{
 		dest->ctype = src->ctype;
 		src->ctype = 0;
+
+		if (src->tmp & PFLAG_PARTICLE_DECO)
+		{
+			// Even if source pipe has particle deco, don't override existing pipe deco. Just delete source deco only.
+			if (!dest->dcolour)
+			{
+				dest->dcolour = src->dcolour;
+				dest->tmp |= PFLAG_PARTICLE_DECO;
+			}
+			src->dcolour = 0;
+			src->tmp &= ~PFLAG_PARTICLE_DECO;
+		}
 	}
 	if ((dest->tmp & PFLAG_CAN_CONDUCT) == 0)
 		dest->temp = src->temp;
