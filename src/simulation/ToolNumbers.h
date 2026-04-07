@@ -35,20 +35,20 @@ typedef struct toolType toolType;
 
 static toolType toolTypes[] =
 {
-	{"HEAT", "DEFAULT_TOOL_HEAT",	COLPACK(0xFFBB00), "Heats the targeted element."},
-	{"COOL", "DEFAULT_TOOL_COOL",	COLPACK(0x00BBFF), "Cools the targeted element."},
-	{"AIR",  "DEFAULT_TOOL_AIR",	COLPACK(0xFFFFFF), "Air, creates airflow and pressure."},
-	{"VAC",  "DEFAULT_TOOL_VAC",	COLPACK(0x303030), "Vacuum, reduces air pressure."},
-	{"PGRV", "DEFAULT_TOOL_PGRV",	COLPACK(0xCCCCFF), "Creates a short-lasting gravity well."},
-	{"NGRV", "DEFAULT_TOOL_NGRV",	COLPACK(0xAACCFF), "Creates a short-lasting negative gravity well."},
-	{"MIX",	 "DEFAULT_TOOL_MIX",	COLPACK(0xFFD090), "Mixes particles around randomly."},
-	{"CYCL", "DEFAULT_TOOL_CYCL",	COLPACK(0x132F5B), "Cyclone, produces swirling air currents."},
-	{"AMBM", "DEFAULT_TOOL_AMBM",	COLPACK(0x00DDFF), "Decreases ambient air temperature."},
-	{"AMBP", "DEFAULT_TOOL_AMBP",	COLPACK(0xFFDD00), "Increases ambient air temperature."},
-	{"WIND", "DEFAULT_UI_WIND",		COLPACK(0x404040), "Creates air movement."},
-	{"PROP", "DEFAULT_UI_PROPERTY",	COLPACK(0xFFAA00), "Property drawing tool."},
-	{"SIGN", "DEFAULT_UI_SIGN",		COLPACK(0x808080), "Sign. Displays text. Click on a sign to edit it or anywhere else to place a new one."},
-	{"CUST", "DEFAULT_UI_ADDLIFE",	COLPACK(0xFEA900), "Add a new custom GOL type. (Use ctrl+shift+rightclick to remove them)"}
+	{"HEAT", "DEFAULT_TOOL_HEAT",   COLPACK(0xFFBB00), "Heats the targeted element."},
+	{"COOL", "DEFAULT_TOOL_COOL",   COLPACK(0x00BBFF), "Cools the targeted element."},
+	{"AIR",  "DEFAULT_TOOL_AIR",    COLPACK(0xFFFFFF), "Air, creates airflow and pressure."},
+	{"VAC",  "DEFAULT_TOOL_VAC",    COLPACK(0x303030), "Vacuum, reduces air pressure."},
+	{"PGRV", "DEFAULT_TOOL_PGRV",   COLPACK(0xCCCCFF), "Creates a short-lasting gravity well."},
+	{"NGRV", "DEFAULT_TOOL_NGRV",   COLPACK(0xAACCFF), "Creates a short-lasting negative gravity well."},
+	{"MIX",  "DEFAULT_TOOL_MIX",    COLPACK(0xFFD090), "Mixes particles around randomly."},
+	{"CYCL", "DEFAULT_TOOL_CYCL",   COLPACK(0x132F5B), "Cyclone, produces swirling air currents."},
+	{"AMBM", "DEFAULT_TOOL_AMBM",   COLPACK(0x00DDFF), "Decreases ambient air temperature."},
+	{"AMBP", "DEFAULT_TOOL_AMBP",   COLPACK(0xFFDD00), "Increases ambient air temperature."},
+	{"WIND", "DEFAULT_TOOL_WIND",   COLPACK(0x404040), "Creates air movement."},
+	{"PROP", "DEFAULT_UI_PROPERTY", COLPACK(0xFFAA00), "Property drawing tool."},
+	{"SIGN", "DEFAULT_UI_SIGN",     COLPACK(0x808080), "Sign. Displays text. Click on a sign to edit it or anywhere else to place a new one."},
+	{"CUST", "DEFAULT_UI_ADDLIFE",  COLPACK(0xFEA900), "Add a new custom GOL type. (Use ctrl+shift+rightclick to remove them)"}
 };
 
 #define DECO_DRAW		0

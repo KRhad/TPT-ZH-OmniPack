@@ -202,7 +202,7 @@ void PlopTool::Click(Simulation *sim, Brush *brush, Point position)
 
 
 GolTool::GolTool(int golID):
-	Tool(GOL_TOOL, golID, "DEFAULT_PT_LIFE_" + builtinGol[golID].name, builtinGol[golID].name, builtinGol[golID].description,
+	Tool(GOL_TOOL, golID, golID == 0 ? "DEFAULT_PT_LIFE" : "DEFAULT_PT_LIFE_" + builtinGol[golID].name, builtinGol[golID].name, builtinGol[golID].description,
 		   builtinGol[golID].color, SC_LIFE)
 {
 
