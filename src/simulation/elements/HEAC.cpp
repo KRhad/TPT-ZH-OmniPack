@@ -17,8 +17,8 @@
 #include <functional>
 #include "simulation/ElementsCommon.h"
 
-static const auto isInsulator = [](Simulation* a, int b) -> bool {
-	return b && (a->elements[TYP(b)].HeatConduct == 0 || (TYP(b) == PT_HSWC && a->parts[ID(b)].life != 10));
+static const auto isInsulator = [](Simulation* sim, int p) -> bool {
+	return p && sim->IsHeatInsulator(sim->parts[ID(p)]);
 };
 
 // If this is used elsewhere (GOLD), it should be moved into Simulation.h
@@ -100,13 +100,13 @@ int HEAC_update(UPDATE_FUNC_ARGS)
 			if (x+rrx >= 0 && x+rrx < XRES && y+rry >= 0 && y+rry < YRES && !CheckLine(sim, x, y, x+rrx, y+rry, isInsulator))
 			{
 				r = pmap[y+rry][x+rrx];
-				if (r && sim->elements[TYP(r)].HeatConduct > 0 && (TYP(r) != PT_HSWC || parts[ID(r)].life == 10))
+				if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 				{
 					count++;
 					tempAgg += parts[ID(r)].temp;
 				}
 				r = photons[y+rry][x+rrx];
-				if (r && sim->elements[TYP(r)].HeatConduct > 0 && (TYP(r) != PT_HSWC || parts[ID(r)].life == 10))
+				if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 				{
 					count++;
 					tempAgg += parts[ID(r)].temp;
@@ -128,12 +128,12 @@ int HEAC_update(UPDATE_FUNC_ARGS)
 				if (x+rrx >= 0 && x+rrx < XRES && y+rry >= 0 && y+rry < YRES && !CheckLine(sim, x, y, x+rrx, y+rry, isInsulator))
 				{
 					r = pmap[y+rry][x+rrx];
-					if (r && sim->elements[TYP(r)].HeatConduct > 0 && (TYP(r) != PT_HSWC || parts[ID(r)].life == 10))
+					if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 					{
 						parts[ID(r)].temp = parts[i].temp;
 					}
 					r = photons[y+rry][x+rrx];
-					if (r && sim->elements[TYP(r)].HeatConduct > 0 && (TYP(r) != PT_HSWC || parts[ID(r)].life == 10))
+					if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 					{
 						parts[ID(r)].temp = parts[i].temp;
 					}

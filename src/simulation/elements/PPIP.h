@@ -2,7 +2,31 @@
 #define PPIP_H
 
 #include "simulation/ElementDataContainer.h"
-#include "simulation/Simulation.h"
+#include "powder.h"
+
+// 0x00000100 is single pixel pipe
+// 0x00000200 will transfer like a single pixel pipe when in forward mode
+// 0x00001C00 forward single pixel pipe direction
+// 0x00002000 will transfer like a single pixel pipe when in reverse mode
+// 0x0001C000 reverse single pixel pipe direction
+// 0x000E0000 PIPE color data stored here
+
+constexpr int PFLAG_CAN_CONDUCT   = 0x00000001;
+constexpr int PFLAG_NORMALSPEED   = 0x00010000;
+constexpr int PFLAG_INITIALIZING  = 0x00020000; // colors haven't been set yet
+constexpr int PFLAG_COLOR_RED     = 0x00040000;
+constexpr int PFLAG_COLOR_GREEN   = 0x00080000;
+constexpr int PFLAG_COLOR_BLUE    = 0x000C0000;
+constexpr int PFLAG_COLORS        = 0x000C0000;
+
+constexpr int PPIP_TMPFLAG_REVERSED        = 0x01000000;
+constexpr int PPIP_TMPFLAG_PAUSED          = 0x02000000;
+constexpr int PPIP_TMPFLAG_TRIGGER_REVERSE = 0x04000000;
+constexpr int PPIP_TMPFLAG_TRIGGER_OFF     = 0x08000000;
+constexpr int PPIP_TMPFLAG_TRIGGER_ON      = 0x10000000;
+constexpr int PPIP_TMPFLAG_TRIGGERS        = 0x1C000000;
+
+class Simulation;
 
 class PPIP_ElementDataContainer : public ElementDataContainer
 {
@@ -15,21 +39,7 @@ public:
 
 	std::unique_ptr<ElementDataContainer> Clone() override { return std::make_unique<PPIP_ElementDataContainer>(*this); }
 
-	void Simulation_BeforeUpdate(Simulation *sim) override
-	{
-		if (ppip_changed)
-		{
-			for (int i = 0; i <= sim->parts_lastActiveIndex; i++)
-			{
-				if (parts[i].type == PT_PPIP)
-				{
-					parts[i].tmp |= (parts[i].tmp&0xE0000000)>>3;
-					parts[i].tmp &= ~0xE0000000;
-				}
-			}
-			ppip_changed = false;
-		}
-	}
+	void Simulation_BeforeUpdate(Simulation *sim) override;
 };
 
 void PIPE_patchR(particle &part);

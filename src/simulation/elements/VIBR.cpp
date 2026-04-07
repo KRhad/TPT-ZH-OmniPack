@@ -68,7 +68,7 @@ int VIBR_update(UPDATE_FUNC_ARGS)
 			int rx = rndstore%7-3;
 			int ry = (rndstore>>3)%7-3;
 			int r = pmap[y+ry][x+rx];
-			if (TYP(r) && TYP(r) != PT_VIBR && TYP(r) != PT_BVBR && sim->elements[TYP(r)].HeatConduct && (TYP(r)!=PT_HSWC||parts[ID(r)].life==10))
+			if (TYP(r) && TYP(r) != PT_VIBR && TYP(r) != PT_BVBR && !sim->IsHeatInsulator(sim->parts[ID(r)]))
 			{
 				parts[ID(r)].temp = restrict_flt(parts[ID(r)].temp + parts[i].tmp * 3, MIN_TEMP, MAX_TEMP);
 				parts[i].tmp = 0;

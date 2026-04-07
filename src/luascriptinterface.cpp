@@ -1,3 +1,4 @@
+
 #ifdef LUACONSOLE
 
 #include <string>
@@ -1254,7 +1255,7 @@ int simulation_resetTemp(lua_State * l)
 	bool onlyConductors = luaL_optint(l, 1, 0) ? true : false;
 	for (int i = 0; i < luaSim->parts_lastActiveIndex; i++)
 	{
-		if (parts[i].type && (luaSim->elements[parts[i].type].HeatConduct || !onlyConductors))
+		if (parts[i].type && (!onlyConductors || !luaSim->IsHeatInsulator(parts[i])))
 		{
 			parts[i].temp = luaSim->elements[parts[i].type].DefaultProperties.temp;
 		}

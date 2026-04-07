@@ -39,7 +39,7 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 	}
 
 	//heat transfer code
-	if ((t!=PT_HSWC || parts[i].life==10) && elements[t].HeatConduct*gel_scale != 0 && (realistic || RNG::Ref().chance(elements[t].HeatConduct*gel_scale, 250)))
+	if (!IsHeatInsulator(parts[i]) && elements[t].HeatConduct*gel_scale != 0 && (realistic || RNG::Ref().chance(elements[t].HeatConduct*gel_scale, 250)))
 	{
 		float c_Cm = 0.0f;
 		if (aheat_enable && !(elements[t].Properties&PROP_NOAMBHEAT))
@@ -76,30 +76,37 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 				continue;
 			rt = TYP(r);
 
-			if (rt && elements[rt].HeatConduct && (rt!=PT_HSWC || parts[ID(r)].life == 10)
-			       && (t !=PT_FILT || (rt!=PT_BRAY && rt!=PT_BIZR && rt!=PT_BIZRG))
-			       && (rt!=PT_FILT || (t !=PT_BRAY && t !=PT_BIZR && t!=PT_BIZRG && t!=PT_PHOT))
-			       && (t !=PT_ELEC || rt!=PT_DEUT)
-			       && (t !=PT_DEUT || rt!=PT_ELEC)
-			       && (t !=PT_HSWC || rt!=PT_FILT || parts[i].tmp != 1)
-			       && (t !=PT_FILT || rt!=PT_HSWC || parts[ID(r)].tmp != 1))
-			{
-				surround_hconduct[j] = ID(r);
-				if (realistic)
-				{
-					if (rt==PT_GEL)
-						gel_scale = parts[ID(r)].tmp*2.55f;
-					else gel_scale = 1.0f;
+			if (!rt || IsHeatInsulator(parts[ID(r)])
+				|| (t == PT_FILT && (rt == PT_BRAY || rt == PT_BIZR || rt == PT_BIZRG))
+				|| (rt == PT_FILT && (t == PT_BRAY || t == PT_PHOT || t == PT_BIZR || t == PT_BIZRG))
+				|| (t == PT_ELEC && rt == PT_DEUT)
+				|| (t == PT_DEUT && rt == PT_ELEC)
+				|| (t == PT_HSWC && rt == PT_FILT && parts[i].tmp == 1)
+				|| (t == PT_FILT && rt == PT_HSWC && parts[ID(r)].tmp == 1))
+				continue;
 
-					c_heat += parts[ID(r)].temp*96.645f/elements[rt].HeatConduct*tptabs(elements[rt].Weight);
-					c_Cm += 96.645f/elements[rt].HeatConduct*tptabs(elements[rt].Weight);
-				}
-				else
-				{
-					c_heat += parts[ID(r)].temp;
-				}
+			surround_hconduct[j] = ID(r);
+			if (realistic)
+			{
+				if (rt==PT_GEL)
+					gel_scale = parts[ID(r)].tmp*2.55f;
+				else gel_scale = 1.0f;
+
+				c_heat += parts[ID(r)].temp*96.645f/elements[rt].HeatConduct*tptabs(elements[rt].Weight);
+				c_Cm += 96.645f/elements[rt].HeatConduct*tptabs(elements[rt].Weight);
+			}
+			else
+			{
+				c_heat += parts[ID(r)].temp;
+			}
+
+			if ((rt == PT_PIPE || rt == PT_PPIP) && parts[ID(r)].ctype != 0)
+			{
+				c_heat += parts[ID(r)].temp; // double count the particle to account for the heat capacity of both the PIPE/PPIP and its contents
 				h_count++;
 			}
+
+			h_count++;
 		}
 		if (realistic)
 		{
@@ -121,7 +128,10 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 				pt = parts[i].temp;
 			else
 			{
-				pt = (c_heat+parts[i].temp)/(h_count+1);
+				if ((t == PT_PIPE || t == PT_PPIP) && parts[i].ctype != 0)
+					pt = (c_heat+parts[i].temp*2.0f)/(h_count+2); // double count the particle to account for the heat capacity of both the PIPE/PPIP and its contents
+				else
+					pt = (c_heat+parts[i].temp)/(h_count+1);
 				pt = parts[i].temp = restrict_flt(pt, MIN_TEMP, MAX_TEMP);
 				for (j=0; j<8; j++)
 				{

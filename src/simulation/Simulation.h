@@ -25,6 +25,7 @@
 #include "simulation/SaveLoadData.h"
 #include "simulation/SimulationData.h"
 #include "simulation/StructProperty.h"
+#include "simulation/elements/PPIP.h"
 #include "powder.h"
 
 class Brush;
@@ -149,6 +150,10 @@ public:
 	bool InBounds(int x, int y)
 	{
 		return (x>=0 && y>=0 && x<XRES && y<YRES);
+	}
+	bool IsHeatInsulator(const particle &p) const
+	{
+		return elements[p.type].HeatConduct == 0 || (p.type == PT_HSWC && p.life != 10) || ((p.type == PT_PIPE || p.type == PT_PPIP) && (p.tmp & PFLAG_CAN_CONDUCT) == 0);
 	}
 	std::string ElementResolve(int type, int ctype) const;
 

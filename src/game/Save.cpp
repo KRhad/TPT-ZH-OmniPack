@@ -29,6 +29,7 @@
 #include "common/Version.h"
 #include "simulation/ElementNumbers.h"
 #include "simulation/GolNumbers.h"
+#include "simulation/Simulation.h"
 #include "simulation/SimulationData.h"
 #include "simulation/ToolNumbers.h"
 #include "simulation/WallNumbers.h"

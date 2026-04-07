@@ -202,7 +202,7 @@ int LIGH_update(UPDATE_FUNC_ARGS)
 
 				if (sim->elements[rt].Properties & PROP_INDESTRUCTIBLE)
 				{
-					if (sim->elements[rt].HeatConduct)
+					if (!sim->IsHeatInsulator(parts[ID(r)]))
 						parts[ID(r)].temp = restrict_flt(parts[ID(r)].temp+powderful/10, MIN_TEMP, MAX_TEMP);
 					continue;
 				}

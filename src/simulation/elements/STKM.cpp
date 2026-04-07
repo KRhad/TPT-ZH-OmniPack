@@ -600,7 +600,7 @@ void STKM_ElementDataContainer::Interact(Simulation* sim, Stickman *playerp, int
 			damage += RNG::Ref().between(32, 51);
 		}
 
-		if (sim->elements[TYP(r)].HeatConduct && (TYP(r)!=PT_HSWC||parts[ID(r)].life==10) && ((playerp->elem!=PT_LIGH && parts[ID(r)].temp>=323) || parts[ID(r)].temp<=243) && (!playerp->rocketBoots || TYP(r)!=PT_PLSM))
+		if (!sim->IsHeatInsulator(sim->parts[ID(r)]) && ((playerp->elem!=PT_LIGH && parts[ID(r)].temp>=323) || parts[ID(r)].temp<=243) && (!playerp->rocketBoots || TYP(r)!=PT_PLSM))
 		{
 			damage += 2;
 			playerp->accs[3] -= 1;

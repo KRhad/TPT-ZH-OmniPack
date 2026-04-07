@@ -18,31 +18,6 @@
 #include "simulation/elements/PRTI.h"
 #include "graphics.h"
 
-#define PFLAG_NORMALSPEED 0x00010000
-#define PFLAG_REVERSE 0x00020000
-
-// 0x000000FF element
-// 0x00000100 is single pixel pipe
-// 0x00000200 will transfer like a single pixel pipe when in forward mode
-// 0x00001C00 forward single pixel pipe direction
-// 0x00002000 will transfer like a single pixel pipe when in reverse mode
-// 0x0001C000 reverse single pixel pipe direction
-// 0x000E0000 PIPE color data stored here
-
-#define PFLAG_NORMALSPEED            0x00010000
-#define PFLAG_INITIALIZING           0x00020000 // colors haven't been set yet
-#define PFLAG_COLOR_RED              0x00040000
-#define PFLAG_COLOR_GREEN            0x00080000
-#define PFLAG_COLOR_BLUE             0x000C0000
-#define PFLAG_COLORS                 0x000C0000
-
-#define PPIP_TMPFLAG_REVERSED        0x01000000
-#define PPIP_TMPFLAG_PAUSED          0x02000000
-#define PPIP_TMPFLAG_TRIGGER_REVERSE 0x04000000
-#define PPIP_TMPFLAG_TRIGGER_OFF     0x08000000
-#define PPIP_TMPFLAG_TRIGGER_ON      0x10000000
-#define PPIP_TMPFLAG_TRIGGERS        0x1C000000
-
 signed char pos_1_rx[] = { -1,-1,-1, 0, 0, 1, 1, 1 };
 signed char pos_1_ry[] = { -1, 0, 1,-1, 1,-1, 0, 1 };
 
@@ -225,7 +200,10 @@ void PIPE_transfer_pipe_to_part(Simulation *sim, particle *pipe, particle *part,
 void PIPE_transfer_part_to_pipe(particle *part, particle *pipe)
 {
 	pipe->ctype = part->type;
-	pipe->temp = part->temp;
+	if ((pipe->tmp & PFLAG_CAN_CONDUCT) == 0)
+		pipe->temp = part->temp;
+	else
+		pipe->temp = (part->temp + pipe->temp) / 2.0f;
 	pipe->tmp2 = part->life;
 	pipe->tmp3 = part->tmp;
 	pipe->tmp4 = part->ctype;
@@ -244,7 +222,10 @@ void PIPE_transfer_pipe_to_pipe(particle *src, particle *dest, bool STOR=false)
 		dest->ctype = src->ctype;
 		src->ctype = 0;
 	}
-	dest->temp = src->temp;
+	if ((dest->tmp & PFLAG_CAN_CONDUCT) == 0)
+		dest->temp = src->temp;
+	else
+		dest->temp = (src->temp + dest->temp) / 2.0f;
 	dest->tmp2 = src->tmp2;
 	dest->tmp3 = src->tmp3;
 	dest->tmp4 = src->tmp4;
@@ -274,7 +255,7 @@ void pushParticle(Simulation *sim, int i, int count, int original)
 			int r = pmap[y+ry][x+rx];
 			if (!r)
 				continue;
-			else if ((TYP(r)==PT_PIPE || TYP(r) == PT_PPIP) && (sim->parts[ID(r)].tmp & PFLAG_COLORS) != notctype && !TYP(sim->parts[ID(r)].ctype))
+			else if ((TYP(r) == PT_PIPE || TYP(r) == PT_PPIP) && (sim->parts[ID(r)].tmp & PFLAG_COLORS) != notctype && !TYP(sim->parts[ID(r)].ctype))
 			{
 				PIPE_transfer_pipe_to_pipe(parts + i, parts + (ID(r)));
 				// Skip particle push, normalizes speed
@@ -655,12 +636,12 @@ void PIPE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->Weight = 100;
 
-	elem->DefaultProperties.temp = 273.15f;
-	elem->HeatConduct = 0;
+	elem->DefaultProperties.temp = 295.15f;
+	elem->HeatConduct = 251;
 	elem->Latent = 0;
 	elem->Description = "PIPE, moves particles around. Once the BRCK generates, erase some for the exit. Then the PIPE generates and is usable.";
 
-	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
+	elem->Properties = TYPE_SOLID | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;

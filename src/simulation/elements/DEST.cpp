@@ -51,7 +51,7 @@ int DEST_update(UPDATE_FUNC_ARGS)
 		if (parts[i].life<=0)
 			parts[i].life=1;
 	}
-	else if (sim->elements[TYP(r)].HeatConduct)
+	else if (!sim->IsHeatInsulator(parts[ID(r)]))
 		parts[ID(r)].temp = MAX_TEMP;
 	parts[i].temp = MAX_TEMP;
 	sim->air->pv[y/CELL][x/CELL]+=80.0f;

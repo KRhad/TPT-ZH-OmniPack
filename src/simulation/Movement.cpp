@@ -597,7 +597,7 @@ int Simulation::TryMove(int i, int x, int y, int nx, int ny)
 			if (TYP(r) == PT_COAL || TYP(r) == PT_BCOL)
 				parts[ID(r)].temp = parts[i].temp;
 
-			if (TYP(r) < PT_NUM && elements[TYP(r)].HeatConduct && (TYP(r)!=PT_HSWC||parts[ID(r)].life==10) && TYP(r)!=PT_FILT)
+			if (TYP(r) < PT_NUM && elements[TYP(r)].HeatConduct && !IsHeatInsulator(parts[ID(r)]) && TYP(r)!=PT_FILT)
 				parts[i].temp = parts[ID(r)].temp = restrict_flt((parts[ID(r)].temp+parts[i].temp)/2, MIN_TEMP, MAX_TEMP);
 		}
 		else if ((parts[i].type==PT_NEUT || parts[i].type==PT_ELEC) && ((elements[TYP(r)].Properties&PROP_CLONE) || (elements[TYP(r)].Properties&PROP_BREAKABLECLONE))) {

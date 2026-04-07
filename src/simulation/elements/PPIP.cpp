@@ -45,12 +45,12 @@ void PPIP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->Weight = 100;
 
-	elem->DefaultProperties.temp = 273.15f;
-	elem->HeatConduct = 0;
+	elem->DefaultProperties.temp = 295.15f;
+	elem->HeatConduct = 251;
 	elem->Latent = 0;
 	elem->Description = "Powered version of pipe";
 
-	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
+	elem->Properties = TYPE_SOLID | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
@@ -69,4 +69,20 @@ void PPIP_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Init = &PPIP_init_element;
 
 	sim->elementData[t].reset(new PPIP_ElementDataContainer);
+}
+
+void PPIP_ElementDataContainer::Simulation_BeforeUpdate(Simulation *sim)
+{
+	if (ppip_changed)
+	{
+		for (int i = 0; i <= sim->parts_lastActiveIndex; i++)
+		{
+			if (parts[i].type == PT_PPIP)
+			{
+				parts[i].tmp |= (parts[i].tmp&0xE0000000)>>3;
+				parts[i].tmp &= ~0xE0000000;
+			}
+		}
+		ppip_changed = false;
+	}
 }
