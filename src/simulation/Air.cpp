@@ -187,6 +187,10 @@ void Air::UpdateAirHeat(Simulation *sim)
 				dh += AIR_VADV*tx*ty*((blockairh[j+1][i+1]&0x8) ? odh : hv[j+1][i+1]);
 			}
 
+			// Don't update if the current cell blocks ambient heat
+			if (blockairh[y][x] & 0x8)
+				dh = hv[y][x];
+
 			// Temp caps
 			if (dh > MAX_TEMP) dh = MAX_TEMP;
 			if (dh < MIN_TEMP) dh = MIN_TEMP;
