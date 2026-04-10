@@ -2564,7 +2564,17 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		if (ctrlHeld)
 			Renderer::Ref().XORColorMode(COLOR_HEAT);
 		else
+		{
 			LoadRenderPreset(CM_HEAT);
+			if (shiftHeld)
+			{
+				heatmode = (heatmode == 1) ? 0 : 1;
+				if (heatmode)
+					SetInfoTip("Dynamic heat mode: On");
+				else
+					SetInfoTip("Dynamic heat mode: Off");
+			}
+		}
 		break;
 	case SDL_SCANCODE_7:
 		if (ctrlHeld)
