@@ -24,13 +24,18 @@ int FOG_update(UPDATE_FUNC_ARGS)
 				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((sim->elements[TYP(r)].Properties&TYPE_SOLID) && RNG::Ref().chance(1, 10) && !parts[i].life && !(sim->elements[TYP(r)].Properties&PROP_CLONE))
+				if ((sim->elements[TYP(r)].Properties & TYPE_SOLID) && RNG::Ref().chance(1, 10) && !parts[i].life && !(sim->elements[TYP(r)].Properties & PROP_CLONE))
 				{
-					part_change_type(i,x,y,PT_RIME);
+					part_change_type(i, x, y, PT_RIME);
 				}
-				if (TYP(r)==PT_SPRK)
+				if (TYP(r) == PT_SPRK)
 				{
 					parts[i].life += RNG::Ref().between(0, 19);
+				}
+				if (TYP(r) == PT_GAS && parts[i].tmp < 10)
+				{
+					sim->part_kill(ID(r));
+					parts[i].tmp++;
 				}
 			}
 	return 0;

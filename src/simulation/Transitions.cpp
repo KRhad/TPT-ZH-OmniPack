@@ -276,6 +276,19 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 					else
 						t = PT_LAVA;
 				}
+				else if (t == PT_RIME)
+				{
+					if (parts[i].tmp > 5)
+					{
+						t = PT_ACID;
+						parts[i].life = 25 + 5 * parts[i].tmp;
+						parts[i].tmp = 0;
+					}
+					else
+					{
+						t = PT_WATR;
+					}
+				}
 				else
 					s = 0;
 			}
@@ -376,7 +389,7 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 			{ // particle type change occurred
 				if (t == PT_ICEI || t == PT_LAVA || t == PT_SNOW)
 					parts[i].ctype = parts[i].type;
-				if (!(t == PT_ICEI && parts[i].ctype == PT_FRZW))
+				if (!(t == PT_ICEI && parts[i].ctype == PT_FRZW) && t != PT_ACID)
 					parts[i].life = 0;
 				if (t == PT_FIRE)
 				{

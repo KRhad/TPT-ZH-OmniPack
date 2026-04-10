@@ -24,15 +24,20 @@ int RIME_update(UPDATE_FUNC_ARGS)
 				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if (TYP(r)==PT_SPRK)
+				if (TYP(r) == PT_SPRK)
 				{
-					part_change_type(i,x,y,PT_FOG);
+					part_change_type(i, x, y, PT_FOG);
 					parts[i].life = RNG::Ref().between(60, 109);
 				}
-				else if (TYP(r)==PT_FOG&&parts[ID(r)].life>0)
+				else if (TYP(r) == PT_FOG && parts[ID(r)].life > 0)
 				{
-					part_change_type(i,x,y,PT_FOG);
+					part_change_type(i, x, y, PT_FOG);
 					parts[i].life = parts[ID(r)].life;
+				}
+				else if (TYP(r) == PT_GAS && parts[i].tmp < 10)
+				{
+					sim->part_kill(ID(r));
+					parts[i].tmp++;
 				}
 			}
 	return 0;
@@ -78,7 +83,7 @@ void RIME_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->LowTemperatureTransitionThreshold = ITL;
 	elem->LowTemperatureTransitionElement = NT;
 	elem->HighTemperatureTransitionThreshold = 273.15f;
-	elem->HighTemperatureTransitionElement = PT_WATR;
+	elem->HighTemperatureTransitionElement = ST;
 
 	elem->Update = &RIME_update;
 	elem->Graphics = NULL;

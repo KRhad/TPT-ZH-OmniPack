@@ -43,8 +43,10 @@ int ACID_update(UPDATE_FUNC_ARGS)
 							sim->part_kill(ID(r));
 						}
 					}
-					else if (!(sim->elements[rt].Properties&PROP_CLONE) && !(sim->elements[rt].Properties&PROP_INDESTRUCTIBLE)
-							&& parts[i].life > 50 && RNG::Ref().chance(sim->elements[rt].Hardness, 1000))
+					else if (!(sim->elements[rt].Properties & PROP_CLONE) &&
+							!(sim->elements[rt].Properties & PROP_INDESTRUCTIBLE) &&
+							((rt != PT_FOG && rt != PT_RIME) || parts[ID(r)].tmp <= 5) &&
+							parts[i].life > 50 && RNG::Ref().chance(sim->elements[rt].Hardness, 1000))
 					{
 						// GLAS protects stuff from acid
 						if (parts_avg(i, ID(r), PT_GLAS) != PT_GLAS)
