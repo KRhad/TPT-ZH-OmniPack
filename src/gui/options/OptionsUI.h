@@ -18,7 +18,7 @@ class OptionsUI : public ui::Window
 	ui::ScrollWindow *scrollArea;
 
 	Checkbox *heatSimCheckbox, *ambientCheckbox, *newtonianCheckbox, *waterEqalizationCheckbox, *decorationCheckbox;
-	Dropdown *airSimDropdown, *gravityDropdown, *edgeModeDropdown, *decoSpaceDropdown, *temperatureScaleDropdown;
+	Dropdown *airSimDropdown, *convectionModeDropdown, *gravityDropdown, *edgeModeDropdown, *decoSpaceDropdown, *temperatureScaleDropdown;
 	Textbox *airTempTextbox;
 	Button *airTempDisplay;
 
@@ -44,6 +44,7 @@ class OptionsUI : public ui::Window
 	void DecorationsChecked(bool checked);
 	void WaterEqualizationChecked(bool checked);
 	void AirSimSelected(unsigned int option);
+	void ConvectionModeSelected(unsigned int option);
 	void GravitySelected(unsigned int option);
 	void EdgeModeSelected(unsigned int option);
 	void DecoSpaceSelected(unsigned int option);

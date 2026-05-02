@@ -156,6 +156,8 @@ public:
 	int airMode;
 	float ambientAirTemp;
 	bool ambientAirTempPresent = false;
+	int convectionMode;
+	bool convectionModePresent = false;
 	int edgeMode;
 	// jacob1's mod simulation options
 	// Since not all saves have these, use a bool to decide whether to overwrite options when loading saves

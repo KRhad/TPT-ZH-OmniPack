@@ -292,6 +292,7 @@ void initSimulationAPI(lua_State * l)
 		{"airMode", simulation_airMode},
 		{"waterEqualization", simulation_waterEqualization},
 		{"ambientAirTemp", simulation_ambientAirTemp},
+		{"convectionMode", simulation_convectionMode},
 		{"elementCount", simulation_elementCount},
 		{"canMove", simulation_canMove},
 		{"parts", simulation_parts},
@@ -407,6 +408,11 @@ void initSimulationAPI(lua_State * l)
 	SETCONST(l, AIR_OFF);
 	SETCONST(l, AIR_NOUPDATE);
 	SETCONST(l, NUM_AIRMODES);
+
+	SETCONST(l, AIRC_NONE);
+	SETCONST(l, AIRC_LEGACY);
+	SETCONST(l, AIRC_BOUSSINESQ);
+	SETCONST(l, NUM_CONVMODES);
 
 	SETCONST(l, GRAV_VERTICAL);
 	SETCONST(l, GRAV_OFF);
@@ -1593,6 +1599,23 @@ int simulation_ambientAirTemp(lua_State * l)
 	}
 	float ambientAirTemp = restrict_flt(luaL_optnumber(l, 1, R_TEMP + 273.15f), MIN_TEMP, MAX_TEMP);
 	luaSim->air->SetAmbientAirTempPref(ambientAirTemp);
+	return 0;
+}
+
+int simulation_convectionMode(lua_State* l)
+{
+	int acount = lua_gettop(l);
+	if (acount == 0)
+	{
+		lua_pushnumber(l, luaSim->air->GetConvectionMode());
+		return 1;
+	}
+	int convMode = luaL_checkint(l, 1);
+	if (convMode < 0 || convMode >= NUM_CONVMODES)
+	{
+		return luaL_error(l, "invalid convection mode");
+	}
+	luaSim->air->SetConvectionMode(convMode);
 	return 0;
 }
 

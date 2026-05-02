@@ -35,6 +35,8 @@ class Air
 
 public:
 	int airMode = AIR_ON;
+	int convectionMode = AIRC_BOUSSINESQ;
+	int saveConvectionMode = -1;
 
 	float pv[YRES/CELL][XRES/CELL];
 	float vx[YRES/CELL][XRES/CELL];
@@ -66,6 +68,10 @@ public:
 	void ClearTemporaryAirTemp();
 	float GetAmbientAirTemp();
 	float GetAmbientAirTempPref();
+
+	int GetConvectionMode();
+	void SetConvectionMode(int convectionMode);
+	void SetTempConvectionMode(int convectionMode);
 };
 
 #endif

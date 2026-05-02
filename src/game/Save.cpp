@@ -223,6 +223,7 @@ void Save::InitVars()
 	customGravityY = 0.0f;
 	airMode = AIR_ON;
 	ambientAirTemp = R_TEMP + 273.15;
+	convectionMode = AIRC_LEGACY;
 	edgeMode = EDGE_VOID;
 	hasPressure = false;
 	hasAmbientHeat = false;
@@ -596,6 +597,7 @@ void Save::ParseSaveOPS()
 		CheckBsonFieldFloat(iter, "customGravityY", &customGravityY);
 		CheckBsonFieldInt(iter, "airMode", &airMode);
 		ambientAirTempPresent = CheckBsonFieldFloat(iter, "ambientAirTemp", &ambientAirTemp) || ambientAirTempPresent;
+		convectionModePresent = CheckBsonFieldInt(iter, "convectionMode", &convectionMode) || convectionModePresent;
 		CheckBsonFieldInt(iter, "edgeMode", &edgeMode);
 		CheckBsonFieldInt(iter, "pmapbits", &pmapbits);
 		activeMenuPresent = CheckBsonFieldInt(iter, "activeMenu", &activeMenu) || activeMenuPresent;
@@ -2638,6 +2640,7 @@ void Save::BuildSave()
 		bson_append_double(&b, "ambientAirTemp", ambientAirTemp);
 		RESTRICTVERSION(96, 0);
 	}
+	bson_append_int(&b, "convectionMode", convectionMode);
 #ifndef NOMOD
 	bson_append_bool(&b, "msrotation", msRotation);
 #endif

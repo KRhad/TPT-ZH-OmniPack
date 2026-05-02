@@ -602,6 +602,8 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 		air->airMode = save->airMode;
 		//if (save->ambientAirTempPresent)
 		//	air->SetAmbientAirTemp(save->ambientAirTemp);
+		if (save->convectionModePresent)
+			air->SetTempConvectionMode(save->convectionMode);
 		gravityMode = save->gravityMode;
 		customGravityX = save->customGravityX;
 		customGravityY = save->customGravityY;
@@ -895,6 +897,7 @@ Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool
 	newSave->customGravityY = customGravityY;
 	newSave->airMode = air->airMode;
 	newSave->ambientAirTemp = air->GetAmbientAirTemp();
+	newSave->convectionMode = air->GetConvectionMode();
 	newSave->edgeMode = edgeMode;
 	newSave->legacyEnable = legacy_enable;
 	newSave->waterEEnabled = water_equal_test;

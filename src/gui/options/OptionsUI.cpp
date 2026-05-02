@@ -122,6 +122,13 @@ OptionsUI::OptionsUI(Simulation *sim):
 	airTempDisplay->SetEnabled(false);
 	scrollArea->AddComponent(airTempDisplay);
 
+	prev = convectionModeDropdown = new Dropdown(prev->Below(Point(0, 4)), Point(Dropdown::AUTOSIZE, Dropdown::AUTOSIZE), {"None", "Legacy", "Boussinesq" });
+	convectionModeDropdown->SetCallback([&](unsigned int option) { this->ConvectionModeSelected(option); });
+	scrollArea->AddComponent(convectionModeDropdown);
+
+	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Air heat convection mode:");
+	scrollArea->AddComponent(descLabel);
+
 	prev = gravityDropdown = new Dropdown(prev->Below(Point(0, 4)), Point(Dropdown::AUTOSIZE, Dropdown::AUTOSIZE), {"Vertical", "Off", "Radial", "Custom"});
 	gravityDropdown->SetCallback([&](unsigned int option) { this->GravitySelected(option); });
 	scrollArea->AddComponent(gravityDropdown);
@@ -152,6 +159,7 @@ OptionsUI::OptionsUI(Simulation *sim):
 
 	// set dropdown widths to width of largest one
 	int maxWidth = airSimDropdown->GetSize().X;
+	maxWidth = tpt::max(maxWidth, convectionModeDropdown->GetSize().X);
 	maxWidth = tpt::max(maxWidth, gravityDropdown->GetSize().X);
 	maxWidth = tpt::max(maxWidth, edgeModeDropdown->GetSize().X);
 	maxWidth = tpt::max(maxWidth, decoSpaceDropdown->GetSize().X);
@@ -163,6 +171,8 @@ OptionsUI::OptionsUI(Simulation *sim):
 	airTempTextbox->SetPosition(Point(xPos, airTempTextbox->GetPosition().Y));
 	airTempTextbox->SetSize(Point(maxWidth - 21, airTempTextbox->GetSize().Y));
 	airTempDisplay->SetPosition(Point(xPos + maxWidth - airTempDisplay->GetSize().X, airTempDisplay->GetPosition().Y));
+	convectionModeDropdown->SetPosition(Point(xPos, convectionModeDropdown->GetPosition().Y));
+	convectionModeDropdown->SetSize(Point(maxWidth, convectionModeDropdown->GetSize().Y));
 	gravityDropdown->SetPosition(Point(xPos, gravityDropdown->GetPosition().Y));
 	gravityDropdown->SetSize(Point(maxWidth, gravityDropdown->GetSize().Y));
 	edgeModeDropdown->SetPosition(Point(xPos, edgeModeDropdown->GetPosition().Y));
@@ -368,6 +378,7 @@ void OptionsUI::InitializeOptions()
 	airSimDropdown->SetSelectedOption(sim->air->airMode);
 	UpdateAmbientAirTempPreview(sim->air->GetAmbientAirTemp(), true);
 	airTempTextbox->SetText(Format::TemperatureToString(sim->air->GetAmbientAirTemp(), sim->temperatureScale));
+	convectionModeDropdown->SetSelectedOption(sim->air->GetConvectionMode());
 	gravityDropdown->SetSelectedOption(sim->gravityMode);
 	edgeModeDropdown->SetSelectedOption(sim->GetEdgeMode());
 	decoSpaceDropdown->SetSelectedOption(sim->decoSpace);
@@ -497,6 +508,11 @@ void OptionsUI::UpdateAmbientAirTempPreview(float airTemp, bool isValid)
 		airTempDisplay->SetBackgroundColor(0);
 		airTempDisplay->SetText("?");
 	}
+}
+
+void OptionsUI::ConvectionModeSelected(unsigned int option)
+{
+	sim->air->SetConvectionMode(option);
 }
 
 void OptionsUI::GravitySelected(unsigned int option)
