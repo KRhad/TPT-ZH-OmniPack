@@ -439,6 +439,18 @@ void Air::UpdateAir()
 				dy += AIR_VADV * txf * tyf * vy[tyi+1][txi+1];
 			}
 
+			// Vorticity confinement
+			if (vorticityCoeff > 0.0f && x > 1 && x < XCELLS - 2 && y > 1 && y < YCELLS - 2)
+			{
+				auto dwx = (std::abs(vorticity(y, x + 1)) - std::abs(vorticity(y, x - 1))) * 0.5f;
+				auto dwy = (std::abs(vorticity(y + 1, x)) - std::abs(vorticity(y - 1, x))) * 0.5f;
+				auto norm = std::sqrt(dwx * dwx + dwy * dwy);
+				auto w = vorticity(y, x);
+
+				dx += vorticityCoeff / 5.0f * dwy / (norm + 0.001f) * w;
+				dy += vorticityCoeff / 5.0f * (-dwx) / (norm + 0.001f) * w;
+			}
+
 			if (bmap[y][x] == WL_FAN)
 			{
 				dx += fvx[y][x];
@@ -551,6 +563,46 @@ float Air::GetAmbientAirTemp()
 float Air::GetAmbientAirTempPref()
 {
 	return ambientAirTempPref;
+}
+
+float Air::vorticity(int y, int x)
+{
+	if (x > 1 && x < XCELLS - 2 && y > 1 && y < YCELLS - 2)
+	{
+		// dvy/dx - dvx/dy
+		return (vy[y][x + 1] - vy[y][x - 1] - (vx[y + 1][x] - vx[y - 1][x])) * 0.5f;
+	}
+	else
+	{
+		return 0.0f;
+	}
+}
+
+float Air::GetVorticityCoeff()
+{
+	return vorticityCoeff;
+}
+
+float Air::GetVorticityCoeffPref()
+{
+	return vorticityCoeffPref;
+}
+
+void Air::ClearTemporaryVorticityCoeff()
+{
+	// Not called on clear_sim, to ensure correct ambient air temp is set when loading saves
+	this->vorticityCoeff = this->vorticityCoeffPref;
+}
+
+void Air::SetVorticityCoeff(float vorticityCoeff)
+{
+	this->vorticityCoeff = vorticityCoeff;
+}
+
+void Air::SetVorticityCoeffPref(float vorticityCoeff)
+{
+	this->vorticityCoeff = vorticityCoeff;
+	this->vorticityCoeffPref = vorticityCoeff;
 }
 
 int Air::GetConvectionMode()

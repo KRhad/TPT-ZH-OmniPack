@@ -35,6 +35,8 @@ class Air
 
 public:
 	int airMode = AIR_ON;
+	float vorticityCoeff = 0.0f;
+	float vorticityCoeffPref = 0.1f;
 	int convectionMode = AIRC_BOUSSINESQ;
 	int saveConvectionMode = -1;
 
@@ -68,6 +70,13 @@ public:
 	void ClearTemporaryAirTemp();
 	float GetAmbientAirTemp();
 	float GetAmbientAirTempPref();
+
+	float vorticity(int y, int x);
+	float GetVorticityCoeff();
+	float GetVorticityCoeffPref();
+	void ClearTemporaryVorticityCoeff();
+	void SetVorticityCoeff(float vorticityCoeff);
+	void SetVorticityCoeffPref(float vorticityCoeff);
 
 	int GetConvectionMode();
 	void SetConvectionMode(int convectionMode);

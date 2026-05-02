@@ -198,6 +198,7 @@ void save_presets()
 	cJSON_AddItemToObject(root, "Simulation", simulationobj=cJSON_CreateObject());
 	cJSON_AddNumberToObject(simulationobj, "EdgeMode", globalSim->edgeMode);
 	cJSON_AddNumberToObject(simulationobj, "AmbientAirTemp", globalSim->air->GetAmbientAirTempPref());
+	cJSON_AddNumberToObject(simulationobj, "VorticityCoeff", globalSim->air->GetVorticityCoeffPref());
 	cJSON_AddNumberToObject(simulationobj, "ConvectionMode", globalSim->air->convectionMode);
 	cJSON_AddNumberToObject(simulationobj, "NewtonianGravity", globalSim->grav->IsEnabled());
 	cJSON_AddNumberToObject(simulationobj, "AmbientHeat", aheat_enable);
@@ -565,6 +566,8 @@ void load_presets(void)
 			}
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "AmbientAirTemp")))
 				globalSim->air->SetAmbientAirTempPref(tmpobj->valuedouble);
+			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "VorticityCoeff")) && 0.0f <= tmpobj->valuedouble && tmpobj->valuedouble <= 1.0f)
+				globalSim->air->SetVorticityCoeffPref(tmpobj->valuedouble);
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "ConvectionMode")))
 				globalSim->air->convectionMode = tmpobj->valueint;
 #ifndef ANDROID

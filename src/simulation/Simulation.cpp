@@ -602,8 +602,11 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 		air->airMode = save->airMode;
 		//if (save->ambientAirTempPresent)
 		//	air->SetAmbientAirTemp(save->ambientAirTemp);
-		if (save->convectionModePresent)
-			air->SetTempConvectionMode(save->convectionMode);
+		air->SetVorticityCoeff(save->vorticityCoeff);
+		int convectionMode = save->convectionMode;
+		if (!save->convectionModePresent && save->createdVersion >= 99)
+			convectionMode = AIRC_BOUSSINESQ;
+		air->SetTempConvectionMode(convectionMode);
 		gravityMode = save->gravityMode;
 		customGravityX = save->customGravityX;
 		customGravityY = save->customGravityY;
@@ -897,6 +900,7 @@ Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool
 	newSave->customGravityY = customGravityY;
 	newSave->airMode = air->airMode;
 	newSave->ambientAirTemp = air->GetAmbientAirTemp();
+	newSave->vorticityCoeff = air->GetVorticityCoeff();
 	newSave->convectionMode = air->GetConvectionMode();
 	newSave->edgeMode = edgeMode;
 	newSave->legacyEnable = legacy_enable;

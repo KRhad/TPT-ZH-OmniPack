@@ -19,7 +19,7 @@ class OptionsUI : public ui::Window
 
 	Checkbox *heatSimCheckbox, *ambientCheckbox, *newtonianCheckbox, *waterEqalizationCheckbox, *decorationCheckbox;
 	Dropdown *airSimDropdown, *convectionModeDropdown, *gravityDropdown, *edgeModeDropdown, *decoSpaceDropdown, *temperatureScaleDropdown;
-	Textbox *airTempTextbox;
+	Textbox *airTempTextbox, *vorticityCoeffTextbox;
 	Button *airTempDisplay;
 
 	Dropdown *scaleDropdown;
@@ -70,6 +70,8 @@ class OptionsUI : public ui::Window
 
 	void UpdateAirTemp(std::string temp, bool isDefocus);
 	void UpdateAmbientAirTempPreview(float airTemp, bool isValid);
+	void UpdateVorticityCoeff(std::string temp, bool isDefocus);
+	void VorticityCoeffToTextBox(float vorticity);
 
 
 	void OnDraw(gfx::VideoBuffer *buf) override;

@@ -92,6 +92,7 @@ int simulation_customGravity(lua_State * l);
 int simulation_airMode(lua_State * l);
 int simulation_waterEqualization(lua_State * l);
 int simulation_ambientAirTemp(lua_State * l);
+int simulation_vorticityCoeff(lua_State * l);
 int simulation_convectionMode(lua_State* l);
 int simulation_elementCount(lua_State* l);
 int simulation_canMove(lua_State * l);

@@ -156,6 +156,7 @@ public:
 	int airMode;
 	float ambientAirTemp;
 	bool ambientAirTempPresent = false;
+	float vorticityCoeff;
 	int convectionMode;
 	bool convectionModePresent = false;
 	int edgeMode;

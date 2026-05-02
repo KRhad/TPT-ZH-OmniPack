@@ -292,6 +292,7 @@ void initSimulationAPI(lua_State * l)
 		{"airMode", simulation_airMode},
 		{"waterEqualization", simulation_waterEqualization},
 		{"ambientAirTemp", simulation_ambientAirTemp},
+		{"vorticityCoeff", simulation_vorticityCoeff},
 		{"convectionMode", simulation_convectionMode},
 		{"elementCount", simulation_elementCount},
 		{"canMove", simulation_canMove},
@@ -1599,6 +1600,19 @@ int simulation_ambientAirTemp(lua_State * l)
 	}
 	float ambientAirTemp = restrict_flt(luaL_optnumber(l, 1, R_TEMP + 273.15f), MIN_TEMP, MAX_TEMP);
 	luaSim->air->SetAmbientAirTempPref(ambientAirTemp);
+	return 0;
+}
+
+int simulation_vorticityCoeff(lua_State * l)
+{
+	int acount = lua_gettop(l);
+	if (acount == 0)
+	{
+		lua_pushnumber(l, luaSim->air->GetVorticityCoeff());
+		return 1;
+	}
+	float vorticityCoeff = restrict_flt(luaL_optnumber(l, 1, 0.0f), 0.0f, 1.0f);
+	luaSim->air->SetVorticityCoeffPref(vorticityCoeff);
 	return 0;
 }
 

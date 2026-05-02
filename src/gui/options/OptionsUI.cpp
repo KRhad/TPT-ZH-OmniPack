@@ -122,6 +122,14 @@ OptionsUI::OptionsUI(Simulation *sim):
 	airTempDisplay->SetEnabled(false);
 	scrollArea->AddComponent(airTempDisplay);
 
+	prev = vorticityCoeffTextbox = new Textbox(prev->Below(Point(0, 4)), Point(0, Textbox::AUTOSIZE), "");
+	vorticityCoeffTextbox->SetCallback([&]() { this->UpdateVorticityCoeff(vorticityCoeffTextbox->GetText(), false); });
+	vorticityCoeffTextbox->SetDefocusCallback([&]() { this->UpdateVorticityCoeff(vorticityCoeffTextbox->GetText(), true); });
+	scrollArea->AddComponent(vorticityCoeffTextbox);
+
+	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Vorticity confinement:");
+	scrollArea->AddComponent(descLabel);
+
 	prev = convectionModeDropdown = new Dropdown(prev->Below(Point(0, 4)), Point(Dropdown::AUTOSIZE, Dropdown::AUTOSIZE), {"None", "Legacy", "Boussinesq" });
 	convectionModeDropdown->SetCallback([&](unsigned int option) { this->ConvectionModeSelected(option); });
 	scrollArea->AddComponent(convectionModeDropdown);
@@ -171,6 +179,8 @@ OptionsUI::OptionsUI(Simulation *sim):
 	airTempTextbox->SetPosition(Point(xPos, airTempTextbox->GetPosition().Y));
 	airTempTextbox->SetSize(Point(maxWidth - 21, airTempTextbox->GetSize().Y));
 	airTempDisplay->SetPosition(Point(xPos + maxWidth - airTempDisplay->GetSize().X, airTempDisplay->GetPosition().Y));
+	vorticityCoeffTextbox->SetPosition(Point(xPos, vorticityCoeffTextbox->GetPosition().Y));
+	vorticityCoeffTextbox->SetSize(Point(maxWidth, vorticityCoeffTextbox->GetSize().Y));
 	convectionModeDropdown->SetPosition(Point(xPos, convectionModeDropdown->GetPosition().Y));
 	convectionModeDropdown->SetSize(Point(maxWidth, convectionModeDropdown->GetSize().Y));
 	gravityDropdown->SetPosition(Point(xPos, gravityDropdown->GetPosition().Y));
@@ -378,6 +388,7 @@ void OptionsUI::InitializeOptions()
 	airSimDropdown->SetSelectedOption(sim->air->airMode);
 	UpdateAmbientAirTempPreview(sim->air->GetAmbientAirTemp(), true);
 	airTempTextbox->SetText(Format::TemperatureToString(sim->air->GetAmbientAirTemp(), sim->temperatureScale));
+	VorticityCoeffToTextBox(sim->air->GetVorticityCoeff());
 	convectionModeDropdown->SetSelectedOption(sim->air->GetConvectionMode());
 	gravityDropdown->SetSelectedOption(sim->gravityMode);
 	edgeModeDropdown->SetSelectedOption(sim->GetEdgeMode());
@@ -493,6 +504,61 @@ void OptionsUI::UpdateAirTemp(std::string temp, bool isDefocus)
 		sim->air->SetAmbientAirTempPref(airTemp);
 
 	UpdateAmbientAirTempPreview(airTemp, isValid);
+}
+
+void OptionsUI::UpdateVorticityCoeff(std::string temp, bool isDefocus)
+{
+	float vorticity;
+	bool isValid;
+	try
+	{
+		vorticity = Format::StringToNumberThrowing<float>(temp);
+		isValid = true;
+	}
+	catch (const std::exception & e)
+	{
+		isValid = false;
+	}
+
+	// While defocusing, correct out of range temperatures and empty textboxes
+	if (isDefocus)
+	{
+		if (temp.empty())
+		{
+			isValid = true;
+			vorticity = 0.1f;
+		}
+		else if (!isValid)
+		{
+			isValid = true;
+			vorticity = sim->air->GetVorticityCoeffPref();
+		}
+		else if (vorticity < 0.0f)
+			vorticity = 0.0f;
+		else if (vorticity > 1.0f)
+			vorticity = 1.0f;
+		//else
+		//	return;
+
+		// Update textbox with the new value
+		VorticityCoeffToTextBox(vorticity);
+	}
+	// Out of range vorticities are invalid, preview should go away
+	else if (vorticity < 0.0f || vorticity > 1.0f)
+		isValid = false;
+
+	// If valid, set temp
+	if (isValid)
+		sim->air->SetVorticityCoeffPref(vorticity);
+}
+
+void OptionsUI::VorticityCoeffToTextBox(float vorticity)
+{
+	std::stringstream ss;
+	ss << std::fixed;
+	ss.precision(2);
+	ss << vorticity;
+	vorticityCoeffTextbox->SetText(ss.str());
 }
 
 void OptionsUI::UpdateAmbientAirTempPreview(float airTemp, bool isValid)

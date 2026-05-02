@@ -86,6 +86,9 @@ Save::Save(const Save & save):
 	airMode(save.airMode),
 	ambientAirTemp(save.ambientAirTemp),
 	ambientAirTempPresent(save.ambientAirTempPresent),
+	vorticityCoeff(save.vorticityCoeff),
+	convectionMode(save.convectionMode),
+	convectionModePresent(save.convectionModePresent),
 	edgeMode(save.edgeMode),
 	hudEnable(save.hudEnable),
 	hudEnablePresent(save.hudEnablePresent),
@@ -223,6 +226,7 @@ void Save::InitVars()
 	customGravityY = 0.0f;
 	airMode = AIR_ON;
 	ambientAirTemp = R_TEMP + 273.15;
+	vorticityCoeff = 0.0f;
 	convectionMode = AIRC_LEGACY;
 	edgeMode = EDGE_VOID;
 	hasPressure = false;
@@ -597,6 +601,7 @@ void Save::ParseSaveOPS()
 		CheckBsonFieldFloat(iter, "customGravityY", &customGravityY);
 		CheckBsonFieldInt(iter, "airMode", &airMode);
 		ambientAirTempPresent = CheckBsonFieldFloat(iter, "ambientAirTemp", &ambientAirTemp) || ambientAirTempPresent;
+		CheckBsonFieldFloat(iter, "vorticityCoeff", &vorticityCoeff);
 		convectionModePresent = CheckBsonFieldInt(iter, "convectionMode", &convectionMode) || convectionModePresent;
 		CheckBsonFieldInt(iter, "edgeMode", &edgeMode);
 		CheckBsonFieldInt(iter, "pmapbits", &pmapbits);
@@ -2639,6 +2644,12 @@ void Save::BuildSave()
 	{
 		bson_append_double(&b, "ambientAirTemp", ambientAirTemp);
 		RESTRICTVERSION(96, 0);
+	}
+	if (vorticityCoeff > 0.0001f && vorticityCoeff < 1.0f)
+	{
+		bson_append_double(&b, "vorticityCoeff", double(vorticityCoeff));
+		// TODO: uncomment
+		//RESTRICTVERSION(100, 0);
 	}
 	bson_append_int(&b, "convectionMode", convectionMode);
 #ifndef NOMOD
