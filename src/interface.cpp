@@ -1252,15 +1252,15 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 						drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 255, 55, 55, 255);
 					hover = i;
 				}
-				else if (i == selectedl || foundTool == *selectedLeft)
+				else if (i == selectedl || (selectedl == -1 && foundTool == *selectedLeft))
 				{
 					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 255, 55, 55, 255);
 				}
-				else if (i==selectedr || foundTool == *selectedRight)
+				else if (i == selectedr || (selectedr == -1 && foundTool == *selectedRight))
 				{
 					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 55, 55, 255, 255);
 				}
-				else if (i==selecteda || foundTool == *selectedAlt)
+				else if (i == selecteda || (selecteda == -1 && foundTool == *selectedAlt))
 				{
 					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 0, 255, 255, 255);
 				}
@@ -1323,15 +1323,15 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 						drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 255, 55, 55, 255);
 					hover = tempInts[i].second;
 				}
-				else if (tempInts[i].second == selectedl || foundTool == *selectedLeft)
+				else if (tempInts[i].second == selectedl || (selectedl == -1 && foundTool == *selectedLeft))
 				{
 					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 255, 55, 55, 255);
 				}
-				else if (tempInts[i].second == selectedr || foundTool == *selectedRight)
+				else if (tempInts[i].second == selectedr || (selectedr == -1 && foundTool == *selectedRight))
 				{
 					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 55, 55, 255, 255);
 				}
-				else if (tempInts[i].second == selecteda || foundTool == *selectedAlt)
+				else if (tempInts[i].second == selecteda || (selecteda == -1 && foundTool == *selectedAlt))
 				{
 					drawrect(vid_buf, xoff+toolx-32, yoff+tooly-1, 29, 17, 0, 255, 255, 255);
 				}

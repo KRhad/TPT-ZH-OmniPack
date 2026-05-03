@@ -487,7 +487,7 @@ int DrawMenusTouch(pixel *vid_buf, int b, int bq, int mx, int my)
 					// if search menu was scrolled to, open elemnt search
 					if (checkSearchMenu && i == SC_SEARCH)
 					{
-						element_search_ui(vid_buf, &activeTools[0], &activeTools[1]);
+						element_search_ui(vid_buf, &activeTools[0], &activeTools[1], &activeTools[2]);
 						int menuSection = GetMenuSection(activeTools[0]);
 						// handle error (this shouldn't ever happen)
 						if (menuSection == -1)
