@@ -442,10 +442,10 @@ void Air::UpdateAir()
 			// Vorticity confinement
 			if (vorticityCoeff > 0.0f && x > 1 && x < XCELLS - 2 && y > 1 && y < YCELLS - 2)
 			{
-				auto dwx = (std::abs(vorticity(y, x + 1)) - std::abs(vorticity(y, x - 1))) * 0.5f;
-				auto dwy = (std::abs(vorticity(y + 1, x)) - std::abs(vorticity(y - 1, x))) * 0.5f;
+				auto dwx = (std::abs(vorticity(this, y, x + 1)) - std::abs(vorticity(this, y, x - 1))) * 0.5f;
+				auto dwy = (std::abs(vorticity(this, y + 1, x)) - std::abs(vorticity(this, y - 1, x))) * 0.5f;
 				auto norm = std::sqrt(dwx * dwx + dwy * dwy);
-				auto w = vorticity(y, x);
+				auto w = vorticity(this, y, x);
 
 				dx += vorticityCoeff / 5.0f * dwy / (norm + 0.001f) * w;
 				dy += vorticityCoeff / 5.0f * (-dwx) / (norm + 0.001f) * w;
@@ -565,12 +565,12 @@ float Air::GetAmbientAirTempPref()
 	return ambientAirTempPref;
 }
 
-float Air::vorticity(int y, int x)
+float Air::vorticity(const Air * air, int y, int x)
 {
 	if (x > 1 && x < XCELLS - 2 && y > 1 && y < YCELLS - 2)
 	{
 		// dvy/dx - dvx/dy
-		return (vy[y][x + 1] - vy[y][x - 1] - (vx[y + 1][x] - vx[y - 1][x])) * 0.5f;
+		return (air->vy[y][x + 1] - air->vy[y][x - 1] - (air->vx[y + 1][x] - air->vx[y - 1][x])) * 0.5f;
 	}
 	else
 	{

@@ -71,7 +71,7 @@ public:
 	float GetAmbientAirTemp();
 	float GetAmbientAirTempPref();
 
-	float vorticity(int y, int x);
+	static float vorticity(const Air * air, int y, int x);
 	float GetVorticityCoeff();
 	float GetVorticityCoeffPref();
 	void ClearTemporaryVorticityCoeff();

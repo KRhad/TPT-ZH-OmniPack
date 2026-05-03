@@ -181,6 +181,10 @@ void Renderer::InitRenderPresets()
 	renderPresets[CM_CRACK].renderMode |= RENDER_EFFE;
 	renderPresets[CM_CRACK].displayMode = DISPLAY_AIRC;
 	renderPresets[CM_CRACK].tooltip = "Alternate Velocity Display";
+
+	renderPresets[CM_VORT].renderMode |= RENDER_EFFE;
+	renderPresets[CM_VORT].displayMode = DISPLAY_AIRW;
+	renderPresets[CM_VORT].tooltip = "Vorticity Display";
 }
 
 bool Renderer::LoadRenderPreset(int preset)

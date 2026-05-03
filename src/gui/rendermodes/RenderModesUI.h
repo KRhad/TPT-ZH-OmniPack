@@ -8,8 +8,7 @@ class Checkbox;
 class Button;
 class RenderModesUI : public ui::Window
 {
-	int line1Pos;
-	int line2Pos;
+	int line1Pos, line2Pos, line3Pos;
 	unsigned int last_render_mode;
 	unsigned int last_display_mode;
 	unsigned int last_color_mode;

@@ -1534,6 +1534,14 @@ void draw_air(pixel *vid, Simulation * sim)
 					c  = PIXRGB(r, g, b);
 				}
 			}
+			else if (display_mode & DISPLAY_AIRW)
+			{
+				auto w = 4 * Air::vorticity(sim->air, y, x);
+				if (w > 0.0f)
+					c = PIXRGB(clamp_flt(w, 0.0f, 8.0f), 0, 0); //positive vorticity is red
+				else
+					c = PIXRGB(0, 0, clamp_flt(-w, 0.0f, 8.0f)); //negative vorticity is blue
+			}
 			if (finding && !(finding & 0x8))
 			{
 				c = PIXRGB(PIXR(c)/10,PIXG(c)/10,PIXB(c)/10);

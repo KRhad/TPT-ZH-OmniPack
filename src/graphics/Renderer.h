@@ -16,7 +16,8 @@
 #define CM_GRAD 8
 #define CM_CRACK 9
 #define CM_LIFE 10
-#define CM_COUNT 11
+#define CM_VORT 11
+#define CM_COUNT 12
 
 class Save;
 
@@ -41,7 +42,7 @@ class Renderer : public Singleton<Renderer>
 	unsigned int displayMode;
 	unsigned int colorMode;
 
-	RenderPreset renderPresets[11];
+	RenderPreset renderPresets[CM_COUNT];
 
 	void InitRenderPresets();
 

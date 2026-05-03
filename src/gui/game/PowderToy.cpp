@@ -2592,7 +2592,14 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			LoadRenderPreset(CM_GRAD);
 		break;
 	case SDL_SCANCODE_0:
-		if (ctrlHeld)
+		if (shiftHeld && DEBUG_MODE)
+		{
+			if (ctrlHeld)
+				Renderer::Ref().ToggleDisplayMode(DISPLAY_AIRW);
+			else
+				LoadRenderPreset(CM_VORT);
+		}
+		else if (ctrlHeld)
 			Renderer::Ref().ToggleDisplayMode(DISPLAY_AIRC);
 		else
 			LoadRenderPreset(CM_CRACK);

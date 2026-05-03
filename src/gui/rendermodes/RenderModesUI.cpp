@@ -13,7 +13,11 @@
 
 
 RenderModesUI::RenderModesUI():
+#ifdef TOUCHUI
+	ui::Window(Point(0, YRES), Point(VIDXRES, MENUSIZE)),
+#else
 	ui::Window(Point(0, YRES), Point(XRES, MENUSIZE)),
+#endif
 	last_render_mode(Renderer::Ref().GetRenderMode()),
 	last_display_mode(Renderer::Ref().GetDisplayMode()),
 	last_color_mode(Renderer::Ref().GetColorMode()),
@@ -161,7 +165,7 @@ void RenderModesUI::InitializeCheckboxes()
 #else
 	Point size = Point(Checkbox::AUTOSIZE, Checkbox::AUTOSIZE);
 	// hardcoded checkbox length (34)
-	Point pos = Point(34*9, 3);
+	Point pos = Point(XRES - 34*10 - 10, 3);
 #endif
 
 	Checkbox *effectsCheckbox = new Checkbox(pos, size, "\xE1");
@@ -214,17 +218,23 @@ void RenderModesUI::InitializeCheckboxes()
 	InitializeDisplayCheckbox(airHeatCheckbox, DISPLAY_AIRH);
 	SetCheckboxToolTip(airHeatCheckbox, "Displays the temperature of the air like heat display does");
 
-	Checkbox *warpCheckbox = new Checkbox(CheckboxPos(airHeatCheckbox, airVelocityCheckbox), size, "\xDE");
+	Checkbox *vorticityCheckbox = new Checkbox(CheckboxPos(airHeatCheckbox, airVelocityCheckbox), size, "\x0F\xA6\x4D\x79\xD4");
+	InitializeDisplayCheckbox(vorticityCheckbox, DISPLAY_AIRW);
+	SetCheckboxToolTip(vorticityCheckbox, "Displays vorticity, red is clockwise and blue is anticlockwise");
+
+	line2Pos = vorticityCheckbox->Right(Point(4, 0)).X;
+
+	Checkbox *warpCheckbox = new Checkbox(Point(line2Pos+6, vorticityCheckbox->GetPosition().Y), size, "\xDE");
 	InitializeDisplayCheckbox(warpCheckbox, DISPLAY_WARP);
 	SetCheckboxToolTip(warpCheckbox, "Gravity lensing, Newtonian Gravity bends light with this on");
 
-	Checkbox *persistentCheckbox = new Checkbox(CheckboxPos(warpCheckbox, crackerCheckbox), size, "\x9A");
+	Checkbox *persistentCheckbox = new Checkbox(CheckboxPos(warpCheckbox, nullptr), size, "\x9A");
 	InitializeDisplayCheckbox(persistentCheckbox, DISPLAY_PERS);
 	SetCheckboxToolTip(persistentCheckbox, "Element paths persist on the screen for a while");
 
-	line2Pos = persistentCheckbox->Right(Point(4, 0)).X;
+	line3Pos = persistentCheckbox->Right(Point(4, 0)).X;
 
-	Checkbox *basic2Checkbox = new Checkbox(Point(line2Pos+6, warpCheckbox->GetPosition().Y), size, "\xDB");
+	Checkbox *basic2Checkbox = new Checkbox(Point(line3Pos+6, warpCheckbox->GetPosition().Y), size, "\xDB");
 	InitializeColorCheckbox(basic2Checkbox, COLOR_BASC);
 	SetCheckboxToolTip(basic2Checkbox, "No special effects at all for anything, overrides all other options and deco");
 
@@ -280,7 +290,7 @@ void RenderModesUI::InitializeButtons()
 {
 #ifdef TOUCHUI
 	Point size = Point(33, 33);
-	Point pos = Point(XRES-40, 3);
+	Point pos = Point(XRES-7, 3);
 #else
 	Point size = Point(31, 16);
 	Point pos = Point(3, 3);
@@ -329,6 +339,10 @@ void RenderModesUI::InitializeButtons()
 	Button *lifeButton = new Button(ButtonPos(alternateVelocityButton, heatGradientButton), size, "\xE0");
 	SetButtonToolTip(lifeButton, "Life display mode preset");
 	InitializeButton(lifeButton, CM_LIFE);
+
+	Button *vortButton = new Button(ButtonPos(lifeButton, alternateVelocityButton), size, "\x0F\xA6\x4D\x79\xD4");
+	SetButtonToolTip(vortButton, "Vorticity display mode preset");
+	InitializeButton(vortButton, CM_VORT);
 }
 
 void RenderModesUI::OnTick(uint32_t ticks)
@@ -381,6 +395,7 @@ void RenderModesUI::OnDraw(gfx::VideoBuffer *buf)
 	{
 		buf->DrawLine(line1Pos, 0, line1Pos, MENUSIZE, 255, 255, 255, 255);
 		buf->DrawLine(line2Pos, 0, line2Pos, MENUSIZE, 255, 255, 255, 255);
+		buf->DrawLine(line3Pos, 0, line3Pos, MENUSIZE, 255, 255, 255, 255);
 	}
 }
 
