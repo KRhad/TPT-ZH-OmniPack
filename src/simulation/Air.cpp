@@ -116,8 +116,7 @@ void Air::UpdateAirHeat(Simulation *sim)
 			{
 				for (int i = -1; i <= 1; i++)
 				{
-					if (y+j > 0 && y+j < YRES/CELL-2 && x+i > 0 && x+i < XRES/CELL-2 &&
-					        !(blockairh[y+j][x+i]&0x8))
+					if (y + j > 0 && y + j < YRES / CELL - 1 && x + i > 0 && x + i < XRES / CELL - 1 && !(blockairh[y + j][x + i] & 0x8))
 					{
 						f = kernel[i+1+(j+1)*3];
 						dh += hv[y+j][x+i]*f;
