@@ -65,7 +65,7 @@ void RIME_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Flammable = 0;
 	elem->Explosive = 0;
 	elem->Meltable = 0;
-	elem->Hardness = 30;
+	elem->Hardness = 32;
 
 	elem->Weight = 100;
 

@@ -71,7 +71,7 @@ void WOOD_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Flammable = 20;
 	elem->Explosive = 0;
 	elem->Meltable = 0;
-	elem->Hardness = 15;
+	elem->Hardness = 16;
 
 	elem->Weight = 100;
 

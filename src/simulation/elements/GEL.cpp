@@ -88,6 +88,15 @@ int GEL_update(UPDATE_FUNC_ARGS)
 						parts[i].tmp--;
 					}
 					break;
+				case PT_BASE:
+					// Base absorbs water from gel
+					if (parts[i].tmp > 0 && parts[ID(r)].life > 1)
+					{
+						// BASE <- GEL
+						parts[ID(r)].life--;
+						parts[i].tmp--;
+					}
+					break;
 				default:
 					break;
 				}
@@ -150,7 +159,7 @@ void GEL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Flammable = 0;
 	elem->Explosive = 0;
 	elem->Meltable = 0;
-	elem->Hardness = 20;
+	elem->Hardness = 19;
 
 	elem->Weight = 35;
 

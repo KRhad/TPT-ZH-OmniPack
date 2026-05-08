@@ -78,7 +78,7 @@ void PUMP_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Flammable = 0;
 	elem->Explosive = 0;
 	elem->Meltable = 0;
-	elem->Hardness = 10;
+	elem->Hardness = 9;
 
 	elem->Weight = 100;
 

@@ -61,6 +61,18 @@ int DSTW_update(UPDATE_FUNC_ARGS)
 						return 1;
 					}
 					break;
+				case PT_SMKE: //DSTW + SMKE = BASE
+					if (parts[ID(r)].temp > (40 + 273.15f) && parts[ID(r)].temp < (60 + 273.15f) &&
+						parts[i].temp > (40 + 273.15f) && parts[i].temp < (60 + 273.15f))
+					{
+						if (RNG::Ref().chance(1, 100))
+						{
+							sim->part_change_type(i,x,y,PT_BASE);
+							parts[i].life = 1;
+							sim->part_kill(ID(r));
+						}
+					}
+					break;
 				default:
 					continue;
 				}

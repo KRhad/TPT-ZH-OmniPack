@@ -38,7 +38,7 @@ void SAWD_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Flammable = 10;
 	elem->Explosive = 0;
 	elem->Meltable = 0;
-	elem->Hardness = 30;
+	elem->Hardness = 29;
 
 	elem->Weight = 18;
 

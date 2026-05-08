@@ -78,7 +78,7 @@ int VIRS_update(UPDATE_FUNC_ARGS)
 						return 1;
 					}
 				}
-				else if (TYP(r) != PT_VIRS && TYP(r) != PT_VRSS && TYP(r) != PT_VRSG && !(sim->elements[TYP(r)].Properties&PROP_INDESTRUCTIBLE))
+				else if (TYP(r) != PT_VIRS && TYP(r) != PT_VRSS && TYP(r) != PT_VRSG && TYP(r) != PT_BASE && !(sim->elements[TYP(r)].Properties&PROP_INDESTRUCTIBLE))
 				{
 					if (!(rndstore & 0x7))
 					{

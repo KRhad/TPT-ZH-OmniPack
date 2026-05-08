@@ -261,7 +261,7 @@ void LITH_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Flammable = 0;
 	elem->Explosive = 0;
 	elem->Meltable = 0;
-	elem->Hardness = 15;
+	elem->Hardness = 14;
 
 	elem->Weight = 17;
 

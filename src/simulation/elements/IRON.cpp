@@ -77,7 +77,7 @@ void IRON_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Flammable = 0;
 	elem->Explosive = 0;
 	elem->Meltable = 1;
-	elem->Hardness = 50;
+	elem->Hardness = 49;
 
 	elem->Weight = 100;
 
