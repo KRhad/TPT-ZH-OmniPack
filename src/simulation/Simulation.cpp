@@ -2225,16 +2225,15 @@ bool Simulation::UpdateParticle(int i)
 			if (parts[i].type == PT_NONE)
 				return true;
 			// can't move there, so bounce off
-			// TODO
 			if (fin_x > x+ISTP) fin_x = x+ISTP;
 			if (fin_x < x-ISTP) fin_x = x-ISTP;
 			if (fin_y > y+ISTP) fin_y = y+ISTP;
 			if (fin_y < y-ISTP) fin_y = y-ISTP;
-			if (DoMove(i, x, y, 0.25f+(float)(2*x-fin_x), 0.25f+fin_y))
+			if (DoMove(i, x, y, (float)(2 * x - fin_x), fin_y))
 			{
 				parts[i].vx *= elements[t].Collision;
 			}
-			else if (DoMove(i, x, y, 0.25f+fin_x, 0.25f+(float)(2*y-fin_y)))
+			else if (DoMove(i, x, y, fin_x, (float)(2 * y - fin_y)))
 			{
 				parts[i].vy *= elements[t].Collision;
 			}
