@@ -239,6 +239,7 @@ void BASE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 16;
 
 	elem->HeatConduct = 31;
+	elem->HeatCapacity = 1.5f;
 	elem->Latent = 0;
 	elem->Description = "Corrosive liquid. Rusts conductive solids, neutralizes acid.";
 

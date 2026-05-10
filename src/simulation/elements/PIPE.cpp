@@ -210,13 +210,18 @@ void PIPE_transfer_pipe_to_part(Simulation *sim, particle *pipe, particle *part,
 	part->flags = 0;
 }
 
-void PIPE_transfer_part_to_pipe(particle *part, particle *pipe)
+void PIPE_transfer_part_to_pipe(Simulation *sim, particle *part, particle *pipe)
 {
 	pipe->ctype = part->type;
 	if ((pipe->tmp & PFLAG_CAN_CONDUCT) == 0)
 		pipe->temp = part->temp;
 	else
-		pipe->temp = (part->temp + pipe->temp) / 2.0f;
+	{
+		auto c_pipe = sim->elements[pipe->type].HeatCapacity;
+		auto c_part = sim->elements[part->type].HeatCapacity;
+
+		pipe->temp = (c_part * part->temp + c_pipe * pipe->temp) / (c_part + c_pipe);
+	}
 	pipe->tmp2 = part->life;
 	pipe->tmp3 = part->tmp;
 	pipe->tmp4 = part->ctype;
@@ -228,7 +233,7 @@ void PIPE_transfer_part_to_pipe(particle *part, particle *pipe)
 	}
 }
 
-void PIPE_transfer_pipe_to_pipe(particle *src, particle *dest, bool STOR=false)
+void PIPE_transfer_pipe_to_pipe(Simulation *sim, particle *src, particle *dest, bool STOR=false)
 {
 	// STOR to PIPE
 	if (STOR)
@@ -256,7 +261,13 @@ void PIPE_transfer_pipe_to_pipe(particle *src, particle *dest, bool STOR=false)
 	if ((dest->tmp & PFLAG_CAN_CONDUCT) == 0)
 		dest->temp = src->temp;
 	else
-		dest->temp = (src->temp + dest->temp) / 2.0f;
+	{
+		auto src_ctype = src->ctype;
+		auto c_src = (0 < src_ctype && src_ctype < PT_NUM) ? sim->elements[src_ctype].HeatCapacity : 1.0f;
+		auto c_dest = sim->elements[dest->type].HeatCapacity;
+
+		dest->temp = (c_src * src->temp + c_dest * dest->temp) / (c_src + c_dest);
+	}
 	dest->tmp2 = src->tmp2;
 	dest->tmp3 = src->tmp3;
 	dest->tmp4 = src->tmp4;
@@ -288,7 +299,7 @@ void pushParticle(Simulation *sim, int i, int count, int original)
 				continue;
 			else if ((TYP(r) == PT_PIPE || TYP(r) == PT_PPIP) && (sim->parts[ID(r)].tmp & PFLAG_COLORS) != notctype && !TYP(sim->parts[ID(r)].ctype))
 			{
-				PIPE_transfer_pipe_to_pipe(parts + i, parts + (ID(r)));
+				PIPE_transfer_pipe_to_pipe(sim, parts + i, parts + (ID(r)));
 				// Skip particle push, normalizes speed
 				if (ID(r) > original)
 					parts[ID(r)].flags |= PFLAG_NORMALSPEED;
@@ -317,7 +328,7 @@ void pushParticle(Simulation *sim, int i, int count, int original)
 		int r = pmap[y+ pos_1_ry[coords]][x+ pos_1_rx[coords]];
 		if ((TYP(r) == PT_PIPE || TYP(r) == PT_PPIP) && (sim->parts[ID(r)].tmp & PFLAG_COLORS) != notctype && !TYP(sim->parts[ID(r)].ctype))
 		{
-			PIPE_transfer_pipe_to_pipe(parts + i, parts + (ID(r)));
+			PIPE_transfer_pipe_to_pipe(sim, parts + i, parts + (ID(r)));
 			// Skip particle push, normalizes speed
 			if (ID(r) > original)
 				parts[ID(r)].flags |= PFLAG_NORMALSPEED;
@@ -503,14 +514,14 @@ int PIPE_update(UPDATE_FUNC_ARGS)
 				{
 					if (TYP(r) == PT_SOAP)
 						detach(ID(r));
-					PIPE_transfer_part_to_pipe(parts+(ID(r)), parts + i);
+					PIPE_transfer_part_to_pipe(sim, parts+(ID(r)), parts + i);
 					sim->part_kill(ID(r));
 				}
 				else if (!TYP(parts[i].ctype) && TYP(r) == PT_STOR && sim->IsElement(parts[ID(r)].tmp) &&
 						 (sim->elements[parts[ID(r)].tmp].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)))
 				{
 					// STOR stores properties in the same places as PIPE does (mostly)
-					PIPE_transfer_pipe_to_pipe(parts+(ID(r)), parts + i, true);
+					PIPE_transfer_pipe_to_pipe(sim, parts+(ID(r)), parts + i, true);
 				}
 			}
 		}

@@ -72,6 +72,7 @@ public:
 	int Weight;
 
 	unsigned char HeatConduct;
+	float HeatCapacity; // Volumetric heat capacity per one pixel. Must be nonzero. The default value is 1.0f.
 	// Latent value is in TPT imaginary units - 750/226*enthalpy value of the material
 	unsigned int Latent;
 	std::string Description;

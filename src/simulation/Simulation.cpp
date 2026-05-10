@@ -2154,7 +2154,7 @@ bool Simulation::UpdateParticle(int i)
 
 			if ((TYP(r)==PT_PIPE || TYP(r) == PT_PPIP) && !TYP(parts[ID(r)].ctype))
 			{
-				PIPE_transfer_part_to_pipe(parts+i, parts+(ID(r)));
+				PIPE_transfer_part_to_pipe(this, parts+i, parts+(ID(r)));
 				return true;
 			}
 

@@ -43,6 +43,7 @@ Element::Element():
 	PhotonReflectWavelengths(0x3FFFFFFF),
 	Weight(50),
 	HeatConduct(128),
+	HeatCapacity(1.0f),
 	Latent(0),
 	Description("No Description."),
 	Properties(TYPE_SOLID),
