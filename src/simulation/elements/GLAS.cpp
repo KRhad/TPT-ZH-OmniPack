@@ -29,6 +29,29 @@ int GLAS_update(UPDATE_FUNC_ARGS)
 		sim->part_change_type(i, x, y, PT_BGLA);
 	}
 	parts[i].tmp3 = press;
+
+	// Liquid nitrogen condenses on chemically strengthened glass
+	if ((strength > 200) && (parts[i].temp < 77.0f) && (sim->air->hv[y/CELL][x/CELL] < 77.0f)
+		&& (sim->air->pv[y/CELL][x/CELL] > 5.0f) && RNG::Ref().chance(1, 100))
+	{
+		// Sample 4 adjacent cells
+		auto adj = RNG::Ref().between(0, 3);
+		auto rx = (1 - 2 * (adj % 2)) * (1 - adj / 2);
+		auto ry = (1 - 2 * (adj % 2)) * (adj / 2);
+
+		auto r = pmap[y + ry][x + rx];
+		// If found an empty spot around glass
+		if (!r)
+		{
+			auto np = sim->part_create(-1, x + rx, y + ry, PT_LNTG);
+			if (np>-1)
+			{
+				sim->air->pv[y/CELL][x/CELL] -= 1.0f;
+				parts[i].temp += 200.0f;
+			}
+		}
+	}
+
 	return 0;
 }
 
