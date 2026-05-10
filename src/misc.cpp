@@ -206,7 +206,6 @@ void save_presets()
 	cJSON_AddNumberToObject(simulationobj, "UndoHistoryLimit", SnapshotHistory::GetUndoHistoryLimit());
 	setBool(simulationobj, "LoadPressure", globalSim->includePressure);
 	cJSON_AddNumberToObject(simulationobj, "DecoSpace", globalSim->decoSpace);
-	cJSON_AddNumberToObject(simulationobj, "RealisticHeat", realistic);
 
 	//Tpt++ install check, prevents annoyingness
 	cJSON_AddTrueToObject(root, "InstallCheck");
@@ -584,8 +583,6 @@ void load_presets(void)
 				globalSim->includePressure = tmpobj->valueint;
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "DecoSpace")))
 				globalSim->decoSpace = tmpobj->valueint;
-			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "RealisticHeat")))
-				realistic = tmpobj->valueint;
 		}
 
 		//read console history

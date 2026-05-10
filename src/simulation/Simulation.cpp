@@ -1753,17 +1753,8 @@ bool Simulation::UpdateParticle(int i)
 
 	if (elements[t].Diffusion)//the random diffusion that gases have
 	{
-		if (realistic)
-		{
-			//The magic number controls diffusion speed
-			parts[i].vx += 0.05f * sqrtf(parts[i].temp) * elements[t].Diffusion * (2.0f * RNG::Ref().uniform01() - 1);
-			parts[i].vy += 0.05f * sqrtf(parts[i].temp) * elements[t].Diffusion * (2.0f * RNG::Ref().uniform01() - 1);
-		}
-		else
-		{
-			parts[i].vx += elements[t].Diffusion * (2.0f * RNG::Ref().uniform01() - 1);
-			parts[i].vy += elements[t].Diffusion * (2.0f * RNG::Ref().uniform01() - 1);
-		}
+		parts[i].vx += elements[t].Diffusion * (2.0f * RNG::Ref().uniform01() - 1);
+		parts[i].vy += elements[t].Diffusion * (2.0f * RNG::Ref().uniform01() - 1);
 	}
 
 	//surround_space stores the number of empty spaces around a particle, nt stores the number of empty spaces + the number of particles of a different type

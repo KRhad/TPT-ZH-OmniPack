@@ -2667,13 +2667,6 @@ void menu_draw_text(Tool* over, int y)
 			else
 				toolTip << "manual: " << lowesttemp-273 << "C - " << highesttemp-273 << "C";
 		}
-		else if (toolID == FAV_REAL)
-		{
-			if (realistic)
-				toolTip << "on";
-			else
-				toolTip << "off";
-		}
 		else if (toolID == FAV_FIND2)
 		{
 			if (finding &0x8)
@@ -2740,14 +2733,6 @@ void menu_select_element(int b, Tool* over)
 #endif
 			else if (toolID == FAV_CUSTOMHUD)
 				active_menu = SC_HUD;
-			else if (toolID == FAV_REAL)
-			{
-				realistic = !realistic;
-				if (realistic)
-					globalSim->elements[PT_FIRE].HeatConduct = 1;
-				else
-					globalSim->elements[PT_FIRE].HeatConduct = 88;
-			}
 			else if (toolID == FAV_FIND2)
 			{
 				if (finding & 0x8)

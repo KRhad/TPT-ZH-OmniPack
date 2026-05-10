@@ -133,7 +133,6 @@ int num_tabs = 1;
 bool show_tabs = false;
 Tool* activeTools[3];
 int autosave = 0;
-int realistic = 0;
 bool explUnlocked = false;
 int old_menu = 0;
 bool doUpdates = true;

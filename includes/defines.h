@@ -197,7 +197,6 @@ class Tool;
 extern Tool* activeTools[3];
 #endif
 extern int autosave;
-extern int realistic;
 extern bool explUnlocked;
 extern int old_menu;
 extern int decobox_hidden;

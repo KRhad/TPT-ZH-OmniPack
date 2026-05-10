@@ -115,12 +115,11 @@ const decoPreset colorlist[] =
 #define FAV_HEAT 5
 #define FAV_LUA 6
 #define FAV_CUSTOMHUD 7
-#define FAV_REAL 8
-#define FAV_FIND2 9
-#define FAV_DATE 10
-#define FAV_SECR 11
-#define FAV_END 12
-#define NUM_FAV_BUTTONS 12
+#define FAV_FIND2 8
+#define FAV_DATE 9
+#define FAV_SECR 10
+#define FAV_END 11
+#define NUM_FAV_BUTTONS 11
 
 struct fav_menu
 {
@@ -141,7 +140,6 @@ const fav_menu fav[] =
 	{"HEAT", COLPACK(0xFF00D4), "Changes heat display mode. Right click to set manual temperatures. Current mode: ", "DEFAULT_FAV_HEAT"},
 	{"LUA",  COLPACK(0xFFFF00), "Add Lua code to a save", "DEFAULT_FAV_LUA"},
 	{"HUD2", COLPACK(0x20D8FF), "Make a custom HUD", "DEFAULT_FAV_HUD2"},
-	{"REAL", COLPACK(0xFF6800), "Turns on realistic heat mode, by savask. Now ", "DEFAULT_FAV_REAL"},
 	{"FND2", COLPACK(0xDF0000), "Alternate find mode, looks different but may find things better. Now ", "DEFAULT_FAV_FND2"},
 	{"DATE", COLPACK(0x3FBB3F), "Change date and time format. Right click to toggle always showing time. Example: ", "DEFAULT_FAV_DATE"},
 	{"", COLPACK(0x000000), "", "DEFAULT_FAV_SECRET"}
