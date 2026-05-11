@@ -54,7 +54,7 @@ int DEST_update(UPDATE_FUNC_ARGS)
 	else if (!sim->IsHeatInsulator(parts[ID(r)]))
 		parts[ID(r)].temp = MAX_TEMP;
 	parts[i].temp = MAX_TEMP;
-	sim->air->pv[y/CELL][x/CELL]+=80.0f;
+	sim->air->pv[y/CELL][x/CELL] = restrict_flt(sim->air->pv[y/CELL][x/CELL] + 80.0f, MIN_PRESSURE, MAX_PRESSURE);
 	return 0;
 }
 

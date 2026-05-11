@@ -220,7 +220,7 @@ int LIGH_update(UPDATE_FUNC_ARGS)
 				case PT_PLUT:
 					//start nuclear reactions
 					parts[ID(r)].temp = restrict_flt(parts[ID(r)].temp+powderful, MIN_TEMP, MAX_TEMP);
-					sim->air->pv[y/CELL][x/CELL] += powderful/35;
+					sim->air->pv[y/CELL][x/CELL] = restrict_flt(sim->air->pv[y/CELL][x/CELL] + powderful/35, MIN_PRESSURE, MAX_PRESSURE);
 					if (RNG::Ref().chance(1, 3))
 					{
 						part_change_type(ID(r),x+rx,y+ry,PT_NEUT);
@@ -258,7 +258,7 @@ int LIGH_update(UPDATE_FUNC_ARGS)
 				{
 					sim->spark_conductive(ID(r), x+rx, y+ry);
 				}
-				sim->air->pv[y/CELL][x/CELL] += powderful/400;
+				sim->air->pv[y/CELL][x/CELL] = restrict_flt(sim->air->pv[y/CELL][x/CELL] + powderful/400, MIN_PRESSURE, MAX_PRESSURE);
 				if (sim->elements[rt].HeatConduct)
 					parts[ID(r)].temp = restrict_flt(parts[ID(r)].temp+powderful/1.3f, MIN_TEMP, MAX_TEMP);
 			}

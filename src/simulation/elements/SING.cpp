@@ -27,10 +27,10 @@ int SING_update(UPDATE_FUNC_ARGS)
 	if (sim->air->pv[y/CELL-1][x/CELL]<singularity)
 		sim->air->pv[y/CELL-1][x/CELL] += 0.1f*(singularity-sim->air->pv[y/CELL-1][x/CELL]);
 
-	sim->air->pv[y/CELL][x/CELL+1] += 0.1f*(singularity-sim->air->pv[y/CELL][x/CELL+1]);
-	sim->air->pv[y/CELL+1][x/CELL+1] += 0.1f*(singularity-sim->air->pv[y/CELL+1][x/CELL+1]);
-	sim->air->pv[y/CELL][x/CELL-1] += 0.1f*(singularity-sim->air->pv[y/CELL][x/CELL-1]);
-	sim->air->pv[y/CELL-1][x/CELL-1] += 0.1f*(singularity-sim->air->pv[y/CELL-1][x/CELL-1]);
+	sim->air->pv[y/CELL][x/CELL+1]   = restrict_flt(sim->air->pv[y/CELL][x/CELL+1]   + 0.1f * (singularity - sim->air->pv[y/CELL][x/CELL+1]),   MIN_PRESSURE, MAX_PRESSURE);
+	sim->air->pv[y/CELL+1][x/CELL+1] = restrict_flt(sim->air->pv[y/CELL+1][x/CELL+1] + 0.1f * (singularity - sim->air->pv[y/CELL+1][x/CELL+1]), MIN_PRESSURE, MAX_PRESSURE);
+	sim->air->pv[y/CELL][x/CELL-1]   = restrict_flt(sim->air->pv[y/CELL][x/CELL-1]   + 0.1f * (singularity - sim->air->pv[y/CELL][x/CELL-1]),   MIN_PRESSURE, MAX_PRESSURE);
+	sim->air->pv[y/CELL-1][x/CELL-1] = restrict_flt(sim->air->pv[y/CELL-1][x/CELL-1] + 0.1f * (singularity - sim->air->pv[y/CELL-1][x/CELL-1]), MIN_PRESSURE, MAX_PRESSURE);
 
 	if (parts[i].life<1)
 	{
@@ -42,7 +42,7 @@ int SING_update(UPDATE_FUNC_ARGS)
 			{
 				int cry = (y/CELL)+ry;
 				if (cry >= 0 && crx >= 0 && crx < (XRES/CELL) && cry < (YRES/CELL))
-					sim->air->pv[cry][crx] += (float)parts[i].tmp;
+					sim->air->pv[cry][crx] = restrict_flt(sim->air->pv[cry][crx] + (float)parts[i].tmp, MIN_PRESSURE, MAX_PRESSURE);
 			}
 		}
 		int spawncount = std::abs(parts[i].tmp);

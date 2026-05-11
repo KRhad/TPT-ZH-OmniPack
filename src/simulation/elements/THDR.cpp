@@ -33,7 +33,7 @@ int THDR_update(UPDATE_FUNC_ARGS)
 				}
 				else if (rt != PT_CLNE && rt != PT_THDR && rt != PT_SPRK && !(sim->elements[rt].Properties & PROP_INDESTRUCTIBLE) && rt != PT_FIRE)
 				{
-					sim->air->pv[y/CELL][x/CELL] += 100.0f;
+					sim->air->pv[y/CELL][x/CELL] = restrict_flt(sim->air->pv[y/CELL][x/CELL] + 100.0f, MIN_PRESSURE, MAX_PRESSURE);
 					if (legacy_enable && RNG::Ref().chance(1, 200))
 					{
 						parts[i].life = RNG::Ref().between(120, 169);
