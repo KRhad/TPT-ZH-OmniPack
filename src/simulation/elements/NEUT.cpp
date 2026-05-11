@@ -14,6 +14,7 @@
  */
 
 #include "simulation/ElementsCommon.h"
+#include "simulation/elements/PLNT.h"
 
 void DeutExplosion(Simulation *sim, int n, int x, int y, float temp, int t)
 {
@@ -201,6 +202,32 @@ int NEUT_update(UPDATE_FUNC_ARGS)
 			case PT_BASE:
 				if (parts[ID(r)].temp > (50 + 273.15) && RNG::Ref().chance(1, 35))
 					sim->part_create(ID(r), x + rx, y + ry, PT_LRBD);
+				break;
+			case PT_SEED:
+				if (!rx && !ry)
+				{
+					// Flip a random gene with 1/2 chance
+					switch (RNG::Ref().between(0, 9))
+					{
+					case 0:
+						parts[ID(r)].ctype ^= 1 << RNG::Ref().between(PLNT_COLOUR, PLNT_LIFE - 1);
+						break;
+					case 1:
+						parts[ID(r)].tmp ^= 1 << RNG::Ref().between(0, PLNT_TOTAL_TMP - 1);
+						break;
+					case 2:
+						parts[ID(r)].tmp2 ^= 1 << RNG::Ref().between(0, PLNT_TOTAL_TMP - 1);
+						break;
+					case 3:
+						parts[ID(r)].tmp3 ^= 1 << RNG::Ref().between(0, PLNT_TOTAL_TMP - 1);
+						break;
+					case 4:
+						parts[ID(r)].tmp4 ^= 1 << RNG::Ref().between(0, PLNT_TOTAL_TMP - 1);
+						break;
+					default:
+						break;
+					}
+				}
 				break;
 			default:
 				break;

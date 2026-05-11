@@ -19,6 +19,7 @@
 
 #include "simulation/elements/ANIM.h"
 #include "simulation/elements/LIFE.h"
+#include "simulation/elements/PLNT.h"
 
 #include "gui/game/PowderToy.h"
 
@@ -37,8 +38,8 @@ int currentHud[HUD_OPTIONS];
 
 void HudDefaults()
 {
-	int defaultNormalHud[HUD_OPTIONS] = {0,0,1,0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,2,0,0,0,0,2,0,2,1,2,0,0,0,2,0,2,0,2,0,1,0,0,0,0,2,0,2,1,0,0,1,1,0,0,0,0};
-	int defaultDebugHud[HUD_OPTIONS] =  {0,0,1,2,1,0,0,0,1,0,1,1,1,0,1,0,0,0,4,1,1,1,0,4,0,4,1,4,1,1,1,4,0,4,0,4,0,1,0,0,0,0,4,0,4,1,0,0,1,1,1,0,0,0};
+	int defaultNormalHud[HUD_OPTIONS] = {0,0,1,0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,2,0,0,0,0,2,0,2,1,2,0,0,0,2,0,2,0,2,0,1,0,0,0,0,2,0,2,1,0,0,1,1,0,0,0,0,0};
+	int defaultDebugHud[HUD_OPTIONS] =  {0,0,1,2,1,0,0,0,1,0,1,1,1,0,1,0,0,0,4,1,1,1,0,4,0,4,1,4,1,1,1,4,0,4,0,4,0,1,0,0,0,0,4,0,4,1,0,0,1,1,1,0,0,0,1};
 	memcpy(normalHud, defaultNormalHud, sizeof(normalHud));
 	memcpy(debugHud, defaultDebugHud, sizeof(debugHud));
 }
@@ -113,6 +114,27 @@ void SetRightHudText(Simulation * sim, int x, int y)
 						nametext << "FILT (" << filtModes[parts[underID].tmp] << ")";
 					else
 						nametext << "FILT (unknown mode)";
+				}
+				else if (currentHud[54] && currentHud[11] && (underType == PT_SEED || (underType == PT_PLNT && parts[underID].ctype)))
+				{
+					int ctype = parts[underID].ctype;
+					nametext << ElementResolve(sim, underType, ctype);
+
+					auto water = (ctype >> PLNT_LIFE) & 0xFF;
+					auto colour = (ctype >> PLNT_COLOUR) & 0x3F;
+					auto dir = (ctype >> PLNT_DIR) & 7;
+					auto active = ctype & 1;
+
+					static const std::array<std::string, 8> directions = {"N", "NW", "W", "SW", "S", "SE", "E", "NE"};
+					static const std::array<std::array<std::string, 4>, 3> colours = {{
+						{{"cc", "cC", "Cc", "CC"}}, {{"mm", "mM", "Mm", "MM"}}, {{"yy", "yY", "Yy", "YY"}}
+					}};
+					auto cyan = (colour >> 4) & 3;
+					auto magenta = (colour >> 2) & 3;
+					auto yellow = colour & 3;
+
+					nametext << " (" << water << " " <<
+						colours[0][cyan] << colours[1][magenta] << colours[2][yellow] << " " << directions[dir] << " " << active << ")";
 				}
 				else if (currentHud[11])
 				{

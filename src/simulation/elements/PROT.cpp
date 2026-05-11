@@ -103,6 +103,21 @@ int PROT_update(UPDATE_FUNC_ARGS)
 		sim->part_kill(i);
 		return 1;
 	}
+	case PT_SEED: // Mutate seeds
+		if (RNG::Ref().chance(1, 2))
+		{
+			std::array<int*, 4> ptrs_tmp = {{&parts[uID].tmp, &parts[uID].tmp2, &parts[uID].tmp3, &parts[uID].tmp4}};
+
+			auto j = RNG::Ref().between(0, 3);
+			auto k = RNG::Ref().between(0, 3);
+			int old_tmpj = *(ptrs_tmp[j]);
+			int old_tmpk = *(ptrs_tmp[k]);
+
+			// Swap genes for j-th and k-th phases
+			*(ptrs_tmp[j]) = old_tmpk;
+			*(ptrs_tmp[k]) = old_tmpj;
+		}
+		break;
 	default:
 		// Set off explosives (only when hot because it wasn't as fun when it made an entire save explode)
 		if (parts[i].temp > 273.15f + 500.0f && (sim->elements[utype].Flammable || sim->elements[utype].Explosive || utype == PT_BANG))

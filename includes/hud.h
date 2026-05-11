@@ -100,6 +100,7 @@ const hud hud_menu[] =
 	{"TMP34", COLPACK(0x000000), 2, "Show tmp3 and tmp4, used by VIRS and PIPE to store extra info"},
 	{"EMAP", COLPACK(0x000000), 3, "Show the value of emap, used in conductive walls"},
 	{"TMPX", COLPACK(0x000000), 2, "Show a particle's tmp2 value for all elements"},
+	{"SEED", COLPACK(0x000000), 2, "Show SEED genes in the HUD"},
 };
 
 #define HUD_BACK 0
@@ -108,8 +109,8 @@ const hud hud_menu[] =
 #define HUD_COORD 3
 #define HUD_RESET 4
 #define HUD_REALSTART 5
-#define HUD_NUM 59
-#define HUD_OPTIONS 54
+#define HUD_NUM 60
+#define HUD_OPTIONS 55
 
 extern int currentHud[HUD_OPTIONS];
 extern int normalHud[HUD_OPTIONS];
