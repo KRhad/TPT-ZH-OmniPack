@@ -1265,7 +1265,7 @@ int simulation_clearRect(lua_State * l)
 int simulation_resetTemp(lua_State * l)
 {
 	bool onlyConductors = luaL_optint(l, 1, 0) ? true : false;
-	for (int i = 0; i < luaSim->parts_lastActiveIndex; i++)
+	for (int i = 0; i <= luaSim->parts_lastActiveIndex; i++)
 	{
 		if (parts[i].type && (!onlyConductors || !luaSim->IsHeatInsulator(parts[i])))
 		{
@@ -2219,7 +2219,12 @@ int simulation_resetSpark(lua_State * l)
 			else
 				luaSim->part_kill(i);
 		}
+		else if (parts[i].type == PT_WIRE)
+		{
+			parts[i].ctype = parts[i].tmp = 0;
+		}
 	}
+	luaSim->elementData[PT_WIFI]->Simulation_Cleared(globalSim);
 	return 0;
 }
 

@@ -2048,7 +2048,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 	case SDL_SCANCODE_EQUALS:
 		if (ctrl)
 		{
-			for (int i = 0; i < sim->parts_lastActiveIndex; i++)
+			for (int i = 0; i <= sim->parts_lastActiveIndex; i++)
 				if (parts[i].type == PT_SPRK)
 				{
 					if (parts[i].ctype >= 0 && parts[i].ctype < PT_NUM && globalSim->elements[parts[i].ctype].Enabled)
@@ -2058,6 +2058,10 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 					}
 					else
 						sim->part_kill(i);
+				}
+				else if (parts[i].type == PT_WIRE)
+				{
+					parts[i].ctype = parts[i].tmp = 0;
 				}
 			sim->elementData[PT_WIFI]->Simulation_Cleared(globalSim);
 		}
@@ -2070,7 +2074,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 					sim->air->vx[ny][nx] = 0;
 					sim->air->vy[ny][nx] = 0;
 				}
-			for (int i = 0; i < sim->parts_lastActiveIndex; i++)
+			for (int i = 0; i <= sim->parts_lastActiveIndex; i++)
 				if (Save::PressureInTmp3(parts[i].type))
 				{
 					parts[i].tmp3 = 0;
