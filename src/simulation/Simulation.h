@@ -155,6 +155,13 @@ public:
 	{
 		return elements[p.type].HeatConduct == 0 || (p.type == PT_HSWC && p.life != 10) || ((p.type == PT_PIPE || p.type == PT_PPIP) && (p.tmp & PFLAG_CAN_CONDUCT) == 0);
 	}
+	float HeatCapacityOf(const particle &p) const
+	{
+		if ((p.type == PT_PIPE || p.type == PT_PPIP) && IsElement(p.ctype))
+			return elements[p.type].HeatCapacity + elements[p.ctype].HeatCapacity;
+		else
+			return elements[p.type].HeatCapacity;
+	}
 	std::string ElementResolve(int type, int ctype) const;
 
 	// Most of the time, part_alloc and part_free should not be used directly unless you really know what you're doing. 

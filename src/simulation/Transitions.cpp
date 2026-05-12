@@ -43,16 +43,17 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 		if (aheat_enable && !(elements[t].Properties&PROP_NOAMBHEAT))
 		{
 			float dtemp = air->hv[y/CELL][x/CELL] - parts[i].temp; // Temperature difference
-			float alpha = std::min(0.04f, 0.4f * elements[t].HeatCapacity); // alpha / heat_capacity must be < 1
+			float hc = HeatCapacityOf(parts[i]);
+			float alpha = std::min(0.04f, 0.4f * hc); // alpha / heat_capacity must be < 1
 
 			// Here we completely ignore that there are CELL^2 "air pixels" in a cell, and the heat capacity of air
-			parts[i].temp = restrict_flt(parts[i].temp + alpha*dtemp / elements[t].HeatCapacity, MIN_TEMP, MAX_TEMP);
+			parts[i].temp = restrict_flt(parts[i].temp + alpha*dtemp / hc, MIN_TEMP, MAX_TEMP);
 			air->hv[y/CELL][x/CELL] = restrict_flt(air->hv[y/CELL][x/CELL] - alpha*dtemp, MIN_TEMP, MAX_TEMP);
 		}
 
 		// Heat transfer with other elements
-		auto hc_total = 0.0f; // Total heat capacity of elements involved
-		auto c_heat = 0.0f; // Total heat distributed between elements
+		float hc_total = 0.0f; // Total heat capacity of elements involved
+		float c_heat = 0.0f; // Total heat distributed between elements
 		int surround_hconduct[8]; // IDs of elements which exchange heat
 
 		for (j=0; j<8; j++)
@@ -74,27 +75,15 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 				continue;
 
 			surround_hconduct[j] = ID(r);
-			c_heat += parts[ID(r)].temp*elements[rt].HeatCapacity;
-			hc_total += elements[rt].HeatCapacity;
-
-			// Double count the particle to account for the heat capacity of both the PIPE/PPIP and its contents
-			if ((rt == PT_PIPE || rt == PT_PPIP) && parts[ID(r)].ctype != 0)
-			{
-				c_heat += parts[ID(r)].temp*elements[rt].HeatCapacity;
-				hc_total += elements[rt].HeatCapacity;
-			}
+			float hc = HeatCapacityOf(parts[ID(r)]);
+			c_heat += parts[ID(r)].temp * hc;
+			hc_total += hc;
 		}
 
 		// Add the current particle
-		c_heat += parts[i].temp*elements[t].HeatCapacity;
-		hc_total += elements[t].HeatCapacity;
-
-		// Double count the current particle to account for the heat capacity of both the PIPE/PPIP and its contents
-		if ((t == PT_PIPE || t == PT_PPIP) && parts[i].ctype != 0)
-		{
-			c_heat += parts[i].temp*elements[t].HeatCapacity;
-			hc_total += elements[t].HeatCapacity;
-		}
+		float hc = HeatCapacityOf(parts[i]);
+		c_heat += parts[i].temp * hc;
+		hc_total += hc;
 
 		// Equilibrium temperature
 		float pt = restrict_flt(c_heat / hc_total, MIN_TEMP, MAX_TEMP);

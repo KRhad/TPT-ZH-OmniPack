@@ -89,8 +89,10 @@ bool CheckLine(Simulation* sim, int x1, int y1, int x2, int y2, BinaryPredicate 
 int HEAC_update(UPDATE_FUNC_ARGS)
 {
 	const int rad = 4;
-	int rry, rrx, r, count = 0;
-	float tempAgg = 0;
+	int rry, rrx, r;
+	float c_heat = 0.0f;
+	float hc_total = 0.0f;
+
 	for (int rx = -1; rx <= 1; rx++)
 	{
 		for (int ry = -1; ry <= 1; ry++)
@@ -102,22 +104,23 @@ int HEAC_update(UPDATE_FUNC_ARGS)
 				r = pmap[y+rry][x+rrx];
 				if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 				{
-					count++;
-					tempAgg += parts[ID(r)].temp;
+					c_heat += parts[ID(r)].temp;
+					hc_total += sim->HeatCapacityOf(parts[ID(r)]);
 				}
 				r = photons[y+rry][x+rrx];
 				if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 				{
-					count++;
-					tempAgg += parts[ID(r)].temp;
+					c_heat += parts[ID(r)].temp;
+					hc_total += sim->HeatCapacityOf(parts[ID(r)]);
 				}
 			}
 		}
 	}
 
-	if (count > 0)
+	if (hc_total > 0.0f)
 	{
-		parts[i].temp = tempAgg/count;
+		auto pt = restrict_flt(c_heat / hc_total, MIN_TEMP, MAX_TEMP);
+		parts[i].temp = pt;
 
 		for (int rx = -1; rx <= 1; rx++)
 		{
@@ -130,12 +133,12 @@ int HEAC_update(UPDATE_FUNC_ARGS)
 					r = pmap[y+rry][x+rrx];
 					if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 					{
-						parts[ID(r)].temp = parts[i].temp;
+						parts[ID(r)].temp = pt;
 					}
 					r = photons[y+rry][x+rrx];
 					if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 					{
-						parts[ID(r)].temp = parts[i].temp;
+						parts[ID(r)].temp = pt;
 					}
 				}
 			}
