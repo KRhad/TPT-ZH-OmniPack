@@ -2067,13 +2067,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		}
 		else
 		{
-			for (int nx = 0; nx < XRES/CELL; nx++)
-				for (int ny = 0; ny < YRES/CELL; ny++)
-				{
-					sim->air->pv[ny][nx] = 0;
-					sim->air->vx[ny][nx] = 0;
-					sim->air->vy[ny][nx] = 0;
-				}
+			sim->air->ClearPresVel();
 			for (int i = 0; i <= sim->parts_lastActiveIndex; i++)
 				if (Save::PressureInTmp3(parts[i].type))
 				{

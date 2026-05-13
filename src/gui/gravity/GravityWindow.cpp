@@ -10,13 +10,11 @@
 #include "interface/Style.h"
 #include "simulation/Simulation.h"
 
-GravityWindow::GravityWindow(Simulation *sim, float scale, int radius):
+GravityWindow::GravityWindow(float scale, int radius, float x, float y, std::string label, std::function<void(float, float)> callback):
 	ui::Window(Point(CENTERED, CENTERED), Point((radius * 5 / 2) + 20, (radius * 5 / 2) + 63)),
-	gravityDirection(new DirectionSelector(Point(10, 25), scale, radius, radius / 4, 2, 5)),
-	sim(sim)
+	directionSelector(new DirectionSelector(Point(10, 25), scale, radius, radius / 4, 2, 5)),
+	callback(callback)
 {
-	int x = sim->customGravityX;
-	int y = sim->customGravityY;
 #ifndef TOUCHUI
 	int buttonHeight = 15;
 #else
@@ -24,7 +22,7 @@ GravityWindow::GravityWindow(Simulation *sim, float scale, int radius):
 	Resize(position, size + Point(0, 10));
 #endif
 
-	Label * tempLabel = new Label(Point(4, 1), Point(size.X - 8, 22), "Custom Gravity");
+	Label * tempLabel = new Label(Point(4, 1), Point(size.X - 8, 22), label);
 	tempLabel->SetColor(COLRGB(140, 140, 255));
 	AddComponent(tempLabel);
 
@@ -35,8 +33,8 @@ GravityWindow::GravityWindow(Simulation *sim, float scale, int radius):
 	labelValues = new Label(labelPos, Point(size.X, 16), gravityText.str());
 	AddComponent(labelValues);
 
-	gravityDirection->SetValues(x, y);
-	gravityDirection->SetUpdateCallback([this, radius](float x, float y) {
+	directionSelector->SetValues(x, y);
+	directionSelector->SetUpdateCallback([this, radius](float x, float y) {
 		std::stringstream gravityText;
 		gravityText.precision(1);
 		gravityText << std::fixed << "X:" << x << " Y:" << y << " Total:" << std::hypot(x, y);
@@ -44,13 +42,12 @@ GravityWindow::GravityWindow(Simulation *sim, float scale, int radius):
 		labelValues->SetPosition(labelPos);
 		labelValues->SetText(gravityText.str());
 	});
-	gravityDirection->SetSnapPoints(5, 5, 2);
-	AddComponent(gravityDirection);
+	directionSelector->SetSnapPoints(5, 5, 2);
+	AddComponent(directionSelector);
 
 	Button *okButton = new Button(Point(0, size.Y - buttonHeight), Point(size.X, buttonHeight), "OK");
-	okButton->SetCallback([&](int mb) {
-		this->sim->customGravityX = gravityDirection->GetXValue();
-		this->sim->customGravityY = gravityDirection->GetYValue();
+	okButton->SetCallback([this](int mb) {
+		this->callback(directionSelector->GetXValue(), directionSelector->GetYValue());
 	});
 	okButton->SetTextColor(COLRGB(140, 140, 255));
 	okButton->SetCloseButton(true);

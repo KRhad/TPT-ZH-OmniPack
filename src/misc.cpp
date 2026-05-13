@@ -198,6 +198,9 @@ void save_presets()
 	cJSON_AddItemToObject(root, "Simulation", simulationobj=cJSON_CreateObject());
 	cJSON_AddNumberToObject(simulationobj, "EdgeMode", globalSim->edgeMode);
 	cJSON_AddNumberToObject(simulationobj, "AmbientAirTemp", globalSim->air->GetAmbientAirTempPref());
+	cJSON_AddNumberToObject(simulationobj, "EdgePressure", globalSim->air->GetEdgePressurePref());
+	cJSON_AddNumberToObject(simulationobj, "EdgeVelocityX", globalSim->air->GetEdgeVelocityPrefX());
+	cJSON_AddNumberToObject(simulationobj, "EdgeVelocityY", globalSim->air->GetEdgeVelocityPrefY());
 	cJSON_AddNumberToObject(simulationobj, "VorticityCoeff", globalSim->air->GetVorticityCoeffPref());
 	cJSON_AddNumberToObject(simulationobj, "ConvectionMode", globalSim->air->convectionMode);
 	cJSON_AddNumberToObject(simulationobj, "NewtonianGravity", globalSim->grav->IsEnabled());
@@ -563,8 +566,14 @@ void load_presets(void)
 					edgeMode = 0;
 				globalSim->edgeMode = edgeMode;
 			}
-			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "AmbientAirTemp")))
+			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "AmbientAirTemp")) && MIN_TEMP <= tmpobj->valuedouble && tmpobj->valuedouble <= MAX_TEMP)
 				globalSim->air->SetAmbientAirTempPref(tmpobj->valuedouble);
+			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "EdgePressure")) && MIN_PRESSURE <= tmpobj->valuedouble && tmpobj->valuedouble <= MAX_PRESSURE)
+				globalSim->air->SetEdgePressurePref(tmpobj->valuedouble);
+			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "EdgeVelocityX")) && -MAX_VELOCITY <= tmpobj->valuedouble && tmpobj->valuedouble <= MAX_VELOCITY)
+				globalSim->air->SetEdgeVelocityPref(tmpobj->valuedouble, globalSim->air->GetEdgeVelocityPrefY());
+			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "EdgeVelocityY")) && -MAX_VELOCITY <= tmpobj->valuedouble && tmpobj->valuedouble <= MAX_VELOCITY)
+				globalSim->air->SetEdgeVelocityPref(globalSim->air->GetEdgeVelocityPrefX(), tmpobj->valuedouble);
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "VorticityCoeff")) && 0.0f <= tmpobj->valuedouble && tmpobj->valuedouble <= 1.0f)
 				globalSim->air->SetVorticityCoeffPref(tmpobj->valuedouble);
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "ConvectionMode")))

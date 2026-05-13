@@ -292,6 +292,8 @@ void initSimulationAPI(lua_State * l)
 		{"airMode", simulation_airMode},
 		{"waterEqualization", simulation_waterEqualization},
 		{"ambientAirTemp", simulation_ambientAirTemp},
+		{"edgePressure", simulation_edgePressure},
+		{"edgeVelocity", simulation_edgeVelocity},
 		{"vorticityCoeff", simulation_vorticityCoeff},
 		{"convectionMode", simulation_convectionMode},
 		{"elementCount", simulation_elementCount},
@@ -1301,7 +1303,7 @@ int simulation_resetPressure(lua_State * l)
 	for (int nx = x1; nx<x1+width; nx++)
 		for (int ny = y1; ny<y1+height; ny++)
 		{
-			luaSim->air->pv[ny][nx] = 0.0f;
+			luaSim->air->pv[ny][nx] = luaSim->air->GetEdgePressure();
 		}
 	return 0;
 }
@@ -1605,6 +1607,34 @@ int simulation_ambientAirTemp(lua_State * l)
 	}
 	float ambientAirTemp = restrict_flt(luaL_optnumber(l, 1, R_TEMP + 273.15f), MIN_TEMP, MAX_TEMP);
 	luaSim->air->SetAmbientAirTempPref(ambientAirTemp);
+	return 0;
+}
+
+int simulation_edgePressure(lua_State * l)
+{
+	int acount = lua_gettop(l);
+	if (acount == 0)
+	{
+		lua_pushnumber(l, luaSim->air->GetEdgePressure());
+		return 1;
+	}
+	float edgePressure = restrict_flt(luaL_optnumber(l, 1, 0), MIN_PRESSURE, MAX_PRESSURE);
+	luaSim->air->SetEdgePressurePref(edgePressure);
+	return 0;
+}
+
+int simulation_edgeVelocity(lua_State * l)
+{
+	int acount = lua_gettop(l);
+	if (acount == 0)
+	{
+		lua_pushnumber(l, luaSim->air->GetEdgeVelocityX());
+		lua_pushnumber(l, luaSim->air->GetEdgeVelocityY());
+		return 2;
+	}
+	float edgeVelocityX = restrict_flt(luaL_optnumber(l, 1, 0), -MAX_VELOCITY, MAX_VELOCITY);
+	float edgeVelocityY = restrict_flt(luaL_optnumber(l, 2, 0), -MAX_VELOCITY, MAX_VELOCITY);
+	luaSim->air->SetEdgeVelocityPref(edgeVelocityX, edgeVelocityY);
 	return 0;
 }
 

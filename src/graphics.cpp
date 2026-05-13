@@ -1471,6 +1471,24 @@ pixel HeatToColor(float temp)
 	return COLARGB(255, (int)((unsigned char)color_data[caddress] * 0.7f), (int)((unsigned char)color_data[caddress + 1] * 0.7f), (int)((unsigned char)color_data[caddress + 2] * 0.7f));
 }
 
+pixel PressureToColor(float pres)
+{
+	if (pres > 0.0f)
+		return COLARGB(255, clamp_flt(pres, 0.0f, 8.0f), 0, 0); //positive pressure is red!
+	else
+		return COLARGB(255, 0, 0, clamp_flt(-pres, 0.0f, 8.0f)); //negative pressure is blue!
+}
+
+pixel VelocityToColor(float vx, float vy, float pres)
+{
+	return COLARGB(
+		255,
+		clamp_flt(fabsf(vx), 0.0f, 8.0f), // vx adds red
+		clamp_flt(pres, 0.0f, 8.0f), // pressure adds green
+		clamp_flt(fabsf(vy), 0.0f, 8.0f) // vy adds blue
+	);
+}
+
 void draw_air(pixel *vid, Simulation * sim)
 {
 	pixel c;
@@ -1480,16 +1498,13 @@ void draw_air(pixel *vid, Simulation * sim)
 		{
 			if (display_mode & DISPLAY_AIRP)
 			{
-				if (sim->air->pv[y][x] > 0.0f)
-					c  = PIXRGB(clamp_flt(sim->air->pv[y][x], 0.0f, 8.0f), 0, 0);//positive pressure is red!
-				else
-					c  = PIXRGB(0, 0, clamp_flt(-sim->air->pv[y][x], 0.0f, 8.0f));//negative pressure is blue!
+				c = PressureToColor(sim->air->pv[y][x]);
+				c = PIXPACK(c);
 			}
 			else if (display_mode & DISPLAY_AIRV)
 			{
-				c  = PIXRGB(clamp_flt(fabsf(sim->air->vx[y][x]), 0.0f, 8.0f),//vx adds red
-				clamp_flt(sim->air->pv[y][x], 0.0f, 8.0f),//pressure adds green
-				clamp_flt(fabsf(sim->air->vy[y][x]), 0.0f, 8.0f));//vy adds blue
+				c = VelocityToColor(sim->air->vx[y][x], sim->air->vy[y][x], sim->air->pv[y][x]);
+				c = PIXPACK(c);
 			}
 			else if (display_mode & DISPLAY_AIRH)
 			{

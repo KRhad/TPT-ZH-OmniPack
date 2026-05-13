@@ -23,6 +23,7 @@
 #include "interface/Engine.h"
 #include "interface/Label.h"
 #include "interface/ScrollWindow.h"
+#include "interface/Style.h"
 #include "interface/Textbox.h"
 #include "simulation/Simulation.h"
 #include "gui/dialogs/ConfirmPrompt.h"
@@ -122,12 +123,37 @@ OptionsUI::OptionsUI(Simulation *sim):
 	airTempDisplay->SetEnabled(false);
 	scrollArea->AddComponent(airTempDisplay);
 
+	prev = edgePressureTextbox = new Textbox(prev->Below(Point(0, 4)), Point(0, Textbox::AUTOSIZE), "");
+	edgePressureTextbox->SetCallback([&]() { this->UpdateEdgePressure(edgePressureTextbox->GetText(), false); });
+	edgePressureTextbox->SetDefocusCallback([&]() { this->UpdateEdgePressure(edgePressureTextbox->GetText(), true); });
+	scrollArea->AddComponent(edgePressureTextbox);
+
+	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Ambient Air Pressure:");
+	scrollArea->AddComponent(descLabel);
+
+	edgePressureDisplay = new Button(Point(0, edgePressureTextbox->GetPosition().Y), Point(17, 17), "");
+	edgePressureDisplay->SetEnabled(false);
+	scrollArea->AddComponent(edgePressureDisplay);
+
+	prev = edgeVelocityButton = new Button(prev->Below(Point(0, 4)), Point(Button::AUTOSIZE, 17), "Change");
+	edgeVelocityButton->SetCallback([&](int mb) { this->EdgeVelocityClicked(); });
+	edgeVelocityButton->SetColor(COLMULT(ui::Style::Border, ui::Style::DeselectedMultiplier));
+	edgeVelocityButton->SetTextColor(ui::Style::Border);
+	scrollArea->AddComponent(edgeVelocityButton);
+
+	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Ambient Air Velocity:");
+	scrollArea->AddComponent(descLabel);
+
+	edgeVelocityDisplay = new Button(Point(0, edgeVelocityButton->GetPosition().Y), Point(17, 17), "");
+	edgeVelocityDisplay->SetEnabled(false);
+	scrollArea->AddComponent(edgeVelocityDisplay);
+
 	prev = vorticityCoeffTextbox = new Textbox(prev->Below(Point(0, 4)), Point(0, Textbox::AUTOSIZE), "");
 	vorticityCoeffTextbox->SetCallback([&]() { this->UpdateVorticityCoeff(vorticityCoeffTextbox->GetText(), false); });
 	vorticityCoeffTextbox->SetDefocusCallback([&]() { this->UpdateVorticityCoeff(vorticityCoeffTextbox->GetText(), true); });
 	scrollArea->AddComponent(vorticityCoeffTextbox);
 
-	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Vorticity confinement:");
+	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Vorticity Confinement:");
 	scrollArea->AddComponent(descLabel);
 
 	prev = convectionModeDropdown = new Dropdown(prev->Below(Point(0, 4)), Point(Dropdown::AUTOSIZE, Dropdown::AUTOSIZE), {"None", "Legacy", "Boussinesq" });
@@ -179,6 +205,12 @@ OptionsUI::OptionsUI(Simulation *sim):
 	airTempTextbox->SetPosition(Point(xPos, airTempTextbox->GetPosition().Y));
 	airTempTextbox->SetSize(Point(maxWidth - 21, airTempTextbox->GetSize().Y));
 	airTempDisplay->SetPosition(Point(xPos + maxWidth - airTempDisplay->GetSize().X, airTempDisplay->GetPosition().Y));
+	edgePressureTextbox->SetPosition(Point(xPos, edgePressureTextbox->GetPosition().Y));
+	edgePressureTextbox->SetSize(Point(maxWidth - 21, edgePressureTextbox->GetSize().Y));
+	edgePressureDisplay->SetPosition(Point(xPos + maxWidth - edgePressureDisplay->GetSize().X, edgePressureDisplay->GetPosition().Y));
+	edgeVelocityButton->SetPosition(Point(xPos, edgeVelocityButton->GetPosition().Y));
+	edgeVelocityButton->SetSize(Point(maxWidth - 21, edgeVelocityButton->GetSize().Y));
+	edgeVelocityDisplay->SetPosition(Point(xPos + maxWidth - edgeVelocityDisplay->GetSize().X, edgeVelocityDisplay->GetPosition().Y));
 	vorticityCoeffTextbox->SetPosition(Point(xPos, vorticityCoeffTextbox->GetPosition().Y));
 	vorticityCoeffTextbox->SetSize(Point(maxWidth, vorticityCoeffTextbox->GetSize().Y));
 	convectionModeDropdown->SetPosition(Point(xPos, convectionModeDropdown->GetPosition().Y));
@@ -388,7 +420,10 @@ void OptionsUI::InitializeOptions()
 	airSimDropdown->SetSelectedOption(sim->air->airMode);
 	UpdateAmbientAirTempPreview(sim->air->GetAmbientAirTemp(), true);
 	airTempTextbox->SetText(Format::TemperatureToString(sim->air->GetAmbientAirTemp(), sim->temperatureScale));
-	VorticityCoeffToTextBox(sim->air->GetVorticityCoeff());
+	EdgePressureToTextbox(sim->air->GetEdgePressure());
+	UpdateEdgePressurePreview(sim->air->GetEdgePressure(), true);
+	UpdateEdgeVelocityPreview(sim->air->GetEdgeVelocityX(), sim->air->GetEdgeVelocityY(), true);
+	VorticityCoeffToTextbox(sim->air->GetVorticityCoeff());
 	convectionModeDropdown->SetSelectedOption(sim->air->GetConvectionMode());
 	gravityDropdown->SetSelectedOption(sim->gravityMode);
 	edgeModeDropdown->SetSelectedOption(sim->GetEdgeMode());
@@ -541,7 +576,7 @@ void OptionsUI::UpdateVorticityCoeff(std::string temp, bool isDefocus)
 		//	return;
 
 		// Update textbox with the new value
-		VorticityCoeffToTextBox(vorticity);
+		VorticityCoeffToTextbox(vorticity);
 	}
 	// Out of range vorticities are invalid, preview should go away
 	else if (vorticity < 0.0f || vorticity > 1.0f)
@@ -552,7 +587,7 @@ void OptionsUI::UpdateVorticityCoeff(std::string temp, bool isDefocus)
 		sim->air->SetVorticityCoeffPref(vorticity);
 }
 
-void OptionsUI::VorticityCoeffToTextBox(float vorticity)
+void OptionsUI::VorticityCoeffToTextbox(float vorticity)
 {
 	std::stringstream ss;
 	ss << std::fixed;
@@ -576,6 +611,101 @@ void OptionsUI::UpdateAmbientAirTempPreview(float airTemp, bool isValid)
 	}
 }
 
+void OptionsUI::UpdateEdgePressure(std::string pres, bool isDefocus)
+{
+	float edgePres;
+	bool isValid;
+	try
+	{
+		edgePres = Format::StringToNumberThrowing<float>(pres);
+		isValid = true;
+	}
+	catch (const std::exception & e)
+	{
+		isValid = false;
+	}
+
+	// While defocusing, correct out of range temperatures and empty textboxes
+	if (isDefocus)
+	{
+		if (pres.empty())
+		{
+			isValid = true;
+			edgePres = 0.0f;
+		}
+		else if (!isValid)
+		{
+			isValid = true;
+			edgePres = sim->air->GetEdgePressurePref();
+		}
+		else if (edgePres < MIN_PRESSURE)
+			edgePres = MIN_PRESSURE;
+		else if (edgePres > MAX_PRESSURE)
+			edgePres = MAX_PRESSURE;
+		//else
+		//	return;
+
+		// Update textbox with the new value
+		EdgePressureToTextbox(edgePres);
+	}
+	// Out of range vorticities are invalid, preview should go away
+	else if (edgePres < MIN_PRESSURE || edgePres > MAX_PRESSURE)
+		isValid = false;
+
+	// If valid, set temp
+	if (isValid)
+		sim->air->SetEdgePressurePref(edgePres);
+
+	UpdateEdgePressurePreview(edgePres, isValid);
+}
+
+void OptionsUI::EdgePressureToTextbox(float edgePres)
+{
+	std::stringstream ss;
+	ss << std::fixed;
+	ss.precision(2);
+	ss << edgePres;
+	edgePressureTextbox->SetText(ss.str());
+}
+
+void OptionsUI::UpdateEdgePressurePreview(float edgePres, bool isValid)
+{
+	if (isValid)
+	{
+		pixel color = PressureToColor(edgePres);
+		edgePressureDisplay->SetBackgroundColor(color);
+		edgePressureDisplay->SetText("");
+	}
+	else
+	{
+		edgePressureDisplay->SetBackgroundColor(0);
+		edgePressureDisplay->SetText("?");
+	}
+}
+
+void OptionsUI::EdgeVelocityClicked()
+{
+	Engine::Ref().ShowWindow(new GravityWindow(0.05f, 40, sim->air->GetEdgeVelocityX(), sim->air->GetEdgeVelocityY(), "Ambient air velocity", [&](float x, float y) {
+		sim->air->SetEdgeVelocityPref(x, y);
+		UpdateEdgeVelocityPreview(x, y, true);
+	}));
+}
+
+void OptionsUI::UpdateEdgeVelocityPreview(float edgeVelocityX, float edgeVelocityY, bool isValid)
+{
+	if (isValid)
+	{
+		pixel color = VelocityToColor(edgeVelocityX, edgeVelocityY, 0.0f);
+		edgeVelocityDisplay->SetBackgroundColor(color);
+		edgeVelocityDisplay->SetText("");
+	}
+	else
+	{
+		edgeVelocityDisplay->SetBackgroundColor(0);
+		edgeVelocityDisplay->SetText("?");
+	}
+}
+
 void OptionsUI::ConvectionModeSelected(unsigned int option)
 {
 	sim->air->SetConvectionMode(option);
@@ -586,7 +716,10 @@ void OptionsUI::GravitySelected(unsigned int option)
 	sim->gravityMode = option;
 	if (option == GRAV_CUSTOM)
 	{
-		Engine::Ref().ShowWindow(new GravityWindow(sim, 0.05f, 40));
+		Engine::Ref().ShowWindow(new GravityWindow(0.05f, 40, sim->customGravityX, sim->customGravityY, "Custom Gravity", [this](float x, float y) {
+			sim->customGravityX = x;
+			sim->customGravityY = y;
+		}));
 	}
 }
 
@@ -739,6 +872,24 @@ void OptionsUI::OnDraw(gfx::VideoBuffer *buf)
 		resizableLabel->SetColor(COLRGB(150, 150, 150));
 	}
 #endif
+}
+
+void OptionsUI::OnDrawAfterSubwindows(gfx::VideoBuffer *buf)
+{
+	// Draw small arrow overtop velocity display. Only displays direction, not magnitute (color handles the magnitude)
+	if ((std::fabs(sim->air->GetEdgeVelocityX()) > 0.0001f || std::fabs(sim->air->GetEdgeVelocityY()) > 0.0001f) &&
+		edgeVelocityDisplay->GetPosition().Y > 0)
+	{
+		// Center of button, need to account for scrollArea's position too ...
+		Point velButtCenter = edgeVelocityDisplay->GetPosition() + edgeVelocityDisplay->GetSize() / 2 + scrollArea->GetPosition();
+
+		float angle = std::atan2(sim->air->GetEdgeVelocityY(), sim->air->GetEdgeVelocityX());
+		float x = std::cos(angle);
+		float y = std::sin(angle);
+		float magnitude = edgeVelocityDisplay->GetSize().X * 0.4;
+		buf->DrawLine(velButtCenter.X, velButtCenter.Y, velButtCenter.X + x * magnitude, velButtCenter.Y + y * magnitude, COLRGB(255, 255, 255));
+		buf->FillCircle(velButtCenter.X + x * magnitude, velButtCenter.Y + y * magnitude, 2, 2, 150, 150, 150, 255);
+	}
 }
 
 void OptionsUI::OnSubwindowDraw(gfx::VideoBuffer *buf)

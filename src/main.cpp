@@ -220,8 +220,7 @@ void clear_sim()
 
 void NewSim()
 {
-	globalSim->air->ClearTemporaryAirTemp();
-	globalSim->air->ClearTemporaryVorticityCoeff();
+	globalSim->air->ClearTemporarySettings();
 	clear_sim();
 	clear_save_info();
 	legacy_enable = 0;

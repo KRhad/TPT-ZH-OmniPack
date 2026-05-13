@@ -86,6 +86,11 @@ Save::Save(const Save & save):
 	airMode(save.airMode),
 	ambientAirTemp(save.ambientAirTemp),
 	ambientAirTempPresent(save.ambientAirTempPresent),
+	edgePressure(save.edgePressure),
+	edgePressurePresent(save.edgePressurePresent),
+	edgeVelocityX(save.edgeVelocityX),
+	edgeVelocityY(save.edgeVelocityY),
+	edgeVelocityPresent(save.edgeVelocityPresent),
 	vorticityCoeff(save.vorticityCoeff),
 	convectionMode(save.convectionMode),
 	convectionModePresent(save.convectionModePresent),
@@ -226,6 +231,8 @@ void Save::InitVars()
 	customGravityY = 0.0f;
 	airMode = AIR_ON;
 	ambientAirTemp = R_TEMP + 273.15;
+	edgePressure = 0.0f;
+	edgeVelocityX = edgeVelocityY = 0.0f;
 	vorticityCoeff = 0.0f;
 	convectionMode = AIRC_LEGACY;
 	edgeMode = EDGE_VOID;
@@ -601,6 +608,9 @@ void Save::ParseSaveOPS()
 		CheckBsonFieldFloat(iter, "customGravityY", &customGravityY);
 		CheckBsonFieldInt(iter, "airMode", &airMode);
 		ambientAirTempPresent = CheckBsonFieldFloat(iter, "ambientAirTemp", &ambientAirTemp) || ambientAirTempPresent;
+		edgePressurePresent = CheckBsonFieldFloat(iter, "edgePressure", &edgePressure) || edgePressurePresent;
+		edgeVelocityPresent = CheckBsonFieldFloat(iter, "edgeVelocityX", &edgeVelocityX) || edgeVelocityPresent;
+		edgeVelocityPresent = CheckBsonFieldFloat(iter, "edgeVelocityY", &edgeVelocityY) || edgeVelocityPresent;
 		CheckBsonFieldFloat(iter, "vorticityCoeff", &vorticityCoeff);
 		convectionModePresent = CheckBsonFieldInt(iter, "convectionMode", &convectionMode) || convectionModePresent;
 		CheckBsonFieldInt(iter, "edgeMode", &edgeMode);
@@ -2644,6 +2654,24 @@ void Save::BuildSave()
 	{
 		bson_append_double(&b, "ambientAirTemp", ambientAirTemp);
 		RESTRICTVERSION(96, 0);
+	}
+	if (std::fabs(edgePressure) > 0.0001f)
+	{
+		bson_append_double(&b, "edgePressure", edgePressure);
+		// TODO: uncomment
+		//RESTRICTVERSION(100, 0);
+	}
+	if (std::fabs(edgeVelocityX) > 0.0001f)
+	{
+		bson_append_double(&b, "edgeVelocityX", edgeVelocityX);
+		// TODO: uncomment
+		//RESTRICTVERSION(100, 0);
+	}
+	if (std::fabs(edgeVelocityY) > 0.0001f)
+	{
+		bson_append_double(&b, "edgeVelocityY", edgeVelocityY);
+		// TODO: uncomment
+		//RESTRICTVERSION(100, 0);
 	}
 	if (vorticityCoeff > 0.0001f && vorticityCoeff < 1.0f)
 	{

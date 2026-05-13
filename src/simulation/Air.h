@@ -32,6 +32,12 @@ class Air
 
 	float ambientAirTemp;
 	float ambientAirTempPref;
+	float edgePressure = 0.0f;
+	float edgeVelocityX = 0.0f;
+	float edgeVelocityY = 0.0f;
+	float edgePressurePref = 0.0f;
+	float edgeVelocityXPref = 0.0f;
+	float edgeVelocityYPref = 0.0f;
 
 public:
 	int airMode = AIR_ON;
@@ -58,7 +64,9 @@ public:
 	void MakeKernel();
 	
 	void Clear();
+	void ClearPresVel();
 	void ClearAirH();
+	void ClearTemporarySettings();
 
 	void UpdateAirHeat(Simulation * sim);
 	void UpdateAir();
@@ -67,14 +75,24 @@ public:
 
 	void SetAmbientAirTemp(float ambientAirTemp);
 	void SetAmbientAirTempPref(float ambientAirTemp);
-	void ClearTemporaryAirTemp();
 	float GetAmbientAirTemp();
 	float GetAmbientAirTempPref();
+
+	void SetEdgePressure(float edgePressure);
+	void SetEdgePressurePref(float edgePressure);
+	float GetEdgePressure();
+	float GetEdgePressurePref();
+
+	void SetEdgeVelocity(float edgeVelocityX, float edgeVelocityY);
+	void SetEdgeVelocityPref(float edgeVelocityX, float edgeVelocityY);
+	float GetEdgeVelocityX();
+	float GetEdgeVelocityPrefX();
+	float GetEdgeVelocityY();
+	float GetEdgeVelocityPrefY();
 
 	static float vorticity(const Air * air, int y, int x);
 	float GetVorticityCoeff();
 	float GetVorticityCoeffPref();
-	void ClearTemporaryVorticityCoeff();
 	void SetVorticityCoeff(float vorticityCoeff);
 	void SetVorticityCoeffPref(float vorticityCoeff);
 

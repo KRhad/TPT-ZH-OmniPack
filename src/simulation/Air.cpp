@@ -52,11 +52,9 @@ void Air::MakeKernel()
 
 void Air::Clear()
 {
-	std::fill(&pv[0][0], &pv[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
-	std::fill(&vy[0][0], &vy[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
-	std::fill(&vx[0][0], &vx[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
-	std::fill(&fvy[0][0], &fvy[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+	ClearPresVel();
 	std::fill(&fvx[0][0], &fvx[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
+	std::fill(&fvy[0][0], &fvy[0][0]+((XRES/CELL)*(YRES/CELL)), 0.0f);
 	std::fill(&blockair[0][0], &blockair[0][0]+((XRES/CELL)*(YRES/CELL)), 0);
 	std::fill(&blockairh[0][0], &blockairh[0][0]+((XRES/CELL)*(YRES/CELL)), 0);
 
@@ -72,9 +70,26 @@ void Air::Clear()
 	saveConvectionMode = -1;
 }
 
+void Air::ClearPresVel()
+{
+	std::fill(&pv[0][0], &pv[0][0]+((XRES/CELL)*(YRES/CELL)), edgePressure);
+	std::fill(&vx[0][0], &vx[0][0]+((XRES/CELL)*(YRES/CELL)), edgeVelocityX);
+	std::fill(&vy[0][0], &vy[0][0]+((XRES/CELL)*(YRES/CELL)), edgeVelocityY);
+}
+
 void Air::ClearAirH()
 {
 	std::fill(&hv[0][0], &hv[0][0]+((XRES/CELL)*(YRES/CELL)), GetAmbientAirTemp());
+}
+
+void Air::ClearTemporarySettings()
+{
+	// Reset settings from loaded saves back to their user-set defaults
+	this->ambientAirTemp = this->ambientAirTempPref;
+	this->edgePressure = this->edgePressurePref;
+	this->edgeVelocityX = this->edgeVelocityXPref;
+	this->edgeVelocityY = this->edgeVelocityYPref;
+	this->vorticityCoeff = this->vorticityCoeffPref;
 }
 
 void Air::UpdateAirHeat(Simulation *sim)
@@ -263,6 +278,11 @@ void Air::UpdateAirHeat(Simulation *sim)
 	memcpy(hv, ohv, sizeof(hv));
 }
 
+static float Mix(float a, float b, float f)
+{
+	return a + (b - a) * f;
+}
+
 void Air::UpdateAir()
 {
 	// "No Update"
@@ -272,35 +292,35 @@ void Air::UpdateAir()
 	// Reduces pressure/velocity on the edges every frame
 	for (int i = 0; i < YRES/CELL; i++)
 	{
-		pv[i][0] = pv[i][0]*0.8f;
-		pv[i][1] = pv[i][1]*0.8f;
-		pv[i][XRES/CELL-2] = pv[i][XRES/CELL-2]*0.8f;
-		pv[i][XRES/CELL-1] = pv[i][XRES/CELL-1]*0.8f;
-		vx[i][0] = vx[i][0]*0.9f;
-		vx[i][1] = vx[i][1]*0.9f;
-		vx[i][XRES/CELL-2] = vx[i][XRES/CELL-2]*0.9f;
-		vx[i][XRES/CELL-1] = vx[i][XRES/CELL-1]*0.9f;
-		vy[i][0] = vy[i][0]*0.9f;
-		vy[i][1] = vy[i][1]*0.9f;
-		vy[i][XRES/CELL-2] = vy[i][XRES/CELL-2]*0.9f;
-		vy[i][XRES/CELL-1] = vy[i][XRES/CELL-1]*0.9f;
+		pv[i][       0] = Mix(edgePressure , pv[i][       0], 0.8f);
+		pv[i][       1] = Mix(edgePressure , pv[i][       1], 0.8f);
+		pv[i][XCELLS-2] = Mix(edgePressure , pv[i][XCELLS-2], 0.8f);
+		pv[i][XCELLS-1] = Mix(edgePressure , pv[i][XCELLS-1], 0.8f);
+		vx[i][       0] = Mix(edgeVelocityX, vx[i][       0], 0.9f);
+		vx[i][       1] = Mix(edgeVelocityX, vx[i][       1], 0.9f);
+		vx[i][XCELLS-2] = Mix(edgeVelocityX, vx[i][XCELLS-2], 0.9f);
+		vx[i][XCELLS-1] = Mix(edgeVelocityX, vx[i][XCELLS-1], 0.9f);
+		vy[i][       0] = Mix(edgeVelocityY, vy[i][       0], 0.9f);
+		vy[i][       1] = Mix(edgeVelocityY, vy[i][       1], 0.9f);
+		vy[i][XCELLS-2] = Mix(edgeVelocityY, vy[i][XCELLS-2], 0.9f);
+		vy[i][XCELLS-1] = Mix(edgeVelocityY, vy[i][XCELLS-1], 0.9f);
 	}
 
 	// Reduces pressure/velocity on the edges every frame
 	for (int i = 0; i < XRES/CELL; i++)
 	{
-		pv[0][i] = pv[0][i]*0.8f;
-		pv[1][i] = pv[1][i]*0.8f;
-		pv[YRES/CELL-2][i] = pv[YRES/CELL-2][i]*0.8f;
-		pv[YRES/CELL-1][i] = pv[YRES/CELL-1][i]*0.8f;
-		vx[0][i] = vx[0][i]*0.9f;
-		vx[1][i] = vx[1][i]*0.9f;
-		vx[YRES/CELL-2][i] = vx[YRES/CELL-2][i]*0.9f;
-		vx[YRES/CELL-1][i] = vx[YRES/CELL-1][i]*0.9f;
-		vy[0][i] = vy[0][i]*0.9f;
-		vy[1][i] = vy[1][i]*0.9f;
-		vy[YRES/CELL-2][i] = vy[YRES/CELL-2][i]*0.9f;
-		vy[YRES/CELL-1][i] = vy[YRES/CELL-1][i]*0.9f;
+		pv[       0][i] = Mix(edgePressure , pv[       0][i], 0.8f);
+		pv[       1][i] = Mix(edgePressure , pv[       1][i], 0.8f);
+		pv[YCELLS-2][i] = Mix(edgePressure , pv[YCELLS-2][i], 0.8f);
+		pv[YCELLS-1][i] = Mix(edgePressure , pv[YCELLS-1][i], 0.8f);
+		vx[       0][i] = Mix(edgeVelocityX, vx[       0][i], 0.9f);
+		vx[       1][i] = Mix(edgeVelocityX, vx[       1][i], 0.9f);
+		vx[YCELLS-2][i] = Mix(edgeVelocityX, vx[YCELLS-2][i], 0.9f);
+		vx[YCELLS-1][i] = Mix(edgeVelocityX, vx[YCELLS-1][i], 0.9f);
+		vy[       0][i] = Mix(edgeVelocityY, vy[       0][i], 0.9f);
+		vy[       1][i] = Mix(edgeVelocityY, vy[       1][i], 0.9f);
+		vy[YCELLS-2][i] = Mix(edgeVelocityY, vy[YCELLS-2][i], 0.9f);
+		vy[YCELLS-1][i] = Mix(edgeVelocityY, vy[YCELLS-1][i], 0.9f);
 	}
 
 	// Clear some velocities near walls
@@ -325,7 +345,7 @@ void Air::UpdateAir()
 		for (int x = 1; x < XRES / CELL - 1; x++)
 		{
 			float dp = (vx[y][x-1] - vx[y][x+1]) + (vy[y-1][x] - vy[y+1][x]);
-			pv[y][x] *= AIR_PLOSS;
+			pv[y][x] = Mix(edgePressure, pv[y][x], AIR_PLOSS);
 			pv[y][x] += dp * AIR_TSTEPP * 0.5f;
 		}
 
@@ -335,8 +355,8 @@ void Air::UpdateAir()
 		{
 			float dx = pv[y][x-1] - pv[y][x+1];
 			float dy = pv[y-1][x] - pv[y+1][x];
-			vx[y][x] *= AIR_VLOSS;
-			vy[y][x] *= AIR_VLOSS;
+			vx[y][x] = Mix(edgeVelocityX, vx[y][x], AIR_VLOSS);
+			vy[y][x] = Mix(edgeVelocityY, vy[y][x], AIR_VLOSS);
 			vx[y][x] += dx * AIR_TSTEPV * 0.5f;
 			vy[y][x] += dy * AIR_TSTEPV * 0.5f;
 			if (blockair[y][x-1] || blockair[y][x] || blockair[y][x+1])
@@ -548,12 +568,6 @@ void Air::SetAmbientAirTempPref(float ambientAirTemp)
 	this->ambientAirTempPref = ambientAirTemp;
 }
 
-void Air::ClearTemporaryAirTemp()
-{
-	// Not called on clear_sim, to ensure correct ambient air temp is set when loading saves
-	this->ambientAirTemp = this->ambientAirTempPref;
-}
-
 float Air::GetAmbientAirTemp()
 {
 	return ambientAirTemp;
@@ -562,6 +576,62 @@ float Air::GetAmbientAirTemp()
 float Air::GetAmbientAirTempPref()
 {
 	return ambientAirTempPref;
+}
+
+void Air::SetEdgePressure(float edgePressure)
+{
+	this->edgePressure = edgePressure;
+}
+
+void Air::SetEdgePressurePref(float edgePressure)
+{
+	this->edgePressure = edgePressure;
+	this->edgePressurePref = edgePressure;
+}
+
+float Air::GetEdgePressure()
+{
+	return edgePressure;
+}
+
+float Air::GetEdgePressurePref()
+{
+	return edgePressurePref;
+}
+
+void Air::SetEdgeVelocity(float edgeVelocityX, float edgeVelocityY)
+{
+	this->edgeVelocityX = edgeVelocityX;
+	this->edgeVelocityY = edgeVelocityY;
+}
+
+void Air::SetEdgeVelocityPref(float edgeVelocityX, float edgeVelocityY)
+{
+
+	this->edgeVelocityX = edgeVelocityX;
+	this->edgeVelocityY = edgeVelocityY;
+	this->edgeVelocityXPref = edgeVelocityX;
+	this->edgeVelocityYPref = edgeVelocityY;
+}
+
+float Air::GetEdgeVelocityX()
+{
+	return edgeVelocityX;
+}
+
+float Air::GetEdgeVelocityPrefX()
+{
+	return edgeVelocityXPref;
+}
+
+float Air::GetEdgeVelocityY()
+{
+	return edgeVelocityY;
+}
+
+float Air::GetEdgeVelocityPrefY()
+{
+	return edgeVelocityYPref;
 }
 
 float Air::vorticity(const Air * air, int y, int x)
@@ -585,12 +655,6 @@ float Air::GetVorticityCoeff()
 float Air::GetVorticityCoeffPref()
 {
 	return vorticityCoeffPref;
-}
-
-void Air::ClearTemporaryVorticityCoeff()
-{
-	// Not called on clear_sim, to ensure correct ambient air temp is set when loading saves
-	this->vorticityCoeff = this->vorticityCoeffPref;
 }
 
 void Air::SetVorticityCoeff(float vorticityCoeff)

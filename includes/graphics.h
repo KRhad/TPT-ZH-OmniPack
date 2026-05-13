@@ -129,6 +129,10 @@ void draw_icon(pixel *vid_buf, int x, int y, char ch, int flag);
 
 pixel HeatToColor(float temp);
 
+pixel PressureToColor(float pres);
+
+pixel VelocityToColor(float vx, float vy, float pres);
+
 void draw_air(pixel *vid, Simulation * sim);
 
 void draw_grav_zones(pixel *vid);

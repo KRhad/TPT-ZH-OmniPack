@@ -157,6 +157,10 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 	{
 		if (save->ambientAirTempPresent)
 			air->SetAmbientAirTemp(save->ambientAirTemp);
+		//if (save->edgePressurePresent)
+		air->SetEdgePressure(save->edgePressure);
+		//if (save->edgeVelocityPresent)
+		air->SetEdgeVelocity(save->edgeVelocityX, save->edgeVelocityY);
 		clear_sim();
 		erase_bframe();
 		instantActivation = false;
@@ -901,6 +905,9 @@ Save * Simulation::CreateSave(int fullX, int fullY, int fullX2, int fullY2, bool
 	newSave->customGravityY = customGravityY;
 	newSave->airMode = air->airMode;
 	newSave->ambientAirTemp = air->GetAmbientAirTemp();
+	newSave->edgePressure = air->GetEdgePressure();
+	newSave->edgeVelocityX = air->GetEdgeVelocityX();
+	newSave->edgeVelocityY = air->GetEdgeVelocityY();
 	newSave->vorticityCoeff = air->GetVorticityCoeff();
 	newSave->convectionMode = air->GetConvectionMode();
 	newSave->edgeMode = edgeMode;

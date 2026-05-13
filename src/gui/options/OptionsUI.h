@@ -19,8 +19,8 @@ class OptionsUI : public ui::Window
 
 	Checkbox *heatSimCheckbox, *ambientCheckbox, *newtonianCheckbox, *waterEqalizationCheckbox, *decorationCheckbox;
 	Dropdown *airSimDropdown, *convectionModeDropdown, *gravityDropdown, *edgeModeDropdown, *decoSpaceDropdown, *temperatureScaleDropdown;
-	Textbox *airTempTextbox, *vorticityCoeffTextbox;
-	Button *airTempDisplay;
+	Textbox *airTempTextbox, *edgePressureTextbox, *vorticityCoeffTextbox;
+	Button *airTempDisplay, *edgePressureDisplay, *edgeVelocityButton, *edgeVelocityDisplay;
 
 	Dropdown *scaleDropdown;
 	Label *resizableLabel, *filteringLabel, *forceIntegerScalingLabel;
@@ -70,11 +70,17 @@ class OptionsUI : public ui::Window
 
 	void UpdateAirTemp(std::string temp, bool isDefocus);
 	void UpdateAmbientAirTempPreview(float airTemp, bool isValid);
+	void UpdateEdgePressure(std::string edgePres, bool isDefocus);
+	void UpdateEdgePressurePreview(float edgePres, bool isValid);
+	void EdgeVelocityClicked();
+	void UpdateEdgeVelocityPreview(float edgeVelocityX, float edgeVelocityY, bool isValid);
 	void UpdateVorticityCoeff(std::string temp, bool isDefocus);
-	void VorticityCoeffToTextBox(float vorticity);
+	void VorticityCoeffToTextbox(float vorticity);
+	void EdgePressureToTextbox(float pressure);
 
 
 	void OnDraw(gfx::VideoBuffer *buf) override;
+	void OnDrawAfterSubwindows(gfx::VideoBuffer *buf) override;
 	void OnSubwindowDraw(gfx::VideoBuffer *buf);
 	void OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
 
