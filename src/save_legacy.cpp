@@ -130,8 +130,8 @@ int invalid_element(int save_as, int el)
 {
 	if (save_as > 0 && (el >= PT_NORMAL_NUM || el < 0 || globalSim->elements[el].Enabled == 0)) //Check for mod/disabled elements
 		return 1;
-	//if (save_as > 1 && (el == PT_LDTC))
-	//	return 1;
+	if (save_as > 1 && (el == PT_BASE || el == PT_SEED))
+		return 1;
 	return 0;
 }
 
@@ -144,48 +144,52 @@ int check_save(int save_as, int orig_x0, int orig_y0, int orig_w, int orig_h, in
 	w  = bw *CELL;
 	h  = bh *CELL;
 
+	auto &possiblyCarriesType = particle::PossiblyCarriesType();
+	auto &properties = particle::GetProperties();
+
 	for (i=0; i<NPART; i++)
 	{
 		if ((int)(parts[i].x+.5f) > x0 && (int)(parts[i].x+.5f) < x0+w && (int)(parts[i].y+.5f) > y0 && (int)(parts[i].y+.5f) < y0+h)
 		{
-			if (invalid_element(save_as,parts[i].type))
+			if (invalid_element(save_as, parts[i].type))
 			{
 				if (give_warning)
 				{
-					char errortext[256] = "", elname[40] = "";
+					std::stringstream errorText;
+					errorText << "Found ";
 					if (parts[i].type > 0 && parts[i].type < PT_NUM)
-						sprintf(elname, "%s", globalSim->elements[parts[i].type].Name.c_str());
+						errorText << globalSim->elements[parts[i].type].Name;
 					else
-						sprintf(elname, "invalid element # %i", parts[i].type);
-					sprintf(errortext,"Found %s at X:%i Y:%i, cannot save",elname,(int)(parts[i].x+.5),(int)(parts[i].y+.5));
-					error_ui(vid_buf,0,errortext);
+						errorText << "invalid element # " << parts[i].type;
+					errorText << " at X:" << (int)(parts[i].x+.5) << " Y:" << (int)(parts[i].y+.5) << ", cannot publish";
+					error_ui(vid_buf, 0, errorText.str());
 				}
 				return 1;
 			}
-			if ((parts[i].type == PT_CLNE || parts[i].type == PT_PCLN || parts[i].type == PT_BCLN || parts[i].type == PT_PBCN || parts[i].type == PT_STOR || parts[i].type == PT_CONV || parts[i].type == PT_STKM || parts[i].type == PT_STKM2 || parts[i].type == PT_FIGH || parts[i].type == PT_LAVA || parts[i].type == PT_SPRK || parts[i].type == PT_PSTN || parts[i].type == PT_CRAY || parts[i].type == PT_DTEC) && invalid_element(save_as,parts[i].ctype))
+			if (globalSim->elements[parts[i].type].CarriesTypeIn)
 			{
-				if (give_warning)
+				for (auto index : possiblyCarriesType)
 				{
-					char errortext[256] = "", elname[40] = "";
-					if (parts[i].ctype > 0 && parts[i].ctype < PT_NUM)
-						sprintf(elname, "%s", globalSim->elements[parts[i].ctype].Name.c_str());
-					else
-						sprintf(elname, "invalid element # %i", parts[i].ctype);
-					sprintf(errortext,"Found %s at X:%i Y:%i, cannot save",elname,(int)(parts[i].x+.5),(int)(parts[i].y+.5));
-					error_ui(vid_buf,0,errortext);
+					if (globalSim->elements[parts[i].type].CarriesTypeIn & (1U << index))
+					{
+						auto *prop = reinterpret_cast<const int *>(reinterpret_cast<const char *>(&parts[i]) + properties[index].Offset);
+						if (invalid_element(save_as, TYP(*prop)))
+						{
+							if (give_warning)
+							{
+								std::stringstream errorText;
+								errorText << "Found ";
+								if (*prop > 0 && *prop < PT_NUM)
+									errorText << globalSim->elements[*prop].Name;
+								else
+									errorText << "invalid element # " << *prop;
+								errorText << " at X:" << (int)(parts[i].x+.5) << " Y:" << (int)(parts[i].y+.5) << ", cannot publish";
+								error_ui(vid_buf, 0, errorText.str());
+							}
+							return 1;
+						}
+					}
 				}
-				return 1;
-			}
-			if ((parts[i].type == PT_PIPE || parts[i].type == PT_PPIP) && invalid_element(save_as,TYP(parts[i].ctype)))
-			{
-				if (give_warning)
-				{
-					char errortext[256] = "", elname[40] = "";
-					sprintf(elname, "%s", globalSim->elements[TYP(parts[i].ctype)].Name.c_str());
-					sprintf(errortext,"Found %s at X:%i Y:%i, cannot save",elname,(int)(parts[i].x+.5),(int)(parts[i].y+.5));
-					error_ui(vid_buf,0,errortext);
-				}
-				return 1;
 			}
 		}
 	}

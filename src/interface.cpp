@@ -2187,8 +2187,8 @@ int save_name_ui(pixel *vid_buf)
 #ifndef NOMOD
 		if (!can_publish)
 		{
-			drawtext(vid_buf, x0+235, y0+180, "\xE4", 255, 255, 0, 255);
-			drawtext(vid_buf, x0+251, y0+182, "Warning: uses mod elements", 192, 192, 192, 255);
+			drawtext(vid_buf, x0+247, y0+180, "\xE4", 255, 255, 0, 255);
+			drawtext(vid_buf, x0+263, y0+182, "Warning: uses mod elements, cannot publish", 192, 192, 192, 255);
 		}
 #endif
 
@@ -2222,6 +2222,11 @@ int save_name_ui(pixel *vid_buf)
 		ui_edit_process(mx, my, b, bq, &ed2);
 		ui_checkbox_process(mx, my, b, bq, &cbPublish);
 		ui_checkbox_process(mx, my, b, bq, &cbPaused);
+		if (!can_publish)
+		{
+			cbPublish.checked = false;
+			cbPublish.focus = false;
+		}
 
 		if ((b && !bq && mx>=x0 && mx<x0+242 && my>=y0+94+YRES/4 && my<y0+110+YRES/4) || sdl_key==SDLK_RETURN)
 		{
