@@ -37,9 +37,7 @@ int BASE_update(UPDATE_FUNC_ARGS)
 			//This way we preserve the total amount of concentrated BASE in the solution
 			if (RNG::Ref().chance(1, parts[i].life+1))
 			{
-				auto temp = parts[i].temp;
-				sim->part_create(i, x, y, PT_BOYL);
-				parts[i].temp = temp;
+				sim->part_create_preserve_energy(i, x, y, PT_BOYL);
 				return 1;
 			}
 			else
@@ -113,12 +111,12 @@ int BASE_update(UPDATE_FUNC_ARGS)
 					} // BASE + GOO = GEL
 					else if (parts[i].life > 1 && rt == PT_GOO)
 					{
-						sim->part_create(ID(r), x + rx, y + ry, PT_GEL);
+						sim->part_create_preserve_energy(ID(r), x + rx, y + ry, PT_GEL);
 						parts[i].life--;
 					} // BASE + BCOL = GUNP
 					else if (parts[i].life > 1 && rt == PT_BCOL)
 					{
-						sim->part_create(ID(r), x + rx, y + ry, PT_GUNP);
+						sim->part_create_preserve_energy(ID(r), x + rx, y + ry, PT_GUNP);
 						parts[i].life--;
 					} // BASE + Molden ROCK = MERC
 					else if (rt == PT_LAVA && parts[ID(r)].ctype == PT_ROCK && pres >= 10.0f && RNG::Ref().chance(1, 1000))

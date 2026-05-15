@@ -1098,6 +1098,23 @@ int Simulation::part_create(int p, int x, int y, int t, int v)
 	return i;
 }
 
+int Simulation::part_create_preserve_energy(int i, int x, int y, int t)
+{
+	float temp = parts[i].temp;
+	float vx = parts[i].vx;
+	float vy = parts[i].vy;
+
+	int np = part_create(i, x, y, t);
+	if (np >= 0)
+	{
+		parts[np].temp = temp;
+		parts[np].vx = vx;
+		parts[np].vy = vy;
+	}
+
+	return np;
+}
+
 // changes the type of particle number i, to t. This also changes pmap at the same time.
 bool Simulation::part_change_type(int i, int x, int y, int t, bool ignore_indestructible)
 {

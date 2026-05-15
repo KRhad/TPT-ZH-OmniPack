@@ -73,6 +73,7 @@ public:
 	void Clear();
 	void RecountElements();
 	int part_create(int p, int x, int y, int t, int v = -1);
+	int part_create_preserve_energy(int i, int x, int y, int t);
 	void part_kill(int i);
 	void part_delete(int x, int y);
 	bool part_change_type(int i, int x, int y, int t, bool ignore_indestructible=false);
