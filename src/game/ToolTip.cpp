@@ -27,7 +27,7 @@ void ToolTip::UpdateToolTip(std::string toolTip, Point location_, int alpha_)
 			alpha = 255;
 	}
 	//else, we want to directly set alpha
-	else if (ID != INTROTIP || alpha > 255)
+	else
 		alpha = alpha_;
 }
 
