@@ -39,10 +39,14 @@ OptionsUI::OptionsUI(Simulation *sim):
 	int checkboxHeight = 13;
 	bool useCheckIcon = true;
 	int okButtonHeight = 15;
+	int optionTextboxHeight = Textbox::AUTOSIZE;
+	int optionButtonHeight = Button::AUTOSIZE;
 #else
 	int checkboxHeight = 20;
 	bool useCheckIcon = false;
 	int okButtonHeight = 25;
+	int optionTextboxHeight = 24;
+	int optionButtonHeight = 24;
 #endif
 
 	Label *headerLabel = new Label(Point(5, 3), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Options");
@@ -111,7 +115,7 @@ OptionsUI::OptionsUI(Simulation *sim):
 	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Air Simulation Mode:");
 	scrollArea->AddComponent(descLabel);
 
-	prev = airTempTextbox = new Textbox(prev->Below(Point(0, 4)), Point(0, Textbox::AUTOSIZE), "");
+	prev = airTempTextbox = new Textbox(prev->Below(Point(0, 4)), Point(0, optionTextboxHeight), "");
 	airTempTextbox->SetCallback([&]() { this->UpdateAirTemp(airTempTextbox->GetText(), false); });
 	airTempTextbox->SetDefocusCallback([&]() { this->UpdateAirTemp(airTempTextbox->GetText(), true); });
 	scrollArea->AddComponent(airTempTextbox);
@@ -119,11 +123,11 @@ OptionsUI::OptionsUI(Simulation *sim):
 	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Ambient Air Temperature:");
 	scrollArea->AddComponent(descLabel);
 
-	airTempDisplay = new Button(Point(0, airTempTextbox->GetPosition().Y), Point(17, 17), "");
+	airTempDisplay = new Button(Point(0, airTempTextbox->GetPosition().Y), Point(airTempTextbox->GetSize().Y, airTempTextbox->GetSize().Y), "");
 	airTempDisplay->SetEnabled(false);
 	scrollArea->AddComponent(airTempDisplay);
 
-	prev = edgePressureTextbox = new Textbox(prev->Below(Point(0, 4)), Point(0, Textbox::AUTOSIZE), "");
+	prev = edgePressureTextbox = new Textbox(prev->Below(Point(0, 4)), Point(0, optionTextboxHeight), "");
 	edgePressureTextbox->SetCallback([&]() { this->UpdateEdgePressure(edgePressureTextbox->GetText(), false); });
 	edgePressureTextbox->SetDefocusCallback([&]() { this->UpdateEdgePressure(edgePressureTextbox->GetText(), true); });
 	scrollArea->AddComponent(edgePressureTextbox);
@@ -131,11 +135,11 @@ OptionsUI::OptionsUI(Simulation *sim):
 	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Ambient Air Pressure:");
 	scrollArea->AddComponent(descLabel);
 
-	edgePressureDisplay = new Button(Point(0, edgePressureTextbox->GetPosition().Y), Point(17, 17), "");
+	edgePressureDisplay = new Button(Point(0, edgePressureTextbox->GetPosition().Y), Point(edgePressureTextbox->GetSize().Y, edgePressureTextbox->GetSize().Y), "");
 	edgePressureDisplay->SetEnabled(false);
 	scrollArea->AddComponent(edgePressureDisplay);
 
-	prev = edgeVelocityButton = new Button(prev->Below(Point(0, 4)), Point(Button::AUTOSIZE, 17), "Change");
+	prev = edgeVelocityButton = new Button(prev->Below(Point(0, 4)), Point(Button::AUTOSIZE, optionButtonHeight), "Change");
 	edgeVelocityButton->SetCallback([&](int mb) { this->EdgeVelocityClicked(); });
 	edgeVelocityButton->SetColor(COLMULT(ui::Style::Border, ui::Style::DeselectedMultiplier));
 	edgeVelocityButton->SetTextColor(ui::Style::Border);
@@ -144,11 +148,11 @@ OptionsUI::OptionsUI(Simulation *sim):
 	descLabel = new Label(Point(17, prev->GetPosition().Y), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Ambient Air Velocity:");
 	scrollArea->AddComponent(descLabel);
 
-	edgeVelocityDisplay = new Button(Point(0, edgeVelocityButton->GetPosition().Y), Point(17, 17), "");
+	edgeVelocityDisplay = new Button(Point(0, edgeVelocityButton->GetPosition().Y), Point(edgeVelocityButton->GetSize().Y, edgeVelocityButton->GetSize().Y), "");
 	edgeVelocityDisplay->SetEnabled(false);
 	scrollArea->AddComponent(edgeVelocityDisplay);
 
-	prev = vorticityCoeffTextbox = new Textbox(prev->Below(Point(0, 4)), Point(0, Textbox::AUTOSIZE), "");
+	prev = vorticityCoeffTextbox = new Textbox(prev->Below(Point(0, 4)), Point(0, optionTextboxHeight), "");
 	vorticityCoeffTextbox->SetCallback([&]() { this->UpdateVorticityCoeff(vorticityCoeffTextbox->GetText(), false); });
 	vorticityCoeffTextbox->SetDefocusCallback([&]() { this->UpdateVorticityCoeff(vorticityCoeffTextbox->GetText(), true); });
 	scrollArea->AddComponent(vorticityCoeffTextbox);
@@ -203,13 +207,13 @@ OptionsUI::OptionsUI(Simulation *sim):
 	airSimDropdown->SetPosition(Point(xPos, airSimDropdown->GetPosition().Y));
 	airSimDropdown->SetSize(Point(maxWidth, airSimDropdown->GetSize().Y));
 	airTempTextbox->SetPosition(Point(xPos, airTempTextbox->GetPosition().Y));
-	airTempTextbox->SetSize(Point(maxWidth - 21, airTempTextbox->GetSize().Y));
+	airTempTextbox->SetSize(Point(maxWidth - 4 - airTempDisplay->GetSize().X, airTempTextbox->GetSize().Y));
 	airTempDisplay->SetPosition(Point(xPos + maxWidth - airTempDisplay->GetSize().X, airTempDisplay->GetPosition().Y));
 	edgePressureTextbox->SetPosition(Point(xPos, edgePressureTextbox->GetPosition().Y));
-	edgePressureTextbox->SetSize(Point(maxWidth - 21, edgePressureTextbox->GetSize().Y));
+	edgePressureTextbox->SetSize(Point(maxWidth - 4 - edgePressureDisplay->GetSize().X, edgePressureTextbox->GetSize().Y));
 	edgePressureDisplay->SetPosition(Point(xPos + maxWidth - edgePressureDisplay->GetSize().X, edgePressureDisplay->GetPosition().Y));
 	edgeVelocityButton->SetPosition(Point(xPos, edgeVelocityButton->GetPosition().Y));
-	edgeVelocityButton->SetSize(Point(maxWidth - 21, edgeVelocityButton->GetSize().Y));
+	edgeVelocityButton->SetSize(Point(maxWidth - 4 - edgeVelocityDisplay->GetSize().X, edgeVelocityButton->GetSize().Y));
 	edgeVelocityDisplay->SetPosition(Point(xPos + maxWidth - edgeVelocityDisplay->GetSize().X, edgeVelocityDisplay->GetPosition().Y));
 	vorticityCoeffTextbox->SetPosition(Point(xPos, vorticityCoeffTextbox->GetPosition().Y));
 	vorticityCoeffTextbox->SetSize(Point(maxWidth, vorticityCoeffTextbox->GetSize().Y));
