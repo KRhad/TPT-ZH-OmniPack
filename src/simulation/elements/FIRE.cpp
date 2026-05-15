@@ -171,6 +171,11 @@ int FIRE_update(UPDATE_FUNC_ARGS)
 				}
 			}
 		}
+		else if (parts[i].ctype == PT_GOLD && pres < -200.0f && parts[i].temp > sim->elements[PT_PTNM].HighTemperatureTransitionThreshold && RNG::Ref().chance(1, 20000))
+		{
+			parts[i].ctype = PT_PTNM;
+			sim->air->pv[y/CELL][x/CELL] += 2.0f;
+		}
 		else if ((parts[i].ctype == PT_STNE || !parts[i].ctype) && pres >= 30.0f && (parts[i].temp > sim->elements[PT_ROCK].HighTemperatureTransitionThreshold || pres < sim->elements[PT_ROCK].HighPressureTransitionThreshold)) // Form ROCK with pressure, if it will stay molten or not immediately break
 		{
 			parts[i].tmp2 = RNG::Ref().between(0, 10); // Provide tmp2 for color noise
@@ -279,6 +284,19 @@ int FIRE_update(UPDATE_FUNC_ARGS)
 						parts[i].tmp = 0;
 						parts[i].ctype = PT_NSCN;
 						parts[ID(r)].ctype = PT_PSCN;
+					}
+					else if (parts[i].ctype == PT_SLCN && rt == PT_LAVA && parts[ID(r)].ctype == PT_SALT)
+					{
+						if (parts[i].temp > sim->elements[PT_LITH].HighTemperatureTransitionThreshold && RNG::Ref().chance(1, 1000))
+						{
+							parts[i].ctype = PT_LITH;
+							parts[i].tmp = 0;
+							parts[i].tmp2 = 0;
+							parts[i].life = 0;
+
+							sim->part_kill(ID(r));
+							continue;
+						}
 					}
 					else if (rt == PT_HEAC && parts[i].ctype == PT_HEAC)
 					{
