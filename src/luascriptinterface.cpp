@@ -4366,23 +4366,6 @@ void ManageElementIdentifier(lua_State *l, int id, bool add)
 			lua_pushnil(l);
 		}
 		lua_settable(l, -3);
-		if (elements[id].Identifier.substr(0, 11) == "DEFAULT_PT_")
-		{
-			std::string realIdentifier = "DEFAULT_PT_" + luaSim->elements[id].Name;
-			if (id != 0 && id != PT_NBHL && id != PT_NWHL && elements[id].Identifier != realIdentifier)
-			{
-				tpt_lua_pushString(l, realIdentifier);
-				if (add)
-				{
-					lua_pushinteger(l, id);
-				}
-				else
-				{
-					lua_pushnil(l);
-				}
-				lua_settable(l, -3);
-			}
-		}
 		lua_pop(l, 1);
 	}
 }
