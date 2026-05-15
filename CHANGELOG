@@ -1353,3 +1353,14 @@ tool-related Lua APIs.
 Version 58.4 2025-02-21
 Change version number to 99.3. Backport minor airsim / CAUS changes from TPT
 99.3.
+
+Version 59.0 2026-05-14
+Minor element search UI improvements. Significant amount of tpt++ backports,
+including heat pipes, air convection setting, air vorticity setting, default
+edge pressure and velocity settings, other airsim  fixes, new BASE and SEED
+elements, a handful of new reactions, and more. See the vanilla changelogs
+for more details. Remove realistic heat option, replaced by less extensive
+but supported heat capacity property (only used on BASE). Shift+6 now toggles
+automatic heat mode. Change version number to 99.5, as minor Lua additions have
+been merged in. Block publishing saves made with mod elements again, along with
+BASE and SEED.
