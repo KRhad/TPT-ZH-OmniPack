@@ -259,6 +259,14 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 					//idealy transitions should use part_create(i) but some elements rely on properties staying constant
 					//and I don't feel like checking each one right now
 					parts[i].tmp = 0;
+
+					if (parts[i].type == PT_SEED)
+					{
+						parts[i].ctype = 0;
+						parts[i].tmp2 = 0;
+						parts[i].tmp3 = 0;
+						parts[i].tmp4 = 0;
+					}
 				}
 				if ((elements[t].Properties & TYPE_GAS) && !(elements[parts[i].type].Properties & TYPE_GAS))
 					air->pv[y/CELL][x/CELL] += 0.50f;
@@ -361,13 +369,27 @@ bool Simulation::CheckPressureTransitions(int i, int t)
 		return false;
 
 	// particle type change occurred
-	parts[i].life = 0;
 	if (!t)
+	{
 		part_kill(i);
-	else
-		part_change_type(i,x,y,t);
+		return true;
+	}
 
-	if (t == PT_FIRE)
+	parts[i].life = 0;
+
+	// To prevent PIPE -> BRMT setting BRMT's ctype
+	if (t == PT_BRMT)
+	{
+		parts[i].ctype = 0;
+		parts[i].tmp = 0;
+		parts[i].tmp2 = 0;
+		parts[i].tmp3 = 0;
+		parts[i].tmp4 = 0;
+	}
+	else if (t == PT_FIRE)
 		parts[i].life = RNG::Ref().between(120, 169);
+
+	part_change_type(i,x,y,t);
+
 	return true;
 }
