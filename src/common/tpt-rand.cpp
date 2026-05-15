@@ -50,6 +50,11 @@ float RNG::uniform01()
 	return static_cast<float>(next() & 0xFFFFFFFF) / static_cast<float>(0xFFFFFFFF);
 }
 
+double RNG::uniform01Double()
+{
+	return double(next() / double(UINT64_C(0xFFFFFFFFFFFFFFFF)));
+}
+
 RNG::RNG()
 {
 	s[0] = time(NULL);

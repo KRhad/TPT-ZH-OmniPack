@@ -69,36 +69,47 @@ LuaSmartRef *tptPart = nullptr;
 static int mathRandom(lua_State *l)
 {
 	// only thing that matters is that the rng not be luacon_sim->rng when !inSimEvent
-	int lower, upper;
+	double lower, upper;
 	switch (lua_gettop(l))
 	{
 	case 0:
-		lua_pushnumber(l, RNG::Ref().uniform01());
+		lua_pushnumber(l, RNG::Ref().uniform01Double());
 		return 1;
 
 	case 1:
 		lower = 1;
-		upper = luaL_checkinteger(l, 1);
+		upper = luaL_checknumber(l, 1);
 		break;
 
 	default:
-		lower = luaL_checkinteger(l, 1);
-		upper = luaL_checkinteger(l, 2);
+		lower = luaL_checknumber(l, 1);
+		upper = luaL_checknumber(l, 2);
 		break;
 	}
 	if (upper < lower)
 	{
 		luaL_error(l, "interval is empty");
 	}
-	if ((unsigned int)(upper) - (unsigned int)(lower) + 1U)
+	if (lower >= INT32_MIN && upper <= INT32_MAX)
 	{
-		lua_pushinteger(l, RNG::Ref().between(lower, upper));
+		int il = int(lower);
+		int iu = int(upper);
+		if (((unsigned int)(iu) - (unsigned int)(il) + 1U)) // the exact expression the RNG divides something by
+		{
+			lua_pushinteger(l, RNG::Ref().between(il, iu));
+		}
+		else
+		{
+			lua_pushinteger(l, int(RNG::Ref()()));
+		}
+	}
+	else if (lower >= UINT32_C(0) && upper <= UINT32_MAX)
+	{
+		lua_pushnumber(l, RNG::Ref()());
 	}
 	else
 	{
-		// The interval is *so* not empty that its size overflows 32-bit integers
-		// (only possible if it's exactly 0x100000000); don't use between.
-		lua_pushinteger(l, int(RNG::Ref()()));
+		lua_pushnumber(l, lower + RNG::Ref().uniform01Double() * (upper - lower));
 	}
 	return 1;
 }
