@@ -76,6 +76,7 @@ void BRMT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Broken metal. Created when iron rusts or when metals break from pressure.";
 
 	elem->Properties = TYPE_PART|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

@@ -376,6 +376,7 @@ void FIRE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Ignites flammable materials. Heats air.";
 
 	elem->Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

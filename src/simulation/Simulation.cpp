@@ -182,6 +182,15 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 		ignoreMissingErrors[PT_RSST] = true;
 		ignoreMissingErrors[PT_RSSS] = true;
 	}
+	if (save->createdVersion < 100)
+	{
+		ignoreMissingErrors[PT_PLSM] = true;
+		ignoreMissingErrors[PT_EXOT] = true;
+		ignoreMissingErrors[PT_FWRK] = true;
+		ignoreMissingErrors[PT_WTRV] = true;
+		ignoreMissingErrors[PT_FIRE] = true;
+		ignoreMissingErrors[PT_BRMT] = true;
+	}
 
 	SaveLoadData saveLoadData;
 	auto &possiblyCarriesType = particle::PossiblyCarriesType();

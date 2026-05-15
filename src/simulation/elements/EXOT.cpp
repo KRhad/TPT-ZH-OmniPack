@@ -230,6 +230,7 @@ void EXOT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Exotic matter. Explodes with excess exposure to electrons. Has many other odd reactions.";
 
 	elem->Properties = TYPE_LIQUID|PROP_NEUTPASS;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

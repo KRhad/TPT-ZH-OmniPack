@@ -68,6 +68,7 @@ void WTRV_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Steam. Produced from hot water.";
 
 	elem->Properties = TYPE_GAS;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

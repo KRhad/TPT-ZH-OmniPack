@@ -113,6 +113,7 @@ void FWRK_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Original version of fireworks, activated by heat/neutrons.";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;
