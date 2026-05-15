@@ -17,6 +17,12 @@ void MenuSection::ClearTools()
 	tools.clear();
 }
 
+void MenuSection::AddTool(Tool* tool)
+{
+	auto it = std::upper_bound(tools.begin(), tools.end(), tool, [](auto a, auto b){ return a->GetMenuSort() < b->GetMenuSort(); });
+	tools.insert(it, tool);
+}
+
 MenuSection* menuSections[SC_TOTAL];
 bool stickyCategories = false;
 

@@ -36,15 +36,16 @@ class Tool
 	ARGBColour color;
 	int MenuSection;
 	int MenuVisible;
+	int MenuSort = 0;
 
 protected:
 	int type;
 	int toolID;
 public:
 	Tool(int toolID, std::string toolIdentifier, std::string name, std::string description, ARGBColour color, int MenuSection,
-		 int MenuVisible = 1);
+		 int MenuVisible = 1, int MenuSort = 0);
 	Tool(int toolType, int toolID, std::string toolIdentifier, std::string name, std::string description, ARGBColour color, int MenuSection,
-		 int MenuVisible = 1);
+		 int MenuVisible = 1, int MenuSort = 0);
 	virtual ~Tool() {}
 
 	int GetType() { return type; }
@@ -55,6 +56,7 @@ public:
 	ARGBColour GetColor() { return color; }
 	int GetMenuSection() { return MenuSection; }
 	int GetMenuVisible() { return MenuVisible; }
+	int GetMenuSort() { return MenuSort; }
 
 	virtual int DrawPoint(Simulation *sim, Brush *brush, Point position, float toolStrength);
 	virtual void DrawLine(Simulation *sim, Brush *brush, Point startPos, Point endPos, bool held, float toolStrength);

@@ -59,10 +59,7 @@ public:
 	{
 	}
 
-	void AddTool(Tool* tool)
-	{
-		tools.push_back(tool);
-	}
+	void AddTool(Tool* tool);
 
 	void ClearTools();
 };

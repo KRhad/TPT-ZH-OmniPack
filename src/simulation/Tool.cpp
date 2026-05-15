@@ -16,13 +16,14 @@
 #include "simulation/elements/LIFE.h"
 
 Tool::Tool(int toolID, std::string toolIdentifier, std::string name, std::string description, ARGBColour color, int MenuSection,
-		   int MenuVisible):
+		   int MenuVisible, int MenuSort):
 	identifier(toolIdentifier),
 	name(name),
 	description(description),
 	color(color),
 	MenuSection(MenuSection),
 	MenuVisible(MenuVisible),
+	MenuSort(MenuSort),
 	type(INVALID_TOOL),
 	toolID(toolID)
 {
@@ -30,13 +31,14 @@ Tool::Tool(int toolID, std::string toolIdentifier, std::string name, std::string
 }
 
 Tool::Tool(int toolType, int toolID, std::string toolIdentifier, std::string name, std::string description, ARGBColour color,
-		   int MenuSection, int MenuVisible):
+		   int MenuSection, int MenuVisible, int MenuSort):
 	identifier(toolIdentifier),
 	name(name),
 	description(description),
 	color(color),
 	MenuSection(MenuSection),
 	MenuVisible(MenuVisible),
+	MenuSort(MenuSort),
 	type(toolType),
 	toolID(toolID)
 {
@@ -157,7 +159,8 @@ void Tool::Select(int toolIndex)
 
 ElementTool::ElementTool(Simulation * sim, int elementID):
 	Tool(ELEMENT_TOOL, elementID, sim->elements[elementID].Identifier, sim->elements[elementID].Name, sim->elements[elementID].Description,
-		   sim->elements[elementID].Colour, sim->elements[elementID].MenuSection, sim->elements[elementID].MenuVisible)
+		   sim->elements[elementID].Colour, sim->elements[elementID].MenuSection, sim->elements[elementID].MenuVisible,
+		   sim->elements[elementID].MenuSort)
 {
 
 }
