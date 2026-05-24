@@ -35,7 +35,7 @@ void Element::Element_PLSM()
 	HeatConduct = 5;
 	Description = Localization::Ref().Tr("sim.elem.DEFAULT_PT_PLSM");
 
-	Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL;
+	Properties = TYPE_GAS|PROP_LIFE_DEC;
 	CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	LowPressure = IPL;

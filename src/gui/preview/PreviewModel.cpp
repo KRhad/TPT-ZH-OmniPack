@@ -147,8 +147,6 @@ void PreviewModel::OnSaveReady()
 	try
 	{
 		auto gameSave = std::make_unique<GameSave>(*saveData);
-		if (gameSave->fromNewerVersion)
-			new ErrorMessage(Localization::Ref().Tr("preview.error_newer_version_title"), String::Build(Localization::Ref().Tr("preview.error_newer_version_message"), SERVER));
 		saveInfo->SetGameSave(std::move(gameSave));
 	}
 	catch(ParseException &e)

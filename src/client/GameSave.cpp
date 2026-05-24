@@ -239,6 +239,7 @@ void GameSave::Expand(const std::vector<char> &data)
 void GameSave::setSize(Vec2<int> newBlockSize)
 {
 	blockSize = newBlockSize;
+	blockContent = blockSize.OriginRect();
 
 	particlesCount = 0;
 	particles = std::vector<Particle>(NPART);
@@ -289,12 +290,17 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 
 	// Grow as needed.
 	assert((Vec2{ CELL, CELL }.OriginRect().Contains(nudge)));
+	blockContent = newBlockS.OriginRect();
 	if (nudge.X) newBlockS.X += 1;
 	if (nudge.Y) newBlockS.Y += 1;
+	if (nudge.X >= CELL / 2) blockContent.pos.X += 1;
+	if (nudge.Y >= CELL / 2) blockContent.pos.Y += 1;
+	btranslate += blockContent.pos;
 
 	// TODO: allow transforms to yield bigger saves. For this we'd need SaveRenderer (the singleton, not Renderer)
 	// to fully render them (possible with stitching) and Simulation::Load to be able to take only the part that fits.
 	newBlockS = newBlockS.Clamp(RectBetween({ 0, 0 }, CELLS));
+	blockContent &= CELLS.OriginRect();
 	auto newPartS = newBlockS * CELL;
 
 	// Prepare to patch pipes.
@@ -594,6 +600,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 
 	std::vector<sign> tempSigns;
 
+	ByteString releaseType = "R";
 	if (auto *origin = getIfType(b, "origin", Bson::Type::objectValue))
 	{
 		int minorVersion = 0;
@@ -601,8 +608,16 @@ void GameSave::readOPS(const std::vector<char> &data)
 		{
 			version[1] = minorVersion;
 		}
+		if (auto *value = getIfType(*origin, "releaseType", Bson::Type::stringValue))
+		{
+			releaseType = value->As<ByteString>();
+		}
 	}
 	fromNewerVersion = version > currentVersion;
+	if (fromNewerVersion)
+	{
+		fromUnstableVersion = releaseType != "R";
+	}
 
 	getAddressIfUser(b, "parts", partsData);
 	getAddressIfUser(b, "partsPos", partsPosData);
@@ -2610,7 +2625,10 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	{
 		b["soapLinks"] = std::move(soapLinkData);
 	}
-	b["blockAir"] = std::move(blockAirData);
+	if (hasBlockAirMaps)
+	{
+		b["blockAir"] = std::move(blockAirData);
+	}
 	if (ensureDeterminism)
 	{
 		b["ensureDeterminism"] = ensureDeterminism;

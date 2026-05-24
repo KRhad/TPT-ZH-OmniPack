@@ -30,6 +30,70 @@
 #include <cmath>
 #include <SDL.h>
 
+class DirectionSelector : public ui::Window
+{
+	std::function<void (float, float)> done;
+
+	void OnTryExit(ExitMethod method) override
+	{
+		CloseActiveWindow();
+		SelfDestruct();
+	}
+
+	void OnDraw() override
+	{
+		Graphics * g = GetGraphics();
+
+		g->DrawFilledRect(RectSized(Position - Vec2{ 1, 1 }, Size + Vec2{ 2, 2 }), 0x000000_rgb);
+		g->DrawRect(RectSized(Position, Size), 0xC8C8C8_rgb);
+	}
+
+	ui::DirectionSelector * direction;
+	ui::Label * labelValues;
+
+public:
+	DirectionSelector(ui::Point position, float scale, int radius, float x, float y, String label, std::function<void (float, float)> newDone):
+		ui::Window(position, ui::Point((radius * 5 / 2) + 20, (radius * 5 / 2) + 75)),
+		done(newDone),
+		direction(new ui::DirectionSelector(ui::Point(10, 32), scale, radius, radius / 4, 2, 5))
+	{
+		ui::Label * tempLabel = new ui::Label(ui::Point(4, 1), ui::Point(Size.X - 8, 22), label);
+		tempLabel->SetTextColour(style::Colour::InformationTitle);
+		tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+		tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+		AddComponent(tempLabel);
+
+		auto * tempSeparator = new ui::Separator(ui::Point(0, 22), ui::Point(Size.X, 1));
+		AddComponent(tempSeparator);
+
+		labelValues = new ui::Label(ui::Point(0, (radius * 5 / 2) + 37), ui::Point(Size.X, 16), String::Build(Format::Precision(1), "X:", x, " Y:", y, " Total:", std::hypot(x, y)));
+		labelValues->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
+		labelValues->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+		AddComponent(labelValues);
+
+		direction->SetValues(x, y);
+		direction->SetUpdateCallback([this](float x, float y) {
+			labelValues->SetText(String::Build(Format::Precision(1), "X:", x, " Y:", y, " Total:", std::hypot(x, y)));
+		});
+		direction->SetSnapPoints(5, 5, 2);
+		AddComponent(direction);
+
+		ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y - 17), ui::Point(Size.X, 17), Localization::Ref().Tr("options.ok"));
+		okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
+		okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+		okayButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
+		okayButton->SetActionCallback({ [this] {
+			done(direction->GetXValue(), direction->GetYValue());
+			CloseActiveWindow();
+			SelfDestruct();
+		} });
+		AddComponent(okayButton);
+		SetOkayButton(okayButton);
+
+		MakeActiveWindow();
+	}
+};
+
 OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 {
 	auto autoWidth = [this](ui::Component *c, int extra) {
@@ -37,7 +101,6 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	};
 	
 	{
-		// 顶部标题使用本地化文本
 		titleLabel = new ui::Label(ui::Point(4, 1), ui::Point(Size.X-8, 22),
 			Localization::Ref().Tr("options.title"));
 		titleLabel->SetTextColour(style::Colour::InformationTitle);
@@ -102,6 +165,30 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		scrollPanel->AddChild(separator);
 		currentY += 11;
 	};
+	auto addTextboxWithPreview = [this, &currentY](String info, bool addPreview, std::function<void (String value, bool defocus)> updateFunc) {
+		auto *textbox = new ui::Textbox(ui::Point(Size.X-95, currentY), ui::Point(80, 16));
+		textbox->SetActionCallback({ [textbox, updateFunc] {
+			updateFunc(textbox->GetText(), false);
+		} });
+		textbox->SetDefocusCallback({ [textbox, updateFunc] {
+			updateFunc(textbox->GetText(), true);
+		} });
+		textbox->SetLimit(9);
+		scrollPanel->AddChild(textbox);
+		ui::Button *preview{};
+		if (addPreview)
+		{
+			textbox->Size.X -= 20;
+			preview = new ui::Button(ui::Point(Size.X-31, currentY), ui::Point(16, 16), "", Localization::Ref().Tr("options.preview"));
+			scrollPanel->AddChild(preview);
+		}
+		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-105, 16), info);
+		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+		scrollPanel->AddChild(label);
+		currentY += 20;
+		return std::make_pair(textbox, preview);
+	};
 
 	heatSimulation = addCheckbox(0, Localization::Ref().Tr("options.heat_simulation"), Localization::Ref().Tr("options.heat_simulation.info"), [this] {
 		c->SetHeatSimulation(heatSimulation->GetChecked());
@@ -124,40 +211,30 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	}, [this] {
 		c->SetAirMode(airMode->GetOption().second);
 	});
+	std::tie(ambientAirTemp, ambientAirTempPreview) = addTextboxWithPreview(Localization::Ref().Tr("options.ambient_air_temperature"), true, [this](String value, bool defocus) {
+		UpdateAirTemp(value, defocus);
+	});
+	std::tie(edgePressure, edgePressurePreview) = addTextboxWithPreview(Localization::Ref().Tr("options.ambient_air_pressure"), true, [this](String value, bool defocus) {
+		UpdateEdgePressure(value, defocus);
+	});
 	{
-		ambientAirTemp = new ui::Textbox(ui::Point(Size.X-95, currentY), ui::Point(60, 16));
-		ambientAirTemp->SetActionCallback({ [this] {
-			UpdateAirTemp(ambientAirTemp->GetText(), false);
+		edgeVelocityChange = new ui::Button(ui::Point(Size.X-95, currentY), ui::Point(80, 16), Localization::Ref().Tr("options.change"));
+		scrollPanel->AddChild(edgeVelocityChange);
+		edgeVelocityChange->SetActionCallback({ [this] {
+			new DirectionSelector(ui::Point(-1, -1), 0.05f, 40, edgeVelocityX, edgeVelocityY, Localization::Ref().Tr("options.ambient_air_velocity"), [this](float x, float y) {
+				c->SetEdgeVelocityX(x);
+				c->SetEdgeVelocityY(y);
+			});
 		} });
-		ambientAirTemp->SetDefocusCallback({ [this] {
-			UpdateAirTemp(ambientAirTemp->GetText(), true);
-		}});
-		ambientAirTemp->SetLimit(9);
-		scrollPanel->AddChild(ambientAirTemp);
-		ambientAirTempPreview = new ui::Button(ui::Point(Size.X-31, currentY), ui::Point(16, 16), "", Localization::Ref().Tr("options.preview"));
-		scrollPanel->AddChild(ambientAirTempPreview);
-		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-105, 16), Localization::Ref().Tr("options.ambient_air_temperature"));
+		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-96, 16), Localization::Ref().Tr("options.ambient_air_velocity"));
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		scrollPanel->AddChild(label);
-		currentY += 20;
+		currentY+=20;
 	}
-	{ // Vorticity coefficient setting
-		vorticityCoeff = new ui::Textbox(ui::Point(Size.X-95, currentY), ui::Point(80, 16));
-		vorticityCoeff->SetActionCallback({ [this] {
-			UpdateVorticityCoeff(vorticityCoeff->GetText(), false);
-		} });
-		vorticityCoeff->SetDefocusCallback({ [this] {
-			UpdateVorticityCoeff(vorticityCoeff->GetText(), true);
-		}});
-		vorticityCoeff->SetLimit(9);
-		scrollPanel->AddChild(vorticityCoeff);
-		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-105, 16), Localization::Ref().Tr("options.vorticity_confinement"));
-		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-		scrollPanel->AddChild(label);
-		currentY += 20;
-	}
+	vorticityCoeff = addTextboxWithPreview(Localization::Ref().Tr("options.vorticity_confinement"), false, [this](String value, bool defocus) {
+		UpdateVorticityCoeff(value, defocus);
+	}).first;
 	convectionMode = addDropDown(Localization::Ref().Tr("options.convection_mode"), {
 		{ Localization::Ref().Tr("options.convection.none"), AIRC_NONE },
 		{ Localization::Ref().Tr("options.convection.legacy"), AIRC_LEGACY },
@@ -165,70 +242,6 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	}, [this] {
 		c->SetConvectionMode(convectionMode->GetOption().second);
 	});
-	class GravityWindow : public ui::Window
-	{
-		void OnTryExit(ExitMethod method) override
-		{
-			CloseActiveWindow();
-			SelfDestruct();
-		}
-
-		void OnDraw() override
-		{
-			Graphics * g = GetGraphics();
-
-			g->DrawFilledRect(RectSized(Position - Vec2{ 1, 1 }, Size + Vec2{ 2, 2 }), 0x000000_rgb);
-			g->DrawRect(RectSized(Position, Size), 0xC8C8C8_rgb);
-		}
-
-		ui::DirectionSelector * gravityDirection;
-		ui::Label * labelValues;
-
-		OptionsController * c;
-
-	public:
-		GravityWindow(ui::Point position, float scale, int radius, float x, float y, OptionsController * c_):
-			ui::Window(position, ui::Point((radius * 5 / 2) + 20, (radius * 5 / 2) + 75)),
-			gravityDirection(new ui::DirectionSelector(ui::Point(10, 32), scale, radius, radius / 4, 2, 5)),
-			c(c_)
-			{
-				ui::Label * tempLabel = new ui::Label(ui::Point(4, 1), ui::Point(Size.X - 8, 22), Localization::Ref().Tr("options.custom_gravity"));
-				tempLabel->SetTextColour(style::Colour::InformationTitle);
-				tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-				tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-				AddComponent(tempLabel);
-
-				auto * tempSeparator = new ui::Separator(ui::Point(0, 22), ui::Point(Size.X, 1));
-				AddComponent(tempSeparator);
-
-				labelValues = new ui::Label(ui::Point(0, (radius * 5 / 2) + 37), ui::Point(Size.X, 16), String::Build(Format::Precision(1), Localization::Ref().Tr("options.gravity.x"), x, Localization::Ref().Tr("options.gravity.y"), y, Localization::Ref().Tr("options.gravity.total"), std::hypot(x, y)));
-				labelValues->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
-				labelValues->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-				AddComponent(labelValues);
-
-				gravityDirection->SetValues(x, y);
-				gravityDirection->SetUpdateCallback([this](float x, float y) {
-					labelValues->SetText(String::Build(Format::Precision(1), Localization::Ref().Tr("options.gravity.x"), x, Localization::Ref().Tr("options.gravity.y"), y, Localization::Ref().Tr("options.gravity.total"), std::hypot(x, y)));
-				});
-				gravityDirection->SetSnapPoints(5, 5, 2);
-				AddComponent(gravityDirection);
-
-				ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y - 17), ui::Point(Size.X, 17), Localization::Ref().Tr("options.ok"));
-				okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
-				okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-				okayButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
-				okayButton->SetActionCallback({ [this] {
-					c->SetCustomGravityX(gravityDirection->GetXValue());
-					c->SetCustomGravityY(gravityDirection->GetYValue());
-					CloseActiveWindow();
-					SelfDestruct();
-				} });
-				AddComponent(okayButton);
-				SetOkayButton(okayButton);
-
-				MakeActiveWindow();
-			}
-	};
 	gravityMode = addDropDown(Localization::Ref().Tr("options.gravity_mode"), {
 		{ Localization::Ref().Tr("options.gravity.vertical"), GRAV_VERTICAL },
 		{ Localization::Ref().Tr("options.gravity.off"), GRAV_OFF },
@@ -238,7 +251,10 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		c->SetGravityMode(gravityMode->GetOption().second);
 		if (gravityMode->GetOption().second == 3)
 		{
-			new GravityWindow(ui::Point(-1, -1), 0.05f, 40, customGravityX, customGravityY, c);
+			new DirectionSelector(ui::Point(-1, -1), 0.05f, 40, customGravityX, customGravityY, Localization::Ref().Tr("options.custom_gravity"), [this](float x, float y) {
+				c->SetCustomGravityX(x);
+				c->SetCustomGravityY(y);
+			});
 		}
 	});
 	edgeMode = addDropDown(Localization::Ref().Tr("options.edge_mode"), {
@@ -249,35 +265,15 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		c->SetEdgeMode(edgeMode->GetOption().second);
 	});
 	temperatureScale = addDropDown(Localization::Ref().Tr("options.temperature"), {
-			{ Localization::Ref().Tr("options.temp.kelvin"), TEMPSCALE_KELVIN },
-			{ Localization::Ref().Tr("options.temp.celsius"), TEMPSCALE_CELSIUS },
-			{ Localization::Ref().Tr("options.temp.fahrenheit"), TEMPSCALE_FAHRENHEIT },
+		{ Localization::Ref().Tr("options.temp.kelvin"), TEMPSCALE_KELVIN },
+		{ Localization::Ref().Tr("options.temp.celsius"), TEMPSCALE_CELSIUS },
+		{ Localization::Ref().Tr("options.temp.fahrenheit"), TEMPSCALE_FAHRENHEIT },
 	}, [this] {
 		c->SetTemperatureScale(TempScale(temperatureScale->GetOption().second));
 	});
 	if (FORCE_WINDOW_FRAME_OPS != forceWindowFrameOpsHandheld)
 	{
 		addSeparator();
-		// 语言标签文字本地化
-		String langLabel = Localization::Ref().Tr("options.language");
-		// 与 Localization::LoadLanguage(index) 一致,按 ISO 639-1 排序
-		language = addDropDown(langLabel, {
-			{ "English",    0 },
-			{ "简体中文",   1 },
-			{ "繁體中文",   2 },
-			{ "Deutsch",    3 },
-			{ "Español",    4 },
-			{ "Français",   5 },
-			{ "Italiano",   6 },
-			{ "日本語",      7 },
-			{ "한국어",      8 },
-			{ "Português",  9 },
-			{ "Русский",   10 },
-			{ "文言",      11 },
-		}, [this] {
-			c->SetLanguage(language->GetOption().second);
-		});
-  
 		std::vector<std::pair<String, int>> options;
 		int currentScale = ui::Engine::Ref().GetScale();
 		int scaleIndex = 1;
@@ -394,8 +390,8 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 				ByteString from = Platform::originalCwd;
 				ByteString to = Platform::sharedCwd;
 				new ConfirmPrompt(Localization::Ref().Tr("options.migrate_confirm_title"), Localization::Ref().Tr("options.migrate_confirm_body_1") + "\n\bt" + from.FromUtf8() + "\bw\n" + Localization::Ref().Tr("options.migrate_confirm_body_2") + "\n\bt" + to.FromUtf8() + "\bw\n\n" + Localization::Ref().Tr("options.migrate_confirm_body_3"), { [from, to]() {
-					String ret = Client::Ref().DoMigration(from, to);
-					new InformationMessage(Localization::Ref().Tr("options.migrate_complete"), ret, false);
+						String ret = Client::Ref().DoMigration(from, to);
+						new InformationMessage(Localization::Ref().Tr("options.migrate_complete"), ret, false);
 				} });
 			} });
 			scrollPanel->AddChild(migrationButton);
@@ -477,6 +473,28 @@ void OptionsView::AmbientAirTempToTextBox(float airTemp)
 	ambientAirTemp->SetText(sb.Build());
 }
 
+void OptionsView::UpdateEdgePressurePreview(float edgePres, bool isValid)
+{
+	if (isValid)
+	{
+		edgePressurePreview->Appearance.BackgroundInactive = PressureToColour(edgePres).WithAlpha(0xFF);
+		edgePressurePreview->SetText("");
+	}
+	else
+	{
+		edgePressurePreview->Appearance.BackgroundInactive = ui::Colour(0, 0, 0);
+		edgePressurePreview->SetText("?");
+	}
+	edgePressurePreview->Appearance.BackgroundHover = edgePressurePreview->Appearance.BackgroundInactive;
+}
+
+void OptionsView::EdgePressureToTextBox(float edgePres)
+{
+	StringBuilder sb;
+	sb << Format::Precision(2) << edgePres;
+	edgePressure->SetText(sb.Build());
+}
+
 void OptionsView::VorticityCoeffToTextBox(float vorticity)
 {
 	StringBuilder sb;
@@ -513,14 +531,14 @@ void OptionsView::UpdateStartupRequestStatus()
 	}
 }
 
-void OptionsView::UpdateAirTemp(String temp, bool isDefocus)
+static void UpdateSettingFromString(String pres, bool isDefocus, float minVale, float maxValue, float defaultValue, auto parse, auto toTextbox, auto apply)
 {
-	// Parse air temp and determine validity
-	float airTemp = 0;
+	// Parse value and determine validity
+	float value = 0;
 	bool isValid;
 	try
 	{
-		airTemp = format::StringToTemperature(temp, TempScale(temperatureScale->GetOption().second));
+		value = parse(pres);
 		isValid = true;
 	}
 	catch (const std::exception &ex)
@@ -528,78 +546,77 @@ void OptionsView::UpdateAirTemp(String temp, bool isDefocus)
 		isValid = false;
 	}
 
-	// While defocusing, correct out of range temperatures and empty textboxes
+	// While defocusing, correct out of range values and empty textboxes
 	if (isDefocus)
 	{
-		if (temp.empty())
+		if (pres.empty())
 		{
 			isValid = true;
-			airTemp = float(R_TEMP) + 273.15f;
+			value = defaultValue;
 		}
 		else if (!isValid)
 			return;
-		else if (airTemp < MIN_TEMP)
-			airTemp = MIN_TEMP;
-		else if (airTemp > MAX_TEMP)
-			airTemp = MAX_TEMP;
+		else if (value < minVale)
+			value = minVale;
+		else if (value > maxValue)
+			value = maxValue;
 
-		AmbientAirTempToTextBox(airTemp);
+		toTextbox(value);
 	}
-	// Out of range temperatures are invalid, preview should go away
-	else if (isValid && (airTemp < MIN_TEMP || airTemp > MAX_TEMP))
+	// Out of range values are invalid, preview should go away
+	else if (isValid && (value < minVale || value > maxValue))
 		isValid = false;
 
-	// If valid, set temp
-	if (isValid)
-		c->SetAmbientAirTemperature(airTemp);
+	// If valid, apply
+	apply(value, isValid);
+}
 
-	UpdateAmbientAirTempPreview(airTemp, isValid);
+void OptionsView::UpdateAirTemp(String temp, bool isDefocus)
+{
+	UpdateSettingFromString(temp, isDefocus, MIN_TEMP, MAX_TEMP, float(R_TEMP) + 273.15f, [this](const String &temp) {
+		return format::StringToTemperature(temp, TempScale(temperatureScale->GetOption().second));
+	}, [this](float airTemp) {
+		AmbientAirTempToTextBox(airTemp);
+	}, [this](float airTemp, bool isValid) {
+		if (isValid)
+		{
+			c->SetAmbientAirTemperature(airTemp);
+		}
+		UpdateAmbientAirTempPreview(airTemp, isValid);
+	});
+}
+
+void OptionsView::UpdateEdgePressure(String pres, bool isDefocus)
+{
+	UpdateSettingFromString(pres, isDefocus, MIN_PRESSURE, MAX_PRESSURE, 0.f, [](const String &pres) {
+		return pres.ToNumber<float>();
+	}, [this](float edgePres) {
+		EdgePressureToTextBox(edgePres);
+	}, [this](float edgePres, bool isValid) {
+		if (isValid)
+		{
+			c->SetEdgePressure(edgePres);
+		}
+		UpdateEdgePressurePreview(edgePres, isValid);
+	});
 }
 
 void OptionsView::UpdateVorticityCoeff(String vort, bool isDefocus)
 {
-	// Parse vorticity and determine validity
-	float vorticity = 0;
-	bool isValid;
-	try
-	{
-		vorticity = vort.ToNumber<float>();
-		isValid = true;
-	}
-	catch (const std::exception &ex)
-	{
-		isValid = false;
-	}
-
-	// While defocusing, correct out of range vorticity and empty textboxes
-	if (isDefocus)
-	{
-		if (vort.empty())
-		{
-			isValid = true;
-			vorticity = 0.0f;
-		}
-		else if (!isValid)
-			return;
-		else if (vorticity < 0.0f)
-			vorticity = 0.0f;
-		else if (vorticity > 1.0f)
-			vorticity = 1.0f;
-
+	UpdateSettingFromString(vort, isDefocus, 0.f, 1.f, 0.1f, [](const String &vort) {
+		return vort.ToNumber<float>();
+	}, [this](float vorticity) {
 		VorticityCoeffToTextBox(vorticity);
-	}
-	// Out of range vorticities are invalid, preview should go away
-	else if (isValid && (vorticity < 0.0f || vorticity > 1.0f))
-		isValid = false;
-
-	// If valid, set vorticity
-	if (isValid)
-		c->SetVorticityCoeff(vorticity);
+	}, [this](float vorticity, bool isValid) {
+		if (isValid)
+		{
+			c->SetVorticityCoeff(vorticity);
+		}
+	});
 }
 
 void OptionsView::NotifySettingsChanged(OptionsModel * sender)
 {
-	// 切换语言后刷新本窗口使用到的本地化文本
 	if (titleLabel)
 	{
 		titleLabel->SetText(Localization::Ref().Tr("options.title"));
@@ -608,7 +625,6 @@ void OptionsView::NotifySettingsChanged(OptionsModel * sender)
 	temperatureScale->SetOption(sender->GetTemperatureScale()); // has to happen before AmbientAirTempToTextBox is called
 	heatSimulation->SetChecked(sender->GetHeatSimulation());
 	ambientHeatSimulation->SetChecked(sender->GetAmbientHeatSimulation());
-	language->SetOption(sender->GetLanguage());
 	newtonianGravity->SetChecked(sender->GetNewtonianGravity());
 	waterEqualisation->SetChecked(sender->GetWaterEqualisation());
 	airMode->SetOption(sender->GetAirMode());
@@ -619,12 +635,20 @@ void OptionsView::NotifySettingsChanged(OptionsModel * sender)
 		UpdateAmbientAirTempPreview(airTemp, true);
 		AmbientAirTempToTextBox(airTemp);
 	}
+	if (!edgePressure->IsFocused())
+	{
+		float pres = sender->GetEdgePressure();
+		UpdateEdgePressurePreview(pres, true);
+		EdgePressureToTextBox(pres);
+	}
 	// Same for vorticity
 	if (!vorticityCoeff->IsFocused())
 	{
 		VorticityCoeffToTextBox(sender->GetVorticityCoeff());
 	}
 	convectionMode->SetOption(sender->GetConvectionMode());
+	edgeVelocityX = sender->GetEdgeVelocityX();
+	edgeVelocityY = sender->GetEdgeVelocityY();
 	gravityMode->SetOption(sender->GetGravityMode());
 	customGravityX = sender->GetCustomGravityX();
 	customGravityY = sender->GetCustomGravityY();
