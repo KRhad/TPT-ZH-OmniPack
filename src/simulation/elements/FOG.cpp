@@ -34,6 +34,7 @@ void Element::Element_FOG()
 	Description = Localization::Ref().Tr("sim.elem.DEFAULT_PT_FOG");
 
 	Properties = TYPE_GAS|PROP_LIFE_DEC;
+	CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -69,10 +70,14 @@ static int update(UPDATE_FUNC_ARGS)
 				{
 					parts[i].life += sim->rng.between(0, 19);
 				}
+				// GAS increases acidity
 				if (TYP(r) == PT_GAS && parts[i].tmp < 10)
 				{
 					sim->kill_part(ID(r));
-					parts[i].tmp++;
+					if (parts[i].ctype == PT_DSTW)
+						parts[i].ctype = 0;
+					else
+						parts[i].tmp++;
 				}
 			}
 		}
