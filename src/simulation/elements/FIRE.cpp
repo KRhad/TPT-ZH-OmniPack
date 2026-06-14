@@ -108,6 +108,11 @@ int FIRE_update(UPDATE_FUNC_ARGS)
 				parts[i].life = 0;
 				parts[i].ctype = PT_FIRE;
 			}
+			else
+			{
+				sim->part_kill(i);
+				return 1;
+			}
 		}
 		break;
 	case PT_FIRE:
@@ -123,6 +128,11 @@ int FIRE_update(UPDATE_FUNC_ARGS)
 			{
 				sim->part_change_type(i, x, y, PT_SMKE);
 				parts[i].life = RNG::Ref().between(250, 269);
+			}
+			else
+			{
+				sim->part_kill(i);
+				return 1;
 			}
 		}
 		break;
@@ -393,7 +403,7 @@ void FIRE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Latent = 0;
 	elem->Description = "Ignites flammable materials. Heats air.";
 
-	elem->Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL;
+	elem->Properties = TYPE_GAS | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;

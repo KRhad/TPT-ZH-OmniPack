@@ -72,7 +72,7 @@ void PLSM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Latent = 0;
 	elem->Description = "Plasma, extremely hot.";
 
-	elem->Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL;
+	elem->Properties = TYPE_GAS | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
