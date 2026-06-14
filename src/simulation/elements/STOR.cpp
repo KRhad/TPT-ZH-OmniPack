@@ -27,6 +27,8 @@ int STOR_update(UPDATE_FUNC_ARGS)
 			{
 				int r = pmap[y+ry][x+rx];
 				if (!r)
+					r = photons[y+ry][x+rx];
+				if (!r)
 					continue;
 				if (!parts[i].tmp && !parts[i].life && TYP(r) != PT_STOR && !(sim->elements[TYP(r)].Properties & TYPE_SOLID) && (!parts[i].ctype || TYP(r) == parts[i].ctype))
 				{
