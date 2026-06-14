@@ -280,6 +280,7 @@ int PLNT_update(UPDATE_FUNC_ARGS)
 						if (np < 0)
 							continue;
 						parts[np].life = 0;
+						parts[np].ctype = parts[i].ctype; // Keep the color identical
 					}
 					break;
 				case PT_LAVA:
