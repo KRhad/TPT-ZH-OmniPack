@@ -59,14 +59,23 @@ void STKM_ElementDataContainer::NewStickman2(int i, int elem)
 
 void STKM_ElementDataContainer::Die(Simulation *sim, Stickman *playerp, int i)
 {
-	int x = (int)(sim->parts[i].x + 0.5f);
-	int y = (int)(sim->parts[i].y + 0.5f);
-	for (int r = -2; r <= 1; r++)
+	if (playerp->fan)
 	{
-		sim->part_create(-1, x + r, y - 2, playerp->elem);
-		sim->part_create(-1, x + r + 1, y + 2, playerp->elem);
-		sim->part_create(-1, x - 2, y + r + 1, playerp->elem);
-		sim->part_create(-1, x + 2, y + r, playerp->elem);
+		int x = (int)(sim->parts[i].x + 0.5f) / CELL;
+		int y = (int)(sim->parts[i].y + 0.5f) / CELL;
+		sim->air->pv[y][x] += 64;
+	}
+	else
+	{
+		int x = (int)(sim->parts[i].x + 0.5f);
+		int y = (int)(sim->parts[i].y + 0.5f);
+		for (int r = -2; r <= 1; r++)
+		{
+			sim->part_create(-1, x + r, y - 2, playerp->elem);
+			sim->part_create(-1, x + r + 1, y + 2, playerp->elem);
+			sim->part_create(-1, x - 2, y + r + 1, playerp->elem);
+			sim->part_create(-1, x + 2, y + r, playerp->elem);
+		}
 	}
 	sim->part_kill(i); // Kill him
 }
@@ -349,10 +358,10 @@ int STKM_ElementDataContainer::Run(Stickman *playerp, UPDATE_FUNC_ARGS)
 	}
 
 	// Charge detector wall if foot inside
-	if (INBOND((int)(playerp->legs[4]+0.5)/CELL, (int)(playerp->legs[5]+0.5)/CELL) &&
+	if (INBOND((int)(playerp->legs[4]+0.5), (int)(playerp->legs[5]+0.5)) &&
 	        bmap[(int)(playerp->legs[5]+0.5)/CELL][(int)(playerp->legs[4]+0.5)/CELL]==WL_DETECT)
 		set_emap((int)playerp->legs[4]/CELL, (int)playerp->legs[5]/CELL);
-	if (INBOND((int)(playerp->legs[12]+0.5)/CELL, (int)(playerp->legs[13]+0.5)/CELL) &&
+	if (INBOND((int)(playerp->legs[12]+0.5), (int)(playerp->legs[13]+0.5)) &&
 	        bmap[(int)(playerp->legs[13]+0.5)/CELL][(int)(playerp->legs[12]+0.5)/CELL]==WL_DETECT)
 		set_emap((int)(playerp->legs[12]+0.5)/CELL, (int)(playerp->legs[13]+0.5)/CELL);
 
