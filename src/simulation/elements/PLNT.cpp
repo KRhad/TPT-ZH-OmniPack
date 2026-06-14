@@ -30,6 +30,15 @@ int detectDown(Simulation *sim, int x, int y)
 
 	sim->GetGravityField(x, y, 1.0f, 1.0f, pGravX, pGravY);
 
+	float gravLen = hypot(pGravX, pGravY);
+
+	// Normalize gravity
+	if (gravLen > 0)
+	{
+		pGravX /= gravLen;
+		pGravY /= gravLen;
+	}
+
 	int gravx = 1;
 	int gravy = 1;
 
