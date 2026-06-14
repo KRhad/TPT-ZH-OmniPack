@@ -14,6 +14,7 @@
  */
 
 #include "simulation/ElementsCommon.h"
+#include "simulation/elements/FIGH.h"
 
 int DRAY_update(UPDATE_FUNC_ARGS)
 {
@@ -112,6 +113,8 @@ int DRAY_update(UPDATE_FUNC_ARGS)
 						// Spark hack
 						if (type == PT_SPRK)
 							p = sim->part_create(-1, xCopyTo, yCopyTo, PT_METL);
+						else if (type == PT_STKM || type == PT_STKM2)
+							continue; // do not try to copy these non-copyable particles
 						else if (type)
 							p = sim->part_create(-1, xCopyTo, yCopyTo, type);
 						else
@@ -125,8 +128,29 @@ int DRAY_update(UPDATE_FUNC_ARGS)
 								sim->part_change_type(p, xCopyTo, yCopyTo, PT_SPRK);
 							if (isEnergy)
 								parts[p] = parts[ID(photons[yCurrent][xCurrent])];
-							else
+							else if (type != PT_FIGH)
 								parts[p] = parts[ID(pmap[yCurrent][xCurrent])];
+							else
+							{
+								// FIGH needs special rules
+								const auto& other = parts[ID(pmap[yCurrent][xCurrent])];
+
+								// need to keep .tmp consistent: it points to fighter metadata
+								auto old_tmp = parts[p].tmp;
+								parts[p] = other;
+								parts[p].tmp = old_tmp;
+
+								// Update the new fighter's metadata
+								// Do not attempt to copy kinematics of legs - overwritten next frame anyway
+								if (other.tmp >= 0 && other.tmp < static_cast<FIGH_ElementDataContainer&>(*sim->elementData[PT_FIGH]).MaxFighters())
+								{
+									const Stickman *source_pst = static_cast<FIGH_ElementDataContainer&>(*sim->elementData[PT_FIGH]).Get(other.tmp);
+									Stickman *this_pst = static_cast<FIGH_ElementDataContainer&>(*sim->elementData[PT_FIGH]).Get(old_tmp);
+									this_pst->rocketBoots = source_pst->rocketBoots;
+									this_pst->fan = source_pst->fan;
+									this_pst->elem = source_pst->elem;
+								}
+							}
 
 							parts[p].x = (float)xCopyTo;
 							parts[p].y = (float)yCopyTo;
