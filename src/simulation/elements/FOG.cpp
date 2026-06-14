@@ -24,7 +24,8 @@ int FOG_update(UPDATE_FUNC_ARGS)
 				int r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((sim->elements[TYP(r)].Properties & TYPE_SOLID) && RNG::Ref().chance(1, 10) && !parts[i].life && !(sim->elements[TYP(r)].Properties & PROP_CLONE))
+				if ((sim->elements[TYP(r)].Properties & TYPE_SOLID) && RNG::Ref().chance(1, 10) && !parts[i].life &&
+					!(sim->elements[TYP(r)].Properties & PROP_CLONE) && !(sim->elements[TYP(r)].Properties & PROP_BREAKABLECLONE))
 				{
 					part_change_type(i, x, y, PT_RIME);
 				}
