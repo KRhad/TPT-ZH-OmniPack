@@ -15,7 +15,7 @@
 
 #include "simulation/ElementsCommon.h"
 
-#define BLEND 0.95f
+#define BLEND 21.0f
 
 int BIZR_update(UPDATE_FUNC_ARGS)
 {
@@ -30,21 +30,21 @@ int BIZR_update(UPDATE_FUNC_ARGS)
 						continue;
 					if (TYP(r)!=PT_BIZR && TYP(r)!=PT_BIZRG  && TYP(r)!=PT_BIZRS)
 					{
-						float ta = (float)COLA(parts[ID(r)].dcolour);
-						float tr = (float)COLR(parts[ID(r)].dcolour);
-						float tg = (float)COLG(parts[ID(r)].dcolour);
-						float tb = (float)COLB(parts[ID(r)].dcolour);
+						int tr = (parts[ID(r)].dcolour >> 16) & 0xFF;
+						int tg = (parts[ID(r)].dcolour >> 8 ) & 0xFF;
+						int tb = (parts[ID(r)].dcolour      ) & 0xFF;
+						int ta = (parts[ID(r)].dcolour >> 24) & 0xFF;
 
-						float ma = (float)COLA(parts[i].dcolour);
-						float mr = (float)COLR(parts[i].dcolour);
-						float mg = (float)COLG(parts[i].dcolour);
-						float mb = (float)COLB(parts[i].dcolour);
-						
-						int nr = (int)((tr*BLEND) + (mr*(1 - BLEND)));
-						int ng = (int)((tg*BLEND) + (mg*(1 - BLEND)));
-						int nb = (int)((tb*BLEND) + (mb*(1 - BLEND)));
-						int na = (int)((ta*BLEND) + (ma*(1 - BLEND)));
-						
+						int mr = (parts[i].dcolour >> 16) & 0xFF;
+						int mg = (parts[i].dcolour >> 8 ) & 0xFF;
+						int mb = (parts[i].dcolour      ) & 0xFF;
+						int ma = (parts[i].dcolour >> 24) & 0xFF;
+
+						int nr = tr + ((mr > tr) - (mr < tr)) + int(std::round((mr - tr) / BLEND));
+						int ng = tg + ((mg > tg) - (mg < tg)) + int(std::round((mg - tg) / BLEND));
+						int nb = tb + ((mb > tb) - (mb < tb)) + int(std::round((mb - tb) / BLEND));
+						int na = ta + ((ma > ta) - (ma < ta)) + int(std::round((ma - ta) / BLEND));
+
 						parts[ID(r)].dcolour = COLARGB(na, nr, ng, nb);
 					}
 				}
