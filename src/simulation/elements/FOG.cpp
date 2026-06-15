@@ -33,10 +33,14 @@ int FOG_update(UPDATE_FUNC_ARGS)
 				{
 					parts[i].life += RNG::Ref().between(0, 19);
 				}
+				// GAS increases acidity
 				if (TYP(r) == PT_GAS && parts[i].tmp < 10)
 				{
 					sim->part_kill(ID(r));
-					parts[i].tmp++;
+					if (parts[i].ctype == PT_DSTW)
+						parts[i].ctype = 0;
+					else
+						parts[i].tmp++;
 				}
 			}
 	return 0;
@@ -74,6 +78,7 @@ void FOG_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Description = "Fog, created when an electric current is passed through RIME.";
 
 	elem->Properties = TYPE_GAS|PROP_LIFE_DEC;
+	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	elem->LowPressureTransitionThreshold = IPL;
 	elem->LowPressureTransitionElement = NT;

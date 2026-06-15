@@ -112,6 +112,8 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 				// particle type change due to high temperature
 				if (elements[t].HighTemperatureTransitionElement != PT_NUM)
 				{
+					if (t == PT_FOG)
+						parts[i].ctype = 0; // clear unnecessary ctype
 					t = elements[t].HighTemperatureTransitionElement;
 				}
 				else if (t==PT_ICEI || t==PT_SNOW)
@@ -174,7 +176,8 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 					}
 					else
 					{
-						t = PT_WATR;
+						t = parts[i].ctype == PT_DSTW ? PT_DSTW : PT_WATR;
+						parts[i].ctype = 0;
 					}
 				}
 				else
@@ -251,6 +254,8 @@ bool Simulation::TransferHeat(int i, int t, int surround[8])
 			{ // particle type change occurred
 				if (t == PT_ICEI || t == PT_LAVA || t == PT_SNOW)
 					parts[i].ctype = parts[i].type;
+				if (t == PT_RIME)
+					parts[i].ctype = PT_DSTW;
 				if (!(t == PT_ICEI && parts[i].ctype == PT_FRZW) && t != PT_ACID)
 					parts[i].life = 0;
 				if (t == PT_FIRE)

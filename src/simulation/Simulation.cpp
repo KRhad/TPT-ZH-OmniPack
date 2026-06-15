@@ -190,6 +190,8 @@ SaveLoadData Simulation::LoadSave(int loadX, int loadY, const Save *originalSave
 		ignoreMissingErrors[PT_WTRV] = true;
 		ignoreMissingErrors[PT_FIRE] = true;
 		ignoreMissingErrors[PT_BRMT] = true;
+		ignoreMissingErrors[PT_FOG] = true;
+		ignoreMissingErrors[PT_RIME] = true;
 	}
 
 	SaveLoadData saveLoadData;
