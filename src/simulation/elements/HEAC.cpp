@@ -104,14 +104,16 @@ int HEAC_update(UPDATE_FUNC_ARGS)
 				r = pmap[y+rry][x+rrx];
 				if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 				{
-					c_heat += parts[ID(r)].temp;
-					hc_total += sim->HeatCapacityOf(parts[ID(r)]);
+					float hc = sim->HeatCapacityOf(parts[ID(r)]);
+					c_heat += parts[ID(r)].temp * hc;
+					hc_total += hc;
 				}
 				r = photons[y+rry][x+rrx];
 				if (r && !sim->IsHeatInsulator(parts[ID(r)]))
 				{
-					c_heat += parts[ID(r)].temp;
-					hc_total += sim->HeatCapacityOf(parts[ID(r)]);
+					float hc = sim->HeatCapacityOf(parts[ID(r)]);
+					c_heat += parts[ID(r)].temp * hc;
+					hc_total += hc;
 				}
 			}
 		}
