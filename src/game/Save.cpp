@@ -2508,6 +2508,14 @@ void Save::BuildSave()
 				{
 					RESTRICTVERSION(98, 0);
 				}
+				if (particles[i].type == PT_BASE || particles[i].type == PT_SEED)
+				{
+					RESTRICTVERSION(100, 0);
+				}
+				if ((particles[i].type == PT_PIPE || particles[i].type == PT_PPIP) && (particles[i].tmp & PFLAG_CAN_CONDUCT))
+				{
+					RESTRICTVERSION(100, 0);
+				}
 
 				// Get the pmap entry for the next particle in the same position
 				i = partsPosLink[i];
