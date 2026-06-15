@@ -35,6 +35,10 @@ int tempParts[XRES];
 #define MAX_FRAME		0x0F
 #define DEFAULT_LIMIT	0x1F
 #define DEFAULT_ARM_LIMIT	0xFF
+constexpr int FLAG_EXT_OBSTACLE = 0x01; // xxx1 : Don't extend if blocked by obstacles
+constexpr int FLAG_EXT_ARMLIMIT = 0x02; // xx1x : Don't extend if blocked by arm limit
+constexpr int FLAG_RET_OBSTACLE = 0x04; // x1xx : Don't retract if frme hinders movement
+constexpr int FLAG_RET_TOOSHORT = 0x08; // 1xxx : Don't retract if arm is shorter than retraction length
 
 StackData CanMoveStack(Simulation * sim, int stackX, int stackY, int directionX, int directionY, int maxSize, int amount, bool retract, int block)
 {
@@ -67,7 +71,7 @@ StackData CanMoveStack(Simulation * sim, int stackX, int stackY, int directionX,
 	return StackData(currentPos - spaces, spaces);
 }
 
-int MoveStack(Simulation *sim, int stackX, int stackY, int directionX, int directionY, int maxSize, int amount, bool retract, int block, int sticky, int callDepth)
+int MoveStack(Simulation *sim, int stackX, int stackY, int directionX, int directionY, int maxSize, int amount, bool retract, int block, int sticky, int callDepth, bool cancelOnObstacle)
 {
 	int posX, posY;
 	int c, j;
@@ -88,7 +92,11 @@ int MoveStack(Simulation *sim, int stackX, int stackY, int directionX, int direc
 			{
 				int spaces = CanMoveStack(sim, posX, posY, realDirectionX, realDirectionY, maxSize, amount, retract, block).spaces;
 				if (spaces < amount)
+				{
+					if (cancelOnObstacle)
+						return 0;   // Obstacle encountered, tmp3 flags are set such that shortened movement is not allowed, abort before moving anything
 					amount = spaces;
+				}
 			}
 			else
 			{
@@ -104,7 +112,11 @@ int MoveStack(Simulation *sim, int stackX, int stackY, int directionX, int direc
 			{
 				int spaces = CanMoveStack(sim, posX, posY, realDirectionX, realDirectionY, maxSize, amount, retract, block).spaces;
 				if (spaces < amount)
+				{
+					if (cancelOnObstacle)
+						return 0;   // Obstacle encountered, tmp3 flags are set such that shortened movement is not allowed, abort before moving anything
 					amount = spaces;
+				}
 			}
 			else
 			{
@@ -118,20 +130,20 @@ int MoveStack(Simulation *sim, int stackX, int stackY, int directionX, int direc
 		{
 			posY = stackY + (c*newY);
 			posX = stackX + (c*newX);
-			MoveStack(sim, posX, posY, directionX, directionY, maxSize, amount, retract, block, !parts[ID(pmap[posY][posX])].tmp, 1);
+			MoveStack(sim, posX, posY, directionX, directionY, maxSize, amount, retract, block, !parts[ID(pmap[posY][posX])].tmp, 1, cancelOnObstacle);
 		}
 		for (c = 1; c < maxLeft; c++)
 		{
 			posY = stackY - (c*newY);
 			posX = stackX - (c*newX);
-			MoveStack(sim, posX, posY, directionX, directionY, maxSize, amount, retract, block, !parts[ID(pmap[posY][posX])].tmp, 1);
+			MoveStack(sim, posX, posY, directionX, directionY, maxSize, amount, retract, block, !parts[ID(pmap[posY][posX])].tmp, 1, cancelOnObstacle);
 		}
 
 		//Remove arm section if retracting with FRME
 		if (retract)
 			for (j = 1; j <= amount; j++)
 				sim->part_kill(ID(pmap[stackY+(directionY*-j)][stackX+(directionX*-j)]));
-		return MoveStack(sim, stackX, stackY, directionX, directionY, maxSize, amount, retract, block, !parts[ID(pmap[stackY][stackX])].tmp, 1);
+		return MoveStack(sim, stackX, stackY, directionX, directionY, maxSize, amount, retract, block, !parts[ID(pmap[stackY][stackX])].tmp, 1, cancelOnObstacle);
 	}
 	if (retract)
 	{
@@ -291,11 +303,16 @@ int PSTN_update(UPDATE_FUNC_ARGS)
 						{
 							if (state == PISTON_EXTEND)
 							{
-								if (armCount+pistonCount > armLimit)
-									pistonCount = armLimit-armCount;
+								if (armCount + pistonCount > armLimit)
+								{
+									if (parts[i].tmp3 & FLAG_EXT_ARMLIMIT)
+										continue; // If extending piston would exceed the armLimit, skip extension entirely
+									pistonCount = armLimit - armCount;
+								}
 								if (pistonCount > 0)
 								{
-									newSpace = MoveStack(sim, pistonEndX, pistonEndY, directionX, directionY, maxSize, pistonCount, false, parts[i].ctype, 1, 0);
+									bool cancelOnObstacle = parts[i].tmp3 & FLAG_EXT_OBSTACLE;
+									newSpace = MoveStack(sim, pistonEndX, pistonEndY, directionX, directionY, maxSize, pistonCount, false, parts[i].ctype, 1, 0, cancelOnObstacle);
 									if (newSpace)
 									{
 										//Create new piston section
@@ -319,10 +336,15 @@ int PSTN_update(UPDATE_FUNC_ARGS)
 							else if (state == PISTON_RETRACT)
 							{
 								if (pistonCount > armCount)
+								{
+									if (parts[i].tmp3 & FLAG_RET_TOOSHORT)
+										continue; // Arm too short to retract according to constraint D
 									pistonCount = armCount;
+								}
 								if (armCount && pistonCount > 0)
 								{
-									MoveStack(sim, pistonEndX, pistonEndY, directionX, directionY, maxSize, pistonCount, true, parts[i].ctype, 1, 0);
+									bool cancelOnObstacle = parts[i].tmp3 & FLAG_RET_OBSTACLE; // Only retract if no obstacles hinder frme movement
+									MoveStack(sim, pistonEndX, pistonEndY, directionX, directionY, maxSize, pistonCount, true, parts[i].ctype, 1, 0, cancelOnObstacle);
 									movedPiston = 1;
 								}
 							}
