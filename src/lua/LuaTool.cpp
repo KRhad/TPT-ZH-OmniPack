@@ -47,12 +47,9 @@ int LuaTool::luaPerformWrapper(LuaTool *tool, Simulation *sim, particle *cpart, 
 		lua_pushinteger(l, x);
 		lua_pushinteger(l, y);
 		lua_pushnumber(l, the_game->GetToolStrength());
-		lua_pushboolean(l, the_game->IsShiftHeld());
-		lua_pushboolean(l, the_game->IsCtrlHeld());
-		lua_pushboolean(l, the_game->IsAltHeld());
 		lua_pushinteger(l, brushX);
 		lua_pushinteger(l, brushY);
-		if (tpt_lua_pcall(l, 9, 1, 0, eventTraitNone))
+		if (tpt_lua_pcall(l, 6, 1, 0, eventTraitNone))
 		{
 			luacon_log("In perform func: " + luacon_geterror());
 			lua_pop(l, 1);
@@ -76,10 +73,7 @@ void LuaTool::luaClickWrapper(int index, Simulation *sim, Brush *brush, Point po
 	lua_pushinteger(l, position.X);
 	lua_pushinteger(l, position.Y);
 	lua_pushnumber(l, the_game->GetToolStrength());
-	lua_pushboolean(l, the_game->IsShiftHeld());
-	lua_pushboolean(l, the_game->IsCtrlHeld());
-	lua_pushboolean(l, the_game->IsAltHeld());
-	if (tpt_lua_pcall(l, 7, 0, 0, eventTraitNone))
+	if (tpt_lua_pcall(l, 4, 0, 0, eventTraitNone))
 	{
 		luacon_log("In click func: " + luacon_geterror());
 		lua_pop(l, 1);
@@ -95,10 +89,7 @@ void LuaTool::luaDragWrapper(int index, Simulation *sim, Brush *brush, Point pos
 	lua_pushinteger(l, position2.X);
 	lua_pushinteger(l, position2.Y);
 	lua_pushnumber(l, the_game->GetToolStrength());
-	lua_pushboolean(l, the_game->IsShiftHeld());
-	lua_pushboolean(l, the_game->IsCtrlHeld());
-	lua_pushboolean(l, the_game->IsAltHeld());
-	if (tpt_lua_pcall(l, 9, 0, 0, eventTraitNone))
+	if (tpt_lua_pcall(l, 6, 0, 0, eventTraitNone))
 	{
 		luacon_log("In drag func: " + luacon_geterror());
 		lua_pop(l, 1);
@@ -112,10 +103,7 @@ void LuaTool::luaDrawWrapper(int index, Simulation *sim, Brush *brush, Point pos
 	lua_pushinteger(l, position.X);
 	lua_pushinteger(l, position.Y);
 	lua_pushnumber(l, the_game->GetToolStrength());
-	lua_pushboolean(l, the_game->IsShiftHeld());
-	lua_pushboolean(l, the_game->IsCtrlHeld());
-	lua_pushboolean(l, the_game->IsAltHeld());
-	if (tpt_lua_pcall(l, 7, 0, 0, eventTraitNone))
+	if (tpt_lua_pcall(l, 4, 0, 0, eventTraitNone))
 	{
 		luacon_log("In draw func: " + luacon_geterror());
 		lua_pop(l, 1);
@@ -131,10 +119,8 @@ void LuaTool::luaDrawLineWrapper(int index, Simulation *sim, Brush *brush, Point
 	lua_pushinteger(l, position2.X);
 	lua_pushinteger(l, position2.Y);
 	lua_pushnumber(l, the_game->GetToolStrength());
-	lua_pushboolean(l, the_game->IsShiftHeld());
-	lua_pushboolean(l, the_game->IsCtrlHeld());
-	lua_pushboolean(l, the_game->IsAltHeld());
-	if (tpt_lua_pcall(l, 9, 0, 0, eventTraitNone))
+	lua_pushboolean(l, dragging);
+	if (tpt_lua_pcall(l, 7, 0, 0, eventTraitNone))
 	{
 		luacon_log("In drawLine func: " + luacon_geterror());
 		lua_pop(l, 1);
@@ -150,10 +136,7 @@ void LuaTool::luaDrawRectWrapper(int index, Simulation *sim, Brush *brush, Point
 	lua_pushinteger(l, position2.X);
 	lua_pushinteger(l, position2.Y);
 	lua_pushnumber(l, the_game->GetToolStrength());
-	lua_pushboolean(l, the_game->IsShiftHeld());
-	lua_pushboolean(l, the_game->IsCtrlHeld());
-	lua_pushboolean(l, the_game->IsAltHeld());
-	if (tpt_lua_pcall(l, 9, 0, 0, eventTraitNone))
+	if (tpt_lua_pcall(l, 6, 0, 0, eventTraitNone))
 	{
 		luacon_log("In drawRect func: " + luacon_geterror());
 		lua_pop(l, 1);
@@ -167,10 +150,7 @@ void LuaTool::luaDrawFillWrapper(int index, Simulation *sim, Brush *brush, Point
 	lua_pushinteger(l, position.X);
 	lua_pushinteger(l, position.Y);
 	lua_pushnumber(l, 1.0f /*the_game->GetToolStrength()*/);
-	lua_pushboolean(l, false /*the_game->IsShiftHeld()*/);
-	lua_pushboolean(l, false /*the_game->IsCtrlHeld()*/);
-	lua_pushboolean(l, false /*the_game->IsAltHeld()*/);
-	if (tpt_lua_pcall(l, 7, 0, 0, eventTraitNone))
+	if (tpt_lua_pcall(l, 4, 0, 0, eventTraitNone))
 	{
 		luacon_log("In drawFill func: " + luacon_geterror());
 		lua_pop(l, 1);
