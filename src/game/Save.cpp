@@ -1349,6 +1349,11 @@ void Save::ParseSaveOPS()
 							particles[newIndex].tmp3 = int(tmp3);
 						}
 					}
+					if (createdVersion < 100)
+					{
+						// tmp flags now exist in the spot previously used by PIPE before ver. 93, clear them
+						particles[newIndex].tmp &= ~0xFF;
+					}
 					// Note: PSv was used in version 77.0 and every version before, add something in PSv too if the element is that old
 
 					newIndex++;
@@ -2002,6 +2007,7 @@ void Save::ParseSavePSv()
 						particles[i-1].tmp |= 0x00020000; //PFLAG_INITIALIZING
 					particles[i-1].tmp |= (particles[i-1].ctype - 1) << 18;
 					particles[i-1].ctype = particles[i-1].tmp & 0xFF;
+					particles[i-1].tmp &= ~0xFF;
 				}
 				if (particles[i-1].type == PT_HSWC || particles[i-1].type == PT_PUMP)
 				{
