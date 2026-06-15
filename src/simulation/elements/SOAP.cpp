@@ -14,6 +14,7 @@
  */
 
 #include "simulation/ElementsCommon.h"
+#include "simulation/elements/SOAP.h"
 
 static bool validIndex(int i)
 {
@@ -40,7 +41,7 @@ void attach(int i1, int i2)
 	}
 }
 
-void detach(int i)
+void SOAP_detach(int i)
 {
 	if ((parts[i].ctype&2) == 2 && validIndex(parts[i].tmp) && parts[parts[i].tmp].type == PT_SOAP)
 	{
@@ -55,6 +56,14 @@ void detach(int i)
 	}
 
 	parts[i].ctype = 0;
+}
+
+void SOAP_neighourLoop(float &dx, float &dy)
+{
+	if (dx >= (XRES / 2 - CELL)) dx -= XRES - 2 * CELL;
+	if (dy >= (YRES / 2 - CELL)) dy -= YRES - 2 * CELL;
+	if (dx < -(XRES / 2 - CELL)) dx += XRES - 2 * CELL;
+	if (dy < -(YRES / 2 - CELL)) dy += YRES - 2 * CELL;
 }
 
 #define SOAP_FREEZING 248.15f
@@ -89,21 +98,21 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 							target = parts[target].tmp;
 							if (!validIndex(target))
 								break;
-							detach(target);
+							SOAP_detach(target);
 						}
 						if (parts[target].ctype&4)
 						{
 							target = parts[target].tmp2;
 							if (!validIndex(target))
 								break;
-							detach(target);
+							SOAP_detach(target);
 						}
 					}
 				}
 				if ((parts[i].ctype&6) != 6)
 					parts[i].ctype = 0;
 				if (validIndex(parts[i].tmp) && (parts[i].ctype&6) == 6 && (parts[parts[i].tmp].ctype&6) == 6 && parts[parts[i].tmp].tmp == i)
-					detach(i);
+					SOAP_detach(i);
 			}
 			parts[i].vy = (parts[i].vy-0.1f)*0.5f;
 			parts[i].vx *= 0.5f;
@@ -139,7 +148,7 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 								if (bmap[(y+ry)/CELL][(x+rx)/CELL] ||
 								    (r && !(sim->elements[TYP(r)].Properties&TYPE_GAS) && TYP(r) != PT_SOAP && TYP(r) != PT_GLAS))
 								{
-									detach(i);
+									SOAP_detach(i);
 									continue;
 								}
 							}
@@ -174,6 +183,7 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 		{
 			float dx = parts[i].x - parts[parts[i].tmp].x;
 			float dy = parts[i].y - parts[parts[i].tmp].y;
+			SOAP_neighourLoop(dx, dy);
 			float d = 9/(pow(dx, 2)+pow(dy, 2)+9)-0.5f;
 
 			parts[parts[i].tmp].vx -= dx*d;
@@ -190,6 +200,7 @@ int SOAP_update(UPDATE_FUNC_ARGS)
 				{
 					dx = parts[ii].x - parts[parts[i].tmp].x;
 					dy = parts[ii].y - parts[parts[i].tmp].y;
+					SOAP_neighourLoop(dx, dy);
 					d = 81/(pow(dx, 2)+pow(dy, 2)+81)-0.5f;
 
 					parts[parts[i].tmp].vx -= dx*d*0.5f;
@@ -260,7 +271,7 @@ void SOAP_ChangeType(ELEMENT_CHANGETYPE_FUNC_ARGS)
 {
 	if (from == PT_SOAP && to != PT_SOAP)
 	{
-		detach(i);
+		SOAP_detach(i);
 	}
 }
 

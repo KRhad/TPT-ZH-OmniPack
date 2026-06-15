@@ -16,6 +16,7 @@
 #include "simulation/ElementsCommon.h"
 #include "simulation/elements/PPIP.h"
 #include "simulation/elements/PRTI.h"
+#include "simulation/elements/SOAP.h"
 #include "graphics.h"
 
 signed char pos_1_rx[] = { -1,-1,-1, 0, 0, 1, 1, 1 };
@@ -362,8 +363,6 @@ void pushParticle(Simulation *sim, int i, int count, int original)
 	return;
 }
 
-void detach(int i);
-
 int PIPE_update(UPDATE_FUNC_ARGS)
 {
 	if (parts[i].ctype && !sim->elements[TYP(parts[i].ctype)].Enabled)
@@ -513,7 +512,7 @@ int PIPE_update(UPDATE_FUNC_ARGS)
 				else if (!TYP(parts[i].ctype) && (sim->elements[TYP(r)].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)))
 				{
 					if (TYP(r) == PT_SOAP)
-						detach(ID(r));
+						SOAP_detach(ID(r));
 					PIPE_transfer_part_to_pipe(sim, parts+(ID(r)), parts + i);
 					sim->part_kill(ID(r));
 				}

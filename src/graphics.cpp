@@ -50,6 +50,7 @@
 #include "simulation/elements/EMP.h"
 #include "simulation/elements/FIGH.h"
 #include "simulation/elements/LIFE.h"
+#include "simulation/elements/SOAP.h"
 #include "simulation/elements/STKM.h"
 
 #include "gui/game/PowderToy.h"
@@ -2096,7 +2097,12 @@ void render_parts(pixel *vid, Simulation * sim, Point mousePos)
 				if (t==PT_SOAP) //pixel_mode & EFFECT_LINES, pointless to check if only soap has it ...
 				{
 					if ((parts[i].ctype&3) == 3 && parts[i].tmp >= 0 && parts[i].tmp < NPART)
-						draw_line(vid, nx, ny, (int)(parts[parts[i].tmp].x+0.5f), (int)(parts[parts[i].tmp].y+0.5f), colr, colg, colb, XRES+BARSIZE);
+					{
+						float dx = parts[parts[i].tmp].x - nx;
+						float dy = parts[parts[i].tmp].y - ny;
+						SOAP_neighourLoop(dx, dy);
+						draw_line(vid, nx, ny, (int)(nx + dx + 0.5f), (int)(ny + dy + 0.5f), colr, colg, colb, XRES+BARSIZE);
+					}
 				}
 				if(pixel_mode & PSPEC_STICKMAN)
 				{

@@ -15,6 +15,7 @@
 
 #include "simulation/ElementsCommon.h"
 #include "simulation/elements/PRTI.h"
+#include "simulation/elements/SOAP.h"
 
 /*these are the count values of where the particle gets stored, depending on where it came from
    0 1 2
@@ -25,8 +26,6 @@
 */
 const int portal_rx[8] = {-1, 0, 1, 1, 1, 0,-1,-1};
 const int portal_ry[8] = {-1,-1,-1, 0, 1, 1, 1, 0};
-
-void detach(int i);
 
 int PRTI_update(UPDATE_FUNC_ARGS)
 {
@@ -60,7 +59,7 @@ int PRTI_update(UPDATE_FUNC_ARGS)
 				continue;// Handling these is a bit more complicated, and is done in STKM_interact()
 
 			if (TYP(r) == PT_SOAP)
-				detach(ID(r));
+				SOAP_detach(ID(r));
 
 			if (channel->StoreParticle(sim, ID(r), count))
 				fe = 1;
