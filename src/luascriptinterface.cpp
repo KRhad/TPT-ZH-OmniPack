@@ -4786,6 +4786,7 @@ void initEventAPI(lua_State * l)
 	lua_pushinteger(l, LuaEvents::keypress); lua_setfield(l, -2, "KEYPRESS");
 	lua_pushinteger(l, LuaEvents::keyrelease); lua_setfield(l, -2, "KEYRELEASE");
 	lua_pushinteger(l, LuaEvents::textinput); lua_setfield(l, -2, "TEXTINPUT");
+	lua_pushinteger(l, LuaEvents::textediting); lua_setfield(l, -2, "TEXTEDITING");
 	lua_pushinteger(l, LuaEvents::mousedown); lua_setfield(l, -2, "MOUSEDOWN");
 	lua_pushinteger(l, LuaEvents::mouseup); lua_setfield(l, -2, "MOUSEUP");
 	lua_pushinteger(l, LuaEvents::mousemove); lua_setfield(l, -2, "MOUSEMOVE");

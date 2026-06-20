@@ -154,6 +154,7 @@ public:
 		keypress,
 		keyrelease,
 		textinput,
+		textediting,
 		mousedown,
 		mouseup,
 		mousemove,
