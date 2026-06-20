@@ -147,7 +147,7 @@ bool Label::CheckPlaceCursor(bool updateCursor, unsigned int position, int posX,
 // all-in-one function that updates displayText with \r, updates cursor position, and cuts string where needed
 void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 {
-	int posX = 0, posY = 12, cursorOffset = 0;
+	int posX = 0, posY = 12;
 	unsigned int wordStart = 0;
 	bool updatedCursor = false;
 
@@ -238,8 +238,6 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 						//use \r instead of \n, that way it can be easily filtered out when copying without ugly hacks
 						text.insert(replacePos, "\r");
 						wordlen++;
-						if (!updatedCursor)
-							cursorOffset++;
 						posX = 0;
 						posY += 12;
 					}

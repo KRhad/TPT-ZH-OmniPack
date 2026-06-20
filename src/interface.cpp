@@ -1722,7 +1722,7 @@ bool confirm_ui(pixel *vid_buf, const char *top, const char *msg, const char *bt
 
 int stamp_ui(pixel *vid_buf, int *reorder)
 {
-	int b=1,bq,mx,my,d=-1,i,j,k,x,gx,gy,y,w,h,r=-1,rnm=-1,stamp_page=0,per_page=GRID_X*GRID_Y,page_count;
+	int b=1,bq,mx,my,d=-1,i,j,k,gx,gy,w,h,r=-1,rnm=-1,stamp_page=0,per_page=GRID_X*GRID_Y,page_count;
 	char page_info[64];
 	std::set<unsigned int> toDelete;
 	int numStamps = Stamps::Ref().GetNumStamps();
@@ -1764,13 +1764,9 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 				{
 					gx = ((XRES/GRID_X)*i) + (XRES/GRID_X-XRES/GRID_S)/2;
 					gy = ((((YRES-MENUSIZE+20)+15)/GRID_Y)*j) + ((YRES-MENUSIZE+20)/GRID_Y-(YRES-MENUSIZE+20)/GRID_S+10)/2 + 18;
-					x = (XRES*i)/GRID_X + XRES/(GRID_X*2);
-					y = (YRES*j)/GRID_Y + YRES/(GRID_Y*2);
 					gy -= 20;
 					w = stamp.thumb_w;
 					h = stamp.thumb_h;
-					x -= w/2;
-					y -= h/2;
 					if (stamp.thumb)
 					{
 						draw_image(vid_buf, stamp.thumb, gx+(((XRES/GRID_S)/2)-(w/2)), gy+(((YRES/GRID_S)/2)-(h/2)), w, h, 255);
@@ -2222,11 +2218,13 @@ int save_name_ui(pixel *vid_buf)
 		ui_edit_process(mx, my, b, bq, &ed2);
 		ui_checkbox_process(mx, my, b, bq, &cbPublish);
 		ui_checkbox_process(mx, my, b, bq, &cbPaused);
+#ifndef NOMOD
 		if (!can_publish)
 		{
 			cbPublish.checked = false;
 			cbPublish.focus = false;
 		}
+#endif
 
 		if ((b && !bq && mx>=x0 && mx<x0+242 && my>=y0+94+YRES/4 && my<y0+110+YRES/4) || sdl_key==SDLK_RETURN)
 		{
@@ -6681,8 +6679,8 @@ void catalogue_ui(pixel * vid_buf)
 	bool dragging = false;
 	bool touchDragged2 = false;
 	int initialMouseY = 0;
-#endif
 	int initialOffset = 0;
+#endif
 	bool touchDragged = false; // when true, ignore clicks on saves
 	int listy = 0, listxc;
 	int listx = 0, listyc;
@@ -6790,7 +6788,9 @@ void catalogue_ui(pixel * vid_buf)
 					cssave = cssave->next;
 				}
 				offsetf -= (YRES/CATALOGUE_S+20);
+#ifdef TOUCHUI
 				initialOffset -= (YRES/CATALOGUE_S+20);
+#endif
 				thidden += CATALOGUE_X;
 			} else {
 				offsetf = (YRES/CATALOGUE_S+20);
@@ -6812,7 +6812,9 @@ void catalogue_ui(pixel * vid_buf)
 					cssave = cssave->prev;
 				}
 				offsetf += (YRES/CATALOGUE_S+20);
+#ifdef TOUCHUI
 				initialOffset += (YRES/CATALOGUE_S+20);
+#endif
 				thidden -= CATALOGUE_X;
 			} else {
 				offsetf = 0.0f;
