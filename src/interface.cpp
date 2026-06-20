@@ -336,7 +336,7 @@ void ui_edit_process(int mx, int my, int mb, int mbq, ui_edit *ed)
 		}
 		ed->overDelete = 0;
 	}
-	if (ed->focus && sdl_key)
+	if (ed->focus && (sdl_key || sdl_textinput.length()))
 	{
 		ed->numClicks = 0;
 		l = strlen(ed->str);
