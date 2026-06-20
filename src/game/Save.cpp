@@ -1352,7 +1352,8 @@ void Save::ParseSaveOPS()
 					if (createdVersion < 100)
 					{
 						// tmp flags now exist in the spot previously used by PIPE before ver. 93, clear them
-						particles[newIndex].tmp &= ~0xFF;
+						if (particles[newIndex].type == PT_PIPE || particles[newIndex].type == PT_PPIP)
+							particles[newIndex].tmp &= ~0xFF;
 					}
 					// Note: PSv was used in version 77.0 and every version before, add something in PSv too if the element is that old
 
