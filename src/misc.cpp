@@ -578,10 +578,8 @@ void load_presets(void)
 				globalSim->air->SetVorticityCoeffPref(tmpobj->valuedouble);
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "ConvectionMode")))
 				globalSim->air->convectionMode = tmpobj->valueint;
-#ifndef ANDROID
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "NewtonianGravity")) && tmpobj->valueint == 1)
 				globalSim->grav->StartAsync();
-#endif
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "AmbientHeat")))
 				aheat_enable = tmpobj->valueint;
 			if ((tmpobj = cJSON_GetObjectItem(simulationobj, "PrettyPowder")))
