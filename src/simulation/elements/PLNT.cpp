@@ -340,22 +340,53 @@ int PLNT_update(UPDATE_FUNC_ARGS)
 	return 0;
 }
 
+constexpr std::array<std::array<int, 3>, 8> leafColor = {{
+	{{ 243, 246, 244 }}, // White
+	{{ 255, 223, 50  }}, // Yellow
+	{{ 255, 183, 197 }}, // Pink
+	{{ 250, 0,   25  }}, // Red
+	{{ 128, 206, 196 }}, // Cyan / light blue
+	{{ 127, 255, 0   }}, // Bright green
+	{{ 0,   74,  178 }}, // Blue
+	{{ 12,  172, 0   }}  // Usual PLNT green
+}};
+
 int PLNT_graphics(GRAPHICS_FUNC_ARGS)
 {
-	float maxtemp = std::max((float)cpart->tmp2, cpart->temp);
-	if (maxtemp > 300)
+	if (cpart->ctype == 0)
 	{
-		*colr += (int)restrict_flt((maxtemp-300)/5,0,58);
-		*colg -= (int)restrict_flt((maxtemp-300)/2,0,102);
-		*colb += (int)restrict_flt((maxtemp-300)/5,0,70);
-		if (maxtemp > 350)
-			cpart->tmp2 = (int)maxtemp;
+		float maxtemp = std::max((float)cpart->tmp2, cpart->temp);
+		if (maxtemp > 300)
+		{
+			*colr += (int)restrict_flt((maxtemp-300)/5,0,58);
+			*colg -= (int)restrict_flt((maxtemp-300)/2,0,102);
+			*colb += (int)restrict_flt((maxtemp-300)/5,0,70);
+		}
+		if (maxtemp < 273)
+		{
+			*colg += (int)restrict_flt((273-maxtemp)/4,0,255);
+			*colb += (int)restrict_flt((273-maxtemp)/1.5,0,255);
+		}
 	}
-	if (maxtemp < 273)
+	else
 	{
-		*colg += (int)restrict_flt((273-maxtemp)/4,0,255);
-		*colb += (int)restrict_flt((273-maxtemp)/1.5f,0,255);
+		// Set tree-grown PLNT color
+		int colour = (cpart->ctype >> PLNT_COLOUR) & 0x3f;
+
+		int cyan = (colour & 0b110000) != 0;
+		int magenta = (colour & 0b001100) != 0;
+		int yellow = (colour & 0b000011) != 0;
+
+		int ind = 4*cyan + 2*magenta + yellow;
+
+		if (0 <= ind && ind < 8)
+		{
+			*colr = leafColor[ind][0];
+			*colg = leafColor[ind][1];
+			*colb = leafColor[ind][2];
+		}
 	}
+
 	return 0;
 }
 
