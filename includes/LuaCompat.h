@@ -15,9 +15,17 @@ extern "C"
 #include "lua5.2/lauxlib.h"
 #include "lua5.2/lualib.h"
 #elif defined(LUAJIT)
+
+#ifdef MACOSX
+#include "luajit-2.0/lua.h"
+#include "luajit-2.0/lauxlib.h"
+#include "luajit-2.0/lualib.h"
+#else
 #include "luajit-2.1/lua.h"
 #include "luajit-2.1/lauxlib.h"
 #include "luajit-2.1/lualib.h"
+#endif
+
 #else
 #include "lua5.1/lua.h"
 #include "lua5.1/lauxlib.h"
