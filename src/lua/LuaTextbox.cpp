@@ -1,0 +1,111 @@
+#ifdef LUACONSOLE
+
+#include "LuaTextbox.h"
+
+#include "luascriptinterface.h"
+
+#include "interface/Textbox.h"
+#include "interface/Window.h"
+
+const char LuaTextbox::className[] = "textbox";
+
+#define method(class, name) {#name, &class::name}
+Luna<LuaTextbox>::RegType LuaTextbox::methods[] = {
+	method(LuaTextbox, text),
+	method(LuaTextbox, readonly),
+	method(LuaTextbox, focus),
+	method(LuaTextbox, onTextChanged),
+	method(LuaTextbox, position),
+	method(LuaTextbox, size),
+	method(LuaTextbox, visible),
+	{0, 0}
+};
+
+LuaTextbox::LuaTextbox(lua_State * l) :
+	LuaComponent(l),
+	onTextChangedFunction()
+{
+	this->l = l;
+	int posX = luaL_optinteger(l, 1, 0);
+	int posY = luaL_optinteger(l, 2, 0);
+	int sizeX = luaL_optinteger(l, 3, 10);
+	int sizeY = luaL_optinteger(l, 4, 10);
+	std::string text = tpt_lua_optString(l, 5, "");
+	std::string placeholder = tpt_lua_optString(l, 6, "");
+
+	textbox = new Textbox(Point(posX, posY), Point(sizeX, sizeY), text);
+	textbox->SetPlaceholder(placeholder);
+	textbox->SetCallback([this] { triggerOnTextChanged(); });
+	textbox->SetSelfManaged();
+	component = textbox;
+}
+
+int LuaTextbox::readonly(lua_State * l)
+{
+	int args = lua_gettop(l);
+	if(args)
+	{
+		luaL_checktype(l, 1, LUA_TBOOLEAN);
+		textbox->SetReadOnly(lua_toboolean(l, 1));
+		return 0;
+	}
+	else
+	{
+		lua_pushboolean(l, textbox->IsReadOnly());
+		return 1;
+	}
+}
+
+int LuaTextbox::focus(lua_State * l)
+{
+	int args = lua_gettop(l);
+	if (args)
+	{
+		luaL_checktype(l, 1, LUA_TBOOLEAN);
+		if (lua_toboolean(l, 1))
+			textbox->GetParent()->FocusComponent(textbox);
+		else
+			textbox->GetParent()->DefocusComponent(textbox);
+		return 0;
+	}
+	else
+	{
+		lua_pushboolean(l, textbox->IsFocused());
+		return 1;
+	}
+}
+
+int LuaTextbox::onTextChanged(lua_State * l)
+{
+	return onTextChangedFunction.CheckAndAssignArg1(l);
+}
+
+void LuaTextbox::triggerOnTextChanged()
+{
+	if (onTextChangedFunction)
+	{
+		lua_rawgeti(l, LUA_REGISTRYINDEX, onTextChangedFunction);
+		lua_rawgeti(l, LUA_REGISTRYINDEX, owner_ref);
+		if (tpt_lua_pcall(l, 1, 0, 0))
+		{
+			luacon_log(tpt_lua_toString(l, -1));
+		}
+	}
+}
+
+int LuaTextbox::text(lua_State * l)
+{
+	int args = lua_gettop(l);
+	if(args)
+	{
+		textbox->SetText(tpt_lua_checkString(l, 1));
+		return 0;
+	}
+	else
+	{
+		tpt_lua_pushString(l, textbox->GetText());
+		return 1;
+	}
+}
+
+#endif

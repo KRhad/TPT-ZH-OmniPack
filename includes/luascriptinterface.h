@@ -1,0 +1,275 @@
+#ifdef LUACONSOLE
+#ifndef LUASCRIPT_H
+#define LUASCRIPT_H
+
+#include <luaconsole.h>
+#include <map>
+#include "simulation/StructProperty.h"
+#include "simulation/SimulationData.h"
+
+// idea from mniip, makes things much simpler
+#define SETCONST(L, NAME)\
+	lua_pushinteger(L, NAME);\
+	lua_setfield(L, -2, #NAME)
+
+#define SETCONSTAS(L, NAME, AS)\
+lua_pushinteger(L, NAME);\
+	lua_setfield(L, -2, AS)
+
+#define SETCONSTF(L, NAME)\
+lua_pushnumber(L, NAME);\
+	lua_setfield(L, -2, #NAME)
+
+extern char custom_can_move[PT_NUM][PT_NUM];
+void custom_init_can_move();
+
+class LuaComponent;
+extern std::map<LuaComponent *, LuaSmartRef> grabbed_components;
+extern int textInputRefcount;
+
+extern long unsigned int luaExecutionStart;
+extern int luaHookTimeout;
+
+extern lua_State * l; // global lua state, used in some callbacks
+
+int simulation_signIndex(lua_State *l);
+int simulation_signNewIndex(lua_State *l);
+int simulation_newsign(lua_State *l);
+void initSimulationAPI(lua_State * l);
+int simulation_partNeighbors(lua_State * l);
+int simulation_partChangeType(lua_State * l);
+int simulation_partCreate(lua_State * l);
+int simulation_partID(lua_State * l);
+int simulation_partProperty(lua_State * l);
+int simulation_partPosition(lua_State * l);
+int simulation_partKill(lua_State * l);
+int simulation_partExists(lua_State * l);
+int simulation_pressure(lua_State* l);
+int simulation_velocityX(lua_State* l);
+int simulation_velocityY(lua_State* l);
+int simulation_ambientHeat(lua_State* l);
+int simulation_gravityMass(lua_State * l);
+int simulation_wallMap(lua_State * l);
+int simulation_elecMap(lua_State * l);
+int simulation_fanVelocityX(lua_State * l);
+int simulation_fanVelocityY(lua_State * l);
+int simulation_ambientHeatSim(lua_State* l);
+int simulation_heatSim(lua_State* l);
+int simulation_newtonianGravity(lua_State* l);
+int simulation_createParts(lua_State * l);
+int simulation_createLine(lua_State * l);
+int simulation_createBox(lua_State * l);
+int simulation_floodParts(lua_State * l);
+int simulation_createWalls(lua_State * l);
+int simulation_createWallLine(lua_State * l);
+int simulation_createWallBox(lua_State * l);
+int simulation_floodWalls(lua_State * l);
+int simulation_toolBrush(lua_State * l);
+int simulation_toolLine(lua_State * l);
+int simulation_toolBox(lua_State * l);
+int simulation_decoBrush(lua_State * l);
+int simulation_decoLine(lua_State * l);
+int simulation_decoBox(lua_State * l);
+int simulation_floodDeco(lua_State * l);
+int simulation_decoColor(lua_State * l);
+int simulation_clearSim(lua_State * l);
+int simulation_clearRect(lua_State * l);
+int simulation_resetTemp(lua_State * l);
+int simulation_resetPressure(lua_State * l);
+int simulation_saveStamp(lua_State * l);
+int simulation_loadStamp(lua_State * l);
+int simulation_deleteStamp(lua_State * l);
+int simulation_listStamps(lua_State *l);
+int simulation_loadSave(lua_State * l);
+int simulation_reloadSave(lua_State * l);
+int simulation_getSaveID(lua_State * l);
+int simulation_adjustCoords(lua_State * l);
+int simulation_prettyPowders(lua_State * l);
+int simulation_gravityGrid(lua_State * l);
+int simulation_edgeMode(lua_State * l);
+int simulation_gravityMode(lua_State * l);
+int simulation_customGravity(lua_State * l);
+int simulation_airMode(lua_State * l);
+int simulation_waterEqualization(lua_State * l);
+int simulation_ambientAirTemp(lua_State * l);
+int simulation_edgePressure(lua_State * l);
+int simulation_edgeVelocity(lua_State * l);
+int simulation_vorticityCoeff(lua_State * l);
+int simulation_convectionMode(lua_State* l);
+int simulation_elementCount(lua_State* l);
+int simulation_canMove(lua_State * l);
+int simulation_parts(lua_State * l);
+int simulation_brush(lua_State * l);
+int simulation_pmap(lua_State * l);
+int simulation_photons(lua_State * l);
+int simulation_neighbours(lua_State * l);
+int simulation_framerender(lua_State * l);
+int simulation_gspeed(lua_State * l);
+int simulation_takeSnapshot(lua_State *l);
+int simulation_historyRestore(lua_State *l);
+int simulation_historyForward(lua_State *l);
+int simulation_replaceModeFlags(lua_State *l);
+int simulation_listCustomGol(lua_State *l);
+int simulation_listDefaultGol(lua_State *l);
+int simulation_addCustomGol(lua_State *l);
+int simulation_removeCustomGol(lua_State *l);
+int simulation_lastUpdatedID(lua_State *l);
+int simulation_updateUpTo(lua_State *l);
+int simulation_temperatureScale(lua_State *l);
+int simulation_randomseed(lua_State * l);
+int simulation_hash(lua_State * l);
+int simulation_ensureDeterminism(lua_State * l);
+int simulation_paused(lua_State * l);
+int simulation_stickman(lua_State * l);
+int simulation_partCount(lua_State * l);
+int simulation_decoSpace(lua_State * l);
+int simulation_gravityField(lua_State * l);
+int simulation_resetGravityField(lua_State * l);
+int simulation_resetSpark(lua_State * l);
+int simulation_resetVelocity(lua_State * l);
+int simulation_stickman(lua_State * l);
+
+void initRendererAPI(lua_State * l);
+int renderer_renderMode(lua_State * l);
+int renderer_displayMode(lua_State * l);
+int renderer_colorMode(lua_State * l);
+int renderer_decorations(lua_State * l);
+int renderer_grid(lua_State * l);
+int renderer_debugHud(lua_State * l);
+int renderer_hud(lua_State * l);
+int renderer_showBrush(lua_State * l);
+int renderer_depth3d(lua_State * l);
+int renderer_zoomEnabled(lua_State *l);
+int renderer_zoomWindowInfo(lua_State *l);
+int renderer_zoomScopeInfo(lua_State *l);
+int renderer_fireSize(lua_State *l);
+int renderer_useDisplayPreset(lua_State *l);
+
+void initFileSystemAPI(lua_State * l);
+int fileSystem_list(lua_State * l);
+int fileSystem_exists(lua_State * l);
+int fileSystem_isFile(lua_State * l);
+int fileSystem_isDirectory(lua_State * l);
+int fileSystem_isLink(lua_State * l);
+int fileSystem_makeDirectory(lua_State * l);
+int fileSystem_removeDirectory(lua_State * l);
+int fileSystem_removeFile(lua_State * l);
+int fileSystem_move(lua_State * l);
+int fileSystem_copy(lua_State * l);
+
+void initInterfaceAPI(lua_State * l);
+int interface_showWindow(lua_State * l);
+int interface_closeWindow(lua_State * l);
+int interface_addComponent(lua_State * l);
+int interface_removeComponent(lua_State * l);
+int interface_grabTextInput(lua_State * l);
+int interface_dropTextInput(lua_State * l);
+int interface_textInputRect(lua_State * l);
+int interface_beginMessageBox(lua_State * l);
+int interface_beginThrowError(lua_State * l);
+int interface_beginInput(lua_State * l);
+int interface_beginConfirm(lua_State * l);
+int interface_activeMenu(lua_State * l);
+int interface_menuEnabled(lua_State * l);
+int interface_menuClick(lua_State * l);
+int interface_numMenus(lua_State * l);
+int interface_perfectCircleBrush(lua_State * l);
+int interface_console(lua_State * l);
+int interface_windowSize(lua_State * l);
+int interface_brushID(lua_State * l);
+int interface_brushRadius(lua_State * l);
+int interface_mousePosition(lua_State * l);
+int interface_activeTool(lua_State * l);
+
+void initGraphicsAPI(lua_State * l);
+int graphics_textSize(lua_State * l);
+int graphics_drawText(lua_State * l);
+int graphics_drawPixel(lua_State * l);
+int graphics_drawLine(lua_State * l);
+int graphics_drawRect(lua_State * l);
+int graphics_fillRect(lua_State * l);
+int graphics_drawCircle(lua_State * l);
+int graphics_fillCircle(lua_State * l);
+int graphics_getColors(lua_State * l);
+int graphics_getHexColor(lua_State * l);
+int graphics_setClipRect(lua_State * l);
+int graphics_toolTip(lua_State * l);
+
+void LuaGetProperty(lua_State* l, StructProperty property, intptr_t propertyAddress);
+void LuaSetProperty(lua_State* l, StructProperty property, intptr_t propertyAddress, int stackPos);
+void LuaSetParticleProperty(lua_State* l, int particleID, StructProperty property, intptr_t propertyAddress, int stackPos);
+
+void initElementsAPI(lua_State * l);
+int elements_allocate(lua_State * l);
+int elements_element(lua_State * l);
+int elements_property(lua_State * l);
+int elements_loadDefault(lua_State * l);
+int elements_free(lua_State * l);
+int elements_exists(lua_State * l);
+int elements_getByName(lua_State * l);
+
+void GetDefaultProperties(lua_State * l, int id);
+void SetDefaultProperties(lua_State * l, int id, int stackPos);
+void ManageElementIdentifier(lua_State *l, int id, bool add);
+
+extern int lastToolIndex;
+void initToolsAPI(lua_State * l);
+int tools_allocate(lua_State * l);
+int tools_property(lua_State * l);
+int tools_free(lua_State * l);
+int tools_exists(lua_State * l);
+int tools_isCustom(lua_State * l);
+Tool * GetToolByIndex(int index);
+void SetToolIndex(lua_State *l, std::string identifier, int index);
+
+void initPlatformAPI(lua_State * l);
+int platform_platform(lua_State * l);
+int platform_build(lua_State * l);
+int platform_releaseType(lua_State * l);
+int platform_exeName(lua_State * l);
+int platform_restart(lua_State * l);
+int platform_openLink(lua_State * l);
+int platform_clipboardCopy(lua_State * l);
+int platform_clipboardPaste(lua_State * l);
+int platform_showOnScreenKeyboard(lua_State * l);
+int platform_getOnScreenKeyboardInput(lua_State * l);
+
+void initEventAPI(lua_State * l);
+int event_register(lua_State * l);
+int event_unregister(lua_State * l);
+int event_getmodifiers(lua_State * l);
+
+void initHttpAPI(lua_State * l);
+int http_get(lua_State *l);
+int http_post(lua_State *l);
+int http_get_auth_token(lua_State *l);
+
+void initSocketAPI(lua_State * l);
+
+void initBZ2API(lua_State *l);
+int bz2_compress_wrapper(lua_State *l);
+int bz2_decompress_wrapper(lua_State *l);
+
+void tpt_lua_pushString(lua_State *L, const std::string &str);
+
+std::string tpt_lua_toString(lua_State *L, int index);
+
+std::string tpt_lua_checkString(lua_State *L, int index);
+
+std::string tpt_lua_optString(lua_State *L, int index, std::string defaultValue = {});
+
+int tpt_lua_loadstring(lua_State *L, const std::string &str);
+int tpt_lua_dostring(lua_State *L, const std::string &str);
+
+bool tpt_lua_equalsString(lua_State *L, int index, const char *data, size_t size);
+template<size_t N>
+bool tpt_lua_equalsLiteral(lua_State *L, int index, const char (&lit)[N])
+{
+	return tpt_lua_equalsString(L, index, lit, N - 1U);
+}
+
+int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc, EventTraits eventTrait);
+int tpt_lua_pcall(lua_State *L, int numArgs, int numResults, int errorFunc);
+
+#endif
+#endif

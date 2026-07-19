@@ -1,0 +1,1371 @@
+
+Version 1.0: http://min.us/lbuOtsPdEMibD2
+Original release, with most of the stuff from my Lua Mod
+
+Version 2.0: http://min.us/lzFWVBYhl5Xfi
+Now with MOVING SOLIDS!
+
+Version 2.1: http://min.us/lbvyL8rkNJlcni
+Latest source + source now on github
+
+Version 3.0: http://min.us/lbjHzEoxmXAFzP
+Added Animated LCRY. Moving solids and ANIM save when you make a stamp or 
+save.
+
+Version 4.0: http://min.us/l2FzyIz4AYBS9
+Moving solids can rotate now, disabled by default, 
+go into the Fav2 menu and click SPIN to allow them to rotate. 
+Also added Indestructible insulator and One time wire, 
+and did some fixes to FIND and BALL.
+
+Version 5.0: http://min.us/lbh6DDTJzdNFU3
+Added automatic and manual heat displays. In automatic heat display, 
+the highest temp is pink and the lowest is dark blue. In Manual, 
+you can decide which temp is displayed as the hottest color and which is 
+the lowest, and everything in between will be based off that. 
+I also added powdered portals and virus/cure, and updated to the latest 
+source to get rid of the update box.
+
+Version 5.1: http://min.us/lDCKmb9BdFazn
+Updated to latest version, added activator, which can be used in creations 
+to prevent people from sparking buttons until specific times. Also, re-added 
+in buttons to switch to the different modes, except blob and heat gradient.
+
+Version 6.0: http://min.us/lUgHNsGndzdbh
+Added powered invisible, blob and heat gradient display, portal effects, and 
+wifi/portal lines. Also added the old lua console commands: sound(must be 
+enable with a shortcut), load, bubble, reset_temp, and reset_pressure(works 
+with the same parameters reset_velocity does). There are three new lua 
+commands: get_pressure, get_gravity, and maxframes(sets the number of frames 
+ANIM can have when created, 1-256). Also, render_ui uses the old cmode 
+pictures in color.Note: the button keys to change display modes, blob & heat 
+gradient display, portal effects (Simon forgot the wifi/portal lines), and 
+new icons all got into the official version. Not much of this code was 
+actually written by me, a lot of it was taken from github after Simon deleted 
+it. He said he might add in more stuff that I wrote later.
+
+Version 7.0: http://min.us/lK604TH6bFNV4
+Added readme. Faster drawing and deleting of elements. Added RAZR, an element
+heavier than all other elements. Added new button in FAV2 menu that can make
+saves compatible with the latest beta or release version and able to be
+published. It makes sure that you don't add in any new elements not in those
+versions. PINV+PHOT = ELEC. SPNG drags along other particles with it, even 
+solids that normally can't move.
+
+Version 8.0: http://min.us/muN92vQxC
+Wall names display in the hud. New lua functions: get_wall and create_wall. A 
+New Wall: ERASEALL. It can erase walls, signs, and particles all at once. 
+Most powered elements drawn in this version are now activated instantly. Set 
+the tmp to zero to keep the old way of activating. New properties that can be 
+set using the lua console: CLONE (0x40000), BREAKABLECLONE (0x80000), 
+POWERED (0x100000), and INDESTRUCTIBLE (0x20000). Use the first 3 together to 
+make different kinds of clone using elements. The last one makes things 
+invincible to every element, and even prevents it from being destroyed in 
+reactions. You can make things like indestructible WATR or METL. Lua code can 
+now be saved. Put it in luacode.txt, and it will be saved and run in 
+stamps/saves. Press up in the console and then enter to load an example.
+
+Version 9: http://min.us/muN92vQxC
+Fix loading some saves and fixed crash with HUD. Removed update button 
+permanently and updated to newer source. Also, decoration color is now drawn 
+on stamps in the stamp browser. 2 new quickoptions: Newtonian gravity and 
+ambient heat. Custom HUDs. To change one, click the HUD2 button in the second 
+favorites menu and different options will come up. You can change all 4 of 
+the original HUD's and it will save and be loaded the next time you start. 
+Also added a few more options not in any normal HUD.
+
+Version 10
+Added display mode toggles, press Ctrl+ a number key besides 4 and 8 to 
+toggle the main feature of that display temporarily. Added more statistics. 
+Fixed some moving solid bugs and made rotation save. Updated to newest 
+source, which includes the new save format, but you can choose to save in the 
+old format instead. You can delete corrupted stamps now. Fix three powered 
+electronic related bugs, all electronics should work like they're supposed 
+to now. Added a decoration smudge (blend) tool
+
+Version 11 - 2/21/12
+Added PROP2 tool, you can draw properties on with the normal brush now. 
+Improved decoration drawing speed and added a hex value display and floodfill 
+to it. Changed menus of some elements. Added a new test icon for the favorites 
+menu. Added an update check, if there is a new version, you can use the link 
+in the message of the day to download a zip file containing the next version 
+of this mod. Added COND, only conducts to other COND with same tmp within a 
+tmp2 radius. Added PWHT, flood fill heats the element above it to it's temp. 
+Use PROP on it to make it create other properties. Added rechargeable battery, 
+set the tmp of battery to the maximum charge it can hold, METL to charge, 
+PSCN/NSCN to turn on/off. Some other stuff not listed here.
+
+Version 12 - 3/2/12
+Added tabs. Hit the tab button in the quickoptions menu or press Ctrl to show 
+a menu of all the tabs you have open. You can switch between them, or open a 
+new one (what you are doing is copied over). Tabs are saved and not simulated 
+when you are not using them. Press shift to save pressure in stamps and saves, 
+RCTRL to keep it when transforming stamps. Added fusion. see thread 12901 for 
+more info (http://powdertoy.co.uk/Discussions/Thread/View.html?Thread=12901). 
+Added realistic mode, not by me and not too noticeable. Autosave button, 
+disabled by default. If Powder Toy unexpectedly closes, the next time you 
+open it your work will appear. Fix decoration tools.
+
+Version 12.1 - 3/3/12
+Make text say version 12, not 10. Remove update check and replace it with 
+another link. Fix crash when you click the LUA button and luacode.txt was 
+missing
+
+Version 13 - 3/18/12
+Fix glitch when VOID-like elements eat particles. Changes and fixes to FIND 
+tool, can also now find walls. Ctrl+F to quickly find and Ctrl+S to save the 
+current tab/create a backup in case of a crash. Shift+R reloads the current 
+tab without saving, Ctrl+Q then clicking yes completely exits from anywhere, 
+and Ctrl+O opens the saves catalogue. You can now edit alpha in the deco 
+editor. Alpha is displayed in (OPS) stamps, all wall types drawn in all 
+stamps. save/load more things in powder.pref. Now uses static Libraries, no 
+dll's are needed. Some fusion changes to make it more controllable.
+
+Version 14 - 4/1/12
+Lua code in saves run in a limited environment without access to dangerous 
+functions that could cause a virus. Prevent infinite loops in Lua, they will 
+exit after 3 seconds (you can click cancel to let it continue running though).
+Oxygen fusion added. 4 New commands: tpt.clear_sim(), tpt.restore_defaults(),
+tpt.reset_elements(). Moving solid ability added to all elements, use 
+tpt.enable_moving_solids() to make all solids move like BALL does. That last 
+one was an April fools joke, if you couldn't tell already.
+
+Version 14.1 - 4/7/12
+Really update to latest source. Fix infinite fusion and burning oxygen. CLNE 
+and PCLN are indestructible, BCLN and PBCN break with DEST and SING again. 
+BHOL, VENT, and VOID are not destroyed by DEST or SING now. New lua commands: 
+tpt.draw(or fill)circle(x,y,rx,ry,r,g,b,a) and tpt.indestructible(string name 
+or particle number). An optional argument to that is a 0, which makes it 
+destructible again. Added Easter egg hunt, press 'e' to start. Removed in 
+version 15.
+
+Version 14.2 - 4/30/12
+update to latest source again. reversible pipe - spark with PSCN to reverse, 
+NSCN to unreverse. This mod is temporarily discontinued, but will be started 
+again in May/June.
+
+Version 15 - 5/22/12
+Fix some deco editor bugs. Element descriptions fade in and out nicely.Fixes 
+to the old menu, the favorites menu is always drawn on bottom when using that. 
+Ability to make custom lua graphics functions. Fix glitch in HUD (life 
+wouldn't show up). You can scroll through comments on saves, but only 10 at 
+most are able to show up. User ID's are now drawn on comments. You can write 
+in color now. Use Ctrl  + one of these letters: w (white), g (grey), o 
+(orange), r (red), l (red-orange), b (blue), and t (light blue). Colors can 
+go in comments, tags, and save names and be seen by all tpt users. They can't 
+go in signs or local saves names (colors are removed). Update to 79.2 source.
+
+Version 16 - 6/14/12
+VOID and PVOD can be set to only eat their ctype (or only not eat it if their 
+tmp is 1). Local save deletion inside tpt. Fix saving as release/beta version, 
+fix many saving problems. Fix SING explosion. lua functions can be auto-
+completed when writing commands in the console (ex. type "tpt.s" and press 
+tab, it changes to "tpt.set_property("). Works with many common lua console 
+commands/things. Lightning can be cloned and it's initial direction is 
+affected by Newtonian gravity too. Right HUD always drawn on top. Moving 
+solids are solid inside and much less glitchy. Also, use tpt.moving_solid() 
+to allow any element to move like moving solid.
+
+Version 16.1 - 6/18/12
+Fix saving as release version, fix saves with LIGH in them. Fix PIPE exploding 
+when energy particles went in it. Front page labeled as page 1, not page 0. 
+Up to 100 comments on saves can be loaded now, they are loaded as you scroll 
+down. Moving solids don't collide with particles they can go through. Fix 
+moving solids causing stacking and BHOL being created. Update to latest source 
+again (still 80.4) which fixes some other bugs.
+
+Version 16.2 - 6/18/12
+Fixed saving saves publicly, remove ability to create colored text.
+
+Version 16.3 - 6/25/12
+Make Some lua console shortcuts less annoying. Fix compression during fusion 
+and with moving sponge. Fix moderator name colors, also, your name is yellow 
+and save creators is red. Update to latest source.
+
+Version 17.0 - 7/5/12
+Many minor graphical fixes to the HUD. FIND can find 3 things at once. Left 
+selected element is red, right selected is blue, and alternate selected is 
+green. LCtrl/RCtrl/Shift + F to toggle these. Also, a new FIND2 button which 
+toggles an alternate find mode more similar to my lua script, where first 
+everything is dimmed, and then a dot is put over what you're finding. Click 
+a user ID to switch to showing comment post times and dates instead. Use the 
+DATE button to change the format. Date format also applies to the HUD now, if 
+you chose to display it. The areas for stamp saving, copying, and cutting can 
+be drawn backwards now. Fix first comment on saves not showing. Fix crash bug 
+with powered electronics and moving solids, ANIM activated instantly now too. 
+New flood-fill brush shape. Many speed improvements by skipping unneeded 
+things. WOOD and PLNT look burnt when hot and frozen when cold. VIRS has a 
+small chance of destroying CURE. saving stamps looks better & you can delete 
+multiple stamps at once with Ctrl+red delete button. Many other minor fixes 
+and changes.
+
+Version 18 - 8/2/12
+Fix bug where all solids could move like SPNG, fix low pressure transition not 
+working. Fix lava's ctype getting changed. You can now highlight text in 
+textboxes and copy/delete just that. SING with a tmp2 of 1 emits gravity 
+instead of pressure (still creates tons of pressure anyway), and with a tmp2 
+of 2 does both. Antimatter's ctype and tmp act tike VOID's (eats it's ctype). 
+Right click the reload button to go back to open_ui. Fix moving solids not 
+showing in HUD. Add scrollbar to scrolling menus. Fix VACU/VENT. Limit the 
+FPS everywhere, so tpt doesn't use 100% CPU when you're not in the main game. 
+Tons of new lua commands, you can pass nothing into functions that set a 
+variable to return that variable instead. When changing the screen size, you 
+can change it even if your screen if too small if you want. Improvements to 
+open_ui, you can click a username to search for their saves, and shift click 
+to see their profile.
+
+Version 18.1 8/7/12
+Fix crash when saving invalid elements (that you shouldn't have anyway). Add 
+an icon to the deco menu and element search ui. Disable reversible pipe on non 
+mod saves. Improvements to the deco menu to make it feel more like the editor, 
+fix middle click to get decocolor inside of it. Fix graphics function crash. 
+Fixes to PWHT so that it works and saves better. Fix instantly powered 
+electronics not saving. Combine PROP & PROP2. To use old prop, flood fill with 
+Ctrl + Shift. Fix TRON. GEL and SPNG can absorb water from elements and leaves 
+behind what the element was mixed with. (ex. PSTE + SPNG -> CLST). Ask to run 
+lua code in saves, instead of just running automatically.
+
+Version 19 8/22/12
+Update to version 82, with all the things I added to that including powered 
+pipe. Fix comments with '/n' in them not displaying correctly. Fix BRAY/EMBR 
+graphics (PMODE_GLOW), make it easier to find stickmen with FIND tool. Add 
+tpt.outside_airtemp, sets the outside ambient heat temperature. More custom 
+HUD options, plus fix a few bugs with it. Fix H2 and O2 not burning at high 
+temperatures (from Triclops200 in tpt++). Edge loop option.
+
+Version 19.1 9/2/12
+Fix some stickmen spawning glitches (still in tpt though). Fast quit option 
+(found in the simulation options). Compatibility with saves made in tpt++ 
+(fixes walls). Fix deco not showing when drawing on ANIM. The extra 1st 
+page saves option stays on like the other search options do. Add things from 
+tpt version 83.0 (DTEC, things from my pull request).
+
+Version 19.2 10/5/12
+Allow longer comments on saves, and the comment box resizes to fit. Allow 
+longer signs to be loaded in saves and make the sign creation ui larger to 
+allow you to make signs the size they are in tpt++. Fix clicking usernames on 
+the bottom row of saves not working. Add some minor simulation changes made 
+in tpt and tpt++.
+
+Version 19.3 10/19/12
+Fix minor problem where PBCN and PLCN wouldn't clone until a frame after they 
+were activated. Fix really long comments not loading, the comments not being 
+drawn to the very bottom, bugs with the resizing comment box, jump when 
+scrolling past certain comments, and scrolling when typing certain letters in 
+the comment box. Use {t:id|text} to link to forum threads and {s:query|text} 
+to start a save search (added by me in tpt++ first). Added tpt++ elements: 
+DMG and TSNS. Fix being unable to save PIPE sometimes (error when saving, 
+invalid element). Fix some moving solid crashes. Fix HUD showing incorrect 
+values with double scale enabled. Don't load selected elements or render mode 
+in saves anymore. Fix tpt bug that will cause you to get logged out sometimes 
+when you shouldn't. Fix another tpt bug where Newtonian gravity wouldn't get 
+reloaded after reloading a save - thanks to jacksonmj for the fix. Make VIRS 
+last longer. Enable the # of votes icon on all saves for everyone.
+
+Version 19.4 11/3/12
+Remove DISPLAY_EFFE from render options. Fix clicking the copy id button 
+exiting the save preview. Fix being able to click usernames and id's from 
+under the comment box (again). Shift-clicking a username from the my own 
+section to search for their saves will work correctly now. Fix shift/ctrl 
+clicking moderators' not searching correctly. Increase number of comments that 
+can be loaded to 200. Add in VIBR and BVBR from tpt++ (still not the final 
+version, 19.4.1 will be soon). Fix PROP_NEUTPENETRATE. Fix bug causing switch 
+to act differently in some rare cases. Fix tools menusection having an extra 
+empty space in old menu ('o') mode. Add 'Empty' edge mode option.
+
+Version 19.4.1 11/5/12
+Fix save as current name and improve how saving works (will allow public / 
+mod saves easily now). Put in the final version of VIBR. Make the thumbnails 
+look as good as I can get them, tpt++'s thumbnail renderer isn't as good, so 
+new thumbnails won't look as good. Add sensors menu icon.
+
+Version 20.0 12/6/12
+Fix DTEC and TSNS not detecting energy particles. Make pressing enter not 
+open the save in the save preview, deleting the comment. Make an error while 
+sending a comment (like posting too frequently) not delete the comment. Fix not 
+being able to remove convo notifications. Fix VIRS+water equalization. Fix any 
+differences with SWCH and other electronics from tpt that was breaking saves. 
+Some minor simulation updates from tpt++. Add back color presets to deco 
+editor, fix some minor bugs with the editor. Add in updater! Thanks to mniip 
+for the space on his server. This readme probably won't update with future 
+updates, but you can still see it on the mod's thread and on github.
+
+Version 20.1 12/7/12
+Fix no fire effects showing after clearing the sim or opening any save. Fix 
+the 'open; button from the website (if you have this 'installed' with ctrl+i)
+
+Version 20.2 12/21/12
+Support both tpt and tpt++ readme's at the same time. Many tpt++ bug fixes to 
+elements like TRON, GLAS, TSNS, SLTW, and WARP. Hold control when selecting a 
+stamp to not reorder it. Change destructibility of clones and voids to match 
+tpt's (although I changed it because I liked my ways better). Fix ANIM pausing 
+and improve the editing of it. Fix really old tpt bug where thumbnails may not 
+load in the save browser, make them load much faster. Send version info and 
+username to the update server when checking.
+
+Version 20.3 12/23/12
+Fix possible crash glitch caused by my tpt++ STKM eaten by CONV fix
+
+Version 20.4 1/8/13
+Fix freeze and remove message when it can't find the update server. The 
+updater will probably continue working when the server is back up. Simulation 
+updates from tpt++ (DTEC detecting GOL fix, VOID/BHOL eat LIGH). Paused 
+checkbox when saving.
+
+Version 21.0 1/25/13
+Change login to tpt++ method, if you login again, this allows comments to be 
+submitted like it, meaning no "posting to frequently" message anymore. Reload 
+comments after submitting one. Highlightable comments. Deco menu must be 
+clicked to open (like tpt++ will be), or press b. New tpt++ elements before 
+they are out (possibly incomplete): CRAY, PSTN, FRME. All the tpt++ lua api's 
+except for interface, lua scripts using the elements api will work now this 
+means. Fix '[' / ']' keys not scrolling comments when not logged in. An option 
+to turn off updates, change the update server to check mniip.com instead, or 
+to just turn them off completely. Fix things being invisible on first startup. 
+Change version number to 85.0, now pretends to be tpt++.
+
+Version 21.1 1/31/13
+Fix excessive stacking bug and weird problems with particle movement, that 
+was creating many problems. Fix copying from comments usually not working. 
+Update this mod's github link in the motd. Fix cause of infinite pressure 
+bug caused by assigning large hotair values with lua. Update PSTN and FRME to
+current tpt++ version.
+
+Version 21.2 2/1/13
+Fix crash when trying to submit another comment before the comments have 
+reloaded. Fix error messages not being considered errors. Fix updating 
+when using mniip.com update server (change back to default IP address to 
+update)
+
+Version 21.3 2/15/13
+Increase zoom to default tpt++ size. Fix crash when one of the first 7 
+comments is REALLY long. Fix crash when loading deleted saves with comments. 
+Fix negative votes display bug and next page arrow showing when it shouldn't. 
+Fix setting deco color with tpt.set_property. DEST won't move clone elements 
+anymore. Don't load edge mode in saves anymore. Memory leak fixes. Allow 
+saving of new elements, since official version 86 is out now.
+
+Version 21.4 2/18/13
+A small CRAY fix from version 86.1.
+
+Version 22.0 3/18/13
+Fix some remaining memory leaks tpt had. Update PSTN and CRAY to the latest 
+changes (PSTN's ctype sets stopper elememt, FRME tmp 1 is non sticky). tpt++ 
+changes to ACEL, DCEL, and NEUTPASS changes too. tpt++ sim.partPosition and 
+sim.partID lua api methods. More constants for mod version info. Fix large 
+comments not being drawn at all. motd swaps between mine and real every time 
+it is shown. remove bounds check in all elements since it isn't needed.
+
+Version 22.1 5/5/13
+Fix NEUT not going through INVS. A few updates to CRAY and PSTN from tpt++. 
+Fix bomb not destroying PBCN. Fix middle click in the deco editor. More fixes 
+to comment scrolling. Fix setting falldown property with lua. Add the 3 new 
+tpt++ elements and some more changes made to elements in tpt++.
+
+Version 23.0 5/25/13
+A ton of improvements to the console / lua, including all the fixes made in 
+the last tpt++ version (implicit returns / tostrings, rewrite of event 
+registration, multiline input, etc.). Better tpt.log, can log to the main 
+screen now. Fix a PROP crash and allow up/down arrow to scroll properties. 
+Fix broken motd with no internet. Many simulation updates from tpt++ (CFLM 
+changes, loop narrow changes, faster GOL, stickmen rocket boots), also all 
+the recent description changes and menusection changes. Remove OTWR and COND 
+from the menu. Some other things from tpt++ like bluescreens and saving 
+window position. Way better console, there is a dragable dividing line 
+between them and results will never overlap with the commands. Textboxes can 
+also be resizable, and console commands / output is highlightable now. Also 
+command history is saved / loaded to powder.pref, and a few other fixes to 
+some other interfaces. Increase maximum stamp pages to 25. A lot of fixes 
+and changes to textboxes, you can double / triple click them like text in 
+other programs.
+
+Version 23.1 6/2/13
+Fix almost irreversible infinite crashing loop with the new bluescreens. They 
+would try to nicely reload your work after the crash, but when it was the save 
+that crashed it, it would constantly restart and keep crashing, and be very 
+hard to stop. Fix crash with LIGH :P. Fix a bunch of small bugs with textboxes 
+and labels from the last update, including multiple comments being selected at 
+once, highlighting errors when clicking a name to reply, and bugs when trying 
+to defocus the auto-focused textbox in the console.
+
+Version 23.1 (build 17) 6/3/13
+Fix weird PRTO crash on save 1214884. Fix glitch where BOMB was set off by but 
+wouldn't destroy CLNE.
+
+Version 23.1 (build 18) 6/3/13
+Fix all the textboxes in the deco editor being focused by default. Fix bug 
+where if you left the deco editor in certain ways, you couldn't click or use 
+the keyboard
+
+Version 24.0 7/12/13
+Decrease tool strength by half, holding ctrl slows it more and holding shift 
+speeds it up. Re-arrange tools menu a little and update the tool and wall 
+descriptions. A ton of simulation updates and bugfixes from tpt++. Change 
+internal version number to 88.0 (doesn't affect saving). ctrl+z works better 
+and goes back to the last time you drew something or opened a save. Overhaul 
+of tabs. They now save more info inside them, and they have their own 
+thumbnailsand names. Right clicking a tab will delete it, and you can use the 
+reloadbutton to reload a tab. Ctrl+s to save it and set a new reload point, 
+ctrl+n tostart a new tab, 't' to open / close the tabs menu. If installed, 
+hitting "open"on the website will open the save in a new tab. Fix 
+tpt.moving_solid. Fix issue where multiple comments could be highlighted at 
+once in save preview and console. A bunch of fixes relating to walls and 
+photons with flood fill. Time enabled by default in HUD.
+
+Version 24.0 (build 20) 7/14/13
+Windows build to fix the bug where you couldn't hold down and draw conductive
+wall, and blob mode would always be on if you had fire mode on when quitting.
+
+Version 24.0 (build 21) 7/15/13
+Fix crash when turning on newtonian gravity with the quickoption
+
+Version 25.0 10/24/13
+Yes this mod is still alive. It was just on a few month break :P. Large 
+internal rewrites, some by jacksonmj, some by me. Elements and element drawing 
+code, menu code, brush code, and some other related things were all redone 
+(partially to completely). Move around a few elements. Fix !set type and !set 
+ctype sometimes not working. Specific delete now activated by 'Delete' or 
+ctrl+semicolon. Many simulation updates from tpt++, including PROT and 
+official VIRS. Add Comment scrolling velocity. Fix not being able to save 
+local saves with mod elements.
+
+Version 25.1 10/29/13
+Fix possible crash when using the same preference file as tpt. Add page number 
+to save preview. Fix incorrect gas/explosive menu icons. Fix VIRS graphics. 
+Fix most holes in rotating moving solids, enable rotation by default. Update 
+internal version number to 89.0.274
+
+Version 25.1 (build 24) 11/11/13
+Fix some VIRS saves not opening. Fix moving solids sometimes not drawing. Fix 
+stickmen not respawning. Fix crash when ctrl+alt+clicking. In textboxes, 
+Ctrl+delete deletes one word and shift+arrow keys highlights text. Red DEUT 
+fix from tpt. Start on merging some major optimizations from cracker64. 
+
+Version 26.0 (build 25) 12/17/13
+A ton of optimizations to almost every element, by cracker64. Report anything 
+broken to me. Fix crash when starting game in deco section. Fix crash when 
+saving local saves on linux. Fix clones cloning double. New Element: Gravitons 
+(GRVT), creates Newtonian Gravity. Comment box turns red when your comment 
+gets too long. New HUD option for FILT modes, change default HUD options 
+slightly. sim.elementCount; some rewrites to portals, stickmen, and WIFI from 
+jacksonmj. Fix save browser glitching when shift-clicking a username in the 
+save preview and then opening one of their saves.
+
+Version 26.0 (build 26) 12/18/13
+Fix pmap errors breaking a lot of things including SWCH. Fix GVRT description.
+
+Version 26.1 (build 27) 12/21/13
+Internal changes to how things are sparked. Fix crash when energy particles
+go into portals. Fix ctype not saving correctly. Realistic heat is glitchy,
+so no longer load that from powder.pref. Also attempt to make it less glitchy.
+
+Version 26.2 (build 28) 1/9/14
+pavg option in HUD. Fix ambient heat. Simulation updates from tpt++. Add a
+button to report bugs, feedback, and suggestions. More major rewrites. This
+time; drawing elements, walls, tools, and deco tools have all been redone to
+be neater and separate from each other. Wall IDs and Tool IDs are now separate 
+from element IDs, so the max element cap has also been increased to 256.
+
+Version 26.3 1/16/14
+Fix steamline drawing and floodfill crash. Fix glitch where ARAY didn't spark 
+INST. Possible element search crash fix. Fix STKM(AIR) blowing ability.
+
+Version 26.4 2/3/14
+Rewrites / fixes to Tool, box, and ellipse brush drawing. Fix possible crash
+when shifting stamps, and make ctrl key not needed. Lots of crash fixes for
+some lua functions. Fix STKM2 spawning with really high life (probably). New
+bug icon. PROP remembers what property you set last. Fix things coming out
+the wrong side of portals. Fix some bugs with clicking after exiting out of
+certain interfaces.
+
+Version 26.4 (build 31) 2/5/14
+Fix local saving not working when not logged in. Simulation api functions for
+drawing particles / walls (intended for the next version really ...). Fix
+possible crash when pasting text in linux.
+
+Version 27.0 3/12/14
+TPT multiplayer script by cracker64 embeded inside. Works much better than
+the original, but still has some major syncing bugs and crashes. Add in all
+missing lua api functions, except for interface. Add ADD/SUB/MUL/DIV deco
+tools, fix deco tool drawing bugs. Fix all STKM spawning / life bugs for real
+this time. PINV bugfixes. Fix mouse handling bugs involving the zoom window
+and the screen edges. Wall brush sizes redone to match tpt++. Fix PPIP in HUD,
+and PIPE -> PRTI transfer bug. Fix FIND. Lots of Lua api fixes, updates from
+tpt++, and other generic bug fixes.
+
+Version 27.1 3/13/14
+TPTMP updates to fix some syncing / other issues
+
+Version 27.2 3/23/14
+Fix random stickmen spawning. Fix flood fill only working on first click. Redo
+some stuff related to saving mod elements to be less annoying. Rewrite toolTips
+(work exactly the same). Update TPTMP to version .7 by cracker64. Fix glitches
+when sparks go through portal breaking some saves. Fix error when loading
+really old saves with FAN wall.
+
+Version 27.2 (build 35) 3/25/14
+Fix mouse cursor not displaying in zoom window. Fix crash with deco presets in
+deco editor. Fix key repeat in TPTMP.
+
+Version 27.3 3/31/14
+TPT element suggestions get ignored far too often, that needs to changed. If
+enough people suggest an element, it must be good, and therefore should be added.
+That's why this version adds 15 NEW ELEMENTS! That more then doubles the current
+mod elements. I've added long suggested elements such as breakable diamond (DMD2),
+broken diamond (BDMD), DIRT, MUD, POOP, and blood (BLOD). I've also added some
+gems that never got noticed, such as dinosaur knee liquid (DKLQ, thanks to
+therocketeer), coconut (COCO), and disappearing metal (DIMT). Also included: COCJ,
+LOLZ2, BATT, CMD, OBMA, and STKW. Special thanks to CatAnimation for suggesting
+many of these useful elements. ... Oh, and I fixed the zoom window bugs.
+
+Version 27.3 (build 37) 4/2/14
+Remove april fools joke (15 elements from last version). Bug fixes in the last
+version: fix cursor lines / stamps not appearing in zoom window, Fix particle
+order issues with box drawing, Save ctrl+z snapshot before pasting stamps.
+
+Version 28.0 5/3/14
+More simulation rewrites/cleanups. Fix bug where things may stack and form
+BHOL at the top of the screen. RAZR goes through GEL and kills stickmen. Fix
+bug where CRAY wouldn't spark INST. Update TPTMP to point to new server and
+fix a few bugs / errors with it. Simulation updates and bugfixes from tpt++.
+
+Version 28.1 5/8/14
+Fix crash when using ETRD. Fix out of screen errors in TPTMP. Update
+Bluescreen message.
+
+Version 28.1 (build 40) 5/9/14
+Fix crash with Newtonian Gravity, by compiling on the update server instead of 
+on my new computer.
+
+Version 29.0 6/2/14
+New Element: DRAY. Replicates a line of particles in front of it. Modify with
+.tmp (copyLength), .tmp2 (spaces after copy), and .ctype (element to end copy
+with when .tmp isn't set). New Wall: AIRBLOCK. Allows all particles but not
+air. New build system: SCons. Also NEW: mac version, needs testing but will
+hopefully work on all OS X Versions 10.5+. Fix deco sample with small brush
+sizes. Fix incorrect coords when placing zoom window, hide cursor when mouse
+is in menus. Fix some crashes with invalid walls/menusections in lua. Update
+to latest tpt source, which includes: visual effect for BRAY through FILT,
+changes to deco on FILT/PHOT, less overpowered QRTZ bunkers, and fix for TNT
+floodfill crash.
+
+Version 29.1 6/4/14
+Fix crash when using BRAY. Possibly fix bugs with setting scale.
+
+Version 29.2 7/5/14
+Fix scale setting issue on Linux. Update TPTMP to the latest version. Fix
+crash with portals. Simulation and interface updates from tpt++. Moving solids
+bounce off walls, go through loop edge mode, and are affected by different
+gravity modes. Fix zoom window being drawn on incorrect side sometimes. Fix
+fullscreen on mac (compiling change).
+
+Version 29.2 (build 44) 7/5/14
+Actually update TPTMP to version .72
+
+Version 29.3 8/21/14
+Fix possible crash when opening saves with VIRS. Lots of updates from tpt++,
+including: new spark graphics and render setting, "open data folder" button,
+re-enable deco on old PHOT, make tpt.selected* and tpt.brush* writable, and
+some crash fixes. Fix the mac version.
+
+Version 29.4 8/30/14
+Update version info to TPT version 90.2, allow GRVT and DRAY in saves.
+
+Version 29.5 9/3/14
+Update TPTMP to version .8 (fixes TPTMP)
+
+Version 29.6 9/26/14
+Fix FIGH drawing. Fix loop edge mode, also stickmen now loop properly. Fix
+stickmen spawning with rocket boots. Stamps can be rotated without holding
+ctrl. Update TPTMP to version .82. Fix HUD issues with LAVA and FILT. Add a
+'rescan stamps' button in the save browser.
+
+Version 30.0 10/31/14
+Rewrite parts of README. Fix emap bug, fix q-tips being invisible. Command 
+key works on OS X. Add tpt.set_debug(2). Rewrite moving solids, fixes the 
+drawing bug and makes them sync over TPTMP. Remove tpt.moving_solid(). Redo 
+parts of ANIM, redo Lua code in saves / lua sandbox. Instantly activated 
+electronics is now a setting (automatically turned on or off). Remove 
+support for PSv mod saves or k,d mod saves with MOVS / ANIM / Lua code and 
+move all of that to a better format. Allow uploading saves made in the mod 
+(mod elements invisible to non TPT players). Fix compatibility with tpt++ 
+powder.pref. Remove most mod-specific lua functions (were clones). New 
+element: CRMC. Add the new script manager lua script. Remove OTWR and COND. 
+New sign / stickmen Lua functions. Support tpt++'s save palette (lua / mod 
+elements can change IDs and still be loaded properly). Remove some legacy 
+BRTY / SDL sound code. Drawing / Lua / Simulation updates from tpt++.
+
+Version 30.0 (build 50) 10/31/14
+Fix crash when loading saves without palette (old mod saves / non-tpt++ saves)
+
+Version 30.1 11/3/14
+Fix crash with loading certain mod saves, fix crash with negative ctype SNOW.
+Update internal script manager.
+
+Version 30.2 11/22/14
+Fix loading Proxy and Fullscreen settings. Fix NSCN not turning off sparked
+SWCH. Prevent possible crash loop when trying to restart after a crash. Reset
+stickmen acceleration on respawn (fixes stickmen controllers). Ctrl+f
+shortcut doesn't activate when holding shift or alt. Fix not being able to set
+negative ctypes with PROP. Fix print() crash. yyyy-mm-dd date format option.
+Fix deco sample sometimes sampling the wrong color. Tons of simulation fixes
+and updates from tpt++/jacksonmj. Fix some saves not loading ctype properly.
+
+Version 30.3 1/9/15
+Revert stacked PSTN fix for now. Fix DMG and IRON. Redo how the save browser
+downloads data entirely (will make it easier to edit). Also likely fixes
+freezes when mniip.com or powdertoy.co.uk go down (happens a lot), and reduces
+lag by a bit. Make almost all interfaces cancel when you click off the edges.
+Minor text updates in multiple interfaces. Fix flood fill issue / crash.
+Always send missing key events to lua. ctrl(+shift)+tab switches between tabs.
+Remove autosave button (it was broken, there are better alternatives now). Fix
+some issues with tptmp and the script manager. Other fixes, also simulation
+updates from tpt++.
+
+Version 30.4 2/14/15
+Fix thumbnails sometimes failing to download. Fix modifier state from lua.
+Better .desktop file and icon on Linux. Cancel mouse drawing when moving it
+in / out of the zoom window. Update internal script manager to 3.4. Now
+compiled using lua5.2. Some other minor bugfixes, especially to lua.
+
+Version 31.0 5/23/15
+Stickmen/signs are placed on mouseup, fix LIGH/TESC drawing bugs. Fix PSNS 
+corrupting the simulation. Fix PHOT+loop mode crash and PROT crash. Fix QRTZ 
+conduction not working at all. tpt.setdebug(0x20) for particle debugging key 
+shortcuts (use 'f' key + modifiers). Lots of simulation and lua updates from 
+tpt++. Save to disk option appears by default when not logged in. Add quick 
+save for local saves. Fix wall drawing with rectangle brush shapes. Scale 
+options take effect immediately, also use scale:2 by default when screen size 
+is large enough on first run. Enable the new interface code, used in the new 
+profile viewer interface. Click the key or ctrl+click a username online to 
+enter. Fix DRAY with .tmp=0.
+
+Version 31.1 5/25/15
+Fix ctrl+z
+
+Version 31.2 7/8/15
+Fix crash when scrolling in profile viewer. Update profile viewer to allow
+editing biography/location, add buttons to open the profile or edit the
+profile / avatar on the website. Large internal code refactors. Make active
+walls less glowy. Improvements to PWHT and BALL drawing. Tooltips when
+hovering over link signs. Simulation updates from tpt++.
+
+Version 31.2 (build 58) 7/8/15
+Fix error message when commenting on saves, fix ALT modifier key.
+
+Version 31.2 (build 59 - OS X) 7/15/15
+Fix all deco loading as white on OS X. Fix freeze when hovering mouse over a
+massive amount of stacked portals.
+
+Version 32.0 11/22/15
+Fix crash with BALL. Massive rewrite of the main interface, done to better 
+support the android port of TPT. The mod is still using the "original" UI, not 
+the new touch version, but it will look different. All of the buttons respond 
+nicely to mouseover and match normal TPT more. Many other behind the scenes 
+changes have been made. New sign UI, sign rewrite. Allow setting more things 
+with !set, support hexadecimal. Some deco editor fixes. Fix GRAV changing 
+color when game is paused. Rewrite mouse drawing, to match all the upstream 
+tpt++ fixes and better support TPTMP. Fix airblock wall giving a warning when 
+saving. Make it less likely to accidentally click and exit the save preview. 
+Fix console history not loading when using the mod alongside tpt++. Fix Lua 
+sandbox. Update to TPTMP .85. Tons of simulation and other updates from tpt++ 
+over the last few months.
+
+Version 32.1 11/23/15
+Fix resizing zoom window & changing mouse size while drawing. Fix tooltip 
+never going away when upvoting a save. Fix alt+click issues (took precedence 
+over line/box/flood fill drawing). Fix 'z' being a toggle. Fix some text 
+selection issues in the profile viewer. Always select elements on mousedown.
+
+Version 32.1 (build 62) 11/23/15
+Fix update issues
+
+Version 32.2 11/25/15
+Fix being able to see things under update button. Fix stamps always including 
+every sign. Fix ctrl+x not deleting signs correctly. Fix signs being too 
+large. Fix crash when autorun.lua ran certain functions. Don't use internal 
+tptmp if script manager version is detected. Update internal tptmp to .86. Fix 
+zoom window being in the wrong position when resizing it. Improve HUD position 
+when zoom window is out.
+
+Version 32.3 12/16/15
+Fix profile viewer not working on save preview screen (ctrl+click a username). 
+Fix being able to zoom in off the edge of the screen by resizing the zoom 
+window (can cause crash). Fix PROT life constantly decreasing into the 
+negatives. Fix flood fill on normal particles also deleting photons. Fixes to 
+shift+WIND tool drawing. Improve save browser, should freeze less now. Cancel 
+mouse drawing when starting a zoom window. Fix possible voting issues / 
+improve error messages. Fix crash when loading SPRK with huge ctype. Fix some 
+text in the options menu.
+
+Version 33.0 1/17/16
+Fix clicking on "next page" in the save browser opening a save instead. 
+Improve save / thumbnail download speed, make sure pending downloads don't  
+cause freezes on exit. Fix WIND tool corrupting the pressure grid and causing 
+crashes. Change the update server to http://starcatcher.us/TPT/. Update 
+internal script manager to 3.5 to fix restarting issues. Fix DLAY delay for 
+real this time. Many simulation updates from tpt++ and other changes.
+
+Version 33.1 2/15/16
+Don't require pressing 'enter' to set deco color in editor. Improve mouse 
+handling in deco editor. Fix bug causing it to create deco underneath the 
+color selector when picking a color. Don't allow placing / creating stamps 
+when color selector is shown. Some dialogs now use the new interface code, 
+fixes update dialogs making the bottom row of buttons disappear. Hex color in 
+deco editor can be copied by clicking on the text. Fix electronics sometimes 
+randomly heating to 10K for no reason. Fix embeded lua code being re-run when 
+placing stamps. New ctrl+up/down shortcuts for switching tabs. New lua 
+functions: tpt.menu_enabled, tpt.menu_click, tpt.num_menus(). Fix 'fav' menu 
+when using the alternate menu design ('o' key). Don't load old menu preference 
+from powder.pref because it confused too many people. Some updates from tpt++.
+
+Version 33.2 3/5/16
+Update to be 91.0 internally. CRMC from tpt++ no longer loads as BALL. Redo 
+edge mode handling, edge mode now loads in saves and resets back to what you 
+had it when clearing the screen. Enter can now be used to quit the game when 
+pressing 'q' and when creating signs. Fix ghost sign / potential crashes when 
+pressing enter in sign ui. Update tptmp to .87, possibly fix bug where tptmp 
+wasn't properly embedded into the mod.
+
+Version 33.3 3/5/16
+Fix crash when loading powder.prefs generated in TPT 91.0.
+
+Version 33.4 3/22/16
+Fix shifting stamps causing edge mode to reset to void. Fix PSTN .temp 
+handling. Allow pressing enter to open a save if the comment box is empty. 
+Load render modes from old powder.prefs (prevents invisible particles on 
+updates). Fix embeded multiplayer script. Move bug reporter to starcatcher.us. 
+Modify updater to use the new interface a little more. Some fixes to particle 
+debugging (tpt.setdebug(0x8))
+
+Version 33.4 (build 70) 3/23/16
+Update internal version number to 91.1.325
+
+Version 33.5 4/2/16
+Add red-cyan 3D mode from tpt++ (only accessible via the renderer.depth3d()
+lua function). tpt++: THDR is no longer an energy particle. Make download code
+even more thread safe.
+
+Version 33.6 5/30/16
+Allow DRAY to copy energy particles. Fix crash when sampling lua elements that
+haven't been properly defined. Fix occasional freeze on exit. Add MIX tool
+by simon, from tpt++. Fix DRAY not copying energy particles. Fix 'character'
+arg in lua keyup event (tpt++ fix).
+
+Version 33.7 6/24/16
+Missed some DRAY fixes: fix bug if the first space after the DRAY was empty,
+fix bug with DRAY's ctype sometimes not working
+
+Version 34.0 7/23/16
+Updates from tpt++ / update to 91.4. Fix crash with FIGH in invalid positions. 
+Change favorites menu to use new icons from tpt++. Fix "Scale" setting not 
+saving in the right format. Update internal lua scripts.
+
+Version 34.1 8/8/16
+Update to TPT 91.5. Fixes to loop edge mode (should fix id:2023102). Rewrite 
+the favorites menu. Fixes duplicate elements sometimes appearing, and it now 
+uses the same powder.pref location as default tpt. Recently used elements 
+are no longer prebuilt or saved on exit, and can be removed the same way as 
+favorites elements can be. Fix submenus in old menu interface ('o' key).
+
+Version 35.0 10/3/16
+Redo render modes interface to more closely match tpt and be easier to use. It 
+is also able to run while the simulation is running. The profile viewer now 
+looks better on profiles that require scrolling. Fix exiting the deco menu 
+sometimes changing which tools you had selected (or crashing?). Updates from 
+tpt++. Installing (ctrl+i) on Linux now leaves a desktop entry for Jacob1's 
+Mod. Ensure powder.pref is updated when changing settings and HUD presets. 
+
+Version 35.1 3/5/17
+Fix crash when editing profile. Fix certain render modes always being forced 
+on at startup. Fix crash when loading certain invalid powder.prefs. Redo 
+ctrl+z, it now can restore all simulation state (including signs). Add ctrl+y 
+shortcut, you can now undo/redo up to 5 times, and edit powder.pref to 
+increase this limit up to 200. Move checkboxes to the right side of render UI. 
+Fix "delete" icon in sign UI. Fix PROP tool resetting to delete every time you 
+select an element. Update internal script manager to 3.9. Fix potential crash 
+when creating BALL. Fixes from tpt++, including lag fix when leaving certain 
+saves open for 20+ minutes. Massive speed boost for the windows version, which 
+now uses the MSVC compiler.
+
+Version 35.2 3/5/17
+Fix crash when brush x radius is 0
+
+Version 35.3 5/18/17
+Fix LAVA(GOLD) + EXOT --> LAVA(VIBR) reaction. Better PROP tool sanity 
+checking. Fix WIND tool color. Add ctrl+backspace/delete and shift+up/down 
+support to new UI. Fix being unable to edit link signs. Update internal script 
+manager to 3.10. Fix stickmen respawning after ctrl+z-ing them. Fix save 
+thumbnails often not downloading. Fix -nan temperatures when using realistic 
+heat mode. Simulation updates from tpt++, including PHOT changes, customizable 
+INVS and FRAY, and ambient heat now being saved in saves.
+
+Version 35.4 5/19/17
+Fix Newtonian Gravity and edge mode always turning off when loading stamps. 
+Fix internal script manager being missing on Windows.
+
+Version 36.0 6/21/17
+Fix more textbox issues in new UI. Add the new elements from the snapshots: 
+HEAC, SAWD, POLO, RFRG, RFGL, and LSNS. Fix crash when favoriting elements 
+from search UI. Search UI now adds selected elements to the recents menu. Fix 
+line debugging (tpt.setdebug(0x4)) ignoring zoom window. Fix elements being 
+one R/G/B value less than they should be. Change "sign out" button to 
+"Register Online" when not logged in. Many simulation updates and interface 
+changes from tpt++.
+
+Version 36.1 7/19/17
+Simulation updates from tpt++ (finalize the new elements). Workaround for 
+broken 404 save. Add logging inside saves for which IDs material was taken 
+from. Fix RAZR not cutting through SAWD. ctrl+click now selects top sign. 
+Wall brush graphics now snapped to the grid when drawing lines and boxes.
+
+Version 36.2 7/23/17
+Change version number to 92.0.331
+
+Version 36.3 8/7/17
+Update with all changes and fixes from TPT 92.1.332. Add double DNS 
+verification to ensure that if the DNS for powdertoy.co.uk expires or is 
+changed, the site is still accessible.
+
+Version 36.4 8/12/17
+Fix clicking out of bounds not closing save preview ui. Fix PROT being 
+destroyed traveling through powered-off LCRY.
+
+Version 37.0 9/30/17
+Fix issue where cursor type (wall/brush) wouldn't update when switching 
+between left/right click. Fix elem.allocate being able to delete lua keywords 
+and overwrite strings. Update to TPT 92.5. Now uses luajit, which gives a 
+10-40% speed boost when running lua scripts.
+
+Version 37.1 10/14/17
+Fix mac version. Large code refactoring (air sim / simulation).
+
+Version 37.2 10/14/17
+Fix custom HUDs resetting to default on startup. .tmp and .tmp2 show in debug 
+HUD by default. Fix color mode resetting on startup.
+
+Version 37.2 (build 89) 10/18/17
+Really fix the mac version.
+
+Version 38.0 12/23/17
+Fix SPNG description error. Fix elem.PROP_LIFE_KILL_DEC being missing. Massive 
+rewrite of save building / loading / transforming entirely into C++. Move to 
+C++11. Stamps now automatically expand when shifted out of bounds. Walls and 
+other grids now shift when stamps are shifted far enough. Screenshots now 
+saved as .png files. Add tpt.record and make tpt.screenshot work like tpt++.
+Display tooltips in element search UI. Allow scale modes higher than 2 (set 
+via console or powder.pref editing).
+
+Version 38.1 12/23/17
+Attempt to fix "out of memory" error when creating saves. I don't actually know 
+what caused it or how I fixed it. Fix stamps not loading in the right position. 
+Fix stamps being allowed out of bounds. Fix ctrl+r redoing instead of 
+reloading. Fix ctrl+s not creating a reload point. Fix reload button being 
+disabled when loading local saves. Fix !bubble crash. Cap recents menu to 20 
+elements. Ctrl+p shortcut to open PROP tool.
+
+Version 38.2 2018-01-02
+Fix ren.colorMode() crash. Fix crash when opening saves from the command line. 
+Improve bson error handling. Fix "Unable to decompress (ret 0)" error when 
+attempting to load certain saves.
+
+Version 39.0 2018-03-04
+Fix "dns mismatch" error when starting game without internet. Sort local saves 
+alphabetically. ctrl+shift+p shortcut for putting PROP on right click. Add 
+cyclone tool from version 93.0. Large rewrite of some simulation code to 
+support doubling the element limit. Disabled until 93.0 comes out due to 
+incompatible save format changes. Add a warning message when stealing saves. 
+When finding particles, show how many were found in HUD. Ignore 503 errors 
+from update server. Redo ANIM somewhat and fix crash when ctrl+z-ing ANIM.
+
+Version 39.1 2018-03-04
+Fix GoL brushes
+
+Version 39.2 2018-03-06
+Fix PIPE initialization
+
+Version 39.3 2018-03-08
+Fix bugs with find tool parts counter when alternate find mode is enabled. Add 
+pressure digitation from tpt++ + fix heat digitation bugs. Fix TESC drawing.
+
+Version 40.0 2018-03-25
+Fix save stealing warning coming up whenever creating a new save. Changes to
+save format and PIPE to match TPT 93.1, which is now released. Change version
+number to 93.1
+
+Version 40.1 2018-04-07
+Update to TPT 93.3 (fixes missing thumbnail bug). Redo update progress UI, it's
+no longer off-centered (won't take effect until the update after this, of
+course)
+
+Version 40.2 2018-04-08
+Update build server (linux 64 bit and mac builds using newer compiler)
+
+Version 41.0 2018-10-01
+Internal cleanup / removal of legacy code. Fix most buttons in custom HUD menu
+being pink. Fix PIPE accepting elements from STOR even when it is full. Fix
+loading of a few elements which store GoL information in the upper bits of
+ctype. Add stasis wall (suggested by dyaomaster, created by moonheart08). Add
+LDTC (linear detector, created by moonheart08 with the help of mark2222 and
+#powder-subframe on libera.chat). These are both official and will be in the
+next version of TPT. Fix GoL identifier. Fix single-pixel PIPE (vanilla bug).
+Update FPS in HUD more often. Increase stamp limit to 5000. Simulation updates
+and other fixes from tpt++.
+
+Version 41.1 2018-10-01
+Fix simulation getting corrupted and breaking everything. Fix BOMB not
+destroying PBCN. Change default menusection to powders.
+
+Version 42.0 2018-12-29
+Use faster RNG. Upgrade to SDL2. This allows for many improvements, like a
+resizable window, new fullscreen mode, major fps improvements with double scale
+mode, and more. Rewrite options interface to use new UI. Add new event api to
+replace legacy register_/unregister_ functions. Add eventcompat.lua in order to
+ensure old scripts using the deprecated api don't break. Fix PHOT+PINV = ELEC.
+Support hex format for all integer properties in PROP tool. Fix invisible
+textboxes in deco editor. Fix ctrl+backspace bug in old UI textboxes. Fix
+issues undoing shift+WIND tool. Fix line drawing creating extra particles with
+flat brushes. Show "X" button next to notifications. Mac version not supported
+at the moment due to issues with the sdl2 upgrade.
+
+Version 42.1 2018-12-30
+Fix mousemove Lua event. Fix PLUT always exploding quickly. Fix difficulty
+resizing window sometimes. Save resizable and alt fullscreen options to
+powder.pref. Add hidden option to change pixel rescaling mode when window
+is resized (beginning of konami code in options ui). This is extremely blurry
+so is hidden by default.
+
+Version 42.2 2018-01-25
+Fix interfaces sometimes closing when the window loses focus. Re-center
+windows icon. Upgrade Linux icon to 128x128 (when it decides to show up).
+Fix mac data directory.
+
+Version 42.3 2019-02-17
+Change TPT version number to 94.0.
+
+Version 42.4 2019-03-02
+Changes from TPT version 94.1, including: Add "Force Integer Scaling" option,
+this fixes lots of issues with fullscreen. Keyboard shortcuts are now based on
+en-US layout, no matter what layout you actually use. GoL is now affected by
+stasis wall. Additional changes: No longer capture the mouse when drawing,
+because this can sometimes cause the computer to appear to freeze. It will now
+calculate mouse position outside the window manually. Mousewheel will now
+always scroll the mouse by one unit, instead of potentially more. Fix mouse Lua
+events reporting 4 for right click instead of 3.
+
+Version 42.5 2019-03-26
+Fix incorrect mouse coordinates when releasing the mouse outside of the window.
+Fix THDR generating pressure when touching CLNE. Properly fix issues saving /
+loading window position with 2nd monitor. Fix stasis wall identifier. Update
+script manager to 3.10. Update tptmp to 0.100.
+
+Version 42.6 2019-04-12
+Fix incorrect mouse position when in fullscreen and "force integer scaling" is
+checked
+
+Version 43.0 2019-07-15
+Add libcurl, communications to the powder toy server and update server are now
+secured using SSL. This prevents others from stealing session information or
+passwords, and prevents ISPs or firewalls from modifying server responses. This
+update will also come to the official version later. Communications to the
+script server or tpt multiplayer are not secured. Update from tpt++: Lua
+functions for working with zoom (other updates from TPT Snapshots to be
+included later). Fix "uses mod elements" false positive with PIPE/PPIP.
+
+Version 43.0 (build 111) 2019-07-15
+Fix crash on startup. Fix updater. Previous build was probably not released
+to anyone.
+
+Version 43.1 2019-07-16
+Fix crash when trying to submit comments
+
+Version 43.2 2019-07-21
+Fix crash when exiting on Windows. Fix non-windows versions accidentally
+being compiled in debug mode.
+
+Version 43.3 2019-07-26
+Fix random crashes when making network requests. Begin work on porting upcoming
+TPT 95.0 features to the mod: Add disable-network flag to turn off network
+requests. Rename nobluescreen command line option to disable-bluescreen. Tweak
+replace mode and specific delete mode to work on energy particles and be
+mutually exclusive. Fix issues saving/loading QRTZ/GLAS/TUNG without pressure
+in saves. Add sim.CELL constant.
+
+Version 43.4 2019-08-17
+Redo prop tool ui. Refactor some code relating to prop tool and prop setting
+Lua functions. Refactor gravity.cpp. Fix crash when save info couldn't be
+downloaded. Redo colors in "new" interface slightly, the new interface is no
+longer pure white, instead it is slightly gray like the official version.
+Move the black bar that appears in the element search ui. Numerous updates
+from the upcoming official 95.0 release (still more to copy over): thread /
+search signs are now red and purple, respectively. Add new sign types, {type},
+{ctype}, {life}, {tmp}, {tmp2}. Other text can now be put alongside these
+custom sign types. Add .life serialization support to LSNS. Other tpt++ updates
+that aren't as noticeable.
+
+Version 43.5 2019-08-27
+Fix rare issue that prevents loading certain saves with Lua elements. Fix
+setting type to none in !set and tpt.set_property. Fix prop window always
+resetting to .type, without indicating it was doing so. Add back PWHT
+because some people still use it. The feature where it can set any property
+(not just .temp) was adjusted slightly. .tmp2 no longer needs to be set, it can
+now set pavg0 and pavg1, and setting .type is now ctype 3 instead of 0.
+
+Version 44.0 2020-01-28
+Update multiplayer script to .101. Add scrollbar to profile viewer and options
+menu. Rewrite console. It now uses the new interface style, can be scrolled
+(and has a scrollbar), and has no limit on the command length. Everything else
+still works the same, besides tab completion, which has been removed. Add
+option to use higher scale modes than double scale, if monitor resolution is
+high enough. The rest of the changelog is all stuff I copied over from vanilla.
+Add "Sticky Categories" option to control whether clicks are needed to change
+menusections. Add toggleable option to include pressure in saves and stamps.
+.cps and .stm files can now be opened by dropping them on the window. Rescan
+stamps now sorts by time created. Revise ctype drawing code, add Lua event
+listeners for this. Add Lua event listeners for create, create_allowed, and
+change_type. Ability to set default properties in Lua. Make water equalization
+fill in areas slightly more naturally. Add (default) option to make deco tools
+use sRGB color space, Gamma 1.8 and Gamma 2.2 were also added. Add option to
+use perfect circle brush instead of TPT's nonstandard circle calculations. Fix
+STK2 rocket boots not saving in saves. Guess best scale on startup. Add http
+api for Lua. Fix mac version not starting due to misplaced file. Fix linux
+64 bit version wrongly depending on libssl1.0 instead of libssl1.1.
+
+Version 44.0 (build 118) 2020-01-29
+Fix linux 64 bit version wrongly depending on libssl1.0 instead of libssl1.1.
+For real this time!
+
+Version 44.1 2020-02-26
+Fix https requests on MacOS. Fix graphical bug when scrolling Options menu
+with dropdown open. Fix console staying open after doing !load. Fix stack
+overflow in Lua particle updates. Fix element search UI on Windows. Fix bug
+reporter. Remove ctrl+click on usernames feature in save preview, because it
+just crashes the game. Change version number to 95.0 - build 345.
+
+Version 44.2 2020-05-04
+Fix [ key zoom window shortcut. Fix decorated fireworks not exploding in the
+right color. Fix {aheat} signs using pressure instead of aheat. Fix infinite
+loop if link sign text doesn't end with }. Fix DRAY bug when one DRAY is
+sparked multiple times in a frame (fixes "virus killer" id:2536933)
+
+Version 44.3 2020-12-07
+Update to TPTMP 1.0. This version adds some QoL features, and also adds
+authentication to the TPT servers. This authentication happens automatically
+on join, and anyone who isn't logged in will be forwarded to the guest lobby.
+Fix PROP tool being able to set type to invalid (disabled) elements.
+
+Version 44.4 2020-12-07
+Update to TPTMP 1.0.1. This version of TPTMP fixes a security issue in the
+authentication process.
+
+Version 44.5 2020-12-28
+Update to TPTMP 1.0.2. This version redoes the user authentication to integrate
+with a brand new api in the website, greatly simplifying and further improving
+the security of the authentication process.
+
+Version 44.5 (build 124) 2020-12-28
+Update to new TPTMP 1.0.2. This fixes token expiration.
+
+Version 45.0 2021-06-21
+Fix potential crash when scrolling options menu. Fix tpt.getscript. Remove
+error message when checking for updates fails. Add error message in save
+browser when downloading the saves list fails. Fix being unable to show intro
+text again after startup. Redo scrolling code and fix issues with scrollbars.
+It should be much more sane when viewing comments now. Only show .tmp2 for
+elements which use it by default. Add option to show .tmp2 on all elements
+regardless. Support home/end, and ctrl/shift variants of these in "new
+interface" textboxes. Fix ctrl+left/right in "new interface" textboxes. Update
+to include all commits from tpt++. Major additions are five new elements: SCLN
+(silicon), PTNM (platinum), VSNS (velocity sensor), ROCK, and LITH (lithium).
+Custom GoL was also added. Data can now be stored in a common data directory,
+dependent on system. Windows users have it stored somewhere in %APPDATA%, Linux
+users in .local/share. Mac users already had this feature. To migrate your data
+to the common directory, use the new "Migrate to shared data directory" button
+in the options menu. powder.pref, stamps, saves, and scripts will all be
+migrated and shared across all post-96.0 versions of TPT. Preferences and
+downloaded scripts will be migrated from the first migrated instance of TPT only.
+
+Version 45.1 2021-06-23
+Fix crash when using platform.restart() on Windows - this fixes bluescreens
+when reloading scripts in the script manager. Block publishing saves that
+contain unreleased elements / features - this matches the behavior of the
+snapshots, which currently block the 5 new elements, GoL, and custom ambient
+air heat.
+
+Version 45.2 2021-06-28
+Update with latest commits from tpt++. Fix script manager thinking it was out
+of date. Fix http api (fixes tptmp). Remove debug print in sim.brush.
+
+Version 45.3 2021-07-05
+Fix hang on exit on Linux, due to improper SDL usage. Updates from tpt++:
+Adjust LITH color, make ROCK more resistant to DEST.
+
+Version 45.4 2021-07-10
+Update for version 96.0. Fix shift+click on comment username to ensure it jumps
+to page 1.
+
+Version 45.5 2021-07-10
+Fix ambient air temp not being set to default when loading saves with ambient
+heat enabled.
+
+Version 45.6 2021-07-18
+Several bugfixes to prepare for tptmpv2 - Lua logs now draw with alpha
+background instead of drawtext_outline like vanilla does. Add tpt.tab_menu to
+check if tab menu is open or not. Allow lua mousedown events to cancel
+mousedowns in quickoptions and element selection. Fix typo in options menu.
+All changes from TPT 96.1.
+
+Version 46.0 2021-08-16
+Update to tptmp 2.0. This is a completely rewritten version of tptmp by
+LBPHacker. It brings much improved stability and syncing, a better room
+ownership model (which now survives server restarts), an optional fps sync
+mechanism, a prettier UI, and more!
+
+Version 46.1 2021-08-18
+Fix builtin-tptmp script suppression. Update to latest version of tptmp, which
+includes several bugfixes.
+
+Version 46.2 2021-08-29
+Update to TPT version 96.2, which includes:: HSV sliders in CGOL window, add
+AMBP and AMBMtools, decrease memory used by ctrl+z snapshots, LIGH lasts longer
+than one frame. Fix some edge cases in ctrl+z (element data not being restored
+if no elements of that type were on screen, ability to undo the addition of
+CGOL). Automatically select new CGOL tool after creating it. Fix console
+history often being deleted when sharing powder.pref between mod and vanilla.
+
+Version 47.0 2021-09-02
+Update to TPTMP v2.0.20 (lots of bugfixes and some additions like floating
+mode, see tptmp thread for details). Related - fix blank pink elements that
+appeared in element search, these came from tptmp and are now hidden. Fix bug
+on Windows causing random disconnects in tptmp. Implement interface api. This
+long overdue change brings Lua parity to this mod, after 9 years. Fix resizable
+window not being enabled after restarting game.
+
+Version 47.1 2021-09-03
+Fix text input sometimes not working in legacy interfaces
+
+Version 47.2 2021-09-05
+Fix text input sometimes not working in modern interfaces
+
+Version 48.0 2021-10-17
+Vanilla compat fix - SING should eat clone elements. Fix being unable to edit
+existing signs. Fix GoL not saving correctly (resulting in corrupted GoL).
+Render GoL colors in stamp previews. Make certain thumbnails slightly less
+blurry (Just the stamp-sized thumbnails, not larger ones). Fix crash when
+rendering certain thumbnails. Update TPTMP to version 2.0.21.
+
+Version 48.1 2021-10-27
+Update to tptmp v2.0.22
+
+Version 49.0 2022-06-05
+Fix !quit. Fix interface closing when copying save id after uploading a save.
+Fix slider colors not being initialized in Lua Slider components. Fix warning
+message when uploading saves with stasis wall or LDTC. Fix ctrl+backspace
+issue when text is already highlighted in legacy interfaces. Add "No saves
+found" message to online save browser. No longer automatically load / render
+incompatible saves by default. Add new "load incompatible saves" option.
+ctrl+click a username in save browser opens profile on the website again.
+Remove obscure and broken feature where moving SPNG drags stuff behind itself.
+Remove inaccessible "Empty" edge mode. Both of these removed features are buggy
+and may have been crash-inducing. gfx. API now matches vanilla coordinate
+behavior when inside Lua Windows. Update to script manager 3.12. Implement
+ctrl+backspace/delete in legacy interfaces. Update with all changes made to
+vanilla tpt in the last few months.
+
+Version 49.1 2022-07-16
+Fix Newtonian Gravity setting not loading properly on startup. Make realistic
+heat and manual find mode's min / max temps save and load from powder.pref.
+Update to tptmp v2.0.23 (stability improvements, account age limit).
+
+Version 49.2 2022-07-17
+Update to TPTMP v2.0.24. This version contains no relevant changes for this
+mod.
+
+Version 50.0 2022-10-07
+Fix being unable to view second page and beyond if front page has 15 or less 
+saves. Fix Platform::ExecutableName on mac if path is longer than 64 
+characters. Partial update to the latest tpt++ source code, including: 
+Add sim.partExists and elem.exists, add real v parameter to sim.partCreate, 
+Fix PIPE graphics hack giving Lua graphics functions bad particle IDs, Fix 
+exception when passing nil to some functions in interface api, Add custom 
+gravity mode and replace hardcoded gravity interactions.
+
+Version 50.1 2022-10-07
+Additional code syncing from vanilla, including: Expose SDL keycodes,
+scancodes, and button codes to Lua. Add PowderCoin icon to font. Make QRTZ
+slightly change color while growing. This version also includes code
+optimizations by savask, which improves performance by 8%.
+
+Version 50.2 2022-10-16
+Fix replace mode
+
+Version 51.0 2022-12-04
+Fix \0 not being an accepted character in lua string arguments, most useful for
+color codes in text drawing functions. Overhaul all api calls in the save
+browser to use their modern variants such as Browse.json instead of legacy
+apis. These new apis also enables new features present in vanilla tpt for the
+past decade, namely: show the number of pages in a search and a textbox to
+choose which page to jump to; show the number of comment pages on a save; show
+save update/create date in your local timezone; and allow sorting favorites by
+date. Add ability to multi-select saves and delete/(un)publish/(un)favorite
+them. Remove limit of viewing 200 comments on a save. Fix lag when scrolling
+down too far in the comments section. Adjust delay when scrolling through
+pages, when scrolling quickly the delay eventually drops to 0. This fixes the
+inconsistent delay when scrolling up vs. down in the search browser. Adjust
+positioning of many objects in the search browser, several awkward spacing
+issues have been fixed and usernames are colored blue like in vanilla, and
+save history icon only shows on hover. Fix issue in save preview where really
+long usernames or date strings could overlap the view counter. Fix issue in
+legacy textboxes where quickly typing after double clicking a word would
+incorrectly highlight text. Fix save name not being shown for online saves when
+not logged in.
+
+Version 51.1 2022-12-07
+Sync all of the latest changes from the vanilla development branch. Use 
+new-style interfaces for all prompts from the Lua console, plus the ctrl+q quit 
+prompt. Re-enable profile viewer in save preview when ctrl+click on a username. 
+Fix avatar not showing for self in profile viewer because edit avatar button 
+was drawn on top of it. Fix bug where elements may be selected when rapidly 
+moving mouse in and out of the window with mouse held down. Fix mac updates. 
+Fix comment usernames / data showing incorrectly after submitting a comment. 
+Fix crash when searching before the initial front page load has completed.
+
+Version 52.0 2022-12-26
+Fix front page expansion button. Update to tptmp v2.0.25. Add new temperature
+scales option from xphere07, which allows you to change the default scale -
+C, F, or K, that is used in the HUD, prop tool, and console. The default is
+Celsius. Custom HUDs will automatically update to use the new "default scale"
+option, rather than scale-specific displays. Various changes and updates from
+tpt++, including numerous new Lua APIs.
+
+Version 52.0 2022-12-06 (build 150)
+Fix custom HUD options not actually being reset, causing temperature scale
+option to not affect HUD without manual changes.
+
+Version 53.0 2023-01-03
+Update to TPT 97.0 (nearly everything was already in, but some last minute beta
+changes are now included). Update to tptmp v2.0.28
+
+Version 54.0 2023-09-15
+Update to script manager 3.13 and tptmp v2.0.33. Adjust tooltips on vote
+buttons. Fix improper front page display when you begin searching before front
+page finishes loading. Fix Lua scripts being unable to change DMND's type.
+Proper ctrl+x support in textboxes. Fix mod feature that allows you to embed
+Lua code in saves. Fix ambient air temp from stamps overwriting preference
+value. Allow using element names for any integer field in PROP tool. Implement
+gfx.setClipRect (very little attempt was made to mirror vanilla behavior).
+
+Version 54.1 2023-09-21
+Update to script manager 3.14. Fix bug preventing script manager updates from
+working if you already had script manager in autorun.lua.
+
+Version 54.2 2023-10-09
+Update to tptmp v2.0.34. tpt++: Fix crash when calling sim.clearRect with
+out-of-bounds coordinates.
+
+Version 54.3 2023-10-13
+Update to tptmp v2.0.36. Fix LuaWindow's OnDraw event being sent after
+components are drawn and not before. Fix gfx.setClipRect not having correct
+coordinates inside Lua windows. Fix icons not rendering in the console. Add
+workaround so that tpt++ icon ranges render in this mod. This allows certain
+Lua scripts that use icons to work without special icon compatibility code.
+
+Version 55.0 2023-12-13
+Boost startup performance, by rendering stamp thumbnails in another thread. If
+you have a lot of stamps, this eliminates the freeze on startup. If stamps
+haven't rendered yet, it will hang when opening the stamp browser, instead.
+This update also removes the 5000 stamp limit, and adds support for
+stamps.json, which is the new stamp format in 98.0. stamps.def is still written
+out, for cross-compatibility with 97.0 clients. Clicking stamp name now brings
+up a prompt to let you rename the stamp. Renamed stamps won't show up in 97.0
+or prior versions of tpt. Fix issue where saves with PIPE/PPIP wouldn't load
+properly in TPT Snapshots (this issue will also be fixed in a future Snapshot).
+Updates from tpt++, from Jan/Feb 2023, plus the save palette code.
+
+Version 55.1 2023-12-13
+Canceling stamp rename prompt will now no-op, instead of renaming stamp to
+".stm"
+
+Version 55.2 2023-12-13
+Fix updater. Previous 55.x versions would act as if the update failed, even if
+it didn't, so you would have to restart the game to apply the update. Remove
+some "wrong type" console spam on startup.
+
+Version 55.3 2023-12-16
+Fix stamps not loading after upgrade.
+
+Version 56.0 2024-02-21
+Update with all user-facing changes in the upcoming 98.0 release. This includes
+the new "resist" element. An overhaul of the Lua API was also done. Wiki
+documentation isn't complete yet, but all the existing functions should be
+preserved via a compatibility script. Fix regression with sim.deleteStamp not
+working if the stamp name is entirely numeric.
+
+Version 56.1 2024-02-22
+Fix sim.pressure and other functions that operate on the block map. Fix SWCH
+not responding to PSCN or NSCN.
+
+Version 56.1 (build 162) 2024-02-22
+Fix updater and data dir migration tool both bluescreening when clicking
+Confirm. This update will have to be downloaded manually if using 56.0 or 56.1.
+
+Version 56.2 2024-02-28
+Fix crash when sparking ETRD. Fix crash when opening certain saves. Fix a few
+minor memory leaks. Try to fix issue on Windows where the already-bluescreened
+game will crash a 2nd time when restarting itself. Make online save upload
+screen wider, so that save titles can be as long as tpt++.
+
+Version 57.0 2024-03-26
+Change version number to 98.0. Add UPDATE_ and DECOSPACE_ Lua constants. Update
+to tptmp v2.1.0. This release is pretty much identical to the last one, as most
+beta bugs did not apply to this mod.
+
+Version 57.1 2024-03-27
+Fix "Error: OK" when voting.
+
+Version 57.2 2024-10-05
+Fix some graphical glitches in tags UI. Change DMG to match vanilla movement,
+despite being glitchy. Update to Script Manager v3.15 with scrolling fixes.
+
+Version 58.0 2024-12-20
+Updates from tpt++ 99.0, including new changes to the online save browser and
+various other sim fixes. Update to tptmp v2.1.2.
+
+Version 58.1 2024-12-30
+Misc unimportant tpt++ updates since the first 99.0 beta. Change internal
+version number to 99.0. Future updates may not fully mirror tpt++ changes, and
+might only be a smaller subset (primarily focusing on simulation changes). I'll
+post more about that on the forums.
+
+Version 58.2 2025-01-25
+Update to TPT version 99.1. Various simulation fixes from TPT 99.1. Rewrite
+Login UI to modern interface style, now shows messages before / after logging
+in, similar to how vanilla TPT shows login errors. Make mass stamp deletion a
+little easier to use. Fix issues rendering or being unable to load stamps with
+custom elements.
+
+Version 58.3 2025-02-08
+Update to TPT version 99.2. Fix conduction failure when stacking certain
+powered electronics and conductors on top of each other. Fix Newtonian Gravity
+not working sometimes after reloading a save. Fix a few issues in certain
+tool-related Lua APIs.
+
+Version 58.4 2025-02-21
+Change version number to 99.3. Backport minor airsim / CAUS changes from TPT
+99.3.
+
+Version 59.0 2026-05-14
+Minor element search UI improvements. Significant amount of tpt++ backports,
+including heat pipes, air convection setting, air vorticity setting, default
+edge pressure and velocity settings, other airsim  fixes, new BASE and SEED
+elements, a handful of new reactions, and more. See the vanilla changelogs
+for more details. Remove realistic heat option, replaced by less extensive
+but supported heat capacity property (only used on BASE). Shift+6 now toggles
+automatic heat mode. Change version number to 99.5, as minor Lua additions have
+been merged in. Block publishing saves made with mod elements again, along with
+BASE and SEED.
+
+Version 59.1 2026-06-29
+Officially update to 100.0, including the rest of the changes between the beta
+and release. Fix latest version of tptmp being unsupported. Update built-in
+script manager and tptmp.

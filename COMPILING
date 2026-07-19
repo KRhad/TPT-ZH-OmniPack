@@ -1,0 +1,31 @@
+The default way of compiling TPT is with SCons: https://scons.org/pages/download.html
+Python 2 is required to run SCons
+
+The command 'scons' with no arguments will attempt to automatically detect your 
+platform and all the necessary required libraries, then start compiling with 
+default settings. On Linux, cross compilers will also be automatically detected 
+when the --win or --mac flags are used For a list of more flags, see 
+https://powdertoy.co.uk/Wiki/W/Scons_command_line_flags.html
+SCons flags in the mod may vary slightly.
+
+
+Compiling on Visual Studio is also somewhat supported. A project file and the 
+required libraries, up to date as of December 2015, can be downloaded here:
+https://dl.dropboxusercontent.com/u/43784416/Jacob1%27s%20Mod/vs%202013%20project.zip
+https://dl.dropboxusercontent.com/u/43784416/PowderToy/Required%20Libraries.zip
+These were created by following a similar process to the wiki guide for default 
+TPT: https://powdertoy.co.uk/Wiki/W/Compiling_tpt%2B%2B_with_Visual_studio.html
+
+
+This mod can also be compiled for Android. The "guide" should help but may have 
+a few misc issues. To try the android compiling guide go here:
+https://gist.github.com/jacob1/7556fd14c3589818c4d2
+AndroidAppSettings.cfg is already set up and included with the repo.
+
+
+The official android version is compiled with --nomod --touchui. --nomod will 
+remove all of the mod elements and the favorites menu, to make it look more 
+like default TPT (since the android port pretends to be default TPT). --touchui 
+will optimize some interfaces for touchscreens. These options should be totally 
+separate, but neither a touch version without --nomod nor a version with just 
+--nomod are officially compiled or supported.

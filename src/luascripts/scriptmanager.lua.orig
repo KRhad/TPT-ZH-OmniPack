@@ -1,0 +1,27 @@
+#ifdef LUACONSOLE
+#ifdef _MSC_VER
+#include "common/Platform.h"
+#include "resource.h"
+#endif
+#include "luaconsole.h"
+
+void luaopen_scriptmanager(lua_State *l)
+{
+#ifndef _MSC_VER
+	int scriptmanager_luac_sz = /*#SIZE*/;
+	const char* scriptmanager_luac = /*#DATA*/;
+	luaL_loadbuffer(l, scriptmanager_luac, scriptmanager_luac_sz, "@scriptmanager.lua");
+	lua_pcall(l, 0, 0, 0);
+#else
+	unsigned int size = 0;
+	const char* data = NULL;
+	Platform::LoadFileInResource(IDI_SCRIPTMANAGER, LUASCRIPT, size, data);
+	char *buffer = new char[size+1];
+	::memcpy(buffer, data, size);
+	buffer[size] = 0;
+	luaL_loadbuffer(l, buffer, size, "@scriptmanager.lua");
+	lua_pcall(l, 0, 0, 0);
+	delete[] buffer;
+#endif
+}
+#endif

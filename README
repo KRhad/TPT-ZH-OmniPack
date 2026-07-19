@@ -1,0 +1,287 @@
+Jacob1's Mod, tpt's longest lasting and most popular mod! My overall goal 
+isn't to add a bunch of elements you can forget about, it's to create a 
+more stable tpt version without many bugs and lots of new features not fit for 
+the officiel version; like multiple tabs, an updated save preview and moving 
+solids. It it based off the older codebase of tpt version 83, back when things 
+were in C and simpler; this allows me to do things how I want without the few 
+small but unfixable bugs tpt++ has.
+
+The mod updates whenever I feel like it. Don't ignore the update notifications 
+like you do in other mods though, this mod actually has it's own in game 
+updater, hosted at https://starcatcher.us/TPT. Typically there is an update,
+no matter how small, once every 1-2 months, although that is constantly 
+changing as my schedule and interest in working on the mod changes. All the 
+changes made to tpt are quickly backported into the mod, making it much more up 
+to date and quicker to test new official features.
+
+When you first start up the mod, it might look a lot different (or the same, 
+if you remember what TPT used to look like before the rewrite). Everything 
+functions exactly the same though. There are a few areas you may want to look 
+at to see the new features. The main one is the sub menus in the favorites menu. 
+The favorites menu is the first feature added to the mod. Although it is now in 
+the official version, the submenus are unique to the mod. You can find many 
+options here, all in element button format (i'll make an actual options ui 
+someday ....). Elsewhere, if you click the 'T' quickoption in the top right you 
+can access the 'tabs' feature. Other changes can be seen in the redone console 
+or in the save preview. An in detail explanation of these features and others 
+are provided below.
+
+
+
+
+------------------------------------------------------------------------------
+------------------------------------Credits-----------------------------------
+------------------------------------------------------------------------------
+Special Thanks
+mniip - hosted the original update server
+iam4722202468 - made the bug font icon / good troll friend
+cracker64 - made the original TPTMP, and hosts the update server
+LBPHacker - made TPTMPv2, which is included in the mod
+
+
+Things in my mod suggested by other people:
+Atrayin - Powered Portals, RAZR
+OmegaSupreme - Animated LCRY
+Videogamer555 - New heat displays
+disturbed666 (aka grandmaster) - A way to turn PHOT into ELEC (but I used PINV instead of TESC)
+Dynotec - new statistics
+therocketeer - smudge tool
+cip - INWR with tmp of 1 doesn't conduct to SWCH
+BoredInSchool - fusion
+tommig - VOID ctypes
+Galacticruler - SING can emit gravity instead of pressure (set tmp2 to 1, or 2 for both)
+Joeboy25 - AMTR ctypes
+baizuo - Multiple element highlights
+The-Fall - GEL and SPNG can absorb water from more elements (ex. PSTE + SPNG -> CLST)
+GIGATeun - GRVI (gravitons)
+minecraft-physics - DRAY (duplicator ray), CRMC
+G-LinuxorU - CRMC additions
+
+
+2014 April fools joke element suggestions:
+therocketeer - DKLQ (dinosaur knee liquid)
+CatAnimation - BLOD/COCO/COCJ/LOLZ2
+Darthanihlus - POOP
+cracker64 - CMD
+bowserinator - DMD2/BDMD (breakable diamond)
+Kikinicij - BATT (ban all the things)
+Nakriollag - DIMT
+
+
+
+
+------------------------------------------------------------------------------
+---------------------------------Explanations---------------------------------
+------------------------------------------------------------------------------
+Favorites Menu / Submenus
+The favorites menu has been the center of most things in the mod since the 
+beginning. To "favorite" an element, ctrl+shift click it from any menu, and 
+it will get a yellow heart by it. To unfavorite it, ctrl+shift+right click 
+it instead. Any recently used elements also will appear in the menu.
+If you click the MORE button, a new menu will appear with more options. 
+HUD's are customizable using the HUD2 button. The FIND button colors whatever 
+element you have selected red, and dims everything else (now in official TPT, 
+with the ctrl+f shortcut). There's also a way to double or triple highlight 
+things in green and blue at the same time, if you click the button more times. 
+FND2 changes the way find is displayed for layered particles. The INFO button 
+displays statistics about how long and how many times you have played powder 
+toy, your average FPS, and info about the current save. REAL turns on realistic 
+heat mode by savask. DATE changes date and time settings, used in the HUD and on 
+save comments. In addition to left clicking, right clicking it will toggle 
+displaying time on comments older than a day. The rest (SPIN, HEAT, LUA) are 
+explained later in the readme.
+
+Moving Solids
+No lag, and it actually works. They are found in the special menu, and you 
+can have a maximum of 256 at once. They are drawn the same shape as your 
+brush, no matter what shape or size it is. They are very bouncy, and fall 
+with gravity. Pressure over 10.0 will destroy them, and if the center 
+particle is destroyed, it will fall apart, making really tiny bouncing 
+pixels. Go into the FAV2 menu and click SPIN to make them able to rotate, now 
+enabled by default. Recent version 29 additions allow them to properly move 
+around in loop edge mode and to bounce off walls. Version 30 rewrites them 
+internally, while paused any moving solids you draw will all be attached as 
+one ball (even if they aren't attached physically). This allows you to create  
+unique shapes.
+
+Animated LCRY
+Found in the powered elements menu. In the decoration editor, 
+press left or right to change frames, and paint each frame normally. Press 
+Del to delete a frame or press Ctrl+right when going to a new frame to copy 
+the old one over to the new one. PSCN activates it, and the speed that it 
+changes depends on its temperature. NSCN deactivates it. METL pauses/unpauses
+it. If you set the tmp2 of the PSCN or NSCN that (de)activates it, you can 
+set which frame ANIM starts or freezes at. Also, you can use the tmp of the 
+PSCN to set the delay for the first frame. You can have a maximum of 25 
+frames, unless you use the lua command tpt.maxframes(num), where num is the 
+new maximum, between 1 and 256. Using that command will reset all existing 
+ANIM. If you delete a lot of it at once, the game will freeze for a while to 
+free all the allocated memory, just wait and it will keep working.
+
+New Heat Displays
+Found in the FAV2 menu. Click the HEAT button once to go to automatic display 
+mode, where the hottest temp is always pink, the lowest is dark blue, and 
+everything else in between is based off of that. Click it again to go into 
+manual heat display. The min and max temps will stop changing when you go 
+into this, so it will help if automatic mode flickers because of something 
+like CLNE(FIRE) constantly changing the max temp. If you right click the 
+button, it will ask you to enter the new maximum and minimum temp. Enter the 
+temperatures in Celsius. It will change the display mode into manual 
+automatically after this.
+
+Powered Elements
+All powered elements are now activated instantly. When you start the mod or 
+clear the sim, a setting is set which causes all powered elements to be 
+instantly activated. Saves loaded from official TPT don't have this set, so 
+will maintain compatibility. Elements from the mod are always activated 
+instantly regardless of this setting. Also, if you want to make a powered 
+element in Lua it's as simple as setting PROP_POWERED, it will handle the 
+life values for you (you will have to do the graphics though).
+
+Lua Code
+Put a Lua script in luacode.txt and click the LUA button in the FAV2 menu. It 
+will read the script and then run it once the following frame. If you need 
+something to run every frame, use tpt.register_step. Once you do this the 
+script becomes "embeded" in every save and stamp you create. When you load the 
+save, it will write the code back out to newluacode.txt and ask if you want 
+to run it. This is just so that you can see what you are running and look for 
+malicious code before it is executed. Clearing the simulation will also make 
+it forget about any code, although there may still be side effects from the 
+script.
+
+Custom HUDs
+Inside the HUD2 menu you can click on HUD2 to make a customized HUD. By 
+default the mod has a custom HUD on that fixes many issues of the original 
+HUD (but these fixes are in TPT now). You can also customize the original HUD 
+too (toggled with HUD button), and both debug mode HUDs. Theoretically, you 
+could have 4 HUDs saved at once, and the HUD2 menu will edit whichever is 
+enabled at the time. After clicking HUD2, there are more submenus. RSET will 
+reset all of the HUDs back to their default values. CORD lets you toggle 
+options related to the second row in the debug HUD. INFO lets you change 
+options related to the uper right line. UI lets you change the things 
+displayed in the upper left. Most buttons in these submenus are toggles, but 
+anything ending in # brings up an input box and allows you to set how many 
+decimal places things like pressure and temperature are displayed to.
+
+Tabs
+Tabs are shown in the 'T' quickoption on the upper right. clicking it toggles 
+showing tabs, you can also hold control to view the tab list. Tabs are 
+basically alternate simulations, which save everything including pressure and 
+current save info. A few really advanced settings may not be saved, as behind 
+the scenes it is simply saving a stamp. They aren't simulated when you aren't 
+looking at them but still have uses. To save the current tab to disk, press 
+ctrl+s. You can then use the reload button from this point, even without an 
+account or looking at a save from the save server. You could just stop here 
+with the tab feature, and only use a single tab for reloading, but there is a 
+lot more. To create a new tab, press ctrl+n or click the '+' icon in the tab 
+menu. Your previous tab will be saved. When hovering over tabs it will 
+display a thumbnail preview and the name of the save so you can quickly 
+identify them. Right clicking on a tab will delete it.
+Two obscure features to note: If you are on the main tpt screen and you open a
+save from the tpt website, it will open it in a new tab instead of launching 
+a new instance of tpt. Also, if your game crashes for any reason, it will 
+save your current tab and restart TPT automatically with all of your previous 
+tabs intact.
+
+Console
+The console has been redone to fix many issues the original one had. Text 
+will no longer overlap, it properly wraps text on both the input and output 
+sides, allowing you to see overly long commands. You can drag the line in the 
+middle of the console to adjust how much room either side gets. The console
+also now scrolls, allowing you to see the previous 20 commands and command
+output. When typing a command the input will also wrap around, fixing the
+arbitrarily short limit of the console in vanilla TPT. In addition, console
+output is saved to powder.pref so you can see what previous commands returned.
+Syntax highlighting from vanilla TPT has not been added yet.
+
+Save Preview
+This may not look a lot different than the default TPT, because tpt++ 
+overhauled the save preview itself when it was redone in c++. It used to be 
+cutting edge though! My mod doesn't have avatars or a scrollbar yet, but it 
+does have other cool features. Comment scrolling works with the scrollwheel on 
+your mouse, or the '[' and ']' keys. There are no 'pages' like in tpt++, it's 
+just a continuous stream of comments. It will attempt to display the page 
+number tpt would have on bottom, but at the moment it can't properly display 
+the maximum number of pages due to API limitations. To the right of each name 
+is the date and time each comment was posted. You can edit how this is 
+displayed with the DATE option in the fav2 menu. If you click it, it will 
+toggle showing User ID's instead. Clicking the 'Submit' button without anything 
+in the textbox will reload the comments. The comment box turns red when the 
+comment is too long to be submitted (the server currently has a 500 character 
+limit). Left clicking a username will append their nick to the end of the 
+textbox to make it easier to reply to their comment without having to type out 
+the username. Shift-clicking their username will open a search for all of their 
+public saves. Ctrl-clicking their username will open the profile UI with their 
+bio and avatar.
+
+
+
+
+------------------------------------------------------------------------------
+------------------------------------History-----------------------------------
+------------------------------------------------------------------------------
+The original point of this mod was the favorite elements menu back in version 
+1. It was intended to do everything my badly written lua script did, because 
+several users such as @MasterMind555 encouraged me to start developing tpt. 
+It was very ambitious, I barely knew how to code and claimed version 2 would 
+have moving solids, something everyone said was impossible. Version 1.0 
+was released on October 18th, 2011, with the Version 2.0 moving solids update 
+shortly after. I added many random suggestions and almost all the current 
+elements within the few months after the original release. Over time, I have 
+fixed a lot of the original things (moving solids back then were hollow and 
+had bad collisions) as I figured out what I was doing.
+
+At some point, I decided to add @BoredInSchool's fusion suggestion into my 
+mod. Everyone loved it, and I decided to try and get some of my code into the 
+official game. After two pull requests filled with fusion, lots of bug fixes, 
+and other small features, I was unexpectedly made a moderator. A few months 
+later I was given access to the repo to help fix all the bugs in the c++ 
+rewrite. Three times before I have stopped work on this for periods of a month 
+or more, but I always come back to it and keep it up to date as new tpt 
+versions are released. Originally, I had planned to port my mod into the c++ 
+rewrite in hopes it would be merged into official. Eventually I realized that 
+was never going to happen, and in fact I didn't want this in official. I like 
+being able to do whatever I want without having others tell me what needs to 
+be done and what can't be put in. I went into full backporting mode, putting 
+all the missing features from the c++ rewrite into my mod so that you 
+wouldn't miss any features when using this. Even though i'm really busy with 
+college, I am still doing this today, and now plan to rewrite a few parts 
+into c++ myself so that I can add more features.
+
+Sometime in the middle, I thought the idea of having a special update server 
+would be cool. @mniip offered to host it for me, with his new server. I 
+quickly put something together that even had in game changelogs, and he did 
+the server side script. It worked great, this helped keep people interested 
+in the mod, because they didn't need to redownload every new version, and 
+eventually get tired of it. Now, a lot of people actually use this as an 
+entire tpt replacement (including me).
+
+
+
+
+------------------------------------------------------------------------------
+-------------------------------------Bugs-------------------------------------
+------------------------------------------------------------------------------
+None (at least that I know of)
+
+
+
+
+------------------------------------------------------------------------------
+-------------------------------------TODO-------------------------------------
+------------------------------------------------------------------------------
+TODO: '>' means currently being worked on/added next
+>Use new tpt++ methods to fetch saves and not over 7 year old ones.
+>Rewrite save browser and save preview UI to new interface
+Support alternate save servers
+Support multiple logins / "remember me" setting
+make open ui more colorful like tpt++, also fix cut off description in save uploading ui
+Ability to follow users using jacksonmj's website
+>Add things from tpt++ that look cool, and any new simulation changes it gets
+
+Possible future plans:
+customizable settings menu completely, ability to add and read options. (also HUD option settings)
+CMND - command element to run old commands
+finish what was started and add ability for multiple Simulation*s to run at once?
+Things never backported: lua panic, regex removal, old/lua syntax highlighting (https://github.com/simtr/The-Powder-Toy/commit/ecf1f0e3917386f087dbe569862bd6486a4b366a)
+ability to hide certain saves (based on things like number of votes, unpublished / published, username, etc.)
