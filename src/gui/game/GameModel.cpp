@@ -14,6 +14,7 @@
 #include "QuickOptions.h"
 #include "lua/CommandInterface.h"
 #include "prefs/GlobalPrefs.h"
+#include "gui/game/OmniContent.h"
 #include "client/Client.h"
 #include "client/GameSave.h"
 #include "client/SaveFile.h"
@@ -794,10 +795,15 @@ Tool * GameModel::GetActiveTool(int selection)
 	return activeTools[selection];
 }
 
-void GameModel::SetActiveTool(int selection, Tool * tool)
+bool GameModel::SetActiveTool(int selection, Tool * tool)
 {
+	if (selection < 0 || selection >= NUM_TOOLINDICES || !tool || !IsOmniToolSelectable(*tool))
+	{
+		return false;
+	}
 	activeTools[selection] = tool;
 	notifyActiveToolsChanged();
+	return true;
 }
 
 std::vector<QuickOption*> GameModel::GetQuickOptions()
@@ -1939,7 +1945,7 @@ void GameModel::BuildMenus()
 		{
 			continue;
 		}
-		if (tool->MenuSection >= 0 && tool->MenuSection < int(sd.msections.size()) && tool->MenuVisible)
+		if (tool->MenuSection >= 0 && tool->MenuSection < int(sd.msections.size()) && tool->MenuVisible && IsOmniToolSelectable(*tool))
 		{
 			menuList[tool->MenuSection]->AddTool(tool.get());
 		}
@@ -1947,7 +1953,7 @@ void GameModel::BuildMenus()
 
 	for (auto &fav : Favorite::Ref().GetFavoritesList())
 	{
-		if (auto *tool = GetToolFromIdentifier(fav))
+		if (auto *tool = GetToolFromIdentifier(fav); tool && IsOmniToolSelectable(*tool))
 		{
 			menuList[SC_FAVORITES]->AddTool(tool);
 		}
@@ -1957,4 +1963,17 @@ void GameModel::BuildMenus()
 	notifyActiveMenuToolListChanged();
 	notifyActiveToolsChanged();
 	notifyLastToolChanged();
+}
+
+void GameModel::RefreshOmniContentSettings()
+{
+	for (auto const &tool : tools)
+	{
+		if (tool && !IsOmniToolSelectable(*tool))
+		{
+			DeselectTool(tool->Identifier);
+		}
+	}
+	sim->replaceModeSelected = regularToolset[3] ? regularToolset[3]->ToolID : 0;
+	BuildMenus();
 }

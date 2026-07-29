@@ -2,6 +2,8 @@
 #include "common/String.h"
 #include "gui/interface/Window.h"
 #include "gui/interface/ScrollPanel.h"
+#include "gui/game/OmniContent.h"
+#include <array>
 #include <optional>
 
 namespace ui
@@ -59,6 +61,7 @@ class OptionsView: public ui::Window
 	ui::Checkbox *redirectStd{};
 	ui::Checkbox *autoStartupRequest{};
 	ui::Label *startupRequestStatus{};
+	std::array<ui::Checkbox *, OmniSettingCount> omniSettings{};
 	ui::ScrollPanel *scrollPanel{};
 	float customGravityX, customGravityY;
 	float edgeVelocityX, edgeVelocityY;

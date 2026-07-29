@@ -7,10 +7,14 @@ public:
 	ElementTool(int id, String name, String description,
 		RGB colour, ByteString identifier, std::unique_ptr<VideoBuffer> (*textureGen)(int, Vec2<int>) = nullptr):
 		Tool(id, name, description, colour, identifier, textureGen)
-	{}
+	{
+		IsElement = true;
+	}
 
 	ElementTool(int id, ByteString identifier) : Tool(id, identifier)
-	{}
+	{
+		IsElement = true;
+	}
 
 	void Draw(Simulation * sim, Brush const &brush, ui::Point position) override;
 	void DrawLine(Simulation * sim, Brush const &brush, ui::Point position1, ui::Point position2, bool dragging) override;

@@ -6,6 +6,7 @@
 class GameModel;
 class OptionsModel;
 class OptionsView;
+enum class OmniSetting : unsigned char;
 class OptionsController
 {
 	GameModel * gModel;
@@ -53,6 +54,7 @@ public:
 	void SetAutoStartupRequest(bool newAutoStartupRequest);
 	void SetFpsLimit(SimFpsLimit newFpsLimit);
 	void SetDrawLimit(DrawLimit newDrawLimit);
+	void SetOmniSettingValue(OmniSetting setting, bool enabled);
 	
 	void Exit();
 	OptionsView * GetView();

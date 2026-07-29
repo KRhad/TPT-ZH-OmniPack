@@ -6,6 +6,7 @@
 class GameModel;
 class Simulation;
 class OptionsView;
+enum class OmniSetting : unsigned char;
 class OptionsModel
 {
 	GameModel * gModel;
@@ -91,5 +92,7 @@ public:
 	void SetFpsLimit(SimFpsLimit newFpsLimit);
 	DrawLimit GetDrawLimit();
 	void SetDrawLimit(DrawLimit newDrawLimit);
+	bool GetOmniSettingValue(OmniSetting setting);
+	void SetOmniSettingValue(OmniSetting setting, bool enabled);
 	virtual ~OptionsModel();
 };

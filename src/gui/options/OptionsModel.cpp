@@ -8,6 +8,7 @@
 #include "gui/interface/Engine.h"
 #include "gui/game/GameModel.h"
 #include "gui/game/GameView.h"
+#include "gui/game/OmniContent.h"
 #include "client/Client.h"
 #include "common/Localization.h"
 #include "common/platform/Platform.h"
@@ -465,6 +466,18 @@ void OptionsModel::SetDrawLimit(DrawLimit newDrawLimit)
 	}
 	GlobalPrefs::Ref().Set("DrawLimit", saved);
 	ui::Engine::Ref().SetDrawingFrequencyLimit(newDrawLimit);
+	notifySettingsChanged();
+}
+
+bool OptionsModel::GetOmniSettingValue(OmniSetting setting)
+{
+	return GetOmniSetting(setting);
+}
+
+void OptionsModel::SetOmniSettingValue(OmniSetting setting, bool enabled)
+{
+	SetOmniSetting(setting, enabled);
+	gModel->RefreshOmniContentSettings();
 	notifySettingsChanged();
 }
 

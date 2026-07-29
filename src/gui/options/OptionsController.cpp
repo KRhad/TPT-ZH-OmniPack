@@ -212,6 +212,11 @@ void OptionsController::SetDrawLimit(DrawLimit newDrawLimit)
 	model->SetDrawLimit(newDrawLimit);
 }
 
+void OptionsController::SetOmniSettingValue(OmniSetting setting, bool enabled)
+{
+	model->SetOmniSettingValue(setting, enabled);
+}
+
 void OptionsController::Exit()
 {
 	view->CloseActiveWindow();

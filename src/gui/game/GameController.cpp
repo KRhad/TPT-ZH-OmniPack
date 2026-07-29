@@ -1163,7 +1163,8 @@ void GameController::SetActiveTool(int toolSelection, Tool * tool)
 {
 	if (gameModel->GetActiveMenu() == SC_DECO && toolSelection == 2)
 		toolSelection = 0;
-	gameModel->SetActiveTool(toolSelection, tool);
+	if (!gameModel->SetActiveTool(toolSelection, tool))
+		return;
 	gameModel->GetRendererSettings().gravityZonesEnabled = false;
 	if (toolSelection == 3)
 		gameModel->GetSimulation()->replaceModeSelected = tool->ToolID;

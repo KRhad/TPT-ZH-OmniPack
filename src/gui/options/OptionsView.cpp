@@ -345,6 +345,21 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		c->SetLanguage(language->GetOption().second);
 	});
 	addSeparator();
+	addLabel(0, Localization::Ref().Tr("options.omni.content"));
+	for (auto const &definition : GetOmniSettingDefinitions())
+	{
+		auto index = static_cast<std::size_t>(definition.setting);
+		omniSettings[index] = addCheckbox(
+			0,
+			Localization::Ref().Tr(definition.labelKey),
+			Localization::Ref().Tr(definition.infoKey),
+			[this, setting = definition.setting, index] {
+				c->SetOmniSettingValue(setting, omniSettings[index]->GetChecked());
+			}
+		);
+		omniSettings[index]->Enabled = definition.available;
+	}
+	addSeparator();
 	std::tie(fpsLimit, fpsLimitText) = addLimitDropDown(Localization::Ref().Tr("options.fps_limit"), {
 		{ Localization::Ref().Tr("options.limit.exact"), fpsLimitDropdownExact },
 		{ Localization::Ref().Tr("options.limit.uncapped"), fpsLimitDropdownUncapped },
@@ -868,6 +883,11 @@ void OptionsView::NotifySettingsChanged(OptionsModel * sender)
 	momentumScroll->SetChecked(sender->GetMomentumScroll());
 	redirectStd->SetChecked(sender->GetRedirectStd());
 	autoStartupRequest->SetChecked(sender->GetAutoStartupRequest());
+	for (auto const &definition : GetOmniSettingDefinitions())
+	{
+		auto index = static_cast<std::size_t>(definition.setting);
+		omniSettings[index]->SetChecked(sender->GetOmniSettingValue(definition.setting));
+	}
 }
 
 void OptionsView::AttachController(OptionsController * c_)

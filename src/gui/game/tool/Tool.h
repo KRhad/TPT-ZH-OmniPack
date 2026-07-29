@@ -31,6 +31,7 @@ public:
 	int MenuSection = SC_TOOL;
 	bool MenuVisible = true;
 	int MenuSort = 0;
+	bool IsElement = false;
 
 	Tool() = default;
 

@@ -1,4 +1,5 @@
 #include "ElementSearchActivity.h"
+#include "ElementCatalog.h"
 
 #include <set>
 #include <map>
@@ -6,6 +7,7 @@
 #include <SDL.h>
 
 #include "common/Localization.h"
+#include "prefs/GlobalPrefs.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/ScrollPanel.h"
 #include "gui/interface/Label.h"
@@ -14,9 +16,56 @@
 #include "gui/Style.h"
 #include "gui/game/Favorite.h"
 #include "gui/game/GameController.h"
+#include "gui/game/OmniContent.h"
 #include "gui/game/ToolButton.h"
+#include "gui/dialogues/InformationMessage.h"
 
 #include "graphics/Graphics.h"
+#include "simulation/SimulationData.h"
+
+namespace
+{
+String CatalogString(std::string_view value)
+{
+	return ByteString(value.data(), value.size()).FromUtf8();
+}
+
+String CatalogValue(char const *kind, std::string_view value)
+{
+	ByteString key = "encyclopedia.value.";
+	key += kind;
+	key += ".";
+	key.append(value.data(), value.size());
+	auto fallback = ByteString(value.data(), value.size());
+	return Localization::Ref().Tr(key.c_str(), fallback.c_str());
+}
+
+String CatalogCategory(std::string_view category)
+{
+	static constexpr std::pair<std::string_view, char const *> categoryKeys[] = {
+		{ "SC_ELEC", "sim.menu.electronics" },
+		{ "SC_POWERED", "sim.menu.powered" },
+		{ "SC_SENSOR", "sim.menu.sensors" },
+		{ "SC_FORCE", "sim.menu.force" },
+		{ "SC_EXPLOSIVE", "sim.menu.explosives" },
+		{ "SC_GAS", "sim.menu.gases" },
+		{ "SC_LIQUID", "sim.menu.liquids" },
+		{ "SC_POWDERS", "sim.menu.powders" },
+		{ "SC_SOLIDS", "sim.menu.solids" },
+		{ "SC_NUCLEAR", "sim.menu.radioactive" },
+		{ "SC_SPECIAL", "sim.menu.special" },
+		{ "SC_LIFE", "sim.menu.gol" },
+	};
+	for (auto const &[value, key] : categoryKeys)
+	{
+		if (category == value)
+		{
+			return Localization::Ref().Tr(key);
+		}
+	}
+	return CatalogValue("category", category);
+}
+}
 
 ElementSearchActivity::ElementSearchActivity(GameController * gameController, std::vector<Tool*> tools) :
 	WindowActivity(ui::Point(-1, -1), ui::Point(236, 302)),
@@ -41,15 +90,68 @@ ElementSearchActivity::ElementSearchActivity(GameController * gameController, st
 	AddComponent(searchField);
 	FocusComponent(searchField);
 
-	ui::Button * closeButton = new ui::Button(ui::Point(0, Size.Y-15), ui::Point((Size.X/2)+1, 15), Localization::Ref().Tr("elementsearch.close"));
+	auto thirdWidth = Size.X / 3;
+	ui::Button * closeButton = new ui::Button(ui::Point(0, Size.Y-15), ui::Point(thirdWidth+1, 15), Localization::Ref().Tr("elementsearch.close"));
 	closeButton->SetActionCallback({ [this] { exit = true; } });
-	ui::Button * okButton = new ui::Button(ui::Point(Size.X/2, Size.Y-15), ui::Point(Size.X/2, 15), Localization::Ref().Tr("dialog.ok"));
+	ui::Button * encyclopediaButton = new ui::Button(ui::Point(thirdWidth, Size.Y-15), ui::Point(thirdWidth+1, 15), Localization::Ref().Tr("elementsearch.encyclopedia"));
+	encyclopediaButton->SetActionCallback({ [this] {
+		auto *tool = GetFirstResult();
+		auto const *record = tool ? FindElementCatalogByIdentifier(tool->Identifier) : nullptr;
+		if (!tool || !record)
+		{
+			new InformationMessage(
+				Localization::Ref().Tr("elementsearch.encyclopedia"),
+				Localization::Ref().Tr("elementsearch.encyclopedia_unavailable"),
+				false
+			);
+			return;
+		}
+
+		auto language = GlobalPrefs::Ref().Get("Language", 1);
+		auto currentName = language == 1 && !record->chineseName.empty()
+			? CatalogString(record->chineseName)
+			: CatalogString(record->englishName);
+		auto title = currentName;
+		if (language == 1 && record->chineseName != record->englishName)
+		{
+			title += " / " + CatalogString(record->englishName);
+		}
+		title += " [" + CatalogString(record->displayCode) + "]";
+
+		StringBuilder details;
+		details << Localization::Ref().Tr("encyclopedia.identifier") << ": " << CatalogString(record->identifier) << "\n";
+		details << Localization::Ref().Tr("encyclopedia.stable_id") << ": " << record->stableId << "\n";
+		details << Localization::Ref().Tr("encyclopedia.category") << ": " << CatalogCategory(record->menuCategory) << "\n";
+		details << Localization::Ref().Tr("encyclopedia.state") << ": " << CatalogValue("state", record->elementState) << "\n";
+		details << Localization::Ref().Tr("encyclopedia.source") << ": " << CatalogString(record->sourceMod) << "\n";
+		details << Localization::Ref().Tr("encyclopedia.source_commit") << ": " << CatalogString(record->sourceCommit) << "\n";
+		details << Localization::Ref().Tr("encyclopedia.license") << ": " << CatalogString(record->license) << "\n";
+		details << Localization::Ref().Tr("encyclopedia.save_compatibility") << ": " << CatalogValue("save", record->saveCompatibility) << "\n";
+		details << Localization::Ref().Tr("encyclopedia.implementation") << ": " << CatalogValue("implementation", record->implementationStatus) << "\n";
+		details << Localization::Ref().Tr("encyclopedia.test_status") << ": " << CatalogValue("test", record->testStatus) << "\n";
+
+		if (record->stableId >= 0 && record->stableId < PT_NUM)
+		{
+			auto const &element = SimulationData::Ref().elements[record->stableId];
+			details << Localization::Ref().Tr("encyclopedia.heat_conductivity") << ": " << int(element.HeatConduct) << "\n";
+			details << Localization::Ref().Tr("encyclopedia.heat_capacity") << ": " << element.HeatCapacity << "\n";
+			details << Localization::Ref().Tr("encyclopedia.low_temperature") << ": " << element.LowTemperature << " K\n";
+			details << Localization::Ref().Tr("encyclopedia.high_temperature") << ": " << element.HighTemperature << " K\n\n";
+			auto catalogDescription = language == 1
+				? CatalogString(record->chineseDescription)
+				: CatalogString(record->englishDescription);
+			details << (catalogDescription.empty() ? element.Description : catalogDescription);
+		}
+		new InformationMessage(title, details.Build(), true);
+	} });
+	ui::Button * okButton = new ui::Button(ui::Point(thirdWidth*2, Size.Y-15), ui::Point(Size.X-thirdWidth*2, 15), Localization::Ref().Tr("dialog.ok"));
 	okButton->SetActionCallback({ [this] {
 		if (GetFirstResult())
 			SetActiveTool(0, GetFirstResult());
 	} });
 
 	AddComponent(okButton);
+	AddComponent(encyclopediaButton);
 	AddComponent(closeButton);
 
 	scrollPanel = new ui::ScrollPanel(searchField->Position + Vec2{ 1, searchField->Size.Y+9 }, { searchField->Size.X - 2, Size.Y-(searchField->Position.Y+searchField->Size.Y+6)-23 });
@@ -123,12 +225,27 @@ void ElementSearchActivity::searchTools(String query)
 
 	for (int toolIndex = 0; toolIndex < (int)tools.size(); ++toolIndex)
 	{
+		if (!IsOmniToolSelectable(*tools[toolIndex]))
+		{
+			continue;
+		}
 		pushIfMatches(tools[toolIndex]->Name.ToLower(), toolIndex, 0);
-		pushIfMatches(tools[toolIndex]->Description.ToLower(), toolIndex, 1);
+		pushIfMatches(tools[toolIndex]->Identifier.FromUtf8().ToLower(), toolIndex, 1);
+		if (auto const *record = FindElementCatalogByIdentifier(tools[toolIndex]->Identifier))
+		{
+			pushIfMatches(CatalogString(record->displayCode).ToLower(), toolIndex, 0);
+			pushIfMatches(CatalogString(record->chineseName).ToLower(), toolIndex, 1);
+			pushIfMatches(CatalogString(record->englishName).ToLower(), toolIndex, 1);
+			pushIfMatches(CatalogString(record->sourceMod).ToLower(), toolIndex, 2);
+			pushIfMatches(CatalogString(record->menuCategory).ToLower(), toolIndex, 2);
+			pushIfMatches(CatalogString(record->englishDescription).ToLower(), toolIndex, 3);
+			pushIfMatches(CatalogString(record->chineseDescription).ToLower(), toolIndex, 3);
+		}
+		pushIfMatches(tools[toolIndex]->Description.ToLower(), toolIndex, 3);
 		auto it = menudescriptionLower.find(tools[toolIndex]);
 		if (it != menudescriptionLower.end())
 		{
-			pushIfMatches(it->second, toolIndex, 2);
+			pushIfMatches(it->second, toolIndex, 4);
 		}
 	}
 

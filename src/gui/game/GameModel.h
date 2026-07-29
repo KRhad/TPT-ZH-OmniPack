@@ -203,6 +203,7 @@ public:
 	String GetInfoTip();
 
 	void BuildMenus();
+	void RefreshOmniContentSettings();
 	void BuildBrushList();
 	void BuildQuickOptionMenu(GameController * controller);
 
@@ -218,7 +219,7 @@ public:
 	void UpdateQuickOptions();
 
 	Tool * GetActiveTool(int selection);
-	void SetActiveTool(int selection, Tool * tool);
+	bool SetActiveTool(int selection, Tool * tool);
 	void SetToolStrength(float value);
 	float GetToolStrength();
 	Tool * GetLastTool();
