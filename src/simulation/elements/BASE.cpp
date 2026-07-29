@@ -191,9 +191,18 @@ static int update(UPDATE_FUNC_ARGS)
 					else if (parts[i].life >= 10 &&
 						       	(elements[rt].Properties & (TYPE_SOLID|PROP_CONDUCTS)) == (TYPE_SOLID|PROP_CONDUCTS) && sim->rng.chance(1, 10))
 					{
-						//@ BASE + conductive solid -> BASE + BMTL
-						sim->createPartTempVel(ID(r), x+rx, y+ry, PT_BMTL);
-						parts[ID(r)].tmp = sim->rng.between(20, 29);
+						//@ BASE + conductive solid -> BASE + BMTL/MSCR
+						if (rt >= PT_ALUM && rt <= PT_TSTL)
+						{
+							sim->createPartTempVel(ID(r), x+rx, y+ry, PT_MSCR);
+							parts[ID(r)].ctype = rt;
+							parts[ID(r)].tmp = 0;
+						}
+						else
+						{
+							sim->createPartTempVel(ID(r), x+rx, y+ry, PT_BMTL);
+							parts[ID(r)].tmp = sim->rng.between(20, 29);
+						}
 						parts[i].life--;
 						//Draw a spark effect
 						parts[i].tmp = 1;

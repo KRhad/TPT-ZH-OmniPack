@@ -37,6 +37,11 @@ config.log
 *.lua
 screenshot_*
 
+# Project-owned, reviewed automation and runtime regression sources.
+!tools/*.py
+!tools/tests/*.py
+!tools/runtime/*.lua
+
 # Visual studio
 /Debug/
 /Release/

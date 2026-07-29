@@ -255,6 +255,29 @@ simulation_elem_names = [
 	disabler(), # 253
 	disabler(), # 254
 	disabler(), # 255: reserved compatibility gap
+	'ALUM', # 256: metallurgy
+	'COPR', # 257
+	'LEAD', # 258
+	'TIN',  # 259
+	'NICL', # 260
+	'MAGN', # 261
+	'CHRM', # 262
+	'COBT', # 263
+	'MOLY', # 264
+	'ZINC', # 265
+	'CHRC', # 266
+	'COKE', # 267
+	'STEL', # 268
+	'BRNZ', # 269
+	'BRAS', # 270
+	'SSIL', # 271
+	'NCRM', # 272
+	'ALMG', # 273
+	'TSTL', # 274
+	'SLAG', # 275
+	'FLUX', # 276
+	'CRUC', # 277
+	'MSCR', # 278
 ]
 
 simulation_elem_src = []
