@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-Phase 3：工业冶金首批完成；下一阶段为 Phase 3：基础化学。
+Phase 3：工业冶金与基础化学首批完成；下一阶段为 Phase 4：复杂内容（生物系统）。
 
 ## 已完成
 
@@ -27,10 +27,15 @@ Phase 3：工业冶金首批完成；下一阶段为 Phase 3：基础化学。
 - 合金与炼钢只收集触发点 `3x3` 邻域，每帧共享 2,048 次成功反应预算，并使用 tick 标记阻止同帧重复级联。
 - 为 23 个冶金元素登记中英文正式名称、短说明、来源、稳定 ID、菜单分类、存档状态与测试状态；缺失的 Seppo 构造器明确按公开概念独立实现，未从二进制反推或复制。
 - 增加冶金静态审计、两项 Python 单测与实际客户端 Lua 回归，覆盖配方、熔体凝固、炭化、电热、压力/碎料、镁燃烧与锌保护。
+- 完成基础化学首批：固定 ID `360..369` 注册氯气、氨气、乙醇、煤油、汽油、乙炔、催化剂、聚合物、过氧化氢和肥料；`279..359` 及未来空槽显式登记为稳定保留区，避免后续模块移动 ID。
+- 建立集中、局部的 `OmniChemistry` 反应引擎：燃料裂化、乙炔聚合、氯氢反应、氨合成、肥料循环、酵母发酵、过氧化氢制备/分解和普通水电解均使用固定 `3x3` 邻域。
+- 化学反应共享每帧 1,536 次成功预算，并以 tick 标记避免同帧级联；氨合成显式排除重复输入，过氧化氢分解先确认氧气输出槽位再消耗输入。
+- 增加“高级化学”模块设置，接入统一菜单、搜索、采样、延迟选择和 Lua 的元素选择门禁。
+- 增加化学静态审计、两项 Python 单测与实际客户端 Lua 回归，覆盖 9 个运行场景和冷催化剂负例。
 
 ## 修改文件
 
-Phase 2 和已完成的 Phase 3 冶金的主要变更：
+Phase 2 和已完成的 Phase 3 冶金/基础化学的主要变更：
 
 - `docs/ELEMENT_REGISTRY.csv`
 - `docs/ELEMENT_DESIGN.md`
@@ -50,6 +55,13 @@ Phase 2 和已完成的 Phase 3 冶金的主要变更：
 - `tools/tests/test_metallurgy_audit.py`
 - `tools/runtime/metallurgy_regression.lua`
 - `tools/runtime_lua_metallurgy_test.ps1`
+- `src/simulation/OmniChemistry.cpp`
+- `src/simulation/OmniChemistry.h`
+- `src/simulation/elements/{CHLR,AMON,ETHL,KERO,GASO,ACTY,CATA,POLY,PERO,FERT}.cpp`
+- `tools/chemistry_audit.py`
+- `tools/tests/test_chemistry_audit.py`
+- `tools/runtime/chemistry_regression.lua`
+- `tools/runtime_lua_chemistry_test.ps1`
 - `src/common/Localization.cpp`
 - `src/common/Localization.h`
 - `src/gui/elementsearch/ElementCatalog.h`
@@ -66,16 +78,18 @@ Phase 2：0。只锁定官方 ID 并建立基础设施，没有把预留内容�
 
 Phase 3 冶金：23。`ALUM`、`COPR`、`LEAD`、`TIN`、`NICL`、`MAGN`、`CHRM`、`COBT`、`MOLY`、`ZINC`、`CHRC`、`COKE`、`STEL`、`BRNZ`、`BRAS`、`SSIL`、`NCRM`、`ALMG`、`TSTL`、`SLAG`、`FLUX`、`CRUC`、`MSCR`；稳定 ID 为 `256..278`。
 
+Phase 3 基础化学：10。`CHLR`、`AMON`、`ETHL`、`KERO`、`GASO`、`ACTY`、`CATA`、`POLY`、`PERO`、`FERT`；稳定 ID 为 `360..369`。
+
 ## 汉化状态
 
-- 英文键：1,200
-- 中文键：1,200
+- 英文键：1,222
+- 中文键：1,222
 - 缺失键：0
 - 多余键：0
 - 发布阻塞错误：0
 - 占位符/控制符错误：0
 - 疑似未翻译警告：37，均保留在 `docs/I18N_AUDIT.md` 供人工分类
-- 官方活动元素名称登记：195/195；冶金元素中英文正式名称登记：23/23
+- 官方活动元素名称登记：195/195；冶金/化学元素中英文正式名称登记：23/10
 - 默认语言：简体中文；英文及其他 10 个原有语言入口保留
 
 该结果证明键集合、格式和登记完整性通过自动门禁；不等于视觉布局已通过。
@@ -115,12 +129,21 @@ Phase 3 冶金增量构建：
 - 产物：`build-phase2-clean/tpt-zh-omnipack.exe`
 - 大小：235,565,190 字节
 - SHA-256：`86F78585851E54547F1A76CD71E126AD3792260F5D75FFA4E9ACBD02543D5F8D`
-- 本次恢复会话可复核现有二进制和全部源码/运行门禁；由于当前 PATH 缺少 Meson 和 C++ 编译器，未从当前会话重新编译。该环境限制不改变上述 2026-07-29 构建结果。
+- 本次恢复会话已通过恢复 MSYS2 UCRT64 工具链复核并重跑后续编译。
+
+Phase 3 基础化学增量构建：
+
+- Windows x64 `debugoptimized` 静态增量构建：PASS，0 error。
+- 工具链：GCC 16.1.0、Meson 1.11.2、Ninja 1.13.2。
+- 产物：`build-phase2-clean/tpt-zh-omnipack.exe`
+- 大小：238,700,275 字节
+- SHA-256：`398BAF39F8B4F0EB8ECA87EAF452A2EE2321831A44191C39064EBBBD0CC333E9`
+- 非系统 GCC runtime DLL 导入：0。
 
 ## 测试结果
 
-- Meson 静态测试：3/3 PASS。
-- Python 工具单元测试：28/28 PASS。
+- Meson 静态测试：Phase 2 为 3/3 PASS；当前含化学门禁为 5/5 PASS。
+- Python 工具单元测试：Phase 2 为 28/28 PASS；当前为 32/32 PASS，2 项 C++ 语法测试因该 Python 环境未找到编译器跳过。
 - 元素登记：PASS，196 槽、195 活动、1 tombstone、`PT_NUM=512`。
 - i18n：PASS，1,154/1,154 键，0 missing、0 extra、0 error；196 行登记表派生的 27 个图鉴枚举键全部存在。
 - 元素名称同步只读检查：PASS，0 change。
@@ -128,7 +151,7 @@ Phase 3 冶金增量构建：
 - clean 构建日志密钥扫描：0 个令牌模式命中；构建目录中 0 个 `powder.pref`、账户或凭据候选文件。
 - 图鉴视觉布局、设置复选框交互、英文切换实际交互：BLOCKED；本会话没有可用的受信任 Computer Use native pipe。
 - 官方存档载入/往返：NOT RUN。
-- 禁用自定义模块存档警告/只读/占位：NOT RUN；尚无正式自定义元素。
+- 禁用自定义模块存档警告/只读/占位：NOT RUN；已有正式自定义元素，已列为发布阻塞项。
 
 Phase 3 冶金：
 
@@ -137,29 +160,37 @@ Phase 3 冶金：
 - 冶金静态审计：PASS，23 个元素、6 条合金配方、1 条炼钢配方、固定 `3x3` 邻域。
 - Python 工具单测：30/30 PASS，2 项 C++ 编译验证因当前环境无 C++ 编译器跳过。
 - 实际客户端 Lua 冶金回归：PASS；7 条配方/凝固场景、5 组材料行为，`256..278` 全部可解析，客户端保持响应。
-- Meson `static` suite：2026-07-29 为 4/4 PASS；本恢复会话因 PATH 缺少 Meson 未重跑。
+- Meson `static` suite：当前为 5/5 PASS，含 registry、i18n、冶金、化学和工具测试。
 - 冶金 OPS 往返存档、禁用冶金模块存档警告、固定生产线 FPS/内存压力样本：NOT RUN。
+
+Phase 3 基础化学：
+
+- 元素登记：PASS，370 槽、228 活动、142 保留、`PT_NUM=512`。
+- 本地化审计：PASS，en/zh `1,222/1,222`，0 missing、0 extra、0 error；37 项保留英文/代号警告待人工分类。
+- 化学静态审计：PASS，10 个元素、7 类受限工艺、固定 `3x3` 邻域。
+- 实际客户端 Lua 化学回归：PASS；9 个场景，覆盖裂化、聚合、过氧化物、氨、氯氢、肥料、发酵和负例；`360..369` 全部可解析，客户端保持响应。
+- 化学 OPS 往返、禁用化学模块载入警告、固定生产线 FPS/内存压力样本：NOT RUN。
 
 ## 性能结果
 
-Phase 2 没有新增粒子更新函数，因此没有新增每帧粒子成本。Phase 3 冶金的反应路径限定为局部 `3x3` 搜索；合金/炼钢共享每帧 2,048 次成功反应预算，且不进行全粒子表扫描。clean build 和 Lua 启动回归未崩溃。FPS、内存、粒子增长和大型生产线压力数据仍为 `NOT RUN`，将在 Phase 7 建立固定样本。
+Phase 2 没有新增粒子更新函数，因此没有新增每帧粒子成本。Phase 3 冶金反应路径限定为局部 `3x3` 搜索；合金/炼钢共享每帧 2,048 次成功反应预算。基础化学同样只用局部 `3x3` 搜索，所有成功反应共享每帧 1,536 次预算。两模块不扫描全粒子表；Lua 回归中客户端保持响应。FPS、内存、粒子增长和大型生产线压力数据仍为 `NOT RUN`，将在 Phase 7 建立固定样本。
 
 ## 已知问题
 
 - 中文字体 `resources/font.bz2` 的名称、来源和许可证仍不可追溯，是正式发布阻塞项。
 - 视觉中文布局与实际语言切换交互尚未执行。
 - 官方 100.0 存档样本载入/重存尚未执行。
-- 关闭冶金模块后加载含该模块元素的中文警告、只读和占位路径尚未实现；这是 Phase 7 存档兼容测试的发布阻塞项。
+- 关闭冶金或化学模块后加载含模块元素的中文警告、只读和占位路径尚未实现；这是 Phase 7 存档兼容测试的发布阻塞项。
 - 图鉴框架目前显示登记说明和基础热学参数；反应、生产方法、用途、危险等级、原作者等正式字段将在内容登记扩展时加入。
 - 曾发现旧 Meson `testlog.txt` 含明文 GitHub PAT 环境变量。该原始日志已删除且未提交；后续测试在清理敏感环境后重跑，令牌模式扫描为 0。凭据轮换属于仓库外必要操作。
 - 两条基线 GCC 警告仍待定位。
 
 ## 下一阶段
 
-1. 在固定 ID `360..391` 中实现基础化学的中央反应表，避免元素更新逻辑相互覆盖。
+1. 在固定 ID `288..327` 中实现生物系统，使用局部状态与每帧预算，并提供简化模拟开关。
 2. 扩展图鉴登记字段与反应数据结构，添加配方、生产方法、用途和危险说明。
 3. 实现禁用模块存档的中文警告和兼容占位策略，再进行 OPS 往返存档测试。
-4. 建立冶金生产线、官方存档和性能固定样本。
+4. 建立冶金/化学生产线、官方存档和性能固定样本。
 
 ## 当前 commit hash
 

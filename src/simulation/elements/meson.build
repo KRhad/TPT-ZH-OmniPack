@@ -278,6 +278,97 @@ simulation_elem_names = [
 	'FLUX', # 276
 	'CRUC', # 277
 	'MSCR', # 278
+	disabler(), # 279: metallurgy reserve
+	disabler(), # 280
+	disabler(), # 281
+	disabler(), # 282
+	disabler(), # 283
+	disabler(), # 284
+	disabler(), # 285
+	disabler(), # 286
+	disabler(), # 287
+	disabler(), # 288: biology reserve
+	disabler(), # 289
+	disabler(), # 290
+	disabler(), # 291
+	disabler(), # 292
+	disabler(), # 293
+	disabler(), # 294
+	disabler(), # 295
+	disabler(), # 296
+	disabler(), # 297
+	disabler(), # 298
+	disabler(), # 299
+	disabler(), # 300
+	disabler(), # 301
+	disabler(), # 302
+	disabler(), # 303
+	disabler(), # 304
+	disabler(), # 305
+	disabler(), # 306
+	disabler(), # 307
+	disabler(), # 308
+	disabler(), # 309
+	disabler(), # 310
+	disabler(), # 311
+	disabler(), # 312
+	disabler(), # 313
+	disabler(), # 314
+	disabler(), # 315
+	disabler(), # 316
+	disabler(), # 317
+	disabler(), # 318
+	disabler(), # 319
+	disabler(), # 320
+	disabler(), # 321
+	disabler(), # 322
+	disabler(), # 323
+	disabler(), # 324
+	disabler(), # 325
+	disabler(), # 326
+	disabler(), # 327
+	disabler(), # 328: advanced nuclear reserve
+	disabler(), # 329
+	disabler(), # 330
+	disabler(), # 331
+	disabler(), # 332
+	disabler(), # 333
+	disabler(), # 334
+	disabler(), # 335
+	disabler(), # 336
+	disabler(), # 337
+	disabler(), # 338
+	disabler(), # 339
+	disabler(), # 340
+	disabler(), # 341
+	disabler(), # 342
+	disabler(), # 343
+	disabler(), # 344
+	disabler(), # 345
+	disabler(), # 346
+	disabler(), # 347
+	disabler(), # 348
+	disabler(), # 349
+	disabler(), # 350
+	disabler(), # 351
+	disabler(), # 352
+	disabler(), # 353
+	disabler(), # 354
+	disabler(), # 355
+	disabler(), # 356
+	disabler(), # 357
+	disabler(), # 358
+	disabler(), # 359
+	'CHLR', # 360: chemistry
+	'AMON', # 361
+	'ETHL', # 362
+	'KERO', # 363
+	'GASO', # 364
+	'ACTY', # 365
+	'CATA', # 366
+	'POLY', # 367
+	'PERO', # 368
+	'FERT', # 369
 ]
 
 simulation_elem_src = []

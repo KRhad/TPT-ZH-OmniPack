@@ -10,6 +10,7 @@ namespace
 constexpr std::array<OmniSettingDefinition, OmniSettingCount> settingDefinitions{ {
 	{ OmniSetting::Biology,              "Omni.Modules.Biology",              "options.omni.biology",               "options.omni.biology.info",               true,  true  },
 	{ OmniSetting::Metallurgy,            "Omni.Modules.Metallurgy",            "options.omni.metallurgy",             "options.omni.metallurgy.info",             true,  true  },
+	{ OmniSetting::Chemistry,             "Omni.Modules.Chemistry",             "options.omni.chemistry",              "options.omni.chemistry.info",              true,  true  },
 	{ OmniSetting::AdvancedNuclear,       "Omni.Modules.AdvancedNuclear",       "options.omni.advanced_nuclear",       "options.omni.advanced_nuclear.info",       true,  true  },
 	{ OmniSetting::SpecialPhysics,        "Omni.Modules.SpecialPhysics",        "options.omni.special_physics",        "options.omni.special_physics.info",        true,  true  },
 	{ OmniSetting::Disasters,             "Omni.Modules.Disasters",             "options.omni.disasters",              "options.omni.disasters.info",              true,  true  },
@@ -123,6 +124,8 @@ bool IsOmniElementSelectable(int elementId)
 		return GetOmniSetting(OmniSetting::Biology);
 	case OmniElementModule::Metallurgy:
 		return GetOmniSetting(OmniSetting::Metallurgy);
+	case OmniElementModule::Chemistry:
+		return GetOmniSetting(OmniSetting::Chemistry);
 	case OmniElementModule::AdvancedNuclear:
 		return GetOmniSetting(OmniSetting::AdvancedNuclear);
 	case OmniElementModule::SpecialPhysics:

@@ -1071,9 +1071,13 @@ def validate_repository(
     for stable_id, meson_name in enumerate(slots):
         lock = lock_by_id.get(stable_id)
         if meson_name is None:
+            # Every unimplemented OmniPack content slot is explicitly
+            # represented in the registry as a reserved compatibility gap.
+            # This permits later modules to claim fixed IDs without shifting
+            # any earlier element, while still rejecting undocumented holes.
             is_known_reserved = (
                 stable_id == OFFICIAL_RESERVED_SLOT
-                or OMNI_RESERVED_FIRST <= stable_id <= OMNI_RESERVED_LAST
+                or OMNI_RESERVED_FIRST <= stable_id < pt_num
             )
             if not is_known_reserved:
                 findings.add("MESON_RESERVED", meson_path, f"unexpected disabled slot {stable_id}")

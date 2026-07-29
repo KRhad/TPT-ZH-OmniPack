@@ -4,6 +4,7 @@
 #include "PIPE.h"
 #include "FIRE.h"
 #include "ETRD.h"
+#include "simulation/OmniChemistry.h"
 
 static int update(UPDATE_FUNC_ARGS);
 static int graphics(GRAPHICS_FUNC_ARGS);
@@ -60,6 +61,8 @@ static int update(UPDATE_FUNC_ARGS)
 	auto &elements = sd.elements;
 	int ct = parts[i].ctype;
 	Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
+	if (ct == PT_CATA)
+		OmniChemistrySparkUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 
 	if (parts[i].life<=0)
 	{

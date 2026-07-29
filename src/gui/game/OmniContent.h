@@ -9,6 +9,7 @@ enum class OmniSetting : unsigned char
 {
 	Biology,
 	Metallurgy,
+	Chemistry,
 	AdvancedNuclear,
 	SpecialPhysics,
 	Disasters,

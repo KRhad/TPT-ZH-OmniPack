@@ -1,18 +1,19 @@
 # 移植账本
 
-> Phase 0 未复制第三方实现代码。Phase 3 当前工作树已登记并实现 23 个冶金元素。下文的“没有逐行复制”特指没有复制第三方元素更新函数；`COPR` 的颜色、导热/导电定位、熔点和氧化玩法由 Cracker 源码适配，不能笼统标成完全原创。
+> Phase 0 未复制第三方实现代码。Phase 3 当前工作树已登记并实现 23 个冶金元素与 10 个基础化学元素。下文的“没有逐行复制”特指没有复制第三方元素更新函数；`COPR` 的颜色、导热/导电定位、熔点和氧化玩法由 Cracker 源码适配，不能笼统标成完全原创。
 
 状态值：`AUDITED`、`DESIGN`、`PORTING`、`TESTING`、`ACCEPTED`、`REJECTED`、`BLOCKED`。
 
 | 模块/候选 | 来源与固定 commit | 原作者/归属 | Phase 0 判定 | 目标方式 | 当前状态 | 理由与门禁 |
 |---|---|---|---|---|---|---|
 | 官方模拟、保存、ID | Official `bff38ce...` | TPT contributors | 直接底座 | 保留并同步 | AUDITED | 100.0.399 权威实现 |
-| 中文/英文语料与严格加载 | Dragonrster `445fab51...`；OmniPack `457233ac...` | Dragonrster、TPT contributors、OmniPack contributors | 审核后重放并重写加载器 | JsonCpp 严格 JSON + 自动审计 | ACCEPTED | en/zh 1,154/1,154，0 阻塞错误；视觉复核仍独立跟踪 |
+| 中文/英文语料与严格加载 | Dragonrster `445fab51...`；OmniPack `457233ac...` | Dragonrster、TPT contributors、OmniPack contributors | 审核后重放并重写加载器 | JsonCpp 严格 JSON + 自动审计 | ACCEPTED | en/zh 1,222/1,222，0 阻塞错误；视觉复核仍独立跟踪 |
 | 官方元素稳定锁 | Official `bff38ce...`；OmniPack `08fe8a82...` | TPT contributors、OmniPack contributors | 源码解析生成 | 逐槽固定 0–195 | ACCEPTED | 196 槽、195 活动、1 tombstone；自动门禁 PASS |
 | 模块选择与图鉴框架 | OmniPack `d7312a9b...`、`f28cdcb7...` | OmniPack contributors | 项目原创实现 | 统一门禁、编译时登记目录 | ACCEPTED | clean build、28 单测、Lua 运行回归和枚举本地化门禁 PASS |
 | Phase 3 工业冶金首批 | Seppo `c3a8dd17...`；Cracker COPR `eb474d38...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、OmniPack contributors | 概念筛选、参数/行为适配、独立更新实现 | 稳定 ID 256–278 + 集中反应引擎 | TESTING | 23 元素、7 配方、5 材料行为；静态门禁与 Lua 运行回归 PASS |
+| Phase 3 基础化学首批 | Seppo `c3a8dd17...`；Cracker `ebbb9aab...`；Cyens `f01d992c...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、cbeimers113、OmniPack contributors | token/玩法需求参考，集中算法独立实现 | 稳定 ID 360–369 + 中央有界反应引擎 | TESTING | 10 元素、11 条反应路径、化学静态门禁与 Lua 真实运行回归 PASS |
 | 汉化字体 | Dragonrster `445fab51...` | 未知 | 禁止发布 | 替换为可追溯字体 | BLOCKED | 名称、来源、许可证缺失 |
-| Cracker 工业化学 | Cracker `ebbb9aab...` | Cracker1000 等 | 重写候选 | 中央反应表 | DESIGN | 与冶金/Cyens 去重 |
+| Cracker 工业化学 | Cracker `ebbb9aab...` | Cracker1000 等 | token/玩法需求参考 | 中央反应表 | TESTING | `CHLR/ACTY` 以新稳定 ID 独立实现；不复制 5×5 更新，不复用旧 ID |
 | 动力门户 PPTI/PPTO | Cracker `ebbb9aab...`; Jacob `b4926161...` | 各来源作者 | 合并重写 | 单一稳定实现 | DESIGN | 多来源重复、旧 API |
 | CSNS/GSNS/导线/PCON | Cracker `ebbb9aab...` | Cracker1000 | 重写候选 | 当前电子 API + 预算 | DESIGN | 自动化价值明确 |
 | PET/BEE 原实现 | Cracker `ebbb9aab...` | Cracker1000 | 排除原实现 | 如需概念则另行设计 | REJECTED | 大范围扫描/越界风险 |
@@ -28,7 +29,7 @@
 | Alchemy 原进度代码 | Alchemy `9a593ce1...` | 原仓库作者 | 排除 | identifier/schema 重写 | REJECTED | 越界、未初始化、可绕过 |
 | Seppo 冶金实现 | Seppo `c3a8dd17...` | SeppoTPT | 无可移植源码 | 清洁室重写 | BLOCKED | 32 个实现文件全部缺失 |
 | Seppo 元素/合金清单 | Seppo `c3a8dd17...` 与论坛 | SeppoTPT | 设计参考 | 去重后自研 | TESTING | 12 个概念条目已用独立实现进入首批冶金；未复制缺失构造器 |
-| Cyens 烃网络 | Cyens `f01d992c...` | cbeimers113 | 重写候选 | 不改官方基础语义 | DESIGN | 有机链有价值 |
+| Cyens 烃网络 | Cyens `f01d992c...` | cbeimers113 | 设计参考 | 不改官方基础语义 | TESTING | 裂化链使用新 `KERO/GASO/ACTY`；未复制其官方 GAS/OIL/WAX 改写 |
 | Cyens 时间/局部重力 | Cyens `f01d992c...` | cbeimers113 | 实验参考 | 默认关闭 | DESIGN | 未完成离子系统、全局风险 |
 
 ## Phase 3 冶金来源与实现复核
@@ -88,7 +89,7 @@ ALNI ALNC TERN MAGX PLTU
 
 因此法律与工程标签是“GPL 来源参数/行为适配 + 本项目更新算法重写”，不是“未使用 Cracker”，也不是“逐行复制 Cracker 更新函数”。
 
-### Cyens：烃网络只作后续化学设计参考
+### Cyens：烃网络仅作基础化学设计参考
 
 固定仓库快照为 `cbeimers113/cyens-toy` `master`
 `f01d992c97432ec1c46d84ade05131da521f355a`。烃系统的文件级相关提交锚点为
@@ -97,7 +98,7 @@ ALNI ALNC TERN MAGX PLTU
 `6bec6d120605889efd9999e905341cc7d88d4e52`，所以 `e60752...` 不能被误写成全部代码的唯一作者来源。
 
 可参考内容是烷烃/烯烃/炔烃分类、碳数对应相变点及名称生成。固定快照同时重定义官方
-`GAS/OIL/MWAX/WAX` 语义，而且后续离子体系仍未完成。Phase 3 冶金不会复制这些文件；燃料和高级化学阶段若采用概念，将使用新稳定标识符、集中反应表和独立实现，不覆盖官方元素基础语义。
+`GAS/OIL/MWAX/WAX` 语义，而且后续离子体系仍未完成。基础化学首批只采用“分馏燃料链 + 独立稳定标识符”的需求：新 `KERO/GASO/ACTY` 由 `OmniChemistry.cpp` 的 3×3 有界规则产生，官方 `GAS/OIL/MWAX/WAX` 构造器和状态转换没有被替换或复制。
 
 ### 方式标签
 
@@ -105,8 +106,8 @@ ALNI ALNC TERN MAGX PLTU
 |---|---|
 | 第三方更新函数逐行复制 | **0**；Seppo 构造器缺失，Cracker COPR 的原 `update` 未复制，Cyens 烃代码未进入冶金模块 |
 | 参数/行为适配 | **1 个元素：COPR**；保留可追溯参数和玩法定位，更新算法按当前 API 重写 |
-| 概念参考 | Seppo 的 12 个公开 token/行为进入独立实现；Cyens 烃网络只保留为后续化学候选 |
-| 本项目原创设计 | 10 个元素及集中反应、性能预算、回收机制；来源登记为 `TPT-ZH-OmniPack/original` |
+| 概念参考 | Seppo 的 12 个冶金 token/行为；Seppo 的 `ETHL/KERO/GASO` token；Cracker 的 `CHLR/ACTY` token；Cyens 的分馏燃料链均进入独立实现 |
+| 本项目原创设计 | 10 个冶金元素和 `AMON/CATA/POLY/PERO/FERT`，连同集中反应、性能预算、回收机制；来源登记为 `TPT-ZH-OmniPack/original` |
 
 ### 当前稳定 ID 与目标文件
 
@@ -137,6 +138,43 @@ ALNI ALNC TERN MAGX PLTU
 | 276 | `OMNI_PT_FLUX` / `FLUX` | OmniPack 原创工艺材料 | `src/simulation/elements/FLUX.cpp` |
 | 277 | `OMNI_PT_CRUC` / `CRUC` | Seppo token/坩埚概念；独立实现 | `src/simulation/elements/CRUC.cpp` |
 | 278 | `OMNI_PT_MSCR` / `MSCR` | OmniPack 原创、携带 `ctype` 的可回收碎料 | `src/simulation/elements/MSCR.cpp` |
+
+## Phase 3 基础化学来源与实现复核
+
+化学首批的提交包含 `src/simulation/OmniChemistry.cpp`/`.h`、十个构造器、模块选择门禁、本地化、登记、审计和真实客户端 Lua 回归。所有反应实现由本项目按 TPT 100.0 API 独立编写；没有复制 Cracker、Seppo 或 Cyens 的元素更新函数。
+
+| 稳定 ID | identifier / 代号 | 来源方式 | 本项目构造文件 |
+|---:|---|---|---|
+| 360 | `OMNI_PT_CHLR` / `CHLR` | Cracker 氯气 token/玩法目标；3×3 反应独立实现 | `src/simulation/elements/CHLR.cpp` |
+| 361 | `OMNI_PT_AMON` / `AMON` | OmniPack 原创的受压火花催化近似 | `src/simulation/elements/AMON.cpp` |
+| 362 | `OMNI_PT_ETHL` / `ETHL` | Seppo token；发酵规则独立实现 | `src/simulation/elements/ETHL.cpp` |
+| 363 | `OMNI_PT_KERO` / `KERO` | Seppo token + Cyens 分馏链需求；集中裂化独立实现 | `src/simulation/elements/KERO.cpp` |
+| 364 | `OMNI_PT_GASO` / `GASO` | Seppo token + Cyens 分馏链需求；集中裂化独立实现 | `src/simulation/elements/GASO.cpp` |
+| 365 | `OMNI_PT_ACTY` / `ACTY` | Cracker token；裂化/聚合规则独立实现 | `src/simulation/elements/ACTY.cpp` |
+| 366 | `OMNI_PT_CATA` / `CATA` | OmniPack 原创工艺条件材料 | `src/simulation/elements/CATA.cpp` |
+| 367 | `OMNI_PT_POLY` / `POLY` | OmniPack 原创聚合物 | `src/simulation/elements/POLY.cpp` |
+| 368 | `OMNI_PT_PERO` / `PERO` | OmniPack 原创电化学近似 | `src/simulation/elements/PERO.cpp` |
+| 369 | `OMNI_PT_FERT` / `FERT` | OmniPack 原创植物支持循环 | `src/simulation/elements/FERT.cpp` |
+
+来源限制与裁决：
+
+- Seppo 的自定义构造器仍缺失，`ETHL/KERO/GASO` 只能作为公开 token/需求参考；
+- Cracker `CHLR` 使用 5×5 邻域并混合多个概率反应，本项目只保留“氯气与氢气在受控温度下生成酸”的玩法目标，改为确定的 3×3 规则；
+- Cyens 的 `Hydrocarbon.cpp` 改写官方 `GAS/OIL/MWAX/WAX` 且离子体系未完成，本项目没有采用这些状态机或粒子字段；
+- 反应配方集中在 `OmniChemistry.cpp`，成功反应受每帧 1,536 次预算限制，使用 `tmp3` 防止同帧重复输入；
+- 化学 OPS 往返、禁用模块载入提示与压力样本仍未运行，不能据此声称完整存档兼容或大型生产线性能通过。
+
+### 当前测试证据（2026-07-30）
+
+| 测试 | 结果 | 可核对证据 |
+|---|---|---|
+| 化学静态门禁 | PASS | `py tools/chemistry_audit.py`：10 元素、7 类受限工艺、3×3 有界 |
+| 化学审计单元测试 | PASS，2/2 | 正常仓库通过；删除反应预算常量时门禁拒绝 |
+| 全部 Python 工具测试 | PASS，32/32 | 两项生成 C++ 语法验证因该 Python 环境未发现编译器而跳过 |
+| Meson `static` suite | PASS，5/5 | registry、i18n、冶金、化学和工具测试 |
+| Windows x64 增量编译 | PASS | GCC 16.1.0、Ninja；0 error |
+| Lua 真实客户端回归 | PASS | `OMNI_CHEMISTRY_IDS=360-369`、`PATHS=9`；客户端保持响应 |
+| 回归路径 | PASS | 原油/煤油裂化、聚合、过氧化物制备与分解、氨合成、氯氢反应、肥料、中温发酵及冷催化剂负例 |
 
 ### 本项目实现文件
 

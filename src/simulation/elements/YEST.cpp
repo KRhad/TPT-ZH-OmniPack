@@ -1,5 +1,6 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
+#include "simulation/OmniChemistry.h"
 
 static int update(UPDATE_FUNC_ARGS);
 
@@ -48,6 +49,9 @@ void Element::Element_YEST()
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	if (OmniChemistryYeastUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 1;
+
 	for (auto rx = -1; rx <= 1; rx++)
 	{
 		for (auto ry = -1; ry <= 1; ry++)
