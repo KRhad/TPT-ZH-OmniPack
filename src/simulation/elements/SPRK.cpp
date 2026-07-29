@@ -5,6 +5,7 @@
 #include "FIRE.h"
 #include "ETRD.h"
 #include "simulation/OmniChemistry.h"
+#include "simulation/OmniNuclear.h"
 
 static int update(UPDATE_FUNC_ARGS);
 static int graphics(GRAPHICS_FUNC_ARGS);
@@ -63,9 +64,13 @@ static int update(UPDATE_FUNC_ARGS)
 	Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
 	if (ct == PT_CATA)
 		OmniChemistrySparkUpdate(UPDATE_FUNC_SUBCALL_ARGS);
+	if (ct == PT_NGEN)
+		OmniNuclearSparkUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 
 	if (parts[i].life<=0)
 	{
+		if (ct == PT_NGEN)
+			parts[i].tmp4 = 0;
 		if (ct==PT_WATR||ct==PT_SLTW||ct==PT_PSCN||ct==PT_NSCN||ct==PT_ETRD||ct==PT_INWR)
 			parts[i].temp = R_TEMP + 273.15f;
 		if (ct<=0 || ct>=PT_NUM || !elements[parts[i].ctype].Enabled)

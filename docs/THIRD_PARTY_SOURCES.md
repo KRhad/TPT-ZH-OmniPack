@@ -26,7 +26,7 @@ Phase 0 审计的九个仓库顶层均含 GPL-3.0 `LICENSE`，本次固定文件
 
 详细版本、元素数、风险与裁决见 `docs/SOURCE_AUDIT.md`；实际文件级来源进入 `docs/PORTING_LEDGER.md`。
 
-## Phase 3 冶金、基础化学与 Phase 4 局部生态来源复核
+## Phase 3 冶金、基础化学、Phase 4 局部生态与 Phase 5 核工业来源复核
 
 以下复核使用仓库内可读源码和 Git 历史，不使用模组二进制。三份来源的固定快照顶层均提供 GNU GPL version 3 `LICENSE`；若未来采用具体代码，发布时仍须保留原版权、作者、文件路径和逐文件 commit 记录。
 
@@ -67,6 +67,10 @@ Phase 0 审计的九个仓库顶层均含 GPL-3.0 `LICENSE`，本次固定文件
 
 SpikeViper 快照 `134ebf330eda42b4b300a2b7613ede71261697df` 仅作为“氧气、营养、感染联动”的设计参考。`NUTR/ALGA/MYCL/SPOR/PATH/STER/HUMS/BIOF` 均为本项目独立实现；没有复制第三方生物更新函数，也没有从发布二进制反推实现。新模块不覆盖官方 `PLNT`、`VIRS`、`WATR` 或 `LIFE` 的状态机，全部规则集中在 `OmniBiology.cpp` 的固定 `3x3` 局部查找中。完整与简化两种模式均由真实客户端 Lua 回归验证，未来使用任何第三方具体实现前仍须单独记录文件级来源和版权。
 
+### Phase 5 核工业来源边界
+
+SpikeViper `134ebf330eda42b4b300a2b7613ede71261697df`、Ultimata `b74971752433652c033559abea415ec3510ac433` 与 Cracker `ebbb9aab6aef27d26517682cebbc0a07147a843a` 的核相关内容只被阅读用于玩法边界和风险评估。`NFUL/MODR/CROD/NCLT/NWST/NGEN/RSHD` 与 `OmniNuclear.cpp` 均由本项目独立实现；没有复制任何第三方核元素更新函数，也没有从二进制或存档推导行为。实现不改写官方 `URAN`、`PLUT`、`NEUT` 或 `DEUT`，只通过 `SPRK(NGEN)` 在本地已存在燃料时创建一个官方中子。静态审计和真实客户端 Lua 回归覆盖控制、冷却、屏蔽及无燃料发生器负例；存档往返和压力样本仍未执行。
+
 ## 论坛与文档资料
 
 - Seppo's Metallurgy Mod 公开主题：  
@@ -86,7 +90,7 @@ SpikeViper 快照 `134ebf330eda42b4b300a2b7613ede71261697df` 仅作为“氧气�
 
 ## 当前代码使用情况
 
-截至 Phase 3 冶金与基础化学首批实现：
+截至 Phase 5 受控核工业首批实现：
 
 - 当前工作树正式登记并实现：23 个元素，稳定 ID `256–278`；
 - 第三方更新函数逐行复制：0；
@@ -95,6 +99,9 @@ SpikeViper 快照 `134ebf330eda42b4b300a2b7613ede71261697df` 仅作为“氧气�
 - OmniPack 原创冶金元素：10 项；
 - 基础化学正式登记元素：10 个，稳定 ID `360–369`；
 - 化学来源：Seppo `ETHL/KERO/GASO` token、Cracker `CHLR/ACTY` token、Cyens 分馏链均为概念参考；对应更新实现独立编写；
+- 局部生态正式登记元素：8 个，稳定 ID `288–295`；Spike 仅作概念参考；
+- 受控核工业正式登记元素：7 个，稳定 ID `328–334`；Spike、Ultimata 与 Cracker 的核内容仅作玩法和风险边界参考；
+- 第三方核更新函数逐行复制：0；官方 `URAN/PLUT/NEUT/DEUT` 状态机改写：0；
 - 冶金与化学静态审计、单元测试和 Lua 真实运行回归：PASS；
 - 来源仓库只读审计：9；
 - 未解决授权项：汉化分支中文字库 1 项；

@@ -7,11 +7,12 @@
 | 模块/候选 | 来源与固定 commit | 原作者/归属 | Phase 0 判定 | 目标方式 | 当前状态 | 理由与门禁 |
 |---|---|---|---|---|---|---|
 | 官方模拟、保存、ID | Official `bff38ce...` | TPT contributors | 直接底座 | 保留并同步 | AUDITED | 100.0.399 权威实现 |
-| 中文/英文语料与严格加载 | Dragonrster `445fab51...`；OmniPack `457233ac...` | Dragonrster、TPT contributors、OmniPack contributors | 审核后重放并重写加载器 | JsonCpp 严格 JSON + 自动审计 | ACCEPTED | en/zh 1,222/1,222，0 阻塞错误；视觉复核仍独立跟踪 |
+| 中文/英文语料与严格加载 | Dragonrster `445fab51...`；OmniPack `457233ac...` | Dragonrster、TPT contributors、OmniPack contributors | 审核后重放并重写加载器 | JsonCpp 严格 JSON + 自动审计 | ACCEPTED | en/zh 1,252/1,252，0 阻塞错误；视觉复核仍独立跟踪 |
 | 官方元素稳定锁 | Official `bff38ce...`；OmniPack `08fe8a82...` | TPT contributors、OmniPack contributors | 源码解析生成 | 逐槽固定 0–195 | ACCEPTED | 196 槽、195 活动、1 tombstone；自动门禁 PASS |
 | 模块选择与图鉴框架 | OmniPack `d7312a9b...`、`f28cdcb7...` | OmniPack contributors | 项目原创实现 | 统一门禁、编译时登记目录 | ACCEPTED | clean build、28 单测、Lua 运行回归和枚举本地化门禁 PASS |
 | Phase 3 工业冶金首批 | Seppo `c3a8dd17...`；Cracker COPR `eb474d38...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、OmniPack contributors | 概念筛选、参数/行为适配、独立更新实现 | 稳定 ID 256–278 + 集中反应引擎 | TESTING | 23 元素、7 配方、5 材料行为；静态门禁与 Lua 运行回归 PASS |
 | Phase 3 基础化学首批 | Seppo `c3a8dd17...`；Cracker `ebbb9aab...`；Cyens `f01d992c...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、cbeimers113、OmniPack contributors | token/玩法需求参考，集中算法独立实现 | 稳定 ID 360–369 + 中央有界反应引擎 | TESTING | 10 元素、11 条反应路径、化学静态门禁与 Lua 真实运行回归 PASS |
+| Phase 5 受控核工业首批 | OmniPack 当前实现；Spike/Ultimata/Cracker 固定快照仅作范围参考 | OmniPack contributors；对应来源作者 | 玩法和风险边界参考，集中算法独立实现 | 稳定 ID 328–334 + 中央有界反应器引擎 | TESTING | 7 元素、4 类受控路径；静态门禁与 Lua 真实运行回归 PASS |
 | 汉化字体 | Dragonrster `445fab51...` | 未知 | 禁止发布 | 替换为可追溯字体 | BLOCKED | 名称、来源、许可证缺失 |
 | Cracker 工业化学 | Cracker `ebbb9aab...` | Cracker1000 等 | token/玩法需求参考 | 中央反应表 | TESTING | `CHLR/ACTY` 以新稳定 ID 独立实现；不复制 5×5 更新，不复用旧 ID |
 | 动力门户 PPTI/PPTO | Cracker `ebbb9aab...`; Jacob `b4926161...` | 各来源作者 | 合并重写 | 单一稳定实现 | DESIGN | 多来源重复、旧 API |
@@ -20,6 +21,7 @@
 | BFLM/CEXP/EXPL | Cracker/Jacob | 各来源作者 | 排除原实现 | 预算化灾害另设计 | REJECTED | 无受控扩散门禁 |
 | MGNT | Cracker `ebbb9aab...` | Cracker1000 | 重写候选 | 半径/帧预算磁体 | DESIGN | 原实现每粒子 6,561 格扫描 |
 | Spike 生物循环 | SpikeViper `134ebf33...` | SpikeViper contributors | 概念参考；独立实现 | 事件驱动局部状态 | PORTED | `288..295` 局部营养/氧气/感染/处理循环；不复制其更新函数 |
+| Spike/Ultimata/Cracker 核内容 | Spike `134ebf33...`；Ultimata `b7497175...`；Cracker `ebbb9aab...` | 对应来源作者 | 只读玩法和风险范围参考 | 原创局部反应器 | PORTED | `328..334` 不复制第三方核更新；不改写官方 `URAN/PLUT/NEUT/DEUT` |
 | Ultimata 传送/漏斗/力场 | Ultimata `b7497175...` | Bowserinator 等 | 精选重写 | 工程化可控元素 | DESIGN | 必须有克制与保存测试 |
 | Ultimata 时间/电磁核心 | Ultimata `b7497175...` | Bowserinator 等 | 实验参考 | 默认关闭，架构先行 | DESIGN | 确定性/网络/性能风险 |
 | Jacob BUTN/PWHT | Jacob `b4926161...` | jacob1 等 | 重写候选 | 当前 API + 洪泛预算 | DESIGN | UX 价值明确，旧代码越界 |
@@ -231,6 +233,37 @@ Phase 4 首批的提交包含 `src/simulation/OmniBiology.cpp`/`.h`、八个构�
 | Windows x64 增量编译 | PASS | GCC 16.1.0、Ninja；0 error |
 | Lua 真实客户端回归 | PASS | 完整与简化模式均为 `PATHS=6`、`IDS=288-295`；客户端保持响应 |
 | 回归路径 | PASS | 藻类光合与冷温负例、菌丝分解、孢子萌发、感染、消毒和生物膜过滤 |
+
+## Phase 5 受控核工业来源与实现复核
+
+Phase 5 首批包含 `src/simulation/OmniNuclear.cpp`/`.h`、七个构造器、`SPRK` 的窄触发钩子、本地化、登记、静态审计和真实客户端 Lua 回归。Spike、Ultimata 与 Cracker 的固定快照只用于界定可玩反应器需要具备控制、冷却、屏蔽和性能限制；本项目没有复制任何第三方核更新函数，也没有修改官方 `URAN`、`PLUT`、`NEUT` 或 `DEUT` 的状态机。
+
+| 稳定 ID | identifier / 代号 | 来源方式 | 本项目构造文件 |
+|---:|---|---|---|
+| 328 | `OMNI_PT_NFUL` / `NFUL` | OmniPack 原创受控燃料规则 | `src/simulation/elements/NFUL.cpp` |
+| 329 | `OMNI_PT_MODR` / `MODR` | OmniPack 原创局部慢化条件 | `src/simulation/elements/MODR.cpp` |
+| 330 | `OMNI_PT_CROD` / `CROD` | OmniPack 原创局部控制条件 | `src/simulation/elements/CROD.cpp` |
+| 331 | `OMNI_PT_NCLT` / `NCLT` | OmniPack 原创冷却到官方蒸汽的路径 | `src/simulation/elements/NCLT.cpp` |
+| 332 | `OMNI_PT_NWST` / `NWST` | OmniPack 原创受控反应副产物 | `src/simulation/elements/NWST.cpp` |
+| 333 | `OMNI_PT_NGEN` / `NGEN` | OmniPack 原创的有燃料前提中子源 | `src/simulation/elements/NGEN.cpp` |
+| 334 | `OMNI_PT_RSHD` / `RSHD` | OmniPack 原创局部中子汇 | `src/simulation/elements/RSHD.cpp` |
+
+来源限制与裁决：
+
+- **第三方核更新函数逐行复制：0。** 所有反应器路径由本项目根据当前 TPT API 独立编写；没有从二进制、论坛描述或第三方存档反推实现。
+- **官方核状态机改写：0。** 新模块只在 `SPRK(NGEN)` 时创建一粒官方 `NEUT`，并在局部路径中消费已经存在的官方 `NEUT`；不修改 `URAN`、`PLUT`、`NEUT` 或 `DEUT` 的源码。
+- **性能限制：**所有成功路径只读取固定 `3x3` 邻域，使用每帧 512 次共享预算和 `tmp3` 同帧级联保护。中子发生器必须先确认局部 `NFUL` 与空槽。
+- **未覆盖范围：**核工业 OPS 往返、关闭模块后的载入提示、视觉设置交互和高粒子数反应堆压力样本仍未运行。
+
+### 当前测试证据（2026-07-30）
+
+| 测试 | 结果 | 可核对证据 |
+|---|---|---|
+| 核工业静态门禁 | PASS | `py tools/nuclear_audit.py`：7 元素、4 类受限路径、`3x3` 有界 |
+| 核工业审计单元测试 | PASS，4/4 | 正常仓库通过；删除事件预算、发生器燃料前提或单次发射门禁时均被拒绝 |
+| Windows x64 增量编译 | PASS | GCC 16.1.0、Ninja；0 error |
+| Lua 真实客户端回归 | PASS | `PATHS=4`、`IDS=328-334`；客户端保持响应 |
+| 回归路径 | PASS | 有慢化受控转换、控制棒抑制、无燃料发生器负例、冷却剂排热与屏蔽吸收 |
 
 ## 每次实际移植必须补记
 

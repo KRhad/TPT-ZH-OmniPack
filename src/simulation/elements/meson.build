@@ -327,13 +327,13 @@ simulation_elem_names = [
 	disabler(), # 325
 	disabler(), # 326
 	disabler(), # 327
-	disabler(), # 328: advanced nuclear reserve
-	disabler(), # 329
-	disabler(), # 330
-	disabler(), # 331
-	disabler(), # 332
-	disabler(), # 333
-	disabler(), # 334
+	'NFUL', # 328: advanced nuclear
+	'MODR', # 329
+	'CROD', # 330
+	'NCLT', # 331
+	'NWST', # 332
+	'NGEN', # 333
+	'RSHD', # 334
 	disabler(), # 335
 	disabler(), # 336
 	disabler(), # 337
