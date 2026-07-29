@@ -195,6 +195,66 @@ simulation_elem_names = [
 	'RSSS',
 	'BASE',
 	'SEED',
+	disabler(), # 196: reserved compatibility gap
+	disabler(), # 197
+	disabler(), # 198
+	disabler(), # 199
+	disabler(), # 200
+	disabler(), # 201
+	disabler(), # 202
+	disabler(), # 203
+	disabler(), # 204
+	disabler(), # 205
+	disabler(), # 206
+	disabler(), # 207
+	disabler(), # 208
+	disabler(), # 209
+	disabler(), # 210
+	disabler(), # 211
+	disabler(), # 212
+	disabler(), # 213
+	disabler(), # 214
+	disabler(), # 215
+	disabler(), # 216
+	disabler(), # 217
+	disabler(), # 218
+	disabler(), # 219
+	disabler(), # 220
+	disabler(), # 221
+	disabler(), # 222
+	disabler(), # 223
+	disabler(), # 224
+	disabler(), # 225
+	disabler(), # 226
+	disabler(), # 227
+	disabler(), # 228
+	disabler(), # 229
+	disabler(), # 230
+	disabler(), # 231
+	disabler(), # 232
+	disabler(), # 233
+	disabler(), # 234
+	disabler(), # 235
+	disabler(), # 236
+	disabler(), # 237
+	disabler(), # 238
+	disabler(), # 239
+	disabler(), # 240
+	disabler(), # 241
+	disabler(), # 242
+	disabler(), # 243
+	disabler(), # 244
+	disabler(), # 245
+	disabler(), # 246
+	disabler(), # 247
+	disabler(), # 248
+	disabler(), # 249
+	disabler(), # 250
+	disabler(), # 251
+	disabler(), # 252
+	disabler(), # 253
+	disabler(), # 254
+	disabler(), # 255: reserved compatibility gap
 ]
 
 simulation_elem_src = []

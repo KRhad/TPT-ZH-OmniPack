@@ -39,6 +39,10 @@ OFFICIAL_SLOT_LAST = 195
 OFFICIAL_RESERVED_SLOT = 146
 OFFICIAL_RESERVED_IDENTIFIER = "RESERVED_PT_146"
 OFFICIAL_RESERVED_DISPLAY_CODE = "----"
+OMNI_RESERVED_REPOSITORY = "TPT-ZH-OmniPack/reserved"
+OMNI_RESERVED_COMMIT = "f28cdcb734c6829ae2f69ca10245d494704a8164"
+OMNI_RESERVED_FIRST = 196
+OMNI_RESERVED_LAST = 255
 
 # SHA-256 over the lock header and rows, using US (0x1f) between fields and LF
 # between records.  Filled after generating the audited bff38ce6 lock table.
@@ -330,6 +334,62 @@ def strict_bool(
         findings.add("BOOLEAN", path, f"{field!r} must be 'true' or 'false'", row_number)
         return None
     return value == "true"
+
+
+def reserved_registry_expectations(stable_id: int) -> dict[str, str]:
+    if stable_id == OFFICIAL_RESERVED_SLOT:
+        return {
+            "identifier": OFFICIAL_RESERVED_IDENTIFIER,
+            "display_code": OFFICIAL_RESERVED_DISPLAY_CODE,
+            "english_name": "Reserved Slot 146",
+            "chinese_name": "保留槽位 146",
+            "source_mod": OFFICIAL_REPOSITORY,
+            "source_id": str(stable_id),
+            "source_commit": OFFICIAL_COMMIT,
+            "english_description": (
+                "Reserved official element slot; never reuse this numeric ID."
+            ),
+            "chinese_description": (
+                "官方保留元素槽位；不得重新使用此数字 ID。"
+            ),
+            "license": "GPL-3.0-only",
+            "meson_name": "disabler()",
+            "source_file": "",
+            "menu_category": "RESERVED",
+            "element_state": "reserved",
+            "default_enabled": "false",
+            "is_duplicate": "false",
+            "duplicate_of": "",
+            "save_compatibility": "reserved-slot",
+            "implementation_status": "reserved",
+            "test_status": "lock-verified",
+        }
+    return {
+        "identifier": f"RESERVED_PT_{stable_id}",
+        "display_code": "----",
+        "english_name": f"Reserved Slot {stable_id}",
+        "chinese_name": f"保留槽位 {stable_id}",
+        "source_mod": OMNI_RESERVED_REPOSITORY,
+        "source_id": str(stable_id),
+        "source_commit": OMNI_RESERVED_COMMIT,
+        "english_description": (
+            f"Stable ID {stable_id} is reserved and has no selectable element."
+        ),
+        "chinese_description": (
+            f"稳定 ID {stable_id} 为保留槽位，当前没有可选择元素。"
+        ),
+        "license": "GPL-3.0-only",
+        "meson_name": "disabler()",
+        "source_file": "",
+        "menu_category": "RESERVED",
+        "element_state": "reserved",
+        "default_enabled": "false",
+        "is_duplicate": "false",
+        "duplicate_of": "",
+        "save_compatibility": "reserved-slot",
+        "implementation_status": "reserved",
+        "test_status": "lock-verified",
+    }
 
 
 def canonical_lock_digest(rows: Sequence[Mapping[str, str]]) -> str:
@@ -826,29 +886,17 @@ def validate_registry(
         if row.get("chinese_description") and not CJK.search(row["chinese_description"]):
             findings.add("REGISTRY_CHINESE", path, "chinese_description must contain a CJK character", row_number)
 
-        if stable_id == OFFICIAL_RESERVED_SLOT:
-            expected = {
-                "identifier": OFFICIAL_RESERVED_IDENTIFIER,
-                "display_code": OFFICIAL_RESERVED_DISPLAY_CODE,
-                "source_mod": OFFICIAL_REPOSITORY,
-                "source_commit": OFFICIAL_COMMIT,
-                "meson_name": "disabler()",
-                "source_file": "",
-                "menu_category": "RESERVED",
-                "element_state": "reserved",
-                "default_enabled": "false",
-                "is_duplicate": "false",
-                "duplicate_of": "",
-                "save_compatibility": "reserved-slot",
-                "implementation_status": "reserved",
-                "test_status": "lock-verified",
-            }
+        slot_is_reserved = (
+            stable_id < len(slots) and slots[stable_id] is None
+        )
+        if slot_is_reserved:
+            expected = reserved_registry_expectations(stable_id)
             for field, value in expected.items():
                 if row.get(field) != value:
                     findings.add(
                         "REGISTRY_RESERVED",
                         path,
-                        f"{field} must be {value!r} for reserved slot 146",
+                        f"{field} must be {value!r} for reserved slot {stable_id}",
                         row_number,
                     )
             identifier_folded = row.get("identifier", "").casefold()
@@ -1023,7 +1071,11 @@ def validate_repository(
     for stable_id, meson_name in enumerate(slots):
         lock = lock_by_id.get(stable_id)
         if meson_name is None:
-            if stable_id != OFFICIAL_RESERVED_SLOT:
+            is_known_reserved = (
+                stable_id == OFFICIAL_RESERVED_SLOT
+                or OMNI_RESERVED_FIRST <= stable_id <= OMNI_RESERVED_LAST
+            )
+            if not is_known_reserved:
                 findings.add("MESON_RESERVED", meson_path, f"unexpected disabled slot {stable_id}")
             if lock and lock.get("slot_status") != "reserved":
                 findings.add("MESON_LOCK", meson_path, f"slot {stable_id} is disabled but lock is not reserved")
@@ -1125,6 +1177,10 @@ def run_self_test() -> list[str]:
     expect(not ASCII_IDENTIFIER.fullmatch("default_pt_watr"), "lowercase identifier rejection")
     expect(bool(CJK.search("简体中文")), "CJK detection")
     expect(not CJK.search("English only"), "non-CJK rejection")
+    reserved = reserved_registry_expectations(196)
+    expect(reserved["identifier"] == "RESERVED_PT_196", "reserved identifier")
+    expect(reserved["source_file"] == "", "reserved source is empty")
+    expect(reserved["implementation_status"] == "reserved", "reserved status")
 
     sample = [
         {
@@ -1188,7 +1244,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             for failure in failures:
                 print(f"element-registry-check: SELF-TEST FAIL: {failure}", file=sys.stderr)
         elif not args.quiet:
-            print("element-registry-check: SELF-TEST PASS (9 checks, no files modified)")
+            print("element-registry-check: SELF-TEST PASS (12 checks, no files modified)")
         return 1 if failures else 0
 
     default_root = Path(__file__).resolve().parents[1]
