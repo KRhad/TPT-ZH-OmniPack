@@ -101,7 +101,7 @@ void OptionsModel::SetTemperatureScale(TempScale temperatureScale)
 
 int OptionsModel::GetLanguage()  
 {  
-    return GlobalPrefs::Ref().Get("Language", 0);
+    return GlobalPrefs::Ref().Get("Language", 1);
 }  
   
 void OptionsModel::SetLanguage(int language)  

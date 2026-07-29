@@ -66,14 +66,22 @@ public:
 		auto * tempSeparator = new ui::Separator(ui::Point(0, 22), ui::Point(Size.X, 1));
 		AddComponent(tempSeparator);
 
-		labelValues = new ui::Label(ui::Point(0, (radius * 5 / 2) + 37), ui::Point(Size.X, 16), String::Build(Format::Precision(1), "X:", x, " Y:", y, " Total:", std::hypot(x, y)));
+		labelValues = new ui::Label(ui::Point(0, (radius * 5 / 2) + 37), ui::Point(Size.X, 16), String::Build(
+			Format::Precision(1),
+			Localization::Ref().Tr("options.direction.x"), x,
+			Localization::Ref().Tr("options.direction.y"), y,
+			Localization::Ref().Tr("options.direction.total"), std::hypot(x, y)));
 		labelValues->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 		labelValues->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		AddComponent(labelValues);
 
 		direction->SetValues(x, y);
 		direction->SetUpdateCallback([this](float x, float y) {
-			labelValues->SetText(String::Build(Format::Precision(1), "X:", x, " Y:", y, " Total:", std::hypot(x, y)));
+			labelValues->SetText(String::Build(
+				Format::Precision(1),
+				Localization::Ref().Tr("options.direction.x"), x,
+				Localization::Ref().Tr("options.direction.y"), y,
+				Localization::Ref().Tr("options.direction.total"), std::hypot(x, y)));
 		});
 		direction->SetSnapPoints(5, 5, 2);
 		AddComponent(direction);
@@ -320,20 +328,36 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	}, [this] {
 		c->SetTemperatureScale(TempScale(temperatureScale->GetOption().second));
 	});
+	language = addDropDown(Localization::Ref().Tr("options.language"), {
+		{ "English", 0 },
+		{ "简体中文", 1 },
+		{ "繁體中文", 2 },
+		{ "Deutsch", 3 },
+		{ "Español", 4 },
+		{ "Français", 5 },
+		{ "Italiano", 6 },
+		{ "日本語", 7 },
+		{ "한국어", 8 },
+		{ "Português", 9 },
+		{ "Русский", 10 },
+		{ "文言", 11 },
+	}, [this] {
+		c->SetLanguage(language->GetOption().second);
+	});
 	addSeparator();
-	std::tie(fpsLimit, fpsLimitText) = addLimitDropDown("Simulation framerate cap", {
-		{ "Exact", fpsLimitDropdownExact },
-		{ "Uncapped", fpsLimitDropdownUncapped },
+	std::tie(fpsLimit, fpsLimitText) = addLimitDropDown(Localization::Ref().Tr("options.fps_limit"), {
+		{ Localization::Ref().Tr("options.limit.exact"), fpsLimitDropdownExact },
+		{ Localization::Ref().Tr("options.limit.uncapped"), fpsLimitDropdownUncapped },
 	}, [this](bool defocus) {
 		UpdateFpsLimit(defocus);
 	});
-	std::tie(drawLimit, drawLimitText) = addLimitDropDown("Rendering framerate cap", {
-		{ "Exact", drawLimitDropdownExact },
-		{ "Follow display", drawLimitDropdownFollowDisplay },
+	std::tie(drawLimit, drawLimitText) = addLimitDropDown(Localization::Ref().Tr("options.draw_limit"), {
+		{ Localization::Ref().Tr("options.limit.exact"), drawLimitDropdownExact },
+		{ Localization::Ref().Tr("options.limit.follow_display"), drawLimitDropdownFollowDisplay },
 	}, [this](bool defocus) {
 		UpdateDrawLimit(defocus);
 	});
-	addButtonWithLabel("Reset", " - Set both limits to sane defaults", [this]{
+	addButtonWithLabel(Localization::Ref().Tr("options.limit.reset"), Localization::Ref().Tr("options.limit.reset_info"), [this] {
 		c->SetFpsLimit(DefaultFpsLimit);
 		c->SetDrawLimit(DefaultDrawLimit);
 	});
@@ -759,6 +783,7 @@ void OptionsView::NotifySettingsChanged(OptionsModel * sender)
 	}
 
 	temperatureScale->SetOption(sender->GetTemperatureScale()); // has to happen before AmbientAirTempToTextBox is called
+	language->SetOption(sender->GetLanguage());
 	heatSimulation->SetChecked(sender->GetHeatSimulation());
 	ambientHeatSimulation->SetChecked(sender->GetAmbientHeatSimulation());
 	newtonianGravity->SetChecked(sender->GetNewtonianGravity());

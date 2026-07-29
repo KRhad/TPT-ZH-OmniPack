@@ -352,7 +352,9 @@ int Main(int argc, char *argv[])
 	auto &prefs = GlobalPrefs::Ref();
 
 	// 初始化全局语言（在创建任何 UI 之前）
-	int languageIndex = prefs.Get("Language", 0);
+	// Fresh OmniPack installations start in Simplified Chinese. Existing users
+	// keep their explicit preference and can switch languages in Options.
+	int languageIndex = prefs.Get("Language", 1);
 	Localization::Ref().SetLanguageIndex(languageIndex);
 
 	WindowFrameOps windowFrameOps{

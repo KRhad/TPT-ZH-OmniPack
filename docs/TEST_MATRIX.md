@@ -10,11 +10,13 @@
 | 九来源提交固定 | 静态 | PASS | `docs/SOURCE_AUDIT.md` |
 | GPL 顶层许可证 | 静态 | PASS | 九来源 LICENSE 哈希一致 |
 | 官方元素 ID 比较 | 静态 | PASS | 汉化分支与官方 398b 注册表一致 |
-| Windows x64 基线配置 | 构建 | NOT RUN | Phase 1 |
-| Windows x64 基线编译 | 构建 | NOT RUN | Phase 1 |
-| 基线启动 | 运行 | NOT RUN | Phase 1 |
-| 基线中文显示 | 运行 | NOT RUN | Phase 1 |
-| 基线英文切换 | 运行 | NOT RUN | 当前切换 UI 缺失 |
+| Windows x64 基线配置 | 构建 | PASS | `docs/BASELINE_BUILD.md` |
+| Windows x64 基线编译 | 构建 | PASS | 445/445，静态 MinGW runtime |
+| 基线启动 | 运行 | PASS | 6 秒存活、Responding=True、非零窗口句柄 |
+| 默认简体中文选择 | 静态 | PASS | fresh preference fallback 为索引 1 |
+| 基线中文视觉显示 | 运行 | BLOCKED | 本会话 Computer Use native pipe 不可用 |
+| 英文切换控件 | 静态/构建 | PASS | 12 语言下拉已编译 |
+| 英文切换实际交互 | 运行 | NOT RUN | 等待可用 UI 自动化或人工复核 |
 | 官方存档载入/重存 | 运行 | NOT RUN | Phase 1 |
 
 ## 静态门禁
@@ -45,5 +47,14 @@
 - 编译器候选：MSYS2 UCRT64 GCC `16.1.0`
 - Meson：`1.11.2`
 - Ninja：`1.13.2`
-- SDL 与链接库版本：等待 Phase 1 Meson 配置日志给出；不能用缺少 `PKG_CONFIG_PATH` 的外壳查询结果代替。
+- SDL：`2.30.9-tpt-libs`
+- JsonCpp：`1.9.5-tpt-libs`
+- 固定依赖包：`tpt-libs v20251019131007`
 
+## Phase 1 构建产物
+
+| 构建 | 状态 | SHA-256 |
+|---|---|---|
+| 未修改 Dragonrster 100.0.398 | PASS | `A15B5D25C5552B9954040F94001C96B4289072D88B9820DCEC3FA5EDDFA69AC7` |
+| 官方 100.0.399 合并态 | PASS | `433F7815624E77F2BF114FC6A923F2D61BC30AD681DF7445E3537C73A1898D44` |
+| OmniPack 中文 clean build | PASS | `8DCC6EB3FF86200188378D273308FF94B5FDB949E2F11E36E0DA55B4B3D1CF3B` |

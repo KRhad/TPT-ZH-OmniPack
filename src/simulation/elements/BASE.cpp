@@ -1,4 +1,5 @@
 #include "simulation/ElementCommon.h"
+#include "common/Localization.h"
 
 static int update(UPDATE_FUNC_ARGS);
 static int graphics(GRAPHICS_FUNC_ARGS);
@@ -31,7 +32,7 @@ void Element::Element_BASE()
 
 	HeatConduct = 31;
 	HeatCapacity = 1.5f;
-	Description = ByteString("腐蚀性液体,能够腐蚀导电固体,会中和酸").FromUtf8();
+	Description = Localization::Ref().Tr("sim.elem.DEFAULT_PT_BASE");
 
 	Properties = TYPE_LIQUID|PROP_DEADLY;
 
