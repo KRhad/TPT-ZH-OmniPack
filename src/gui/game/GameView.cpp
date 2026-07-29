@@ -1660,6 +1660,10 @@ void GameView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl,
 	{
 		c->LoadRenderPreset(11);
 	}
+	else if (shift && key == '0')
+	{
+		c->LoadRenderPreset(12);
+	}
 	else if (key >= '0' && key <= '9')
 	{
 		c->LoadRenderPreset(key-'0');
@@ -2541,7 +2545,7 @@ void GameView::OnDraw()
 			if (gravtot)
 				sampleInfo << Localization::Ref().Tr("gameview.debug.gx") << sample.GravityVelocityX << Localization::Ref().Tr("gameview.debug.gy") << sample.GravityVelocityY;
 
-			if (c->GetAHeatEnable())
+			if (c->GetAHeatEnable() && sample.isMouseInSim)
 			{
 				sampleInfo << Localization::Ref().Tr("gameview.debug.aheat");
 				format::RenderTemperature(sampleInfo, sample.AirTemperature, c->GetTemperatureScale());
@@ -2604,10 +2608,6 @@ void GameView::OnDraw()
 			if (std::holds_alternative<DrawLimitDisplay>(drawLimit))
 			{
 				fpsInfo << Localization::Ref().Tr("gameview.fps.display");
-			}
-			else if (std::holds_alternative<DrawLimitNone>(drawLimit))
-			{
-				fpsInfo << Localization::Ref().Tr("gameview.fps.none");
 			}
 			else
 			{

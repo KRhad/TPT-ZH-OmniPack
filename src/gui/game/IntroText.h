@@ -45,21 +45,26 @@ inline ByteString IntroText()
 	auto tr = [](const char *key) { return Localization::Ref().Tr(key).ToUtf8(); };
 	ByteStringBuilder sb;
 	sb << tr("intro.title_prefix") << APPNAME << tr("intro.title_after_name") << DISPLAY_VERSION[0] << "." << DISPLAY_VERSION[1] << tr("intro.title_after_version")
-	      << tr("intro.control.copy_paste_cut")
+	      << tr("intro.toggle_help")
 	      << tr("intro.material.hover")
 	      << tr("intro.material.pick")
 	      << tr("intro.draw.freeform")
-	      << tr("intro.draw.straight")
-	      << tr("intro.draw.rectangles")
-	      << tr("intro.draw.flood_fill")
+	      << "\n"
 	      << tr("intro.tool.size")
 	      << tr("intro.tool.sample")
-	      << tr("intro.tool.undo")
-	      << tr("intro.zoom.tool")
+	      << tr("intro.control.copy_paste_cut")
+	      << tr("intro.paste.transform")
+	      << tr("intro.draw.straight")
+	      << tr("intro.draw.rectangles")
+	      << "\n"
 	      << tr("intro.sim.pause")
+	      << tr("intro.tool.undo")
 	      << tr("intro.save.stamps")
-	      << tr("intro.screenshot")
+	      << "\n"
+	      << tr("intro.view.modes")
 	      << tr("intro.hud.debug")
+	      << tr("intro.zoom.tool")
+	      << tr("intro.search.highlight")
 	      << "\n";
 	if constexpr (BETA)
 	{

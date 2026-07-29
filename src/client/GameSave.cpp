@@ -402,15 +402,21 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 			}
 		}
 		newPressure[newBpos] = pressure[bpos];
-		newVelocityX[newBpos] = velocityX[bpos];
-		newVelocityY[newBpos] = velocityY[bpos];
+		{
+			auto transformed = transform * Vec2{ velocityX[bpos], velocityY[bpos] };
+			newVelocityX[newBpos] = transformed.X;
+			newVelocityY[newBpos] = transformed.Y;
+		}
 		newAmbientHeat[newBpos] = ambientHeat[bpos];
 		newBlockAir[newBpos] = blockAir[bpos];
 		newBlockAirh[newBpos] = blockAirh[bpos];
 		newGravMass[newBpos] = gravMass[bpos];
 		newGravMask[newBpos] = gravMask[bpos];
-		newGravForceX[newBpos] = gravForceX[bpos];
-		newGravForceY[newBpos] = gravForceY[bpos];
+		{
+			auto transformed = transform * Vec2{ gravForceX[bpos], gravForceY[bpos] };
+			newGravForceX[newBpos] = transformed.X;
+			newGravForceY[newBpos] = transformed.Y;
+		}
 	}
 	blockMap = std::move(newBlockMap);
 	fanVelX = std::move(newFanVelX);
@@ -479,7 +485,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 	unsigned partsCount = 0;
 	unsigned int savedVersion = inputData[4];
 	version = { savedVersion, 0 };
-	bool fakeNewerVersion = false; // used for development builds only
+	[[maybe_unused]] bool fakeNewerVersion = false; // used for development builds only
 
 	auto getIfType = [](const Bson &b, const char *key, Bson::Type type) -> const Bson * {
 		if (auto *node = b.Get(key))
@@ -820,7 +826,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 			{
 				if(j+1 >= fanData.size())
 				{
-					fprintf(stderr, "Not enough fan data\n");
+					throw ParseException(ParseException::Corrupt, "Not enough fan data");
 				}
 				fanVelX[blockP + bpos] = (fanData[j++]-127.0f)/64.0f;
 				fanVelY[blockP + bpos] = (fanData[j++]-127.0f)/64.0f;
@@ -837,7 +843,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 	{
 		unsigned int j = 0;
 		unsigned char i, i2;
-		if (blockS.X * blockS.Y > int(pressData.size()))
+		if (blockS.X * blockS.Y * 2 > int(pressData.size()))
 			throw ParseException(ParseException::Corrupt, "Not enough pressure data");
 		for (auto bpos : blockS.OriginRect().Range<LEFT_TO_RIGHT, TOP_TO_BOTTOM>())
 		{
@@ -853,7 +859,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 	{
 		unsigned int j = 0;
 		unsigned char i, i2;
-		if (blockS.X * blockS.Y > int(vxData.size()))
+		if (blockS.X * blockS.Y * 2 > int(vxData.size()))
 			throw ParseException(ParseException::Corrupt, "Not enough vx data");
 		for (auto bpos : blockS.OriginRect().Range<LEFT_TO_RIGHT, TOP_TO_BOTTOM>())
 		{
@@ -868,7 +874,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 	{
 		unsigned int j = 0;
 		unsigned char i, i2;
-		if (blockS.X * blockS.Y > int(vyData.size()))
+		if (blockS.X * blockS.Y * 2 > int(vyData.size()))
 			throw ParseException(ParseException::Corrupt, "Not enough vy data");
 		for (auto bpos : blockS.OriginRect().Range<LEFT_TO_RIGHT, TOP_TO_BOTTOM>())
 		{
@@ -882,7 +888,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 	if (ambientData.data())
 	{
 		unsigned int i = 0, tempTemp;
-		if (blockS.X * blockS.Y > int(ambientData.size()))
+		if (blockS.X * blockS.Y * 2 > int(ambientData.size()))
 			throw ParseException(ParseException::Corrupt, "Not enough ambient heat data");
 		for (auto bpos : blockS.OriginRect().Range<LEFT_TO_RIGHT, TOP_TO_BOTTOM>())
 		{
@@ -909,7 +915,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 
 	if (gravityData.data())
 	{
-		if (blockS.X * blockS.Y * 4 > int(gravityData.size()))
+		if (blockS.X * blockS.Y * 4 * int(sizeof(float)) > int(gravityData.size()))
 		{
 			throw ParseException(ParseException::Corrupt, "Not enough gravity data");
 		}
@@ -1224,25 +1230,30 @@ void GameSave::readOPS(const std::vector<char> &data)
 					break;
 				case PT_PIPE:
 				case PT_PPIP:
-					if (savedVersion < 93 && !fakeNewerVersion)
+					if (savedVersion < 93)
 					{
 						if (particles[newIndex].ctype == 1)
 							particles[newIndex].tmp |= 0x00020000; //PFLAG_INITIALIZING
 						particles[newIndex].tmp |= (particles[newIndex].ctype-1)<<18;
 						particles[newIndex].ctype = particles[newIndex].tmp&0xFF;
 					}
+					if (savedVersion < 100)
+					{
+						// tmp flags now exist in the spot previously used by PIPE before ver. 93, clear them
+						particles[newIndex].tmp &= ~0xFF;
+					}
 					break;
 				case PT_TSNS:
 				case PT_HSWC:
 				case PT_PSNS:
 				case PT_PUMP:
-					if (savedVersion < 93 && !fakeNewerVersion)
+					if (savedVersion < 93)
 					{
 						particles[newIndex].tmp = 0;
 					}
 					break;
 				case PT_LIFE:
-					if (savedVersion < 96 && !fakeNewerVersion)
+					if (savedVersion < 96)
 					{
 						if (particles[newIndex].ctype >= 0 && particles[newIndex].ctype < NGOL)
 						{
@@ -1560,7 +1571,7 @@ void GameSave::readPSv(const std::vector<char> &dataVec)
 		if (i)
 		{
 			if (ver>=44) {
-				if (p >= dataLength) {
+				if (p + 2 > dataLength) {
 					throw ParseException(ParseException::Corrupt, "Not enough data at line " MTOS(__LINE__) " in " MTOS(__FILE__));
 				}
 				if (i <= NPART) {
@@ -1586,7 +1597,7 @@ void GameSave::readPSv(const std::vector<char> &dataVec)
 			auto i = particleIDMap[pos];
 			if (i)
 			{
-				if (p >= dataLength) {
+				if (p + 2 > dataLength) {
 					throw ParseException(ParseException::Corrupt, "Not enough data at line " MTOS(__LINE__) " in " MTOS(__FILE__));
 				}
 				if (i <= NPART) {
@@ -1715,6 +1726,10 @@ void GameSave::readPSv(const std::vector<char> &dataVec)
 					if (ver>=42) {
 						if (new_format) {
 							ttv = (data[p++])<<8;
+							if (p >= dataLength)
+							{
+								throw ParseException(ParseException::Corrupt, "Not enough data at line " MTOS(__LINE__) " in " MTOS(__FILE__));
+							}
 							ttv |= (data[p++]);
 							if (particles[i-1].type==PT_PUMP) {
 								particles[i-1].temp = ttv + 0.15;//fix PUMP saved at 0, so that it loads at 0.
@@ -1732,6 +1747,10 @@ void GameSave::readPSv(const std::vector<char> &dataVec)
 				{
 					p++;
 					if (new_format) {
+						if (p >= dataLength)
+						{
+							throw ParseException(ParseException::Corrupt, "Not enough data at line " MTOS(__LINE__) " in " MTOS(__FILE__));
+						}
 						p++;
 					}
 				}
@@ -1890,6 +1909,7 @@ void GameSave::readPSv(const std::vector<char> &dataVec)
 						particles[i-1].tmp |= 0x00020000; //PFLAG_INITIALIZING
 					particles[i-1].tmp |= (particles[i-1].ctype-1)<<18;
 					particles[i-1].ctype = particles[i-1].tmp&0xFF;
+					particles[i-1].tmp &= ~0xFF;
 				}
 				else if (particles[i-1].type == PT_HSWC || particles[i-1].type == PT_PUMP)
 				{

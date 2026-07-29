@@ -12,7 +12,7 @@
 using namespace ui;
 
 Engine::Engine():
-	drawingFrequencyLimit(DrawLimitDisplay{}),
+	drawingFrequencyLimit(DrawLimitExplicit{ 60 }),
 	FrameIndex(0),
 	state_(nullptr),
 	windowTargetPosition(0, 0),

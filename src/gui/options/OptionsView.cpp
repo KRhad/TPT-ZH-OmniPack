@@ -94,6 +94,20 @@ public:
 	}
 };
 
+namespace
+{
+	enum FpsLimitDropdown
+	{
+		fpsLimitDropdownExact,
+		fpsLimitDropdownUncapped,
+	};
+	enum DrawLimitDropdown
+	{
+		drawLimitDropdownExact,
+		drawLimitDropdownFollowDisplay,
+	};
+};
+
 OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 {
 	auto autoWidth = [this](ui::Component *c, int extra) {
@@ -158,6 +172,41 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		autoWidth(label, 85);
 		currentY += 20;
 		return dropDown;
+	};
+	auto addButtonWithLabel = [this, &currentY, &addLabel](String buttonText, String labelText, std::function<void ()> action) {
+		auto *button = new ui::Button(ui::Point(10, currentY), ui::Point(90, 16), buttonText);
+		button->SetActionCallback({ action });
+		scrollPanel->AddChild(button);
+		auto *label = addLabel(5, labelText);
+		currentY += 13;
+		return label;
+	};
+	auto addLimitDropDown = [this, &currentY, &autoWidth](String info, std::vector<std::pair<String, int>> options, std::function<void (bool)> action) {
+		auto *dropDown = new ui::DropDown(ui::Point(Size.X - 155, currentY), ui::Point(100, 16));
+		scrollPanel->AddChild(dropDown);
+		for (auto &option : options)
+		{
+			dropDown->AddOption(option);
+		}
+		dropDown->SetActionCallback({ [action]() {
+			action(true);
+		} });
+		auto *textbox = new ui::Textbox(ui::Point(Size.X - 51, currentY), ui::Point(36, 16));
+		textbox->SetActionCallback({ [action]() {
+			action(false);
+		} });
+		textbox->SetDefocusCallback({ [action]() {
+			action(true);
+		} });
+		textbox->SetLimit(4);
+		scrollPanel->AddChild(textbox);
+		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X - 96, 16), info);
+		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+		scrollPanel->AddChild(label);
+		autoWidth(label, 105);
+		currentY += 20;
+		return std::make_pair(dropDown, textbox);
 	};
 	auto addSeparator = [this, &currentY]() {
 		currentY += 6;
@@ -271,9 +320,27 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	}, [this] {
 		c->SetTemperatureScale(TempScale(temperatureScale->GetOption().second));
 	});
+	addSeparator();
+	std::tie(fpsLimit, fpsLimitText) = addLimitDropDown("Simulation framerate cap", {
+		{ "Exact", fpsLimitDropdownExact },
+		{ "Uncapped", fpsLimitDropdownUncapped },
+	}, [this](bool defocus) {
+		UpdateFpsLimit(defocus);
+	});
+	std::tie(drawLimit, drawLimitText) = addLimitDropDown("Rendering framerate cap", {
+		{ "Exact", drawLimitDropdownExact },
+		{ "Follow display", drawLimitDropdownFollowDisplay },
+	}, [this](bool defocus) {
+		UpdateDrawLimit(defocus);
+	});
+	addButtonWithLabel("Reset", " - Set both limits to sane defaults", [this]{
+		c->SetFpsLimit(DefaultFpsLimit);
+		c->SetDrawLimit(DefaultDrawLimit);
+	});
+	currentY -= 6;
+	addSeparator();
 	if (FORCE_WINDOW_FRAME_OPS != forceWindowFrameOpsHandheld)
 	{
-		addSeparator();
 		std::vector<std::pair<String, int>> options;
 		int currentScale = ui::Engine::Ref().GetScale();
 		int scaleIndex = 1;
@@ -411,32 +478,18 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		}
 		c->SetAutoStartupRequest(checked);
 	});
-	auto *doStartupRequest = new ui::Button(ui::Point(10, currentY), ui::Point(90, 16), Localization::Ref().Tr("options.fetch_now"));
-	doStartupRequest->SetActionCallback({ [] {
+	startupRequestStatus = addButtonWithLabel(Localization::Ref().Tr("options.fetch_now"), "", [] {
 		Client::Ref().BeginStartupRequest();
-	} });
-	scrollPanel->AddChild(doStartupRequest);
-	startupRequestStatus = addLabel(5, "");
+	});
 	UpdateStartupRequestStatus();
-	currentY += 13;
 	redirectStd = addCheckbox(0, Localization::Ref().Tr("options.redirect_std"), Localization::Ref().Tr("options.redirect_std.info"), [this] {
 		c->SetRedirectStd(redirectStd->GetChecked());
 	});
-
-	{
-		addSeparator();
-
-		auto *creditsButton = new ui::Button(ui::Point(10, currentY), ui::Point(90, 16), Localization::Ref().Tr("options.credits"));
-		creditsButton->SetActionCallback({ [] {
-			auto *credits = new Credits();
-			ui::Engine::Ref().ShowWindow(credits);
-		} });
-		scrollPanel->AddChild(creditsButton);
-
-		addLabel(5, Localization::Ref().Tr("options.credits_desc"));
-		currentY += 13;
-	}
-
+	addSeparator();
+	addButtonWithLabel(Localization::Ref().Tr("options.credits"), Localization::Ref().Tr("options.credits_desc"), [] {
+		auto *credits = new Credits();
+		ui::Engine::Ref().ShowWindow(credits);
+	});
 
 	{
 		ui::Button *ok = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X, 16), Localization::Ref().Tr("options.ok"));
@@ -531,10 +584,11 @@ void OptionsView::UpdateStartupRequestStatus()
 	}
 }
 
-static void UpdateSettingFromString(String pres, bool isDefocus, float minVale, float maxValue, float defaultValue, auto parse, auto toTextbox, auto apply)
+template<class Value>
+static void UpdateSettingFromString(String pres, bool isDefocus, Value minVale, Value maxValue, Value defaultValue, auto parse, auto toTextbox, auto apply)
 {
 	// Parse value and determine validity
-	float value = 0;
+	Value value = Value(0);
 	bool isValid;
 	try
 	{
@@ -569,6 +623,88 @@ static void UpdateSettingFromString(String pres, bool isDefocus, float minVale, 
 
 	// If valid, apply
 	apply(value, isValid);
+}
+
+void OptionsView::UpdateFpsLimit(bool isDefocus)
+{
+	if (fpsLimit->GetOption().second == fpsLimitDropdownExact)
+	{
+		UpdateSettingFromString(fpsLimitText->GetText(), isDefocus, FpsLimitExplicit::minSane, FpsLimitExplicit::maxSane, DefaultFpsLimit.value, [](const String &s) {
+			return s.ToNumber<float>();
+		}, [this](float value) {
+			FpsLimitToInterface(FpsLimitExplicit{ value });
+		}, [this](float value, bool isValid) {
+			if (isValid)
+			{
+				c->SetFpsLimit(FpsLimitExplicit{ value });
+			}
+		});
+	}
+	else
+	{
+		fpsLimitText->Enabled = false;
+		fpsLimitText->SetText("");
+		c->SetFpsLimit(FpsLimitNone{});
+	}
+}
+
+void OptionsView::FpsLimitToInterface(SimFpsLimit limit)
+{
+	if (auto *fpsLimitExplicit = std::get_if<FpsLimitExplicit>(&limit))
+	{
+		StringBuilder sb;
+		sb << fpsLimitExplicit->value;
+		fpsLimitText->Enabled = true;
+		fpsLimitText->SetText(sb.Build());
+		fpsLimit->SetOption(fpsLimitDropdownExact);
+	}
+	else
+	{
+		fpsLimitText->Enabled = false;
+		fpsLimitText->SetText("");
+		fpsLimit->SetOption(fpsLimitDropdownUncapped);
+	}
+}
+
+void OptionsView::UpdateDrawLimit(bool isDefocus)
+{
+	if (drawLimit->GetOption().second == drawLimitDropdownExact)
+	{
+		UpdateSettingFromString(drawLimitText->GetText(), isDefocus, DrawLimitExplicit::minSane, DrawLimitExplicit::maxSane, DefaultDrawLimit.value, [](const String &s) {
+			return s.ToNumber<int>();
+		}, [this](int value) {
+			DrawLimitToInterface(DrawLimitExplicit{ value });
+		}, [this](int value, bool isValid) {
+			if (isValid)
+			{
+				c->SetDrawLimit(DrawLimitExplicit{ value });
+			}
+		});
+	}
+	else
+	{
+		drawLimitText->Enabled = false;
+		drawLimitText->SetText("");
+		c->SetDrawLimit(DrawLimitDisplay{});
+	}
+}
+
+void OptionsView::DrawLimitToInterface(DrawLimit limit)
+{
+	if (auto *drawLimitExplicit = std::get_if<DrawLimitExplicit>(&limit))
+	{
+		StringBuilder sb;
+		sb << drawLimitExplicit->value;
+		drawLimitText->Enabled = true;
+		drawLimitText->SetText(sb.Build());
+		drawLimit->SetOption(drawLimitDropdownExact);
+	}
+	else
+	{
+		drawLimitText->Enabled = false;
+		drawLimitText->SetText("");
+		drawLimit->SetOption(drawLimitDropdownFollowDisplay);
+	}
 }
 
 void OptionsView::UpdateAirTemp(String temp, bool isDefocus)
@@ -640,6 +776,14 @@ void OptionsView::NotifySettingsChanged(OptionsModel * sender)
 		float pres = sender->GetEdgePressure();
 		UpdateEdgePressurePreview(pres, true);
 		EdgePressureToTextBox(pres);
+	}
+	if (!fpsLimitText->IsFocused())
+	{
+		FpsLimitToInterface(sender->GetFpsLimit());
+	}
+	if (!drawLimitText->IsFocused())
+	{
+		DrawLimitToInterface(sender->GetDrawLimit());
 	}
 	// Same for vorticity
 	if (!vorticityCoeff->IsFocused())

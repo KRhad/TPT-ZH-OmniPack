@@ -273,16 +273,16 @@ void SaveButton::OnMouseClick(int x, int y, unsigned int button)
 	{
 		return; //left click only!
 	}
-	if (file && !file->LazyGetGameSave())
-	{
-		new ErrorMessage(Localization::Ref().Tr("gametools.error_loading_save"), file->GetError());
-		return;
-	}
-
 	if(x>=Size.X-20 && y>=6 && y<=20 && x<=Size.X-6 && selectable)
 	{
 		selected = !selected;
 		DoSelection();
+		return;
+	}
+
+	if (file && !file->LazyGetGameSave())
+	{
+		new ErrorMessage(Localization::Ref().Tr("gametools.error_loading_save"), file->GetError());
 		return;
 	}
 
