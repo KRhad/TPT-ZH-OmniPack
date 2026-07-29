@@ -6,6 +6,7 @@ from __future__ import annotations
 import csv
 import pathlib
 import re
+import subprocess
 import sys
 
 
@@ -65,16 +66,52 @@ def cpp_string(value: str) -> str:
     )
 
 
-def main() -> int:
-    if len(sys.argv) != 3:
+def validate_repository(source_root: pathlib.Path, registry_path: pathlib.Path) -> bool:
+    checker = pathlib.Path(__file__).with_name("element_registry_check.py")
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(checker),
+            "--root",
+            str(source_root),
+            "--registry",
+            str(registry_path),
+            "--quiet",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if completed.returncode:
         print(
-            "usage: generate_element_catalog.py OUTPUT_CPP ELEMENT_REGISTRY.csv",
+            "element catalog: repository registry validation failed",
+            file=sys.stderr,
+        )
+        if completed.stdout:
+            print(completed.stdout.rstrip(), file=sys.stderr)
+        if completed.stderr:
+            print(completed.stderr.rstrip(), file=sys.stderr)
+        return False
+    return True
+
+
+def main() -> int:
+    if len(sys.argv) not in (3, 4):
+        print(
+            "usage: generate_element_catalog.py OUTPUT_CPP ELEMENT_REGISTRY.csv "
+            "[SOURCE_ROOT]",
             file=sys.stderr,
         )
         return 2
 
     output_path = pathlib.Path(sys.argv[1])
     registry_path = pathlib.Path(sys.argv[2])
+    if len(sys.argv) == 4:
+        source_root = pathlib.Path(sys.argv[3]).resolve()
+        if not validate_repository(source_root, registry_path.resolve()):
+            return 1
 
     with registry_path.open("r", encoding="utf-8-sig", newline="") as registry_file:
         reader = csv.DictReader(registry_file)

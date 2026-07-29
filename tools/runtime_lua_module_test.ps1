@@ -3,7 +3,9 @@ param(
     [string] $Executable,
 
     [ValidateRange(1, 120)]
-    [int] $TimeoutSeconds = 15
+    [int] $TimeoutSeconds = 15,
+
+    [string] $TemporaryDirectory = [System.IO.Path]::GetTempPath()
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,7 +16,10 @@ if (-not (Test-Path -LiteralPath $autorunSource -PathType Leaf)) {
     throw "Missing Lua regression script: $autorunSource"
 }
 
-$tempParent = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
+$tempParent = [System.IO.Path]::GetFullPath($TemporaryDirectory)
+if (-not (Test-Path -LiteralPath $tempParent -PathType Container)) {
+    throw "Temporary directory does not exist: $tempParent"
+}
 $testRoot = Join-Path $tempParent ("tpt-omnipack-lua-" + [guid]::NewGuid().ToString("N"))
 $resolvedTestRoot = [System.IO.Path]::GetFullPath($testRoot)
 $tempPrefix = $tempParent.TrimEnd(
@@ -34,19 +39,20 @@ try {
     New-Item -ItemType Directory -Path $resolvedTestRoot | Out-Null
     Copy-Item -LiteralPath $autorunSource -Destination (Join-Path $resolvedTestRoot "autorun.lua")
 
-    $stdout = Join-Path $resolvedTestRoot "stdout.log"
-    $stderr = Join-Path $resolvedTestRoot "stderr.log"
     $result = Join-Path $resolvedTestRoot "lua-module-regression.result"
 
     Remove-Item Env:GITHUB_PAT_TOKEN -ErrorAction SilentlyContinue
-    $process = Start-Process `
-        -FilePath $resolvedExecutable `
-        -ArgumentList @("ddir", $resolvedTestRoot) `
-        -WorkingDirectory $resolvedTestRoot `
-        -WindowStyle Hidden `
-        -RedirectStandardOutput $stdout `
-        -RedirectStandardError $stderr `
-        -PassThru
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $resolvedExecutable
+    $startInfo.WorkingDirectory = $resolvedTestRoot
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.ArgumentList.Add("ddir")
+    $startInfo.ArgumentList.Add($resolvedTestRoot)
+    $process = [System.Diagnostics.Process]::Start($startInfo)
+    if (-not $process) {
+        throw "Failed to start the client"
+    }
 
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     do {
@@ -72,12 +78,7 @@ try {
     }
 
     if (-not $passed) {
-        $stderrText = if (Test-Path -LiteralPath $stderr) {
-            [string](Get-Content -LiteralPath $stderr -Raw)
-        } else {
-            ""
-        }
-        throw "Lua module regression failed; responding=$responding; stderr=$stderrText; artifacts=$resolvedTestRoot"
+        throw "Lua module regression failed; responding=$responding; artifacts=$resolvedTestRoot"
     }
     if (-not $responding) {
         throw "Lua module regression produced a result but the client stopped responding; artifacts=$resolvedTestRoot"

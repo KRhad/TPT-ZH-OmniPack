@@ -43,6 +43,7 @@ String CatalogValue(char const *kind, std::string_view value)
 String CatalogCategory(std::string_view category)
 {
 	static constexpr std::pair<std::string_view, char const *> categoryKeys[] = {
+		{ "SC_WALL", "sim.menu.walls" },
 		{ "SC_ELEC", "sim.menu.electronics" },
 		{ "SC_POWERED", "sim.menu.powered" },
 		{ "SC_SENSOR", "sim.menu.sensors" },
@@ -55,6 +56,9 @@ String CatalogCategory(std::string_view category)
 		{ "SC_NUCLEAR", "sim.menu.radioactive" },
 		{ "SC_SPECIAL", "sim.menu.special" },
 		{ "SC_LIFE", "sim.menu.gol" },
+		{ "SC_TOOL", "sim.menu.tools" },
+		{ "SC_FAVORITES", "sim.menu.favorites" },
+		{ "SC_DECO", "sim.menu.deco" },
 	};
 	for (auto const &[value, key] : categoryKeys)
 	{

@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+import csv
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import io
 import json
 from pathlib import Path
 import re
@@ -65,6 +67,41 @@ LIKELY_LATIN1_MOJIBAKE_RE = re.compile(
 )
 
 MAX_FINDINGS_IN_REPORT = 300
+
+ENCYCLOPEDIA_REGISTRY_COLUMNS = (
+    "identifier",
+    "menu_category",
+    "element_state",
+    "save_compatibility",
+    "implementation_status",
+    "test_status",
+)
+ENCYCLOPEDIA_ENUM_TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+MENU_CATEGORY_LOCALIZATION_KEYS = {
+    "SC_WALL": "sim.menu.walls",
+    "SC_ELEC": "sim.menu.electronics",
+    "SC_POWERED": "sim.menu.powered",
+    "SC_SENSOR": "sim.menu.sensors",
+    "SC_FORCE": "sim.menu.force",
+    "SC_EXPLOSIVE": "sim.menu.explosives",
+    "SC_GAS": "sim.menu.gases",
+    "SC_LIQUID": "sim.menu.liquids",
+    "SC_POWDERS": "sim.menu.powders",
+    "SC_SOLIDS": "sim.menu.solids",
+    "SC_NUCLEAR": "sim.menu.radioactive",
+    "SC_SPECIAL": "sim.menu.special",
+    "SC_LIFE": "sim.menu.gol",
+    "SC_TOOL": "sim.menu.tools",
+    "SC_FAVORITES": "sim.menu.favorites",
+    "SC_DECO": "sim.menu.deco",
+    "RESERVED": "encyclopedia.value.category.RESERVED",
+}
+ENCYCLOPEDIA_ENUM_PREFIXES = {
+    "element_state": "encyclopedia.value.state.",
+    "save_compatibility": "encyclopedia.value.save.",
+    "implementation_status": "encyclopedia.value.implementation.",
+    "test_status": "encyclopedia.value.test.",
+}
 
 
 @dataclass(frozen=True)
@@ -765,6 +802,178 @@ def _audit_source_registration(
     )
 
 
+def _set_encyclopedia_registry_stats(
+    result: AuditResult,
+    *,
+    rows: int = 0,
+    expected: int = 0,
+    missing_en: int = 0,
+    missing_zh: int = 0,
+    unknown_categories: int = 0,
+) -> None:
+    result.stats.update(
+        {
+            "encyclopedia_registry_rows": rows,
+            "encyclopedia_enum_keys": expected,
+            "encyclopedia_enum_missing_en": missing_en,
+            "encyclopedia_enum_missing_zh": missing_zh,
+            "encyclopedia_unknown_menu_categories": unknown_categories,
+        }
+    )
+
+
+def _audit_encyclopedia_registry(
+    en: Catalog,
+    zh: Catalog,
+    result: AuditResult,
+) -> None:
+    registry_path = result.source_root / "docs" / "ELEMENT_REGISTRY.csv"
+    _set_encyclopedia_registry_stats(result)
+    if not registry_path.is_file():
+        return
+
+    try:
+        raw = registry_path.read_bytes()
+    except OSError as exc:
+        result.add(
+            SEVERITY_ERROR,
+            "registration.encyclopedia_registry_read",
+            f"无法读取元素登记表：{exc}",
+        )
+        return
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        result.add(
+            SEVERITY_ERROR,
+            "registration.encyclopedia_registry_utf8",
+            f"元素登记表不是有效 UTF-8：{exc}",
+        )
+        return
+    try:
+        csv_rows = list(
+            csv.reader(io.StringIO(text, newline=""), strict=True)
+        )
+    except csv.Error as exc:
+        result.add(
+            SEVERITY_ERROR,
+            "registration.encyclopedia_registry_csv",
+            f"元素登记表 CSV 解析失败：{exc}",
+        )
+        return
+    if not csv_rows:
+        result.add(
+            SEVERITY_ERROR,
+            "registration.encyclopedia_registry_empty",
+            "元素登记表为空。",
+        )
+        return
+
+    header = csv_rows[0]
+    duplicate_columns = sorted(
+        {column for column in header if header.count(column) > 1}
+    )
+    if duplicate_columns:
+        result.add(
+            SEVERITY_ERROR,
+            "registration.encyclopedia_registry_columns",
+            "元素登记表含重复列：" + ", ".join(duplicate_columns),
+        )
+        return
+    missing_columns = [
+        column
+        for column in ENCYCLOPEDIA_REGISTRY_COLUMNS
+        if column not in header
+    ]
+    if missing_columns:
+        result.add(
+            SEVERITY_ERROR,
+            "registration.encyclopedia_registry_columns",
+            "元素登记表缺少图鉴枚举列：" + ", ".join(missing_columns),
+        )
+        return
+
+    expected_keys: set[str] = set()
+    unknown_categories = 0
+    data_rows = 0
+    for line_number, values in enumerate(csv_rows[1:], start=2):
+        if not values or all(not value.strip() for value in values):
+            result.add(
+                SEVERITY_ERROR,
+                "registration.encyclopedia_registry_row",
+                f"元素登记表第 {line_number} 行为空。",
+            )
+            continue
+        data_rows += 1
+        if len(values) != len(header):
+            result.add(
+                SEVERITY_ERROR,
+                "registration.encyclopedia_registry_row",
+                f"元素登记表第 {line_number} 行有 {len(values)} 列，"
+                f"表头为 {len(header)} 列。",
+            )
+            continue
+        row = dict(zip(header, values))
+        identifier = row["identifier"].strip() or f"第 {line_number} 行"
+        category = row["menu_category"].strip()
+        category_key = MENU_CATEGORY_LOCALIZATION_KEYS.get(category)
+        if category_key is None:
+            unknown_categories += 1
+            result.add(
+                SEVERITY_ERROR,
+                "registration.encyclopedia_category_unknown",
+                f"无法映射 menu_category `{category or '<empty>'}`；"
+                "必须显式登记对应的本地化键。",
+                identifier,
+            )
+        else:
+            expected_keys.add(category_key)
+
+        for column, prefix in ENCYCLOPEDIA_ENUM_PREFIXES.items():
+            value = row[column].strip()
+            if not value:
+                result.add(
+                    SEVERITY_ERROR,
+                    "registration.encyclopedia_enum_empty",
+                    f"登记表字段 `{column}` 为空。",
+                    identifier,
+                )
+                continue
+            if not ENCYCLOPEDIA_ENUM_TOKEN_RE.fullmatch(value):
+                result.add(
+                    SEVERITY_ERROR,
+                    "registration.encyclopedia_enum_invalid",
+                    f"登记表字段 `{column}` 含不能组成稳定键的值 "
+                    f"`{value}`。",
+                    identifier,
+                )
+                continue
+            expected_keys.add(prefix + value)
+
+    missing_en = expected_keys - en.entries.keys()
+    missing_zh = expected_keys - zh.entries.keys()
+    _record_missing_group(
+        result,
+        "registration.encyclopedia_enum_en",
+        "英文缺少图鉴枚举本地化键",
+        missing_en,
+    )
+    _record_missing_group(
+        result,
+        "registration.encyclopedia_enum_zh",
+        "中文缺少图鉴枚举本地化键",
+        missing_zh,
+    )
+    _set_encyclopedia_registry_stats(
+        result,
+        rows=data_rows,
+        expected=len(expected_keys),
+        missing_en=len(missing_en),
+        missing_zh=len(missing_zh),
+        unknown_categories=unknown_categories,
+    )
+
+
 def audit(
     en_path: Path,
     zh_path: Path,
@@ -837,6 +1046,7 @@ def audit(
         _audit_common_values(en, zh, result)
         _audit_untranslated_and_width(en, zh, result)
         _audit_source_registration(en, zh, result)
+        _audit_encyclopedia_registry(en, zh, result)
     else:
         result.stats.update(
             {
@@ -859,6 +1069,11 @@ def audit(
                 "literal_tr_missing_zh": 0,
                 "orphan_element_descriptions": 0,
                 "orphan_menus": 0,
+                "encyclopedia_registry_rows": 0,
+                "encyclopedia_enum_keys": 0,
+                "encyclopedia_enum_missing_en": 0,
+                "encyclopedia_enum_missing_zh": 0,
+                "encyclopedia_unknown_menu_categories": 0,
             }
         )
 
@@ -949,6 +1164,10 @@ def _metric_rows(result: AuditResult) -> list[tuple[str, int]]:
         ("缺少英文/中文菜单键", stats["menu_missing_en"] + stats["menu_missing_zh"]),
         ("源码字面量 Tr() 键", stats["literal_tr_keys"]),
         ("缺少英文/中文 Tr() 键", stats["literal_tr_missing_en"] + stats["literal_tr_missing_zh"]),
+        ("图鉴登记表行", stats["encyclopedia_registry_rows"]),
+        ("图鉴枚举所需键", stats["encyclopedia_enum_keys"]),
+        ("缺少英文/中文图鉴枚举键", stats["encyclopedia_enum_missing_en"] + stats["encyclopedia_enum_missing_zh"]),
+        ("未知图鉴菜单类别", stats["encyclopedia_unknown_menu_categories"]),
         ("发布阻塞错误", stats["blocking_errors"]),
         ("人工复核警告", stats["warnings"]),
     ]

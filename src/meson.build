@@ -278,11 +278,13 @@ element_catalog_data = custom_target(
 	'element-catalog-data',
 	input: files('../docs/ELEMENT_REGISTRY.csv'),
 	output: 'ElementCatalogData.cpp',
+	build_always_stale: true,
 	command: [
 		python3_prog,
 		files('../tools/generate_element_catalog.py'),
 		'@OUTPUT@',
 		'@INPUT@',
+		meson.project_source_root(),
 	],
 )
 powder_files += element_catalog_data

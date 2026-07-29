@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import csv
 import importlib.util
 import io
 import json
@@ -75,6 +76,82 @@ void Element::Element_WATR()
         with contextlib.redirect_stdout(io.StringIO()):
             with contextlib.redirect_stderr(io.StringIO()):
                 return i18n_audit.main(argv)
+
+    def write_encyclopedia_registry(self, root: Path) -> None:
+        docs = root / "docs"
+        docs.mkdir(parents=True, exist_ok=True)
+        columns = (
+            "identifier",
+            "menu_category",
+            "element_state",
+            "save_compatibility",
+            "implementation_status",
+            "test_status",
+        )
+        rows = (
+            {
+                "identifier": "DEFAULT_PT_WATR",
+                "menu_category": "SC_LIQUID",
+                "element_state": "liquid",
+                "save_compatibility": "official-locked",
+                "implementation_status": "implemented",
+                "test_status": "source-verified",
+            },
+            {
+                "identifier": "RESERVED_PT_146",
+                "menu_category": "RESERVED",
+                "element_state": "reserved",
+                "save_compatibility": "reserved-slot",
+                "implementation_status": "reserved",
+                "test_status": "lock-verified",
+            },
+        )
+        with (docs / "ELEMENT_REGISTRY.csv").open(
+            "w", encoding="utf-8", newline=""
+        ) as registry:
+            writer = csv.DictWriter(registry, fieldnames=columns)
+            writer.writeheader()
+            writer.writerows(rows)
+
+    @staticmethod
+    def add_encyclopedia_enum_keys(
+        en: dict[str, str], zh: dict[str, str]
+    ) -> None:
+        values = {
+            "encyclopedia.value.category.RESERVED": (
+                "Reserved slot",
+                "保留槽位",
+            ),
+            "encyclopedia.value.state.liquid": ("Liquid", "液体"),
+            "encyclopedia.value.state.reserved": ("Reserved", "保留"),
+            "encyclopedia.value.save.official-locked": (
+                "Official ID locked",
+                "官方 ID 已锁定",
+            ),
+            "encyclopedia.value.save.reserved-slot": (
+                "Reserved save slot",
+                "保留存档槽位",
+            ),
+            "encyclopedia.value.implementation.implemented": (
+                "Implemented",
+                "已实现",
+            ),
+            "encyclopedia.value.implementation.reserved": (
+                "Reserved",
+                "保留",
+            ),
+            "encyclopedia.value.test.source-verified": (
+                "Source verified",
+                "来源已验证",
+            ),
+            "encyclopedia.value.test.lock-verified": (
+                "ID lock verified",
+                "ID 锁定已验证",
+            ),
+        }
+        for key, (en_value, zh_value) in values.items():
+            en[key] = en_value
+            zh[key] = zh_value
 
     def test_clean_check_passes_and_does_not_write_implicitly(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -186,6 +263,55 @@ void Element::Element_WATR()
             self.assertIn("text.mojibake", codes)
             self.assertIn("registration.element_name_en", codes)
             self.assertIn("registration.element_name_zh", codes)
+
+    def test_missing_encyclopedia_enum_keys_are_blocking(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            en, zh = self.clean_catalogs()
+            self.make_repo(root, en, zh)
+            self.write_encyclopedia_registry(root)
+            result = i18n_audit.audit(
+                root / "src/lang/en-US.json",
+                root / "src/lang/zh-CN.json",
+                root,
+            )
+            codes = {item.code for item in result.errors}
+            self.assertIn("registration.encyclopedia_enum_en", codes)
+            self.assertIn("registration.encyclopedia_enum_zh", codes)
+            rendered = "\n".join(item.render() for item in result.errors)
+            self.assertIn("encyclopedia.value.category.RESERVED", rendered)
+            self.assertEqual(result.stats["encyclopedia_registry_rows"], 2)
+            self.assertEqual(result.stats["encyclopedia_enum_keys"], 10)
+            self.assertEqual(result.stats["encyclopedia_enum_missing_en"], 9)
+            self.assertEqual(result.stats["encyclopedia_enum_missing_zh"], 9)
+            self.assertEqual(
+                self.run_main(["--source-root", str(root), "--check"]), 1
+            )
+
+    def test_complete_encyclopedia_enum_keys_pass(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            en, zh = self.clean_catalogs()
+            self.add_encyclopedia_enum_keys(en, zh)
+            self.make_repo(root, en, zh)
+            self.write_encyclopedia_registry(root)
+            result = i18n_audit.audit(
+                root / "src/lang/en-US.json",
+                root / "src/lang/zh-CN.json",
+                root,
+            )
+            self.assertFalse(
+                any(
+                    item.code.startswith("registration.encyclopedia")
+                    for item in result.errors
+                )
+            )
+            self.assertEqual(result.stats["encyclopedia_enum_keys"], 10)
+            self.assertEqual(result.stats["encyclopedia_enum_missing_en"], 0)
+            self.assertEqual(result.stats["encyclopedia_enum_missing_zh"], 0)
+            self.assertEqual(
+                self.run_main(["--source-root", str(root), "--check"]), 0
+            )
 
 
 if __name__ == "__main__":

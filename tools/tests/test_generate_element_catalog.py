@@ -300,6 +300,35 @@ class GenerateElementCatalogTests(unittest.TestCase):
             self.assertIn("CSV row width does not match", error)
             self.assertEqual(output.read_bytes(), original_output)
 
+    def test_optional_repository_validation_is_fail_closed(self) -> None:
+        source_root = Path("source root")
+        registry = Path("registry.csv")
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=1,
+            stdout="",
+            stderr="semantic registry failure\n",
+        )
+        with mock.patch.object(
+            generate_element_catalog.subprocess,
+            "run",
+            return_value=completed,
+        ) as run:
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                valid = generate_element_catalog.validate_repository(
+                    source_root,
+                    registry,
+                )
+        self.assertFalse(valid)
+        self.assertIn("repository registry validation failed", stderr.getvalue())
+        self.assertIn("semantic registry failure", stderr.getvalue())
+        command = run.call_args.args[0]
+        self.assertIn("--root", command)
+        self.assertIn(str(source_root), command)
+        self.assertIn("--registry", command)
+        self.assertIn(str(registry), command)
+
     def test_noncanonical_stable_ids_are_rejected_without_overwrite(self) -> None:
         for stable_id in (
             "not-an-integer",
