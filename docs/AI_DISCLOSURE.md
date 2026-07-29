@@ -28,5 +28,4 @@ TPT-ZH-OmniPack / 万象沙盘整合版在开发过程中使用了 OpenAI Codex 
 - 失败、跳过和外部阻塞；
 - 对应源码 commit。
 
-当前 Phase 0 只完成静态来源审计，尚无可发布二进制。
-
+当前完成至 Phase 2：已执行 Windows x64 clean build、静态门禁、工具单元测试和 Lua 运行回归；视觉 UI、存档兼容、性能压力和人工翻译质量复核尚未完成，因此仍无可发布二进制。

@@ -1,116 +1,143 @@
 # TPT-ZH-OmniPack 开发进度
 
-> 本文件只记录有证据支持的结果。未执行的测试明确标为“未执行”，不以编译成功替代运行验证。
+> 本文件只记录有源码差异、构建日志或测试输出支持的结果。未执行项目明确标为 `NOT RUN` 或 `BLOCKED`。
 
 ## 当前阶段
 
-Phase 1：稳定基线（完成，进入 Phase 2）
+Phase 2：基础设施完成；下一阶段为 Phase 3：低风险内容。
 
 ## 已完成
 
-- 在 `C:\Users\KR\TPT-ZH-OmniPack` 建立独立、干净的 `Dragonrster/The-Powder-Toy-Chinese:i18n-new` 工作副本。
-- 在 `C:\Users\KR\tpt-omnipack-sources` 建立九个固定提交的只读审计副本，未覆盖任何仓库的 `src`。
-- 固定并核验官方、汉化主干、Cracker、SpikeViper、Ultimata、Jacob1、Alchemy、Seppo、Cyens 的仓库、分支、提交、时间和许可证。
-- 核对各来源的元素登记数量、旧 ID 区间、当前官方 ID 冲突和主要核心系统差异。
-- 对公开源码执行静态审计，记录确定的越界、除零、无限增长或高复杂度风险。
-- 确认九个来源顶层均带 GPL-3.0 许可证；相同 `LICENSE` 文件的 SHA-256 为 `0B383D5A63DA644F628D99C33976EA6487ED89AAA59F0B3257992DEAC1171E6B`。
-- 确认 Seppo 公共源码登记了 32 个新增元素，但缺少全部 32 个实现文件，不能编译、链接或作为可发布实现直接移植。
-- 确认当前汉化分支内嵌中文字库没有可追溯的字体名称、来源或许可证，正式发布前必须替换。
-- 在固定 `445fab51` 干净副本完成未经生产代码修改的 Windows x64 静态基线构建。
-- 建立 `integration/zh-omnipack` 与 `backup/phase0-097cb71e` 分支。
-- 合并官方 `bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd`，保留 100.0.399 的保存与模拟安全修复。
-- 人工融合 7 个冲突文件，保留 HEAC 热容量加权、MIX 除零保护和新版 FPS/Options 行为。
-- 默认语言改为简体中文，设置页恢复 12 语言下拉框，`BASE` 说明进入本地化系统。
-- 项目名、可执行文件名、App ID 和数据目录改为 OmniPack 独立命名，并将 `mod_id` 归零。
-- 删除陈旧 `src/VcsTag.h`，修复 clean parallel build 的生成依赖竞态。
+- Phase 0：固定并审计九个来源仓库、许可证、精确提交、元素登记、ID 冲突、核心差异和确定风险。
+- Phase 1：完成 Dragonrster 100.0.398 未修改基线构建，合并官方 100.0.399，建立 `integration/zh-omnipack`，恢复默认简体中文与 12 语言切换，并完成独立项目命名。
+- 建立 196 槽官方元素锁表：195 个活动元素和 ID 146 tombstone；官方 ID 0–195 不可漂移。
+- 建立 0–511 稳定 ID 分区，冶金、生物、核能、化学、自动化、特殊物理、灾害、兼容和实验内容均有固定区间。
+- 实现只读元素登记门禁，检查重复 ID/identifier、`PT_NUM` 上限、Meson 次序、菜单、名称、说明、来源、许可证、状态和官方锁哈希。
+- 用 JsonCpp 严格解析所有内嵌语言文件；拒绝重复键、注释、尾随逗号、根类型错误、非字符串值和尾随垃圾，并保留安全英文回退。
+- 实现英中本地化审计、元素名称同步及其单元测试。
+- 为 195 个官方活动元素登记中英文正式名称；ID 146 tombstone 不生成可见名称。
+- 实现统一模块设置与中央工具选择门禁；菜单、收藏、搜索、采样、延迟选择和 Lua 调用均经过同一选择判定。
+- 对 Lua 运行时元素按“稳定 ID + identifier”识别，避免把运行时占用的保留数字槽误判成整合模块元素。
+- 建立编译时只读图鉴目录；搜索支持代号、identifier、中英文名称与说明、来源和分类。
+- 图鉴中的分类、状态、存档兼容性、实现状态和测试状态均使用本地化键；来源名、commit 和许可证按允许保留的专有标识显示。
+- 建立模块设置 UI。六个内容模块可控制；四个尚未实现的设置明确标注“待实现”并强制禁用。
+- 注册 3 个 Meson 静态测试目标，并增加可复现 Windows Lua 运行回归脚本。
 
 ## 修改文件
 
-- `docs/SOURCE_AUDIT.md`
-- `docs/PORTING_LEDGER.md`
+Phase 2 的主要变更：
+
 - `docs/ELEMENT_REGISTRY.csv`
 - `docs/ELEMENT_DESIGN.md`
 - `docs/I18N_AUDIT.md`
-- `docs/SAVE_COMPATIBILITY.md`
-- `docs/TEST_MATRIX.md`
-- `docs/KNOWN_ISSUES.md`
-- `docs/THIRD_PARTY_SOURCES.md`
-- `docs/AI_DISCLOSURE.md`
-- `docs/PROGRESS.md`
-- `README.zh-CN.md`
-- `CHANGELOG.zh-CN.md`
-
-Phase 0 未修改生产代码；Phase 1 的生产修改为官方同步、冲突融合、中文基线和构建修复。
+- `tools/data/official_elements_100_0.csv`
+- `tools/element_registry_check.py`
+- `tools/i18n_audit.py`
+- `tools/sync_element_localization.py`
+- `tools/generate_element_catalog.py`
+- `tools/tests/*.py`
+- `tools/runtime_lua_module_test.ps1`
+- `tools/runtime/module_filter_regression.lua`
+- `src/common/Localization.cpp`
+- `src/common/Localization.h`
+- `src/gui/elementsearch/ElementCatalog.h`
+- `src/gui/elementsearch/ElementSearchActivity.cpp`
+- `src/gui/game/OmniContent.cpp`
+- `src/gui/game/OmniContent.h`
+- GameModel、GameController、Options、Tool 和 Meson 相关文件
+- `src/lang/en-US.json`
+- `src/lang/zh-CN.json`
 
 ## 新增元素
 
-0。Phase 1 没有改变官方元素登记表或 ID。
+0。Phase 2 只锁定官方 ID 并建立基础设施，没有把预留内容伪装成已实现元素。
 
 ## 汉化状态
 
-当前中文基线的严格 JSON 统计：
-
-- 英文键：893
-- 中文键：893
+- 英文键：1,154
+- 中文键：1,154
 - 缺失键：0
 - 多余键：0
-- 中文空值：1
-- 已确认玩家可见硬编码英文：至少 4 个明确 UI 实例，另有错误路径待系统扫描
-- 默认语言：简体中文（索引 1）
-- 当前设置页语言切换控件：已恢复，包含 12 种语言
-- 中文正式元素名称：未实现
+- 发布阻塞错误：0
+- 占位符/控制符错误：0
+- 疑似未翻译警告：37，均保留在 `docs/I18N_AUDIT.md` 供人工分类
+- 官方活动元素名称登记：195/195
+- 默认语言：简体中文；英文及其他 10 个原有语言入口保留
 
-键集合、默认索引和编译已验证；视觉中文布局和实际下拉交互仍未执行，不能据此声称发布合格。
+该结果证明键集合、格式和登记完整性通过自动门禁；不等于视觉布局已通过。
 
 ## 编译命令
 
-详见 `docs/BASELINE_BUILD.md`。核心配置为 `debugoptimized`、`static=prebuilt`、静态 GCC runtime 与 gc-sections。
+在清空的 `build-phase2-clean` 中执行：
+
+```powershell
+meson setup build-phase2-clean `
+  -Dbuildtype=debugoptimized `
+  -Dstatic=prebuilt `
+  -Dstrip=false `
+  -Dlto=false `
+  "-Dc_args=['-ffunction-sections','-fdata-sections']" `
+  "-Dcpp_args=['-ffunction-sections','-fdata-sections']" `
+  "-Dc_link_args=['-Wl,--gc-sections','-static','-static-libgcc','-static-libstdc++']" `
+  "-Dcpp_link_args=['-Wl,--gc-sections','-static','-static-libgcc','-static-libstdc++']" `
+  -Dmanifest_date=2026-07-29
+meson compile -C build-phase2-clean -v
+```
 
 ## 编译结果
 
-- 未修改 100.0.398 基线：PASS，445/445，SHA-256 `A15B5D25C5552B9954040F94001C96B4289072D88B9820DCEC3FA5EDDFA69AC7`
-- 官方 100.0.399 合并态：PASS，445/445，SHA-256 `433F7815624E77F2BF114FC6A923F2D61BC30AD681DF7445E3537C73A1898D44`
-- 中文基线 clean build：PASS，445/445，SHA-256 `8DCC6EB3FF86200188378D273308FF94B5FDB949E2F11E36E0DA55B4B3D1CF3B`
-- 错误：0；警告：2，均为 GCC 16 对 `PowderToy.cpp` 的 `std::optional<ByteString>` 路径报告
+- Windows x64 `debugoptimized` 静态 clean build：PASS，448/448。
+- 编译错误：0。
+- 编译警告：2；均为基线已有的 `PowderToy.cpp` / `std::optional<ByteString>` GCC `-Wmaybe-uninitialized`。
+- 产物：`build-phase2-clean/tpt-zh-omnipack.exe`
+- 大小：228,411,304 字节
+- SHA-256：`6428B39852C31AB03A9EEB3C20AFFA16CA9B7B84DB6EC88042831F1CAD2416BB`
+- PE：PE32+、Windows GUI、x86-64。
+- 非系统 GCC runtime DLL 导入：0。
 
 ## 测试结果
 
-- Git 工作树隔离检查：通过。
-- 九来源提交固定检查：通过。
-- 顶层许可证存在性与哈希检查：通过。
-- 元素登记静态计数：通过。
-- ID 冲突静态分析：完成。
-- 未修改基线启动/响应：PASS。
-- 中文基线启动/响应与独立窗口标题：PASS。
-- 项目注册的 Meson 测试：0 项；退出码 0 不代表覆盖。
-- 默认语言索引、语言下拉和英中键集合：静态验证 PASS。
-- 视觉中文、英文切换交互、官方存档：未执行。
+- Meson 静态测试：3/3 PASS。
+- Python 工具单元测试：28/28 PASS。
+- 元素登记：PASS，196 槽、195 活动、1 tombstone、`PT_NUM=512`。
+- i18n：PASS，1,154/1,154 键，0 missing、0 extra、0 error；196 行登记表派生的 27 个图鉴枚举键全部存在。
+- 元素名称同步只读检查：PASS，0 change。
+- Lua 动态元素分配/选择运行回归：PASS；首个动态元素 ID 255，`ui.activeTool(0)` 返回 `OMNITEST_PT_LUA1`，客户端 `Responding=True`。
+- clean 构建日志密钥扫描：0 个令牌模式命中；构建目录中 0 个 `powder.pref`、账户或凭据候选文件。
+- 图鉴视觉布局、设置复选框交互、英文切换实际交互：BLOCKED；本会话没有可用的受信任 Computer Use native pipe。
+- 官方存档载入/往返：NOT RUN。
+- 禁用自定义模块存档警告/只读/占位：NOT RUN；尚无正式自定义元素。
 
 ## 性能结果
 
-未执行运行压力测试。静态审计已确认若干必须重写或加预算的路径，例如 Cracker `PET`/`MGNT` 大范围逐粒子搜索、Cracker `BFLM` 扩散、Ultimata 全局物理扩展及旧 Alchemy 的逐粒子配方检查。
+Phase 2 没有新增粒子更新函数，因此没有新增每帧粒子成本。clean build 和 Lua 启动回归未崩溃。FPS、内存、粒子增长和大型模拟压力数据仍为 `NOT RUN`，将在 Phase 3 首批内容元素进入后建立固定样本。
 
 ## 已知问题
 
-- 当前分支已合并审计时的 46 个官方后续提交；仍需持续跟踪新的上游安全修复。
-- 中文字体来源与授权不可追溯，是发布阻塞项。
-- Seppo 公共源码缺失新增元素实现，只能作为设计和登记表参考。
-- 所有旧模组自定义 ID 均需统一迁移；不得直接信任旧数字 ID。
-- Windows Computer Use 的受信任 `node_repl`/native pipe 本会话不可用，视觉 UI 自动化尚未执行。
-- 官方存档样本载入/往返尚未执行。
+- 中文字体 `resources/font.bz2` 的名称、来源和许可证仍不可追溯，是正式发布阻塞项。
+- 视觉中文布局与实际语言切换交互尚未执行。
+- 官方 100.0 存档样本载入/重存尚未执行。
+- 关闭模块后加载含该模块元素的中文警告、只读和占位路径尚未实现；正式自定义元素进入前必须完成。
+- 图鉴框架目前显示登记说明和基础热学参数；反应、生产方法、用途、危险等级、原作者等正式字段将在内容登记扩展时加入。
+- 曾发现旧 Meson `testlog.txt` 含明文 GitHub PAT 环境变量。该原始日志已删除且未提交；后续测试在清理敏感环境后重跑，令牌模式扫描为 0。凭据轮换属于仓库外必要操作。
+- 两条基线 GCC 警告仍待定位。
 
 ## 下一阶段
 
-1. 实现 `tools/i18n_audit.py` 与 `tools/element_registry_check.py`。
-2. 生成不可漂移的官方 100.0 元素锁表和完整 `ELEMENT_REGISTRY.csv`。
-3. 用 JsonCpp 替换宽松本地化解析器，并增加 Meson 静态测试。
-4. 建立模块元数据、统一选择权限和图鉴数据框架。
-5. 建立官方存档固定样本与往返测试。
+1. 扩展图鉴登记字段与反应数据结构。
+2. 在固定 ID 256–287 中实现并分别提交工业冶金基础元素与合金反应。
+3. 实现基础化学的中央反应表，避免元素更新逻辑相互覆盖。
+4. 在自定义元素首次进入前完成禁用模块存档警告和兼容占位策略。
+5. 建立冶金生产线、官方存档和性能固定样本。
 
 ## 当前 commit hash
 
-最近已提交的官方合并：
+Phase 2 最终加固提交：
 
-`5ff2bccd99169bc54d61e9485ba2013b9e6adb8c`
+`f28cdcb734c6829ae2f69ca10245d494704a8164`
 
-本文件随 Phase 1 中文基线提交更新。
+同阶段前置提交：
+
+- 模块门禁与图鉴框架：`d7312a9b75176bcfa938e9727be9131c7835c728`
+- 官方元素锁与登记：`08fe8a82b180d357420bb24df34c475d983bb943`
+- 严格本地化门禁：`457233acce404dd1f8d2e3566abea23f0ec6c0e3`

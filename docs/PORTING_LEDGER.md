@@ -7,7 +7,9 @@
 | 模块/候选 | 来源与固定 commit | 原作者/归属 | Phase 0 判定 | 目标方式 | 当前状态 | 理由与门禁 |
 |---|---|---|---|---|---|---|
 | 官方模拟、保存、ID | Official `bff38ce...` | TPT contributors | 直接底座 | 保留并同步 | AUDITED | 100.0.399 权威实现 |
-| 中文/英文语料 | Dragonrster `445fab51...` | Dragonrster 与 TPT contributors | 审核后重放 | 严格 JSON + 自动审计 | DESIGN | 默认语言/UI/BASE/空值待修 |
+| 中文/英文语料与严格加载 | Dragonrster `445fab51...`；OmniPack `457233ac...` | Dragonrster、TPT contributors、OmniPack contributors | 审核后重放并重写加载器 | JsonCpp 严格 JSON + 自动审计 | ACCEPTED | en/zh 1,154/1,154，0 阻塞错误；视觉复核仍独立跟踪 |
+| 官方元素稳定锁 | Official `bff38ce...`；OmniPack `08fe8a82...` | TPT contributors、OmniPack contributors | 源码解析生成 | 逐槽固定 0–195 | ACCEPTED | 196 槽、195 活动、1 tombstone；自动门禁 PASS |
+| 模块选择与图鉴框架 | OmniPack `d7312a9b...`、`f28cdcb7...` | OmniPack contributors | 项目原创实现 | 统一门禁、编译时登记目录 | ACCEPTED | clean build、28 单测、Lua 运行回归和枚举本地化门禁 PASS |
 | 汉化字体 | Dragonrster `445fab51...` | 未知 | 禁止发布 | 替换为可追溯字体 | BLOCKED | 名称、来源、许可证缺失 |
 | Cracker 工业化学 | Cracker `ebbb9aab...` | Cracker1000 等 | 重写候选 | 中央反应表 | DESIGN | 与冶金/Cyens 去重 |
 | 动力门户 PPTI/PPTO | Cracker `ebbb9aab...`; Jacob `b4926161...` | 各来源作者 | 合并重写 | 单一稳定实现 | DESIGN | 多来源重复、旧 API |
@@ -42,4 +44,3 @@
 - 性能预算与已知偏差。
 
 任何 `ACCEPTED` 项都必须能从本账本追到固定来源和测试证据。
-

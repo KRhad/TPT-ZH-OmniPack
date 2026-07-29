@@ -1,60 +1,94 @@
 # 测试矩阵
 
-状态：`PASS`、`FAIL`、`BLOCKED`、`NOT RUN`。每个 PASS 必须链接日志或固定输出。
+状态：`PASS`、`FAIL`、`BLOCKED`、`NOT RUN`。编译通过不替代运行、视觉、存档或压力测试。
 
 ## Phase 0 / Phase 1 基线
 
 | 测试 | 类型 | 状态 | 证据/备注 |
 |---|---|---|---|
-| 工作树隔离 | 静态 | PASS | 独立目录，未修改用户已有脏仓库 |
+| 工作树隔离 | 静态 | PASS | 独立目录；未覆盖任何来源仓库的 `src` |
 | 九来源提交固定 | 静态 | PASS | `docs/SOURCE_AUDIT.md` |
-| GPL 顶层许可证 | 静态 | PASS | 九来源 LICENSE 哈希一致 |
-| 官方元素 ID 比较 | 静态 | PASS | 汉化分支与官方 398b 注册表一致 |
-| Windows x64 基线配置 | 构建 | PASS | `docs/BASELINE_BUILD.md` |
-| Windows x64 基线编译 | 构建 | PASS | 445/445，静态 MinGW runtime |
-| 基线启动 | 运行 | PASS | 6 秒存活、Responding=True、非零窗口句柄 |
+| GPL 顶层许可证 | 静态 | PASS | 九来源顶层许可证及哈希已记录 |
+| Windows x64 未修改基线 | 构建 | PASS | 445/445；`docs/BASELINE_BUILD.md` |
+| 基线启动 | 运行 | PASS | 进程存活、Responding=True、非零窗口句柄 |
 | 默认简体中文选择 | 静态 | PASS | fresh preference fallback 为索引 1 |
-| 基线中文视觉显示 | 运行 | BLOCKED | 本会话 Computer Use native pipe 不可用 |
-| 英文切换控件 | 静态/构建 | PASS | 12 语言下拉已编译 |
-| 英文切换实际交互 | 运行 | NOT RUN | 等待可用 UI 自动化或人工复核 |
-| 官方存档载入/重存 | 运行 | NOT RUN | Phase 1 |
+| 12 语言切换控件 | 静态/构建 | PASS | Options 下拉已编译 |
+| 中文视觉布局 | 运行 | BLOCKED | 本会话缺少受信任 Computer Use native pipe |
+| 英文切换实际交互 | 运行 | NOT RUN | 需 UI 自动化或人工复核 |
+| 官方 100.0 存档载入/重存 | 运行 | NOT RUN | 尚未建立固定样本 |
 
-## 静态门禁
+## Phase 2 静态门禁
 
-| 测试 | 状态 | 计划实现 |
+| 测试 | 状态 | 证据/备注 |
 |---|---|---|
-| 元素稳定 ID 冲突 | NOT RUN | `tools/element_registry_check.py` |
-| 元素 identifier 冲突 | NOT RUN | 同上 |
-| ID 超出 `PT_NUM` | NOT RUN | 同上 |
-| 菜单分类非法 | NOT RUN | 同上 |
-| 中英文名称/说明缺失 | NOT RUN | 同上 |
-| 来源登记缺失 | NOT RUN | 同上 |
-| JSON 严格校验 | NOT RUN | `tools/i18n_audit.py` |
-| i18n 键差 | NOT RUN | 同上 |
-| 格式占位符差异 | NOT RUN | 同上 |
-| 玩家可见硬编码英文 | NOT RUN | 同上加人工白名单 |
-| 非法温度/数值 | NOT RUN | 元素注册检查 |
-| 明显无限复制/循环模式 | NOT RUN | 静态规则加代码复核 |
-| 发布包隐私文件 | NOT RUN | `tools/package_audit.py` |
+| 元素稳定 ID 冲突 | PASS | `tools/element_registry_check.py` |
+| 元素 identifier 冲突 | PASS | 大小写不敏感检查 |
+| ID 超出 `PT_NUM` | PASS | 196 行登记；`PT_NUM=512` |
+| 官方 ID 漂移 | PASS | 0–195 与固定锁表逐槽比较 |
+| Meson 槽位漂移 | PASS | 196 个官方槽与源码逐槽比较 |
+| 菜单分类非法 | PASS | `MenuSection.h` 枚举域 |
+| 中英文名称/说明缺失 | PASS | 195 个活动官方元素 |
+| 来源、commit、许可证缺失 | PASS | 语义登记门禁 |
+| 布尔/枚举字段非法 | PASS | 登记检查器；图鉴生成前强制执行 |
+| JSON 严格校验 | PASS | 重复键、注释、尾逗号、根类型、尾随垃圾 |
+| i18n 键差 | PASS | en-US/zh-CN 1,154/1,154；missing=0；extra=0 |
+| 格式占位符差异 | PASS | 0 |
+| 换行/颜色/链接控制符差异 | PASS | 0 |
+| 空字符串 | PASS | 0 |
+| 元素名称登记 | PASS | 195/195；ID 146 tombstone 排除 |
+| 菜单键登记 | PASS | 16/16 |
+| 图鉴动态枚举键 | PASS | 196 行派生 27 键；英中缺失均为 0 |
+| Python 工具单元测试 | PASS | 28/28 |
+| Meson `static` suite | PASS | 3/3 |
+| 玩家可见硬编码英文 | NOT RUN | 自动启发式已运行；完整 Phase 6 人工分类尚未完成 |
+| 非法温度/数值 | PASS（官方） | 官方 195 元素构造参数静态解析 |
+| 明显无限复制/循环模式 | PASS（官方基线） | Phase 0 静态复核；自定义内容尚未加入 |
+| 发布包隐私文件 | NOT RUN | 打包脚本尚未实现 |
 
-## 运行与压力测试
+## Phase 2 构建与运行
 
-用户要求的启动、语言、保存、模块关闭、搜索、图鉴、炼金、生物、冶金、核能、灰蛊、标签页、恢复、Lua、在线/离线、更新以及七类压力测试均为 `NOT RUN`。将在对应实现提交后逐项增加固定样本、自动记录 FPS/粒子数/内存并更新本表。
+| 测试 | 类型 | 状态 | 证据/备注 |
+|---|---|---|---|
+| clean Meson 配置 | 构建 | PASS | Windows 11、Meson 1.11.2 |
+| clean Windows x64 编译 | 构建 | PASS | 448/448，0 error，2 基线 warning |
+| PE 架构 | 静态 | PASS | PE32+、Windows GUI、x86-64 |
+| 静态 GCC runtime | 静态 | PASS | 无 `libgcc_s`、`libstdc++`、`libwinpthread` 导入 |
+| Lua 动态元素分配 | 运行 | PASS | ID 255 |
+| Lua 动态元素选择 | 运行 | PASS | `OMNITEST_PT_LUA1` |
+| 运行进程响应 | 运行 | PASS | Lua 回归时 Responding=True |
+| 含空格临时路径 | 运行 | PASS | `.NET ProcessStartInfo.ArgumentList` 精确传参 |
+| 原始构建日志令牌扫描 | 安全 | PASS | GitHub token 模式命中 0 |
+| 构建目录隐私文件 | 安全 | PASS | `powder.pref`/账户/凭据候选 0 |
+| 图鉴打开与视觉排版 | 运行 | BLOCKED | 需要可信 UI 控制 |
+| 模块开关点击交互 | 运行 | BLOCKED | 需要可信 UI 控制 |
+| 禁用模块的存档警告 | 运行 | NOT RUN | 尚未实现兼容加载 UI |
 
-## 测试环境基线
+## 后续运行与压力测试
+
+以下测试尚未因编译成功而被误标为通过：
+
+| 范围 | 状态 |
+|---|---|
+| 新建沙盘、保存/加载、崩溃恢复、多标签页 | NOT RUN |
+| 官方、汉化及来源模组存档迁移 | NOT RUN |
+| 在线功能、离线模式、更新检查 | NOT RUN |
+| 冶金、基础化学、生物、核能、自动化、灾害玩法 | NOT RUN |
+| 炼金进度、成就、挑战、教程 | NOT RUN |
+| 七类高粒子数压力样本 | NOT RUN |
+| FPS、最低 FPS、内存和无限增长记录 | NOT RUN |
+
+## 测试环境
 
 - OS：Microsoft Windows 11 专业版 64 位，版本 `10.0.26200`
-- 编译器候选：MSYS2 UCRT64 GCC `16.1.0`
+- 编译器：MSYS2 UCRT64 GCC `16.1.0`
 - Meson：`1.11.2`
 - Ninja：`1.13.2`
 - SDL：`2.30.9-tpt-libs`
 - JsonCpp：`1.9.5-tpt-libs`
-- 固定依赖包：`tpt-libs v20251019131007`
+- 固定依赖：`tpt-libs v20251019131007`
 
-## Phase 1 构建产物
+## 当前 Phase 2 产物
 
-| 构建 | 状态 | SHA-256 |
-|---|---|---|
-| 未修改 Dragonrster 100.0.398 | PASS | `A15B5D25C5552B9954040F94001C96B4289072D88B9820DCEC3FA5EDDFA69AC7` |
-| 官方 100.0.399 合并态 | PASS | `433F7815624E77F2BF114FC6A923F2D61BC30AD681DF7445E3537C73A1898D44` |
-| OmniPack 中文 clean build | PASS | `8DCC6EB3FF86200188378D273308FF94B5FDB949E2F11E36E0DA55B4B3D1CF3B` |
+| 构建 | 状态 | 大小 | SHA-256 |
+|---|---|---:|---|
+| `build-phase2-clean/tpt-zh-omnipack.exe` | PASS | 228,411,304 | `6428B39852C31AB03A9EEB3C20AFFA16CA9B7B84DB6EC88042831F1CAD2416BB` |
