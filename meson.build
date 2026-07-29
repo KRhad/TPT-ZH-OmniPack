@@ -493,6 +493,7 @@ foreach sta_info : [
 		host_platform == 'android' ? sdl2_dep : [],
 		png_dep,
 		bzip2_dep,
+		json_dep,
 	] ],
 	[ 'gui', gui_files, [
 		sdl2_dep,
@@ -624,6 +625,49 @@ if get_option('clang_tidy')
 		],
 	)
 endif
+
+static_test_env = environment()
+static_test_env.set('PYTHONDONTWRITEBYTECODE', '1')
+
+test(
+	'i18n-audit',
+	python3_prog,
+	args: [
+		files('tools/i18n_audit.py'),
+		'--source-root', meson.project_source_root(),
+		'--check',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'element-registry',
+	python3_prog,
+	args: [
+		files('tools/element_registry_check.py'),
+		'--root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'python-tool-unit-tests',
+	python3_prog,
+	args: [
+		'-m', 'unittest', 'discover',
+		'-s', join_paths(meson.project_source_root(), 'tools', 'tests'),
+		'-p', 'test_*.py',
+		'-v',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
 
 if host_platform == 'emscripten'
 	run_target(

@@ -1,70 +1,101 @@
-# 简体中文本地化审计
+# 简体中文本地化自动审计
 
-## Phase 1 基线
+> 本报告由 `tools/i18n_audit.py` 生成。错误是发布阻塞项；警告必须人工复核，但不会单独令 `--check` 失败。
 
-审计对象：
+## 审计对象
 
-- 仓库：`Dragonrster/The-Powder-Toy-Chinese`
-- 分支：`i18n-new`
-- 提交：`445fab51dcf66057e645371aa9c9a556425b3d2f`
-- TPT：`100.0.398`
+- 生成时间（UTC）：`2026-07-29T14:30:25+00:00`
+- 当前提交：`08fe8a82b180d357420bb24df34c475d983bb943`
+- 英文文件：`C:\Users\KR\TPT-ZH-OmniPack\src\lang\en-US.json`
+- 中文文件：`C:\Users\KR\TPT-ZH-OmniPack\src\lang\zh-CN.json`
+- 命令：`python tools/i18n_audit.py --check --write-report docs\I18N_AUDIT.md`
 
-## 自动可复核统计
+## 结论
+
+**静态审计通过**
 
 | 指标 | 数量 |
 |---|---:|
-| `en-US` 键 | 893 |
-| `zh-CN` 键 | 893 |
+| 英文键总数 | 1125 |
+| 中文键总数 | 1125 |
 | 中文缺失键 | 0 |
 | 中文多余键 | 0 |
-| 重复键 | 0 |
-| 中文空字符串 | 1 |
-| 完全等同英文的中文值 | 37 |
-| 源码字面量 `Tr()` 键 | 747 |
+| 英文/中文重复键 | 0 |
+| 英文/中文空值 | 0 |
+| 占位符错误 | 0 |
+| 颜色控制错误 | 0 |
+| 换行结构错误 | 0 |
+| 链接控制错误 | 0 |
+| 结束控制错误 | 0 |
+| 疑似未翻译/保留英文项 | 37 |
+| 乱码/非法字符项 | 0 |
+| 宽度风险 | 0 |
+| 源码登记元素 | 195 |
+| 缺少英文/中文元素短说明 | 0 |
+| 缺少英文/中文元素正式名称 | 0 |
+| 源码登记菜单 | 16 |
+| 缺少英文/中文菜单键 | 0 |
+| 源码字面量 Tr() 键 | 776 |
+| 缺少英文/中文 Tr() 键 | 0 |
+| 发布阻塞错误 | 0 |
+| 人工复核警告 | 37 |
 
-中文空值为 `gameview.tooltip.open_forum_thread_suffix`。37 个等同值多数是代号、格式片段、GOL 名称或允许保留的技术文本，仍需人工分类。
+## 元素与菜单登记
 
-## 已修复
+- 源码元素：195；短说明缺失（英/中）：0/0；正式名称缺失（英/中）：0/0。
+- 源码菜单：16；菜单键缺失（英/中）：0/0。
+- 源码字面量 `Tr()` 键：776；缺失（英/中）：0/0。
 
-- fresh preference 的默认语言索引改为 1（简体中文）；
-- Options 恢复 12 语言下拉框；
-- `BASE` 说明改用 `sim.elem.DEFAULT_PT_BASE`；
-- 官方新增 FPS/绘制上限和 Intro 帮助文本已补英中键。
+元素四字符 `Name` 不视为正式英文/中文名称。当前审计约定正式名称键为 `sim.elem.<Identifier>.name`，现有 `sim.elem.<Identifier>` 继续作为短说明键。
 
-## 已确认缺陷
+## 发布阻塞错误
 
-1. 当前只有元素说明键，没有中文正式名称、别名和中文搜索元数据。
-2. 至少以下玩家可见文本仍为英文：
-   - `PreviewView.cpp`：`Save from newer version`
-   - `LocalBrowserView.cpp`：`Next`
-   - `Textbox.cpp`：`Copy / Paste`
-3. 错误、客户端通知、存档异常等路径仍需完整静态扫描。
-4. 当前 `Localization.cpp` 使用遇错静默停止的手写 JSON 解析器，不能可靠报告重复键、尾部垃圾或错误位置。
-5. 现有中文字库没有来源和授权记录，不能进入发布包。
+- 无。
 
-## 占位符与控制符
+## 人工复核警告
 
-Phase 0 的简单占位符比较只对 credits 标记产生疑似项，属于启发式误报。Phase 2 的 `tools/i18n_audit.py` 必须分别比较：
+- `translation.identical` `gameview.fps.grid_suffix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `gameview.fps.temp_h`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `intro.title_after_version`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `intro.title_prefix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `intro.version_prefix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `login.use_account_not_email_suffix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `options.deco.gamma18`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `options.deco.gamma22`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `options.deco.srgb`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `search.status_favouring_suffix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `search.status_publishing_suffix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `search.status_unfavouring_suffix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `search.status_unpublishing_suffix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.2X2.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.34.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.AMOE.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.ASIM.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.BRAN.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.COAG.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.DANI.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.DMOE.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.FRG2.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.FROG.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.GNAR.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.GOL.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.HLIF.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.LLIF.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.LOTE.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.MAZE.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.MOVE.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.MYST.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.PGOL.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.REPL.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.SEED.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.STAN.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.STAR.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `translation.identical` `sim.gol.WALL.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
 
-- `printf`/format 占位符的名称、类型和数量；
-- TPT 颜色控制字节；
-- 显式换行；
-- JSON 转义；
-- 不能翻译的内部代码片段。
+## 审计规则说明
 
-## UI 宽度风险
-
-尚未执行像素级 UI 宽度测试。Phase 6 将使用实际字体度量和渲染截图，不以字符数作为唯一结论。窄按钮只显示短译名，完整说明进入图鉴。
-
-## 发布门禁
-
-- 缺失键：必须为 0；
-- 空字符串：必须为 0；
-- 占位符错误：必须为 0；
-- 玩家可见硬编码英文：必须完成分类，非允许项为 0；
-- 中文字体：必须有名称、作者、来源 URL、许可证与生成方法；
-- 默认简体中文与英文切换均需实际运行验证。
-
-## 当前结论
-
-`不合格（Phase 1 基线）`。默认简体中文、切换控件和键集合已满足静态门禁；元素中文名称、硬编码文本、严格解析、视觉验证和字体授权仍未满足发布要求。
+- 严格 UTF-8/JSON、重复键、平面字符串对象、键集合、空值、占位符及 TPT 控制符属于可自动判定门禁。
+- 颜色控制支持 `\b` 加 `wgorlbtuU`；链接必须使用 `{a:URL|文本}` 并紧跟 `\x0E` 或实际 0x0E。
+- 换行比较换行总数、首尾状态及连续换行段；任何差异均需先修正或明确调整审计策略。
+- 疑似英文和宽度检查是启发式。宽度按 Unicode 东亚宽度估算，不能替代实际 TPT 字体渲染截图。
+- 当前语言加载器对字面量 `\x0E` 的运行时转换能力仍需由 C++ 测试单独验证；本脚本验证英中结构一致性。
