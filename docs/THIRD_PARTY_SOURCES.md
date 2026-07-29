@@ -26,6 +26,43 @@ Phase 0 审计的九个仓库顶层均含 GPL-3.0 `LICENSE`，本次固定文件
 
 详细版本、元素数、风险与裁决见 `docs/SOURCE_AUDIT.md`；实际文件级来源进入 `docs/PORTING_LEDGER.md`。
 
+## Phase 3 冶金来源复核
+
+以下复核使用仓库内可读源码和 Git 历史，不使用模组二进制。三份来源的固定快照顶层均提供 GNU GPL version 3 `LICENSE`；若未来采用具体代码，发布时仍须保留原版权、作者、文件路径和逐文件 commit 记录。
+
+| 来源 | 固定快照与文件级锚点 | 可验证内容 | 本项目使用边界 |
+|---|---|---|---|
+| Seppo's Metallurgy Mod SRC | `c3a8dd171a1c0fefc9a386e7e069f81d91f1514f` | `ElementNumbers.h` 仅登记 32 个新增元素；32 个对应构造文件全部不存在；`WOOD/IRON/TTAN/COAL/SPRK/NEUT/OIL.cpp` 留有反应碎片 | 12 个 token/行为概念进入独立实现；不得从论坛二进制或描述反推缺失实现 |
+| Cracker1000 COPR | 快照 `ebbb9aab6aef27d26517682cebbc0a07147a843a`；`src/simulation/elements/COPR.cpp` 最后修改 `eb474d385ffb5ebd545cf9f5f3cf513ffba9fe35`；blob `f531fb85ea2c70b19195ceba168abd41b3a522da` | 铜的颜色、导热/导电、熔点和氧化玩法；同时存在未做边界检查的远距读取及高频邻域扫描 | 本项目适配参数/行为并保留 GPL 来源；没有逐行复制原 `update`，改为 3×3 有界腐蚀和可回收 `MSCR` |
+| Cyens Toy Hydrocarbon | 快照 `f01d992c97432ec1c46d84ade05131da521f355a`；相关提交锚点 `e60752b6cc0c31a0d323c22ee5a764c66a10033a`；当前主体历史还含 `6bec6d120605889efd9999e905341cc7d88d4e52` | 烃分类、相变估算和命名；同时改写官方 `GAS/OIL/MWAX/WAX` 行为 | 只供后续燃料/化学设计参考；不覆盖官方语义，不把未完成离子体系包装为正式功能 |
+
+### Seppo 可读反应碎片与已知问题
+
+- `WOOD.cpp`：压力/温度和倒计时尝试产生 `CHRC`；
+- `IRON.cpp`：腐蚀为 `BMTL`，高温邻近 `COAL` 时尝试生成 `STEL`；
+- `TTAN.cpp`：高温邻近 `STEL` 时尝试生成 `TTSL`；
+- `COAL.cpp`：极高温邻近 `COCH` 时尝试生成 `COCA`；
+- `SPRK.cpp`：`IRON/COPR/BRNZ/STEL/TTSL` 通电后尝试电解邻水；
+- `NEUT.cpp`：`OIL/DESL/KERO` 的随机燃料裂解；
+- `OIL.cpp`：高温转换字段使用 `PT_GAS | PT_ETHL`。
+
+上游公开记录的 bug 是合金比例错误、`WOOD -> CHRC` 不发生、酸元素为占位。源码还显示非法概率参数、极窄反应温区、连续随机转换互相覆盖，以及把两个元素 ID 按位或当作产物。由于自定义构造实现缺失，这些碎片只能证明需求和旧问题，不能证明 32 个新增元素的完整行为。
+
+本阶段来源分类结论：
+
+- **第三方更新函数逐行复制：0。** Seppo 的 32 个构造器不存在；Cracker COPR 原 `update` 未复制；Cyens 烃代码未进入冶金模块。
+- **参数/行为适配：1。** `OMNI_PT_COPR`（稳定 ID 257）适配 Cracker 铜色、导热/导电定位、熔点和氧化玩法，并记录 `eb474d...`；本项目另写有界腐蚀算法。
+- **Seppo 概念参考并独立实现：12。** `ALUM/LEAD/TIN/NICL/MAGN/CHRM/COBT/MOLY/CHRC/STEL/BRNZ/CRUC`。
+- **OmniPack 原创：10。** `ZINC/COKE/BRAS/SSIL/NCRM/ALMG/TSTL/SLAG/FLUX/MSCR`，连同集中反应、每帧预算和回收机制。
+- **Cyens 当前使用：0。** 烃网络只保留为后续燃料/化学设计参考。
+- **禁止项：**不得从缺失源码、论坛二进制或只有行为描述的发布物补全实现。
+
+23 项稳定 ID 固定为 `256–278`，完整逐项映射、构造文件和来源方式见
+`docs/PORTING_LEDGER.md`。中央实现位于
+`src/simulation/OmniMetallurgy.cpp`/`.h`；静态门禁位于
+`tools/metallurgy_audit.py`，真实运行测试位于
+`tools/runtime/metallurgy_regression.lua`。当前证据为：静态审计 PASS（23 元素、6 合金配方、1 炼钢配方、3×3 有界）、冶金单测 2/2、全部工具单测 30/30、Meson `static` 4/4、Lua 回归 PASS（7 配方、5 材料行为、ID `256–278`）。
+
 ## 论坛与文档资料
 
 - Seppo's Metallurgy Mod 公开主题：  
@@ -45,11 +82,14 @@ Phase 0 审计的九个仓库顶层均含 GPL-3.0 `LICENSE`，本次固定文件
 
 ## 当前代码使用情况
 
-截至 Phase 0：
+截至 Phase 3 冶金首批实现：
 
-- 第三方实现代码移植：0；
-- 正式新增元素：0；
+- 当前工作树正式登记并实现：23 个元素，稳定 ID `256–278`；
+- 第三方更新函数逐行复制：0；
+- Cracker 参数/行为适配：`COPR` 1 项，来源已固定到 `eb474d...`；
+- Seppo 概念参考并独立实现：12 项；
+- OmniPack 原创冶金元素：10 项；
+- 冶金静态审计、单元测试和 Lua 真实运行回归：PASS；
 - 来源仓库只读审计：9；
 - 未解决授权项：汉化分支中文字库 1 项；
 - 缺失源码项：Seppo 自定义元素实现 32 项。
-

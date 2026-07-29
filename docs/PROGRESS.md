@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-Phase 2：基础设施完成；下一阶段为 Phase 3：低风险内容。
+Phase 3：工业冶金首批完成；下一阶段为 Phase 3：基础化学。
 
 ## 已完成
 
@@ -22,10 +22,15 @@ Phase 2：基础设施完成；下一阶段为 Phase 3：低风险内容。
 - 图鉴中的分类、状态、存档兼容性、实现状态和测试状态均使用本地化键；来源名、commit 和许可证按允许保留的专有标识显示。
 - 建立模块设置 UI。六个内容模块可控制；四个尚未实现的设置明确标注“待实现”并强制禁用。
 - 注册 3 个 Meson 静态测试目标，并增加可复现 Windows Lua 运行回归脚本。
+- 完成首批工业冶金：在固定 ID `256..278` 注册 23 个材料、工艺与回收元素，且不占用 `196..255` 官方兼容缓冲区。
+- 建立集中、局部的冶金反应引擎：6 条定比熔融合金配方、1 条炼钢配方、木材炭化、煤炭炼焦、压力碎料回收、铜腐蚀、镁燃烧、锌牺牲保护与镍铬电热。
+- 合金与炼钢只收集触发点 `3x3` 邻域，每帧共享 2,048 次成功反应预算，并使用 tick 标记阻止同帧重复级联。
+- 为 23 个冶金元素登记中英文正式名称、短说明、来源、稳定 ID、菜单分类、存档状态与测试状态；缺失的 Seppo 构造器明确按公开概念独立实现，未从二进制反推或复制。
+- 增加冶金静态审计、两项 Python 单测与实际客户端 Lua 回归，覆盖配方、熔体凝固、炭化、电热、压力/碎料、镁燃烧与锌保护。
 
 ## 修改文件
 
-Phase 2 的主要变更：
+Phase 2 和已完成的 Phase 3 冶金的主要变更：
 
 - `docs/ELEMENT_REGISTRY.csv`
 - `docs/ELEMENT_DESIGN.md`
@@ -38,6 +43,13 @@ Phase 2 的主要变更：
 - `tools/tests/*.py`
 - `tools/runtime_lua_module_test.ps1`
 - `tools/runtime/module_filter_regression.lua`
+- `src/simulation/OmniMetallurgy.cpp`
+- `src/simulation/OmniMetallurgy.h`
+- `src/simulation/elements/{ALUM,COPR,LEAD,TIN,NICL,MAGN,CHRM,COBT,MOLY,ZINC,CHRC,COKE,STEL,BRNZ,BRAS,SSIL,NCRM,ALMG,TSTL,SLAG,FLUX,CRUC,MSCR}.cpp`
+- `tools/metallurgy_audit.py`
+- `tools/tests/test_metallurgy_audit.py`
+- `tools/runtime/metallurgy_regression.lua`
+- `tools/runtime_lua_metallurgy_test.ps1`
 - `src/common/Localization.cpp`
 - `src/common/Localization.h`
 - `src/gui/elementsearch/ElementCatalog.h`
@@ -50,18 +62,20 @@ Phase 2 的主要变更：
 
 ## 新增元素
 
-0。Phase 2 只锁定官方 ID 并建立基础设施，没有把预留内容伪装成已实现元素。
+Phase 2：0。只锁定官方 ID 并建立基础设施，没有把预留内容伪装成已实现元素。
+
+Phase 3 冶金：23。`ALUM`、`COPR`、`LEAD`、`TIN`、`NICL`、`MAGN`、`CHRM`、`COBT`、`MOLY`、`ZINC`、`CHRC`、`COKE`、`STEL`、`BRNZ`、`BRAS`、`SSIL`、`NCRM`、`ALMG`、`TSTL`、`SLAG`、`FLUX`、`CRUC`、`MSCR`；稳定 ID 为 `256..278`。
 
 ## 汉化状态
 
-- 英文键：1,154
-- 中文键：1,154
+- 英文键：1,200
+- 中文键：1,200
 - 缺失键：0
 - 多余键：0
 - 发布阻塞错误：0
 - 占位符/控制符错误：0
 - 疑似未翻译警告：37，均保留在 `docs/I18N_AUDIT.md` 供人工分类
-- 官方活动元素名称登记：195/195
+- 官方活动元素名称登记：195/195；冶金元素中英文正式名称登记：23/23
 - 默认语言：简体中文；英文及其他 10 个原有语言入口保留
 
 该结果证明键集合、格式和登记完整性通过自动门禁；不等于视觉布局已通过。
@@ -95,6 +109,14 @@ meson compile -C build-phase2-clean -v
 - PE：PE32+、Windows GUI、x86-64。
 - 非系统 GCC runtime DLL 导入：0。
 
+Phase 3 冶金增量构建：
+
+- Windows x64 `debugoptimized` 静态增量构建：PASS，28/28，0 error。
+- 产物：`build-phase2-clean/tpt-zh-omnipack.exe`
+- 大小：235,565,190 字节
+- SHA-256：`86F78585851E54547F1A76CD71E126AD3792260F5D75FFA4E9ACBD02543D5F8D`
+- 本次恢复会话可复核现有二进制和全部源码/运行门禁；由于当前 PATH 缺少 Meson 和 C++ 编译器，未从当前会话重新编译。该环境限制不改变上述 2026-07-29 构建结果。
+
 ## 测试结果
 
 - Meson 静态测试：3/3 PASS。
@@ -108,27 +130,36 @@ meson compile -C build-phase2-clean -v
 - 官方存档载入/往返：NOT RUN。
 - 禁用自定义模块存档警告/只读/占位：NOT RUN；尚无正式自定义元素。
 
+Phase 3 冶金：
+
+- 元素登记：PASS，279 槽、218 活动、61 保留、`PT_NUM=512`。
+- 本地化审计：PASS，en/zh `1,200/1,200`，0 missing、0 extra、0 error；37 项保留英文/代号警告待人工分类。
+- 冶金静态审计：PASS，23 个元素、6 条合金配方、1 条炼钢配方、固定 `3x3` 邻域。
+- Python 工具单测：30/30 PASS，2 项 C++ 编译验证因当前环境无 C++ 编译器跳过。
+- 实际客户端 Lua 冶金回归：PASS；7 条配方/凝固场景、5 组材料行为，`256..278` 全部可解析，客户端保持响应。
+- Meson `static` suite：2026-07-29 为 4/4 PASS；本恢复会话因 PATH 缺少 Meson 未重跑。
+- 冶金 OPS 往返存档、禁用冶金模块存档警告、固定生产线 FPS/内存压力样本：NOT RUN。
+
 ## 性能结果
 
-Phase 2 没有新增粒子更新函数，因此没有新增每帧粒子成本。clean build 和 Lua 启动回归未崩溃。FPS、内存、粒子增长和大型模拟压力数据仍为 `NOT RUN`，将在 Phase 3 首批内容元素进入后建立固定样本。
+Phase 2 没有新增粒子更新函数，因此没有新增每帧粒子成本。Phase 3 冶金的反应路径限定为局部 `3x3` 搜索；合金/炼钢共享每帧 2,048 次成功反应预算，且不进行全粒子表扫描。clean build 和 Lua 启动回归未崩溃。FPS、内存、粒子增长和大型生产线压力数据仍为 `NOT RUN`，将在 Phase 7 建立固定样本。
 
 ## 已知问题
 
 - 中文字体 `resources/font.bz2` 的名称、来源和许可证仍不可追溯，是正式发布阻塞项。
 - 视觉中文布局与实际语言切换交互尚未执行。
 - 官方 100.0 存档样本载入/重存尚未执行。
-- 关闭模块后加载含该模块元素的中文警告、只读和占位路径尚未实现；正式自定义元素进入前必须完成。
+- 关闭冶金模块后加载含该模块元素的中文警告、只读和占位路径尚未实现；这是 Phase 7 存档兼容测试的发布阻塞项。
 - 图鉴框架目前显示登记说明和基础热学参数；反应、生产方法、用途、危险等级、原作者等正式字段将在内容登记扩展时加入。
 - 曾发现旧 Meson `testlog.txt` 含明文 GitHub PAT 环境变量。该原始日志已删除且未提交；后续测试在清理敏感环境后重跑，令牌模式扫描为 0。凭据轮换属于仓库外必要操作。
 - 两条基线 GCC 警告仍待定位。
 
 ## 下一阶段
 
-1. 扩展图鉴登记字段与反应数据结构。
-2. 在固定 ID 256–287 中实现并分别提交工业冶金基础元素与合金反应。
-3. 实现基础化学的中央反应表，避免元素更新逻辑相互覆盖。
-4. 在自定义元素首次进入前完成禁用模块存档警告和兼容占位策略。
-5. 建立冶金生产线、官方存档和性能固定样本。
+1. 在固定 ID `360..391` 中实现基础化学的中央反应表，避免元素更新逻辑相互覆盖。
+2. 扩展图鉴登记字段与反应数据结构，添加配方、生产方法、用途和危险说明。
+3. 实现禁用模块存档的中文警告和兼容占位策略，再进行 OPS 往返存档测试。
+4. 建立冶金生产线、官方存档和性能固定样本。
 
 ## 当前 commit hash
 
@@ -141,3 +172,5 @@ Phase 2 最终加固提交：
 - 模块门禁与图鉴框架：`d7312a9b75176bcfa938e9727be9131c7835c728`
 - 官方元素锁与登记：`08fe8a82b180d357420bb24df34c475d983bb943`
 - 严格本地化门禁：`457233acce404dd1f8d2e3566abea23f0ec6c0e3`
+
+Phase 3 冶金提交：`metallurgy: add bounded industrial materials module`（以当前 Git 历史中的该提交为准）。

@@ -194,6 +194,13 @@ static int update(UPDATE_FUNC_ARGS)
 		if(parts[i].temp < 3595.0){
 			parts[i].temp += sim->rng.between(-4, 15);
 		}
+		break;
+	case PT_NCRM:
+		// Nichrome converts repeated electrical pulses into controlled heat.
+		parts[i].temp = std::min(
+			parts[i].temp + 12.0f,
+			elements[PT_NCRM].HighTemperature - 25.0f);
+		break;
 	default:
 		break;
 	}

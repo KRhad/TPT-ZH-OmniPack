@@ -1,6 +1,6 @@
 # 移植账本
 
-> Phase 0 状态：尚未复制任何第三方实现代码。账本中的“重写候选”只是设计准入，不等于正式收录。
+> Phase 0 未复制第三方实现代码。Phase 3 当前工作树已登记并实现 23 个冶金元素。下文的“没有逐行复制”特指没有复制第三方元素更新函数；`COPR` 的颜色、导热/导电定位、熔点和氧化玩法由 Cracker 源码适配，不能笼统标成完全原创。
 
 状态值：`AUDITED`、`DESIGN`、`PORTING`、`TESTING`、`ACCEPTED`、`REJECTED`、`BLOCKED`。
 
@@ -10,6 +10,7 @@
 | 中文/英文语料与严格加载 | Dragonrster `445fab51...`；OmniPack `457233ac...` | Dragonrster、TPT contributors、OmniPack contributors | 审核后重放并重写加载器 | JsonCpp 严格 JSON + 自动审计 | ACCEPTED | en/zh 1,154/1,154，0 阻塞错误；视觉复核仍独立跟踪 |
 | 官方元素稳定锁 | Official `bff38ce...`；OmniPack `08fe8a82...` | TPT contributors、OmniPack contributors | 源码解析生成 | 逐槽固定 0–195 | ACCEPTED | 196 槽、195 活动、1 tombstone；自动门禁 PASS |
 | 模块选择与图鉴框架 | OmniPack `d7312a9b...`、`f28cdcb7...` | OmniPack contributors | 项目原创实现 | 统一门禁、编译时登记目录 | ACCEPTED | clean build、28 单测、Lua 运行回归和枚举本地化门禁 PASS |
+| Phase 3 工业冶金首批 | Seppo `c3a8dd17...`；Cracker COPR `eb474d38...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、OmniPack contributors | 概念筛选、参数/行为适配、独立更新实现 | 稳定 ID 256–278 + 集中反应引擎 | TESTING | 23 元素、7 配方、5 材料行为；静态门禁与 Lua 运行回归 PASS |
 | 汉化字体 | Dragonrster `445fab51...` | 未知 | 禁止发布 | 替换为可追溯字体 | BLOCKED | 名称、来源、许可证缺失 |
 | Cracker 工业化学 | Cracker `ebbb9aab...` | Cracker1000 等 | 重写候选 | 中央反应表 | DESIGN | 与冶金/Cyens 去重 |
 | 动力门户 PPTI/PPTO | Cracker `ebbb9aab...`; Jacob `b4926161...` | 各来源作者 | 合并重写 | 单一稳定实现 | DESIGN | 多来源重复、旧 API |
@@ -26,9 +27,140 @@
 | Alchemy 四元素开局 | Alchemy `9a593ce1...` | jacob1/SopaXorzTaker 等 | 设计采用 | 全新进度服务 | DESIGN | 与总任务初始集合一致 |
 | Alchemy 原进度代码 | Alchemy `9a593ce1...` | 原仓库作者 | 排除 | identifier/schema 重写 | REJECTED | 越界、未初始化、可绕过 |
 | Seppo 冶金实现 | Seppo `c3a8dd17...` | SeppoTPT | 无可移植源码 | 清洁室重写 | BLOCKED | 32 个实现文件全部缺失 |
-| Seppo 元素/合金清单 | Seppo `c3a8dd17...` 与论坛 | SeppoTPT | 设计参考 | 去重后自研 | DESIGN | 需修复公开旧 bug |
+| Seppo 元素/合金清单 | Seppo `c3a8dd17...` 与论坛 | SeppoTPT | 设计参考 | 去重后自研 | TESTING | 12 个概念条目已用独立实现进入首批冶金；未复制缺失构造器 |
 | Cyens 烃网络 | Cyens `f01d992c...` | cbeimers113 | 重写候选 | 不改官方基础语义 | DESIGN | 有机链有价值 |
 | Cyens 时间/局部重力 | Cyens `f01d992c...` | cbeimers113 | 实验参考 | 默认关闭 | DESIGN | 未完成离子系统、全局风险 |
+
+## Phase 3 冶金来源与实现复核
+
+三份来源的固定快照均带 GNU GPL version 3 `LICENSE`；许可证允许在遵守 GPL 的前提下改编可获得的源码，但不允许把缺失实现或论坛二进制猜测成“已移植源码”。当前 23 个元素已进入生产源码和登记表；实现提交就是包含本账本更新的 Phase 3 模块提交，提交后由 `docs/PROGRESS.md` 记录精确 hash。
+
+### Seppo：只能参考清单与公开行为
+
+固定来源为 `SeppoTPT/Seppo-s-Metallurgy-Mod-SRC` `master`：
+`c3a8dd171a1c0fefc9a386e7e069f81d91f1514f`。`ElementNumbers.h` 登记了旧 ID `187..218` 的 32 个新增元素：
+
+```text
+CHRC SFAC ETHL KERO GASO TIN COPR BRNZ HELI LEAD COBA STEL CROM ALUM
+DURA COCH MLYB SODI CHLR COCA ANAC TTSL CRUC SALD MAGN NICK ALBR
+ALNI ALNC TERN MAGX PLTU
+```
+
+固定树中不存在上述任一元素的 `src/simulation/elements/<NAME>.cpp`，因此没有可审计的构造器、属性、更新函数或图形函数。能够复核的只有对官方元素文件的零散修改：
+
+| 原文件 | 可见反应碎片 | Phase 3 裁决 |
+|---|---|---|
+| `WOOD.cpp` | 压力/温度与计时逻辑试图把 `WOOD` 转为 `CHRC` | 只作为木炭生产需求；独立重写 |
+| `IRON.cpp` | 铁腐蚀为 `BMTL`；约 `1670 K` 时在 5×5 邻域消耗 `COAL` 生成 `STEL` | 只采用“冶炼钢+腐蚀差异”概念；反应表重写 |
+| `TTAN.cpp` | 约 `1940 K` 时在 5×5 邻域消耗 `STEL` 生成 `TTSL` | 只作为高温合金需求；配方和窗口重设计 |
+| `COAL.cpp` | 高温 `COAL + COCH -> COCA` | 不移植原概率代码；按集中配方重写 |
+| `SPRK.cpp` | `IRON/COPR/BRNZ/STEL/TTSL` 通电后把邻水转换为 `O2` 或 `H2` | 只采用电解联动概念；统一电解机制重写 |
+| `NEUT.cpp` | `OIL/DESL` 随机裂解为 `GAS/GASO/KERO`，`KERO` 可继续变为 `GASO` | 只采用燃料裂解概念；不把中子随机覆盖链原样移入 |
+| `OIL.cpp` | 高温转换字段写成 `PT_GAS \| PT_ETHL` | 拒绝原实现；按单一、可验证产物规则重写 |
+
+公开主题明确记录了合金比例错误、`WOOD -> CHRC` 不发生、酸元素只是占位。源码复核另确认了以下风险：
+
+- `OIL.cpp` 用元素 ID 做按位或，不能表达多产物反应；
+- `COAL.cpp` 出现 `RNG::Ref().chance(3, 1)`，概率参数不合法；
+- `TTAN.cpp` 的反应温度只比熔化转换低约 `1 K`，并使用恒真的 `chance(1, 1)`；
+- `NEUT.cpp` 对同一粒子连续执行互相覆盖的随机转换；
+- 32 个新增元素构造实现缺失，不能从登记表、论坛描述或二进制反推出代码。
+
+因此 Phase 3 对 Seppo 的使用方式固定为：**概念参考 + 独立实现**。当前采用其公开 token/行为概念的 12 项是 `ALUM/LEAD/TIN/NICL/MAGN/CHRM/COBT/MOLY/CHRC/STEL/BRNZ/CRUC`；对应构造器和中央更新函数均由本项目按 TPT 100.0 API 编写。不得标为逐行移植，不得从发布二进制补全；登记表继续保留 Seppo commit 和旧 ID 以提供概念来源与迁移线索。
+
+### Cracker：COPR 参数/行为适配，更新函数独立实现
+
+固定仓库快照为 `cracker1000/The-Powder-Toy` `master`
+`ebbb9aab6aef27d26517682cebbc0a07147a843a`。该快照中的
+`src/simulation/elements/COPR.cpp` 内容最后由
+`eb474d385ffb5ebd545cf9f5f3cf513ffba9fe35` 修改；固定 blob 为
+`f531fb85ea2c70b19195ceba168abd41b3a522da`。
+
+本项目的 `src/simulation/elements/COPR.cpp` 明确属于 **参数/行为适配**：保留了 Cracker 文件的铜色 `0xB87333`、高导热 `255`、导电/热辉光定位、约 `1358 K` 熔点和“氧化削弱材料”的玩法目标，因此登记来源是 Cracker、旧 ID 为 `222`、文件级 commit 为 `eb474d...`。
+
+没有逐行复制 Cracker 的 `update`：
+
+- 原实现是可移动 `TYPE_PART`，本项目使用固定 `TYPE_SOLID`；
+- 原实现用无边界检查的 `±8` 读取模拟低温超导，本项目删除该路径；
+- 原实现每粒子扫描 5×5 邻域，本项目经 `OmniMetallurgyMetalUpdate` 只检查有边界保护的 3×3 邻域；
+- 本项目把氧气、盐水和水造成的腐蚀累积到 `tmp`，最终生成携带 `ctype=COPR` 的 `MSCR`，支持回炉恢复；这是新的兼容/回收设计；
+- 铜与锡、锌的 3:1 熔融配方由集中反应表验证，不沿用 Cracker 更新代码。
+
+因此法律与工程标签是“GPL 来源参数/行为适配 + 本项目更新算法重写”，不是“未使用 Cracker”，也不是“逐行复制 Cracker 更新函数”。
+
+### Cyens：烃网络只作后续化学设计参考
+
+固定仓库快照为 `cbeimers113/cyens-toy` `master`
+`f01d992c97432ec1c46d84ade05131da521f355a`。烃系统的文件级相关提交锚点为
+`e60752b6cc0c31a0d323c22ee5a764c66a10033a`（`Remove hydrocarbon decomposition`）；
+当前 `Hydrocarbon.cpp` 主体的逐行历史还回溯到
+`6bec6d120605889efd9999e905341cc7d88d4e52`，所以 `e60752...` 不能被误写成全部代码的唯一作者来源。
+
+可参考内容是烷烃/烯烃/炔烃分类、碳数对应相变点及名称生成。固定快照同时重定义官方
+`GAS/OIL/MWAX/WAX` 语义，而且后续离子体系仍未完成。Phase 3 冶金不会复制这些文件；燃料和高级化学阶段若采用概念，将使用新稳定标识符、集中反应表和独立实现，不覆盖官方元素基础语义。
+
+### 方式标签
+
+| 标签 | 本阶段含义 |
+|---|---|
+| 第三方更新函数逐行复制 | **0**；Seppo 构造器缺失，Cracker COPR 的原 `update` 未复制，Cyens 烃代码未进入冶金模块 |
+| 参数/行为适配 | **1 个元素：COPR**；保留可追溯参数和玩法定位，更新算法按当前 API 重写 |
+| 概念参考 | Seppo 的 12 个公开 token/行为进入独立实现；Cyens 烃网络只保留为后续化学候选 |
+| 本项目原创设计 | 10 个元素及集中反应、性能预算、回收机制；来源登记为 `TPT-ZH-OmniPack/original` |
+
+### 当前稳定 ID 与目标文件
+
+稳定 ID `196–255` 仍是兼容保留区；冶金元素只占用固定区间 `256–278`，没有改变官方 `0–195`。
+
+| 稳定 ID | identifier / 代号 | 来源方式 | 本项目构造文件 |
+|---:|---|---|---|
+| 256 | `OMNI_PT_ALUM` / `ALUM` | Seppo token/概念；独立实现 | `src/simulation/elements/ALUM.cpp` |
+| 257 | `OMNI_PT_COPR` / `COPR` | Cracker 参数/行为适配；更新算法重写 | `src/simulation/elements/COPR.cpp` |
+| 258 | `OMNI_PT_LEAD` / `LEAD` | Seppo token/概念；独立实现 | `src/simulation/elements/LEAD.cpp` |
+| 259 | `OMNI_PT_TIN` / `TIN` | Seppo token/概念；独立实现 | `src/simulation/elements/TIN.cpp` |
+| 260 | `OMNI_PT_NICL` / `NICL` | Seppo `NICK` 概念重命名；独立实现 | `src/simulation/elements/NICL.cpp` |
+| 261 | `OMNI_PT_MAGN` / `MAGN` | Seppo token/概念；独立实现 | `src/simulation/elements/MAGN.cpp` |
+| 262 | `OMNI_PT_CHRM` / `CHRM` | Seppo `CROM` 概念重命名；独立实现 | `src/simulation/elements/CHRM.cpp` |
+| 263 | `OMNI_PT_COBT` / `COBT` | Seppo `COBA` 概念重命名；独立实现 | `src/simulation/elements/COBT.cpp` |
+| 264 | `OMNI_PT_MOLY` / `MOLY` | Seppo `MLYB` 概念重命名；独立实现 | `src/simulation/elements/MOLY.cpp` |
+| 265 | `OMNI_PT_ZINC` / `ZINC` | OmniPack 原创 | `src/simulation/elements/ZINC.cpp` |
+| 266 | `OMNI_PT_CHRC` / `CHRC` | Seppo 木炭概念；有界炭化重写 | `src/simulation/elements/CHRC.cpp` |
+| 267 | `OMNI_PT_COKE` / `COKE` | OmniPack 原创；不采用含混的 `COCH/COCA` | `src/simulation/elements/COKE.cpp` |
+| 268 | `OMNI_PT_STEL` / `STEL` | Seppo 炼钢概念；配方重写 | `src/simulation/elements/STEL.cpp` |
+| 269 | `OMNI_PT_BRNZ` / `BRNZ` | Seppo token/概念；3:1 配方重写 | `src/simulation/elements/BRNZ.cpp` |
+| 270 | `OMNI_PT_BRAS` / `BRAS` | OmniPack 原创 | `src/simulation/elements/BRAS.cpp` |
+| 271 | `OMNI_PT_SSIL` / `SSIL` | OmniPack 原创；不复用 Seppo 的钛钢 `TTSL` | `src/simulation/elements/SSIL.cpp` |
+| 272 | `OMNI_PT_NCRM` / `NCRM` | OmniPack 原创 | `src/simulation/elements/NCRM.cpp` |
+| 273 | `OMNI_PT_ALMG` / `ALMG` | OmniPack 原创；不复制未定义的 Seppo `MAGX` | `src/simulation/elements/ALMG.cpp` |
+| 274 | `OMNI_PT_TSTL` / `TSTL` | OmniPack 原创钴钼工具钢 | `src/simulation/elements/TSTL.cpp` |
+| 275 | `OMNI_PT_SLAG` / `SLAG` | OmniPack 原创工艺副产物 | `src/simulation/elements/SLAG.cpp` |
+| 276 | `OMNI_PT_FLUX` / `FLUX` | OmniPack 原创工艺材料 | `src/simulation/elements/FLUX.cpp` |
+| 277 | `OMNI_PT_CRUC` / `CRUC` | Seppo token/坩埚概念；独立实现 | `src/simulation/elements/CRUC.cpp` |
+| 278 | `OMNI_PT_MSCR` / `MSCR` | OmniPack 原创、携带 `ctype` 的可回收碎料 | `src/simulation/elements/MSCR.cpp` |
+
+### 本项目实现文件
+
+- `src/simulation/OmniMetallurgy.cpp` 与 `.h`：集中反应、3×3 局部收集、每帧最多 2,048 次反应、同帧级联保护、压力碎料与回炉恢复；
+- `src/simulation/elements/FIRE.cpp`：在官方熔融元素更新中接入合金/炼钢反应；
+- `src/simulation/elements/WOOD.cpp`、`COAL.cpp`：接入坩埚旁缺氧保温的木炭/焦炭生产；
+- `src/simulation/elements/SPRK.cpp`：接入 `NCRM` 电阻发热；
+- `src/simulation/elements/BASE.cpp`：碱液腐蚀自定义金属时改生成 `MSCR` 并保留原 `ctype`；
+- `docs/ELEMENT_REGISTRY.csv`：23 项稳定 ID、双语说明、来源 commit 与兼容状态；
+- `src/lang/en-US.json`、`zh-CN.json`：23 项名称和短说明；
+- `tools/metallurgy_audit.py`、`tools/tests/test_metallurgy_audit.py`：登记、配方、边界和性能门禁；
+- `tools/runtime/metallurgy_regression.lua`、`tools/runtime_lua_metallurgy_test.ps1`：真实客户端运行回归。
+
+### 当前测试证据（2026-07-29）
+
+| 测试 | 结果 | 可核对证据 |
+|---|---|---|
+| 冶金静态门禁 | PASS | `py tools/metallurgy_audit.py`：23 元素、6 合金配方、1 炼钢配方、3×3 有界 |
+| 冶金审计单元测试 | PASS，2/2 | 正常仓库通过；把青铜比例从 3:1 改错时门禁会拒绝 |
+| 全部 Python 工具测试 | PASS，30/30 | Meson 测试记录；新增 2 项冶金审计测试 |
+| Meson `static` suite | PASS，4/4 | 包含 registry、i18n、冶金和工具测试 |
+| Lua 真实客户端回归 | PASS | `OMNI_METALLURGY_IDS=256-278`、`RECIPES=7`、`BEHAVIORS=5` |
+| 七组配方运行帧数 | PASS | `BRNZ/BRAS/NCRM/ALMG/SSIL/TSTL/STEL` 均在第 1 帧完成并验证冷却固化 |
+| 额外运行行为 | PASS | 炭化、焦化、冷固体不合金、镍铬发热、压损差异、碎料回炉、镁燃烧、锌牺牲保护 |
 
 ## 每次实际移植必须补记
 

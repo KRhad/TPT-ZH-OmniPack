@@ -1,5 +1,6 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
+#include "simulation/OmniMetallurgy.h"
 #include <algorithm>
 
 static int update(UPDATE_FUNC_ARGS);
@@ -51,6 +52,9 @@ void Element::Element_WOOD()
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	if (OmniMetallurgyWoodUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 1;
+
 	if (parts[i].temp > 450 && parts[i].temp > parts[i].tmp)
 		parts[i].tmp = (int)parts[i].temp;
 
