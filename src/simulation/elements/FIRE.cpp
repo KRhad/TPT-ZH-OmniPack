@@ -1,5 +1,6 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
+#include "simulation/OmniMetallurgy.h"
 #include "FIRE.h"
 #include <algorithm>
 
@@ -319,6 +320,8 @@ int Element_FIRE_update(UPDATE_FUNC_ARGS)
 			}
 		}
 	}
+	if (t == PT_LAVA && OmniMetallurgyLavaUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 0;
 	if (sim->legacy_enable && t!=PT_SPRK) // SPRK has no legacy reactions
 		updateLegacy(UPDATE_FUNC_SUBCALL_ARGS);
 	return 0;

@@ -1,5 +1,6 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
+#include "simulation/OmniMetallurgy.h"
 #include "COAL.h"
 
 void Element::Element_COAL()
@@ -52,6 +53,9 @@ void Element::Element_COAL()
 
 int Element_COAL_update(UPDATE_FUNC_ARGS)
 {
+	if (OmniMetallurgyCoalUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 1;
+
 	if (parts[i].life<=0) {
 		sim->create_part(i, x, y, PT_FIRE);
 		return 1;
