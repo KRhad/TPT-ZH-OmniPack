@@ -19,7 +19,7 @@
 | PET/BEE 原实现 | Cracker `ebbb9aab...` | Cracker1000 | 排除原实现 | 如需概念则另行设计 | REJECTED | 大范围扫描/越界风险 |
 | BFLM/CEXP/EXPL | Cracker/Jacob | 各来源作者 | 排除原实现 | 预算化灾害另设计 | REJECTED | 无受控扩散门禁 |
 | MGNT | Cracker `ebbb9aab...` | Cracker1000 | 重写候选 | 半径/帧预算磁体 | DESIGN | 原实现每粒子 6,561 格扫描 |
-| Spike 生物循环 | SpikeViper `134ebf33...` | SpikeViper contributors | 重写候选 | 事件驱动局部状态 | DESIGN | 氧/营养/感染联动价值高 |
+| Spike 生物循环 | SpikeViper `134ebf33...` | SpikeViper contributors | 概念参考；独立实现 | 事件驱动局部状态 | PORTED | `288..295` 局部营养/氧气/感染/处理循环；不复制其更新函数 |
 | Ultimata 传送/漏斗/力场 | Ultimata `b7497175...` | Bowserinator 等 | 精选重写 | 工程化可控元素 | DESIGN | 必须有克制与保存测试 |
 | Ultimata 时间/电磁核心 | Ultimata `b7497175...` | Bowserinator 等 | 实验参考 | 默认关闭，架构先行 | DESIGN | 确定性/网络/性能风险 |
 | Jacob BUTN/PWHT | Jacob `b4926161...` | jacob1 等 | 重写候选 | 当前 API + 洪泛预算 | DESIGN | UX 价值明确，旧代码越界 |
@@ -199,6 +199,38 @@ ALNI ALNC TERN MAGX PLTU
 | Lua 真实客户端回归 | PASS | `OMNI_METALLURGY_IDS=256-278`、`RECIPES=7`、`BEHAVIORS=5` |
 | 七组配方运行帧数 | PASS | `BRNZ/BRAS/NCRM/ALMG/SSIL/TSTL/STEL` 均在第 1 帧完成并验证冷却固化 |
 | 额外运行行为 | PASS | 炭化、焦化、冷固体不合金、镍铬发热、压损差异、碎料回炉、镁燃烧、锌牺牲保护 |
+
+## Phase 4 局部生态来源与实现复核
+
+Phase 4 首批的提交包含 `src/simulation/OmniBiology.cpp`/`.h`、八个构造器、既有生物模块门禁、本地化、登记、审计和真实客户端 Lua 回归。SpikeViper 快照仅用于确认“氧气、营养、感染联动”的玩法方向；本项目没有复制该来源的元素更新函数，也没有改动官方 `PLNT`、`VIRS`、`WATR` 或 `LIFE` 状态机。
+
+| 稳定 ID | identifier / 代号 | 来源方式 | 本项目构造文件 |
+|---:|---|---|---|
+| 288 | `OMNI_PT_NUTR` / `NUTR` | OmniPack 原创局部营养输入 | `src/simulation/elements/NUTR.cpp` |
+| 289 | `OMNI_PT_ALGA` / `ALGA` | Spike 生态联动需求参考；光合规则独立实现 | `src/simulation/elements/ALGA.cpp` |
+| 290 | `OMNI_PT_MYCL` / `MYCL` | OmniPack 原创局部分解者 | `src/simulation/elements/MYCL.cpp` |
+| 291 | `OMNI_PT_SPOR` / `SPOR` | OmniPack 原创局部萌发输入 | `src/simulation/elements/SPOR.cpp` |
+| 292 | `OMNI_PT_PATH` / `PATH` | Spike 感染联动需求参考；规则独立实现 | `src/simulation/elements/PATH.cpp` |
+| 293 | `OMNI_PT_STER` / `STER` | OmniPack 原创局部处理材料 | `src/simulation/elements/STER.cpp` |
+| 294 | `OMNI_PT_HUMS` / `HUMS` | OmniPack 原创稳定生物副产物 | `src/simulation/elements/HUMS.cpp` |
+| 295 | `OMNI_PT_BIOF` / `BIOF` | OmniPack 原创局部过滤介质 | `src/simulation/elements/BIOF.cpp` |
+
+来源限制与裁决：
+
+- **第三方更新函数逐行复制：0。** SpikeViper 的生物循环没有进入本项目源码；只保留氧气、营养、感染之间存在可控联动的公开玩法目标。
+- **官方状态机改写：0。** `PLNT`、`VIRS`、`WATR`、`LIFE` 保持官方更新函数；新元素仅把这些官方元素作为局部输入或输出。
+- **性能限制：**所有成功事件共享 1,024 次/帧预算，局部搜寻固定为 `3x3`，`tmp3` 防止同帧级联；简化模式不增加粒子数。
+- **未覆盖范围：**生态存档往返、关闭模块后的载入提示、视觉设置交互以及高粒子数压力样本仍未运行。
+
+### 当前测试证据（2026-07-30）
+
+| 测试 | 结果 | 可核对证据 |
+|---|---|---|
+| 生物静态门禁 | PASS | `py tools/biology_audit.py`：8 元素、6 条局部路径、3×3 有界 |
+| 生物审计单元测试 | PASS，3/3 | 正常仓库通过；删除事件预算或禁用简化模式时门禁拒绝 |
+| Windows x64 增量编译 | PASS | GCC 16.1.0、Ninja；0 error |
+| Lua 真实客户端回归 | PASS | 完整与简化模式均为 `PATHS=6`、`IDS=288-295`；客户端保持响应 |
+| 回归路径 | PASS | 藻类光合与冷温负例、菌丝分解、孢子萌发、感染、消毒和生物膜过滤 |
 
 ## 每次实际移植必须补记
 

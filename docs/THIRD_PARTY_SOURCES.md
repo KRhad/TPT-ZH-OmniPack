@@ -26,7 +26,7 @@ Phase 0 审计的九个仓库顶层均含 GPL-3.0 `LICENSE`，本次固定文件
 
 详细版本、元素数、风险与裁决见 `docs/SOURCE_AUDIT.md`；实际文件级来源进入 `docs/PORTING_LEDGER.md`。
 
-## Phase 3 冶金与基础化学来源复核
+## Phase 3 冶金、基础化学与 Phase 4 局部生态来源复核
 
 以下复核使用仓库内可读源码和 Git 历史，不使用模组二进制。三份来源的固定快照顶层均提供 GNU GPL version 3 `LICENSE`；若未来采用具体代码，发布时仍须保留原版权、作者、文件路径和逐文件 commit 记录。
 
@@ -62,6 +62,10 @@ Phase 0 审计的九个仓库顶层均含 GPL-3.0 `LICENSE`，本次固定文件
 `src/simulation/OmniMetallurgy.cpp`/`.h`；静态门禁位于
 `tools/metallurgy_audit.py`，真实运行测试位于
 `tools/runtime/metallurgy_regression.lua`。当前证据为：静态审计 PASS（23 元素、6 合金配方、1 炼钢配方、3×3 有界）、冶金单测 2/2、全部工具单测 30/30、Meson `static` 4/4、Lua 回归 PASS（7 配方、5 材料行为、ID `256–278`）。
+
+### Phase 4 生物来源边界
+
+SpikeViper 快照 `134ebf330eda42b4b300a2b7613ede71261697df` 仅作为“氧气、营养、感染联动”的设计参考。`NUTR/ALGA/MYCL/SPOR/PATH/STER/HUMS/BIOF` 均为本项目独立实现；没有复制第三方生物更新函数，也没有从发布二进制反推实现。新模块不覆盖官方 `PLNT`、`VIRS`、`WATR` 或 `LIFE` 的状态机，全部规则集中在 `OmniBiology.cpp` 的固定 `3x3` 局部查找中。完整与简化两种模式均由真实客户端 Lua 回归验证，未来使用任何第三方具体实现前仍须单独记录文件级来源和版权。
 
 ## 论坛与文档资料
 

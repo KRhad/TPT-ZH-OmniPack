@@ -15,7 +15,7 @@ constexpr std::array<OmniSettingDefinition, OmniSettingCount> settingDefinitions
 	{ OmniSetting::SpecialPhysics,        "Omni.Modules.SpecialPhysics",        "options.omni.special_physics",        "options.omni.special_physics.info",        true,  true  },
 	{ OmniSetting::Disasters,             "Omni.Modules.Disasters",             "options.omni.disasters",              "options.omni.disasters.info",              true,  true  },
 	{ OmniSetting::Experimental,          "Omni.Modules.Experimental",          "options.omni.experimental",           "options.omni.experimental.info",           false, true  },
-	{ OmniSetting::SimplifiedBiology,     "Omni.Simulation.SimplifiedBiology",  "options.omni.simplified_biology",     "options.omni.simplified_biology.info",     false, false },
+	{ OmniSetting::SimplifiedBiology,     "Omni.Simulation.SimplifiedBiology",  "options.omni.simplified_biology",     "options.omni.simplified_biology.info",     false, true  },
 	{ OmniSetting::PerformanceProtection, "Omni.Simulation.PerformanceGuard",   "options.omni.performance_protection", "options.omni.performance_protection.info", false, false },
 	{ OmniSetting::DetailedHud,           "Omni.Interface.DetailedHud",         "options.omni.detailed_hud",            "options.omni.detailed_hud.info",            false, false },
 	{ OmniSetting::AlchemyMode,           "Omni.Progress.AlchemyMode",          "options.omni.alchemy_mode",            "options.omni.alchemy_mode.info",            false, false },

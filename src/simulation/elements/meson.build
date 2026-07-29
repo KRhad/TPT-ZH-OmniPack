@@ -287,14 +287,14 @@ simulation_elem_names = [
 	disabler(), # 285
 	disabler(), # 286
 	disabler(), # 287
-	disabler(), # 288: biology reserve
-	disabler(), # 289
-	disabler(), # 290
-	disabler(), # 291
-	disabler(), # 292
-	disabler(), # 293
-	disabler(), # 294
-	disabler(), # 295
+	'NUTR', # 288: biology
+	'ALGA', # 289
+	'MYCL', # 290
+	'SPOR', # 291
+	'PATH', # 292
+	'STER', # 293
+	'HUMS', # 294
+	'BIOF', # 295
 	disabler(), # 296
 	disabler(), # 297
 	disabler(), # 298
