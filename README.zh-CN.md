@@ -22,6 +22,8 @@ Windows x64 发布候选由 `tools/package_test_release.py` 从剥离后的 Rele
 
 不会从只有二进制、没有对应公开源码的模组复制实现。对应源码由当前 Git commit 标识，发布报告会写入完整 commit；发布 tag 仅在全部硬门禁通过后创建。发布包不会包含 `powder.pref`、登录令牌、个人存档或开发者隐私文件。
 
+对应源码仓库：`https://github.com/Dragonrster/The-Powder-Toy-Chinese`。当前公共测试候选对应分支 `release/test-public-hardening` 的完整 commit 会写入 ZIP 内 `TEST-MANIFEST.txt` 和 `dist/release-report-0.1.0-test.md`；在该 commit 已推送并可从该地址取得前，不得公开分发二进制。
+
 ## 构建
 
 Windows x64 基线和 Phase 2 clean build 已按 Meson 与官方静态链接参数复现。环境、命令、产物哈希和警告见 `docs/BASELINE_BUILD.md` 与 `docs/PROGRESS.md`。当前仓库自带的旧 `build.bat` 含开发机绝对路径，不能作为正式构建方法。
