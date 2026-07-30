@@ -13,7 +13,8 @@
 | 基线启动 | 运行 | PASS | 进程存活、Responding=True、非零窗口句柄 |
 | 默认简体中文选择 | 静态 | PASS | fresh preference fallback 为索引 1 |
 | 12 语言切换控件 | 静态/构建 | PASS | Options 下拉已编译 |
-| 中文视觉布局 | 运行 | BLOCKED | 本会话缺少受信任 Computer Use native pipe |
+| 中文基础可读性 | 人工视觉 | PASS | 用户确认当前原生 Fusion 12px 方案已解决中文显示问题 |
+| 中文 DPI 与完整页面布局 | 人工视觉 | NOT RUN | 仍需 100%/125%/150%、长文本、按钮、对话框和图鉴矩阵 |
 | 英文切换实际交互 | 运行 | NOT RUN | 需 UI 自动化或人工复核 |
 | 官方 100.0 存档载入/重存 | 运行 | NOT RUN | 尚未建立固定样本 |
 
@@ -224,7 +225,8 @@
 | Fusion 12px BDF 来源与转换 | 源码/自动 | PASS | 版本 `2026.07.20`、固定 BDF/许可证哈希；1,839 个原生字形直接映射，Unifont 回退 0；六个固定中文字形逐行矩阵一致 |
 | Fusion 字体容器与全目录覆盖 | 静态 | PASS | `font.bz2` 为 `47F4EB85...`；14,629 字形、2,593 个语言字符全覆盖、pack/unpack 通过、重复 CJK 位图 0 |
 | Fusion 私有试包默认启动 | 实际进程 | PASS | `943DA2A6...` ZIP 审计通过；解压后使用 20 个全新目录启动均响应，崩溃 0 |
-| Fusion 私有试包中文人工可读性 | 实际 GUI | NOT RUN | 必须从 `943DA2A6...` ZIP 解压运行后由用户检查；自动 PNG 和引擎探针不能代替该结论 |
+| Fusion 中文人工可读性 | 实际 GUI | PASS | 用户确认当前原生 Fusion 12px 方案的中文显示问题已经解决；DPI、语言切换和完整页面矩阵另列为未测试 |
+| 便携首次运行安装提示 | 源码/clean build | PASS | 默认 `can_install=no`；生成配置 `CAN_INSTALL=false`、`INSTALL_CHECK=false`；重新打包 ZIP 的人工启动仍待执行 |
 | 已拒绝修复试包默认中文启动 | 实际进程 | PASS | 隔离用户目录重复 20 次，`running=true`、`Responding=true`、崩溃 0；与人工字形质量失败是相互独立的结果 |
 | 中文/英文点击切换 | 实际 GUI | NOT RUN | 需截图和重启验证 |
 | 模块开关与代表元素 | 实际 GUI | NOT RUN | 需四模块和 `ALUM/NUTR/NFUL/CHLR` 实测 |
@@ -240,7 +242,7 @@
 | 最终 ZIP 启动 | 实际进程 | PASS | 解压 EXE 的路径、SHA-256、标题、窗口句柄与 `Responding=True` 记录在 `artifacts/final-validation/logs/` |
 | 最终 ZIP Lua 回归 | 实际客户端 | PASS | 6/6；`lua-runtime-final-zip.txt` |
 | 本地化与存档兼容审计 | 自动 | PASS | `i18n_audit.py --check` 与 `save_compatibility_audit.py`；`localization-and-compatibility-audits.txt` |
-| 私有修复试包简中可读性 | 实际 GUI | FAIL | 用户在真实 Windows 桌面解压运行后判定中文显示质量不合格；该结论不代表英文切换和 100%/125%/150% DPI 矩阵已执行 |
+| 当前原生 12px 简中可读性 | 实际 GUI | PASS | 用户确认当前中文显示问题解决；英文切换和 100%/125%/150% DPI 矩阵仍为 `NOT RUN` |
 | 四模块、代表元素与持久化 | 实际 GUI | NOT RUN | 未在最终 ZIP 中执行模块开关、搜索、放置、图鉴或重启 |
 | OPS 往返、三选项与载体字段 | 实际 GUI | NOT RUN | 未用 GUI 保存 OPS；静态审计不替代运行证据 |
 | 代表玩法 | 实际 GUI | NOT RUN | Lua 运行回归仅证明脚本覆盖路径，不能代替交互场景 |

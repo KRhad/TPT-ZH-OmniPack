@@ -2,18 +2,17 @@
 
 ## 发布阻塞
 
-1. **已拒绝候选 `5828a97fc39129547354956dde84d7b6cfb818c2`：**真实 Windows 桌面报告中文界面严重异常。根因是 Unifont 2bpp 打包位序与 `FontReader` 不一致，且 16 到 12 像素的点采样丢失笔画。
-2. **已拒绝私有修复试包 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95` / `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081`：**字体容器、引擎离屏渲染和 20 次默认中文启动自动检查通过，但用户从 ZIP 解压运行后确认中文显示仍不如既有出版中文版本，人工中文可读性/字形质量失败。该试包仅保留为失败对照，`font_visual_readability_valid=false`，`release_ready=false`；这不是进程崩溃结论。
-3. 原生 Fusion Pixel Font 12px BDF 方案已完成来源、许可证、固定哈希、全量覆盖、固定字形矩阵和容器验证；新的私有 ZIP 尚未完成人工中文可读性、布局、英文切换、重启持久化和完整页面交互测试，`font_visual_readability_valid=not_tested`。
-4. 尚未执行官方存档载入/重存基线和四模块 OPS 往返。
-5. 稳定新增元素 ID 分区、登记门禁、禁用模块警告和只读加载已实现；旧模组 ID 迁移与缺失元素兼容占位尚未实现。
-6. 最终 ZIP 的只读上传拦截仍缺少实际点击证据。
-7. GCC 16 对 `PowderToy.cpp` 的 `std::optional<ByteString>` 路径给出 2 个 `-Wmaybe-uninitialized`，待定位。
+1. 用户已确认当前原生 Fusion Pixel Font 12px 方案的中文显示问题解决；100%/125%/150% DPI、中文/英文往返切换、重启持久化、长文本及全部页面矩阵仍未完成。
+2. 便携候选曾因默认 `can_install=auto` 弹出文件关联“安装”提示。源码和 clean build 已改为 `CAN_INSTALL=false`、`INSTALL_CHECK=false`；必须从重新打包的 ZIP 再做一次全新目录启动确认。
+3. 尚未完成官方基础存档、单模块、四模块混合以及 `LAVA/SPRK/MSCR` 携带类型的完整 OPS 保存—重启—加载—再保存—再加载矩阵。
+4. 禁用模块的正常加载、只读加载、取消、菜单/快捷键/另存/覆盖/上传拦截和退出不覆盖仍缺少可信 GUI 点击证据。
+5. 十个固定压力样本、FPS/1% low、峰值工作集、粒子增长、保存加载耗时和两小时长时间测试尚未完成。
+6. 稳定新增元素 ID 分区、登记门禁、禁用模块警告和只读加载已实现；旧模组 ID 迁移与缺失元素兼容占位尚未实现。
+7. GCC 16 对 `PowderToy.cpp` 的 `std::optional<ByteString>` 路径给出既有 `-Wmaybe-uninitialized`，并对 `Simulation::FloodParts` 给出既有 `-Warray-bounds` 优化警告；尚未形成独立根因结论。
 8. 图鉴内容目前覆盖 48 个已实现的 OmniPack 元素；官方元素继续只显示现有登记说明和热学属性，不能据此推断完整官方工艺百科。
-9. 曾发现一个开发期 Meson 原始测试日志记录明文 GitHub PAT。该日志已删除且从未提交；凭据仍必须在仓库外轮换。后续测试已清理敏感环境并通过令牌模式扫描。
-10. 当前 `artifacts/zh-ui-fix/candidate/` Windows x64 ZIP 是已拒绝的私有修复试包，不是未公开发布候选；其字体来源、许可证、白名单打包和符号分离虽已自动验证，但人工中文可读性已经失败，OPS 往返和性能验证也未执行。
-11. 2026-07-30 最终验收扫描在当前进程环境变量发现一个 GitHub classic PAT；扫描报告仅保留变量名和脱敏指纹。Git 历史和候选 ZIP 未发现该模式，但无法证明旧凭据已经撤销或轮换。因此不得推送、创建 tag 或公开发布，直到在仓库外完成可验证的撤销。
-12. 当前 Windows 自动化会话无法将最终 ZIP 的 SDL 窗口置为前景，且 `PrintWindow` 只能获取黑色客户端帧。语言切换、模块 UI、OPS 三选项/只读保存/上传和压力测试均未执行，不得声称通过。
+9. 2026-07-30 脱敏扫描在当前进程环境变量发现一个 GitHub classic PAT；Git 历史和已审计 ZIP 未发现该模式，但无法证明旧凭据已经撤销或轮换。因此不得推送、创建 tag 或公开发布，直到用户在外部账户完成可验证的撤销或轮换。
+10. 正式发布远端和权限尚未确认；当前 `origin` 指向旧汉化仓库，不能把本地开发分支擅自推送为 OmniPack 正式源码。
+11. 当前 Windows Computer Use 运行时不可用；系统 API 可启动和聚焦 SDL 窗口，但不能替代可信的完整 GUI 交互、截图和 DPI 验收。
 
 ```text
 credential_exposure_found=true
@@ -23,6 +22,10 @@ credential_revoked=false
 credential_rotated=false
 secret_scan_pass=false
 ```
+
+## 历史废弃基线
+
+2026-07-30 的早期 Unifont 转换候选及其第一次结构修复试包均已废弃，只用于回归对照。当前产物以 `c743db2f` 的原生 Fusion 12px 字体实现及后续 `development/omnipack-1.0` 提交为准；历史 EXE/ZIP 哈希不得用于当前发布报告。
 
 ## 来源限制
 
