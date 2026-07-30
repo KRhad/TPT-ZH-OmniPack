@@ -15,6 +15,7 @@
 build*/*
 /dist/
 /.omni-test-tmp/
+/artifacts/
 *.o
 *.exe
 *.dmg
