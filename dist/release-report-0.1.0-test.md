@@ -1,6 +1,6 @@
 # TPT-ZH-OmniPack 0.1.0-test 最终验收报告
 
-本报告记录已拒绝的试包，不再代表可发布版本。用户在真实 Windows 桌面确认中文界面严重异常后，候选源码提交 `5828a97fc39129547354956dde84d7b6cfb818c2` 及其 ZIP 已于 2026-07-30 废弃。随后用于验证转换器修复的私有试包 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95` / `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081` 也经用户解压运行并判定中文可读性和字形质量不合格。两代 ZIP 均只保留为失败基线，禁止作为最终候选、tag 或公开发布依据。
+本报告记录两个已拒绝试包和一个待人工检查的私有试包，不代表可发布版本。用户在真实 Windows 桌面确认中文界面严重异常后，候选源码提交 `5828a97fc39129547354956dde84d7b6cfb818c2` 及其 ZIP 已于 2026-07-30 废弃。随后用于验证转换器修复的私有试包 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95` / `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081` 也经用户解压运行并判定中文可读性和字形质量不合格。两代 ZIP 均只保留为失败基线；新的原生 12px 私有试包在人工通过前同样禁止作为最终候选、tag 或公开发布依据。
 
 ## 交付物
 
@@ -30,13 +30,23 @@
 
 转换器修复源码提交为 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95`。该试包仅生成在 `artifacts/zh-ui-fix/candidate/` 供中文人工验收，未公开、未推送、未创建 tag。普通 ZIP SHA-256 为 `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081`，符号 ZIP SHA-256 为 `AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0`。两包 ZIP 内容审计和自动字体探针通过，且默认中文启动 20 次无崩溃；但用户从 ZIP 解压运行后明确判定中文显示仍不如既有出版中文版本，人工视觉可读性和字形质量门禁失败。该试包已拒绝，只保留为失败对照，不是可发布候选，`font_visual_readability_valid=false`，`release_ready=false`。
 
+## 待人工检查的原生 12px 私有试包
+
+原生 Fusion Pixel Font 12px BDF 实现绑定提交 `c743db2fcc49c01033e68023cceff897ed4c35f6`。私有普通 ZIP SHA-256 为 `943DA2A60C0B371A1D3F921FEC525FB3F7B5AEBC7C5CE7775A8AEFA883C13F14`，符号 ZIP SHA-256 为 `BE14C7D53658963DF1C6B1ECFAA44AC51F8004883530CB7DF922E4282FC11031`，解压后的已剥离 EXE SHA-256 为 `05DACBFCC31D6F1920D4437DB60629A1F9DA79CC0A14AA13138DD97393CCF6AF`。两包审计通过，清洁 Release 构建、Meson 12/12、Python 56、Lua 6/6 和 20 次全新目录启动均通过，启动失败 0。该 ZIP 仅位于 `artifacts/zh-ui-fix/candidate/fusion-c743db2f/`，未公开、未推送、未创建 tag；人工中文可读性仍为 `not_tested`，`release_ready=false`。
+
 完整证据、环境信息、失败模式和最小下一步见 `docs/FINAL_VALIDATION.md` 与 `artifacts/final-validation/`。
 
 ## 机器可读结论
 
 ```text
-source_commit=ca3cccbee13a41c37ee0b7975c4b5f060cb34a95
+source_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
 candidate_version=0.1.0-test
+private_candidate_public_zip_sha256=943DA2A60C0B371A1D3F921FEC525FB3F7B5AEBC7C5CE7775A8AEFA883C13F14
+private_candidate_symbols_zip_sha256=BE14C7D53658963DF1C6B1ECFAA44AC51F8004883530CB7DF922E4282FC11031
+private_candidate_exe_sha256=05DACBFCC31D6F1920D4437DB60629A1F9DA79CC0A14AA13138DD97393CCF6AF
+private_candidate_zip_audit_pass=true
+private_candidate_startup_runs=20
+private_candidate_startup_crashes=0
 rejected_candidate_commit=5828a97fc39129547354956dde84d7b6cfb818c2
 rejected_public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
 rejected_symbols_zip_sha256=3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9

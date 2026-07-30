@@ -35,6 +35,8 @@
 
 新的原生 12px 方案生成 `resources/font.bz2` SHA-256 `47F4EB851ABFC4CABDFC780E3D427ECBA39077418324A4E291CCDE552F0C139D`，包含 14,629 个字形，其中官方 TPT 基线 12,790 个、Fusion 补充 1,839 个、Unifont 回退 0 个。固定测试逐行比较 `U+4E2D/U+6587/U+7B80/U+4F53/U+5DE5/U+4E1A` 的 BDF 单色矩阵与 TPT 解包矩阵，并验证所有 2,593 个嵌入语言字符、替换字形、容器边界、码点排序、宽度和 pack/unpack。自动结果不代替下一私有 ZIP 的人工桌面可读性判断。
 
+该方案的私有人工试包绑定提交 `c743db2fcc49c01033e68023cceff897ed4c35f6`，普通 ZIP SHA-256 `943DA2A60C0B371A1D3F921FEC525FB3F7B5AEBC7C5CE7775A8AEFA883C13F14`，符号 ZIP SHA-256 `BE14C7D53658963DF1C6B1ECFAA44AC51F8004883530CB7DF922E4282FC11031`。ZIP 内容与 PE 审计通过，从 ZIP 解压后以 20 个全新数据目录启动均响应，进程崩溃 0；人工可读性仍为 `not_tested`。
+
 ## 替换的未审计资源
 
 原 `resources/font.bz2` 在 Dragonrster 提交 `f0e9b52a0c3a6a87562aa87527ce84316321e720` 被替换为 476,825 字节扩展字库，但提交、仓库和文件内均没有名称、作者、来源或许可证。该资源不再作为发布字体输入或发布依据。

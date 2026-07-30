@@ -223,7 +223,8 @@
 | 私有修复试包中文人工可读性 | 实际 GUI | FAIL | 用户从 `E52E746B...` ZIP 解压运行后确认中文显示仍不如既有出版中文版本；`font_visual_readability_valid=false`，该试包已拒绝并仅保留作失败对照 |
 | Fusion 12px BDF 来源与转换 | 源码/自动 | PASS | 版本 `2026.07.20`、固定 BDF/许可证哈希；1,839 个原生字形直接映射，Unifont 回退 0；六个固定中文字形逐行矩阵一致 |
 | Fusion 字体容器与全目录覆盖 | 静态 | PASS | `font.bz2` 为 `47F4EB85...`；14,629 字形、2,593 个语言字符全覆盖、pack/unpack 通过、重复 CJK 位图 0 |
-| Fusion 私有试包中文人工可读性 | 实际 GUI | NOT RUN | 必须从新的私有 ZIP 解压运行后由用户检查；自动 PNG 和引擎探针不能代替该结论 |
+| Fusion 私有试包默认启动 | 实际进程 | PASS | `943DA2A6...` ZIP 审计通过；解压后使用 20 个全新目录启动均响应，崩溃 0 |
+| Fusion 私有试包中文人工可读性 | 实际 GUI | NOT RUN | 必须从 `943DA2A6...` ZIP 解压运行后由用户检查；自动 PNG 和引擎探针不能代替该结论 |
 | 已拒绝修复试包默认中文启动 | 实际进程 | PASS | 隔离用户目录重复 20 次，`running=true`、`Responding=true`、崩溃 0；与人工字形质量失败是相互独立的结果 |
 | 中文/英文点击切换 | 实际 GUI | NOT RUN | 需截图和重启验证 |
 | 模块开关与代表元素 | 实际 GUI | NOT RUN | 需四模块和 `ALUM/NUTR/NFUL/CHLR` 实测 |
