@@ -5,7 +5,7 @@
 ## 当前范围
 
 ```text
-audit_head=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+audit_head=5a9435e98e063f60c6576180b348c89542d8bb67
 implementation_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
 font_implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
 development_gate_head=d3419e7b

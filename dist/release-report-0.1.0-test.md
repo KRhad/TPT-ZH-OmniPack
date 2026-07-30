@@ -1,30 +1,30 @@
 # TPT-ZH-OmniPack 0.1.0-test 候选报告
 
-本报告绑定当前本地候选 `4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a`。它不是公开发布报告：人工 GUI、完整压力、凭据撤销、公开源码、匿名克隆、tag 和 GitHub prerelease 尚未通过，因此 `release_ready=false`。
+本报告绑定当前本地候选 `5a9435e98e063f60c6576180b348c89542d8bb67`。它不是公开发布报告：人工 GUI、完整压力、凭据撤销、公开源码、匿名克隆、tag 和 GitHub prerelease 尚未通过，因此 `release_ready=false`。
 
 ## 当前产物
 
 | 产物 | SHA-256 | 状态 |
 |---|---|---|
-| `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip` | `0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051` | 本地候选；白名单、清单、哈希和解压二审通过 |
-| `TPT-ZH-OmniPack-0.1.0-test-Symbols-Windows-x64.zip` | `4F3645DFD664B3DE2BB0ADDD0FE107037607F4DEE7BBF4DAF5C97D6521A400A1` | 本地符号候选；审计通过 |
+| `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip` | `D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16` | 本地候选；白名单、清单、哈希和解压二审通过 |
+| `TPT-ZH-OmniPack-0.1.0-test-Symbols-Windows-x64.zip` | `D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD5E5` | 本地符号候选；审计通过 |
 | `tpt-zh-omnipack.exe` | `D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2` | 已剥离；未签名 |
 | `tpt-zh-omnipack.debug` | `42D96F23C3702EE96FBEE5CF961582B7A1423FA1ABC6A73D617066A8A5E66364` | 与普通包分离 |
 | `resources/font.bz2` | `47F4EB851ABFC4CABDFC780E3D427ECBA39077418324A4E291CCDE552F0C139D` | Fusion Pixel Font 原生 12px；许可证与覆盖审计通过 |
 
-普通 ZIP 有 15 个白名单成员，未压缩总大小 17,774,104 bytes；符号 ZIP 有 2 个成员。普通包不包含 `.cps`、`.stm`、`.pref`、Lua、账户、图章、个人存档或调试符号。
+普通 ZIP 有 15 个白名单成员，未压缩总大小 17,775,937 bytes；符号 ZIP 有 2 个成员。普通包不包含 `.cps`、`.stm`、`.pref`、Lua、账户、图章、个人存档或调试符号。
 
 ## 当前证据
 
-- 空目录 Windows x64 Release build：`502/502`，0 error；二进制构建提交为仅早于压力工具修复的 `e2e1b3fe81082350b5e4919a2b8e43dac29ef090`，`4f5c07f9` 不改变二进制源码。
-- Meson：`13/13`；Python：`77/77`，0 skip。
+- 空目录 Windows x64 Release build：`502/502`，0 error；二进制构建提交为 `e2e1b3fe81082350b5e4919a2b8e43dac29ef090`，其后的压力工具、报告门禁和文档提交不改变二进制源码。
+- 当前候选源码 Meson：`14/14`；Python：`86/86`，0 skip。
 - 已剥离 EXE 的模块、冶金、生态、化学、核工业和混合 OPS Lua 运行回归：`6/6`。
 - 官方、冶金、生态、化学、核工业独立 OPS：`5/5`，15 个进程、10 次重启、10 次加载验证、79 粒子、每次加载合计 120 字段断言。四模块混合 OPS 另用 3 个进程完成双往返。
 - OPS 覆盖 `LAVA.ctype`、`SPRK.ctype`、`MSCR.ctype`、`CONV.ctype/tmp`、`VIRS.tmp2`，并检查 OPS1、BZip2 和 palette identifier。
 - ZIP 解压 EXE 在全新隔离 `ddir` 实际启动，窗口标题正确、句柄非零、`Responding=true`，正常退出；这不是窗口内容或安装提示的人工视觉证据。
 - 发布 EXE 无 `.debug*` 段、无开发路径标记、无动态 GCC 开发运行库，保留 `DYNAMIC_BASE`、`NX_COMPAT` 和 `HIGH_ENTROPY_VA`；Authenticode 状态为 `NotSigned`。
 - 用户确认当前原生 Fusion 12px 中文显示问题已解决；英文界面、双向语言切换、重启持久化和 100%/125%/150% DPI 尚未完整验收。
-- 十个固定压力场景和原始数据格式已实现。第一次完整运行暴露阻塞式 Lua 的脚本无响应并失败；`4f5c07f9` 已改为逐 UI tick 返回。S01/S02 随后各完成 60+600 秒；平均 FPS 均约 60，峰值工作集分别为 152,281,088/162,676,736 bytes，无崩溃/卡死且 OPS 往返通过。只读判定器对两项均报告有限观察期内 `unbounded_growth=false`、`memory_leak_suspected=false`、`sample_execution_pass=true`；事件计数、场景行为和其余 8 个样本尚未齐全。
+- 十个固定压力场景和原始数据格式已实现。第一次完整运行暴露阻塞式 Lua 的脚本无响应并失败；`4f5c07f9` 已改为逐 UI tick 返回。S01/S02 随后各完成 60+600 秒；平均 FPS 均约 60，峰值工作集分别为 152,281,088/162,676,736 bytes，无崩溃/卡死且 OPS 往返通过。只读判定器对两项均报告有限观察期内 `unbounded_growth=false`、`memory_leak_suspected=false`、`sample_execution_pass=true`；事件计数、场景行为和其余 8 个样本尚未齐全。两项压力证据绑定旧清单提交 `4f5c07f9`/旧 ZIP，但新候选 EXE SHA-256 完全相同；文档变化不扩张其运行证据范围。
 
 ## 明确废弃的历史候选
 
@@ -38,7 +38,7 @@
 ## 机器可读结论
 
 ```text
-source_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+source_commit=5a9435e98e063f60c6576180b348c89542d8bb67
 binary_build_commit=e2e1b3fe81082350b5e4919a2b8e43dac29ef090
 release_tag=not_tested
 version=0.1.0-test
@@ -46,8 +46,8 @@ upstream_version=100.0.399
 
 clean_build_pass=true
 clean_build_targets=502/502
-meson_tests=13/13
-python_tests=77/77
+meson_tests=14/14
+python_tests=86/86
 python_test_skips=0
 lua_runtime_tests=6/6
 
@@ -106,8 +106,8 @@ developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051
-symbols_zip_sha256=4F3645DFD664B3DE2BB0ADDD0FE107037607F4DEE7BBF4DAF5C97D6521A400A1
+public_zip_sha256=D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16
+symbols_zip_sha256=D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD5E5
 source_zip_sha256=not_tested
 zip_audit_pass=true
 

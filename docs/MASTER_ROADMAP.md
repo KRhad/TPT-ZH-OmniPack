@@ -49,9 +49,10 @@ release_ready=false
 ### 接管后增量证据
 
 ```text
-candidate_source_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+candidate_source_commit=5a9435e98e063f60c6576180b348c89542d8bb67
 binary_clean_build_commit=e2e1b3fe81082350b5e4919a2b8e43dac29ef090
 development_gate_head=d3419e7b
+candidate_documentation_commit=5a9435e9
 portable_install_prompt_fix=a590f8b5
 reaction_registry_gate=8391dbd1
 ops_mixed_roundtrip_test_commit=148c4acd
@@ -65,12 +66,10 @@ ops_mixed_carrier_roundtrip_test=true
 ops_official_roundtrip_test=true
 ops_single_module_roundtrip_tests=4/4
 clean_build=502/502
-meson_tests=13/13
-candidate_python_tests=77/77
-development_meson_tests=14/14
-development_python_tests=86/86
-public_zip_sha256=0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051
-symbols_zip_sha256=4F3645DFD664B3DE2BB0ADDD0FE107037607F4DEE7BBF4DAF5C97D6521A400A1
+meson_tests=14/14
+candidate_python_tests=86/86
+public_zip_sha256=D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16
+symbols_zip_sha256=D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD5E5
 stress_test=not_tested
 release_ready=false
 ```

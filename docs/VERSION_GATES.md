@@ -6,7 +6,7 @@
 
 - 门禁状态只能是 `true`、`false`、`not_tested`、精确计数、精确提交或精确 SHA-256。
 - 表格结果使用“源码确认、编译确认、自动测试确认、实际运行确认、人工视觉确认、尚未测试”六类证据标记；已执行的失败在标记后写精确 `false`，外部阻塞也单独注明。任何 `false`、尚未测试或外部阻塞均使版本不能发布。
-- 当前候选源码为 `4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a`，字体实现为 `c743db2fcc49c01033e68023cceff897ed4c35f6`，本次二进制 clean build 绑定其仅修改测试工具的父提交 `e2e1b3fe81082350b5e4919a2b8e43dac29ef090`。ZIP 清单绑定 `4f5c07f9`；一旦影响二进制、包内文档或测试语义的源码变化，相关构建、ZIP、运行、GUI、OPS 和压力证据必须重跑。
+- 当前候选源码为 `5a9435e98e063f60c6576180b348c89542d8bb67`，字体实现为 `c743db2fcc49c01033e68023cceff897ed4c35f6`，本次二进制 clean build 绑定 `e2e1b3fe81082350b5e4919a2b8e43dac29ef090`；其后提交只改测试工具与文档。普通包和符号包清单均绑定 `5a9435e9`；一旦影响二进制、包内文档或测试语义的源码变化，相关构建、ZIP、运行、GUI、OPS 和压力证据必须重跑。
 - 每个证据至少记录 `source_commit`、命令或操作步骤、环境、开始/结束时间、结果文件和产物 SHA-256。GUI 证据还需记录语言、DPI 和页面；OPS 证据还需记录输入/两次输出哈希与粒子引用核对。
 - `release_ready` 是所有适用硬门禁的逻辑与，不允许人工覆写。
 
@@ -28,11 +28,11 @@
 
 | 门禁 ID | 必需结果 | 当前状态 | 当前证据 |
 |---|---|---|---|
-| `GATE-010-SOURCE` | HEAD、分支、上游和 48 元素登记可重现 | 源码确认 | 候选源码 `4f5c07f9`；开发分支 `development/omnipack-1.0`；字体 `c743db2f`；48 个元素固定于 `256..278`、`288..295`、`328..334`、`360..369`；登记表 370 行、243 active、127 reserved |
+| `GATE-010-SOURCE` | HEAD、分支、上游和 48 元素登记可重现 | 源码确认 | 候选源码 `5a9435e9`；开发分支 `development/omnipack-1.0`；字体 `c743db2f`；48 个元素固定于 `256..278`、`288..295`、`328..334`、`360..369`；登记表 370 行、243 active、127 reserved |
 | `GATE-010-FONT-SOURCE` | 字体来源、许可证、固定哈希、容器和全部语言字符覆盖通过 | 自动测试确认 | `resources/font.bz2` SHA-256 `47F4EB85...`；Fusion 原生 12px，14,629 字形、2,593 字符覆盖 |
 | `GATE-010-BUILD` | Windows x64 clean Release build 成功 | 编译确认 | 空目录 `build-0.1.0-test-e2e1b3fe`，Release `502/502`，0 error；GCC 警告另列已知问题 |
-| `GATE-010-MESON` | 全部 Meson 测试通过 | 自动测试确认 | 当前候选 `13/13` |
-| `GATE-010-PYTHON` | 全部 Python 工具测试通过且无未说明跳过 | 自动测试确认 | 当前候选 `77/77`，0 skip |
+| `GATE-010-MESON` | 全部 Meson 测试通过 | 自动测试确认 | 当前候选 `14/14` |
+| `GATE-010-PYTHON` | 全部 Python 工具测试通过且无未说明跳过 | 自动测试确认 | 当前候选 `86/86`，0 skip |
 | `GATE-010-LUA` | 最终 ZIP EXE 执行模块及四反应引擎回归 | 实际运行确认 | 已剥离 EXE `6/6`；另有五类 OPS 双往返运行 |
 | `GATE-010-STARTUP` | 从 ZIP 解压、全新隔离目录重复启动，无崩溃且进程响应 | 实际运行确认 | 当前 ZIP 解压 EXE 在全新隔离 `ddir` 启动，标题正确、句柄非零、`Responding=true`、正常退出；重复次数 1 |
 
@@ -66,7 +66,7 @@
 | `GATE-010-SOURCE-PUBLIC` | 对应源码和 tag 可匿名 HTTPS 克隆并重建 | 源码确认（`false`；外部权限阻塞） | 当前 `source_commit_public=false`、`anonymous_clone_pass=false` |
 | `GATE-010-LICENSES` | GPL、字体、第三方来源和 AI 披露随源码/包完整 | 自动测试确认 | 当前普通 ZIP 白名单含 GPL、字体许可证、第三方来源和 AI 披露；ZIP 清单/哈希二审通过；公开对应源码仍受外部门禁阻塞 |
 | `GATE-010-BINARY` | 普通 EXE 已剥离、符号分离、无开发路径，PE 安全标志保留 | 自动测试确认 | EXE `D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2`；符号 `42D96F23C3702EE96FBEE5CF961582B7A1423FA1ABC6A73D617066A8A5E66364`；路径、调试段、动态开发运行库及 PE 标志审计通过；未签名 |
-| `GATE-010-PACKAGES` | 普通包、符号包及 `.sha256` 生成并解压二审，普通包无用户数据 | 自动测试确认 | 候选 `4f5c07f9`：普通 ZIP `0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051`；符号 ZIP `4F3645DFD664B3DE2BB0ADDD0FE107037607F4DEE7BBF4DAF5C97D6521A400A1`；两包审计通过 |
+| `GATE-010-PACKAGES` | 普通包、符号包及 `.sha256` 生成并解压二审，普通包无用户数据 | 自动测试确认 | 候选 `5a9435e9`：普通 ZIP `D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16`；符号 ZIP `D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD5E5`；两包清单绑定相同提交且审计通过 |
 | `GATE-010-TAG` | tag `v0.1.0-test` 指向报告中的精确提交 | 源码确认（`false`；外部权限阻塞） | 当前无发布 tag，不得提前创建 |
 | `GATE-010-RELEASE` | prerelease 已创建且下载物哈希与报告一致 | 源码确认（`false`；外部权限阻塞） | 当前 `github_release_created=false`、`release_ready=false` |
 
