@@ -6,7 +6,7 @@
 
 - 初始工作树干净；请求指定的 `0e9ff54c65c64f01e3af567366d2eed1de2c5dd9` 是当前分支的祖先。
 - 开始验收时 HEAD 已包含后续干净提交 `e2e965ad` 和 `1d490072`，没有回退或覆盖它们。
-- 术语修正构建基线为 `4961f99f8371d142bb7d4e361607b00251a501d6`；旧候选 ZIP 已保存在 `artifacts/final-validation/baseline-dist/`，原始 `dist/` 文件未删除。
+- 最终候选构建提交为 `1a76864b85175b9564373598c9f931ac8c27f014`；旧候选 ZIP 已保存在 `artifacts/final-validation/baseline-dist/`，原始 `dist/` 文件未删除。
 
 ## 凭据检查
 
@@ -60,7 +60,7 @@
 ## 机器可读结论
 
 ```text
-source_commit=not_tested
+source_commit=1a76864b85175b9564373598c9f931ac8c27f014
 release_tag=not_tested
 version=0.1.0-test
 
@@ -137,8 +137,8 @@ developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=not_tested
-symbols_zip_sha256=not_tested
+public_zip_sha256=4377A351CBC791B574C8C261ADD08A1CAF7412B60103F018AE63BFAE50DEF183
+symbols_zip_sha256=E3EBD7042DA7020059EC66B994715644889165D9B42A45B7538228D3A9E94D06
 zip_audit_pass=true
 
 tag_public=false
