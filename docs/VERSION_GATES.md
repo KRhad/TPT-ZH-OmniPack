@@ -51,8 +51,8 @@
 | 门禁 ID | 必需结果 | 当前状态 | 完成证据 |
 |---|---|---|---|
 | `GATE-010-OPS-OFFICIAL` | 官方基础 OPS 执行保存→退出→重启→加载→再保存→再加载 | 实际运行确认 | `official` 场景 3 进程、2 重启、2 加载；6 粒子、每次 14 字段断言，官方 identifier/ID 逐项一致 |
-| `GATE-010-OPS-MODULES` | 四个单模块与四模块混合 OPS 完成双往返 | 实际运行确认 | `metallurgy/biology/chemistry/nuclear` 5/5 总用例通过；单模块共 15 进程、10 重启、10 加载验证；混合场景另用 3 进程双往返通过 |
-| `GATE-010-OPS-CARRIERS` | `LAVA`、`SPRK`、`MSCR` 及 `ctype/tmp/tmp2` 间接引用往返不漂移 | 实际运行确认 | 提交 `f92e12fa`：官方、四单模块和混合场景覆盖 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2`；单模块每次加载合计 120 字段断言 |
+| `GATE-010-OPS-MODULES` | 四个单模块与四模块混合 OPS 完成双往返 | 实际运行确认 | `metallurgy/biology/chemistry/nuclear` 单模块 `4/4`，共 12 进程、8 重启、8 加载验证、73 粒子和 106 字段断言；混合场景另用 3 进程双往返通过 |
+| `GATE-010-OPS-CARRIERS` | `LAVA`、`SPRK`、`MSCR` 及 `ctype/tmp/tmp2` 间接引用往返不漂移 | 实际运行确认 | 提交 `f92e12fa`：官方、四单模块和混合场景覆盖 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2`；官方加四单模块每次加载合计 120 字段断言，其中四单模块为 106 |
 | `GATE-010-LOAD-CHOICE` | 禁用模块提示的正常加载、只读加载、取消均正确 | 尚未测试 | 三项真实 GUI 操作；取消后沙盘哈希/状态不变 |
 | `GATE-010-READONLY-SAVE` | 菜单、快捷键、另存、覆盖和退出路径均不覆盖只读源 | 尚未测试 | 五条写入路径及磁盘哈希前后对比 |
 | `GATE-010-READONLY-UPLOAD` | 新建上传和在线更新上传均被拦截 | 尚未测试 | 登录/测试环境中的两条控制器路径 |
