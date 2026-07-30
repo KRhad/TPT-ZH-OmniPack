@@ -276,15 +276,16 @@ embedded_files += [
 
 element_catalog_data = custom_target(
 	'element-catalog-data',
-	input: files('../docs/ELEMENT_REGISTRY.csv'),
+	input: files('../docs/ELEMENT_REGISTRY.csv', '../docs/ELEMENT_CONTENT.csv'),
 	output: 'ElementCatalogData.cpp',
 	build_always_stale: true,
 	command: [
 		python3_prog,
 		files('../tools/generate_element_catalog.py'),
 		'@OUTPUT@',
-		'@INPUT@',
+		'@INPUT0@',
 		meson.project_source_root(),
+		'@INPUT1@',
 	],
 )
 powder_files += element_catalog_data

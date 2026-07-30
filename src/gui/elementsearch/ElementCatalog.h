@@ -24,6 +24,14 @@ struct ElementCatalogRecord
 	std::string_view chineseDescription;
 	std::string_view license;
 	std::string_view notes;
+	std::string_view recipeEnglish;
+	std::string_view recipeChinese;
+	std::string_view productionEnglish;
+	std::string_view productionChinese;
+	std::string_view useEnglish;
+	std::string_view useChinese;
+	std::string_view hazardEnglish;
+	std::string_view hazardChinese;
 };
 
 std::span<ElementCatalogRecord const> GetElementCatalog();

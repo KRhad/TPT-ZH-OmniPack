@@ -69,6 +69,16 @@ String CatalogCategory(std::string_view category)
 	}
 	return CatalogValue("category", category);
 }
+
+String CatalogContent(
+	int language,
+	std::string_view english,
+	std::string_view chinese)
+{
+	return language == 1 && !chinese.empty()
+		? CatalogString(chinese)
+		: CatalogString(english);
+}
 }
 
 ElementSearchActivity::ElementSearchActivity(GameController * gameController, std::vector<Tool*> tools) :
@@ -133,6 +143,15 @@ ElementSearchActivity::ElementSearchActivity(GameController * gameController, st
 		details << Localization::Ref().Tr("encyclopedia.save_compatibility") << ": " << CatalogValue("save", record->saveCompatibility) << "\n";
 		details << Localization::Ref().Tr("encyclopedia.implementation") << ": " << CatalogValue("implementation", record->implementationStatus) << "\n";
 		details << Localization::Ref().Tr("encyclopedia.test_status") << ": " << CatalogValue("test", record->testStatus) << "\n";
+		auto appendContent = [&](char const *key, std::string_view english, std::string_view chinese) {
+			auto content = CatalogContent(language, english, chinese);
+			if (!content.empty())
+				details << Localization::Ref().Tr(key) << ": " << content << "\n";
+		};
+		appendContent("encyclopedia.recipe", record->recipeEnglish, record->recipeChinese);
+		appendContent("encyclopedia.production", record->productionEnglish, record->productionChinese);
+		appendContent("encyclopedia.use", record->useEnglish, record->useChinese);
+		appendContent("encyclopedia.hazard", record->hazardEnglish, record->hazardChinese);
 
 		if (record->stableId >= 0 && record->stableId < PT_NUM)
 		{
@@ -244,6 +263,14 @@ void ElementSearchActivity::searchTools(String query)
 			pushIfMatches(CatalogString(record->menuCategory).ToLower(), toolIndex, 2);
 			pushIfMatches(CatalogString(record->englishDescription).ToLower(), toolIndex, 3);
 			pushIfMatches(CatalogString(record->chineseDescription).ToLower(), toolIndex, 3);
+			pushIfMatches(CatalogString(record->recipeEnglish).ToLower(), toolIndex, 3);
+			pushIfMatches(CatalogString(record->recipeChinese).ToLower(), toolIndex, 3);
+			pushIfMatches(CatalogString(record->productionEnglish).ToLower(), toolIndex, 3);
+			pushIfMatches(CatalogString(record->productionChinese).ToLower(), toolIndex, 3);
+			pushIfMatches(CatalogString(record->useEnglish).ToLower(), toolIndex, 3);
+			pushIfMatches(CatalogString(record->useChinese).ToLower(), toolIndex, 3);
+			pushIfMatches(CatalogString(record->hazardEnglish).ToLower(), toolIndex, 3);
+			pushIfMatches(CatalogString(record->hazardChinese).ToLower(), toolIndex, 3);
 		}
 		pushIfMatches(tools[toolIndex]->Description.ToLower(), toolIndex, 3);
 		auto it = menudescriptionLower.find(tools[toolIndex]);

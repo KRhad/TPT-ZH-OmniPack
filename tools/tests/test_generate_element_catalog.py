@@ -48,6 +48,14 @@ struct ElementCatalogRecord
     std::string_view chineseDescription;
     std::string_view license;
     std::string_view notes;
+    std::string_view recipeEnglish;
+    std::string_view recipeChinese;
+    std::string_view productionEnglish;
+    std::string_view productionChinese;
+    std::string_view useEnglish;
+    std::string_view useChinese;
+    std::string_view hazardEnglish;
+    std::string_view hazardChinese;
 };
 
 std::span<ElementCatalogRecord const> GetElementCatalog();
@@ -128,10 +136,20 @@ class GenerateElementCatalogTests(unittest.TestCase):
             writer.writerows(rows)
 
     @staticmethod
-    def run_main(output: Path, registry: Path) -> tuple[int, str, str]:
+    def run_main(
+        output: Path,
+        registry: Path,
+        source_root: Path | None = None,
+        content: Path | None = None,
+    ) -> tuple[int, str, str]:
         stdout = io.StringIO()
         stderr = io.StringIO()
         argv = [str(SCRIPT), str(output), str(registry)]
+        if source_root is not None:
+            argv.append(str(source_root))
+        if content is not None:
+            assert source_root is not None
+            argv.append(str(content))
         with mock.patch.object(sys, "argv", argv):
             with contextlib.redirect_stdout(stdout):
                 with contextlib.redirect_stderr(stderr):
@@ -229,6 +247,30 @@ class GenerateElementCatalogTests(unittest.TestCase):
                 first_text.index('"DEFAULT_PT_HIGH"'),
             )
             self.assert_compiles(first_output)
+
+    def test_content_registry_is_compiled_into_matching_omnipack_record(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            registry = root / "registry.csv"
+            content = root / "content.csv"
+            output = root / "catalog.cpp"
+            self.write_registry(
+                registry,
+                [self.make_row(identifier="OMNI_PT_TEST")],
+            )
+            content.write_text(
+                "identifier,recipe_en,recipe_zh,production_en,production_zh,use_en,use_zh,hazard_en,hazard_zh\n"
+                "OMNI_PT_TEST,Recipe,配方,Production,生产,Use,用途,Hazard,危险\n",
+                encoding="utf-8",
+                newline="",
+            )
+            with mock.patch.object(
+                generate_element_catalog, "validate_repository", return_value=True
+            ):
+                result, _, error = self.run_main(output, registry, root, content)
+            self.assertEqual(result, 0, error)
+            generated = output.read_text(encoding="utf-8")
+            self.assertIn('"Recipe", "配方", "Production", "生产", "Use", "用途", "Hazard", "危险"', generated)
 
     def test_missing_column_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

@@ -4,8 +4,8 @@
 
 ## 审计对象
 
-- 生成时间（UTC）：`2026-07-29T18:05:55+00:00`
-- 当前提交：`25a43eccf5b9b825ec373740377c6b05a7d58e7f`
+- 生成时间（UTC）：`2026-07-30T02:41:46+00:00`
+- 当前提交：`a24c96aa6b5eaf9b2e4fa52198892e3a785c8fae`
 - 英文文件：`C:\Users\KR\TPT-ZH-OmniPack\src\lang\en-US.json`
 - 中文文件：`C:\Users\KR\TPT-ZH-OmniPack\src\lang\zh-CN.json`
 - 命令：`python tools/i18n_audit.py --check --write-report docs\I18N_AUDIT.md`
@@ -16,8 +16,8 @@
 
 | 指标 | 数量 |
 |---|---:|
-| 英文键总数 | 1252 |
-| 中文键总数 | 1252 |
+| 英文键总数 | 1256 |
+| 中文键总数 | 1256 |
 | 中文缺失键 | 0 |
 | 中文多余键 | 0 |
 | 英文/中文重复键 | 0 |

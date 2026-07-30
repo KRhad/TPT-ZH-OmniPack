@@ -154,6 +154,21 @@
 | 核工业 OPS 往返存档 | 运行 | NOT RUN | Phase 7 固定 `328..334`、`SPRK(NGEN)`、`NEUT` 样本 |
 | 高粒子数反应堆压力样本 | 压力 | NOT RUN | Phase 7 记录 FPS、内存与事件预算耗尽行为 |
 
+## Phase 6 扩展元素图鉴内容
+
+| 测试 | 类型 | 状态 | 证据/备注 |
+|---|---|---|---|
+| 双语内容登记完整性 | 静态 | PASS | `ELEMENT_CONTENT.csv` 覆盖全部 48 个 `implementation_status=implemented` 的 `OMNI_PT_*` 元素 |
+| 内容 identifier 契约 | 静态 | PASS | 缺失、未知或大小写漂移 identifier 均被内容审计拒绝 |
+| 内容字段结构 | 静态 | PASS | 配方、生产、用途、危险均要求英中非空文本且拒绝非法控制符 |
+| 编译目录整合 | 构建 | PASS | `generate_element_catalog.py` 将八个内容字段写入 `ElementCatalogRecord` |
+| 图鉴搜索内容 | 构建 | PASS | 搜索索引配方、生产、用途和危险的中英文文本 |
+| 内容静态审计 | 静态 | PASS | `py tools/element_content_audit.py`：48 条双语扩展元素内容 |
+| Python 工具单元测试 | 静态 | PASS | 44/44；2 项本机未发现 C++ 编译器的测试跳过 |
+| Meson `static` suite | 静态 | PASS | 8/8，含内容审计 |
+| Windows x64 增量编译 | 构建 | PASS | GCC 16.1.0 / Ninja；0 error，2 条既有 `PowderToy.cpp` warning |
+| 图鉴内容视觉布局 | 运行 | NOT RUN | 需要可信 UI 控制或人工复核 |
+
 ## 后续运行与压力测试
 
 以下测试尚未因编译成功而被误标为通过：
@@ -166,6 +181,7 @@
 | 冶金核心生产链与材料行为 | PASS |
 | 基础化学核心工艺 | PASS |
 | 生物与受控核工业核心路径 | PASS |
+| 扩展元素图鉴内容数据与编译目录 | PASS |
 | 自动化、灾害玩法 | NOT RUN |
 | 炼金进度、成就、挑战、教程 | NOT RUN |
 | 七类高粒子数压力样本 | NOT RUN |
@@ -204,3 +220,9 @@
 | 构建 | 状态 | 大小 | SHA-256 |
 |---|---|---:|---|
 | `build-phase2-clean/tpt-zh-omnipack.exe` | PASS | 243,554,909 | `F27E73149243B096933C0779EE0701ADA7711C3090C24E9629389299671BF6FD` |
+
+## 当前 Phase 6 扩展元素图鉴内容产物
+
+| 构建 | 状态 | 大小 | SHA-256 |
+|---|---|---:|---|
+| `build-phase2-clean/tpt-zh-omnipack.exe` | PASS | 243,661,917 | `7CF703EC81DC878368E63EEB1E88C297C734C9ED8F7286943AD0DE9A8BA5B260` |
