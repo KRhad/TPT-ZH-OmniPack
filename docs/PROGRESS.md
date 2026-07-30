@@ -278,6 +278,9 @@ Phase 8 Windows x64 测试包：
 - 测试包门禁：PASS，检查 ZIP 成员精确集合、重复成员、PE `MZ` 头、可执行文件大小/SHA-256 与清单的一致性。
 - 静态审计与 Python 工具单测：PASS，50/50。
 - Meson `static` suite：10/10 PASS，含测试包审计。
+- 交付产物：从提交 `f19cf0634e8c024bc5a7711ee1f2c2d652d7d5f6` 构建；`tpt-zh-omnipack.exe` 为 `244,465,722` 字节，SHA-256 为 `3B96CFEC060705A48681645074AE3C5F53E9A2D40AE56FF76B0E906C2FDBD406`。ZIP 为 `69,790,282` 字节，SHA-256 为 `D97AB00AFB0F7DF42BF8C58981641C1F984B041365B205E8FCD162B2D901A258`。
+- 最终客户端 Lua 回归：PASS，模块分配/选择、冶金（7 条配方、5 类行为）、化学（9 条路径）、生态完整/简化模式（各 6 条路径）和核工业（4 条路径）均以交付可执行文件运行通过。
+- Windows x64 重建：PASS，0 error；GCC 16.1.0 仍报告两条既有 `PowderToy.cpp` `-Wmaybe-uninitialized` 警告。
 - 实际 UI 手动检查、OPS 往返、跨模组迁移、兼容占位和高粒子数压力：NOT RUN。
 
 ## 性能结果
@@ -315,3 +318,7 @@ Phase 2 最终加固提交：
 - 严格本地化门禁：`457233acce404dd1f8d2e3566abea23f0ec6c0e3`
 
 Phase 3 冶金提交：`metallurgy: add bounded industrial materials module`（以当前 Git 历史中的该提交为准）。
+
+Phase 7 禁用模块存档加载兼容：`0c2e6cbabbccd40ef380c7953941a3e4e1dbb266`
+
+Phase 8 Windows x64 测试包（本次交付产物源提交）：`f19cf0634e8c024bc5a7711ee1f2c2d652d7d5f6`

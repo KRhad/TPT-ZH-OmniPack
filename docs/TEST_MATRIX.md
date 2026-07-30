@@ -199,7 +199,10 @@
 | 测试包审计单元测试 | 静态 | PASS | 3 项覆盖正常包、个人数据注入和清单/二进制篡改 |
 | Python 工具单元测试 | 静态 | PASS | 50/50 |
 | Meson `static` suite | 静态 | PASS | 10/10，含测试包审计 |
-| 测试 ZIP 生成与审计 | 构建 | PASS | `package_test_release.py` 后由 `test_release_audit.py` 复核 |
+| Windows x64 构建 | 构建 | PASS | GCC 16.1.0 / Ninja；0 error，2 条既有 `PowderToy.cpp` warning |
+| 测试 ZIP 生成与审计 | 构建 | PASS | 从 `f19cf0634e8c024bc5a7711ee1f2c2d652d7d5f6` 构建；`package_test_release.py` 后由 `test_release_audit.py` 复核 |
+| 交付 ZIP 完整性 | 构建 | PASS | `69,790,282` 字节，SHA-256 `D97AB00AFB0F7DF42BF8C58981641C1F984B041365B205E8FCD162B2D901A258` |
+| 最终 Lua 客户端回归 | 运行 | PASS | 模块、冶金、化学、生态完整/简化及核工业共 6 项通过 |
 | Windows UI 手动检查 | 运行 | NOT RUN | 测试步骤见 `docs/TEST_RELEASE.md` |
 
 ## 后续运行与压力测试
@@ -267,3 +270,12 @@
 | 构建 | 状态 | 大小 | SHA-256 |
 |---|---|---:|---|
 | `build-phase2-clean/tpt-zh-omnipack.exe` | PASS | 244,470,300 | `860F796A547DACF8EAB014AE4060252DD2199224067A21EA91BC64178FB4690D` |
+
+## 当前 Phase 8 Windows x64 测试包产物
+
+| 构建 | 状态 | 大小 | SHA-256 |
+|---|---|---:|---|
+| `build-phase2-clean/tpt-zh-omnipack.exe` | PASS | 244,465,722 | `3B96CFEC060705A48681645074AE3C5F53E9A2D40AE56FF76B0E906C2FDBD406` |
+| `dist/TPT-ZH-OmniPack-Test-Windows-x64.zip` | PASS | 69,790,282 | `D97AB00AFB0F7DF42BF8C58981641C1F984B041365B205E8FCD162B2D901A258` |
+
+上述 Phase 8 产物由提交 `f19cf0634e8c024bc5a7711ee1f2c2d652d7d5f6` 构建，ZIP 内 `TEST-MANIFEST.txt` 绑定同一提交、可执行文件大小和 SHA-256。
