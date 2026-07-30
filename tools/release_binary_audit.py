@@ -22,6 +22,7 @@ DLL_CHARACTERISTICS_BITS = {
     "NX_COMPAT": 0x0100,
     "HIGH_ENTROPY_VA": 0x0020,
 }
+DYNAMIC_RUNTIME_DLLS = ("libgcc_s_seh-1.dll", "libstdc++-6.dll", "libwinpthread-1.dll")
 
 
 def sha256(path: Path) -> str:
@@ -66,6 +67,10 @@ def audit_executable(executable: Path, objdump: str | None, strings: str | None)
         for marker in SECURITY_MARKERS:
             if not flags & DLL_CHARACTERISTICS_BITS[marker]:
                 errors.append(f"PE security flag is absent: {marker}")
+        imports = portable.stdout.lower()
+        for dll_name in DYNAMIC_RUNTIME_DLLS:
+            if f"dll name: {dll_name}" in imports:
+                errors.append(f"release executable imports a development runtime DLL: {dll_name}")
     if not strings:
         errors.append("strings is required for release path auditing")
     else:
