@@ -7,11 +7,8 @@
 inline ByteString VersionInfo()
 {
 	ByteStringBuilder sb;
-	sb << DISPLAY_VERSION[0] << "." << DISPLAY_VERSION[1];
-	if constexpr (!SNAPSHOT)
-	{
-		sb << "." << APP_VERSION.build;
-	}
+	sb << APPNAME << " " << RELEASE_LABEL
+	   << " (The Powder Toy " << UPSTREAM_VERSION.displayVersion[0] << "." << UPSTREAM_VERSION.displayVersion[1] << "." << UPSTREAM_VERSION.build << ")";
 	sb << " " << IDENT;
 	if constexpr (MOD)
 	{
@@ -44,7 +41,7 @@ inline ByteString IntroText()
 {
 	auto tr = [](const char *key) { return Localization::Ref().Tr(key).ToUtf8(); };
 	ByteStringBuilder sb;
-	sb << tr("intro.title_prefix") << APPNAME << tr("intro.title_after_name") << DISPLAY_VERSION[0] << "." << DISPLAY_VERSION[1] << tr("intro.title_after_version")
+	sb << tr("intro.title_prefix") << APPNAME << " " << RELEASE_LABEL << tr("intro.title_after_name") << UPSTREAM_VERSION.displayVersion[0] << "." << UPSTREAM_VERSION.displayVersion[1] << tr("intro.title_after_version")
 	      << tr("intro.toggle_help")
 	      << tr("intro.material.hover")
 	      << tr("intro.material.pick")

@@ -248,7 +248,7 @@ void SDLSetScreen()
 		{
 			rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
 		}
-		sdl_window = SDL_CreateWindow(APPNAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, size.X, size.Y, flags);
+		sdl_window = SDL_CreateWindow(ByteString::Build(APPNAME, " ", RELEASE_LABEL).c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, size.X, size.Y, flags);
 		if (!sdl_window)
 		{
 			fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());

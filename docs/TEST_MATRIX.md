@@ -43,7 +43,7 @@
 | 玩家可见硬编码英文 | NOT RUN | 自动启发式已运行；完整 Phase 6 人工分类尚未完成 |
 | 非法温度/数值 | PASS（官方） | 官方 195 元素构造参数静态解析 |
 | 明显无限复制/循环模式 | PASS（官方基线） | Phase 0 静态复核；自定义内容尚未加入 |
-| 发布包隐私文件 | NOT RUN | 打包脚本尚未实现 |
+| 发布包隐私文件 | PASS（自动） | 白名单打包和解压后二次审计拒绝偏好、存档、脚本、对象和调试文件 |
 
 ## Phase 2 构建与运行
 
@@ -204,6 +204,23 @@
 | 交付 ZIP 完整性 | 构建 | PASS | `69,790,282` 字节，SHA-256 `D97AB00AFB0F7DF42BF8C58981641C1F984B041365B205E8FCD162B2D901A258` |
 | 最终 Lua 客户端回归 | 运行 | PASS | 模块、冶金、化学、生态完整/简化及核工业共 6 项通过 |
 | Windows UI 手动检查 | 运行 | NOT RUN | 测试步骤见 `docs/TEST_RELEASE.md` |
+
+## Release 加固候选
+
+| 测试 | 类型 | 状态 | 证据/备注 |
+|---|---|---|---|
+| Windows x64 Release clean build | 构建 | PASS | `build-release-public`，GCC 16.1.0 / Meson 1.11.2 / Ninja 1.13.2；500 目标、0 error |
+| 调试符号拆分 | 构建 | PASS | `objcopy --only-keep-debug` 后 `strip --strip-debug`；普通 EXE 与 `.debug` 分离 |
+| 发布 EXE 调试段 | 自动 | PASS | `release_binary_audit.py` 拒绝 `.debug*` 段 |
+| 发布 EXE 开发路径 | 自动 | PASS | 扫描拒绝 `C:\\Users\\`、`/Users/` 和构建路径标记 |
+| PE 缓解属性 | 自动 | PASS | 审计 `DYNAMIC_BASE`、`NX_COMPAT`、`HIGH_ENTROPY_VA` 位 |
+| 字体来源与许可证 | 源码/自动 | PASS | `docs/FONT_AUDIT.md`；语言目录 2,593 字符全部有合法字形输入 |
+| 公共 ZIP 与符号 ZIP | 自动 | PASS（待最终报告哈希） | 白名单、成员哈希、ZIP SHA-256、解压后二次审计 |
+| 最终 ZIP 启动 | 实际 GUI | NOT RUN | 必须从解压目录记录窗口、独立数据目录与退出行为 |
+| 中文/英文点击切换 | 实际 GUI | NOT RUN | 需截图和重启验证 |
+| 模块开关与代表元素 | 实际 GUI | NOT RUN | 需四模块和 `ALUM/NUTR/NFUL/CHLR` 实测 |
+| OPS 三选项与只读拦截 | 实际 GUI | NOT RUN | 静态门禁已通过，实际点击未完成 |
+| 反应与压力样本 | 实际 GUI | NOT RUN | Lua 回归不替代持续 FPS/内存数据 |
 
 ## 后续运行与压力测试
 

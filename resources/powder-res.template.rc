@@ -25,11 +25,11 @@ PRODUCTVERSION @DISPLAY_VERSION_MAJOR@,@DISPLAY_VERSION_MINOR@,0,@BUILD_NUM@
 		{
 			VALUE "CompanyName",      "https://powdertoy.co.uk/\0"
 			VALUE "FileDescription",  "@APPNAME@\0"
-			VALUE "FileVersion",      "@DISPLAY_VERSION_MAJOR@.@DISPLAY_VERSION_MINOR@.0.@BUILD_NUM@\0"
+			VALUE "FileVersion",      "TPT-ZH-OmniPack @RELEASE_LABEL@ (The Powder Toy @UPSTREAM_VERSION_MAJOR@.@UPSTREAM_VERSION_MINOR@.@UPSTREAM_BUILD_NUM@)\0"
 			VALUE "OriginalFilename", "@APPEXE@.exe\0"
 			VALUE "LegalCopyright",   "@MANIFEST_COPYRIGHT@\0"
-			VALUE "ProductName",      "@APPCOMMENT@\0"
-			VALUE "ProductVersion",   "@DISPLAY_VERSION_MAJOR@.@DISPLAY_VERSION_MINOR@.0.@BUILD_NUM@\0"
+			VALUE "ProductName",      "@APPNAME@\0"
+			VALUE "ProductVersion",   "@RELEASE_LABEL@ (upstream @UPSTREAM_VERSION_MAJOR@.@UPSTREAM_VERSION_MINOR@.@UPSTREAM_BUILD_NUM@)\0"
 			VALUE "InternalName",     "@APPID@\0"
 		}
 	}

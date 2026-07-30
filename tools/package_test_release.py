@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Build a minimal, auditable Windows x64 test ZIP from a verified executable."""
+"""Create deterministic public-test and detached-symbol ZIP archives."""
 
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -14,14 +16,24 @@ from typing import Iterable, Sequence
 import zipfile
 
 
-PACKAGE_NAME = "TPT-ZH-OmniPack-Test-Windows-x64"
+VERSION = "0.1.0-test"
+PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
+SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
+SYMBOL_NAME = "tpt-zh-omnipack.debug"
 DOCUMENTS = (
     ("LICENSE", "LICENSE"),
     ("README.zh-CN.md", "README.zh-CN.md"),
     ("CHANGELOG.zh-CN.md", "CHANGELOG.zh-CN.md"),
     ("docs/TEST_RELEASE.md", "TESTING.zh-CN.md"),
+    ("docs/THIRD_PARTY_SOURCES.md", "SOURCE-AND-LICENSES.zh-CN.md"),
+    ("docs/KNOWN_ISSUES.md", "KNOWN-ISSUES.zh-CN.md"),
+    ("docs/AI_DISCLOSURE.md", "AI-DISCLOSURE.zh-CN.md"),
+    ("docs/FONT_AUDIT.md", "FONT-AUDIT.md"),
+    ("resources/third_party/GNU_UNIFONT_COPYING.txt", "LICENSES/GNU-UNIFONT-OFL-1.1.txt"),
 )
+FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
+FORBIDDEN_COMPONENTS = {".git", "__pycache__", "build", "dist"}
 
 
 def sha256(path: Path) -> str:
@@ -34,103 +46,119 @@ def sha256(path: Path) -> str:
 
 def git_revision(source_root: Path) -> str:
     completed = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=source_root,
-        check=False,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
+        ["git", "rev-parse", "HEAD"], cwd=source_root, check=False,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if completed.returncode:
-        return "unknown"
+        raise ValueError(f"cannot determine Git revision: {completed.stderr.strip()}")
     revision = completed.stdout.strip()
-    return revision if revision else "unknown"
+    if len(revision) != 40:
+        raise ValueError(f"unexpected Git revision: {revision!r}")
+    return revision
 
 
-def required_sources(source_root: Path, executable: Path) -> list[Path]:
-    sources = [executable]
-    for source_name, _ in DOCUMENTS:
-        sources.append(source_root / source_name)
-    return sources
+def source_date_epoch() -> int:
+    value = os.environ.get("SOURCE_DATE_EPOCH")
+    if value is None:
+        return 315532800  # 1980-01-01, the earliest ZIP timestamp.
+    try:
+        epoch = int(value)
+    except ValueError as exc:
+        raise ValueError("SOURCE_DATE_EPOCH must be an integer") from exc
+    if epoch < 315532800:
+        raise ValueError("SOURCE_DATE_EPOCH must be on or after 1980-01-01")
+    return epoch
 
 
-def validate_sources(source_root: Path, executable: Path) -> list[str]:
-    errors: list[str] = []
+def zip_datetime(epoch: int) -> tuple[int, int, int, int, int, int]:
+    timestamp = datetime.fromtimestamp(epoch, tz=timezone.utc)
+    return timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute, timestamp.second
+
+
+def validate_member_name(name: str) -> None:
+    path = Path(name)
+    if path.is_absolute() or ".." in path.parts or any(component in FORBIDDEN_COMPONENTS for component in path.parts):
+        raise ValueError(f"unsafe archive member name: {name}")
+    if name.lower().endswith(FORBIDDEN_SUFFIXES):
+        raise ValueError(f"forbidden archive member name: {name}")
+
+
+def validate_sources(source_root: Path, executable: Path, symbols: Path) -> None:
     if executable.name != EXECUTABLE_NAME:
-        errors.append(
-            f"executable must be named {EXECUTABLE_NAME!r}, got {executable.name!r}"
-        )
-    for path in required_sources(source_root, executable):
-        if not path.is_file():
-            errors.append(f"required test-release source is missing: {path}")
-    if executable.is_file():
-        with executable.open("rb") as stream:
-            if stream.read(2) != b"MZ":
-                errors.append(f"executable is not a Windows PE file: {executable}")
-    return errors
+        raise ValueError(f"executable must be named {EXECUTABLE_NAME!r}, got {executable.name!r}")
+    if not executable.is_file() or executable.read_bytes()[:2] != b"MZ":
+        raise ValueError(f"executable is not a Windows PE file: {executable}")
+    if not symbols.is_file() or symbols.stat().st_size == 0:
+        raise ValueError(f"debug symbol file is missing or empty: {symbols}")
+    for source_name, archive_name in DOCUMENTS:
+        validate_member_name(archive_name)
+        source = source_root / source_name
+        if not source.is_file():
+            raise ValueError(f"required public-release source is missing: {source}")
 
 
-def manifest_lines(revision: str, executable: Path, documents: Iterable[tuple[str, Path]]) -> str:
+def manifest(revision: str, members: Iterable[tuple[str, Path]], build_epoch: int, kind: str) -> str:
     lines = [
-        "format=1",
+        "format=2",
+        f"kind={kind}",
+        f"version={VERSION}",
         f"revision={revision}",
-        f"file={EXECUTABLE_NAME}",
-        f"sha256={sha256(executable)}",
-        f"size={executable.stat().st_size}",
+        f"build_epoch={build_epoch}",
     ]
-    for archive_name, document in documents:
-        lines.append(f"document={archive_name}:{sha256(document)}")
+    for name, path in members:
+        lines.append(f"member={name}|{path.stat().st_size}|{sha256(path)}")
     return "\n".join(lines) + "\n"
 
 
-def build_package(source_root: Path, executable: Path, output_directory: Path) -> tuple[Path, Path]:
+def write_zip(path: Path, root: str, files: Iterable[tuple[str, Path]], manifest_text: str, epoch: int) -> None:
+    timestamp = zip_datetime(epoch)
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9, strict_timestamps=True) as archive:
+        for name, source in sorted(files):
+            info = zipfile.ZipInfo(f"{root}/{name}", date_time=timestamp)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, source.read_bytes())
+        info = zipfile.ZipInfo(f"{root}/TEST-MANIFEST.txt", date_time=timestamp)
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.external_attr = 0o100644 << 16
+        archive.writestr(info, manifest_text.encode("utf-8"))
+
+
+def write_hash(path: Path) -> Path:
+    hash_path = path.with_suffix(path.suffix + ".sha256")
+    hash_path.write_text(f"{sha256(path)}  {path.name}\n", encoding="ascii", newline="\n")
+    return hash_path
+
+
+def build_package(source_root: Path, executable: Path, symbols: Path, output_directory: Path) -> tuple[Path, Path, Path, Path]:
     source_root = source_root.resolve()
     executable = executable.resolve()
+    symbols = symbols.resolve()
     output_directory = output_directory.resolve()
-    errors = validate_sources(source_root, executable)
-    if errors:
-        raise ValueError("\n".join(errors))
-
-    output_directory.mkdir(parents=True, exist_ok=True)
-    package_path = output_directory / f"{PACKAGE_NAME}.zip"
-    hash_path = output_directory / f"{PACKAGE_NAME}.zip.sha256"
+    validate_sources(source_root, executable, symbols)
     revision = git_revision(source_root)
-    document_sources = [
-        (archive_name, source_root / source_name)
-        for source_name, archive_name in DOCUMENTS
-    ]
-    manifest = manifest_lines(revision, executable, document_sources)
-
+    epoch = source_date_epoch()
+    output_directory.mkdir(parents=True, exist_ok=True)
+    normal_files = [(EXECUTABLE_NAME, executable)] + [(name, source_root / source) for source, name in DOCUMENTS]
+    symbol_files = [(SYMBOL_NAME, symbols)]
+    package_path = output_directory / f"{PACKAGE_STEM}.zip"
+    symbols_path = output_directory / f"{SYMBOL_PACKAGE_STEM}.zip"
     with tempfile.TemporaryDirectory(dir=output_directory) as temporary:
-        staged_root = Path(temporary) / PACKAGE_NAME
-        staged_root.mkdir()
-        shutil.copy2(executable, staged_root / EXECUTABLE_NAME)
-        for archive_name, source in document_sources:
-            shutil.copy2(source, staged_root / archive_name)
-        (staged_root / "TEST-MANIFEST.txt").write_text(manifest, encoding="utf-8", newline="\n")
-
-        temporary_zip = Path(temporary) / package_path.name
-        with zipfile.ZipFile(temporary_zip, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
-            for path in sorted(staged_root.rglob("*")):
-                if path.is_file():
-                    archive.write(path, path.relative_to(staged_root.parent).as_posix())
-        shutil.move(temporary_zip, package_path)
-
-    hash_path.write_text(
-        f"{sha256(package_path)}  {package_path.name}\n", encoding="ascii", newline="\n"
-    )
-    return package_path, hash_path
+        temporary = Path(temporary)
+        normal_temp = temporary / package_path.name
+        symbols_temp = temporary / symbols_path.name
+        write_zip(normal_temp, PACKAGE_STEM, normal_files, manifest(revision, normal_files, epoch, "public-test"), epoch)
+        write_zip(symbols_temp, SYMBOL_PACKAGE_STEM, symbol_files, manifest(revision, symbol_files, epoch, "debug-symbols"), epoch)
+        shutil.move(normal_temp, package_path)
+        shutil.move(symbols_temp, symbols_path)
+    return package_path, write_hash(package_path), symbols_path, write_hash(symbols_path)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--source-root", type=Path, default=Path(__file__).resolve().parents[1]
-    )
-    parser.add_argument(
-        "--executable", type=Path, required=True, help="Verified Windows executable to package."
-    )
+    parser.add_argument("--source-root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--executable", type=Path, required=True)
+    parser.add_argument("--symbols", type=Path, required=True)
     parser.add_argument("--output-directory", type=Path, default=Path("dist"))
     return parser
 
@@ -138,18 +166,16 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     source_root = args.source_root.resolve()
-    output_directory = args.output_directory
-    if not output_directory.is_absolute():
-        output_directory = source_root / output_directory
+    output_directory = args.output_directory if args.output_directory.is_absolute() else source_root / args.output_directory
     try:
-        package_path, hash_path = build_package(
-            source_root, args.executable, output_directory
-        )
+        package, package_hash, symbols, symbols_hash = build_package(source_root, args.executable, args.symbols, output_directory)
     except (OSError, ValueError) as exc:
         print(f"test-release-package: ERROR {exc}", file=sys.stderr)
         return 1
-    print(f"test-release-package: PASS {package_path}")
-    print(f"test-release-package: SHA256 {hash_path}")
+    print(f"test-release-package: PASS {package}")
+    print(f"test-release-package: SHA256 {package_hash}")
+    print(f"test-release-package: SYMBOLS {symbols}")
+    print(f"test-release-package: SYMBOLS-SHA256 {symbols_hash}")
     return 0
 
 

@@ -179,6 +179,12 @@ option(
 	description: 'App name, used for desktop integration and the window title, change if you work on a mod'
 )
 option(
+	'release_label',
+	type: 'string',
+	value: '0.1.0-test',
+	description: 'OmniPack product release label shown in the UI and Windows metadata'
+)
+option(
 	'app_comment',
 	type: 'string',
 	value: 'Simplified Chinese integrated physics sandbox',

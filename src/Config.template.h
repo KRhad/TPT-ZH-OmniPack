@@ -41,6 +41,7 @@ constexpr char UPDATESERVER[]   = "@UPDATESERVER@";
 constexpr char IDENT_PLATFORM[] = "@IDENT_PLATFORM@";
 constexpr char IDENT[]          = "@IDENT@";
 constexpr char APPNAME[]        = "@APPNAME@";
+constexpr char RELEASE_LABEL[]  = "@RELEASE_LABEL@";
 constexpr char APPCOMMENT[]     = "@APPCOMMENT@";
 constexpr char APPEXE[]         = "@APPEXE@";
 constexpr char APPID[]          = "@APPID@";

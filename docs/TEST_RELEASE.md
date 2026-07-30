@@ -1,8 +1,8 @@
-# Windows x64 测试版
+# Windows x64 公共测试候选
 
 ## 测试范围
 
-这是 TPT-ZH-OmniPack 的 Windows x64 内部测试版本。它包含官方 TPT 100.0
+这是 `TPT-ZH-OmniPack 0.1.0-test` 的 Windows x64 公共测试候选。它基于 The Powder Toy `100.0.399`，不是官方发布，也不是稳定版。它包含官方 TPT 100.0
 沙盘以及下列已实现模块：
 
 - 工业冶金：ID `256..278`。
@@ -15,12 +15,12 @@
 
 ## 启动
 
-1. 将 `TPT-ZH-OmniPack-Test-Windows-x64.zip` 解压到可写目录。
-2. 用 `TPT-ZH-OmniPack-Test-Windows-x64.zip.sha256` 校验 ZIP 哈希。
+1. 将 `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip` 解压到可写目录。
+2. 用 `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip.sha256` 校验 ZIP 哈希；ZIP 内的 `TEST-MANIFEST.txt` 校验每个文件。
 3. 启动 `tpt-zh-omnipack.exe`。
 4. 在“选项”的内容分区开关各模块，再从材料菜单或元素搜索中查找元素。
 
-测试包刻意不包含偏好、图章、存档、脚本或账户数据；首次运行会自行创建所需的应用数据。
+测试包刻意不包含偏好、图章、存档、脚本或账户数据；首次运行会自行创建独立于官方 TPT 的应用数据。当前 EXE 未签名，Windows SmartScreen 可能提示；不要绕过来源或哈希核验。
 
 ## 手动检查
 
@@ -43,4 +43,4 @@
 
 - UI 视觉复核与语言切换交互仍需人工验证。
 - OPS 往返、跨模组迁移、兼容占位与高粒子数性能样本尚未完成。
-- 随包中文字体仍缺少可追溯名称、来源和许可证信息，这阻止正式公开发布。
+- 最终 ZIP 的视觉、语言切换、OPS 往返、只读上传和压力测试仍需在隔离 Windows x64 环境中实际完成；在报告写明通过前，它阻止公开发布。
