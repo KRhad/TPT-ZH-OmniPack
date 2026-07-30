@@ -13,6 +13,8 @@
 
 # Build files
 build*/*
+/dist/
+/.omni-test-tmp/
 *.o
 *.exe
 *.dmg

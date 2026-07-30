@@ -4,8 +4,8 @@
 
 ## 审计对象
 
-- 生成时间（UTC）：`2026-07-30T03:08:20+00:00`
-- 当前提交：`b475a2eba2dc2ea1f2b7d93f9c4e5d5d75935c88`
+- 生成时间（UTC）：`2026-07-30T03:27:47+00:00`
+- 当前提交：`0c2e6cbabbccd40ef380c7953941a3e4e1dbb266`
 - 英文文件：`C:\Users\KR\TPT-ZH-OmniPack\src\lang\en-US.json`
 - 中文文件：`C:\Users\KR\TPT-ZH-OmniPack\src\lang\zh-CN.json`
 - 命令：`python tools/i18n_audit.py --check --write-report docs\I18N_AUDIT.md`
