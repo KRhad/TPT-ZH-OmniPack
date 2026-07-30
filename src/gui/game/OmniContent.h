@@ -2,8 +2,10 @@
 
 #include <array>
 #include <cstddef>
+#include <vector>
 
 class Tool;
+class GameSave;
 
 enum class OmniSetting : unsigned char
 {
@@ -79,3 +81,5 @@ void SetOmniSetting(OmniSetting setting, bool enabled);
 OmniElementModule GetOmniElementModule(int elementId);
 bool IsOmniElementSelectable(int elementId);
 bool IsOmniToolSelectable(Tool const &tool);
+std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save);
+char const *GetOmniElementModuleNameKey(OmniElementModule module);

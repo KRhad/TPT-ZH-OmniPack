@@ -10,6 +10,7 @@
 #include "Notification.h"
 #include "QuickOptions.h"
 #include "RenderPreset.h"
+#include "OmniContent.h"
 #include "tool/PropertyTool.h"
 #include "tool/GOLTool.h"
 
@@ -40,6 +41,7 @@
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/dialogues/InformationMessage.h"
 #include "gui/dialogues/ConfirmPrompt.h"
+#include "gui/dialogues/SaveCompatibilityPrompt.h"
 #include "gui/interface/Engine.h"
 
 #include "gui/colourpicker/ColourPickerActivity.h"
@@ -1230,15 +1232,7 @@ void GameController::OpenSearch(String searchText)
 		search = new SearchController([this] {
 			if (search->GetLoadedSave())
 			{
-				try
-				{
-					HistorySnapshot();
-					gameModel->SetSave(search->TakeLoadedSave(), gameView->ShiftBehaviour());
-				}
-				catch(GameModelException & ex)
-				{
-					new ErrorMessage(Localization::Ref().Tr("gamecontroller.cannot_open_save"), ByteString(ex.what()).FromUtf8());
-				}
+				LoadSave(search->TakeLoadedSave());
 			}
 		});
 	if (searchText.length())
@@ -1248,6 +1242,12 @@ void GameController::OpenSearch(String searchText)
 
 void GameController::OpenLocalSaveWindow(bool asCurrent)
 {
+	if (readOnlySave)
+	{
+		new ErrorMessage(Localization::Ref().Tr("common.error"), Localization::Ref().Tr("gamecontroller.read_only_save"));
+		return;
+	}
+
 	Simulation * sim = gameModel->GetSimulation();
 	auto gameSave = sim->Save(gameModel->GetIncludePressure() != gameView->ShiftBehaviour(), RES.OriginRect());
 	if(!gameSave)
@@ -1300,28 +1300,102 @@ void GameController::OpenLocalSaveWindow(bool asCurrent)
 
 void GameController::LoadSaveFile(std::unique_ptr<SaveFile> file)
 {
-	gameModel->SetSaveFile(std::move(file), gameView->ShiftBehaviour());
+	if (!file)
+	{
+		return;
+	}
+	auto const *save = file->GetGameSave();
+	if (!save)
+	{
+		save = file->LazyGetGameSave();
+	}
+	if (!save)
+	{
+		new ErrorMessage(Localization::Ref().Tr("gamecontroller.cannot_open_save"), file->GetError());
+		return;
+	}
+
+	auto pendingFile = std::make_shared<std::unique_ptr<SaveFile>>(std::move(file));
+	RequestSaveLoad(*save, [this, pendingFile](bool readOnly) {
+		if (!*pendingFile)
+		{
+			return;
+		}
+		auto const previousReadOnlySave = readOnlySave;
+		try
+		{
+			HistorySnapshot();
+			readOnlySave = readOnly;
+			gameModel->SetSaveFile(std::move(*pendingFile), gameView->ShiftBehaviour());
+		}
+		catch (GameModelException &ex)
+		{
+			readOnlySave = previousReadOnlySave;
+			new ErrorMessage(Localization::Ref().Tr("gamecontroller.cannot_open_save"), ByteString(ex.what()).FromUtf8());
+		}
+	});
 }
 
 
 void GameController::LoadSave(std::unique_ptr<SaveInfo> save)
 {
-	gameModel->SetSave(std::move(save), gameView->ShiftBehaviour());
+	if (!save || !save->GetGameSave())
+	{
+		return;
+	}
+
+	auto pendingSave = std::make_shared<std::unique_ptr<SaveInfo>>(std::move(save));
+	RequestSaveLoad(*(*pendingSave)->GetGameSave(), [this, pendingSave](bool readOnly) {
+		if (!*pendingSave)
+		{
+			return;
+		}
+		auto const previousReadOnlySave = readOnlySave;
+		try
+		{
+			HistorySnapshot();
+			readOnlySave = readOnly;
+			gameModel->SetSave(std::move(*pendingSave), gameView->ShiftBehaviour());
+		}
+		catch (GameModelException &ex)
+		{
+			readOnlySave = previousReadOnlySave;
+			new ErrorMessage(Localization::Ref().Tr("gamecontroller.cannot_open_save"), ByteString(ex.what()).FromUtf8());
+		}
+	});
+}
+
+void GameController::RequestSaveLoad(GameSave const &save, std::function<void (bool)> load)
+{
+	auto modules = FindDisabledOmniSaveModules(save);
+	if (modules.empty())
+	{
+		load(false);
+		return;
+	}
+
+	StringBuilder message;
+	message << Localization::Ref().Tr("gamecontroller.disabled_modules_message_prefix");
+	for (auto module : modules)
+	{
+		auto const *key = GetOmniElementModuleNameKey(module);
+		if (key && *key)
+		{
+			message << "\n- " << Localization::Ref().Tr(key);
+		}
+	}
+	message << Localization::Ref().Tr("gamecontroller.disabled_modules_message_suffix");
+	new SaveCompatibilityPrompt(Localization::Ref().Tr("gamecontroller.disabled_modules_title"), message.Build(), {
+		[load] { load(false); },
+		[load] { load(true); },
+	});
 }
 
 void GameController::OpenSaveDone()
 {
 	if (activePreview->GetDoOpen() && activePreview->GetSaveInfo())
 	{
-		try
-		{
-			HistorySnapshot();
-			LoadSave(activePreview->TakeSaveInfo());
-		}
-		catch(GameModelException & ex)
-		{
-			new ErrorMessage(Localization::Ref().Tr("gamecontroller.cannot_open_save"), ByteString(ex.what()).FromUtf8());
-		}
+		LoadSave(activePreview->TakeSaveInfo());
 	}
 }
 
@@ -1347,7 +1421,6 @@ void GameController::OpenSavePreview()
 void GameController::OpenLocalBrowse()
 {
 	new FileBrowserActivity(ByteString::Build(LOCAL_SAVE_DIR, PATH_SEP_CHAR), [this](auto file) {
-		HistorySnapshot();
 		LoadSaveFile(std::move(file));
 	});
 }
@@ -1455,6 +1528,12 @@ void GameController::OpenRenderOptions()
 
 void GameController::OpenSaveWindow()
 {
+	if (readOnlySave)
+	{
+		new ErrorMessage(Localization::Ref().Tr("common.error"), Localization::Ref().Tr("gamecontroller.read_only_save"));
+		return;
+	}
+
 	auto user = gameModel->GetUser();
 	if (user)
 	{
@@ -1498,6 +1577,12 @@ void GameController::OpenSaveWindow()
 
 void GameController::SaveAsCurrent()
 {
+	if (readOnlySave)
+	{
+		new ErrorMessage(Localization::Ref().Tr("common.error"), Localization::Ref().Tr("gamecontroller.read_only_save"));
+		return;
+	}
+
 	auto user = gameModel->GetUser();
 	if (gameModel->GetSave() && user && user->Username == gameModel->GetSave()->GetUserName())
 	{
@@ -1557,6 +1642,7 @@ void GameController::ChangeBrush()
 void GameController::ClearSim()
 {
 	HistorySnapshot();
+	readOnlySave = false;
 	gameModel->SetSave(nullptr, false);
 	gameModel->ClearSimulation();
 }

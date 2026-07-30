@@ -65,8 +65,10 @@ private:
 	std::vector<std::unique_ptr<DebugInfo>> debugInfo;
 	std::unique_ptr<Snapshot> beforeRestore;
 	unsigned int debugFlags;
+	bool readOnlySave = false;
 	
 	void OpenSaveDone();
+	void RequestSaveLoad(GameSave const &save, std::function<void (bool)> load);
 public:
 	enum MouseupReason
 	{

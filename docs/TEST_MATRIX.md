@@ -61,7 +61,7 @@
 | 构建目录隐私文件 | 安全 | PASS | `powder.pref`/账户/凭据候选 0 |
 | 图鉴打开与视觉排版 | 运行 | BLOCKED | 需要可信 UI 控制 |
 | 模块开关点击交互 | 运行 | BLOCKED | 需要可信 UI 控制 |
-| 禁用模块的存档警告 | 运行 | NOT RUN | 尚未实现兼容加载 UI |
+| 禁用模块的存档警告 | 静态/构建 | PASS | Phase 7 统一加载门禁、中文三选项提示和只读保存拦截已编译；实际 UI 交互仍待执行 |
 
 ## Phase 3 工业冶金
 
@@ -169,6 +169,25 @@
 | Windows x64 增量编译 | 构建 | PASS | GCC 16.1.0 / Ninja；0 error，2 条既有 `PowderToy.cpp` warning |
 | 图鉴内容视觉布局 | 运行 | NOT RUN | 需要可信 UI 控制或人工复核 |
 
+## Phase 7 禁用模块存档加载兼容
+
+| 测试 | 类型 | 状态 | 证据/备注 |
+|---|---|---|---|
+| 直接模块元素检测 | 静态 | PASS | 解析后的 `Particle.type` 在切换沙盘前按稳定目录和模块开关检查 |
+| 携带元素检测 | 静态 | PASS | 读取 `CarriesTypeIn` 标记的 `life`、`ctype`、`tmp..tmp4`；`LAVA`、`SPRK`、`MSCR` 等载体均覆盖 |
+| OPS 打包值解码 | 静态 | PASS | 所有携带类型经 `TYP()` 解码，保留粒子索引等高位元数据 |
+| 统一加载入口 | 静态/构建 | PASS | 本地文件、搜索、预览和 URL 加载都经 `LoadSaveFile` 或 `LoadSave` 门禁 |
+| 中文/英文加载选择 | 静态/构建 | PASS | 三选项为正常加载、只读加载、取消；提示列出触发的已关闭模块 |
+| 正常加载数据保留 | 静态/构建 | PASS | 检测仅读取已解析的存档，不删除、映射或替换粒子 |
+| 只读保存拦截 | 静态/构建 | PASS | 本地另存/覆盖、在线新建/更新保存均在控制器入口阻止 |
+| 存档兼容静态审计 | 静态 | PASS | `py tools/save_compatibility_audit.py` 覆盖检测、入口和保存保护契约 |
+| Python 工具单元测试 | 静态 | PASS | 47/47；2 项本机未发现 C++ 编译器的测试跳过 |
+| Meson `static` suite | 静态 | PASS | 9/9，含存档兼容审计 |
+| Windows x64 增量编译 | 构建 | PASS | GCC 16.1.0 / Ninja；0 error，2 条既有 `PowderToy.cpp` warning |
+| 三选项 UI 与只读保存行为 | 运行 | NOT RUN | 需要可信 UI 控制或人工复核 |
+| 禁用模块 OPS 往返 | 运行 | NOT RUN | 需要固定的 `LAVA`、`SPRK`、`MSCR` 携带类型样本 |
+| 兼容占位转换 | 运行 | NOT RUN | 未实现；不得静默转换或删除存档粒子 |
+
 ## 后续运行与压力测试
 
 以下测试尚未因编译成功而被误标为通过：
@@ -182,6 +201,7 @@
 | 基础化学核心工艺 | PASS |
 | 生物与受控核工业核心路径 | PASS |
 | 扩展元素图鉴内容数据与编译目录 | PASS |
+| 禁用模块存档加载保护 | PASS（静态/构建） |
 | 自动化、灾害玩法 | NOT RUN |
 | 炼金进度、成就、挑战、教程 | NOT RUN |
 | 七类高粒子数压力样本 | NOT RUN |
@@ -225,4 +245,10 @@
 
 | 构建 | 状态 | 大小 | SHA-256 |
 |---|---|---:|---|
-| `build-phase2-clean/tpt-zh-omnipack.exe` | PASS | 243,661,917 | `7CF703EC81DC878368E63EEB1E88C297C734C9ED8F7286943AD0DE9A8BA5B260` |
+| `build-phase2-clean/tpt-zh-omnipack.exe` | PASS | 243,658,363 | `88DD50F4815356F9E86B97ECAD59DE019BF97BE8EFECABE876AD16363DDD5D91` |
+
+## 当前 Phase 7 禁用模块存档加载兼容产物
+
+| 构建 | 状态 | 大小 | SHA-256 |
+|---|---|---:|---|
+| `build-phase2-clean/tpt-zh-omnipack.exe` | PASS | 244,470,300 | `860F796A547DACF8EAB014AE4060252DD2199224067A21EA91BC64178FB4690D` |

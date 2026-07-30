@@ -2,8 +2,11 @@
 
 #include "gui/elementsearch/ElementCatalog.h"
 #include "gui/game/tool/Tool.h"
+#include "client/GameSave.h"
 #include "prefs/GlobalPrefs.h"
+#include "simulation/Particle.h"
 #include "simulation/ElementDefs.h"
+#include "simulation/SimulationData.h"
 
 namespace
 {
@@ -159,4 +162,81 @@ bool IsOmniToolSelectable(Tool const &tool)
 		return true;
 	}
 	return IsOmniElementSelectable(elementId);
+}
+
+char const *GetOmniElementModuleNameKey(OmniElementModule module)
+{
+	switch (module)
+	{
+	case OmniElementModule::Biology:
+		return "options.omni.biology";
+	case OmniElementModule::Metallurgy:
+		return "options.omni.metallurgy";
+	case OmniElementModule::Chemistry:
+		return "options.omni.chemistry";
+	case OmniElementModule::AdvancedNuclear:
+		return "options.omni.advanced_nuclear";
+	case OmniElementModule::SpecialPhysics:
+		return "options.omni.special_physics";
+	case OmniElementModule::Disasters:
+		return "options.omni.disasters";
+	case OmniElementModule::Experimental:
+		return "options.omni.experimental";
+	default:
+		return "";
+	}
+}
+
+std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save)
+{
+	constexpr std::size_t moduleCount = static_cast<std::size_t>(OmniElementModule::Experimental) + 1;
+	std::array<bool, moduleCount> found{};
+	auto const &elements = SimulationData::CRef().elements;
+	auto const &possiblyCarriesType = Particle::PossiblyCarriesType();
+	auto const &properties = Particle::GetProperties();
+
+	auto inspectType = [&found](int type) {
+		type = TYP(type);
+		if (type <= 0 || type >= PT_NUM)
+		{
+			return;
+		}
+		auto const *record = FindElementCatalogByStableId(type);
+		if (!record || !record->identifier.starts_with("OMNI_PT_") || record->implementationStatus != "implemented" || IsOmniElementSelectable(type))
+		{
+			return;
+		}
+		found[static_cast<std::size_t>(GetOmniElementModule(type))] = true;
+	};
+
+	for (int index = 0; index < NPART && index < save.particlesCount && index < static_cast<int>(save.particles.size()); ++index)
+	{
+		auto const &particle = save.particles[index];
+		auto type = TYP(particle.type);
+		if (type <= 0 || type >= PT_NUM)
+		{
+			continue;
+		}
+
+		inspectType(type);
+		for (auto propertyIndex : possiblyCarriesType)
+		{
+			if (!(elements[type].CarriesTypeIn & (1U << propertyIndex)))
+			{
+				continue;
+			}
+			auto const *property = reinterpret_cast<int const *>(reinterpret_cast<char const *>(&particle) + properties[propertyIndex].Offset);
+			inspectType(TYP(*property));
+		}
+	}
+
+	std::vector<OmniElementModule> modules;
+	for (std::size_t index = 0; index < found.size(); ++index)
+	{
+		if (found[index])
+		{
+			modules.push_back(static_cast<OmniElementModule>(index));
+		}
+	}
+	return modules;
 }
