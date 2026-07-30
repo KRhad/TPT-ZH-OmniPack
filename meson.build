@@ -693,6 +693,19 @@ test(
 )
 
 test(
+	'reaction-registry',
+	python3_prog,
+	args: [
+		files('tools/reaction_registry_check.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'metallurgy-audit',
 	python3_prog,
 	args: [
