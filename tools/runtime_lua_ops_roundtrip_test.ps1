@@ -2,6 +2,16 @@ param(
     [Parameter(Mandatory = $true)]
     [string] $Executable,
 
+    [ValidateSet(
+        "mixed",
+        "official",
+        "metallurgy",
+        "biology",
+        "chemistry",
+        "nuclear"
+    )]
+    [string] $Scenario = "mixed",
+
     [ValidateRange(1, 180)]
     [int] $TimeoutSeconds = 30,
 
@@ -23,7 +33,8 @@ if (-not (Test-Path -LiteralPath $tempParent -PathType Container)) {
     throw "Temporary directory does not exist: $tempParent"
 }
 $testRoot = Join-Path $tempParent (
-    "tpt-omnipack-ops-roundtrip-" + [guid]::NewGuid().ToString("N")
+    "tpt-omnipack-ops-roundtrip-" + $Scenario + "-" +
+    [guid]::NewGuid().ToString("N")
 )
 $resolvedTestRoot = [System.IO.Path]::GetFullPath($testRoot)
 $tempPrefix = $tempParent.TrimEnd(
@@ -140,6 +151,16 @@ function Invoke-OpsPhase {
         )
     }
 
+    $resultScenario = Get-ResultValue -Text $resultText -Key (
+        "OMNI_OPS_SCENARIO"
+    )
+    if ($resultScenario -ne $Scenario) {
+        throw (
+            "OPS phase $Phase reported scenario '$resultScenario', expected " +
+            "'$Scenario'; artifacts=$resolvedTestRoot"
+        )
+    }
+
     return [pscustomobject]@{
         Phase = $Phase
         ProcessId = $process.Id
@@ -204,6 +225,11 @@ try {
     Copy-Item -LiteralPath $autorunSource -Destination (
         Join-Path $resolvedTestRoot "autorun.lua"
     )
+    [System.IO.File]::WriteAllText(
+        (Join-Path $resolvedTestRoot "ops-roundtrip.scenario"),
+        $Scenario,
+        [System.Text.Encoding]::ASCII
+    )
 
     $phase1 = Invoke-OpsPhase -Phase 1
     $ops1 = Test-OpsFile -Stamp $phase1.Stamp
@@ -219,6 +245,41 @@ try {
         throw "Final restart did not verify the second saved OPS file"
     }
 
+    $consistencyKeys = @(
+        "OMNI_OPS_PARTICLES",
+        "OMNI_OPS_FIELD_ASSERTIONS",
+        "OMNI_OPS_DIRECT_GT255",
+        "OMNI_OPS_CTYPE_CARRIERS",
+        "OMNI_OPS_TMP_CARRIERS",
+        "OMNI_OPS_TMP2_CARRIERS",
+        "OMNI_OPS_STABLE_IDENTIFIER_COUNT",
+        "OMNI_OPS_STABLE_IDENTIFIERS"
+    )
+    foreach ($key in $consistencyKeys) {
+        $firstValue = Get-ResultValue -Text $phase1.Text -Key $key
+        $secondValue = Get-ResultValue -Text $phase2.Text -Key $key
+        $thirdValue = Get-ResultValue -Text $phase3.Text -Key $key
+        if ($firstValue -ne $secondValue -or $secondValue -ne $thirdValue) {
+            throw (
+                "$key changed across the three OPS processes: " +
+                "phase1=$firstValue; phase2=$secondValue; phase3=$thirdValue"
+            )
+        }
+    }
+
+    $firstPaletteCount = Get-ResultValue `
+        -Text $phase1.Text `
+        -Key "OMNI_OPS_PALETTE_IDENTIFIERS"
+    $secondPaletteCount = Get-ResultValue `
+        -Text $phase2.Text `
+        -Key "OMNI_OPS_PALETTE_IDENTIFIERS"
+    if ($firstPaletteCount -ne $secondPaletteCount) {
+        throw (
+            "OPS palette identifier count changed after resave: " +
+            "first=$firstPaletteCount; second=$secondPaletteCount"
+        )
+    }
+
     $stampIndexPath = Join-Path $resolvedTestRoot "stamps\stamps.json"
     if (-not (Test-Path -LiteralPath $stampIndexPath -PathType Leaf)) {
         throw "Client did not persist its isolated stamp index"
@@ -230,19 +291,47 @@ try {
     }
 
     $aggregatePath = Join-Path $resolvedTestRoot "ops-roundtrip.result"
+    $particleCount = Get-ResultValue `
+        -Text $phase3.Text `
+        -Key "OMNI_OPS_PARTICLES"
+    $fieldAssertions = Get-ResultValue `
+        -Text $phase3.Text `
+        -Key "OMNI_OPS_FIELD_ASSERTIONS"
+    $directGt255 = Get-ResultValue `
+        -Text $phase3.Text `
+        -Key "OMNI_OPS_DIRECT_GT255"
+    $ctypeCarriers = Get-ResultValue `
+        -Text $phase3.Text `
+        -Key "OMNI_OPS_CTYPE_CARRIERS"
+    $tmpCarriers = Get-ResultValue `
+        -Text $phase3.Text `
+        -Key "OMNI_OPS_TMP_CARRIERS"
+    $tmp2Carriers = Get-ResultValue `
+        -Text $phase3.Text `
+        -Key "OMNI_OPS_TMP2_CARRIERS"
+    $stableIdentifierCount = Get-ResultValue `
+        -Text $phase3.Text `
+        -Key "OMNI_OPS_STABLE_IDENTIFIER_COUNT"
+    $stableIdentifiers = Get-ResultValue `
+        -Text $phase3.Text `
+        -Key "OMNI_OPS_STABLE_IDENTIFIERS"
     $aggregateLines = @(
         "OMNI_OPS_ROUNDTRIP_STATUS=PASS",
+        "OMNI_OPS_SCENARIO=$Scenario",
         "OMNI_OPS_CONTAINER=stamp",
         "OMNI_OPS_FORMAT=OPS1",
         "OMNI_OPS_PROCESS_COUNT=3",
         "OMNI_OPS_RESTART_COUNT=2",
         "OMNI_OPS_LOAD_VERIFICATIONS=2",
-        "OMNI_OPS_PARTICLES=11",
-        "OMNI_OPS_FIELD_ASSERTIONS_PER_LOAD=20",
-        "OMNI_OPS_DIRECT_GT255=4",
-        "OMNI_OPS_CTYPE_CARRIERS=LAVA,SPRK,MSCR,CONV",
-        "OMNI_OPS_TMP_CARRIERS=CONV",
-        "OMNI_OPS_TMP2_CARRIERS=VIRS",
+        "OMNI_OPS_PARTICLES=$particleCount",
+        "OMNI_OPS_FIELD_ASSERTIONS_PER_LOAD=$fieldAssertions",
+        "OMNI_OPS_DIRECT_GT255=$directGt255",
+        "OMNI_OPS_CTYPE_CARRIERS=$ctypeCarriers",
+        "OMNI_OPS_TMP_CARRIERS=$tmpCarriers",
+        "OMNI_OPS_TMP2_CARRIERS=$tmp2Carriers",
+        "OMNI_OPS_STABLE_IDENTIFIER_COUNT=$stableIdentifierCount",
+        "OMNI_OPS_STABLE_IDENTIFIERS=$stableIdentifiers",
+        "OMNI_OPS_PALETTE_IDENTIFIERS=$secondPaletteCount",
         "OMNI_OPS_FIRST_STAMP=$($phase1.Stamp)",
         "OMNI_OPS_FIRST_SIZE=$($ops1.Length)",
         "OMNI_OPS_FIRST_PAYLOAD_SIZE=$($ops1.PayloadLength)",

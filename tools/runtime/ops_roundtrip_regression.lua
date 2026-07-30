@@ -1,4 +1,5 @@
 local PHASE_FILE = "ops-roundtrip.phase"
+local SCENARIO_FILE = "ops-roundtrip.scenario"
 local STATE_FILE = "ops-roundtrip.state"
 
 local function read_all(path)
@@ -12,7 +13,103 @@ local phase = tonumber(read_all(PHASE_FILE):match("%d+"))
 assert(phase == 1 or phase == 2 or phase == 3,
     "invalid OPS roundtrip phase: " .. tostring(phase))
 
+local scenario = read_all(SCENARIO_FILE):match("^%s*([%w_-]+)%s*$")
+local valid_scenarios = {
+    mixed = true,
+    official = true,
+    metallurgy = true,
+    biology = true,
+    chemistry = true,
+    nuclear = true,
+}
+assert(valid_scenarios[scenario],
+    "invalid OPS roundtrip scenario: " .. tostring(scenario))
+
 local RESULT = "ops-roundtrip-phase" .. phase .. ".result"
+
+local definitions = {
+    dust = { "DEFAULT_PT_DUST", "DUST", 1 },
+    water = { "DEFAULT_PT_WATR", "WATR", 2 },
+    lava = { "DEFAULT_PT_LAVA", "LAVA", 6 },
+    spark = { "DEFAULT_PT_SPRK", "SPRK", 15 },
+    conv = { "DEFAULT_PT_CONV", "CONV", 85 },
+    virs = { "DEFAULT_PT_VIRS", "VIRS", 174 },
+
+    alum = { "OMNI_PT_ALUM", "ALUM", 256 },
+    copr = { "OMNI_PT_COPR", "COPR", 257 },
+    lead = { "OMNI_PT_LEAD", "LEAD", 258 },
+    tin = { "OMNI_PT_TIN", "TIN", 259 },
+    nicl = { "OMNI_PT_NICL", "NICL", 260 },
+    magn = { "OMNI_PT_MAGN", "MAGN", 261 },
+    chrm = { "OMNI_PT_CHRM", "CHRM", 262 },
+    cobt = { "OMNI_PT_COBT", "COBT", 263 },
+    moly = { "OMNI_PT_MOLY", "MOLY", 264 },
+    zinc = { "OMNI_PT_ZINC", "ZINC", 265 },
+    chrc = { "OMNI_PT_CHRC", "CHRC", 266 },
+    coke = { "OMNI_PT_COKE", "COKE", 267 },
+    stel = { "OMNI_PT_STEL", "STEL", 268 },
+    brnz = { "OMNI_PT_BRNZ", "BRNZ", 269 },
+    bras = { "OMNI_PT_BRAS", "BRAS", 270 },
+    ssil = { "OMNI_PT_SSIL", "SSIL", 271 },
+    ncrm = { "OMNI_PT_NCRM", "NCRM", 272 },
+    almg = { "OMNI_PT_ALMG", "ALMG", 273 },
+    tstl = { "OMNI_PT_TSTL", "TSTL", 274 },
+    slag = { "OMNI_PT_SLAG", "SLAG", 275 },
+    flux = { "OMNI_PT_FLUX", "FLUX", 276 },
+    cruc = { "OMNI_PT_CRUC", "CRUC", 277 },
+    mscr = { "OMNI_PT_MSCR", "MSCR", 278 },
+
+    nutr = { "OMNI_PT_NUTR", "NUTR", 288 },
+    alga = { "OMNI_PT_ALGA", "ALGA", 289 },
+    mycl = { "OMNI_PT_MYCL", "MYCL", 290 },
+    spor = { "OMNI_PT_SPOR", "SPOR", 291 },
+    path = { "OMNI_PT_PATH", "PATH", 292 },
+    ster = { "OMNI_PT_STER", "STER", 293 },
+    hums = { "OMNI_PT_HUMS", "HUMS", 294 },
+    biof = { "OMNI_PT_BIOF", "BIOF", 295 },
+
+    nful = { "OMNI_PT_NFUL", "NFUL", 328 },
+    modr = { "OMNI_PT_MODR", "MODR", 329 },
+    crod = { "OMNI_PT_CROD", "CROD", 330 },
+    nclt = { "OMNI_PT_NCLT", "NCLT", 331 },
+    nwst = { "OMNI_PT_NWST", "NWST", 332 },
+    ngen = { "OMNI_PT_NGEN", "NGEN", 333 },
+    rshd = { "OMNI_PT_RSHD", "RSHD", 334 },
+
+    chlr = { "OMNI_PT_CHLR", "CHLR", 360 },
+    amon = { "OMNI_PT_AMON", "AMON", 361 },
+    ethl = { "OMNI_PT_ETHL", "ETHL", 362 },
+    kero = { "OMNI_PT_KERO", "KERO", 363 },
+    gaso = { "OMNI_PT_GASO", "GASO", 364 },
+    acty = { "OMNI_PT_ACTY", "ACTY", 365 },
+    cata = { "OMNI_PT_CATA", "CATA", 366 },
+    poly = { "OMNI_PT_POLY", "POLY", 367 },
+    pero = { "OMNI_PT_PERO", "PERO", 368 },
+    fert = { "OMNI_PT_FERT", "FERT", 369 },
+}
+
+local module_keys = {
+    metallurgy = {
+        "alum", "copr", "lead", "tin", "nicl", "magn", "chrm",
+        "cobt", "moly", "zinc", "chrc", "coke", "stel", "brnz",
+        "bras", "ssil", "ncrm", "almg", "tstl", "slag", "flux",
+        "cruc", "mscr",
+    },
+    biology = {
+        "nutr", "alga", "mycl", "spor", "path", "ster", "hums",
+        "biof",
+    },
+    nuclear = {
+        "nful", "modr", "crod", "nclt", "nwst", "ngen", "rshd",
+    },
+    chemistry = {
+        "chlr", "amon", "ethl", "kero", "gaso", "acty", "cata",
+        "poly", "pero", "fert",
+    },
+}
+
+local official_keys = { "dust", "water", "lava", "spark", "conv", "virs" }
+local mixed_keys = { "alum", "mscr", "nutr", "nful", "chlr" }
 
 local function must_element(identifier, short_name, stable_id)
     local id = elements[identifier]
@@ -25,104 +122,177 @@ local function must_element(identifier, short_name, stable_id)
     return id
 end
 
-local ids = {
-    dust = assert(elements.DEFAULT_PT_DUST),
-    water = assert(elements.DEFAULT_PT_WATR),
-    lava = assert(elements.DEFAULT_PT_LAVA),
-    spark = assert(elements.DEFAULT_PT_SPRK),
-    conv = assert(elements.DEFAULT_PT_CONV),
-    virs = assert(elements.DEFAULT_PT_VIRS),
-    alum = must_element("OMNI_PT_ALUM", "ALUM", 256),
-    mscr = must_element("OMNI_PT_MSCR", "MSCR", 278),
-    nutr = must_element("OMNI_PT_NUTR", "NUTR", 288),
-    nful = must_element("OMNI_PT_NFUL", "NFUL", 328),
-    chlr = must_element("OMNI_PT_CHLR", "CHLR", 360),
+local ids = {}
+local validated_keys = {}
+
+local function validate_key(key)
+    if ids[key] then
+        return
+    end
+    local definition = assert(definitions[key], "missing definition for " .. key)
+    ids[key] = must_element(definition[1], definition[2], definition[3])
+    validated_keys[#validated_keys + 1] = key
+end
+
+for _, key in ipairs(official_keys) do
+    validate_key(key)
+end
+if scenario == "mixed" then
+    for _, key in ipairs(mixed_keys) do
+        validate_key(key)
+    end
+elseif scenario ~= "official" then
+    for _, key in ipairs(module_keys[scenario]) do
+        validate_key(key)
+    end
+end
+
+local fixtures = {}
+local required_palette = {}
+local direct_gt255 = 0
+
+local function require_palette(key)
+    local definition = assert(definitions[key], "missing definition for " .. key)
+    required_palette[definition[1]] = true
+end
+
+local function add_fixture(name, particle_key, property_specs, create_key)
+    local fixture_index = #fixtures
+    local fixture = {
+        name = name,
+        x = 64 + (fixture_index % 60) * 8,
+        y = 64 + math.floor(fixture_index / 60) * 8,
+        particle_type = assert(ids[particle_key],
+            "unvalidated fixture particle type: " .. particle_key),
+        properties = {},
+    }
+    require_palette(particle_key)
+    if create_key then
+        fixture.create_type = assert(ids[create_key],
+            "unvalidated fixture create type: " .. create_key)
+    end
+    for _, property_spec in ipairs(property_specs or {}) do
+        local value = property_spec.value
+        if property_spec.element then
+            value = assert(ids[property_spec.element],
+                "unvalidated carried element: " .. property_spec.element)
+            require_palette(property_spec.element)
+        end
+        fixture.properties[property_spec.name] = value
+    end
+    fixtures[#fixtures + 1] = fixture
+end
+
+local function add_direct_module_fixture(key)
+    add_fixture("direct_" .. key .. "_gt255", key)
+    direct_gt255 = direct_gt255 + 1
+end
+
+add_fixture("official_dust", "dust", {
+    { name = "life", value = 123 },
+})
+add_fixture("official_water", "water", {
+    { name = "tmp", value = 17 },
+})
+
+if scenario == "mixed" then
+    add_direct_module_fixture("alum")
+    add_direct_module_fixture("nutr")
+    add_direct_module_fixture("nful")
+    add_direct_module_fixture("chlr")
+else
+    for _, key in ipairs(module_keys[scenario] or {}) do
+        add_direct_module_fixture(key)
+    end
+end
+
+local carrier_targets = {
+    official = {
+        lava = "dust",
+        spark = "water",
+        conv_ctype = "dust",
+        conv_tmp = "water",
+        virs_tmp2 = "dust",
+    },
+    metallurgy = {
+        lava = "alum",
+        spark = "stel",
+        mscr = "copr",
+        conv_ctype = "brnz",
+        conv_tmp = "slag",
+        virs_tmp2 = "flux",
+    },
+    biology = {
+        lava = "hums",
+        spark = "biof",
+        conv_ctype = "nutr",
+        conv_tmp = "alga",
+        virs_tmp2 = "path",
+    },
+    chemistry = {
+        lava = "kero",
+        spark = "cata",
+        conv_ctype = "chlr",
+        conv_tmp = "fert",
+        virs_tmp2 = "pero",
+    },
+    nuclear = {
+        lava = "nful",
+        spark = "ngen",
+        conv_ctype = "crod",
+        conv_tmp = "nwst",
+        virs_tmp2 = "rshd",
+    },
+    mixed = {
+        lava = "alum",
+        spark = "nful",
+        mscr = "alum",
+        conv_ctype = "nful",
+        conv_tmp = "nutr",
+        virs_tmp2 = "chlr",
+    },
 }
 
-assert(ids.alum > 255 and ids.mscr > 255 and ids.nutr > 255
-    and ids.nful > 255 and ids.chlr > 255,
-    "fixture requires OmniPack element IDs above 255")
+local targets = carrier_targets[scenario]
+add_fixture("lava_ctype_gt255", "lava", {
+    { name = "ctype", element = targets.lava },
+})
+add_fixture("spark_ctype_gt255", "spark", {
+    { name = "ctype", element = targets.spark },
+    { name = "life", value = 4 },
+}, targets.spark)
+if targets.mscr then
+    add_fixture("mscr_ctype_gt255", "mscr", {
+        { name = "ctype", element = targets.mscr },
+    })
+end
+add_fixture("conv_ctype_tmp_gt255", "conv", {
+    { name = "ctype", element = targets.conv_ctype },
+    { name = "tmp", element = targets.conv_tmp },
+})
+add_fixture("virs_tmp2_gt255", "virs", {
+    { name = "tmp2", element = targets.virs_tmp2 },
+})
 
-local fixtures = {
-    {
-        name = "official_dust",
-        x = 80,
-        y = 80,
-        particle_type = ids.dust,
-        properties = { life = 123 },
-    },
-    {
-        name = "official_water",
-        x = 88,
-        y = 80,
-        particle_type = ids.water,
-        properties = { tmp = 17 },
-    },
-    {
-        name = "direct_alum_gt255",
-        x = 96,
-        y = 80,
-        particle_type = ids.alum,
-        properties = {},
-    },
-    {
-        name = "direct_nutr_gt255",
-        x = 104,
-        y = 80,
-        particle_type = ids.nutr,
-        properties = {},
-    },
-    {
-        name = "direct_nful_gt255",
-        x = 112,
-        y = 80,
-        particle_type = ids.nful,
-        properties = {},
-    },
-    {
-        name = "direct_chlr_gt255",
-        x = 120,
-        y = 80,
-        particle_type = ids.chlr,
-        properties = {},
-    },
-    {
-        name = "lava_ctype_gt255",
-        x = 128,
-        y = 80,
-        particle_type = ids.lava,
-        properties = { ctype = ids.alum },
-    },
-    {
-        name = "spark_ctype_gt255",
-        x = 136,
-        y = 80,
-        create_type = ids.alum,
-        particle_type = ids.spark,
-        properties = { ctype = ids.nful, life = 4 },
-    },
-    {
-        name = "mscr_ctype_gt255",
-        x = 144,
-        y = 80,
-        particle_type = ids.mscr,
-        properties = { ctype = ids.alum },
-    },
-    {
-        name = "conv_tmp_gt255",
-        x = 152,
-        y = 80,
-        particle_type = ids.conv,
-        properties = { ctype = ids.nful, tmp = ids.nutr },
-    },
-    {
-        name = "virs_tmp2_gt255",
-        x = 160,
-        y = 80,
-        particle_type = ids.virs,
-        properties = { tmp2 = ids.chlr },
-    },
-}
+local required_palette_identifiers = {}
+for identifier in pairs(required_palette) do
+    required_palette_identifiers[#required_palette_identifiers + 1] = identifier
+end
+table.sort(required_palette_identifiers)
+
+table.sort(validated_keys, function(left, right)
+    return definitions[left][1] < definitions[right][1]
+end)
+local stable_identifier_entries = {}
+for _, key in ipairs(validated_keys) do
+    stable_identifier_entries[#stable_identifier_entries + 1] =
+        definitions[key][1] .. ":" .. ids[key]
+end
+
+local ctype_carriers = targets.mscr and "LAVA,SPRK,MSCR,CONV"
+    or "LAVA,SPRK,CONV"
+local tmp_carriers = "CONV"
+local tmp2_carriers = "VIRS"
 
 local function configure_empty_simulation()
     sim.clearSim()
@@ -213,20 +383,6 @@ local function save_entire_simulation()
         "client did not return a ten-character stamp ID: " .. tostring(stamp))
     return stamp
 end
-
-local required_palette_identifiers = {
-    "DEFAULT_PT_DUST",
-    "DEFAULT_PT_WATR",
-    "DEFAULT_PT_LAVA",
-    "DEFAULT_PT_SPRK",
-    "DEFAULT_PT_CONV",
-    "DEFAULT_PT_VIRS",
-    "OMNI_PT_ALUM",
-    "OMNI_PT_MSCR",
-    "OMNI_PT_NUTR",
-    "OMNI_PT_NFUL",
-    "OMNI_PT_CHLR",
-}
 
 local function inspect_ops_file(stamp)
     local raw = read_all("stamps/" .. stamp .. ".stm")
@@ -320,6 +476,7 @@ local ok, data = xpcall(run_phase, debug.traceback)
 local report = assert(io.open(RESULT, "wb"))
 if ok then
     report:write("OMNI_OPS_STATUS=PASS\n")
+    report:write("OMNI_OPS_SCENARIO=" .. scenario .. "\n")
     report:write("OMNI_OPS_PHASE=" .. phase .. "\n")
     report:write("OMNI_OPS_OPERATION=" .. data.operation .. "\n")
     report:write("OMNI_OPS_STAMP=" .. data.stamp .. "\n")
@@ -328,20 +485,24 @@ if ok then
     end
     report:write("OMNI_OPS_PARTICLES=" .. data.particle_count .. "\n")
     report:write("OMNI_OPS_FIELD_ASSERTIONS=" .. data.assertions .. "\n")
+    report:write("OMNI_OPS_DIRECT_GT255=" .. direct_gt255 .. "\n")
+    report:write("OMNI_OPS_CTYPE_CARRIERS=" .. ctype_carriers .. "\n")
+    report:write("OMNI_OPS_TMP_CARRIERS=" .. tmp_carriers .. "\n")
+    report:write("OMNI_OPS_TMP2_CARRIERS=" .. tmp2_carriers .. "\n")
+    report:write("OMNI_OPS_STABLE_IDENTIFIER_COUNT="
+        .. #stable_identifier_entries .. "\n")
+    report:write("OMNI_OPS_STABLE_IDENTIFIERS="
+        .. table.concat(stable_identifier_entries, ";") .. "\n")
     if data.file_size then
         report:write("OMNI_OPS_FILE_SIZE=" .. data.file_size .. "\n")
         report:write("OMNI_OPS_PAYLOAD_SIZE=" .. data.payload_size .. "\n")
         report:write(
             "OMNI_OPS_PALETTE_IDENTIFIERS=" .. data.palette_identifiers .. "\n")
     end
-    report:write("OMNI_OPS_ALUM_ID=" .. ids.alum .. "\n")
-    report:write("OMNI_OPS_MSCR_ID=" .. ids.mscr .. "\n")
-    report:write("OMNI_OPS_NUTR_ID=" .. ids.nutr .. "\n")
-    report:write("OMNI_OPS_NFUL_ID=" .. ids.nful .. "\n")
-    report:write("OMNI_OPS_CHLR_ID=" .. ids.chlr .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")
     report:write("OMNI_OPS_STATUS=FAIL\n")
+    report:write("OMNI_OPS_SCENARIO=" .. scenario .. "\n")
     report:write("OMNI_OPS_PHASE=" .. phase .. "\n")
     report:write("OMNI_OPS_ERROR=" .. error_text .. "\n")
 end
