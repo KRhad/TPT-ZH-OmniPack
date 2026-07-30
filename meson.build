@@ -795,6 +795,19 @@ test(
 )
 
 test(
+	'release-report',
+	python3_prog,
+	args: [
+		files('tools/release_report_check.py'),
+		join_paths(meson.project_source_root(), 'dist', 'release-report-0.1.0-test.md'),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'python-tool-unit-tests',
 	python3_prog,
 	args: [
