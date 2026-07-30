@@ -31,6 +31,10 @@ DOCUMENTS = (
     ("docs/AI_DISCLOSURE.md", "AI-DISCLOSURE.zh-CN.md"),
     ("docs/FONT_AUDIT.md", "FONT-AUDIT.md"),
     ("resources/third_party/GNU_UNIFONT_COPYING.txt", "LICENSES/GNU-UNIFONT-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt"),
 )
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 FORBIDDEN_COMPONENTS = {".git", "__pycache__", "build", "dist"}

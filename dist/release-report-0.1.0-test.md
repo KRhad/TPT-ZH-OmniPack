@@ -1,6 +1,6 @@
 # TPT-ZH-OmniPack 0.1.0-test 最终验收报告
 
-本报告记录已拒绝的候选，不再代表可发布版本。用户在真实 Windows 桌面确认中文界面严重异常后，候选源码提交 `5828a97fc39129547354956dde84d7b6cfb818c2` 及其 ZIP 已于 2026-07-30 废弃。旧 ZIP 保留为失败基线，禁止作为最终候选、tag 或公开发布依据。
+本报告记录已拒绝的试包，不再代表可发布版本。用户在真实 Windows 桌面确认中文界面严重异常后，候选源码提交 `5828a97fc39129547354956dde84d7b6cfb818c2` 及其 ZIP 已于 2026-07-30 废弃。随后用于验证转换器修复的私有试包 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95` / `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081` 也经用户解压运行并判定中文可读性和字形质量不合格。两代 ZIP 均只保留为失败基线，禁止作为最终候选、tag 或公开发布依据。
 
 ## 交付物
 
@@ -26,9 +26,9 @@
 - `origin` 不存在两个发布分支或目标 tag；凭据门禁失败前未推送，未进行匿名克隆。
 - SDL 窗口无法获得前景，`PrintWindow` 仅获黑帧，故没有可信真实 GUI、OPS、只读门禁或压力测试证据。
 
-## 私有修复候选
+## 已拒绝的私有修复试包
 
-修复源码提交为 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95`。该候选仅生成在 `artifacts/zh-ui-fix/candidate/` 供中文人工验收，未公开、未推送、未创建 tag。普通 ZIP SHA-256 为 `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081`，符号 ZIP SHA-256 为 `AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0`。两包 ZIP 内容审计通过，但人工视觉和语言切换门禁未完成，`release_ready=false`。
+转换器修复源码提交为 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95`。该试包仅生成在 `artifacts/zh-ui-fix/candidate/` 供中文人工验收，未公开、未推送、未创建 tag。普通 ZIP SHA-256 为 `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081`，符号 ZIP SHA-256 为 `AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0`。两包 ZIP 内容审计和自动字体探针通过，且默认中文启动 20 次无崩溃；但用户从 ZIP 解压运行后明确判定中文显示仍不如既有出版中文版本，人工视觉可读性和字形质量门禁失败。该试包已拒绝，只保留为失败对照，不是可发布候选，`font_visual_readability_valid=false`，`release_ready=false`。
 
 完整证据、环境信息、失败模式和最小下一步见 `docs/FINAL_VALIDATION.md` 与 `artifacts/final-validation/`。
 
@@ -41,6 +41,11 @@ rejected_candidate_commit=5828a97fc39129547354956dde84d7b6cfb818c2
 rejected_public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
 rejected_symbols_zip_sha256=3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9
 rejection_reason=zh_ui_failure
+rejected_fix_candidate_commit=ca3cccbee13a41c37ee0b7975c4b5f060cb34a95
+rejected_fix_public_zip_sha256=E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081
+rejected_fix_symbols_zip_sha256=AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0
+rejected_fix_reason=zh_font_visual_quality_failure
+rejected_fix_zip_audit_pass=true
 release_tag=not_tested
 version=0.1.0-test
 
@@ -58,14 +63,19 @@ public_clone_commit=not_tested
 public_clone_build_pass=not_tested
 
 clean_build_pass=true
-meson_tests=10/10
-python_tests=50
+meson_tests=12/12
+python_tests=56
 lua_runtime_tests=6/6
 
 gui_launch_test=true
+zh_process_crash=false
+rejected_fix_zh_glyph_corruption=true
+zh_glyph_corruption=not_tested
 zh_en_switch_test=false
 ui_text_overflow_test=not_tested
-font_visual_test=false
+rejected_fix_font_visual_readability_valid=false
+font_visual_test=not_tested
+font_visual_readability_valid=not_tested
 module_ui_test=not_tested
 representative_element_test=not_tested
 
@@ -99,9 +109,9 @@ developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081
-symbols_zip_sha256=AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0
-zip_audit_pass=true
+public_zip_sha256=not_tested
+symbols_zip_sha256=not_tested
+zip_audit_pass=not_tested
 
 tag_public=false
 github_release_created=false

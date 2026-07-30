@@ -205,7 +205,7 @@
 | 最终 Lua 客户端回归 | 运行 | PASS | 模块、冶金、化学、生态完整/简化及核工业共 6 项通过 |
 | Windows UI 手动检查 | 运行 | NOT RUN | 测试步骤见 `docs/TEST_RELEASE.md` |
 
-## Release 加固候选
+## Release 加固与已拒绝修复试包
 
 | 测试 | 类型 | 状态 | 证据/备注 |
 |---|---|---|---|
@@ -220,7 +220,11 @@
 | 已拒绝候选中文字体 | 运行/字体 | FAIL | `5828a97f` 的 Unifont 转换高位优先打包，和 `FontReader` 低位优先读取不兼容；整数缩放还跳过一部分源行。旧 ZIP 仅保留为失败基线，不得作为候选 |
 | 修复字体容器与转换 | 静态 | PASS | `validate_tpt_font.py`：容器、覆盖、pack/unpack、固定 Unifont 源码点与已知中文字符通过 |
 | 修复字体引擎离屏渲染 | 引擎 | PASS | `font_render_probe` 调用 `FontReader` 和 `Graphics`；中文、混合符号和化学文本及 `zh-CN.json` 的 1,262 条文本均可测量、绘制，替换字形 0 |
-| 修复候选默认中文启动 | 实际进程 | PASS | 隔离用户目录重复 20 次，`running=true`、`Responding=true`、崩溃 0；不替代 UI 视觉验收 |
+| 私有修复试包中文人工可读性 | 实际 GUI | FAIL | 用户从 `E52E746B...` ZIP 解压运行后确认中文显示仍不如既有出版中文版本；`font_visual_readability_valid=false`，该试包已拒绝并仅保留作失败对照 |
+| Fusion 12px BDF 来源与转换 | 源码/自动 | PASS | 版本 `2026.07.20`、固定 BDF/许可证哈希；1,839 个原生字形直接映射，Unifont 回退 0；六个固定中文字形逐行矩阵一致 |
+| Fusion 字体容器与全目录覆盖 | 静态 | PASS | `font.bz2` 为 `47F4EB85...`；14,629 字形、2,593 个语言字符全覆盖、pack/unpack 通过、重复 CJK 位图 0 |
+| Fusion 私有试包中文人工可读性 | 实际 GUI | NOT RUN | 必须从新的私有 ZIP 解压运行后由用户检查；自动 PNG 和引擎探针不能代替该结论 |
+| 已拒绝修复试包默认中文启动 | 实际进程 | PASS | 隔离用户目录重复 20 次，`running=true`、`Responding=true`、崩溃 0；与人工字形质量失败是相互独立的结果 |
 | 中文/英文点击切换 | 实际 GUI | NOT RUN | 需截图和重启验证 |
 | 模块开关与代表元素 | 实际 GUI | NOT RUN | 需四模块和 `ALUM/NUTR/NFUL/CHLR` 实测 |
 | OPS 三选项与只读拦截 | 实际 GUI | NOT RUN | 静态门禁已通过，实际点击未完成 |
@@ -235,7 +239,7 @@
 | 最终 ZIP 启动 | 实际进程 | PASS | 解压 EXE 的路径、SHA-256、标题、窗口句柄与 `Responding=True` 记录在 `artifacts/final-validation/logs/` |
 | 最终 ZIP Lua 回归 | 实际客户端 | PASS | 6/6；`lua-runtime-final-zip.txt` |
 | 本地化与存档兼容审计 | 自动 | PASS | `i18n_audit.py --check` 与 `save_compatibility_audit.py`；`localization-and-compatibility-audits.txt` |
-| 简中/英文与高 DPI 视觉检查 | 实际 GUI | NOT RUN | SDL 窗口不能获得前景，`PrintWindow` 客户端为黑帧；无可信点击或截图证据 |
+| 私有修复试包简中可读性 | 实际 GUI | FAIL | 用户在真实 Windows 桌面解压运行后判定中文显示质量不合格；该结论不代表英文切换和 100%/125%/150% DPI 矩阵已执行 |
 | 四模块、代表元素与持久化 | 实际 GUI | NOT RUN | 未在最终 ZIP 中执行模块开关、搜索、放置、图鉴或重启 |
 | OPS 往返、三选项与载体字段 | 实际 GUI | NOT RUN | 未用 GUI 保存 OPS；静态审计不替代运行证据 |
 | 代表玩法 | 实际 GUI | NOT RUN | Lua 运行回归仅证明脚本覆盖路径，不能代替交互场景 |

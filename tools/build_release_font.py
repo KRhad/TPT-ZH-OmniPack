@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Build the embedded TPT bitmap font from pinned, redistributable sources.
 
-The upstream TPT font supplies the UI glyphs.  GNU Unifont supplies only the
-glyphs needed by the embedded language catalogs that upstream does not have.
-The output format is consumed by ``src/graphics/FontReader.cpp``.
+The upstream TPT font supplies UI, icon and Latin glyphs. Fusion Pixel Font's
+native 12px Simplified Chinese BDF supplies missing Chinese glyphs without
+resampling. GNU Unifont remains the fallback for other embedded language
+catalogs. The output format is consumed by ``src/graphics/FontReader.cpp``.
 """
 
 from __future__ import annotations
@@ -19,8 +20,28 @@ from typing import Iterable, Sequence
 
 
 FONT_HEIGHT = 12
+BDF_ASCENT = 10
 UPSTREAM_FONT = "resources/third_party/tpt-upstream-font-100.0.399.bz2"
 UNIFONT_HEX = "resources/third_party/unifont_all-16.0.03.hex.gz"
+FUSION_BDF = "resources/third_party/fusion-pixel-12px-monospaced-zh_hans-v2026.07.20.bdf"
+FUSION_LICENSES = (
+    "resources/third_party/FUSION_PIXEL_FONT_OFL-1.1.txt",
+    "resources/third_party/FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt",
+    "resources/third_party/FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt",
+    "resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt",
+)
+PINNED_INPUT_SHA256 = {
+    UPSTREAM_FONT: "EA86995CC429146F9869C172DC6DAE63D9B6E8BBFC7AC7D07D0CF30FB07D17F7",
+    UNIFONT_HEX: "23AB31CA87C6614B97928A39DC0C15BC2AAA5B6F130ADF9E1DF481250F73BAAF",
+    FUSION_BDF: "8E4A12E821EFAD608BCB464D685CE50C70693F85A1E95DEAD9575E6CECAFFFC7",
+    "resources/third_party/GNU_UNIFONT_COPYING.txt":
+        "1E74CB82BF476843E97C2596297B04219B1A7E51F7238944A8C031CB9401FA87",
+    FUSION_LICENSES[0]: "BC518CF64B8032C07690F33CC270C35C179255A6AC8EFA7C165EBAE7E8F76A63",
+    FUSION_LICENSES[1]: "3AB41567E68E3988BA1EF16DD2644ECA95CA5648EA12E7D46E6287FC0BBE5AEE",
+    FUSION_LICENSES[2]: "2B6E5938E5CFFA0B9E183BD05F8C363E174E7EBED1A0556E2855FD1707FA2188",
+    FUSION_LICENSES[3]: "86A3EE9495F942F0243F18C103DA9FACA27ADB88142613EDB8BB852E56C892C1",
+}
+FUSION_XLFD = "-TakWolf-Fusion Pixel 12px Mono zh_hans-Regular-R-Normal-Sans Serif-12-120-75-75-M-118-ISO10646-1"
 
 
 def sha256(path: Path) -> str:
@@ -29,6 +50,19 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest().upper()
+
+
+def verify_pinned_inputs(source_root: Path) -> None:
+    for relative, expected in PINNED_INPUT_SHA256.items():
+        path = source_root / relative
+        if not path.is_file():
+            raise ValueError(f"required pinned font input is missing: {path}")
+        actual = sha256(path)
+        if actual != expected:
+            raise ValueError(
+                f"pinned font input hash mismatch for {relative}: "
+                f"expected {expected}, got {actual}"
+            )
 
 
 def parse_tpt_font(path: Path) -> dict[int, tuple[int, bytes]]:
@@ -90,6 +124,149 @@ def parse_unifont(path: Path, required: set[int]) -> dict[int, tuple[int, tuple[
                 raise ValueError(f"invalid GNU Unifont glyph U+{codepoint:04X}")
             glyphs[codepoint] = (width, rows)
     return glyphs
+
+
+def convert_bdf_glyph(
+    advance_width: int,
+    bounding_box: tuple[int, int, int, int],
+    bitmap_rows: Sequence[str],
+) -> tuple[int, bytes]:
+    """Map one BDF glyph into TPT's 12-row cell without scaling."""
+    glyph_width, glyph_height, offset_x, offset_y = bounding_box
+    if not 1 <= advance_width <= 64:
+        raise ValueError(f"invalid BDF advance width {advance_width}")
+    if glyph_width < 0 or glyph_height < 0 or len(bitmap_rows) != glyph_height:
+        raise ValueError("invalid BDF glyph dimensions")
+    bytes_per_row = (glyph_width + 7) // 8
+    pixels = [[0 for _ in range(advance_width)] for _ in range(FONT_HEIGHT)]
+    for source_y, bitmap_text in enumerate(bitmap_rows):
+        if len(bitmap_text) != bytes_per_row * 2:
+            raise ValueError("BDF bitmap row length does not match BBX width")
+        try:
+            bits = int(bitmap_text, 16) if bitmap_text else 0
+        except ValueError as exc:
+            raise ValueError(f"invalid BDF bitmap row {bitmap_text!r}") from exc
+        padding = bytes_per_row * 8 - glyph_width
+        if padding and bits & ((1 << padding) - 1):
+            raise ValueError("BDF bitmap has nonzero row-padding bits")
+        glyph_y = offset_y + glyph_height - 1 - source_y
+        target_y = BDF_ASCENT - 1 - glyph_y
+        for source_x in range(glyph_width):
+            if not bits & (1 << (bytes_per_row * 8 - 1 - source_x)):
+                continue
+            target_x = offset_x + source_x
+            if not (0 <= target_x < advance_width and 0 <= target_y < FONT_HEIGHT):
+                raise ValueError("BDF glyph has a lit pixel outside its advance cell")
+            pixels[target_y][target_x] = 3
+    return advance_width, pack_tpt_pixels([pixel for row in pixels for pixel in row])
+
+
+def _parse_bdf_glyph(block: Sequence[str]) -> tuple[int, int, tuple[int, int, int, int], tuple[str, ...]]:
+    encoding: int | None = None
+    advance: int | None = None
+    bounding_box: tuple[int, int, int, int] | None = None
+    bitmap_rows: list[str] = []
+    in_bitmap = False
+    for line in block:
+        if line.startswith("ENCODING "):
+            fields = line.split()
+            if len(fields) != 2:
+                raise ValueError("invalid BDF ENCODING record")
+            encoding = int(fields[1])
+        elif line.startswith("DWIDTH "):
+            fields = line.split()
+            if len(fields) != 3 or fields[2] != "0":
+                raise ValueError("unsupported BDF DWIDTH record")
+            advance = int(fields[1])
+        elif line.startswith("BBX "):
+            fields = line.split()
+            if len(fields) != 5:
+                raise ValueError("invalid BDF BBX record")
+            bounding_box = tuple(int(value) for value in fields[1:])
+        elif line == "BITMAP":
+            if in_bitmap:
+                raise ValueError("duplicate BDF BITMAP record")
+            in_bitmap = True
+        elif in_bitmap and line != "ENDCHAR":
+            bitmap_rows.append(line)
+    if encoding is None or advance is None or bounding_box is None or not in_bitmap:
+        raise ValueError("incomplete BDF glyph record")
+    return encoding, advance, bounding_box, tuple(bitmap_rows)
+
+
+def parse_fusion_bdf(path: Path, required: set[int]) -> dict[int, tuple[int, bytes]]:
+    """Parse and validate the pinned Fusion Pixel Font BDF."""
+    font_name: str | None = None
+    size: tuple[int, int, int] | None = None
+    font_box: tuple[int, int, int, int] | None = None
+    expected_characters: int | None = None
+    properties: dict[str, str] = {}
+    in_properties = False
+    block: list[str] | None = None
+    seen: set[int] = set()
+    selected: dict[int, tuple[int, bytes]] = {}
+    character_count = 0
+    with path.open("rt", encoding="utf-8", newline="") as stream:
+        for line_number, raw_line in enumerate(stream, 1):
+            line = raw_line.rstrip("\r\n")
+            if block is not None:
+                block.append(line)
+                if line == "ENDCHAR":
+                    try:
+                        encoding, advance, bounding_box, bitmap_rows = _parse_bdf_glyph(block)
+                    except ValueError as exc:
+                        raise ValueError(f"{path}:{line_number}: {exc}") from exc
+                    character_count += 1
+                    if encoding >= 0:
+                        if encoding in seen:
+                            raise ValueError(f"duplicate BDF encoding U+{encoding:04X}")
+                        seen.add(encoding)
+                        if encoding in required:
+                            selected[encoding] = convert_bdf_glyph(advance, bounding_box, bitmap_rows)
+                    block = None
+                continue
+            if line.startswith("STARTCHAR "):
+                block = [line]
+            elif line.startswith("FONT "):
+                font_name = line.removeprefix("FONT ")
+            elif line.startswith("SIZE "):
+                fields = line.split()
+                if len(fields) != 4:
+                    raise ValueError("invalid BDF SIZE record")
+                size = tuple(int(value) for value in fields[1:])
+            elif line.startswith("FONTBOUNDINGBOX "):
+                fields = line.split()
+                if len(fields) != 5:
+                    raise ValueError("invalid BDF FONTBOUNDINGBOX record")
+                font_box = tuple(int(value) for value in fields[1:])
+            elif line.startswith("CHARS "):
+                expected_characters = int(line.split()[1])
+            elif line.startswith("STARTPROPERTIES "):
+                in_properties = True
+            elif line == "ENDPROPERTIES":
+                in_properties = False
+            elif in_properties and " " in line:
+                key, value = line.split(" ", 1)
+                properties[key] = value.strip('"')
+    if block is not None:
+        raise ValueError(f"unterminated BDF glyph in {path}")
+    expected_metadata = {
+        "FONT_VERSION": "2026.07.20",
+        "FAMILY_NAME": "Fusion Pixel 12px Mono zh_hans",
+        "FONT_ASCENT": "10",
+        "FONT_DESCENT": "2",
+        "DEFAULT_CHAR": "-1",
+    }
+    if font_name != FUSION_XLFD or size != (12, 75, 75) or font_box != (12, 12, 0, -2):
+        raise ValueError("unexpected Fusion Pixel Font BDF global metrics")
+    if any(properties.get(key) != value for key, value in expected_metadata.items()):
+        raise ValueError("unexpected Fusion Pixel Font BDF properties")
+    if expected_characters != 36500 or character_count != expected_characters:
+        raise ValueError(
+            f"Fusion Pixel Font BDF glyph count mismatch: "
+            f"header={expected_characters} parsed={character_count}"
+        )
+    return selected
 
 
 def convert_unifont_glyph(width: int, rows: tuple[int, ...]) -> tuple[int, bytes]:
@@ -163,37 +340,48 @@ def encode_tpt_font(glyphs: dict[int, tuple[int, bytes]]) -> bytes:
 
 def build_font(source_root: Path, output: Path) -> dict[str, int | str]:
     source_root = source_root.resolve()
+    verify_pinned_inputs(source_root)
     upstream_path = source_root / UPSTREAM_FONT
     unifont_path = source_root / UNIFONT_HEX
+    fusion_path = source_root / FUSION_BDF
     language_paths = sorted((source_root / "src/lang").glob("*.json"))
     if not language_paths:
         raise ValueError("no embedded language catalogs found")
-    for path in (upstream_path, unifont_path):
-        if not path.is_file():
-            raise ValueError(f"required font input is missing: {path}")
-
     glyphs = parse_tpt_font(upstream_path)
     required = required_codepoints(language_paths)
+    zh_path = source_root / "src/lang/zh-CN.json"
+    if not zh_path.is_file():
+        raise ValueError("Simplified Chinese language catalog is missing")
+    zh_required = required_codepoints([zh_path])
     missing = required - set(glyphs)
-    unifont = parse_unifont(unifont_path, missing)
-    unresolved = sorted(missing - set(unifont))
+    fusion = parse_fusion_bdf(fusion_path, missing)
+    missing_zh_fusion = sorted((zh_required - set(glyphs)) - set(fusion))
+    if missing_zh_fusion:
+        rendered = ", ".join(f"U+{codepoint:04X}" for codepoint in missing_zh_fusion[:12])
+        suffix = "" if len(missing_zh_fusion) <= 12 else f" (+{len(missing_zh_fusion) - 12})"
+        raise ValueError(f"Fusion Pixel Font does not cover Simplified Chinese catalog: {rendered}{suffix}")
+    unifont_needed = missing - set(fusion)
+    unifont = parse_unifont(unifont_path, unifont_needed)
+    unresolved = sorted(unifont_needed - set(unifont))
     if unresolved:
         rendered = ", ".join(f"U+{codepoint:04X}" for codepoint in unresolved[:12])
         suffix = "" if len(unresolved) <= 12 else f" (+{len(unresolved) - 12})"
         raise ValueError(f"GNU Unifont does not cover embedded language glyphs: {rendered}{suffix}")
     for codepoint in missing:
-        glyphs[codepoint] = convert_unifont_glyph(*unifont[codepoint])
+        glyphs[codepoint] = fusion.get(codepoint) or convert_unifont_glyph(*unifont[codepoint])
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_bytes(encode_tpt_font(glyphs))
     return {
         "base_glyphs": len(glyphs) - len(missing),
-        "added_unifont_glyphs": len(missing),
+        "added_fusion_glyphs": len(fusion),
+        "added_unifont_glyphs": len(unifont),
         "glyphs": len(glyphs),
         "required_glyphs": len(required),
         "output_bytes": output.stat().st_size,
         "output_sha256": sha256(output),
         "upstream_font_sha256": sha256(upstream_path),
+        "fusion_bdf_sha256": sha256(fusion_path),
         "unifont_sha256": sha256(unifont_path),
     }
 

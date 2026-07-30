@@ -11,16 +11,19 @@ from __future__ import annotations
 import argparse
 import bz2
 import json
+import struct
 import sys
+import zlib
 from pathlib import Path
 from typing import Iterable, Sequence
 
-try:
-    from PIL import Image
-except ImportError:  # pragma: no cover - explicitly diagnosed for release tooling
-    Image = None
-
-from build_release_font import FONT_HEIGHT, convert_unifont_glyph, parse_unifont, unpack_tpt_glyph
+from build_release_font import (
+    FONT_HEIGHT,
+    convert_unifont_glyph,
+    parse_fusion_bdf,
+    parse_unifont,
+    unpack_tpt_glyph,
+)
 
 
 KNOWN_TEXT = "简体中文工业冶金局部生态高级化学受控核设置保存加载只读取消"
@@ -85,12 +88,25 @@ def pack_pixels(pixels: Sequence[int]) -> bytes:
     return bytes(packed)
 
 
+def png_chunk(kind: bytes, data: bytes) -> bytes:
+    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+
+
 def save_glyph_png(path: Path, codepoint: int, width: int, matrix: Sequence[Sequence[int]], scale: int = 16) -> None:
-    if Image is None:
-        raise RuntimeError("Pillow is required to export glyph PNGs")
-    image = Image.new("L", (width, FONT_HEIGHT), 0)
-    image.putdata([value * 85 for row in matrix for value in row])
-    image.resize((width * scale, FONT_HEIGHT * scale), Image.Resampling.NEAREST).save(path)
+    """Write a dependency-free grayscale PNG with nearest-neighbour scaling."""
+    image_width = width * scale
+    image_height = FONT_HEIGHT * scale
+    scanlines = bytearray()
+    for row in matrix:
+        expanded = bytes(value * 85 for value in row for _ in range(scale))
+        for _ in range(scale):
+            scanlines.append(0)  # PNG filter: None
+            scanlines.extend(expanded)
+    png = b"\x89PNG\r\n\x1a\n"
+    png += png_chunk(b"IHDR", struct.pack(">IIBBBBB", image_width, image_height, 8, 0, 0, 0, 0))
+    png += png_chunk(b"IDAT", zlib.compress(bytes(scanlines), 9))
+    png += png_chunk(b"IEND", b"")
+    path.write_bytes(png)
 
 
 def degradation(width: int, matrix: Sequence[Sequence[int]]) -> list[str]:
@@ -111,7 +127,13 @@ def degradation(width: int, matrix: Sequence[Sequence[int]]) -> list[str]:
     return warnings
 
 
-def validate(font: Path, language_paths: list[Path], output: Path | None, unifont: Path | None) -> dict[str, object]:
+def validate(
+    font: Path,
+    language_paths: list[Path],
+    output: Path | None,
+    unifont: Path | None,
+    fusion_bdf: Path | None,
+) -> dict[str, object]:
     glyphs = parse_font(font)
     required = catalog_codepoints(language_paths)
     missing = sorted(required - set(glyphs))
@@ -153,17 +175,33 @@ def validate(font: Path, language_paths: list[Path], output: Path | None, unifon
     if unifont is not None:
         probe_source = parse_unifont(unifont, set(PROBE_CODEPOINTS))
         source_missing = sorted(set(PROBE_CODEPOINTS) - set(probe_source))
+        roundtrip_failed = []
+        for codepoint, source_glyph in probe_source.items():
+            width, bitmap = convert_unifont_glyph(*source_glyph)
+            if pack_pixels([pixel for row in glyph_pixels(width, bitmap) for pixel in row]) != bitmap:
+                roundtrip_failed.append(codepoint)
+        if source_missing or roundtrip_failed:
+            raise ValueError(
+                "Unifont source decode/roundtrip mismatch: "
+                f"missing={','.join(f'U+{codepoint:04X}' for codepoint in source_missing)} "
+                f"roundtrip={','.join(f'U+{codepoint:04X}' for codepoint in roundtrip_failed)}"
+            )
+        source_decode_test = True
+    fusion_source_decode_test = False
+    if fusion_bdf is not None:
+        probe_source = parse_fusion_bdf(fusion_bdf, set(PROBE_CODEPOINTS))
+        source_missing = sorted(set(PROBE_CODEPOINTS) - set(probe_source))
         mismatched = [
             codepoint for codepoint, source_glyph in probe_source.items()
-            if glyphs.get(codepoint) != convert_unifont_glyph(*source_glyph)
+            if glyphs.get(codepoint) != source_glyph
         ]
         if source_missing or mismatched:
             raise ValueError(
-                "Unifont conversion mismatch: "
+                "Fusion BDF conversion mismatch: "
                 f"missing={','.join(f'U+{codepoint:04X}' for codepoint in source_missing)} "
                 f"mismatched={','.join(f'U+{codepoint:04X}' for codepoint in mismatched)}"
             )
-        source_decode_test = True
+        fusion_source_decode_test = True
     if output:
         output.mkdir(parents=True, exist_ok=True)
         for codepoint in sorted({ord(character) for character in KNOWN_TEXT} | set(PROBE_CODEPOINTS)):
@@ -177,6 +215,7 @@ def validate(font: Path, language_paths: list[Path], output: Path | None, unifon
         "font_glyph_coverage_valid": True,
         "font_pack_roundtrip_test": True,
         "unifont_source_decode_test": source_decode_test,
+        "fusion_bdf_source_decode_test": fusion_source_decode_test,
         "zh_known_glyph_test": True,
         "cjk_duplicate_bitmaps": duplicate_cjk,
         "cjk_degradation_warnings": len(warnings),
@@ -189,10 +228,17 @@ def main() -> int:
     parser.add_argument("--language-dir", type=Path, default=Path("src/lang"))
     parser.add_argument("--output", type=Path)
     parser.add_argument("--unifont", type=Path)
+    parser.add_argument("--fusion-bdf", type=Path)
     args = parser.parse_args()
     try:
-        result = validate(args.font, sorted(args.language_dir.glob("*.json")), args.output, args.unifont)
-    except (OSError, ValueError, json.JSONDecodeError, RuntimeError) as error:
+        result = validate(
+            args.font,
+            sorted(args.language_dir.glob("*.json")),
+            args.output,
+            args.unifont,
+            args.fusion_bdf,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"validate-tpt-font: ERROR {error}", file=sys.stderr)
         return 1
     print("validate-tpt-font: PASS " + " ".join(f"{key}={value}" for key, value in result.items()))

@@ -15,10 +15,12 @@
 - `zh_failure_root_cause=Unifont converter packed 2bpp pixels MSB-first while FontReader::NextPixel consumes LSB-first; integer 16-to-12 point sampling also skipped source stroke rows`
 - `zh_process_crash=false`：修复候选在全新隔离用户目录默认中文启动 20 次，均存活并响应；旧候选没有可用 WER、转储或异常代码，不能补造崩溃记录。
 - `baseline_zh_glyph_corruption=true`：旧候选字体确定存在上述位序和截笔错误。
-- `zh_glyph_corruption=not_tested`：修复候选的离屏引擎输出可读，但最终 ZIP 尚未由人工在真实桌面查看，不能声称 GUI 字形损坏已清除。
+- `rejected_fix_zh_glyph_corruption=true`：转换器修复试包的离屏引擎输出和结构检查通过，但用户从 ZIP 解压运行后明确判定其中文显示仍不如既有出版中文版本；该结论记录为中文可读性/字形质量失败，不推断进程崩溃。
+- `zh_glyph_corruption=not_tested`：当前原生 Fusion 12px BDF 方案已通过固定矩阵、全目录覆盖和引擎离屏渲染，但新的私有 ZIP 尚未由用户在真实桌面查看。
 - `zh_layout_failure=not_tested`
 - `zh_locale_loading_failure=false`：严格 JSON/键/占位符审计及引擎对 `zh-CN.json` 1,262 条文本的测量/绘制通过，替换字形 0；真实 GUI 切换生命周期仍待验证。
-- `font_visual_readability_valid=not_tested`：离屏 probe 的 PNG 可读，但不是最终 ZIP 的人工桌面验收。
+- `rejected_fix_font_visual_readability_valid=false`：提交 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95`、ZIP `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081` 已由用户解压运行并人工查看，中文显示质量未达到既有出版中文基线。该私有试包已拒绝。
+- `font_visual_readability_valid=not_tested`：新的原生 12px 方案仍需从私有 ZIP 解压运行后人工验收。
 
 ## 凭据检查
 
@@ -53,7 +55,7 @@
 
 最终 ZIP 的 EXE 可启动，窗口标题为 `TPT-ZH-OmniPack 0.1.0-test` 并保持响应。当前自动化会话无法把 SDL 窗口置为前景：`SetForegroundWindow` 返回 `false`，且目标窗口句柄不等于当前前景句柄，见 `gui-foreground-attempt.json`。`PrintWindow` 返回成功但 SDL 客户端区为黑帧，见 `04-zh-main-printwindow.png`。屏幕区域抓取会包含其他桌面窗口，因此不能作为 TPT UI 证据。
 
-因此，本环境不能安全或可验证地执行所要求的设置点击、语言切换、模块开关、保存加载、只读门禁和十个压力样本。没有发送会影响其他前景应用的键鼠输入，也没有伪造 OPS 或性能记录。
+因此，本自动化环境不能安全或可验证地执行所要求的设置点击、语言切换、模块开关、保存加载、只读门禁和十个压力样本。用户已在真实 Windows 桌面对私有修复试包完成中文可读性检查并给出失败结论，但这不等于其余交互、高 DPI 和页面矩阵已执行。没有发送会影响其他前景应用的键鼠输入，也没有伪造 OPS 或性能记录。
 
 ## 已完成的非 GUI 验证
 
@@ -79,12 +81,18 @@ rejected_candidate_commit=5828a97fc39129547354956dde84d7b6cfb818c2
 rejected_public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
 rejected_symbols_zip_sha256=3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9
 rejection_reason=zh_ui_failure
+rejected_fix_candidate_commit=ca3cccbee13a41c37ee0b7975c4b5f060cb34a95
+rejected_fix_public_zip_sha256=E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081
+rejected_fix_symbols_zip_sha256=AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0
+rejected_fix_reason=zh_font_visual_quality_failure
+rejected_fix_zip_audit_pass=true
 
 zh_failure_type=glyph_corruption
 zh_failure_reproduced=true
 zh_failure_root_cause=Unifont converter packed 2bpp pixels MSB-first while FontReader::NextPixel consumes LSB-first; integer 16-to-12 point sampling skipped source stroke rows
 zh_process_crash=false
 baseline_zh_glyph_corruption=true
+rejected_fix_zh_glyph_corruption=true
 zh_glyph_corruption=not_tested
 zh_layout_failure=not_tested
 zh_locale_loading_failure=false
@@ -99,6 +107,7 @@ font_pixel_conversion_valid=true
 font_engine_render_valid=true
 zh_known_glyph_test=true
 zh_golden_image_test=not_tested
+rejected_fix_font_visual_readability_valid=false
 font_visual_readability_valid=not_tested
 font_dpi_layout_valid=not_tested
 
@@ -127,8 +136,8 @@ public_clone_build_pass=not_tested
 
 clean_build_pass=true
 meson_tests=12/12
-python_tests=53
-lua_runtime_tests=not_tested
+python_tests=56
+lua_runtime_tests=6/6
 
 gui_launch_test=true
 zh_default_test=not_tested
@@ -138,7 +147,7 @@ en_to_zh_switch_test=not_tested
 zh_persistence_test=not_tested
 zh_en_switch_test=false
 ui_text_overflow_test=not_tested
-font_visual_test=false
+font_visual_test=not_tested
 module_ui_test=not_tested
 metallurgy_ui_test=not_tested
 ecology_ui_test=not_tested
@@ -185,9 +194,9 @@ developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081
-symbols_zip_sha256=AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0
-zip_audit_pass=true
+public_zip_sha256=not_tested
+symbols_zip_sha256=not_tested
+zip_audit_pass=not_tested
 
 tag_public=false
 tag_anonymous_clone_pass=false
@@ -202,5 +211,6 @@ release_ready=false
 |---|---|---|---|---|
 | PAT 未证明撤销或轮换 | 外部账户/安全 | `secret-scan-results.txt` 发现当前环境 PAT；无撤销证据 | 停止推送、tag 和 Release | 在 GitHub 安全设置撤销旧 PAT，使用最小权限凭据和凭据库重新认证，再记录不含原文的证据 |
 | 源码尚未公开 | 权限/外部服务 | 两个发布分支和 tag 在 `origin` 均不存在 | 未推送 | 撤销确认后推送分支，匿名 HTTPS 克隆并构建验证 |
-| SDL GUI 无可验证前景/画面 | 环境 | 前景 API 失败，`PrintWindow` 黑帧 | 保存窗口、截图和失败证据；未盲目发送输入 | 在可交互 Windows 桌面用 UI Automation、AutoHotkey 或人工操作执行完整 GUI/OPS/压力矩阵 |
+| 私有修复试包中文可读性失败 | 字体/实际 GUI | 用户解压运行 `E52E746B...` 后确认其中文显示仍不如既有出版中文版本 | 拒绝该试包，保留为失败对照，`rejected_fix_font_visual_readability_valid=false` | 已实现原生 Fusion 12px BDF 方案；生成新的私有试包供人工检查 |
+| 自动化 SDL GUI 无可验证前景/画面 | 环境 | 前景 API 失败，`PrintWindow` 黑帧 | 保存窗口、截图和失败证据；未盲目发送输入 | 在可交互 Windows 桌面执行其余语言切换、页面、高 DPI、OPS 和压力矩阵 |
 | OPS 与压力样本未创建 | 环境 | `saves/` 和 `stress/` 的结果文件明确为未测试 | 未构造伪 OPS 或伪性能数据 | 使用最终 ZIP 的 GUI 保存十个 OPS 样本，完成往返、门禁和十个固定压力运行 |

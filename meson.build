@@ -661,6 +661,7 @@ test(
 		'--font', join_paths(meson.project_source_root(), 'resources', 'font.bz2'),
 		'--language-dir', join_paths(meson.project_source_root(), 'src', 'lang'),
 		'--unifont', join_paths(meson.project_source_root(), 'resources', 'third_party', 'unifont_all-16.0.03.hex.gz'),
+		'--fusion-bdf', join_paths(meson.project_source_root(), 'resources', 'third_party', 'fusion-pixel-12px-monospaced-zh_hans-v2026.07.20.bdf'),
 	],
 	env: static_test_env,
 	suite: 'static',

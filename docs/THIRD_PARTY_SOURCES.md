@@ -84,8 +84,8 @@ SpikeViper `134ebf330eda42b4b300a2b7613ede71261697df`、Ultimata `b7497175243365
 ## 字体、图像、音效与二进制
 
 - Dragonrster 分支曾使用不可追溯的扩展 `font.bz2`；它已被替换，不再作为发布输入或授权依据。
-- 发布字体由官方 TPT `100.0.399` 位图字库与 GNU Unifont `16.0.03` 受限字符子集确定性生成。完整来源、SHA-256、转换方法、嵌入/再分发许可见 `docs/FONT_AUDIT.md`。
-- GNU Unifont 的 SIL Open Font License 1.1 / GPL 字体嵌入例外文本随包提供为 `LICENSES/GNU-UNIFONT-OFL-1.1.txt`。
+- 发布字体由官方 TPT `100.0.399` 位图字库、Fusion Pixel Font `2026.07.20` 原生 12px 简体中文 BDF 受限字符子集及 GNU Unifont `16.0.03` 回退确定性生成。完整来源、固定 commit、SHA-256、坐标映射、嵌入/再分发许可见 `docs/FONT_AUDIT.md`。
+- Fusion Pixel Font 主 OFL 1.1 及 Ark Pixel Font、Cubic 11、Galmuri 上游 OFL 文本均随包置于 `LICENSES/`；GNU Unifont 的 SIL OFL 1.1 / GPL 字体嵌入例外文本随包提供为 `LICENSES/GNU-UNIFONT-OFL-1.1.txt`。
 - Phase 0 没有引入新音效、图片或第三方二进制。
 - 发布包不会包含任何只有二进制而没有对应合法源码的模组实现。
 
