@@ -1,24 +1,27 @@
 # 性能与稳定性基线
 
-本文件定义可重复的性能采样、固定场景和发布判定。当前已实现十场景的隔离 Lua/PowerShell 采样工具，并能生成逐秒帧/粒子序列、Windows 进程 CPU/内存序列、两份 OPS、保存加载耗时和机器可读 JSON。短烟测只验证工具链；S01/S02 已完成 60 秒预热和 600 秒采样，但模块事件计数、场景停止/恢复断言及其余 8 个样本尚未完成，因此正式性能基线仍为 `not_tested`。
+本文件定义可重复的性能采样、固定场景和发布判定。当前已实现十场景的隔离 Lua/PowerShell 采样工具，并能生成逐秒帧/粒子序列、Windows 进程 CPU/内存序列、两份 OPS、保存加载耗时和机器可读 JSON。当前候选的十项完整 `60+600` 秒执行及独立工件评估均已完成；模块事件计数和场景停止/恢复断言仍未实现，因此完整性能门禁仍为 `not_tested`。
 
 ## 当前快照
 
 ```text
-audit_head=5a9435e98e063f60c6576180b348c89542d8bb67
+candidate_source_commit=5a9435e98e063f60c6576180b348c89542d8bb67
 implementation_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+harness_commit=90007099c8f1ce44527d78203cd41f6f49e8e7c6
 candidate_version=0.1.0-test
 candidate_exe_sha256=D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2
 candidate_zip_sha256=D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16
-stress_evidence_source_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
-stress_evidence_zip_sha256=0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051
+stress_evidence_source_commit=5a9435e98e063f60c6576180b348c89542d8bb67
+stress_evidence_zip_sha256=D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16
 stress_samples_passed=0
 stress_samples_total=10
 harness_smoke_scenarios=10/10
 responsive_harness_smoke_scenarios=1/10
-full_sample_executions=2/10
-sample_executions_passed=2/10
-full_samples_assessed=2/10
+full_sample_executions=10/10
+sample_executions_passed=10/10
+full_samples_assessed=10/10
+event_evidence_complete=false
+scenario_behavior_pass=not_tested
 ops_mixed_carrier_roundtrip=true
 stress_test=not_tested
 long_run_test=not_tested
@@ -41,7 +44,7 @@ long_run_test=not_tested
 | 物理内存 | 33,784,102,912 bytes |
 | 电源模式 | Windows 高性能方案 `8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c` |
 
-当前 ZIP 解压后 EXE 已从全新隔离目录启动并正常退出，且所有运行工具都使用独立 `ddir`。这证明当前运行路径和隔离策略可用，不提供持续运行、FPS 或内存基线。
+当前 ZIP 解压后 EXE 已从全新隔离目录启动并正常退出，且所有运行工具都使用独立 `ddir`。十项持续运行、FPS 和内存原始序列另见下文；隔离启动本身不替代窗口内容、语言或 DPI 的人工视觉证据。
 
 ## 采样工具与已发现失败
 
@@ -58,7 +61,7 @@ long_run_test=not_tested
 - 每次运行预创建仅含 `{}` 的隔离 `powder.pref`，避免首次启动缩放确认阻塞事件循环；不读取真实用户偏好、账户、图章或存档，也不把该临时偏好复制到证据目录。
 - 第一版工具在 Lua autorun 中连续循环。十个 2 秒烟测均完成，但首次 600 秒运行在约 3 秒后被客户端 `LuaHookTimeout` 以“Script not responding”终止。该结果是工具缺陷和真实失败，不计为样本结果。
 - 提交 `4f5c07f9` 改为在 `event.tick` 中每次只执行一帧并立即返回。修复后 S01 响应性烟测通过，约 2.004 秒内完成 122 帧，平均约 60.9 次 `sim.updateUpTo`/秒，`Responding=true`；该数值只验证新调度方式，不是冻结性能基线。
-- 当前没有引擎暴露的模块事件计数器，对应 JSON 字段保持 `not_tested`。S01/S02 的只读判定器基于 600 秒序列给出 `unbounded_growth=false` 和 `memory_leak_suspected=false`；这是有限观察分类，不是长期有界性的数学证明，也不会仅根据“进程未崩溃”推断结果。
+- 当前没有引擎暴露的模块事件计数器，对应 JSON 字段保持 `not_tested`。当前候选的十项只读判定器均基于 600 秒序列给出 `unbounded_growth=false` 和 `memory_leak_suspected=false`；这是有限观察分类，不是长期有界性的数学证明，也不会仅根据“进程未崩溃”推断结果。
 
 ## 源码中的有界机制
 
@@ -142,37 +145,56 @@ notes
 
 ## 0.1.0-test 十个固定样本
 
-十个场景均已有确定性构造器和短烟测 OPS/JSON。正式表只接受完整 60+600 秒运行，因此在完整样本结束并复核前仍全部保持尚未测试。
+十个场景均已有确定性构造器和短烟测 OPS/JSON。下表的所有当前状态均绑定同一候选 ZIP、同一 EXE 和同一采样器提交；每项均完成完整 `60+600` 秒运行并通过独立工件评估，但均尚未满足事件/行为的完整门禁。
 
 | 样本 ID | 固定场景 | 必需活动与故障点 | 运行时长 | 当前状态 |
 |---|---|---|---:|---|
-| `S01-METALLURGY-LARGE` | 大型冶金工厂 | 原料熔化、合金、炼钢、炉渣与碎料回收同时运行 | 60 秒预热 + 600 秒采样 | 实际运行确认；完整门禁未通过 |
-| `S02-FURNACES-PARALLEL` | 多熔炉并行 | 多个 `CRUC` 炭化/炼焦及多组合金达到事件高负载 | 60 秒预热 + 600 秒采样 | 实际运行确认；完整门禁未通过 |
-| `S03-ECOLOGY-AREA` | 大面积生态循环 | 藻类、菌丝、孢子、营养和腐殖质在完整模式长期循环 | ≥10 分钟 | 尚未测试 |
-| `S04-PATHOGEN-CONTROL` | 病原体传播与消毒 | `PATH` 扩散、`STER` 消毒和湿 `BIOF` 过滤；确认可停止 | ≥10 分钟 | 尚未测试 |
-| `S05-CHEMISTRY-DENSE` | 高密度化学反应 | 裂化、聚合、氨、肥料、过氧化物和发酵并行 | ≥10 分钟 | 尚未测试 |
-| `S06-NEUTRON-GENERATORS` | 多中子发生器 | 多个 `SPRK(NGEN)` 脉冲、有/无燃料和满输出槽负例 | ≥10 分钟 | 尚未测试 |
-| `S07-REACTOR-STABLE` | 稳定反应堆 | 燃料、慢化、控制、冷却和屏蔽稳定运行 | ≥10 分钟 | 尚未测试 |
-| `S08-REACTOR-LOCA` | 失冷反应堆 | 切断冷却、废料升温、停堆和恢复；不得不可控增长 | ≥10 分钟 | 尚未测试 |
-| `S09-ALL-MODULES` | 四模块同时活动 | 冶金、生态、化学、核工业同时达到持续负载 | ≥10 分钟 | 尚未测试 |
-| `S10-CARRIERS-ROUNDTRIP` | 大量间接元素引用 | `LAVA`、`SPRK`、`MSCR`、`ctype/tmp/tmp2` 大量存在并反复双往返 | ≥10 分钟 | 尚未测试 |
+| `S01-METALLURGY-LARGE` | 大型冶金工厂 | 原料熔化、合金、炼钢、炉渣与碎料回收同时运行 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
+| `S02-FURNACES-PARALLEL` | 多熔炉并行 | 多个 `CRUC` 炭化/炼焦及多组合金达到事件高负载 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
+| `S03-ECOLOGY-AREA` | 大面积生态循环 | 藻类、菌丝、孢子、营养和腐殖质在完整模式长期循环 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
+| `S04-PATHOGEN-CONTROL` | 病原体传播与消毒 | `PATH` 扩散、`STER` 消毒和湿 `BIOF` 过滤；确认可停止 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
+| `S05-CHEMISTRY-DENSE` | 高密度化学反应 | 裂化、聚合、氨、肥料、过氧化物和发酵并行 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
+| `S06-NEUTRON-GENERATORS` | 多中子发生器 | 多个 `SPRK(NGEN)` 脉冲、有/无燃料和满输出槽负例 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
+| `S07-REACTOR-STABLE` | 稳定反应堆 | 燃料、慢化、控制、冷却和屏蔽稳定运行 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
+| `S08-REACTOR-LOCA` | 失冷反应堆 | 切断冷却、废料升温、停堆和恢复；不得不可控增长 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
+| `S09-ALL-MODULES` | 四模块同时活动 | 冶金、生态、化学、核工业同时达到持续负载 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
+| `S10-CARRIERS-ROUNDTRIP` | 大量间接元素引用 | `LAVA`、`SPRK`、`MSCR`、`ctype/tmp/tmp2` 大量存在并反复双往返 | 60 秒预热 + 600 秒采样 | 实际运行确认；独立评估通过，完整门禁未通过 |
 
 ### 当前结果表
 
-| 样本 | 初始/峰值/结束粒子 | 平均/1% low/最低 FPS | 峰值工作集 | 崩溃/卡死 | 无界增长 | OPS 往返 | 结果 |
+| 样本 | 初始/峰值/结束粒子 | 平均/1% low/最低 FPS | 峰值工作集 | 崩溃/卡死 | 增长/泄漏（有限观察） | OPS 往返 | 结果 |
 |---|---|---|---|---|---|---|---|
-| `S01` | `49,536 / 49,536 / 13,167` | `60.002 / 52.631 / 46.490` | `152,281,088 bytes` | `false / false` | `false` | `true` | 样本执行通过；事件计数/场景行为未完成 |
-| `S02` | `49,536 / 139,323 / 16,520` | `60.002 / 52.633 / 47.177` | `162,676,736 bytes` | `false / false` | `false` | `true` | 样本执行通过；事件计数/场景行为未完成 |
-| `S03` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
-| `S04` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
-| `S05` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
-| `S06` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
-| `S07` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
-| `S08` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
-| `S09` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
-| `S10` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
+| `S01` | `49,536 / 49,536 / 12,971` | `60.002 / 55.020 / 49.992` | `142,331,904 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
+| `S02` | `49,536 / 138,927 / 16,520` | `60.001 / 53.033 / 49.317` | `142,262,272 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
+| `S03` | `33,024 / 33,024 / 15,056` | `59.825 / 52.637 / 0.790` | `136,507,392 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
+| `S04` | `33,024 / 33,024 / 6,605` | `60.002 / 55.300 / 42.143` | `135,753,728 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
+| `S05` | `33,024 / 33,024 / 5,516` | `60.002 / 55.551 / 52.301` | `137,445,376 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
+| `S06` | `43,206 / 43,758 / 42,188` | `60.002 / 49.997 / 43.449` | `149,983,232 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
+| `S07` | `82,560 / 82,560 / 75,962` | `60.001 / 41.669 / 37.036` | `147,914,752 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
+| `S08` | `41,280 / 41,280 / 32,000` | `60.001 / 50.246 / 38.463` | `139,624,448 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
+| `S09` | `43,929 / 43,929 / 24,461` | `60.002 / 52.631 / 45.304` | `140,681,216 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
+| `S10` | `16,512 / 16,512 / 1,298` | `60.002 / 55.554 / 41.668` | `134,885,376 bytes` | `false / false` | `false / false` | `true` | 执行与独立评估通过；完整门禁 `false` |
 
-### S01 完整执行证据
+### 当前候选的来源与评估
+
+上述十项均由普通包 `D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16` 中与 `D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2` 匹配的 EXE 执行，`source_commit=5a9435e98e063f60c6576180b348c89542d8bb67`，`harness_commit=90007099c8f1ce44527d78203cd41f6f49e8e7c6`。每个运行目录包含 `result.json`、逐秒 `frame-series.csv`、进程 `process-series.csv`、两份 OPS 和 `assessment.json`；十份评估均为 `assessment_status=PASS`、`sample_execution_pass=true`、`unbounded_growth=false`、`memory_leak_suspected=false`。
+
+| 样本 | 当前候选 run ID |
+|---|---|
+| `S01` | `20260730T171016Z-c3af7cdd` |
+| `S02` | `20260730T172142Z-d0455385` |
+| `S03` | `20260730T143842Z-695f739e` |
+| `S04` | `20260730T145118Z-96694b33` |
+| `S05` | `20260730T160043Z-bc38fc43` |
+| `S06` | `20260730T161216Z-abdd6b22` |
+| `S07` | `20260730T162342Z-43b5c183` |
+| `S08` | `20260730T163511Z-8f9d2c6a` |
+| `S09` | `20260730T164635Z-f03d2a70` |
+| `S10` | `20260730T165757Z-07684e98` |
+
+`S03` 记录到一次最低 `0.790` FPS，已如实保留；由于本版本尚未定义通过阈值，它不单独改写为失败或通过。所有十项的 `event_evidence_complete=false`、`scenario_behavior_pass=not_tested`，故十项 `performance_gate_pass=false`，`stress_samples_passed=0`，`stress_test=not_tested`。有限观察的 `false` 值不构成长期有界性的数学证明。
+
+### 早期候选 S01 历史证据（不计入当前候选）
 
 ```text
 run_id=20260730T135615Z-7ce0af06
@@ -208,7 +230,7 @@ gate_result=incomplete_event_and_growth_evidence
 
 原始数据位于 `artifacts/performance/0.1.0-test/DESKTOP-14BQH2Q-276049E7945C/S01-METALLURGY-LARGE/20260730T135615Z-7ce0af06/`：595 条逐秒帧/粒子记录、1,289 条进程记录以及两份 OPS。`tools/analyze_stress_result.py` 已核对原始 JSON、CSV、OPS1/BZip2 和两份 SHA-256；后半段粒子观测不是“非递减且至少一次增加”，工作集与私有字节最后四分之一也未同时满足该有限观察规则，因此输出 `unbounded_growth=false`、`memory_leak_suspected=false`、`sample_execution_pass=true`。该规则不是长期有界性的数学证明；事件计数和场景停止/恢复仍缺失，所以 `performance_gate_pass=false`。
 
-### S02 完整执行证据
+### 早期候选 S02 历史证据（不计入当前候选）
 
 ```text
 run_id=20260730T140824Z-4564e521
@@ -319,12 +341,16 @@ data_consistency_pass=
 ## 当前门禁结论
 
 ```text
-performance_measurements_complete=false
+performance_measurements_complete=true
+stress_samples_executed=10
+stress_sample_executions_passed=10
 stress_samples_passed=0
 stress_samples_total=10
 stress_test=not_tested
-memory_leak_suspected=not_tested
-unbounded_growth_detected=not_tested
+memory_leak_suspected=false
+unbounded_growth_detected=false
+event_evidence_complete=false
+scenario_behavior_pass=not_tested
 long_run_test=not_tested
 performance_gate_pass=false
 ```

@@ -10,7 +10,7 @@
 |---|---|---|---|
 | 空目录 Release 构建 | 构建 | PASS | `build-0.1.0-test-e2e1b3fe`，`502/502`，0 error；其后提交只改压力/报告工具与文档，不改变二进制 |
 | 当前 Meson 全量 | 自动 | PASS | `14/14` |
-| 当前 Python 全量 | 自动 | PASS | `86/86`，0 skip |
+| 当前 Python 全量 | 自动 | PASS | `87/87`，0 skip |
 | 元素/反应 registry | 自动 | PASS | 370 元素槽、243 active、127 reserved；48 个玩法字段完整；38/38 反应规则 |
 | 字体资源与渲染探针 | 自动/引擎 | PASS | `font.bz2` SHA-256 `47F4EB85...`；2,593 语言字符覆盖；中文矩阵和引擎探针通过 |
 | 已剥离 EXE Lua 回归 | 实际运行 | PASS | 模块、冶金、生态、化学、核工业和混合 OPS 共 `6/6` |
@@ -26,7 +26,7 @@
 | 四模块 UI 与代表元素 | 人工视觉 | NOT RUN | `ALUM/NUTR/CHLR/NFUL` 的搜索、放置、图鉴、开关和重启未完成 |
 | 禁用模块三选项/只读写入拦截 | 实际 GUI | NOT RUN | 静态门禁通过；菜单、快捷键、另存、覆盖、上传和取消不改变沙盘仍需点击证据 |
 | 十场景压力烟测工具 | 实际运行 | PASS | 十个场景均能生成帧、CPU、内存、粒子、保存加载与 OPS 原始文件；仅表示工具执行，`stress_gate=not_tested` |
-| 十场景各 10 分钟门禁 | 持续运行 | NOT RUN | 首次完整运行发现并修复 Lua 无响应；新方案完整矩阵尚未结束 |
+| 十场景各 10 分钟门禁 | 持续运行 | BLOCKED | 当前候选 `5a9435e9` / `90007099` 下 `10/10` 完整 `60+600` 秒样本的执行与独立工件评估通过；所有 `performance_gate_pass=false`，因为模块事件计数和场景停止/恢复断言尚未实现 |
 | PAT 撤销、公开源码和匿名克隆 | 外部 | BLOCKED | `credential_revoked=false`、`source_commit_public=false`、`anonymous_clone_pass=false` |
 | `v0.1.0-test` / GitHub prerelease | 外部 | BLOCKED | 未创建 tag/Release；`release_ready=false` |
 
@@ -37,7 +37,7 @@
 | 压力原始证据判定器 | 自动 | PASS | `b356f931`；核对 JSON/CSV/OPS 哈希，有限观察增长分类不替代长期证明 |
 | 发布报告结构门禁 | 自动 | PASS | `d3419e7b`；67 个机器字段齐全，拒绝非法值、缺字段、哈希不符及 `release_ready` 覆盖失败门禁 |
 | 开发 HEAD Meson | 自动 | PASS | `14/14`，新增 `release-report` 门禁 |
-| 开发 HEAD Python | 自动 | PASS | `86/86`，0 skip |
+| 开发 HEAD Python | 自动 | PASS | `87/87`，0 skip |
 
 这些门禁工具不改变候选 EXE `D29E6776...5BFB2`；当前重新封装的 ZIP 已写入真实源码提交 `5a9435e9` 和新哈希。
 
@@ -124,8 +124,8 @@
 | Python 工具单元测试 | 静态 | PASS | 30/30 |
 | Meson `static` suite | 静态 | PASS | 4/4 |
 | Windows x64 增量编译 | 构建 | PASS | 28/28，0 error |
-| 大型冶金工厂压力样本 | 压力 | NOT RUN | Phase 7 建立固定样本并记录 FPS/内存 |
-| 冶金 OPS 往返存档 | 运行 | NOT RUN | Phase 7 固定 `>255`、LAVA/SPRK/MSCR 样本 |
+| 大型冶金工厂压力样本 | 压力 | BLOCKED | 当前候选 S01 已完成 `60+600` 秒、FPS/内存/OPS 原始序列及独立评估；事件/行为完整门禁尚未满足 |
+| 冶金 OPS 往返存档 | 运行 | PASS | 当前候选独立冶金 OPS 双往返，覆盖 `>255`、`LAVA/SPRK/MSCR` 载体字段 |
 
 ## Phase 3 基础化学
 
@@ -148,8 +148,8 @@
 | Python 工具单元测试 | 静态 | PASS | 32/32，2 项本机未发现 C++ 编译器的测试跳过 |
 | Meson `static` suite | 静态 | PASS | 5/5 |
 | Windows x64 增量编译 | 构建 | PASS | 0 error；GCC 16.1.0 / Meson 1.11.2 / Ninja 1.13.2 |
-| 化学 OPS 往返存档 | 运行 | NOT RUN | Phase 7 固定 `360..369`、SPRK(CATA)、PERO 样本 |
-| 化学生产线压力样本 | 压力 | NOT RUN | Phase 7 记录 FPS、内存、反应预算耗尽行为 |
+| 化学 OPS 往返存档 | 运行 | PASS | 当前候选独立化学 OPS 双往返，覆盖 `360..369`、`SPRK(CATA)` 与 `PERO` |
+| 化学生产线压力样本 | 压力 | BLOCKED | 当前候选 S05 已完成 `60+600` 秒、FPS/内存/OPS 原始序列及独立评估；事件/行为完整门禁尚未满足 |
 
 ## Phase 4 局部生态
 
@@ -170,8 +170,8 @@
 | Python 工具单元测试 | 静态 | PASS | 35/35；2 项本机未发现 C++ 编译器的测试跳过 |
 | Meson `static` suite | 静态 | PASS | 6/6，含 registry、i18n、冶金、化学、生物和工具测试 |
 | Windows x64 增量编译 | 构建 | PASS | GCC 16.1.0 / Ninja；0 error |
-| 生物 OPS 往返存档 | 运行 | NOT RUN | Phase 7 固定 `288..295` 与两种模式样本 |
-| 高粒子数生态压力样本 | 压力 | NOT RUN | Phase 7 记录 FPS、内存与事件预算耗尽行为 |
+| 生物 OPS 往返存档 | 运行 | PASS | 当前候选独立生态 OPS 双往返，覆盖 `288..295` 与两种模式字段 |
+| 高粒子数生态压力样本 | 压力 | BLOCKED | 当前候选 S03/S04 已完成 `60+600` 秒、FPS/内存/OPS 原始序列及独立评估；事件/行为完整门禁尚未满足 |
 
 ## Phase 5 受控核工业
 
@@ -191,8 +191,8 @@
 | Python 工具单元测试 | 静态 | PASS | 39/39；2 项本机未发现 C++ 编译器的测试跳过 |
 | Meson `static` suite | 静态 | PASS | 7/7，含 registry、i18n、冶金、化学、生物、核工业和工具测试 |
 | Windows x64 增量编译 | 构建 | PASS | GCC 16.1.0 / Ninja；0 error，2 条既有 `PowderToy.cpp` warning |
-| 核工业 OPS 往返存档 | 运行 | NOT RUN | Phase 7 固定 `328..334`、`SPRK(NGEN)`、`NEUT` 样本 |
-| 高粒子数反应堆压力样本 | 压力 | NOT RUN | Phase 7 记录 FPS、内存与事件预算耗尽行为 |
+| 核工业 OPS 往返存档 | 运行 | PASS | 当前候选独立核工业 OPS 双往返，覆盖 `328..334`、`SPRK(NGEN)` 与 `NEUT` |
+| 高粒子数反应堆压力样本 | 压力 | BLOCKED | 当前候选 S06/S07/S08 已完成 `60+600` 秒、FPS/内存/OPS 原始序列及独立评估；事件/行为完整门禁尚未满足 |
 
 ## Phase 6 扩展元素图鉴内容
 
@@ -285,7 +285,7 @@
 | 四模块、代表元素与持久化 | 实际 GUI | NOT RUN | 未在最终 ZIP 中执行模块开关、搜索、放置、图鉴或重启 |
 | OPS 往返、三选项与载体字段 | 实际 GUI | NOT RUN | 未用 GUI 保存 OPS；静态审计不替代运行证据 |
 | 代表玩法 | 实际 GUI | NOT RUN | Lua 运行回归仅证明脚本覆盖路径，不能代替交互场景 |
-| 十个固定压力样本 | 持续运行 | NOT RUN | 未获得 FPS、内存、粒子增长或重载数据 |
+| 十个固定压力样本 | 持续运行 | BLOCKED | 当前候选 `10/10` 已获得 FPS、内存、粒子和双 OPS 往返原始数据，独立评估均通过；事件计数和场景停止/恢复断言仍缺，完整门禁 `false` |
 
 ## 后续运行与压力测试
 

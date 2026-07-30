@@ -22,12 +22,12 @@ symbols_zip_sha256=D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD
 release_ready=false
 ```
 
-- 空目录 Windows x64 Release 构建 `502/502`，当前 Meson `14/14`，Python `86/86`，0 skip；已剥离 EXE 的模块/四反应引擎 Lua 回归 `6/6`。
+- 空目录 Windows x64 Release 构建 `502/502`，当前 Meson `14/14`，Python `87/87`，0 skip；已剥离 EXE 的模块/四反应引擎 Lua 回归 `6/6`。
 - 官方、冶金、生态、化学、核工业五类独立 OPS 双往返 `5/5`：15 个独立进程、10 次重启、10 次加载验证、79 个粒子、每次加载合计 120 个字段断言；四模块混合场景另用 3 个进程双往返通过。
 - `ELEMENT_REGISTRY.csv` 现有 370 行、243 active、127 reserved；48 个 OmniPack 元素直接登记 production、uses、hazards、controls、cleanup，并由构建门禁拒绝空字段、别名漂移和官方/保留槽伪玩法声明。
 - 普通包和符号包已通过白名单、清单、哈希与解压二审。普通 EXE 无 `.debug*` 段、无开发路径标记、无动态 GCC 开发运行库，保留 `DYNAMIC_BASE/NX_COMPAT/HIGH_ENTROPY_VA`；Authenticode 为 `NotSigned`。
 - 当前 ZIP 解压 EXE 已在全新隔离 `ddir` 启动：标题 `TPT-ZH-OmniPack 0.1.0-test`、句柄非零、`Responding=true`、退出码 0。窗口内容不可可信捕获，因此不能据此断言安装提示、语言、DPI 或页面视觉通过。
-- 十个固定压力场景工具已实现。旧阻塞式 2 秒烟测暴露“Lua 脚本无响应”；`4f5c07f9` 改为每个 UI tick 返回。S01/S02 均完成 60 秒预热 + 600 秒采样；平均 FPS 均约 60，1% low 分别 52.631/52.633，峰值工作集 152,281,088/162,676,736 bytes，崩溃/卡死 false、OPS 往返 true。只读判定器写入两项 `unbounded_growth=false`、`memory_leak_suspected=false`、`sample_execution_pass=true`；事件计数/场景行为与其余 8 场景未完成，故总 `stress_test=not_tested`。
+- 十个固定压力场景工具已实现。旧阻塞式 2 秒烟测暴露“Lua 脚本无响应”；`4f5c07f9` 改为每个 UI tick 返回。当前候选 `5a9435e9` / `90007099` 的十项均完成 60 秒预热 + 600 秒采样，并通过 JSON/CSV/OPS 独立评估：`crashed=false`、`hung=false`、`roundtrip_pass=true`，有限观察 `unbounded_growth=false`、`memory_leak_suspected=false`。S03 的最低 FPS `0.790` 已保留；事件计数和场景行为断言仍为 `not_tested`，所以十项 `performance_gate_pass=false`、总 `stress_test=not_tested`。
 - 仍有外部门禁：PAT 撤销/轮换、授权发布远端、公开源码、匿名克隆、tag/GitHub Release、可信 GUI 交互与最终 DPI 矩阵。
 - 候选冻结后增加只读压力证据判定器和机器可读报告门禁；它们不改变候选 EXE。当前普通包与符号包已重新封装，内部清单均绑定 `5a9435e98e063f60c6576180b348c89542d8bb67`，两包解压二审通过。
 

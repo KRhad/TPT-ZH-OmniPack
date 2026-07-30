@@ -67,14 +67,14 @@ ops_official_roundtrip_test=true
 ops_single_module_roundtrip_tests=4/4
 clean_build=502/502
 meson_tests=14/14
-candidate_python_tests=86/86
+candidate_python_tests=87/87
 public_zip_sha256=D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16
 symbols_zip_sha256=D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD5E5
 stress_test=not_tested
 release_ready=false
 ```
 
-用户已确认当前原生 Fusion 12px 字体的中文实际可读性；DPI 和完整页面矩阵仍未测试。官方、四个单模块和四模块混合 OPS 已分别完成真实三进程双往返，验证稳定 identifier/ID 与 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2`。本地 `.cps` 保存对话框、禁用模块三选项和只读写入拦截仍需 GUI 交互。压力工具已建立并在完整运行中发现、修复一次 Lua 无响应缺陷；S01/S02 各完成 60 秒预热和 600 秒采样，有限观察判定、进程稳定性和 OPS 往返通过，但模块事件计数、场景停止/恢复断言及其余 8 个样本未完成，因此总门禁仍为 `not_tested`。
+用户已确认当前原生 Fusion 12px 字体的中文实际可读性；DPI 和完整页面矩阵仍未测试。官方、四个单模块和四模块混合 OPS 已分别完成真实三进程双往返，验证稳定 identifier/ID 与 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2`。本地 `.cps` 保存对话框、禁用模块三选项和只读写入拦截仍需 GUI 交互。压力工具已建立并在完整运行中发现、修复一次 Lua 无响应缺陷；当前候选的十项 `60+600` 秒样本均完成、通过独立 JSON/CSV/OPS 评估，且有限观察下无增长或泄漏信号。模块事件计数与场景停止/恢复断言仍未实现，所有 `performance_gate_pass=false`，因此总 `stress_test=not_tested`。
 
 ### 已明确废弃的候选
 

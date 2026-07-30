@@ -32,7 +32,7 @@
 | `GATE-010-FONT-SOURCE` | 字体来源、许可证、固定哈希、容器和全部语言字符覆盖通过 | 自动测试确认 | `resources/font.bz2` SHA-256 `47F4EB85...`；Fusion 原生 12px，14,629 字形、2,593 字符覆盖 |
 | `GATE-010-BUILD` | Windows x64 clean Release build 成功 | 编译确认 | 空目录 `build-0.1.0-test-e2e1b3fe`，Release `502/502`，0 error；GCC 警告另列已知问题 |
 | `GATE-010-MESON` | 全部 Meson 测试通过 | 自动测试确认 | 当前候选 `14/14` |
-| `GATE-010-PYTHON` | 全部 Python 工具测试通过且无未说明跳过 | 自动测试确认 | 当前候选 `86/86`，0 skip |
+| `GATE-010-PYTHON` | 全部 Python 工具测试通过且无未说明跳过 | 自动测试确认 | 当前候选 `87/87`，0 skip |
 | `GATE-010-LUA` | 最终 ZIP EXE 执行模块及四反应引擎回归 | 实际运行确认 | 已剥离 EXE `6/6`；另有五类 OPS 双往返运行 |
 | `GATE-010-STARTUP` | 从 ZIP 解压、全新隔离目录重复启动，无崩溃且进程响应 | 实际运行确认 | 当前 ZIP 解压 EXE 在全新隔离 `ddir` 启动，标题正确、句柄非零、`Responding=true`、正常退出；重复次数 1 |
 
@@ -61,7 +61,7 @@
 
 | 门禁 ID | 必需结果 | 当前状态 | 完成证据 |
 |---|---|---|---|
-| `GATE-010-STRESS` | 十个固定样本全部有时长、粒子数、FPS、内存、崩溃/卡死/增长、OPS 结果 | 尚未测试 | S01/S02 已完成 60+600 秒、FPS/内存/粒子/OPS 采样，崩溃/卡死为 false，有限观察判定为 `unbounded_growth=false`、`memory_leak_suspected=false`；模块事件计数和场景停止/恢复断言未完成，且其余 8 个样本尚未完成 |
+| `GATE-010-STRESS` | 十个固定样本全部有时长、粒子数、FPS、内存、崩溃/卡死/增长、OPS 结果 | 实际运行确认（`false`） | 当前候选十项均完成 `60+600` 秒，JSON/CSV/OPS 与哈希评估通过，`crashed=false`、`hung=false`、`roundtrip_pass=true`，有限观察 `unbounded_growth=false`、`memory_leak_suspected=false`；模块事件计数为 `not_tested`、场景停止/恢复未断言，故十项 `performance_gate_pass=false` |
 | `GATE-010-PAT` | 暴露 PAT 已撤销或轮换，重新扫描无凭据泄露 | 自动测试确认（`false`；外部账户阻塞） | 当前 `secret_scan_pass=false`、`credential_revoked=false`、`credential_rotated=false` |
 | `GATE-010-SOURCE-PUBLIC` | 对应源码和 tag 可匿名 HTTPS 克隆并重建 | 源码确认（`false`；外部权限阻塞） | 当前 `source_commit_public=false`、`anonymous_clone_pass=false` |
 | `GATE-010-LICENSES` | GPL、字体、第三方来源和 AI 披露随源码/包完整 | 自动测试确认 | 当前普通 ZIP 白名单含 GPL、字体许可证、第三方来源和 AI 披露；ZIP 清单/哈希二审通过；公开对应源码仍受外部门禁阻塞 |
