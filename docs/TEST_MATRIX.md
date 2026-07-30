@@ -54,8 +54,8 @@
 | 冶金—化学路径 | 实际运行 | PASS | 当前编译产物化学 Lua PASS（11 条路径）；覆盖温区、缺输入、保留 `CATA` 和 `SLAG/ACID/CATA -> FLUX/WATR` |
 | 冶金—核工业路径 | 实际运行 | PASS | 当前编译产物冶金 Lua PASS（8 配方/5 行为）；覆盖 `SSIL/LAVA(LEAD)/SPRK(NCRM) -> 2 RSHD` 与无效火花负例 |
 | 四模块废物路径 | 实际运行 | PASS | 当前编译产物核工业 Lua PASS（5 条路径）；覆盖冷却稳定化、输入不全/温区负例、水和催化剂保留 |
-| 更新后 S04/S05/S07/S09 压力 smoke | 实际运行 | PASS | 当前 EXE `DC1BF56F...AF5DD6` 的工作树 smoke `4/4`（run `25ccb48c`、`2886c376`、`2cff2a5f`、`da10ce91`）；每项约 `2.01` 秒、`crashed=false`、`hung=false`、`roundtrip_pass=true`、`stop_event_delta=0`、恢复断言 `7`；`gate_result=not_tested`，不能替代正式 10 分钟样本 |
-| 0.2 正式压力样本 | 持续运行 | NOT RUN | 当前工作树尚未完成与最终提交/ZIP 绑定的正式压力样本；旧候选十项和 S09 两小时证据不得混用 |
+| 更新后 S04/S05/S07/S09 压力 smoke | 实际运行 | PASS | 提交 `98affcd7` 绑定的 EXE `EBB33CCE...3F3D82` smoke `4/4`（run `c7da9340`、`28384c3a`、`7af70c0f`、`99403b92`）；每项约 `2.01` 秒、`crashed=false`、`hung=false`、`roundtrip_pass=true`、`stop_event_delta=0`、恢复断言 `7`；`gate_result=not_tested`，不能替代正式 10 分钟样本 |
+| 0.2 正式压力样本 | 持续运行 | NOT RUN | 实现提交 `98affcd7` 尚未完成与最终 ZIP 绑定的正式压力样本；旧候选十项和 S09 两小时证据不得混用 |
 | 0.2 示例 OPS / 教程 | 运行 | NOT RUN | 7 个示例 OPS 和 8 项教程/挑战尚未实现 |
 
 ## Phase 0 / Phase 1 基线

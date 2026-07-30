@@ -76,9 +76,10 @@ stress_test=true
 candidate_s09_7200s_observation=true
 candidate_s09_run_id=20260730T210719Z-d4085bc4
 candidate_s09_performance_gate=true
-worktree_exe_sha256=DC1BF56F6BFB2DE0FFB71EB85A376FB99000026C614AD624FA49076A98AF5DD6
-worktree_lua_runtime=5/5
-worktree_stress_smoke=4/4
+cross_module_implementation_commit=98affcd76c9d3a02b136781d1bfa71fefb88302f
+implementation_exe_sha256=EBB33CCEDE76DDCC4F9375F96330519A1A5751080E40E936D3BAEB70763F3D82
+implementation_lua_runtime=5/5
+implementation_stress_smoke=4/4
 release_ready=false
 ```
 
@@ -152,7 +153,7 @@ release/1.0.0
 
 ### 0.2.0：跨模块闭环
 
-48 元素用途矩阵与审计门禁已经完成；四条最小跨模块反应也已在当前工作树登记、实现并通过编译/静态门禁：炉渣酸处理、过氧化氢病原处理与腐殖质回收、不锈钢—熔融铅屏蔽组装、冷却四模块废物稳定化。下一步是实际 Lua、示例 OPS、错误/事故/停止/回收场景、更新后压力和教程；这些未完成前仍不能把 `GATE-020-*` 写为通过。
+48 元素用途矩阵与审计门禁已经完成；四条最小跨模块反应已由提交 `98affcd7` 登记、实现，并通过编译/静态门禁、Lua `5/5` 与更新后 smoke `4/4`：炉渣酸处理、过氧化氢病原处理与腐殖质回收、不锈钢—熔融铅屏蔽组装、冷却四模块废物稳定化。下一步是示例 OPS、正式压力和教程；这些未完成前仍不能把 `GATE-020-*` 写为通过。
 
 ### 0.3.0：工程自动化
 

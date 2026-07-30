@@ -2,15 +2,15 @@
 
 本文件汇总当前可玩的内容、现有证据和后续版本缺口。逐元素稳定 ID、来源、许可证、描述和登记测试以 `docs/ELEMENT_REGISTRY.csv` 为准；双语配方、生产、用途和危险文本以 `docs/ELEMENT_CONTENT.csv` 为准。这里不把登记文本本身当作反应已实现或实际玩法已验证。
 
-这里不把登记文本本身当作反应已实现或实际玩法已验证。模块总览中的候选压力、OPS 和 Lua 证据仍绑定 `ff5945c4`；当前 0.2 工作树新增链的运行证据状态单列在下方，不得混用。
+这里不把登记文本本身当作反应已实现或实际玩法已验证。模块总览中的候选压力、OPS 和 Lua 证据仍绑定 `ff5945c4`；0.2 实现提交 `98affcd7` 的新增链运行证据状态单列在下方，不得混用。
 
 ## 当前范围
 
 ```text
-audit_head=ff5945c4acbe15052a316771934854aa0f9281de
-implementation_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+audit_head=98affcd76c9d3a02b136781d1bfa71fefb88302f
+implementation_commit=98affcd76c9d3a02b136781d1bfa71fefb88302f
 font_implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
-development_gate_head=ff5945c4
+development_gate_head=98affcd7
 official_id_range=0..195
 official_active_elements=195
 official_tombstones=1
@@ -127,11 +127,11 @@ pt_num=512
 | 稳定 identifier/ID、双语名、来源、许可证、源码路径 | 48/48 | 自动测试确认 | 不代表玩法用途充分 |
 | 双语配方、生产、用途、危险字段 | 48/48 | 自动测试确认 | 文本可能描述直接放置或尚无闭环的用途 |
 | 元素编译注册 | 48/48 | 编译确认 | 不代表 GUI 可找到或放置 |
-| 四反应引擎 Lua 回归 | 四模块 | 当前工作树实际运行确认 | 生物完整/简化、化学、冶金、核工业共 `5/5`；只覆盖脚本场景，不替代 GUI、OPS 或正式压力 |
+| 四反应引擎 Lua 回归 | 四模块 | `98affcd7` 实际运行确认 | 生物完整/简化、化学、冶金、核工业共 `5/5`；只覆盖脚本场景，不替代 GUI、OPS 或正式压力 |
 | 搜索、放置、图鉴 | `ALUM/NUTR/CHLR/NFUL` 代表项 | 尚未测试 | 需最终 ZIP 人工操作 |
 | 禁用模块存档检查 | 直接类型与载体字段 | 自动测试确认 | 三选项和保存/上传拦截实际 GUI 尚未测试 |
 | OPS 双往返 | 官方、四个单模块、四模块混合及载体 | 实际运行确认 | 每类真实 `.stm` OPS1 均完成两次保存/重启/加载；覆盖稳定 identifier/ID 与 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2` |
-| 固定压力样本 | 10 类 | 候选已通过；工作树 smoke `4/4` | 旧候选正式证据仍绑定 `ff5945c4`；工作树 S04/S05/S07/S09 仅约 2 秒 smoke，`gate_result=not_tested`，正式样本需绑定最终提交/ZIP |
+| 固定压力样本 | 10 类 | 候选已通过；`98affcd7` smoke `4/4` | 旧候选正式证据仍绑定 `ff5945c4`；0.2 的 S04/S05/S07/S09 仅约 2 秒 smoke，`gate_result=not_tested`，正式样本需绑定最终 ZIP |
 
 ## 版本内容增长规则
 
