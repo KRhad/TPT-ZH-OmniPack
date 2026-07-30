@@ -40,6 +40,7 @@ local ids = {
     flux = must_element("OMNI_PT_FLUX", "FLUX"),
     cruc = must_element("OMNI_PT_CRUC", "CRUC"),
     mscr = must_element("OMNI_PT_MSCR", "MSCR"),
+    rshd = must_element("OMNI_PT_RSHD", "RSHD"),
 }
 
 local positions = {
@@ -269,6 +270,37 @@ local function run_material_behaviors()
         "zinc did not pause corrosion on adjacent wet iron")
 end
 
+local function run_radiation_shield_assembly()
+    configure_simulation()
+    local steel = sim.partCreate(-1, 120, 120, ids.ssil)
+    local lead = create_molten(ids.lead, { 1, 0 }, 800.0)
+    local heater = sim.partCreate(-1, 120, 121, ids.ncrm)
+    assert(steel >= 0 and lead >= 0 and heater >= 0,
+        "radiation shield assembly setup failed")
+    sim.partProperty(steel, "temp", 800.0)
+    sim.partProperty(heater, "type", ids.spark)
+    sim.partProperty(heater, "ctype", ids.ncrm)
+    sim.partProperty(heater, "life", 4)
+    sim.partProperty(heater, "temp", 800.0)
+    sim.updateUpTo()
+    assert(sim.partProperty(steel, "type") == ids.rshd
+        and sim.partProperty(lead, "type") == ids.rshd,
+        "stainless steel and molten lead did not assemble into two shields")
+
+    configure_simulation()
+    steel = sim.partCreate(-1, 120, 120, ids.ssil)
+    lead = create_molten(ids.lead, { 1, 0 }, 800.0)
+    assert(steel >= 0 and lead >= 0, "shield negative-control setup failed")
+    sim.partProperty(steel, "temp", 800.0)
+    for _ = 1, 3 do
+        sim.updateUpTo()
+    end
+    assert(sim.partProperty(steel, "type") == ids.ssil
+        and sim.partProperty(lead, "type") == ids.lava
+        and sim.partProperty(lead, "ctype") == ids.lead,
+        "shield assembly ran without its active nichrome spark")
+end
+
 local function test()
     local frames = {}
     frames.brnz = run_alloy(
@@ -305,6 +337,7 @@ local function test()
     run_carbonization()
     run_negative_control()
     run_material_behaviors()
+    run_radiation_shield_assembly()
     return frames
 end
 
@@ -312,7 +345,7 @@ local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_METALLURGY_STATUS=PASS\n")
-    report:write("OMNI_METALLURGY_RECIPES=7\n")
+    report:write("OMNI_METALLURGY_RECIPES=8\n")
     report:write("OMNI_METALLURGY_BEHAVIORS=5\n")
     report:write(
         "OMNI_METALLURGY_IDS=" .. ids.alum .. "-" .. ids.mscr .. "\n")

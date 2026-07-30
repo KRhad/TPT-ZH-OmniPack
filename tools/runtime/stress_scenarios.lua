@@ -44,6 +44,7 @@ local ids = {
     wood = assert(elements.DEFAULT_PT_WOOD),
     coal = assert(elements.DEFAULT_PT_COAL),
     oil = assert(elements.DEFAULT_PT_OIL),
+    acid = assert(elements.DEFAULT_PT_ACID),
     oxygen = assert(elements.DEFAULT_PT_O2),
     neutron = assert(elements.DEFAULT_PT_NEUT),
     alum = must_element("OMNI_PT_ALUM", "ALUM"),
@@ -114,6 +115,16 @@ local function spark_generator(x, y, temperature)
     if particle then
         sim.partProperty(particle, "type", ids.spark)
         sim.partProperty(particle, "ctype", ids.ngen)
+        sim.partProperty(particle, "life", 4)
+    end
+    return particle
+end
+
+local function spark_nichrome(x, y, temperature)
+    local particle = make(ids.ncrm, x, y, { temp = temperature or 800.0 })
+    if particle then
+        sim.partProperty(particle, "type", ids.spark)
+        sim.partProperty(particle, "ctype", ids.ncrm)
         sim.partProperty(particle, "life", 4)
     end
     return particle
@@ -228,6 +239,30 @@ local function pathogen(bounds)
     grid(bounds, function(x, y, n)
         make(types[(n % #types) + 1], x, y, { temp = 310.0 })
         make(types[((n + 1) % #types) + 1], x + 1, y, { temp = 310.0 })
+        -- Keep a sparse chemistry-to-biology treatment and recovery loop in
+        -- the pathogen fixture.  The extra particles stay inside this
+        -- stride cell, so the stress sample remains a bounded local test.
+        if n % 6 == 0 then
+            make(ids.path, x + 2, y, { temp = 300.0 })
+            make(ids.pero, x + 2, y + 1, { temp = 300.0 })
+        elseif n % 6 == 1 then
+            make(ids.hums, x + 2, y, { temp = 300.0 })
+            make(ids.fert, x + 2, y + 1, { temp = 300.0 })
+            make(ids.water, x + 1, y + 1, { temp = 300.0 })
+        end
+    end)
+end
+
+local function ecology_chemistry_loop(bounds)
+    grid(bounds, function(x, y, n)
+        if n % 2 == 0 then
+            make(ids.path, x + 2, y + 1, { temp = 300.0 })
+            make(ids.pero, x + 2, y + 2, { temp = 300.0 })
+        else
+            make(ids.hums, x + 2, y + 1, { temp = 300.0 })
+            make(ids.fert, x + 2, y + 2, { temp = 300.0 })
+            make(ids.water, x + 1, y + 2, { temp = 300.0 })
+        end
     end)
 end
 
@@ -240,6 +275,18 @@ local function chemistry(bounds)
     grid(bounds, function(x, y, n)
         make(types[(n % #types) + 1], x, y, { temp = 430.0 })
         make(types[((n + 5) % #types) + 1], x + 1, y, { temp = 430.0 })
+        if n % 8 == 0 then
+            make(ids.cata, x + 2, y + 1, { temp = 320.0 })
+            make(ids.slag, x + 2, y + 2, { temp = 320.0 })
+            make(ids.acid, x + 1, y + 2, { temp = 320.0 })
+        elseif n % 8 == 4 then
+            make(ids.nwst, x + 1, y + 1, { temp = 550.0 })
+            make(ids.slag, x + 2, y + 1, { temp = 550.0 })
+            make(ids.hums, x + 2, y + 2, { temp = 550.0 })
+            make(ids.poly, x + 1, y + 2, { temp = 550.0 })
+            make(ids.cata, x, y + 2, { temp = 550.0 })
+            make(ids.water, x, y + 1, { temp = 550.0 })
+        end
     end)
 end
 
@@ -269,6 +316,11 @@ local function stable_reactor(bounds)
             make(ids.nclt, x + 1, y + 1, { temp = 450.0 })
         end
         make(ids.rshd, x + 2, y, { temp = 450.0 })
+        if n % 6 == 0 then
+            make(ids.ssil, x + 2, y + 1, { temp = 800.0 })
+            molten(ids.lead, x + 2, y + 2, 800.0)
+            spark_nichrome(x + 1, y + 2, 800.0)
+        end
     end)
 end
 
@@ -313,7 +365,9 @@ local scenarios = {
     ["S01-METALLURGY-LARGE"] = function() metallurgy(full) end,
     ["S02-FURNACES-PARALLEL"] = function() furnaces(full) end,
     ["S03-ECOLOGY-AREA"] = function() ecology(full) end,
-    ["S04-PATHOGEN-CONTROL"] = function() pathogen(full) end,
+    ["S04-PATHOGEN-CONTROL"] = function()
+        pathogen(full)
+    end,
     ["S05-CHEMISTRY-DENSE"] = function() chemistry(full) end,
     ["S06-NEUTRON-GENERATORS"] = function() generators(full) end,
     ["S07-REACTOR-STABLE"] = function() stable_reactor(full) end,
@@ -321,6 +375,7 @@ local scenarios = {
     ["S09-ALL-MODULES"] = function()
         metallurgy({ x1 = 48, y1 = 48, x2 = sim.XRES / 2 - 12, y2 = sim.YRES / 2 - 12 })
         ecology({ x1 = sim.XRES / 2 + 12, y1 = 48, x2 = sim.XRES - 49, y2 = sim.YRES / 2 - 12 })
+        ecology_chemistry_loop({ x1 = sim.XRES / 2 + 12, y1 = 48, x2 = sim.XRES - 49, y2 = sim.YRES / 2 - 12 })
         chemistry({ x1 = 48, y1 = sim.YRES / 2 + 12, x2 = sim.XRES / 2 - 12, y2 = sim.YRES - 49 })
         stable_reactor({ x1 = sim.XRES / 2 + 12, y1 = sim.YRES / 2 + 12, x2 = sim.XRES - 49, y2 = sim.YRES - 49 })
     end,

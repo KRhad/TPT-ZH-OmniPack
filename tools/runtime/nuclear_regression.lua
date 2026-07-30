@@ -16,6 +16,13 @@ local ids = {
     waste = must_element("OMNI_PT_NWST", "NWST"),
     generator = must_element("OMNI_PT_NGEN", "NGEN"),
     shield = must_element("OMNI_PT_RSHD", "RSHD"),
+    slag = must_element("OMNI_PT_SLAG", "SLAG"),
+    flux = must_element("OMNI_PT_FLUX", "FLUX"),
+    humus = must_element("OMNI_PT_HUMS", "HUMS"),
+    nutrient = must_element("OMNI_PT_NUTR", "NUTR"),
+    polymer = must_element("OMNI_PT_POLY", "POLY"),
+    catalyst = must_element("OMNI_PT_CATA", "CATA"),
+    water = assert(elements.DEFAULT_PT_WATR),
     neutron = assert(elements.DEFAULT_PT_NEUT),
     spark = assert(elements.DEFAULT_PT_SPRK),
     steam = assert(elements.DEFAULT_PT_WTRV),
@@ -125,16 +132,62 @@ local function run_cooling_and_shielding()
         "radiation shield did not convert absorbed neutron energy into heat")
 end
 
+local function run_waste_stabilization()
+    configure_simulation()
+    local waste = make(ids.waste, 120, 120, 550.0)
+    local slag = make(ids.slag, 121, 120, 550.0)
+    local humus = make(ids.humus, 120, 121, 550.0)
+    local polymer = make(ids.polymer, 119, 120, 550.0)
+    local water = make(ids.water, 120, 119, 550.0)
+    local catalyst = make(ids.catalyst, 121, 121, 550.0)
+    step()
+    assert(sim.partProperty(waste, "type") == ids.shield
+        and sim.partProperty(polymer, "type") == ids.shield
+        and sim.partProperty(slag, "type") == ids.flux
+        and sim.partProperty(humus, "type") == ids.nutrient
+        and sim.partProperty(water, "type") == ids.water
+        and sim.partProperty(catalyst, "type") == ids.catalyst,
+        "cooled four-module waste did not stabilize into reusable outputs")
+
+    configure_simulation()
+    waste = make(ids.waste, 120, 120, 550.0)
+    slag = make(ids.slag, 121, 120, 550.0)
+    humus = make(ids.humus, 120, 121, 550.0)
+    polymer = make(ids.polymer, 119, 120, 550.0)
+    make(ids.catalyst, 121, 121, 550.0)
+    step(3)
+    assert(sim.partProperty(waste, "type") == ids.waste
+        and sim.partProperty(slag, "type") == ids.slag
+        and sim.partProperty(humus, "type") == ids.humus
+        and sim.partProperty(polymer, "type") == ids.polymer,
+        "waste stabilization ran without its retained water condition")
+
+    configure_simulation()
+    waste = make(ids.waste, 120, 120, 630.0)
+    slag = make(ids.slag, 121, 120, 630.0)
+    humus = make(ids.humus, 120, 121, 630.0)
+    polymer = make(ids.polymer, 119, 120, 630.0)
+    make(ids.water, 120, 119, 630.0)
+    make(ids.catalyst, 121, 121, 630.0)
+    step()
+    assert(sim.partProperty(waste, "type") == ids.waste
+        and sim.partProperty(slag, "type") == ids.slag
+        and sim.partProperty(humus, "type") == ids.humus
+        and sim.partProperty(polymer, "type") == ids.polymer,
+        "hot waste stabilization ran above its registered safe window")
+end
+
 local function test()
     run_controlled_fission()
     run_cooling_and_shielding()
+    run_waste_stabilization()
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_NUCLEAR_STATUS=PASS\n")
-    report:write("OMNI_NUCLEAR_PATHS=4\n")
+    report:write("OMNI_NUCLEAR_PATHS=5\n")
     report:write("OMNI_NUCLEAR_IDS=" .. ids.fuel .. "-" .. ids.shield .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

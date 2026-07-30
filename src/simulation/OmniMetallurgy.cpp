@@ -248,6 +248,50 @@ bool ConsumeReactionBudget(Simulation *sim)
 	return true;
 }
 
+bool TryRadiationShieldAssembly(
+	int i,
+	int x,
+	int y,
+	Parts &parts,
+	int pmap[YRES][XRES],
+	Simulation *sim)
+{
+	auto touchedMarker = sim->currentTick + 1;
+	if (parts[i].type != PT_SSIL
+		|| parts[i].temp < 700.0f || parts[i].temp > 1200.0f
+		|| parts[i].tmp3 == touchedMarker)
+		return false;
+
+	int leadX = 0;
+	int leadY = 0;
+	auto lead = FindNeighbourAt(
+		x, y, PT_LAVA, PT_LEAD, parts, pmap, leadX, leadY);
+	auto heater = FindNeighbour(x, y, PT_SPRK, PT_NCRM, parts, pmap);
+	if (lead < 0 || heater < 0
+		|| parts[lead].temp < 650.0f || parts[lead].temp > 1200.0f
+		|| parts[lead].tmp3 == touchedMarker
+		|| parts[heater].tmp3 == touchedMarker
+		|| !ConsumeReactionBudget(sim))
+		return false;
+
+	auto temperature = (parts[i].temp + parts[lead].temp) * 0.5f;
+	auto makeShield = [&](int index, int px, int py)
+	{
+		sim->part_change_type(index, px, py, PT_RSHD);
+		parts[index].temp = temperature;
+		parts[index].life = 0;
+		parts[index].ctype = 0;
+		parts[index].tmp = 0;
+		parts[index].tmp2 = 0;
+		parts[index].tmp4 = 0;
+		parts[index].tmp3 = touchedMarker;
+	};
+	makeShield(i, x, y);
+	makeShield(lead, leadX, leadY);
+	parts[heater].tmp3 = touchedMarker;
+	return true;
+}
+
 LocalParticles CollectLocalParticles(
 	int i,
 	int x,
@@ -478,6 +522,10 @@ bool TrySteelRecipe(
 
 int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 {
+	if (TryRadiationShieldAssembly(i, x, y, parts, pmap, sim))
+	{
+		return 1;
+	}
 	if (BreakIntoScrap(i, x, y, parts, sim))
 	{
 		return 1;

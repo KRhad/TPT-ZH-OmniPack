@@ -129,11 +129,52 @@ bool ShieldAbsorption(UPDATE_FUNC_ARGS)
 	Touch(i, parts, sim);
 	return true;
 }
+
+bool WasteStabilization(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_NWST || IsTouched(i, parts, sim)
+		|| parts[i].temp < 500.0f || parts[i].temp > 620.0f)
+		return false;
+	auto slag = FindLocal(x, y, PT_SLAG, i, parts, pmap, sim);
+	auto humus = FindLocal(x, y, PT_HUMS, i, parts, pmap, sim);
+	auto polymer = FindLocal(x, y, PT_POLY, i, parts, pmap, sim);
+	auto water = FindLocal(x, y, PT_WATR, i, parts, pmap, sim);
+	auto catalyst = FindLocal(x, y, PT_CATA, i, parts, pmap, sim);
+	if (slag.index < 0 || humus.index < 0 || polymer.index < 0
+		|| water.index < 0 || catalyst.index < 0)
+		return false;
+	auto inWindow = [&](int index)
+	{
+		return parts[index].temp >= 500.0f && parts[index].temp <= 620.0f;
+	};
+	if (!inWindow(slag.index) || !inWindow(humus.index)
+		|| !inWindow(polymer.index) || !inWindow(water.index)
+		|| !inWindow(catalyst.index) || !ConsumeEvent(sim))
+		return false;
+
+	auto temperature = (
+		parts[i].temp + parts[slag.index].temp + parts[humus.index].temp
+		+ parts[polymer.index].temp + parts[water.index].temp) / 5.0f;
+	Convert(sim, { i, x, y }, PT_RSHD, parts, temperature);
+	Convert(sim, polymer, PT_RSHD, parts, temperature);
+	Convert(sim, slag, PT_FLUX, parts, temperature);
+	Convert(sim, humus, PT_NUTR, parts, temperature);
+	parts[i].tmp4 = 0;
+	parts[polymer.index].tmp4 = 0;
+	Touch(i, parts, sim);
+	Touch(slag.index, parts, sim);
+	Touch(humus.index, parts, sim);
+	Touch(polymer.index, parts, sim);
+	Touch(water.index, parts, sim);
+	Touch(catalyst.index, parts, sim);
+	return true;
+}
 }
 
 int OmniNuclearElementUpdate(UPDATE_FUNC_ARGS)
 {
-	if (FuelFission(UPDATE_FUNC_SUBCALL_ARGS)
+	if (WasteStabilization(UPDATE_FUNC_SUBCALL_ARGS)
+		|| FuelFission(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CoolantBoil(UPDATE_FUNC_SUBCALL_ARGS)
 		|| ShieldAbsorption(UPDATE_FUNC_SUBCALL_ARGS))
 		return 1;

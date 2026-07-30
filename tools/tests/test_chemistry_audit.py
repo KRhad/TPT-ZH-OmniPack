@@ -36,6 +36,36 @@ class ChemistryAuditTests(unittest.TestCase):
             chemistry_audit.read_text = original
         self.assertTrue(any("per-frame reaction budget" in error for error in errors))
 
+    def test_missing_peroxide_treatment_is_rejected(self) -> None:
+        source = (ROOT / "src" / "simulation" / "OmniChemistry.cpp").read_text(
+            encoding="utf-8"
+        )
+        errors: list[str] = []
+        original = chemistry_audit.read_text
+        try:
+            chemistry_audit.read_text = lambda _path, _errors: source.replace(
+                "PeroxidePathogenTreatment", "RemovedPeroxideTreatment"
+            )
+            chemistry_audit.check_engine(ROOT, errors)
+        finally:
+            chemistry_audit.read_text = original
+        self.assertTrue(any("peroxide pathogen treatment" in error for error in errors))
+
+    def test_missing_slag_leaching_is_rejected(self) -> None:
+        source = (ROOT / "src" / "simulation" / "OmniChemistry.cpp").read_text(
+            encoding="utf-8"
+        )
+        errors: list[str] = []
+        original = chemistry_audit.read_text
+        try:
+            chemistry_audit.read_text = lambda _path, _errors: source.replace(
+                "SlagAcidLeaching", "RemovedSlagLeaching"
+            )
+            chemistry_audit.check_engine(ROOT, errors)
+        finally:
+            chemistry_audit.read_text = original
+        self.assertTrue(any("slag acid leaching" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

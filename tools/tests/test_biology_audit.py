@@ -55,6 +55,21 @@ class BiologyAuditTests(unittest.TestCase):
             biology_audit.read_text = original
         self.assertTrue(any("simplified biology setting" in error for error in errors))
 
+    def test_missing_humus_recovery_is_rejected(self) -> None:
+        source = (ROOT / "src" / "simulation" / "OmniBiology.cpp").read_text(
+            encoding="utf-8"
+        )
+        errors: list[str] = []
+        original = biology_audit.read_text
+        try:
+            biology_audit.read_text = lambda _path, _errors: source.replace(
+                "HumusFertilizerRecovery", "RemovedHumusRecovery"
+            )
+            biology_audit.check_engine(ROOT, errors)
+        finally:
+            biology_audit.read_text = original
+        self.assertTrue(any("humus fertilizer recovery" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

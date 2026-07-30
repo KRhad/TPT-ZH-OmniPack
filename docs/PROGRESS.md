@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-版本门禁：`0.1.0-test` 仍因 GUI/外部门禁不能公开发布，开发分支为 `development/omnipack-1.0`。不虚报 0.1 完成的同时，已开始不改变玩法的 0.2 用途审计；跨模块实现仍须逐条登记、测试和提交。
+版本门禁：`0.1.0-test` 仍因 GUI/外部门禁不能公开发布，开发分支为 `development/omnipack-1.0`。不虚报 0.1 完成的同时，0.2 用途审计已进入四条最小跨模块链实现；每条仍须完成运行、OPS、教程和压力证据。
 
 ## 2026-07-31 当前候选快照
 
@@ -27,10 +27,33 @@ release_ready=false
 - `ELEMENT_REGISTRY.csv` 现有 370 行、243 active、127 reserved；48 个 OmniPack 元素直接登记 production、uses、hazards、controls、cleanup，并由构建门禁拒绝空字段、别名漂移和官方/保留槽伪玩法声明。
 - 普通包和符号包已通过白名单、清单、哈希与解压二审。普通 EXE 无 `.debug*` 段、无开发路径标记、无动态 GCC 开发运行库，保留 `DYNAMIC_BASE/NX_COMPAT/HIGH_ENTROPY_VA`；Authenticode 为 `NotSigned`。
 - 当前 ZIP 解压 EXE 已在全新隔离 `ddir` 启动：标题 `TPT-ZH-OmniPack 0.1.0-test`、句柄非零、`Responding=true`、退出码 0。窗口内容不可可信捕获，因此不能据此断言安装提示、语言、DPI 或页面视觉通过。
-- 十个固定压力场景工具已实现。旧阻塞式 2 秒烟测暴露“Lua 脚本无响应”；`4f5c07f9` 改为每个 UI tick 返回。当前候选 `ff5945c4` 的十项均完成 60 秒预热 + 600 秒采样，并通过 JSON/CSV/OPS 独立评估：`crashed=false`、`hung=false`、`roundtrip_pass=true`，有限观察 `unbounded_growth=false`、`memory_leak_suspected=false`。事件计数、停止残余事件和七项恢复断言均已实际记录；十项 `performance_gate_pass=true`，总事件 `22529`、单帧峰值 `1024`、总 `stress_test=true`。两小时长跑仍为 `not_tested`。
+- 十个固定压力场景工具已实现。旧阻塞式 2 秒烟测暴露“Lua 脚本无响应”；`4f5c07f9` 改为每个 UI tick 返回。当前候选 `ff5945c4` 的十项均完成 60 秒预热 + 600 秒采样，并通过 JSON/CSV/OPS 独立评估：`crashed=false`、`hung=false`、`roundtrip_pass=true`，有限观察 `unbounded_growth=false`、`memory_leak_suspected=false`。事件计数、停止残余事件和七项恢复断言均已实际记录；十项 `performance_gate_pass=true`，总事件 `22529`、单帧峰值 `1024`、总 `stress_test=true`。另完成候选 `S09-ALL-MODULES` 的 7,200.002 秒有限观测（run `20260730T210719Z-d4085bc4`）：`average_fps=59.994426`、`one_percent_low_fps=31.579334`、`minimum_fps=2.032157`、`peak_particles=43929`、`crashed=false`、`hung=false`、独立 `performance_gate_pass=true`；这不覆盖 1.0.0 要求的语言/模块切换等综合长跑，故综合 `long_run_test` 仍为 `not_tested`。
 - 仍有外部门禁：PAT 撤销/轮换、授权发布远端、公开源码、匿名克隆、tag/GitHub Release、可信 GUI 交互与最终 DPI 矩阵。
 - 候选冻结后增加只读压力证据判定器和机器可读报告门禁；事件指标实现和压力工具提交 `ff5945c4` 重新构建了候选 EXE。当前普通包 `53E0304F...9827`、符号包 `8FD702E9...E48D` 的内部清单均绑定 `ff5945c4acbe15052a316771934854aa0f9281de`，两包解压二审通过。
-- 0.2 用途矩阵已覆盖 48/48 元素并接入 fail-closed 审计：23 项仅能直接放置、33 项缺跨模块联动、4 项缺回收、1 项有未验证玩法声明；所有缺口均保留稳定 ID 并写入处置，不把登记文本冒充已实现反应。
+- `f8fa2b97` 的 0.2 用途审计基线覆盖 48/48 元素：当时为 23 项仅直接放置、33 项缺跨模块联动、4 项缺回收和 1 项未验证声明。当前工作树增量另列如下，不回写为 0.1 候选证据。
+
+## 2026-07-31 0.2 本地跨模块增量
+
+```text
+base_head=f8fa2b97
+reaction_registry=43
+meson_static=15/15
+python_tests=100/100
+lua_runtime=5/5
+stress_smoke=4/4
+stress_smoke_samples=S04,S05,S07,S09
+stress_smoke_gate=not_tested
+worktree_exe_sha256=DC1BF56F6BFB2DE0FFB71EB85A376FB99000026C614AD624FA49076A98AF5DD6
+release_ready=false
+```
+
+- 生态—化学：`PERO + PATH -> WATR + HUMS`，以及湿润 `HUMS + FERT -> NUTR + DUST`；温区、热催化剂抢占、缺水和冷温负例均写入回归脚本。
+- 冶金—化学：285–340 K 下 `SLAG + ACID + CATA -> FLUX + WATR`；催化剂保留，离开温区或缺输入停止。
+- 冶金—核工业：700–1200 K 下 `SSIL + LAVA(LEAD) + SPRK(NCRM) -> 2 RSHD`；缺有效镍铬火花时输入保持不变。
+- 四模块废物：500–620 K 下冷却 `NWST + SLAG + HUMS + POLY + WATR + CATA -> 2 RSHD + FLUX + NUTR + WATR`；水和催化剂保留，高温或输入不全不运行。
+- 四条路径均固定在 `3x3`，复用现有模块每帧预算与同 tick 标记，不新增元素、不移动稳定 ID，粒子数不增加。
+- 当前静态/编译证据为 PASS：43 条 reaction registry、370 槽元素 registry、48/48 内容/用途矩阵、英中 1262/1262、字体覆盖、Meson `15/15`、Python `100/100`。当前 `DC1BF56F...AF5DD6` 编译产物的 Lua 回归为完整/简化生物、化学、冶金、核工业 `5/5`；更新后 S04/S05/S07/S09 smoke 为 `4/4`（run `25ccb48c`、`2886c376`、`2cff2a5f`、`da10ce91`），每项均有事件、OPS 双往返、停止差值 `0` 和 7 条恢复断言，但 smoke 采样约 2 秒且 `stress_gate=not_tested`。工作树尚未提交，不能把这些结果绑定为公开候选。
+- 用途矩阵当前为 21 项仅直接放置、26 项缺跨模块联动、0 项终点副产物、0 项缺回收、4 项缺明确机器用途、1 项未验证声明和 14 项无已知用途缺口。
 
 ## 2026-07-30 接管基线
 

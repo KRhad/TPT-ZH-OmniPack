@@ -65,6 +65,21 @@ class NuclearAuditTests(unittest.TestCase):
             nuclear_audit.read_text = original
         self.assertTrue(any("one neutron per spark guard" in error for error in errors))
 
+    def test_missing_waste_stabilization_is_rejected(self) -> None:
+        source = (ROOT / "src" / "simulation" / "OmniNuclear.cpp").read_text(
+            encoding="utf-8"
+        )
+        errors: list[str] = []
+        original = nuclear_audit.read_text
+        try:
+            nuclear_audit.read_text = lambda _path, _errors: source.replace(
+                "WasteStabilization", "RemovedWastePath"
+            )
+            nuclear_audit.check_engine(ROOT, errors)
+        finally:
+            nuclear_audit.read_text = original
+        self.assertTrue(any("four-module waste stabilization" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -160,6 +160,10 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "scrap ctype recovery": "parts[i].ctype = sourceType",
         "charcoal hold time": "++parts[i].tmp3 < 60",
         "coke hold time": "++parts[i].tmp3 < 90",
+        "radiation shield assembly": "TryRadiationShieldAssembly(",
+        "molten lead shield input": "PT_LAVA, PT_LEAD",
+        "nichrome spark assembly condition": "PT_SPRK, PT_NCRM",
+        "nuclear shield output": "PT_RSHD",
     }
     for label, marker in required_markers.items():
         if marker not in text:
@@ -272,7 +276,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args.quiet:
         print(
             "metallurgy-audit: PASS "
-            "(23 elements, 6 alloy recipes, 1 steel recipe, 3x3 bounded)"
+            "(23 elements, 6 alloy recipes, 1 steel recipe, 1 nuclear assembly, 3x3 bounded)"
         )
     return 0
 

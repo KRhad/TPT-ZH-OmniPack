@@ -20,6 +20,10 @@ local ids = {
     polymer = must_element("OMNI_PT_POLY", "POLY"),
     peroxide = must_element("OMNI_PT_PERO", "PERO"),
     fertilizer = must_element("OMNI_PT_FERT", "FERT"),
+    pathogen = must_element("OMNI_PT_PATH", "PATH"),
+    humus = must_element("OMNI_PT_HUMS", "HUMS"),
+    slag = must_element("OMNI_PT_SLAG", "SLAG"),
+    flux = must_element("OMNI_PT_FLUX", "FLUX"),
     dust = assert(elements.DEFAULT_PT_DUST),
     hydrogen = assert(elements.DEFAULT_PT_H2),
     nitrogen = assert(elements.DEFAULT_PT_LNTG),
@@ -220,19 +224,60 @@ local function run_negative_control()
         "cold catalyst cracked oil without its temperature condition")
 end
 
+local function run_biology_treatment()
+    configure_simulation()
+    local peroxide = make(ids.peroxide, 120, 120, 300.0)
+    local pathogen = make(ids.pathogen, 121, 120, 300.0)
+    step()
+    assert(sim.partProperty(peroxide, "type") == ids.water
+        and sim.partProperty(pathogen, "type") == ids.humus,
+        "peroxide did not treat the adjacent pathogen")
+
+    configure_simulation()
+    peroxide = make(ids.peroxide, 120, 120, 280.0)
+    pathogen = make(ids.pathogen, 121, 120, 280.0)
+    step(3)
+    assert(sim.partProperty(peroxide, "type") == ids.peroxide
+        and sim.partProperty(pathogen, "type") == ids.pathogen,
+        "cold peroxide treated a pathogen outside its window")
+end
+
+local function run_slag_recovery()
+    configure_simulation()
+    local catalyst = make(ids.catalyst, 120, 120, 320.0)
+    local slag = make(ids.slag, 121, 120, 320.0)
+    local acid = make(ids.acid, 120, 121, 320.0)
+    step()
+    assert(sim.partProperty(catalyst, "type") == ids.catalyst
+        and sim.partProperty(slag, "type") == ids.flux
+        and sim.partProperty(acid, "type") == ids.water,
+        "mild catalytic acid leaching did not recover slag into flux and water")
+
+    configure_simulation()
+    catalyst = make(ids.catalyst, 120, 120, 350.0)
+    slag = make(ids.slag, 121, 120, 350.0)
+    acid = make(ids.acid, 120, 121, 350.0)
+    step(3)
+    assert(sim.partProperty(slag, "type") == ids.slag
+        and sim.partProperty(acid, "type") == ids.acid,
+        "hot slag leaching ran outside its registered temperature window")
+end
+
 local function test()
     run_fuel_chain()
     run_polymerisation()
     run_electrochemistry()
     run_reaction_network()
     run_negative_control()
+    run_biology_treatment()
+    run_slag_recovery()
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_CHEMISTRY_STATUS=PASS\n")
-    report:write("OMNI_CHEMISTRY_PATHS=9\n")
+    report:write("OMNI_CHEMISTRY_PATHS=11\n")
     report:write("OMNI_CHEMISTRY_IDS=" .. ids.chlorine .. "-" .. ids.fertilizer .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

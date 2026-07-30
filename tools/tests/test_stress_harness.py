@@ -121,6 +121,38 @@ class StressHarnessContractTest(unittest.TestCase):
         for module in self.event_modules:
             self.assertIn("sim->RecordOmniEvent();", module)
 
+    def test_biology_chemistry_fixture_is_present_in_targeted_stress_samples(self) -> None:
+        self.assertIn("local function ecology_chemistry_loop(bounds)", self.lua)
+        self.assertIn('make(ids.path, x + 2, y + 1, { temp = 300.0 })', self.lua)
+        self.assertIn('ids.pero, x + 2, y + 2', self.lua)
+        self.assertIn('ids.hums, x + 2, y + 1', self.lua)
+        self.assertIn('ids.fert, x + 2, y + 2', self.lua)
+        self.assertIn('S04-PATHOGEN-CONTROL', self.lua)
+        self.assertIn('S09-ALL-MODULES', self.lua)
+
+    def test_slag_recovery_fixture_is_present_in_chemistry_stress(self) -> None:
+        self.assertIn('acid = assert(elements.DEFAULT_PT_ACID)', self.lua)
+        self.assertIn('make(ids.cata, x + 2, y + 1, { temp = 320.0 })', self.lua)
+        self.assertIn('make(ids.slag, x + 2, y + 2, { temp = 320.0 })', self.lua)
+        self.assertIn('make(ids.acid, x + 1, y + 2, { temp = 320.0 })', self.lua)
+
+    def test_radiation_shield_assembly_fixture_is_present_in_reactor_stress(self) -> None:
+        self.assertIn("local function spark_nichrome", self.lua)
+        self.assertIn('make(ids.ssil, x + 2, y + 1, { temp = 800.0 })', self.lua)
+        self.assertIn('molten(ids.lead, x + 2, y + 2, 800.0)', self.lua)
+        self.assertIn('spark_nichrome(x + 1, y + 2, 800.0)', self.lua)
+
+    def test_four_module_waste_fixture_is_present_in_all_module_stress(self) -> None:
+        for marker in (
+            'make(ids.nwst, x + 1, y + 1, { temp = 550.0 })',
+            'make(ids.slag, x + 2, y + 1, { temp = 550.0 })',
+            'make(ids.hums, x + 2, y + 2, { temp = 550.0 })',
+            'make(ids.poly, x + 1, y + 2, { temp = 550.0 })',
+            'make(ids.cata, x, y + 2, { temp = 550.0 })',
+            'make(ids.water, x, y + 1, { temp = 550.0 })',
+        ):
+            self.assertIn(marker, self.lua)
+
 
 if __name__ == "__main__":
     unittest.main()

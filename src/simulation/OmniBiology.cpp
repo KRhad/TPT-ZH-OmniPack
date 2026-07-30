@@ -136,6 +136,24 @@ bool MyceliumDecomposition(UPDATE_FUNC_ARGS)
 	return true;
 }
 
+bool HumusFertilizerRecovery(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_HUMS || IsTouched(i, parts, sim) || !InGrowthWindow(parts[i]))
+		return false;
+	auto fertilizer = FindLocal(x, y, PT_FERT, i, parts, pmap, sim);
+	auto water = FindLocal(x, y, PT_WATR, fertilizer.index, parts, pmap, sim);
+	if (fertilizer.index < 0 || water.index < 0 || !ConsumeReactionBudget(sim))
+		return false;
+
+	auto temperature = (parts[i].temp + parts[fertilizer.index].temp + parts[water.index].temp) / 3.0f;
+	Convert(sim, Slot{ i, x, y }, PT_NUTR, parts, temperature);
+	Convert(sim, fertilizer, PT_DUST, parts, temperature);
+	Touch(i, parts, sim);
+	Touch(fertilizer.index, parts, sim);
+	Touch(water.index, parts, sim);
+	return true;
+}
+
 bool SporeGermination(UPDATE_FUNC_ARGS)
 {
 	if (parts[i].type != PT_SPOR || IsTouched(i, parts, sim) || !InGrowthWindow(parts[i]))
@@ -209,6 +227,7 @@ int OmniBiologyElementUpdate(UPDATE_FUNC_ARGS)
 {
 	if (AlgaePhotosynthesis(UPDATE_FUNC_SUBCALL_ARGS)
 		|| MyceliumDecomposition(UPDATE_FUNC_SUBCALL_ARGS)
+		|| HumusFertilizerRecovery(UPDATE_FUNC_SUBCALL_ARGS)
 		|| SporeGermination(UPDATE_FUNC_SUBCALL_ARGS)
 		|| PathogenInfection(UPDATE_FUNC_SUBCALL_ARGS)
 		|| Sterilization(UPDATE_FUNC_SUBCALL_ARGS)

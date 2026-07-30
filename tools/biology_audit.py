@@ -79,6 +79,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "simplified simulation preference": "Omni.Simulation.SimplifiedBiology",
         "algae photosynthesis": "PT_ALGA",
         "mycelium decomposition": "PT_MYCL",
+        "humus fertilizer recovery": "HumusFertilizerRecovery",
+        "chemistry fertilizer input": "PT_FERT",
         "spore germination": "PT_SPOR",
         "pathogen infection": "PT_PATH",
         "sterilant treatment": "PT_STER",
@@ -146,7 +148,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"biology-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("biology-audit: PASS (8 elements, 6 bounded ecology paths, 3x3 local)")
+        print("biology-audit: PASS (8 elements, 7 bounded ecology/integration paths, 3x3 local)")
     return 0
 
 

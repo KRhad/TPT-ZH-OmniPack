@@ -86,6 +86,11 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "fuel requirement for source": "if (fuel.index < 0)",
         "neutron output occupancy guard": "!photons[y + ry][x + rx]",
         "one neutron per spark guard": "parts[i].tmp4 & NuclearSparkEmitted",
+        "four-module waste stabilization": "WasteStabilization(",
+        "metallurgy waste input": "PT_SLAG",
+        "biology waste input": "PT_HUMS",
+        "chemistry structure input": "PT_POLY",
+        "reusable chemistry catalyst": "PT_CATA",
     }
     for label, marker in required_markers.items():
         if marker not in text:
@@ -138,7 +143,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"nuclear-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("nuclear-audit: PASS (7 elements, 4 bounded reactor paths, 3x3 local)")
+        print("nuclear-audit: PASS (7 elements, 5 bounded reactor/integration paths, 3x3 local)")
     return 0
 
 

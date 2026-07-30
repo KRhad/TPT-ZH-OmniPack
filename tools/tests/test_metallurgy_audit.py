@@ -34,6 +34,21 @@ class MetallurgyAuditTests(unittest.TestCase):
         self.assertTrue(errors)
         self.assertIn("audited stoichiometry", errors[-1])
 
+    def test_missing_radiation_shield_assembly_is_rejected(self) -> None:
+        source = (
+            ROOT / "src" / "simulation" / "OmniMetallurgy.cpp"
+        ).read_text(encoding="utf-8")
+        errors: list[str] = []
+        original = metallurgy_audit.read_text
+        try:
+            metallurgy_audit.read_text = lambda _path, _errors: source.replace(
+                "TryRadiationShieldAssembly", "RemovedShieldAssembly"
+            )
+            metallurgy_audit.check_engine(ROOT, errors)
+        finally:
+            metallurgy_audit.read_text = original
+        self.assertTrue(any("radiation shield assembly" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

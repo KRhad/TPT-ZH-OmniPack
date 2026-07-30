@@ -81,6 +81,10 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "kerosene cracking": "PT_KERO, i, parts, pmap, sim",
         "acetylene polymerisation": "PT_ACTY, i, parts, pmap, sim",
         "peroxide decomposition": "PT_PERO, i, parts, pmap, sim",
+        "peroxide pathogen treatment": "PeroxidePathogenTreatment",
+        "biology pathogen input": "PT_PATH, i, parts, pmap, sim",
+        "slag acid leaching": "SlagAcidLeaching",
+        "metallurgy slag input": "PT_SLAG, i, parts, pmap, sim",
         "chlorine hydrogen route": "PT_CHLR",
         "ammonia fertiliser route": "PT_AMON",
         "fermentation hook": "OmniChemistryYeastUpdate",
@@ -145,7 +149,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"chemistry-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("chemistry-audit: PASS (10 elements, 7 bounded process paths, 3x3 local)")
+        print("chemistry-audit: PASS (10 elements, 9 bounded process/integration paths, 3x3 local)")
     return 0
 
 

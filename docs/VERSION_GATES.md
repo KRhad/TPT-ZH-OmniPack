@@ -61,7 +61,7 @@
 
 | 门禁 ID | 必需结果 | 当前状态 | 完成证据 |
 |---|---|---|---|
-| `GATE-010-STRESS` | 十个固定样本全部有时长、粒子数、FPS、内存、崩溃/卡死/增长、OPS 结果 | 实际运行确认 | 当前候选十项均完成 `60+600` 秒，JSON/CSV/OPS 与哈希评估通过；`crashed=false`、`hung=false`、`roundtrip_pass=true`、`unbounded_growth=false`、`memory_leak_suspected=false`；事件总数/单帧峰值、停止残余事件和七项恢复断言均实际记录，十项 `performance_gate_pass=true`（总事件 `22529`，峰值 `1024`） |
+| `GATE-010-STRESS` | 十个固定样本全部有时长、粒子数、FPS、内存、崩溃/卡死/增长、OPS 结果 | 实际运行确认 | 当前候选十项均完成 `60+600` 秒，JSON/CSV/OPS 与哈希评估通过；`crashed=false`、`hung=false`、`roundtrip_pass=true`、`unbounded_growth=false`、`memory_leak_suspected=false`；事件总数/单帧峰值、停止残余事件和七项恢复断言均实际记录，十项 `performance_gate_pass=true`（总事件 `22529`，峰值 `1024`）。另有候选 S09 run `20260730T210719Z-d4085bc4` 完成 `7200.002183` 秒有限观测并独立评估通过；不覆盖 1.0.0 综合长跑。 |
 | `GATE-010-PAT` | 暴露 PAT 已撤销或轮换，重新扫描无凭据泄露 | 自动测试确认（`false`；外部账户阻塞） | 当前 `secret_scan_pass=false`、`credential_revoked=false`、`credential_rotated=false` |
 | `GATE-010-SOURCE-PUBLIC` | 对应源码和 tag 可匿名 HTTPS 克隆并重建 | 源码确认（`false`；外部权限阻塞） | 当前 `source_commit_public=false`、`anonymous_clone_pass=false` |
 | `GATE-010-LICENSES` | GPL、字体、第三方来源和 AI 披露随源码/包完整 | 自动测试确认 | 当前普通 ZIP 白名单含 GPL、字体许可证、第三方来源和 AI 披露；ZIP 清单/哈希二审通过；公开对应源码仍受外部门禁阻塞 |
@@ -83,15 +83,15 @@ release_ready=false
 
 | 门禁 ID | 必需结果 | 当前状态 |
 |---|---|---|
-| `GATE-020-AUDIT` | 48 元素逐项填写生产、主要/次要用途、消耗、副产物、危险、控制、回收、模块、教程、压力风险；孤立项有保留 ID 的处置 | 自动测试确认；`ELEMENT_USAGE_MATRIX.csv` 48/48，23 项仅直接放置、4 项缺回收、1 项未验证声明均有 disposition |
-| `GATE-020-REGISTRY` | 新增或修改元素/反应先通过两个 registry 的完整性、ID、来源、许可证、预算和测试审计 | 自动测试确认；元素、反应、内容和用途四项 fail-closed 审计已接入 Meson；跨模块反应尚未登记 |
-| `GATE-020-MET-CHEM` | 冶金—化学链具备正常、误操作、事故、停止和回收路径 | 尚未测试 |
-| `GATE-020-BIO-CHEM` | 生态—化学链具备正常、误操作、事故、停止和回收路径 | 尚未测试 |
-| `GATE-020-MET-NUCLEAR` | 冶金—核工业链具备结构、屏蔽、控制、冷却、燃料/废料处理闭环 | 尚未测试 |
-| `GATE-020-WASTE` | 冶金、化学、生态、核废料及污染水/结构均有受限处理或封装路径 | 尚未测试 |
+| `GATE-020-AUDIT` | 48 元素逐项填写生产、主要/次要用途、消耗、副产物、危险、控制、回收、模块、教程、压力风险；孤立项有保留 ID 的处置 | 自动测试确认；`ELEMENT_USAGE_MATRIX.csv` 48/48，当前 21 项仅直接放置、0 项缺回收、1 项未验证声明均有 disposition |
+| `GATE-020-REGISTRY` | 新增或修改元素/反应先通过两个 registry 的完整性、ID、来源、许可证、预算和测试审计 | 自动测试确认；43 条反应及元素、内容、用途四项 fail-closed 审计通过；四条最小跨模块路径均已登记 |
+| `GATE-020-MET-CHEM` | 冶金—化学链具备正常、误操作、事故、停止和回收路径 | 源码/编译/静态审计与实际 Lua 确认；`SLAG/ACID/CATA` 路径及温区/缺输入/停止负例通过，OPS、教程和正式压力尚未测试 |
+| `GATE-020-BIO-CHEM` | 生态—化学链具备正常、误操作、事故、停止和回收路径 | 源码/编译/静态审计与实际 Lua 确认；完整/简化生物模式均通过 `PERO/PATH`、湿 `HUMS/FERT/WATR` 和负例，OPS、教程和正式压力尚未测试 |
+| `GATE-020-MET-NUCLEAR` | 冶金—核工业链具备结构、屏蔽、控制、冷却、燃料/废料处理闭环 | 源码/编译/静态审计与实际 Lua 确认；`SSIL/LAVA(LEAD)/SPRK(NCRM)` 组装及无效火花负例通过，OPS、维护教程和正式压力尚未测试 |
+| `GATE-020-WASTE` | 冶金、化学、生态、核废料及污染水/结构均有受限处理或封装路径 | 源码/编译/静态审计与实际 Lua 确认；冷却四模块稳定化及输入/温区负例通过，OPS、污染水教程和正式压力尚未测试 |
 | `GATE-020-SAVES` | 7 个项目版本生成的示例 OPS 可加载，清单记录生成版本和 SHA-256 | 尚未测试 |
 | `GATE-020-CHALLENGES` | 8 项教程/挑战均有目标、初始存档、提示、成功/失败、结果和下一项，且可实际完成 | 尚未测试 |
-| `GATE-020-TESTS` | 每条链的自动反应测试、OPS 往返、错误/事故/回收和压力场景通过 | 尚未测试 |
+| `GATE-020-TESTS` | 每条链的自动反应测试、OPS 往返、错误/事故/回收和压力场景通过 | 静态 Meson `15/15`、Python `100/100`；当前 EXE `DC1BF56F...AF5DD6` 的 Lua `5/5`、更新后 S04/S05/S07/S09 smoke `4/4`，但示例 OPS、正式压力样本和教程仍尚未测试 |
 | `GATE-020-RELEASE` | 全量回归、双语 GUI、包审计、源码/tag/匿名克隆及 `v0.2.0` 发布通过 | 尚未测试 |
 
 ## 0.3.0：自动化和工程控制

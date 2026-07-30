@@ -121,12 +121,71 @@ Slot FindEmpty(int x, int y, int pmap[YRES][XRES])
 	return {};
 }
 
+bool HasHotLocal(
+	int x,
+	int y,
+	int type,
+	float minimumTemperature,
+	Parts &parts,
+	int pmap[YRES][XRES])
+{
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+				continue;
+			auto packed = pmap[y + ry][x + rx];
+			if (packed && TYP(packed) == type && parts[ID(packed)].temp >= minimumTemperature)
+				return true;
+		}
+	}
+	return false;
+}
+
 void Convert(Simulation *sim, Slot slot, int type, Parts &parts, float temperature)
 {
 	sim->part_change_type(slot.index, slot.x, slot.y, type);
 	parts[slot.index].temp = temperature;
 	parts[slot.index].life = 0;
 	parts[slot.index].ctype = 0;
+}
+
+bool PeroxidePathogenTreatment(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_PERO || IsTouched(i, parts, sim)
+		|| parts[i].temp < 285.0f || parts[i].temp > 330.0f
+		|| HasHotLocal(x, y, PT_CATA, 350.0f, parts, pmap))
+		return false;
+	auto pathogen = FindLocal(x, y, PT_PATH, i, parts, pmap, sim);
+	if (pathogen.index < 0 || !ConsumeReactionBudget(sim))
+		return false;
+
+	auto temperature = (parts[i].temp + parts[pathogen.index].temp) * 0.5f;
+	Convert(sim, Slot{ i, x, y }, PT_WATR, parts, temperature);
+	Convert(sim, pathogen, PT_HUMS, parts, temperature);
+	Touch(i, parts, sim);
+	Touch(pathogen.index, parts, sim);
+	return true;
+}
+
+bool SlagAcidLeaching(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_CATA || IsTouched(i, parts, sim)
+		|| parts[i].temp < 285.0f || parts[i].temp > 340.0f)
+		return false;
+	auto slag = FindLocal(x, y, PT_SLAG, i, parts, pmap, sim);
+	auto acid = FindLocal(x, y, PT_ACID, slag.index, parts, pmap, sim);
+	if (slag.index < 0 || acid.index < 0 || !ConsumeReactionBudget(sim))
+		return false;
+
+	auto temperature = (parts[i].temp + parts[slag.index].temp + parts[acid.index].temp) / 3.0f;
+	Convert(sim, slag, PT_FLUX, parts, temperature);
+	Convert(sim, acid, PT_WATR, parts, temperature);
+	Touch(i, parts, sim);
+	Touch(slag.index, parts, sim);
+	Touch(acid.index, parts, sim);
+	return true;
 }
 
 bool CatalyticCracking(UPDATE_FUNC_ARGS)
@@ -262,7 +321,9 @@ bool FertilizerUse(UPDATE_FUNC_ARGS)
 
 int OmniChemistryElementUpdate(UPDATE_FUNC_ARGS)
 {
-	if (CatalyticCracking(UPDATE_FUNC_SUBCALL_ARGS)
+	if (PeroxidePathogenTreatment(UPDATE_FUNC_SUBCALL_ARGS)
+		|| SlagAcidLeaching(UPDATE_FUNC_SUBCALL_ARGS)
+		|| CatalyticCracking(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CatalyticPolymerisation(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CatalyticPeroxideDecomposition(UPDATE_FUNC_SUBCALL_ARGS)
 		|| ChlorineReaction(UPDATE_FUNC_SUBCALL_ARGS)

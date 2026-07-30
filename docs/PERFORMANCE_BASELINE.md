@@ -1,6 +1,6 @@
 # 性能与稳定性基线
 
-本文件定义可重复的性能采样、固定场景和发布判定。当前已实现十场景的隔离 Lua/PowerShell 采样工具，并能生成逐秒帧/粒子序列、Windows 进程 CPU/内存序列、两份 OPS、保存加载耗时和机器可读 JSON。当前候选的十项完整 `60+600` 秒执行及独立工件评估均已完成；模块事件计数与停止/恢复断言也已由客户端 API 实际记录，十项 `performance_gate_pass=true`。这仍是有限观察，不是长期稳定性或两小时长跑证明。
+本文件定义可重复的性能采样、固定场景和发布判定。当前已实现十场景的隔离 Lua/PowerShell 采样工具，并能生成逐秒帧/粒子序列、Windows 进程 CPU/内存序列、两份 OPS、保存加载耗时和机器可读 JSON。当前候选的十项完整 `60+600` 秒执行及独立工件评估均已完成；模块事件计数与停止/恢复断言也已由客户端 API 实际记录，十项 `performance_gate_pass=true`。候选 S09 另完成一次连续 `7200.002183` 秒有限观测并通过独立评估；这仍不是覆盖语言/模块切换等要求的 1.0.0 综合长跑证明。
 
 ## 当前快照
 
@@ -15,6 +15,9 @@ stress_evidence_source_commit=ff5945c4acbe15052a316771934854aa0f9281de
 stress_evidence_zip_sha256=53E0304FF8CE932F7D836620A7599085A486B1689EAC131BC78D7B8EA6619827
 stress_samples_passed=10
 stress_samples_total=10
+s09_7200s_observation=true
+s09_7200s_run_id=20260730T210719Z-d4085bc4
+s09_7200s_performance_gate=true
 harness_smoke_scenarios=10/10
 responsive_harness_smoke_scenarios=1/10
 full_sample_executions=10/10
@@ -198,7 +201,7 @@ notes
 | `S09` | `20260730T193619Z-d9f707f9` |
 | `S10` | `20260730T194745Z-2bd2d539` |
 
-当前正式样本的最低观测为 S10 的 `30.218` FPS；本版本没有绝对 FPS 通过阈值，因此该数值只如实记录。十项的 `event_evidence_complete=true`、`scenario_behavior_pass=true`、`performance_gate_pass=true`，总事件 `22529`、最大单帧峰值 `1024`、`stress_samples_passed=10`、`stress_test=true`。每项停止后 `stop_event_delta=0`、恢复断言为 `7`。有限观察的 `false` 值不构成长期有界性的数学证明，两小时长跑仍为 `not_tested`。
+当前正式样本的最低观测为 S10 的 `30.218` FPS；本版本没有绝对 FPS 通过阈值，因此该数值只如实记录。十项的 `event_evidence_complete=true`、`scenario_behavior_pass=true`、`performance_gate_pass=true`，总事件 `22529`、最大单帧峰值 `1024`、`stress_samples_passed=10`、`stress_test=true`。每项停止后 `stop_event_delta=0`、恢复断言为 `7`。有限观察的 `false` 值不构成长期有界性的数学证明。候选 S09 长跑工件为 `artifacts/performance/0.1.0-test-long-run/.../S09-ALL-MODULES/20260730T210719Z-d4085bc4/`，采样 `7200.002183` 秒，独立评估 `performance_gate_pass=true`；它不包含 1.0.0 要求的语言/模块切换等综合步骤。
 
 ### 早期候选 S01 历史证据（不计入当前候选）
 
@@ -359,6 +362,7 @@ event_evidence_complete=true
 scenario_behavior_pass=true
 stress_event_total=22529
 stress_peak_event_per_frame=1024
+s09_7200s_observation=true
 long_run_test=not_tested
 performance_gate_pass=true
 ```

@@ -27,6 +27,7 @@
 | 禁用模块三选项/只读写入拦截 | 实际 GUI | NOT RUN | 静态门禁通过；菜单、快捷键、另存、覆盖、上传和取消不改变沙盘仍需点击证据 |
 | 十场景压力烟测工具 | 实际运行 | PASS | 十个场景均能生成帧、CPU、内存、粒子、事件计数、保存加载与 OPS 原始文件 |
 | 十场景各 10 分钟门禁 | 持续运行 | PASS | 当前候选 `ff5945c4` 下 `10/10` 完整 `60+600` 秒样本通过；事件总数 `22529`、单帧峰值 `1024`，十项 `performance_gate_pass=true`，有限观察增长/泄漏均为 false |
+| 候选 S09 两小时有限观测 | 持续运行 | PASS | `ff5945c4`；run `20260730T210719Z-d4085bc4`，预热 `60.009708` 秒、采样 `7200.002183` 秒；独立评估 `performance_gate_pass=true`、`unbounded_growth=false`、`memory_leak_suspected=false`；不等于 1.0.0 综合长跑 |
 | PAT 撤销、公开源码和匿名克隆 | 外部 | BLOCKED | `credential_revoked=false`、`source_commit_public=false`、`anonymous_clone_pass=false` |
 | `v0.1.0-test` / GitHub prerelease | 外部 | BLOCKED | 未创建 tag/Release；`release_ready=false` |
 
@@ -47,9 +48,15 @@
 |---|---|---|---|
 | 48 元素用途矩阵 | 源码/自动 | PASS | `ELEMENT_USAGE_MATRIX.csv` 48/48；生产、主要/次要用途、消耗、副产物、危险、控制、回收、教程、压力风险和处置均非空 |
 | 用途矩阵身份门禁 | 自动 | PASS | 对照 `ELEMENT_REGISTRY.csv` 拒绝缺行、额外元素、稳定 ID/代号/模块漂移、非法 gap/disposition |
-| 缺口分类 | 源码确认 | PASS | 23 项仅直接放置、33 项缺跨模块联动、4 项缺回收、1 项未验证玩法声明；没有删除或重排 ID |
-| 开发 HEAD 自动测试 | 自动 | PASS | Meson static `15/15`；Python `91/91`，0 skip |
-| 四条跨模块闭环 | 运行 | NOT RUN | 尚未修改反应；必须先登记正常/事故/停止/回收路径和预算 |
+| 缺口分类 | 源码确认 | PASS | 当前为 21 项仅直接放置、26 项缺跨模块联动、0 项终点副产物、0 项缺回收、4 项缺机器用途、1 项未验证声明；没有删除或重排 ID |
+| 开发 HEAD 自动测试 | 自动 | PASS | Meson static `15/15`；Python `100/100`，0 skip；43 条 reaction registry |
+| 生态—化学路径 | 实际运行 | PASS | 当前 `build-0.1.0-test-metrics`：完整/简化生物 Lua 均 PASS；覆盖 `PERO/PATH`、湿 `HUMS/FERT/WATR`、冷温/缺水/热催化剂负例；热催化剂夹具以 700 K 初温确保三帧内实际保持 `>=350 K` |
+| 冶金—化学路径 | 实际运行 | PASS | 当前编译产物化学 Lua PASS（11 条路径）；覆盖温区、缺输入、保留 `CATA` 和 `SLAG/ACID/CATA -> FLUX/WATR` |
+| 冶金—核工业路径 | 实际运行 | PASS | 当前编译产物冶金 Lua PASS（8 配方/5 行为）；覆盖 `SSIL/LAVA(LEAD)/SPRK(NCRM) -> 2 RSHD` 与无效火花负例 |
+| 四模块废物路径 | 实际运行 | PASS | 当前编译产物核工业 Lua PASS（5 条路径）；覆盖冷却稳定化、输入不全/温区负例、水和催化剂保留 |
+| 更新后 S04/S05/S07/S09 压力 smoke | 实际运行 | PASS | 当前 EXE `DC1BF56F...AF5DD6` 的工作树 smoke `4/4`（run `25ccb48c`、`2886c376`、`2cff2a5f`、`da10ce91`）；每项约 `2.01` 秒、`crashed=false`、`hung=false`、`roundtrip_pass=true`、`stop_event_delta=0`、恢复断言 `7`；`gate_result=not_tested`，不能替代正式 10 分钟样本 |
+| 0.2 正式压力样本 | 持续运行 | NOT RUN | 当前工作树尚未完成与最终提交/ZIP 绑定的正式压力样本；旧候选十项和 S09 两小时证据不得混用 |
+| 0.2 示例 OPS / 教程 | 运行 | NOT RUN | 7 个示例 OPS 和 8 项教程/挑战尚未实现 |
 
 ## Phase 0 / Phase 1 基线
 
