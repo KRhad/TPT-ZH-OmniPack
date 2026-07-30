@@ -1,0 +1,158 @@
+# 0.1.0-test 最终公开测试验收
+
+验收分支：`release/test-public-final-validation`。本文件只记录实际取得的证据；未取得可信 GUI、OPS 或性能数据的项目不得由静态分析、编译或 Lua 回归替代。
+
+## 冻结与基线
+
+- 初始工作树干净；请求指定的 `0e9ff54c65c64f01e3af567366d2eed1de2c5dd9` 是当前分支的祖先。
+- 开始验收时 HEAD 已包含后续干净提交 `e2e965ad` 和 `1d490072`，没有回退或覆盖它们。
+- 术语修正构建基线为 `4961f99f8371d142bb7d4e361607b00251a501d6`；旧候选 ZIP 已保存在 `artifacts/final-validation/baseline-dist/`，原始 `dist/` 文件未删除。
+
+## 凭据检查
+
+2026-07-30 的脱敏扫描覆盖工作区、候选 ZIP、所有分支/tag/reflog 可达 Git 对象、PowerShell 历史、CI 配置、临时目录和环境变量。报告位于 `artifacts/final-validation/logs/secret-scan-results.txt`，仅包含位置、类型和不可逆 SHA-256 截断指纹。
+
+- 发现一个当前进程环境变量 `GITHUB_PAT_TOKEN` 中的 GitHub classic PAT；报告不包含其原文。
+- Git 可达历史和候选发布包未发现匹配的 GitHub PAT 模式。
+- 本机没有 `gh`，且没有 GitHub 账户安全管理操作的可验证权限。因此无法证明旧凭据已撤销或已轮换。
+- 在旧凭据失效获得可验证证据前，不推送分支、不创建 tag、不创建 GitHub Release。
+
+## 源码公开性
+
+`origin` 是 `https://github.com/Dragonrster/The-Powder-Toy-Chinese.git`。远端引用检查记录于 `artifacts/final-validation/logs/remote-release-ref-check.txt`：
+
+- `release/test-public-hardening` 不存在于远端。
+- `release/test-public-final-validation` 不存在于远端。
+- `v0.1.0-test` 不存在于远端。
+
+由于凭据门禁失败，未尝试推送，也未进行匿名克隆。公开源码和匿名克隆门禁均不通过。
+
+## 最终 ZIP 运行环境
+
+- OS：Windows 11 Pro x64 `10.0.26200`；系统语言：`zh-CN`。
+- 显示器：NVIDIA GeForce RTX 5070 Ti Laptop GPU，`1920x1080`，32-bit。
+- DPI：`LogPixels=192`，等价 150% 缩放。
+- 最终 ZIP 从 `dist/` 解压到 `artifacts/final-validation/runtime/final-zip/`；EXE SHA-256 与 ZIP 内清单一致。
+- 独立数据目录：`artifacts/final-validation/runtime/user-data/`；启动前没有 `powder.pref`，首次启动后才创建该文件。
+- EXE 进程路径、命令行、窗口标题、句柄和 `Responding=True` 已记录在 `artifacts/final-validation/logs/process-identity.json` 与 `gui-launch-dpi-fixed.json`。
+
+## GUI 限制
+
+最终 ZIP 的 EXE 可启动，窗口标题为 `TPT-ZH-OmniPack 0.1.0-test` 并保持响应。当前自动化会话无法把 SDL 窗口置为前景：`SetForegroundWindow` 返回 `false`，且目标窗口句柄不等于当前前景句柄，见 `gui-foreground-attempt.json`。`PrintWindow` 返回成功但 SDL 客户端区为黑帧，见 `04-zh-main-printwindow.png`。屏幕区域抓取会包含其他桌面窗口，因此不能作为 TPT UI 证据。
+
+因此，本环境不能安全或可验证地执行所要求的设置点击、语言切换、模块开关、保存加载、只读门禁和十个压力样本。没有发送会影响其他前景应用的键鼠输入，也没有伪造 OPS 或性能记录。
+
+## 已完成的非 GUI 验证
+
+- clean Release build：通过。
+- Meson 静态测试：`10/10`。
+- Python 工具测试：`50`。
+- 最终 ZIP EXE 的真实客户端 Lua 回归：`6/6`（模块选择、工业冶金、高级化学、局部生态完整/简化、受控核工业）。
+- 本地化审计、存档兼容静态审计和 ZIP 内容审计：通过。
+- EXE 调试段拆分、开发路径清理、静态运行库检查和 PE ASLR/DEP/high-entropy 标志：通过。
+
+## 术语审计
+
+- 玩家可见正式模块名称已统一为工业冶金、局部生态、高级化学和受控核工业，分别出现在简中/英文设置标签和发布测试说明。
+- `options.omni.biology`、`options.omni.metallurgy` 和 `options.omni.advanced_nuclear` 是内部稳定本地化键，不因显示名称变化而改名。
+- `基础化学`、`生物扩展` 等出现在部分 Phase 历史、来源账本或旧来源名称中时属于历史记录，不作为当前玩家可见的模块名称。
+
+## 机器可读结论
+
+```text
+source_commit=not_tested
+release_tag=not_tested
+version=0.1.0-test
+
+credential_exposure_found=true
+credential_present_in_git_history=false
+credential_present_in_release_artifacts=false
+credential_revoked=false
+credential_rotated=false
+secret_scan_pass=false
+
+source_branch_public=false
+source_commit_public=false
+anonymous_clone_pass=false
+public_clone_commit=not_tested
+public_clone_build_pass=not_tested
+
+clean_build_pass=true
+meson_tests=10/10
+python_tests=50
+lua_runtime_tests=6/6
+
+gui_launch_test=true
+zh_default_test=not_tested
+zh_to_en_switch_test=not_tested
+en_persistence_test=not_tested
+en_to_zh_switch_test=not_tested
+zh_persistence_test=not_tested
+zh_en_switch_test=not_tested
+ui_text_overflow_test=not_tested
+font_visual_test=not_tested
+module_ui_test=not_tested
+metallurgy_ui_test=not_tested
+ecology_ui_test=not_tested
+chemistry_ui_test=not_tested
+nuclear_ui_test=not_tested
+representative_element_test=not_tested
+module_state_persistence_test=not_tested
+
+official_ops_roundtrip_test=not_tested
+metallurgy_ops_roundtrip_test=not_tested
+ecology_ops_roundtrip_test=not_tested
+chemistry_ops_roundtrip_test=not_tested
+nuclear_ops_roundtrip_test=not_tested
+mixed_ops_roundtrip_test=not_tested
+ops_roundtrip_test=not_tested
+
+disabled_module_dialog_test=not_tested
+normal_load_test=not_tested
+readonly_load_test=not_tested
+cancel_load_test=not_tested
+readonly_save_block_test=not_tested
+readonly_upload_block_test=not_tested
+readonly_menu_save_block_test=not_tested
+readonly_ctrl_s_block_test=not_tested
+readonly_save_as_block_test=not_tested
+readonly_overwrite_block_test=not_tested
+readonly_exit_no_overwrite_test=not_tested
+indirect_element_detection_test=not_tested
+lava_carrier_detection_test=not_tested
+sprk_carrier_detection_test=not_tested
+mscr_carrier_detection_test=not_tested
+
+representative_gameplay_test=not_tested
+stress_samples_passed=0
+stress_samples_total=10
+unbounded_growth_detected=not_tested
+memory_leak_suspected=not_tested
+stress_test=not_tested
+
+font_license_resolved=true
+release_exe_stripped=true
+debug_symbols_separated=true
+developer_paths_removed=true
+pe_security_flags_preserved=true
+authenticode_signed=false
+
+public_zip_sha256=not_tested
+symbols_zip_sha256=not_tested
+zip_audit_pass=true
+
+tag_public=false
+tag_anonymous_clone_pass=false
+github_release_created=false
+release_permission_blocked=true
+release_ready=false
+```
+
+## 发布阻塞与最小下一步
+
+| 阻塞项 | 类型 | 证据 | 已采取动作 | 最小下一步 |
+|---|---|---|---|---|
+| PAT 未证明撤销或轮换 | 外部账户/安全 | `secret-scan-results.txt` 发现当前环境 PAT；无撤销证据 | 停止推送、tag 和 Release | 在 GitHub 安全设置撤销旧 PAT，使用最小权限凭据和凭据库重新认证，再记录不含原文的证据 |
+| 源码尚未公开 | 权限/外部服务 | 两个发布分支和 tag 在 `origin` 均不存在 | 未推送 | 撤销确认后推送分支，匿名 HTTPS 克隆并构建验证 |
+| SDL GUI 无可验证前景/画面 | 环境 | 前景 API 失败，`PrintWindow` 黑帧 | 保存窗口、截图和失败证据；未盲目发送输入 | 在可交互 Windows 桌面用 UI Automation、AutoHotkey 或人工操作执行完整 GUI/OPS/压力矩阵 |
+| OPS 与压力样本未创建 | 环境 | `saves/` 和 `stress/` 的结果文件明确为未测试 | 未构造伪 OPS 或伪性能数据 | 使用最终 ZIP 的 GUI 保存十个 OPS 样本，完成往返、门禁和十个固定压力运行 |

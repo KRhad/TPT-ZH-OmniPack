@@ -35,3 +35,8 @@
 
 Phase 0 未取得覆盖所有来源的合法样本集，也未运行载入测试。上表是静态可迁移性判定，不是最终兼容声明。
 
+## 0.1.0-test 最终验收状态
+
+2026-07-30 的 `save_compatibility_audit.py` 静态审计通过，确认统一加载入口、直接元素及 `LAVA`/`SPRK`/`MSCR` 携带类型检测、以及只读保存/上传控制器门禁仍存在。该结果不代表 OPS 运行验证。
+
+最终 ZIP 的 SDL 窗口在当前自动化会话中不能获得前景且无法抓取非黑色客户端画面，因此未能通过正常 GUI 保存所要求的 `official-baseline.ops`、四模块、混合、三个载体和只读源 OPS。`artifacts/final-validation/saves/ops-roundtrip-results.json` 与 `.md` 将这些项目标记为 `not_tested`；不得把静态检测、序列化单测或伪造文件称为往返通过。

@@ -222,6 +222,21 @@
 | OPS 三选项与只读拦截 | 实际 GUI | NOT RUN | 静态门禁已通过，实际点击未完成 |
 | 反应与压力样本 | 实际 GUI | NOT RUN | Lua 回归不替代持续 FPS/内存数据 |
 
+## 0.1.0-test 最终验收
+
+| 测试 | 类型 | 状态 | 证据/备注 |
+|---|---|---|---|
+| 脱敏凭据扫描 | 安全 | BLOCKED | 工作区、可达 Git 对象、ZIP、历史、CI、临时目录和环境已扫描；当前 `GITHUB_PAT_TOKEN` PAT 未证明已撤销 |
+| 远端发布引用 | 远端 | BLOCKED | `origin` 不存在 `release/test-public-hardening`、`release/test-public-final-validation` 或 `v0.1.0-test`；凭据门禁前不推送 |
+| 最终 ZIP 启动 | 实际进程 | PASS | 解压 EXE 的路径、SHA-256、标题、窗口句柄与 `Responding=True` 记录在 `artifacts/final-validation/logs/` |
+| 最终 ZIP Lua 回归 | 实际客户端 | PASS | 6/6；`lua-runtime-final-zip.txt` |
+| 本地化与存档兼容审计 | 自动 | PASS | `i18n_audit.py --check` 与 `save_compatibility_audit.py`；`localization-and-compatibility-audits.txt` |
+| 简中/英文与高 DPI 视觉检查 | 实际 GUI | NOT RUN | SDL 窗口不能获得前景，`PrintWindow` 客户端为黑帧；无可信点击或截图证据 |
+| 四模块、代表元素与持久化 | 实际 GUI | NOT RUN | 未在最终 ZIP 中执行模块开关、搜索、放置、图鉴或重启 |
+| OPS 往返、三选项与载体字段 | 实际 GUI | NOT RUN | 未用 GUI 保存 OPS；静态审计不替代运行证据 |
+| 代表玩法 | 实际 GUI | NOT RUN | Lua 运行回归仅证明脚本覆盖路径，不能代替交互场景 |
+| 十个固定压力样本 | 持续运行 | NOT RUN | 未获得 FPS、内存、粒子增长或重载数据 |
+
 ## 后续运行与压力测试
 
 以下测试尚未因编译成功而被误标为通过：
