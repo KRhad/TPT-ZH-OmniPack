@@ -100,6 +100,90 @@ function Get-StampInfo {
     }
 }
 
+function Get-PackageProvenance {
+    param(
+        [Parameter(Mandatory = $true)][string] $Package,
+        [Parameter(Mandatory = $true)][string] $ExecutablePath
+    )
+
+    $resolvedPackage = (Resolve-Path -LiteralPath $Package).Path
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($resolvedPackage)
+    try {
+        $manifestEntries = @(
+            $archive.Entries | Where-Object { $_.FullName -match '/TEST-MANIFEST\.txt$' }
+        )
+        if ($manifestEntries.Count -ne 1) {
+            throw "Expected exactly one TEST-MANIFEST.txt in package, found $($manifestEntries.Count)"
+        }
+        $reader = [System.IO.StreamReader]::new(
+            $manifestEntries[0].Open(),
+            [System.Text.Encoding]::UTF8,
+            $true
+        )
+        try {
+            $manifestText = $reader.ReadToEnd()
+        }
+        finally {
+            $reader.Dispose()
+        }
+        if ($manifestText -notmatch '(?m)^kind=public-test\r?$') {
+            throw "Package manifest is not a public-test manifest"
+        }
+        $revisionMatches = [regex]::Matches(
+            $manifestText,
+            '(?m)^revision=([0-9a-f]{40})\r?$'
+        )
+        if ($revisionMatches.Count -ne 1) {
+            throw "Package manifest must contain exactly one lowercase 40-character revision"
+        }
+        $executableMatches = [regex]::Matches(
+            $manifestText,
+            '(?m)^member=tpt-zh-omnipack\.exe\|([0-9]+)\|([0-9A-F]{64})\r?$'
+        )
+        if ($executableMatches.Count -ne 1) {
+            throw "Package manifest must contain exactly one tpt-zh-omnipack.exe member"
+        }
+        $actualExecutable = Get-Item -LiteralPath $ExecutablePath
+        $expectedLength = [int64]$executableMatches[0].Groups[1].Value
+        $expectedHash = $executableMatches[0].Groups[2].Value
+        $actualHash = (Get-FileHash -LiteralPath $actualExecutable.FullName -Algorithm SHA256).Hash
+        if ($actualExecutable.Length -ne $expectedLength) {
+            throw "Package executable size does not match the selected executable"
+        }
+        if ($actualHash -ne $expectedHash) {
+            throw "Package executable hash does not match the selected executable"
+        }
+        return [pscustomobject]@{
+            Revision = $revisionMatches[0].Groups[1].Value
+            Sha256 = (Get-FileHash -LiteralPath $resolvedPackage -Algorithm SHA256).Hash
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
+}
+
+$harnessCommit = (& git -C $sourceRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or $harnessCommit -notmatch '^[0-9a-f]{40}$') {
+    throw "Cannot resolve the stress harness commit"
+}
+$sourceCommit = $null
+$publicZipSha256 = "not_tested"
+if ($PackageZip) {
+    $packageProvenance = Get-PackageProvenance `
+        -Package $PackageZip `
+        -ExecutablePath $resolvedExecutable
+    $sourceCommit = $packageProvenance.Revision
+    $publicZipSha256 = $packageProvenance.Sha256
+}
+elseif (-not $Smoke) {
+    throw "PackageZip is required for formal stress runs"
+}
+else {
+    $sourceCommit = $harnessCommit
+}
+
 $completed = $false
 try {
     New-Item -ItemType Directory -Path $testRoot | Out-Null
@@ -174,11 +258,6 @@ try {
 
     $firstOps = Get-StampInfo -Stamp $lua.first_stamp
     $secondOps = Get-StampInfo -Stamp $lua.second_stamp
-    $sourceCommit = (& git -C $sourceRoot rev-parse HEAD).Trim()
-    if ($LASTEXITCODE -ne 0 -or $sourceCommit -notmatch '^[0-9a-f]{40}$') {
-        throw "Cannot resolve the source commit"
-    }
-
     $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
     $computer = Get-CimInstance Win32_ComputerSystem
     $os = Get-CimInstance Win32_OperatingSystem
@@ -203,11 +282,6 @@ try {
     catch {
         $powerMode = "not_tested"
     }
-    $publicZipSha256 = "not_tested"
-    if ($PackageZip) {
-        $publicZipSha256 = (Get-FileHash -LiteralPath (Resolve-Path -LiteralPath $PackageZip).Path -Algorithm SHA256).Hash
-    }
-
     $artifactBase = if ([System.IO.Path]::IsPathRooted($OutputDirectory)) {
         [System.IO.Path]::GetFullPath($OutputDirectory)
     } else {
@@ -226,6 +300,7 @@ try {
         sample_id = $SampleId
         run_id = $runId
         source_commit = $sourceCommit
+        harness_commit = $harnessCommit
         release_tag = "not_tested"
         version = "0.1.0-test"
         public_zip_sha256 = $publicZipSha256

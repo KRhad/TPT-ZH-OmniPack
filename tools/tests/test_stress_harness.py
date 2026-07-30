@@ -65,6 +65,19 @@ class StressHarnessContractTest(unittest.TestCase):
             self.assertIn(filename, self.powershell)
         self.assertIn('GetString($bytes, 0, 4) -ne "OPS1"', self.powershell)
 
+    def test_formal_runs_bind_the_package_manifest_and_executable(self) -> None:
+        self.assertIn("PackageZip is required for formal stress runs", self.powershell)
+        self.assertIn("TEST-MANIFEST.txt", self.powershell)
+        self.assertIn("kind=public-test", self.powershell)
+        self.assertIn("revision=([0-9a-f]{40})", self.powershell)
+        self.assertIn("member=tpt-zh-omnipack", self.powershell)
+        self.assertIn("Package executable size does not match", self.powershell)
+        self.assertIn("Package executable hash does not match", self.powershell)
+        self.assertIn("$sourceCommit = $packageProvenance.Revision", self.powershell)
+        self.assertIn("harness_commit = $harnessCommit", self.powershell)
+        self.assertIn("elseif (-not $Smoke)", self.powershell)
+        self.assertEqual(self.powershell.count("rev-parse HEAD"), 1)
+
     def test_unavailable_evidence_is_not_invented(self) -> None:
         for field in (
             "display_resolution",

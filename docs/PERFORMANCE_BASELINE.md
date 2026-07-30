@@ -93,6 +93,7 @@ schema_version
 sample_id
 run_id
 source_commit
+harness_commit
 release_tag
 version
 public_zip_sha256
