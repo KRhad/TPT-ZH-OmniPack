@@ -13,6 +13,15 @@
 9. 2026-07-30 最终验收扫描在当前进程环境变量发现一个 GitHub classic PAT；扫描报告仅保留变量名和脱敏指纹。Git 历史和候选 ZIP 未发现该模式，但无法证明旧凭据已经撤销或轮换。因此不得推送、创建 tag 或公开发布，直到在仓库外完成可验证的撤销。
 10. 当前 Windows 自动化会话无法将最终 ZIP 的 SDL 窗口置为前景，且 `PrintWindow` 只能获取黑色客户端帧。语言切换、模块 UI、OPS 三选项/只读保存/上传和压力测试均未执行，不得声称通过。
 
+```text
+credential_exposure_found=true
+credential_present_in_git_history=false
+credential_present_in_release_artifacts=false
+credential_revoked=false
+credential_rotated=false
+secret_scan_pass=false
+```
+
 ## 来源限制
 
 - Seppo 公共仓库登记的 32 个新增元素实现文件全部缺失；不得从仅有二进制的版本复制实现。
