@@ -37,6 +37,13 @@ Phase 0 未取得覆盖所有来源的合法样本集，也未运行载入测试
 
 ## 0.1.0-test 最终验收状态
 
-2026-07-30 的 `save_compatibility_audit.py` 静态审计通过，确认统一加载入口、直接元素及 `LAVA`/`SPRK`/`MSCR` 携带类型检测、以及只读保存/上传控制器门禁仍存在。该结果不代表 OPS 运行验证。
+2026-07-30 的 `save_compatibility_audit.py` 静态审计通过，确认统一加载入口、直接元素及 `LAVA`/`SPRK`/`MSCR` 携带类型检测、以及只读保存/上传控制器门禁仍存在。
 
-最终 ZIP 的 SDL 窗口在当前自动化会话中不能获得前景且无法抓取非黑色客户端画面，因此未能通过正常 GUI 保存所要求的 `official-baseline.ops`、四模块、混合、三个载体和只读源 OPS。`artifacts/final-validation/saves/ops-roundtrip-results.json` 与 `.md` 将这些项目标记为 `not_tested`；不得把静态检测、序列化单测或伪造文件称为往返通过。
+提交 `f92e12fa` 使用客户端真实 `sim.saveStamp`/`sim.loadStamp` 和 OPS1/BZip2 文件完成以下保存→退出→重启→加载→再保存→退出→重启→加载：
+
+- 官方场景：6 粒子、6 个稳定 identifier、每次加载 14 个字段断言；
+- 冶金、生态、化学、核工业四个独立场景：合计 15 个进程、10 次重启、10 次加载验证、79 粒子，每次加载合计 120 个字段断言；
+- 四模块混合场景：11 粒子，直接验证 `ALUM=256`、`NUTR=288`、`NFUL=328`、`CHLR=360`；
+- 所有适用场景核对 `LAVA.ctype`、`SPRK.ctype`、`CONV.ctype/tmp`、`VIRS.tmp2`，冶金和混合场景另核对 `MSCR.ctype`；两份输出均检查 OPS1 头、BZip2 载荷和 palette identifier。
+
+这些结果是实际运行确认，但走的是隔离 stamp API。当前自动化会话仍不能可信点击 SDL 内的本地保存对话框，因此 GUI `.cps` 保存、禁用模块三选项、只读菜单/快捷键/另存/覆盖/上传以及取消后当前沙盘不变仍为 `not_tested`。旧 `artifacts/final-validation/saves/ops-roundtrip-results.*` 仅是早期未测试记录，不再代表当前 stamp 往返状态。

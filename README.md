@@ -1,4 +1,13 @@
-The Powder Toy - June 2026
+TPT-ZH-OmniPack / Omniverse Sandbox Integration
+================================================
+
+This repository is an unofficial GPL-3.0 integration based on The Powder Toy `100.0.399`. The current product version is `0.1.0-test`; it includes Simplified Chinese and English support plus 48 stable-ID OmniPack elements across metallurgy, local ecology, advanced chemistry, and controlled nuclear modules.
+
+The local Windows candidate has passed a clean Release build, automated tests, detached-symbol/package audits, Lua gameplay regressions, and official/single-module/mixed OPS stamp roundtrips. It is **not release-ready**: trusted GUI/DPI checks, the full stress matrix, PAT revocation, an authorized public source remote, anonymous clone verification, tag, and GitHub prerelease remain incomplete. The existing `origin` is a historical Chinese-fork remote and must not be represented as the public source for this candidate.
+
+See [README.zh-CN.md](README.zh-CN.md), [docs/VERSION_GATES.md](docs/VERSION_GATES.md), and [dist/release-report-0.1.0-test.md](dist/release-report-0.1.0-test.md) for the scoped evidence and blockers.
+
+Upstream The Powder Toy README - June 2026
 ==========================
 
 Get the latest version [from the Powder Toy website](https://powdertoy.co.uk/Download.html). We're also on [Steam](https://store.steampowered.com/app/1148350/The_Powder_Toy/).

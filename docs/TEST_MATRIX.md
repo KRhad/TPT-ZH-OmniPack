@@ -2,6 +2,45 @@
 
 状态：`PASS`、`FAIL`、`BLOCKED`、`NOT RUN`。编译通过不替代运行、视觉、存档或压力测试。
 
+## 0.1.0-test 当前候选（`4f5c07f9`）
+
+本节是当前候选的权威摘要；后续 Phase 表保留历史增量证据，不能用旧计数或旧哈希覆盖本节。
+
+| 测试 | 类型 | 状态 | 证据/备注 |
+|---|---|---|---|
+| 空目录 Release 构建 | 构建 | PASS | `build-0.1.0-test-e2e1b3fe`，`502/502`，0 error；其后 `4f5c07f9` 仅修压力测试工具，不改变二进制 |
+| 当前 Meson 全量 | 自动 | PASS | `13/13` |
+| 当前 Python 全量 | 自动 | PASS | `77/77`，0 skip |
+| 元素/反应 registry | 自动 | PASS | 370 元素槽、243 active、127 reserved；48 个玩法字段完整；38/38 反应规则 |
+| 字体资源与渲染探针 | 自动/引擎 | PASS | `font.bz2` SHA-256 `47F4EB85...`；2,593 语言字符覆盖；中文矩阵和引擎探针通过 |
+| 已剥离 EXE Lua 回归 | 实际运行 | PASS | 模块、冶金、生态、化学、核工业和混合 OPS 共 `6/6` |
+| 官方 OPS 双往返 | 实际运行 | PASS | 3 进程、2 重启、2 加载；6 粒子、每次 14 字段断言 |
+| 四个单模块 OPS 双往返 | 实际运行 | PASS | `5/5` 总用例中的冶金/生态/化学/核工业；总计 15 进程、10 重启、10 加载、120 字段断言 |
+| 四模块混合及载体 OPS | 实际运行 | PASS | 11 粒子；`ALUM/NUTR/NFUL/CHLR` 与 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2` 两次重载一致 |
+| 当前普通/符号 ZIP | 自动 | PASS | 普通 `0DF8695E...B051`；符号 `4F3645DF...00A1`；白名单、清单、哈希、解压二审通过 |
+| 当前发布 EXE | 自动 | PASS | `D29E6776...5BFB2`；调试段/开发路径/动态 GCC runtime 0；ASLR、DEP/NX、高熵地址标志存在；未签名 |
+| 当前 ZIP 解压启动 | 实际运行 | PASS | 全新隔离 `ddir`；窗口标题正确、句柄非零、`Responding=true`、退出码 0；不等于窗口内容视觉通过 |
+| 首次安装提示消失 | 人工视觉 | NOT RUN | 源码/生成配置为 `CAN_INSTALL=false`、`INSTALL_CHECK=false`；当前环境不能可信读取 SDL 内部对话框 |
+| 中文实际可读性 | 人工视觉 | PASS | 用户确认当前原生 Fusion 12px 方案解决中文显示问题；语言切换和 DPI 另列 |
+| 中英切换/持久化和 DPI | 人工视觉 | NOT RUN | 100%/125%/150%、双向切换、重启及长文本页面矩阵未完成 |
+| 四模块 UI 与代表元素 | 人工视觉 | NOT RUN | `ALUM/NUTR/CHLR/NFUL` 的搜索、放置、图鉴、开关和重启未完成 |
+| 禁用模块三选项/只读写入拦截 | 实际 GUI | NOT RUN | 静态门禁通过；菜单、快捷键、另存、覆盖、上传和取消不改变沙盘仍需点击证据 |
+| 十场景压力烟测工具 | 实际运行 | PASS | 十个场景均能生成帧、CPU、内存、粒子、保存加载与 OPS 原始文件；仅表示工具执行，`stress_gate=not_tested` |
+| 十场景各 10 分钟门禁 | 持续运行 | NOT RUN | 首次完整运行发现并修复 Lua 无响应；新方案完整矩阵尚未结束 |
+| PAT 撤销、公开源码和匿名克隆 | 外部 | BLOCKED | `credential_revoked=false`、`source_commit_public=false`、`anonymous_clone_pass=false` |
+| `v0.1.0-test` / GitHub prerelease | 外部 | BLOCKED | 未创建 tag/Release；`release_ready=false` |
+
+### 候选冻结后的本地门禁
+
+| 测试 | 类型 | 状态 | 证据/备注 |
+|---|---|---|---|
+| 压力原始证据判定器 | 自动 | PASS | `b356f931`；核对 JSON/CSV/OPS 哈希，有限观察增长分类不替代长期证明 |
+| 发布报告结构门禁 | 自动 | PASS | `d3419e7b`；67 个机器字段齐全，拒绝非法值、缺字段、哈希不符及 `release_ready` 覆盖失败门禁 |
+| 开发 HEAD Meson | 自动 | PASS | `14/14`，新增 `release-report` 门禁 |
+| 开发 HEAD Python | 自动 | PASS | `86/86`，0 skip |
+
+这些是候选 `4f5c07f9` 之后的工具提交，不改变候选 EXE `D29E6776...5BFB2`；下一次封包必须写入新的真实源码提交和哈希。
+
 ## Phase 0 / Phase 1 基线
 
 | 测试 | 类型 | 状态 | 证据/备注 |

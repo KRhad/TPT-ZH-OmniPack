@@ -1,17 +1,22 @@
 # 性能与稳定性基线
 
-本文件定义可重复的性能采样、固定场景和发布判定。当前已有局部事件预算、启动稳定性以及一次混合/载体 OPS 双往返证据，但没有 FPS、CPU、内存、粒子增长、保存或加载耗时数据；因此当前性能基线仍为 `not_tested`，不能由 clean build、字段往返或 Lua 反应回归替代。
+本文件定义可重复的性能采样、固定场景和发布判定。当前已实现十场景的隔离 Lua/PowerShell 采样工具，并能生成逐秒帧/粒子序列、Windows 进程 CPU/内存序列、两份 OPS、保存加载耗时和机器可读 JSON。短烟测只验证工具链；S01/S02 已完成 60 秒预热和 600 秒采样，但模块事件计数、场景停止/恢复断言及其余 8 个样本尚未完成，因此正式性能基线仍为 `not_tested`。
 
 ## 当前快照
 
 ```text
-audit_head=e18abad9753e61e8f6c9f8fdf671c4bd80a4ca53
-implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
+audit_head=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+implementation_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
 candidate_version=0.1.0-test
-candidate_exe_sha256=05DACBFCC31D6F1920D4437DB60629A1F9DA79CC0A14AA13138DD97393CCF6AF
-candidate_zip_sha256=943DA2A60C0B371A1D3F921FEC525FB3F7B5AEBC7C5CE7775A8AEFA883C13F14
+candidate_exe_sha256=D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2
+candidate_zip_sha256=0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051
 stress_samples_passed=0
 stress_samples_total=10
+harness_smoke_scenarios=10/10
+responsive_harness_smoke_scenarios=1/10
+full_sample_executions=2/10
+sample_executions_passed=2/10
+full_samples_assessed=2/10
 ops_mixed_carrier_roundtrip=true
 stress_test=not_tested
 long_run_test=not_tested
@@ -30,9 +35,28 @@ long_run_test=not_tested
 | Meson / Ninja | 1.11.2 / 1.13.2 |
 | SDL / JsonCpp | 2.30.9-tpt-libs / 1.9.5-tpt-libs |
 | 固定依赖 | `tpt-libs v20251019131007` |
-| CPU、物理内存、电源模式 | `not_tested`；正式采样前必须记录 |
+| CPU | Intel Core Ultra 9 275HX；24 logical CPUs |
+| 物理内存 | 33,784,102,912 bytes |
+| 电源模式 | Windows 高性能方案 `8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c` |
 
-私有候选从 ZIP 解压后使用 20 个全新隔离数据目录启动均响应、崩溃 0。这证明启动稳定性，不提供持续运行、FPS 或内存基线。
+当前 ZIP 解压后 EXE 已从全新隔离目录启动并正常退出，且所有运行工具都使用独立 `ddir`。这证明当前运行路径和隔离策略可用，不提供持续运行、FPS 或内存基线。
+
+## 采样工具与已发现失败
+
+运行入口：
+
+```powershell
+.\tools\runtime_stress_test.ps1 `
+  -Executable <从当前普通 ZIP 解压的 tpt-zh-omnipack.exe> `
+  -PackageZip .\dist\TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip `
+  -SampleId S01-METALLURGY-LARGE
+```
+
+- 默认参数严格使用 60 秒预热、600 秒正式采样和密度步长 3；`-Smoke` 只运行 2 秒、使用步长 12，并强制写 `gate_result=not_tested`。
+- 每次运行预创建仅含 `{}` 的隔离 `powder.pref`，避免首次启动缩放确认阻塞事件循环；不读取真实用户偏好、账户、图章或存档，也不把该临时偏好复制到证据目录。
+- 第一版工具在 Lua autorun 中连续循环。十个 2 秒烟测均完成，但首次 600 秒运行在约 3 秒后被客户端 `LuaHookTimeout` 以“Script not responding”终止。该结果是工具缺陷和真实失败，不计为样本结果。
+- 提交 `4f5c07f9` 改为在 `event.tick` 中每次只执行一帧并立即返回。修复后 S01 响应性烟测通过，约 2.004 秒内完成 122 帧，平均约 60.9 次 `sim.updateUpTo`/秒，`Responding=true`；该数值只验证新调度方式，不是冻结性能基线。
+- 当前没有引擎暴露的模块事件计数器，对应 JSON 字段保持 `not_tested`。S01/S02 的只读判定器基于 600 秒序列给出 `unbounded_growth=false` 和 `memory_leak_suspected=false`；这是有限观察分类，不是长期有界性的数学证明，也不会仅根据“进程未崩溃”推断结果。
 
 ## 源码中的有界机制
 
@@ -115,12 +139,12 @@ notes
 
 ## 0.1.0-test 十个固定样本
 
-所有样本当前均未生成可复核 OPS 或性能结果。
+十个场景均已有确定性构造器和短烟测 OPS/JSON。正式表只接受完整 60+600 秒运行，因此在完整样本结束并复核前仍全部保持尚未测试。
 
 | 样本 ID | 固定场景 | 必需活动与故障点 | 运行时长 | 当前状态 |
 |---|---|---|---:|---|
-| `S01-METALLURGY-LARGE` | 大型冶金工厂 | 原料熔化、合金、炼钢、炉渣与碎料回收同时运行 | ≥10 分钟 | 尚未测试 |
-| `S02-FURNACES-PARALLEL` | 多熔炉并行 | 多个 `CRUC` 炭化/炼焦及多组合金达到事件高负载 | ≥10 分钟 | 尚未测试 |
+| `S01-METALLURGY-LARGE` | 大型冶金工厂 | 原料熔化、合金、炼钢、炉渣与碎料回收同时运行 | 60 秒预热 + 600 秒采样 | 实际运行确认；完整门禁未通过 |
+| `S02-FURNACES-PARALLEL` | 多熔炉并行 | 多个 `CRUC` 炭化/炼焦及多组合金达到事件高负载 | 60 秒预热 + 600 秒采样 | 实际运行确认；完整门禁未通过 |
 | `S03-ECOLOGY-AREA` | 大面积生态循环 | 藻类、菌丝、孢子、营养和腐殖质在完整模式长期循环 | ≥10 分钟 | 尚未测试 |
 | `S04-PATHOGEN-CONTROL` | 病原体传播与消毒 | `PATH` 扩散、`STER` 消毒和湿 `BIOF` 过滤；确认可停止 | ≥10 分钟 | 尚未测试 |
 | `S05-CHEMISTRY-DENSE` | 高密度化学反应 | 裂化、聚合、氨、肥料、过氧化物和发酵并行 | ≥10 分钟 | 尚未测试 |
@@ -134,8 +158,8 @@ notes
 
 | 样本 | 初始/峰值/结束粒子 | 平均/1% low/最低 FPS | 峰值工作集 | 崩溃/卡死 | 无界增长 | OPS 往返 | 结果 |
 |---|---|---|---|---|---|---|---|
-| `S01` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
-| `S02` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
+| `S01` | `49,536 / 49,536 / 13,167` | `60.002 / 52.631 / 46.490` | `152,281,088 bytes` | `false / false` | `false` | `true` | 样本执行通过；事件计数/场景行为未完成 |
+| `S02` | `49,536 / 139,323 / 16,520` | `60.002 / 52.633 / 47.177` | `162,676,736 bytes` | `false / false` | `false` | `true` | 样本执行通过；事件计数/场景行为未完成 |
 | `S03` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
 | `S04` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
 | `S05` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
@@ -144,6 +168,77 @@ notes
 | `S08` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
 | `S09` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
 | `S10` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | `not_tested` | 尚未测试 |
+
+### S01 完整执行证据
+
+```text
+run_id=20260730T135615Z-7ce0af06
+source_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+public_zip_sha256=0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051
+exe_sha256=D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2
+warmup_seconds=60.008954
+sample_seconds=600.001172
+initial_particles=49536
+sample_particle_min=13167
+sample_particle_max=13177
+final_particles=13167
+average_fps=60.001549
+one_percent_low_fps=52.631431
+minimum_fps=46.490251
+average_cpu_percent=0.866442
+peak_working_set_bytes=152281088
+peak_private_bytes=143712256
+save_time_first_ms=127.002716
+load_time_first_ms=17.000198
+save_time_second_ms=49.002886
+load_time_second_ms=8.999109
+input_ops_sha256=92E589FA72F3F231AD44B26C1B2588797996C13D0571442FC5AC7147C91E805A
+output_ops_second_sha256=98670969419183BCE13B9987AAFD3F0BE7AFF582F14120225F8925AA1FC09DB8
+crashed=false
+hung=false
+roundtrip_pass=true
+unbounded_growth=false
+memory_leak_suspected=false
+sample_execution_pass=true
+gate_result=incomplete_event_and_growth_evidence
+```
+
+原始数据位于 `artifacts/performance/0.1.0-test/DESKTOP-14BQH2Q-276049E7945C/S01-METALLURGY-LARGE/20260730T135615Z-7ce0af06/`：595 条逐秒帧/粒子记录、1,289 条进程记录以及两份 OPS。`tools/analyze_stress_result.py` 已核对原始 JSON、CSV、OPS1/BZip2 和两份 SHA-256；后半段粒子观测不是“非递减且至少一次增加”，工作集与私有字节最后四分之一也未同时满足该有限观察规则，因此输出 `unbounded_growth=false`、`memory_leak_suspected=false`、`sample_execution_pass=true`。该规则不是长期有界性的数学证明；事件计数和场景停止/恢复仍缺失，所以 `performance_gate_pass=false`。
+
+### S02 完整执行证据
+
+```text
+run_id=20260730T140824Z-4564e521
+source_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+public_zip_sha256=0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051
+exe_sha256=D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2
+warmup_seconds=60.013020
+sample_seconds=600.000381
+initial_particles=49536
+peak_particles=139323
+final_particles=16520
+average_fps=60.001629
+one_percent_low_fps=52.632752
+minimum_fps=47.176838
+average_cpu_percent=0.567436
+peak_working_set_bytes=162676736
+peak_private_bytes=157003776
+save_time_first_ms=84.499121
+load_time_first_ms=10.999203
+save_time_second_ms=55.009127
+load_time_second_ms=8.121014
+input_ops_sha256=4B24731BC81F02E9EBD9B9B1F1C247E6B59A9A9CBF42A7A6AD380BA1256F1528
+output_ops_second_sha256=3FE68AB6CA58D4DE9F0CDB1F3D590E4B6CD4765E9517AEA3EB8D5D26930D144D
+crashed=false
+hung=false
+roundtrip_pass=true
+unbounded_growth=false
+memory_leak_suspected=false
+sample_execution_pass=true
+performance_gate_pass=false
+```
+
+原始数据位于 `artifacts/performance/0.1.0-test/DESKTOP-14BQH2Q-276049E7945C/S02-FURNACES-PARALLEL/20260730T140824Z-4564e521/`。正式采样的 595 条粒子记录全部为 16,520；预热反应期曾达到 139,323。结束保存/加载阶段提高了进程内存峰值，但最后四分之一的工作集和私有字节并非同时逐样本单调增加，有限观察分类为 `memory_leak_suspected=false`。
 
 ## 后续版本场景扩展
 

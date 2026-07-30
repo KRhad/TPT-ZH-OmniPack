@@ -49,17 +49,33 @@ release_ready=false
 ### 接管后增量证据
 
 ```text
-development_head=148c4acde025f9fac11bfa419308423d441f638d
+candidate_source_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+binary_clean_build_commit=e2e1b3fe81082350b5e4919a2b8e43dac29ef090
+development_gate_head=d3419e7b
 portable_install_prompt_fix=a590f8b5
 reaction_registry_gate=8391dbd1
-ops_roundtrip_test_commit=148c4acd
+ops_mixed_roundtrip_test_commit=148c4acd
+ops_isolated_cases_commit=f92e12fa
+stress_harness_commit=423bf6da
+stress_responsiveness_fix=4f5c07f9
+stress_assessment_gate=b356f931
+release_report_gate=d3419e7b
 font_visual_test=true
 ops_mixed_carrier_roundtrip_test=true
-ops_roundtrip_test=not_tested
+ops_official_roundtrip_test=true
+ops_single_module_roundtrip_tests=4/4
+clean_build=502/502
+meson_tests=13/13
+candidate_python_tests=77/77
+development_meson_tests=14/14
+development_python_tests=86/86
+public_zip_sha256=0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051
+symbols_zip_sha256=4F3645DFD664B3DE2BB0ADDD0FE107037607F4DEE7BBF4DAF5C97D6521A400A1
+stress_test=not_tested
 release_ready=false
 ```
 
-用户已确认当前原生 Fusion 12px 字体的中文实际可读性；DPI 和完整页面矩阵仍未测试。真实客户端 OPS 测试已经用 3 个独立进程完成两次重启、两次加载和两次保存，验证 11 个粒子、每次加载 20 项字段、四模块直接高 ID 以及 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2`。该结果覆盖混合/载体场景，但官方-only 和四个单模块独立 OPS 尚未完成，因此总门禁仍为 `not_tested`。
+用户已确认当前原生 Fusion 12px 字体的中文实际可读性；DPI 和完整页面矩阵仍未测试。官方、四个单模块和四模块混合 OPS 已分别完成真实三进程双往返，验证稳定 identifier/ID 与 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2`。本地 `.cps` 保存对话框、禁用模块三选项和只读写入拦截仍需 GUI 交互。压力工具已建立并在完整运行中发现、修复一次 Lua 无响应缺陷；S01/S02 各完成 60 秒预热和 600 秒采样，有限观察判定、进程稳定性和 OPS 往返通过，但模块事件计数、场景停止/恢复断言及其余 8 个样本未完成，因此总门禁仍为 `not_tested`。
 
 ### 已明确废弃的候选
 
@@ -103,7 +119,7 @@ release/1.0.0
 
 | 版本 | 主要交付 | 当前证据状态 | 进入下一版本的条件 |
 |---|---|---|---|
-| `0.1.0-test` | 冻结 48 元素与四模块，完成双语、OPS 门禁、十样本压力、法律与可公开测试包 | 中文可读性、混合/载体 OPS、源码/构建/自动测试已有证据；DPI/语言切换、单模块 OPS、压力、凭据撤销、公开源码未通过 | `GATE-010-*` 全部通过并创建 `v0.1.0-test` |
+| `0.1.0-test` | 冻结 48 元素与四模块，完成双语、OPS 门禁、十样本压力、法律与可公开测试包 | 中文可读性、官方/单模块/混合 OPS、源码/构建/自动测试和本地 ZIP 已有证据；DPI/语言切换、GUI 只读门禁、完整压力、凭据撤销、公开源码未通过 | `GATE-010-*` 全部通过并创建 `v0.1.0-test` |
 | `0.2.0` | 四模块用途审计、四条跨模块闭环、7 个示例存档、8 项教程/挑战 | 尚未测试 | `GATE-020-*` 全部通过并创建 `v0.2.0` |
 | `0.3.0` | 复用官方电子系统的传感、阀门、联锁和自动化场景 | 尚未测试 | `GATE-030-*` 全部通过并创建 `v0.3.0` |
 | `0.4.0` | 独立炼金探索模式、十阶段解锁、进度持久化与防死局图搜索 | 尚未测试 | `GATE-040-*` 全部通过并创建 `v0.4.0` |

@@ -5,8 +5,10 @@
 ## 当前范围
 
 ```text
-audit_head=e18abad9753e61e8f6c9f8fdf671c4bd80a4ca53
-implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
+audit_head=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+implementation_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+font_implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
+development_gate_head=d3419e7b
 official_id_range=0..195
 official_active_elements=195
 official_tombstones=1
@@ -33,10 +35,10 @@ pt_num=512
 
 | 玩家模块 | 元素数 | 元素代号 | 当前反应/事件上限 | 自动证据 | 实际 GUI/OPS/压力 |
 |---|---:|---|---:|---|---|
-| 工业冶金 | 23 | `ALUM COPR LEAD TIN NICL MAGN CHRM COBT MOLY ZINC CHRC COKE STEL BRNZ BRAS SSIL NCRM ALMG TSTL SLAG FLUX CRUC MSCR` | 每帧 2,048 次成功反应，固定 `3x3` | 登记、冶金审计和 Lua 场景已通过 | 尚未测试 |
-| 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景已通过 | 尚未测试 |
-| 高级化学 | 10 | `CHLR AMON ETHL KERO GASO ACTY CATA POLY PERO FERT` | 每帧 1,536 次成功反应，固定 `3x3` | 登记、化学审计和 Lua 场景已通过 | 尚未测试 |
-| 受控核工业 | 7 | `NFUL MODR CROD NCLT NWST NGEN RSHD` | 每帧 512 次成功事件，固定 `3x3` | 登记、核工业审计和 Lua 场景已通过 | 尚未测试 |
+| 工业冶金 | 23 | `ALUM COPR LEAD TIN NICL MAGN CHRM COBT MOLY ZINC CHRC COKE STEL BRNZ BRAS SSIL NCRM ALMG TSTL SLAG FLUX CRUC MSCR` | 每帧 2,048 次成功反应，固定 `3x3` | 登记、冶金审计、Lua 场景和独立 OPS 双往返通过 | GUI/完整压力尚未测试 |
+| 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景和独立 OPS 双往返通过 | GUI/完整压力尚未测试 |
+| 高级化学 | 10 | `CHLR AMON ETHL KERO GASO ACTY CATA POLY PERO FERT` | 每帧 1,536 次成功反应，固定 `3x3` | 登记、化学审计、Lua 场景和独立 OPS 双往返通过 | GUI/完整压力尚未测试 |
+| 受控核工业 | 7 | `NFUL MODR CROD NCLT NWST NGEN RSHD` | 每帧 512 次成功事件，固定 `3x3` | 登记、核工业审计、Lua 场景和独立 OPS 双往返通过 | GUI/完整压力尚未测试 |
 
 四个上限来自当前源码常量并带同 tick 标记，属于源码确认；它们不是 FPS、内存或无界增长压力证据。
 
@@ -45,7 +47,7 @@ pt_num=512
 | 内容组 | 稳定 ID / 元素 | 已实现玩法 | 已知控制/回收 | 当前缺口 |
 |---|---|---|---|---|
 | 基础金属 | `256..265`：`ALUM COPR LEAD TIN NICL MAGN CHRM COBT MOLY ZINC` | 熔化后参与 6 条定比合金配方；压力可使合适金属变为 `MSCR`；铜腐蚀、镁燃烧、锌牺牲保护 | `MSCR` 保存原金属 `ctype`，再加热回到熔融原料 | 大多数基础金属只有沙盒直接放置，尚无稳定采矿/精炼生产链 |
-| 工艺燃料 | `266..267`：`CHRC COKE` | 无氧、邻近 `CRUC` 的木材炭化与煤炭炼焦；`COKE` 用于炼钢 | 可燃；控制氧气和温度可停止工艺 | 尚未连接高级化学燃料制备；固定工厂 OPS 未建 |
+| 工艺燃料 | `266..267`：`CHRC COKE` | 无氧、邻近 `CRUC` 的木材炭化与煤炭炼焦；`COKE` 用于炼钢 | 可燃；控制氧气和温度可停止工艺 | 尚未连接高级化学燃料制备；已有压力场景 OPS，但面向玩家的固定示例 OPS 未建 |
 | 金属/合金产品 | `268..274`：`STEL BRNZ BRAS SSIL NCRM ALMG TSTL` | 钢、青铜、黄铜、不锈钢、镍铬、铝镁和工具钢配方；`NCRM` 通电有限升温 | 压力损坏后进入 `MSCR` 回收 | 缺少跨化学腐蚀/回收、核设施结构验收和实际机器用途 |
 | 工艺材料与废料 | `275..278`：`SLAG FLUX CRUC MSCR` | `FLUX` 在炼钢时转成 `SLAG`；`CRUC` 提供炭化/炼焦条件；`MSCR` 回收金属 | `MSCR` 可回炉 | `SLAG` 当前是终点副产物，无后续处理；`FLUX/CRUC` 主要靠直接放置 |
 
@@ -126,8 +128,8 @@ pt_num=512
 | 四反应引擎 Lua 回归 | 四模块 | 实际运行确认 | 只覆盖脚本场景；不替代 GUI、OPS 或压力 |
 | 搜索、放置、图鉴 | `ALUM/NUTR/CHLR/NFUL` 代表项 | 尚未测试 | 需最终 ZIP 人工操作 |
 | 禁用模块存档检查 | 直接类型与载体字段 | 自动测试确认 | 三选项和保存/上传拦截实际 GUI 尚未测试 |
-| OPS 双往返 | 官方粒子、四模块混合、载体 | 实际运行确认 | 真实 `.stm` OPS1 已完成两次保存/重启/加载并核对字段；官方-only 与四个单模块独立语料仍未测试 |
-| 固定压力样本 | 10 类 | 尚未测试 | 无 FPS、内存和粒子增长数据 |
+| OPS 双往返 | 官方、四个单模块、四模块混合及载体 | 实际运行确认 | 每类真实 `.stm` OPS1 均完成两次保存/重启/加载；覆盖稳定 identifier/ID 与 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2` |
+| 固定压力样本 | 10 类 | 尚未测试 | 工具短烟测覆盖 10/10；S01/S02 已取得完整 FPS、内存、粒子和 OPS 数据，但事件/行为断言及其余 8 项未完成 |
 
 ## 版本内容增长规则
 

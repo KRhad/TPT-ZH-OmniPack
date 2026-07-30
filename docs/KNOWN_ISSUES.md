@@ -3,12 +3,12 @@
 ## 发布阻塞
 
 1. 用户已确认当前原生 Fusion Pixel Font 12px 方案的中文显示问题解决；100%/125%/150% DPI、中文/英文往返切换、重启持久化、长文本及全部页面矩阵仍未完成。
-2. 便携候选曾因默认 `can_install=auto` 弹出文件关联“安装”提示。源码和 clean build 已改为 `CAN_INSTALL=false`、`INSTALL_CHECK=false`；必须从重新打包的 ZIP 再做一次全新目录启动确认。
-3. 尚未完成官方基础存档、单模块、四模块混合以及 `LAVA/SPRK/MSCR` 携带类型的完整 OPS 保存—重启—加载—再保存—再加载矩阵。
+2. 便携候选曾因默认 `can_install=auto` 弹出文件关联“安装”提示。当前源码和 clean build 为 `CAN_INSTALL=false`、`INSTALL_CHECK=false`，当前 ZIP 解压 EXE 已从全新目录启动并正常退出；由于本会话没有可信窗口内容捕获，“没有显示安装提示”的人工视觉项仍为 `not_tested`。
+3. 官方、四个单模块和四模块混合的真实 OPS stamp 双往返已经自动通过，并覆盖 `LAVA/SPRK/MSCR/CONV/VIRS` 的间接类型字段；本地保存对话框生成 `.cps` 的 GUI 路径仍未实际点击。
 4. 禁用模块的正常加载、只读加载、取消、菜单/快捷键/另存/覆盖/上传拦截和退出不覆盖仍缺少可信 GUI 点击证据。
-5. 十个固定压力样本、FPS/1% low、峰值工作集、粒子增长、保存加载耗时和两小时长时间测试尚未完成。
+5. 十个固定压力场景和隔离采样工具已建立。最初 2 秒烟测全部能生成 FPS、1% low、工作集、粒子和 OPS 数据；第一次完整样本因 Lua 连续占用触发“脚本无响应”而失败，已在 `4f5c07f9` 改为逐 UI tick 采样并通过响应性烟测。十个 10 分钟样本和两小时长跑仍未全部完成。
 6. 稳定新增元素 ID 分区、登记门禁、禁用模块警告和只读加载已实现；旧模组 ID 迁移与缺失元素兼容占位尚未实现。
-7. GCC 16 对 `PowderToy.cpp` 的 `std::optional<ByteString>` 路径给出既有 `-Wmaybe-uninitialized`，并对 `Simulation::FloodParts` 给出既有 `-Warray-bounds` 优化警告；尚未形成独立根因结论。
+7. GCC 16 对 `OurVariant/Bson` 和 `PowderToy.cpp` 的 `std::optional<ByteString>` 路径给出 `-Wmaybe-uninitialized`，并对 `Simulation::FloodParts` 给出 `-Warray-bounds` 优化警告；clean build 成功但尚未形成独立根因结论，不能写成已修复。
 8. 图鉴内容目前覆盖 48 个已实现的 OmniPack 元素；官方元素继续只显示现有登记说明和热学属性，不能据此推断完整官方工艺百科。
 9. 2026-07-30 脱敏扫描在当前进程环境变量发现一个 GitHub classic PAT；Git 历史和已审计 ZIP 未发现该模式，但无法证明旧凭据已经撤销或轮换。因此不得推送、创建 tag 或公开发布，直到用户在外部账户完成可验证的撤销或轮换。
 10. 正式发布远端和权限尚未确认；当前 `origin` 指向旧汉化仓库，不能把本地开发分支擅自推送为 OmniPack 正式源码。

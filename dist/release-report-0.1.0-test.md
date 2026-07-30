@@ -1,135 +1,123 @@
-# TPT-ZH-OmniPack 0.1.0-test 最终验收报告
+# TPT-ZH-OmniPack 0.1.0-test 候选报告
 
-本报告记录两个已拒绝试包和一个待人工检查的私有试包，不代表可发布版本。用户在真实 Windows 桌面确认中文界面严重异常后，候选源码提交 `5828a97fc39129547354956dde84d7b6cfb818c2` 及其 ZIP 已于 2026-07-30 废弃。随后用于验证转换器修复的私有试包 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95` / `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081` 也经用户解压运行并判定中文可读性和字形质量不合格。两代 ZIP 均只保留为失败基线；新的原生 12px 私有试包在人工通过前同样禁止作为最终候选、tag 或公开发布依据。
+本报告绑定当前本地候选 `4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a`。它不是公开发布报告：人工 GUI、完整压力、凭据撤销、公开源码、匿名克隆、tag 和 GitHub prerelease 尚未通过，因此 `release_ready=false`。
 
-## 交付物
+## 当前产物
 
-| 文件 | SHA-256 | 状态 |
+| 产物 | SHA-256 | 状态 |
 |---|---|---|
-| `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip` | `DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189` | 已拒绝失败基线，`zh_ui_failure` |
-| `TPT-ZH-OmniPack-0.1.0-test-Symbols-Windows-x64.zip` | `3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9` | 已拒绝失败基线，`zh_ui_failure` |
+| `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip` | `0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051` | 本地候选；白名单、清单、哈希和解压二审通过 |
+| `TPT-ZH-OmniPack-0.1.0-test-Symbols-Windows-x64.zip` | `4F3645DFD664B3DE2BB0ADDD0FE107037607F4DEE7BBF4DAF5C97D6521A400A1` | 本地符号候选；审计通过 |
+| `tpt-zh-omnipack.exe` | `D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2` | 已剥离；未签名 |
+| `tpt-zh-omnipack.debug` | `42D96F23C3702EE96FBEE5CF961582B7A1423FA1ABC6A73D617066A8A5E66364` | 与普通包分离 |
+| `resources/font.bz2` | `47F4EB851ABFC4CABDFC780E3D427ECBA39077418324A4E291CCDE552F0C139D` | Fusion Pixel Font 原生 12px；许可证与覆盖审计通过 |
 
-此前候选的普通 ZIP `8266231A3DE12D504706B3174D01570456DAC3948C3C7AB0187949EAADE05DBD` 与符号 ZIP `296794B51D11ACD73198CE96EE300C61320F8E282B9307F2EF03AF4A2D31CF1B` 仅作为基线归档，不得作为本候选引用。
+普通 ZIP 有 15 个白名单成员，未压缩总大小 17,774,104 bytes；符号 ZIP 有 2 个成员。普通包不包含 `.cps`、`.stm`、`.pref`、Lua、账户、图章、个人存档或调试符号。
 
-## 拒绝原因
+## 当前证据
 
-- 中文字体转换器把 2bpp 像素按高位优先写入，而 `FontReader::NextPixel()` 按低位优先读取，导致四像素组内横向顺序错误。
-- 16x16 到 12 高度的整数点采样跳过部分源行，会把单像素笔画转换为空白，例如 `U+4E00`。
-- 修复工作位于 `fix/zh-ui-crash`；旧 ZIP 的来源提交和哈希不得继续被称为候选。
+- 空目录 Windows x64 Release build：`502/502`，0 error；二进制构建提交为仅早于压力工具修复的 `e2e1b3fe81082350b5e4919a2b8e43dac29ef090`，`4f5c07f9` 不改变二进制源码。
+- Meson：`13/13`；Python：`77/77`，0 skip。
+- 已剥离 EXE 的模块、冶金、生态、化学、核工业和混合 OPS Lua 运行回归：`6/6`。
+- 官方、冶金、生态、化学、核工业独立 OPS：`5/5`，15 个进程、10 次重启、10 次加载验证、79 粒子、每次加载合计 120 字段断言。四模块混合 OPS 另用 3 个进程完成双往返。
+- OPS 覆盖 `LAVA.ctype`、`SPRK.ctype`、`MSCR.ctype`、`CONV.ctype/tmp`、`VIRS.tmp2`，并检查 OPS1、BZip2 和 palette identifier。
+- ZIP 解压 EXE 在全新隔离 `ddir` 实际启动，窗口标题正确、句柄非零、`Responding=true`，正常退出；这不是窗口内容或安装提示的人工视觉证据。
+- 发布 EXE 无 `.debug*` 段、无开发路径标记、无动态 GCC 开发运行库，保留 `DYNAMIC_BASE`、`NX_COMPAT` 和 `HIGH_ENTROPY_VA`；Authenticode 状态为 `NotSigned`。
+- 用户确认当前原生 Fusion 12px 中文显示问题已解决；英文界面、双向语言切换、重启持久化和 100%/125%/150% DPI 尚未完整验收。
+- 十个固定压力场景和原始数据格式已实现。第一次完整运行暴露阻塞式 Lua 的脚本无响应并失败；`4f5c07f9` 已改为逐 UI tick 返回。S01/S02 随后各完成 60+600 秒；平均 FPS 均约 60，峰值工作集分别为 152,281,088/162,676,736 bytes，无崩溃/卡死且 OPS 往返通过。只读判定器对两项均报告有限观察期内 `unbounded_growth=false`、`memory_leak_suspected=false`、`sample_execution_pass=true`；事件计数、场景行为和其余 8 个样本尚未齐全。
 
-## 历史证据摘要
+## 明确废弃的历史候选
 
-- clean Release build、Meson `10/10`、Python `50`、最终 ZIP EXE 的 Lua 运行回归 `6/6` 均已通过。
-- ZIP 白名单、内部清单、分离调试符号、开发路径清理、静态运行库和 PE ASLR/DEP/high-entropy 标志均已审计通过。
-- 最终 ZIP 解压后 EXE 的路径、SHA-256、窗口标题、非零句柄和 `Responding=True` 已取得；并使用独立用户数据目录。
-- 脱敏扫描未在 Git 可达历史或当前发布 ZIP 找到 GitHub PAT 模式。初次本轮 Meson 测试继承 PAT 后生成的两份忽略测试日志已在复扫发现后删除，并在移除 PAT 的环境重跑 Meson `10/10`；当前环境仍存在 `GITHUB_PAT_TOKEN`，且无撤销或轮换的可验证证据。
-- `origin` 不存在两个发布分支或目标 tag；凭据门禁失败前未推送，未进行匿名克隆。
-- SDL 窗口无法获得前景，`PrintWindow` 仅获黑帧，故没有可信真实 GUI、OPS、只读门禁或压力测试证据。
+以下仅为失败回归基线，不是当前产物，不得用于当前下载或 tag：
 
-## 已拒绝的私有修复试包
-
-转换器修复源码提交为 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95`。该试包仅生成在 `artifacts/zh-ui-fix/candidate/` 供中文人工验收，未公开、未推送、未创建 tag。普通 ZIP SHA-256 为 `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081`，符号 ZIP SHA-256 为 `AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0`。两包 ZIP 内容审计和自动字体探针通过，且默认中文启动 20 次无崩溃；但用户从 ZIP 解压运行后明确判定中文显示仍不如既有出版中文版本，人工视觉可读性和字形质量门禁失败。该试包已拒绝，只保留为失败对照，不是可发布候选，`font_visual_readability_valid=false`，`release_ready=false`。
-
-## 待人工检查的原生 12px 私有试包
-
-原生 Fusion Pixel Font 12px BDF 实现绑定提交 `c743db2fcc49c01033e68023cceff897ed4c35f6`。私有普通 ZIP SHA-256 为 `943DA2A60C0B371A1D3F921FEC525FB3F7B5AEBC7C5CE7775A8AEFA883C13F14`，符号 ZIP SHA-256 为 `BE14C7D53658963DF1C6B1ECFAA44AC51F8004883530CB7DF922E4282FC11031`，解压后的已剥离 EXE SHA-256 为 `05DACBFCC31D6F1920D4437DB60629A1F9DA79CC0A14AA13138DD97393CCF6AF`。两包审计通过，清洁 Release 构建、Meson 12/12、Python 56、Lua 6/6 和 20 次全新目录启动均通过，启动失败 0。该 ZIP 仅位于 `artifacts/zh-ui-fix/candidate/fusion-c743db2f/`，未公开、未推送、未创建 tag；人工中文可读性仍为 `not_tested`，`release_ready=false`。
-
-完整证据、环境信息、失败模式和最小下一步见 `docs/FINAL_VALIDATION.md` 与 `artifacts/final-validation/`。
+| 源码提交 | 普通 ZIP SHA-256 | 废弃原因 |
+|---|---|---|
+| `5828a97fc39129547354956dde84d7b6cfb818c2` | `DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189` | 中文字形损坏 |
+| `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95` | `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081` | 中文可读性/字形质量失败 |
 
 ## 机器可读结论
 
 ```text
-source_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
-candidate_version=0.1.0-test
-private_candidate_public_zip_sha256=943DA2A60C0B371A1D3F921FEC525FB3F7B5AEBC7C5CE7775A8AEFA883C13F14
-private_candidate_symbols_zip_sha256=BE14C7D53658963DF1C6B1ECFAA44AC51F8004883530CB7DF922E4282FC11031
-private_candidate_exe_sha256=05DACBFCC31D6F1920D4437DB60629A1F9DA79CC0A14AA13138DD97393CCF6AF
-private_candidate_zip_audit_pass=true
-private_candidate_startup_runs=20
-private_candidate_startup_crashes=0
-rejected_candidate_commit=5828a97fc39129547354956dde84d7b6cfb818c2
-rejected_public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
-rejected_symbols_zip_sha256=3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9
-rejection_reason=zh_ui_failure
-rejected_fix_candidate_commit=ca3cccbee13a41c37ee0b7975c4b5f060cb34a95
-rejected_fix_public_zip_sha256=E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081
-rejected_fix_symbols_zip_sha256=AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0
-rejected_fix_reason=zh_font_visual_quality_failure
-rejected_fix_zip_audit_pass=true
+source_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
+binary_build_commit=e2e1b3fe81082350b5e4919a2b8e43dac29ef090
 release_tag=not_tested
 version=0.1.0-test
-
-credential_exposure_found=true
-credential_present_in_git_history=false
-credential_present_in_release_artifacts=false
-credential_revoked=false
-credential_rotated=false
-secret_scan_pass=false
-
-source_branch_public=false
-source_commit_public=false
-anonymous_clone_pass=false
-public_clone_commit=not_tested
-public_clone_build_pass=not_tested
+upstream_version=100.0.399
 
 clean_build_pass=true
-meson_tests=12/12
-python_tests=56
+clean_build_targets=502/502
+meson_tests=13/13
+python_tests=77/77
+python_test_skips=0
 lua_runtime_tests=6/6
 
-gui_launch_test=true
-zh_process_crash=false
-rejected_fix_zh_glyph_corruption=true
-zh_glyph_corruption=not_tested
-zh_en_switch_test=false
-ui_text_overflow_test=not_tested
-rejected_fix_font_visual_readability_valid=false
-font_visual_test=not_tested
-font_visual_readability_valid=not_tested
+zh_gui_test=true
+en_gui_test=not_tested
+font_visual_test=true
+language_switch_test=not_tested
+language_persistence_test=not_tested
+dpi_100_test=not_tested
+dpi_125_test=not_tested
+dpi_150_test=not_tested
 module_ui_test=not_tested
-representative_element_test=not_tested
 
-official_ops_roundtrip_test=not_tested
-metallurgy_ops_roundtrip_test=not_tested
-ecology_ops_roundtrip_test=not_tested
-chemistry_ops_roundtrip_test=not_tested
-nuclear_ops_roundtrip_test=not_tested
-mixed_ops_roundtrip_test=not_tested
-ops_roundtrip_test=not_tested
-
+ops_roundtrip_test=true
+official_ops_roundtrip_test=true
+metallurgy_ops_roundtrip_test=true
+ecology_ops_roundtrip_test=true
+chemistry_ops_roundtrip_test=true
+nuclear_ops_roundtrip_test=true
+mixed_ops_roundtrip_test=true
+ops_case_processes=18
+ops_case_restarts=12
+ops_case_load_verifications=12
 disabled_module_dialog_test=not_tested
-normal_load_test=not_tested
-readonly_load_test=not_tested
-cancel_load_test=not_tested
 readonly_save_block_test=not_tested
 readonly_upload_block_test=not_tested
-indirect_element_detection_test=not_tested
+save_migration_test=not_tested
+gui_cps_save_test=not_tested
 
-representative_gameplay_test=not_tested
+reaction_tests=38/38
+automation_tests=not_tested
+alchemy_progression_tests=not_tested
+challenge_tests=not_tested
+stress_harness_test=true
+stress_samples_executed=2
+stress_sample_executions_passed=2
 stress_samples_passed=0
 stress_samples_total=10
-unbounded_growth_detected=not_tested
-memory_leak_suspected=not_tested
 stress_test=not_tested
+long_run_test=not_tested
 
 font_license_resolved=true
+third_party_license_audit=true
+secret_scan_pass=false
+credential_exposure_found=true
+credential_revoked=false
+credential_rotated=false
+source_commit_public=false
+anonymous_clone_pass=false
+
+release_exe_sha256=D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2
+debug_symbols_sha256=42D96F23C3702EE96FBEE5CF961582B7A1423FA1ABC6A73D617066A8A5E66364
 release_exe_stripped=true
 debug_symbols_separated=true
 developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=not_tested
-symbols_zip_sha256=not_tested
-zip_audit_pass=not_tested
+public_zip_sha256=0DF8695EE9D28D61C7F076EF199831BA953117B632043948E85AF6A3BBACB051
+symbols_zip_sha256=4F3645DFD664B3DE2BB0ADDD0FE107037607F4DEE7BBF4DAF5C97D6521A400A1
+source_zip_sha256=not_tested
+zip_audit_pass=true
 
-tag_public=false
 github_release_created=false
 release_ready=false
 ```
 
-## 阻塞项
+## 当前硬阻塞
 
-1. **安全/外部账户：**PAT 尚未取得撤销或轮换证据；停止推送、tag 和 Release。下一步是在 GitHub 外部安全设置撤销旧凭据并安全重新认证。
-2. **权限/外部服务：**发布分支未公开，不能进行匿名克隆。下一步是在安全门禁通过后推送并用无凭据 HTTPS 克隆验证。
-3. **环境：**当前会话无法安全控制或捕获 SDL GUI 内容。下一步是在交互式 Windows 桌面使用最终 ZIP 完成语言、模块、OPS、只读门禁和十个固定压力样本。
+1. 外部账户：已暴露 PAT 没有撤销或轮换证据，`secret_scan_pass=false`。
+2. 外部权限：没有经授权的 OmniPack 发布远端，源码未公开，匿名克隆、tag 和 GitHub prerelease 未执行。
+3. GUI：本会话没有可用的可信 Windows Computer Use 会话，不能完成语言、DPI、四模块、禁用模块三选项与保存/上传拦截的点击证据。
+4. 稳定性：十个 10 分钟压力样本与后续两小时长跑未全部完成。
