@@ -626,6 +626,17 @@ if get_option('clang_tidy')
 	)
 endif
 
+font_render_probe = executable(
+	'font_render_probe',
+	sources: files('tools/font_render_probe.cpp'),
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ threads_dep, sta_libs['common'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
 static_test_env = environment()
 static_test_env.set('PYTHONDONTWRITEBYTECODE', '1')
 
@@ -638,6 +649,31 @@ test(
 		'--check',
 	],
 	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'tpt-font-validation',
+	python3_prog,
+	args: [
+		files('tools/validate_tpt_font.py'),
+		'--font', join_paths(meson.project_source_root(), 'resources', 'font.bz2'),
+		'--language-dir', join_paths(meson.project_source_root(), 'src', 'lang'),
+		'--unifont', join_paths(meson.project_source_root(), 'resources', 'third_party', 'unifont_all-16.0.03.hex.gz'),
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'font-render-probe',
+	font_render_probe,
+	args: [
+		join_paths(meson.project_source_root(), 'artifacts', 'zh-ui-fix', 'render-probe'),
+		join_paths(meson.project_source_root(), 'src', 'lang', 'zh-CN.json'),
+	],
 	suite: 'static',
 	timeout: 60,
 )

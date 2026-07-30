@@ -118,6 +118,11 @@ int FontReader::GetWidth() const
 	return width;
 }
 
+std::size_t FontReader::GetResourceOffset() const
+{
+	return pointer - font_data - 1;
+}
+
 int FontReader::NextPixel()
 {
 	if(!pixels)

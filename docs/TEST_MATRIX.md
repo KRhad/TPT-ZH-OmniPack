@@ -217,6 +217,10 @@
 | 字体来源与许可证 | 源码/自动 | PASS | `docs/FONT_AUDIT.md`；语言目录 2,593 字符全部有合法字形输入 |
 | 公共 ZIP 与符号 ZIP | 自动 | PASS | 白名单、成员哈希、ZIP SHA-256、解压后二次审计均通过；最终哈希见 `dist/release-report-0.1.0-test.md` |
 | 最终 ZIP 启动 | 实际 GUI | PASS | 解压后的最终 ZIP 运行 8 秒，窗口标题为 `TPT-ZH-OmniPack 0.1.0-test`，`Responding=True`、句柄非零；仅创建隔离的 OmniPack 数据目录 |
+| 已拒绝候选中文字体 | 运行/字体 | FAIL | `5828a97f` 的 Unifont 转换高位优先打包，和 `FontReader` 低位优先读取不兼容；整数缩放还跳过一部分源行。旧 ZIP 仅保留为失败基线，不得作为候选 |
+| 修复字体容器与转换 | 静态 | PASS | `validate_tpt_font.py`：容器、覆盖、pack/unpack、固定 Unifont 源码点与已知中文字符通过 |
+| 修复字体引擎离屏渲染 | 引擎 | PASS | `font_render_probe` 调用 `FontReader` 和 `Graphics`；中文、混合符号和化学文本及 `zh-CN.json` 的 1,262 条文本均可测量、绘制，替换字形 0 |
+| 修复候选默认中文启动 | 实际进程 | PASS | 隔离用户目录重复 20 次，`running=true`、`Responding=true`、崩溃 0；不替代 UI 视觉验收 |
 | 中文/英文点击切换 | 实际 GUI | NOT RUN | 需截图和重启验证 |
 | 模块开关与代表元素 | 实际 GUI | NOT RUN | 需四模块和 `ALUM/NUTR/NFUL/CHLR` 实测 |
 | OPS 三选项与只读拦截 | 实际 GUI | NOT RUN | 静态门禁已通过，实际点击未完成 |

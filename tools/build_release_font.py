@@ -93,24 +93,61 @@ def parse_unifont(path: Path, required: set[int]) -> dict[int, tuple[int, tuple[
 
 
 def convert_unifont_glyph(width: int, rows: tuple[int, ...]) -> tuple[int, bytes]:
-    # A 16x16 1-bit bitmap is resampled to TPT's 12-pixel font height.  The
-    # width follows the same 3:4 ratio so CJK glyphs stay square.
+    # A 16x16 1-bit bitmap is resampled to TPT's 12-pixel font height. The
+    # width follows the same 3:4 ratio so CJK glyphs stay square. Area
+    # coverage is used deliberately: integer point sampling skipped source
+    # rows 3, 7, 11 and 15 and could erase a one-pixel CJK stroke entirely.
     output_width = max(1, round(width * FONT_HEIGHT / 16))
     pixels: list[int] = []
     for output_y in range(FONT_HEIGHT):
-        source_y = min(15, (output_y * 16) // FONT_HEIGHT)
-        row = rows[source_y]
         for output_x in range(output_width):
-            source_x = min(width - 1, (output_x * width) // output_width)
-            pixels.append(3 if row & (1 << (width - 1 - source_x)) else 0)
+            # X coordinates use output_width units; Y coordinates use
+            # FONT_HEIGHT units. Multiplying the overlap lengths yields an
+            # exact integer coverage numerator over one output pixel.
+            target_x0, target_x1 = output_x * width, (output_x + 1) * width
+            target_y0, target_y1 = output_y * 16, (output_y + 1) * 16
+            coverage = 0
+            for source_y in range(16):
+                overlap_y = max(0, min(target_y1, (source_y + 1) * FONT_HEIGHT) - max(target_y0, source_y * FONT_HEIGHT))
+                if not overlap_y:
+                    continue
+                row = rows[source_y]
+                for source_x in range(width):
+                    if not row & (1 << (width - 1 - source_x)):
+                        continue
+                    overlap_x = max(0, min(target_x1, (source_x + 1) * output_width) - max(target_x0, source_x * output_width))
+                    coverage += overlap_x * overlap_y
+            # Round normalized coverage to the engine's 0..3 alpha range.
+            # ``coverage`` is measured in a common source/target coordinate
+            # system. One target pixel spans ``width * 16`` units.
+            denominator = width * 16
+            pixels.append((coverage * 3 + denominator // 2) // denominator)
+    return output_width, pack_tpt_pixels(pixels)
+
+
+def pack_tpt_pixels(pixels: Sequence[int]) -> bytes:
+    """Pack pixels in FontReader::NextPixel order (first pixel in bits 0..1)."""
     packed = bytearray()
     for index in range(0, len(pixels), 4):
         value = 0
-        for pixel in pixels[index : index + 4]:
-            value = (value << 2) | pixel
-        value <<= 2 * (4 - len(pixels[index : index + 4]))
+        for offset, pixel in enumerate(pixels[index : index + 4]):
+            value |= (pixel & 0x3) << (offset * 2)
         packed.append(value)
-    return output_width, bytes(packed)
+    return bytes(packed)
+
+
+def unpack_tpt_glyph(width: int, bitmap: bytes) -> tuple[tuple[int, ...], ...]:
+    """Decode a TPT glyph exactly as FontReader::NextPixel does."""
+    if width < 1 or len(bitmap) != width * 3:
+        raise ValueError("invalid TPT glyph bitmap")
+    pixels = [
+        (bitmap[index // 4] >> ((index % 4) * 2)) & 0x3
+        for index in range(width * FONT_HEIGHT)
+    ]
+    return tuple(
+        tuple(pixels[row * width : (row + 1) * width])
+        for row in range(FONT_HEIGHT)
+    )
 
 
 def encode_tpt_font(glyphs: dict[int, tuple[int, bytes]]) -> bytes:

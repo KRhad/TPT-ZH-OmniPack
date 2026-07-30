@@ -18,5 +18,6 @@ class FontReader
 public:
 	FontReader(String::value_type ch);
 	int GetWidth() const;
+	std::size_t GetResourceOffset() const;
 	int NextPixel();
 };

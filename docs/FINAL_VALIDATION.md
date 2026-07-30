@@ -1,12 +1,24 @@
 # 0.1.0-test 最终公开测试验收
 
-验收分支：`release/test-public-final-validation`。本文件只记录实际取得的证据；未取得可信 GUI、OPS 或性能数据的项目不得由静态分析、编译或 Lua 回归替代。
+验收分支原为 `release/test-public-final-validation`；中文修复工作从 2026-07-30 起在 `fix/zh-ui-crash` 进行。旧候选已经废弃。本文件只记录实际取得的证据；未取得可信 GUI、OPS 或性能数据的项目不得由静态分析、编译或 Lua 回归替代。
 
 ## 冻结与基线
 
 - 初始工作树干净；请求指定的 `0e9ff54c65c64f01e3af567366d2eed1de2c5dd9` 是当前分支的祖先。
 - 开始验收时 HEAD 已包含后续干净提交 `e2e965ad` 和 `1d490072`，没有回退或覆盖它们。
-- 最终候选构建提交为 `5828a97fc39129547354956dde84d7b6cfb818c2`；旧候选 ZIP 已保存在 `artifacts/final-validation/baseline-dist/`，原始 `dist/` 文件未删除。包外验收报告随后更新，不改变候选 ZIP 的内部清单。
+- 被拒绝候选构建提交为 `5828a97fc39129547354956dde84d7b6cfb818c2`；旧候选 ZIP 已保存在 `artifacts/final-validation/baseline-dist/`，原始 `dist/` 文件未删除。用户报告真实 Windows 中文界面严重异常后，该候选不再有效。失败证据、基线文件和修复日志位于 `artifacts/zh-ui-fix/`。
+
+## 中文故障处置
+
+- `zh_failure_type=glyph_corruption`
+- `zh_failure_reproduced=true`
+- `zh_failure_root_cause=Unifont converter packed 2bpp pixels MSB-first while FontReader::NextPixel consumes LSB-first; integer 16-to-12 point sampling also skipped source stroke rows`
+- `zh_process_crash=false`：修复候选在全新隔离用户目录默认中文启动 20 次，均存活并响应；旧候选没有可用 WER、转储或异常代码，不能补造崩溃记录。
+- `baseline_zh_glyph_corruption=true`：旧候选字体确定存在上述位序和截笔错误。
+- `zh_glyph_corruption=not_tested`：修复候选的离屏引擎输出可读，但最终 ZIP 尚未由人工在真实桌面查看，不能声称 GUI 字形损坏已清除。
+- `zh_layout_failure=not_tested`
+- `zh_locale_loading_failure=false`：严格 JSON/键/占位符审计及引擎对 `zh-CN.json` 1,262 条文本的测量/绘制通过，替换字形 0；真实 GUI 切换生命周期仍待验证。
+- `font_visual_readability_valid=not_tested`：离屏 probe 的 PNG 可读，但不是最终 ZIP 的人工桌面验收。
 
 ## 凭据检查
 
@@ -61,7 +73,42 @@
 ## 机器可读结论
 
 ```text
-source_commit=5828a97fc39129547354956dde84d7b6cfb818c2
+source_commit=not_tested
+candidate_version=0.1.0-test
+rejected_candidate_commit=5828a97fc39129547354956dde84d7b6cfb818c2
+rejected_public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
+rejected_symbols_zip_sha256=3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9
+rejection_reason=zh_ui_failure
+
+zh_failure_type=glyph_corruption
+zh_failure_reproduced=true
+zh_failure_root_cause=Unifont converter packed 2bpp pixels MSB-first while FontReader::NextPixel consumes LSB-first; integer 16-to-12 point sampling skipped source stroke rows
+zh_process_crash=false
+baseline_zh_glyph_corruption=true
+zh_glyph_corruption=not_tested
+zh_layout_failure=not_tested
+zh_locale_loading_failure=false
+
+font_source_verified=true
+font_license_verified=true
+font_container_valid=true
+font_glyph_coverage_valid=true
+font_pack_roundtrip_test=true
+unifont_source_decode_test=true
+font_pixel_conversion_valid=true
+font_engine_render_valid=true
+zh_known_glyph_test=true
+zh_golden_image_test=not_tested
+font_visual_readability_valid=not_tested
+font_dpi_layout_valid=not_tested
+
+zh_first_start_test=true
+en_to_zh_switch_test=not_tested
+zh_to_en_switch_test=not_tested
+zh_persistence_test=not_tested
+zh_startup_runs=20
+zh_startup_crashes=0
+
 release_tag=not_tested
 version=0.1.0-test
 
@@ -79,9 +126,9 @@ public_clone_commit=not_tested
 public_clone_build_pass=not_tested
 
 clean_build_pass=true
-meson_tests=10/10
+meson_tests=12/12
 python_tests=50
-lua_runtime_tests=6/6
+lua_runtime_tests=not_tested
 
 gui_launch_test=true
 zh_default_test=not_tested
@@ -89,9 +136,9 @@ zh_to_en_switch_test=not_tested
 en_persistence_test=not_tested
 en_to_zh_switch_test=not_tested
 zh_persistence_test=not_tested
-zh_en_switch_test=not_tested
+zh_en_switch_test=false
 ui_text_overflow_test=not_tested
-font_visual_test=not_tested
+font_visual_test=false
 module_ui_test=not_tested
 metallurgy_ui_test=not_tested
 ecology_ui_test=not_tested
@@ -138,9 +185,9 @@ developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
-symbols_zip_sha256=3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9
-zip_audit_pass=true
+public_zip_sha256=not_tested
+symbols_zip_sha256=not_tested
+zip_audit_pass=not_tested
 
 tag_public=false
 tag_anonymous_clone_pass=false

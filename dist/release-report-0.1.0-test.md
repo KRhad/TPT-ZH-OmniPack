@@ -1,17 +1,23 @@
 # TPT-ZH-OmniPack 0.1.0-test 最终验收报告
 
-本报告对应最终候选源码提交 `5828a97fc39129547354956dde84d7b6cfb818c2`，其 ZIP 内 `TEST-MANIFEST.txt` 已绑定相同提交。此候选未公开发布；所有未完成实际交互门禁均明确保持未测试。
+本报告记录已拒绝的候选，不再代表可发布版本。用户在真实 Windows 桌面确认中文界面严重异常后，候选源码提交 `5828a97fc39129547354956dde84d7b6cfb818c2` 及其 ZIP 已于 2026-07-30 废弃。旧 ZIP 保留为失败基线，禁止作为最终候选、tag 或公开发布依据。
 
 ## 交付物
 
 | 文件 | SHA-256 | 状态 |
 |---|---|---|
-| `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip` | `DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189` | ZIP 内容审计通过，未公开 |
-| `TPT-ZH-OmniPack-0.1.0-test-Symbols-Windows-x64.zip` | `3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9` | ZIP 内容审计通过，未公开 |
+| `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip` | `DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189` | 已拒绝失败基线，`zh_ui_failure` |
+| `TPT-ZH-OmniPack-0.1.0-test-Symbols-Windows-x64.zip` | `3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9` | 已拒绝失败基线，`zh_ui_failure` |
 
 此前候选的普通 ZIP `8266231A3DE12D504706B3174D01570456DAC3948C3C7AB0187949EAADE05DBD` 与符号 ZIP `296794B51D11ACD73198CE96EE300C61320F8E282B9307F2EF03AF4A2D31CF1B` 仅作为基线归档，不得作为本候选引用。
 
-## 证据摘要
+## 拒绝原因
+
+- 中文字体转换器把 2bpp 像素按高位优先写入，而 `FontReader::NextPixel()` 按低位优先读取，导致四像素组内横向顺序错误。
+- 16x16 到 12 高度的整数点采样跳过部分源行，会把单像素笔画转换为空白，例如 `U+4E00`。
+- 修复工作位于 `fix/zh-ui-crash`；旧 ZIP 的来源提交和哈希不得继续被称为候选。
+
+## 历史证据摘要
 
 - clean Release build、Meson `10/10`、Python `50`、最终 ZIP EXE 的 Lua 运行回归 `6/6` 均已通过。
 - ZIP 白名单、内部清单、分离调试符号、开发路径清理、静态运行库和 PE ASLR/DEP/high-entropy 标志均已审计通过。
@@ -26,6 +32,11 @@
 
 ```text
 source_commit=5828a97fc39129547354956dde84d7b6cfb818c2
+candidate_version=0.1.0-test
+rejected_candidate_commit=5828a97fc39129547354956dde84d7b6cfb818c2
+rejected_public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
+rejected_symbols_zip_sha256=3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9
+rejection_reason=zh_ui_failure
 release_tag=not_tested
 version=0.1.0-test
 
@@ -48,9 +59,9 @@ python_tests=50
 lua_runtime_tests=6/6
 
 gui_launch_test=true
-zh_en_switch_test=not_tested
+zh_en_switch_test=false
 ui_text_overflow_test=not_tested
-font_visual_test=not_tested
+font_visual_test=false
 module_ui_test=not_tested
 representative_element_test=not_tested
 
@@ -84,9 +95,9 @@ developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
-symbols_zip_sha256=3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9
-zip_audit_pass=true
+public_zip_sha256=not_tested
+symbols_zip_sha256=not_tested
+zip_audit_pass=false
 
 tag_public=false
 github_release_created=false
