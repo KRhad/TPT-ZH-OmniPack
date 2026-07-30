@@ -1,0 +1,256 @@
+# 版本硬门禁
+
+本文件定义从 `0.1.0-test` 到 `1.0.0` 的发布判定。任何版本只有在其全部必需门禁都有精确证据、机器可读报告写入 `release_ready=true` 后才可创建对应 tag。后续版本的代码可以在开发分支继续，但不能绕过尚未通过的前序发布门禁。
+
+## 判定规则
+
+- 门禁状态只能是 `true`、`false`、`not_tested`、精确计数、精确提交或精确 SHA-256。
+- 表格结果使用“源码确认、编译确认、自动测试确认、实际运行确认、人工视觉确认、尚未测试”六类证据标记；已执行的失败在标记后写精确 `false`，外部阻塞也单独注明。任何 `false`、尚未测试或外部阻塞均使版本不能发布。
+- 当前基线审计 HEAD 为 `e18abad9753e61e8f6c9f8fdf671c4bd80a4ca53`，字体实现为 `c743db2fcc49c01033e68023cceff897ed4c35f6`。一旦源码变化，所有绑定旧提交的构建、ZIP、运行、GUI、OPS 和压力证据都必须按受影响范围重跑。
+- 每个证据至少记录 `source_commit`、命令或操作步骤、环境、开始/结束时间、结果文件和产物 SHA-256。GUI 证据还需记录语言、DPI 和页面；OPS 证据还需记录输入/两次输出哈希与粒子引用核对。
+- `release_ready` 是所有适用硬门禁的逻辑与，不允许人工覆写。
+
+## 全版本不变量
+
+| 门禁 ID | 条件 | 核查依据 |
+|---|---|---|
+| `GATE-ALL-ID` | 官方 ID `0..195` 和已发布 OmniPack identifier/稳定 ID 不漂移；删除内容只保留 tombstone/迁移映射 | `docs/ELEMENT_REGISTRY.csv`、登记审计 |
+| `GATE-ALL-REG` | 新元素和反应在实现前完成元素/反应登记，字段完整且审计通过 | 两个 registry 及构建门禁 |
+| `GATE-ALL-SAVE` | 禁用、缺失或迁移失败的元素不被静默删除或错误替换；取消/失败不改变沙盘 | OPS 语料与运行测试 |
+| `GATE-ALL-LOCAL` | 反应、传播、信号和特殊物理是有界局部计算，具有事件预算和循环保护 | 源码审计、单测、压力测试 |
+| `GATE-ALL-PRIVACY` | 普通包不含偏好、账户、令牌、图章、个人存档、测试数据或调试符号 | ZIP 白名单与解压审计 |
+| `GATE-ALL-LICENSE` | GPL、字体和所有第三方来源/许可证/修改记录完整 | 许可证清单与来源账本 |
+| `GATE-ALL-REPORT` | 报告字段齐全，SHA-256 与实际文件匹配，未执行项不伪装为通过 | `dist/release-report-<version>.md` 解析检查 |
+
+## 0.1.0-test 当前门禁
+
+### 源码、构建与自动测试
+
+| 门禁 ID | 必需结果 | 当前状态 | 当前证据 |
+|---|---|---|---|
+| `GATE-010-SOURCE` | HEAD、分支、上游和 48 元素登记可重现 | 源码确认 | 接管审计 `e18abad9`；开发分支 `development/omnipack-1.0`；字体 `c743db2f`；48 个元素固定于 `256..278`、`288..295`、`328..334`、`360..369` |
+| `GATE-010-FONT-SOURCE` | 字体来源、许可证、固定哈希、容器和全部语言字符覆盖通过 | 自动测试确认 | `resources/font.bz2` SHA-256 `47F4EB85...`；Fusion 原生 12px，14,629 字形、2,593 字符覆盖 |
+| `GATE-010-BUILD` | Windows x64 clean Release build 成功 | 编译确认 | 当前报告 `clean_build_pass=true` |
+| `GATE-010-MESON` | 全部 Meson 测试通过 | 自动测试确认 | `12/12` |
+| `GATE-010-PYTHON` | 全部 Python 工具测试通过且无未说明跳过 | 自动测试确认 | 反应登记加入后 `66` PASS、2 个既有 C++ 编译环境跳过；最终候选需保存精确日志 |
+| `GATE-010-LUA` | 最终 ZIP EXE 执行模块及四反应引擎回归 | 实际运行确认 | 当前私有候选 `6/6` |
+| `GATE-010-STARTUP` | 从 ZIP 解压、全新隔离目录重复启动，无崩溃且进程响应 | 实际运行确认 | 当前私有候选 20/20 响应，崩溃 0 |
+
+### 双语与四模块 GUI
+
+| 门禁 ID | 必需结果 | 当前状态 | 完成证据 |
+|---|---|---|---|
+| `GATE-010-ZH-DEFAULT` | 无偏好首次启动实际显示简体中文 | 尚未测试 | 最终 ZIP 的真实桌面截图/记录；进程启动不替代视觉确认 |
+| `GATE-010-LANG-SWITCH` | 英→中、中→英均成功，重启后各自持久化 | 尚未测试 | 两方向操作和两次重启记录 |
+| `GATE-010-ZH-FONT` | 中文无乱码、破碎、方框，图鉴和化学文本可读 | 人工视觉确认 | 用户确认当前原生 Fusion 12px 方案的中文显示问题已解决；DPI/完整页面另行验收 |
+| `GATE-010-DPI` | 100%、125%、150% 下主界面、设置、图鉴、对话框无严重溢出 | 尚未测试 | 三档 DPI 的中英文页面矩阵 |
+| `GATE-010-MODULE-UI` | 四模块开关、搜索、放置、图鉴和重启持久化 | 尚未测试 | 分别验证工业冶金/局部生态/高级化学/受控核工业及 `ALUM/NUTR/CHLR/NFUL` |
+
+### OPS 往返与只读门禁
+
+| 门禁 ID | 必需结果 | 当前状态 | 完成证据 |
+|---|---|---|---|
+| `GATE-010-OPS-OFFICIAL` | 官方基础 OPS 执行保存→退出→重启→加载→再保存→再加载 | 尚未测试 | 输入及两次输出、粒子/元数据核对 |
+| `GATE-010-OPS-MODULES` | 四个单模块与四模块混合 OPS 完成双往返 | 尚未测试 | 四模块混合场景已实际通过；4 个单模块独立 OPS 尚未执行 |
+| `GATE-010-OPS-CARRIERS` | `LAVA`、`SPRK`、`MSCR` 及 `ctype/tmp/tmp2` 间接引用往返不漂移 | 实际运行确认 | 提交 `148c4acd`：3 进程、2 重启、2 加载；每次 20 字段断言，覆盖 `LAVA/SPRK/MSCR/CONV/VIRS` |
+| `GATE-010-LOAD-CHOICE` | 禁用模块提示的正常加载、只读加载、取消均正确 | 尚未测试 | 三项真实 GUI 操作；取消后沙盘哈希/状态不变 |
+| `GATE-010-READONLY-SAVE` | 菜单、快捷键、另存、覆盖和退出路径均不覆盖只读源 | 尚未测试 | 五条写入路径及磁盘哈希前后对比 |
+| `GATE-010-READONLY-UPLOAD` | 新建上传和在线更新上传均被拦截 | 尚未测试 | 登录/测试环境中的两条控制器路径 |
+
+### 压力、法律与发布
+
+| 门禁 ID | 必需结果 | 当前状态 | 完成证据 |
+|---|---|---|---|
+| `GATE-010-STRESS` | 十个固定样本全部有时长、粒子数、FPS、内存、崩溃/卡死/增长、OPS 结果 | 尚未测试 | `docs/PERFORMANCE_BASELINE.md` 定义的 10/10 样本 |
+| `GATE-010-PAT` | 暴露 PAT 已撤销或轮换，重新扫描无凭据泄露 | 自动测试确认（`false`；外部账户阻塞） | 当前 `secret_scan_pass=false`、`credential_revoked=false`、`credential_rotated=false` |
+| `GATE-010-SOURCE-PUBLIC` | 对应源码和 tag 可匿名 HTTPS 克隆并重建 | 源码确认（`false`；外部权限阻塞） | 当前 `source_commit_public=false`、`anonymous_clone_pass=false` |
+| `GATE-010-LICENSES` | GPL、字体、第三方来源和 AI 披露随源码/包完整 | 尚未测试（字体部分为自动测试确认） | 字体许可证已通过；最终全包许可证审计尚未绑定当前公开候选 |
+| `GATE-010-BINARY` | 普通 EXE 已剥离、符号分离、无开发路径，PE 安全标志保留 | 自动测试确认 | 私有候选审计通过；最终公开候选变化后需重跑 |
+| `GATE-010-PACKAGES` | 普通包、符号包及 `.sha256` 生成并解压二审，普通包无用户数据 | 尚未测试（私有包为自动测试确认） | 私有包审计为 true，但 `public_zip_sha256`、`symbols_zip_sha256` 和最终 `zip_audit_pass` 仍为 `not_tested` |
+| `GATE-010-TAG` | tag `v0.1.0-test` 指向报告中的精确提交 | 源码确认（`false`；外部权限阻塞） | 当前无发布 tag，不得提前创建 |
+| `GATE-010-RELEASE` | prerelease 已创建且下载物哈希与报告一致 | 源码确认（`false`；外部权限阻塞） | 当前 `github_release_created=false`、`release_ready=false` |
+
+0.1.0-test 当前总判定：
+
+```text
+gate_set=GATE-010
+gate_pass=false
+release_tag=not_tested
+release_ready=false
+```
+
+## 0.2.0：四模块跨系统联动
+
+| 门禁 ID | 必需结果 | 当前状态 |
+|---|---|---|
+| `GATE-020-AUDIT` | 48 元素逐项填写生产、主要/次要用途、消耗、副产物、危险、控制、回收、模块、教程、压力风险；孤立项有保留 ID 的处置 | 尚未测试 |
+| `GATE-020-REGISTRY` | 新增或修改元素/反应先通过两个 registry 的完整性、ID、来源、许可证、预算和测试审计 | 尚未测试 |
+| `GATE-020-MET-CHEM` | 冶金—化学链具备正常、误操作、事故、停止和回收路径 | 尚未测试 |
+| `GATE-020-BIO-CHEM` | 生态—化学链具备正常、误操作、事故、停止和回收路径 | 尚未测试 |
+| `GATE-020-MET-NUCLEAR` | 冶金—核工业链具备结构、屏蔽、控制、冷却、燃料/废料处理闭环 | 尚未测试 |
+| `GATE-020-WASTE` | 冶金、化学、生态、核废料及污染水/结构均有受限处理或封装路径 | 尚未测试 |
+| `GATE-020-SAVES` | 7 个项目版本生成的示例 OPS 可加载，清单记录生成版本和 SHA-256 | 尚未测试 |
+| `GATE-020-CHALLENGES` | 8 项教程/挑战均有目标、初始存档、提示、成功/失败、结果和下一项，且可实际完成 | 尚未测试 |
+| `GATE-020-TESTS` | 每条链的自动反应测试、OPS 往返、错误/事故/回收和压力场景通过 | 尚未测试 |
+| `GATE-020-RELEASE` | 全量回归、双语 GUI、包审计、源码/tag/匿名克隆及 `v0.2.0` 发布通过 | 尚未测试 |
+
+## 0.3.0：自动化和工程控制
+
+| 门禁 ID | 必需结果 | 当前状态 |
+|---|---|---|
+| `GATE-030-DESIGN` | 对传感、过滤、延迟、计数、存储、阀门、加料、排废、停机、报警和联锁逐项证明复用官方元件或登记必要新增 | 尚未测试 |
+| `GATE-030-SCENARIOS` | 自动恒温熔炉、合金、燃料、营养、消毒、冷却反应堆、紧停、废料转运和综合工厂可运行 | 尚未测试 |
+| `GATE-030-BOUNDS` | 无每帧全图扫描；扫描半径、事件预算、循环保护、故障状态和性能计数器均有自动测试 | 尚未测试 |
+| `GATE-030-INTERLOCK` | 自动化不能绕过模块禁用、只读存档或改变官方电子行为 | 尚未测试 |
+| `GATE-030-CHALLENGES` | 自动控温、加料、分拣、消毒、紧急停机和多模块自动工厂挑战均可完成 | 尚未测试 |
+| `GATE-030-STRESS` | 自动化高负载和信号环压力样本无崩溃、卡死、无界事件或不可停止回路 | 尚未测试 |
+| `GATE-030-RELEASE` | 全量回归及 `v0.3.0` 公开发布门禁通过 | 尚未测试 |
+
+## 0.4.0：炼金探索与科技解锁
+
+| 门禁 ID | 必需结果 | 当前状态 |
+|---|---|---|
+| `GATE-040-MODE` | 炼金探索是独立模式；普通沙盒默认自由且回归通过 | 尚未测试 |
+| `GATE-040-GRAPH` | 初始元素和十阶段配方图有版本化数据，所有必需节点可达且无循环依赖死锁 | 尚未测试 |
+| `GATE-040-CONDITIONS` | 解锁条件实际覆盖温度、压力、电流、催化、时间、结构、冷却、过滤和多阶段过程 | 尚未测试 |
+| `GATE-040-PERSIST` | 发现、通知、提示、解锁树、记录、重置及多存档进度保存/加载/迁移通过 | 尚未测试 |
+| `GATE-040-NO-BYPASS` | 搜索、收藏和普通 Lua 接口不能提前使用未解锁元素 | 尚未测试 |
+| `GATE-040-MODULES` | 关闭模块的行为明确，旧进度可迁移，失败不损坏进度 | 尚未测试 |
+| `GATE-040-LONGRUN` | 长期进度反复保存加载无丢失、重复解锁或死局 | 尚未测试 |
+| `GATE-040-RELEASE` | 全量回归及 `v0.4.0` 公开发布门禁通过 | 尚未测试 |
+
+## 0.5.0：灾害和特殊物理
+
+| 门禁 ID | 必需结果 | 当前状态 |
+|---|---|---|
+| `GATE-050-REGISTRY` | 每种危险登记触发、扩散、寿命/预算、控制、隔离、清理、防护、性能上限和测试 | 尚未测试 |
+| `GATE-050-BOUNDED` | 不存在单粒无限复制、全图无界传播、永久不可清理污染或无预算高能粒子 | 尚未测试 |
+| `GATE-050-CONTROL` | 每种危险的停止、隔离和清理路径都通过正常/失败/资源受限测试 | 尚未测试 |
+| `GATE-050-CHALLENGES` | 火灾、病原体、冷却、核事故、化学泄漏、灰蛊及设施恢复挑战可完成 | 尚未测试 |
+| `GATE-050-SAVE` | 灾害不会损坏 OPS 格式或把强制规则泄漏到普通沙盒 | 尚未测试 |
+| `GATE-050-STRESS` | 每类灾害极限样本在预算上限内运行且可恢复 | 尚未测试 |
+| `GATE-050-RELEASE` | 全量回归及 `v0.5.0` 公开发布门禁通过 | 尚未测试 |
+
+## 0.6.0：界面、图鉴与内容管理
+
+| 门禁 ID | 必需结果 | 当前状态 |
+|---|---|---|
+| `GATE-060-SEARCH` | 中英文名、代号、identifier、用途、来源、模块、状态、危险、最近和收藏检索准确 | 尚未测试 |
+| `GATE-060-RECIPES` | 正向/反向配方、“如何获得”“能做什么”、关联跳转和生产链可视化与 registry 一致 | 尚未测试 |
+| `GATE-060-STATE` | 未解锁和禁用模块状态准确，切换后索引立即一致 | 尚未测试 |
+| `GATE-060-ENTRY` | 示例存档、教程、挑战和性能风险入口可达且不显示裸内部枚举 | 尚未测试 |
+| `GATE-060-ACCESS` | 中英文、高 DPI、键盘、滚动长说明和窄窗口布局通过人工矩阵 | 尚未测试 |
+| `GATE-060-PERF` | 最大索引构建与查询有数值基线，无交互卡死 | 尚未测试 |
+| `GATE-060-RELEASE` | 全量回归及 `v0.6.0` 公开发布门禁通过 | 尚未测试 |
+
+## 0.7.0：存档迁移和兼容性
+
+| 门禁 ID | 必需结果 | 当前状态 |
+|---|---|---|
+| `GATE-070-CORPUS` | 官方 100.0、历版 OmniPack、汉化分支及可合法分析来源形成带来源/许可证/哈希的语料库 | 尚未测试 |
+| `GATE-070-LEVELS` | 每个来源明确标记完全兼容、自动迁移、部分迁移、只读或无法兼容 | 尚未测试 |
+| `GATE-070-MAPPING` | 稳定 identifier、旧 ID 和所有间接引用使用同一版本化映射 | 尚未测试 |
+| `GATE-070-SAFETY` | 迁移前备份原文件；取消或失败不改变原 OPS/当前沙盘；不静默替换 | 尚未测试 |
+| `GATE-070-LOG` | 缺失元素提示、迁移日志及失败原因可查看 | 尚未测试 |
+| `GATE-070-ROUNDTRIP` | 每个兼容等级都有成功、失败、取消、备份和二次加载测试 | 尚未测试 |
+| `GATE-070-RELEASE` | 全量回归及 `v0.7.0` 公开发布门禁通过 | 尚未测试 |
+
+## 0.8.0：性能、安全与稳定性
+
+| 门禁 ID | 必需结果 | 当前状态 |
+|---|---|---|
+| `GATE-080-BASELINE` | `docs/PERFORMANCE_BASELINE.md` 的低端、工厂、生态、反应堆、灾害、自动化、索引、OPS 和迁移样本有完整指标 | 尚未测试 |
+| `GATE-080-REGRESSION` | 同硬件同样本的 FPS、1% low、内存、保存/加载和索引回归在文档阈值内或有明确阻塞缺陷处置 | 尚未测试 |
+| `GATE-080-BOUND-AUDIT` | 全图/大邻域扫描、创建链、信号、灰蛊、病原体、生态、核、Lua 和标签页路径完成审计 | 尚未测试 |
+| `GATE-080-FUZZ` | 字体、JSON、OPS 元数据、模块状态、元素 ID、配方图、进度和索引模糊测试通过 | 尚未测试 |
+| `GATE-080-RECOVERY` | 在线/离线、崩溃恢复、坏数据和保存中断不损坏用户数据 | 尚未测试 |
+| `GATE-080-STABILITY` | 高负载长时间运行无崩溃、泄漏、卡死或无界增长 | 尚未测试 |
+| `GATE-080-RELEASE` | 全量回归及 `v0.8.0` 公开发布门禁通过 | 尚未测试 |
+
+## 0.9.0 与发布候选
+
+| 门禁 ID | 必需结果 | 当前状态 |
+|---|---|---|
+| `GATE-090-FREEZE` | 功能冻结后无大型系统、批量元素或无必要架构改写 | 尚未测试 |
+| `GATE-090-CONTENT` | 所有正式元素有双语名、图鉴、用途；所有链有示例；所有危险有控制 | 尚未测试 |
+| `GATE-090-GAMEPLAY` | 全部教程/挑战可完成，炼金无死局，自动化无明显无限循环 | 尚未测试 |
+| `GATE-090-COMPAT` | 旧存档迁移、OPS 双往返、只读三选项与上传拦截全部通过 | 尚未测试 |
+| `GATE-090-GUI` | 简中与英文完整人工检查；其他语言回退明确 | 尚未测试 |
+| `GATE-090-STABILITY` | 压力、崩溃恢复、性能和长时间测试通过 | 尚未测试 |
+| `GATE-090-LEGAL` | 发布包、对应源码、许可证、第三方来源、AI 披露、升级说明和已知问题完整 | 尚未测试 |
+| `GATE-090-RC1` | 创建 `v0.9.0` 后，由同一冻结树或明确修复提交生成并验证 `v1.0.0-rc.1` | 尚未测试 |
+
+阻塞缺陷每次修复都生成新的 `v1.0.0-rc.N` 并重跑受影响门禁；RC 不能改名冒充 1.0.0。
+
+## 1.0.0 正式门禁
+
+| 门禁 ID | 必需结果 | 当前状态 |
+|---|---|---|
+| `GATE-100-FUNCTION` | 普通沙盒、四模块闭环、跨模块、自动化、炼金、教程/挑战、灾害、图鉴、模块和示例完整可用 | 尚未测试 |
+| `GATE-100-LANGUAGE` | 简中、英文完整人工通过；其他语言正确回退 | 尚未测试 |
+| `GATE-100-SAVE` | 官方 OPS、旧 OmniPack、进度、迁移、禁用模块、间接引用及只读/上传门禁通过 | 尚未测试 |
+| `GATE-100-AUTO` | clean Release build、全部 Meson/Python/Lua/反应/自动化/配方图/挑战测试通过 | 尚未测试 |
+| `GATE-100-STRESS` | 十类以上压力测试通过，无已知无界增长或数据损坏 | 尚未测试 |
+| `GATE-100-LONGRUN` | 两小时连续运行覆盖大型自动化、生态、多反应堆、多灾害恢复、反复存取、语言/模块切换、索引和炼金进度 | 尚未测试 |
+| `GATE-100-BINARY` | 普通 EXE 已剥离、符号分离、无开发路径、PE 安全标志保留；签名状态如实记录 | 尚未测试 |
+| `GATE-100-LEGAL` | GPL、字体、第三方来源、AI 披露和对应源码完整，无已知凭据泄露 | 尚未测试 |
+| `GATE-100-PACKAGES` | Windows x64、Symbols、Source 三个 ZIP 及三个 `.sha256` 与解压清单审计通过，无用户数据 | 尚未测试 |
+| `GATE-100-PUBLIC` | `v1.0.0`、公开源码、匿名克隆/构建和 GitHub Release 下载复核通过 | 尚未测试 |
+
+最终报告必须同时精确包含：
+
+```text
+version=1.0.0
+release_tag=v1.0.0
+release_ready=true
+```
+
+任一 `GATE-100-*` 为 `false`、`not_tested`、失败计数或缺失时，必须写 `release_ready=false`。
+
+## 机器可读报告最低字段
+
+每版 `dist/release-report-<version>.md` 的 fenced `text` 块必须包含且只用允许值：
+
+```text
+source_commit=
+release_tag=
+version=
+upstream_version=
+clean_build_pass=
+meson_tests=
+python_tests=
+lua_runtime_tests=
+zh_gui_test=
+en_gui_test=
+font_visual_test=
+module_ui_test=
+ops_roundtrip_test=
+disabled_module_dialog_test=
+readonly_save_block_test=
+readonly_upload_block_test=
+save_migration_test=
+reaction_tests=
+automation_tests=
+alchemy_progression_tests=
+challenge_tests=
+stress_test=
+long_run_test=
+font_license_resolved=
+third_party_license_audit=
+secret_scan_pass=
+source_commit_public=
+anonymous_clone_pass=
+release_exe_stripped=
+debug_symbols_separated=
+developer_paths_removed=
+pe_security_flags_preserved=
+authenticode_signed=
+public_zip_sha256=
+symbols_zip_sha256=
+source_zip_sha256=
+zip_audit_pass=
+github_release_created=
+release_ready=
+```
+
+不适用于早期版本的字段使用 `not_tested`，不能省略；`source_zip_sha256` 在不要求源码 ZIP 的版本仍保持 `not_tested`。发布脚本必须验证报告的哈希和 tag/commit 关系，不能只检查字符串是否存在。
