@@ -8,6 +8,15 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 LUA = ROOT / "tools" / "runtime" / "stress_scenarios.lua"
 POWERSHELL = ROOT / "tools" / "runtime_stress_test.ps1"
+SIMULATION_HEADER = ROOT / "src" / "simulation" / "Simulation.h"
+SIMULATION_CPP = ROOT / "src" / "simulation" / "Simulation.cpp"
+LUA_SIMULATION = ROOT / "src" / "lua" / "LuaSimulation.cpp"
+EVENT_MODULES = (
+    ROOT / "src" / "simulation" / "OmniMetallurgy.cpp",
+    ROOT / "src" / "simulation" / "OmniBiology.cpp",
+    ROOT / "src" / "simulation" / "OmniChemistry.cpp",
+    ROOT / "src" / "simulation" / "OmniNuclear.cpp",
+)
 
 SAMPLES = {
     "S01-METALLURGY-LARGE",
@@ -28,6 +37,10 @@ class StressHarnessContractTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.lua = LUA.read_text(encoding="utf-8")
         cls.powershell = POWERSHELL.read_text(encoding="utf-8")
+        cls.simulation_header = SIMULATION_HEADER.read_text(encoding="utf-8")
+        cls.simulation_cpp = SIMULATION_CPP.read_text(encoding="utf-8")
+        cls.lua_simulation = LUA_SIMULATION.read_text(encoding="utf-8")
+        cls.event_modules = [path.read_text(encoding="utf-8") for path in EVENT_MODULES]
 
     def test_every_fixed_sample_is_implemented_and_selectable(self) -> None:
         for sample in SAMPLES:
@@ -78,16 +91,35 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn("elseif (-not $Smoke)", self.powershell)
         self.assertEqual(self.powershell.count("rev-parse HEAD"), 1)
 
-    def test_unavailable_evidence_is_not_invented(self) -> None:
+    def test_event_and_stop_evidence_are_measured_not_invented(self) -> None:
         for field in (
             "display_resolution",
             "dpi_percent",
             "language",
-            "event_count_total",
-            "event_count_peak_per_frame",
             "unbounded_growth",
         ):
             self.assertRegex(self.powershell, rf"{re.escape(field)} = \"not_tested\"")
+        self.assertIn("event_count_total = [int64]$lua.event_count_total", self.powershell)
+        self.assertIn(
+            "event_count_peak_per_frame = [int64]$lua.event_count_peak_per_frame",
+            self.powershell,
+        )
+        self.assertIn("scenario_stop_pass = [System.Convert]::ToBoolean", self.powershell)
+        self.assertIn("scenario_recovery_pass = [System.Convert]::ToBoolean", self.powershell)
+        self.assertIn("scenario_recovery_assertions = [int64]$lua.scenario_recovery_assertions", self.powershell)
+        self.assertIn("sim.resetOmniEventMetrics()", self.lua)
+        self.assertIn("sim.omniEventMetrics()", self.lua)
+        self.assertIn("scenario_stop_pass", self.lua)
+        self.assertIn("scenario_recovery_pass", self.lua)
+        self.assertIn("scenario_recovery_assertions", self.lua)
+        self.assertIn("void ResetOmniEventMetrics();", self.simulation_header)
+        self.assertIn("void RecordOmniEvent();", self.simulation_header)
+        self.assertIn("void Simulation::RecordOmniEvent()", self.simulation_cpp)
+        self.assertIn("omniEventCountCurrentFrame.store(0", self.simulation_cpp)
+        self.assertIn("LFUNC(omniEventMetrics)", self.lua_simulation)
+        self.assertIn("LFUNC(resetOmniEventMetrics)", self.lua_simulation)
+        for module in self.event_modules:
+            self.assertIn("sim->RecordOmniEvent();", module)
 
 
 if __name__ == "__main__":

@@ -88,6 +88,27 @@ static int partCount(lua_State *L)
 	return 1;
 }
 
+static int omniEventMetrics(lua_State *L)
+{
+	auto metrics = GetLSI()->sim->GetOmniEventMetrics();
+	lua_newtable(L);
+	lua_pushinteger(L, static_cast<lua_Integer>(metrics.total));
+	lua_setfield(L, -2, "total");
+	lua_pushinteger(L, static_cast<lua_Integer>(metrics.currentFrame));
+	lua_setfield(L, -2, "current_frame");
+	lua_pushinteger(L, static_cast<lua_Integer>(metrics.peakPerFrame));
+	lua_setfield(L, -2, "peak_per_frame");
+	return 1;
+}
+
+static int resetOmniEventMetrics(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	lsi->AssertInterfaceEvent();
+	lsi->sim->ResetOmniEventMetrics();
+	return 0;
+}
+
 static int decoSpace(lua_State *L)
 {
 	auto *lsi = GetLSI();
@@ -2119,6 +2140,8 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(wallMap),
 		LFUNC(elecMap),
 		LFUNC(partCount),
+		LFUNC(omniEventMetrics),
+		LFUNC(resetOmniEventMetrics),
 		LFUNC(decoSpace),
 		LFUNC(fanVelocityX),
 		LFUNC(fanVelocityY),

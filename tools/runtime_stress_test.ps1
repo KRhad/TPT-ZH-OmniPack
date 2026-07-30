@@ -255,6 +255,19 @@ try {
     if ($process.ExitCode -ne 0 -or $lua.OMNI_STRESS_LUA_STATUS -ne "PASS") {
         throw "Stress Lua failed; exit_code=$($process.ExitCode); error=$($lua.error); artifacts=$testRoot"
     }
+    foreach ($field in @("event_count_total", "event_count_peak_per_frame", "scenario_recovery_assertions")) {
+        if (-not $lua.ContainsKey($field) -or $lua[$field] -notmatch '^\d+$') {
+            throw "Stress Lua did not provide a nonnegative integer $field"
+        }
+    }
+    if (-not $lua.ContainsKey("stop_event_delta") -or $lua.stop_event_delta -notmatch '^-?\d+$') {
+        throw "Stress Lua did not provide an integer stop_event_delta"
+    }
+    foreach ($field in @("scenario_stop_pass", "scenario_recovery_pass")) {
+        if (-not $lua.ContainsKey($field) -or $lua[$field] -notin @("true", "false")) {
+            throw "Stress Lua did not provide a boolean $field"
+        }
+    }
 
     $firstOps = Get-StampInfo -Stamp $lua.first_stamp
     $secondOps = Get-StampInfo -Stamp $lua.second_stamp
@@ -332,8 +345,8 @@ try {
         average_cpu_percent = $averageCpu
         peak_working_set_bytes = $peakWorkingSet
         peak_private_bytes = $peakPrivateBytes
-        event_count_total = "not_tested"
-        event_count_peak_per_frame = "not_tested"
+        event_count_total = [int64]$lua.event_count_total
+        event_count_peak_per_frame = [int64]$lua.event_count_peak_per_frame
         save_time_first_ms = [double]$lua.save_time_first_ms
         load_time_first_ms = [double]$lua.load_time_first_ms
         save_time_second_ms = [double]$lua.save_time_second_ms
@@ -342,9 +355,13 @@ try {
         hung = $false
         unbounded_growth = "not_tested"
         roundtrip_pass = [System.Convert]::ToBoolean($lua.roundtrip_pass)
+        scenario_stop_pass = [System.Convert]::ToBoolean($lua.scenario_stop_pass)
+        scenario_recovery_pass = [System.Convert]::ToBoolean($lua.scenario_recovery_pass)
+        stop_event_delta = [int64]$lua.stop_event_delta
+        scenario_recovery_assertions = [int64]$lua.scenario_recovery_assertions
         smoke_run = [bool]$Smoke
-        gate_result = if ($Smoke) { "not_tested" } else { "incomplete_event_and_growth_evidence" }
-        notes = "Simulation FPS is measured as completed sim.updateUpTo calls per wall-clock second. GUI frame presentation, display/DPI, event counters, and unbounded-growth classification are not inferred."
+        gate_result = if ($Smoke) { "not_tested" } else { "pending_independent_assessment" }
+        notes = "Simulation FPS is measured as completed sim.updateUpTo calls per wall-clock second. Event metrics count successful Omni budget consumptions from post-load warmup through sample completion. GUI frame presentation, display/DPI, and long-term boundedness are not inferred."
     }
     $jsonPath = Join-Path $artifactDirectory "result.json"
     [System.IO.File]::WriteAllText(

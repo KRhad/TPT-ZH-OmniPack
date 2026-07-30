@@ -84,7 +84,7 @@ long_run_test=not_tested
 4. 使用项目版本生成并保存固定 OPS；将随机种子、模拟尺寸、初始粒子数和初始粒子类型计数写入场景清单。若引擎不能固定随机种子，明确记录并至少重复 3 次取中位数。
 5. 加载后预热 60 秒；正式采样至少 10 分钟。每秒记录进程 CPU、工作集、私有字节、粒子数和可用事件计数；逐帧或以引擎计数器记录 FPS。
 6. 样本开始和结束各执行一次保存/加载；需要往返的样本按“保存→退出→重启→加载→再保存→再加载”执行。
-7. 每个样本独立记录崩溃、无响应、用户强制终止、无界增长判定、保存/加载成功和输出 OPS SHA-256。
+7. 每个样本独立记录崩溃、无响应、用户强制终止、模块成功事件总数/单帧峰值、停止后的残余事件、恢复标记字段断言、无界增长判定、保存/加载成功和输出 OPS SHA-256。
 8. 原始数据写入 `artifacts/performance/<version>/<machine-id>/<sample-id>/`；摘要写回本文件和版本报告。没有原始文件的数值不得作为门禁证据。
 
 ### 每个样本的机器可读字段
@@ -130,6 +130,10 @@ peak_working_set_bytes
 peak_private_bytes
 event_count_total
 event_count_peak_per_frame
+scenario_stop_pass
+scenario_recovery_pass
+stop_event_delta
+scenario_recovery_assertions
 save_time_first_ms
 load_time_first_ms
 save_time_second_ms

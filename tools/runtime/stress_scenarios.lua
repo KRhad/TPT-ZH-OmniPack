@@ -131,6 +131,58 @@ end
 
 local full = { x1 = 48, y1 = 48, x2 = sim.XRES - 49, y2 = sim.YRES - 49 }
 
+local recovery_markers = {
+    {
+        name = "mscr_ctype",
+        x = 8,
+        y = 8,
+        particle_type = ids.mscr,
+        properties = { ctype = ids.alum },
+    },
+    {
+        name = "conv_ctype_tmp",
+        x = 12,
+        y = 8,
+        particle_type = ids.conv,
+        properties = { ctype = ids.nful, tmp = ids.chlr },
+    },
+    {
+        name = "virs_tmp2",
+        x = 16,
+        y = 8,
+        particle_type = ids.virs,
+        properties = { tmp2 = ids.alum },
+    },
+}
+
+local function create_recovery_markers()
+    for _, marker in ipairs(recovery_markers) do
+        local particle = assert(make(
+            marker.particle_type, marker.x, marker.y, marker.properties),
+            "failed to create recovery marker: " .. marker.name)
+        assert(sim.partID(marker.x, marker.y) == particle,
+            "recovery marker is not addressable: " .. marker.name)
+    end
+end
+
+local function verify_recovery_markers()
+    local assertions = 0
+    for _, marker in ipairs(recovery_markers) do
+        local particle = sim.partID(marker.x, marker.y)
+        assert(type(particle) == "number",
+            "missing recovered marker: " .. marker.name)
+        assert(sim.partProperty(particle, "type") == marker.particle_type,
+            "recovered marker type changed: " .. marker.name)
+        assertions = assertions + 1
+        for property, expected in pairs(marker.properties) do
+            assert(sim.partProperty(particle, property) == expected,
+                "recovered marker field changed: " .. marker.name .. "." .. property)
+            assertions = assertions + 1
+        end
+    end
+    return assertions
+end
+
 local function metallurgy(bounds)
     grid(bounds, function(x, y, n)
         local recipe = n % 4
@@ -310,7 +362,9 @@ local function write_success(data)
         "actual_sample_seconds", "average_fps", "one_percent_low_fps",
         "minimum_fps", "first_stamp", "second_stamp", "save_time_first_ms",
         "load_time_first_ms", "save_time_second_ms", "load_time_second_ms",
-        "roundtrip_pass",
+        "roundtrip_pass", "event_count_total", "event_count_peak_per_frame",
+        "scenario_stop_pass", "scenario_recovery_pass", "stop_event_delta",
+        "scenario_recovery_assertions",
     }) do
         result:write(key .. "=" .. tostring(data[key]) .. "\n")
     end
@@ -377,21 +431,52 @@ local function finish_sample(now)
     local maximum_frame_time = runtime.sample_frame_times[
         #runtime.sample_frame_times]
 
+    create_recovery_markers()
+    local expected_recovered_particles = final_before_save + #recovery_markers
     local second_stamp, save_time_second_ms = timed_save()
     local load_time_second_ms = timed_load(second_stamp)
     local after_second_load = particle_count()
-    local roundtrip_pass = final_before_save == after_second_load
+    local roundtrip_pass = expected_recovered_particles == after_second_load
     assert(roundtrip_pass, "second immediate OPS reload changed particle count")
+    local initial_recovery_assertions = verify_recovery_markers()
 
     event.unregister(event.tick, tick_callback)
     runtime.callback_registered = false
+    local event_metrics = sim.omniEventMetrics()
+    local event_count_total = assert(tonumber(event_metrics.total),
+        "omni event total is unavailable")
+    local event_count_peak_per_frame = assert(
+        tonumber(event_metrics.peak_per_frame),
+        "omni event peak is unavailable")
+    assert(event_count_total >= 0 and event_count_peak_per_frame >= 0,
+        "omni event metrics must be nonnegative")
+
+    sim.clearSim()
+    for _ = 1, 4 do
+        sim.updateUpTo()
+    end
+    local stopped_particles = particle_count()
+    local stopped_metrics = sim.omniEventMetrics()
+    local stop_event_delta = assert(tonumber(stopped_metrics.total),
+        "omni event total disappeared after stop") - event_count_total
+    local scenario_stop_pass = stopped_particles == 0 and stop_event_delta == 0
+    assert(scenario_stop_pass,
+        "cleared stress scenario retained particles or produced omni events")
+
+    timed_load(second_stamp)
+    local recovered_particles = particle_count()
+    local scenario_recovery_pass = recovered_particles == after_second_load
+        and verify_recovery_markers() == initial_recovery_assertions
+    assert(scenario_recovery_pass,
+        "stress scenario did not recover saved marker state after stop")
+
     write_success({
         sample_id = sample_id,
         initial_particles = runtime.initial_particles,
         peak_particles = math.max(
             runtime.warmup_peak_particles,
             runtime.sample_peak_particles),
-        final_particles = after_second_load,
+        final_particles = final_before_save,
         warmup_frames = runtime.warmup_frames,
         sample_frames = runtime.sample_frames,
         actual_warmup_seconds = string.format(
@@ -411,6 +496,12 @@ local function finish_sample(now)
         save_time_second_ms = string.format("%.6f", save_time_second_ms),
         load_time_second_ms = string.format("%.6f", load_time_second_ms),
         roundtrip_pass = "true",
+        event_count_total = math.floor(event_count_total),
+        event_count_peak_per_frame = math.floor(event_count_peak_per_frame),
+        scenario_stop_pass = tostring(scenario_stop_pass),
+        scenario_recovery_pass = tostring(scenario_recovery_pass),
+        stop_event_delta = math.floor(stop_event_delta),
+        scenario_recovery_assertions = initial_recovery_assertions,
     })
     os.exit(0)
 end
@@ -489,6 +580,7 @@ local function start()
     runtime.load_time_first_ms = timed_load(runtime.first_stamp)
     assert(particle_count() == runtime.initial_particles,
         "first immediate OPS reload changed particle count")
+    sim.resetOmniEventMetrics()
 
     local now = socket.getTime()
     runtime.warmup_frames = 0

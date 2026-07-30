@@ -35,6 +35,7 @@ bool ConsumeReactionBudget(Simulation *sim)
 	if (reactionBudget.remaining <= 0)
 		return false;
 	--reactionBudget.remaining;
+	sim->RecordOmniEvent();
 	return true;
 }
 

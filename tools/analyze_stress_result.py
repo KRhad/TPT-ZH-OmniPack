@@ -86,6 +86,14 @@ def tail_values(rows: Sequence[dict[str, float]], field: str, fraction: float) -
     return [row[field] for row in rows[first:]]
 
 
+def nonnegative_number(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and value >= 0
+    )
+
+
 def validate_ops(path: Path, expected_hash: str) -> dict[str, Any]:
     data = path.read_bytes()
     if len(data) <= 15 or data[:4] != b"OPS1" or data[12:15] != b"BZh":
@@ -154,8 +162,36 @@ def analyze(directory: Path) -> dict[str, Any]:
         and not sustained_particle_growth
         and not memory_leak_suspected
     )
-    event_evidence_complete = isinstance(result.get("event_count_total"), (int, float)) and isinstance(
-        result.get("event_count_peak_per_frame"), (int, float)
+    event_evidence_complete = nonnegative_number(
+        result.get("event_count_total")
+    ) and nonnegative_number(
+        result.get("event_count_peak_per_frame")
+    )
+    stop_pass = result.get("scenario_stop_pass")
+    recovery_pass = result.get("scenario_recovery_pass")
+    stop_event_delta = result.get("stop_event_delta")
+    recovery_assertions = result.get("scenario_recovery_assertions")
+    scenario_evidence_complete = (
+        isinstance(stop_pass, bool)
+        and isinstance(recovery_pass, bool)
+        and isinstance(stop_event_delta, (int, float))
+        and not isinstance(stop_event_delta, bool)
+        and nonnegative_number(recovery_assertions)
+    )
+    scenario_behavior_pass: bool | str
+    if scenario_evidence_complete:
+        scenario_behavior_pass = (
+            stop_pass
+            and recovery_pass
+            and stop_event_delta == 0
+            and recovery_assertions > 0
+        )
+    else:
+        scenario_behavior_pass = "not_tested"
+    performance_gate_pass = (
+        sample_execution_pass
+        and event_evidence_complete
+        and scenario_behavior_pass is True
     )
 
     return {
@@ -185,8 +221,12 @@ def analyze(directory: Path) -> dict[str, Any]:
         "runtime_pass": runtime_pass,
         "sample_execution_pass": sample_execution_pass,
         "event_evidence_complete": event_evidence_complete,
-        "scenario_behavior_pass": "not_tested",
-        "performance_gate_pass": False,
+        "event_count_total": result.get("event_count_total"),
+        "event_count_peak_per_frame": result.get("event_count_peak_per_frame"),
+        "scenario_behavior_pass": scenario_behavior_pass,
+        "stop_event_delta": stop_event_delta,
+        "scenario_recovery_assertions": recovery_assertions,
+        "performance_gate_pass": performance_gate_pass,
         "classification_note": (
             "unbounded_growth reports only whether the final half of observed "
             "particle samples is nondecreasing with at least one increase; "

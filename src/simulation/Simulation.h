@@ -16,6 +16,7 @@
 #include "SimulationSettings.h"
 #include <cstring>
 #include <cstddef>
+#include <atomic>
 #include <vector>
 #include <array>
 #include <memory>
@@ -167,6 +168,13 @@ public:
 	uint64_t frameCount;
 	bool ensureDeterminism;
 
+	struct OmniEventMetrics
+	{
+		uint64_t total;
+		uint64_t currentFrame;
+		uint64_t peakPerFrame;
+	};
+
 	// initialized very late >_>
 	int NUM_PARTS;
 	int sandcolour;
@@ -225,6 +233,9 @@ public:
 	void BeforeSim(bool willUpdate);
 	void AfterSim();
 	void clear_area(int area_x, int area_y, int area_w, int area_h);
+	void ResetOmniEventMetrics();
+	void RecordOmniEvent();
+	OmniEventMetrics GetOmniEventMetrics() const;
 
 	void SetEdgeMode(int newEdgeMode);
 	void SetDecoSpace(int newDecoSpace);
@@ -275,6 +286,10 @@ public:
 	static std::unique_ptr<Simulation> Factory();
 
 private:
+	std::atomic<uint64_t> omniEventCountTotal{ 0 };
+	std::atomic<uint64_t> omniEventCountCurrentFrame{ 0 };
+	std::atomic<uint64_t> omniEventCountPeakPerFrame{ 0 };
+
 	CoordStack& getCoordStackSingleton();
 
 	void ResetNewtonianGravity(GravityInput newGravIn, GravityOutput newGravOut);

@@ -24,7 +24,13 @@ def digest(data: bytes) -> str:
 
 
 class AnalyzeStressResultTest(unittest.TestCase):
-    def fixture(self, directory: Path, particles: list[int], smoke: bool = False) -> None:
+    def fixture(
+        self,
+        directory: Path,
+        particles: list[int],
+        smoke: bool = False,
+        complete_gate_evidence: bool = False,
+    ) -> None:
         ops1 = b"OPS1" + b"\0" * 8 + b"BZh" + b"input"
         ops2 = b"OPS1" + b"\0" * 8 + b"BZh" + b"output"
         (directory / "input-first.stm").write_bytes(ops1)
@@ -55,6 +61,17 @@ class AnalyzeStressResultTest(unittest.TestCase):
             "roundtrip_pass": True,
             "smoke_run": smoke,
         }
+        if complete_gate_evidence:
+            result.update(
+                {
+                    "event_count_total": 123,
+                    "event_count_peak_per_frame": 7,
+                    "scenario_stop_pass": True,
+                    "scenario_recovery_pass": True,
+                    "stop_event_delta": 0,
+                    "scenario_recovery_assertions": 7,
+                }
+            )
         (directory / "result.json").write_text(
             json.dumps(result), encoding="utf-8"
         )
@@ -75,7 +92,7 @@ class AnalyzeStressResultTest(unittest.TestCase):
             for index in range(max(8, len(particles))):
                 writer.writerow((index * 10, 120000000 - index, 110000000 - index))
 
-    def test_stable_full_run_has_bounded_observation_but_not_gate_pass(self) -> None:
+    def test_stable_full_run_is_gated_by_evidence_completeness(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             self.fixture(directory, [100, 90, 80, 80, 80, 80, 80, 80])
@@ -85,6 +102,17 @@ class AnalyzeStressResultTest(unittest.TestCase):
         self.assertTrue(value["sample_execution_pass"])
         self.assertFalse(value["event_evidence_complete"])
         self.assertFalse(value["performance_gate_pass"])
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [100, 90, 80, 80, 80, 80, 80, 80],
+                complete_gate_evidence=True,
+            )
+            value = analysis.analyze(directory)
+        self.assertTrue(value["event_evidence_complete"])
+        self.assertTrue(value["scenario_behavior_pass"])
+        self.assertTrue(value["performance_gate_pass"])
 
     def test_monotonic_tail_growth_is_reported(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

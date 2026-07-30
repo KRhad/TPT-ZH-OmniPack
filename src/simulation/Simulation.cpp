@@ -3720,6 +3720,34 @@ void Simulation::UpdateGravityMask()
 	}
 }
 
+void Simulation::ResetOmniEventMetrics()
+{
+	omniEventCountTotal.store(0, std::memory_order_relaxed);
+	omniEventCountCurrentFrame.store(0, std::memory_order_relaxed);
+	omniEventCountPeakPerFrame.store(0, std::memory_order_relaxed);
+}
+
+void Simulation::RecordOmniEvent()
+{
+	const auto current = omniEventCountCurrentFrame.fetch_add(1, std::memory_order_relaxed) + 1;
+	omniEventCountTotal.fetch_add(1, std::memory_order_relaxed);
+	auto peak = omniEventCountPeakPerFrame.load(std::memory_order_relaxed);
+	while (current > peak
+		&& !omniEventCountPeakPerFrame.compare_exchange_weak(
+			peak, current, std::memory_order_relaxed, std::memory_order_relaxed))
+	{
+	}
+}
+
+Simulation::OmniEventMetrics Simulation::GetOmniEventMetrics() const
+{
+	return {
+		omniEventCountTotal.load(std::memory_order_relaxed),
+		omniEventCountCurrentFrame.load(std::memory_order_relaxed),
+		omniEventCountPeakPerFrame.load(std::memory_order_relaxed),
+	};
+}
+
 //updates pmap, gol, and some other simulation stuff (but not particles)
 void Simulation::BeforeSim(bool willUpdate)
 {
@@ -3748,6 +3776,7 @@ void Simulation::BeforeSim(bool willUpdate)
 		etrd_life0_count = 0;
 
 		currentTick++;
+		omniEventCountCurrentFrame.store(0, std::memory_order_relaxed);
 
 		elementRecount |= !(currentTick%180);
 		if (elementRecount)
