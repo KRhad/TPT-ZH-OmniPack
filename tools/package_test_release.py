@@ -160,6 +160,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--symbols", type=Path, required=True)
     parser.add_argument("--output-directory", type=Path, default=Path("dist"))
+    parser.add_argument("--objdump", help="Path to objdump for mandatory PE auditing.")
+    parser.add_argument("--strings", help="Path to strings for mandatory path auditing.")
     return parser
 
 
@@ -168,6 +170,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     source_root = args.source_root.resolve()
     output_directory = args.output_directory if args.output_directory.is_absolute() else source_root / args.output_directory
     try:
+        audit_command = [
+            sys.executable,
+            str(Path(__file__).with_name("release_binary_audit.py")),
+            "--executable",
+            str(args.executable),
+            "--symbols",
+            str(args.symbols),
+        ]
+        if args.objdump:
+            audit_command.extend(["--objdump", args.objdump])
+        if args.strings:
+            audit_command.extend(["--strings", args.strings])
+        audit = subprocess.run(audit_command, check=False, capture_output=True, text=True)
+        if audit.returncode:
+            raise ValueError("release binary audit failed: " + audit.stderr.strip())
         package, package_hash, symbols, symbols_hash = build_package(source_root, args.executable, args.symbols, output_directory)
     except (OSError, ValueError) as exc:
         print(f"test-release-package: ERROR {exc}", file=sys.stderr)

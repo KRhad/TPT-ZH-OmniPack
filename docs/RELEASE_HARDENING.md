@@ -19,6 +19,7 @@ meson setup build-release-public-static . --buildtype=release -Ddebug=true -Dsta
 meson compile -C build-release-public-static
 py -3.14 tools/prepare_windows_release.py --raw-executable build-release-public-static/tpt-zh-omnipack.exe --executable artifacts/release-hardening/tpt-zh-omnipack.exe --symbols artifacts/release-hardening/tpt-zh-omnipack.debug --objcopy C:\\msys64\\ucrt64\\bin\\objcopy.exe --strip C:\\msys64\\ucrt64\\bin\\strip.exe
 py -3.14 tools/release_binary_audit.py --executable artifacts/release-hardening/tpt-zh-omnipack.exe --symbols artifacts/release-hardening/tpt-zh-omnipack.debug --objdump C:\\msys64\\ucrt64\\bin\\objdump.exe --strings C:\\msys64\\ucrt64\\bin\\strings.exe
+py -3.14 tools/package_test_release.py --executable artifacts/release-hardening/tpt-zh-omnipack.exe --symbols artifacts/release-hardening/tpt-zh-omnipack.debug --objdump C:\\msys64\\ucrt64\\bin\\objdump.exe --strings C:\\msys64\\ucrt64\\bin\\strings.exe
 ```
 
 `release + debug=true` produces a RelWithDebInfo-equivalent input. `objcopy --only-keep-debug` runs before `strip --strip-debug`; the normal ZIP never receives the detached symbols. `-Dstatic=prebuilt` alone is insufficient: the documented GCC runtime link flags prevent an otherwise clean-machine failure on `libgcc_s_seh-1.dll`, `libstdc++-6.dll` or `libwinpthread-1.dll`. The audit fails if these imports, user path markers, a `.debug*` PE section, or required ASLR/DEP/high-entropy flags remain absent.
