@@ -147,7 +147,7 @@ pt_num=512
 
 ## 0.2.0 用途审计入口
 
-在 0.2.0 开发前，必须把每个正式元素的下列字段写入可机器审计的 registry，而不是只留在本汇总表：
+`docs/ELEMENT_USAGE_MATRIX.csv` 已把 48 个正式 OmniPack 元素的下列字段写入机器可审计矩阵，并由 `tools/element_usage_audit.py` 与 Meson `static` suite 逐项对照稳定 ID、代号、模块和实现状态：
 
 ```text
 production
@@ -163,4 +163,16 @@ tutorial_scene
 stress_risk
 ```
 
-当前优先审计项是基础金属来源、`SLAG`、`HUMS`、`NWST`、`STER`、`BIOF`、`CHLR`、`CATA`、`POLY`、`FERT` 与核结构材料。处理方式可以是补齐闭环、标记实验性并默认隐藏，或保留稳定 ID 并写迁移说明；不得删除后重排 ID。
+当前审计结果：
+
+| 指标 | 数量 | 结论 |
+|---|---:|---|
+| 仅能直接放置 | 23 | 必须补生产路径或保留稳定 ID 并明确实验处置 |
+| 缺少跨模块联动 | 33 | 作为四条 0.2 闭环的候选输入/产物，不等于全部都要新增反应 |
+| 终点副产物 | 3 | `SLAG`、`HUMS`、`NWST` |
+| 缺少回收路径 | 4 | `SLAG`、`HUMS`、`NWST`、`POLY` |
+| 缺少明确机器用途 | 5 | `BRNZ`、`BRAS`、`ALMG`、`TSTL`、`POLY` |
+| 未验证玩法声明 | 1 | `LEAD` 屏蔽声明须实现并测试或修正文案 |
+| 当前无已知用途缺口 | 3 | `NCRM`、`MYCL`、`ACTY`；仍可参与后续跨模块教程 |
+
+矩阵给每个缺口写入 `disposition`：40 项进入 0.2 联动设计、4 项优先补回收、1 项修复或测试声明，3 项保持现状。此分类不会删除、隐藏或重排任何稳定 ID；真正修改玩法前仍须先更新 `REACTION_REGISTRY.csv` 并增加自动测试。
