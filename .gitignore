@@ -45,6 +45,10 @@ screenshot_*
 !tools/tests/*.py
 !tools/runtime/*.lua
 
+# Audited font source and licenses used by the deterministic release font build.
+!resources/third_party/FUSION_PIXEL_FONT_*.txt
+!resources/third_party/fusion-pixel-12px-monospaced-zh_hans-v2026.07.20.bdf
+
 # Visual studio
 /Debug/
 /Release/

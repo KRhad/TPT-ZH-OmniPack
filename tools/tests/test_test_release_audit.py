@@ -46,6 +46,13 @@ class TestReleaseAuditTests(unittest.TestCase):
         third_party = source / "resources" / "third_party"
         third_party.mkdir(parents=True)
         (third_party / "GNU_UNIFONT_COPYING.txt").write_text("OFL\n", encoding="utf-8")
+        for name in (
+            "FUSION_PIXEL_FONT_OFL-1.1.txt",
+            "FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt",
+            "FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt",
+            "FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt",
+        ):
+            (third_party / name).write_text("OFL\n", encoding="utf-8")
         executable = source / "tpt-zh-omnipack.exe"
         executable.write_bytes(b"MZ test executable")
         (source / "tpt-zh-omnipack.debug").write_bytes(b"MZ test debug symbols")

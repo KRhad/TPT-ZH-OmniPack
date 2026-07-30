@@ -21,6 +21,10 @@ NORMAL_DOCUMENTS = {
     "LICENSE", "README.zh-CN.md", "CHANGELOG.zh-CN.md", "TESTING.zh-CN.md",
     "SOURCE-AND-LICENSES.zh-CN.md", "KNOWN-ISSUES.zh-CN.md", "AI-DISCLOSURE.zh-CN.md",
     "FONT-AUDIT.md", "LICENSES/GNU-UNIFONT-OFL-1.1.txt",
+    "LICENSES/FUSION-PIXEL-FONT-OFL-1.1.txt",
+    "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt",
+    "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt",
+    "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt",
 }
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 PATH_MARKERS = (b"C:\\Users\\", b"/Users/", b"\\build-", b"/build-")
