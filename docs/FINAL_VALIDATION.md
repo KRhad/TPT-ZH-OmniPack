@@ -14,6 +14,7 @@
 
 - 发现一个当前进程环境变量 `GITHUB_PAT_TOKEN` 中的 GitHub classic PAT；报告不包含其原文。
 - Git 可达历史和候选发布包未发现匹配的 GitHub PAT 模式。
+- 初次本轮 Meson 测试曾在继承该环境变量后，把同一 PAT 写入两个忽略的 `build-final-validation-release/meson-logs/testlog.*` 文件。复扫发现后立即删除两份日志，并在移除该变量的子进程中重跑 Meson `10/10`；最终复扫确认工作区、可达 Git 对象和候选 ZIP 均无匹配模式。
 - 本机没有 `gh`，且没有 GitHub 账户安全管理操作的可验证权限。因此无法证明旧凭据已撤销或已轮换。
 - 在旧凭据失效获得可验证证据前，不推送分支、不创建 tag、不创建 GitHub Release。
 
