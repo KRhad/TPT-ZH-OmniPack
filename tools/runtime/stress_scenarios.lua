@@ -1,0 +1,426 @@
+local CONFIG_FILE = "stress-scenario.config"
+local RESULT_FILE = "stress-lua.result"
+local FRAME_SERIES_FILE = "frame-series.csv"
+
+local function read_config()
+    local file = assert(io.open(CONFIG_FILE, "rb"), "cannot open " .. CONFIG_FILE)
+    local text = assert(file:read("*a"), "cannot read " .. CONFIG_FILE)
+    file:close()
+    local config = {}
+    for line in text:gmatch("[^\r\n]+") do
+        local key, value = line:match("^([%w_]+)=(.*)$")
+        if key then
+            config[key] = value
+        end
+    end
+    return config
+end
+
+local config = read_config()
+local sample_id = assert(config.sample_id, "sample_id is required")
+local warmup_seconds = assert(tonumber(config.warmup_seconds), "invalid warmup_seconds")
+local sample_seconds = assert(tonumber(config.sample_seconds), "invalid sample_seconds")
+local stride = assert(tonumber(config.fixture_stride), "invalid fixture_stride")
+assert(warmup_seconds >= 0 and sample_seconds > 0, "invalid duration")
+assert(stride >= 3 and stride <= 24, "fixture_stride must be between 3 and 24")
+assert(socket and type(socket.getTime) == "function", "socket.getTime is unavailable")
+
+local function must_element(identifier, short_name)
+    local id = elements[identifier]
+    assert(type(id) == "number", "missing element constant: " .. identifier)
+    assert(elements.getByName(short_name) == id,
+        "name/identifier mismatch for " .. identifier)
+    return id
+end
+
+local ids = {
+    dust = assert(elements.DEFAULT_PT_DUST),
+    water = assert(elements.DEFAULT_PT_WATR),
+    lava = assert(elements.DEFAULT_PT_LAVA),
+    spark = assert(elements.DEFAULT_PT_SPRK),
+    conv = assert(elements.DEFAULT_PT_CONV),
+    virs = assert(elements.DEFAULT_PT_VIRS),
+    iron = assert(elements.DEFAULT_PT_IRON),
+    wood = assert(elements.DEFAULT_PT_WOOD),
+    coal = assert(elements.DEFAULT_PT_COAL),
+    oil = assert(elements.DEFAULT_PT_OIL),
+    oxygen = assert(elements.DEFAULT_PT_O2),
+    neutron = assert(elements.DEFAULT_PT_NEUT),
+    alum = must_element("OMNI_PT_ALUM", "ALUM"),
+    magn = must_element("OMNI_PT_MAGN", "MAGN"),
+    copr = must_element("OMNI_PT_COPR", "COPR"),
+    tin = must_element("OMNI_PT_TIN", "TIN"),
+    coke = must_element("OMNI_PT_COKE", "COKE"),
+    stel = must_element("OMNI_PT_STEL", "STEL"),
+    slag = must_element("OMNI_PT_SLAG", "SLAG"),
+    flux = must_element("OMNI_PT_FLUX", "FLUX"),
+    cruc = must_element("OMNI_PT_CRUC", "CRUC"),
+    mscr = must_element("OMNI_PT_MSCR", "MSCR"),
+    nutr = must_element("OMNI_PT_NUTR", "NUTR"),
+    alga = must_element("OMNI_PT_ALGA", "ALGA"),
+    mycl = must_element("OMNI_PT_MYCL", "MYCL"),
+    spor = must_element("OMNI_PT_SPOR", "SPOR"),
+    path = must_element("OMNI_PT_PATH", "PATH"),
+    ster = must_element("OMNI_PT_STER", "STER"),
+    hums = must_element("OMNI_PT_HUMS", "HUMS"),
+    biof = must_element("OMNI_PT_BIOF", "BIOF"),
+    nful = must_element("OMNI_PT_NFUL", "NFUL"),
+    modr = must_element("OMNI_PT_MODR", "MODR"),
+    crod = must_element("OMNI_PT_CROD", "CROD"),
+    nclt = must_element("OMNI_PT_NCLT", "NCLT"),
+    nwst = must_element("OMNI_PT_NWST", "NWST"),
+    ngen = must_element("OMNI_PT_NGEN", "NGEN"),
+    rshd = must_element("OMNI_PT_RSHD", "RSHD"),
+    chlr = must_element("OMNI_PT_CHLR", "CHLR"),
+    amon = must_element("OMNI_PT_AMON", "AMON"),
+    ethl = must_element("OMNI_PT_ETHL", "ETHL"),
+    kero = must_element("OMNI_PT_KERO", "KERO"),
+    gaso = must_element("OMNI_PT_GASO", "GASO"),
+    acty = must_element("OMNI_PT_ACTY", "ACTY"),
+    cata = must_element("OMNI_PT_CATA", "CATA"),
+    poly = must_element("OMNI_PT_POLY", "POLY"),
+    pero = must_element("OMNI_PT_PERO", "PERO"),
+    fert = must_element("OMNI_PT_FERT", "FERT"),
+}
+
+local function configure_simulation()
+    sim.clearSim()
+    sim.paused(true)
+    sim.gravityMode(sim.GRAV_OFF)
+    sim.airMode(sim.AIR_OFF)
+    sim.ambientHeatSim(false)
+    sim.heatSim(true)
+    sim.ensureDeterminism(true)
+    sim.randomSeed(11, 12, 13, 14)
+end
+
+local function make(type, x, y, properties)
+    local particle = sim.partCreate(-1, x, y, type)
+    if particle < 0 then
+        return nil
+    end
+    for property, value in pairs(properties or {}) do
+        sim.partProperty(particle, property, value)
+    end
+    return particle
+end
+
+local function molten(ctype, x, y, temperature)
+    return make(ids.lava, x, y, { ctype = ctype, temp = temperature or 1800.0 })
+end
+
+local function spark_generator(x, y, temperature)
+    local particle = make(ids.ngen, x, y, { temp = temperature or 400.0 })
+    if particle then
+        sim.partProperty(particle, "type", ids.spark)
+        sim.partProperty(particle, "ctype", ids.ngen)
+        sim.partProperty(particle, "life", 4)
+    end
+    return particle
+end
+
+local function grid(bounds, callback)
+    local ordinal = 0
+    for y = bounds.y1, bounds.y2, stride do
+        for x = bounds.x1, bounds.x2, stride do
+            ordinal = ordinal + 1
+            callback(x, y, ordinal)
+        end
+    end
+end
+
+local full = { x1 = 48, y1 = 48, x2 = sim.XRES - 49, y2 = sim.YRES - 49 }
+
+local function metallurgy(bounds)
+    grid(bounds, function(x, y, n)
+        local recipe = n % 4
+        if recipe == 0 then
+            molten(ids.alum, x, y, 1000.0)
+            molten(ids.alum, x + 1, y, 1000.0)
+            molten(ids.magn, x, y + 1, 1000.0)
+        elseif recipe == 1 then
+            molten(ids.copr, x, y, 1500.0)
+            molten(ids.copr, x + 1, y, 1500.0)
+            molten(ids.tin, x, y + 1, 1500.0)
+        elseif recipe == 2 then
+            molten(ids.iron, x, y, 2600.0)
+            make(ids.coke, x + 1, y, { temp = 1200.0 })
+            make(ids.flux, x, y + 1, { temp = 1200.0 })
+        else
+            make(ids.mscr, x, y, { ctype = ids.stel, temp = 900.0 })
+            make(ids.flux, x + 1, y, { temp = 900.0 })
+            make(ids.slag, x, y + 1, { temp = 900.0 })
+        end
+    end)
+end
+
+local function furnaces(bounds)
+    grid(bounds, function(x, y, n)
+        make(ids.cruc, x, y, { temp = 1300.0 })
+        make((n % 2 == 0) and ids.wood or ids.coal, x + 1, y,
+            { temp = 1300.0 })
+        make(ids.oxygen, x, y + 1, { temp = 900.0 })
+    end)
+end
+
+local function ecology(bounds)
+    local types = { ids.nutr, ids.alga, ids.mycl, ids.spor, ids.hums, ids.water }
+    grid(bounds, function(x, y, n)
+        make(types[(n % #types) + 1], x, y, { temp = 298.15 })
+        make(types[((n + 2) % #types) + 1], x + 1, y, { temp = 298.15 })
+    end)
+end
+
+local function pathogen(bounds)
+    local types = { ids.path, ids.water, ids.ster, ids.biof, ids.nutr }
+    grid(bounds, function(x, y, n)
+        make(types[(n % #types) + 1], x, y, { temp = 310.0 })
+        make(types[((n + 1) % #types) + 1], x + 1, y, { temp = 310.0 })
+    end)
+end
+
+local function chemistry(bounds)
+    local types = {
+        ids.chlr, ids.amon, ids.ethl, ids.kero, ids.gaso,
+        ids.acty, ids.cata, ids.poly, ids.pero, ids.fert,
+        ids.oil, ids.water,
+    }
+    grid(bounds, function(x, y, n)
+        make(types[(n % #types) + 1], x, y, { temp = 430.0 })
+        make(types[((n + 5) % #types) + 1], x + 1, y, { temp = 430.0 })
+    end)
+end
+
+local function generators(bounds)
+    grid(bounds, function(x, y, n)
+        spark_generator(x, y, 450.0)
+        if n % 3 ~= 0 then
+            make(ids.nful, x + 1, y, { temp = 450.0 })
+        end
+        if n % 4 ~= 0 then
+            make(ids.modr, x, y + 1, { temp = 450.0 })
+        end
+        if n % 5 == 0 then
+            make(ids.crod, x + 1, y + 1, { temp = 450.0 })
+        end
+    end)
+end
+
+local function stable_reactor(bounds)
+    grid(bounds, function(x, y, n)
+        spark_generator(x, y, 450.0)
+        make(ids.nful, x + 1, y, { temp = 450.0 })
+        make(ids.modr, x, y + 1, { temp = 450.0 })
+        if n % 2 == 0 then
+            make(ids.crod, x + 1, y + 1, { temp = 450.0 })
+        else
+            make(ids.nclt, x + 1, y + 1, { temp = 450.0 })
+        end
+        make(ids.rshd, x + 2, y, { temp = 450.0 })
+    end)
+end
+
+local function loca(bounds)
+    grid(bounds, function(x, y, n)
+        if n % 2 == 0 then
+            make(ids.nwst, x, y, { temp = 1700.0 })
+            make(ids.rshd, x + 1, y, { temp = 500.0 })
+        else
+            spark_generator(x, y, 800.0)
+            make(ids.nful, x + 1, y, { temp = 800.0 })
+            make(ids.modr, x, y + 1, { temp = 800.0 })
+        end
+    end)
+end
+
+local function carriers(bounds)
+    local omni = { ids.alum, ids.nutr, ids.nful, ids.chlr, ids.mscr }
+    grid(bounds, function(x, y, n)
+        local target = omni[(n % #omni) + 1]
+        local kind = n % 5
+        if kind == 0 then
+            make(ids.lava, x, y, { ctype = target, temp = 1700.0 })
+        elseif kind == 1 then
+            local spark = make(target, x, y, { temp = 400.0 })
+            if spark then
+                sim.partProperty(spark, "type", ids.spark)
+                sim.partProperty(spark, "ctype", target)
+                sim.partProperty(spark, "life", 4)
+            end
+        elseif kind == 2 then
+            make(ids.mscr, x, y, { ctype = target })
+        elseif kind == 3 then
+            make(ids.conv, x, y, { ctype = target, tmp = omni[((n + 1) % #omni) + 1] })
+        else
+            make(ids.virs, x, y, { tmp2 = target })
+        end
+    end)
+end
+
+local scenarios = {
+    ["S01-METALLURGY-LARGE"] = function() metallurgy(full) end,
+    ["S02-FURNACES-PARALLEL"] = function() furnaces(full) end,
+    ["S03-ECOLOGY-AREA"] = function() ecology(full) end,
+    ["S04-PATHOGEN-CONTROL"] = function() pathogen(full) end,
+    ["S05-CHEMISTRY-DENSE"] = function() chemistry(full) end,
+    ["S06-NEUTRON-GENERATORS"] = function() generators(full) end,
+    ["S07-REACTOR-STABLE"] = function() stable_reactor(full) end,
+    ["S08-REACTOR-LOCA"] = function() loca(full) end,
+    ["S09-ALL-MODULES"] = function()
+        metallurgy({ x1 = 48, y1 = 48, x2 = sim.XRES / 2 - 12, y2 = sim.YRES / 2 - 12 })
+        ecology({ x1 = sim.XRES / 2 + 12, y1 = 48, x2 = sim.XRES - 49, y2 = sim.YRES / 2 - 12 })
+        chemistry({ x1 = 48, y1 = sim.YRES / 2 + 12, x2 = sim.XRES / 2 - 12, y2 = sim.YRES - 49 })
+        stable_reactor({ x1 = sim.XRES / 2 + 12, y1 = sim.YRES / 2 + 12, x2 = sim.XRES - 49, y2 = sim.YRES - 49 })
+    end,
+    ["S10-CARRIERS-ROUNDTRIP"] = function() carriers(full) end,
+}
+
+local function particle_count()
+    local count = 0
+    for _ in sim.parts() do
+        count = count + 1
+    end
+    return count
+end
+
+local function timed_save()
+    local started = socket.getTime()
+    local stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
+    local elapsed_ms = (socket.getTime() - started) * 1000.0
+    assert(type(stamp) == "string" and stamp:match("^[0-9A-Fa-f]+$") and #stamp == 10,
+        "saveStamp did not return a ten-character stamp ID")
+    return stamp, elapsed_ms
+end
+
+local function timed_load(stamp)
+    sim.clearSim()
+    local started = socket.getTime()
+    local loaded, load_error = sim.loadStamp(stamp, 0, 0, false, 0, 1)
+    local elapsed_ms = (socket.getTime() - started) * 1000.0
+    assert(loaded == 1, "loadStamp failed: " .. tostring(load_error))
+    return elapsed_ms
+end
+
+local function run_for(seconds, collect)
+    local started = socket.getTime()
+    local frame_times = {}
+    local frames = 0
+    local peak_particles = particle_count()
+    local next_sample = started + 1.0
+    local series = collect and assert(io.open(FRAME_SERIES_FILE, "wb")) or nil
+    if series then
+        series:write("elapsed_seconds,frames,particles\n")
+    end
+    while socket.getTime() - started < seconds do
+        local frame_started = socket.getTime()
+        sim.updateUpTo()
+        local frame_elapsed = socket.getTime() - frame_started
+        frames = frames + 1
+        if collect then
+            frame_times[#frame_times + 1] = math.max(frame_elapsed, 0.000000001)
+        end
+        local now = socket.getTime()
+        if now >= next_sample then
+            local particles = particle_count()
+            peak_particles = math.max(peak_particles, particles)
+            if series then
+                series:write(string.format("%.6f,%d,%d\n", now - started, frames, particles))
+                series:flush()
+            end
+            next_sample = next_sample + 1.0
+        end
+    end
+    local elapsed = socket.getTime() - started
+    local final_particles = particle_count()
+    peak_particles = math.max(peak_particles, final_particles)
+    if series then
+        series:write(string.format("%.6f,%d,%d\n", elapsed, frames, final_particles))
+        series:close()
+    end
+    if not collect then
+        return { frames = frames, elapsed = elapsed, peak_particles = peak_particles }
+    end
+    table.sort(frame_times)
+    local slow_index = math.max(1, math.ceil(#frame_times * 0.99))
+    local maximum_frame_time = frame_times[#frame_times]
+    return {
+        frames = frames,
+        elapsed = elapsed,
+        peak_particles = peak_particles,
+        final_particles = final_particles,
+        average_fps = frames / elapsed,
+        one_percent_low_fps = 1.0 / frame_times[slow_index],
+        minimum_fps = 1.0 / maximum_frame_time,
+    }
+end
+
+local function write_success(data)
+    local result = assert(io.open(RESULT_FILE, "wb"))
+    result:write("OMNI_STRESS_LUA_STATUS=PASS\n")
+    for _, key in ipairs({
+        "sample_id", "initial_particles", "peak_particles", "final_particles",
+        "warmup_frames", "sample_frames", "actual_warmup_seconds",
+        "actual_sample_seconds", "average_fps", "one_percent_low_fps",
+        "minimum_fps", "first_stamp", "second_stamp", "save_time_first_ms",
+        "load_time_first_ms", "save_time_second_ms", "load_time_second_ms",
+        "roundtrip_pass",
+    }) do
+        result:write(key .. "=" .. tostring(data[key]) .. "\n")
+    end
+    result:close()
+end
+
+local function run()
+    local scenario = assert(scenarios[sample_id], "unknown sample_id: " .. sample_id)
+    configure_simulation()
+    scenario()
+    local initial_particles = particle_count()
+    assert(initial_particles > 0, "scenario created no particles")
+
+    local first_stamp, save_time_first_ms = timed_save()
+    local load_time_first_ms = timed_load(first_stamp)
+    assert(particle_count() == initial_particles,
+        "first immediate OPS reload changed particle count")
+
+    local warmup = run_for(warmup_seconds, false)
+    local sampled = run_for(sample_seconds, true)
+
+    local before_second_save = particle_count()
+    local second_stamp, save_time_second_ms = timed_save()
+    local load_time_second_ms = timed_load(second_stamp)
+    local after_second_load = particle_count()
+    local roundtrip_pass = before_second_save == after_second_load
+    assert(roundtrip_pass, "second immediate OPS reload changed particle count")
+
+    write_success({
+        sample_id = sample_id,
+        initial_particles = initial_particles,
+        peak_particles = math.max(warmup.peak_particles, sampled.peak_particles),
+        final_particles = after_second_load,
+        warmup_frames = warmup.frames,
+        sample_frames = sampled.frames,
+        actual_warmup_seconds = string.format("%.6f", warmup.elapsed),
+        actual_sample_seconds = string.format("%.6f", sampled.elapsed),
+        average_fps = string.format("%.6f", sampled.average_fps),
+        one_percent_low_fps = string.format("%.6f", sampled.one_percent_low_fps),
+        minimum_fps = string.format("%.6f", sampled.minimum_fps),
+        first_stamp = first_stamp,
+        second_stamp = second_stamp,
+        save_time_first_ms = string.format("%.6f", save_time_first_ms),
+        load_time_first_ms = string.format("%.6f", load_time_first_ms),
+        save_time_second_ms = string.format("%.6f", save_time_second_ms),
+        load_time_second_ms = string.format("%.6f", load_time_second_ms),
+        roundtrip_pass = "true",
+    })
+end
+
+local ok, error_text = xpcall(run, debug.traceback)
+if not ok then
+    local result = assert(io.open(RESULT_FILE, "wb"))
+    result:write("OMNI_STRESS_LUA_STATUS=FAIL\n")
+    result:write("sample_id=" .. tostring(sample_id) .. "\n")
+    result:write("error=" .. tostring(error_text):gsub("[\r\n]+", " | ") .. "\n")
+    result:close()
+end
+
+os.exit(ok and 0 or 1)
