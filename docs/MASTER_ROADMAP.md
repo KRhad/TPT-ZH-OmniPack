@@ -49,18 +49,18 @@ release_ready=false
 ### 接管后增量证据
 
 ```text
-candidate_source_commit=5a9435e98e063f60c6576180b348c89542d8bb67
-binary_clean_build_commit=e2e1b3fe81082350b5e4919a2b8e43dac29ef090
-development_gate_head=d3419e7b
-candidate_documentation_commit=5a9435e9
+candidate_source_commit=ff5945c4acbe15052a316771934854aa0f9281de
+binary_clean_build_commit=ff5945c4acbe15052a316771934854aa0f9281de
+development_gate_head=ff5945c4
+candidate_package_documentation_commit=ff5945c4
 portable_install_prompt_fix=a590f8b5
 reaction_registry_gate=8391dbd1
 ops_mixed_roundtrip_test_commit=148c4acd
 ops_isolated_cases_commit=f92e12fa
-stress_harness_commit=423bf6da
+stress_harness_commit=ff5945c4
 stress_responsiveness_fix=4f5c07f9
-stress_assessment_gate=b356f931
-release_report_gate=d3419e7b
+stress_assessment_gate=ff5945c4
+release_report_gate=ff5945c4
 font_visual_test=true
 ops_mixed_carrier_roundtrip_test=true
 ops_official_roundtrip_test=true
@@ -68,13 +68,15 @@ ops_single_module_roundtrip_tests=4/4
 clean_build=502/502
 meson_tests=14/14
 candidate_python_tests=87/87
-public_zip_sha256=D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16
-symbols_zip_sha256=D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD5E5
-stress_test=not_tested
+public_zip_sha256=53E0304FF8CE932F7D836620A7599085A486B1689EAC131BC78D7B8EA6619827
+symbols_zip_sha256=8FD702E9F9B92E34321226340F9EF3742EFA86FE8C0FA98302CD6CECAAACE48D
+stress_samples=10/10
+stress_event_total=22529
+stress_test=true
 release_ready=false
 ```
 
-用户已确认当前原生 Fusion 12px 字体的中文实际可读性；DPI 和完整页面矩阵仍未测试。官方、四个单模块和四模块混合 OPS 已分别完成真实三进程双往返，验证稳定 identifier/ID 与 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2`。本地 `.cps` 保存对话框、禁用模块三选项和只读写入拦截仍需 GUI 交互。压力工具已建立并在完整运行中发现、修复一次 Lua 无响应缺陷；当前候选的十项 `60+600` 秒样本均完成、通过独立 JSON/CSV/OPS 评估，且有限观察下无增长或泄漏信号。模块事件计数与场景停止/恢复断言仍未实现，所有 `performance_gate_pass=false`，因此总 `stress_test=not_tested`。
+用户已确认当前原生 Fusion 12px 字体的中文实际可读性；DPI 和完整页面矩阵仍未测试。官方、四个单模块和四模块混合 OPS 已分别完成真实三进程双往返，验证稳定 identifier/ID 与 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2`。本地 `.cps` 保存对话框、禁用模块三选项和只读写入拦截仍需 GUI 交互。当前候选的十项 `60+600` 秒样本均完成、通过独立 JSON/CSV/OPS 评估，并实际记录模块事件计数与停止/恢复断言；十项 `performance_gate_pass=true`，总事件 `22529`，但两小时长跑仍为 `not_tested`。
 
 ### 已明确废弃的候选
 
@@ -118,7 +120,7 @@ release/1.0.0
 
 | 版本 | 主要交付 | 当前证据状态 | 进入下一版本的条件 |
 |---|---|---|---|
-| `0.1.0-test` | 冻结 48 元素与四模块，完成双语、OPS 门禁、十样本压力、法律与可公开测试包 | 中文可读性、官方/单模块/混合 OPS、源码/构建/自动测试和本地 ZIP 已有证据；DPI/语言切换、GUI 只读门禁、完整压力、凭据撤销、公开源码未通过 | `GATE-010-*` 全部通过并创建 `v0.1.0-test` |
+| `0.1.0-test` | 冻结 48 元素与四模块，完成双语、OPS 门禁、十样本压力、法律与可公开测试包 | 中文可读性、官方/单模块/混合 OPS、源码/构建/自动测试、本地 ZIP 和十样本性能门禁已有证据；DPI/语言切换、GUI 只读门禁、凭据撤销、公开源码未通过 | `GATE-010-*` 全部通过并创建 `v0.1.0-test` |
 | `0.2.0` | 四模块用途审计、四条跨模块闭环、7 个示例存档、8 项教程/挑战 | 尚未测试 | `GATE-020-*` 全部通过并创建 `v0.2.0` |
 | `0.3.0` | 复用官方电子系统的传感、阀门、联锁和自动化场景 | 尚未测试 | `GATE-030-*` 全部通过并创建 `v0.3.0` |
 | `0.4.0` | 独立炼金探索模式、十阶段解锁、进度持久化与防死局图搜索 | 尚未测试 | `GATE-040-*` 全部通过并创建 `v0.4.0` |
@@ -135,11 +137,12 @@ release/1.0.0
 
 不增加大型玩法。只允许修复中文/英文 GUI、四模块 UI、OPS 往返和只读门禁、固定压力样本、凭据/许可证/打包问题。当前最短关键路径是：
 
-1. 从新生成且绑定当前提交的 ZIP 做简中/英文、100%/125%/150% DPI 人工矩阵；
-2. 做官方、四模块、混合及 `LAVA`/`SPRK`/`MSCR`/`ctype/tmp/tmp2` OPS 双往返；
-3. 实际点击正常加载、只读加载、取消及全部保存/上传拦截路径；
-4. 生成并运行 `docs/PERFORMANCE_BASELINE.md` 的十个固定样本；
-5. 在外部账户撤销或轮换已暴露 PAT，再进行推送、匿名克隆、tag 和 prerelease。
+1. 从绑定 `ff5945c4` 的 ZIP 做简中/英文、100%/125%/150% DPI 人工矩阵；
+2. 实际点击正常加载、只读加载、取消及全部保存/上传拦截路径；
+3. 完成两小时长跑；十个固定 `60+600` 秒样本已通过；
+4. 在外部账户撤销或轮换已暴露 PAT，再进行推送、匿名克隆、tag 和 prerelease。
+
+官方、四模块、混合及 `LAVA`/`SPRK`/`MSCR`/`ctype/tmp/tmp2` OPS 双往返已经通过，不再列为未完成关键路径。
 
 ### 0.2.0：跨模块闭环
 
@@ -201,4 +204,4 @@ next_version_allowed=false
 release_ready=false
 ```
 
-当前可以继续完成本地修复、测试、文档和打包，但在 PAT 撤销/轮换、真实 GUI、OPS、压力、公开源码和匿名克隆证据齐全前，不得创建 `v0.1.0-test` 或宣称完成 0.1.0-test。
+当前可以继续完成本地修复、测试、文档和打包，但在 PAT 撤销/轮换、真实 GUI、公开源码和匿名克隆证据齐全前，不得创建 `v0.1.0-test` 或宣称公开发布 0.1.0-test；十样本性能门禁本身已通过。

@@ -1,30 +1,45 @@
 # TPT-ZH-OmniPack 0.1.0-test 候选报告
 
-本报告绑定当前本地候选 `5a9435e98e063f60c6576180b348c89542d8bb67`。它不是公开发布报告：人工 GUI、压力事件/场景行为门禁、凭据撤销、公开源码、匿名克隆、tag 和 GitHub prerelease 尚未通过，因此 `release_ready=false`。
+本报告绑定当前本地候选 `ff5945c4acbe15052a316771934854aa0f9281de` 及其重新封装的普通包。十个固定压力样本的事件、停止/恢复和有限观察门禁现已全部通过；报告仍不是公开发布报告，因为可信 GUI 矩阵、凭据处置、授权公开源码、匿名克隆、发布 tag/Release 和两小时长跑尚未完成，因此 `release_ready=false`。
 
 ## 当前产物
 
 | 产物 | SHA-256 | 状态 |
 |---|---|---|
-| `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip` | `D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16` | 本地候选；白名单、清单、哈希和解压二审通过 |
-| `TPT-ZH-OmniPack-0.1.0-test-Symbols-Windows-x64.zip` | `D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD5E5` | 本地符号候选；审计通过 |
-| `tpt-zh-omnipack.exe` | `D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2` | 已剥离；未签名 |
-| `tpt-zh-omnipack.debug` | `42D96F23C3702EE96FBEE5CF961582B7A1423FA1ABC6A73D617066A8A5E66364` | 与普通包分离 |
-| `resources/font.bz2` | `47F4EB851ABFC4CABDFC780E3D427ECBA39077418324A4E291CCDE552F0C139D` | Fusion Pixel Font 原生 12px；许可证与覆盖审计通过 |
+| `TPT-ZH-OmniPack-0.1.0-test-Windows-x64.zip` | `53E0304FF8CE932F7D836620A7599085A486B1689EAC131BC78D7B8EA6619827` | 当前本地候选；白名单、清单、成员哈希、ZIP 哈希和解压二审通过 |
+| `TPT-ZH-OmniPack-0.1.0-test-Symbols-Windows-x64.zip` | `8FD702E9F9B92E34321226340F9EF3742EFA86FE8C0FA98302CD6CECAAACE48D` | 当前本地符号包；与普通包分离，审计通过 |
+| `tpt-zh-omnipack.exe` | `14A00CCF73D5100C43D677572529F6DDCD9A2790FC16FED70136185262B46926` | 已剥离；未签名 |
+| `tpt-zh-omnipack.debug` | `17CE34385D9F27A610A591E3F76D6E61D9044B02D5791784563F4B5FDEBC7871` | detached symbols；不在普通包 |
+| `resources/font.bz2` | `47F4EB851ABFC4CABDFC780E3D427ECBA39077418324A4E291CCDE552F0C139D` | Fusion Pixel Font 原生 12px；许可证和覆盖审计通过 |
 
-普通 ZIP 有 15 个白名单成员，未压缩总大小 17,775,937 bytes；符号 ZIP 有 2 个成员。普通包不包含 `.cps`、`.stm`、`.pref`、Lua、账户、图章、个人存档或调试符号。
+普通 ZIP 有 15 个白名单成员，未包含 `.cps`、`.stm`、`.pref`、Lua、账户、图章、个人存档或调试符号；符号 ZIP 仅用于崩溃分析。包内 `TEST-MANIFEST.txt` 的 `revision`、EXE 大小和成员哈希均与上述候选一致。
 
 ## 当前证据
 
-- 空目录 Windows x64 Release build：`502/502`，0 error；二进制构建提交为 `e2e1b3fe81082350b5e4919a2b8e43dac29ef090`，其后的压力工具、报告门禁和文档提交不改变二进制源码。
-- 当前候选源码 Meson：`14/14`；Python：`87/87`，0 skip。
-- 已剥离 EXE 的模块、冶金、生态、化学、核工业和混合 OPS Lua 运行回归：`6/6`。
-- 官方、冶金、生态、化学、核工业独立 OPS：`5/5`，15 个进程、10 次重启、10 次加载验证、79 粒子、每次加载合计 120 字段断言。四模块混合 OPS 另用 3 个进程完成双往返。
-- OPS 覆盖 `LAVA.ctype`、`SPRK.ctype`、`MSCR.ctype`、`CONV.ctype/tmp`、`VIRS.tmp2`，并检查 OPS1、BZip2 和 palette identifier。
-- ZIP 解压 EXE 在全新隔离 `ddir` 实际启动，窗口标题正确、句柄非零、`Responding=true`，正常退出；这不是窗口内容或安装提示的人工视觉证据。
-- 发布 EXE 无 `.debug*` 段、无开发路径标记、无动态 GCC 开发运行库，保留 `DYNAMIC_BASE`、`NX_COMPAT` 和 `HIGH_ENTROPY_VA`；Authenticode 状态为 `NotSigned`。
-- 用户确认当前原生 Fusion 12px 中文显示问题已解决；英文界面、双向语言切换、重启持久化和 100%/125%/150% DPI 尚未完整验收。
-- 十个固定压力场景均以当前普通包完成 60 秒预热 + 600 秒采样，绑定 `source_commit=5a9435e9`、`harness_commit=90007099`、普通 ZIP `D69E75BE...9A16` 与 EXE `D29E6776...5BFB2`。十项原始 JSON/CSV/OPS 和 `assessment.json` 均通过独立校验：`crashed=false`、`hung=false`、`roundtrip_pass=true`，有限观察下 `unbounded_growth=false`、`memory_leak_suspected=false`。S03 有一次最低 `0.790` FPS，已保留；尚未定义绝对通过阈值。所有十项的模块事件计数仍为 `not_tested`、场景停止/恢复行为仍未断言，故每项 `performance_gate_pass=false`，总 `stress_test=not_tested`。
+- `build-0.1.0-test-metrics` 的 Windows x64 Release clean build 已完成；当前候选 Meson `14/14`、Python `87/87`（0 skip），最终 ZIP Lua 模块/反应回归 `6/6`。
+- 官方、四个单模块和四模块混合 OPS 已完成隔离双往返；覆盖 `LAVA.ctype`、`SPRK.ctype`、`MSCR.ctype`、`CONV.ctype/tmp`、`VIRS.tmp2` 等间接字段。
+- 当前普通 ZIP 解压到 `artifacts/development-1.0/extracted-ff5945c4-53e0304f` 后可启动：标题正确、窗口句柄非零、进程响应、正常退出码 `0`。这只是进程证据，不是窗口内容、安装提示或 DPI 的人工视觉证据。
+- EXE 无 `.debug*` 段、无开发路径标记、无动态 GCC 开发运行库，保留 `DYNAMIC_BASE`、`NX_COMPAT` 和 `HIGH_ENTROPY_VA`；Authenticode 状态为 `NotSigned`。
+- 用户已确认当前原生 Fusion 12px 方案的中文可读性；英文切换、双向语言持久化、100%/125%/150% DPI、四模块页面和只读/上传点击矩阵仍为 `not_tested`。
+
+### 十个正式压力样本
+
+每项均使用 60 秒预热 + 600 秒采样，且 `source_commit`、`harness_commit`、普通 ZIP 和 EXE 完全一致。每份目录保留 `result.json`、逐秒帧/进程序列、两份 OPS、`assessment.json` 和 SHA-256。
+
+| 样本 | Run ID | 事件总数 / 单帧峰值 | 停止/恢复 | 有限观察 | 门禁 |
+|---|---|---:|---|---|---|
+| S01 | `20260730T180440Z-784d734c` | 1557 / 243 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+| S02 | `20260730T181609Z-1519fcf4` | 0 / 0 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+| S03 | `20260730T182740Z-1b06cb19` | 4449 / 693 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+| S04 | `20260730T183905Z-2586b0be` | 6541 / 1024 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+| S05 | `20260730T185034Z-fabbdd4c` | 229 / 8 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+| S06 | `20260730T190158Z-7a7786ba` | 2402 / 512 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+| S07 | `20260730T191326Z-f68af76a` | 2048 / 512 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+| S08 | `20260730T192453Z-9131600a` | 2048 / 512 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+| S09 | `20260730T193619Z-d9f707f9` | 3255 / 525 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+| S10 | `20260730T194745Z-2bd2d539` | 0 / 0 | true / true | 无界增长=false；泄漏嫌疑=false | true |
+
+聚合断言：`10/10` 样本通过，事件总数 `22529`，最大单帧事件峰值 `1024`，每项 `scenario_recovery_assertions=7`、`stop_event_delta=0`。S02/S10 的零事件是被记录的数值，不是缺失字段。有限观察规则不构成长期有界性的数学证明；两小时长跑仍未执行。
 
 ## 明确废弃的历史候选
 
@@ -38,14 +53,15 @@
 ## 机器可读结论
 
 ```text
-source_commit=5a9435e98e063f60c6576180b348c89542d8bb67
-binary_build_commit=e2e1b3fe81082350b5e4919a2b8e43dac29ef090
+source_commit=ff5945c4acbe15052a316771934854aa0f9281de
+harness_commit=ff5945c4acbe15052a316771934854aa0f9281de
+binary_build_commit=ff5945c4acbe15052a316771934854aa0f9281de
 release_tag=not_tested
 version=0.1.0-test
 upstream_version=100.0.399
 
 clean_build_pass=true
-clean_build_targets=502/502
+clean_build_targets=not_tested
 meson_tests=14/14
 python_tests=87/87
 python_test_skips=0
@@ -68,9 +84,6 @@ ecology_ops_roundtrip_test=true
 chemistry_ops_roundtrip_test=true
 nuclear_ops_roundtrip_test=true
 mixed_ops_roundtrip_test=true
-ops_case_processes=18
-ops_case_restarts=12
-ops_case_load_verifications=12
 disabled_module_dialog_test=not_tested
 readonly_save_block_test=not_tested
 readonly_upload_block_test=not_tested
@@ -84,9 +97,11 @@ challenge_tests=not_tested
 stress_harness_test=true
 stress_samples_executed=10
 stress_sample_executions_passed=10
-stress_samples_passed=0
+stress_samples_passed=10
 stress_samples_total=10
-stress_test=not_tested
+stress_event_total=22529
+stress_peak_event_per_frame=1024
+stress_test=true
 long_run_test=not_tested
 
 font_license_resolved=true
@@ -98,16 +113,16 @@ credential_rotated=false
 source_commit_public=false
 anonymous_clone_pass=false
 
-release_exe_sha256=D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2
-debug_symbols_sha256=42D96F23C3702EE96FBEE5CF961582B7A1423FA1ABC6A73D617066A8A5E66364
+release_exe_sha256=14A00CCF73D5100C43D677572529F6DDCD9A2790FC16FED70136185262B46926
+debug_symbols_sha256=17CE34385D9F27A610A591E3F76D6E61D9044B02D5791784563F4B5FDEBC7871
 release_exe_stripped=true
 debug_symbols_separated=true
 developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16
-symbols_zip_sha256=D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD5E5
+public_zip_sha256=53E0304FF8CE932F7D836620A7599085A486B1689EAC131BC78D7B8EA6619827
+symbols_zip_sha256=8FD702E9F9B92E34321226340F9EF3742EFA86FE8C0FA98302CD6CECAAACE48D
 source_zip_sha256=not_tested
 zip_audit_pass=true
 
@@ -117,7 +132,7 @@ release_ready=false
 
 ## 当前硬阻塞
 
-1. 外部账户：已暴露 PAT 没有撤销或轮换证据，`secret_scan_pass=false`。
-2. 外部权限：没有经授权的 OmniPack 发布远端，源码未公开，匿名克隆、tag 和 GitHub prerelease 未执行。
-3. GUI：本会话没有可用的可信 Windows Computer Use 会话，不能完成语言、DPI、四模块、禁用模块三选项与保存/上传拦截的点击证据。
-4. 稳定性：十个 10 分钟压力样本与后续两小时长跑未全部完成。
+1. 外部账户：当前环境仍有 PAT 暴露证据，未取得撤销或轮换证明，`secret_scan_pass=false`。
+2. 外部权限：没有经授权的 OmniPack 发布远端；源码未公开，匿名克隆、tag 和 GitHub prerelease 未执行。
+3. GUI：没有可信 Windows Computer Use 会话，不能把进程响应当作语言、DPI、模块、禁用模块或上传拦截的视觉/交互证据。
+4. 稳定性：十个正式 10 分钟样本已通过本版本性能门禁，但两小时长跑和更高版本的长期稳定性仍未测试。

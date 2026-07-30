@@ -1,6 +1,6 @@
 # 0.1.0-test 最终公开测试验收
 
-验收分支原为 `release/test-public-final-validation`；中文修复工作从 2026-07-30 起在 `fix/zh-ui-crash` 进行。旧候选已经废弃。本文件只记录实际取得的证据；未取得可信 GUI、OPS 或性能数据的项目不得由静态分析、编译或 Lua 回归替代。
+验收分支原为 `release/test-public-final-validation`；中文修复工作从 2026-07-30 起在 `fix/zh-ui-crash` 进行。旧候选已经废弃。本文件保留当时的验收快照及未测试值，不作为 `ff5945c4` 当前候选摘要；当前权威状态见 `dist/release-report-0.1.0-test.md`、`docs/PERFORMANCE_BASELINE.md` 和 `docs/VERSION_GATES.md`。未取得可信 GUI 证据的项目仍不得由静态分析、编译或 Lua 回归替代。
 
 ## 冻结与基线
 

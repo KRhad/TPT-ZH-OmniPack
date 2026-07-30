@@ -5,10 +5,10 @@
 ## 当前范围
 
 ```text
-audit_head=5a9435e98e063f60c6576180b348c89542d8bb67
+audit_head=ff5945c4acbe15052a316771934854aa0f9281de
 implementation_commit=4f5c07f9243b2ad04c8dbeb8b9c1887d9812c60a
 font_implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
-development_gate_head=d3419e7b
+development_gate_head=ff5945c4
 official_id_range=0..195
 official_active_elements=195
 official_tombstones=1
@@ -35,10 +35,10 @@ pt_num=512
 
 | 玩家模块 | 元素数 | 元素代号 | 当前反应/事件上限 | 自动证据 | 实际 GUI/OPS/压力 |
 |---|---:|---|---:|---|---|
-| 工业冶金 | 23 | `ALUM COPR LEAD TIN NICL MAGN CHRM COBT MOLY ZINC CHRC COKE STEL BRNZ BRAS SSIL NCRM ALMG TSTL SLAG FLUX CRUC MSCR` | 每帧 2,048 次成功反应，固定 `3x3` | 登记、冶金审计、Lua 场景、独立 OPS 双往返和 S01 压力执行通过 | GUI/性能事件与场景行为门禁未完成 |
-| 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景、独立 OPS 双往返和 S03/S04 压力执行通过 | GUI/性能事件与场景行为门禁未完成 |
-| 高级化学 | 10 | `CHLR AMON ETHL KERO GASO ACTY CATA POLY PERO FERT` | 每帧 1,536 次成功反应，固定 `3x3` | 登记、化学审计、Lua 场景、独立 OPS 双往返和 S05 压力执行通过 | GUI/性能事件与场景行为门禁未完成 |
-| 受控核工业 | 7 | `NFUL MODR CROD NCLT NWST NGEN RSHD` | 每帧 512 次成功事件，固定 `3x3` | 登记、核工业审计、Lua 场景、独立 OPS 双往返和 S06/S07/S08 压力执行通过 | GUI/性能事件与场景行为门禁未完成 |
+| 工业冶金 | 23 | `ALUM COPR LEAD TIN NICL MAGN CHRM COBT MOLY ZINC CHRC COKE STEL BRNZ BRAS SSIL NCRM ALMG TSTL SLAG FLUX CRUC MSCR` | 每帧 2,048 次成功反应，固定 `3x3` | 登记、冶金审计、Lua 场景、独立 OPS 双往返和 S01/S02 压力执行通过；事件总数实际记录 | GUI/模块视觉门禁未完成 |
+| 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景、独立 OPS 双往返和 S03/S04 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
+| 高级化学 | 10 | `CHLR AMON ETHL KERO GASO ACTY CATA POLY PERO FERT` | 每帧 1,536 次成功反应，固定 `3x3` | 登记、化学审计、Lua 场景、独立 OPS 双往返和 S05 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
+| 受控核工业 | 7 | `NFUL MODR CROD NCLT NWST NGEN RSHD` | 每帧 512 次成功事件，固定 `3x3` | 登记、核工业审计、Lua 场景、独立 OPS 双往返和 S06/S07/S08 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
 
 四个上限来自当前源码常量并带同 tick 标记，属于源码确认；它们不是 FPS、内存或无界增长压力证据。
 
@@ -129,7 +129,7 @@ pt_num=512
 | 搜索、放置、图鉴 | `ALUM/NUTR/CHLR/NFUL` 代表项 | 尚未测试 | 需最终 ZIP 人工操作 |
 | 禁用模块存档检查 | 直接类型与载体字段 | 自动测试确认 | 三选项和保存/上传拦截实际 GUI 尚未测试 |
 | OPS 双往返 | 官方、四个单模块、四模块混合及载体 | 实际运行确认 | 每类真实 `.stm` OPS1 均完成两次保存/重启/加载；覆盖稳定 identifier/ID 与 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2` |
-| 固定压力样本 | 10 类 | 实际运行确认（完整门禁未通过） | 当前候选十项均完成 `60+600` 秒、FPS/内存/粒子和 OPS 原始数据，独立评估均通过；模块事件计数和场景停止/恢复断言尚未实现，故 `performance_gate_pass=false` |
+| 固定压力样本 | 10 类 | 实际运行确认 | 当前候选十项均完成 `60+600` 秒、FPS/内存/粒子、事件计数和 OPS 原始数据，独立评估均通过；停止/恢复七项断言和有限观察门禁均通过，`performance_gate_pass=true` |
 
 ## 版本内容增长规则
 

@@ -6,19 +6,19 @@
 
 版本门禁：`0.1.0-test` 稳定化，开发分支 `development/omnipack-1.0`。当前只修复公开测试基线、补齐 OPS/GUI/压力证据，不新增大型玩法；0.1 本地门禁完成后进入 0.2 跨模块联动。
 
-## 2026-07-30 当前候选快照
+## 2026-07-31 当前候选快照
 
 ```text
-candidate_source_commit=5a9435e98e063f60c6576180b348c89542d8bb67
-binary_clean_build_commit=e2e1b3fe81082350b5e4919a2b8e43dac29ef090
-development_gate_head=d3419e7b
+candidate_source_commit=ff5945c4acbe15052a316771934854aa0f9281de
+binary_clean_build_commit=ff5945c4acbe15052a316771934854aa0f9281de
+development_gate_head=ff5945c4
 branch=development/omnipack-1.0
 upstream_version=100.0.399
 font_sha256=47F4EB851ABFC4CABDFC780E3D427ECBA39077418324A4E291CCDE552F0C139D
-release_exe_sha256=D29E67762E3A6C592E84B2FF3D5FAB47958C7BB79336D3D2C9AE3CCDC9C5BFB2
-debug_symbols_sha256=42D96F23C3702EE96FBEE5CF961582B7A1423FA1ABC6A73D617066A8A5E66364
-public_zip_sha256=D69E75BEBBA4C2222F0CA5D2343A52650A07B0E46E546619817D63EA6CEF9A16
-symbols_zip_sha256=D0F2C5275956BF8BB6C13BBC0FE172A6106EEDDAC6EDCD3C6E3F1F9686BDD5E5
+release_exe_sha256=14A00CCF73D5100C43D677572529F6DDCD9A2790FC16FED70136185262B46926
+debug_symbols_sha256=17CE34385D9F27A610A591E3F76D6E61D9044B02D5791784563F4B5FDEBC7871
+public_zip_sha256=53E0304FF8CE932F7D836620A7599085A486B1689EAC131BC78D7B8EA6619827
+symbols_zip_sha256=8FD702E9F9B92E34321226340F9EF3742EFA86FE8C0FA98302CD6CECAAACE48D
 release_ready=false
 ```
 
@@ -27,9 +27,9 @@ release_ready=false
 - `ELEMENT_REGISTRY.csv` 现有 370 行、243 active、127 reserved；48 个 OmniPack 元素直接登记 production、uses、hazards、controls、cleanup，并由构建门禁拒绝空字段、别名漂移和官方/保留槽伪玩法声明。
 - 普通包和符号包已通过白名单、清单、哈希与解压二审。普通 EXE 无 `.debug*` 段、无开发路径标记、无动态 GCC 开发运行库，保留 `DYNAMIC_BASE/NX_COMPAT/HIGH_ENTROPY_VA`；Authenticode 为 `NotSigned`。
 - 当前 ZIP 解压 EXE 已在全新隔离 `ddir` 启动：标题 `TPT-ZH-OmniPack 0.1.0-test`、句柄非零、`Responding=true`、退出码 0。窗口内容不可可信捕获，因此不能据此断言安装提示、语言、DPI 或页面视觉通过。
-- 十个固定压力场景工具已实现。旧阻塞式 2 秒烟测暴露“Lua 脚本无响应”；`4f5c07f9` 改为每个 UI tick 返回。当前候选 `5a9435e9` / `90007099` 的十项均完成 60 秒预热 + 600 秒采样，并通过 JSON/CSV/OPS 独立评估：`crashed=false`、`hung=false`、`roundtrip_pass=true`，有限观察 `unbounded_growth=false`、`memory_leak_suspected=false`。S03 的最低 FPS `0.790` 已保留；事件计数和场景行为断言仍为 `not_tested`，所以十项 `performance_gate_pass=false`、总 `stress_test=not_tested`。
+- 十个固定压力场景工具已实现。旧阻塞式 2 秒烟测暴露“Lua 脚本无响应”；`4f5c07f9` 改为每个 UI tick 返回。当前候选 `ff5945c4` 的十项均完成 60 秒预热 + 600 秒采样，并通过 JSON/CSV/OPS 独立评估：`crashed=false`、`hung=false`、`roundtrip_pass=true`，有限观察 `unbounded_growth=false`、`memory_leak_suspected=false`。事件计数、停止残余事件和七项恢复断言均已实际记录；十项 `performance_gate_pass=true`，总事件 `22529`、单帧峰值 `1024`、总 `stress_test=true`。两小时长跑仍为 `not_tested`。
 - 仍有外部门禁：PAT 撤销/轮换、授权发布远端、公开源码、匿名克隆、tag/GitHub Release、可信 GUI 交互与最终 DPI 矩阵。
-- 候选冻结后增加只读压力证据判定器和机器可读报告门禁；它们不改变候选 EXE。当前普通包与符号包已重新封装，内部清单均绑定 `5a9435e98e063f60c6576180b348c89542d8bb67`，两包解压二审通过。
+- 候选冻结后增加只读压力证据判定器和机器可读报告门禁；事件指标实现和压力工具提交 `ff5945c4` 重新构建了候选 EXE。当前普通包 `53E0304F...9827`、符号包 `8FD702E9...E48D` 的内部清单均绑定 `ff5945c4acbe15052a316771934854aa0f9281de`，两包解压二审通过。
 
 ## 2026-07-30 接管基线
 
@@ -249,8 +249,8 @@ Phase 7 禁用模块存档加载兼容增量构建：
 - Lua 动态元素分配/选择运行回归：PASS；首个动态元素 ID 255，`ui.activeTool(0)` 返回 `OMNITEST_PT_LUA1`，客户端 `Responding=True`。
 - clean 构建日志密钥扫描：0 个令牌模式命中；构建目录中 0 个 `powder.pref`、账户或凭据候选文件。
 - 图鉴视觉布局、设置复选框交互、英文切换实际交互：BLOCKED；本会话没有可用的受信任 Computer Use native pipe。
-- 官方存档载入/往返：NOT RUN。
-- 禁用自定义模块存档加载：静态门禁与构建 PASS；实际三选项 UI、OPS 往返和兼容占位转换仍为 NOT RUN。
+- 官方 OPS stamp 双往返：PASS；GUI `.cps` 保存路径仍为 NOT RUN。
+- 禁用自定义模块存档加载：静态门禁与构建 PASS，模块 OPS 往返 PASS；实际三选项 UI 和兼容占位转换仍为 NOT RUN。
 
 Phase 3 冶金：
 
@@ -260,7 +260,7 @@ Phase 3 冶金：
 - Python 工具单测：30/30 PASS，2 项 C++ 编译验证因当前环境无 C++ 编译器跳过。
 - 实际客户端 Lua 冶金回归：PASS；7 条配方/凝固场景、5 组材料行为，`256..278` 全部可解析，客户端保持响应。
 - Meson `static` suite：当前为 5/5 PASS，含 registry、i18n、冶金、化学和工具测试。
-- 冶金 OPS 往返存档、禁用冶金模块存档警告、固定生产线 FPS/内存压力样本：NOT RUN。
+- 冶金 OPS 双往返和固定 S01/S02 生产线压力门禁：PASS；禁用冶金模块三选项 GUI 仍为 NOT RUN。
 
 Phase 3 基础化学：
 
@@ -268,7 +268,7 @@ Phase 3 基础化学：
 - 本地化审计：PASS，en/zh `1,222/1,222`，0 missing、0 extra、0 error；37 项保留英文/代号警告待人工分类。
 - 化学静态审计：PASS，10 个元素、7 类受限工艺、固定 `3x3` 邻域。
 - 实际客户端 Lua 化学回归：PASS；9 个场景，覆盖裂化、聚合、过氧化物、氨、氯氢、肥料、发酵和负例；`360..369` 全部可解析，客户端保持响应。
-- 化学 OPS 往返、禁用化学模块载入警告、固定生产线 FPS/内存压力样本：NOT RUN。
+- 化学 OPS 双往返和固定 S05 生产线压力门禁：PASS；禁用化学模块三选项 GUI 仍为 NOT RUN。
 
 Phase 4 局部生态：
 
@@ -276,7 +276,7 @@ Phase 4 局部生态：
 - 本地化审计：PASS，en/zh `1,238/1,238`，0 missing、0 extra、0 error；37 项保留英文/代号警告待人工分类。
 - 生物静态审计：PASS，8 个元素、6 条局部路径、固定 `3x3` 邻域。
 - 实际客户端 Lua 回归：PASS；完整和简化模式各覆盖 6 个场景，`288..295` 全部可解析，客户端保持响应。
-- 生物 OPS 往返、关闭生物模块载入警告、固定生态压力样本：NOT RUN。
+- 生物 OPS 双往返和固定 S03/S04 生态压力门禁：PASS；关闭生物模块三选项 GUI 仍为 NOT RUN。
 
 Phase 5 受控核工业：
 
@@ -286,7 +286,7 @@ Phase 5 受控核工业：
 - Python 工具单测：39/39 PASS，2 项 C++ 编译验证因当前 Python 环境未发现编译器跳过。
 - Meson `static` suite：7/7 PASS，含核工业门禁。
 - 实际客户端 Lua 回归：PASS；受控转换、控制棒、无燃料发生器负例、冷却剂与屏蔽均覆盖；`328..334` 全部可解析，客户端保持响应。
-- 核工业 OPS 往返、关闭核工业模块载入警告、固定反应堆压力样本：NOT RUN。
+- 核工业 OPS 双往返和固定 S06/S07/S08 反应堆压力门禁：PASS；关闭核工业模块三选项 GUI 仍为 NOT RUN。
 
 Phase 6 扩展元素图鉴内容：
 
@@ -324,19 +324,19 @@ Phase 2 没有新增粒子更新函数，因此没有新增每帧粒子成本。
 ## 已知问题
 
 - 当前中文字体的名称、上游版本、固定 BDF、许可证和生成链路已审计；用户确认当前中文可读。完整 DPI、长文本、语言切换和页面矩阵仍未执行。
-- 官方 100.0 存档样本载入/重存尚未执行。
-- 禁用模块存档的中文提示、正常/只读加载与保存拦截已实现；实际三选项 UI、禁用模块 OPS 往返以及兼容占位转换仍未执行或实现，是发布阻塞项。
-- Windows x64 内部测试 ZIP 已生成并有隐私/完整性审计，但 UI 人工复核、OPS 往返、跨来源迁移及高粒子数性能数据仍缺失，不得称为正式公开发布。
+- 官方 OPS stamp 及四模块 OPS 已完成双往返；GUI `.cps` 保存路径和跨来源迁移语料仍未执行。
+- 禁用模块存档的中文提示、正常/只读加载与保存拦截已实现；载体 OPS 往返通过，实际三选项 UI 以及兼容占位转换仍未执行或实现，是发布阻塞项。
+- 当前 Windows x64 候选 ZIP 已通过隐私/完整性审计和十个高粒子数性能门禁，但 UI 人工复核、跨来源迁移及两小时长跑仍缺失，不得称为正式公开发布。
 - 图鉴内容目前覆盖 48 个已实现 OmniPack 元素；官方元素仍只显示登记说明和基础热学参数，完整图鉴视觉布局尚未执行。
 - 曾发现旧 Meson `testlog.txt` 含明文 GitHub PAT 环境变量。该原始日志已删除且未提交；后续测试在清理敏感环境后重跑，令牌模式扫描为 0。凭据轮换属于仓库外必要操作。
 - 两条基线 GCC 警告仍待定位。
 
 ## 下一阶段
 
-1. 完成 0.1.0-test 的 OPS 往返、禁用模块实际三选项/只读写入门禁与十个固定压力样本。
-2. 从重新打包的便携 ZIP 执行中文/英文切换、DPI、四模块 UI 和代表元素检查。
+1. 完成 0.1.0-test 的禁用模块实际三选项、只读写入/上传和 GUI `.cps` 路径证据。
+2. 从重新打包的便携 ZIP 执行中文/英文切换、DPI、四模块 UI 和代表元素检查，并完成两小时长跑。
 3. 完成本地安全门禁；PAT 撤销、正式远端推送和匿名克隆在取得外部权限后执行。
-4. 0.1 本地门禁固化后进入 0.2.0 的用途矩阵和四条跨模块闭环。
+4. 在不虚报 0.1 发布状态的前提下，开始 0.2.0 的用途矩阵和四条跨模块闭环。
 
 ## 当前 commit hash
 
