@@ -45,7 +45,14 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn('$startInfo.ArgumentList.Add($testRoot)', self.powershell)
         for name in ("GITHUB_PAT_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"):
             self.assertIn(name, self.powershell)
-        self.assertNotIn("powder.pref", self.powershell)
+        self.assertIn('(Join-Path $testRoot "powder.pref")', self.powershell)
+        self.assertIn('"{}" + [Environment]::NewLine', self.powershell)
+        self.assertNotIn("AppData", self.powershell)
+
+    def test_long_run_returns_control_to_the_ui_event_loop(self) -> None:
+        self.assertIn("event.register(event.tick, tick_callback)", self.lua)
+        self.assertIn("event.unregister(event.tick, tick_callback)", self.lua)
+        self.assertNotIn("while socket.getTime() - started < seconds", self.lua)
 
     def test_required_raw_series_and_ops_evidence_are_persisted(self) -> None:
         for filename in (

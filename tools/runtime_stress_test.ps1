@@ -103,6 +103,14 @@ function Get-StampInfo {
 $completed = $false
 try {
     New-Item -ItemType Directory -Path $testRoot | Out-Null
+    # An existing empty preference object makes this an isolated returning
+    # profile. It suppresses first-run modal UI (for example automatic scale
+    # confirmation) without importing any real user preference or account.
+    [System.IO.File]::WriteAllText(
+        (Join-Path $testRoot "powder.pref"),
+        "{}" + [Environment]::NewLine,
+        [System.Text.UTF8Encoding]::new($false)
+    )
     Copy-Item -LiteralPath $luaSource -Destination (Join-Path $testRoot "autorun.lua")
     [System.IO.File]::WriteAllLines(
         (Join-Path $testRoot "stress-scenario.config"),

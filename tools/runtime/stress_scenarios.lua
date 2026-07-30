@@ -301,59 +301,6 @@ local function timed_load(stamp)
     return elapsed_ms
 end
 
-local function run_for(seconds, collect)
-    local started = socket.getTime()
-    local frame_times = {}
-    local frames = 0
-    local peak_particles = particle_count()
-    local next_sample = started + 1.0
-    local series = collect and assert(io.open(FRAME_SERIES_FILE, "wb")) or nil
-    if series then
-        series:write("elapsed_seconds,frames,particles\n")
-    end
-    while socket.getTime() - started < seconds do
-        local frame_started = socket.getTime()
-        sim.updateUpTo()
-        local frame_elapsed = socket.getTime() - frame_started
-        frames = frames + 1
-        if collect then
-            frame_times[#frame_times + 1] = math.max(frame_elapsed, 0.000000001)
-        end
-        local now = socket.getTime()
-        if now >= next_sample then
-            local particles = particle_count()
-            peak_particles = math.max(peak_particles, particles)
-            if series then
-                series:write(string.format("%.6f,%d,%d\n", now - started, frames, particles))
-                series:flush()
-            end
-            next_sample = next_sample + 1.0
-        end
-    end
-    local elapsed = socket.getTime() - started
-    local final_particles = particle_count()
-    peak_particles = math.max(peak_particles, final_particles)
-    if series then
-        series:write(string.format("%.6f,%d,%d\n", elapsed, frames, final_particles))
-        series:close()
-    end
-    if not collect then
-        return { frames = frames, elapsed = elapsed, peak_particles = peak_particles }
-    end
-    table.sort(frame_times)
-    local slow_index = math.max(1, math.ceil(#frame_times * 0.99))
-    local maximum_frame_time = frame_times[#frame_times]
-    return {
-        frames = frames,
-        elapsed = elapsed,
-        peak_particles = peak_particles,
-        final_particles = final_particles,
-        average_fps = frames / elapsed,
-        one_percent_low_fps = 1.0 / frame_times[slow_index],
-        minimum_fps = 1.0 / maximum_frame_time,
-    }
-end
-
 local function write_success(data)
     local result = assert(io.open(RESULT_FILE, "wb"))
     result:write("OMNI_STRESS_LUA_STATUS=PASS\n")
@@ -370,52 +317,21 @@ local function write_success(data)
     result:close()
 end
 
-local function run()
-    local scenario = assert(scenarios[sample_id], "unknown sample_id: " .. sample_id)
-    configure_simulation()
-    scenario()
-    local initial_particles = particle_count()
-    assert(initial_particles > 0, "scenario created no particles")
+local runtime = {
+    callback_registered = false,
+    series = nil,
+}
+local tick_callback
 
-    local first_stamp, save_time_first_ms = timed_save()
-    local load_time_first_ms = timed_load(first_stamp)
-    assert(particle_count() == initial_particles,
-        "first immediate OPS reload changed particle count")
-
-    local warmup = run_for(warmup_seconds, false)
-    local sampled = run_for(sample_seconds, true)
-
-    local before_second_save = particle_count()
-    local second_stamp, save_time_second_ms = timed_save()
-    local load_time_second_ms = timed_load(second_stamp)
-    local after_second_load = particle_count()
-    local roundtrip_pass = before_second_save == after_second_load
-    assert(roundtrip_pass, "second immediate OPS reload changed particle count")
-
-    write_success({
-        sample_id = sample_id,
-        initial_particles = initial_particles,
-        peak_particles = math.max(warmup.peak_particles, sampled.peak_particles),
-        final_particles = after_second_load,
-        warmup_frames = warmup.frames,
-        sample_frames = sampled.frames,
-        actual_warmup_seconds = string.format("%.6f", warmup.elapsed),
-        actual_sample_seconds = string.format("%.6f", sampled.elapsed),
-        average_fps = string.format("%.6f", sampled.average_fps),
-        one_percent_low_fps = string.format("%.6f", sampled.one_percent_low_fps),
-        minimum_fps = string.format("%.6f", sampled.minimum_fps),
-        first_stamp = first_stamp,
-        second_stamp = second_stamp,
-        save_time_first_ms = string.format("%.6f", save_time_first_ms),
-        load_time_first_ms = string.format("%.6f", load_time_first_ms),
-        save_time_second_ms = string.format("%.6f", save_time_second_ms),
-        load_time_second_ms = string.format("%.6f", load_time_second_ms),
-        roundtrip_pass = "true",
-    })
-end
-
-local ok, error_text = xpcall(run, debug.traceback)
-if not ok then
+local function write_failure(error_text)
+    if runtime.series then
+        runtime.series:close()
+        runtime.series = nil
+    end
+    if runtime.callback_registered and tick_callback then
+        event.unregister(event.tick, tick_callback)
+        runtime.callback_registered = false
+    end
     local result = assert(io.open(RESULT_FILE, "wb"))
     result:write("OMNI_STRESS_LUA_STATUS=FAIL\n")
     result:write("sample_id=" .. tostring(sample_id) .. "\n")
@@ -423,4 +339,174 @@ if not ok then
     result:close()
 end
 
-os.exit(ok and 0 or 1)
+local function begin_sample(now)
+    runtime.phase = "sample"
+    runtime.phase_started = now
+    runtime.next_particle_sample = now + 1.0
+    runtime.sample_frames = 0
+    runtime.sample_frame_times = {}
+    runtime.last_frame_started = nil
+    runtime.sample_peak_particles = particle_count()
+    runtime.series = assert(io.open(FRAME_SERIES_FILE, "wb"))
+    runtime.series:write("elapsed_seconds,frames,particles\n")
+    runtime.series:flush()
+end
+
+local function finish_sample(now)
+    local sample_elapsed = now - runtime.phase_started
+    local final_before_save = particle_count()
+    runtime.sample_peak_particles = math.max(
+        runtime.sample_peak_particles,
+        final_before_save)
+    runtime.series:write(string.format(
+        "%.6f,%d,%d\n",
+        sample_elapsed,
+        runtime.sample_frames,
+        final_before_save))
+    runtime.series:close()
+    runtime.series = nil
+
+    assert(runtime.sample_frames > 0, "sample completed without simulation frames")
+    if #runtime.sample_frame_times == 0 then
+        runtime.sample_frame_times[1] = sample_elapsed / runtime.sample_frames
+    end
+    table.sort(runtime.sample_frame_times)
+    local slow_index = math.max(
+        1,
+        math.ceil(#runtime.sample_frame_times * 0.99))
+    local maximum_frame_time = runtime.sample_frame_times[
+        #runtime.sample_frame_times]
+
+    local second_stamp, save_time_second_ms = timed_save()
+    local load_time_second_ms = timed_load(second_stamp)
+    local after_second_load = particle_count()
+    local roundtrip_pass = final_before_save == after_second_load
+    assert(roundtrip_pass, "second immediate OPS reload changed particle count")
+
+    event.unregister(event.tick, tick_callback)
+    runtime.callback_registered = false
+    write_success({
+        sample_id = sample_id,
+        initial_particles = runtime.initial_particles,
+        peak_particles = math.max(
+            runtime.warmup_peak_particles,
+            runtime.sample_peak_particles),
+        final_particles = after_second_load,
+        warmup_frames = runtime.warmup_frames,
+        sample_frames = runtime.sample_frames,
+        actual_warmup_seconds = string.format(
+            "%.6f", runtime.actual_warmup_seconds),
+        actual_sample_seconds = string.format("%.6f", sample_elapsed),
+        average_fps = string.format(
+            "%.6f", runtime.sample_frames / sample_elapsed),
+        one_percent_low_fps = string.format(
+            "%.6f", 1.0 / runtime.sample_frame_times[slow_index]),
+        minimum_fps = string.format("%.6f", 1.0 / maximum_frame_time),
+        first_stamp = runtime.first_stamp,
+        second_stamp = second_stamp,
+        save_time_first_ms = string.format(
+            "%.6f", runtime.save_time_first_ms),
+        load_time_first_ms = string.format(
+            "%.6f", runtime.load_time_first_ms),
+        save_time_second_ms = string.format("%.6f", save_time_second_ms),
+        load_time_second_ms = string.format("%.6f", load_time_second_ms),
+        roundtrip_pass = "true",
+    })
+    os.exit(0)
+end
+
+local function tick_once()
+    local frame_started = socket.getTime()
+    if runtime.phase == "warmup"
+        and frame_started - runtime.phase_started >= warmup_seconds then
+        local particles = particle_count()
+        runtime.warmup_peak_particles = math.max(
+            runtime.warmup_peak_particles,
+            particles)
+        runtime.actual_warmup_seconds = frame_started - runtime.phase_started
+        begin_sample(frame_started)
+    end
+
+    if runtime.phase == "sample" and runtime.last_frame_started then
+        runtime.sample_frame_times[#runtime.sample_frame_times + 1] = math.max(
+            frame_started - runtime.last_frame_started,
+            0.000000001)
+    end
+    if runtime.phase == "sample" then
+        runtime.last_frame_started = frame_started
+    end
+
+    sim.updateUpTo()
+    if runtime.phase == "warmup" then
+        runtime.warmup_frames = runtime.warmup_frames + 1
+    else
+        runtime.sample_frames = runtime.sample_frames + 1
+    end
+
+    local now = socket.getTime()
+    if now >= runtime.next_particle_sample then
+        local particles = particle_count()
+        if runtime.phase == "warmup" then
+            runtime.warmup_peak_particles = math.max(
+                runtime.warmup_peak_particles,
+                particles)
+        else
+            runtime.sample_peak_particles = math.max(
+                runtime.sample_peak_particles,
+                particles)
+            runtime.series:write(string.format(
+                "%.6f,%d,%d\n",
+                now - runtime.phase_started,
+                runtime.sample_frames,
+                particles))
+            runtime.series:flush()
+        end
+        runtime.next_particle_sample = now + 1.0
+    end
+
+    if runtime.phase == "sample"
+        and now - runtime.phase_started >= sample_seconds then
+        finish_sample(now)
+    end
+end
+
+tick_callback = function()
+    local ok, error_text = xpcall(tick_once, debug.traceback)
+    if not ok then
+        write_failure(error_text)
+        os.exit(1)
+    end
+end
+
+local function start()
+    local scenario = assert(scenarios[sample_id], "unknown sample_id: " .. sample_id)
+    configure_simulation()
+    scenario()
+    runtime.initial_particles = particle_count()
+    assert(runtime.initial_particles > 0, "scenario created no particles")
+
+    runtime.first_stamp, runtime.save_time_first_ms = timed_save()
+    runtime.load_time_first_ms = timed_load(runtime.first_stamp)
+    assert(particle_count() == runtime.initial_particles,
+        "first immediate OPS reload changed particle count")
+
+    local now = socket.getTime()
+    runtime.warmup_frames = 0
+    runtime.warmup_peak_particles = runtime.initial_particles
+    runtime.actual_warmup_seconds = 0.0
+    if warmup_seconds == 0 then
+        begin_sample(now)
+    else
+        runtime.phase = "warmup"
+        runtime.phase_started = now
+        runtime.next_particle_sample = now + 1.0
+    end
+    event.register(event.tick, tick_callback)
+    runtime.callback_registered = true
+end
+
+local ok, error_text = xpcall(start, debug.traceback)
+if not ok then
+    write_failure(error_text)
+    os.exit(1)
+end
