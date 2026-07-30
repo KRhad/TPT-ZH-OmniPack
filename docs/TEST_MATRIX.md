@@ -215,8 +215,8 @@
 | 发布 EXE 开发路径 | 自动 | PASS | 扫描拒绝 `C:\\Users\\`、`/Users/` 和构建路径标记 |
 | PE 缓解属性 | 自动 | PASS | 审计 `DYNAMIC_BASE`、`NX_COMPAT`、`HIGH_ENTROPY_VA` 位 |
 | 字体来源与许可证 | 源码/自动 | PASS | `docs/FONT_AUDIT.md`；语言目录 2,593 字符全部有合法字形输入 |
-| 公共 ZIP 与符号 ZIP | 自动 | PASS（待最终报告哈希） | 白名单、成员哈希、ZIP SHA-256、解压后二次审计 |
-| 最终 ZIP 启动 | 实际 GUI | NOT RUN | 必须从解压目录记录窗口、独立数据目录与退出行为 |
+| 公共 ZIP 与符号 ZIP | 自动 | PASS | 白名单、成员哈希、ZIP SHA-256、解压后二次审计均通过；最终哈希见 `dist/release-report-0.1.0-test.md` |
+| 最终 ZIP 启动 | 实际 GUI | PASS | 解压后的最终 ZIP 运行 8 秒，窗口标题为 `TPT-ZH-OmniPack 0.1.0-test`，`Responding=True`、句柄非零；仅创建隔离的 OmniPack 数据目录 |
 | 中文/英文点击切换 | 实际 GUI | NOT RUN | 需截图和重启验证 |
 | 模块开关与代表元素 | 实际 GUI | NOT RUN | 需四模块和 `ALUM/NUTR/NFUL/CHLR` 实测 |
 | OPS 三选项与只读拦截 | 实际 GUI | NOT RUN | 静态门禁已通过，实际点击未完成 |
