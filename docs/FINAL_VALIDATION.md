@@ -6,7 +6,7 @@
 
 - 初始工作树干净；请求指定的 `0e9ff54c65c64f01e3af567366d2eed1de2c5dd9` 是当前分支的祖先。
 - 开始验收时 HEAD 已包含后续干净提交 `e2e965ad` 和 `1d490072`，没有回退或覆盖它们。
-- 最终候选构建提交为 `784525867567a801fc0d37224eb36041ba78d553`；旧候选 ZIP 已保存在 `artifacts/final-validation/baseline-dist/`，原始 `dist/` 文件未删除。包外验收报告随后更新，不改变候选 ZIP 的内部清单。
+- 最终候选构建提交为 `5828a97fc39129547354956dde84d7b6cfb818c2`；旧候选 ZIP 已保存在 `artifacts/final-validation/baseline-dist/`，原始 `dist/` 文件未删除。包外验收报告随后更新，不改变候选 ZIP 的内部清单。
 
 ## 凭据检查
 
@@ -61,7 +61,7 @@
 ## 机器可读结论
 
 ```text
-source_commit=784525867567a801fc0d37224eb36041ba78d553
+source_commit=5828a97fc39129547354956dde84d7b6cfb818c2
 release_tag=not_tested
 version=0.1.0-test
 
@@ -138,8 +138,8 @@ developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=E697338844474CC90C89863B8C93165F5CC39D3CEADE41C8D336EF67118F861C
-symbols_zip_sha256=602032D5739B38ECB4B2499CAD0F0066F9F253B090A3F4D69AD02545343E9D55
+public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
+symbols_zip_sha256=3EDD20947C0D96BFD4675938B7FAE599D5F9DBA8E3F99D388C33854B329B33F9
 zip_audit_pass=true
 
 tag_public=false
