@@ -84,6 +84,27 @@ REGISTRY_COLUMNS = (
     "chinese_description",
     "license",
     "notes",
+    "code",
+    "zh_name",
+    "en_name",
+    "module",
+    "source",
+    "production",
+    "uses",
+    "hazards",
+    "controls",
+    "cleanup",
+    "status",
+    "tests",
+)
+
+UPSTREAM_GAMEPLAY_SENTINEL = "upstream_managed_by_official_tpt"
+RESERVED_GAMEPLAY_SENTINEL = "reserved_slot_no_element"
+OMNIPACK_MODULE_RANGES = (
+    (256, 287, "metallurgy"),
+    (288, 327, "biology"),
+    (328, 359, "nuclear"),
+    (360, 511, "chemistry"),
 )
 
 SLOT_STATUSES = frozenset({"active", "reserved"})
@@ -833,6 +854,79 @@ def validate_registry(
         )
         if stable_id is None:
             continue
+
+        alias_fields = {
+            "code": "display_code",
+            "zh_name": "chinese_name",
+            "en_name": "english_name",
+            "source": "source_mod",
+            "status": "implementation_status",
+            "tests": "test_status",
+        }
+        for alias, canonical in alias_fields.items():
+            if row.get(alias) != row.get(canonical):
+                findings.add(
+                    "REGISTRY_ALIAS",
+                    path,
+                    f"{alias} must exactly match {canonical}",
+                    row_number,
+                )
+
+        slot_is_reserved = stable_id < len(slots) and slots[stable_id] is None
+        if stable_id <= OFFICIAL_SLOT_LAST:
+            expected_module = "official_reserved" if slot_is_reserved else "official"
+        elif slot_is_reserved:
+            expected_module = "omnipack_reserved"
+        else:
+            expected_module = next(
+                (
+                    module
+                    for first, last, module in OMNIPACK_MODULE_RANGES
+                    if first <= stable_id <= last
+                ),
+                "",
+            )
+        if row.get("module") != expected_module:
+            findings.add(
+                "REGISTRY_MODULE",
+                path,
+                f"module must be {expected_module!r} for stable_id {stable_id}",
+                row_number,
+            )
+
+        gameplay_fields = ("production", "uses", "hazards", "controls", "cleanup")
+        if slot_is_reserved:
+            for field in gameplay_fields:
+                if row.get(field) != RESERVED_GAMEPLAY_SENTINEL:
+                    findings.add(
+                        "REGISTRY_RESERVED_GAMEPLAY",
+                        path,
+                        f"{field} must be {RESERVED_GAMEPLAY_SENTINEL!r} for a reserved slot",
+                        row_number,
+                    )
+        elif stable_id <= OFFICIAL_SLOT_LAST:
+            for field in gameplay_fields:
+                if row.get(field) != UPSTREAM_GAMEPLAY_SENTINEL:
+                    findings.add(
+                        "REGISTRY_UPSTREAM_GAMEPLAY",
+                        path,
+                        f"{field} must be {UPSTREAM_GAMEPLAY_SENTINEL!r} for an official element",
+                        row_number,
+                    )
+        else:
+            for field in gameplay_fields:
+                value = row.get(field, "").strip()
+                if (
+                    len(value) < 12
+                    or value in {UPSTREAM_GAMEPLAY_SENTINEL, RESERVED_GAMEPLAY_SENTINEL}
+                ):
+                    findings.add(
+                        "REGISTRY_GAMEPLAY",
+                        path,
+                        f"implemented OmniPack field {field} needs a concrete audited value",
+                        row_number,
+                    )
+
         if stable_id in by_id:
             findings.add("REGISTRY_DUPLICATE_ID", path, f"stable_id {stable_id} is duplicated", row_number)
         by_id[stable_id] = row
@@ -886,9 +980,6 @@ def validate_registry(
         if row.get("chinese_description") and not CJK.search(row["chinese_description"]):
             findings.add("REGISTRY_CHINESE", path, "chinese_description must contain a CJK character", row_number)
 
-        slot_is_reserved = (
-            stable_id < len(slots) and slots[stable_id] is None
-        )
         if slot_is_reserved:
             expected = reserved_registry_expectations(stable_id)
             for field, value in expected.items():
