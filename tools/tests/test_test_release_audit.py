@@ -35,6 +35,10 @@ class TestReleaseAuditTests(unittest.TestCase):
         (source / "LICENSE").write_text("GPL test\n", encoding="utf-8")
         (source / "README.zh-CN.md").write_text("Readme\n", encoding="utf-8")
         (source / "CHANGELOG.zh-CN.md").write_text("Changes\n", encoding="utf-8")
+        (source / "meson_options.txt").write_text(
+            "option('can_install', type: 'combo', choices: ['no', 'yes', 'yes_check', 'auto'], value: 'no')\n",
+            encoding="utf-8",
+        )
         (source / "docs" / "TEST_RELEASE.md").write_text(
             "Windows x64\n不属于本测试版\n已知测试限制\n未签名\n",
             encoding="utf-8",
@@ -83,6 +87,17 @@ class TestReleaseAuditTests(unittest.TestCase):
                 archive.writestr("TPT-ZH-OmniPack-0.1.0-test-Windows-x64/powder.pref", "{}")
             errors = test_release_audit.audit_package(package)
             self.assertTrue(any("forbidden" in error for error in errors))
+
+    def test_portable_package_rejects_first_run_install_prompt_default(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            options = source / "meson_options.txt"
+            options.write_text(
+                options.read_text(encoding="utf-8").replace("value: 'no'", "value: 'auto'"),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "can_install=no"):
+                self.build_package(source)
 
     def test_manifest_hash_tampering_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -27,8 +27,8 @@ option(
 	'can_install',
 	type: 'combo',
 	choices: [ 'no', 'yes', 'yes_check', 'auto' ],
-	value: 'auto',
-	description: 'Disable (\'no\') or enable (\'yes\') setting up file and URL associations, or even offer to do it at startup (\'yes_check\')'
+	value: 'no',
+	description: 'Portable OmniPack builds do not alter file or URL associations by default; opt in with yes or yes_check'
 )
 option(
 	'shared_data_folder',

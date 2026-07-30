@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 import hashlib
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -38,6 +39,10 @@ DOCUMENTS = (
 )
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 FORBIDDEN_COMPONENTS = {".git", "__pycache__", "build", "dist"}
+CAN_INSTALL_DEFAULT_RE = re.compile(
+    r"option\(\s*['\"]can_install['\"].*?value\s*:\s*['\"]([^'\"]+)['\"]",
+    re.DOTALL,
+)
 
 
 def sha256(path: Path) -> str:
@@ -94,6 +99,16 @@ def validate_sources(source_root: Path, executable: Path, symbols: Path) -> None
         raise ValueError(f"executable is not a Windows PE file: {executable}")
     if not symbols.is_file() or symbols.stat().st_size == 0:
         raise ValueError(f"debug symbol file is missing or empty: {symbols}")
+    options_path = source_root / "meson_options.txt"
+    if not options_path.is_file():
+        raise ValueError(f"Meson options are missing: {options_path}")
+    match = CAN_INSTALL_DEFAULT_RE.search(options_path.read_text(encoding="utf-8"))
+    if match is None or match.group(1) != "no":
+        actual = match.group(1) if match else "missing"
+        raise ValueError(
+            "portable release must default can_install=no to avoid a first-run "
+            f"association prompt (got {actual})"
+        )
     for source_name, archive_name in DOCUMENTS:
         validate_member_name(archive_name)
         source = source_root / source_name
