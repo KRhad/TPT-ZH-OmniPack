@@ -73,7 +73,7 @@
 ## 机器可读结论
 
 ```text
-source_commit=not_tested
+source_commit=ca3cccbee13a41c37ee0b7975c4b5f060cb34a95
 candidate_version=0.1.0-test
 rejected_candidate_commit=5828a97fc39129547354956dde84d7b6cfb818c2
 rejected_public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
@@ -127,7 +127,7 @@ public_clone_build_pass=not_tested
 
 clean_build_pass=true
 meson_tests=12/12
-python_tests=50
+python_tests=53
 lua_runtime_tests=not_tested
 
 gui_launch_test=true
@@ -185,9 +185,9 @@ developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=not_tested
-symbols_zip_sha256=not_tested
-zip_audit_pass=not_tested
+public_zip_sha256=E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081
+symbols_zip_sha256=AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0
+zip_audit_pass=true
 
 tag_public=false
 tag_anonymous_clone_pass=false

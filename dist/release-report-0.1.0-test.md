@@ -26,12 +26,16 @@
 - `origin` 不存在两个发布分支或目标 tag；凭据门禁失败前未推送，未进行匿名克隆。
 - SDL 窗口无法获得前景，`PrintWindow` 仅获黑帧，故没有可信真实 GUI、OPS、只读门禁或压力测试证据。
 
+## 私有修复候选
+
+修复源码提交为 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95`。该候选仅生成在 `artifacts/zh-ui-fix/candidate/` 供中文人工验收，未公开、未推送、未创建 tag。普通 ZIP SHA-256 为 `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081`，符号 ZIP SHA-256 为 `AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0`。两包 ZIP 内容审计通过，但人工视觉和语言切换门禁未完成，`release_ready=false`。
+
 完整证据、环境信息、失败模式和最小下一步见 `docs/FINAL_VALIDATION.md` 与 `artifacts/final-validation/`。
 
 ## 机器可读结论
 
 ```text
-source_commit=5828a97fc39129547354956dde84d7b6cfb818c2
+source_commit=ca3cccbee13a41c37ee0b7975c4b5f060cb34a95
 candidate_version=0.1.0-test
 rejected_candidate_commit=5828a97fc39129547354956dde84d7b6cfb818c2
 rejected_public_zip_sha256=DC8211AC5F4590DA74231D922FCCC0168933D6DCF7AB82AA1D369CE2E97B0189
@@ -95,9 +99,9 @@ developer_paths_removed=true
 pe_security_flags_preserved=true
 authenticode_signed=false
 
-public_zip_sha256=not_tested
-symbols_zip_sha256=not_tested
-zip_audit_pass=false
+public_zip_sha256=E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081
+symbols_zip_sha256=AAEDCAC3F3EBF16A967D29C110C4935C7A4A6396C46403C67A5C1E53D40CE0E0
+zip_audit_pass=true
 
 tag_public=false
 github_release_created=false
