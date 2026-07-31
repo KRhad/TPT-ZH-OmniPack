@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "content_version": "0.2.0-dev",
+  "source_commit": "c77c777410a8468bd011ca7669f05e9e748abf8e",
+  "generator_exe_sha256": "98136A59507EB0170C48F99A586D188DD3002D241FCB8B5513D15CC9026EDA69",
+  "generated_utc": "2026-07-31T00:08:13.7480012Z",
+  "examples": [
+    {
+      "id": "peroxide-pathogen",
+      "filename": "01-peroxide-pathogen.stm",
+      "stamp_id": "0200000001",
+      "source_stamp_id": "6a6be76b00",
+      "sha256": "32F0CCE4CCB1997B2F8AECF0948E452D49AE4E71D7DC4DD979BD45BC8F2A9DDD",
+      "bytes": 595,
+      "initial_particles": 2,
+      "generation_order": 1,
+      "purpose": "生态—化学病原处理的可复现初始场景"
+    },
+    {
+      "id": "humus-fertilizer",
+      "filename": "02-humus-fertilizer.stm",
+      "stamp_id": "0200000002",
+      "source_stamp_id": "6a6be76b00",
+      "sha256": "F1AA44227BE94E41490A8C82E77459FC1FE98F59E9ED7B075CE85E37D894969D",
+      "bytes": 618,
+      "initial_particles": 3,
+      "generation_order": 2,
+      "purpose": "湿腐殖质肥料回收场景"
+    },
+    {
+      "id": "slag-acid",
+      "filename": "03-slag-acid.stm",
+      "stamp_id": "0200000003",
+      "source_stamp_id": "6a6be76c00",
+      "sha256": "9DF2D31D6EEEB117EEB71E284FD2C4CB7F61C160E23F364EBE5F68F146A282D2",
+      "bytes": 618,
+      "initial_particles": 3,
+      "generation_order": 3,
+      "purpose": "温和炉渣酸处理场景"
+    },
+    {
+      "id": "shield-assembly",
+      "filename": "04-shield-assembly.stm",
+      "stamp_id": "0200000004",
+      "source_stamp_id": "6a6be76c00",
+      "sha256": "3902B871B80A90EFCFECFB26BA9950CE3BE66A2DEADC9313704F07574BE1609E",
+      "bytes": 640,
+      "initial_particles": 3,
+      "generation_order": 4,
+      "purpose": "不锈钢—熔融铅—镍铬火花屏蔽组装场景"
+    },
+    {
+      "id": "waste-stabilization",
+      "filename": "05-waste-stabilization.stm",
+      "stamp_id": "0200000005",
+      "source_stamp_id": "6a6be76c00",
+      "sha256": "516C30BC94293F6A89507A5ED136C56CD3BF06D83037B5E1C5233FD2A1B1F1DB",
+      "bytes": 653,
+      "initial_particles": 6,
+      "generation_order": 5,
+      "purpose": "冷却四模块废物稳定化场景"
+    },
+    {
+      "id": "waste-missing-catalyst",
+      "filename": "06-waste-missing-catalyst.stm",
+      "stamp_id": "0200000006",
+      "source_stamp_id": "6a6be76d00",
+      "sha256": "541EB491F7009A5A5FD3B0166B75BEF490225D9C7D9AA5C29C110B4F552B3DA6",
+      "bytes": 648,
+      "initial_particles": 5,
+      "generation_order": 6,
+      "purpose": "输入不全时保持核废物稳定化停止的控制场景"
+    },
+    {
+      "id": "integrated-recovery",
+      "filename": "07-integrated-recovery.stm",
+      "stamp_id": "0200000007",
+      "source_stamp_id": "6a6be76d00",
+      "sha256": "294786E6BAC8545A3EBC825796D10FA7556508292ECCB106CF7B44BB8F326BD1",
+      "bytes": 786,
+      "initial_particles": 17,
+      "generation_order": 7,
+      "purpose": "四条跨模块链并行恢复的综合场景"
+    }
+  ],
+  "tutorial_ids": [
+    "T01-PERO-PATH",
+    "T02-PERO-CONTROL",
+    "T03-HUMS-FERT",
+    "T04-SLAG-ACID",
+    "T05-SHIELD",
+    "T06-WASTE-CATALYST",
+    "T07-WASTE-FULL",
+    "T08-INTEGRATED"
+  ]
+}

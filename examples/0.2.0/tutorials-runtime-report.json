@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "source_commit": "c77c777410a8468bd011ca7669f05e9e748abf8e",
+  "executable_sha256": "98136A59507EB0170C48F99A586D188DD3002D241FCB8B5513D15CC9026EDA69",
+  "example_count": 7,
+  "tutorial_count": 8,
+  "pass_count": 8,
+  "results": [
+    {
+      "id": "T01-PERO-PATH",
+      "example_id": "peroxide-pathogen",
+      "status": "PASS",
+      "assertions": 4,
+      "initial_particles": 2,
+      "final_particles": 2,
+      "stamp_id": "0200000001"
+    },
+    {
+      "id": "T02-PERO-CONTROL",
+      "example_id": "peroxide-pathogen",
+      "status": "PASS",
+      "assertions": 6,
+      "initial_particles": 2,
+      "final_particles": 3,
+      "stamp_id": "0200000001"
+    },
+    {
+      "id": "T03-HUMS-FERT",
+      "example_id": "humus-fertilizer",
+      "status": "PASS",
+      "assertions": 5,
+      "initial_particles": 3,
+      "final_particles": 3,
+      "stamp_id": "0200000002"
+    },
+    {
+      "id": "T04-SLAG-ACID",
+      "example_id": "slag-acid",
+      "status": "PASS",
+      "assertions": 3,
+      "initial_particles": 3,
+      "final_particles": 3,
+      "stamp_id": "0200000003"
+    },
+    {
+      "id": "T05-SHIELD",
+      "example_id": "shield-assembly",
+      "status": "PASS",
+      "assertions": 4,
+      "initial_particles": 3,
+      "final_particles": 3,
+      "stamp_id": "0200000004"
+    },
+    {
+      "id": "T06-WASTE-CATALYST",
+      "example_id": "waste-missing-catalyst",
+      "status": "PASS",
+      "assertions": 6,
+      "initial_particles": 5,
+      "final_particles": 6,
+      "stamp_id": "0200000006"
+    },
+    {
+      "id": "T07-WASTE-FULL",
+      "example_id": "waste-stabilization",
+      "status": "PASS",
+      "assertions": 7,
+      "initial_particles": 6,
+      "final_particles": 6,
+      "stamp_id": "0200000005"
+    },
+    {
+      "id": "T08-INTEGRATED",
+      "example_id": "integrated-recovery",
+      "status": "PASS",
+      "assertions": 16,
+      "initial_particles": 17,
+      "final_particles": 17,
+      "stamp_id": "0200000007"
+    }
+  ]
+}
