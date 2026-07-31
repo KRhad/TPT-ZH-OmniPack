@@ -13,6 +13,7 @@
 9. 2026-07-30 脱敏扫描在当前进程环境变量发现一个 GitHub classic PAT；Git 历史和已审计 ZIP 未发现该模式，但无法证明旧凭据已经撤销或轮换。因此不得推送、创建 tag 或公开发布，直到用户在外部账户完成可验证的撤销或轮换。
 10. 正式发布远端和权限尚未确认；当前 `origin` 指向旧汉化仓库，不能把本地开发分支擅自推送为 OmniPack 正式源码。
 11. 当前 Windows Computer Use 运行时不可用；系统 API 可启动和聚焦 SDL 窗口，但不能替代可信的完整 GUI 交互、截图和 DPI 验收。
+12. 0.4 炼金图、OPS 进度、十阶段运行和防绕过门禁已通过；`alchemy.progress.button_info` 仍有窄布局启发式警告，进度窗口滚动、简中/英文和 100%/125%/150% DPI 的实际桌面矩阵为 `not_tested`。
 
 ```text
 credential_exposure_found=true

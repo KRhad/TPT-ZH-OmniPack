@@ -77,6 +77,24 @@
 | 0.3 双语 GUI / DPI / 只读交互 | 人工 | NOT RUN | 未取得可信窗口内容与点击证据；不由自动化、压力或启动存活替代 |
 | `v0.3.0` / 公开源码 / Release | 外部 | BLOCKED | 未创建 tag/Release；`release_ready=false` |
 
+## 0.4.0 当前本地审计
+
+| 测试 | 类型 | 状态 | 证据/备注 |
+|---|---|---|---|
+| 模式与配方图 | 源码/自动 | PASS | 默认普通沙盒自由；schema 1、四初始 identifier、十阶段、九类条件、全部输入可达、无循环死锁 |
+| clean Release build | 构建 | PASS | `build-0.4.0-dev-repro-clean`，`510/510`、0 error；固定 epoch 后两个 clean 目录的剥离 EXE 哈希一致 |
+| 开发 HEAD 自动测试 | 自动 | PASS | Meson static `18/18`；Python `133/133`、0 skip；i18n `1307/1307`、errors 0 |
+| 进度 OPS 持久化 | 自动/OPS | PASS | 多存档隔离、损坏/未知 schema fail-closed；精通状态连续 100 次真实 `Serialise -> Parse -> Import` 逐字段一致 |
+| 创建路径防绕过 | 实际运行 | PASS | 锁定、自由、stamp 三类运行，共 22 条断言；覆盖粒子、属性、刷/线/框/填充、工具和 stamp |
+| 十阶段模块矩阵 | 实际运行 | PASS | modules-on/off 各十阶段；总计 4,620 帧、两次 `mastery=true`，关闭模块时隐藏进度仍保存 |
+| 四模块与 OPS 回归 | 实际运行 | PASS | 模块/冶金/化学/生态两模式/核工业均通过；五类 OPS 15 进程、10 重启、10 加载、120 字段断言 |
+| 0.2/0.3 内容回归 | 实际运行 | PASS | 同一 EXE：0.2 示例 7/7、教程 8/8；0.3 场景 9/9、挑战 6/6、95 断言、停止增量 0 |
+| 字体与中文离屏渲染 | 自动/引擎 | PASS | `font.bz2` `91AA3E91...B7FA`；14,633 字形、2,597 必需字符、目录测量/渲染 `1307/1307` |
+| 0.4 本地包 | 包 | PASS | 普通 `CC5FD5BB...F7BD`、符号 `D6C61673...7628`；两次封包复现，成员/炼金图/PE/路径/哈希与解压二审通过 |
+| 解压候选隐藏启动 | 进程 | PASS | `Responding=true`、无残留；隐藏窗口句柄为 0，仅证明进程存活，不等于 GUI 视觉通过 |
+| 炼金窗口 / 双语 / DPI | 实际 GUI | NOT RUN | `alchemy.progress.button_info` 有窄布局警告；未取得可信窗口内容、滚动、100%/125%/150% DPI 与语言切换证据 |
+| `v0.4.0` / 公开源码 / Release | 外部 | BLOCKED | 未创建 tag/Release；`GATE-040-RELEASE=false`、`release_ready=false` |
+
 ## Phase 0 / Phase 1 基线
 
 | 测试 | 类型 | 状态 | 证据/备注 |

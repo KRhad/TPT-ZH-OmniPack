@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-版本门禁：`0.1.0-test` 仍因 GUI/外部门禁不能公开发布，开发分支为 `development/omnipack-1.0`。0.2 的跨模块闭环和 0.3 的官方工程自动化均已有本地通过证据；`0.3.0-dev` 不是公开发布，可信 GUI、公开源码/tag/Release 等 `GATE-030-RELEASE` 项保持 false/not_tested。
+版本门禁：`0.1.0-test` 仍因 GUI/外部门禁不能公开发布，开发分支为 `development/omnipack-1.0`。0.2 跨模块闭环、0.3 官方工程自动化和 0.4 炼金探索均已有本地通过证据；这些 `-dev` 候选都不是公开发布，可信 GUI、公开源码/tag/Release 等各版 `RELEASE` 门禁保持 false/not_tested。下一本地开发阶段为 0.5 灾害与特殊物理。
 
 ## 2026-07-31 当前候选快照
 
@@ -99,6 +99,41 @@ release_ready=false
 - S11 正式样本 `20260731T080609Z-91b43bef` 和修复后的 S12 `20260731T083137Z-80a982fe` 均完成 `60+600` 秒并独立得到 `performance_gate_pass=true`。总官方信号 `1,053,257,081`，最大单帧信号 `56,421`；两项停止增量 0、恢复/OPS 通过，有限观察增长和内存泄漏怀疑均为 false。
 - S12 失败样本 `20260731T081741Z-ddd919fe` 保留为负证据：一次性火花在预热期耗尽导致正式窗口信号 0、门禁 false；`522dc3bc` 改用官方 BTRY 持续激励后重新完整运行通过。
 - 精确提交、哈希、构建边界和 run ID 见 `docs/PHASE_0_3_EVIDENCE.md`。
+
+## 2026-07-31 0.4 本地炼金探索增量
+
+```text
+package_source_commit=f42deded7f537c343071854068c2e2c453d56cd4
+alchemy_implementation_commit=00785c133520d1848635d9a9407d9670a2bb2d6c
+alchemy_roundtrip_probe_commit=1aefae4efb11d6ed1fea7eb66265eedf92eb7afc
+clean_build_targets=510/510
+meson_static=18/18
+python_tests=133/133
+python_test_skips=0
+alchemy_schema=1
+alchemy_stages=10
+alchemy_condition_types=9
+alchemy_gate_assertions=22
+alchemy_runtime_modes=2
+alchemy_runtime_stage_completions=20
+alchemy_serialise_parse_import_cycles=100
+clean_rebuild_exe_reproducible=true
+debug_symbols_cross_build_reproducible=false
+release_exe_sha256=04398AE78304FCAAC42011FB0F6665B32BA9BF558F5FCA8D05FD30A70F3DF4B7
+local_dev_zip_sha256=CC5FD5BB099C12DD4B215C5C592C4794ABAAD482D8CB1A38D41B632586DFF7BD
+symbols_zip_sha256=D6C61673FFCF3D2D2695D9F838EF40FAA52370D7A4BE9B9728C4215A5A197628
+gate_040_release=false
+release_ready=false
+```
+
+- 普通沙盒默认自由，炼金模式单独启用。配方图为四初始 identifier、十阶段、九类条件，自动审计证明全部输入可达且无循环死锁。
+- OPS `omniAlchemy` 使用严格键/类型/数量/长度限制和 identifier-only schema；多存档隔离、损坏状态、未知 schema 与精通状态均通过。精通进度连续 100 次真实序列化、解析、导入后逐字段一致。
+- 搜索、收藏、活动工具、UI 粘贴、Lua 创建/改型/属性/刷线框填充/工具和 stamp 统一门禁；锁定 11、自由 10、stamp 1，共 22 条实际断言通过。
+- 模块开启和关闭两种模式各完成十阶段，总计 4,620 帧，两次 `mastery=true`；关闭模块不会丢进度，但隐藏解锁只有模块重新启用后才可选择。
+- clean 候选的 0.2 示例/教程为 `7/7`、`8/8`，0.3 场景/挑战为 `9/9`、`6/6`、95 断言且停止增量 0；五类 OPS 双往返总计 15 个进程、10 次重启、10 次加载和 120 个字段断言。
+- 固定 `SOURCE_DATE_EPOCH=1785491929` 后，两个独立 clean 目录的剥离 EXE 哈希相同；detached symbols 跨目录不同并明确记为 `false`。普通/符号 ZIP 相同输入各封包两次均逐字节复现，二次解压审计通过。
+- 当前字体 SHA-256 为 `91AA3E913051E73B1CE412D2E84487BD459AB78BE606D062716608715479B7FA`，14,633 字形覆盖 2,597 个必需字符；简中目录离屏测量/渲染 `1307/1307`。炼金进度按钮仍有窄布局启发式警告，可信窗口和 DPI 矩阵为 `not_tested`。
+- 精确候选、哈希、门禁判定和未测试边界见 `docs/PHASE_0_4_EVIDENCE.md`。
 
 ## 2026-07-30 接管基线
 

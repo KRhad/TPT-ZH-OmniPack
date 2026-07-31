@@ -29,7 +29,7 @@
 
 结构修复试验所用 `resources/font.bz2` 哈希为 `4306249BD82DDEF2EEB15E2A3668AC02B970662768B392C8B45515BB550CBA34`。转换器按 `FontReader` 的低位优先协议打包，并用面积覆盖量化避免旧点采样直接跳行。`tools/validate_tpt_font.py` 验证压缩容器、三字节码点排序、字形边界、替换字形、语言目录覆盖、pack/unpack 往返及固定 Unifont 源码点 `U+4E2D/U+6587/U+7B80/U+4F53/U+5DE5/U+4E1A`。指定字形 PNG 输出至 `artifacts/zh-ui-fix/font/decoded/`。这些结构性质通过不代表缩放后的中文字形达到人工可读性要求。
 
-`font_render_probe` 直接使用 `FontReader`、`Graphics::TextSize` 和 `Graphics::BlendText` 渲染中文、混合符号及化学文本，并逐条测量和绘制 `zh-CN.json` 的 1,296 条文本（替换字形为 0）；其输出位于 `artifacts/zh-ui-fix/render-probe/`。该离屏验证通过不等于人工 GUI 可读性验证。
+`font_render_probe` 直接使用 `FontReader`、`Graphics::TextSize` 和 `Graphics::BlendText` 渲染中文、混合符号、化学及炼金进度文本；当前 0.4 候选逐条测量和绘制 `zh-CN.json` 的 1,307 条文本（替换字形为 0），输出保存在忽略的 `artifacts/font-render/0.4.0-dev-*` 证据目录。该离屏验证通过不等于人工 GUI 可读性验证。
 
 私有试包绑定提交 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95`，ZIP SHA-256 为 `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081`。用户从 ZIP 解压运行后确认其中文显示仍不如既有出版中文 EXE（SHA-256 `3B96CFEC060705A48681645074AE3C5F53E9A2D40AE56FF76B0E906C2FDBD406`）。该人工结论使中文可读性/字形质量门禁失败；试包仅保留作失败对照，不得称为可发布候选。该结论没有发现或推断进程崩溃。
 
