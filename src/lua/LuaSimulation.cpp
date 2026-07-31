@@ -15,7 +15,6 @@
 #include "simulation/Air.h"
 #include "simulation/ElementCommon.h"
 #include "simulation/GOLString.h"
-#include "simulation/OmniAlchemy.h"
 #include "simulation/gravity/Gravity.h"
 #include "simulation/Snapshot.h"
 #include "simulation/ToolClasses.h"
@@ -35,11 +34,9 @@ void RequireOmniElementCreation(lua_State *L, int type)
 		return;
 	}
 	auto restriction = GetOmniElementSelectionRestriction(type);
-	auto const *reason = restriction == OmniSelectionRestriction::AlchemyLocked
-		? "locked by alchemy progress"
-		: restriction == OmniSelectionRestriction::ModuleDisabled
-			? "disabled module"
-			: "unavailable element";
+	auto const *reason = restriction == OmniSelectionRestriction::ModuleDisabled
+		? "disabled module"
+		: "unavailable element";
 	(void)luaL_error(L, "Element %d is unavailable: %s", type, reason);
 }
 
@@ -140,40 +137,6 @@ static int resetOmniEventMetrics(lua_State *L)
 	lsi->AssertInterfaceEvent();
 	lsi->sim->ResetOmniEventMetrics();
 	return 0;
-}
-
-static int omniAlchemyProgress(lua_State *L)
-{
-	auto &alchemy = OmniAlchemy::Ref();
-	lua_newtable(L);
-	lua_pushinteger(L, OmniAlchemyProgressSchemaVersion);
-	lua_setfield(L, -2, "schema_version");
-	lua_pushinteger(L, static_cast<lua_Integer>(alchemy.CompletedStageCount()));
-	lua_setfield(L, -2, "completed_stage_count");
-	lua_pushinteger(L, static_cast<lua_Integer>(OmniAlchemyStageCount));
-	lua_setfield(L, -2, "stage_count");
-	lua_pushboolean(L, alchemy.Mastered());
-	lua_setfield(L, -2, "mastered");
-	tpt_lua_pushByteString(L, alchemy.CurrentStageId());
-	lua_setfield(L, -2, "current_stage_id");
-	tpt_lua_pushByteString(L, alchemy.CurrentHintKey());
-	lua_setfield(L, -2, "current_hint_key");
-	lua_pushinteger(L, alchemy.CurrentDwellFrames());
-	lua_setfield(L, -2, "current_dwell_frames");
-	lua_pushboolean(L, alchemy.CurrentCoolingArmed());
-	lua_setfield(L, -2, "current_cooling_armed");
-	return 1;
-}
-
-static int omniAlchemyUnlocked(lua_State *L)
-{
-	auto type = luaL_checkinteger(L, 1);
-	if (type < 0 || type >= PT_NUM)
-	{
-		return luaL_error(L, "Invalid element ID (%d)", type);
-	}
-	lua_pushboolean(L, OmniAlchemy::Ref().IsElementUnlocked(type));
-	return 1;
 }
 
 static int decoSpace(lua_State *L)
@@ -1125,10 +1088,6 @@ static int loadStamp(lua_State *L)
 	if (tempfile && tempfile->GetGameSave())
 	{
 		auto gameSave = tempfile->TakeGameSave();
-		if (GetOmniSetting(OmniSetting::AlchemyMode) && !FindLockedAlchemySaveElements(*gameSave).empty())
-		{
-			return luaL_error(L, "Stamp contains elements locked by alchemy progress");
-		}
 		auto [ quoX, remX ] = floorDiv(partP.X, CELL);
 		auto [ quoY, remY ] = floorDiv(partP.Y, CELL);
 		if (remX || remY || hflip || rotation)
@@ -2226,8 +2185,6 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(partCount),
 		LFUNC(omniEventMetrics),
 		LFUNC(resetOmniEventMetrics),
-		LFUNC(omniAlchemyProgress),
-		LFUNC(omniAlchemyUnlocked),
 		LFUNC(decoSpace),
 		LFUNC(fanVelocityX),
 		LFUNC(fanVelocityY),

@@ -6,7 +6,6 @@
 #include "prefs/GlobalPrefs.h"
 #include "simulation/Particle.h"
 #include "simulation/ElementDefs.h"
-#include "simulation/OmniAlchemy.h"
 #include "simulation/SimulationData.h"
 
 namespace
@@ -16,13 +15,7 @@ constexpr std::array<OmniSettingDefinition, OmniSettingCount> settingDefinitions
 	{ OmniSetting::Metallurgy,            "Omni.Modules.Metallurgy",            "options.omni.metallurgy",             "options.omni.metallurgy.info",             true,  true  },
 	{ OmniSetting::Chemistry,             "Omni.Modules.Chemistry",             "options.omni.chemistry",              "options.omni.chemistry.info",              true,  true  },
 	{ OmniSetting::AdvancedNuclear,       "Omni.Modules.AdvancedNuclear",       "options.omni.advanced_nuclear",       "options.omni.advanced_nuclear.info",       true,  true  },
-	{ OmniSetting::SpecialPhysics,        "Omni.Modules.SpecialPhysics",        "options.omni.special_physics",        "options.omni.special_physics.info",        true,  true  },
-	{ OmniSetting::Disasters,             "Omni.Modules.Disasters",             "options.omni.disasters",              "options.omni.disasters.info",              true,  true  },
-	{ OmniSetting::Experimental,          "Omni.Modules.Experimental",          "options.omni.experimental",           "options.omni.experimental.info",           false, true  },
 	{ OmniSetting::SimplifiedBiology,     "Omni.Simulation.SimplifiedBiology",  "options.omni.simplified_biology",     "options.omni.simplified_biology.info",     false, true  },
-	{ OmniSetting::PerformanceProtection, "Omni.Simulation.PerformanceGuard",   "options.omni.performance_protection", "options.omni.performance_protection.info", false, false },
-	{ OmniSetting::DetailedHud,           "Omni.Interface.DetailedHud",         "options.omni.detailed_hud",            "options.omni.detailed_hud.info",            false, false },
-	{ OmniSetting::AlchemyMode,           "Omni.Progress.AlchemyMode",          "options.omni.alchemy_mode",            "options.omni.alchemy_mode.info",            false, true  },
 } };
 
 static_assert(settingDefinitions.size() == OmniSettingCount);
@@ -137,23 +130,13 @@ OmniSelectionRestriction GetOmniElementSelectionRestriction(int elementId)
 		if (!GetOmniSetting(OmniSetting::AdvancedNuclear)) return OmniSelectionRestriction::ModuleDisabled;
 		break;
 	case OmniElementModule::SpecialPhysics:
-		if (!GetOmniSetting(OmniSetting::SpecialPhysics)) return OmniSelectionRestriction::ModuleDisabled;
-		break;
 	case OmniElementModule::Disasters:
-		if (!GetOmniSetting(OmniSetting::Disasters)) return OmniSelectionRestriction::ModuleDisabled;
-		break;
 	case OmniElementModule::Experimental:
-		if (!GetOmniSetting(OmniSetting::Experimental)) return OmniSelectionRestriction::ModuleDisabled;
-		break;
 	case OmniElementModule::Reserved:
 	case OmniElementModule::Compatibility:
 		return OmniSelectionRestriction::ReservedElement;
 	default:
 		break;
-	}
-	if (GetOmniSetting(OmniSetting::AlchemyMode) && !OmniAlchemy::Ref().IsElementUnlocked(elementId))
-	{
-		return OmniSelectionRestriction::AlchemyLocked;
 	}
 	return OmniSelectionRestriction::None;
 }
@@ -213,12 +196,6 @@ char const *GetOmniElementModuleNameKey(OmniElementModule module)
 		return "options.omni.chemistry";
 	case OmniElementModule::AdvancedNuclear:
 		return "options.omni.advanced_nuclear";
-	case OmniElementModule::SpecialPhysics:
-		return "options.omni.special_physics";
-	case OmniElementModule::Disasters:
-		return "options.omni.disasters";
-	case OmniElementModule::Experimental:
-		return "options.omni.experimental";
 	default:
 		return "";
 	}
@@ -277,56 +254,4 @@ std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save)
 		}
 	}
 	return modules;
-}
-
-std::vector<int> FindLockedAlchemySaveElements(GameSave const &save)
-{
-	std::array<bool, PT_NUM> found{};
-	auto const &elements = SimulationData::CRef().elements;
-	auto const &possiblyCarriesType = Particle::PossiblyCarriesType();
-	auto const &properties = Particle::GetProperties();
-
-	auto inspectType = [&found, &elements](int type) {
-		type = TYP(type);
-		if (type <= 0 || type >= PT_NUM || !GetOmniSetting(OmniSetting::AlchemyMode) || OmniAlchemy::Ref().IsElementUnlocked(type))
-		{
-			return;
-		}
-		auto const *record = FindElementCatalogByStableId(type);
-		auto const &runtimeIdentifier = elements[type].Identifier;
-		if (record && record->identifier == std::string_view(runtimeIdentifier.data(), runtimeIdentifier.size()))
-		{
-			found[type] = true;
-		}
-	};
-
-	for (int index = 0; index < NPART && index < save.particlesCount && index < static_cast<int>(save.particles.size()); ++index)
-	{
-		auto const &particle = save.particles[index];
-		auto type = TYP(particle.type);
-		if (type <= 0 || type >= PT_NUM)
-		{
-			continue;
-		}
-		inspectType(type);
-		for (auto propertyIndex : possiblyCarriesType)
-		{
-			if (!(elements[type].CarriesTypeIn & (1U << propertyIndex)))
-			{
-				continue;
-			}
-			auto const *property = reinterpret_cast<int const *>(reinterpret_cast<char const *>(&particle) + properties[propertyIndex].Offset);
-			inspectType(*property);
-		}
-	}
-
-	std::vector<int> elementIds;
-	for (int type = 1; type < PT_NUM; ++type)
-	{
-		if (found[type])
-		{
-			elementIds.push_back(type);
-		}
-	}
-	return elementIds;
 }

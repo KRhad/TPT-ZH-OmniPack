@@ -27,8 +27,8 @@
 | Jacob BUTN/PWHT | Jacob `b4926161...` | jacob1 等 | 重写候选 | 当前 API + 洪泛预算 | DESIGN | UX 价值明确，旧代码越界 |
 | Jacob MOVS/ANIM | Jacob `b4926161...` | jacob1 等 | 仅需求参考 | 新数据结构才可实现 | DESIGN | 旧内存/边界/冻结风险 |
 | Jacob 保存来源标记 | Jacob `b4926161...` | jacob1 | 迁移参考 | 只读识别 `"Jacob1's_Mod"` | DESIGN | 可帮助可靠识别来源 |
-| Alchemy 四元素开局 | Alchemy `9a593ce1...` | jacob1/SopaXorzTaker 等 | 设计采用 | 全新进度服务 | DESIGN | 与总任务初始集合一致 |
-| Alchemy 原进度代码 | Alchemy `9a593ce1...` | 原仓库作者 | 排除 | identifier/schema 重写 | REJECTED | 越界、未初始化、可绕过 |
+| Alchemy 四元素开局/发现 | Alchemy `9a593ce1...` | jacob1/SopaXorzTaker 等 | 排除 | 不移植 | REJECTED | 与全部内容直接可用的产品方向冲突 |
+| Alchemy 原进度代码 | Alchemy `9a593ce1...` | 原仓库作者 | 排除 | 不移植 | REJECTED | 越界、未初始化、可绕过且属于已删除系统 |
 | Seppo 冶金实现 | Seppo `c3a8dd17...` | SeppoTPT | 无可移植源码 | 清洁室重写 | BLOCKED | 32 个实现文件全部缺失 |
 | Seppo 元素/合金清单 | Seppo `c3a8dd17...` 与论坛 | SeppoTPT | 设计参考 | 去重后自研 | TESTING | 12 个概念条目已用独立实现进入首批冶金；未复制缺失构造器 |
 | Cyens 烃网络 | Cyens `f01d992c...` | cbeimers113 | 设计参考 | 不改官方基础语义 | TESTING | 裂化链使用新 `KERO/GASO/ACTY`；未复制其官方 GAS/OIL/WAX 改写 |

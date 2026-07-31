@@ -1,0 +1,32 @@
+compound_id,formula,zh_name,en_name,stable_id,identifier,category,standard_state,status,source_mapping,gameplay_role,tests,notes
+compound.ammonia,NH3,氨,Ammonia,361,OMNI_PT_AMON,inorganic_gas,gas,implemented,OMNI_PT_AMON,fertilizer feedstock and acid neutralisation,tools/tests/test_chemistry_audit.py,game-scale synthesis
+compound.ethanol,C2H5OH,乙醇,Ethanol,362,OMNI_PT_ETHL,organic_liquid,liquid,implemented,OMNI_PT_ETHL,flammable solvent and fermentation product,tools/tests/test_chemistry_audit.py,not an unlock reward
+compound.acetylene,C2H2,乙炔,Acetylene,365,OMNI_PT_ACTY,organic_gas,gas,implemented,OMNI_PT_ACTY,high-energy fuel and polymer feedstock,tools/tests/test_chemistry_audit.py,bounded combustion
+compound.hydrogen_peroxide,H2O2,过氧化氢,Hydrogen peroxide,368,OMNI_PT_PERO,inorganic_liquid,liquid,implemented,OMNI_PT_PERO,oxidizer disinfectant and decomposition source,tools/tests/test_chemistry_audit.py,game-scale concentration
+compound.water,H2O,水,Water,2,DEFAULT_PT_WATR,inorganic_liquid,liquid,reuse_official,DEFAULT_PT_WATR,solvent phase change and reaction medium,official element tests,generic TPT water representation
+compound.carbon_dioxide,CO2,二氧化碳,Carbon dioxide,80,DEFAULT_PT_CO2,oxide,gas,reuse_official,DEFAULT_PT_CO2,combustion product and photosynthesis input,official element tests,official behavior retained
+compound.hydrochloric_acid,HCl(aq),盐酸,Hydrochloric acid,,,acid,liquid,planned,,chloride chemistry and metal corrosion,not_tested,stable ID pending audit
+compound.sulfuric_acid,H2SO4,硫酸,Sulfuric acid,,,acid,liquid,planned,,strong acid and industrial dehydrating behavior,not_tested,stable ID pending audit
+compound.nitric_acid,HNO3,硝酸,Nitric acid,,,acid,liquid,planned,,oxidizing acid and nitrate chemistry,not_tested,stable ID pending audit
+compound.phosphoric_acid,H3PO4,磷酸,Phosphoric acid,,,acid,liquid,planned,,phosphate and fertilizer chemistry,not_tested,stable ID pending audit
+compound.hydrofluoric_acid,HF(aq),氢氟酸,Hydrofluoric acid,,,acid,liquid,planned,,glass and silicate corrosion,not_tested,stable ID pending audit
+compound.carbonic_acid,H2CO3,碳酸,Carbonic acid,,,acid,liquid,planned,,carbon dioxide water equilibrium,not_tested,stable ID pending audit
+compound.sodium_hydroxide,NaOH,氢氧化钠,Sodium hydroxide,,,base,solid,planned,,strong base neutralisation and industrial processing,not_tested,stable ID pending audit
+compound.potassium_hydroxide,KOH,氢氧化钾,Potassium hydroxide,,,base,solid,planned,,strong base and battery chemistry,not_tested,stable ID pending audit
+compound.calcium_hydroxide,Ca(OH)2,氢氧化钙,Calcium hydroxide,,,base,powder,planned,,lime concrete and neutralisation,not_tested,stable ID pending audit
+compound.sodium_chloride,NaCl,氯化钠,Sodium chloride,,,salt,powder,planned,,electrolyte chloride and molten salt,not_tested,stable ID pending audit
+compound.potassium_nitrate,KNO3,硝酸钾,Potassium nitrate,,,salt,powder,planned,,oxidizer fertilizer and game-safe energetic reactions,not_tested,no real manufacturing instructions
+compound.ammonium_nitrate,NH4NO3,硝酸铵,Ammonium nitrate,,,salt,powder,planned,,fertilizer and bounded energetic material,not_tested,no real manufacturing instructions
+compound.copper_sulfate,CuSO4,硫酸铜,Copper sulfate,,,salt,powder,planned,,electrochemistry toxicity and crystal behavior,not_tested,stable ID pending audit
+compound.calcium_carbonate,CaCO3,碳酸钙,Calcium carbonate,,,carbonate,powder,planned,,limestone calcination and construction feedstock,not_tested,stable ID pending audit
+compound.sodium_bicarbonate,NaHCO3,碳酸氢钠,Sodium bicarbonate,,,carbonate,powder,planned,,weak-base neutralisation and carbon dioxide release,not_tested,stable ID pending audit
+compound.carbon_monoxide,CO,一氧化碳,Carbon monoxide,,,oxide,gas,planned,,toxic incomplete-combustion product and reducing gas,not_tested,stable ID pending audit
+compound.sulfur_dioxide,SO2,二氧化硫,Sulfur dioxide,,,oxide,gas,planned,,toxic combustion gas and acid-rain precursor,not_tested,stable ID pending audit
+compound.nitrogen_dioxide,NO2,二氧化氮,Nitrogen dioxide,,,oxide,gas,planned,,toxic oxidizing gas and nitric-acid precursor,not_tested,stable ID pending audit
+compound.silicon_dioxide,SiO2,二氧化硅,Silicon dioxide,,,oxide,solid,planned,,quartz glass and ceramic feedstock,not_tested,official QRTZ mapping requires behavior audit
+compound.aluminium_oxide,Al2O3,氧化铝,Aluminium oxide,,,oxide,solid,planned,,ceramic refractory and ore processing,not_tested,stable ID pending audit
+compound.calcium_oxide,CaO,氧化钙,Calcium oxide,,,oxide,powder,planned,,lime hydration and construction chemistry,not_tested,stable ID pending audit
+compound.hydrogen_sulfide,H2S,硫化氢,Hydrogen sulfide,,,inorganic_gas,gas,planned,,toxic gas sulfide chemistry and combustion,not_tested,stable ID pending audit
+compound.silicon_carbide,SiC,碳化硅,Silicon carbide,,,ceramic,solid,planned,,hard refractory and semiconductor material,not_tested,stable ID pending audit
+compound.boron_nitride,BN,氮化硼,Boron nitride,,,ceramic,solid,planned,,insulating refractory and special material,not_tested,stable ID pending audit
+compound.silicon_nitride,Si3N4,氮化硅,Silicon nitride,,,ceramic,solid,planned,,strong thermal-shock-resistant ceramic,not_tested,stable ID pending audit

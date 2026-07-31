@@ -29,11 +29,11 @@
 
 结构修复试验所用 `resources/font.bz2` 哈希为 `4306249BD82DDEF2EEB15E2A3668AC02B970662768B392C8B45515BB550CBA34`。转换器按 `FontReader` 的低位优先协议打包，并用面积覆盖量化避免旧点采样直接跳行。`tools/validate_tpt_font.py` 验证压缩容器、三字节码点排序、字形边界、替换字形、语言目录覆盖、pack/unpack 往返及固定 Unifont 源码点 `U+4E2D/U+6587/U+7B80/U+4F53/U+5DE5/U+4E1A`。指定字形 PNG 输出至 `artifacts/zh-ui-fix/font/decoded/`。这些结构性质通过不代表缩放后的中文字形达到人工可读性要求。
 
-`font_render_probe` 直接使用 `FontReader`、`Graphics::TextSize` 和 `Graphics::BlendText` 渲染中文、混合符号、化学及炼金进度文本；当前 0.4 候选逐条测量和绘制 `zh-CN.json` 的 1,307 条文本（替换字形为 0），输出保存在忽略的 `artifacts/font-render/0.4.0-dev-*` 证据目录。该离屏验证通过不等于人工 GUI 可读性验证。
+`font_render_probe` 直接使用 `FontReader`、`Graphics::TextSize` 和 `Graphics::BlendText` 渲染中文、混合符号、化学和图鉴文本；Phase 1 删除旧进度文案后重新对完整 `zh-CN.json` 测量和绘制，替换字形为 0。该离屏验证通过不等于人工 GUI 可读性验证。
 
 私有试包绑定提交 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95`，ZIP SHA-256 为 `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081`。用户从 ZIP 解压运行后确认其中文显示仍不如既有出版中文 EXE（SHA-256 `3B96CFEC060705A48681645074AE3C5F53E9A2D40AE56FF76B0E906C2FDBD406`）。该人工结论使中文可读性/字形质量门禁失败；试包仅保留作失败对照，不得称为可发布候选。该结论没有发现或推断进程崩溃。
 
-当前原生 12px 方案生成 `resources/font.bz2` SHA-256 `91AA3E913051E73B1CE412D2E84487BD459AB78BE606D062716608715479B7FA`，包含 14,633 个字形，其中官方 TPT 基线 12,790 个、Fusion 补充 1,843 个、Unifont 回退 0 个。固定测试逐行比较 `U+4E2D/U+6587/U+7B80/U+4F53/U+5DE5/U+4E1A` 的 BDF 单色矩阵与 TPT 解包矩阵，并验证所有 2,597 个嵌入语言字符、替换字形、容器边界、码点排序、宽度和 pack/unpack。此次重建覆盖模组元素自识别说明及炼金进度界面的新增文案；两次分离生成得到相同哈希。自动结果不代替下一私有 ZIP 的人工桌面可读性判断。
+当前原生 12px 方案生成 `resources/font.bz2` SHA-256 `C0C4AB8472EEAFC22F73C0BB131D73CE2A3822DDC2EB893F1E52D5F8368236A9`，包含 14,623 个字形，其中官方 TPT 基线 12,790 个、Fusion 补充 1,833 个、Unifont 回退 0 个。固定测试逐行比较 `U+4E2D/U+6587/U+7B80/U+4F53/U+5DE5/U+4E1A` 的 BDF 单色矩阵与 TPT 解包矩阵，并验证所有 2,587 个嵌入语言字符、替换字形、容器边界、码点排序、宽度和 pack/unpack。此次重建覆盖“元素说明”标签并移除已废弃进度文案。自动结果不代替最终私有 ZIP 的人工桌面可读性判断。
 
 该方案的私有人工试包绑定提交 `c743db2fcc49c01033e68023cceff897ed4c35f6`，普通 ZIP SHA-256 `943DA2A60C0B371A1D3F921FEC525FB3F7B5AEBC7C5CE7775A8AEFA883C13F14`，符号 ZIP SHA-256 `BE14C7D53658963DF1C6B1ECFAA44AC51F8004883530CB7DF922E4282FC11031`。ZIP 内容与 PE 审计通过，从 ZIP 解压后以 20 个全新数据目录启动均响应，进程崩溃 0；人工可读性仍为 `not_tested`。
 

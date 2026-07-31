@@ -20,7 +20,7 @@ Phase 0 审计的九个仓库顶层均含 GPL-3.0 `LICENSE`，本次固定文件
 | SpikeViper Biology | https://github.com/SpikeViper/The-Powder-Toy | `master` | `134ebf330eda42b4b300a2b7613ede71261697df` | 生物系统设计参考，重写 |
 | TPT Ultimata Mod | https://github.com/Bowserinator/TPT-Ultimata-Mod | `development` | `b74971752433652c033559abea415ec3510ac433` | 特殊物理/电子/载具候选，精选重写 |
 | Jacob1 Mod | https://github.com/jacob1/The-Powder-Toy | `c++` | `b492616124d2346a5ec7bc70fa881fb73345396b` | 自动化、UX 和存档来源识别参考 |
-| TPT-Alchemy | https://github.com/jacob1/TPT-Alchemy | `master` | `9a593ce11536e2e683bc64a698399c0805ce77a1` | 炼金模式设计参考，进度实现重写 |
+| TPT-Alchemy | https://github.com/jacob1/TPT-Alchemy | `master` | `9a593ce11536e2e683bc64a698399c0805ce77a1` | 进度/发现系统拒绝；仅可独立评估无解锁的反应概念 |
 | Seppo's Metallurgy Mod SRC | https://github.com/SeppoTPT/Seppo-s-Metallurgy-Mod-SRC | `master` | `c3a8dd171a1c0fefc9a386e7e069f81d91f1514f` | 清洁室需求参考；实现源码缺失 |
 | Cyens Toy | https://github.com/cbeimers113/cyens-toy | `master` | `f01d992c97432ec1c46d84ade05131da521f355a` | 烃化学/气体/特殊物理设计参考，重写 |
 

@@ -25,7 +25,6 @@
 #include "graphics/Renderer.h"
 #include "simulation/Air.h"
 #include "simulation/GOLString.h"
-#include "simulation/OmniAlchemy.h"
 #include "simulation/gravity/Gravity.h"
 #include "simulation/Simulation.h"
 #include "simulation/Snapshot.h"
@@ -863,16 +862,6 @@ void GameModel::SaveToSimParameters(const GameSave &saveData)
 		sim->rng = RNG();
 	}
 	sim->ensureDeterminism = saveData.ensureDeterminism;
-	OmniAlchemy::Ref().Import(saveData.omniAlchemy);
-	if (!tools.empty())
-	{
-		RefreshOmniContentSettings();
-	}
-	if (GetOmniSetting(OmniSetting::AlchemyMode))
-	{
-		auto hintKey = OmniAlchemy::Ref().CurrentHintKey();
-		SetInfoTip(Localization::Ref().Tr(hintKey.c_str()));
-	}
 }
 
 void GameModel::SetSave(std::unique_ptr<SaveInfo> newSave, bool invertIncludePressure)
@@ -1235,7 +1224,6 @@ void GameModel::FrameStep(int frames)
 
 void GameModel::ClearSimulation()
 {
-	OmniAlchemy::Ref().Reset();
 	//Load defaults
 	sim->gravityMode = GRAV_VERTICAL;
 	sim->customGravityX = 0.0f;
@@ -1254,10 +1242,6 @@ void GameModel::ClearSimulation()
 	sim->clear_sim();
 	ren->ClearAccumulation();
 	Client::Ref().ClearAuthorInfo();
-	if (GetOmniSetting(OmniSetting::AlchemyMode) && !tools.empty())
-	{
-		RefreshOmniContentSettings();
-	}
 
 	notifySaveChanged();
 	UpdateQuickOptions();
@@ -1265,16 +1249,6 @@ void GameModel::ClearSimulation()
 
 void GameModel::SetPlaceSave(std::unique_ptr<GameSave> save)
 {
-	if (save && GetOmniSetting(OmniSetting::AlchemyMode))
-	{
-		auto lockedElements = FindLockedAlchemySaveElements(*save);
-		if (!lockedElements.empty())
-		{
-			SetInfoTip(Localization::Ref().Tr("alchemy.paste_locked"));
-			Log("Paste rejected because it contains elements locked by current alchemy progress", false);
-			save.reset();
-		}
-	}
 	transformedPlaceSave.reset();
 	placeSave = std::move(save);
 	notifyPlaceSaveChanged();
@@ -1759,14 +1733,6 @@ void GameModel::AfterSim()
 {
 	FrameTime::Span span(frameTime.get(), "GameModel::AfterSim");
 	sim->AfterSim();
-	if (GetOmniSetting(OmniSetting::AlchemyMode) && OmniAlchemy::Ref().Observe(*sim))
-	{
-		RefreshOmniContentSettings();
-	}
-	if (auto noticeKey = OmniAlchemy::Ref().ConsumeNoticeKey(); !noticeKey.empty())
-	{
-		SetInfoTip(Localization::Ref().Tr(noticeKey.c_str()));
-	}
 	CommandInterface::Ref().HandleEvent(AfterSimEvent{});
 }
 

@@ -13,13 +13,7 @@ enum class OmniSetting : unsigned char
 	Metallurgy,
 	Chemistry,
 	AdvancedNuclear,
-	SpecialPhysics,
-	Disasters,
-	Experimental,
 	SimplifiedBiology,
-	PerformanceProtection,
-	DetailedHud,
-	AlchemyMode,
 	Count,
 };
 
@@ -44,7 +38,6 @@ enum class OmniSelectionRestriction : unsigned char
 	InvalidElement,
 	ReservedElement,
 	ModuleDisabled,
-	AlchemyLocked,
 };
 
 struct OmniSettingDefinition
@@ -93,5 +86,4 @@ bool IsOmniElementSelectable(int elementId);
 bool IsOmniElementCreationAllowed(int elementId);
 bool IsOmniToolSelectable(Tool const &tool);
 std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save);
-std::vector<int> FindLockedAlchemySaveElements(GameSave const &save);
 char const *GetOmniElementModuleNameKey(OmniElementModule module);

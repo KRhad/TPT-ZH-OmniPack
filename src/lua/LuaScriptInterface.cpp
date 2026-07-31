@@ -336,11 +336,9 @@ void LuaSetParticleProperty(lua_State *L, int particleID, StructProperty propert
 		if (type >= 0 && !IsOmniElementCreationAllowed(TYP(type)))
 		{
 			auto restriction = GetOmniElementSelectionRestriction(TYP(type));
-			auto const *reason = restriction == OmniSelectionRestriction::AlchemyLocked
-				? "locked by alchemy progress"
-				: restriction == OmniSelectionRestriction::ModuleDisabled
-					? "disabled module"
-					: "unavailable element";
+			auto const *reason = restriction == OmniSelectionRestriction::ModuleDisabled
+				? "disabled module"
+				: "unavailable element";
 			(void)luaL_error(L, "Element %d is unavailable: %s", TYP(type), reason);
 			return;
 		}

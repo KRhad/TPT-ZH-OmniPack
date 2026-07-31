@@ -16,7 +16,6 @@ import zipfile
 VERSION = "0.1.0-test"
 DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
-ALCHEMY_VERSION = "0.4.0-dev"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -60,8 +59,6 @@ AUTOMATION_ONLY_DOCUMENTS = {
     "examples/0.3.0/09-integrated-factory.stm",
 }
 AUTOMATION_DOCUMENTS = DEV_DOCUMENTS | AUTOMATION_ONLY_DOCUMENTS
-ALCHEMY_ONLY_DOCUMENTS = {"ALCHEMY-PROGRESSION-0.4.0.json"}
-ALCHEMY_DOCUMENTS = AUTOMATION_DOCUMENTS | ALCHEMY_ONLY_DOCUMENTS
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 PATH_MARKERS = (b"C:\\Users\\", b"/Users/", b"\\build-", b"/build-")
 
@@ -97,8 +94,6 @@ def development_documents(version: str) -> set[str]:
         return DEV_DOCUMENTS
     if version == AUTOMATION_VERSION:
         return AUTOMATION_DOCUMENTS
-    if version == ALCHEMY_VERSION:
-        return ALCHEMY_DOCUMENTS
     return set()
 
 
@@ -209,32 +204,6 @@ def audit_0_3_automation(
             errors.append(f"0.3 automation manifest does not match member: {filename}")
 
 
-def audit_0_4_alchemy(archive: zipfile.ZipFile, stem: str, errors: list[str]) -> None:
-    document = json.loads(archive.read(f"{stem}/ALCHEMY-PROGRESSION-0.4.0.json"))
-    initial = document.get("initial_identifiers")
-    conditions = document.get("required_condition_types")
-    stages = document.get("stages")
-    progress_schema = document.get("progress_schema")
-    mode_policy = document.get("mode_policy")
-    if document.get("schema_version") != 1 or document.get("content_version") != ALCHEMY_VERSION:
-        errors.append("0.4 alchemy schema or content version is invalid")
-    if not isinstance(initial, list) or set(initial) != {
-        "DEFAULT_PT_FIRE", "DEFAULT_PT_WATR", "DEFAULT_PT_STNE", "DEFAULT_PT_O2"
-    } or len(initial) != 4:
-        errors.append("0.4 alchemy initial identifier set is invalid")
-    if not isinstance(stages, list) or len(stages) != 10:
-        errors.append("0.4 alchemy document does not contain ten stages")
-    if not isinstance(conditions, list) or set(conditions) != {
-        "temperature", "pressure", "electric", "catalyst", "time", "structure",
-        "cooling", "filtering", "multi_stage",
-    }:
-        errors.append("0.4 alchemy condition set is invalid")
-    if not isinstance(progress_schema, dict) or progress_schema.get("current") != 1:
-        errors.append("0.4 alchemy progress schema is invalid")
-    if not isinstance(mode_policy, dict) or mode_policy.get("progress_storage") != "OPS.omniAlchemy":
-        errors.append("0.4 alchemy progress storage is invalid")
-
-
 def audit_package(
     package_path: Path,
     expect_symbols: bool = False,
@@ -246,7 +215,6 @@ def audit_package(
         VERSION: "public-test",
         DEV_VERSION: "local-dev",
         AUTOMATION_VERSION: "local-dev",
-        ALCHEMY_VERSION: "local-dev",
     }
     if version not in profiles:
         return [f"unsupported package version: {version}"]
@@ -317,12 +285,10 @@ def audit_package(
                     audit_0_2_examples(
                         archive, stem, actual, executable_hash, errors
                     )
-                    if version in {AUTOMATION_VERSION, ALCHEMY_VERSION}:
+                    if version == AUTOMATION_VERSION:
                         audit_0_3_automation(
                             archive, stem, actual, executable_hash, errors
                         )
-                    if version == ALCHEMY_VERSION:
-                        audit_0_4_alchemy(archive, stem, errors)
     except (OSError, ValueError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
         errors.append(f"cannot read package: {exc}")
     return errors
@@ -342,7 +308,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--symbols", action="store_true")
     parser.add_argument(
         "--version",
-        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION, ALCHEMY_VERSION),
+        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION),
         default=VERSION,
     )
     parser.add_argument("--kind", choices=("public-test", "local-dev"))

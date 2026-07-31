@@ -1,0 +1,14 @@
+isotope_id,atomic_number,symbol,zh_name,en_name,stable_id,identifier,half_life_model,decay_type,decay_product,heat,particles,neutron_behavior,status,tests,notes
+isotope.hydrogen_2,1,H-2,氢-2,Hydrogen-2,,,stable,none,none,low,none,fusion_feedstock,planned,not_tested,official DEUT is deuterium oxide and is not silently reused
+isotope.hydrogen_3,1,H-3,氢-3,Hydrogen-3,,,long,beta,helium-3,low,electron,fusion_feedstock,planned,not_tested,game-scaled half-life
+isotope.carbon_14,6,C-14,碳-14,Carbon-14,,,long,beta,nitrogen-14,low,electron,neutral,planned,not_tested,tracer gameplay
+isotope.cobalt_60,27,Co-60,钴-60,Cobalt-60,,,medium,beta_gamma,nickel-60,medium,electron_gamma,neutral,planned,not_tested,irradiation source
+isotope.strontium_90,38,Sr-90,锶-90,Strontium-90,,,medium,beta,yttrium-90,medium,electron,neutral,planned,not_tested,waste hazard
+isotope.iodine_131,53,I-131,碘-131,Iodine-131,,,short,beta_gamma,xenon-131,medium,electron_gamma,absorber,planned,not_tested,volatile fission product
+isotope.caesium_137,55,Cs-137,铯-137,Caesium-137,,,medium,beta_gamma,barium-137m,medium,electron_gamma,neutral,planned,not_tested,contamination gameplay
+isotope.thorium_232,90,Th-232,钍-232,Thorium-232,,,very_long,alpha,radium-228,low,alpha,fertile,planned,not_tested,thorium fuel cycle
+isotope.uranium_235,92,U-235,铀-235,Uranium-235,,,very_long,alpha_fission,thorium-231_or_fission,high,alpha_neutron,fissile,planned,not_tested,official URAN behavior must be audited before mapping
+isotope.uranium_238,92,U-238,铀-238,Uranium-238,,,very_long,alpha,thorium-234,low,alpha,fertile,planned,not_tested,breeding and shielding interaction
+isotope.plutonium_239,94,Pu-239,钚-239,Plutonium-239,,,very_long,alpha_fission,uranium-235_or_fission,high,alpha_neutron,fissile,planned,not_tested,official PLUT behavior must be audited before mapping
+isotope.americium_241,95,Am-241,镅-241,Americium-241,,,long,alpha_gamma,neptunium-237,medium,alpha_gamma,absorber,planned,not_tested,source and waste gameplay
+isotope.californium_252,98,Cf-252,锎-252,Californium-252,,,short,alpha_spontaneous_fission,curium-248_or_fission,high,alpha_neutron,strong_neutron_source,planned,not_tested,strict event budget required

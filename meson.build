@@ -637,10 +637,10 @@ font_render_probe = executable(
 	override_options: target_options,
 )
 
-alchemy_state_probe = executable(
-	'alchemy_state_probe',
+legacy_progress_save_probe = executable(
+	'legacy_progress_save_probe',
 	sources: [
-		files('tools/alchemy_state_probe.cpp'),
+		files('tools/legacy_progress_save_probe.cpp'),
 		files('src/client/GameSave.cpp'),
 		files('src/client/User.cpp'),
 		files('src/graphics/Renderer.cpp'),
@@ -815,26 +815,6 @@ test(
 )
 
 test(
-	'alchemy-audit',
-	python3_prog,
-	args: [
-		files('tools/alchemy_audit.py'),
-		'--source-root', meson.project_source_root(),
-		'--quiet',
-	],
-	env: static_test_env,
-	suite: 'static',
-	timeout: 60,
-)
-
-test(
-	'alchemy-state-probe',
-	alchemy_state_probe,
-	suite: 'static',
-	timeout: 60,
-)
-
-test(
 	'save-compatibility-audit',
 	python3_prog,
 	args: [
@@ -843,6 +823,30 @@ test(
 		'--quiet',
 	],
 	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'removed-game-systems-audit',
+	python3_prog,
+	args: [
+		files('tools/removed_game_systems_audit.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'legacy-progress-save-probe',
+	legacy_progress_save_probe,
+	args: [
+		files('examples/0.2.0/01-peroxide-pathogen.stm'),
+		files('examples/0.3.0/09-integrated-factory.stm'),
+	],
 	suite: 'static',
 	timeout: 60,
 )

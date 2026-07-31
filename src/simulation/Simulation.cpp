@@ -5,7 +5,6 @@
 #include "gravity/Gravity.h"
 #include "ToolClasses.h"
 #include "SimulationData.h"
-#include "OmniAlchemy.h"
 #include "client/GameSave.h"
 #include "common/tpt-rand.h"
 #include "common/Defer.h"
@@ -498,7 +497,6 @@ void Simulation::SaveSimOptions(GameSave &gameSave)
 	gameSave.waterEEnabled = water_equal_test;
 	gameSave.gravityEnable = bool(grav);
 	gameSave.aheatEnable = aheat_enable;
-	gameSave.omniAlchemy = OmniAlchemy::Ref().Export();
 }
 
 bool Simulation::FloodFillPmapCheck(int x, int y, int type) const

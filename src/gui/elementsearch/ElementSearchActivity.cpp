@@ -163,7 +163,8 @@ ElementSearchActivity::ElementSearchActivity(GameController * gameController, st
 			auto catalogDescription = language == 1
 				? CatalogString(record->chineseDescription)
 				: CatalogString(record->englishDescription);
-			details << (catalogDescription.empty() ? element.Description : catalogDescription);
+			details << Localization::Ref().Tr("encyclopedia.description") << ": "
+				<< (catalogDescription.empty() ? element.Description : catalogDescription);
 		}
 		new InformationMessage(title, details.Build(), true);
 	} });

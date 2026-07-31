@@ -92,8 +92,12 @@ gui_cps_save_test=not_tested
 
 reaction_tests=38/38
 automation_tests=not_tested
-alchemy_progression_tests=not_tested
-challenge_tests=not_tested
+game_tasks_removed=true
+achievements_removed=true
+challenge_system_removed=true
+technology_tree_removed=true
+alchemy_progression_removed=true
+forced_unlocks_removed=true
 stress_harness_test=true
 stress_samples_executed=10
 stress_sample_executions_passed=10

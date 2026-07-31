@@ -44,8 +44,8 @@ class BiologyAuditTests(unittest.TestCase):
         try:
             biology_audit.read_text = lambda path, current_errors: (
                 settings.replace(
-                    "false, true  },\n\t{ OmniSetting::PerformanceProtection",
-                    "false, false },\n\t{ OmniSetting::PerformanceProtection",
+                    '"options.omni.simplified_biology.info",     false, true  },',
+                    '"options.omni.simplified_biology.info",     false, false },',
                 )
                 if path == settings_path
                 else original(path, current_errors)

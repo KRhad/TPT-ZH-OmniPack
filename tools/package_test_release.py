@@ -20,7 +20,6 @@ import zipfile
 VERSION = "0.1.0-test"
 DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
-ALCHEMY_VERSION = "0.4.0-dev"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -95,10 +94,6 @@ AUTOMATION_ONLY_DOCUMENTS = (
     ),
 )
 AUTOMATION_DOCUMENTS = DEV_DOCUMENTS + AUTOMATION_ONLY_DOCUMENTS
-ALCHEMY_ONLY_DOCUMENTS = (
-    ("docs/ALCHEMY_PROGRESSION.json", "ALCHEMY-PROGRESSION-0.4.0.json"),
-)
-ALCHEMY_DOCUMENTS = AUTOMATION_DOCUMENTS + ALCHEMY_ONLY_DOCUMENTS
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 FORBIDDEN_COMPONENTS = {".git", "__pycache__", "build", "dist"}
 CAN_INSTALL_DEFAULT_RE = re.compile(
@@ -151,7 +146,6 @@ def validate_profile(version: str, kind: str, include_examples: bool) -> None:
         VERSION: ("public-test", False),
         DEV_VERSION: ("local-dev", True),
         AUTOMATION_VERSION: ("local-dev", True),
-        ALCHEMY_VERSION: ("local-dev", True),
     }
     if version not in expected:
         raise ValueError(f"unsupported package version: {version}")
@@ -175,8 +169,6 @@ def development_documents(version: str) -> tuple[tuple[str, str], ...]:
         return DEV_DOCUMENTS
     if version == AUTOMATION_VERSION:
         return AUTOMATION_DOCUMENTS
-    if version == ALCHEMY_VERSION:
-        return ALCHEMY_DOCUMENTS
     return ()
 
 
@@ -338,7 +330,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-directory", type=Path, default=Path("dist"))
     parser.add_argument(
         "--version",
-        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION, ALCHEMY_VERSION),
+        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION),
         default=VERSION,
     )
     parser.add_argument("--kind", choices=("public-test", "local-dev"), default="public-test")

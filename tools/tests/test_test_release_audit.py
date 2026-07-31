@@ -185,31 +185,6 @@ class TestReleaseAuditTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def add_alchemy_sources(self, source: Path) -> None:
-        self.add_automation_sources(source)
-        (source / "docs" / "ALCHEMY_PROGRESSION.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": 1,
-                    "content_version": package_test_release.ALCHEMY_VERSION,
-                    "progress_schema": {"current": 1},
-                    "mode_policy": {"progress_storage": "OPS.omniAlchemy"},
-                    "initial_identifiers": [
-                        "DEFAULT_PT_FIRE",
-                        "DEFAULT_PT_WATR",
-                        "DEFAULT_PT_STNE",
-                        "DEFAULT_PT_O2",
-                    ],
-                    "required_condition_types": [
-                        "temperature", "pressure", "electric", "catalyst", "time",
-                        "structure", "cooling", "filtering", "multi_stage",
-                    ],
-                    "stages": [{"order": index} for index in range(1, 11)],
-                }
-            ),
-            encoding="utf-8",
-        )
-
     def test_generated_package_passes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source = self.make_source_root(Path(temporary))
@@ -316,66 +291,6 @@ class TestReleaseAuditTests(unittest.TestCase):
                 ),
                 [],
             )
-
-    def test_alchemy_package_includes_all_prior_content_and_graph(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            source = self.make_source_root(Path(temporary))
-            self.add_alchemy_sources(source)
-            with mock.patch.object(
-                package_test_release, "git_revision", return_value="a" * 40
-            ):
-                package, _, symbols, _ = package_test_release.build_package(
-                    source,
-                    source / "tpt-zh-omnipack.exe",
-                    source / "tpt-zh-omnipack.debug",
-                    source / "dist",
-                    version=package_test_release.ALCHEMY_VERSION,
-                    kind="local-dev",
-                    include_examples=True,
-                )
-            self.assertEqual(
-                test_release_audit.audit_package(
-                    package,
-                    version=package_test_release.ALCHEMY_VERSION,
-                    kind="local-dev",
-                ),
-                [],
-            )
-            self.assertEqual(
-                test_release_audit.audit_package(
-                    symbols,
-                    True,
-                    version=package_test_release.ALCHEMY_VERSION,
-                ),
-                [],
-            )
-
-    def test_alchemy_package_rejects_incomplete_graph_metadata(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            source = self.make_source_root(Path(temporary))
-            self.add_alchemy_sources(source)
-            graph_path = source / "docs" / "ALCHEMY_PROGRESSION.json"
-            graph = json.loads(graph_path.read_text(encoding="utf-8"))
-            graph["stages"].pop()
-            graph_path.write_text(json.dumps(graph), encoding="utf-8")
-            with mock.patch.object(
-                package_test_release, "git_revision", return_value="a" * 40
-            ):
-                package, _, _, _ = package_test_release.build_package(
-                    source,
-                    source / "tpt-zh-omnipack.exe",
-                    source / "tpt-zh-omnipack.debug",
-                    source / "dist",
-                    version=package_test_release.ALCHEMY_VERSION,
-                    kind="local-dev",
-                    include_examples=True,
-                )
-            errors = test_release_audit.audit_package(
-                package,
-                version=package_test_release.ALCHEMY_VERSION,
-                kind="local-dev",
-            )
-            self.assertTrue(any("ten stages" in error for error in errors))
 
     def test_local_dev_profile_must_be_explicit(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

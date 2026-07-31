@@ -25,7 +25,7 @@
 | [SpikeViper Biology](https://github.com/SpikeViper/The-Powder-Toy) | `master` / `134ebf330eda42b4b300a2b7613ede71261697df` | 2023-11-26 20:38:00 -06:00 | 97.0.352 | 222，含 NONE；30 新增 | 生物循环概念按事件/预算模型重写 |
 | [TPT Ultimata](https://github.com/Bowserinator/TPT-Ultimata-Mod) | `development` / `b74971752433652c033559abea415ec3510ac433` | 2023-10-08 16:42:48 -04:00 | 97.0.352 | 334，含 NONE；142 新增 | 只精选有联动内容，按当前核心重写 |
 | [Jacob1 Mod](https://github.com/jacob1/The-Powder-Toy) | `c++` / `b492616124d2346a5ec7bc70fa881fb73345396b` | 2026-06-29 18:03:41 -04:00 | 宏为 100.0.399；架构源于 83 | 206 槽；10 新增 | 保存标记和 UX 仅参考；少量自动化元素重写 |
-| [TPT-Alchemy](https://github.com/jacob1/TPT-Alchemy) | `master` / `9a593ce11536e2e683bc64a698399c0805ce77a1` | 2016-08-17 14:54:42 +03:00 | 91.3.328 | 180 槽；无新增 | 四元素开局/发现思路保留，进度系统全部重写 |
+| [TPT-Alchemy](https://github.com/jacob1/TPT-Alchemy) | `master` / `9a593ce11536e2e683bc64a698399c0805ce77a1` | 2016-08-17 14:54:42 +03:00 | 91.3.328 | 180 槽；无新增 | 进度、发现、成就和限制系统全部拒绝 |
 | [Seppo Metallurgy](https://github.com/SeppoTPT/Seppo-s-Metallurgy-Mod-SRC) | `master` / `c3a8dd171a1c0fefc9a386e7e069f81d91f1514f` | 2020-05-28 23:41:02 -04:00 | 95.0.345 | 219，含 NONE；32 新增 | 32 个实现文件全缺失，只能清洁室设计参考 |
 | [Cyens Toy](https://github.com/cbeimers113/cyens-toy) | `master` / `f01d992c97432ec1c46d84ade05131da521f355a` | 2022-07-21 14:22:31 -04:00 | 96.2.350 | 194，含 NONE；2 新增 | 烃链/可压缩气体思路重写；不覆盖官方元素语义 |
 
@@ -209,7 +209,7 @@ bool elementsAcquired[PT_NUM];
 
 快照比较约 870 files，`+62095/-73583`。
 
-**裁决：**只保留四元素开局、反应发现、通知、成就分类和结构配方思路；以 identifier 集合、版本化独立进度、集中配方、原子保存和统一权限服务全部重写。
+**裁决：**进度、发现限制、通知、成就和四元素开局全部拒绝移植。公开源码仅用于证明该旧系统存在的缺陷；不再作为当前产品设计来源。可独立评估其中具体化学反应概念，但必须进入自由沙盒统一反应表，且不得附带解锁条件。
 
 ## 8. SeppoTPT/Seppo-s-Metallurgy-Mod-SRC
 
@@ -272,7 +272,7 @@ ALNI ALNC TERN MAGX PLTU
 | 磁场/力场/局部重力 | Cracker、Ultimata、Cyens | 分离工程磁体、可控力场和实验全局物理 |
 | 灰蛊/异常复制 | Cracker、Ultimata | 统一粒子/帧预算和克制机制 |
 | 时间控制 | Cracker、Ultimata、Cyens | 不改全局时钟；仅实验局部更新调度，默认关闭 |
-| 炼金发现 | Alchemy、整合反应网 | 全新中央配方和 identifier 进度服务 |
+| 旧发现/进度系统 | Alchemy | 拒绝；只保留无解锁条件的独立反应概念 |
 
 ## 总体移植判定
 
@@ -291,7 +291,7 @@ ALNI ALNC TERN MAGX PLTU
 
 - 所有旧模组新增元素实现；
 - 生物循环、冶金反应、核工业、自动化门户/传感器；
-- 炼金进度、解锁、成就、挑战；
+- 旧模组中值得保留但依赖过时核心的材料与反应；
 - 时间、磁场、力场、灰蛊等强力系统及其预算；
 - 旧存档来源识别、稳定 ID 迁移和缺失模块占位。
 
@@ -326,4 +326,3 @@ Get-FileHash LICENSE -Algorithm SHA256
 ```
 
 本报告中的“已知崩溃/风险”来自具体源码边界、公开问题或仓库明确说明；没有用“issue 为零”推断“没有 bug”。
-
