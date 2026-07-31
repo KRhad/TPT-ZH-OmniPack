@@ -44,6 +44,18 @@ screenshot_*
 !tools/*.py
 !tools/tests/*.py
 !tools/runtime/*.lua
+!tools/mod_catalog/
+!tools/mod_catalog/*.py
+
+# External repositories and raw Lua downloads are read-only research inputs.
+# Only curated metadata, patches and placeholder files are committed.
+/external/repositories/*
+!/external/repositories/.gitkeep
+/external/lua-mods/*
+!/external/lua-mods/.gitkeep
+/external/rejected/*
+!/external/rejected/.gitkeep
+/external/metadata/*.json
 
 # Audited font source and licenses used by the deterministic release font build.
 !resources/third_party/FUSION_PIXEL_FONT_*.txt

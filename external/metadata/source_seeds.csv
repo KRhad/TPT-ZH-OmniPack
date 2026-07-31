@@ -1,0 +1,42 @@
+mod_id,repository_url,forum_url,download_url,discovery_source,port_priority,expected_source_type,notes
+official,https://github.com/The-Powder-Toy/The-Powder-Toy,,,known_baseline,0,cpp_source,official comparison baseline
+dragonrster,https://github.com/Dragonrster/The-Powder-Toy-Chinese,,,existing_origin,0,cpp_source,translation baseline not a content source
+cracker1000,https://github.com/cracker1000/The-Powder-Toy,https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=23279,,official_forum,1,cpp_source,50+ element mod
+spikeviper,https://github.com/SpikeViper/The-Powder-Toy,https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=26571,,official_forum,1,cpp_source,biology mod
+ultimata,https://github.com/Bowserinator/TPT-Ultimata-Mod,,,known_priority,2,cpp_source,large special physics mod
+jacob1,https://github.com/jacob1/The-Powder-Toy,https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=11117,,official_forum,2,cpp_source,long-running UI and element mod
+alchemy,https://github.com/jacob1/TPT-Alchemy,https://powdertoy.co.uk/Discussions/Thread/View.html?Post=295857,,official_forum,4,cpp_source,progress systems rejected; reactions only may be reviewed
+seppo,https://github.com/SeppoTPT/Seppo-s-Metallurgy-Mod-SRC,,,known_priority,2,cpp_source,public repository has missing element implementations
+cyens,https://github.com/cbeimers113/cyens-toy,,,known_priority,2,cpp_source,old science overhaul
+cyens_src,https://github.com/cbeimers113/cyens-toy-src,,,github_search,1,cpp_source,newer science overhaul source
+science_toy,https://github.com/cbeimers113/The-Science-Toy,,,github_search,2,cpp_source,science oriented mod
+biological_mod,https://github.com/sam-astro/TPT-Biological-Mod,,,github_search,1,cpp_source,biological elements
+chemistry_mod,https://github.com/Thenukeluis/The-Chemistry-Mod,,,github_search,1,cpp_source,periodic elements and compounds candidate
+metacircuits,https://github.com/cbeimers113/metacircuits,,,github_search,3,cpp_source,logic gate system
+mod_archive,https://github.com/JS101dotgit/TPTModArchive,,,github_search,2,mixed_source,archive index and historical sources
+record_mod,https://github.com/catsoften/TPT-Record-Mod,,,github_search,4,cpp_source,recording UI feature
+dtttpt,https://github.com/DavidTheTech/DTTTPT,,,github_search,4,cpp_source,older general mod
+plant_mod,https://github.com/Dev1475yt/TPT_Plantmod,,,github_search,2,cpp_source,plant ecology candidate
+bmn_mod,https://github.com/FeynmanTech/bmn-tpt,,,github_search,4,cpp_source,older BMN mod
+nucular_mod,https://github.com/nucular/The-Powder-Toy-nuculars-mod,,,github_search,2,cpp_source,dead nuclear-themed source reference
+alchemagica,https://github.com/Rebmiami/Alchemagica,,,github_search,4,cpp_source,magic theme low priority
+ryan_mod,https://github.com/Ryan-31415/tptmod-ryan,,,github_search,4,cpp_source,general mod
+lua_mods_serg,https://github.com/SergSoftwares/TptMods,,,github_search,3,lua_source,Lua mod collection
+fun_chemicals,https://github.com/ShadyShadyAsh/fun-n-kemiko,,,github_search,1,lua_source,chemistry Lua candidate
+temp_mod_fork,https://github.com/temp-TPT-mod-1/The-Powder-Toy-mod-fork,,,github_search,4,cpp_source,old fork
+toast_mod,https://github.com/Toastfem/The-Powder-Toy-Toast-mod,,,github_search,4,cpp_source,general mod
+triheron_ui,https://github.com/Triheron/The-Powder-Toy-Triheron,,,github_search,4,cpp_source,archived UI mod
+yeah_mod,https://github.com/yeah42148/ThePowderToy,,,github_search,4,cpp_source,older general mod
+zakpack,https://github.com/Zak03/Powder-toy-lua-elemant-pack-zakpack-,,,github_search,3,lua_source,five Lua elements
+unproductive,https://github.com/alecnotalex/The-Powder-Toy,https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=10803,,official_forum,4,cpp_source,old low-quality element mod
+periodic_mod,https://github.com/mechai12b/tpt-elementmod,,,github_search,1,cpp_source,periodic table inspired candidate
+realistic_combustibles,https://github.com/noideawhattonamemyacount/Wa,,,github_search,2,cpp_source,combustibles candidate
+powder_better,https://github.com/samsa12/powder-toy-but-better,,,github_search,3,cpp_source,new element and optimization fork
+tpt_elements_editor,https://github.com/boxmein/tptelements2,,,github_search,4,documentation_only,MIT editor and element metadata tooling
+fanmod,https://github.com/Rebmiami/FanMod,https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=26165,,official_forum,2,lua_source,community element script including tritium and bounded UI concepts
+magnet_toy,https://github.com/T307-coder/The-Magnet-Toy,https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=27832,,official_forum,3,cpp_source,electromagnetism system; high core and performance review risk
+norbs_mod,https://github.com/norbcodes/TPT-Norbs-Mod,,,github_topic,3,cpp_source,current general-purpose mod fork
+chem_mod_lua,,https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=21831,https://pastebin.com/raw/4e6Seg7C,official_forum,1,lua_source,40+ chemistry script; license unknown and existing elements are overridden
+tpt_remade,,https://powdertoy.co.uk/Discussions/Thread/View.html?Post=317208,https://pastebin.com/raw/3ZBzHjy9,official_forum,2,lua_source,historical Lua periodic-content candidate; license unknown
+realistic_science,,https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=15471,,official_forum,2,cpp_source,historical source link; host and license require manual recovery
+tommig_mod,,https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=11279,,official_forum,2,cpp_source,historical chemistry source links; availability and license require review

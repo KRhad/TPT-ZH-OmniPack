@@ -1,0 +1,3 @@
+mod_id,author,relative_path,download_url,sha256,last_update_date,license,notes
+chem_mod_lua,Kev_AK,chem_mod_lua/chem-mod-1.2.2b.lua,https://pastebin.com/raw/4e6Seg7C,C7A6A96E51141C514F2FF6DBDA11CCB0F8BBD86A399DB67C472938A374C2D243,2023-11-12,unknown,Forum-published current Lua source; code and behavior may be inspected but not copied without a license.
+tpt_remade,_Theo,tpt_remade/tpt-remade-iv.lua,https://pastebin.com/raw/3ZBzHjy9,5EB11BDC020DB660106521BE1D6A0AD662F0F149849D5E38BD787296324378B0,2021-01-30,unknown,Forum-linked Lua source; code and behavior may be inspected but not copied without a license.

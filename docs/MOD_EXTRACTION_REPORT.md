@@ -1,0 +1,38 @@
+# 模组提取报告
+
+```text
+repositories_discovered=41
+repositories_cloned=27
+raw_sources_downloaded=2
+repositories_buildable=not_tested
+mods_cataloged=41
+mods_with_source=28
+mods_binary_only=1
+mods_license_compatible=20
+mods_license_unknown=20
+cpp_elements_detected=4248
+lua_elements_detected=277
+candidate_definition_records=4522
+unique_candidate_elements=770
+licensed_source_candidates=339
+duplicate_candidates=32
+duplicate_definition_records=3584
+rejected_candidates=32
+direct_port_candidates=78
+rewrite_candidates=261
+reference_only_candidates=431
+elements_ported=0
+elements_rewritten=0
+elements_rejected=0
+periodic_elements_sourced=not_tested
+periodic_elements_remaining=118
+total_omnipack_elements=48
+clean_build_pass=true
+element_registry_pass=true
+reaction_registry_pass=true
+license_audit_pass=false
+```
+
+数值只代表当前克隆集和自动扫描。候选数按标准化名称与代号折叠重复分叉；行为差异仍保留在去重报告中。
+`duplicate_definition_records` 是自动拒绝的重复源码定义数，不等于已经人工拒绝的独立材料。
+`license_audit_pass=true` 只能由完成逐文件、README、子模块和资源复核后的显式参数写入。

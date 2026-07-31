@@ -841,6 +841,18 @@ test(
 )
 
 test(
+	'mod-catalog-validation',
+	python3_prog,
+	args: [
+		files('tools/mod_catalog/validate_mod_catalog.py'),
+		'--source-root', meson.project_source_root(),
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'legacy-progress-save-probe',
 	legacy_progress_save_probe,
 	args: [
