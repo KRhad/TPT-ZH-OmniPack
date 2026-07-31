@@ -12,7 +12,7 @@
 | 当前 Meson 全量 | 自动 | PASS | `14/14` |
 | 当前 Python 全量 | 自动 | PASS | `87/87`，0 skip |
 | 元素/反应 registry | 自动 | PASS | 370 元素槽、243 active、127 reserved；48 个玩法字段完整；38/38 反应规则 |
-| 字体资源与渲染探针 | 自动/引擎 | PASS | `font.bz2` SHA-256 `47F4EB85...`；2,593 语言字符覆盖；中文矩阵和引擎探针通过 |
+| 字体资源与渲染探针 | 自动/引擎 | PASS | `font.bz2` SHA-256 `C13C3D0E...`；2,590 语言字符覆盖；中文矩阵和引擎探针通过 |
 | 已剥离 EXE Lua 回归 | 实际运行 | PASS | 模块、冶金、生态、化学、核工业和混合 OPS 共 `6/6` |
 | 官方 OPS 双往返 | 实际运行 | PASS | 3 进程、2 重启、2 加载；6 粒子、每次 14 字段断言 |
 | 四个单模块 OPS 双往返 | 实际运行 | PASS | `4/4`；总计 12 进程、8 重启、8 加载、73 粒子、每次加载合计 106 字段断言；加上官方场景后为 `5/5`、15 进程、10 重启、10 加载、79 粒子和 120 字段断言 |
@@ -273,15 +273,15 @@
 | 发布 EXE 调试段 | 自动 | PASS | `release_binary_audit.py` 拒绝 `.debug*` 段 |
 | 发布 EXE 开发路径 | 自动 | PASS | 扫描拒绝 `C:\\Users\\`、`/Users/` 和构建路径标记 |
 | PE 缓解属性 | 自动 | PASS | 审计 `DYNAMIC_BASE`、`NX_COMPAT`、`HIGH_ENTROPY_VA` 位 |
-| 字体来源与许可证 | 源码/自动 | PASS | `docs/FONT_AUDIT.md`；语言目录 2,593 字符全部有合法字形输入 |
+| 字体来源与许可证 | 源码/自动 | PASS | `docs/FONT_AUDIT.md`；语言目录 2,590 字符全部有合法字形输入 |
 | 公共 ZIP 与符号 ZIP | 自动 | PASS | 白名单、成员哈希、ZIP SHA-256、解压后二次审计均通过；最终哈希见 `dist/release-report-0.1.0-test.md` |
 | 最终 ZIP 启动 | 实际 GUI | PASS | 解压后的最终 ZIP 运行 8 秒，窗口标题为 `TPT-ZH-OmniPack 0.1.0-test`，`Responding=True`、句柄非零；仅创建隔离的 OmniPack 数据目录 |
 | 已拒绝候选中文字体 | 运行/字体 | FAIL | `5828a97f` 的 Unifont 转换高位优先打包，和 `FontReader` 低位优先读取不兼容；整数缩放还跳过一部分源行。旧 ZIP 仅保留为失败基线，不得作为候选 |
 | 修复字体容器与转换 | 静态 | PASS | `validate_tpt_font.py`：容器、覆盖、pack/unpack、固定 Unifont 源码点与已知中文字符通过 |
 | 修复字体引擎离屏渲染 | 引擎 | PASS | `font_render_probe` 调用 `FontReader` 和 `Graphics`；中文、混合符号和化学文本及 `zh-CN.json` 的 1,262 条文本均可测量、绘制，替换字形 0 |
 | 私有修复试包中文人工可读性 | 实际 GUI | FAIL | 用户从 `E52E746B...` ZIP 解压运行后确认中文显示仍不如既有出版中文版本；`font_visual_readability_valid=false`，该试包已拒绝并仅保留作失败对照 |
-| Fusion 12px BDF 来源与转换 | 源码/自动 | PASS | 版本 `2026.07.20`、固定 BDF/许可证哈希；1,839 个原生字形直接映射，Unifont 回退 0；六个固定中文字形逐行矩阵一致 |
-| Fusion 字体容器与全目录覆盖 | 静态 | PASS | `font.bz2` 为 `47F4EB85...`；14,629 字形、2,593 个语言字符全覆盖、pack/unpack 通过、重复 CJK 位图 0 |
+| Fusion 12px BDF 来源与转换 | 源码/自动 | PASS | 版本 `2026.07.20`、固定 BDF/许可证哈希；1,836 个原生字形直接映射，Unifont 回退 0；六个固定中文字形逐行矩阵一致 |
+| Fusion 字体容器与全目录覆盖 | 静态 | PASS | `font.bz2` 为 `C13C3D0E...`；14,626 字形、2,590 个语言字符全覆盖、pack/unpack 通过、重复 CJK 位图 0 |
 | Fusion 私有试包默认启动 | 实际进程 | PASS | `943DA2A6...` ZIP 审计通过；解压后使用 20 个全新目录启动均响应，崩溃 0 |
 | Fusion 中文人工可读性 | 实际 GUI | PASS | 用户确认当前原生 Fusion 12px 方案的中文显示问题已经解决；DPI、语言切换和完整页面矩阵另列为未测试 |
 | 便携首次运行安装提示 | 源码/clean build | PASS | 默认 `can_install=no`；生成配置 `CAN_INSTALL=false`、`INSTALL_CHECK=false`；重新打包 ZIP 的人工启动仍待执行 |

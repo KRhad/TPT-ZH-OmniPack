@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,6 +82,49 @@ class ElementRegistryGameplayFieldsTest(unittest.TestCase):
             ] = "Future element."
 
         self.assertIn("REGISTRY_RESERVED_GAMEPLAY", self.validate_rows(mutate))
+
+    def test_omnipack_description_without_element_name_is_rejected(self) -> None:
+        def mutate(rows):
+            next(row for row in rows if row["identifier"] == "OMNI_PT_ALUM")[
+                "english_description"
+            ] = "Light conductive aluminium."
+
+        self.assertIn("REGISTRY_DESCRIPTION_PREFIX", self.validate_rows(mutate))
+
+    def test_omnipack_registry_and_language_description_drift_is_rejected(self) -> None:
+        def mutate(rows):
+            next(row for row in rows if row["identifier"] == "OMNI_PT_ALUM")[
+                "english_description"
+            ] = "Aluminium: Deliberate drift for the negative test."
+
+        self.assertIn(
+            "REGISTRY_LANGUAGE_DESCRIPTION",
+            self.validate_rows(mutate),
+        )
+
+    def test_omnipack_language_name_and_description_drift_is_rejected(self) -> None:
+        original_load_language = element_registry_check.load_language
+
+        def load_language(path, findings):
+            catalog = original_load_language(path, findings)
+            if path.name == "zh-CN.json":
+                catalog["sim.elem.OMNI_PT_ALUM.name"] = "错误名称"
+                catalog["sim.elem.OMNI_PT_ALUM"] = "铝：故意制造语言包漂移。"
+            return catalog
+
+        with mock.patch.object(
+            element_registry_check,
+            "load_language",
+            side_effect=load_language,
+        ):
+            findings, _ = element_registry_check.validate_repository(
+                ROOT,
+                ROOT / "docs" / "ELEMENT_REGISTRY.csv",
+                ROOT / "tools" / "data" / "official_elements_100_0.csv",
+            )
+        codes = {finding.code for finding in findings.errors}
+        self.assertIn("REGISTRY_LANGUAGE_NAME", codes)
+        self.assertIn("REGISTRY_LANGUAGE_DESCRIPTION", codes)
 
 
 if __name__ == "__main__":

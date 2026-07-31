@@ -1073,17 +1073,17 @@ def validate_registry(
                         row_number,
                     )
 
-            for language_name, language, text_field in (
-                ("en-US", english, "english_description"),
-                ("zh-CN", chinese, "chinese_description"),
+            for language_name, language, name_field, text_field, separator in (
+                ("en-US", english, "english_name", "english_description", ": "),
+                ("zh-CN", chinese, "chinese_name", "chinese_description", "："),
             ):
                 translated = language.get(source.description_key)
+                language_path = root / "src" / "lang" / f"{language_name}.json"
                 if not isinstance(translated, str) or not translated.strip():
                     findings.add(
                         "REGISTRY_LANGUAGE",
-                        path,
+                        language_path,
                         f"{language_name} lacks non-empty key {source.description_key}",
-                        row_number,
                     )
                 if not row.get(text_field):
                     findings.add(
@@ -1092,6 +1092,53 @@ def validate_registry(
                         f"{text_field} is required for {source.identifier}",
                         row_number,
                     )
+
+                # OmniPack descriptions are self-identifying in both source-of-
+                # truth locations: users must see the element name before any
+                # behaviour text, and the registry and language catalogs must
+                # not silently drift apart.
+                if source.identifier.startswith("OMNI_PT_"):
+                    expected_name = row.get(name_field, "")
+                    expected_description = row.get(text_field, "")
+                    name_key = f"{source.description_key}.name"
+                    localized_name = language.get(name_key)
+                    if localized_name != expected_name:
+                        findings.add(
+                            "REGISTRY_LANGUAGE_NAME",
+                            language_path,
+                            f"{name_key}={localized_name!r}, registry requires "
+                            f"{expected_name!r}",
+                        )
+                    if translated != expected_description:
+                        findings.add(
+                            "REGISTRY_LANGUAGE_DESCRIPTION",
+                            language_path,
+                            f"{source.description_key} must exactly match "
+                            f"{text_field} for {source.identifier}",
+                        )
+
+                    required_prefix = f"{expected_name}{separator}"
+                    if (
+                        expected_name
+                        and expected_description
+                        and not expected_description.startswith(required_prefix)
+                    ):
+                        findings.add(
+                            "REGISTRY_DESCRIPTION_PREFIX",
+                            path,
+                            f"{text_field} must start with {required_prefix!r}",
+                            row_number,
+                        )
+                    if (
+                        isinstance(translated, str)
+                        and expected_name
+                        and not translated.startswith(required_prefix)
+                    ):
+                        findings.add(
+                            "REGISTRY_DESCRIPTION_PREFIX",
+                            language_path,
+                            f"{source.description_key} must start with {required_prefix!r}",
+                        )
 
         official = lock_by_id.get(stable_id)
         if official is not None:

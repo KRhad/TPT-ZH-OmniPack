@@ -14,7 +14,7 @@ binary_clean_build_commit=ff5945c4acbe15052a316771934854aa0f9281de
 development_gate_head=ff5945c4
 branch=development/omnipack-1.0
 upstream_version=100.0.399
-font_sha256=47F4EB851ABFC4CABDFC780E3D427ECBA39077418324A4E291CCDE552F0C139D
+font_sha256=C13C3D0ECB9EAC6B8CB1C2785C4C3176C578C1B07506D4CA5D32F24838E566B0
 release_exe_sha256=14A00CCF73D5100C43D677572529F6DDCD9A2790FC16FED70136185262B46926
 debug_symbols_sha256=17CE34385D9F27A610A591E3F76D6E61D9044B02D5791784563F4B5FDEBC7871
 public_zip_sha256=53E0304FF8CE932F7D836620A7599085A486B1689EAC131BC78D7B8EA6619827
@@ -74,7 +74,7 @@ release_ready=false
 
 - 接管时 HEAD：`e18abad9753e61e8f6c9f8fdf671c4bd80a4ca53`；工作树干净；中文字体实现提交为 `c743db2fcc49c01033e68023cceff897ed4c35f6`。
 - 用户已确认当前 Fusion Pixel Font 原生 12px 方案解决中文显示问题；该结论只覆盖中文实际可读性，不替代 100%/125%/150% DPI、完整页面和语言切换矩阵。
-- 字体可复现构建 SHA-256：`47F4EB851ABFC4CABDFC780E3D427ECBA39077418324A4E291CCDE552F0C139D`；2,593 个语言字符全覆盖，已知中文 BDF 矩阵和引擎离屏探针通过。
+- 字体可复现构建 SHA-256：`C13C3D0ECB9EAC6B8CB1C2785C4C3176C578C1B07506D4CA5D32F24838E566B0`；2,590 个语言字符全覆盖，已知中文 BDF 矩阵和引擎离屏探针通过。
 - 接管后重跑：clean Release 502/502、Meson 12/12、Lua 6/6；中英文目录 1,262/1,262、缺失 0、额外 0。
 - 首次运行曾出现文件关联“安装”提示。提交 `a590f8b5` 将便携构建默认设为 `can_install=no`，生成配置确认 `CAN_INSTALL=false`、`INSTALL_CHECK=false`，并让打包器拒绝该设置回退。
 - `origin` 仍指向旧汉化仓库；没有安全、明确的正式发布远端授权，因此未推送、未创建 tag 或 GitHub Release。

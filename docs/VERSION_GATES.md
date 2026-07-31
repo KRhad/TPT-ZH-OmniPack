@@ -29,7 +29,7 @@
 | 门禁 ID | 必需结果 | 当前状态 | 当前证据 |
 |---|---|---|---|
 | `GATE-010-SOURCE` | HEAD、分支、上游和 48 元素登记可重现 | 源码确认 | 候选源码 `ff5945c4`；开发分支 `development/omnipack-1.0`；字体 `c743db2f`；48 个元素固定于 `256..278`、`288..295`、`328..334`、`360..369`；登记表 370 行、243 active、127 reserved |
-| `GATE-010-FONT-SOURCE` | 字体来源、许可证、固定哈希、容器和全部语言字符覆盖通过 | 自动测试确认 | `resources/font.bz2` SHA-256 `47F4EB85...`；Fusion 原生 12px，14,629 字形、2,593 字符覆盖 |
+| `GATE-010-FONT-SOURCE` | 字体来源、许可证、固定哈希、容器和全部语言字符覆盖通过 | 自动测试确认 | `resources/font.bz2` SHA-256 `C13C3D0E...`；Fusion 原生 12px，14,626 字形、2,590 字符覆盖 |
 | `GATE-010-BUILD` | Windows x64 clean Release build 成功 | 编译确认 | `build-0.1.0-test-metrics` 的 clean Release 构建通过，0 error；GCC 警告另列已知问题 |
 | `GATE-010-MESON` | 全部 Meson 测试通过 | 自动测试确认 | 当前候选 `14/14` |
 | `GATE-010-PYTHON` | 全部 Python 工具测试通过且无未说明跳过 | 自动测试确认 | 当前候选 `87/87`，0 skip |
