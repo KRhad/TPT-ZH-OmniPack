@@ -5,7 +5,7 @@ param(
     [ValidateSet("Generate", "Verify", "All")]
     [string] $Mode = "All",
 
-    [string] $ExamplesDirectory = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) "..\..\examples\0.2.0"),
+    [string] $ExamplesDirectory = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) "..\examples\0.2.0"),
 
     [string] $TemporaryDirectory = [System.IO.Path]::GetTempPath(),
 

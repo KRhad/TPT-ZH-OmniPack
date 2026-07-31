@@ -34,6 +34,10 @@ class RuntimeWrapperCleanupContractTest(unittest.TestCase):
             self.assertIn("Start-Sleep -Milliseconds 100", wrapper)
             self.assertIn("Write-Warning", wrapper)
 
+    def test_examples_default_directory_stays_inside_source_root(self) -> None:
+        self.assertIn('"..\\examples\\0.2.0"', self.examples)
+        self.assertNotIn('"..\\..\\examples\\0.2.0"', self.examples)
+
 
 if __name__ == "__main__":
     unittest.main()
