@@ -100,6 +100,11 @@ REQUIRED_REACTIONS = {
     "periodic.helium_cryogenic_exchange",
     "periodic.radon_decay",
     "periodic.oganesson_decay",
+    "periodic.alkali_water",
+    "periodic.alkali_acid",
+    "periodic.alkali_oxidation",
+    "periodic.alkali_vaporisation",
+    "periodic.francium_decay",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

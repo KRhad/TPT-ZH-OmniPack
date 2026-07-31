@@ -8,3 +8,6 @@
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS);
 int OmniNobleGasGraphics(GRAPHICS_FUNC_ARGS);
 void OmniNobleGasCreate(ELEMENT_CREATE_FUNC_ARGS);
+int OmniAlkaliMetalUpdate(UPDATE_FUNC_ARGS);
+int OmniMoltenAlkaliUpdate(UPDATE_FUNC_ARGS);
+void OmniAlkaliMetalCreate(ELEMENT_CREATE_FUNC_ARGS);

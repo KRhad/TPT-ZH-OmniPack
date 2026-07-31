@@ -11,7 +11,7 @@ param(
 $ErrorActionPreference = "Stop"
 $resolvedExecutable = (Resolve-Path -LiteralPath $Executable).Path
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$autorunSource = Join-Path $scriptRoot "runtime\periodic_noble_gas_regression.lua"
+$autorunSource = Join-Path $scriptRoot "runtime\periodic_regression.lua"
 if (-not (Test-Path -LiteralPath $autorunSource -PathType Leaf)) {
     throw "Missing Lua regression script: $autorunSource"
 }
@@ -35,7 +35,7 @@ $passed = $false
 try {
     New-Item -ItemType Directory -Path $resolvedTestRoot | Out-Null
     Copy-Item -LiteralPath $autorunSource -Destination (Join-Path $resolvedTestRoot "autorun.lua")
-    $result = Join-Path $resolvedTestRoot "lua-periodic-noble-gas-regression.result"
+    $result = Join-Path $resolvedTestRoot "lua-periodic-regression.result"
     Remove-Item Env:GITHUB_PAT_TOKEN -ErrorAction SilentlyContinue
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = $resolvedExecutable

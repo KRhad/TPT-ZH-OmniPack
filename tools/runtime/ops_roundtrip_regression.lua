@@ -89,11 +89,15 @@ local definitions = {
     fert = { "OMNI_PT_FERT", "FERT", 369 },
 
     he = { "OMNI_PT_HE", "HE", 370 },
+    sodium = { "OMNI_PT_NA", "NA", 376 },
     ne = { "OMNI_PT_NE", "NE", 375 },
     ar = { "OMNI_PT_AR", "AR", 379 },
+    potassium = { "OMNI_PT_K", "K", 380 },
     kr = { "OMNI_PT_KR", "KR", 390 },
     xe = { "OMNI_PT_XE", "XE", 405 },
+    caesium = { "OMNI_PT_CS", "CS", 406 },
     rn = { "OMNI_PT_RN", "RN", 431 },
+    francium = { "OMNI_PT_FR", "FR", 432 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -116,7 +120,8 @@ local module_keys = {
         "poly", "pero", "fert",
     },
     periodic = {
-        "he", "ne", "ar", "kr", "xe", "rn", "og",
+        "he", "ne", "ar", "sodium", "potassium", "kr", "xe",
+        "caesium", "rn", "francium", "og",
     },
 }
 
@@ -256,11 +261,11 @@ local carrier_targets = {
         virs_tmp2 = "rshd",
     },
     periodic = {
-        lava = "he",
-        spark = "xe",
-        conv_ctype = "rn",
+        lava = "caesium",
+        spark = "sodium",
+        conv_ctype = "francium",
         conv_tmp = "og",
-        virs_tmp2 = "kr",
+        virs_tmp2 = "potassium",
     },
     mixed = {
         lava = "alum",

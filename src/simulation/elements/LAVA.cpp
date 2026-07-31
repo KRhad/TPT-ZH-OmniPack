@@ -1,7 +1,9 @@
 #include "simulation/ElementCommon.h"
+#include "simulation/OmniPeriodic.h"
 #include "common/Localization.h"
 #include "FIRE.h"
 
+static int update(UPDATE_FUNC_ARGS);
 static int graphics(GRAPHICS_FUNC_ARGS);
 static void create(ELEMENT_CREATE_FUNC_ARGS);
 
@@ -48,9 +50,18 @@ void Element::Element_LAVA()
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
 
-	Update = &Element_FIRE_update;
+	Update = &update;
 	Graphics = &graphics;
 	Create = &create;
+}
+
+static int update(UPDATE_FUNC_ARGS)
+{
+	if (OmniMoltenAlkaliUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+	{
+		return 1;
+	}
+	return Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
 }
 
 static int graphics(GRAPHICS_FUNC_ARGS)

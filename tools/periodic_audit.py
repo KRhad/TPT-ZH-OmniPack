@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed audit for periodic-table runtime data and the first noble-gas batch."""
+"""Fail-closed audit for periodic-table runtime data and implemented family batches."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import sys
 from typing import Sequence
 
 
-EXPECTED_NEW_ELEMENTS = {
+EXPECTED_NOBLE_ELEMENTS = {
     370: "HE",
     375: "NE",
     379: "AR",
@@ -20,6 +20,15 @@ EXPECTED_NEW_ELEMENTS = {
     431: "RN",
     461: "OG",
 }
+
+EXPECTED_ALKALI_ELEMENTS = {
+    376: "NA",
+    380: "K",
+    406: "CS",
+    432: "FR",
+}
+
+EXPECTED_NEW_ELEMENTS = EXPECTED_NOBLE_ELEMENTS | EXPECTED_ALKALI_ELEMENTS
 
 
 def read_text(path: Path, errors: list[str]) -> str:
@@ -81,12 +90,15 @@ def check_source_map(root: Path, errors: list[str]) -> None:
     if [int(row["atomic_number"]) for row in rows] != list(range(1, 119)):
         errors.append(f"{path}: atomic numbers are not the complete ordered range 1..118")
     implemented = [row for row in rows if row.get("status") == "implemented"]
-    if len(implemented) != 33:
-        errors.append(f"{path}: expected 33 implemented mappings after batch 1 and found {len(implemented)}")
+    if len(implemented) != 37:
+        errors.append(f"{path}: expected 37 implemented mappings after the alkali batch and found {len(implemented)}")
     by_number = {int(row["atomic_number"]): row for row in rows}
     if by_number.get(1, {}).get("stable_id") != "148":
         errors.append(f"{path}: hydrogen must continue to reuse stable ID 148")
-    expected_atomic = {2: 370, 10: 375, 18: 379, 36: 390, 54: 405, 86: 431, 118: 461}
+    expected_atomic = {
+        2: 370, 10: 375, 11: 376, 18: 379, 19: 380, 36: 390,
+        54: 405, 55: 406, 86: 431, 87: 432, 118: 461,
+    }
     for atomic_number, stable_id in expected_atomic.items():
         row = by_number.get(atomic_number, {})
         if row.get("stable_id") != str(stable_id) or row.get("status") != "implemented":
@@ -107,6 +119,11 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "helium cryogenic behaviour": "parts[i].type != PT_HE || parts[i].temp >= 20.0f",
         "xenon discharge tuning": "case PT_XE:",
         "radon decay": "sourceType == PT_RN ? PT_POLO : PT_RN",
+        "alkali water reaction": "ReactAlkaliWithWaterOrAcid",
+        "alkali acid salt route": "int residue = acid ? PT_SALT : PT_CAUS",
+        "alkali oxygen reaction": "OxidiseHotAlkali",
+        "alkali vaporisation": "VaporiseHotAlkali",
+        "francium decay": "sourceType != PT_FR || parts[i].type != PT_FR",
         "finite discharge photon": "parts[photon].life = 24",
         "finite decay photon": "parts[photon].life = 18",
     }
@@ -115,7 +132,7 @@ def check_engine(root: Path, errors: list[str]) -> None:
             errors.append(f"{engine_path}: missing {label}: {marker!r}")
     if re.search(r"\bNPART\b|parts\.active", engine):
         errors.append(f"{engine_path}: periodic family update must not scan all particles")
-    for stable_id, name in EXPECTED_NEW_ELEMENTS.items():
+    for stable_id, name in EXPECTED_NOBLE_ELEMENTS.items():
         path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
         text = read_text(path, errors)
         for marker in (
@@ -127,6 +144,20 @@ def check_engine(root: Path, errors: list[str]) -> None:
         ):
             if marker not in text:
                 errors.append(f"{path}: missing periodic element marker {marker!r}")
+    for stable_id, name in EXPECTED_ALKALI_ELEMENTS.items():
+        path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
+        text = read_text(path, errors)
+        for marker in (
+            f'Identifier = "OMNI_PT_{name}"',
+            "HeatCapacity =",
+            "Update = &OmniAlkaliMetalUpdate",
+            "Create = &OmniAlkaliMetalCreate",
+        ):
+            if marker not in text:
+                errors.append(f"{path}: missing periodic element marker {marker!r}")
+    lava = read_text(root / "src" / "simulation" / "elements" / "LAVA.cpp", errors)
+    if "OmniMoltenAlkaliUpdate" not in lava:
+        errors.append("LAVA.cpp: molten alkali ctype update hook is missing")
 
 
 def check_ui(root: Path, errors: list[str]) -> None:
@@ -185,7 +216,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"periodic-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("periodic-audit: PASS (118 mapped, 33 implemented, 7 new noble gases, 1024/frame)")
+        print("periodic-audit: PASS (118 mapped, 37 implemented, 11 new periodic elements, 1024/frame)")
     return 0
 
 
