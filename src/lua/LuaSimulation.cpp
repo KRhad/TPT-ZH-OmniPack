@@ -10,14 +10,47 @@
 #include "gui/game/GameModel.h"
 #include "gui/game/GameView.h"
 #include "gui/game/Brush.h"
+#include "gui/game/OmniContent.h"
 #include "gui/game/tool/Tool.h"
 #include "simulation/Air.h"
 #include "simulation/ElementCommon.h"
 #include "simulation/GOLString.h"
+#include "simulation/OmniAlchemy.h"
 #include "simulation/gravity/Gravity.h"
 #include "simulation/Snapshot.h"
 #include "simulation/ToolClasses.h"
 #include <type_traits>
+
+namespace
+{
+void RequireOmniElementCreation(lua_State *L, int type)
+{
+	if (type < 0)
+	{
+		return;
+	}
+	type = TYP(type);
+	if (type >= PT_NUM || IsOmniElementCreationAllowed(type))
+	{
+		return;
+	}
+	auto restriction = GetOmniElementSelectionRestriction(type);
+	auto const *reason = restriction == OmniSelectionRestriction::AlchemyLocked
+		? "locked by alchemy progress"
+		: restriction == OmniSelectionRestriction::ModuleDisabled
+			? "disabled module"
+			: "unavailable element";
+	(void)luaL_error(L, "Element %d is unavailable: %s", type, reason);
+}
+
+void RequireOmniTool(lua_State *L, Tool const &tool)
+{
+	if (!IsOmniToolSelectable(tool))
+	{
+		RequireOmniElementCreation(L, tool.ToolID);
+	}
+}
+}
 
 static int ambientHeatSim(lua_State *L)
 {
@@ -107,6 +140,40 @@ static int resetOmniEventMetrics(lua_State *L)
 	lsi->AssertInterfaceEvent();
 	lsi->sim->ResetOmniEventMetrics();
 	return 0;
+}
+
+static int omniAlchemyProgress(lua_State *L)
+{
+	auto &alchemy = OmniAlchemy::Ref();
+	lua_newtable(L);
+	lua_pushinteger(L, OmniAlchemyProgressSchemaVersion);
+	lua_setfield(L, -2, "schema_version");
+	lua_pushinteger(L, static_cast<lua_Integer>(alchemy.CompletedStageCount()));
+	lua_setfield(L, -2, "completed_stage_count");
+	lua_pushinteger(L, static_cast<lua_Integer>(OmniAlchemyStageCount));
+	lua_setfield(L, -2, "stage_count");
+	lua_pushboolean(L, alchemy.Mastered());
+	lua_setfield(L, -2, "mastered");
+	tpt_lua_pushByteString(L, alchemy.CurrentStageId());
+	lua_setfield(L, -2, "current_stage_id");
+	tpt_lua_pushByteString(L, alchemy.CurrentHintKey());
+	lua_setfield(L, -2, "current_hint_key");
+	lua_pushinteger(L, alchemy.CurrentDwellFrames());
+	lua_setfield(L, -2, "current_dwell_frames");
+	lua_pushboolean(L, alchemy.CurrentCoolingArmed());
+	lua_setfield(L, -2, "current_cooling_armed");
+	return 1;
+}
+
+static int omniAlchemyUnlocked(lua_State *L)
+{
+	auto type = luaL_checkinteger(L, 1);
+	if (type < 0 || type >= PT_NUM)
+	{
+		return luaL_error(L, "Invalid element ID (%d)", type);
+	}
+	lua_pushboolean(L, OmniAlchemy::Ref().IsElementUnlocked(type));
+	return 1;
 }
 
 static int decoSpace(lua_State *L)
@@ -339,7 +406,9 @@ static int partChangeType(lua_State *L)
 	int partIndex = lua_tointeger(L, 1);
 	if(partIndex < 0 || partIndex >= NPART || !lsi->sim->parts[partIndex].type)
 		return 0;
-	lsi->sim->part_change_type(partIndex, int(lsi->sim->parts[partIndex].x+0.5f), int(lsi->sim->parts[partIndex].y+0.5f), lua_tointeger(L, 2));
+	auto type = lua_tointeger(L, 2);
+	RequireOmniElementCreation(L, type);
+	lsi->sim->part_change_type(partIndex, int(lsi->sim->parts[partIndex].x+0.5f), int(lsi->sim->parts[partIndex].y+0.5f), type);
 	return 0;
 }
 
@@ -373,6 +442,7 @@ static int partCreate(lua_State *L)
 		v = ID(type);
 		type = TYP(type);
 	}
+	RequireOmniElementCreation(L, type);
 	lua_pushinteger(L, lsi->sim->create_part(newID, lua_tointeger(L, 2), lua_tointeger(L, 3), type, v));
 	return 1;
 }
@@ -533,6 +603,7 @@ static int createParts(lua_State *L)
 	if (!(lsi->eventTraits & eventTraitInterface) && !lua_isnoneornil(L, 5) && brushID == BRUSH_CIRCLE && flags == 0)
 	{
 		int c = luaL_checkint(L, 5); // note: weird: has to be specified in a sim context but not in a ui context
+		RequireOmniElementCreation(L, c);
 		auto center = Vec2(x, y);
 		RasterizeEllipseRows(Vec2<float>(float(rx * rx), float(ry * ry)), [lsi, c, center](int xLim, int dy) {
 			for (auto pos : RectBetween(center + Vec2(-xLim, dy), center + Vec2(xLim, dy)))
@@ -553,6 +624,7 @@ static int createParts(lua_State *L)
 	newBrush->SetRadius(ui::Point(rx, ry));
 
 	int c = luaL_optint(L,5,lsi->gameModel->GetActiveTool(0)->ToolID);
+	RequireOmniElementCreation(L, c);
 	int ret = lsi->sim->CreateParts(-2, x, y, c, *newBrush, uiFlags);
 	lua_pushinteger(L, ret);
 	return 1;
@@ -573,12 +645,14 @@ static int createLine(lua_State *L)
 	if (!(lsi->eventTraits & eventTraitInterface) && rx == 0 && ry == 0 && !lua_isnoneornil(L, 7) && brushID == BRUSH_CIRCLE && flags == 0)
 	{
 		int c = luaL_checkint(L, 7); // note: weird: has to be specified in a sim context but not in a ui context
+		RequireOmniElementCreation(L, c);
 		lsi->sim->CreateLine(x1, y1, x2, y2, c);
 		return 0;
 	}
 
 	lsi->AssertToolEvent();
 	int c = luaL_optint(L,7,lsi->gameModel->GetActiveTool(0)->ToolID);
+	RequireOmniElementCreation(L, c);
 	int uiFlags = luaL_optint(L,9,lsi->sim->replaceModeFlags);
 	Brush *brush = lsi->gameModel->GetBrushByID(brushID);
 	if (!brush)
@@ -602,12 +676,14 @@ static int createBox(lua_State *L)
 	if (!(lsi->eventTraits & eventTraitInterface) && !lua_isnoneornil(L, 5) && flags == 0)
 	{
 		int c = luaL_checkint(L, 5); // note: weird: has to be specified in a sim context but not in a ui context
+		RequireOmniElementCreation(L, c);
 		lsi->sim->CreateBox(-1, x1, y1, x2, y2, c, 0);
 		return 0;
 	}
 
 	lsi->AssertToolEvent();
 	int c = luaL_optint(L,5,lsi->gameModel->GetActiveTool(0)->ToolID);
+	RequireOmniElementCreation(L, c);
 	int uiFlags = luaL_optint(L,6,lsi->sim->replaceModeFlags);
 
 	lsi->sim->CreateBox(-2, x1, y1, x2, y2, c, uiFlags);
@@ -621,6 +697,7 @@ static int floodParts(lua_State *L)
 	int x = luaL_optint(L,1,-1);
 	int y = luaL_optint(L,2,-1);
 	int c = luaL_optint(L,3,lsi->gameModel->GetActiveTool(0)->ToolID);
+	RequireOmniElementCreation(L, c);
 	int cm = luaL_optint(L,4,-1);
 	int flags = luaL_optint(L,5,lsi->sim->replaceModeFlags);
 
@@ -730,6 +807,7 @@ static int toolBrush(lua_State *L)
 	{
 		return luaL_error(L, "Invalid tool id '%d'", tool);
 	}
+	RequireOmniTool(L, *toolPtr);
 
 	Brush *brush = lsi->gameModel->GetBrushByID(brushID);
 	if (!brush)
@@ -763,6 +841,7 @@ static int toolLine(lua_State *L)
 	{
 		return luaL_error(L, "Invalid tool id '%d'", tool);
 	}
+	RequireOmniTool(L, *toolPtr);
 
 	Brush *brush = lsi->gameModel->GetBrushByID(brushID);
 	if (!brush)
@@ -799,6 +878,7 @@ static int toolBox(lua_State *L)
 	{
 		return luaL_error(L, "Invalid tool id '%d'", tool);
 	}
+	RequireOmniTool(L, *toolPtr);
 	auto newBrush = brush->Clone();
 	newBrush->SetRadius(ui::Point(rx, ry));
 	toolPtr->Strength = strength;
@@ -1045,6 +1125,10 @@ static int loadStamp(lua_State *L)
 	if (tempfile && tempfile->GetGameSave())
 	{
 		auto gameSave = tempfile->TakeGameSave();
+		if (GetOmniSetting(OmniSetting::AlchemyMode) && !FindLockedAlchemySaveElements(*gameSave).empty())
+		{
+			return luaL_error(L, "Stamp contains elements locked by alchemy progress");
+		}
 		auto [ quoX, remX ] = floorDiv(partP.X, CELL);
 		auto [ quoY, remY ] = floorDiv(partP.Y, CELL);
 		if (remX || remY || hflip || rotation)
@@ -2142,6 +2226,8 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(partCount),
 		LFUNC(omniEventMetrics),
 		LFUNC(resetOmniEventMetrics),
+		LFUNC(omniAlchemyProgress),
+		LFUNC(omniAlchemyUnlocked),
 		LFUNC(decoSpace),
 		LFUNC(fanVelocityX),
 		LFUNC(fanVelocityY),

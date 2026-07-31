@@ -10,6 +10,7 @@
 #include "simulation/gravity/GravityData.h"
 #include "simulation/SimulationSettings.h"
 #include "Misc.h"
+#include "OmniAlchemySaveState.h"
 #include "SimulationConfig.h"
 #include <vector>
 #include <array>
@@ -117,6 +118,7 @@ public:
 	int convectionMode = AIRC_LEGACY;
 	int edgeMode = 0;
 	bool wantAuthors = true;
+	OmniAlchemySaveState omniAlchemy;
 
 	MissingElements missingElements;
 

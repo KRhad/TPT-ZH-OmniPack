@@ -55,6 +55,26 @@ class SaveCompatibilityAuditTests(unittest.TestCase):
             save_compatibility_audit.read_text = original
         self.assertTrue(any("read-only upload guard" in error for error in errors))
 
+    def test_alchemy_lock_is_not_misreported_as_disabled_module(self) -> None:
+        source_path = ROOT / "src" / "gui" / "game" / "OmniContent.cpp"
+        source = source_path.read_text(encoding="utf-8")
+        errors: list[str] = []
+        original = save_compatibility_audit.read_text
+        try:
+            save_compatibility_audit.read_text = lambda path, current_errors: (
+                source.replace(
+                    "GetOmniElementSelectionRestriction(type) != OmniSelectionRestriction::ModuleDisabled",
+                    "IsOmniElementSelectable(type)",
+                    1,
+                )
+                if path == source_path
+                else original(path, current_errors)
+            )
+            save_compatibility_audit.check_source(ROOT, errors)
+        finally:
+            save_compatibility_audit.read_text = original
+        self.assertTrue(any("disabled module check" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

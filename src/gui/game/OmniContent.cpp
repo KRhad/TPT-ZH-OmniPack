@@ -6,6 +6,7 @@
 #include "prefs/GlobalPrefs.h"
 #include "simulation/Particle.h"
 #include "simulation/ElementDefs.h"
+#include "simulation/OmniAlchemy.h"
 #include "simulation/SimulationData.h"
 
 namespace
@@ -21,7 +22,7 @@ constexpr std::array<OmniSettingDefinition, OmniSettingCount> settingDefinitions
 	{ OmniSetting::SimplifiedBiology,     "Omni.Simulation.SimplifiedBiology",  "options.omni.simplified_biology",     "options.omni.simplified_biology.info",     false, true  },
 	{ OmniSetting::PerformanceProtection, "Omni.Simulation.PerformanceGuard",   "options.omni.performance_protection", "options.omni.performance_protection.info", false, false },
 	{ OmniSetting::DetailedHud,           "Omni.Interface.DetailedHud",         "options.omni.detailed_hud",            "options.omni.detailed_hud.info",            false, false },
-	{ OmniSetting::AlchemyMode,           "Omni.Progress.AlchemyMode",          "options.omni.alchemy_mode",            "options.omni.alchemy_mode.info",            false, false },
+	{ OmniSetting::AlchemyMode,           "Omni.Progress.AlchemyMode",          "options.omni.alchemy_mode",            "options.omni.alchemy_mode.info",            false, true  },
 } };
 
 static_assert(settingDefinitions.size() == OmniSettingCount);
@@ -114,35 +115,71 @@ OmniElementModule GetOmniElementModule(int elementId)
 	return OmniElementModule::Experimental;
 }
 
-bool IsOmniElementSelectable(int elementId)
+OmniSelectionRestriction GetOmniElementSelectionRestriction(int elementId)
 {
 	if (elementId < 0 || elementId >= PT_NUM)
 	{
-		return false;
+		return OmniSelectionRestriction::InvalidElement;
 	}
 
 	switch (GetOmniElementModule(elementId))
 	{
 	case OmniElementModule::Biology:
-		return GetOmniSetting(OmniSetting::Biology);
+		if (!GetOmniSetting(OmniSetting::Biology)) return OmniSelectionRestriction::ModuleDisabled;
+		break;
 	case OmniElementModule::Metallurgy:
-		return GetOmniSetting(OmniSetting::Metallurgy);
+		if (!GetOmniSetting(OmniSetting::Metallurgy)) return OmniSelectionRestriction::ModuleDisabled;
+		break;
 	case OmniElementModule::Chemistry:
-		return GetOmniSetting(OmniSetting::Chemistry);
+		if (!GetOmniSetting(OmniSetting::Chemistry)) return OmniSelectionRestriction::ModuleDisabled;
+		break;
 	case OmniElementModule::AdvancedNuclear:
-		return GetOmniSetting(OmniSetting::AdvancedNuclear);
+		if (!GetOmniSetting(OmniSetting::AdvancedNuclear)) return OmniSelectionRestriction::ModuleDisabled;
+		break;
 	case OmniElementModule::SpecialPhysics:
-		return GetOmniSetting(OmniSetting::SpecialPhysics);
+		if (!GetOmniSetting(OmniSetting::SpecialPhysics)) return OmniSelectionRestriction::ModuleDisabled;
+		break;
 	case OmniElementModule::Disasters:
-		return GetOmniSetting(OmniSetting::Disasters);
+		if (!GetOmniSetting(OmniSetting::Disasters)) return OmniSelectionRestriction::ModuleDisabled;
+		break;
 	case OmniElementModule::Experimental:
-		return GetOmniSetting(OmniSetting::Experimental);
+		if (!GetOmniSetting(OmniSetting::Experimental)) return OmniSelectionRestriction::ModuleDisabled;
+		break;
 	case OmniElementModule::Reserved:
 	case OmniElementModule::Compatibility:
-		return false;
+		return OmniSelectionRestriction::ReservedElement;
 	default:
+		break;
+	}
+	if (GetOmniSetting(OmniSetting::AlchemyMode) && !OmniAlchemy::Ref().IsElementUnlocked(elementId))
+	{
+		return OmniSelectionRestriction::AlchemyLocked;
+	}
+	return OmniSelectionRestriction::None;
+}
+
+bool IsOmniElementSelectable(int elementId)
+{
+	return GetOmniElementSelectionRestriction(elementId) == OmniSelectionRestriction::None;
+}
+
+bool IsOmniElementCreationAllowed(int elementId)
+{
+	if (elementId < 0 || elementId >= PT_NUM)
+	{
+		return false;
+	}
+	auto const *record = FindElementCatalogByStableId(elementId);
+	if (!record)
+	{
 		return true;
 	}
+	auto const &runtimeIdentifier = SimulationData::CRef().elements[elementId].Identifier;
+	if (record->identifier != std::string_view(runtimeIdentifier.data(), runtimeIdentifier.size()))
+	{
+		return true;
+	}
+	return IsOmniElementSelectable(elementId);
 }
 
 bool IsOmniToolSelectable(Tool const &tool)
@@ -161,7 +198,7 @@ bool IsOmniToolSelectable(Tool const &tool)
 		// integrated module. Numeric IDs alone must never classify them.
 		return true;
 	}
-	return IsOmniElementSelectable(elementId);
+	return GetOmniElementSelectionRestriction(elementId) == OmniSelectionRestriction::None;
 }
 
 char const *GetOmniElementModuleNameKey(OmniElementModule module)
@@ -202,7 +239,8 @@ std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save)
 			return;
 		}
 		auto const *record = FindElementCatalogByStableId(type);
-		if (!record || !record->identifier.starts_with("OMNI_PT_") || record->implementationStatus != "implemented" || IsOmniElementSelectable(type))
+		if (!record || !record->identifier.starts_with("OMNI_PT_") || record->implementationStatus != "implemented" ||
+			GetOmniElementSelectionRestriction(type) != OmniSelectionRestriction::ModuleDisabled)
 		{
 			return;
 		}
@@ -239,4 +277,56 @@ std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save)
 		}
 	}
 	return modules;
+}
+
+std::vector<int> FindLockedAlchemySaveElements(GameSave const &save)
+{
+	std::array<bool, PT_NUM> found{};
+	auto const &elements = SimulationData::CRef().elements;
+	auto const &possiblyCarriesType = Particle::PossiblyCarriesType();
+	auto const &properties = Particle::GetProperties();
+
+	auto inspectType = [&found, &elements](int type) {
+		type = TYP(type);
+		if (type <= 0 || type >= PT_NUM || !GetOmniSetting(OmniSetting::AlchemyMode) || OmniAlchemy::Ref().IsElementUnlocked(type))
+		{
+			return;
+		}
+		auto const *record = FindElementCatalogByStableId(type);
+		auto const &runtimeIdentifier = elements[type].Identifier;
+		if (record && record->identifier == std::string_view(runtimeIdentifier.data(), runtimeIdentifier.size()))
+		{
+			found[type] = true;
+		}
+	};
+
+	for (int index = 0; index < NPART && index < save.particlesCount && index < static_cast<int>(save.particles.size()); ++index)
+	{
+		auto const &particle = save.particles[index];
+		auto type = TYP(particle.type);
+		if (type <= 0 || type >= PT_NUM)
+		{
+			continue;
+		}
+		inspectType(type);
+		for (auto propertyIndex : possiblyCarriesType)
+		{
+			if (!(elements[type].CarriesTypeIn & (1U << propertyIndex)))
+			{
+				continue;
+			}
+			auto const *property = reinterpret_cast<int const *>(reinterpret_cast<char const *>(&particle) + properties[propertyIndex].Offset);
+			inspectType(*property);
+		}
+	}
+
+	std::vector<int> elementIds;
+	for (int type = 1; type < PT_NUM; ++type)
+	{
+		if (found[type])
+		{
+			elementIds.push_back(type);
+		}
+	}
+	return elementIds;
 }

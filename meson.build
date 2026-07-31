@@ -637,6 +637,24 @@ font_render_probe = executable(
 	override_options: target_options,
 )
 
+alchemy_state_probe = executable(
+	'alchemy_state_probe',
+	sources: [
+		files('tools/alchemy_state_probe.cpp'),
+		files('src/client/GameSave.cpp'),
+		files('src/client/User.cpp'),
+		files('src/graphics/Renderer.cpp'),
+		files('src/prefs/Prefs.cpp'),
+		files('src/simulation/gravity/Fft.cpp'),
+	],
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ threads_dep, fftw_dep, sta_libs['common'], sta_libs['simulation'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
 static_test_env = environment()
 static_test_env.set('PYTHONDONTWRITEBYTECODE', '1')
 
@@ -792,6 +810,26 @@ test(
 		'--quiet',
 	],
 	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'alchemy-audit',
+	python3_prog,
+	args: [
+		files('tools/alchemy_audit.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'alchemy-state-probe',
+	alchemy_state_probe,
 	suite: 'static',
 	timeout: 60,
 )

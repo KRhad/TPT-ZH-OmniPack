@@ -6,6 +6,7 @@
 #include "gui/game/GameController.h"
 #include "gui/game/GameModel.h"
 #include "gui/game/GameView.h"
+#include "gui/game/OmniContent.h"
 #include "gui/interface/Engine.h"
 #include "gui/interface/Window.h"
 #include "LuaBit.h"
@@ -331,7 +332,19 @@ void LuaSetParticleProperty(lua_State *L, int particleID, StructProperty propert
 	if (property.Name == "type")
 	{
 		lsi->AssertMonopartAccessEvent(-1);
-		sim->part_change_type(particleID, int(sim->parts[particleID].x+0.5f), int(sim->parts[particleID].y+0.5f), luaL_checkinteger(L, 3));
+		auto type = luaL_checkinteger(L, 3);
+		if (type >= 0 && !IsOmniElementCreationAllowed(TYP(type)))
+		{
+			auto restriction = GetOmniElementSelectionRestriction(TYP(type));
+			auto const *reason = restriction == OmniSelectionRestriction::AlchemyLocked
+				? "locked by alchemy progress"
+				: restriction == OmniSelectionRestriction::ModuleDisabled
+					? "disabled module"
+					: "unavailable element";
+			(void)luaL_error(L, "Element %d is unavailable: %s", TYP(type), reason);
+			return;
+		}
+		sim->part_change_type(particleID, int(sim->parts[particleID].x+0.5f), int(sim->parts[particleID].y+0.5f), type);
 	}
 	else if (property.Name == "x" || property.Name == "y")
 	{

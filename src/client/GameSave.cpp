@@ -25,6 +25,107 @@ static void TrimAuthorsIn(Bson &b, int depth);
 static std::set<int> GetNestedSaveIDs(const Bson &j);
 static void TrimAuthorsOut(Bson &b, int depth);
 
+namespace
+{
+bool IsAlchemyIdentifier(ByteString const &value)
+{
+	auto hasPrefix = value.BeginsWith("DEFAULT_PT_") || value.BeginsWith("OMNI_PT_");
+	return hasPrefix && std::all_of(value.begin(), value.end(), [](unsigned char ch) {
+		return (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_';
+	});
+}
+
+bool IsAlchemyStageId(ByteString const &value)
+{
+	return !value.empty() && value[0] == 'A' && std::all_of(value.begin(), value.end(), [](unsigned char ch) {
+		return (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '-';
+	});
+}
+
+bool ReadAlchemyStrings(
+	Bson const &object,
+	char const *key,
+	std::size_t maximumCount,
+	std::size_t maximumBytes,
+	bool (*validator)(ByteString const &),
+	std::vector<ByteString> &output
+)
+{
+	auto *node = object.Get(key);
+	if (!node || node->GetType() != Bson::Type::arrayValue || node->GetSize() > maximumCount)
+	{
+		return false;
+	}
+	std::set<ByteString> unique;
+	for (auto const &item : node->As<Bson::Array>())
+	{
+		if (!item.Is<ByteString>())
+		{
+			return false;
+		}
+		auto const &value = item.As<ByteString>();
+		if (value.empty() || value.size() > maximumBytes || !validator(value) || !unique.insert(value).second)
+		{
+			return false;
+		}
+		output.push_back(value);
+	}
+	return true;
+}
+
+bool ReadOmniAlchemy(Bson const &node, OmniAlchemySaveState &state)
+{
+	if (node.GetType() != Bson::Type::objectValue)
+	{
+		return false;
+	}
+	auto const &object = node.As<Bson::Object>();
+	constexpr std::array<char const *, 6> knownKeys{
+		"schema", "unlocked", "completed", "records", "dwellFrames", "coolingArmed",
+	};
+	if (object.size() != knownKeys.size() || std::any_of(object.begin(), object.end(), [&](auto const &entry) {
+		return std::none_of(knownKeys.begin(), knownKeys.end(), [&entry](char const *key) {
+			return entry.first == key;
+		});
+	}))
+	{
+		return false;
+	}
+	auto *schema = node.Get("schema");
+	if (!schema || !schema->Is<int32_t>() || schema->As<int32_t>() != OmniAlchemyProgressSchemaVersion)
+	{
+		return false;
+	}
+	state.schemaVersion = schema->As<int32_t>();
+	if (!ReadAlchemyStrings(node, "unlocked", OmniAlchemyMaxSavedIdentifiers, OmniAlchemyMaxIdentifierBytes, IsAlchemyIdentifier, state.unlockedIdentifiers) ||
+		!ReadAlchemyStrings(node, "completed", OmniAlchemyStageCount, OmniAlchemyMaxStageIdBytes, IsAlchemyStageId, state.completedStages) ||
+		!ReadAlchemyStrings(node, "records", OmniAlchemyMaxSavedRecords, OmniAlchemyMaxStageIdBytes, IsAlchemyStageId, state.records))
+	{
+		return false;
+	}
+	auto *dwell = node.Get("dwellFrames");
+	auto *cooling = node.Get("coolingArmed");
+	if (!dwell || dwell->GetType() != Bson::Type::arrayValue || dwell->GetSize() != OmniAlchemyStageCount ||
+		!cooling || cooling->GetType() != Bson::Type::arrayValue || cooling->GetSize() != OmniAlchemyStageCount)
+	{
+		return false;
+	}
+	for (std::size_t index = 0; index < OmniAlchemyStageCount; ++index)
+	{
+		auto const *dwellValue = dwell->Get(index);
+		auto const *coolingValue = cooling->Get(index);
+		if (!dwellValue || !dwellValue->Is<int32_t>() || dwellValue->As<int32_t>() < 0 || dwellValue->As<int32_t>() > 600 ||
+			!coolingValue || !coolingValue->Is<bool>())
+		{
+			return false;
+		}
+		state.dwellFrames[index] = dwellValue->As<int32_t>();
+		state.coolingArmed[index] = coolingValue->As<bool>();
+	}
+	return true;
+}
+}
+
 GameSave::GameSave(Vec2<int> newBlockSize)
 {
 	setSize(newBlockSize);
@@ -643,6 +744,20 @@ void GameSave::readOPS(const std::vector<char> &data)
 	copyIfBool(b, "aheat_enable", aheatEnable);
 	copyIfBool(b, "waterEEnabled", waterEEnabled);
 	copyIfBool(b, "paused", paused);
+	if (auto *alchemyNode = b.Get("omniAlchemy"))
+	{
+		omniAlchemy.present = true;
+		omniAlchemy.valid = ReadOmniAlchemy(*alchemyNode, omniAlchemy);
+		if (!omniAlchemy.valid)
+		{
+			omniAlchemy.unlockedIdentifiers.clear();
+			omniAlchemy.completedStages.clear();
+			omniAlchemy.records.clear();
+			omniAlchemy.dwellFrames.fill(0);
+			omniAlchemy.coolingArmed.fill(false);
+			std::cerr << "Invalid omniAlchemy progress; using fail-closed initial state" << std::endl;
+		}
+	}
 	copyIfInt32(b, "gravityMode", gravityMode);
 	copyIfFloat(b, "customGravityX", customGravityX);
 	copyIfFloat(b, "customGravityY", customGravityY);
@@ -2570,6 +2685,33 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	}
 	b["convectionMode"] = convectionMode;
 	b["edgeMode"] = edgeMode;
+	if (omniAlchemy.present && omniAlchemy.valid)
+	{
+		auto &alchemyNode = (b["omniAlchemy"] = Bson::Type::objectValue);
+		alchemyNode["schema"] = omniAlchemy.schemaVersion;
+		auto &unlockedNode = (alchemyNode["unlocked"] = Bson::Type::arrayValue);
+		for (auto const &identifier : omniAlchemy.unlockedIdentifiers)
+		{
+			unlockedNode.Append(identifier);
+		}
+		auto &completedNode = (alchemyNode["completed"] = Bson::Type::arrayValue);
+		for (auto const &stage : omniAlchemy.completedStages)
+		{
+			completedNode.Append(stage);
+		}
+		auto &recordsNode = (alchemyNode["records"] = Bson::Type::arrayValue);
+		for (auto const &record : omniAlchemy.records)
+		{
+			recordsNode.Append(record);
+		}
+		auto &dwellNode = (alchemyNode["dwellFrames"] = Bson::Type::arrayValue);
+		auto &coolingNode = (alchemyNode["coolingArmed"] = Bson::Type::arrayValue);
+		for (std::size_t index = 0; index < OmniAlchemyStageCount; ++index)
+		{
+			dwellNode.Append(omniAlchemy.dwellFrames[index]);
+			coolingNode.Append(omniAlchemy.coolingArmed[index]);
+		}
+	}
 
 	if (stkm.hasData())
 	{

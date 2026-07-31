@@ -33,7 +33,10 @@ def check_source(root: Path, errors: list[str]) -> None:
         "carried type metadata": "CarriesTypeIn & (1U << propertyIndex)",
         "packed carried type decoding": "inspectType(TYP(*property));",
         "runtime catalog identity guard": 'record->identifier.starts_with("OMNI_PT_")',
-        "disabled module check": "IsOmniElementSelectable(type)",
+        "disabled module check": (
+            "GetOmniElementSelectionRestriction(type) != "
+            "OmniSelectionRestriction::ModuleDisabled"
+        ),
     }
     for label, marker in omni_markers.items():
         if marker not in omni:

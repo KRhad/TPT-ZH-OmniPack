@@ -9,6 +9,7 @@
 #include "graphics/Renderer.h"
 #include "gui/Style.h"
 #include "simulation/ElementDefs.h"
+#include "simulation/OmniAlchemy.h"
 #include "simulation/SimulationSettings.h"
 #include "simulation/Air.h"
 #include "client/Client.h"
@@ -359,6 +360,51 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		);
 		omniSettings[index]->Enabled = definition.available;
 	}
+	addButtonWithLabel(
+		Localization::Ref().Tr("alchemy.progress.button"),
+		Localization::Ref().Tr("alchemy.progress.button_info"),
+		[] {
+			auto &alchemy = OmniAlchemy::Ref();
+			auto state = alchemy.Export();
+			StringBuilder message;
+			message << Localization::Ref().Tr(
+				GetOmniSetting(OmniSetting::AlchemyMode)
+					? "alchemy.progress.mode_active"
+					: "alchemy.progress.mode_inactive"
+			);
+			message << "\n" << Localization::Ref().Tr("alchemy.progress.completed_prefix")
+				<< int(alchemy.CompletedStageCount()) << "/" << int(OmniAlchemyStageCount);
+			message << "\n" << Localization::Ref().Tr("alchemy.progress.unlocked_prefix")
+				<< int(state.unlockedIdentifiers.size());
+			message << "\n\n" << Localization::Ref().Tr("alchemy.progress.tree_title");
+			for (std::size_t index = 0; index < OmniAlchemyStageCount; ++index)
+			{
+				auto nameKey = alchemy.StageNameKey(index);
+				message << "\n" << (index < alchemy.CompletedStageCount() ? "[x] " : "[ ] ")
+					<< Localization::Ref().Tr(nameKey.c_str());
+			}
+			message << "\n\n" << Localization::Ref().Tr("alchemy.progress.records_title");
+			if (state.records.empty())
+			{
+				message << "\n" << Localization::Ref().Tr("alchemy.progress.records_empty");
+			}
+			else
+			{
+				for (auto const &record : state.records)
+				{
+					message << "\n- " << record.FromUtf8();
+				}
+			}
+			auto hintKey = alchemy.CurrentHintKey();
+			message << "\n\n" << Localization::Ref().Tr("alchemy.progress.current_hint_prefix")
+				<< Localization::Ref().Tr(hintKey.c_str());
+			new InformationMessage(
+				Localization::Ref().Tr("alchemy.progress.title"),
+				message.Build(),
+				true
+			);
+		}
+	);
 	addSeparator();
 	std::tie(fpsLimit, fpsLimitText) = addLimitDropDown(Localization::Ref().Tr("options.fps_limit"), {
 		{ Localization::Ref().Tr("options.limit.exact"), fpsLimitDropdownExact },

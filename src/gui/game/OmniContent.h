@@ -38,6 +38,15 @@ enum class OmniElementModule : unsigned char
 	Experimental,
 };
 
+enum class OmniSelectionRestriction : unsigned char
+{
+	None,
+	InvalidElement,
+	ReservedElement,
+	ModuleDisabled,
+	AlchemyLocked,
+};
+
 struct OmniSettingDefinition
 {
 	OmniSetting setting;
@@ -79,7 +88,10 @@ bool GetOmniSetting(OmniSetting setting);
 void SetOmniSetting(OmniSetting setting, bool enabled);
 
 OmniElementModule GetOmniElementModule(int elementId);
+OmniSelectionRestriction GetOmniElementSelectionRestriction(int elementId);
 bool IsOmniElementSelectable(int elementId);
+bool IsOmniElementCreationAllowed(int elementId);
 bool IsOmniToolSelectable(Tool const &tool);
 std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save);
+std::vector<int> FindLockedAlchemySaveElements(GameSave const &save);
 char const *GetOmniElementModuleNameKey(OmniElementModule module);

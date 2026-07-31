@@ -2,6 +2,7 @@
 #include "OptionsView.h"
 #include "simulation/Simulation.h"
 #include "simulation/Air.h"
+#include "simulation/OmniAlchemy.h"
 #include "simulation/gravity/Gravity.h"
 #include "prefs/GlobalPrefs.h"
 #include "common/clipboard/Clipboard.h"
@@ -478,6 +479,11 @@ void OptionsModel::SetOmniSettingValue(OmniSetting setting, bool enabled)
 {
 	SetOmniSetting(setting, enabled);
 	gModel->RefreshOmniContentSettings();
+	if (setting == OmniSetting::AlchemyMode)
+	{
+		auto key = enabled ? OmniAlchemy::Ref().CurrentHintKey() : ByteString("alchemy.mode.disabled_notice");
+		gModel->SetInfoTip(Localization::Ref().Tr(key.c_str()));
+	}
 	notifySettingsChanged();
 }
 

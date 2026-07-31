@@ -25,6 +25,7 @@
 #include "graphics/Renderer.h"
 #include "simulation/Air.h"
 #include "simulation/GOLString.h"
+#include "simulation/OmniAlchemy.h"
 #include "simulation/gravity/Gravity.h"
 #include "simulation/Simulation.h"
 #include "simulation/Snapshot.h"
@@ -862,6 +863,16 @@ void GameModel::SaveToSimParameters(const GameSave &saveData)
 		sim->rng = RNG();
 	}
 	sim->ensureDeterminism = saveData.ensureDeterminism;
+	OmniAlchemy::Ref().Import(saveData.omniAlchemy);
+	if (!tools.empty())
+	{
+		RefreshOmniContentSettings();
+	}
+	if (GetOmniSetting(OmniSetting::AlchemyMode))
+	{
+		auto hintKey = OmniAlchemy::Ref().CurrentHintKey();
+		SetInfoTip(Localization::Ref().Tr(hintKey.c_str()));
+	}
 }
 
 void GameModel::SetSave(std::unique_ptr<SaveInfo> newSave, bool invertIncludePressure)
@@ -1224,6 +1235,7 @@ void GameModel::FrameStep(int frames)
 
 void GameModel::ClearSimulation()
 {
+	OmniAlchemy::Ref().Reset();
 	//Load defaults
 	sim->gravityMode = GRAV_VERTICAL;
 	sim->customGravityX = 0.0f;
@@ -1242,6 +1254,10 @@ void GameModel::ClearSimulation()
 	sim->clear_sim();
 	ren->ClearAccumulation();
 	Client::Ref().ClearAuthorInfo();
+	if (GetOmniSetting(OmniSetting::AlchemyMode) && !tools.empty())
+	{
+		RefreshOmniContentSettings();
+	}
 
 	notifySaveChanged();
 	UpdateQuickOptions();
@@ -1249,6 +1265,16 @@ void GameModel::ClearSimulation()
 
 void GameModel::SetPlaceSave(std::unique_ptr<GameSave> save)
 {
+	if (save && GetOmniSetting(OmniSetting::AlchemyMode))
+	{
+		auto lockedElements = FindLockedAlchemySaveElements(*save);
+		if (!lockedElements.empty())
+		{
+			SetInfoTip(Localization::Ref().Tr("alchemy.paste_locked"));
+			Log("Paste rejected because it contains elements locked by current alchemy progress", false);
+			save.reset();
+		}
+	}
 	transformedPlaceSave.reset();
 	placeSave = std::move(save);
 	notifyPlaceSaveChanged();
@@ -1733,6 +1759,14 @@ void GameModel::AfterSim()
 {
 	FrameTime::Span span(frameTime.get(), "GameModel::AfterSim");
 	sim->AfterSim();
+	if (GetOmniSetting(OmniSetting::AlchemyMode) && OmniAlchemy::Ref().Observe(*sim))
+	{
+		RefreshOmniContentSettings();
+	}
+	if (auto noticeKey = OmniAlchemy::Ref().ConsumeNoticeKey(); !noticeKey.empty())
+	{
+		SetInfoTip(Localization::Ref().Tr(noticeKey.c_str()));
+	}
 	CommandInterface::Ref().HandleEvent(AfterSimEvent{});
 }
 
@@ -1747,15 +1781,24 @@ Tool *GameModel::GetToolByIndex(int index)
 
 void GameModel::SanitizeToolsets()
 {
+	auto *regularPrimary = GetToolFromIdentifier("DEFAULT_PT_DUST");
+	if (!regularPrimary || !IsOmniToolSelectable(*regularPrimary))
+	{
+		regularPrimary = GetToolFromIdentifier("DEFAULT_PT_FIRE");
+	}
+	if (!regularPrimary || !IsOmniToolSelectable(*regularPrimary))
+	{
+		regularPrimary = GetToolFromIdentifier("DEFAULT_PT_NONE");
+	}
 	if (!decoToolset   [0]) decoToolset   [0] = GetToolFromIdentifier("DEFAULT_DECOR_SET");
 	if (!decoToolset   [1]) decoToolset   [1] = GetToolFromIdentifier("DEFAULT_DECOR_CLR");
 	if (!decoToolset   [2]) decoToolset   [2] = GetToolFromIdentifier("DEFAULT_UI_SAMPLE");
 	if (!decoToolset   [3]) decoToolset   [3] = GetToolFromIdentifier("DEFAULT_PT_NONE"  );
-	if (!regularToolset[0]) regularToolset[0] = GetToolFromIdentifier("DEFAULT_PT_DUST"  );
+	if (!regularToolset[0] || !IsOmniToolSelectable(*regularToolset[0])) regularToolset[0] = regularPrimary;
 	if (!regularToolset[1]) regularToolset[1] = GetToolFromIdentifier("DEFAULT_PT_NONE"  );
 	if (!regularToolset[2]) regularToolset[2] = GetToolFromIdentifier("DEFAULT_UI_SAMPLE");
 	if (!regularToolset[3]) regularToolset[3] = GetToolFromIdentifier("DEFAULT_PT_NONE"  );
-	if (!lastTool)
+	if (!lastTool || !IsOmniToolSelectable(*lastTool))
 	{
 		lastTool = activeTools[0];
 	}
