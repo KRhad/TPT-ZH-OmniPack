@@ -28,6 +28,16 @@ assert(flerovium == 457, "periodic flerovium stable ID changed: " .. tostring(fl
 ui.activeTool(0, "OMNI_PT_FL")
 assert(ui.activeTool(0) == "OMNI_PT_FL",
     "always-available superheavy carbon-group content was blocked by a module gate")
+local nitrogen = assert(elements.OMNI_PT_N)
+assert(nitrogen == 373, "periodic nitrogen stable ID changed: " .. tostring(nitrogen))
+ui.activeTool(0, "OMNI_PT_N")
+assert(ui.activeTool(0) == "OMNI_PT_N",
+    "always-available nitrogen-group content was blocked by a module gate")
+local moscovium = assert(elements.OMNI_PT_MC)
+assert(moscovium == 458, "periodic moscovium stable ID changed: " .. tostring(moscovium))
+ui.activeTool(0, "OMNI_PT_MC")
+assert(ui.activeTool(0) == "OMNI_PT_MC",
+    "always-available superheavy nitrogen-group content was blocked by a module gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -50,4 +60,6 @@ report:write("OMNI_PERIODIC_ALKALINE_EARTH_ACTIVE=OMNI_PT_CA\n")
 report:write("OMNI_PERIODIC_BORON_GROUP_ACTIVE=OMNI_PT_B\n")
 report:write("OMNI_PERIODIC_CARBON_GROUP_ACTIVE=OMNI_PT_GE\n")
 report:write("OMNI_PERIODIC_CARBON_SUPERHEAVY_ACTIVE=OMNI_PT_FL\n")
+report:write("OMNI_PERIODIC_NITROGEN_GROUP_ACTIVE=OMNI_PT_N\n")
+report:write("OMNI_PERIODIC_NITROGEN_SUPERHEAVY_ACTIVE=OMNI_PT_MC\n")
 report:close()

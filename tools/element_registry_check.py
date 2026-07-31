@@ -129,6 +129,7 @@ IMPLEMENTATION_STATUSES = frozenset(
 )
 TEST_STATUSES = frozenset(
     {
+        "not_tested",
         "untested",
         "source-verified",
         "unit-tested",

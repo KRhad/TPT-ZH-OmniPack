@@ -41,6 +41,12 @@ local ids = {
     tin = must_element("OMNI_PT_TIN", "TIN", 259),
     lead = must_element("OMNI_PT_LEAD", "LEAD", 258),
     flerovium = must_element("OMNI_PT_FL", "FL", 457),
+    nitrogen = must_element("OMNI_PT_N", "N", 373),
+    phosphorus = must_element("OMNI_PT_P", "P", 377),
+    arsenic = must_element("OMNI_PT_AS", "AS", 387),
+    antimony = must_element("OMNI_PT_SB", "SB", 402),
+    bismuth = must_element("OMNI_PT_BI", "BI", 429),
+    moscovium = must_element("OMNI_PT_MC", "MC", 458),
     lithium = must_element("DEFAULT_PT_LITH", "LITH", 191),
     rubidium = must_element("DEFAULT_PT_RBDM", "RBDM", 41),
     hydrogen = must_element("DEFAULT_PT_H2", "HYGN", 148),
@@ -48,9 +54,12 @@ local ids = {
     acid = must_element("DEFAULT_PT_ACID", "ACID", 21),
     caustic = must_element("DEFAULT_PT_CAUS", "CAUS", 86),
     salt = must_element("DEFAULT_PT_SALT", "SALT", 26),
+    dust = must_element("DEFAULT_PT_DUST", "DUST", 1),
     oxygen = must_element("DEFAULT_PT_O2", "OXYG", 61),
     neutron = must_element("DEFAULT_PT_NEUT", "NEUT", 18),
     glass = must_element("DEFAULT_PT_GLAS", "GLAS", 45),
+    liquid_nitrogen = must_element("DEFAULT_PT_LNTG", "LN2", 37),
+    nitrogen_ice = must_element("DEFAULT_PT_NICE", "NICE", 51),
     lava = must_element("DEFAULT_PT_LAVA", "LAVA", 6),
     fire = must_element("DEFAULT_PT_FIRE", "FIRE", 4),
     metal = assert(elements.DEFAULT_PT_METL),
@@ -141,6 +150,18 @@ local function run_property_differences()
     assert(elements.property(ids.flerovium, "Properties")
             ~= elements.property(ids.germanium, "Properties"),
         "radioactive flerovium and stable germanium have identical properties")
+    assert(elements.property(ids.nitrogen, "Falldown")
+            ~= elements.property(ids.phosphorus, "Falldown"),
+        "gaseous nitrogen and powdered phosphorus have identical movement properties")
+    assert(elements.property(ids.antimony, "HighTemperature")
+            > elements.property(ids.bismuth, "HighTemperature"),
+        "antimony and bismuth do not retain distinct melting points")
+    assert(elements.property(ids.arsenic, "Properties")
+            ~= elements.property(ids.bismuth, "Properties"),
+        "deadly arsenic and simplified non-deadly bismuth have identical properties")
+    assert(elements.property(ids.moscovium, "Properties")
+            ~= elements.property(ids.bismuth, "Properties"),
+        "radioactive moscovium and stable bismuth have identical properties")
 end
 
 local function run_water_reaction(type, seed)
@@ -496,6 +517,127 @@ local function run_carbon_group_reactions()
         "hot molten tin did not enter its finite vaporisation proxy")
 end
 
+local function run_nitrogen_group_reactions()
+    configure(551)
+    sim.heatSim(true)
+    local old_n_conduct = elements.property(ids.nitrogen, "HeatConduct")
+    local old_ln2_conduct = elements.property(ids.liquid_nitrogen, "HeatConduct")
+    local old_nice_conduct = elements.property(ids.nitrogen_ice, "HeatConduct")
+    elements.property(ids.nitrogen, "HeatConduct", 250)
+    elements.property(ids.liquid_nitrogen, "HeatConduct", 250)
+    elements.property(ids.nitrogen_ice, "HeatConduct", 250)
+    local nitrogen = make(ids.nitrogen, 120, 120, 76.0)
+    step()
+    assert(sim.partProperty(nitrogen, "type") == ids.liquid_nitrogen,
+        "cold nitrogen gas did not condense into liquid nitrogen")
+    sim.partProperty(nitrogen, "temp", 62.0)
+    step()
+    assert(sim.partProperty(nitrogen, "type") == ids.nitrogen_ice,
+        "liquid nitrogen did not freeze into nitrogen ice")
+    sim.partProperty(nitrogen, "temp", 64.0)
+    step()
+    assert(sim.partProperty(nitrogen, "type") == ids.liquid_nitrogen,
+        "nitrogen ice did not thaw into liquid nitrogen")
+    sim.partProperty(nitrogen, "temp", 78.0)
+    step()
+    assert(sim.partProperty(nitrogen, "type") == ids.nitrogen,
+        "liquid nitrogen did not warm back into periodic nitrogen gas")
+    elements.property(ids.nitrogen, "HeatConduct", old_n_conduct)
+    elements.property(ids.liquid_nitrogen, "HeatConduct", old_ln2_conduct)
+    elements.property(ids.nitrogen_ice, "HeatConduct", old_nice_conduct)
+
+    configure(561)
+    local old_n_diffusion = elements.property(ids.nitrogen, "Diffusion")
+    local old_n_advection = elements.property(ids.nitrogen, "Advection")
+    elements.property(ids.nitrogen, "Diffusion", 0.0)
+    elements.property(ids.nitrogen, "Advection", 0.0)
+    nitrogen = make(ids.nitrogen, 120, 120, 300.0)
+    for _ = 1, 80 do
+        local electron = make(ids.electron, 121, 120, 300.0)
+        sim.partProperty(electron, "vx", 0.0)
+        sim.partProperty(electron, "vy", 0.0)
+        step()
+        if sim.partExists(electron) then sim.partKill(electron) end
+        if sim.partExists(nitrogen)
+                and sim.partProperty(nitrogen, "life") > 0 then break end
+    end
+    elements.property(ids.nitrogen, "Diffusion", old_n_diffusion)
+    elements.property(ids.nitrogen, "Advection", old_n_advection)
+    assert(sim.partExists(nitrogen)
+            and sim.partProperty(nitrogen, "life") > 0,
+        "nitrogen did not enter its finite local-discharge glow state")
+
+    configure(571)
+    local old_o_diffusion = elements.property(ids.oxygen, "Diffusion")
+    local old_o_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    local phosphorus = make(ids.phosphorus, 120, 120, 330.0)
+    local oxygen = make(ids.oxygen, 121, 120, 330.0)
+    step(2)
+    assert(sim.partProperty(phosphorus, "type") == ids.dust
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "warm phosphorus oxygen route did not produce dust and finite fire")
+    elements.property(ids.oxygen, "Diffusion", old_o_diffusion)
+    elements.property(ids.oxygen, "Advection", old_o_advection)
+
+    configure(581)
+    local arsenic = make(ids.arsenic, 120, 120, 380.0)
+    local acid = make(ids.acid, 121, 120, 380.0)
+    step()
+    assert(sim.partProperty(arsenic, "type") == ids.salt
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "warm arsenic acid route did not produce generic salt and hydrogen")
+
+    configure(591)
+    arsenic = make(ids.arsenic, 120, 120, 887.0)
+    step()
+    assert(sim.partProperty(arsenic, "type") == ids.fire
+            and sim.partProperty(arsenic, "ctype") == ids.arsenic
+            and sim.partProperty(arsenic, "life") == 60,
+        "hot arsenic did not enter its finite sublimation proxy")
+
+    configure(601)
+    local antimony = make(ids.antimony, 120, 120, 350.0)
+    acid = make(ids.acid, 121, 120, 350.0)
+    step()
+    assert(sim.partProperty(antimony, "type") == ids.salt
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "warm antimony acid route did not produce generic salt and hydrogen")
+
+    configure(611)
+    old_o_diffusion = elements.property(ids.oxygen, "Diffusion")
+    old_o_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    local bismuth = make(ids.bismuth, 120, 120, 720.0)
+    oxygen = make(ids.oxygen, 121, 120, 720.0)
+    step()
+    assert(sim.partProperty(bismuth, "type") == ids.salt
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "hot bismuth oxygen route did not produce generic salt and finite fire")
+    elements.property(ids.oxygen, "Diffusion", old_o_diffusion)
+    elements.property(ids.oxygen, "Advection", old_o_advection)
+
+    configure(621)
+    local molten = make(ids.lava, 120, 120, 2000.0)
+    sim.partProperty(molten, "ctype", ids.antimony)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.fire
+            and sim.partProperty(molten, "ctype") == ids.antimony
+            and sim.partProperty(molten, "life") == 60,
+        "hot molten antimony did not enter its finite vaporisation proxy")
+
+    configure(631)
+    molten = make(ids.lava, 120, 120, 1900.0)
+    sim.partProperty(molten, "ctype", ids.bismuth)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.fire
+            and sim.partProperty(molten, "ctype") == ids.bismuth
+            and sim.partProperty(molten, "life") == 60,
+        "hot molten bismuth did not enter its finite vaporisation proxy")
+end
+
 local function run_helium_cryogenics()
     configure(81)
     local old_diffusion = elements.property(ids.he, "Diffusion")
@@ -598,6 +740,24 @@ local function run_radioactive_decays()
         "flerovium did not enter its compressed polonium decay proxy")
     assert(count_type(ids.photon) == 1,
         "one flerovium decay did not emit exactly one finite photon")
+
+    configure(120)
+    local moscovium = make(ids.moscovium, 120, 120, 293.15)
+    sim.partProperty(moscovium, "tmp", 1)
+    step()
+    assert(sim.partProperty(moscovium, "type") == ids.nihonium,
+        "moscovium did not enter the compressed nihonium decay proxy")
+    assert(sim.partProperty(moscovium, "tmp") >= 90
+            and sim.partProperty(moscovium, "tmp") <= 180,
+        "moscovium decay did not initialize the nihonium lifetime")
+    assert(count_type(ids.photon) == 1,
+        "first moscovium decay stage did not emit exactly one finite photon")
+    sim.partProperty(moscovium, "tmp", 1)
+    step()
+    assert(sim.partProperty(moscovium, "type") == ids.polonium,
+        "nihonium produced by moscovium did not decay to polonium")
+    assert(count_type(ids.photon) == 2,
+        "two-stage moscovium decay did not emit exactly two finite photons")
 end
 
 local function run_decay_budget()
@@ -710,6 +870,28 @@ local function run_flerovium_budget()
     return events
 end
 
+local function run_moscovium_budget()
+    configure(641)
+    local total = 1200
+    for index = 0, total - 1 do
+        local particle = make(ids.moscovium,
+            50 + (index % 100) * 5,
+            50 + math.floor(index / 100) * 5,
+            293.15)
+        sim.partProperty(particle, "tmp", 1)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total), "missing moscovium event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame moscovium events were not capped at 1024: " .. tostring(events))
+    assert(count_type(ids.moscovium) >= total - 1024,
+        "event-budget exhaustion did not defer remaining moscovium decays")
+    assert(count_type(ids.photon) <= 1024,
+        "bounded moscovium decays emitted too many photons")
+    return events
+end
+
 local function test()
     run_property_differences()
     run_alkali_water_series()
@@ -718,6 +900,7 @@ local function test()
     run_alkaline_earth_oxygen_and_phase()
     run_boron_group_reactions()
     run_carbon_group_reactions()
+    run_nitrogen_group_reactions()
     run_helium_cryogenics()
     run_xenon_discharge()
     run_radioactive_decays()
@@ -726,20 +909,22 @@ local function test()
     local radium_budget = run_radium_budget()
     local nihonium_budget = run_nihonium_budget()
     local flerovium_budget = run_flerovium_budget()
+    local moscovium_budget = run_moscovium_budget()
     return math.max(noble_budget, francium_budget, radium_budget,
-        nihonium_budget, flerovium_budget)
+        nihonium_budget, flerovium_budget, moscovium_budget)
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_PERIODIC_STATUS=PASS\n")
-    report:write("OMNI_PERIODIC_NEW_ELEMENTS=23\n")
-    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=49\n")
+    report:write("OMNI_PERIODIC_NEW_ELEMENTS=29\n")
+    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=55\n")
     report:write("OMNI_PERIODIC_ALKALI_FAMILY=6\n")
     report:write("OMNI_PERIODIC_ALKALINE_EARTH_FAMILY=6\n")
     report:write("OMNI_PERIODIC_BORON_GROUP=6\n")
     report:write("OMNI_PERIODIC_CARBON_GROUP=6\n")
+    report:write("OMNI_PERIODIC_NITROGEN_GROUP=6\n")
     report:write("OMNI_PERIODIC_BUDGET_EVENTS=" .. tostring(data) .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

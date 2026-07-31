@@ -49,12 +49,22 @@ EXPECTED_CARBON_GROUP_ELEMENTS = {
     457: "FL",
 }
 
+EXPECTED_NITROGEN_GROUP_ELEMENTS = {
+    373: "N",
+    377: "P",
+    387: "AS",
+    402: "SB",
+    429: "BI",
+    458: "MC",
+}
+
 EXPECTED_NEW_ELEMENTS = (
     EXPECTED_NOBLE_ELEMENTS
     | EXPECTED_ALKALI_ELEMENTS
     | EXPECTED_ALKALINE_EARTH_ELEMENTS
     | EXPECTED_BORON_GROUP_ELEMENTS
     | EXPECTED_CARBON_GROUP_ELEMENTS
+    | EXPECTED_NITROGEN_GROUP_ELEMENTS
 )
 
 
@@ -117,9 +127,9 @@ def check_source_map(root: Path, errors: list[str]) -> None:
     if [int(row["atomic_number"]) for row in rows] != list(range(1, 119)):
         errors.append(f"{path}: atomic numbers are not the complete ordered range 1..118")
     implemented = [row for row in rows if row.get("status") == "implemented"]
-    if len(implemented) != 49:
+    if len(implemented) != 55:
         errors.append(
-            f"{path}: expected 49 implemented mappings after the carbon-group batch "
+            f"{path}: expected 55 implemented mappings after the nitrogen-group batch "
             f"and found {len(implemented)}"
         )
     by_number = {int(row["atomic_number"]): row for row in rows}
@@ -132,6 +142,7 @@ def check_source_map(root: Path, errors: list[str]) -> None:
         88: 433, 118: 461, 5: 372, 13: 256, 31: 385,
         49: 401, 81: 428, 113: 456, 6: 28, 14: 187,
         32: 386, 50: 259, 82: 258, 114: 457,
+        7: 373, 15: 377, 33: 387, 51: 402, 83: 429, 115: 458,
     }
     for atomic_number, stable_id in expected_atomic.items():
         row = by_number.get(atomic_number, {})
@@ -177,6 +188,11 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "germanium discharge": "ExciteGermanium",
         "tin pest": "EmbrittleColdTin",
         "flerovium decay": "sourceType != PT_FL || parts[i].type != PT_FL",
+        "nitrogen discharge": "ExciteNitrogen",
+        "nitrogen-group acid chemistry": "ReactNitrogenGroupWithAcid",
+        "nitrogen-group oxidation": "OxidiseHotNitrogenGroup",
+        "nitrogen-group vaporisation": "VaporiseHotNitrogenGroup",
+        "moscovium decay": "sourceType != PT_MC || parts[i].type != PT_MC",
     }
     for label, marker in required.items():
         if marker not in engine:
@@ -240,6 +256,18 @@ def check_engine(root: Path, errors: list[str]) -> None:
         ):
             if marker not in text:
                 errors.append(f"{path}: missing periodic element marker {marker!r}")
+    for stable_id, name in EXPECTED_NITROGEN_GROUP_ELEMENTS.items():
+        path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
+        text = read_text(path, errors)
+        for marker in (
+            f'Identifier = "OMNI_PT_{name}"',
+            "HeatCapacity =",
+            "Update = &OmniNitrogenGroupUpdate",
+            "Graphics = &OmniNitrogenGroupGraphics",
+            "Create = &OmniNitrogenGroupCreate",
+        ):
+            if marker not in text:
+                errors.append(f"{path}: missing periodic element marker {marker!r}")
     magnesium = read_text(
         root / "src" / "simulation" / "elements" / "MAGN.cpp", errors
     )
@@ -284,6 +312,13 @@ def check_engine(root: Path, errors: list[str]) -> None:
         errors.append("LAVA.cpp: molten boron-group ctype update hook is missing")
     if "OmniMoltenCarbonGroupUpdate" not in lava:
         errors.append("LAVA.cpp: molten carbon-group ctype update hook is missing")
+    if "OmniMoltenNitrogenGroupUpdate" not in lava:
+        errors.append("LAVA.cpp: molten nitrogen-group ctype update hook is missing")
+    liquid_nitrogen = read_text(
+        root / "src" / "simulation" / "elements" / "LNTG.cpp", errors
+    )
+    if "HighTemperatureTransition = PT_N" not in liquid_nitrogen:
+        errors.append("LNTG.cpp: liquid nitrogen to periodic nitrogen transition is missing")
 
 
 def check_ui(root: Path, errors: list[str]) -> None:
@@ -342,7 +377,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"periodic-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("periodic-audit: PASS (118 mapped, 49 implemented, 23 new periodic elements, 1024/frame)")
+        print("periodic-audit: PASS (118 mapped, 55 implemented, 29 new periodic elements, 1024/frame)")
     return 0
 
 

@@ -69,7 +69,9 @@ try {
             $resultText -match "(?m)^OMNI_PERIODIC_ALKALINE_EARTH_ACTIVE=OMNI_PT_CA\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_BORON_GROUP_ACTIVE=OMNI_PT_B\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_CARBON_GROUP_ACTIVE=OMNI_PT_GE\r?$" -and
-            $resultText -match "(?m)^OMNI_PERIODIC_CARBON_SUPERHEAVY_ACTIVE=OMNI_PT_FL\r?$"
+            $resultText -match "(?m)^OMNI_PERIODIC_CARBON_SUPERHEAVY_ACTIVE=OMNI_PT_FL\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_NITROGEN_GROUP_ACTIVE=OMNI_PT_N\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_NITROGEN_SUPERHEAVY_ACTIVE=OMNI_PT_MC\r?$"
         ) {
             $passed = $true
             break

@@ -110,6 +110,12 @@ local definitions = {
     nihonium = { "OMNI_PT_NH", "NH", 456 },
     germanium = { "OMNI_PT_GE", "GE", 386 },
     flerovium = { "OMNI_PT_FL", "FL", 457 },
+    nitrogen = { "OMNI_PT_N", "N", 373 },
+    phosphorus = { "OMNI_PT_P", "P", 377 },
+    arsenic = { "OMNI_PT_AS", "AS", 387 },
+    antimony = { "OMNI_PT_SB", "SB", 402 },
+    bismuth = { "OMNI_PT_BI", "BI", 429 },
+    moscovium = { "OMNI_PT_MC", "MC", 458 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -137,6 +143,8 @@ local module_keys = {
         "strontium", "barium", "radium",
         "boron", "gallium", "indium", "thallium", "nihonium",
         "germanium", "flerovium",
+        "nitrogen", "phosphorus", "arsenic", "antimony", "bismuth",
+        "moscovium",
     },
 }
 

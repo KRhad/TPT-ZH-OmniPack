@@ -67,6 +67,17 @@ struct CarbonGroupProperties
 	unsigned int flameColour;
 };
 
+struct NitrogenGroupProperties
+{
+	float acidThreshold;
+	float oxygenThreshold;
+	float boilingPoint;
+	int reactionHeat;
+	float pressure;
+	int oxideProduct;
+	unsigned int flameColour;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -183,6 +194,27 @@ CarbonGroupProperties CarbonGroupPropertiesFor(int type)
 	}
 }
 
+NitrogenGroupProperties NitrogenGroupPropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_N:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 20, 0.1f, PT_NONE, 0xFFB080FF };
+	case PT_P:
+		return { MAX_TEMP, 320.0f, 554.0f, 340, 0.75f, PT_DUST, 0xFFE8FFB0 };
+	case PT_AS:
+		return { 380.0f, 620.0f, 887.0f, 160, 0.45f, PT_DUST, 0xFFB8D8FF };
+	case PT_SB:
+		return { 350.0f, 680.0f, 1908.0f, 130, 0.4f, PT_SALT, 0xFFC8D0FF };
+	case PT_BI:
+		return { 390.0f, 720.0f, 1837.0f, 100, 0.35f, PT_SALT, 0xFFD8B0FF };
+	case PT_MC:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 600, 1.0f, PT_NONE, 0xFFFF6090 };
+	default:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 0, 0.0f, PT_NONE, 0 };
+	}
+}
+
 bool IsAlkaliMetal(int type)
 {
 	return type == PT_NA || type == PT_K || type == PT_CS || type == PT_FR;
@@ -204,6 +236,12 @@ bool IsReactiveCarbonGroupElement(int type)
 {
 	return type == PT_SLCN || type == PT_GE || type == PT_TIN ||
 		type == PT_LEAD || type == PT_FL;
+}
+
+bool IsNitrogenGroupElement(int type)
+{
+	return type == PT_N || type == PT_P || type == PT_AS ||
+		type == PT_SB || type == PT_BI || type == PT_MC;
 }
 
 bool IsWaterLike(int type)
@@ -1235,6 +1273,197 @@ bool UpdateCarbonGroup(UPDATE_FUNC_ARGS, int sourceType)
 	}
 	return ExciteGermanium(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
+
+bool DecayMoscovium(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_MC || parts[i].type != PT_MC)
+	{
+		return false;
+	}
+	if (parts[i].tmp <= 0)
+	{
+		parts[i].tmp = sim->rng.between(50, 110);
+		return false;
+	}
+	--parts[i].tmp;
+	if (parts[i].tmp > 0)
+	{
+		return false;
+	}
+	if (!ConsumeEvent(sim))
+	{
+		parts[i].tmp = 1;
+		return false;
+	}
+
+	auto temperature = std::min(parts[i].temp + 600.0f, MAX_TEMP);
+	sim->part_change_type(i, x, y, PT_NH);
+	ResetReactionProduct(parts[i], PT_NH);
+	parts[i].tmp = sim->rng.between(90, 180);
+	parts[i].temp = temperature;
+	int photon = sim->create_part(-3, x, y, PT_PHOT);
+	if (photon >= 0)
+	{
+		parts[photon].ctype = 0x03F03F00;
+		parts[photon].temp = temperature;
+		parts[photon].life = 18;
+	}
+	return true;
+}
+
+bool ReactNitrogenGroupWithAcid(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_AS && sourceType != PT_SB && sourceType != PT_BI)
+	{
+		return false;
+	}
+	auto properties = NitrogenGroupPropertiesFor(sourceType);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_ACID)
+			{
+				continue;
+			}
+			auto acid = ID(packed);
+			if (std::max(parts[i].temp, parts[acid].temp) < properties.acidThreshold)
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[acid].temp) +
+					float(properties.reactionHeat),
+				MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SALT);
+			sim->part_change_type(acid, x + rx, y + ry, PT_H2);
+			ResetReactionProduct(parts[i], PT_SALT);
+			ResetReactionProduct(parts[acid], PT_H2);
+			parts[i].temp = temperature;
+			parts[acid].temp = temperature;
+			AddBoundedPressure(sim, x, y, properties.pressure);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool OxidiseHotNitrogenGroup(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_N || sourceType == PT_MC)
+	{
+		return false;
+	}
+	auto properties = NitrogenGroupPropertiesFor(sourceType);
+	if (parts[i].temp < properties.oxygenThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2)
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+
+			auto oxygen = ID(packed);
+			auto temperature = std::min(
+				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, properties.oxideProduct);
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
+			ResetReactionProduct(parts[i], properties.oxideProduct);
+			ResetReactionProduct(parts[oxygen], PT_FIRE);
+			parts[i].temp = temperature;
+			parts[oxygen].temp = temperature;
+			parts[oxygen].life = sourceType == PT_P ? 32 : 20;
+			parts[oxygen].dcolour = properties.flameColour;
+			AddBoundedPressure(sim, x, y, properties.pressure * 0.35f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseHotNitrogenGroup(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_N || sourceType == PT_MC)
+	{
+		return false;
+	}
+	auto properties = NitrogenGroupPropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_FIRE);
+	ResetReactionProduct(parts[i], PT_FIRE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 60;
+	parts[i].dcolour = properties.flameColour;
+	AddBoundedPressure(sim, x, y, properties.pressure * 0.25f);
+	return true;
+}
+
+bool ExciteNitrogen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_N || parts[i].type != PT_N || parts[i].life > 0 ||
+		!HasLocalDischarge(x, y, pmap, sim) ||
+		!sim->rng.chance(1, 5) || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	parts[i].life = 12;
+	parts[i].temp = std::min(parts[i].temp + 20.0f, MAX_TEMP);
+	return true;
+}
+
+bool UpdateNitrogenGroup(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsNitrogenGroupElement(sourceType))
+	{
+		return false;
+	}
+	if (DecayMoscovium(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (VaporiseHotNitrogenGroup(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (ReactNitrogenGroupWithAcid(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (OxidiseHotNitrogenGroup(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return ExciteNitrogen(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
 }
 
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
@@ -1384,5 +1613,45 @@ void OmniCarbonGroupCreate(ELEMENT_CREATE_FUNC_ARGS)
 	if (t == PT_FL)
 	{
 		sim->parts[i].tmp = sim->rng.between(60, 130);
+	}
+}
+
+int OmniNitrogenGroupUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateNitrogenGroup(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenNitrogenGroupUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateNitrogenGroup(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+int OmniNitrogenGroupGraphics(GRAPHICS_FUNC_ARGS)
+{
+	if (cpart->type == PT_N && cpart->life > 0)
+	{
+		int intensity = std::min(cpart->life * 10, 120);
+		*firea = intensity;
+		*firer = std::min(*colr + 60, 255);
+		*fireg = std::min(*colg + 20, 255);
+		*fireb = 255;
+		*pixel_mode |= PMODE_GLOW | FIRE_ADD;
+	}
+	else if (cpart->type == PT_MC)
+	{
+		*pixel_mode |= PMODE_GLOW;
+	}
+	return 0;
+}
+
+void OmniNitrogenGroupCreate(ELEMENT_CREATE_FUNC_ARGS)
+{
+	if (t == PT_MC)
+	{
+		sim->parts[i].tmp = sim->rng.between(50, 110);
 	}
 }

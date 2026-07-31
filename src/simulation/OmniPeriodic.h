@@ -21,3 +21,7 @@ int OmniCarbonGroupUpdate(UPDATE_FUNC_ARGS);
 int OmniMoltenCarbonGroupUpdate(UPDATE_FUNC_ARGS);
 int OmniCarbonGroupGraphics(GRAPHICS_FUNC_ARGS);
 void OmniCarbonGroupCreate(ELEMENT_CREATE_FUNC_ARGS);
+int OmniNitrogenGroupUpdate(UPDATE_FUNC_ARGS);
+int OmniMoltenNitrogenGroupUpdate(UPDATE_FUNC_ARGS);
+int OmniNitrogenGroupGraphics(GRAPHICS_FUNC_ARGS);
+void OmniNitrogenGroupCreate(ELEMENT_CREATE_FUNC_ARGS);

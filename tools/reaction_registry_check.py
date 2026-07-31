@@ -123,6 +123,11 @@ REQUIRED_REACTIONS = {
     "periodic.tin_pest",
     "periodic.germanium_discharge",
     "periodic.flerovium_decay",
+    "periodic.nitrogen_discharge",
+    "periodic.nitrogen_group_acid",
+    "periodic.nitrogen_group_oxidation",
+    "periodic.nitrogen_group_vaporisation",
+    "periodic.moscovium_decay",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

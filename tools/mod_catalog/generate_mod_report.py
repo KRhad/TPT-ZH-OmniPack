@@ -204,6 +204,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         and {row.get("atomic_number") for row in periodic_rows} == {str(value) for value in range(1, 119)}
     )
     periodic_sourced = sum(row.get("status") == "implemented" for row in periodic_rows)
+    element_registry_path = root / "docs/ELEMENT_REGISTRY.csv"
+    if element_registry_path.is_file():
+        with element_registry_path.open("r", encoding="utf-8", newline="") as stream:
+            element_registry_rows = list(csv.DictReader(stream))
+    else:
+        element_registry_rows = []
+    total_omnipack_elements = sum(
+        row.get("identifier", "").startswith("OMNI_PT_")
+        and row.get("implementation_status") == "implemented"
+        for row in element_registry_rows
+    )
     reaction_by_key = {
         (row["source_mod"], row["source_file"], row["source_identifier"]): row for row in reactions
     }
@@ -310,7 +321,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"periodic_source_map_complete={str(periodic_map_complete).lower()}",
         f"periodic_elements_sourced={periodic_sourced}",
         f"periodic_elements_remaining={118 - periodic_sourced if periodic_map_complete else 'not_tested'}",
-        "total_omnipack_elements=48",
+        f"total_omnipack_elements={total_omnipack_elements}",
         f"clean_build_pass={args.clean_build_pass}",
         f"element_registry_pass={args.element_registry_pass}",
         f"reaction_registry_pass={args.reaction_registry_pass}",
