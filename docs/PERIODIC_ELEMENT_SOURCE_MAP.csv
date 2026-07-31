@@ -70,12 +70,12 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 69,Tm,铥,Thulium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,420,planned,not_tested
 70,Yb,镱,Ytterbium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,421,planned,not_tested
 71,Lu,镥,Lutetium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,422,planned,not_tested
-72,Hf,铪,Hafnium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,423,planned,not_tested
-73,Ta,钽,Tantalum,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,424,planned,not_tested
+72,Hf,铪,Hafnium,,OMNI_PT_HF,,TPT-ZH-OmniPack/original,248c516aefcbeae187de95aadb384c22280a678c,family_generated,423,implemented,runtime-tested
+73,Ta,钽,Tantalum,,OMNI_PT_TA,,TPT-ZH-OmniPack/original,248c516aefcbeae187de95aadb384c22280a678c,family_generated,424,implemented,runtime-tested
 74,W,钨,Tungsten,DEFAULT_PT_TUNG,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,171,implemented,source-verified
-75,Re,铼,Rhenium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,425,planned,not_tested
-76,Os,锇,Osmium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,426,planned,not_tested
-77,Ir,铱,Iridium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,427,planned,not_tested
+75,Re,铼,Rhenium,,OMNI_PT_RE,,TPT-ZH-OmniPack/original,248c516aefcbeae187de95aadb384c22280a678c,family_generated,425,implemented,runtime-tested
+76,Os,锇,Osmium,,OMNI_PT_OS,,TPT-ZH-OmniPack/original,248c516aefcbeae187de95aadb384c22280a678c,family_generated,426,implemented,runtime-tested
+77,Ir,铱,Iridium,,OMNI_PT_IR,,TPT-ZH-OmniPack/original,248c516aefcbeae187de95aadb384c22280a678c,family_generated,427,implemented,runtime-tested
 78,Pt,铂,Platinum,DEFAULT_PT_PTNM,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,188,implemented,source-verified
 79,Au,金,Gold,DEFAULT_PT_GOLD,,alchemy;biological_mod;bmn_mod;chemistry_mod;cracker1000;cyens;cyens_src;dtttpt;jacob1;magnet_toy;metacircuits;norbs_mod;nucular_mod;powder_better;record_mod;science_toy;seppo;spikeviper;ultimata,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,170,implemented,source-verified
 80,Hg,汞,Mercury,DEFAULT_PT_MERC,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,152,implemented,source-verified

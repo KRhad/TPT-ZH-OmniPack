@@ -155,6 +155,14 @@ REQUIRED_REACTIONS = {
     "periodic.palladium_hydrogen_absorption",
     "periodic.palladium_hydrogen_release",
     "periodic.silver_tarnish",
+    "periodic.third_transition_acid",
+    "periodic.third_transition_oxidation",
+    "periodic.third_transition_vaporisation",
+    "periodic.hafnium_neutron_capture",
+    "periodic.tantalum_passivation",
+    "periodic.rhenium_superalloy",
+    "periodic.osmium_toxic_oxidation",
+    "periodic.iridium_peroxide_catalysis",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

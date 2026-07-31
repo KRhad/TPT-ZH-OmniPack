@@ -119,6 +119,16 @@ struct SecondTransitionProperties
 	unsigned int flameColour;
 };
 
+struct ThirdTransitionProperties
+{
+	float acidThreshold;
+	float oxygenThreshold;
+	float boilingPoint;
+	int reactionHeat;
+	float pressure;
+	unsigned int flameColour;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -336,6 +346,25 @@ SecondTransitionProperties SecondTransitionPropertiesFor(int type)
 	}
 }
 
+ThirdTransitionProperties ThirdTransitionPropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_HF:
+		return { 700.0f, 900.0f, 4876.0f, 120, 0.30f, 0xFFDDEEFF };
+	case PT_TA:
+		return { 1200.0f, 1300.0f, 5731.0f, 90, 0.20f, 0xFFD8D0FF };
+	case PT_RE:
+		return { 800.0f, 1050.0f, 5903.0f, 80, 0.20f, 0xFFE0E8FF };
+	case PT_OS:
+		return { 650.0f, 450.0f, 5285.0f, 170, 0.35f, 0xFFFFFFA0 };
+	case PT_IR:
+		return { 1000.0f, 1200.0f, 4701.0f, 70, 0.15f, 0xFFFFF0E8 };
+	default:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 0, 0.0f, 0 };
+	}
+}
+
 bool IsAlkaliMetal(int type)
 {
 	return type == PT_NA || type == PT_K || type == PT_CS || type == PT_FR;
@@ -386,6 +415,12 @@ bool IsSecondTransitionExtension(int type)
 	return type == PT_Y || type == PT_ZR || type == PT_NB ||
 		type == PT_TC || type == PT_RU || type == PT_RH ||
 		type == PT_PD || type == PT_AG || type == PT_CD;
+}
+
+bool IsThirdTransitionExtension(int type)
+{
+	return type == PT_HF || type == PT_TA || type == PT_RE ||
+		type == PT_OS || type == PT_IR;
 }
 
 bool IsHalogenReactiveMetal(int type)
@@ -2692,6 +2727,364 @@ bool UpdateSecondTransition(UPDATE_FUNC_ARGS, int sourceType)
 	}
 	return ExciteYttrium(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
+
+bool CaptureHafniumNeutron(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_HF)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			for (auto packed : { pmap[y + ry][x + rx], sim->photons[y + ry][x + rx] })
+			{
+				if (!packed || TYP(packed) != PT_NEUT)
+				{
+					continue;
+				}
+				if (!ConsumeEvent(sim))
+				{
+					return false;
+				}
+				auto neutron = ID(packed);
+				parts[i].temp = std::min(
+					std::max(parts[i].temp, parts[neutron].temp) + 90.0f,
+					MAX_TEMP);
+				parts[i].tmp = std::min(parts[i].tmp + 1, 255);
+				sim->kill_part(neutron);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool PassivateTantalum(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_TA || parts[i].temp < 700.0f || parts[i].life > 0)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2 || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto oxygen = ID(packed);
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[oxygen].temp) + 80.0f,
+				MAX_TEMP);
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_GLAS);
+			ResetReactionProduct(parts[oxygen], PT_GLAS);
+			parts[oxygen].temp = temperature;
+			parts[oxygen].dcolour = 0xFFD8D0FF;
+			parts[i].life = 120;
+			parts[i].temp = temperature;
+			AddBoundedPressure(sim, x, y, 0.15f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool AlloyRheniumSuperalloy(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_RE || parts[i].temp < 2000.0f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed)
+			{
+				continue;
+			}
+			auto nickel = ID(packed);
+			if (TYP(packed) != PT_NICL &&
+				(TYP(packed) != PT_LAVA || parts[nickel].ctype != PT_NICL))
+			{
+				continue;
+			}
+			if (std::max(parts[i].temp, parts[nickel].temp) < 2000.0f ||
+				!ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[nickel].temp) + 100.0f,
+				MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_LAVA);
+			sim->part_change_type(nickel, x + rx, y + ry, PT_LAVA);
+			ResetReactionProduct(parts[i], PT_LAVA);
+			ResetReactionProduct(parts[nickel], PT_LAVA);
+			parts[i].ctype = PT_TSTL;
+			parts[nickel].ctype = PT_TSTL;
+			parts[i].temp = temperature;
+			parts[nickel].temp = temperature;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool OxidiseOsmiumToToxicVapour(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_OS || parts[i].temp < 450.0f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2 || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto oxygen = ID(packed);
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[oxygen].temp) + 170.0f,
+				MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SMKE);
+			ResetReactionProduct(parts[i], PT_SMKE);
+			parts[i].ctype = PT_OS;
+			parts[i].life = 80;
+			parts[i].temp = temperature;
+			parts[i].dcolour = 0xFFFFFFA0;
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_CAUS);
+			ResetReactionProduct(parts[oxygen], PT_CAUS);
+			parts[oxygen].temp = temperature;
+			parts[oxygen].dcolour = 0xFFFFFFA0;
+			AddBoundedPressure(sim, x, y, 0.5f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CatalysePeroxideWithIridium(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_IR || parts[i].temp < 350.0f)
+	{
+		return false;
+	}
+	int peroxide[2] = { -1, -1 };
+	int peroxideX[2] = { 0, 0 };
+	int peroxideY[2] = { 0, 0 };
+	int emptyX = -1;
+	int emptyY = -1;
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed)
+			{
+				if (emptyX < 0)
+				{
+					emptyX = x + rx;
+					emptyY = y + ry;
+				}
+				continue;
+			}
+			if (TYP(packed) == PT_PERO)
+			{
+				int slot = peroxide[0] < 0 ? 0 : (peroxide[1] < 0 ? 1 : -1);
+				if (slot >= 0)
+				{
+					peroxide[slot] = ID(packed);
+					peroxideX[slot] = x + rx;
+					peroxideY[slot] = y + ry;
+				}
+			}
+		}
+	}
+	if (peroxide[0] < 0 || peroxide[1] < 0 || emptyX < 0 || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	int oxygen = sim->create_part(-1, emptyX, emptyY, PT_O2);
+	if (oxygen < 0)
+	{
+		return false;
+	}
+	auto temperature = std::min(parts[i].temp + 90.0f, MAX_TEMP);
+	for (int slot = 0; slot < 2; ++slot)
+	{
+		sim->part_change_type(
+			peroxide[slot], peroxideX[slot], peroxideY[slot], PT_WATR);
+		ResetReactionProduct(parts[peroxide[slot]], PT_WATR);
+		parts[peroxide[slot]].temp = temperature;
+	}
+	parts[oxygen].temp = temperature;
+	parts[i].temp = std::min(parts[i].temp + 15.0f, MAX_TEMP);
+	return true;
+}
+
+bool ReactThirdTransitionWithAcid(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = ThirdTransitionPropertiesFor(sourceType);
+	if (sourceType == PT_TA && parts[i].life > 0)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_ACID)
+			{
+				continue;
+			}
+			auto acid = ID(packed);
+			if (std::max(parts[i].temp, parts[acid].temp) < properties.acidThreshold ||
+				!ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[acid].temp) +
+					float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SALT);
+			sim->part_change_type(acid, x + rx, y + ry, PT_H2);
+			ResetReactionProduct(parts[i], PT_SALT);
+			ResetReactionProduct(parts[acid], PT_H2);
+			parts[i].temp = temperature;
+			parts[acid].temp = temperature;
+			AddBoundedPressure(sim, x, y, properties.pressure);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool OxidiseHotThirdTransition(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = ThirdTransitionPropertiesFor(sourceType);
+	if (parts[i].temp < properties.oxygenThreshold ||
+		(sourceType == PT_TA && parts[i].life > 0))
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2 || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto oxygen = ID(packed);
+			auto temperature = std::min(
+				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_MSCR);
+			ResetReactionProduct(parts[i], PT_MSCR);
+			parts[i].ctype = sourceType;
+			parts[i].temp = temperature;
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
+			ResetReactionProduct(parts[oxygen], PT_FIRE);
+			parts[oxygen].temp = temperature;
+			parts[oxygen].life = 20;
+			parts[oxygen].dcolour = properties.flameColour;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseThirdTransition(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = ThirdTransitionPropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_FIRE);
+	ResetReactionProduct(parts[i], PT_FIRE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 60;
+	parts[i].dcolour = properties.flameColour;
+	return true;
+}
+
+bool UpdateThirdTransition(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsThirdTransitionExtension(sourceType))
+	{
+		return false;
+	}
+	if (CaptureHafniumNeutron(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (PassivateTantalum(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (AlloyRheniumSuperalloy(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (OxidiseOsmiumToToxicVapour(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (CatalysePeroxideWithIridium(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (VaporiseThirdTransition(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (ReactThirdTransitionWithAcid(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return OxidiseHotThirdTransition(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
 }
 
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
@@ -3024,5 +3417,41 @@ void OmniSecondTransitionCreate(ELEMENT_CREATE_FUNC_ARGS)
 	if (t == PT_TC)
 	{
 		sim->parts[i].tmp = sim->rng.between(600, 1200);
+	}
+}
+
+int OmniThirdTransitionUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateThirdTransition(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenThirdTransitionUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateThirdTransition(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+int OmniThirdTransitionGraphics(GRAPHICS_FUNC_ARGS)
+{
+	if (cpart->type == PT_TA && cpart->life > 0)
+	{
+		int intensity = std::min(cpart->life, 120);
+		*firea = intensity;
+		*firer = std::min(*colr + 35, 255);
+		*fireg = std::min(*colg + 20, 255);
+		*fireb = 255;
+		*pixel_mode |= PMODE_GLOW | FIRE_ADD;
+	}
+	return 0;
+}
+
+void OmniThirdTransitionCreate(ELEMENT_CREATE_FUNC_ARGS)
+{
+	if (t == PT_HF)
+	{
+		sim->parts[i].tmp = 0;
 	}
 }

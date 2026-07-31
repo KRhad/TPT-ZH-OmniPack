@@ -40,3 +40,7 @@ int OmniSecondTransitionUpdate(UPDATE_FUNC_ARGS);
 int OmniMoltenSecondTransitionUpdate(UPDATE_FUNC_ARGS);
 int OmniSecondTransitionGraphics(GRAPHICS_FUNC_ARGS);
 void OmniSecondTransitionCreate(ELEMENT_CREATE_FUNC_ARGS);
+int OmniThirdTransitionUpdate(UPDATE_FUNC_ARGS);
+int OmniMoltenThirdTransitionUpdate(UPDATE_FUNC_ARGS);
+int OmniThirdTransitionGraphics(GRAPHICS_FUNC_ARGS);
+void OmniThirdTransitionCreate(ELEMENT_CREATE_FUNC_ARGS);

@@ -137,6 +137,11 @@ local definitions = {
     palladium = { "OMNI_PT_PD", "PD", 398 },
     silver = { "OMNI_PT_AG", "AG", 399 },
     cadmium = { "OMNI_PT_CD", "CD", 400 },
+    hafnium = { "OMNI_PT_HF", "HF", 423 },
+    tantalum = { "OMNI_PT_TA", "TA", 424 },
+    rhenium = { "OMNI_PT_RE", "RE", 425 },
+    osmium = { "OMNI_PT_OS", "OS", 426 },
+    iridium = { "OMNI_PT_IR", "IR", 427 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -170,6 +175,7 @@ local module_keys = {
         "scandium", "vanadium", "manganese",
         "yttrium", "zirconium", "niobium", "technetium",
         "ruthenium", "rhodium", "palladium", "silver", "cadmium",
+        "hafnium", "tantalum", "rhenium", "osmium", "iridium",
     },
 }
 

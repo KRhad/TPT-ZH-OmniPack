@@ -422,11 +422,11 @@ simulation_elem_names = [
 	disabler(), # 420: periodic Tm reserved
 	disabler(), # 421: periodic Yb reserved
 	disabler(), # 422: periodic Lu reserved
-	disabler(), # 423: periodic Hf reserved
-	disabler(), # 424: periodic Ta reserved
-	disabler(), # 425: periodic Re reserved
-	disabler(), # 426: periodic Os reserved
-	disabler(), # 427: periodic Ir reserved
+	'HF',   # 423: periodic Hf
+	'TA',   # 424: periodic Ta
+	'RE',   # 425: periodic Re
+	'OS',   # 426: periodic Os
+	'IR',   # 427: periodic Ir
 	'TL',   # 428: periodic Tl
 	'BI',   # 429: periodic Bi
 	'AT',   # 430: periodic At

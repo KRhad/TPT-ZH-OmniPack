@@ -77,7 +77,8 @@ try {
             $resultText -match "(?m)^OMNI_PERIODIC_HALOGEN_ACTIVE=OMNI_PT_F\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_HALOGEN_SUPERHEAVY_ACTIVE=OMNI_PT_TS\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_FIRST_TRANSITION_ACTIVE=OMNI_PT_SC\r?$" -and
-            $resultText -match "(?m)^OMNI_PERIODIC_SECOND_TRANSITION_ACTIVE=OMNI_PT_Y\r?$"
+            $resultText -match "(?m)^OMNI_PERIODIC_SECOND_TRANSITION_ACTIVE=OMNI_PT_Y\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_THIRD_TRANSITION_ACTIVE=OMNI_PT_HF\r?$"
         ) {
             $passed = $true
             break
