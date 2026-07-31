@@ -33,26 +33,27 @@
 | 局部生态 8 | PASS | PASS | PASS | 历史 PASS | ID `288..295`；完整/简化均通过 |
 | 受控核工业 7 | PASS | PASS | PASS | 历史 PASS | ID `328..334` |
 | 高级化学 10 | PASS | PASS | PASS | 历史 PASS | ID `360..369` |
-| 周期表前六批 29 | PASS | PASS | PASS | 预算帧 PASS | 新 ID `370..461` 中 29 项启用；55/118 映射可用 |
+| 周期表前七批 33 | PASS | PASS | PASS | 预算帧 PASS | 新 ID `370..461` 中 33 项启用；59/118 映射可用 |
 | 多模块混合 | PASS | 历史 PASS | 历史 PASS | 历史 PASS | Phase 1 正式混合压力尚未复跑 |
 
-### 周期表前六批证据
+### 周期表前七批证据
 
 | 项目 | 状态 | 证据 |
 |---|---|---|
 | 118 行数据、长式格位、搜索/筛选契约 | PASS | `periodic-runtime-audit` 与 Python 单测 |
-| 29 个新 identifier / 固定 ID / 双语图鉴 | PASS | 元素登记、i18n、内容门禁 |
-| 氦/氙/放射性行为及碱金属、碱土金属、硼族、碳族、氮族各 6 个族成员 | PASS | `runtime_lua_periodic_test.ps1` |
+| 33 个新 identifier / 固定 ID / 双语图鉴 | PASS | 元素登记、i18n、内容门禁；所有新增说明均以对应元素中英文名开头 |
+| 氦/氙/放射性行为及碱金属、碱土金属、硼族、碳族、氮族、氧族各 6 个族成员 | PASS | `runtime_lua_periodic_test.ps1` |
 | 硼族关键行为 | PASS | 硼中子俘获、铝两性反应、镓脆铝、硼氧化、铟汽化与鿭衰变均由真实客户端断言 |
 | 碳族关键行为 | PASS | 钻石惰性、硅氧化、锗放电/酸反应、锡瘟、铅中子吸收/酸氧反应、熔融锡汽化和𫓧衰变均由真实客户端断言 |
 | 氮族关键行为 | PASS | 氮三相往返/放电、磷氧燃烧、砷酸反应/升华、锑与铋差异/汽化、镆两段衰变均由真实客户端断言 |
-| 单帧事件预算 | PASS | 1,200 个 `OG/FR/RA/NH/FL/MC(tmp=1)` 隔离样本分别验证，峰值均不超过且可达到 `1024` |
-| 周期 ID OPS 与携带字段 | PASS | 3 进程、2 重启、2 加载、35 粒子、43 字段断言 |
-| 周期内容无解锁直接选择 | PASS | `HE`、`NA`、`CA`、`B`、`GE`、`FL`、`N`、`MC` 代表项均可直接选择 |
+| 氧族关键行为 | PASS | 官方 `O2 ↔ LO2`、`POLO → PLUT`、硫燃烧/熔化/汽化、硒光敏/氧化/汽化、碲玻璃态氧化/汽化和𫟷两段衰变均由真实客户端断言 |
+| 单帧事件预算 | PASS | 1,200 个 `OG/FR/RA/NH/FL/MC/LV(tmp=1)` 隔离样本分别验证，峰值均不超过且可达到 `1024` |
+| 周期 ID OPS 与携带字段 | PASS | 3 进程、2 重启、2 加载、39 粒子、47 字段断言 |
+| 周期内容无解锁直接选择 | PASS | `HE`、`NA`、`CA`、`B`、`GE`、`FL`、`N`、`MC`、`S`、`LV` 代表项均可直接选择 |
 | 新增中文字体与 Unicode 路径 | PASS | 字体为 14,731 字形/2,695 必需字符；`𫓧` 的四字节 UTF-8 往返、字体查找和完整中文语言包离屏渲染通过 |
-| 本批 clean Release build | PASS | `build-periodic-nitrogen-group-final-clean`，`542/542`；EXE `A58CAF3CE3B337E11B224E70CE1B16BA4D587F089D4A7D2CE4C45B2EE3F9EC4C` |
-| 本批 Meson/Python 全量套件 | PASS | static `21/21`；Python `151/151`，0 skip |
-| 六类与 mixed OPS | PASS | 21 进程、14 重启、14 加载；六类 114 粒子/163 字段断言，mixed 11 粒子/20 字段断言 |
+| 本批 clean Release build | PASS | `build-periodic-oxygen-group-final-clean`，`546/546`；最终生成目录重链后 EXE `F074CED19649A849A8DF919D4E33B11D5C5936A5551BBE10C7A52DFF80841763` |
+| 本批 Meson/Python 全量套件 | PASS | static `21/21`；Python `152/152`，0 skip |
+| 六类与 mixed OPS | PASS | 21 进程、14 重启、14 加载；六类 118 粒子/167 字段断言，mixed 11 粒子/20 字段断言 |
 | 周期表真实窗口排版/双语/DPI | NOT RUN | 仍需可信桌面视觉矩阵；编译和静态 UI 契约不替代视觉结论 |
 
 旧文件名中的 `tutorial` 或 `challenge` 表示开发用反应样例和回归场景，不是玩家任务系统，不参与元素可用性或存档进度。

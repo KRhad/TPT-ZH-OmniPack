@@ -78,6 +78,16 @@ struct NitrogenGroupProperties
 	unsigned int flameColour;
 };
 
+struct OxygenGroupProperties
+{
+	float oxygenThreshold;
+	float boilingPoint;
+	int reactionHeat;
+	float pressure;
+	int oxideProduct;
+	unsigned int flameColour;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -215,6 +225,23 @@ NitrogenGroupProperties NitrogenGroupPropertiesFor(int type)
 	}
 }
 
+OxygenGroupProperties OxygenGroupPropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_S:
+		return { 390.0f, 718.0f, 300, 0.6f, PT_SMKE, 0xFFFFFF50 };
+	case PT_SE:
+		return { 620.0f, 958.0f, 170, 0.4f, PT_DUST, 0xFF80A0FF };
+	case PT_TE:
+		return { 780.0f, 1261.0f, 140, 0.35f, PT_GLAS, 0xFFD0E0FF };
+	case PT_LV:
+		return { MAX_TEMP, MAX_TEMP, 650, 1.0f, PT_NONE, 0xFFFF5080 };
+	default:
+		return { MAX_TEMP, MAX_TEMP, 0, 0.0f, PT_NONE, 0 };
+	}
+}
+
 bool IsAlkaliMetal(int type)
 {
 	return type == PT_NA || type == PT_K || type == PT_CS || type == PT_FR;
@@ -242,6 +269,11 @@ bool IsNitrogenGroupElement(int type)
 {
 	return type == PT_N || type == PT_P || type == PT_AS ||
 		type == PT_SB || type == PT_BI || type == PT_MC;
+}
+
+bool IsOxygenGroupExtension(int type)
+{
+	return type == PT_S || type == PT_SE || type == PT_TE || type == PT_LV;
 }
 
 bool IsWaterLike(int type)
@@ -310,6 +342,26 @@ bool HasLocalDischarge(int x, int y, int pmap[YRES][XRES], Simulation *sim)
 			}
 			if (IsDischargeSource(pmap[y + ry][x + rx]) ||
 				IsDischargeSource(sim->photons[y + ry][x + rx]))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool HasLocalPhoton(int x, int y, Simulation *sim)
+{
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = sim->photons[y + ry][x + rx];
+			if (packed && TYP(packed) == PT_PHOT)
 			{
 				return true;
 			}
@@ -1464,6 +1516,150 @@ bool UpdateNitrogenGroup(UPDATE_FUNC_ARGS, int sourceType)
 	}
 	return ExciteNitrogen(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
+
+bool DecayLivermorium(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_LV || parts[i].type != PT_LV)
+	{
+		return false;
+	}
+	if (parts[i].tmp <= 0)
+	{
+		parts[i].tmp = sim->rng.between(40, 90);
+		return false;
+	}
+	--parts[i].tmp;
+	if (parts[i].tmp > 0)
+	{
+		return false;
+	}
+	if (!ConsumeEvent(sim))
+	{
+		parts[i].tmp = 1;
+		return false;
+	}
+
+	auto temperature = std::min(parts[i].temp + 650.0f, MAX_TEMP);
+	sim->part_change_type(i, x, y, PT_FL);
+	ResetReactionProduct(parts[i], PT_FL);
+	parts[i].tmp = sim->rng.between(60, 130);
+	parts[i].temp = temperature;
+	int photon = sim->create_part(-3, x, y, PT_PHOT);
+	if (photon >= 0)
+	{
+		parts[photon].ctype = 0x03F03F00;
+		parts[photon].temp = temperature;
+		parts[photon].life = 18;
+	}
+	return true;
+}
+
+bool OxidiseHotOxygenGroup(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_LV)
+	{
+		return false;
+	}
+	auto properties = OxygenGroupPropertiesFor(sourceType);
+	if (parts[i].temp < properties.oxygenThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2)
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+
+			auto oxygen = ID(packed);
+			auto temperature = std::min(
+				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, properties.oxideProduct);
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
+			ResetReactionProduct(parts[i], properties.oxideProduct);
+			ResetReactionProduct(parts[oxygen], PT_FIRE);
+			parts[i].temp = temperature;
+			parts[oxygen].temp = temperature;
+			if (properties.oxideProduct == PT_SMKE)
+			{
+				parts[i].life = 45;
+			}
+			parts[oxygen].life = sourceType == PT_S ? 32 : 20;
+			parts[oxygen].dcolour = properties.flameColour;
+			AddBoundedPressure(sim, x, y, properties.pressure * 0.35f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseHotOxygenGroup(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_LV)
+	{
+		return false;
+	}
+	auto properties = OxygenGroupPropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_FIRE);
+	ResetReactionProduct(parts[i], PT_FIRE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 60;
+	parts[i].dcolour = properties.flameColour;
+	AddBoundedPressure(sim, x, y, properties.pressure * 0.25f);
+	return true;
+}
+
+bool ExciteSelenium(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_SE || parts[i].type != PT_SE || parts[i].life > 0 ||
+		(!HasLocalDischarge(x, y, pmap, sim) && !HasLocalPhoton(x, y, sim)) ||
+		!sim->rng.chance(1, 4) || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	parts[i].life = 12;
+	parts[i].temp = std::min(parts[i].temp + 15.0f, MAX_TEMP);
+	return true;
+}
+
+bool UpdateOxygenGroup(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsOxygenGroupExtension(sourceType))
+	{
+		return false;
+	}
+	if (DecayLivermorium(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (VaporiseHotOxygenGroup(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (OxidiseHotOxygenGroup(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return ExciteSelenium(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
 }
 
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
@@ -1653,5 +1849,45 @@ void OmniNitrogenGroupCreate(ELEMENT_CREATE_FUNC_ARGS)
 	if (t == PT_MC)
 	{
 		sim->parts[i].tmp = sim->rng.between(50, 110);
+	}
+}
+
+int OmniOxygenGroupUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateOxygenGroup(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenOxygenGroupUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateOxygenGroup(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+int OmniOxygenGroupGraphics(GRAPHICS_FUNC_ARGS)
+{
+	if (cpart->type == PT_SE && cpart->life > 0)
+	{
+		int intensity = std::min(cpart->life * 10, 120);
+		*firea = intensity;
+		*firer = std::min(*colr + 40, 255);
+		*fireg = std::min(*colg + 70, 255);
+		*fireb = 255;
+		*pixel_mode |= PMODE_GLOW | FIRE_ADD;
+	}
+	else if (cpart->type == PT_LV)
+	{
+		*pixel_mode |= PMODE_GLOW;
+	}
+	return 0;
+}
+
+void OmniOxygenGroupCreate(ELEMENT_CREATE_FUNC_ARGS)
+{
+	if (t == PT_LV)
+	{
+		sim->parts[i].tmp = sim->rng.between(40, 90);
 	}
 }

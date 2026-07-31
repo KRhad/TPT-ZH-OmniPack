@@ -128,6 +128,10 @@ REQUIRED_REACTIONS = {
     "periodic.nitrogen_group_oxidation",
     "periodic.nitrogen_group_vaporisation",
     "periodic.moscovium_decay",
+    "periodic.oxygen_group_oxidation",
+    "periodic.oxygen_group_vaporisation",
+    "periodic.selenium_excitation",
+    "periodic.livermorium_decay",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

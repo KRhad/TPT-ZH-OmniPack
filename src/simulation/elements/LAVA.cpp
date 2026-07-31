@@ -77,6 +77,10 @@ static int update(UPDATE_FUNC_ARGS)
 	{
 		return 1;
 	}
+	if (OmniMoltenOxygenGroupUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+	{
+		return 1;
+	}
 	return Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
 }
 

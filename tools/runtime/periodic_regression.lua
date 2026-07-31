@@ -47,6 +47,10 @@ local ids = {
     antimony = must_element("OMNI_PT_SB", "SB", 402),
     bismuth = must_element("OMNI_PT_BI", "BI", 429),
     moscovium = must_element("OMNI_PT_MC", "MC", 458),
+    sulfur = must_element("OMNI_PT_S", "S", 378),
+    selenium = must_element("OMNI_PT_SE", "SE", 388),
+    tellurium = must_element("OMNI_PT_TE", "TE", 403),
+    livermorium = must_element("OMNI_PT_LV", "LV", 459),
     lithium = must_element("DEFAULT_PT_LITH", "LITH", 191),
     rubidium = must_element("DEFAULT_PT_RBDM", "RBDM", 41),
     hydrogen = must_element("DEFAULT_PT_H2", "HYGN", 148),
@@ -56,16 +60,19 @@ local ids = {
     salt = must_element("DEFAULT_PT_SALT", "SALT", 26),
     dust = must_element("DEFAULT_PT_DUST", "DUST", 1),
     oxygen = must_element("DEFAULT_PT_O2", "OXYG", 61),
+    liquid_oxygen = must_element("DEFAULT_PT_LO2", "LOXY", 60),
     neutron = must_element("DEFAULT_PT_NEUT", "NEUT", 18),
     glass = must_element("DEFAULT_PT_GLAS", "GLAS", 45),
     liquid_nitrogen = must_element("DEFAULT_PT_LNTG", "LN2", 37),
     nitrogen_ice = must_element("DEFAULT_PT_NICE", "NICE", 51),
     lava = must_element("DEFAULT_PT_LAVA", "LAVA", 6),
     fire = must_element("DEFAULT_PT_FIRE", "FIRE", 4),
+    smoke = must_element("DEFAULT_PT_SMKE", "SMKE", 57),
+    plutonium = must_element("DEFAULT_PT_PLUT", "PLUT", 19),
     metal = assert(elements.DEFAULT_PT_METL),
     electron = assert(elements.DEFAULT_PT_ELEC),
     photon = assert(elements.DEFAULT_PT_PHOT),
-    polonium = assert(elements.DEFAULT_PT_POLO),
+    polonium = must_element("DEFAULT_PT_POLO", "POLO", 182),
     scrap = must_element("OMNI_PT_MSCR", "MSCR", 278),
 }
 
@@ -162,6 +169,15 @@ local function run_property_differences()
     assert(elements.property(ids.moscovium, "Properties")
             ~= elements.property(ids.bismuth, "Properties"),
         "radioactive moscovium and stable bismuth have identical properties")
+    assert(elements.property(ids.sulfur, "Falldown")
+            ~= elements.property(ids.tellurium, "Falldown"),
+        "powdered sulfur and fixed tellurium have identical movement properties")
+    assert(elements.property(ids.selenium, "HighTemperature")
+            < elements.property(ids.tellurium, "HighTemperature"),
+        "selenium and tellurium do not retain distinct melting points")
+    assert(elements.property(ids.livermorium, "Properties")
+            ~= elements.property(ids.selenium, "Properties"),
+        "radioactive livermorium and stable selenium have identical properties")
 end
 
 local function run_water_reaction(type, seed)
@@ -638,6 +654,131 @@ local function run_nitrogen_group_reactions()
         "hot molten bismuth did not enter its finite vaporisation proxy")
 end
 
+local function run_oxygen_group_reactions()
+    configure(651)
+    sim.heatSim(true)
+    local old_o_conduct = elements.property(ids.oxygen, "HeatConduct")
+    local old_lo2_conduct = elements.property(ids.liquid_oxygen, "HeatConduct")
+    elements.property(ids.oxygen, "HeatConduct", 250)
+    elements.property(ids.liquid_oxygen, "HeatConduct", 250)
+    local oxygen = make(ids.oxygen, 120, 120, 89.0)
+    step()
+    assert(sim.partProperty(oxygen, "type") == ids.liquid_oxygen,
+        "cold official oxygen did not condense into liquid oxygen")
+    sim.partProperty(oxygen, "temp", 91.0)
+    step()
+    assert(sim.partProperty(oxygen, "type") == ids.oxygen,
+        "liquid oxygen did not warm back into official oxygen gas")
+    elements.property(ids.oxygen, "HeatConduct", old_o_conduct)
+    elements.property(ids.liquid_oxygen, "HeatConduct", old_lo2_conduct)
+
+    configure(661)
+    local polonium = make(ids.polonium, 120, 120, 400.0)
+    sim.partProperty(polonium, "tmp2", 10)
+    step()
+    assert(sim.partProperty(polonium, "type") == ids.plutonium,
+        "official polonium tmp2 route did not produce plutonium")
+
+    configure(671)
+    local old_o_diffusion = elements.property(ids.oxygen, "Diffusion")
+    local old_o_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    local sulfur = make(ids.sulfur, 120, 120, 400.0)
+    oxygen = make(ids.oxygen, 121, 120, 400.0)
+    step(2)
+    assert(sim.partProperty(sulfur, "type") == ids.smoke
+            and sim.partProperty(sulfur, "life") > 0
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "warm sulfur oxygen route did not produce finite smoke and fire")
+    elements.property(ids.oxygen, "Diffusion", old_o_diffusion)
+    elements.property(ids.oxygen, "Advection", old_o_advection)
+
+    configure(681)
+    sim.heatSim(true)
+    local old_s_conduct = elements.property(ids.sulfur, "HeatConduct")
+    elements.property(ids.sulfur, "HeatConduct", 250)
+    sulfur = make(ids.sulfur, 120, 120, 389.0)
+    step()
+    assert(sim.partProperty(sulfur, "type") == ids.lava
+            and sim.partProperty(sulfur, "ctype") == ids.sulfur,
+        "sulfur did not melt into typed LAVA")
+    elements.property(ids.sulfur, "HeatConduct", old_s_conduct)
+    sim.partProperty(sulfur, "temp", 720.0)
+    step()
+    assert(sim.partProperty(sulfur, "type") == ids.fire
+            and sim.partProperty(sulfur, "ctype") == ids.sulfur
+            and sim.partProperty(sulfur, "life") == 60,
+        "hot molten sulfur did not enter its finite vaporisation proxy")
+
+    configure(691)
+    local old_se_diffusion = elements.property(ids.selenium, "Diffusion")
+    local old_se_advection = elements.property(ids.selenium, "Advection")
+    elements.property(ids.selenium, "Diffusion", 0.0)
+    elements.property(ids.selenium, "Advection", 0.0)
+    local selenium = make(ids.selenium, 120, 120, 300.0)
+    for _ = 1, 80 do
+        local photon = make(ids.photon, 121, 120, 300.0)
+        sim.partProperty(photon, "vx", 0.0)
+        sim.partProperty(photon, "vy", 0.0)
+        step()
+        if sim.partExists(photon) then sim.partKill(photon) end
+        if sim.partExists(selenium)
+                and sim.partProperty(selenium, "life") > 0 then break end
+    end
+    elements.property(ids.selenium, "Diffusion", old_se_diffusion)
+    elements.property(ids.selenium, "Advection", old_se_advection)
+    assert(sim.partExists(selenium)
+            and sim.partProperty(selenium, "life") > 0,
+        "selenium did not enter its finite local-photon glow state")
+
+    configure(701)
+    old_o_diffusion = elements.property(ids.oxygen, "Diffusion")
+    old_o_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    selenium = make(ids.selenium, 120, 120, 630.0)
+    oxygen = make(ids.oxygen, 121, 120, 630.0)
+    step(2)
+    assert(sim.partProperty(selenium, "type") == ids.dust
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "hot selenium oxygen route did not produce dust and finite fire")
+    elements.property(ids.oxygen, "Diffusion", old_o_diffusion)
+    elements.property(ids.oxygen, "Advection", old_o_advection)
+
+    configure(711)
+    old_o_diffusion = elements.property(ids.oxygen, "Diffusion")
+    old_o_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    local tellurium = make(ids.tellurium, 120, 120, 790.0)
+    oxygen = make(ids.oxygen, 121, 120, 790.0)
+    step(2)
+    assert(sim.partProperty(tellurium, "type") == ids.glass
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "hot tellurium oxygen route did not produce glass and finite fire")
+    elements.property(ids.oxygen, "Diffusion", old_o_diffusion)
+    elements.property(ids.oxygen, "Advection", old_o_advection)
+
+    configure(721)
+    local molten = make(ids.lava, 120, 120, 960.0)
+    sim.partProperty(molten, "ctype", ids.selenium)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.fire
+            and sim.partProperty(molten, "ctype") == ids.selenium
+            and sim.partProperty(molten, "life") == 60,
+        "hot molten selenium did not enter its finite vaporisation proxy")
+
+    configure(731)
+    molten = make(ids.lava, 120, 120, 1270.0)
+    sim.partProperty(molten, "ctype", ids.tellurium)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.fire
+            and sim.partProperty(molten, "ctype") == ids.tellurium
+            and sim.partProperty(molten, "life") == 60,
+        "hot molten tellurium did not enter its finite vaporisation proxy")
+end
+
 local function run_helium_cryogenics()
     configure(81)
     local old_diffusion = elements.property(ids.he, "Diffusion")
@@ -758,6 +899,24 @@ local function run_radioactive_decays()
         "nihonium produced by moscovium did not decay to polonium")
     assert(count_type(ids.photon) == 2,
         "two-stage moscovium decay did not emit exactly two finite photons")
+
+    configure(130)
+    local livermorium = make(ids.livermorium, 120, 120, 293.15)
+    sim.partProperty(livermorium, "tmp", 1)
+    step()
+    assert(sim.partProperty(livermorium, "type") == ids.flerovium,
+        "livermorium did not enter the compressed flerovium decay proxy")
+    assert(sim.partProperty(livermorium, "tmp") >= 60
+            and sim.partProperty(livermorium, "tmp") <= 130,
+        "livermorium decay did not initialize the flerovium lifetime")
+    assert(count_type(ids.photon) == 1,
+        "first livermorium decay stage did not emit exactly one finite photon")
+    sim.partProperty(livermorium, "tmp", 1)
+    step()
+    assert(sim.partProperty(livermorium, "type") == ids.polonium,
+        "flerovium produced by livermorium did not decay to polonium")
+    assert(count_type(ids.photon) == 2,
+        "two-stage livermorium decay did not emit exactly two finite photons")
 end
 
 local function run_decay_budget()
@@ -892,6 +1051,28 @@ local function run_moscovium_budget()
     return events
 end
 
+local function run_livermorium_budget()
+    configure(741)
+    local total = 1200
+    for index = 0, total - 1 do
+        local particle = make(ids.livermorium,
+            50 + (index % 100) * 5,
+            50 + math.floor(index / 100) * 5,
+            293.15)
+        sim.partProperty(particle, "tmp", 1)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total), "missing livermorium event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame livermorium events were not capped at 1024: " .. tostring(events))
+    assert(count_type(ids.livermorium) >= total - 1024,
+        "event-budget exhaustion did not defer remaining livermorium decays")
+    assert(count_type(ids.photon) <= 1024,
+        "bounded livermorium decays emitted too many photons")
+    return events
+end
+
 local function test()
     run_property_differences()
     run_alkali_water_series()
@@ -901,6 +1082,7 @@ local function test()
     run_boron_group_reactions()
     run_carbon_group_reactions()
     run_nitrogen_group_reactions()
+    run_oxygen_group_reactions()
     run_helium_cryogenics()
     run_xenon_discharge()
     run_radioactive_decays()
@@ -910,21 +1092,24 @@ local function test()
     local nihonium_budget = run_nihonium_budget()
     local flerovium_budget = run_flerovium_budget()
     local moscovium_budget = run_moscovium_budget()
+    local livermorium_budget = run_livermorium_budget()
     return math.max(noble_budget, francium_budget, radium_budget,
-        nihonium_budget, flerovium_budget, moscovium_budget)
+        nihonium_budget, flerovium_budget, moscovium_budget,
+        livermorium_budget)
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_PERIODIC_STATUS=PASS\n")
-    report:write("OMNI_PERIODIC_NEW_ELEMENTS=29\n")
-    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=55\n")
+    report:write("OMNI_PERIODIC_NEW_ELEMENTS=33\n")
+    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=59\n")
     report:write("OMNI_PERIODIC_ALKALI_FAMILY=6\n")
     report:write("OMNI_PERIODIC_ALKALINE_EARTH_FAMILY=6\n")
     report:write("OMNI_PERIODIC_BORON_GROUP=6\n")
     report:write("OMNI_PERIODIC_CARBON_GROUP=6\n")
     report:write("OMNI_PERIODIC_NITROGEN_GROUP=6\n")
+    report:write("OMNI_PERIODIC_OXYGEN_GROUP=6\n")
     report:write("OMNI_PERIODIC_BUDGET_EVENTS=" .. tostring(data) .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

@@ -116,6 +116,10 @@ local definitions = {
     antimony = { "OMNI_PT_SB", "SB", 402 },
     bismuth = { "OMNI_PT_BI", "BI", 429 },
     moscovium = { "OMNI_PT_MC", "MC", 458 },
+    sulfur = { "OMNI_PT_S", "S", 378 },
+    selenium = { "OMNI_PT_SE", "SE", 388 },
+    tellurium = { "OMNI_PT_TE", "TE", 403 },
+    livermorium = { "OMNI_PT_LV", "LV", 459 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -144,7 +148,7 @@ local module_keys = {
         "boron", "gallium", "indium", "thallium", "nihonium",
         "germanium", "flerovium",
         "nitrogen", "phosphorus", "arsenic", "antimony", "bismuth",
-        "moscovium",
+        "moscovium", "sulfur", "selenium", "tellurium", "livermorium",
     },
 }
 
