@@ -15,6 +15,7 @@ import zipfile
 
 VERSION = "0.1.0-test"
 DEV_VERSION = "0.2.0-dev"
+AUTOMATION_VERSION = "0.3.0-dev"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -41,6 +42,23 @@ DEV_DOCUMENTS = {
     "examples/0.2.0/06-waste-missing-catalyst.stm",
     "examples/0.2.0/07-integrated-recovery.stm",
 }
+AUTOMATION_ONLY_DOCUMENTS = {
+    "AUTOMATION-CAPABILITIES.csv",
+    "automation/0.3.0/scenario-spec.json",
+    "automation/0.3.0/official-source-sha256.json",
+    "examples/0.3.0/manifest.json",
+    "examples/0.3.0/runtime-report.json",
+    "examples/0.3.0/01-thermostatic-furnace.stm",
+    "examples/0.3.0/02-automatic-alloy.stm",
+    "examples/0.3.0/03-fuel-control.stm",
+    "examples/0.3.0/04-nutrient-dosing.stm",
+    "examples/0.3.0/05-pathogen-disinfection.stm",
+    "examples/0.3.0/06-reactor-cooling.stm",
+    "examples/0.3.0/07-emergency-stop.stm",
+    "examples/0.3.0/08-waste-transfer.stm",
+    "examples/0.3.0/09-integrated-factory.stm",
+}
+AUTOMATION_DOCUMENTS = DEV_DOCUMENTS | AUTOMATION_ONLY_DOCUMENTS
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 PATH_MARKERS = (b"C:\\Users\\", b"/Users/", b"\\build-", b"/build-")
 
@@ -71,16 +89,119 @@ def package_stems(version: str) -> tuple[str, str]:
     )
 
 
-def expected_members(stem: str, kind: str) -> set[str]:
+def development_documents(version: str) -> set[str]:
+    if version == DEV_VERSION:
+        return DEV_DOCUMENTS
+    if version == AUTOMATION_VERSION:
+        return AUTOMATION_DOCUMENTS
+    return set()
+
+
+def expected_members(stem: str, kind: str, version: str) -> set[str]:
     if kind == "public-test":
         files = {EXECUTABLE_NAME, *NORMAL_DOCUMENTS}
     elif kind == "local-dev":
-        files = {EXECUTABLE_NAME, *NORMAL_DOCUMENTS, *DEV_DOCUMENTS}
+        files = {
+            EXECUTABLE_NAME,
+            *NORMAL_DOCUMENTS,
+            *development_documents(version),
+        }
     elif kind == "debug-symbols":
         files = {SYMBOL_NAME}
     else:
         return set()
     return {f"{stem}/{name}" for name in files | {"TEST-MANIFEST.txt"}}
+
+
+def audit_0_2_examples(
+    archive: zipfile.ZipFile,
+    stem: str,
+    actual: set[str],
+    executable_hash: str,
+    errors: list[str],
+) -> None:
+    example_manifest = json.loads(
+        archive.read(f"{stem}/examples/0.2.0/manifest.json")
+    )
+    runtime_report = json.loads(
+        archive.read(f"{stem}/examples/0.2.0/tutorials-runtime-report.json")
+    )
+    if example_manifest.get("content_version") != DEV_VERSION:
+        errors.append("0.2 example manifest version is invalid")
+    if example_manifest.get("generator_exe_sha256") != executable_hash:
+        errors.append("0.2 example manifest executable does not match package")
+    if runtime_report.get("executable_sha256") != executable_hash:
+        errors.append("0.2 tutorial report executable does not match package")
+    if runtime_report.get("source_commit") != example_manifest.get("source_commit"):
+        errors.append("0.2 tutorial and example source commits do not match")
+    if runtime_report.get("pass_count") != 8:
+        errors.append("0.2 tutorial report does not contain 8 passes")
+    example_rows = example_manifest.get("examples")
+    if not isinstance(example_rows, list) or len(example_rows) != 7:
+        errors.append("0.2 example manifest does not contain 7 examples")
+        return
+    for row in example_rows:
+        filename = row.get("filename") if isinstance(row, dict) else None
+        member_name = f"{stem}/examples/0.2.0/{filename}"
+        if member_name not in actual:
+            errors.append(f"0.2 example manifest member is missing: {filename}")
+            continue
+        data = archive.read(member_name)
+        if len(data) != row.get("bytes") or sha256_bytes(data) != row.get("sha256"):
+            errors.append(f"0.2 example manifest does not match member: {filename}")
+
+
+def audit_0_3_automation(
+    archive: zipfile.ZipFile,
+    stem: str,
+    actual: set[str],
+    executable_hash: str,
+    errors: list[str],
+) -> None:
+    manifest = json.loads(archive.read(f"{stem}/examples/0.3.0/manifest.json"))
+    report = json.loads(archive.read(f"{stem}/examples/0.3.0/runtime-report.json"))
+    if manifest.get("content_version") != AUTOMATION_VERSION:
+        errors.append("0.3 automation manifest version is invalid")
+    if manifest.get("source_tree_state") != "clean":
+        errors.append("0.3 automation manifest is not from a clean source tree")
+    if manifest.get("generator_exe_sha256") != executable_hash:
+        errors.append("0.3 automation manifest executable does not match package")
+    if report.get("executable_sha256") != executable_hash:
+        errors.append("0.3 automation report executable does not match package")
+    if report.get("source_commit") != manifest.get("source_commit"):
+        errors.append("0.3 automation report and manifest source commits do not match")
+    if report.get("source_tree_state") != "clean":
+        errors.append("0.3 automation report is not from a clean source tree")
+    if report.get("scenario_pass_count") != 9:
+        errors.append("0.3 automation report does not contain 9 scenario passes")
+    if report.get("challenge_pass_count") != 6:
+        errors.append("0.3 automation report does not contain 6 challenge passes")
+    if report.get("stop_event_delta_total") != 0:
+        errors.append("0.3 automation report contains post-stop events")
+    challenge_ids = manifest.get("challenge_ids")
+    if not isinstance(challenge_ids, list) or len(challenge_ids) != 6:
+        errors.append("0.3 automation manifest does not contain 6 challenge IDs")
+    scenario_rows = manifest.get("scenarios")
+    if not isinstance(scenario_rows, list) or len(scenario_rows) != 9:
+        errors.append("0.3 automation manifest does not contain 9 scenarios")
+        return
+    stable_ids: set[str] = set()
+    for row in scenario_rows:
+        filename = row.get("filename") if isinstance(row, dict) else None
+        stable_id = row.get("stamp_id") if isinstance(row, dict) else None
+        if not isinstance(stable_id, str) or not re.fullmatch(r"03[0-9a-f]{8}", stable_id):
+            errors.append(f"0.3 automation scenario has invalid stable stamp ID: {stable_id!r}")
+        elif stable_id in stable_ids:
+            errors.append(f"0.3 automation scenario repeats stable stamp ID: {stable_id}")
+        else:
+            stable_ids.add(stable_id)
+        member_name = f"{stem}/examples/0.3.0/{filename}"
+        if member_name not in actual:
+            errors.append(f"0.3 automation manifest member is missing: {filename}")
+            continue
+        data = archive.read(member_name)
+        if len(data) != row.get("bytes") or sha256_bytes(data) != row.get("sha256"):
+            errors.append(f"0.3 automation manifest does not match member: {filename}")
 
 
 def audit_package(
@@ -90,7 +211,11 @@ def audit_package(
     kind: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
-    profiles = {VERSION: "public-test", DEV_VERSION: "local-dev"}
+    profiles = {
+        VERSION: "public-test",
+        DEV_VERSION: "local-dev",
+        AUTOMATION_VERSION: "local-dev",
+    }
     if version not in profiles:
         return [f"unsupported package version: {version}"]
     if expect_symbols:
@@ -109,7 +234,7 @@ def audit_package(
             if len(set(names)) != len(names):
                 errors.append("package contains duplicate ZIP member names")
             actual = set(names)
-            expected = expected_members(stem, kind)
+            expected = expected_members(stem, kind, version)
             if actual != expected:
                 missing = sorted(expected - actual)
                 extra = sorted(actual - expected)
@@ -120,7 +245,10 @@ def audit_package(
             for name in actual:
                 lowered = name.lower()
                 relative = name.removeprefix(f"{stem}/")
-                allowed_stamp = kind == "local-dev" and relative in DEV_DOCUMENTS
+                allowed_stamp = (
+                    kind == "local-dev"
+                    and relative in development_documents(version)
+                )
                 if lowered.endswith(FORBIDDEN_SUFFIXES) and not allowed_stamp:
                     errors.append(f"package contains forbidden data: {name}")
             manifest_name = f"{stem}/TEST-MANIFEST.txt"
@@ -153,38 +281,14 @@ def audit_package(
                         if marker not in archive.read(f"{stem}/TESTING.zh-CN.md").decode("utf-8", errors="replace"):
                             errors.append(f"test instructions are missing marker: {marker!r}")
                 elif kind == "local-dev":
-                    example_manifest = json.loads(
-                        archive.read(f"{stem}/examples/0.2.0/manifest.json")
-                    )
-                    runtime_report = json.loads(
-                        archive.read(
-                            f"{stem}/examples/0.2.0/tutorials-runtime-report.json"
-                        )
-                    )
                     executable_hash = sha256_bytes(executable)
-                    if example_manifest.get("content_version") != version:
-                        errors.append("example manifest version does not match package")
-                    if example_manifest.get("generator_exe_sha256") != executable_hash:
-                        errors.append("example manifest executable does not match package")
-                    if runtime_report.get("executable_sha256") != executable_hash:
-                        errors.append("tutorial report executable does not match package")
-                    if runtime_report.get("source_commit") != example_manifest.get("source_commit"):
-                        errors.append("tutorial and example source commits do not match")
-                    if runtime_report.get("pass_count") != 8:
-                        errors.append("tutorial report does not contain 8 passes")
-                    example_rows = example_manifest.get("examples")
-                    if not isinstance(example_rows, list) or len(example_rows) != 7:
-                        errors.append("example manifest does not contain 7 examples")
-                    else:
-                        for row in example_rows:
-                            filename = row.get("filename") if isinstance(row, dict) else None
-                            member_name = f"{stem}/examples/0.2.0/{filename}"
-                            if member_name not in actual:
-                                errors.append(f"example manifest member is missing: {filename}")
-                                continue
-                            data = archive.read(member_name)
-                            if len(data) != row.get("bytes") or sha256_bytes(data) != row.get("sha256"):
-                                errors.append(f"example manifest does not match member: {filename}")
+                    audit_0_2_examples(
+                        archive, stem, actual, executable_hash, errors
+                    )
+                    if version == AUTOMATION_VERSION:
+                        audit_0_3_automation(
+                            archive, stem, actual, executable_hash, errors
+                        )
     except (OSError, ValueError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
         errors.append(f"cannot read package: {exc}")
     return errors
@@ -202,7 +306,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("package", type=Path)
     parser.add_argument("--symbols", action="store_true")
-    parser.add_argument("--version", choices=(VERSION, DEV_VERSION), default=VERSION)
+    parser.add_argument(
+        "--version",
+        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION),
+        default=VERSION,
+    )
     parser.add_argument("--kind", choices=("public-test", "local-dev"))
     return parser
 

@@ -121,6 +121,70 @@ class TestReleaseAuditTests(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def add_automation_sources(self, source: Path) -> None:
+        self.add_dev_sources(source)
+        (source / "docs" / "AUTOMATION_CAPABILITIES.csv").write_text(
+            "capability_id,decision\nsensor,reuse_official\n",
+            encoding="utf-8",
+        )
+        automation = source / "automation" / "0.3.0"
+        automation.mkdir(parents=True)
+        (automation / "scenario-spec.json").write_text("{}\n", encoding="utf-8")
+        (automation / "official-source-sha256.json").write_text(
+            "{}\n", encoding="utf-8"
+        )
+        examples = source / "examples" / "0.3.0"
+        examples.mkdir(parents=True)
+        filenames = [
+            archive
+            for _, archive in package_test_release.AUTOMATION_ONLY_DOCUMENTS
+            if archive.endswith(".stm")
+        ]
+        rows = []
+        for index, archive_name in enumerate(filenames, start=1):
+            filename = Path(archive_name).name
+            data = b"OPS1" + b"\0" * 8 + b"BZh" + bytes([32 + index])
+            (examples / filename).write_bytes(data)
+            rows.append(
+                {
+                    "id": f"automation-{index}",
+                    "filename": filename,
+                    "stamp_id": f"03{index:08x}",
+                    "bytes": len(data),
+                    "sha256": hashlib.sha256(data).hexdigest().upper(),
+                }
+            )
+        executable_hash = hashlib.sha256(
+            (source / "tpt-zh-omnipack.exe").read_bytes()
+        ).hexdigest().upper()
+        source_commit = "c" * 40
+        (examples / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "content_version": package_test_release.AUTOMATION_VERSION,
+                    "source_commit": source_commit,
+                    "source_tree_state": "clean",
+                    "generator_exe_sha256": executable_hash,
+                    "challenge_ids": [f"A{index:02d}" for index in range(1, 7)],
+                    "scenarios": rows,
+                }
+            ),
+            encoding="utf-8",
+        )
+        (examples / "runtime-report.json").write_text(
+            json.dumps(
+                {
+                    "source_commit": source_commit,
+                    "source_tree_state": "clean",
+                    "executable_sha256": executable_hash,
+                    "scenario_pass_count": 9,
+                    "challenge_pass_count": 6,
+                    "stop_event_delta_total": 0,
+                }
+            ),
+            encoding="utf-8",
+        )
+
     def test_generated_package_passes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source = self.make_source_root(Path(temporary))
@@ -191,6 +255,39 @@ class TestReleaseAuditTests(unittest.TestCase):
                     symbols,
                     True,
                     version=package_test_release.DEV_VERSION,
+                ),
+                [],
+            )
+
+    def test_automation_package_includes_both_content_generations(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            self.add_automation_sources(source)
+            with mock.patch.object(
+                package_test_release, "git_revision", return_value="a" * 40
+            ):
+                package, _, symbols, _ = package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.AUTOMATION_VERSION,
+                    kind="local-dev",
+                    include_examples=True,
+                )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    package,
+                    version=package_test_release.AUTOMATION_VERSION,
+                    kind="local-dev",
+                ),
+                [],
+            )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    symbols,
+                    True,
+                    version=package_test_release.AUTOMATION_VERSION,
                 ),
                 [],
             )

@@ -19,6 +19,7 @@ import zipfile
 
 VERSION = "0.1.0-test"
 DEV_VERSION = "0.2.0-dev"
+AUTOMATION_VERSION = "0.3.0-dev"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -62,6 +63,37 @@ DEV_DOCUMENTS = (
         )
     ),
 )
+AUTOMATION_ONLY_DOCUMENTS = (
+    ("docs/AUTOMATION_CAPABILITIES.csv", "AUTOMATION-CAPABILITIES.csv"),
+    ("automation/0.3.0/scenario-spec.json", "automation/0.3.0/scenario-spec.json"),
+    (
+        "automation/0.3.0/official-source-sha256.json",
+        "automation/0.3.0/official-source-sha256.json",
+    ),
+    ("examples/0.3.0/manifest.json", "examples/0.3.0/manifest.json"),
+    ("examples/0.3.0/runtime-report.json", "examples/0.3.0/runtime-report.json"),
+    *tuple(
+        (
+            f"examples/0.3.0/{ordinal:02d}-{name}.stm",
+            f"examples/0.3.0/{ordinal:02d}-{name}.stm",
+        )
+        for ordinal, name in enumerate(
+            (
+                "thermostatic-furnace",
+                "automatic-alloy",
+                "fuel-control",
+                "nutrient-dosing",
+                "pathogen-disinfection",
+                "reactor-cooling",
+                "emergency-stop",
+                "waste-transfer",
+                "integrated-factory",
+            ),
+            start=1,
+        )
+    ),
+)
+AUTOMATION_DOCUMENTS = DEV_DOCUMENTS + AUTOMATION_ONLY_DOCUMENTS
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 FORBIDDEN_COMPONENTS = {".git", "__pycache__", "build", "dist"}
 CAN_INSTALL_DEFAULT_RE = re.compile(
@@ -113,6 +145,7 @@ def validate_profile(version: str, kind: str, include_examples: bool) -> None:
     expected = {
         VERSION: ("public-test", False),
         DEV_VERSION: ("local-dev", True),
+        AUTOMATION_VERSION: ("local-dev", True),
     }
     if version not in expected:
         raise ValueError(f"unsupported package version: {version}")
@@ -131,13 +164,24 @@ def package_stems(version: str) -> tuple[str, str]:
     )
 
 
+def development_documents(version: str) -> tuple[tuple[str, str], ...]:
+    if version == DEV_VERSION:
+        return DEV_DOCUMENTS
+    if version == AUTOMATION_VERSION:
+        return AUTOMATION_DOCUMENTS
+    return ()
+
+
 def validate_member_name(name: str, allow_example_stamp: bool = False) -> None:
     path = Path(name)
     if path.is_absolute() or ".." in path.parts or any(component in FORBIDDEN_COMPONENTS for component in path.parts):
         raise ValueError(f"unsafe archive member name: {name}")
     allowed_stamp = (
         allow_example_stamp
-        and name.startswith("examples/0.2.0/")
+        and (
+            name.startswith("examples/0.2.0/")
+            or name.startswith("examples/0.3.0/")
+        )
         and name.lower().endswith(".stm")
     )
     if name.lower().endswith(FORBIDDEN_SUFFIXES) and not allowed_stamp:
@@ -175,7 +219,7 @@ def validate_sources(
         if not source.is_file():
             raise ValueError(f"required public-release source is missing: {source}")
     if include_examples:
-        for source_name, archive_name in DEV_DOCUMENTS:
+        for source_name, archive_name in development_documents(version):
             validate_member_name(archive_name, allow_example_stamp=True)
             source = source_root / source_name
             if not source.is_file() or source.stat().st_size == 0:
@@ -246,7 +290,9 @@ def build_package(
     epoch = source_date_epoch()
     output_directory.mkdir(parents=True, exist_ok=True)
     package_stem, symbol_package_stem = package_stems(version)
-    selected_documents = DOCUMENTS + (DEV_DOCUMENTS if include_examples else ())
+    selected_documents = DOCUMENTS + (
+        development_documents(version) if include_examples else ()
+    )
     normal_files = [(EXECUTABLE_NAME, executable)] + [
         (name, source_root / source) for source, name in selected_documents
     ]
@@ -282,7 +328,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--symbols", type=Path, required=True)
     parser.add_argument("--output-directory", type=Path, default=Path("dist"))
-    parser.add_argument("--version", choices=(VERSION, DEV_VERSION), default=VERSION)
+    parser.add_argument(
+        "--version",
+        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION),
+        default=VERSION,
+    )
     parser.add_argument("--kind", choices=("public-test", "local-dev"), default="public-test")
     parser.add_argument("--include-examples", action="store_true")
     parser.add_argument("--objdump", help="Path to objdump for mandatory PE auditing.")
