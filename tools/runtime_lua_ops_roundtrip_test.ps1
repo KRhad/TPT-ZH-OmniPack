@@ -281,6 +281,7 @@ try {
         "OMNI_OPS_PARTICLES",
         "OMNI_OPS_FIELD_ASSERTIONS",
         "OMNI_OPS_DIRECT_GT255",
+        "OMNI_OPS_DIRECT_ELEMENTS",
         "OMNI_OPS_CTYPE_CARRIERS",
         "OMNI_OPS_TMP_CARRIERS",
         "OMNI_OPS_TMP2_CARRIERS",
@@ -332,6 +333,9 @@ try {
     $directGt255 = Get-ResultValue `
         -Text $phase3.Text `
         -Key "OMNI_OPS_DIRECT_GT255"
+    $directElements = Get-ResultValue `
+        -Text $phase3.Text `
+        -Key "OMNI_OPS_DIRECT_ELEMENTS"
     $ctypeCarriers = Get-ResultValue `
         -Text $phase3.Text `
         -Key "OMNI_OPS_CTYPE_CARRIERS"
@@ -358,6 +362,7 @@ try {
         "OMNI_OPS_PARTICLES=$particleCount",
         "OMNI_OPS_FIELD_ASSERTIONS_PER_LOAD=$fieldAssertions",
         "OMNI_OPS_DIRECT_GT255=$directGt255",
+        "OMNI_OPS_DIRECT_ELEMENTS=$directElements",
         "OMNI_OPS_CTYPE_CARRIERS=$ctypeCarriers",
         "OMNI_OPS_TMP_CARRIERS=$tmpCarriers",
         "OMNI_OPS_TMP2_CARRIERS=$tmp2Carriers",

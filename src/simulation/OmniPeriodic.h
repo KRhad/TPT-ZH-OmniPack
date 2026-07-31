@@ -52,3 +52,7 @@ int OmniActinideUpdate(UPDATE_FUNC_ARGS);
 int OmniMoltenActinideUpdate(UPDATE_FUNC_ARGS);
 int OmniActinideGraphics(GRAPHICS_FUNC_ARGS);
 void OmniActinideCreate(ELEMENT_CREATE_FUNC_ARGS);
+int OmniSuperheavyUpdate(UPDATE_FUNC_ARGS);
+int OmniMoltenSuperheavyUpdate(UPDATE_FUNC_ARGS);
+int OmniSuperheavyGraphics(GRAPHICS_FUNC_ARGS);
+void OmniSuperheavyCreate(ELEMENT_CREATE_FUNC_ARGS);

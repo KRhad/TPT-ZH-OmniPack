@@ -12,10 +12,10 @@ periodic_reuse_existing=26
 periodic_new_ids=92
 periodic_new_id_first=370
 periodic_new_id_last=461
-periodic_elements_implemented=109
-periodic_elements_planned=9
-periodic_new_elements_active=83
-active_element_slots=326
+periodic_elements_implemented=118
+periodic_elements_planned=0
+periodic_new_elements_active=92
+active_element_slots=335
 registered_element_slots=462
 periodic_source_map_valid=true
 pt_num_expansion_required=false
@@ -25,7 +25,7 @@ pt_num_expansion_required=false
 
 原子序数不等于内部 ID。`docs/PERIODIC_ELEMENT_SOURCE_MAP.csv` 是 118 行的不可变映射：能代表真实纯元素的官方或 OmniPack 实现保留原 ID，其余元素按原子序数遍历后的缺失顺序固定到 `370..461`。泛化 `METL`、泛化 `NBLE`、化合物 `DEUT` 和只有低温相但缺少常温相的 `LNTG` 不被虚报为完整纯元素映射。
 
-`370..461` 已全部显式登记为周期表固定区；当前启用 `HE=370`、`BE=371`、`B=372`、`N=373`、`F=374`、`NE=375`、`NA=376`、`P=377`、`S=378`、`AR=379`、`K=380`、`CA=381`、`SC=382`、`V=383`、`MN=384`、`GA=385`、`GE=386`、`AS=387`、`SE=388`、`BR=389`、`KR=390`、`SR=391`、`Y=392`、`ZR=393`、`NB=394`、`TC=395`、`RU=396`、`RH=397`、`PD=398`、`AG=399`、`CD=400`、`IN=401`、`SB=402`、`TE=403`、`I=404`、`XE=405`、`CS=406`、`BA=407`、`LA=408`、`CE=409`、`PR=410`、`ND=411`、`PM=412`、`SM=413`、`EU=414`、`GD=415`、`TB=416`、`DY=417`、`HO=418`、`ER=419`、`TM=420`、`YB=421`、`LU=422`、`HF=423`、`TA=424`、`RE=425`、`OS=426`、`IR=427`、`TL=428`、`BI=429`、`AT=430`、`RN=431`、`FR=432`、`RA=433`、`AC=434`、`TH=435`、`PA=436`、`NP=437`、`AM=438`、`CM=439`、`BK=440`、`CF=441`、`ES=442`、`FM=443`、`MD=444`、`NO=445`、`LR=446`、`NH=456`、`FL=457`、`MC=458`、`LV=459`、`TS=460`、`OG=461`，其余 `447..455` 共 9 槽继续是不可选择的保留项。既有 `CHLR=360`、`MAGN=261`、`ALUM=256`、`TIN=259`、`LEAD=258`、`CHRM=262`、`COBT=263`、`NICL=260`、`COPR=257`、`MOLY=264`、`ZINC=265` 和官方 `URAN=32`、`PLUT=19`、`TTAN=144`、`TUNG=171`、`PTNM=188`、`GOLD=170`、`MERC=152`、`IRON=76`、`DMND=28`、`SLCN=187`、`O2=61`、`POLO=182` 继续复用且 ID 不变。自动化回归仍只复用官方元素，不拥有新稳定 ID。
+`370..461` 已全部显式登记并启用为周期表固定区。`370..433` 保留前十二批映射，`434..446` 为新增锕系，`447..455` 依次为 `RF/DB/SG/BH/HS/MT/DS/RG/CN`，`456..461` 为 `NH/FL/MC/LV/TS/OG`；固定区当前无保留空槽。既有 `CHLR=360`、`MAGN=261`、`ALUM=256`、`TIN=259`、`LEAD=258`、`CHRM=262`、`COBT=263`、`NICL=260`、`COPR=257`、`MOLY=264`、`ZINC=265` 和官方 `URAN=32`、`PLUT=19`、`TTAN=144`、`TUNG=171`、`PTNM=188`、`GOLD=170`、`MERC=152`、`IRON=76`、`DMND=28`、`SLCN=187`、`O2=61`、`POLO=182` 继续复用且 ID 不变。自动化回归只复用这些既有 identifier，不为同一纯元素分配第二个稳定 ID。
 
 ## OPS 与间接字段
 
@@ -39,12 +39,12 @@ Lua 分配器先从 255 向下寻找禁用槽，只有该区域耗尽后才从 5
 
 ## 容量
 
-完成全部 92 个新增周期元素后，活动元素预计为 `335`。当前活动数为 `326`（原 243 加前十三批 83）；`462..511` 仍有 50 个连续槽，现有冶金、生物和核工业区还分别有 9、32 和 25 个空槽。理论活动上限仍可达到 451，覆盖 300–450 的目标上界而无需把 `PMAPBITS` 扩大到 10。
+全部 92 个新增周期元素完成后，当前活动元素为 `335`（原 243 加十四批 92）；`462..511` 仍有 50 个连续槽，现有冶金、生物和核工业区还分别有 9、32 和 25 个空槽。理论活动上限仍可达到 451，覆盖 300–450 的目标上界而无需把 `PMAPBITS` 扩大到 10。
 
 ## 仍需实测
 
-- 前十三批 83 个新周期直接类型和周期类型在 `LAVA/SPRK/MSCR/CONV/VIRS` 携带字段中的 OPS 双往返已通过；后续批次仍须逐批复跑；
-- 118 种元素同图保存、重载和缺失 identifier 提示；
+- 92 个新周期直接类型及全部 118 个周期映射已在同图 OPS 中完成三进程双往返，`LAVA/SPRK/MSCR/CONV/VIRS` 携带字段同时通过；
+- 缺失 identifier 的实际 GUI 提示与外部网络保存服务路径；
 - Lua 动态元素与已启用周期元素同时存在时的分配及重载；
 - 网络保存服务与 GUI `.cps` 路径；
 - 大型存档反复加载的性能与内存。

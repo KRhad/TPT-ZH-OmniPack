@@ -182,6 +182,11 @@ REQUIRED_REACTIONS = {
     "periodic.actinide_acid",
     "periodic.actinide_oxidation",
     "periodic.actinide_vaporisation",
+    "periodic.superheavy_decay",
+    "periodic.superheavy_synthesis",
+    "periodic.superheavy_acid",
+    "periodic.superheavy_oxidation",
+    "periodic.superheavy_vaporisation",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

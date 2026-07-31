@@ -38,13 +38,20 @@ periodic_family_tests_pass=true
 当前开发树真实状态：
 
 ```text
-periodic_table_elements=76
+periodic_table_elements=118
 periodic_table_ui=true
-all_periodic_elements_placeable=false
+all_periodic_elements_placeable=true
 periodic_source_map_complete=true
-periodic_family_tests_pass=partial
-periodic_0_2_gate=false
+periodic_family_tests_pass=true
+periodic_clean_build_pass=true
+periodic_ops_roundtrip_test=true
+periodic_table_gui_visual_test=not_tested
+periodic_stress_test=not_tested
+periodic_0_2_content_gate=true
+periodic_0_2_release_gate=false
 ```
+
+`periodic_0_2_release_gate=false` 只表示本批全新 clean build、正式压力矩阵和可信桌面人工视觉尚未全部形成证据；不否定 118 种元素已实现、可直接放置且自动化族行为与 OPS 往返已通过。
 
 ## `0.3.0`–`0.8.0` 内容批次
 

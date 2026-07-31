@@ -90,6 +90,12 @@ assert(actinium == 434,
 ui.activeTool(0, "OMNI_PT_AC")
 assert(ui.activeTool(0) == "OMNI_PT_AC",
     "always-available actinide content was blocked by a module gate")
+local rutherfordium = assert(elements.OMNI_PT_RF)
+assert(rutherfordium == 447,
+    "periodic rutherfordium stable ID changed: " .. tostring(rutherfordium))
+ui.activeTool(0, "OMNI_PT_RF")
+assert(ui.activeTool(0) == "OMNI_PT_RF",
+    "always-available superheavy content was blocked by a module gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -123,4 +129,5 @@ report:write("OMNI_PERIODIC_SECOND_TRANSITION_ACTIVE=OMNI_PT_Y\n")
 report:write("OMNI_PERIODIC_THIRD_TRANSITION_ACTIVE=OMNI_PT_HF\n")
 report:write("OMNI_PERIODIC_LANTHANIDE_ACTIVE=OMNI_PT_LA\n")
 report:write("OMNI_PERIODIC_ACTINIDE_ACTIVE=OMNI_PT_AC\n")
+report:write("OMNI_PERIODIC_SUPERHEAVY_ACTIVE=OMNI_PT_RF\n")
 report:close()

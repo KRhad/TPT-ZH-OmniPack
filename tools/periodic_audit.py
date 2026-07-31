@@ -133,6 +133,18 @@ EXPECTED_ACTINIDE_ELEMENTS = {
     446: "LR",
 }
 
+EXPECTED_SUPERHEAVY_TRANSITION_ELEMENTS = {
+    447: "RF",
+    448: "DB",
+    449: "SG",
+    450: "BH",
+    451: "HS",
+    452: "MT",
+    453: "DS",
+    454: "RG",
+    455: "CN",
+}
+
 EXPECTED_NEW_ELEMENTS = (
     EXPECTED_NOBLE_ELEMENTS
     | EXPECTED_ALKALI_ELEMENTS
@@ -147,6 +159,7 @@ EXPECTED_NEW_ELEMENTS = (
     | EXPECTED_THIRD_TRANSITION_ELEMENTS
     | EXPECTED_LANTHANIDE_ELEMENTS
     | EXPECTED_ACTINIDE_ELEMENTS
+    | EXPECTED_SUPERHEAVY_TRANSITION_ELEMENTS
 )
 
 
@@ -209,9 +222,9 @@ def check_source_map(root: Path, errors: list[str]) -> None:
     if [int(row["atomic_number"]) for row in rows] != list(range(1, 119)):
         errors.append(f"{path}: atomic numbers are not the complete ordered range 1..118")
     implemented = [row for row in rows if row.get("status") == "implemented"]
-    if len(implemented) != 109:
+    if len(implemented) != 118:
         errors.append(
-            f"{path}: expected 109 implemented mappings after the actinide batch "
+            f"{path}: expected all 118 implemented mappings after the superheavy batch "
             f"and found {len(implemented)}"
         )
     by_number = {int(row["atomic_number"]): row for row in rows}
@@ -239,6 +252,8 @@ def check_source_map(root: Path, errors: list[str]) -> None:
         89: 434, 90: 435, 91: 436, 92: 32, 93: 437,
         94: 19, 95: 438, 96: 439, 97: 440, 98: 441,
         99: 442, 100: 443, 101: 444, 102: 445, 103: 446,
+        104: 447, 105: 448, 106: 449, 107: 450, 108: 451,
+        109: 452, 110: 453, 111: 454, 112: 455,
     }
     for atomic_number, stable_id in expected_atomic.items():
         row = by_number.get(atomic_number, {})
@@ -341,6 +356,11 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "actinide acid chemistry": "ReactActinideWithAcid",
         "actinide oxidation": "OxidiseHotActinide",
         "actinide vaporisation": "VaporiseActinide",
+        "superheavy decay": "DecaySuperheavy",
+        "superheavy high-energy synthesis": "SynthesizeSuperheavy",
+        "superheavy acid chemistry": "ReactSuperheavyWithAcid",
+        "superheavy oxidation": "OxidiseHotSuperheavy",
+        "superheavy vaporisation": "VaporiseSuperheavy",
     }
     for label, marker in required.items():
         if marker not in engine:
@@ -500,6 +520,19 @@ def check_engine(root: Path, errors: list[str]) -> None:
         ):
             if marker not in text:
                 errors.append(f"{path}: missing periodic element marker {marker!r}")
+    for stable_id, name in EXPECTED_SUPERHEAVY_TRANSITION_ELEMENTS.items():
+        path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
+        text = read_text(path, errors)
+        for marker in (
+            f'Identifier = "OMNI_PT_{name}"',
+            "HeatCapacity =",
+            "PROP_RADIOACTIVE",
+            "Update = &OmniSuperheavyUpdate",
+            "Graphics = &OmniSuperheavyGraphics",
+            "Create = &OmniSuperheavyCreate",
+        ):
+            if marker not in text:
+                errors.append(f"{path}: missing periodic element marker {marker!r}")
     magnesium = read_text(
         root / "src" / "simulation" / "elements" / "MAGN.cpp", errors
     )
@@ -560,6 +593,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         errors.append("LAVA.cpp: molten lanthanide ctype update hook is missing")
     if "OmniMoltenActinideUpdate" not in lava:
         errors.append("LAVA.cpp: molten actinide ctype update hook is missing")
+    if "OmniMoltenSuperheavyUpdate" not in lava:
+        errors.append("LAVA.cpp: molten superheavy ctype update hook is missing")
     liquid_nitrogen = read_text(
         root / "src" / "simulation" / "elements" / "LNTG.cpp", errors
     )
@@ -670,7 +705,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"periodic-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("periodic-audit: PASS (118 mapped, 109 implemented, 83 new periodic elements, 1024/frame)")
+        print("periodic-audit: PASS (118 mapped, 118 implemented, 92 new periodic elements, 1024/frame)")
     return 0
 
 

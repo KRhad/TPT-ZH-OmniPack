@@ -36,6 +36,20 @@ local definitions = {
     conv = { "DEFAULT_PT_CONV", "CONV", 85 },
     virs = { "DEFAULT_PT_VIRS", "VIRS", 174 },
 
+    hydrogen = { "DEFAULT_PT_H2", "HYGN", 148 },
+    lithium = { "DEFAULT_PT_LITH", "LITH", 191 },
+    carbon = { "DEFAULT_PT_DMND", "DMND", 28 },
+    oxygen = { "DEFAULT_PT_O2", "OXYG", 61 },
+    silicon = { "DEFAULT_PT_SLCN", "SLCN", 187 },
+    titanium = { "DEFAULT_PT_TTAN", "TTAN", 144 },
+    iron = { "DEFAULT_PT_IRON", "IRON", 76 },
+    rubidium = { "DEFAULT_PT_RBDM", "RBDM", 41 },
+    tungsten = { "DEFAULT_PT_TUNG", "TUNG", 171 },
+    platinum = { "DEFAULT_PT_PTNM", "PTNM", 188 },
+    gold = { "DEFAULT_PT_GOLD", "GOLD", 170 },
+    mercury = { "DEFAULT_PT_MERC", "MERC", 152 },
+    polonium = { "DEFAULT_PT_POLO", "POLO", 182 },
+
     alum = { "OMNI_PT_ALUM", "ALUM", 256 },
     copr = { "OMNI_PT_COPR", "COPR", 257 },
     lead = { "OMNI_PT_LEAD", "LEAD", 258 },
@@ -167,6 +181,15 @@ local definitions = {
     mendelevium = { "OMNI_PT_MD", "MD", 444 },
     nobelium = { "OMNI_PT_NO", "NO", 445 },
     lawrencium = { "OMNI_PT_LR", "LR", 446 },
+    rutherfordium = { "OMNI_PT_RF", "RF", 447 },
+    dubnium = { "OMNI_PT_DB", "DB", 448 },
+    seaborgium = { "OMNI_PT_SG", "SG", 449 },
+    bohrium = { "OMNI_PT_BH", "BH", 450 },
+    hassium = { "OMNI_PT_HS", "HS", 451 },
+    meitnerium = { "OMNI_PT_MT", "MT", 452 },
+    darmstadtium = { "OMNI_PT_DS", "DS", 453 },
+    roentgenium = { "OMNI_PT_RG", "RG", 454 },
+    copernicium = { "OMNI_PT_CN", "CN", 455 },
     hafnium = { "OMNI_PT_HF", "HF", 423 },
     tantalum = { "OMNI_PT_TA", "TA", 424 },
     rhenium = { "OMNI_PT_RE", "RE", 425 },
@@ -194,6 +217,10 @@ local module_keys = {
         "poly", "pero", "fert",
     },
     periodic = {
+        "hydrogen", "lithium", "carbon", "oxygen", "silicon", "titanium",
+        "iron", "rubidium", "tungsten", "platinum", "gold", "mercury",
+        "polonium", "magn", "alum", "chlr", "chrm", "cobt", "nicl",
+        "copr", "zinc", "moly", "tin", "lead",
         "he", "ne", "ar", "sodium", "potassium", "kr", "xe",
         "caesium", "rn", "francium", "og", "beryllium", "calcium",
         "strontium", "barium", "radium",
@@ -212,6 +239,8 @@ local module_keys = {
         "actinium", "thorium", "protactinium", "uranium", "neptunium",
         "plutonium", "americium", "curium", "berkelium", "californium",
         "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium",
+        "rutherfordium", "dubnium", "seaborgium", "bohrium", "hassium",
+        "meitnerium", "darmstadtium", "roentgenium", "copernicium",
         "hafnium", "tantalum", "rhenium", "osmium", "iridium",
     },
 }
@@ -261,6 +290,7 @@ end
 local fixtures = {}
 local required_palette = {}
 local direct_gt255 = 0
+local direct_elements = 0
 
 local function require_palette(key)
     local definition = assert(definitions[key], "missing definition for " .. key)
@@ -297,6 +327,7 @@ end
 local function add_direct_module_fixture(key)
     local is_gt255 = ids[key] > 255
     add_fixture("direct_" .. key .. (is_gt255 and "_gt255" or "_reused"), key)
+    direct_elements = direct_elements + 1
     if is_gt255 then direct_gt255 = direct_gt255 + 1 end
 end
 
@@ -356,12 +387,12 @@ local carrier_targets = {
         virs_tmp2 = "rshd",
     },
     periodic = {
-        lava = "californium",
-        spark = "lawrencium",
-        mscr = "actinium",
-        conv_ctype = "thorium",
-        conv_tmp = "americium",
-        virs_tmp2 = "nobelium",
+        lava = "copernicium",
+        spark = "roentgenium",
+        mscr = "rutherfordium",
+        conv_ctype = "dubnium",
+        conv_tmp = "hassium",
+        virs_tmp2 = "darmstadtium",
     },
     mixed = {
         lava = "alum",
@@ -606,6 +637,7 @@ if ok then
     report:write("OMNI_OPS_PARTICLES=" .. data.particle_count .. "\n")
     report:write("OMNI_OPS_FIELD_ASSERTIONS=" .. data.assertions .. "\n")
     report:write("OMNI_OPS_DIRECT_GT255=" .. direct_gt255 .. "\n")
+    report:write("OMNI_OPS_DIRECT_ELEMENTS=" .. direct_elements .. "\n")
     report:write("OMNI_OPS_CTYPE_CARRIERS=" .. ctype_carriers .. "\n")
     report:write("OMNI_OPS_TMP_CARRIERS=" .. tmp_carriers .. "\n")
     report:write("OMNI_OPS_TMP2_CARRIERS=" .. tmp2_carriers .. "\n")

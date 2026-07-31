@@ -155,6 +155,24 @@ struct ActinideProperties
 	unsigned int emissionColour;
 };
 
+struct SuperheavyProperties
+{
+	float acidThreshold;
+	float oxygenThreshold;
+	float boilingPoint;
+	int reactionHeat;
+	int decayProduct;
+	int captureProduct;
+	int lifeMin;
+	int lifeMax;
+	float decayHeat;
+	float captureHeat;
+	float synthesisThreshold;
+	float pressure;
+	unsigned int emissionColour;
+	int radiationType;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -471,11 +489,48 @@ ActinideProperties ActinidePropertiesFor(int type)
 		return { 310.0f, 500.0f, 1500.0f, 250, PT_FM, PT_LR,
 			150, 300, 480.0f, 460.0f, 0.64f, 0xFFC870D8 };
 	case PT_LR:
-		return { 300.0f, 480.0f, 2200.0f, 260, PT_MD, NT,
+		return { 300.0f, 480.0f, 2200.0f, 260, PT_MD, PT_RF,
 			120, 240, 520.0f, 500.0f, 0.72f, 0xFFA080FF };
 	default:
 		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 0, NT, NT,
 			0, 0, 0.0f, 0.0f, 0.0f, 0 };
+	}
+}
+
+SuperheavyProperties SuperheavyPropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_RF:
+		return { 500.0f, 900.0f, 3600.0f, 280, PT_HF, PT_DB,
+			360, 600, 420.0f, 250.0f, 900.0f, 0.50f, 0xFF9FC8FF, PT_PHOT };
+	case PT_DB:
+		return { 520.0f, 950.0f, 3400.0f, 290, PT_TA, PT_SG,
+			320, 540, 450.0f, 270.0f, 1000.0f, 0.55f, 0xFF90B8FF, PT_NEUT };
+	case PT_SG:
+		return { 550.0f, 1000.0f, 3900.0f, 300, PT_TUNG, PT_BH,
+			280, 480, 480.0f, 290.0f, 1100.0f, 0.60f, 0xFF80A8FF, PT_PHOT };
+	case PT_BH:
+		return { 480.0f, 850.0f, 3500.0f, 310, PT_RE, PT_HS,
+			250, 430, 510.0f, 310.0f, 1200.0f, 0.65f, 0xFF9080FF, PT_PHOT };
+	case PT_HS:
+		return { 600.0f, 1100.0f, 3800.0f, 320, PT_OS, PT_MT,
+			220, 380, 540.0f, 330.0f, 1300.0f, 0.70f, 0xFFB070FF, PT_NEUT };
+	case PT_MT:
+		return { 450.0f, 800.0f, 3200.0f, 330, PT_IR, PT_DS,
+			190, 330, 570.0f, 350.0f, 1400.0f, 0.75f, 0xFFD070F0, PT_PHOT };
+	case PT_DS:
+		return { 430.0f, 750.0f, 2900.0f, 340, PT_PTNM, PT_RG,
+			165, 290, 600.0f, 370.0f, 1500.0f, 0.80f, 0xFFFF70D0, PT_PHOT };
+	case PT_RG:
+		return { 380.0f, 650.0f, 2300.0f, 350, PT_GOLD, PT_CN,
+			140, 250, 630.0f, 390.0f, 1600.0f, 0.85f, 0xFFFF80A0, PT_NEUT };
+	case PT_CN:
+		return { 320.0f, 500.0f, 750.0f, 360, PT_MERC, PT_NH,
+			120, 220, 660.0f, 410.0f, 1700.0f, 0.90f, 0xFFFFA0C0, PT_PHOT };
+	default:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 0, NT, NT,
+			0, 0, 0.0f, 0.0f, MAX_TEMP, 0.0f, 0, NT };
 	}
 }
 
@@ -553,6 +608,13 @@ bool IsActinideExtension(int type)
 		type == PT_BK || type == PT_CF || type == PT_ES ||
 		type == PT_FM || type == PT_MD || type == PT_NO ||
 		type == PT_LR;
+}
+
+bool IsSuperheavyTransition(int type)
+{
+	return type == PT_RF || type == PT_DB || type == PT_SG ||
+		type == PT_BH || type == PT_HS || type == PT_MT ||
+		type == PT_DS || type == PT_RG || type == PT_CN;
 }
 
 bool IsHalogenReactiveMetal(int type)
@@ -3658,12 +3720,29 @@ void InitialiseActinideState(Simulation *sim, Particle &particle, int type)
 		sim->rng.between(properties.lifeMin, properties.lifeMax) : 0;
 }
 
+void InitialiseSuperheavyState(Simulation *sim, Particle &particle, int type)
+{
+	auto properties = SuperheavyPropertiesFor(type);
+	particle.tmp = 0;
+	particle.tmp2 = 0;
+	particle.life = properties.lifeMin > 0 ?
+		sim->rng.between(properties.lifeMin, properties.lifeMax) : 0;
+}
+
 void ChangeActinideProduct(UPDATE_FUNC_ARGS, int product)
 {
-	if (parts[i].type == PT_LAVA && IsActinideExtension(product))
+	if (parts[i].type == PT_LAVA &&
+		(IsActinideExtension(product) || IsSuperheavyTransition(product)))
 	{
 		parts[i].ctype = product;
-		InitialiseActinideState(sim, parts[i], product);
+		if (IsActinideExtension(product))
+		{
+			InitialiseActinideState(sim, parts[i], product);
+		}
+		else
+		{
+			InitialiseSuperheavyState(sim, parts[i], product);
+		}
 		return;
 	}
 	sim->part_change_type(i, x, y, product);
@@ -3671,6 +3750,10 @@ void ChangeActinideProduct(UPDATE_FUNC_ARGS, int product)
 	if (IsActinideExtension(product))
 	{
 		InitialiseActinideState(sim, parts[i], product);
+	}
+	else if (IsSuperheavyTransition(product))
+	{
+		InitialiseSuperheavyState(sim, parts[i], product);
 	}
 	else if (product == PT_FR)
 	{
@@ -3731,6 +3814,11 @@ bool CaptureActinideNeutron(UPDATE_FUNC_ARGS, int sourceType)
 				}
 				auto neutron = ID(packed);
 				auto neutronTemperature = parts[neutron].temp;
+				if (sourceType == PT_LR &&
+					std::max(parts[i].temp, neutronTemperature) < 900.0f)
+				{
+					continue;
+				}
 				bool fission = sourceType == PT_CF &&
 					std::max(parts[i].temp, neutronTemperature) >= 900.0f;
 				if (!ConsumeEvent(sim))
@@ -3879,6 +3967,209 @@ bool UpdateActinide(UPDATE_FUNC_ARGS, int sourceType)
 		return true;
 	}
 	return OxidiseHotActinide(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
+
+void ChangeSuperheavyProduct(UPDATE_FUNC_ARGS, int product)
+{
+	if (parts[i].type == PT_LAVA && IsSuperheavyTransition(product))
+	{
+		parts[i].ctype = product;
+		InitialiseSuperheavyState(sim, parts[i], product);
+		return;
+	}
+	sim->part_change_type(i, x, y, product);
+	ResetReactionProduct(parts[i], product);
+	if (IsSuperheavyTransition(product))
+	{
+		InitialiseSuperheavyState(sim, parts[i], product);
+	}
+	else if (product == PT_NH)
+	{
+		parts[i].tmp = sim->rng.between(90, 180);
+	}
+}
+
+bool DecaySuperheavy(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsSuperheavyTransition(sourceType) || parts[i].life > 0)
+	{
+		return false;
+	}
+	auto properties = SuperheavyPropertiesFor(sourceType);
+	if (!ConsumeEvent(sim))
+	{
+		parts[i].life = 1;
+		return false;
+	}
+	auto temperature = std::min(parts[i].temp + properties.decayHeat, MAX_TEMP);
+	ChangeSuperheavyProduct(UPDATE_FUNC_SUBCALL_ARGS, properties.decayProduct);
+	parts[i].temp = temperature;
+	int radiation = sim->create_part(-3, x, y, properties.radiationType);
+	if (radiation >= 0)
+	{
+		parts[radiation].temp = temperature;
+		parts[radiation].life = properties.radiationType == PT_NEUT ? 24 : 18;
+		if (properties.radiationType == PT_PHOT)
+		{
+			parts[radiation].ctype = 0x03F03F00;
+		}
+	}
+	AddBoundedPressure(sim, x, y, properties.pressure);
+	return true;
+}
+
+bool SynthesizeSuperheavy(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = SuperheavyPropertiesFor(sourceType);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			for (auto packed : { pmap[y + ry][x + rx], sim->photons[y + ry][x + rx] })
+			{
+				if (!packed || TYP(packed) != PT_NEUT)
+				{
+					continue;
+				}
+				auto neutron = ID(packed);
+				auto collisionTemperature =
+					std::max(parts[i].temp, parts[neutron].temp);
+				if (collisionTemperature < properties.synthesisThreshold)
+				{
+					continue;
+				}
+				if (!ConsumeEvent(sim))
+				{
+					return false;
+				}
+				int captureCount = std::min(parts[i].tmp2 + 1, 255);
+				auto temperature = std::min(
+					collisionTemperature + properties.captureHeat, MAX_TEMP);
+				sim->kill_part(neutron);
+				ChangeSuperheavyProduct(
+					UPDATE_FUNC_SUBCALL_ARGS, properties.captureProduct);
+				parts[i].tmp2 = captureCount;
+				parts[i].temp = temperature;
+				AddBoundedPressure(sim, x, y, properties.pressure * 0.5f);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool ReactSuperheavyWithAcid(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = SuperheavyPropertiesFor(sourceType);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_ACID)
+			{
+				continue;
+			}
+			auto acid = ID(packed);
+			if (std::max(parts[i].temp, parts[acid].temp) < properties.acidThreshold ||
+				!ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[acid].temp) +
+					float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_MSCR);
+			ResetReactionProduct(parts[i], PT_MSCR);
+			parts[i].ctype = sourceType;
+			sim->part_change_type(acid, x + rx, y + ry, PT_H2);
+			ResetReactionProduct(parts[acid], PT_H2);
+			parts[i].temp = temperature;
+			parts[acid].temp = temperature;
+			AddBoundedPressure(sim, x, y, properties.pressure);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool OxidiseHotSuperheavy(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = SuperheavyPropertiesFor(sourceType);
+	if (parts[i].temp < properties.oxygenThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2 || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto oxygen = ID(packed);
+			auto temperature = std::min(
+				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_MSCR);
+			ResetReactionProduct(parts[i], PT_MSCR);
+			parts[i].ctype = sourceType;
+			parts[i].temp = temperature;
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
+			ResetReactionProduct(parts[oxygen], PT_FIRE);
+			parts[oxygen].temp = temperature;
+			parts[oxygen].life = 20;
+			parts[oxygen].dcolour = properties.emissionColour;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseSuperheavy(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = SuperheavyPropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_FIRE);
+	ResetReactionProduct(parts[i], PT_FIRE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 36;
+	parts[i].dcolour = properties.emissionColour;
+	return true;
+}
+
+bool UpdateSuperheavy(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsSuperheavyTransition(sourceType))
+	{
+		return false;
+	}
+	if (DecaySuperheavy(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		SynthesizeSuperheavy(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		VaporiseSuperheavy(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		ReactSuperheavyWithAcid(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return OxidiseHotSuperheavy(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
 }
 
@@ -4327,4 +4618,39 @@ int OmniActinideGraphics(GRAPHICS_FUNC_ARGS)
 void OmniActinideCreate(ELEMENT_CREATE_FUNC_ARGS)
 {
 	InitialiseActinideState(sim, sim->parts[i], t);
+}
+
+int OmniSuperheavyUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateSuperheavy(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenSuperheavyUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateSuperheavy(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+int OmniSuperheavyGraphics(GRAPHICS_FUNC_ARGS)
+{
+	if (cpart->life > 0)
+	{
+		auto properties = SuperheavyPropertiesFor(cpart->type);
+		int intensity = std::min(
+			std::max(36, 170 - std::min(cpart->life / 5, 130)), 170);
+		*firea = intensity;
+		*firer = int((properties.emissionColour >> 16) & 0xFF);
+		*fireg = int((properties.emissionColour >> 8) & 0xFF);
+		*fireb = int(properties.emissionColour & 0xFF);
+		*pixel_mode |= PMODE_GLOW | FIRE_ADD;
+	}
+	return 0;
+}
+
+void OmniSuperheavyCreate(ELEMENT_CREATE_FUNC_ARGS)
+{
+	InitialiseSuperheavyState(sim, sim->parts[i], t);
 }

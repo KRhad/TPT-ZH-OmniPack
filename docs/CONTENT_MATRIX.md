@@ -7,7 +7,7 @@
 ## 当前范围
 
 ```text
-current_work_base=54411e08b8215638f403c9bc181afb48d9ca5ea5
+current_work_base=518dd9a4d5cbb874281635f7e7552b1ce14050ee
 periodic_alkaline_earth_batch_base=546b8791ca6b94ddd4791f42ededd5684168c59a
 periodic_boron_group_batch_base=5d9b99471590428e6430e9070c25a0907710c222
 periodic_carbon_group_batch_base=de91bbb67b2faef85ed178444a52a7b148328136
@@ -19,13 +19,14 @@ periodic_second_transition_batch_base=b26112f95c08d9daa252e54f65c6e26a05cd17e9
 periodic_third_transition_batch_base=248c516aefcbeae187de95aadb384c22280a678c
 periodic_lanthanide_batch_base=7c49278b856461f61cec1cc4974db90c709968bb
 periodic_actinide_batch_base=54411e08b8215638f403c9bc181afb48d9ca5ea5
+periodic_superheavy_batch_base=518dd9a4d5cbb874281635f7e7552b1ce14050ee
 font_implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
 development_gate_head=98affcd7
 official_id_range=0..195
 official_active_elements=195
 official_tombstones=1
-omnipack_implemented_elements=131
-periodic_mappings_implemented=109
+omnipack_implemented_elements=140
+periodic_mappings_implemented=118
 pt_num=512
 ```
 
@@ -38,7 +39,7 @@ pt_num=512
 | 局部生态 | `288..327` | 8（`288..295`） | 已实现 ID 不移动；`296..327` 保留 |
 | 受控核工业 | `328..359` | 7（`328..334`） | 已实现 ID 不移动；`335..359` 保留 |
 | 高级化学 | `360..369` | 10 | 已实现 ID 不移动 |
-| 周期表固定区 | `370..461` | 83 已实现 / 9 保留 | 原子序数映射固定，不是解锁顺序 |
+| 周期表固定区 | `370..461` | 92 已实现 / 0 保留 | 原子序数映射固定，不是解锁顺序 |
 | 后续内容保留 | `462..511` | 0 | 化合物、材料与兼容 tombstone；不得静默替换缺失元素 |
 
 ## 模块总览
@@ -49,7 +50,7 @@ pt_num=512
 | 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景、独立 OPS 双往返和 S03/S04 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
 | 高级化学 | 10 | `CHLR AMON ETHL KERO GASO ACTY CATA POLY PERO FERT` | 每帧 1,536 次成功反应，固定 `3x3` | 登记、化学审计、Lua 场景、独立 OPS 双往返和 S05 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
 | 受控核工业 | 7 | `NFUL MODR CROD NCLT NWST NGEN RSHD` | 每帧 512 次成功事件，固定 `3x3` | 登记、核工业审计、Lua 场景、独立 OPS 双往返和 S06/S07/S08 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
-| 周期表前十三批 | 83 新增 / 109 映射 | 前八个主族批次、三条过渡系、镧系和锕系；铀/钚复用官方实现，其余 13 个锕系成员新增 | 每帧 1,024 次放电/换热/族反应/衰变/合金事件，固定 `3x3` | 登记、周期审计、Lua 行为与预算、周期 OPS 双往返通过 | 周期表窗口视觉/DPI 门禁未完成；104–112 号共 9 个元素尚未实现 |
+| 完整周期表十四批 | 92 新增 / 118 映射 | 前八个主族批次、三条过渡系、镧系、锕系和 15 成员超重系列全部完成 | 每帧 1,024 次放电/换热/族反应/衰变/合成事件，固定 `3x3` | 登记、周期审计、Lua 行为与预算、118 元素同图 OPS 双往返通过 | 周期表窗口视觉/DPI 与正式 600 秒压力采样仍未完成 |
 
 五个内容系统上限来自当前源码常量并带同 tick 标记，属于源码确认；它们不是完整 FPS、内存或长跑压力证据。
 
@@ -121,7 +122,7 @@ pt_num=512
 | 局部生态 | true | true | 8 元素 | 已实现；另有“简化生物模拟”开关 |
 | 高级化学 | true | true | 10 元素 | 已实现；实际 UI 持久化未测试 |
 | 受控核工业 | true | true | 7 元素 | 已实现；实际 UI 持久化未测试 |
-| 元素周期表 | true | 始终可用 | 109/118 映射可选择 | 面板已编译并通过静态/运行契约；视觉矩阵未执行 |
+| 元素周期表 | true | 始终可用 | 118/118 映射可选择 | 面板已编译并通过静态/运行契约；视觉矩阵未执行 |
 
 周期表固定区为 `370..461`；未实现槽不创建普通元素工具，只在周期表正确格位显示待实现状态。`462..511` 继续保留给后续材料；没有内容时不创建玩家设置入口。
 
@@ -132,10 +133,10 @@ pt_num=512
 | 稳定 identifier/ID、双语名、来源、许可证、源码路径 | 118/118 | 自动测试确认 | 不代表全部 118 周期元素已实现 |
 | 双语配方、生产、用途、危险字段 | 118/118 | 自动测试确认 | 文本可能描述直接放置或尚无闭环的用途 |
 | 元素编译注册 | 118/118 | 编译确认 | 周期表视觉布局仍需人工核验 |
-| 五类反应引擎 Lua 回归 | 四可选模块 + 周期前十三批 | 实际运行确认 | 周期回归覆盖 83 个新增元素、七个六成员主族、7 个稀有气体、三条过渡系、15 个镧系成员、15 个锕系成员和预算；不替代完整 GUI 或长跑 |
+| 五类反应引擎 Lua 回归 | 四可选模块 + 完整周期表 | 实际运行确认 | 周期回归覆盖 92 个新增元素、七个六成员主族、7 个稀有气体、三条过渡系、镧系/锕系/超重系各 15 个成员和预算；不替代完整 GUI 或长跑 |
 | 搜索、放置、图鉴 | `ALUM/NUTR/CHLR/NFUL/HE/NA` 代表项 | 源码/运行选择 PASS；GUI 视觉 NOT RUN | 需最终 ZIP 人工操作 |
 | 禁用模块存档检查 | 直接类型与载体字段 | 自动测试确认 | 三选项和保存/上传拦截实际 GUI 尚未测试 |
-| OPS 双往返 | 官方、四个单模块、周期前十三批、混合及载体 | 实际运行确认 | 周期用例覆盖 83 个大于 255 的直接类型以及 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2` |
+| OPS 双往返 | 官方、四个单模块、118 周期元素、混合及载体 | 实际运行确认 | 周期用例同图覆盖 118 个周期直接类型、其中 103 个大于 255，以及 `LAVA/SPRK/MSCR/CONV/VIRS` 的 `ctype/tmp/tmp2` |
 | 固定压力样本 | 10 类 | 候选已通过；`98affcd7` smoke `4/4` | 旧候选正式证据仍绑定 `ff5945c4`；0.2 的 S04/S05/S07/S09 仅约 2 秒 smoke，`gate_result=not_tested`，正式样本需绑定最终 ZIP |
 
 ## 版本内容增长规则
@@ -155,7 +156,7 @@ pt_num=512
 
 ## 0.2.0 用途审计入口
 
-`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 131 个 OmniPack 元素；周期元素的双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、129 条 `REACTION_REGISTRY.csv` 登记和周期专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
+`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 140 个 OmniPack 元素；周期元素的双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、134 条 `REACTION_REGISTRY.csv` 登记和周期专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
 
 ```text
 production

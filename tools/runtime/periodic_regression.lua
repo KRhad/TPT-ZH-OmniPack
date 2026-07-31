@@ -106,6 +106,15 @@ local ids = {
     mendelevium = must_element("OMNI_PT_MD", "MD", 444),
     nobelium = must_element("OMNI_PT_NO", "NO", 445),
     lawrencium = must_element("OMNI_PT_LR", "LR", 446),
+    rutherfordium = must_element("OMNI_PT_RF", "RF", 447),
+    dubnium = must_element("OMNI_PT_DB", "DB", 448),
+    seaborgium = must_element("OMNI_PT_SG", "SG", 449),
+    bohrium = must_element("OMNI_PT_BH", "BH", 450),
+    hassium = must_element("OMNI_PT_HS", "HS", 451),
+    meitnerium = must_element("OMNI_PT_MT", "MT", 452),
+    darmstadtium = must_element("OMNI_PT_DS", "DS", 453),
+    roentgenium = must_element("OMNI_PT_RG", "RG", 454),
+    copernicium = must_element("OMNI_PT_CN", "CN", 455),
     hafnium = must_element("OMNI_PT_HF", "HF", 423),
     tantalum = must_element("OMNI_PT_TA", "TA", 424),
     tungsten = must_element("DEFAULT_PT_TUNG", "TUNG", 171),
@@ -341,6 +350,15 @@ local function run_property_differences()
     assert(elements.property(ids.californium, "HeatConduct")
             > elements.property(ids.nobelium, "HeatConduct"),
         "californium and nobelium do not retain distinct conductivity")
+    assert(elements.property(ids.hassium, "Hardness")
+            > elements.property(ids.copernicium, "Hardness"),
+        "hard hassium and soft copernicium do not retain distinct hardness")
+    assert(elements.property(ids.roentgenium, "HeatConduct")
+            > elements.property(ids.copernicium, "HeatConduct"),
+        "roentgenium and copernicium do not retain distinct conductivity")
+    assert(elements.property(ids.copernicium, "HighTemperature")
+            < elements.property(ids.seaborgium, "HighTemperature"),
+        "volatile copernicium and refractory seaborgium are not distinct")
 end
 
 local function run_water_reaction(type, seed)
@@ -1705,15 +1723,25 @@ local function run_actinide_reactions()
         "californium fission did not replace exactly one consumed neutron")
 
     configure(1511)
-    local terminal = make(ids.lawrencium, 120, 120, 300.0)
-    local terminal_neutron = make(ids.neutron, 121, 120, 300.0)
-    sim.partProperty(terminal_neutron, "vx", 0.0)
-    sim.partProperty(terminal_neutron, "vy", 0.0)
+    local cold_terminal = make(ids.lawrencium, 120, 120, 300.0)
+    local cold_neutron = make(ids.neutron, 121, 120, 300.0)
+    sim.partProperty(cold_neutron, "vx", 0.0)
+    sim.partProperty(cold_neutron, "vy", 0.0)
     step()
-    assert(sim.partProperty(terminal, "type") == ids.lawrencium
-            and sim.partProperty(terminal, "tmp") == 1
-            and sim.partProperty(terminal, "temp") > 700.0,
-        "terminal lawrencium did not retain bounded neutron-capture heat")
+    assert(sim.partProperty(cold_terminal, "type") == ids.lawrencium
+            and sim.partExists(cold_neutron),
+        "cold lawrencium collision incorrectly entered high-energy synthesis")
+
+    configure(1512)
+    local hot_terminal = make(ids.lawrencium, 120, 120, 950.0)
+    local hot_neutron = make(ids.neutron, 121, 120, 950.0)
+    sim.partProperty(hot_neutron, "vx", 0.0)
+    sim.partProperty(hot_neutron, "vy", 0.0)
+    step()
+    assert(sim.partProperty(hot_terminal, "type") == ids.rutherfordium
+            and sim.partProperty(hot_terminal, "life") >= 360
+            and not sim.partExists(hot_neutron),
+        "energetic lawrencium collision did not synthesize rutherfordium")
 
     configure(1521)
     local old_acid_advection = elements.property(ids.acid, "Advection")
@@ -1757,6 +1785,141 @@ local function run_actinide_reactions()
             and sim.partProperty(vapour, "ctype") == ids.einsteinium
             and sim.partProperty(vapour, "life") == 45,
         "hot molten einsteinium did not enter its finite vapour proxy")
+end
+
+local function run_superheavy_reactions()
+    configure(1561)
+    local rutherfordium = make(ids.rutherfordium, 120, 120, 293.15)
+    local copernicium = make(ids.copernicium, 122, 120, 293.15)
+    assert(sim.partProperty(rutherfordium, "life") >= 360
+            and sim.partProperty(rutherfordium, "life") <= 600,
+        "rutherfordium creation did not initialize the longest transition timer")
+    assert(sim.partProperty(copernicium, "life") >= 120
+            and sim.partProperty(copernicium, "life") <= 220,
+        "copernicium creation did not initialize the shortest transition timer")
+
+    local decay_cases = {
+        { ids.rutherfordium, ids.hafnium, ids.photon },
+        { ids.dubnium, ids.tantalum, ids.neutron },
+        { ids.seaborgium, ids.tungsten, ids.photon },
+        { ids.bohrium, ids.rhenium, ids.photon },
+        { ids.hassium, ids.osmium, ids.neutron },
+        { ids.meitnerium, ids.iridium, ids.photon },
+        { ids.darmstadtium, ids.platinum, ids.photon },
+        { ids.roentgenium, ids.gold, ids.neutron },
+        { ids.copernicium, ids.mercury, ids.photon },
+    }
+    for index, case in ipairs(decay_cases) do
+        configure(1570 + index)
+        local material = make(case[1], 120, 120, 300.0)
+        sim.partProperty(material, "life", 0)
+        step()
+        assert(sim.partProperty(material, "type") == case[2],
+            "superheavy representative decay produced the wrong group analogue")
+        assert(count_type(case[3]) == 1,
+            "one superheavy decay did not emit exactly one bounded radiation particle")
+    end
+
+    local synthesis_cases = {
+        { ids.lawrencium, ids.rutherfordium, 900.0 },
+        { ids.rutherfordium, ids.dubnium, 900.0 },
+        { ids.dubnium, ids.seaborgium, 1000.0 },
+        { ids.seaborgium, ids.bohrium, 1100.0 },
+        { ids.bohrium, ids.hassium, 1200.0 },
+        { ids.hassium, ids.meitnerium, 1300.0 },
+        { ids.meitnerium, ids.darmstadtium, 1400.0 },
+        { ids.darmstadtium, ids.roentgenium, 1500.0 },
+        { ids.roentgenium, ids.copernicium, 1600.0 },
+        { ids.copernicium, ids.nihonium, 1700.0 },
+    }
+    for index, case in ipairs(synthesis_cases) do
+        configure(1590 + index)
+        local material = make(case[1], 120, 120, case[3])
+        local neutron = make(ids.neutron, 121, 120, case[3])
+        sim.partProperty(neutron, "vx", 0.0)
+        sim.partProperty(neutron, "vy", 0.0)
+        step()
+        assert(sim.partProperty(material, "type") == case[2],
+            "high-energy superheavy synthesis produced the wrong next element")
+        assert(not sim.partExists(neutron),
+            "high-energy superheavy synthesis did not consume the incoming neutron")
+        if case[2] == ids.nihonium then
+            assert(sim.partProperty(material, "tmp") >= 90
+                    and sim.partProperty(material, "tmp") <= 180,
+                "copernicium synthesis did not initialize the nihonium timer")
+        else
+            assert(sim.partProperty(material, "life") > 0,
+                "superheavy synthesis did not initialize a finite product lifetime")
+        end
+    end
+
+    configure(1611)
+    local cold_rf = make(ids.rutherfordium, 120, 120, 850.0)
+    local cold_neutron = make(ids.neutron, 121, 120, 850.0)
+    sim.partProperty(cold_neutron, "vx", 0.0)
+    sim.partProperty(cold_neutron, "vy", 0.0)
+    step()
+    assert(sim.partProperty(cold_rf, "type") == ids.rutherfordium
+            and sim.partExists(cold_neutron),
+        "sub-threshold rutherfordium collision incorrectly synthesized dubnium")
+
+    configure(1621)
+    local molten_rf = make(ids.lava, 120, 120, 2500.0)
+    sim.partProperty(molten_rf, "ctype", ids.rutherfordium)
+    sim.partProperty(molten_rf, "life", 500)
+    local hot_neutron = make(ids.neutron, 121, 120, 2500.0)
+    sim.partProperty(hot_neutron, "vx", 0.0)
+    sim.partProperty(hot_neutron, "vy", 0.0)
+    step()
+    assert(sim.partProperty(molten_rf, "type") == ids.lava
+            and sim.partProperty(molten_rf, "ctype") == ids.dubnium
+            and sim.partProperty(molten_rf, "life") >= 320,
+        "typed molten rutherfordium did not retain the synthesized dubnium type")
+
+    configure(1631)
+    local old_acid_advection = elements.property(ids.acid, "Advection")
+    local old_acid_gravity = elements.property(ids.acid, "Gravity")
+    local old_acid_falldown = elements.property(ids.acid, "Falldown")
+    elements.property(ids.acid, "Advection", 0.0)
+    elements.property(ids.acid, "Gravity", 0.0)
+    elements.property(ids.acid, "Falldown", 0)
+    local roentgenium = make(ids.roentgenium, 120, 120, 390.0)
+    local acid = make(ids.acid, 121, 120, 390.0)
+    step()
+    elements.property(ids.acid, "Advection", old_acid_advection)
+    elements.property(ids.acid, "Gravity", old_acid_gravity)
+    elements.property(ids.acid, "Falldown", old_acid_falldown)
+    assert(sim.partProperty(roentgenium, "type") == ids.scrap
+            and sim.partProperty(roentgenium, "ctype") == ids.roentgenium
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "superheavy acid route did not retain typed radioactive waste")
+
+    configure(1641)
+    local old_o_diffusion = elements.property(ids.oxygen, "Diffusion")
+    local old_o_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    local molten_cn = make(ids.lava, 120, 120, 600.0)
+    sim.partProperty(molten_cn, "ctype", ids.copernicium)
+    sim.partProperty(molten_cn, "life", 180)
+    local oxygen = make(ids.oxygen, 121, 120, 600.0)
+    step()
+    elements.property(ids.oxygen, "Diffusion", old_o_diffusion)
+    elements.property(ids.oxygen, "Advection", old_o_advection)
+    assert(sim.partProperty(molten_cn, "type") == ids.scrap
+            and sim.partProperty(molten_cn, "ctype") == ids.copernicium
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "hot molten copernicium did not produce typed waste and finite fire")
+
+    configure(1651)
+    local vapour = make(ids.lava, 120, 120, 800.0)
+    sim.partProperty(vapour, "ctype", ids.copernicium)
+    sim.partProperty(vapour, "life", 180)
+    step()
+    assert(sim.partProperty(vapour, "type") == ids.fire
+            and sim.partProperty(vapour, "ctype") == ids.copernicium
+            and sim.partProperty(vapour, "life") == 36,
+        "hot molten copernicium did not enter its finite vapour proxy")
 end
 
 local function run_helium_cryogenics()
@@ -2217,6 +2380,29 @@ local function run_actinide_budget()
     return events
 end
 
+local function run_superheavy_budget()
+    configure(1661)
+    local total = 1200
+    for index = 0, total - 1 do
+        local x = 50 + (index % 100) * 5
+        local y = 50 + math.floor(index / 100) * 5
+        local copernicium = make(ids.copernicium, x, y, 300.0)
+        sim.partProperty(copernicium, "life", 0)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total),
+        "missing superheavy event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame superheavy events were not capped at 1024: "
+            .. tostring(events))
+    assert(count_type(ids.copernicium) >= total - 1024,
+        "event-budget exhaustion did not defer remaining copernicium decays")
+    assert(count_type(ids.photon) <= 1024,
+        "bounded superheavy decays emitted too many photons")
+    return events
+end
+
 local function test()
     run_property_differences()
     run_alkali_water_series()
@@ -2233,6 +2419,7 @@ local function test()
     run_third_transition_reactions()
     run_lanthanide_reactions()
     run_actinide_reactions()
+    run_superheavy_reactions()
     run_helium_cryogenics()
     run_xenon_discharge()
     run_radioactive_decays()
@@ -2250,19 +2437,21 @@ local function test()
     local third_transition_budget = run_third_transition_budget()
     local lanthanide_budget = run_lanthanide_budget()
     local actinide_budget = run_actinide_budget()
+    local superheavy_budget = run_superheavy_budget()
     return math.max(noble_budget, francium_budget, radium_budget,
         nihonium_budget, flerovium_budget, moscovium_budget,
         livermorium_budget, astatine_budget, tennessine_budget,
         first_transition_budget, second_transition_budget,
-        third_transition_budget, lanthanide_budget, actinide_budget)
+        third_transition_budget, lanthanide_budget, actinide_budget,
+        superheavy_budget)
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_PERIODIC_STATUS=PASS\n")
-    report:write("OMNI_PERIODIC_NEW_ELEMENTS=83\n")
-    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=109\n")
+    report:write("OMNI_PERIODIC_NEW_ELEMENTS=92\n")
+    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=118\n")
     report:write("OMNI_PERIODIC_ALKALI_FAMILY=6\n")
     report:write("OMNI_PERIODIC_ALKALINE_EARTH_FAMILY=6\n")
     report:write("OMNI_PERIODIC_BORON_GROUP=6\n")
@@ -2275,6 +2464,7 @@ if ok then
     report:write("OMNI_PERIODIC_THIRD_TRANSITION_SERIES=9\n")
     report:write("OMNI_PERIODIC_LANTHANIDE_SERIES=15\n")
     report:write("OMNI_PERIODIC_ACTINIDE_SERIES=15\n")
+    report:write("OMNI_PERIODIC_SUPERHEAVY_SERIES=15\n")
     report:write("OMNI_PERIODIC_BUDGET_EVENTS=" .. tostring(data) .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

@@ -22,6 +22,7 @@ class PeriodicTableDataTests(unittest.TestCase):
         self.assertIn("std::array<PeriodicElementRecord, 118>", rendered)
         self.assertEqual(rendered.count("\n\t{ "), 118)
         self.assertIn('"He", "氦", "Helium", "OMNI_PT_HE", 370', rendered)
+        self.assertIn('"Rf", "𬬻", "Rutherfordium", "OMNI_PT_RF", 447', rendered)
         self.assertIn('"Og", "鿫", "Oganesson", "OMNI_PT_OG", 461', rendered)
 
     def test_long_form_positions_and_filters_are_stable(self) -> None:
@@ -40,7 +41,7 @@ class PeriodicTableDataTests(unittest.TestCase):
             ROOT / "docs" / "PERIODIC_ELEMENT_SOURCE_MAP.csv"
         )
         implemented = [row for row in rows if row["status"] == "implemented"]
-        self.assertEqual(len(implemented), 109)
+        self.assertEqual(len(implemented), 118)
         self.assertTrue(all(row["official_mapping"] or row["omnipack_mapping"] for row in implemented))
 
     def test_generator_refuses_to_overwrite_header(self) -> None:
