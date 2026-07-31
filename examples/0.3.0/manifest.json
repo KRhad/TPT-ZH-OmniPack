@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "content_version": "0.3.0-dev",
+  "source_commit": "52544032509f0b6e6888c6322a1c385e2f62ee3c",
+  "source_tree_state": "clean",
+  "generator_exe_sha256": "BEFC407DA2ADBE5B836C8437A8C8921EA04F8B8648B397DDD86D9F907D8F0568",
+  "scenario_spec_sha256": "AD0DB0BBE917738543525C3A53DDE75B16863C66858E905AE4B3A3C10C0A79AF",
+  "runtime_script_sha256": "8D555444F5381C5156C45F414DC9B565E00AC6FFE222A1A737D5033068C16DED",
+  "generated_utc": "2026-07-31T07:36:52.3383547Z",
+  "scenarios": [
+    {
+      "id": "thermostatic-furnace",
+      "filename": "01-thermostatic-furnace.stm",
+      "stamp_id": "0300000001",
+      "source_stamp_id": "6a6c509100",
+      "sha256": "144FE8F43AD1B1967D3F9264E9FF52D823DA83BBE4E67CF030B5BD04161C56B5",
+      "bytes": 709,
+      "initial_particles": 12,
+      "generation_order": 1,
+      "title_zh": "自动恒温熔炉"
+    },
+    {
+      "id": "automatic-alloy",
+      "filename": "02-automatic-alloy.stm",
+      "stamp_id": "0300000002",
+      "source_stamp_id": "6a6c509100",
+      "sha256": "F315EC4DE087CF7DD9D868F4F41F9479F302DA2D529D853DD31C70EEB617A353",
+      "bytes": 758,
+      "initial_particles": 12,
+      "generation_order": 2,
+      "title_zh": "自动合金加料"
+    },
+    {
+      "id": "fuel-control",
+      "filename": "03-fuel-control.stm",
+      "stamp_id": "0300000003",
+      "source_stamp_id": "6a6c509200",
+      "sha256": "93776DCF97EA29BCA60C28578E65BC6033341982036F4BAC22EB86DC59D9EFC7",
+      "bytes": 740,
+      "initial_particles": 11,
+      "generation_order": 3,
+      "title_zh": "燃料制备与供给控制"
+    },
+    {
+      "id": "nutrient-dosing",
+      "filename": "04-nutrient-dosing.stm",
+      "stamp_id": "0300000004",
+      "source_stamp_id": "6a6c509200",
+      "sha256": "2F320EE3A7BE513DA44A8CAF54C0F40BB86D259B90C5324E45AF74183DEF0517",
+      "bytes": 736,
+      "initial_particles": 11,
+      "generation_order": 4,
+      "title_zh": "营养自动加料"
+    },
+    {
+      "id": "pathogen-disinfection",
+      "filename": "05-pathogen-disinfection.stm",
+      "stamp_id": "0300000005",
+      "source_stamp_id": "6a6c509200",
+      "sha256": "6753E30E8435A22FBC7C66A6849A505ADE8B877BB315665D7C6A7D73E40E67B5",
+      "bytes": 707,
+      "initial_particles": 11,
+      "generation_order": 5,
+      "title_zh": "病原体自动消毒"
+    },
+    {
+      "id": "reactor-cooling",
+      "filename": "06-reactor-cooling.stm",
+      "stamp_id": "0300000006",
+      "source_stamp_id": "6a6c509300",
+      "sha256": "4791D87A77CAA2A98DE246CD53698A25CFBD15480ACA4562B0AEA2F61F76B5A9",
+      "bytes": 762,
+      "initial_particles": 13,
+      "generation_order": 6,
+      "title_zh": "反应堆自动冷却"
+    },
+    {
+      "id": "emergency-stop",
+      "filename": "07-emergency-stop.stm",
+      "stamp_id": "0300000007",
+      "source_stamp_id": "6a6c509300",
+      "sha256": "BB1FCA4E69B3E6957356438F6873F6F9E53A27B00CAB1AC5695AE95E1D5B1EC0",
+      "bytes": 661,
+      "initial_particles": 10,
+      "generation_order": 7,
+      "title_zh": "全厂紧急停机"
+    },
+    {
+      "id": "waste-transfer",
+      "filename": "08-waste-transfer.stm",
+      "stamp_id": "0300000008",
+      "source_stamp_id": "6a6c509300",
+      "sha256": "681CA4CB9CC9A8DCCEEE6C57DB0B7CFBFF806C2CA7478D95A7716A0716BE91E5",
+      "bytes": 749,
+      "initial_particles": 11,
+      "generation_order": 8,
+      "title_zh": "废料分拣与转运"
+    },
+    {
+      "id": "integrated-factory",
+      "filename": "09-integrated-factory.stm",
+      "stamp_id": "0300000009",
+      "source_stamp_id": "6a6c509400",
+      "sha256": "1E6B279EF6C144EE2B5E97F8B2C52373EE2A0A0A15811D28969A61ADCD9F4353",
+      "bytes": 956,
+      "initial_particles": 27,
+      "generation_order": 9,
+      "title_zh": "四模块综合自动工厂"
+    }
+  ],
+  "challenge_ids": [
+    "A01-TEMPERATURE",
+    "A02-FEEDING",
+    "A03-SORTING",
+    "A04-DISINFECTION",
+    "A05-EMERGENCY-STOP",
+    "A06-MULTI-MODULE"
+  ]
+}
