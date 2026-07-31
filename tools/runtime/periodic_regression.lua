@@ -57,6 +57,16 @@ local ids = {
     iodine = must_element("OMNI_PT_I", "I", 404),
     astatine = must_element("OMNI_PT_AT", "AT", 430),
     tennessine = must_element("OMNI_PT_TS", "TS", 460),
+    scandium = must_element("OMNI_PT_SC", "SC", 382),
+    titanium = must_element("DEFAULT_PT_TTAN", "TTAN", 144),
+    vanadium = must_element("OMNI_PT_V", "V", 383),
+    chromium = must_element("OMNI_PT_CHRM", "CHRM", 262),
+    manganese = must_element("OMNI_PT_MN", "MN", 384),
+    iron = must_element("DEFAULT_PT_IRON", "IRON", 76),
+    cobalt = must_element("OMNI_PT_COBT", "COBT", 263),
+    nickel = must_element("OMNI_PT_NICL", "NICL", 260),
+    copper = must_element("OMNI_PT_COPR", "COPR", 257),
+    zinc = must_element("OMNI_PT_ZINC", "ZINC", 265),
     lithium = must_element("DEFAULT_PT_LITH", "LITH", 191),
     rubidium = must_element("DEFAULT_PT_RBDM", "RBDM", 41),
     hydrogen = must_element("DEFAULT_PT_H2", "HYGN", 148),
@@ -80,6 +90,9 @@ local ids = {
     photon = assert(elements.DEFAULT_PT_PHOT),
     polonium = must_element("DEFAULT_PT_POLO", "POLO", 182),
     scrap = must_element("OMNI_PT_MSCR", "MSCR", 278),
+    steel = must_element("OMNI_PT_STEL", "STEL", 268),
+    tool_steel = must_element("OMNI_PT_TSTL", "TSTL", 274),
+    slag = must_element("OMNI_PT_SLAG", "SLAG", 275),
     pathogen = must_element("OMNI_PT_PATH", "PATH", 292),
 }
 
@@ -197,6 +210,18 @@ local function run_property_differences()
     assert(elements.property(ids.tennessine, "Properties")
             ~= elements.property(ids.bromine, "Properties"),
         "superheavy tennessine and liquid bromine have identical properties")
+    assert(elements.property(ids.scandium, "Weight")
+            < elements.property(ids.titanium, "Weight"),
+        "light scandium is not lighter than official titanium")
+    assert(elements.property(ids.vanadium, "HighTemperature")
+            > elements.property(ids.manganese, "HighTemperature"),
+        "vanadium and manganese do not retain distinct melting points")
+    assert(elements.property(ids.copper, "HeatConduct")
+            > elements.property(ids.vanadium, "HeatConduct"),
+        "copper is not more thermally conductive than vanadium")
+    assert(elements.property(ids.chromium, "Hardness")
+            ~= elements.property(ids.manganese, "Hardness"),
+        "chromium and manganese do not retain distinct hardness")
 end
 
 local function run_water_reaction(type, seed)
@@ -909,6 +934,81 @@ local function run_halogen_group_reactions()
         "three-stage tennessine decay did not emit exactly three finite photons")
 end
 
+local function run_first_transition_reactions()
+    configure(871)
+    local scandium = make(ids.scandium, 120, 120, 330.0)
+    local acid = make(ids.acid, 121, 120, 330.0)
+    step()
+    assert(sim.partProperty(scandium, "type") == ids.salt
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "warm scandium acid route did not produce generic salt and hydrogen")
+
+    configure(881)
+    scandium = make(ids.scandium, 120, 120, 300.0)
+    for _ = 1, 80 do
+        local electron = make(ids.electron, 121, 120, 300.0)
+        sim.partProperty(electron, "vx", 0.0)
+        sim.partProperty(electron, "vy", 0.0)
+        step()
+        if sim.partExists(electron) then sim.partKill(electron) end
+        if sim.partExists(scandium)
+                and sim.partProperty(scandium, "life") > 0 then break end
+    end
+    assert(sim.partExists(scandium)
+            and sim.partProperty(scandium, "life") > 0,
+        "scandium did not enter its finite discharge-lamp glow state")
+    assert(count_type(ids.photon) >= 1,
+        "scandium discharge did not emit a finite photon")
+
+    configure(891)
+    local old_o_diffusion = elements.property(ids.oxygen, "Diffusion")
+    local old_o_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    scandium = make(ids.scandium, 120, 120, 760.0)
+    local oxygen = make(ids.oxygen, 121, 120, 760.0)
+    step()
+    assert(sim.partProperty(scandium, "type") == ids.scrap
+            and sim.partProperty(scandium, "ctype") == ids.scandium
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "hot scandium oxygen route did not produce typed scrap and finite fire")
+    elements.property(ids.oxygen, "Diffusion", old_o_diffusion)
+    elements.property(ids.oxygen, "Advection", old_o_advection)
+
+    configure(901)
+    local vanadium = make(ids.vanadium, 120, 120, 1900.0)
+    local steel = make(ids.lava, 121, 120, 1900.0)
+    sim.partProperty(steel, "ctype", ids.steel)
+    step()
+    assert(sim.partProperty(vanadium, "type") == ids.lava
+            and sim.partProperty(vanadium, "ctype") == ids.tool_steel
+            and sim.partProperty(steel, "type") == ids.lava
+            and sim.partProperty(steel, "ctype") == ids.tool_steel,
+        "vanadium and molten steel did not form two typed tool-steel proxies")
+
+    configure(911)
+    local manganese = make(ids.manganese, 120, 120, 1300.0)
+    local iron = make(ids.lava, 121, 120, 1700.0)
+    sim.partProperty(iron, "ctype", ids.iron)
+    oxygen = make(ids.oxygen, 120, 121, 1300.0)
+    step()
+    assert(sim.partProperty(manganese, "type") == ids.lava
+            and sim.partProperty(manganese, "ctype") == ids.steel
+            and sim.partProperty(iron, "type") == ids.lava
+            and sim.partProperty(iron, "ctype") == ids.steel
+            and sim.partProperty(oxygen, "type") == ids.slag,
+        "manganese did not deoxidize molten iron into steel and slag proxies")
+
+    configure(921)
+    local molten = make(ids.lava, 120, 120, 2340.0)
+    sim.partProperty(molten, "ctype", ids.manganese)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.fire
+            and sim.partProperty(molten, "ctype") == ids.manganese
+            and sim.partProperty(molten, "life") == 60,
+        "hot molten manganese did not enter its finite vaporisation proxy")
+end
+
 local function run_helium_cryogenics()
     configure(81)
     local old_diffusion = elements.property(ids.he, "Diffusion")
@@ -1247,6 +1347,27 @@ local function run_tennessine_budget()
     return events
 end
 
+local function run_first_transition_budget()
+    configure(931)
+    local total = 1200
+    for index = 0, total - 1 do
+        local x = 50 + (index % 100) * 5
+        local y = 50 + math.floor(index / 100) * 5
+        make(ids.scandium, x, y, 760.0)
+        make(ids.oxygen, x + 1, y, 760.0)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total),
+        "missing first-transition event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame first-transition events were not capped at 1024: "
+            .. tostring(events))
+    assert(count_type(ids.scandium) >= total - 1024,
+        "event-budget exhaustion did not defer remaining scandium oxidation")
+    return events
+end
+
 local function test()
     run_property_differences()
     run_alkali_water_series()
@@ -1258,6 +1379,7 @@ local function test()
     run_nitrogen_group_reactions()
     run_oxygen_group_reactions()
     run_halogen_group_reactions()
+    run_first_transition_reactions()
     run_helium_cryogenics()
     run_xenon_discharge()
     run_radioactive_decays()
@@ -1270,17 +1392,19 @@ local function test()
     local livermorium_budget = run_livermorium_budget()
     local astatine_budget = run_astatine_budget()
     local tennessine_budget = run_tennessine_budget()
+    local first_transition_budget = run_first_transition_budget()
     return math.max(noble_budget, francium_budget, radium_budget,
         nihonium_budget, flerovium_budget, moscovium_budget,
-        livermorium_budget, astatine_budget, tennessine_budget)
+        livermorium_budget, astatine_budget, tennessine_budget,
+        first_transition_budget)
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_PERIODIC_STATUS=PASS\n")
-    report:write("OMNI_PERIODIC_NEW_ELEMENTS=38\n")
-    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=64\n")
+    report:write("OMNI_PERIODIC_NEW_ELEMENTS=41\n")
+    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=67\n")
     report:write("OMNI_PERIODIC_ALKALI_FAMILY=6\n")
     report:write("OMNI_PERIODIC_ALKALINE_EARTH_FAMILY=6\n")
     report:write("OMNI_PERIODIC_BORON_GROUP=6\n")
@@ -1288,6 +1412,7 @@ if ok then
     report:write("OMNI_PERIODIC_NITROGEN_GROUP=6\n")
     report:write("OMNI_PERIODIC_OXYGEN_GROUP=6\n")
     report:write("OMNI_PERIODIC_HALOGEN_GROUP=6\n")
+    report:write("OMNI_PERIODIC_FIRST_TRANSITION_SERIES=10\n")
     report:write("OMNI_PERIODIC_BUDGET_EVENTS=" .. tostring(data) .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

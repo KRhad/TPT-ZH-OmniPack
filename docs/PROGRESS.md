@@ -13,17 +13,18 @@ periodic_carbon_group_base_commit=de91bbb67b2faef85ed178444a52a7b148328136
 periodic_nitrogen_group_base_commit=2eeab9f39b503e580b259ac6897dc9e177e5244c
 periodic_oxygen_group_base_commit=3c3c623a12c2f17374db26c067d454787ecbd7ae
 periodic_halogen_group_base_commit=8066533aea4bc4a5d6ae73c5d776d56fabf84eb6
+periodic_first_transition_base_commit=6c64c0a0b39ed3e9830f1077b04779b21943c380
 pt_num=512
 pmapbits=9
 official_active_elements=195
-omnipack_active_elements=86
-total_active_elements=281
+omnipack_active_elements=89
+total_active_elements=284
 registered_slots=462
-reserved_slots=181
+reserved_slots=178
 enabled_content_modules=4
-periodic_elements_placeable=64
-periodic_elements_remaining=54
-reaction_registry_entries=86
+periodic_elements_placeable=67
+periodic_elements_remaining=51
+reaction_registry_entries=92
 periodic_table_ui=true
 save_format=OPS1/BZip2
 release_ready=false
@@ -38,10 +39,10 @@ release_ready=false
 - 周期表 ID/字体基础设施 clean build `509/509`、Meson static `20/20`、Python `136/136`（0 skip）通过；
 - 周期表中文名称的 118 个字符已全部加入确定性字体，新增稀有字形仍待人工桌面可读性检查。
 
-## Phase 2/3：周期表 UI、稀有气体、碱金属、碱土金属、硼族、碳族、氮族、氧族与卤素批次
+## Phase 2/3：周期表 UI、前八个主族批次与第一过渡系
 
 - 118 行来源映射生成编译时周期表模型；标准长式面板支持中英文名、符号、原子序数、identifier、状态、放射性和金属类别筛选，f 区可展开；
-- 周期表只是直接选择入口，不读取存档进度，不增加解锁或任务状态；未实现的 54 格保留正确位置并明确显示待实现；
+- 周期表只是直接选择入口，不读取存档进度，不增加解锁或任务状态；未实现的 51 格保留正确位置并明确显示待实现；
 - 复用官方氢 `148`；新增 `HE=370`、`NE=375`、`AR=379`、`KR=390`、`XE=405`、`RN=431`、`OG=461`；
 - 复用官方锂 `191` 和铷 `41`；新增 `NA=376`、`K=380`、`CS=406`、`FR=432`，水反应强度依族序增加，熔融态保留反应，钫以 `180..360` 游戏刻压缩衰变为钋和一个有限寿命光子；
 - 复用并增强既有镁 `261`；新增 `BE=371`、`CA=381`、`SR=391`、`BA=407`、`RA=433`，区分铍钝化/毒性、镁白光燃烧、钙锶钡焰色和镭到氡衰变；
@@ -50,12 +51,13 @@ release_ready=false
 - 新增 `N=373`、`P=377`、`AS=387`、`SB=402`、`BI=429`、`MC=458`，连接 `N ↔ LNTG ↔ NICE`，实现氮有限放电、磷燃烧、砷升华、锑/铋属性与熔点差异、分级酸氧/汽化及 `MC → NH → POLO` 两段衰变；
 - 复用官方 `O2=61`、`LO2=60` 与 `POLO=182`；新增 `S=378`、`SE=388`、`TE=403`、`LV=459`，实现氧液相往返、硫有限烟雾燃烧、硒光敏辉光、硒/碲差异化氧化与汽化、钋质子计数转钚及 `LV → FL → POLO` 两段衰变；
 - 复用既有 `CHLR=360` 并保留其 11 条高级化学路径；新增 `F=374`、`BR=389`、`I=404`、`AT=430`、`TS=460`，实现氟遇水/氢成酸、分级卤化/消毒、溴/碘有限蒸气、碘熔融，以及 `AT → POLO` 与 `TS → MC → NH → POLO` 有界衰变；
-- 共享 `OmniPeriodic.cpp` 只做 `3x3` 局部检查，放电、低温换热、七类主族反应和衰变共享 `1024` 次/帧预算；火焰、高能光子和着色蒸气寿命有限；
-- 真实客户端 Lua 回归：`OMNI_PERIODIC_STATUS=PASS`、38 个新元素、64 个已实现周期映射、七个主族各 6 个成员，压力帧事件恰为 1024；
-- 周期 OPS：3 进程、2 重启、2 加载、44 粒子、52 字段断言、38 个直接大于 255 的类型与携带字段通过；
-- 模块/Lua 回归确认从 `HE` 到 `TS` 的各批代表项均可直接选择且 Lua 仍优先分配 ID `255`；
-- 全新 `build-periodic-halogen-final-clean` Windows x64 Release 构建 `551/551` 通过；最终 EXE SHA-256 `2D70ADE599F15718A415B813E4D918C62C3C641852F6AA6CBF0F05321C868F08`，Meson static `21/21`、Python `153/153`（0 skip）通过；
-- clean EXE 已复跑四模块、完整/简化生态、周期、模块、六类 OPS 与 mixed OPS：合计 21 个进程、14 次重启、14 次加载验证；六类为 123 粒子/172 字段断言，周期用例含 38 个大于 255 的直接类型。
+- 第一过渡系复用 `TTAN=144`、`CHRM=262`、`IRON=76`、`COBT=263`、`NICL=260`、`COPR=257`、`ZINC=265`；新增 `SC=382`、`V=383`、`MN=384`，实现钪放电灯辉光、钒工具钢合金、锰钢液脱氧及分级酸蚀/氧化/汽化；
+- 共享 `OmniPeriodic.cpp` 只做 `3x3` 局部检查，放电、低温换热、七类主族、第一过渡系反应和衰变共享 `1024` 次/帧预算；火焰、高能光子和着色蒸气寿命有限；
+- 真实客户端 Lua 回归：`OMNI_PERIODIC_STATUS=PASS`、41 个新元素、67 个已实现周期映射、七个主族各 6 个成员及第一过渡系 10 个成员，压力帧事件恰为 1024；
+- 周期 OPS：3 进程、2 重启、2 加载、47 粒子、55 字段断言、41 个直接大于 255 的类型与携带字段通过；
+- 模块/Lua 回归确认从 `HE` 到 `SC` 的各批代表项均可直接选择且 Lua 仍优先分配 ID `255`；
+- 全新 `build-periodic-first-transition-final-clean` Windows x64 Release 构建 `554/554` 通过；最终 EXE SHA-256 `034592B42F21416D5D9DF59E78E092D7E72F12A5BE2F1E90E73C8D35030500EF`，Meson static `21/21`、Python `154/154`（0 skip）通过；
+- clean EXE 已复跑四模块、完整/简化生态、周期、模块、六类 OPS 与 mixed OPS：合计 21 个进程、14 次重启、14 次加载验证；六类为 126 粒子/175 字段断言，周期用例含 41 个大于 255 的直接类型。
 
 ## Phase 1：纯沙盒方向清理
 
@@ -67,14 +69,14 @@ release_ready=false
 - 删除五个没有实际内容的玩家设置入口，稳定 ID 区间不变；
 - 新增两个真实旧 OPS 的忽略字段/重存兼容探针；
 - 图鉴正文新增“元素说明 / Element description”标签；
-- 重建 12px 字体：14,732 字形、2,696 个语言与周期表必需字符、SHA-256 `B12048E43CF43A4FADA257C9EDF1F9FD7CF31A38B803A44125472B78ACDEB2FA`；补充平面字符 `𫓧` 的 UTF-8 往返和完整语言包离屏渲染已通过；
+- 重建 12px 字体：14,734 字形、2,698 个语言与周期表必需字符、SHA-256 `1C870605D5AAEC0B6AAA6B3B71475060210201BCF909D992D92D811335ADAC30`；补充平面字符 `𫓧` 的 UTF-8 往返和完整语言包离屏渲染已通过；
 - 全新 Release clean build `509/509` 通过，EXE SHA-256 `CAC60B021E92E46C232B8DEF07126BE8CF2F791BDE1722550C341AA02D3A05C4`；Meson static `18/18`、Python `124/124`、0 skip。
 - 当前四模块及完整/简化生态 Lua 回归 `6/6`；0.2 反应样例 `7/7`、回归场景 `8/8`；自动化场景 `9/9`、工程断言组 `6/6`、95 断言、停止增量 0。
 - 官方与四模块 OPS `5/5`：15 个进程、10 次重启、10 次加载、79 粒子、每次加载合计 120 个字段断言。
 
 ## 下一步
 
-1. 实现第一过渡系共享行为与缺失成员；
+1. 实现第二过渡系共享行为与缺失成员；
 2. 连续推进后续过渡金属、镧系和锕系元素；
 3. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
 4. 保持 `release_ready=false`，直到 118 元素、300+ 材料和全部 1.0.0 门禁真实完成。

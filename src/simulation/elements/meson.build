@@ -381,9 +381,9 @@ simulation_elem_names = [
 	'AR',   # 379: periodic Ar
 	'K',    # 380: periodic K
 	'CA',   # 381: periodic Ca
-	disabler(), # 382: periodic Sc reserved
-	disabler(), # 383: periodic V reserved
-	disabler(), # 384: periodic Mn reserved
+	'SC',   # 382: periodic Sc
+	'V',    # 383: periodic V
+	'MN',   # 384: periodic Mn
 	'GA',   # 385: periodic Ga
 	'GE',   # 386: periodic Ge
 	'AS',   # 387: periodic As

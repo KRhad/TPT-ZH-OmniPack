@@ -125,6 +125,9 @@ local definitions = {
     iodine = { "OMNI_PT_I", "I", 404 },
     astatine = { "OMNI_PT_AT", "AT", 430 },
     tennessine = { "OMNI_PT_TS", "TS", 460 },
+    scandium = { "OMNI_PT_SC", "SC", 382 },
+    vanadium = { "OMNI_PT_V", "V", 383 },
+    manganese = { "OMNI_PT_MN", "MN", 384 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -155,6 +158,7 @@ local module_keys = {
         "nitrogen", "phosphorus", "arsenic", "antimony", "bismuth",
         "moscovium", "sulfur", "selenium", "tellurium", "livermorium",
         "fluorine", "bromine", "iodine", "astatine", "tennessine",
+        "scandium", "vanadium", "manganese",
     },
 }
 

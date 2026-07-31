@@ -99,6 +99,16 @@ struct HalogenProperties
 	unsigned int vapourColour;
 };
 
+struct FirstTransitionProperties
+{
+	float acidThreshold;
+	float oxygenThreshold;
+	float boilingPoint;
+	int reactionHeat;
+	float pressure;
+	unsigned int flameColour;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -274,6 +284,21 @@ HalogenProperties HalogenPropertiesFor(int type)
 	}
 }
 
+FirstTransitionProperties FirstTransitionPropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_SC:
+		return { 320.0f, 750.0f, 3109.0f, 130, 0.35f, 0xFFDDEBFF };
+	case PT_V:
+		return { 420.0f, 900.0f, 3680.0f, 100, 0.25f, 0xFFC8D8FF };
+	case PT_MN:
+		return { 300.0f, 650.0f, 2334.0f, 180, 0.45f, 0xFFFFD8A0 };
+	default:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 0, 0.0f, 0 };
+	}
+}
+
 bool IsAlkaliMetal(int type)
 {
 	return type == PT_NA || type == PT_K || type == PT_CS || type == PT_FR;
@@ -312,6 +337,11 @@ bool IsHalogenElement(int type)
 {
 	return type == PT_F || type == PT_CHLR || type == PT_BR ||
 		type == PT_I || type == PT_AT || type == PT_TS;
+}
+
+bool IsFirstTransitionExtension(int type)
+{
+	return type == PT_SC || type == PT_V || type == PT_MN;
 }
 
 bool IsHalogenReactiveMetal(int type)
@@ -1983,6 +2013,253 @@ bool UpdateHalogen(UPDATE_FUNC_ARGS, int sourceType)
 	}
 	return VaporiseHalogen(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
+
+bool ExciteScandium(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_SC || parts[i].type != PT_SC || parts[i].life > 0 ||
+		!HasLocalDischarge(x, y, pmap, sim) || !sim->rng.chance(1, 3) ||
+		!ConsumeEvent(sim))
+	{
+		return false;
+	}
+	parts[i].life = 12;
+	parts[i].temp = std::min(parts[i].temp + 18.0f, MAX_TEMP);
+	int photon = sim->create_part(-3, x, y, PT_PHOT);
+	if (photon >= 0)
+	{
+		parts[photon].ctype = 0x000FF000;
+		parts[photon].temp = parts[i].temp;
+		parts[photon].life = 20;
+	}
+	return true;
+}
+
+bool AlloyVanadiumToolSteel(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_V || parts[i].temp < 1800.0f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_LAVA)
+			{
+				continue;
+			}
+			auto steel = ID(packed);
+			if (parts[steel].ctype != PT_STEL || parts[steel].temp < 1700.0f ||
+				!ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto temperature = std::max(
+				1800.0f, (parts[i].temp + parts[steel].temp) * 0.5f);
+			sim->part_change_type(i, x, y, PT_LAVA);
+			ResetReactionProduct(parts[i], PT_LAVA);
+			parts[i].ctype = PT_TSTL;
+			parts[i].temp = temperature;
+			ResetReactionProduct(parts[steel], PT_LAVA);
+			parts[steel].ctype = PT_TSTL;
+			parts[steel].temp = temperature;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool DeoxidiseSteelWithManganese(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_MN || parts[i].temp < 1200.0f)
+	{
+		return false;
+	}
+	int molten = -1;
+	int oxygen = -1;
+	int moltenX = 0;
+	int moltenY = 0;
+	int oxygenX = 0;
+	int oxygenY = 0;
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed)
+			{
+				continue;
+			}
+			auto neighbour = ID(packed);
+			if (TYP(packed) == PT_O2 && oxygen < 0)
+			{
+				oxygen = neighbour;
+				oxygenX = x + rx;
+				oxygenY = y + ry;
+			}
+			else if (TYP(packed) == PT_LAVA && molten < 0 &&
+				(parts[neighbour].ctype == PT_IRON || parts[neighbour].ctype == PT_STEL) &&
+				parts[neighbour].temp >= 1600.0f)
+			{
+				molten = neighbour;
+				moltenX = x + rx;
+				moltenY = y + ry;
+			}
+		}
+	}
+	if (molten < 0 || oxygen < 0 || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = std::max(
+		1600.0f, (parts[i].temp + parts[molten].temp) * 0.5f);
+	sim->part_change_type(i, x, y, PT_LAVA);
+	ResetReactionProduct(parts[i], PT_LAVA);
+	parts[i].ctype = PT_STEL;
+	parts[i].temp = temperature;
+	ResetReactionProduct(parts[molten], PT_LAVA);
+	parts[molten].ctype = PT_STEL;
+	parts[molten].temp = temperature;
+	sim->part_change_type(oxygen, oxygenX, oxygenY, PT_SLAG);
+	ResetReactionProduct(parts[oxygen], PT_SLAG);
+	parts[oxygen].temp = std::min(temperature, 1450.0f);
+	AddBoundedPressure(sim, moltenX, moltenY, 0.2f);
+	return true;
+}
+
+bool ReactFirstTransitionWithAcid(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = FirstTransitionPropertiesFor(sourceType);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_ACID)
+			{
+				continue;
+			}
+			auto acid = ID(packed);
+			if (std::max(parts[i].temp, parts[acid].temp) < properties.acidThreshold ||
+				!ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[acid].temp) +
+					float(properties.reactionHeat),
+				MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SALT);
+			sim->part_change_type(acid, x + rx, y + ry, PT_H2);
+			ResetReactionProduct(parts[i], PT_SALT);
+			ResetReactionProduct(parts[acid], PT_H2);
+			parts[i].temp = temperature;
+			parts[acid].temp = temperature;
+			AddBoundedPressure(sim, x, y, properties.pressure);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool OxidiseHotFirstTransition(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = FirstTransitionPropertiesFor(sourceType);
+	if (parts[i].temp < properties.oxygenThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2 || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto oxygen = ID(packed);
+			auto temperature = std::min(
+				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_MSCR);
+			ResetReactionProduct(parts[i], PT_MSCR);
+			parts[i].ctype = sourceType;
+			parts[i].temp = temperature;
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
+			ResetReactionProduct(parts[oxygen], PT_FIRE);
+			parts[oxygen].temp = temperature;
+			parts[oxygen].life = 20;
+			parts[oxygen].dcolour = properties.flameColour;
+			AddBoundedPressure(sim, x, y, properties.pressure * 0.35f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseFirstTransition(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = FirstTransitionPropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_FIRE);
+	ResetReactionProduct(parts[i], PT_FIRE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 60;
+	parts[i].dcolour = properties.flameColour;
+	AddBoundedPressure(sim, x, y, properties.pressure * 0.25f);
+	return true;
+}
+
+bool UpdateFirstTransition(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsFirstTransitionExtension(sourceType))
+	{
+		return false;
+	}
+	if (AlloyVanadiumToolSteel(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (DeoxidiseSteelWithManganese(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (VaporiseFirstTransition(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (ReactFirstTransitionWithAcid(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (OxidiseHotFirstTransition(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return ExciteScandium(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
 }
 
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
@@ -2248,4 +2525,32 @@ void OmniHalogenCreate(ELEMENT_CREATE_FUNC_ARGS)
 	{
 		sim->parts[i].tmp = sim->rng.between(35, 75);
 	}
+}
+
+int OmniFirstTransitionUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateFirstTransition(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenFirstTransitionUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateFirstTransition(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+int OmniFirstTransitionGraphics(GRAPHICS_FUNC_ARGS)
+{
+	if (cpart->type == PT_SC && cpart->life > 0)
+	{
+		int intensity = std::min(cpart->life * 10, 120);
+		*firea = intensity;
+		*firer = std::min(*colr + 35, 255);
+		*fireg = std::min(*colg + 55, 255);
+		*fireb = 255;
+		*pixel_mode |= PMODE_GLOW | FIRE_ADD;
+	}
+	return 0;
 }

@@ -19,11 +19,11 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 18,Ar,氩,Argon,,OMNI_PT_AR,,TPT-ZH-OmniPack/original,21b160a5bd25df266c6f82528eb12f3103b39b03,family_generated,379,implemented,runtime-tested
 19,K,钾,Potassium,,OMNI_PT_K,fun_chemicals,TPT-ZH-OmniPack/original,bcf5accf04dae7269dacce250e46d16c1632f94f,family_generated,380,implemented,runtime-tested
 20,Ca,钙,Calcium,,OMNI_PT_CA,,TPT-ZH-OmniPack/original,546b8791ca6b94ddd4791f42ededd5684168c59a,family_generated,381,implemented,runtime-tested
-21,Sc,钪,Scandium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,382,planned,not_tested
+21,Sc,钪,Scandium,,OMNI_PT_SC,,TPT-ZH-OmniPack/original,6c64c0a0b39ed3e9830f1077b04779b21943c380,family_generated,382,implemented,runtime-tested
 22,Ti,钛,Titanium,DEFAULT_PT_TTAN,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,144,implemented,source-verified
-23,V,钒,Vanadium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,383,planned,not_tested
+23,V,钒,Vanadium,,OMNI_PT_V,,TPT-ZH-OmniPack/original,6c64c0a0b39ed3e9830f1077b04779b21943c380,family_generated,383,implemented,runtime-tested
 24,Cr,铬,Chromium,,OMNI_PT_CHRM,,SeppoTPT/Seppo-s-Metallurgy-Mod-SRC,c3a8dd171a1c0fefc9a386e7e069f81d91f1514f,reuse_omnipack,262,implemented,runtime-tested
-25,Mn,锰,Manganese,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,384,planned,not_tested
+25,Mn,锰,Manganese,,OMNI_PT_MN,,TPT-ZH-OmniPack/original,6c64c0a0b39ed3e9830f1077b04779b21943c380,family_generated,384,implemented,runtime-tested
 26,Fe,铁,Iron,DEFAULT_PT_IRON,,alchemy;biological_mod;bmn_mod;chemistry_mod;cracker1000;cyens;cyens_src;dtttpt;jacob1;magnet_toy;metacircuits;norbs_mod;nucular_mod;powder_better;record_mod;science_toy;seppo;spikeviper;ultimata;unproductive,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,76,implemented,source-verified
 27,Co,钴,Cobalt,,OMNI_PT_COBT,chem_mod_lua;cyens_src,SeppoTPT/Seppo-s-Metallurgy-Mod-SRC,c3a8dd171a1c0fefc9a386e7e069f81d91f1514f,reuse_omnipack,263,implemented,runtime-tested
 28,Ni,镍,Nickel,,OMNI_PT_NICL,,SeppoTPT/Seppo-s-Metallurgy-Mod-SRC,c3a8dd171a1c0fefc9a386e7e069f81d91f1514f,reuse_omnipack,260,implemented,runtime-tested

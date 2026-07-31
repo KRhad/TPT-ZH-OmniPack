@@ -60,6 +60,12 @@ assert(tennessine == 460,
 ui.activeTool(0, "OMNI_PT_TS")
 assert(ui.activeTool(0) == "OMNI_PT_TS",
     "always-available superheavy halogen content was blocked by a module gate")
+local scandium = assert(elements.OMNI_PT_SC)
+assert(scandium == 382,
+    "periodic scandium stable ID changed: " .. tostring(scandium))
+ui.activeTool(0, "OMNI_PT_SC")
+assert(ui.activeTool(0) == "OMNI_PT_SC",
+    "always-available first-transition content was blocked by a module gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -88,4 +94,5 @@ report:write("OMNI_PERIODIC_OXYGEN_GROUP_ACTIVE=OMNI_PT_S\n")
 report:write("OMNI_PERIODIC_OXYGEN_SUPERHEAVY_ACTIVE=OMNI_PT_LV\n")
 report:write("OMNI_PERIODIC_HALOGEN_ACTIVE=OMNI_PT_F\n")
 report:write("OMNI_PERIODIC_HALOGEN_SUPERHEAVY_ACTIVE=OMNI_PT_TS\n")
+report:write("OMNI_PERIODIC_FIRST_TRANSITION_ACTIVE=OMNI_PT_SC\n")
 report:close()

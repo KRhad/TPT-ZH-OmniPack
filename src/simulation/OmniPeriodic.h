@@ -33,3 +33,6 @@ int OmniHalogenUpdate(UPDATE_FUNC_ARGS);
 int OmniMoltenHalogenUpdate(UPDATE_FUNC_ARGS);
 int OmniHalogenGraphics(GRAPHICS_FUNC_ARGS);
 void OmniHalogenCreate(ELEMENT_CREATE_FUNC_ARGS);
+int OmniFirstTransitionUpdate(UPDATE_FUNC_ARGS);
+int OmniMoltenFirstTransitionUpdate(UPDATE_FUNC_ARGS);
+int OmniFirstTransitionGraphics(GRAPHICS_FUNC_ARGS);

@@ -73,6 +73,12 @@ EXPECTED_HALOGEN_ELEMENTS = {
     460: "TS",
 }
 
+EXPECTED_FIRST_TRANSITION_ELEMENTS = {
+    382: "SC",
+    383: "V",
+    384: "MN",
+}
+
 EXPECTED_NEW_ELEMENTS = (
     EXPECTED_NOBLE_ELEMENTS
     | EXPECTED_ALKALI_ELEMENTS
@@ -82,6 +88,7 @@ EXPECTED_NEW_ELEMENTS = (
     | EXPECTED_NITROGEN_GROUP_ELEMENTS
     | EXPECTED_OXYGEN_GROUP_ELEMENTS
     | EXPECTED_HALOGEN_ELEMENTS
+    | EXPECTED_FIRST_TRANSITION_ELEMENTS
 )
 
 
@@ -144,9 +151,9 @@ def check_source_map(root: Path, errors: list[str]) -> None:
     if [int(row["atomic_number"]) for row in rows] != list(range(1, 119)):
         errors.append(f"{path}: atomic numbers are not the complete ordered range 1..118")
     implemented = [row for row in rows if row.get("status") == "implemented"]
-    if len(implemented) != 64:
+    if len(implemented) != 67:
         errors.append(
-            f"{path}: expected 64 implemented mappings after the halogen batch "
+            f"{path}: expected 67 implemented mappings after the first transition batch "
             f"and found {len(implemented)}"
         )
     by_number = {int(row["atomic_number"]): row for row in rows}
@@ -162,6 +169,8 @@ def check_source_map(root: Path, errors: list[str]) -> None:
         7: 373, 15: 377, 33: 387, 51: 402, 83: 429, 115: 458,
         8: 61, 16: 378, 34: 388, 52: 403, 84: 182, 116: 459,
         9: 374, 17: 360, 35: 389, 53: 404, 85: 430, 117: 460,
+        21: 382, 22: 144, 23: 383, 24: 262, 25: 384,
+        26: 76, 27: 263, 28: 260, 29: 257, 30: 265,
     }
     for atomic_number, stable_id in expected_atomic.items():
         row = by_number.get(atomic_number, {})
@@ -222,6 +231,12 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "halogen disinfection": "DisinfectWithHalogen",
         "halogen vaporisation": "VaporiseHalogen",
         "radioactive halogen decay": "DecayRadioactiveHalogen",
+        "first-transition acid chemistry": "ReactFirstTransitionWithAcid",
+        "first-transition oxidation": "OxidiseHotFirstTransition",
+        "first-transition vaporisation": "VaporiseFirstTransition",
+        "scandium discharge": "ExciteScandium",
+        "vanadium tool-steel alloy": "AlloyVanadiumToolSteel",
+        "manganese steel deoxidation": "DeoxidiseSteelWithManganese",
     }
     for label, marker in required.items():
         if marker not in engine:
@@ -321,6 +336,17 @@ def check_engine(root: Path, errors: list[str]) -> None:
         ):
             if marker not in text:
                 errors.append(f"{path}: missing periodic element marker {marker!r}")
+    for stable_id, name in EXPECTED_FIRST_TRANSITION_ELEMENTS.items():
+        path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
+        text = read_text(path, errors)
+        for marker in (
+            f'Identifier = "OMNI_PT_{name}"',
+            "HeatCapacity =",
+            "Update = &OmniFirstTransitionUpdate",
+            "Graphics = &OmniFirstTransitionGraphics",
+        ):
+            if marker not in text:
+                errors.append(f"{path}: missing periodic element marker {marker!r}")
     magnesium = read_text(
         root / "src" / "simulation" / "elements" / "MAGN.cpp", errors
     )
@@ -371,6 +397,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         errors.append("LAVA.cpp: molten oxygen-group ctype update hook is missing")
     if "OmniMoltenHalogenUpdate" not in lava:
         errors.append("LAVA.cpp: molten halogen ctype update hook is missing")
+    if "OmniMoltenFirstTransitionUpdate" not in lava:
+        errors.append("LAVA.cpp: molten first-transition ctype update hook is missing")
     liquid_nitrogen = read_text(
         root / "src" / "simulation" / "elements" / "LNTG.cpp", errors
     )
@@ -404,6 +432,25 @@ def check_engine(root: Path, errors: list[str]) -> None:
     ):
         if marker not in chlorine:
             errors.append(f"CHLR.cpp: missing combined chlorine marker {marker!r}")
+    titanium = read_text(
+        root / "src" / "simulation" / "elements" / "TTAN.cpp", errors
+    )
+    for marker in ('Identifier = "DEFAULT_PT_TTAN"', "HighTemperature = 1941.0f", "bmap_blockair"):
+        if marker not in titanium:
+            errors.append(f"TTAN.cpp: missing official titanium marker {marker!r}")
+    iron = read_text(
+        root / "src" / "simulation" / "elements" / "IRON.cpp", errors
+    )
+    for marker in ('Identifier = "DEFAULT_PT_IRON"', "case PT_SLTW:", "case PT_O2:"):
+        if marker not in iron:
+            errors.append(f"IRON.cpp: missing official iron marker {marker!r}")
+    for name in ("CHRM", "COBT", "NICL", "COPR", "ZINC"):
+        text = read_text(
+            root / "src" / "simulation" / "elements" / f"{name}.cpp", errors
+        )
+        for marker in (f'Identifier = "OMNI_PT_{name}"', "OmniMetallurgyMetalUpdate"):
+            if marker not in text:
+                errors.append(f"{name}.cpp: missing reused transition marker {marker!r}")
 
 
 def check_ui(root: Path, errors: list[str]) -> None:
@@ -462,7 +509,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"periodic-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("periodic-audit: PASS (118 mapped, 64 implemented, 38 new periodic elements, 1024/frame)")
+        print("periodic-audit: PASS (118 mapped, 67 implemented, 41 new periodic elements, 1024/frame)")
     return 0
 
 

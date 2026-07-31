@@ -164,6 +164,23 @@ class PeriodicAuditTests(unittest.TestCase):
             periodic_audit.read_text = original
         self.assertTrue(any("molten halogen" in error for error in errors))
 
+    def test_missing_molten_first_transition_hook_is_rejected(self) -> None:
+        lava_path = ROOT / "src" / "simulation" / "elements" / "LAVA.cpp"
+        source = lava_path.read_text(encoding="utf-8")
+        original = periodic_audit.read_text
+        errors: list[str] = []
+        try:
+            periodic_audit.read_text = lambda path, output: (
+                source.replace(
+                    "OmniMoltenFirstTransitionUpdate", "removedFirstTransitionHook"
+                )
+                if path == lava_path else original(path, output)
+            )
+            periodic_audit.check_engine(ROOT, errors)
+        finally:
+            periodic_audit.read_text = original
+        self.assertTrue(any("molten first-transition" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

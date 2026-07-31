@@ -71,7 +71,12 @@ try {
             $resultText -match "(?m)^OMNI_PERIODIC_CARBON_GROUP_ACTIVE=OMNI_PT_GE\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_CARBON_SUPERHEAVY_ACTIVE=OMNI_PT_FL\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_NITROGEN_GROUP_ACTIVE=OMNI_PT_N\r?$" -and
-            $resultText -match "(?m)^OMNI_PERIODIC_NITROGEN_SUPERHEAVY_ACTIVE=OMNI_PT_MC\r?$"
+            $resultText -match "(?m)^OMNI_PERIODIC_NITROGEN_SUPERHEAVY_ACTIVE=OMNI_PT_MC\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_OXYGEN_GROUP_ACTIVE=OMNI_PT_S\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_OXYGEN_SUPERHEAVY_ACTIVE=OMNI_PT_LV\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_HALOGEN_ACTIVE=OMNI_PT_F\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_HALOGEN_SUPERHEAVY_ACTIVE=OMNI_PT_TS\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_FIRST_TRANSITION_ACTIVE=OMNI_PT_SC\r?$"
         ) {
             $passed = $true
             break

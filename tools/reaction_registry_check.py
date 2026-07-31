@@ -139,6 +139,12 @@ REQUIRED_REACTIONS = {
     "periodic.halogen_vaporisation",
     "periodic.astatine_decay",
     "periodic.tennessine_decay",
+    "periodic.first_transition_acid",
+    "periodic.first_transition_oxidation",
+    "periodic.first_transition_vaporisation",
+    "periodic.scandium_discharge",
+    "periodic.vanadium_tool_steel",
+    "periodic.manganese_deoxidation",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
