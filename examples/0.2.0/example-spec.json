@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "content_version": "0.2.0-dev",
+  "examples": [
+    {
+      "id": "peroxide-pathogen",
+      "filename": "01-peroxide-pathogen.stm",
+      "purpose": "生态—化学病原处理的可复现初始场景",
+      "particles": [
+        {"element": "PERO", "x": 120, "y": 120, "temp": 300.0},
+        {"element": "PATH", "x": 121, "y": 120, "temp": 300.0}
+      ]
+    },
+    {
+      "id": "humus-fertilizer",
+      "filename": "02-humus-fertilizer.stm",
+      "purpose": "湿腐殖质肥料回收场景",
+      "particles": [
+        {"element": "HUMS", "x": 120, "y": 120, "temp": 300.0},
+        {"element": "FERT", "x": 121, "y": 120, "temp": 300.0},
+        {"element": "WATR", "x": 120, "y": 121, "temp": 300.0}
+      ]
+    },
+    {
+      "id": "slag-acid",
+      "filename": "03-slag-acid.stm",
+      "purpose": "温和炉渣酸处理场景",
+      "particles": [
+        {"element": "CATA", "x": 120, "y": 120, "temp": 320.0},
+        {"element": "SLAG", "x": 121, "y": 120, "temp": 320.0},
+        {"element": "ACID", "x": 120, "y": 121, "temp": 320.0}
+      ]
+    },
+    {
+      "id": "shield-assembly",
+      "filename": "04-shield-assembly.stm",
+      "purpose": "不锈钢—熔融铅—镍铬火花屏蔽组装场景",
+      "particles": [
+        {"element": "SSIL", "x": 120, "y": 120, "temp": 800.0},
+        {"element": "LAVA", "ctype": "LEAD", "x": 121, "y": 120, "temp": 800.0},
+        {"element": "NCRM", "x": 120, "y": 121, "temp": 800.0}
+      ]
+    },
+    {
+      "id": "waste-stabilization",
+      "filename": "05-waste-stabilization.stm",
+      "purpose": "冷却四模块废物稳定化场景",
+      "particles": [
+        {"element": "NWST", "x": 120, "y": 120, "temp": 550.0},
+        {"element": "SLAG", "x": 121, "y": 120, "temp": 550.0},
+        {"element": "HUMS", "x": 120, "y": 121, "temp": 550.0},
+        {"element": "POLY", "x": 119, "y": 120, "temp": 550.0},
+        {"element": "WATR", "x": 120, "y": 119, "temp": 550.0},
+        {"element": "CATA", "x": 121, "y": 121, "temp": 550.0}
+      ]
+    },
+    {
+      "id": "waste-missing-catalyst",
+      "filename": "06-waste-missing-catalyst.stm",
+      "purpose": "输入不全时保持核废物稳定化停止的控制场景",
+      "particles": [
+        {"element": "NWST", "x": 120, "y": 120, "temp": 550.0},
+        {"element": "SLAG", "x": 121, "y": 120, "temp": 550.0},
+        {"element": "HUMS", "x": 120, "y": 121, "temp": 550.0},
+        {"element": "POLY", "x": 119, "y": 120, "temp": 550.0},
+        {"element": "WATR", "x": 120, "y": 119, "temp": 550.0}
+      ]
+    },
+    {
+      "id": "integrated-recovery",
+      "filename": "07-integrated-recovery.stm",
+      "purpose": "四条跨模块链并行恢复的综合场景",
+      "particles": [
+        {"element": "PERO", "x": 96, "y": 96, "temp": 300.0},
+        {"element": "PATH", "x": 97, "y": 96, "temp": 300.0},
+        {"element": "HUMS", "x": 112, "y": 96, "temp": 300.0},
+        {"element": "FERT", "x": 113, "y": 96, "temp": 300.0},
+        {"element": "WATR", "x": 112, "y": 97, "temp": 300.0},
+        {"element": "CATA", "x": 128, "y": 96, "temp": 320.0},
+        {"element": "SLAG", "x": 129, "y": 96, "temp": 320.0},
+        {"element": "ACID", "x": 128, "y": 97, "temp": 320.0},
+        {"element": "SSIL", "x": 96, "y": 128, "temp": 800.0},
+        {"element": "LAVA", "ctype": "LEAD", "x": 97, "y": 128, "temp": 800.0},
+        {"element": "NCRM", "x": 96, "y": 129, "temp": 800.0},
+        {"element": "NWST", "x": 128, "y": 128, "temp": 550.0},
+        {"element": "SLAG", "x": 129, "y": 128, "temp": 550.0},
+        {"element": "HUMS", "x": 128, "y": 129, "temp": 550.0},
+        {"element": "POLY", "x": 127, "y": 128, "temp": 550.0},
+        {"element": "WATR", "x": 128, "y": 127, "temp": 550.0},
+        {"element": "CATA", "x": 129, "y": 129, "temp": 550.0}
+      ]
+    }
+  ]
+}
