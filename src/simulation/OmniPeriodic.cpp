@@ -129,6 +129,16 @@ struct ThirdTransitionProperties
 	unsigned int flameColour;
 };
 
+struct LanthanideProperties
+{
+	float acidThreshold;
+	float oxygenThreshold;
+	float boilingPoint;
+	int reactionHeat;
+	float pressure;
+	unsigned int emissionColour;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -365,6 +375,45 @@ ThirdTransitionProperties ThirdTransitionPropertiesFor(int type)
 	}
 }
 
+LanthanideProperties LanthanidePropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_LA:
+		return { 293.0f, 550.0f, 3737.0f, 140, 0.35f, 0xFFB8D0FF };
+	case PT_CE:
+		return { 320.0f, 800.0f, 3716.0f, 130, 0.30f, 0xFFFFD080 };
+	case PT_PR:
+		return { 330.0f, 620.0f, 3793.0f, 125, 0.30f, 0xFFD0E8FF };
+	case PT_ND:
+		return { 340.0f, 650.0f, 3347.0f, 120, 0.30f, 0xFFB8D8FF };
+	case PT_PM:
+		return { 300.0f, 500.0f, 3273.0f, 180, 0.45f, 0xFF80FFB0 };
+	case PT_SM:
+		return { 350.0f, 650.0f, 2067.0f, 115, 0.30f, 0xFFD8D8FF };
+	case PT_EU:
+		return { 293.0f, 500.0f, 1802.0f, 150, 0.40f, 0xFFFF9070 };
+	case PT_GD:
+		return { 380.0f, 700.0f, 3546.0f, 110, 0.28f, 0xFF90FFE8 };
+	case PT_TB:
+		return { 400.0f, 720.0f, 3503.0f, 105, 0.28f, 0xFF80FF80 };
+	case PT_DY:
+		return { 420.0f, 750.0f, 2840.0f, 100, 0.25f, 0xFF90B8FF };
+	case PT_HO:
+		return { 430.0f, 780.0f, 2993.0f, 95, 0.25f, 0xFFD090FF };
+	case PT_ER:
+		return { 450.0f, 800.0f, 3141.0f, 90, 0.22f, 0xFFFF90C8 };
+	case PT_TM:
+		return { 420.0f, 720.0f, 2223.0f, 100, 0.24f, 0xFF80C8FF };
+	case PT_YB:
+		return { 293.0f, 450.0f, 1469.0f, 155, 0.42f, 0xFFFFE0A0 };
+	case PT_LU:
+		return { 500.0f, 900.0f, 3675.0f, 85, 0.20f, 0xFFDDE8FF };
+	default:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 0, 0.0f, 0 };
+	}
+}
+
 bool IsAlkaliMetal(int type)
 {
 	return type == PT_NA || type == PT_K || type == PT_CS || type == PT_FR;
@@ -421,6 +470,15 @@ bool IsThirdTransitionExtension(int type)
 {
 	return type == PT_HF || type == PT_TA || type == PT_RE ||
 		type == PT_OS || type == PT_IR;
+}
+
+bool IsLanthanide(int type)
+{
+	return type == PT_LA || type == PT_CE || type == PT_PR ||
+		type == PT_ND || type == PT_PM || type == PT_SM ||
+		type == PT_EU || type == PT_GD || type == PT_TB ||
+		type == PT_DY || type == PT_HO || type == PT_ER ||
+		type == PT_TM || type == PT_YB || type == PT_LU;
 }
 
 bool IsHalogenReactiveMetal(int type)
@@ -3085,6 +3143,437 @@ bool UpdateThirdTransition(UPDATE_FUNC_ARGS, int sourceType)
 	}
 	return OxidiseHotThirdTransition(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
+
+bool ReleaseLanthanumHydrogen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_LA || parts[i].tmp <= 0 || parts[i].temp < 900.0f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry) ||
+				pmap[y + ry][x + rx])
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+			int hydrogen = sim->create_part(-1, x + rx, y + ry, PT_H2);
+			if (hydrogen < 0)
+			{
+				return false;
+			}
+			parts[hydrogen].temp = parts[i].temp;
+			--parts[i].tmp;
+			AddBoundedPressure(sim, x, y, 0.15f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool AbsorbLanthanumHydrogen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_LA || parts[i].tmp >= 4 || parts[i].temp < 300.0f ||
+		parts[i].temp >= 700.0f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_H2 || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto hydrogen = ID(packed);
+			parts[i].temp = std::min(
+				std::max(parts[i].temp, parts[hydrogen].temp) + 20.0f, MAX_TEMP);
+			parts[i].tmp = std::min(parts[i].tmp + 1, 4);
+			sim->kill_part(hydrogen);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool ReleaseCeriumOxygen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_CE || parts[i].tmp <= 0 || parts[i].temp < 1050.0f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry) ||
+				pmap[y + ry][x + rx])
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+			int oxygen = sim->create_part(-1, x + rx, y + ry, PT_O2);
+			if (oxygen < 0)
+			{
+				return false;
+			}
+			parts[oxygen].temp = parts[i].temp;
+			--parts[i].tmp;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool AbsorbCeriumOxygen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_CE || parts[i].tmp >= 4 || parts[i].temp < 400.0f ||
+		parts[i].temp >= 750.0f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2 || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto oxygen = ID(packed);
+			parts[i].temp = std::min(
+				std::max(parts[i].temp, parts[oxygen].temp) + 30.0f, MAX_TEMP);
+			parts[i].tmp = std::min(parts[i].tmp + 1, 4);
+			sim->kill_part(oxygen);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool DecayPromethium(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_PM || parts[i].life > 0)
+	{
+		return false;
+	}
+	if (!ConsumeEvent(sim))
+	{
+		parts[i].life = 1;
+		return false;
+	}
+	auto temperature = std::min(parts[i].temp + 180.0f, MAX_TEMP);
+	if (parts[i].type == PT_LAVA)
+	{
+		parts[i].ctype = PT_SM;
+		parts[i].tmp = 0;
+		parts[i].tmp2 = 0;
+		parts[i].life = 0;
+	}
+	else
+	{
+		sim->part_change_type(i, x, y, PT_SM);
+		ResetReactionProduct(parts[i], PT_SM);
+	}
+	parts[i].temp = temperature;
+	int photon = sim->create_part(-3, x, y, PT_PHOT);
+	if (photon >= 0)
+	{
+		parts[photon].ctype = 0x0003FFF0;
+		parts[photon].temp = temperature;
+		parts[photon].life = 18;
+	}
+	return true;
+}
+
+bool CaptureLanthanideNeutron(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_SM && sourceType != PT_GD && sourceType != PT_LU)
+	{
+		return false;
+	}
+	float captureHeat = sourceType == PT_GD ? 180.0f :
+		(sourceType == PT_SM ? 90.0f : 60.0f);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			for (auto packed : { pmap[y + ry][x + rx], sim->photons[y + ry][x + rx] })
+			{
+				if (!packed || TYP(packed) != PT_NEUT)
+				{
+					continue;
+				}
+				if (!ConsumeEvent(sim))
+				{
+					return false;
+				}
+				auto neutron = ID(packed);
+				parts[i].temp = std::min(
+					std::max(parts[i].temp, parts[neutron].temp) + captureHeat,
+					MAX_TEMP);
+				parts[i].tmp = std::min(parts[i].tmp + 1, 255);
+				parts[i].life = std::max(parts[i].life, 30);
+				sim->kill_part(neutron);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool MagnetiseLanthanide(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_PR && sourceType != PT_ND && sourceType != PT_SM &&
+		sourceType != PT_GD && sourceType != PT_DY && sourceType != PT_HO)
+	{
+		return false;
+	}
+	if (parts[i].life > 0 || !HasLocalDischarge(x, y, pmap, sim) ||
+		!ConsumeEvent(sim))
+	{
+		return false;
+	}
+	int intensity = sourceType == PT_DY ? 80 :
+		(sourceType == PT_HO ? 75 : (sourceType == PT_ND ? 70 : 55));
+	parts[i].life = intensity;
+	parts[i].tmp2 = std::min(parts[i].tmp2 + 1, 255);
+	parts[i].temp = std::min(parts[i].temp + float(intensity) * 0.25f, MAX_TEMP);
+	return true;
+}
+
+bool FluoresceLanthanide(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if ((sourceType != PT_EU && sourceType != PT_TB) || parts[i].life > 0)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = sim->photons[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_PHOT || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto photon = ID(packed);
+			parts[photon].ctype = sourceType == PT_EU ? 0x000FF000 : 0x00003FF0;
+			parts[photon].life = std::max(parts[photon].life, 18);
+			parts[i].life = 60;
+			parts[i].temp = std::min(parts[i].temp + 10.0f, MAX_TEMP);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool AmplifyLanthanidePhoton(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if ((sourceType != PT_ER && sourceType != PT_TM) || parts[i].life > 0 ||
+		!HasLocalPhoton(x, y, sim))
+	{
+		return false;
+	}
+	if (!ConsumeEvent(sim))
+	{
+		return false;
+	}
+	int photon = sim->create_part(-3, x, y, PT_PHOT);
+	if (photon < 0)
+	{
+		return false;
+	}
+	parts[photon].ctype = sourceType == PT_ER ? 0x00003FF0 : 0x03F00000;
+	parts[photon].temp = std::min(parts[i].temp + 20.0f, MAX_TEMP);
+	parts[photon].life = 18;
+	parts[i].life = 45;
+	parts[i].temp = std::min(parts[i].temp + 12.0f, MAX_TEMP);
+	return true;
+}
+
+bool ReactYtterbiumWithWater(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_YB || parts[i].temp < 330.0f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || !IsWaterLike(TYP(packed)) || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto water = ID(packed);
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[water].temp) + 155.0f, MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SALT);
+			sim->part_change_type(water, x + rx, y + ry, PT_H2);
+			ResetReactionProduct(parts[i], PT_SALT);
+			ResetReactionProduct(parts[water], PT_H2);
+			parts[i].temp = temperature;
+			parts[water].temp = temperature;
+			AddBoundedPressure(sim, x, y, 0.6f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool ReactLanthanideWithAcid(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = LanthanidePropertiesFor(sourceType);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_ACID)
+			{
+				continue;
+			}
+			auto acid = ID(packed);
+			if (std::max(parts[i].temp, parts[acid].temp) < properties.acidThreshold ||
+				!ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[acid].temp) +
+					float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SALT);
+			sim->part_change_type(acid, x + rx, y + ry, PT_H2);
+			ResetReactionProduct(parts[i], PT_SALT);
+			ResetReactionProduct(parts[acid], PT_H2);
+			parts[i].temp = temperature;
+			parts[acid].temp = temperature;
+			AddBoundedPressure(sim, x, y, properties.pressure);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool OxidiseHotLanthanide(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = LanthanidePropertiesFor(sourceType);
+	if (parts[i].temp < properties.oxygenThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2 || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto oxygen = ID(packed);
+			auto temperature = std::min(
+				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_MSCR);
+			ResetReactionProduct(parts[i], PT_MSCR);
+			parts[i].ctype = sourceType;
+			parts[i].temp = temperature;
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
+			ResetReactionProduct(parts[oxygen], PT_FIRE);
+			parts[oxygen].temp = temperature;
+			parts[oxygen].life = 20;
+			parts[oxygen].dcolour = properties.emissionColour;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseLanthanide(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = LanthanidePropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_FIRE);
+	ResetReactionProduct(parts[i], PT_FIRE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 60;
+	parts[i].dcolour = properties.emissionColour;
+	return true;
+}
+
+bool UpdateLanthanide(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsLanthanide(sourceType))
+	{
+		return false;
+	}
+	if (DecayPromethium(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (ReleaseLanthanumHydrogen(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		AbsorbLanthanumHydrogen(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		ReleaseCeriumOxygen(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		AbsorbCeriumOxygen(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		CaptureLanthanideNeutron(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		FluoresceLanthanide(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		AmplifyLanthanidePhoton(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		MagnetiseLanthanide(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		ReactYtterbiumWithWater(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		VaporiseLanthanide(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		ReactLanthanideWithAcid(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return OxidiseHotLanthanide(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
 }
 
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
@@ -3453,5 +3942,48 @@ void OmniThirdTransitionCreate(ELEMENT_CREATE_FUNC_ARGS)
 	if (t == PT_HF)
 	{
 		sim->parts[i].tmp = 0;
+	}
+}
+
+int OmniLanthanideUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateLanthanide(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenLanthanideUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateLanthanide(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+int OmniLanthanideGraphics(GRAPHICS_FUNC_ARGS)
+{
+	if (cpart->life > 0)
+	{
+		auto colour = LanthanidePropertiesFor(cpart->type).emissionColour;
+		int intensity = std::min(cpart->life * 3, 150);
+		*firea = intensity;
+		*firer = int((colour >> 16) & 0xFF);
+		*fireg = int((colour >> 8) & 0xFF);
+		*fireb = int(colour & 0xFF);
+		*pixel_mode |= PMODE_GLOW | FIRE_ADD;
+	}
+	return 0;
+}
+
+void OmniLanthanideCreate(ELEMENT_CREATE_FUNC_ARGS)
+{
+	sim->parts[i].tmp = 0;
+	sim->parts[i].tmp2 = 0;
+	if (t == PT_PM)
+	{
+		sim->parts[i].life = sim->rng.between(180, 360);
+	}
+	else
+	{
+		sim->parts[i].life = 0;
 	}
 }

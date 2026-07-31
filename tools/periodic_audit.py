@@ -99,6 +99,24 @@ EXPECTED_THIRD_TRANSITION_ELEMENTS = {
     427: "IR",
 }
 
+EXPECTED_LANTHANIDE_ELEMENTS = {
+    408: "LA",
+    409: "CE",
+    410: "PR",
+    411: "ND",
+    412: "PM",
+    413: "SM",
+    414: "EU",
+    415: "GD",
+    416: "TB",
+    417: "DY",
+    418: "HO",
+    419: "ER",
+    420: "TM",
+    421: "YB",
+    422: "LU",
+}
+
 EXPECTED_NEW_ELEMENTS = (
     EXPECTED_NOBLE_ELEMENTS
     | EXPECTED_ALKALI_ELEMENTS
@@ -111,6 +129,7 @@ EXPECTED_NEW_ELEMENTS = (
     | EXPECTED_FIRST_TRANSITION_ELEMENTS
     | EXPECTED_SECOND_TRANSITION_ELEMENTS
     | EXPECTED_THIRD_TRANSITION_ELEMENTS
+    | EXPECTED_LANTHANIDE_ELEMENTS
 )
 
 
@@ -173,9 +192,9 @@ def check_source_map(root: Path, errors: list[str]) -> None:
     if [int(row["atomic_number"]) for row in rows] != list(range(1, 119)):
         errors.append(f"{path}: atomic numbers are not the complete ordered range 1..118")
     implemented = [row for row in rows if row.get("status") == "implemented"]
-    if len(implemented) != 81:
+    if len(implemented) != 96:
         errors.append(
-            f"{path}: expected 81 implemented mappings after the third transition batch "
+            f"{path}: expected 96 implemented mappings after the lanthanide batch "
             f"and found {len(implemented)}"
         )
     by_number = {int(row["atomic_number"]): row for row in rows}
@@ -197,6 +216,9 @@ def check_source_map(root: Path, errors: list[str]) -> None:
         44: 396, 45: 397, 46: 398, 47: 399, 48: 400,
         72: 423, 73: 424, 74: 171, 75: 425, 76: 426,
         77: 427, 78: 188, 79: 170, 80: 152,
+        57: 408, 58: 409, 59: 410, 60: 411, 61: 412,
+        62: 413, 63: 414, 64: 415, 65: 416, 66: 417,
+        67: 418, 68: 419, 69: 420, 70: 421, 71: 422,
     }
     for atomic_number, stable_id in expected_atomic.items():
         row = by_number.get(atomic_number, {})
@@ -281,6 +303,19 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "rhenium superalloy": "AlloyRheniumSuperalloy",
         "osmium toxic oxidation": "OxidiseOsmiumToToxicVapour",
         "iridium peroxide catalysis": "CatalysePeroxideWithIridium",
+        "lanthanide acid chemistry": "ReactLanthanideWithAcid",
+        "lanthanide oxidation": "OxidiseHotLanthanide",
+        "lanthanide vaporisation": "VaporiseLanthanide",
+        "lanthanum hydrogen absorption": "AbsorbLanthanumHydrogen",
+        "lanthanum hydrogen release": "ReleaseLanthanumHydrogen",
+        "cerium oxygen absorption": "AbsorbCeriumOxygen",
+        "cerium oxygen release": "ReleaseCeriumOxygen",
+        "promethium decay": "DecayPromethium",
+        "lanthanide neutron capture": "CaptureLanthanideNeutron",
+        "lanthanide magnetic response": "MagnetiseLanthanide",
+        "lanthanide fluorescence": "FluoresceLanthanide",
+        "lanthanide photon amplification": "AmplifyLanthanidePhoton",
+        "ytterbium water reaction": "ReactYtterbiumWithWater",
     }
     for label, marker in required.items():
         if marker not in engine:
@@ -415,6 +450,18 @@ def check_engine(root: Path, errors: list[str]) -> None:
         ):
             if marker not in text:
                 errors.append(f"{path}: missing periodic element marker {marker!r}")
+    for stable_id, name in EXPECTED_LANTHANIDE_ELEMENTS.items():
+        path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
+        text = read_text(path, errors)
+        for marker in (
+            f'Identifier = "OMNI_PT_{name}"',
+            "HeatCapacity =",
+            "Update = &OmniLanthanideUpdate",
+            "Graphics = &OmniLanthanideGraphics",
+            "Create = &OmniLanthanideCreate",
+        ):
+            if marker not in text:
+                errors.append(f"{path}: missing periodic element marker {marker!r}")
     magnesium = read_text(
         root / "src" / "simulation" / "elements" / "MAGN.cpp", errors
     )
@@ -471,6 +518,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         errors.append("LAVA.cpp: molten second-transition ctype update hook is missing")
     if "OmniMoltenThirdTransitionUpdate" not in lava:
         errors.append("LAVA.cpp: molten third-transition ctype update hook is missing")
+    if "OmniMoltenLanthanideUpdate" not in lava:
+        errors.append("LAVA.cpp: molten lanthanide ctype update hook is missing")
     liquid_nitrogen = read_text(
         root / "src" / "simulation" / "elements" / "LNTG.cpp", errors
     )
@@ -581,7 +630,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"periodic-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("periodic-audit: PASS (118 mapped, 81 implemented, 55 new periodic elements, 1024/frame)")
+        print("periodic-audit: PASS (118 mapped, 96 implemented, 70 new periodic elements, 1024/frame)")
     return 0
 
 

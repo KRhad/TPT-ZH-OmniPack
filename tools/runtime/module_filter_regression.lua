@@ -78,6 +78,12 @@ assert(hafnium == 423,
 ui.activeTool(0, "OMNI_PT_HF")
 assert(ui.activeTool(0) == "OMNI_PT_HF",
     "always-available third-transition content was blocked by a module gate")
+local lanthanum = assert(elements.OMNI_PT_LA)
+assert(lanthanum == 408,
+    "periodic lanthanum stable ID changed: " .. tostring(lanthanum))
+ui.activeTool(0, "OMNI_PT_LA")
+assert(ui.activeTool(0) == "OMNI_PT_LA",
+    "always-available lanthanide content was blocked by a module gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -109,4 +115,5 @@ report:write("OMNI_PERIODIC_HALOGEN_SUPERHEAVY_ACTIVE=OMNI_PT_TS\n")
 report:write("OMNI_PERIODIC_FIRST_TRANSITION_ACTIVE=OMNI_PT_SC\n")
 report:write("OMNI_PERIODIC_SECOND_TRANSITION_ACTIVE=OMNI_PT_Y\n")
 report:write("OMNI_PERIODIC_THIRD_TRANSITION_ACTIVE=OMNI_PT_HF\n")
+report:write("OMNI_PERIODIC_LANTHANIDE_ACTIVE=OMNI_PT_LA\n")
 report:close()

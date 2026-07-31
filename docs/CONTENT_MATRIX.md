@@ -7,7 +7,7 @@
 ## 当前范围
 
 ```text
-current_work_base=248c516aefcbeae187de95aadb384c22280a678c
+current_work_base=7c49278b856461f61cec1cc4974db90c709968bb
 periodic_alkaline_earth_batch_base=546b8791ca6b94ddd4791f42ededd5684168c59a
 periodic_boron_group_batch_base=5d9b99471590428e6430e9070c25a0907710c222
 periodic_carbon_group_batch_base=de91bbb67b2faef85ed178444a52a7b148328136
@@ -17,13 +17,14 @@ periodic_halogen_group_batch_base=8066533aea4bc4a5d6ae73c5d776d56fabf84eb6
 periodic_first_transition_batch_base=6c64c0a0b39ed3e9830f1077b04779b21943c380
 periodic_second_transition_batch_base=b26112f95c08d9daa252e54f65c6e26a05cd17e9
 periodic_third_transition_batch_base=248c516aefcbeae187de95aadb384c22280a678c
+periodic_lanthanide_batch_base=7c49278b856461f61cec1cc4974db90c709968bb
 font_implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
 development_gate_head=98affcd7
 official_id_range=0..195
 official_active_elements=195
 official_tombstones=1
-omnipack_implemented_elements=103
-periodic_mappings_implemented=81
+omnipack_implemented_elements=118
+periodic_mappings_implemented=96
 pt_num=512
 ```
 
@@ -47,7 +48,7 @@ pt_num=512
 | 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景、独立 OPS 双往返和 S03/S04 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
 | 高级化学 | 10 | `CHLR AMON ETHL KERO GASO ACTY CATA POLY PERO FERT` | 每帧 1,536 次成功反应，固定 `3x3` | 登记、化学审计、Lua 场景、独立 OPS 双往返和 S05 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
 | 受控核工业 | 7 | `NFUL MODR CROD NCLT NWST NGEN RSHD` | 每帧 512 次成功事件，固定 `3x3` | 登记、核工业审计、Lua 场景、独立 OPS 双往返和 S06/S07/S08 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
-| 周期表前十一批 | 55 新增 / 81 映射 | 前八个主族批次及三条过渡系；第三过渡系新增铪、钽、铼、锇、铱并复用钨、铂、金、汞 | 每帧 1,024 次放电/换热/族反应/衰变/合金事件，固定 `3x3` | 登记、周期审计、Lua 行为与预算、周期 OPS 双往返通过 | 周期表窗口视觉/DPI 门禁未完成；37 个元素尚未实现 |
+| 周期表前十二批 | 70 新增 / 96 映射 | 前八个主族批次、三条过渡系和镧系；镧至镥 15 个成员全部新增 | 每帧 1,024 次放电/换热/族反应/衰变/合金事件，固定 `3x3` | 登记、周期审计、Lua 行为与预算、周期 OPS 双往返通过 | 周期表窗口视觉/DPI 门禁未完成；22 个元素尚未实现 |
 
 五个内容系统上限来自当前源码常量并带同 tick 标记，属于源码确认；它们不是完整 FPS、内存或长跑压力证据。
 
@@ -119,21 +120,21 @@ pt_num=512
 | 局部生态 | true | true | 8 元素 | 已实现；另有“简化生物模拟”开关 |
 | 高级化学 | true | true | 10 元素 | 已实现；实际 UI 持久化未测试 |
 | 受控核工业 | true | true | 7 元素 | 已实现；实际 UI 持久化未测试 |
-| 元素周期表 | true | 始终可用 | 81/118 映射可选择 | 面板已编译并通过静态/运行契约；视觉矩阵未执行 |
+| 元素周期表 | true | 始终可用 | 96/118 映射可选择 | 面板已编译并通过静态/运行契约；视觉矩阵未执行 |
 
 周期表固定区为 `370..461`；未实现槽不创建普通元素工具，只在周期表正确格位显示待实现状态。`462..511` 继续保留给后续材料；没有内容时不创建玩家设置入口。
 
 ## 内容证据矩阵
 
-| 内容证据 | 103 元素覆盖 | 当前状态 | 限制 |
+| 内容证据 | 118 元素覆盖 | 当前状态 | 限制 |
 |---|---:|---|---|
-| 稳定 identifier/ID、双语名、来源、许可证、源码路径 | 103/103 | 自动测试确认 | 不代表全部 118 周期元素已实现 |
-| 双语配方、生产、用途、危险字段 | 103/103 | 自动测试确认 | 文本可能描述直接放置或尚无闭环的用途 |
-| 元素编译注册 | 103/103 | 编译确认 | 周期表视觉布局仍需人工核验 |
-| 五类反应引擎 Lua 回归 | 四可选模块 + 周期前十一批 | 实际运行确认 | 周期回归覆盖 55 个新增元素、七个六成员主族、7 个稀有气体、前两条各 10 成员及第三条 9 成员的过渡系和预算；不替代完整 GUI 或长跑 |
+| 稳定 identifier/ID、双语名、来源、许可证、源码路径 | 118/118 | 自动测试确认 | 不代表全部 118 周期元素已实现 |
+| 双语配方、生产、用途、危险字段 | 118/118 | 自动测试确认 | 文本可能描述直接放置或尚无闭环的用途 |
+| 元素编译注册 | 118/118 | 编译确认 | 周期表视觉布局仍需人工核验 |
+| 五类反应引擎 Lua 回归 | 四可选模块 + 周期前十二批 | 实际运行确认 | 周期回归覆盖 70 个新增元素、七个六成员主族、7 个稀有气体、三条过渡系及 15 个镧系成员和预算；不替代完整 GUI 或长跑 |
 | 搜索、放置、图鉴 | `ALUM/NUTR/CHLR/NFUL/HE/NA` 代表项 | 源码/运行选择 PASS；GUI 视觉 NOT RUN | 需最终 ZIP 人工操作 |
 | 禁用模块存档检查 | 直接类型与载体字段 | 自动测试确认 | 三选项和保存/上传拦截实际 GUI 尚未测试 |
-| OPS 双往返 | 官方、四个单模块、周期前十一批、混合及载体 | 实际运行确认 | 周期用例覆盖 55 个大于 255 的直接类型以及 `LAVA/SPRK/CONV/VIRS` 的 `ctype/tmp/tmp2` |
+| OPS 双往返 | 官方、四个单模块、周期前十二批、混合及载体 | 实际运行确认 | 周期用例覆盖 70 个大于 255 的直接类型以及 `LAVA/SPRK/CONV/VIRS` 的 `ctype/tmp/tmp2` |
 | 固定压力样本 | 10 类 | 候选已通过；`98affcd7` smoke `4/4` | 旧候选正式证据仍绑定 `ff5945c4`；0.2 的 S04/S05/S07/S09 仅约 2 秒 smoke，`gate_result=not_tested`，正式样本需绑定最终 ZIP |
 
 ## 版本内容增长规则
@@ -153,7 +154,7 @@ pt_num=512
 
 ## 0.2.0 用途审计入口
 
-`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 103 个 OmniPack 元素；周期元素的双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、110 条 `REACTION_REGISTRY.csv` 登记和周期专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
+`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 118 个 OmniPack 元素；周期元素的双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、123 条 `REACTION_REGISTRY.csv` 登记和周期专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
 
 ```text
 production

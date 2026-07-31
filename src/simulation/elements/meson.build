@@ -407,21 +407,21 @@ simulation_elem_names = [
 	'XE',   # 405: periodic Xe
 	'CS',   # 406: periodic Cs
 	'BA',   # 407: periodic Ba
-	disabler(), # 408: periodic La reserved
-	disabler(), # 409: periodic Ce reserved
-	disabler(), # 410: periodic Pr reserved
-	disabler(), # 411: periodic Nd reserved
-	disabler(), # 412: periodic Pm reserved
-	disabler(), # 413: periodic Sm reserved
-	disabler(), # 414: periodic Eu reserved
-	disabler(), # 415: periodic Gd reserved
-	disabler(), # 416: periodic Tb reserved
-	disabler(), # 417: periodic Dy reserved
-	disabler(), # 418: periodic Ho reserved
-	disabler(), # 419: periodic Er reserved
-	disabler(), # 420: periodic Tm reserved
-	disabler(), # 421: periodic Yb reserved
-	disabler(), # 422: periodic Lu reserved
+	'LA',   # 408: periodic La
+	'CE',   # 409: periodic Ce
+	'PR',   # 410: periodic Pr
+	'ND',   # 411: periodic Nd
+	'PM',   # 412: periodic Pm
+	'SM',   # 413: periodic Sm
+	'EU',   # 414: periodic Eu
+	'GD',   # 415: periodic Gd
+	'TB',   # 416: periodic Tb
+	'DY',   # 417: periodic Dy
+	'HO',   # 418: periodic Ho
+	'ER',   # 419: periodic Er
+	'TM',   # 420: periodic Tm
+	'YB',   # 421: periodic Yb
+	'LU',   # 422: periodic Lu
 	'HF',   # 423: periodic Hf
 	'TA',   # 424: periodic Ta
 	'RE',   # 425: periodic Re

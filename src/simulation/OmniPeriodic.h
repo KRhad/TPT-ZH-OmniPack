@@ -44,3 +44,7 @@ int OmniThirdTransitionUpdate(UPDATE_FUNC_ARGS);
 int OmniMoltenThirdTransitionUpdate(UPDATE_FUNC_ARGS);
 int OmniThirdTransitionGraphics(GRAPHICS_FUNC_ARGS);
 void OmniThirdTransitionCreate(ELEMENT_CREATE_FUNC_ARGS);
+int OmniLanthanideUpdate(UPDATE_FUNC_ARGS);
+int OmniMoltenLanthanideUpdate(UPDATE_FUNC_ARGS);
+int OmniLanthanideGraphics(GRAPHICS_FUNC_ARGS);
+void OmniLanthanideCreate(ELEMENT_CREATE_FUNC_ARGS);

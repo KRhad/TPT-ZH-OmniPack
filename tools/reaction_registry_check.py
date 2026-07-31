@@ -163,6 +163,19 @@ REQUIRED_REACTIONS = {
     "periodic.rhenium_superalloy",
     "periodic.osmium_toxic_oxidation",
     "periodic.iridium_peroxide_catalysis",
+    "periodic.lanthanide_acid",
+    "periodic.lanthanide_oxidation",
+    "periodic.lanthanide_vaporisation",
+    "periodic.lanthanum_hydrogen_absorption",
+    "periodic.lanthanum_hydrogen_release",
+    "periodic.cerium_oxygen_absorption",
+    "periodic.cerium_oxygen_release",
+    "periodic.promethium_decay",
+    "periodic.lanthanide_neutron_absorption",
+    "periodic.lanthanide_magnetic_excitation",
+    "periodic.lanthanide_fluorescence",
+    "periodic.lanthanide_photon_amplification",
+    "periodic.ytterbium_water",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

@@ -77,6 +77,21 @@ local ids = {
     palladium = must_element("OMNI_PT_PD", "PD", 398),
     silver = must_element("OMNI_PT_AG", "AG", 399),
     cadmium = must_element("OMNI_PT_CD", "CD", 400),
+    lanthanum = must_element("OMNI_PT_LA", "LA", 408),
+    cerium = must_element("OMNI_PT_CE", "CE", 409),
+    praseodymium = must_element("OMNI_PT_PR", "PR", 410),
+    neodymium = must_element("OMNI_PT_ND", "ND", 411),
+    promethium = must_element("OMNI_PT_PM", "PM", 412),
+    samarium = must_element("OMNI_PT_SM", "SM", 413),
+    europium = must_element("OMNI_PT_EU", "EU", 414),
+    gadolinium = must_element("OMNI_PT_GD", "GD", 415),
+    terbium = must_element("OMNI_PT_TB", "TB", 416),
+    dysprosium = must_element("OMNI_PT_DY", "DY", 417),
+    holmium = must_element("OMNI_PT_HO", "HO", 418),
+    erbium = must_element("OMNI_PT_ER", "ER", 419),
+    thulium = must_element("OMNI_PT_TM", "TM", 420),
+    ytterbium = must_element("OMNI_PT_YB", "YB", 421),
+    lutetium = must_element("OMNI_PT_LU", "LU", 422),
     hafnium = must_element("OMNI_PT_HF", "HF", 423),
     tantalum = must_element("OMNI_PT_TA", "TA", 424),
     tungsten = must_element("DEFAULT_PT_TUNG", "TUNG", 171),
@@ -282,6 +297,27 @@ local function run_property_differences()
     assert(elements.property(ids.mercury, "Falldown")
             ~= elements.property(ids.gold, "Falldown"),
         "liquid mercury and solid gold have identical movement properties")
+    assert(elements.property(ids.lanthanum, "HighTemperature")
+            > elements.property(ids.cerium, "HighTemperature"),
+        "lanthanum and cerium do not retain distinct melting points")
+    assert(elements.property(ids.promethium, "Properties")
+            ~= elements.property(ids.neodymium, "Properties"),
+        "radioactive promethium and stable neodymium have identical properties")
+    assert(elements.property(ids.europium, "Hardness")
+            < elements.property(ids.gadolinium, "Hardness"),
+        "soft europium is not softer than gadolinium")
+    assert(elements.property(ids.dysprosium, "HighTemperature")
+            < elements.property(ids.holmium, "HighTemperature"),
+        "dysprosium and holmium do not retain distinct melting points")
+    assert(elements.property(ids.erbium, "HeatConduct")
+            > elements.property(ids.thulium, "HeatConduct"),
+        "erbium and thulium optical materials have identical conductivity")
+    assert(elements.property(ids.ytterbium, "HighTemperature")
+            < elements.property(ids.lutetium, "HighTemperature"),
+        "low-melting ytterbium and refractory lutetium are not distinct")
+    assert(elements.property(ids.lutetium, "Hardness")
+            > elements.property(ids.lanthanum, "Hardness"),
+        "dense lutetium is not harder than lanthanum")
 end
 
 local function run_water_reaction(type, seed)
@@ -1367,6 +1403,208 @@ local function run_third_transition_reactions()
         "hot molten iridium did not enter its finite vaporisation proxy")
 end
 
+local function run_lanthanide_reactions()
+    configure(1141)
+    local old_h_diffusion = elements.property(ids.hydrogen, "Diffusion")
+    local old_h_advection = elements.property(ids.hydrogen, "Advection")
+    elements.property(ids.hydrogen, "Diffusion", 0.0)
+    elements.property(ids.hydrogen, "Advection", 0.0)
+    local lanthanum = make(ids.lanthanum, 120, 120, 500.0)
+    make(ids.hydrogen, 121, 120, 500.0)
+    make(ids.hydrogen, 119, 120, 500.0)
+    make(ids.hydrogen, 120, 121, 500.0)
+    make(ids.hydrogen, 120, 119, 500.0)
+    step(8)
+    assert(sim.partProperty(lanthanum, "tmp") == 4
+            and count_type(ids.hydrogen) == 0,
+        "warm lanthanum did not absorb four bounded local hydrogen particles")
+    sim.partProperty(lanthanum, "temp", 950.0)
+    step(4)
+    assert(sim.partProperty(lanthanum, "tmp") == 0
+            and count_type(ids.hydrogen) == 4,
+        "hot lanthanum did not release four stored hydrogen particles")
+    elements.property(ids.hydrogen, "Diffusion", old_h_diffusion)
+    elements.property(ids.hydrogen, "Advection", old_h_advection)
+
+    configure(1151)
+    local old_o_diffusion = elements.property(ids.oxygen, "Diffusion")
+    local old_o_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    local cerium = make(ids.cerium, 120, 120, 500.0)
+    make(ids.oxygen, 121, 120, 500.0)
+    make(ids.oxygen, 119, 120, 500.0)
+    make(ids.oxygen, 120, 121, 500.0)
+    make(ids.oxygen, 120, 119, 500.0)
+    step(8)
+    assert(sim.partProperty(cerium, "tmp") == 4
+            and count_type(ids.oxygen) == 0,
+        "warm cerium did not absorb four bounded local oxygen particles")
+    sim.partProperty(cerium, "temp", 1100.0)
+    step(4)
+    assert(sim.partProperty(cerium, "tmp") == 0
+            and count_type(ids.oxygen) == 4,
+        "hot cerium did not release four stored oxygen particles")
+    elements.property(ids.oxygen, "Diffusion", old_o_diffusion)
+    elements.property(ids.oxygen, "Advection", old_o_advection)
+
+    local function run_magnetic_response(type, expected_life, seed)
+        configure(seed)
+        local material = make(type, 120, 120, 300.0)
+        local electron = make(ids.electron, 121, 120, 300.0)
+        sim.partProperty(electron, "vx", 0.0)
+        sim.partProperty(electron, "vy", 0.0)
+        step()
+        assert(sim.partProperty(material, "life") >= expected_life - 1
+                and sim.partProperty(material, "tmp2") == 1,
+            "lanthanide magnetic response did not enter its bounded glow state")
+    end
+    run_magnetic_response(ids.praseodymium, 55, 1161)
+    run_magnetic_response(ids.neodymium, 70, 1171)
+    run_magnetic_response(ids.dysprosium, 80, 1181)
+    run_magnetic_response(ids.holmium, 75, 1191)
+
+    configure(1201)
+    local promethium = make(ids.promethium, 120, 120, 300.0)
+    assert(sim.partProperty(promethium, "life") >= 180
+            and sim.partProperty(promethium, "life") <= 360,
+        "promethium creation did not initialize its bounded lifetime")
+    sim.partProperty(promethium, "life", 0)
+    step()
+    assert(sim.partProperty(promethium, "type") == ids.samarium,
+        "promethium did not decay to samarium")
+    assert(count_type(ids.photon) == 1,
+        "one promethium decay did not emit exactly one finite photon")
+
+    configure(1211)
+    local molten_promethium = make(ids.lava, 120, 120, 1500.0)
+    sim.partProperty(molten_promethium, "ctype", ids.promethium)
+    sim.partProperty(molten_promethium, "life", 0)
+    step()
+    assert(sim.partProperty(molten_promethium, "type") == ids.lava
+            and sim.partProperty(molten_promethium, "ctype") == ids.samarium,
+        "typed molten promethium did not decay to typed molten samarium")
+
+    local function run_neutron_capture(type, seed)
+        configure(seed)
+        local material = make(type, 120, 120, 300.0)
+        local neutron = make(ids.neutron, 121, 120, 300.0)
+        sim.partProperty(neutron, "vx", 0.0)
+        sim.partProperty(neutron, "vy", 0.0)
+        step()
+        assert(sim.partProperty(material, "tmp") == 1
+                and not sim.partExists(neutron),
+            "lanthanide neutron absorber did not consume one local neutron")
+        return sim.partProperty(material, "temp")
+    end
+    local samarium_temp = run_neutron_capture(ids.samarium, 1221)
+    local gadolinium_temp = run_neutron_capture(ids.gadolinium, 1231)
+    local lutetium_temp = run_neutron_capture(ids.lutetium, 1241)
+    assert(gadolinium_temp > samarium_temp and samarium_temp > lutetium_temp,
+        "lanthanide neutron-capture heating is not element-specific")
+
+    local function run_fluorescence(type, expected_mask, seed)
+        configure(seed)
+        local material = make(type, 120, 120, 300.0)
+        local photon = make(ids.photon, 121, 120, 300.0)
+        sim.partProperty(photon, "vx", 0.0)
+        sim.partProperty(photon, "vy", 0.0)
+        step()
+        assert(sim.partProperty(material, "life") > 0
+                and sim.partExists(photon)
+                and sim.partProperty(photon, "ctype") == expected_mask,
+            "lanthanide phosphor did not convert the photon band")
+    end
+    run_fluorescence(ids.europium, 0x000FF000, 1251)
+    run_fluorescence(ids.terbium, 0x00003FF0, 1261)
+
+    local function run_photon_amplifier(type, expected_mask, seed)
+        configure(seed)
+        local material = make(type, 120, 120, 300.0)
+        local seed_photon = make(ids.photon, 121, 120, 300.0)
+        sim.partProperty(seed_photon, "vx", 0.0)
+        sim.partProperty(seed_photon, "vy", 0.0)
+        local before = count_type(ids.photon)
+        step()
+        assert(sim.partProperty(material, "life") > 0
+                and count_type(ids.photon) == before + 1,
+            "lanthanide optical material did not emit one bounded photon")
+        local found_band = false
+        for particle in sim.parts() do
+            if sim.partProperty(particle, "type") == ids.photon
+                    and sim.partProperty(particle, "ctype") == expected_mask then
+                found_band = true
+            end
+        end
+        assert(found_band, "lanthanide optical material emitted the wrong photon band")
+        sim.resetOmniEventMetrics()
+        step()
+        local metrics = sim.omniEventMetrics()
+        assert(tonumber(metrics.total) == 0,
+            "lanthanide photon amplifier ignored its finite cooldown")
+    end
+    run_photon_amplifier(ids.erbium, 0x00003FF0, 1271)
+    run_photon_amplifier(ids.thulium, 0x03F00000, 1281)
+
+    configure(1291)
+    local old_water_advection = elements.property(ids.water, "Advection")
+    local old_water_gravity = elements.property(ids.water, "Gravity")
+    local old_water_falldown = elements.property(ids.water, "Falldown")
+    elements.property(ids.water, "Advection", 0.0)
+    elements.property(ids.water, "Gravity", 0.0)
+    elements.property(ids.water, "Falldown", 0)
+    local water = make(ids.water, 121, 120, 340.0)
+    local ytterbium = make(ids.ytterbium, 120, 120, 340.0)
+    step()
+    elements.property(ids.water, "Advection", old_water_advection)
+    elements.property(ids.water, "Gravity", old_water_gravity)
+    elements.property(ids.water, "Falldown", old_water_falldown)
+    assert(sim.partProperty(ytterbium, "type") == ids.salt
+            and sim.partProperty(water, "type") == ids.hydrogen,
+        "warm ytterbium and water did not produce generic salt and hydrogen")
+
+    configure(1301)
+    local old_acid_advection = elements.property(ids.acid, "Advection")
+    local old_acid_gravity = elements.property(ids.acid, "Gravity")
+    local old_acid_falldown = elements.property(ids.acid, "Falldown")
+    elements.property(ids.acid, "Advection", 0.0)
+    elements.property(ids.acid, "Gravity", 0.0)
+    elements.property(ids.acid, "Falldown", 0)
+    local lutetium = make(ids.lutetium, 120, 120, 510.0)
+    local acid = make(ids.acid, 121, 120, 510.0)
+    step()
+    elements.property(ids.acid, "Advection", old_acid_advection)
+    elements.property(ids.acid, "Gravity", old_acid_gravity)
+    elements.property(ids.acid, "Falldown", old_acid_falldown)
+    assert(sim.partProperty(lutetium, "type") == ids.salt
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "hot lutetium acid route did not produce generic salt and hydrogen")
+
+    configure(1311)
+    old_o_diffusion = elements.property(ids.oxygen, "Diffusion")
+    old_o_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    local terbium = make(ids.terbium, 120, 120, 730.0)
+    local oxygen = make(ids.oxygen, 121, 120, 730.0)
+    step()
+    elements.property(ids.oxygen, "Diffusion", old_o_diffusion)
+    elements.property(ids.oxygen, "Advection", old_o_advection)
+    assert(sim.partProperty(terbium, "type") == ids.scrap
+            and sim.partProperty(terbium, "ctype") == ids.terbium
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "hot terbium oxygen route did not produce typed scrap and finite fire")
+
+    configure(1321)
+    local molten = make(ids.lava, 120, 120, 2230.0)
+    sim.partProperty(molten, "ctype", ids.thulium)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.fire
+            and sim.partProperty(molten, "ctype") == ids.thulium
+            and sim.partProperty(molten, "life") == 60,
+        "hot molten thulium did not enter its finite vaporisation proxy")
+end
+
 local function run_helium_cryogenics()
     configure(81)
     local old_diffusion = elements.property(ids.he, "Diffusion")
@@ -1779,6 +2017,29 @@ local function run_third_transition_budget()
     return events
 end
 
+local function run_lanthanide_budget()
+    configure(1331)
+    local total = 1200
+    for index = 0, total - 1 do
+        local x = 50 + (index % 100) * 5
+        local y = 50 + math.floor(index / 100) * 5
+        local promethium = make(ids.promethium, x, y, 300.0)
+        sim.partProperty(promethium, "life", 0)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total),
+        "missing lanthanide event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame lanthanide events were not capped at 1024: "
+            .. tostring(events))
+    assert(count_type(ids.promethium) >= total - 1024,
+        "event-budget exhaustion did not defer remaining promethium decays")
+    assert(count_type(ids.photon) <= 1024,
+        "bounded promethium decays emitted too many photons")
+    return events
+end
+
 local function test()
     run_property_differences()
     run_alkali_water_series()
@@ -1793,6 +2054,7 @@ local function test()
     run_first_transition_reactions()
     run_second_transition_reactions()
     run_third_transition_reactions()
+    run_lanthanide_reactions()
     run_helium_cryogenics()
     run_xenon_discharge()
     run_radioactive_decays()
@@ -1808,19 +2070,20 @@ local function test()
     local first_transition_budget = run_first_transition_budget()
     local second_transition_budget = run_second_transition_budget()
     local third_transition_budget = run_third_transition_budget()
+    local lanthanide_budget = run_lanthanide_budget()
     return math.max(noble_budget, francium_budget, radium_budget,
         nihonium_budget, flerovium_budget, moscovium_budget,
         livermorium_budget, astatine_budget, tennessine_budget,
         first_transition_budget, second_transition_budget,
-        third_transition_budget)
+        third_transition_budget, lanthanide_budget)
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_PERIODIC_STATUS=PASS\n")
-    report:write("OMNI_PERIODIC_NEW_ELEMENTS=55\n")
-    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=81\n")
+    report:write("OMNI_PERIODIC_NEW_ELEMENTS=70\n")
+    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=96\n")
     report:write("OMNI_PERIODIC_ALKALI_FAMILY=6\n")
     report:write("OMNI_PERIODIC_ALKALINE_EARTH_FAMILY=6\n")
     report:write("OMNI_PERIODIC_BORON_GROUP=6\n")
@@ -1831,6 +2094,7 @@ if ok then
     report:write("OMNI_PERIODIC_FIRST_TRANSITION_SERIES=10\n")
     report:write("OMNI_PERIODIC_SECOND_TRANSITION_SERIES=10\n")
     report:write("OMNI_PERIODIC_THIRD_TRANSITION_SERIES=9\n")
+    report:write("OMNI_PERIODIC_LANTHANIDE_SERIES=15\n")
     report:write("OMNI_PERIODIC_BUDGET_EVENTS=" .. tostring(data) .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")
