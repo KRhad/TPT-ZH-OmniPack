@@ -132,6 +132,13 @@ REQUIRED_REACTIONS = {
     "periodic.oxygen_group_vaporisation",
     "periodic.selenium_excitation",
     "periodic.livermorium_decay",
+    "periodic.halogen_hydrogen",
+    "periodic.fluorine_water",
+    "periodic.halogen_metal_salt",
+    "periodic.halogen_disinfection",
+    "periodic.halogen_vaporisation",
+    "periodic.astatine_decay",
+    "periodic.tennessine_decay",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

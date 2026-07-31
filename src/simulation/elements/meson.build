@@ -373,7 +373,7 @@ simulation_elem_names = [
 	'BE',   # 371: periodic Be
 	'B',    # 372: periodic B
 	'N',   # 373: periodic N
-	disabler(), # 374: periodic F reserved
+	'F',   # 374: periodic F
 	'NE',   # 375: periodic Ne
 	'NA',   # 376: periodic Na
 	'P',   # 377: periodic P
@@ -388,7 +388,7 @@ simulation_elem_names = [
 	'GE',   # 386: periodic Ge
 	'AS',   # 387: periodic As
 	'SE',   # 388: periodic Se
-	disabler(), # 389: periodic Br reserved
+	'BR',   # 389: periodic Br
 	'KR',   # 390: periodic Kr
 	'SR',   # 391: periodic Sr
 	disabler(), # 392: periodic Y reserved
@@ -403,7 +403,7 @@ simulation_elem_names = [
 	'IN',   # 401: periodic In
 	'SB',   # 402: periodic Sb
 	'TE',   # 403: periodic Te
-	disabler(), # 404: periodic I reserved
+	'I',   # 404: periodic I
 	'XE',   # 405: periodic Xe
 	'CS',   # 406: periodic Cs
 	'BA',   # 407: periodic Ba
@@ -429,7 +429,7 @@ simulation_elem_names = [
 	disabler(), # 427: periodic Ir reserved
 	'TL',   # 428: periodic Tl
 	'BI',   # 429: periodic Bi
-	disabler(), # 430: periodic At reserved
+	'AT',   # 430: periodic At
 	'RN',   # 431: periodic Rn
 	'FR',   # 432: periodic Fr
 	'RA',   # 433: periodic Ra
@@ -459,7 +459,7 @@ simulation_elem_names = [
 	'FL',   # 457: periodic Fl
 	'MC',   # 458: periodic Mc
 	'LV',   # 459: periodic Lv
-	disabler(), # 460: periodic Ts reserved
+	'TS',   # 460: periodic Ts
 	'OG',   # 461: periodic Og
 ]
 

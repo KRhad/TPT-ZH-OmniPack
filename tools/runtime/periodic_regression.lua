@@ -51,6 +51,12 @@ local ids = {
     selenium = must_element("OMNI_PT_SE", "SE", 388),
     tellurium = must_element("OMNI_PT_TE", "TE", 403),
     livermorium = must_element("OMNI_PT_LV", "LV", 459),
+    fluorine = must_element("OMNI_PT_F", "F", 374),
+    chlorine = must_element("OMNI_PT_CHLR", "CHLR", 360),
+    bromine = must_element("OMNI_PT_BR", "BR", 389),
+    iodine = must_element("OMNI_PT_I", "I", 404),
+    astatine = must_element("OMNI_PT_AT", "AT", 430),
+    tennessine = must_element("OMNI_PT_TS", "TS", 460),
     lithium = must_element("DEFAULT_PT_LITH", "LITH", 191),
     rubidium = must_element("DEFAULT_PT_RBDM", "RBDM", 41),
     hydrogen = must_element("DEFAULT_PT_H2", "HYGN", 148),
@@ -74,6 +80,7 @@ local ids = {
     photon = assert(elements.DEFAULT_PT_PHOT),
     polonium = must_element("DEFAULT_PT_POLO", "POLO", 182),
     scrap = must_element("OMNI_PT_MSCR", "MSCR", 278),
+    pathogen = must_element("OMNI_PT_PATH", "PATH", 292),
 }
 
 local function configure(seed)
@@ -178,6 +185,18 @@ local function run_property_differences()
     assert(elements.property(ids.livermorium, "Properties")
             ~= elements.property(ids.selenium, "Properties"),
         "radioactive livermorium and stable selenium have identical properties")
+    assert(elements.property(ids.fluorine, "Diffusion")
+            > elements.property(ids.chlorine, "Diffusion"),
+        "fluorine and chlorine do not retain distinct gas diffusion")
+    assert(elements.property(ids.bromine, "Falldown")
+            ~= elements.property(ids.iodine, "Falldown"),
+        "liquid bromine and solid iodine have identical movement properties")
+    assert(elements.property(ids.astatine, "Properties")
+            ~= elements.property(ids.iodine, "Properties"),
+        "radioactive astatine and stable iodine have identical properties")
+    assert(elements.property(ids.tennessine, "Properties")
+            ~= elements.property(ids.bromine, "Properties"),
+        "superheavy tennessine and liquid bromine have identical properties")
 end
 
 local function run_water_reaction(type, seed)
@@ -779,6 +798,117 @@ local function run_oxygen_group_reactions()
         "hot molten tellurium did not enter its finite vaporisation proxy")
 end
 
+local function run_halogen_group_reactions()
+    configure(751)
+    local chlorine = make(ids.chlorine, 120, 120, 450.0)
+    local hydrogen = make(ids.hydrogen, 121, 120, 450.0)
+    step()
+    assert(sim.partProperty(chlorine, "type") == ids.acid
+            and sim.partProperty(hydrogen, "type") == ids.acid,
+        "reused chlorine chemistry no longer converts hot hydrogen into acid")
+
+    configure(761)
+    local fluorine = make(ids.fluorine, 120, 120, 293.15)
+    local water = make(ids.water, 121, 120, 293.15)
+    step()
+    assert(sim.partProperty(fluorine, "type") == ids.acid
+            and sim.partProperty(water, "type") == ids.acid,
+        "fluorine water route did not produce two acid proxy particles")
+
+    configure(771)
+    fluorine = make(ids.fluorine, 120, 120, 293.15)
+    local metal = make(ids.metal, 121, 120, 293.15)
+    step()
+    assert(sim.partProperty(fluorine, "type") == ids.salt
+            and sim.partProperty(metal, "type") == ids.salt,
+        "fluorine metal route did not produce two halide salt proxies")
+
+    configure(781)
+    chlorine = make(ids.chlorine, 120, 120, 293.15)
+    local pathogen = make(ids.pathogen, 121, 120, 293.15)
+    step()
+    assert(sim.partProperty(chlorine, "type") == ids.salt
+            and sim.partProperty(pathogen, "type") == ids.dust,
+        "chlorine disinfection did not produce salt and inert dust")
+
+    configure(791)
+    local bromine = make(ids.bromine, 120, 120, 380.0)
+    hydrogen = make(ids.hydrogen, 121, 120, 380.0)
+    step()
+    assert(sim.partProperty(bromine, "type") == ids.acid
+            and sim.partProperty(hydrogen, "type") == ids.acid,
+        "warm bromine hydrogen route did not produce acid")
+
+    configure(801)
+    bromine = make(ids.bromine, 120, 120, 333.0)
+    step()
+    assert(sim.partProperty(bromine, "type") == ids.smoke
+            and sim.partProperty(bromine, "ctype") == ids.bromine
+            and sim.partProperty(bromine, "life") == 60,
+        "warm bromine did not enter its finite coloured vapour proxy")
+
+    configure(811)
+    sim.heatSim(true)
+    local old_i_conduct = elements.property(ids.iodine, "HeatConduct")
+    elements.property(ids.iodine, "HeatConduct", 250)
+    local iodine = make(ids.iodine, 120, 120, 387.0)
+    step()
+    assert(sim.partProperty(iodine, "type") == ids.lava
+            and sim.partProperty(iodine, "ctype") == ids.iodine,
+        "iodine did not melt into typed LAVA")
+    elements.property(ids.iodine, "HeatConduct", old_i_conduct)
+    sim.partProperty(iodine, "temp", 458.0)
+    step()
+    assert(sim.partProperty(iodine, "type") == ids.smoke
+            and sim.partProperty(iodine, "ctype") == ids.iodine
+            and sim.partProperty(iodine, "life") == 60,
+        "hot molten iodine did not enter its finite purple vapour proxy")
+
+    configure(821)
+    local astatine = make(ids.astatine, 120, 120, 293.15)
+    assert(sim.partProperty(astatine, "tmp") >= 240
+            and sim.partProperty(astatine, "tmp") <= 480,
+        "astatine creation did not initialize its bounded lifetime")
+    sim.partProperty(astatine, "tmp", 1)
+    step()
+    assert(sim.partProperty(astatine, "type") == ids.polonium,
+        "astatine did not decay to polonium")
+    assert(count_type(ids.photon) == 1,
+        "one astatine decay did not emit exactly one finite photon")
+
+    configure(831)
+    local molten = make(ids.lava, 120, 120, 600.0)
+    sim.partProperty(molten, "ctype", ids.astatine)
+    sim.partProperty(molten, "tmp", 1)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.polonium,
+        "molten astatine ctype did not retain radioactive decay")
+    assert(count_type(ids.photon) == 1,
+        "one molten astatine decay did not emit exactly one finite photon")
+
+    configure(841)
+    local tennessine = make(ids.tennessine, 120, 120, 293.15)
+    assert(sim.partProperty(tennessine, "tmp") >= 35
+            and sim.partProperty(tennessine, "tmp") <= 75,
+        "tennessine creation did not initialize its bounded lifetime")
+    sim.partProperty(tennessine, "tmp", 1)
+    step()
+    assert(sim.partProperty(tennessine, "type") == ids.moscovium,
+        "tennessine did not enter the compressed moscovium decay proxy")
+    assert(count_type(ids.photon) == 1,
+        "first tennessine decay stage did not emit exactly one finite photon")
+    sim.partProperty(tennessine, "tmp", 1)
+    step()
+    assert(sim.partProperty(tennessine, "type") == ids.nihonium,
+        "moscovium produced by tennessine did not decay to nihonium")
+    sim.partProperty(tennessine, "tmp", 1)
+    step()
+    assert(sim.partProperty(tennessine, "type") == ids.polonium,
+        "nihonium produced by tennessine did not decay to polonium")
+    assert(count_type(ids.photon) == 3,
+        "three-stage tennessine decay did not emit exactly three finite photons")
+end
+
 local function run_helium_cryogenics()
     configure(81)
     local old_diffusion = elements.property(ids.he, "Diffusion")
@@ -1073,6 +1203,50 @@ local function run_livermorium_budget()
     return events
 end
 
+local function run_astatine_budget()
+    configure(851)
+    local total = 1200
+    for index = 0, total - 1 do
+        local particle = make(ids.astatine,
+            50 + (index % 100) * 5,
+            50 + math.floor(index / 100) * 5,
+            293.15)
+        sim.partProperty(particle, "tmp", 1)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total), "missing astatine event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame astatine events were not capped at 1024: " .. tostring(events))
+    assert(count_type(ids.astatine) >= total - 1024,
+        "event-budget exhaustion did not defer remaining astatine decays")
+    assert(count_type(ids.photon) <= 1024,
+        "bounded astatine decays emitted too many photons")
+    return events
+end
+
+local function run_tennessine_budget()
+    configure(861)
+    local total = 1200
+    for index = 0, total - 1 do
+        local particle = make(ids.tennessine,
+            50 + (index % 100) * 5,
+            50 + math.floor(index / 100) * 5,
+            293.15)
+        sim.partProperty(particle, "tmp", 1)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total), "missing tennessine event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame tennessine events were not capped at 1024: " .. tostring(events))
+    assert(count_type(ids.tennessine) >= total - 1024,
+        "event-budget exhaustion did not defer remaining tennessine decays")
+    assert(count_type(ids.photon) <= 1024,
+        "bounded tennessine decays emitted too many photons")
+    return events
+end
+
 local function test()
     run_property_differences()
     run_alkali_water_series()
@@ -1083,6 +1257,7 @@ local function test()
     run_carbon_group_reactions()
     run_nitrogen_group_reactions()
     run_oxygen_group_reactions()
+    run_halogen_group_reactions()
     run_helium_cryogenics()
     run_xenon_discharge()
     run_radioactive_decays()
@@ -1093,23 +1268,26 @@ local function test()
     local flerovium_budget = run_flerovium_budget()
     local moscovium_budget = run_moscovium_budget()
     local livermorium_budget = run_livermorium_budget()
+    local astatine_budget = run_astatine_budget()
+    local tennessine_budget = run_tennessine_budget()
     return math.max(noble_budget, francium_budget, radium_budget,
         nihonium_budget, flerovium_budget, moscovium_budget,
-        livermorium_budget)
+        livermorium_budget, astatine_budget, tennessine_budget)
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_PERIODIC_STATUS=PASS\n")
-    report:write("OMNI_PERIODIC_NEW_ELEMENTS=33\n")
-    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=59\n")
+    report:write("OMNI_PERIODIC_NEW_ELEMENTS=38\n")
+    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=64\n")
     report:write("OMNI_PERIODIC_ALKALI_FAMILY=6\n")
     report:write("OMNI_PERIODIC_ALKALINE_EARTH_FAMILY=6\n")
     report:write("OMNI_PERIODIC_BORON_GROUP=6\n")
     report:write("OMNI_PERIODIC_CARBON_GROUP=6\n")
     report:write("OMNI_PERIODIC_NITROGEN_GROUP=6\n")
     report:write("OMNI_PERIODIC_OXYGEN_GROUP=6\n")
+    report:write("OMNI_PERIODIC_HALOGEN_GROUP=6\n")
     report:write("OMNI_PERIODIC_BUDGET_EVENTS=" .. tostring(data) .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

@@ -88,6 +88,17 @@ struct OxygenGroupProperties
 	unsigned int flameColour;
 };
 
+struct HalogenProperties
+{
+	float hydrogenThreshold;
+	float metalThreshold;
+	float disinfectionThreshold;
+	float boilingPoint;
+	int reactionHeat;
+	float pressure;
+	unsigned int vapourColour;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -242,6 +253,27 @@ OxygenGroupProperties OxygenGroupPropertiesFor(int type)
 	}
 }
 
+HalogenProperties HalogenPropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_F:
+		return { 293.0f, 273.0f, 273.0f, MAX_TEMP, 500, 1.4f, 0xFFDFF56A };
+	case PT_CHLR:
+		return { MAX_TEMP, 320.0f, 273.0f, MAX_TEMP, 300, 0.8f, 0xFF95C84B };
+	case PT_BR:
+		return { 380.0f, 360.0f, 290.0f, 332.0f, 220, 0.6f, 0xFF8B2F20 };
+	case PT_I:
+		return { 500.0f, 480.0f, 320.0f, 457.0f, 160, 0.4f, 0xFF7B3FA0 };
+	case PT_AT:
+		return { 520.0f, 520.0f, 340.0f, MAX_TEMP, 240, 0.5f, 0xFF4E4057 };
+	case PT_TS:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, MAX_TEMP, 700, 1.0f, 0xFFFF4060 };
+	default:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, MAX_TEMP, 0, 0.0f, 0 };
+	}
+}
+
 bool IsAlkaliMetal(int type)
 {
 	return type == PT_NA || type == PT_K || type == PT_CS || type == PT_FR;
@@ -274,6 +306,27 @@ bool IsNitrogenGroupElement(int type)
 bool IsOxygenGroupExtension(int type)
 {
 	return type == PT_S || type == PT_SE || type == PT_TE || type == PT_LV;
+}
+
+bool IsHalogenElement(int type)
+{
+	return type == PT_F || type == PT_CHLR || type == PT_BR ||
+		type == PT_I || type == PT_AT || type == PT_TS;
+}
+
+bool IsHalogenReactiveMetal(int type)
+{
+	return type == PT_LITH || type == PT_NA || type == PT_K ||
+		type == PT_RBDM || type == PT_CS || type == PT_MAGN ||
+		type == PT_CA || type == PT_SR || type == PT_BA ||
+		type == PT_ALUM || type == PT_COPR || type == PT_IRON ||
+		type == PT_METL;
+}
+
+bool IsDisinfectionTarget(int type)
+{
+	return type == PT_PATH || type == PT_SPOR || type == PT_MYCL ||
+		type == PT_BIOF;
 }
 
 bool IsWaterLike(int type)
@@ -1660,6 +1713,276 @@ bool UpdateOxygenGroup(UPDATE_FUNC_ARGS, int sourceType)
 	}
 	return ExciteSelenium(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
+
+bool DecayRadioactiveHalogen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if ((sourceType != PT_AT && sourceType != PT_TS) ||
+		(parts[i].type != sourceType &&
+			(parts[i].type != PT_LAVA || parts[i].ctype != sourceType)))
+	{
+		return false;
+	}
+	if (parts[i].tmp <= 0)
+	{
+		parts[i].tmp = sourceType == PT_TS ? sim->rng.between(35, 75) :
+			sim->rng.between(240, 480);
+		return false;
+	}
+	--parts[i].tmp;
+	if (parts[i].tmp > 0)
+	{
+		return false;
+	}
+	if (!ConsumeEvent(sim))
+	{
+		parts[i].tmp = 1;
+		return false;
+	}
+
+	auto properties = HalogenPropertiesFor(sourceType);
+	auto temperature = std::min(parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+	int product = sourceType == PT_TS ? PT_MC : PT_POLO;
+	sim->part_change_type(i, x, y, product);
+	ResetReactionProduct(parts[i], product);
+	parts[i].temp = temperature;
+	if (product == PT_MC)
+	{
+		parts[i].tmp = sim->rng.between(50, 110);
+	}
+	int photon = sim->create_part(-3, x, y, PT_PHOT);
+	if (photon >= 0)
+	{
+		parts[photon].ctype = sourceType == PT_TS ? 0x03F03F00 : 0x0003FFF0;
+		parts[photon].temp = temperature;
+		parts[photon].life = 18;
+	}
+	return true;
+}
+
+bool ReactFluorineWithWater(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_F || parts[i].type != PT_F || parts[i].temp < 250.0f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || !IsWaterLike(TYP(packed)))
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+			auto water = ID(packed);
+			auto properties = HalogenPropertiesFor(sourceType);
+			auto temperature = std::min(parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_ACID);
+			sim->part_change_type(water, x + rx, y + ry, PT_ACID);
+			ResetReactionProduct(parts[i], PT_ACID);
+			ResetReactionProduct(parts[water], PT_ACID);
+			parts[i].temp = temperature;
+			parts[water].temp = temperature;
+			AddBoundedPressure(sim, x, y, properties.pressure);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool ReactHalogenWithHydrogen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_CHLR || sourceType == PT_TS)
+	{
+		return false;
+	}
+	auto properties = HalogenPropertiesFor(sourceType);
+	if (parts[i].temp < properties.hydrogenThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_H2)
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+			auto hydrogen = ID(packed);
+			auto temperature = std::min(parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_ACID);
+			sim->part_change_type(hydrogen, x + rx, y + ry, PT_ACID);
+			ResetReactionProduct(parts[i], PT_ACID);
+			ResetReactionProduct(parts[hydrogen], PT_ACID);
+			parts[i].temp = temperature;
+			parts[hydrogen].temp = temperature;
+			AddBoundedPressure(sim, x, y, properties.pressure * 0.6f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool ReactHalogenWithMetal(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_TS)
+	{
+		return false;
+	}
+	auto properties = HalogenPropertiesFor(sourceType);
+	if (parts[i].temp < properties.metalThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed)
+			{
+				continue;
+			}
+			auto metal = ID(packed);
+			auto metalType = parts[metal].type == PT_LAVA ? parts[metal].ctype : parts[metal].type;
+			if (!IsHalogenReactiveMetal(metalType))
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+			auto temperature = std::min(parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SALT);
+			sim->part_change_type(metal, x + rx, y + ry, PT_SALT);
+			ResetReactionProduct(parts[i], PT_SALT);
+			ResetReactionProduct(parts[metal], PT_SALT);
+			parts[i].temp = temperature;
+			parts[metal].temp = temperature;
+			parts[i].dcolour = properties.vapourColour;
+			parts[metal].dcolour = properties.vapourColour;
+			AddBoundedPressure(sim, x, y, properties.pressure * 0.45f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool DisinfectWithHalogen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_TS)
+	{
+		return false;
+	}
+	auto properties = HalogenPropertiesFor(sourceType);
+	if (parts[i].temp < properties.disinfectionThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || !IsDisinfectionTarget(TYP(packed)))
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+			auto target = ID(packed);
+			auto temperature = std::min(parts[i].temp + float(properties.reactionHeat) * 0.25f, MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SALT);
+			sim->part_change_type(target, x + rx, y + ry, PT_DUST);
+			ResetReactionProduct(parts[i], PT_SALT);
+			ResetReactionProduct(parts[target], PT_DUST);
+			parts[i].temp = temperature;
+			parts[target].temp = temperature;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseHalogen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_BR && sourceType != PT_I)
+	{
+		return false;
+	}
+	auto properties = HalogenPropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_SMKE);
+	ResetReactionProduct(parts[i], PT_SMKE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 60;
+	parts[i].dcolour = properties.vapourColour;
+	AddBoundedPressure(sim, x, y, properties.pressure * 0.25f);
+	return true;
+}
+
+bool UpdateHalogen(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsHalogenElement(sourceType))
+	{
+		return false;
+	}
+	if (DecayRadioactiveHalogen(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (ReactFluorineWithWater(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (ReactHalogenWithHydrogen(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (ReactHalogenWithMetal(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (DisinfectWithHalogen(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return VaporiseHalogen(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
 }
 
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
@@ -1889,5 +2212,40 @@ void OmniOxygenGroupCreate(ELEMENT_CREATE_FUNC_ARGS)
 	if (t == PT_LV)
 	{
 		sim->parts[i].tmp = sim->rng.between(40, 90);
+	}
+}
+
+int OmniHalogenUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateHalogen(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenHalogenUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateHalogen(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+int OmniHalogenGraphics(GRAPHICS_FUNC_ARGS)
+{
+	if (cpart->type == PT_AT || cpart->type == PT_TS)
+	{
+		*pixel_mode |= PMODE_GLOW;
+	}
+	return 0;
+}
+
+void OmniHalogenCreate(ELEMENT_CREATE_FUNC_ARGS)
+{
+	if (t == PT_AT)
+	{
+		sim->parts[i].tmp = sim->rng.between(240, 480);
+	}
+	else if (t == PT_TS)
+	{
+		sim->parts[i].tmp = sim->rng.between(35, 75);
 	}
 }

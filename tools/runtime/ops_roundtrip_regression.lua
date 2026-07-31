@@ -120,6 +120,11 @@ local definitions = {
     selenium = { "OMNI_PT_SE", "SE", 388 },
     tellurium = { "OMNI_PT_TE", "TE", 403 },
     livermorium = { "OMNI_PT_LV", "LV", 459 },
+    fluorine = { "OMNI_PT_F", "F", 374 },
+    bromine = { "OMNI_PT_BR", "BR", 389 },
+    iodine = { "OMNI_PT_I", "I", 404 },
+    astatine = { "OMNI_PT_AT", "AT", 430 },
+    tennessine = { "OMNI_PT_TS", "TS", 460 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -149,6 +154,7 @@ local module_keys = {
         "germanium", "flerovium",
         "nitrogen", "phosphorus", "arsenic", "antimony", "bismuth",
         "moscovium", "sulfur", "selenium", "tellurium", "livermorium",
+        "fluorine", "bromine", "iodine", "astatine", "tennessine",
     },
 }
 
@@ -288,11 +294,11 @@ local carrier_targets = {
         virs_tmp2 = "rshd",
     },
     periodic = {
-        lava = "flerovium",
-        spark = "boron",
-        conv_ctype = "germanium",
-        conv_tmp = "indium",
-        virs_tmp2 = "thallium",
+        lava = "iodine",
+        spark = "tennessine",
+        conv_ctype = "bromine",
+        conv_tmp = "astatine",
+        virs_tmp2 = "fluorine",
     },
     mixed = {
         lava = "alum",

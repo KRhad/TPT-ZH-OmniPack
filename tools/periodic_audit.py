@@ -65,6 +65,14 @@ EXPECTED_OXYGEN_GROUP_ELEMENTS = {
     459: "LV",
 }
 
+EXPECTED_HALOGEN_ELEMENTS = {
+    374: "F",
+    389: "BR",
+    404: "I",
+    430: "AT",
+    460: "TS",
+}
+
 EXPECTED_NEW_ELEMENTS = (
     EXPECTED_NOBLE_ELEMENTS
     | EXPECTED_ALKALI_ELEMENTS
@@ -73,6 +81,7 @@ EXPECTED_NEW_ELEMENTS = (
     | EXPECTED_CARBON_GROUP_ELEMENTS
     | EXPECTED_NITROGEN_GROUP_ELEMENTS
     | EXPECTED_OXYGEN_GROUP_ELEMENTS
+    | EXPECTED_HALOGEN_ELEMENTS
 )
 
 
@@ -135,9 +144,9 @@ def check_source_map(root: Path, errors: list[str]) -> None:
     if [int(row["atomic_number"]) for row in rows] != list(range(1, 119)):
         errors.append(f"{path}: atomic numbers are not the complete ordered range 1..118")
     implemented = [row for row in rows if row.get("status") == "implemented"]
-    if len(implemented) != 59:
+    if len(implemented) != 64:
         errors.append(
-            f"{path}: expected 59 implemented mappings after the oxygen-group batch "
+            f"{path}: expected 64 implemented mappings after the halogen batch "
             f"and found {len(implemented)}"
         )
     by_number = {int(row["atomic_number"]): row for row in rows}
@@ -152,6 +161,7 @@ def check_source_map(root: Path, errors: list[str]) -> None:
         32: 386, 50: 259, 82: 258, 114: 457,
         7: 373, 15: 377, 33: 387, 51: 402, 83: 429, 115: 458,
         8: 61, 16: 378, 34: 388, 52: 403, 84: 182, 116: 459,
+        9: 374, 17: 360, 35: 389, 53: 404, 85: 430, 117: 460,
     }
     for atomic_number, stable_id in expected_atomic.items():
         row = by_number.get(atomic_number, {})
@@ -206,6 +216,12 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "oxygen-group vaporisation": "VaporiseHotOxygenGroup",
         "selenium photoelectric excitation": "ExciteSelenium",
         "livermorium decay": "sourceType != PT_LV || parts[i].type != PT_LV",
+        "halogen hydrogen chemistry": "ReactHalogenWithHydrogen",
+        "fluorine water chemistry": "ReactFluorineWithWater",
+        "halogen metal chemistry": "ReactHalogenWithMetal",
+        "halogen disinfection": "DisinfectWithHalogen",
+        "halogen vaporisation": "VaporiseHalogen",
+        "radioactive halogen decay": "DecayRadioactiveHalogen",
     }
     for label, marker in required.items():
         if marker not in engine:
@@ -293,6 +309,18 @@ def check_engine(root: Path, errors: list[str]) -> None:
         ):
             if marker not in text:
                 errors.append(f"{path}: missing periodic element marker {marker!r}")
+    for stable_id, name in EXPECTED_HALOGEN_ELEMENTS.items():
+        path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
+        text = read_text(path, errors)
+        for marker in (
+            f'Identifier = "OMNI_PT_{name}"',
+            "HeatCapacity =",
+            "Update = &OmniHalogenUpdate",
+            "Graphics = &OmniHalogenGraphics",
+            "Create = &OmniHalogenCreate",
+        ):
+            if marker not in text:
+                errors.append(f"{path}: missing periodic element marker {marker!r}")
     magnesium = read_text(
         root / "src" / "simulation" / "elements" / "MAGN.cpp", errors
     )
@@ -341,6 +369,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         errors.append("LAVA.cpp: molten nitrogen-group ctype update hook is missing")
     if "OmniMoltenOxygenGroupUpdate" not in lava:
         errors.append("LAVA.cpp: molten oxygen-group ctype update hook is missing")
+    if "OmniMoltenHalogenUpdate" not in lava:
+        errors.append("LAVA.cpp: molten halogen ctype update hook is missing")
     liquid_nitrogen = read_text(
         root / "src" / "simulation" / "elements" / "LNTG.cpp", errors
     )
@@ -364,6 +394,16 @@ def check_engine(root: Path, errors: list[str]) -> None:
     ):
         if marker not in polonium:
             errors.append(f"POLO.cpp: missing official polonium marker {marker!r}")
+    chlorine = read_text(
+        root / "src" / "simulation" / "elements" / "CHLR.cpp", errors
+    )
+    for marker in (
+        'Identifier = "OMNI_PT_CHLR"',
+        "OmniChemistryElementUpdate",
+        "OmniHalogenUpdate",
+    ):
+        if marker not in chlorine:
+            errors.append(f"CHLR.cpp: missing combined chlorine marker {marker!r}")
 
 
 def check_ui(root: Path, errors: list[str]) -> None:
@@ -422,7 +462,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"periodic-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("periodic-audit: PASS (118 mapped, 59 implemented, 33 new periodic elements, 1024/frame)")
+        print("periodic-audit: PASS (118 mapped, 64 implemented, 38 new periodic elements, 1024/frame)")
     return 0
 
 

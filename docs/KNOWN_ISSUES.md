@@ -2,12 +2,12 @@
 
 ## 当前发布阻塞
 
-1. 周期表 UI 和 118 行元数据基础已实现，但当前只有 59/118 个纯元素映射可放置，仍缺 59 个实际元素行为。
-2. 当前总活动材料为 276，尚未达到 `total_playable_materials>=300`。
+1. 周期表 UI 和 118 行元数据基础已实现，但当前只有 64/118 个纯元素映射可放置，仍缺 54 个实际元素行为。
+2. 当前总活动材料为 281，尚未达到 `total_playable_materials>=300`。
 3. 模组来源目录、自动提取和去重报告已建立；逐文件、子模块与资源许可证总审计仍未完成，因此 `license_audit_pass=false`。
-4. Phase 1 与周期表前七批的全新 clean build、静态/Python 套件、模块/周期 Lua、六类与 mixed OPS 已通过；完整 118 元素压力矩阵和两小时长跑尚未执行。
+4. Phase 1 与周期表前八批的全新 clean build、静态/Python 套件、模块/周期 Lua、六类与 mixed OPS 已通过；完整 118 元素压力矩阵和两小时长跑尚未执行。
 5. 用户已确认原生 Fusion Pixel Font 的中文可读性；新的内容界面、双语往返、100%/125%/150% DPI 和所有页面仍需最终 GUI 人工矩阵。
-6. 图鉴已有 81 个 OmniPack 元素的完整双语内容；余下周期元素与未来材料说明尚未完成。
+6. 图鉴已有 86 个 OmniPack 元素的完整双语内容；余下周期元素与未来材料说明尚未完成。
 7. 当前 `origin` 是旧汉化仓库，不是授权的 OmniPack 正式远端；不能擅自推送或发布。
 8. 既有环境曾发现 GitHub classic PAT；Git 历史和已审计包未发现该模式，但撤销/轮换没有外部证据。
 9. GCC 16 仍对 `OurVariant/Bson`、`PowderToy.cpp` 和 `Simulation::FloodParts` 给出既有优化警告，尚无独立根因结论。
@@ -22,10 +22,10 @@
 
 ```text
 release_ready=false
-periodic_table_elements=59
+periodic_table_elements=64
 periodic_table_ui=true
 periodic_table_gui_visual_test=not_tested
-total_playable_materials=276
+total_playable_materials=281
 clean_build_pass=true
 stress_test=not_tested
 long_run_test=not_tested

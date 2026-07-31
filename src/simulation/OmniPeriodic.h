@@ -29,3 +29,7 @@ int OmniOxygenGroupUpdate(UPDATE_FUNC_ARGS);
 int OmniMoltenOxygenGroupUpdate(UPDATE_FUNC_ARGS);
 int OmniOxygenGroupGraphics(GRAPHICS_FUNC_ARGS);
 void OmniOxygenGroupCreate(ELEMENT_CREATE_FUNC_ARGS);
+int OmniHalogenUpdate(UPDATE_FUNC_ARGS);
+int OmniMoltenHalogenUpdate(UPDATE_FUNC_ARGS);
+int OmniHalogenGraphics(GRAPHICS_FUNC_ARGS);
+void OmniHalogenCreate(ELEMENT_CREATE_FUNC_ARGS);

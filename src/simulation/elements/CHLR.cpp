@@ -1,6 +1,9 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
 #include "simulation/OmniChemistry.h"
+#include "simulation/OmniPeriodic.h"
+
+static int update(UPDATE_FUNC_ARGS);
 
 void Element::Element_CHLR()
 {
@@ -36,5 +39,14 @@ void Element::Element_CHLR()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	Update = &OmniChemistryElementUpdate;
+	Update = &update;
+}
+
+static int update(UPDATE_FUNC_ARGS)
+{
+	if (OmniChemistryElementUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+	{
+		return 1;
+	}
+	return OmniHalogenUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 }

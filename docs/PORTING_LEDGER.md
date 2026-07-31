@@ -13,7 +13,7 @@
 | Phase 3 工业冶金首批 | Seppo `c3a8dd17...`；Cracker COPR `eb474d38...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、OmniPack contributors | 概念筛选、参数/行为适配、独立更新实现 | 稳定 ID 256–278 + 集中反应引擎 | TESTING | 23 元素、7 配方、5 材料行为；静态门禁与 Lua 运行回归 PASS |
 | Phase 3 基础化学首批 | Seppo `c3a8dd17...`；Cracker `ebbb9aab...`；Cyens `f01d992c...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、cbeimers113、OmniPack contributors | token/玩法需求参考，集中算法独立实现 | 稳定 ID 360–369 + 中央有界反应引擎 | TESTING | 10 元素、11 条反应路径、化学静态门禁与 Lua 真实运行回归 PASS |
 | Phase 5 受控核工业首批 | OmniPack 当前实现；Spike/Ultimata/Cracker 固定快照仅作范围参考 | OmniPack contributors；对应来源作者 | 玩法和风险边界参考，集中算法独立实现 | 稳定 ID 328–334 + 中央有界反应器引擎 | TESTING | 7 元素、4 类受控路径；静态门禁与 Lua 真实运行回归 PASS |
-| Phase 3 周期表前七批 | OmniPack `21b160a5...`、`bcf5accf...`、`546b8791...`、`5d9b9947...`、`de91bbb6...`、`2eeab9f3...`、`3c3c623a...` 基线；候选目录只核对搜索覆盖 | OmniPack contributors | 原创族逻辑；未复制外部候选实现 | 稀有气体、碱金属、碱土金属、硼族、碳族、氮族及氧族 33 个新固定 ID + 共享周期引擎 | TESTING | 33 新元素、59/118 映射；行为、预算、OPS 与直接选择回归 PASS |
+| Phase 3 周期表前八批 | OmniPack `21b160a5...`、`bcf5accf...`、`546b8791...`、`5d9b9947...`、`de91bbb6...`、`2eeab9f3...`、`3c3c623a...`、`8066533a...` 基线；候选目录只核对搜索覆盖 | OmniPack contributors | 原创族逻辑；未复制外部候选实现 | 稀有气体、碱金属、碱土金属、硼族、碳族、氮族、氧族及卤素 38 个新固定 ID + 共享周期引擎 | TESTING | 38 新元素、64/118 映射；行为、预算、OPS 与直接选择回归 PASS |
 | 汉化字体 | Dragonrster `445fab51...` | 未知 | 禁止发布 | 替换为可追溯字体 | BLOCKED | 名称、来源、许可证缺失 |
 | Cracker 工业化学 | Cracker `ebbb9aab...` | Cracker1000 等 | token/玩法需求参考 | 中央反应表 | TESTING | `CHLR/ACTY` 以新稳定 ID 独立实现；不复制 5×5 更新，不复用旧 ID |
 | 动力门户 PPTI/PPTO | Cracker `ebbb9aab...`; Jacob `b4926161...` | 各来源作者 | 合并重写 | 单一稳定实现 | DESIGN | 多来源重复、旧 API |
@@ -46,6 +46,8 @@
 周期表氮族批次新增 `N=373`、`P=377`、`AS=387`、`SB=402`、`BI=429`、`MC=458`，构造器与共享逻辑均为本项目原创实现；仅把官方 `LNTG=37`、`NICE=51` 的既有低温相安全连接到常温氮。氮放电、磷燃烧、分级酸/氧/汽化和 `MC → NH → POLO` 压缩衰变没有复制候选模组代码或常量表；`biological_mod` 只保留为氮候选搜索命中。
 
 周期表氧族批次复用官方 `O2=61`、`LO2=60` 和 `POLO=182`，不覆盖其更新函数、相变或稳定 ID；`S=378`、`SE=388`、`TE=403`、`LV=459` 的构造器和共享逻辑均为本项目原创实现。外部 `chem_mod_lua` 只作为硫候选搜索命中保留在来源映射中；硫烟雾燃烧、硒光敏辉光、硒/碲氧化与汽化及 `LV → FL → POLO` 压缩衰变没有复制候选模组代码或常量表。
+
+周期表卤素批次复用既有 `CHLR=360`，保留其稳定 ID、模块归属和 11 条高级化学路径；`F=374`、`BR=389`、`I=404`、`AT=430`、`TS=460` 的构造器与共享逻辑均为本项目原创实现。氟遇水/氢代理、分级卤化/消毒、有限着色蒸气和 `AT → POLO`、`TS → MC → NH → POLO` 压缩衰变没有复制候选模组代码或常量表。
 
 ## Phase 3 冶金来源与实现复核
 

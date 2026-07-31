@@ -49,6 +49,17 @@ assert(livermorium == 459,
 ui.activeTool(0, "OMNI_PT_LV")
 assert(ui.activeTool(0) == "OMNI_PT_LV",
     "always-available superheavy oxygen-group content was blocked by a module gate")
+local fluorine = assert(elements.OMNI_PT_F)
+assert(fluorine == 374, "periodic fluorine stable ID changed: " .. tostring(fluorine))
+ui.activeTool(0, "OMNI_PT_F")
+assert(ui.activeTool(0) == "OMNI_PT_F",
+    "always-available halogen content was blocked by a module gate")
+local tennessine = assert(elements.OMNI_PT_TS)
+assert(tennessine == 460,
+    "periodic tennessine stable ID changed: " .. tostring(tennessine))
+ui.activeTool(0, "OMNI_PT_TS")
+assert(ui.activeTool(0) == "OMNI_PT_TS",
+    "always-available superheavy halogen content was blocked by a module gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -75,4 +86,6 @@ report:write("OMNI_PERIODIC_NITROGEN_GROUP_ACTIVE=OMNI_PT_N\n")
 report:write("OMNI_PERIODIC_NITROGEN_SUPERHEAVY_ACTIVE=OMNI_PT_MC\n")
 report:write("OMNI_PERIODIC_OXYGEN_GROUP_ACTIVE=OMNI_PT_S\n")
 report:write("OMNI_PERIODIC_OXYGEN_SUPERHEAVY_ACTIVE=OMNI_PT_LV\n")
+report:write("OMNI_PERIODIC_HALOGEN_ACTIVE=OMNI_PT_F\n")
+report:write("OMNI_PERIODIC_HALOGEN_SUPERHEAVY_ACTIVE=OMNI_PT_TS\n")
 report:close()
