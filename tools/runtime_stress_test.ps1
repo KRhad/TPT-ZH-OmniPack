@@ -26,9 +26,12 @@ param(
     [ValidateRange(3, 24)]
     [int] $FixtureStride = 3,
 
-    [string] $OutputDirectory = "artifacts/performance/0.1.0-test",
+    [string] $OutputDirectory,
 
     [string] $PackageZip,
+
+    [ValidateSet("0.1.0-test", "0.2.0-dev")]
+    [string] $PackageVersion = "0.1.0-test",
 
     [string] $TemporaryDirectory = [System.IO.Path]::GetTempPath(),
 
@@ -42,6 +45,9 @@ if ($Smoke) {
     $WarmupSeconds = 0
     $SampleSeconds = 2
     $FixtureStride = [Math]::Max($FixtureStride, 12)
+}
+if (-not $OutputDirectory) {
+    $OutputDirectory = "artifacts/performance/$PackageVersion"
 }
 
 $sourceRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
@@ -103,7 +109,8 @@ function Get-StampInfo {
 function Get-PackageProvenance {
     param(
         [Parameter(Mandatory = $true)][string] $Package,
-        [Parameter(Mandatory = $true)][string] $ExecutablePath
+        [Parameter(Mandatory = $true)][string] $ExecutablePath,
+        [Parameter(Mandatory = $true)][string] $ExpectedVersion
     )
 
     $resolvedPackage = (Resolve-Path -LiteralPath $Package).Path
@@ -127,8 +134,19 @@ function Get-PackageProvenance {
         finally {
             $reader.Dispose()
         }
-        if ($manifestText -notmatch '(?m)^kind=public-test\r?$') {
-            throw "Package manifest is not a public-test manifest"
+        $kindMatches = [regex]::Matches(
+            $manifestText,
+            '(?m)^kind=(public-test|local-dev)\r?$'
+        )
+        if ($kindMatches.Count -ne 1) {
+            throw "Package manifest must contain one supported package kind"
+        }
+        $versionMatches = [regex]::Matches(
+            $manifestText,
+            '(?m)^version=([^\r\n]+)\r?$'
+        )
+        if ($versionMatches.Count -ne 1 -or $versionMatches[0].Groups[1].Value -ne $ExpectedVersion) {
+            throw "Package manifest version does not match $ExpectedVersion"
         }
         $revisionMatches = [regex]::Matches(
             $manifestText,
@@ -157,6 +175,7 @@ function Get-PackageProvenance {
         return [pscustomobject]@{
             Revision = $revisionMatches[0].Groups[1].Value
             Sha256 = (Get-FileHash -LiteralPath $resolvedPackage -Algorithm SHA256).Hash
+            Kind = $kindMatches[0].Groups[1].Value
         }
     }
     finally {
@@ -170,12 +189,15 @@ if ($LASTEXITCODE -ne 0 -or $harnessCommit -notmatch '^[0-9a-f]{40}$') {
 }
 $sourceCommit = $null
 $publicZipSha256 = "not_tested"
+$packageKind = "not_tested"
 if ($PackageZip) {
     $packageProvenance = Get-PackageProvenance `
         -Package $PackageZip `
-        -ExecutablePath $resolvedExecutable
+        -ExecutablePath $resolvedExecutable `
+        -ExpectedVersion $PackageVersion
     $sourceCommit = $packageProvenance.Revision
     $publicZipSha256 = $packageProvenance.Sha256
+    $packageKind = $packageProvenance.Kind
 }
 elseif (-not $Smoke) {
     throw "PackageZip is required for formal stress runs"
@@ -315,7 +337,8 @@ try {
         source_commit = $sourceCommit
         harness_commit = $harnessCommit
         release_tag = "not_tested"
-        version = "0.1.0-test"
+        version = $PackageVersion
+        package_kind = $packageKind
         public_zip_sha256 = $publicZipSha256
         exe_sha256 = (Get-FileHash -LiteralPath $resolvedExecutable -Algorithm SHA256).Hash
         input_ops_sha256 = $firstOps.Sha256

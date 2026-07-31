@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 from pathlib import Path
 import re
 import sys
@@ -13,6 +14,7 @@ import zipfile
 
 
 VERSION = "0.1.0-test"
+DEV_VERSION = "0.2.0-dev"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -25,6 +27,19 @@ NORMAL_DOCUMENTS = {
     "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt",
     "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt",
     "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt",
+}
+DEV_DOCUMENTS = {
+    "TUTORIALS-0.2.0.json",
+    "examples/0.2.0/example-spec.json",
+    "examples/0.2.0/manifest.json",
+    "examples/0.2.0/tutorials-runtime-report.json",
+    "examples/0.2.0/01-peroxide-pathogen.stm",
+    "examples/0.2.0/02-humus-fertilizer.stm",
+    "examples/0.2.0/03-slag-acid.stm",
+    "examples/0.2.0/04-shield-assembly.stm",
+    "examples/0.2.0/05-waste-stabilization.stm",
+    "examples/0.2.0/06-waste-missing-catalyst.stm",
+    "examples/0.2.0/07-integrated-recovery.stm",
 }
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 PATH_MARKERS = (b"C:\\Users\\", b"/Users/", b"\\build-", b"/build-")
@@ -49,9 +64,18 @@ def parse_manifest(data: bytes) -> tuple[dict[str, str], dict[str, tuple[int, st
     return fields, members
 
 
+def package_stems(version: str) -> tuple[str, str]:
+    return (
+        f"TPT-ZH-OmniPack-{version}-Windows-x64",
+        f"TPT-ZH-OmniPack-{version}-Symbols-Windows-x64",
+    )
+
+
 def expected_members(stem: str, kind: str) -> set[str]:
     if kind == "public-test":
         files = {EXECUTABLE_NAME, *NORMAL_DOCUMENTS}
+    elif kind == "local-dev":
+        files = {EXECUTABLE_NAME, *NORMAL_DOCUMENTS, *DEV_DOCUMENTS}
     elif kind == "debug-symbols":
         files = {SYMBOL_NAME}
     else:
@@ -59,10 +83,24 @@ def expected_members(stem: str, kind: str) -> set[str]:
     return {f"{stem}/{name}" for name in files | {"TEST-MANIFEST.txt"}}
 
 
-def audit_package(package_path: Path, expect_symbols: bool = False) -> list[str]:
+def audit_package(
+    package_path: Path,
+    expect_symbols: bool = False,
+    version: str = VERSION,
+    kind: str | None = None,
+) -> list[str]:
     errors: list[str] = []
-    stem = SYMBOL_PACKAGE_STEM if expect_symbols else PACKAGE_STEM
-    kind = "debug-symbols" if expect_symbols else "public-test"
+    profiles = {VERSION: "public-test", DEV_VERSION: "local-dev"}
+    if version not in profiles:
+        return [f"unsupported package version: {version}"]
+    if expect_symbols:
+        kind = "debug-symbols"
+    elif kind is None:
+        kind = profiles[version]
+    elif kind != profiles[version]:
+        return [f"version {version} requires kind={profiles[version]}"]
+    package_stem, symbol_package_stem = package_stems(version)
+    stem = symbol_package_stem if expect_symbols else package_stem
     if not package_path.is_file():
         return [f"package does not exist: {package_path}"]
     try:
@@ -81,14 +119,16 @@ def audit_package(package_path: Path, expect_symbols: bool = False) -> list[str]
                     errors.append(f"package contains unexpected members: {', '.join(extra)}")
             for name in actual:
                 lowered = name.lower()
-                if lowered.endswith(FORBIDDEN_SUFFIXES):
+                relative = name.removeprefix(f"{stem}/")
+                allowed_stamp = kind == "local-dev" and relative in DEV_DOCUMENTS
+                if lowered.endswith(FORBIDDEN_SUFFIXES) and not allowed_stamp:
                     errors.append(f"package contains forbidden data: {name}")
             manifest_name = f"{stem}/TEST-MANIFEST.txt"
             if manifest_name not in actual:
                 errors.append("package manifest is missing")
                 return errors
             fields, members = parse_manifest(archive.read(manifest_name))
-            if fields.get("format") != "2" or fields.get("kind") != kind or fields.get("version") != VERSION:
+            if fields.get("format") != "2" or fields.get("kind") != kind or fields.get("version") != version:
                 errors.append("package manifest metadata is invalid")
             if not re.fullmatch(r"[0-9a-f]{40}", fields.get("revision", "")):
                 errors.append("package manifest Git revision is invalid")
@@ -108,10 +148,44 @@ def audit_package(package_path: Path, expect_symbols: bool = False) -> list[str]
                     errors.append("packaged executable does not begin with PE MZ header")
                 if any(marker.lower() in executable.lower() for marker in PATH_MARKERS):
                     errors.append("packaged executable leaks a development path")
-                for marker in ("Windows x64", "不属于本测试版", "已知测试限制", "未签名"):
-                    if marker not in archive.read(f"{stem}/TESTING.zh-CN.md").decode("utf-8", errors="replace"):
-                        errors.append(f"test instructions are missing marker: {marker!r}")
-    except (OSError, ValueError, zipfile.BadZipFile) as exc:
+                if kind == "public-test":
+                    for marker in ("Windows x64", "不属于本测试版", "已知测试限制", "未签名"):
+                        if marker not in archive.read(f"{stem}/TESTING.zh-CN.md").decode("utf-8", errors="replace"):
+                            errors.append(f"test instructions are missing marker: {marker!r}")
+                elif kind == "local-dev":
+                    example_manifest = json.loads(
+                        archive.read(f"{stem}/examples/0.2.0/manifest.json")
+                    )
+                    runtime_report = json.loads(
+                        archive.read(
+                            f"{stem}/examples/0.2.0/tutorials-runtime-report.json"
+                        )
+                    )
+                    executable_hash = sha256_bytes(executable)
+                    if example_manifest.get("content_version") != version:
+                        errors.append("example manifest version does not match package")
+                    if example_manifest.get("generator_exe_sha256") != executable_hash:
+                        errors.append("example manifest executable does not match package")
+                    if runtime_report.get("executable_sha256") != executable_hash:
+                        errors.append("tutorial report executable does not match package")
+                    if runtime_report.get("source_commit") != example_manifest.get("source_commit"):
+                        errors.append("tutorial and example source commits do not match")
+                    if runtime_report.get("pass_count") != 8:
+                        errors.append("tutorial report does not contain 8 passes")
+                    example_rows = example_manifest.get("examples")
+                    if not isinstance(example_rows, list) or len(example_rows) != 7:
+                        errors.append("example manifest does not contain 7 examples")
+                    else:
+                        for row in example_rows:
+                            filename = row.get("filename") if isinstance(row, dict) else None
+                            member_name = f"{stem}/examples/0.2.0/{filename}"
+                            if member_name not in actual:
+                                errors.append(f"example manifest member is missing: {filename}")
+                                continue
+                            data = archive.read(member_name)
+                            if len(data) != row.get("bytes") or sha256_bytes(data) != row.get("sha256"):
+                                errors.append(f"example manifest does not match member: {filename}")
+    except (OSError, ValueError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
         errors.append(f"cannot read package: {exc}")
     return errors
 
@@ -128,12 +202,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("package", type=Path)
     parser.add_argument("--symbols", action="store_true")
+    parser.add_argument("--version", choices=(VERSION, DEV_VERSION), default=VERSION)
+    parser.add_argument("--kind", choices=("public-test", "local-dev"))
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    errors = audit_package(args.package, args.symbols) + audit_hash_file(args.package)
+    errors = audit_package(
+        args.package,
+        args.symbols,
+        version=args.version,
+        kind=args.kind,
+    ) + audit_hash_file(args.package)
     if errors:
         for error in errors:
             print(f"test-release-audit: ERROR {error}", file=sys.stderr)

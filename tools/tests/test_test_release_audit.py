@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -72,6 +74,53 @@ class TestReleaseAuditTests(unittest.TestCase):
             )
         return package, symbols
 
+    def add_dev_sources(self, source: Path) -> None:
+        examples = source / "examples" / "0.2.0"
+        examples.mkdir(parents=True)
+        filenames = [archive for _, archive in package_test_release.DEV_DOCUMENTS if archive.endswith(".stm")]
+        rows = []
+        for index, archive_name in enumerate(filenames, start=1):
+            filename = Path(archive_name).name
+            data = b"OPS1" + b"\0" * 8 + b"BZh" + bytes([index])
+            (examples / filename).write_bytes(data)
+            rows.append(
+                {
+                    "id": f"example-{index}",
+                    "filename": filename,
+                    "bytes": len(data),
+                    "sha256": hashlib.sha256(data).hexdigest().upper(),
+                }
+            )
+        executable_hash = hashlib.sha256(
+            (source / "tpt-zh-omnipack.exe").read_bytes()
+        ).hexdigest().upper()
+        source_commit = "b" * 40
+        (source / "docs" / "TUTORIALS_0.2.json").write_text(
+            "{}\n", encoding="utf-8"
+        )
+        (examples / "example-spec.json").write_text("{}\n", encoding="utf-8")
+        (examples / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "content_version": package_test_release.DEV_VERSION,
+                    "source_commit": source_commit,
+                    "generator_exe_sha256": executable_hash,
+                    "examples": rows,
+                }
+            ),
+            encoding="utf-8",
+        )
+        (examples / "tutorials-runtime-report.json").write_text(
+            json.dumps(
+                {
+                    "source_commit": source_commit,
+                    "executable_sha256": executable_hash,
+                    "pass_count": 8,
+                }
+            ),
+            encoding="utf-8",
+        )
+
     def test_generated_package_passes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source = self.make_source_root(Path(temporary))
@@ -114,6 +163,49 @@ class TestReleaseAuditTests(unittest.TestCase):
             self.assertTrue(
                 any("duplicate ZIP member" in error or "manifest" in error for error in errors)
             )
+
+    def test_local_dev_package_includes_bound_examples(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            self.add_dev_sources(source)
+            with mock.patch.object(package_test_release, "git_revision", return_value="a" * 40):
+                package, _, symbols, _ = package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.DEV_VERSION,
+                    kind="local-dev",
+                    include_examples=True,
+                )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    package,
+                    version=package_test_release.DEV_VERSION,
+                    kind="local-dev",
+                ),
+                [],
+            )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    symbols,
+                    True,
+                    version=package_test_release.DEV_VERSION,
+                ),
+                [],
+            )
+
+    def test_local_dev_profile_must_be_explicit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            with self.assertRaisesRegex(ValueError, "requires kind=local-dev"):
+                package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.DEV_VERSION,
+                )
 
 
 if __name__ == "__main__":

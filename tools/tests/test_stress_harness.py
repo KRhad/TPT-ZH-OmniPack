@@ -81,7 +81,9 @@ class StressHarnessContractTest(unittest.TestCase):
     def test_formal_runs_bind_the_package_manifest_and_executable(self) -> None:
         self.assertIn("PackageZip is required for formal stress runs", self.powershell)
         self.assertIn("TEST-MANIFEST.txt", self.powershell)
-        self.assertIn("kind=public-test", self.powershell)
+        self.assertIn("kind=(public-test|local-dev)", self.powershell)
+        self.assertIn('[ValidateSet("0.1.0-test", "0.2.0-dev")]', self.powershell)
+        self.assertIn("Package manifest version does not match", self.powershell)
         self.assertIn("revision=([0-9a-f]{40})", self.powershell)
         self.assertIn("member=tpt-zh-omnipack", self.powershell)
         self.assertIn("Package executable size does not match", self.powershell)

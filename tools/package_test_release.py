@@ -18,6 +18,7 @@ import zipfile
 
 
 VERSION = "0.1.0-test"
+DEV_VERSION = "0.2.0-dev"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -36,6 +37,30 @@ DOCUMENTS = (
     ("resources/third_party/FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt"),
     ("resources/third_party/FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt"),
     ("resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt"),
+)
+DEV_DOCUMENTS = (
+    ("docs/TUTORIALS_0.2.json", "TUTORIALS-0.2.0.json"),
+    ("examples/0.2.0/example-spec.json", "examples/0.2.0/example-spec.json"),
+    ("examples/0.2.0/manifest.json", "examples/0.2.0/manifest.json"),
+    ("examples/0.2.0/tutorials-runtime-report.json", "examples/0.2.0/tutorials-runtime-report.json"),
+    *tuple(
+        (
+            f"examples/0.2.0/{ordinal:02d}-{name}.stm",
+            f"examples/0.2.0/{ordinal:02d}-{name}.stm",
+        )
+        for ordinal, name in enumerate(
+            (
+                "peroxide-pathogen",
+                "humus-fertilizer",
+                "slag-acid",
+                "shield-assembly",
+                "waste-stabilization",
+                "waste-missing-catalyst",
+                "integrated-recovery",
+            ),
+            start=1,
+        )
+    ),
 )
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 FORBIDDEN_COMPONENTS = {".git", "__pycache__", "build", "dist"}
@@ -84,15 +109,50 @@ def zip_datetime(epoch: int) -> tuple[int, int, int, int, int, int]:
     return timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute, timestamp.second
 
 
-def validate_member_name(name: str) -> None:
+def validate_profile(version: str, kind: str, include_examples: bool) -> None:
+    expected = {
+        VERSION: ("public-test", False),
+        DEV_VERSION: ("local-dev", True),
+    }
+    if version not in expected:
+        raise ValueError(f"unsupported package version: {version}")
+    expected_kind, expected_examples = expected[version]
+    if kind != expected_kind or include_examples != expected_examples:
+        raise ValueError(
+            f"version {version} requires kind={expected_kind} "
+            f"and include_examples={str(expected_examples).lower()}"
+        )
+
+
+def package_stems(version: str) -> tuple[str, str]:
+    return (
+        f"TPT-ZH-OmniPack-{version}-Windows-x64",
+        f"TPT-ZH-OmniPack-{version}-Symbols-Windows-x64",
+    )
+
+
+def validate_member_name(name: str, allow_example_stamp: bool = False) -> None:
     path = Path(name)
     if path.is_absolute() or ".." in path.parts or any(component in FORBIDDEN_COMPONENTS for component in path.parts):
         raise ValueError(f"unsafe archive member name: {name}")
-    if name.lower().endswith(FORBIDDEN_SUFFIXES):
+    allowed_stamp = (
+        allow_example_stamp
+        and name.startswith("examples/0.2.0/")
+        and name.lower().endswith(".stm")
+    )
+    if name.lower().endswith(FORBIDDEN_SUFFIXES) and not allowed_stamp:
         raise ValueError(f"forbidden archive member name: {name}")
 
 
-def validate_sources(source_root: Path, executable: Path, symbols: Path) -> None:
+def validate_sources(
+    source_root: Path,
+    executable: Path,
+    symbols: Path,
+    version: str = VERSION,
+    kind: str = "public-test",
+    include_examples: bool = False,
+) -> None:
+    validate_profile(version, kind, include_examples)
     if executable.name != EXECUTABLE_NAME:
         raise ValueError(f"executable must be named {EXECUTABLE_NAME!r}, got {executable.name!r}")
     if not executable.is_file() or executable.read_bytes()[:2] != b"MZ":
@@ -114,13 +174,25 @@ def validate_sources(source_root: Path, executable: Path, symbols: Path) -> None
         source = source_root / source_name
         if not source.is_file():
             raise ValueError(f"required public-release source is missing: {source}")
+    if include_examples:
+        for source_name, archive_name in DEV_DOCUMENTS:
+            validate_member_name(archive_name, allow_example_stamp=True)
+            source = source_root / source_name
+            if not source.is_file() or source.stat().st_size == 0:
+                raise ValueError(f"required local-dev source is missing or empty: {source}")
 
 
-def manifest(revision: str, members: Iterable[tuple[str, Path]], build_epoch: int, kind: str) -> str:
+def manifest(
+    revision: str,
+    members: Iterable[tuple[str, Path]],
+    build_epoch: int,
+    kind: str,
+    version: str = VERSION,
+) -> str:
     lines = [
         "format=2",
         f"kind={kind}",
-        f"version={VERSION}",
+        f"version={version}",
         f"revision={revision}",
         f"build_epoch={build_epoch}",
     ]
@@ -149,25 +221,56 @@ def write_hash(path: Path) -> Path:
     return hash_path
 
 
-def build_package(source_root: Path, executable: Path, symbols: Path, output_directory: Path) -> tuple[Path, Path, Path, Path]:
+def build_package(
+    source_root: Path,
+    executable: Path,
+    symbols: Path,
+    output_directory: Path,
+    version: str = VERSION,
+    kind: str = "public-test",
+    include_examples: bool = False,
+) -> tuple[Path, Path, Path, Path]:
     source_root = source_root.resolve()
     executable = executable.resolve()
     symbols = symbols.resolve()
     output_directory = output_directory.resolve()
-    validate_sources(source_root, executable, symbols)
+    validate_sources(
+        source_root,
+        executable,
+        symbols,
+        version=version,
+        kind=kind,
+        include_examples=include_examples,
+    )
     revision = git_revision(source_root)
     epoch = source_date_epoch()
     output_directory.mkdir(parents=True, exist_ok=True)
-    normal_files = [(EXECUTABLE_NAME, executable)] + [(name, source_root / source) for source, name in DOCUMENTS]
+    package_stem, symbol_package_stem = package_stems(version)
+    selected_documents = DOCUMENTS + (DEV_DOCUMENTS if include_examples else ())
+    normal_files = [(EXECUTABLE_NAME, executable)] + [
+        (name, source_root / source) for source, name in selected_documents
+    ]
     symbol_files = [(SYMBOL_NAME, symbols)]
-    package_path = output_directory / f"{PACKAGE_STEM}.zip"
-    symbols_path = output_directory / f"{SYMBOL_PACKAGE_STEM}.zip"
+    package_path = output_directory / f"{package_stem}.zip"
+    symbols_path = output_directory / f"{symbol_package_stem}.zip"
     with tempfile.TemporaryDirectory(dir=output_directory) as temporary:
         temporary = Path(temporary)
         normal_temp = temporary / package_path.name
         symbols_temp = temporary / symbols_path.name
-        write_zip(normal_temp, PACKAGE_STEM, normal_files, manifest(revision, normal_files, epoch, "public-test"), epoch)
-        write_zip(symbols_temp, SYMBOL_PACKAGE_STEM, symbol_files, manifest(revision, symbol_files, epoch, "debug-symbols"), epoch)
+        write_zip(
+            normal_temp,
+            package_stem,
+            normal_files,
+            manifest(revision, normal_files, epoch, kind, version),
+            epoch,
+        )
+        write_zip(
+            symbols_temp,
+            symbol_package_stem,
+            symbol_files,
+            manifest(revision, symbol_files, epoch, "debug-symbols", version),
+            epoch,
+        )
         shutil.move(normal_temp, package_path)
         shutil.move(symbols_temp, symbols_path)
     return package_path, write_hash(package_path), symbols_path, write_hash(symbols_path)
@@ -179,6 +282,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--symbols", type=Path, required=True)
     parser.add_argument("--output-directory", type=Path, default=Path("dist"))
+    parser.add_argument("--version", choices=(VERSION, DEV_VERSION), default=VERSION)
+    parser.add_argument("--kind", choices=("public-test", "local-dev"), default="public-test")
+    parser.add_argument("--include-examples", action="store_true")
     parser.add_argument("--objdump", help="Path to objdump for mandatory PE auditing.")
     parser.add_argument("--strings", help="Path to strings for mandatory path auditing.")
     return parser
@@ -204,7 +310,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         audit = subprocess.run(audit_command, check=False, capture_output=True, text=True)
         if audit.returncode:
             raise ValueError("release binary audit failed: " + audit.stderr.strip())
-        package, package_hash, symbols, symbols_hash = build_package(source_root, args.executable, args.symbols, output_directory)
+        package, package_hash, symbols, symbols_hash = build_package(
+            source_root,
+            args.executable,
+            args.symbols,
+            output_directory,
+            version=args.version,
+            kind=args.kind,
+            include_examples=args.include_examples,
+        )
     except (OSError, ValueError) as exc:
         print(f"test-release-package: ERROR {exc}", file=sys.stderr)
         return 1
