@@ -134,6 +134,8 @@ class StressHarnessContractTest(unittest.TestCase):
     def test_automation_stress_measures_official_signal_population(self) -> None:
         self.assertIn("local function automation_factory(bounds)", self.lua)
         self.assertIn("local function automation_signal_loop(bounds)", self.lua)
+        self.assertIn("btry = assert(elements.DEFAULT_PT_BTRY)", self.lua)
+        self.assertIn("make(ids.btry, x + 2, y)", self.lua)
         self.assertIn("sim.elementCount(ids.spark)", self.lua)
         self.assertIn("runtime.signal_count_total", self.lua)
         self.assertIn("runtime.signal_count_peak_per_frame", self.lua)

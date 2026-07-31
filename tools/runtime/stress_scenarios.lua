@@ -50,6 +50,7 @@ local ids = {
     pscn = assert(elements.DEFAULT_PT_PSCN),
     nscn = assert(elements.DEFAULT_PT_NSCN),
     metl = assert(elements.DEFAULT_PT_METL),
+    btry = assert(elements.DEFAULT_PT_BTRY),
     wifi = assert(elements.DEFAULT_PT_WIFI),
     filt = assert(elements.DEFAULT_PT_FILT),
     dlay = assert(elements.DEFAULT_PT_DLAY),
@@ -410,12 +411,11 @@ local function automation_signal_loop(bounds)
     grid(bounds, function(x, y, n)
         local channel_temperature = 173.15 + ((n % 8) * 100.0)
         make(ids.wifi, x, y, { temp = channel_temperature })
-        local transmitter = make(ids.pscn, x + 1, y)
-        if transmitter and n % 16 == 0 then
-            sim.partProperty(transmitter, "type", ids.spark)
-            sim.partProperty(transmitter, "ctype", ids.pscn)
-            sim.partProperty(transmitter, "life", 4)
-        end
+        make(ids.pscn, x + 1, y)
+        -- Official BTRY repeatedly excites adjacent conductors after their
+        -- cooldown, so the formal sample measures a sustained official SPRK
+        -- population instead of a one-shot pulse consumed during warmup.
+        make(ids.btry, x + 2, y)
         make(ids.dlay, x, y + 1, { temp = 275.15 })
         make(ids.pscn, x + 1, y + 1)
         make(ids.nscn, x + 2, y + 1)
