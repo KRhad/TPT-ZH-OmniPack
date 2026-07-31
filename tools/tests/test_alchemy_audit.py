@@ -101,6 +101,24 @@ class AlchemyAuditTests(unittest.TestCase):
             alchemy_audit.read_text = original
         self.assertTrue(any("FindLockedAlchemySaveElements" in error for error in errors))
 
+    def test_repeated_serialise_parse_import_removal_is_rejected(self) -> None:
+        probe_path = ROOT / "tools" / "alchemy_state_probe.cpp"
+        probe = probe_path.read_text(encoding="utf-8").replace(
+            "iterationSave.Serialise().second",
+            "removedSerialiseStep().second",
+            1,
+        )
+        errors: list[str] = []
+        original = alchemy_audit.read_text
+        try:
+            alchemy_audit.read_text = lambda path, sink: (
+                probe if path == probe_path else original(path, sink)
+            )
+            alchemy_audit.check_runtime_contract(ROOT, DOCUMENT, errors)
+        finally:
+            alchemy_audit.read_text = original
+        self.assertTrue(any("iterationSave.Serialise().second" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

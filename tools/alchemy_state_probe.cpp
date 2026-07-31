@@ -18,6 +18,18 @@ bool Has(std::vector<ByteString> const &values, char const *value)
 {
 	return std::find(values.begin(), values.end(), value) != values.end();
 }
+
+bool SameState(OmniAlchemySaveState const &left, OmniAlchemySaveState const &right)
+{
+	return left.present == right.present &&
+		left.valid == right.valid &&
+		left.schemaVersion == right.schemaVersion &&
+		left.unlockedIdentifiers == right.unlockedIdentifiers &&
+		left.completedStages == right.completedStages &&
+		left.records == right.records &&
+		left.dwellFrames == right.dwellFrames &&
+		left.coolingArmed == right.coolingArmed;
+}
 }
 
 int main()
@@ -106,16 +118,23 @@ int main()
 	{
 		return Fail("canonical ten-stage mastery state was not accepted");
 	}
-	GameSave masterySave(Vec2<int>{ 1, 1 });
-	masterySave.omniAlchemy = alchemy.Export();
-	GameSave masteryLoaded(masterySave.Serialise().second);
 	for (int iteration = 0; iteration < 100; ++iteration)
 	{
-		if (!alchemy.Import(masteryLoaded.omniAlchemy) || !alchemy.Mastered() ||
-			alchemy.Export().completedStages.size() != OmniAlchemyStageCount ||
-			alchemy.Export().records.size() != OmniAlchemyStageCount)
+		auto before = alchemy.Export();
+		GameSave iterationSave(Vec2<int>{ 1, 1 });
+		iterationSave.omniAlchemy = before;
+		auto serialisedProgress = iterationSave.Serialise().second;
+		if (serialisedProgress.empty())
 		{
-			return Fail("repeated mastery load introduced loss or duplicate records");
+			return Fail("repeated mastery serialisation returned no OPS data");
+		}
+		GameSave parsedProgress(serialisedProgress);
+		if (!SameState(before, parsedProgress.omniAlchemy) ||
+			!alchemy.Import(parsedProgress.omniAlchemy) ||
+			!SameState(before, alchemy.Export()) ||
+			!alchemy.Mastered())
+		{
+			return Fail("repeated Serialise-Parse-Import introduced progress loss or duplication");
 		}
 	}
 
@@ -137,7 +156,7 @@ int main()
 
 	std::cout
 		<< "alchemy-state-probe: PASS "
-		<< "initial=4 stage_roundtrip=10 repeated_loads=100 multi_save_isolation=true "
+		<< "initial=4 stage_roundtrip=10 repeated_loads=100 serialise_parse_import=100 multi_save_isolation=true "
 		<< "corrupt_fail_closed=true unknown_schema_rejected=true mastery=true"
 		<< std::endl;
 	return 0;

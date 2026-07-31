@@ -426,7 +426,9 @@ def check_runtime_contract(root: Path, document: dict[str, Any], errors: list[st
 
     evidence_markers = {
         "tools/alchemy_state_probe.cpp": (
-            "stage_roundtrip=10", "repeated_loads=100", "multi_save_isolation=true",
+            "stage_roundtrip=10", "repeated_loads=100", "serialise_parse_import=100",
+            "iterationSave.Serialise().second", "GameSave parsedProgress(serialisedProgress)",
+            "alchemy.Import(parsedProgress.omniAlchemy)", "multi_save_isolation=true",
             "corrupt_fail_closed=true", "unknown_schema_rejected=true", "mastery=true",
         ),
         "tools/runtime/alchemy_gate_regression.lua": (
