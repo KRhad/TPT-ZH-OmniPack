@@ -33,23 +33,23 @@
 | 局部生态 8 | PASS | PASS | PASS | 历史 PASS | ID `288..295`；完整/简化均通过 |
 | 受控核工业 7 | PASS | PASS | PASS | 历史 PASS | ID `328..334` |
 | 高级化学 10 | PASS | PASS | PASS | 历史 PASS | ID `360..369` |
-| 周期表前两批 11 | PASS | PASS | PASS | 预算帧 PASS | ID `370/375/376/379/380/390/405/406/431/432/461`；37/118 映射可用 |
+| 周期表前三批 16 | PASS | PASS | PASS | 预算帧 PASS | 新 ID `370..461` 中 16 项启用；42/118 映射可用 |
 | 多模块混合 | PASS | 历史 PASS | 历史 PASS | 历史 PASS | Phase 1 正式混合压力尚未复跑 |
 
-### 周期表前两批证据
+### 周期表前三批证据
 
 | 项目 | 状态 | 证据 |
 |---|---|---|
 | 118 行数据、长式格位、搜索/筛选契约 | PASS | `periodic-runtime-audit` 与 Python 单测 |
-| 11 个新 identifier / 固定 ID / 双语图鉴 | PASS | 元素登记、i18n、内容门禁 |
-| 氦低温、氙放电、氡/鿫衰变及 6 种碱金属代表行为 | PASS | `runtime_lua_periodic_test.ps1` |
-| 单帧事件预算 | PASS | 1,200 个 `OG(tmp=1)` 与隔离 `FR(tmp=1)` 样本分别验证，峰值均不超过且可达到 `1024` |
-| 周期 ID OPS 与携带字段 | PASS | 3 进程、2 重启、2 加载、17 粒子、25 字段断言 |
-| 周期内容无解锁直接选择 | PASS | `OMNI_PERIODIC_ACTIVE=OMNI_PT_HE`；`OMNI_PERIODIC_ALKALI_ACTIVE=OMNI_PT_NA` |
-| 新增中文字体覆盖 | PASS | “剧”`U+5267`、“苛”`U+82DB` 由固定 Fusion BDF 补入；容器与离屏渲染通过 |
-| 本批 clean Release build | PASS | `build-periodic-alkali-final-clean`，`524/524`；EXE `081D54682C8904DC36591FCEA757AB7A631613D8DEB60BD3563EC07CF0F4A325` |
-| 本批 Meson/Python 全量套件 | PASS | static `21/21`；Python `144/144`，0 skip |
-| 六类与 mixed OPS | PASS | 21 进程、14 重启、14 加载；六类 96 粒子/145 字段断言，mixed 11 粒子/20 字段断言 |
+| 16 个新 identifier / 固定 ID / 双语图鉴 | PASS | 元素登记、i18n、内容门禁 |
+| 氦/氙/放射性行为及碱金属、碱土金属各 6 个族成员 | PASS | `runtime_lua_periodic_test.ps1` |
+| 单帧事件预算 | PASS | 1,200 个 `OG/FR/RA(tmp=1)` 隔离样本分别验证，峰值均不超过且可达到 `1024` |
+| 周期 ID OPS 与携带字段 | PASS | 3 进程、2 重启、2 加载、22 粒子、30 字段断言 |
+| 周期内容无解锁直接选择 | PASS | `HE`、`NA`、`CA` 三批代表项均可直接选择 |
+| 新增中文字体覆盖 | PASS | 本批“征”`U+5F81`、“泼”`U+6CFC` 由固定 Fusion BDF 补入；容器与离屏渲染通过 |
+| 本批 clean Release build | PASS | `build-periodic-alkaline-earth-final-clean`，`529/529`；EXE `EAB45B822DA99F90DC18E462A114571C347ABB40B3DEC9FE63BB7237B49B7DED` |
+| 本批 Meson/Python 全量套件 | PASS | static `21/21`；Python `145/145`，0 skip |
+| 六类与 mixed OPS | PASS | 21 进程、14 重启、14 加载；六类 101 粒子/150 字段断言，mixed 11 粒子/20 字段断言 |
 | 周期表真实窗口排版/双语/DPI | NOT RUN | 仍需可信桌面视觉矩阵；编译和静态 UI 契约不替代视觉结论 |
 
 旧文件名中的 `tutorial` 或 `challenge` 表示开发用反应样例和回归场景，不是玩家任务系统，不参与元素可用性或存档进度。

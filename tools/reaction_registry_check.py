@@ -105,6 +105,11 @@ REQUIRED_REACTIONS = {
     "periodic.alkali_oxidation",
     "periodic.alkali_vaporisation",
     "periodic.francium_decay",
+    "periodic.alkaline_earth_water",
+    "periodic.alkaline_earth_acid",
+    "periodic.alkaline_earth_oxidation",
+    "periodic.alkaline_earth_vaporisation",
+    "periodic.radium_decay",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

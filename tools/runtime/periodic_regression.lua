@@ -23,6 +23,12 @@ local ids = {
     potassium = must_element("OMNI_PT_K", "K", 380),
     caesium = must_element("OMNI_PT_CS", "CS", 406),
     francium = must_element("OMNI_PT_FR", "FR", 432),
+    beryllium = must_element("OMNI_PT_BE", "BE", 371),
+    calcium = must_element("OMNI_PT_CA", "CA", 381),
+    strontium = must_element("OMNI_PT_SR", "SR", 391),
+    barium = must_element("OMNI_PT_BA", "BA", 407),
+    radium = must_element("OMNI_PT_RA", "RA", 433),
+    magnesium = must_element("OMNI_PT_MAGN", "MAGN", 261),
     lithium = must_element("DEFAULT_PT_LITH", "LITH", 191),
     rubidium = must_element("DEFAULT_PT_RBDM", "RBDM", 41),
     hydrogen = must_element("DEFAULT_PT_H2", "HYGN", 148),
@@ -37,6 +43,7 @@ local ids = {
     electron = assert(elements.DEFAULT_PT_ELEC),
     photon = assert(elements.DEFAULT_PT_PHOT),
     polonium = assert(elements.DEFAULT_PT_POLO),
+    scrap = must_element("OMNI_PT_MSCR", "MSCR", 278),
 }
 
 local function configure(seed)
@@ -86,6 +93,12 @@ local function run_property_differences()
     assert(elements.property(ids.francium, "Properties")
             ~= elements.property(ids.potassium, "Properties"),
         "radioactive francium and stable potassium have identical properties")
+    assert(elements.property(ids.beryllium, "Hardness")
+            > elements.property(ids.calcium, "Hardness"),
+        "beryllium and calcium do not retain distinct hardness")
+    assert(elements.property(ids.radium, "Properties")
+            ~= elements.property(ids.strontium, "Properties"),
+        "radioactive radium and stable strontium have identical properties")
 end
 
 local function run_water_reaction(type, seed)
@@ -179,6 +192,119 @@ local function run_alkali_acid_oxygen_and_phase()
         "hot molten sodium did not enter its finite vaporisation proxy")
 end
 
+local function run_alkaline_earth_water_reaction(type, seed)
+    configure(seed)
+    sim.airMode(sim.AIR_NOUPDATE)
+    local water = make(ids.water, 121, 120, 293.15)
+    local metal = make(type, 120, 120, 293.15)
+    step()
+    assert(sim.partExists(metal) and sim.partProperty(metal, "type") == ids.caustic,
+        "alkaline-earth metal did not become bounded caustic residue")
+    assert(sim.partExists(water) and sim.partProperty(water, "type") == ids.hydrogen,
+        "alkaline-earth water reaction did not produce hydrogen")
+    return sim.pressure(30, 30)
+end
+
+local function run_alkaline_earth_water_series()
+    local calcium_pressure = run_alkaline_earth_water_reaction(ids.calcium, 241)
+    local strontium_pressure = run_alkaline_earth_water_reaction(ids.strontium, 251)
+    local barium_pressure = run_alkaline_earth_water_reaction(ids.barium, 261)
+    local radium_pressure = run_alkaline_earth_water_reaction(ids.radium, 271)
+    assert(calcium_pressure < strontium_pressure
+            and strontium_pressure < barium_pressure
+            and barium_pressure < radium_pressure,
+        "alkaline-earth water-reaction severity does not increase down the family")
+
+    configure(281)
+    local water = make(ids.water, 121, 120, 293.15)
+    local beryllium = make(ids.beryllium, 120, 120, 293.15)
+    step()
+    assert(sim.partProperty(beryllium, "type") == ids.beryllium
+            and sim.partProperty(water, "type") == ids.water,
+        "beryllium incorrectly reacts with cool water")
+
+    configure(291)
+    local acid = make(ids.acid, 121, 120, 340.0)
+    beryllium = make(ids.beryllium, 120, 120, 293.15)
+    step()
+    assert(sim.partProperty(beryllium, "type") == ids.salt
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "warm acid did not overcome beryllium passivation")
+
+    configure(301)
+    acid = make(ids.acid, 121, 120, 293.15)
+    local magnesium = make(ids.magnesium, 120, 120, 293.15)
+    step()
+    assert(sim.partProperty(magnesium, "type") == ids.salt
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "reused magnesium did not enter the shared acid route")
+end
+
+local function run_flame_signature(type, temperature, colour, seed)
+    configure(seed)
+    local oxygen = make(ids.oxygen, 121, 120, temperature)
+    local metal = make(type, 120, 120, temperature)
+    step()
+    assert(sim.partProperty(metal, "type") == ids.salt,
+        "hot alkaline-earth metal did not oxidize to generic salt")
+    assert(sim.partProperty(oxygen, "type") == ids.fire,
+        "hot alkaline-earth oxidation did not create finite fire")
+    assert(sim.partProperty(oxygen, "dcolour") == colour,
+        "alkaline-earth flame signature colour changed")
+end
+
+local function run_alkaline_earth_oxygen_and_phase()
+    run_flame_signature(ids.calcium, 700.0, 0xFFFF8A35, 311)
+    run_flame_signature(ids.strontium, 700.0, 0xFFFF3030, 321)
+    run_flame_signature(ids.barium, 700.0, 0xFF66FF66, 331)
+
+    configure(341)
+    local old_diffusion = elements.property(ids.oxygen, "Diffusion")
+    local old_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    local oxygen = make(ids.oxygen, 121, 120, 900.0)
+    local magnesium = make(ids.magnesium, 120, 120, 900.0)
+    for _ = 1, 120 do
+        step()
+        if sim.partProperty(magnesium, "type") == ids.scrap then break end
+    end
+    elements.property(ids.oxygen, "Diffusion", old_diffusion)
+    elements.property(ids.oxygen, "Advection", old_advection)
+    assert(sim.partProperty(magnesium, "type") == ids.scrap,
+        "reused magnesium no longer burns to typed recoverable scrap")
+    assert(not sim.partExists(oxygen)
+            or sim.partProperty(oxygen, "type") ~= ids.oxygen,
+        "magnesium combustion did not consume local oxygen")
+    local white_flame = false
+    for particle in sim.parts() do
+        if sim.partProperty(particle, "type") == ids.fire
+                and sim.partProperty(particle, "dcolour") == 0xFFFFFFFF then
+            white_flame = true
+            break
+        end
+    end
+    assert(white_flame, "magnesium combustion lost its bright white flame signature")
+
+    configure(351)
+    local water = make(ids.water, 121, 120, 293.15)
+    local molten = make(ids.lava, 120, 120, 1200.0)
+    sim.partProperty(molten, "ctype", ids.calcium)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.caustic
+            and sim.partProperty(water, "type") == ids.hydrogen,
+        "molten calcium ctype did not retain its water reaction")
+
+    configure(361)
+    molten = make(ids.lava, 120, 120, 1600.0)
+    sim.partProperty(molten, "ctype", ids.barium)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.fire
+            and sim.partProperty(molten, "ctype") == ids.barium
+            and sim.partProperty(molten, "life") == 60,
+        "hot molten barium did not enter its finite vaporisation proxy")
+end
+
 local function run_helium_cryogenics()
     configure(81)
     local old_diffusion = elements.property(ids.he, "Diffusion")
@@ -252,6 +378,17 @@ local function run_radioactive_decays()
         "francium did not enter its compressed polonium decay proxy")
     assert(count_type(ids.photon) == 1,
         "one francium decay did not emit exactly one finite photon")
+
+    configure(117)
+    local radium = make(ids.radium, 120, 120, 293.15)
+    sim.partProperty(radium, "tmp", 1)
+    step()
+    assert(sim.partProperty(radium, "type") == ids.rn,
+        "radium did not enter its compressed radon decay proxy")
+    assert(sim.partProperty(radium, "tmp") >= 1200,
+        "radium decay did not initialize the radon lifetime")
+    assert(count_type(ids.photon) == 1,
+        "one radium decay did not emit exactly one finite photon")
 end
 
 local function run_decay_budget()
@@ -298,25 +435,51 @@ local function run_francium_budget()
     return events
 end
 
+local function run_radium_budget()
+    configure(371)
+    local total = 1200
+    for index = 0, total - 1 do
+        local particle = make(ids.radium,
+            50 + (index % 100) * 5,
+            50 + math.floor(index / 100) * 5,
+            293.15)
+        sim.partProperty(particle, "tmp", 1)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total), "missing radium event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame radium events were not capped at 1024: " .. tostring(events))
+    assert(count_type(ids.radium) >= total - 1024,
+        "event-budget exhaustion did not defer remaining radium decays")
+    assert(count_type(ids.photon) <= 1024,
+        "bounded radium decays emitted too many photons")
+    return events
+end
+
 local function test()
     run_property_differences()
     run_alkali_water_series()
     run_alkali_acid_oxygen_and_phase()
+    run_alkaline_earth_water_series()
+    run_alkaline_earth_oxygen_and_phase()
     run_helium_cryogenics()
     run_xenon_discharge()
     run_radioactive_decays()
     local noble_budget = run_decay_budget()
     local francium_budget = run_francium_budget()
-    return math.max(noble_budget, francium_budget)
+    local radium_budget = run_radium_budget()
+    return math.max(noble_budget, francium_budget, radium_budget)
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_PERIODIC_STATUS=PASS\n")
-    report:write("OMNI_PERIODIC_NEW_ELEMENTS=11\n")
-    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=37\n")
+    report:write("OMNI_PERIODIC_NEW_ELEMENTS=16\n")
+    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=42\n")
     report:write("OMNI_PERIODIC_ALKALI_FAMILY=6\n")
+    report:write("OMNI_PERIODIC_ALKALINE_EARTH_FAMILY=6\n")
     report:write("OMNI_PERIODIC_BUDGET_EVENTS=" .. tostring(data) .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

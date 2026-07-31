@@ -98,6 +98,11 @@ local definitions = {
     caesium = { "OMNI_PT_CS", "CS", 406 },
     rn = { "OMNI_PT_RN", "RN", 431 },
     francium = { "OMNI_PT_FR", "FR", 432 },
+    beryllium = { "OMNI_PT_BE", "BE", 371 },
+    calcium = { "OMNI_PT_CA", "CA", 381 },
+    strontium = { "OMNI_PT_SR", "SR", 391 },
+    barium = { "OMNI_PT_BA", "BA", 407 },
+    radium = { "OMNI_PT_RA", "RA", 433 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -121,7 +126,8 @@ local module_keys = {
     },
     periodic = {
         "he", "ne", "ar", "sodium", "potassium", "kr", "xe",
-        "caesium", "rn", "francium", "og",
+        "caesium", "rn", "francium", "og", "beryllium", "calcium",
+        "strontium", "barium", "radium",
     },
 }
 
@@ -261,11 +267,11 @@ local carrier_targets = {
         virs_tmp2 = "rshd",
     },
     periodic = {
-        lava = "caesium",
-        spark = "sodium",
-        conv_ctype = "francium",
+        lava = "radium",
+        spark = "beryllium",
+        conv_ctype = "calcium",
         conv_tmp = "og",
-        virs_tmp2 = "potassium",
+        virs_tmp2 = "barium",
     },
     mixed = {
         lava = "alum",

@@ -2,7 +2,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 1,H,氢,Hydrogen,DEFAULT_PT_H2,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,148,implemented,source-verified
 2,He,氦,Helium,,OMNI_PT_HE,tpt_remade,TPT-ZH-OmniPack/original,21b160a5bd25df266c6f82528eb12f3103b39b03,family_generated,370,implemented,runtime-tested
 3,Li,锂,Lithium,DEFAULT_PT_LITH,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,191,implemented,source-verified
-4,Be,铍,Beryllium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,371,planned,not_tested
+4,Be,铍,Beryllium,,OMNI_PT_BE,,TPT-ZH-OmniPack/original,546b8791ca6b94ddd4791f42ededd5684168c59a,family_generated,371,implemented,runtime-tested
 5,B,硼,Boron,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,372,planned,not_tested
 6,C,碳,Carbon,DEFAULT_PT_DMND,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,28,implemented,source-verified
 7,N,氮,Nitrogen,,,biological_mod,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,373,planned,not_tested
@@ -18,7 +18,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 17,Cl,氯,Chlorine,,OMNI_PT_CHLR,chem_mod_lua;fun_chemicals,cracker1000/The-Powder-Toy,ebbb9aab6aef27d26517682cebbc0a07147a843a,reuse_omnipack,360,implemented,unit-tested
 18,Ar,氩,Argon,,OMNI_PT_AR,,TPT-ZH-OmniPack/original,21b160a5bd25df266c6f82528eb12f3103b39b03,family_generated,379,implemented,runtime-tested
 19,K,钾,Potassium,,OMNI_PT_K,fun_chemicals,TPT-ZH-OmniPack/original,bcf5accf04dae7269dacce250e46d16c1632f94f,family_generated,380,implemented,runtime-tested
-20,Ca,钙,Calcium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,381,planned,not_tested
+20,Ca,钙,Calcium,,OMNI_PT_CA,,TPT-ZH-OmniPack/original,546b8791ca6b94ddd4791f42ededd5684168c59a,family_generated,381,implemented,runtime-tested
 21,Sc,钪,Scandium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,382,planned,not_tested
 22,Ti,钛,Titanium,DEFAULT_PT_TTAN,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,144,implemented,source-verified
 23,V,钒,Vanadium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,383,planned,not_tested
@@ -36,7 +36,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 35,Br,溴,Bromine,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,389,planned,not_tested
 36,Kr,氪,Krypton,,OMNI_PT_KR,,TPT-ZH-OmniPack/original,21b160a5bd25df266c6f82528eb12f3103b39b03,family_generated,390,implemented,runtime-tested
 37,Rb,铷,Rubidium,DEFAULT_PT_RBDM,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,41,implemented,source-verified
-38,Sr,锶,Strontium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,391,planned,not_tested
+38,Sr,锶,Strontium,,OMNI_PT_SR,,TPT-ZH-OmniPack/original,546b8791ca6b94ddd4791f42ededd5684168c59a,family_generated,391,implemented,runtime-tested
 39,Y,钇,Yttrium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,392,planned,not_tested
 40,Zr,锆,Zirconium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,393,planned,not_tested
 41,Nb,铌,Niobium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,394,planned,not_tested
@@ -54,7 +54,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 53,I,碘,Iodine,,,chem_mod_lua,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,404,planned,not_tested
 54,Xe,氙,Xenon,,OMNI_PT_XE,,TPT-ZH-OmniPack/original,21b160a5bd25df266c6f82528eb12f3103b39b03,family_generated,405,implemented,runtime-tested
 55,Cs,铯,Caesium,,OMNI_PT_CS,,TPT-ZH-OmniPack/original,bcf5accf04dae7269dacce250e46d16c1632f94f,family_generated,406,implemented,runtime-tested
-56,Ba,钡,Barium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,407,planned,not_tested
+56,Ba,钡,Barium,,OMNI_PT_BA,,TPT-ZH-OmniPack/original,546b8791ca6b94ddd4791f42ededd5684168c59a,family_generated,407,implemented,runtime-tested
 57,La,镧,Lanthanum,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,408,planned,not_tested
 58,Ce,铈,Cerium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,409,planned,not_tested
 59,Pr,镨,Praseodymium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,410,planned,not_tested
@@ -86,7 +86,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 85,At,砹,Astatine,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,430,planned,not_tested
 86,Rn,氡,Radon,,OMNI_PT_RN,,TPT-ZH-OmniPack/original,21b160a5bd25df266c6f82528eb12f3103b39b03,family_generated,431,implemented,runtime-tested
 87,Fr,钫,Francium,,OMNI_PT_FR,,TPT-ZH-OmniPack/original,bcf5accf04dae7269dacce250e46d16c1632f94f,family_generated,432,implemented,runtime-tested
-88,Ra,镭,Radium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,433,planned,not_tested
+88,Ra,镭,Radium,,OMNI_PT_RA,,TPT-ZH-OmniPack/original,546b8791ca6b94ddd4791f42ededd5684168c59a,family_generated,433,implemented,runtime-tested
 89,Ac,锕,Actinium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,434,planned,not_tested
 90,Th,钍,Thorium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,435,planned,not_tested
 91,Pa,镤,Protactinium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,436,planned,not_tested

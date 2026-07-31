@@ -34,6 +34,18 @@ struct AlkaliProperties
 	float boilingPoint;
 };
 
+struct AlkalineEarthProperties
+{
+	int waterHeat;
+	float pressure;
+	int fireChance;
+	float waterThreshold;
+	float acidThreshold;
+	float oxygenThreshold;
+	float boilingPoint;
+	unsigned int flameColour;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -89,9 +101,36 @@ AlkaliProperties AlkaliPropertiesFor(int type)
 	}
 }
 
+AlkalineEarthProperties AlkalineEarthPropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_BE:
+		return { 70, 0.25f, 0, 900.0f, 330.0f, 900.0f, 2742.0f, 0xFFE8F4FF };
+	case PT_MAGN:
+		return { 150, 0.6f, 8, 650.0f, 293.0f, MAX_TEMP, 1363.0f, 0xFFFFFFFF };
+	case PT_CA:
+		return { 170, 1.0f, 8, 273.0f, 273.0f, 650.0f, 1757.0f, 0xFFFF8A35 };
+	case PT_SR:
+		return { 250, 2.0f, 4, 273.0f, 273.0f, 580.0f, 1655.0f, 0xFFFF3030 };
+	case PT_BA:
+		return { 340, 3.5f, 2, 273.0f, 273.0f, 520.0f, 1500.0f, 0xFF66FF66 };
+	case PT_RA:
+		return { 430, 5.0f, 2, 273.0f, 273.0f, 480.0f, 1413.0f, 0xFF70FFB0 };
+	default:
+		return { 80, 0.25f, 0, MAX_TEMP, MAX_TEMP, MAX_TEMP, MAX_TEMP, 0 };
+	}
+}
+
 bool IsAlkaliMetal(int type)
 {
 	return type == PT_NA || type == PT_K || type == PT_CS || type == PT_FR;
+}
+
+bool IsAlkalineEarthMetal(int type)
+{
+	return type == PT_BE || type == PT_MAGN || type == PT_CA ||
+		type == PT_SR || type == PT_BA || type == PT_RA;
 }
 
 bool IsWaterLike(int type)
@@ -114,9 +153,14 @@ void AddBoundedPressure(Simulation *sim, int x, int y, float amount)
 	pressure = std::min(pressure + amount, MAX_PRESSURE);
 }
 
-void EmitAlkaliFire(
-	Simulation *sim, int x, int y, float temperature, int chance)
+void EmitPeriodicFire(
+	Simulation *sim, int x, int y, float temperature, int chance,
+	unsigned int colour = 0)
 {
+	if (chance <= 0)
+	{
+		return;
+	}
 	if (chance > 1 && !sim->rng.chance(1, chance))
 	{
 		return;
@@ -126,6 +170,10 @@ void EmitAlkaliFire(
 	{
 		sim->parts[fire].temp = temperature;
 		sim->parts[fire].life = 16;
+		if (colour)
+		{
+			sim->parts[fire].dcolour = colour;
+		}
 	}
 }
 
@@ -342,7 +390,7 @@ bool ReactAlkaliWithWaterOrAcid(UPDATE_FUNC_ARGS, int sourceType)
 			parts[i].temp = temperature;
 			parts[neighbour].temp = temperature;
 			AddBoundedPressure(sim, x, y, acid ? properties.pressure * 0.5f : properties.pressure);
-			EmitAlkaliFire(sim, x, y, temperature, acid ? properties.fireChance * 2 : properties.fireChance);
+			EmitPeriodicFire(sim, x, y, temperature, acid ? properties.fireChance * 2 : properties.fireChance);
 			return true;
 		}
 	}
@@ -429,6 +477,189 @@ bool UpdateAlkali(UPDATE_FUNC_ARGS, int sourceType)
 	}
 	return OxidiseHotAlkali(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
+
+bool DecayRadium(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_RA || parts[i].type != PT_RA)
+	{
+		return false;
+	}
+	if (parts[i].tmp <= 0)
+	{
+		parts[i].tmp = sim->rng.between(900, 1800);
+		return false;
+	}
+	--parts[i].tmp;
+	if (parts[i].tmp > 0)
+	{
+		return false;
+	}
+	if (!ConsumeEvent(sim))
+	{
+		parts[i].tmp = 1;
+		return false;
+	}
+
+	auto temperature = std::min(parts[i].temp + 240.0f, MAX_TEMP);
+	sim->part_change_type(i, x, y, PT_RN);
+	ResetReactionProduct(parts[i], PT_RN);
+	parts[i].temp = temperature;
+	parts[i].tmp = sim->rng.between(1200, 2400);
+	int photon = sim->create_part(-3, x, y, PT_PHOT);
+	if (photon >= 0)
+	{
+		parts[photon].ctype = 0x0003FFF0;
+		parts[photon].temp = temperature;
+		parts[photon].life = 18;
+	}
+	return true;
+}
+
+bool ReactAlkalineEarthWithWaterOrAcid(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = AlkalineEarthPropertiesFor(sourceType);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed)
+			{
+				continue;
+			}
+			auto neighbourType = TYP(packed);
+			bool acid = neighbourType == PT_ACID;
+			if (!acid && !IsWaterLike(neighbourType))
+			{
+				continue;
+			}
+			auto neighbour = ID(packed);
+			float threshold = acid ? properties.acidThreshold : properties.waterThreshold;
+			if (std::max(parts[i].temp, parts[neighbour].temp) < threshold)
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+
+			float heat = acid ? properties.waterHeat * 0.55f : properties.waterHeat;
+			float temperature = std::min(
+				std::max(parts[i].temp, parts[neighbour].temp) + heat,
+				MAX_TEMP);
+			int residue = acid ? PT_SALT : PT_CAUS;
+			sim->part_change_type(i, x, y, residue);
+			sim->part_change_type(neighbour, x + rx, y + ry, PT_H2);
+			ResetReactionProduct(parts[i], residue);
+			ResetReactionProduct(parts[neighbour], PT_H2);
+			parts[i].temp = temperature;
+			parts[neighbour].temp = temperature;
+			AddBoundedPressure(
+				sim, x, y,
+				acid ? properties.pressure * 0.4f : properties.pressure);
+			EmitPeriodicFire(
+				sim, x, y, temperature,
+				acid ? properties.fireChance * 2 : properties.fireChance,
+				properties.flameColour);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool OxidiseHotAlkalineEarth(UPDATE_FUNC_ARGS, int sourceType)
+{
+	// Magnesium retains its existing metallurgy implementation, which produces
+	// typed recoverable scrap and a bright finite flame above 800 K.
+	if (sourceType == PT_MAGN)
+	{
+		return false;
+	}
+	auto properties = AlkalineEarthPropertiesFor(sourceType);
+	if (parts[i].temp < properties.oxygenThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2)
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+
+			auto oxygen = ID(packed);
+			float temperature = std::min(
+				parts[i].temp + properties.waterHeat + 180.0f,
+				MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SALT);
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
+			ResetReactionProduct(parts[i], PT_SALT);
+			ResetReactionProduct(parts[oxygen], PT_FIRE);
+			parts[i].temp = temperature;
+			parts[oxygen].temp = temperature;
+			parts[oxygen].life = 24;
+			parts[oxygen].dcolour = properties.flameColour;
+			AddBoundedPressure(sim, x, y, properties.pressure * 0.6f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseHotAlkalineEarth(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = AlkalineEarthPropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	float temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_FIRE);
+	ResetReactionProduct(parts[i], PT_FIRE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 60;
+	parts[i].dcolour = properties.flameColour;
+	AddBoundedPressure(sim, x, y, properties.pressure * 0.35f);
+	return true;
+}
+
+bool UpdateAlkalineEarth(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsAlkalineEarthMetal(sourceType))
+	{
+		return false;
+	}
+	if (DecayRadium(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (VaporiseHotAlkalineEarth(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (ReactAlkalineEarthWithWaterOrAcid(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return OxidiseHotAlkalineEarth(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
 }
 
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
@@ -494,5 +725,27 @@ void OmniAlkaliMetalCreate(ELEMENT_CREATE_FUNC_ARGS)
 	if (t == PT_FR)
 	{
 		sim->parts[i].tmp = sim->rng.between(180, 360);
+	}
+}
+
+int OmniAlkalineEarthMetalUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateAlkalineEarth(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenAlkalineEarthUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateAlkalineEarth(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+void OmniAlkalineEarthMetalCreate(ELEMENT_CREATE_FUNC_ARGS)
+{
+	if (t == PT_RA)
+	{
+		sim->parts[i].tmp = sim->rng.between(900, 1800);
 	}
 }

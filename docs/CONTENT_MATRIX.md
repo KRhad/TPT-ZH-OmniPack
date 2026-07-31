@@ -7,15 +7,15 @@
 ## 当前范围
 
 ```text
-current_work_base=bcf5accf04dae7269dacce250e46d16c1632f94f
-periodic_alkali_batch_base=bcf5accf04dae7269dacce250e46d16c1632f94f
+current_work_base=546b8791ca6b94ddd4791f42ededd5684168c59a
+periodic_alkaline_earth_batch_base=546b8791ca6b94ddd4791f42ededd5684168c59a
 font_implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
 development_gate_head=98affcd7
 official_id_range=0..195
 official_active_elements=195
 official_tombstones=1
-omnipack_implemented_elements=59
-periodic_mappings_implemented=37
+omnipack_implemented_elements=64
+periodic_mappings_implemented=42
 pt_num=512
 ```
 
@@ -28,7 +28,7 @@ pt_num=512
 | 局部生态 | `288..327` | 8（`288..295`） | 已实现 ID 不移动；`296..327` 保留 |
 | 受控核工业 | `328..359` | 7（`328..334`） | 已实现 ID 不移动；`335..359` 保留 |
 | 高级化学 | `360..369` | 10 | 已实现 ID 不移动 |
-| 周期表固定区 | `370..461` | 11 已实现 / 81 保留 | 原子序数映射固定，不是解锁顺序 |
+| 周期表固定区 | `370..461` | 16 已实现 / 76 保留 | 原子序数映射固定，不是解锁顺序 |
 | 后续内容保留 | `462..511` | 0 | 化合物、材料与兼容 tombstone；不得静默替换缺失元素 |
 
 ## 模块总览
@@ -39,7 +39,7 @@ pt_num=512
 | 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景、独立 OPS 双往返和 S03/S04 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
 | 高级化学 | 10 | `CHLR AMON ETHL KERO GASO ACTY CATA POLY PERO FERT` | 每帧 1,536 次成功反应，固定 `3x3` | 登记、化学审计、Lua 场景、独立 OPS 双往返和 S05 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
 | 受控核工业 | 7 | `NFUL MODR CROD NCLT NWST NGEN RSHD` | 每帧 512 次成功事件，固定 `3x3` | 登记、核工业审计、Lua 场景、独立 OPS 双往返和 S06/S07/S08 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
-| 周期表前两批 | 11 新增 / 37 映射 | `HE NE NA AR K KR XE CS RN FR OG`，另复用锂、铷等现有纯元素 | 每帧 1,024 次放电/换热/碱金属反应/衰变事件，固定 `3x3` | 登记、周期审计、Lua 行为与预算、周期 OPS 双往返通过 | 周期表窗口视觉/DPI 门禁未完成；81 个元素尚未实现 |
+| 周期表前三批 | 16 新增 / 42 映射 | 稀有气体、碱金属、碱土金属；另复用氢、锂、镁、铷等现有纯元素 | 每帧 1,024 次放电/换热/族反应/衰变事件，固定 `3x3` | 登记、周期审计、Lua 行为与预算、周期 OPS 双往返通过 | 周期表窗口视觉/DPI 门禁未完成；76 个元素尚未实现 |
 
 五个内容系统上限来自当前源码常量并带同 tick 标记，属于源码确认；它们不是完整 FPS、内存或长跑压力证据。
 
@@ -111,21 +111,21 @@ pt_num=512
 | 局部生态 | true | true | 8 元素 | 已实现；另有“简化生物模拟”开关 |
 | 高级化学 | true | true | 10 元素 | 已实现；实际 UI 持久化未测试 |
 | 受控核工业 | true | true | 7 元素 | 已实现；实际 UI 持久化未测试 |
-| 元素周期表 | true | 始终可用 | 37/118 映射可选择 | 面板已编译并通过静态/运行契约；视觉矩阵未执行 |
+| 元素周期表 | true | 始终可用 | 42/118 映射可选择 | 面板已编译并通过静态/运行契约；视觉矩阵未执行 |
 
 周期表固定区为 `370..461`；未实现槽不创建普通元素工具，只在周期表正确格位显示待实现状态。`462..511` 继续保留给后续材料；没有内容时不创建玩家设置入口。
 
 ## 内容证据矩阵
 
-| 内容证据 | 59 元素覆盖 | 当前状态 | 限制 |
+| 内容证据 | 64 元素覆盖 | 当前状态 | 限制 |
 |---|---:|---|---|
-| 稳定 identifier/ID、双语名、来源、许可证、源码路径 | 59/59 | 自动测试确认 | 不代表全部 118 周期元素已实现 |
-| 双语配方、生产、用途、危险字段 | 59/59 | 自动测试确认 | 文本可能描述直接放置或尚无闭环的用途 |
-| 元素编译注册 | 59/59 | 编译确认 | 周期表视觉布局仍需人工核验 |
-| 五类反应引擎 Lua 回归 | 四可选模块 + 周期前两批 | 实际运行确认 | 周期回归覆盖 11 个新增元素、6 个碱金属族成员和预算；不替代完整 GUI 或长跑 |
+| 稳定 identifier/ID、双语名、来源、许可证、源码路径 | 64/64 | 自动测试确认 | 不代表全部 118 周期元素已实现 |
+| 双语配方、生产、用途、危险字段 | 64/64 | 自动测试确认 | 文本可能描述直接放置或尚无闭环的用途 |
+| 元素编译注册 | 64/64 | 编译确认 | 周期表视觉布局仍需人工核验 |
+| 五类反应引擎 Lua 回归 | 四可选模块 + 周期前三批 | 实际运行确认 | 周期回归覆盖 16 个新增元素、两族各 6 个成员和预算；不替代完整 GUI 或长跑 |
 | 搜索、放置、图鉴 | `ALUM/NUTR/CHLR/NFUL/HE/NA` 代表项 | 源码/运行选择 PASS；GUI 视觉 NOT RUN | 需最终 ZIP 人工操作 |
 | 禁用模块存档检查 | 直接类型与载体字段 | 自动测试确认 | 三选项和保存/上传拦截实际 GUI 尚未测试 |
-| OPS 双往返 | 官方、四个单模块、周期前两批、混合及载体 | 实际运行确认 | 周期用例覆盖 11 个大于 255 的直接类型以及 `LAVA/SPRK/CONV/VIRS` 的 `ctype/tmp/tmp2` |
+| OPS 双往返 | 官方、四个单模块、周期前三批、混合及载体 | 实际运行确认 | 周期用例覆盖 16 个大于 255 的直接类型以及 `LAVA/SPRK/CONV/VIRS` 的 `ctype/tmp/tmp2` |
 | 固定压力样本 | 10 类 | 候选已通过；`98affcd7` smoke `4/4` | 旧候选正式证据仍绑定 `ff5945c4`；0.2 的 S04/S05/S07/S09 仅约 2 秒 smoke，`gate_result=not_tested`，正式样本需绑定最终 ZIP |
 
 ## 版本内容增长规则
@@ -145,7 +145,7 @@ pt_num=512
 
 ## 0.2.0 用途审计入口
 
-`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 59 个 OmniPack 元素；周期元素的双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、`REACTION_REGISTRY.csv` 和周期专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
+`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 64 个 OmniPack 元素；周期元素的双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、`REACTION_REGISTRY.csv` 和周期专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
 
 ```text
 production

@@ -574,6 +574,7 @@ int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 				{
 					parts[flame].temp = 2500.0f;
 					parts[flame].life = 80;
+					parts[flame].dcolour = 0xFFFFFFFF;
 				}
 				sim->part_change_type(i, x, y, PT_MSCR);
 				parts[i].ctype = PT_MAGN;
