@@ -784,6 +784,19 @@ test(
 )
 
 test(
+	'automation-audit',
+	python3_prog,
+	args: [
+		files('tools/automation_audit.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'save-compatibility-audit',
 	python3_prog,
 	args: [

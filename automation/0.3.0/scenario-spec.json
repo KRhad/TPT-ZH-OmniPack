@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "content_version": "0.3.0-dev",
+  "safety_policy": {
+    "normal_save_load_path_only": true,
+    "read_only_bypass_allowed": false,
+    "module_gate_bypass_allowed": false,
+    "official_behavior_mutation_allowed": false,
+    "new_automation_elements": 0,
+    "reserved_id_first": 392,
+    "reserved_id_last": 423
+  },
+  "bounds": {
+    "max_sensor_radius": 8,
+    "max_signal_events_per_frame": 128,
+    "max_circuit_particles": 4096,
+    "max_network_nodes": 64,
+    "max_frames_per_challenge": 240,
+    "quiescence_frames": 32
+  },
+  "runtime_contract": {
+    "required_metrics": [
+      "frames",
+      "input_events",
+      "output_events",
+      "peak_events_per_frame",
+      "blocked_events",
+      "stop_event_delta",
+      "recovery_assertions"
+    ],
+    "success_status": "OMNI_AUTOMATION_STATUS=PASS",
+    "failure_status": "OMNI_AUTOMATION_STATUS=FAIL"
+  },
+  "scenarios": [
+    {
+      "id": "thermostatic-furnace",
+      "title_zh": "自动恒温熔炉",
+      "capabilities": ["sensor", "delay", "shutdown", "alarm"],
+      "official_elements": ["TSNS", "DLAY", "SWCH", "WIFI", "LCRY"],
+      "omni_elements": ["CRUC", "NCRM", "SLAG"],
+      "module_dependencies": ["metallurgy"],
+      "max_radius": 4,
+      "max_frames": 96,
+      "max_particles": 256,
+      "event_budget": 16,
+      "failure_state": "over-temperature signal opens the heater switch and latches the alarm",
+      "success_assertions": ["cold_no_trip", "hot_trip", "heater_cutoff", "alarm_latched", "manual_reset"]
+    },
+    {
+      "id": "automatic-alloy",
+      "title_zh": "自动合金加料",
+      "capabilities": ["feeding", "delay", "counting", "storage"],
+      "official_elements": ["CRAY", "PSTN", "DLAY", "LSNS", "FILT", "STOR"],
+      "omni_elements": ["COPR", "TIN", "BRNZ", "CRUC"],
+      "module_dependencies": ["metallurgy"],
+      "max_radius": 4,
+      "max_frames": 120,
+      "max_particles": 384,
+      "event_budget": 24,
+      "failure_state": "missing or excess feed leaves the batch unconverted and closes the feeder",
+      "success_assertions": ["three_copper_present", "one_tin_fed", "feed_count_exact", "bronze_produced", "feeder_quiescent"]
+    },
+    {
+      "id": "fuel-control",
+      "title_zh": "燃料制备与供给控制",
+      "capabilities": ["sensor", "filtering", "feeding", "valve", "shutdown"],
+      "official_elements": ["TSNS", "DTEC", "FILT", "CRAY", "PPIP", "SWCH"],
+      "omni_elements": ["CATA", "KERO", "GASO"],
+      "module_dependencies": ["chemistry"],
+      "max_radius": 5,
+      "max_frames": 120,
+      "max_particles": 384,
+      "event_budget": 24,
+      "failure_state": "high temperature or missing catalyst pauses the fuel valve",
+      "success_assertions": ["catalyst_detected", "feed_enabled", "fuel_created", "overheat_trip", "valve_paused"]
+    },
+    {
+      "id": "nutrient-dosing",
+      "title_zh": "营养自动加料",
+      "capabilities": ["sensor", "storage", "feeding", "counting", "interlock"],
+      "official_elements": ["DTEC", "STOR", "CRAY", "LSNS", "FILT", "INST", "SWCH"],
+      "omni_elements": ["HUMS", "FERT", "NUTR"],
+      "module_dependencies": ["biology", "chemistry"],
+      "max_radius": 5,
+      "max_frames": 96,
+      "max_particles": 320,
+      "event_budget": 16,
+      "failure_state": "dry or absent biomass blocks dosing and retains the stored nutrient",
+      "success_assertions": ["biomass_detected", "wet_interlock_pass", "single_dose", "nutrient_recovered", "dry_interlock_blocks"]
+    },
+    {
+      "id": "pathogen-disinfection",
+      "title_zh": "病原体自动消毒",
+      "capabilities": ["sensor", "filtering", "feeding", "alarm", "interlock"],
+      "official_elements": ["DTEC", "FILT", "CRAY", "WIFI", "LCRY", "INST", "SWCH"],
+      "omni_elements": ["PATH", "PERO", "HUMS"],
+      "module_dependencies": ["biology", "chemistry"],
+      "max_radius": 5,
+      "max_frames": 96,
+      "max_particles": 320,
+      "event_budget": 16,
+      "failure_state": "no pathogen produces no dose; hot catalyst blocks treatment and raises an alarm",
+      "success_assertions": ["pathogen_detected", "single_peroxide_dose", "pathogen_treated", "no_target_no_dose", "hot_interlock_alarm"]
+    },
+    {
+      "id": "reactor-cooling",
+      "title_zh": "反应堆自动冷却",
+      "capabilities": ["sensor", "storage", "valve", "feeding", "alarm", "interlock"],
+      "official_elements": ["TSNS", "STOR", "PPIP", "CRAY", "WIFI", "LCRY", "INST", "SWCH"],
+      "omni_elements": ["NFUL", "NCLT", "NWST", "CROD"],
+      "module_dependencies": ["nuclear"],
+      "max_radius": 5,
+      "max_frames": 144,
+      "max_particles": 512,
+      "event_budget": 24,
+      "failure_state": "over-temperature closes fuel feed, inserts the control state, and opens coolant storage",
+      "success_assertions": ["normal_no_trip", "hot_trip", "fuel_feed_closed", "coolant_released", "waste_temperature_reduced", "alarm_cleared_after_reset"]
+    },
+    {
+      "id": "emergency-stop",
+      "title_zh": "全厂紧急停机",
+      "capabilities": ["shutdown", "valve", "alarm", "interlock", "delay"],
+      "official_elements": ["SWCH", "PPIP", "WIFI", "LCRY", "INST", "DLAY"],
+      "omni_elements": [],
+      "module_dependencies": [],
+      "max_radius": 3,
+      "max_frames": 72,
+      "max_particles": 192,
+      "event_budget": 12,
+      "failure_state": "the stop path deenergizes a series switch and pauses the valve; start is accepted only after a separate delayed reset",
+      "success_assertions": ["running_before_stop", "stop_isolated_from_start", "valves_paused", "post_stop_events_zero", "early_reset_blocked", "delayed_reset_pass"]
+    },
+    {
+      "id": "waste-transfer",
+      "title_zh": "废料分拣与转运",
+      "capabilities": ["sensor", "filtering", "storage", "waste_discharge", "counting", "valve"],
+      "official_elements": ["DTEC", "FILT", "STOR", "PIPE", "PPIP", "LSNS"],
+      "omni_elements": ["SLAG", "HUMS", "NWST"],
+      "module_dependencies": ["metallurgy", "biology", "nuclear"],
+      "max_radius": 6,
+      "max_frames": 144,
+      "max_particles": 512,
+      "event_budget": 24,
+      "failure_state": "unknown or blocked waste remains in storage and closes the discharge valve",
+      "success_assertions": ["waste_detected", "known_type_selected", "single_item_stored", "known_item_released", "unknown_item_retained", "transfer_count_exact"]
+    },
+    {
+      "id": "integrated-factory",
+      "title_zh": "四模块综合自动工厂",
+      "capabilities": ["sensor", "filtering", "delay", "counting", "storage", "valve", "feeding", "waste_discharge", "shutdown", "alarm", "interlock"],
+      "official_elements": ["TSNS", "PSNS", "DTEC", "FILT", "DLAY", "LSNS", "STOR", "PPIP", "CRAY", "PIPE", "SWCH", "WIFI", "INST"],
+      "omni_elements": ["BRNZ", "KERO", "NUTR", "PERO", "PATH", "NFUL", "NCLT", "NWST", "SLAG"],
+      "module_dependencies": ["metallurgy", "biology", "nuclear", "chemistry"],
+      "max_radius": 8,
+      "max_frames": 240,
+      "max_particles": 4096,
+      "event_budget": 128,
+      "failure_state": "any cell trip isolates only its bounded cell; global stop deenergizes every feeder and valve",
+      "success_assertions": ["all_modules_present", "bounded_cells_operate", "cell_fault_isolated", "global_stop_quiescent", "save_roundtrip_preserves_state", "manual_recovery_pass"]
+    }
+  ],
+  "challenges": [
+    {"id": "A01-TEMPERATURE", "scenario": "thermostatic-furnace", "expected_outcome": "hold the furnace below the trip threshold and complete a manual reset"},
+    {"id": "A02-FEEDING", "scenario": "automatic-alloy", "expected_outcome": "deliver exactly one tin charge to a three-copper molten batch"},
+    {"id": "A03-SORTING", "scenario": "waste-transfer", "expected_outcome": "release registered waste while retaining an unknown or blocked payload"},
+    {"id": "A04-DISINFECTION", "scenario": "pathogen-disinfection", "expected_outcome": "dose peroxide only when a pathogen and safe treatment conditions are present"},
+    {"id": "A05-EMERGENCY-STOP", "scenario": "emergency-stop", "expected_outcome": "stop all outputs and reject an early reset"},
+    {"id": "A06-MULTI-MODULE", "scenario": "integrated-factory", "expected_outcome": "operate four bounded cells, isolate one fault, stop globally, and recover manually"}
+  ]
+}
