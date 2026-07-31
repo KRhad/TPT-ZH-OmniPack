@@ -63,7 +63,10 @@ REQUIRED_FIELDS = (
 )
 CANONICAL_DECIMAL = re.compile(r"0|[1-9][0-9]*")
 FORBIDDEN_CONTROL = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]")
-CJK = re.compile(r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]")
+CJK = re.compile(
+    r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF"
+    r"\U00020000-\U0002FA1F\U00030000-\U000323AF]"
+)
 ASCII_LETTER = re.compile(r"[A-Za-z]")
 
 

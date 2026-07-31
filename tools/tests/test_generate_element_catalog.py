@@ -86,6 +86,9 @@ EXPECTED_REQUIRED_FIELDS = (
 
 
 class GenerateElementCatalogTests(unittest.TestCase):
+    def test_supplementary_cjk_content_is_recognized(self) -> None:
+        self.assertIsNotNone(generate_element_catalog.CJK.search("𫓧"))
+
     @staticmethod
     def make_row(
         identifier: str = "DEFAULT_PT_TEST",

@@ -58,7 +58,10 @@ LITERAL_TR_KEY_RE = re.compile(
 )
 URL_RE = re.compile(r"(?:https?://|irc\.)\S+", re.IGNORECASE)
 LATIN_WORD_RE = re.compile(r"[A-Za-z]{3,}")
-CJK_RE = re.compile(r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]")
+CJK_RE = re.compile(
+    r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF"
+    r"\U00020000-\U0002FA1F\U00030000-\U000323AF]"
+)
 STRONG_MOJIBAKE_RE = re.compile(
     r"\uFFFD|锟斤拷|烫烫烫|屯屯屯|ï¿½", re.IGNORECASE
 )

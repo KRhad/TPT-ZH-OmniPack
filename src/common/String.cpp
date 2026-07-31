@@ -122,7 +122,7 @@ String ByteString::FromUtf8(bool ignoreError) const
 				if(i + 2 < size() && from[i + 2] >= 0x80 && from[i + 2] < 0xC0)
 					if(i + 3 < size() && from[i + 3] >= 0x80 && from[i + 3] < 0xC0)
 					{
-						destination.push_back((from[i] & 0x07) << 18 | (from[i + 1] & 0x3F) << 12 | (from[i + 2] & 0x3F) | (from[i + 3] & 0x3F));
+						destination.push_back((from[i] & 0x07) << 18 | (from[i + 1] & 0x3F) << 12 | (from[i + 2] & 0x3F) << 6 | (from[i + 3] & 0x3F));
 						i += 4;
 						continue;
 					}

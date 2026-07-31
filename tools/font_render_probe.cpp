@@ -68,6 +68,21 @@ bool ValidateCatalog(std::filesystem::path const &path, std::filesystem::path co
 	std::ofstream report(reportPath, std::ios::app | std::ios::binary);
 	if (!report)
 		return false;
+	ByteString const supplementaryUtf8("\xF0\xAB\x93\xA7");
+	String supplementary;
+	try
+	{
+		supplementary = supplementaryUtf8.FromUtf8(false);
+	}
+	catch (std::exception const &)
+	{
+		return false;
+	}
+	bool const supplementaryRoundtrip = supplementary.size() == 1 &&
+		supplementary.front() == 0x2B4E7 && supplementary.ToUtf8() == supplementaryUtf8;
+	report << "supplementary_utf8_roundtrip\t" << (supplementaryRoundtrip ? "true" : "false") << '\n';
+	if (!supplementaryRoundtrip)
+		return false;
 	int measured = 0;
 	int rendered = 0;
 	int replacement = 0;
@@ -96,7 +111,11 @@ bool ValidateCatalog(std::filesystem::path const &path, std::filesystem::path co
 			FontReader glyph(codepoint);
 			FontReader fallback(0xFFFD);
 			if (glyph.GetResourceOffset() == fallback.GetResourceOffset() && codepoint != 0xFFFD)
+			{
 				replacement++;
+				report << "catalog_replacement\t" << key << '\t' << "U+" << std::hex
+					<< std::uppercase << static_cast<unsigned int>(codepoint) << std::dec << '\n';
+			}
 		}
 		graphics.Clear();
 		graphics.BlendText({ 8, 8 }, text, (0xFFFFFF_rgb).WithAlpha(255));

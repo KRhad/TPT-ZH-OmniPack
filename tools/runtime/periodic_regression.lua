@@ -35,6 +35,12 @@ local ids = {
     indium = must_element("OMNI_PT_IN", "IN", 401),
     thallium = must_element("OMNI_PT_TL", "TL", 428),
     nihonium = must_element("OMNI_PT_NH", "NH", 456),
+    diamond = must_element("DEFAULT_PT_DMND", "DMND", 28),
+    silicon = must_element("DEFAULT_PT_SLCN", "SLCN", 187),
+    germanium = must_element("OMNI_PT_GE", "GE", 386),
+    tin = must_element("OMNI_PT_TIN", "TIN", 259),
+    lead = must_element("OMNI_PT_LEAD", "LEAD", 258),
+    flerovium = must_element("OMNI_PT_FL", "FL", 457),
     lithium = must_element("DEFAULT_PT_LITH", "LITH", 191),
     rubidium = must_element("DEFAULT_PT_RBDM", "RBDM", 41),
     hydrogen = must_element("DEFAULT_PT_H2", "HYGN", 148),
@@ -118,6 +124,23 @@ local function run_property_differences()
     assert(elements.property(ids.nihonium, "Properties")
             ~= elements.property(ids.gallium, "Properties"),
         "radioactive nihonium and stable gallium have identical properties")
+    assert(elements.property(ids.diamond, "Meltable") == 0,
+        "diamond carbon mapping lost its indestructible non-meltable property")
+    assert(elements.property(ids.silicon, "Falldown")
+            ~= elements.property(ids.germanium, "Falldown"),
+        "powder silicon and solid germanium have identical movement properties")
+    assert(elements.property(ids.germanium, "Hardness")
+            > elements.property(ids.tin, "Hardness"),
+        "brittle germanium is not harder than soft tin")
+    assert(elements.property(ids.tin, "HighTemperature")
+            < elements.property(ids.lead, "HighTemperature"),
+        "tin and lead do not retain distinct melting points")
+    assert(elements.property(ids.lead, "Weight")
+            > elements.property(ids.tin, "Weight"),
+        "dense lead is not heavier than tin")
+    assert(elements.property(ids.flerovium, "Properties")
+            ~= elements.property(ids.germanium, "Properties"),
+        "radioactive flerovium and stable germanium have identical properties")
 end
 
 local function run_water_reaction(type, seed)
@@ -382,6 +405,97 @@ local function run_boron_group_reactions()
         "hot molten indium did not enter its finite vaporisation proxy")
 end
 
+local function run_carbon_group_reactions()
+    configure(451)
+    local old_diffusion = elements.property(ids.oxygen, "Diffusion")
+    local old_advection = elements.property(ids.oxygen, "Advection")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Advection", 0.0)
+    local diamond = make(ids.diamond, 120, 120, 1100.0)
+    local oxygen = make(ids.oxygen, 121, 120, 1100.0)
+    step()
+    assert(sim.partProperty(diamond, "type") == ids.diamond,
+        "diamond carbon mapping was made chemically reactive")
+    assert(sim.partProperty(oxygen, "type") == ids.oxygen,
+        "inert diamond unexpectedly consumed local oxygen")
+
+    configure(461)
+    local silicon = make(ids.silicon, 120, 120, 1000.0)
+    oxygen = make(ids.oxygen, 121, 120, 1000.0)
+    step()
+    assert(sim.partProperty(silicon, "type") == ids.glass
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "hot silicon oxidation did not produce glass and finite fire proxies")
+    elements.property(ids.oxygen, "Diffusion", old_diffusion)
+    elements.property(ids.oxygen, "Advection", old_advection)
+
+    configure(471)
+    local germanium = make(ids.germanium, 120, 120, 300.0)
+    for _ = 1, 80 do
+        local electron = make(ids.electron, 121, 120, 300.0)
+        sim.partProperty(electron, "vx", 0.0)
+        sim.partProperty(electron, "vy", 0.0)
+        step()
+        if sim.partExists(electron) then sim.partKill(electron) end
+        if sim.partProperty(germanium, "life") > 0 then break end
+    end
+    assert(sim.partExists(germanium)
+            and sim.partProperty(germanium, "life") > 0,
+        "germanium did not enter its finite local-discharge glow state")
+
+    configure(481)
+    germanium = make(ids.germanium, 120, 120, 360.0)
+    local acid = make(ids.acid, 121, 120, 360.0)
+    step()
+    assert(sim.partProperty(germanium, "type") == ids.salt
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "warm germanium acid route did not produce generic salt and hydrogen")
+
+    configure(491)
+    local tin = make(ids.tin, 120, 120, 250.0)
+    step(120)
+    assert(sim.partProperty(tin, "type") == ids.scrap
+            and sim.partProperty(tin, "ctype") == ids.tin,
+        "prolonged cold tin did not become recoverable typed brittle scrap")
+
+    configure(501)
+    local lead = make(ids.lead, 124, 120, 293.15)
+    local neutron = make(ids.neutron, 120, 120, 293.15)
+    sim.partProperty(neutron, "vx", 4.0)
+    sim.partProperty(neutron, "vy", 0.0)
+    for _ = 1, 8 do
+        step()
+        if not sim.partExists(neutron) then break end
+    end
+    assert(sim.partExists(lead) and not sim.partExists(neutron),
+        "lead did not absorb an incident neutron through PROP_NEUTABSORB")
+
+    configure(511)
+    lead = make(ids.lead, 120, 120, 360.0)
+    acid = make(ids.acid, 121, 120, 360.0)
+    step()
+    assert(sim.partProperty(lead, "type") == ids.salt
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "warm lead acid route did not produce generic salt and hydrogen")
+
+    configure(521)
+    lead = make(ids.lead, 120, 120, 700.0)
+    oxygen = make(ids.oxygen, 121, 120, 700.0)
+    step()
+    assert(sim.partProperty(lead, "type") == ids.salt
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "hot lead oxidation did not produce generic salt and finite fire")
+
+    configure(531)
+    local molten = make(ids.lava, 120, 120, 3000.0)
+    sim.partProperty(molten, "ctype", ids.tin)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.fire
+            and sim.partProperty(molten, "ctype") == ids.tin
+            and sim.partProperty(molten, "life") == 60,
+        "hot molten tin did not enter its finite vaporisation proxy")
+end
+
 local function run_helium_cryogenics()
     configure(81)
     local old_diffusion = elements.property(ids.he, "Diffusion")
@@ -475,6 +589,15 @@ local function run_radioactive_decays()
         "nihonium did not enter its compressed polonium decay proxy")
     assert(count_type(ids.photon) == 1,
         "one nihonium decay did not emit exactly one finite photon")
+
+    configure(119)
+    local flerovium = make(ids.flerovium, 120, 120, 293.15)
+    sim.partProperty(flerovium, "tmp", 1)
+    step()
+    assert(sim.partProperty(flerovium, "type") == ids.polonium,
+        "flerovium did not enter its compressed polonium decay proxy")
+    assert(count_type(ids.photon) == 1,
+        "one flerovium decay did not emit exactly one finite photon")
 end
 
 local function run_decay_budget()
@@ -565,6 +688,28 @@ local function run_nihonium_budget()
     return events
 end
 
+local function run_flerovium_budget()
+    configure(541)
+    local total = 1200
+    for index = 0, total - 1 do
+        local particle = make(ids.flerovium,
+            50 + (index % 100) * 5,
+            50 + math.floor(index / 100) * 5,
+            293.15)
+        sim.partProperty(particle, "tmp", 1)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total), "missing flerovium event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame flerovium events were not capped at 1024: " .. tostring(events))
+    assert(count_type(ids.flerovium) >= total - 1024,
+        "event-budget exhaustion did not defer remaining flerovium decays")
+    assert(count_type(ids.photon) <= 1024,
+        "bounded flerovium decays emitted too many photons")
+    return events
+end
+
 local function test()
     run_property_differences()
     run_alkali_water_series()
@@ -572,6 +717,7 @@ local function test()
     run_alkaline_earth_water_series()
     run_alkaline_earth_oxygen_and_phase()
     run_boron_group_reactions()
+    run_carbon_group_reactions()
     run_helium_cryogenics()
     run_xenon_discharge()
     run_radioactive_decays()
@@ -579,18 +725,21 @@ local function test()
     local francium_budget = run_francium_budget()
     local radium_budget = run_radium_budget()
     local nihonium_budget = run_nihonium_budget()
-    return math.max(noble_budget, francium_budget, radium_budget, nihonium_budget)
+    local flerovium_budget = run_flerovium_budget()
+    return math.max(noble_budget, francium_budget, radium_budget,
+        nihonium_budget, flerovium_budget)
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_PERIODIC_STATUS=PASS\n")
-    report:write("OMNI_PERIODIC_NEW_ELEMENTS=21\n")
-    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=47\n")
+    report:write("OMNI_PERIODIC_NEW_ELEMENTS=23\n")
+    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=49\n")
     report:write("OMNI_PERIODIC_ALKALI_FAMILY=6\n")
     report:write("OMNI_PERIODIC_ALKALINE_EARTH_FAMILY=6\n")
     report:write("OMNI_PERIODIC_BORON_GROUP=6\n")
+    report:write("OMNI_PERIODIC_CARBON_GROUP=6\n")
     report:write("OMNI_PERIODIC_BUDGET_EVENTS=" .. tostring(data) .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

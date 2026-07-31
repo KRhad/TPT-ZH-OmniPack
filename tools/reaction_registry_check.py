@@ -117,6 +117,12 @@ REQUIRED_REACTIONS = {
     "periodic.gallium_embrittlement",
     "periodic.boron_group_vaporisation",
     "periodic.nihonium_decay",
+    "periodic.carbon_group_acid",
+    "periodic.carbon_group_oxidation",
+    "periodic.carbon_group_vaporisation",
+    "periodic.tin_pest",
+    "periodic.germanium_discharge",
+    "periodic.flerovium_decay",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

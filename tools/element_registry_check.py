@@ -151,7 +151,10 @@ ASCII_IDENTIFIER = re.compile(r"^[A-Z][A-Z0-9_]*$")
 ASCII_MESON_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
 ASCII_DISPLAY_CODE = re.compile(r"^[\x21-\x7E]+$")
 HEX_COMMIT = re.compile(r"^[0-9a-f]{40}$")
-CJK = re.compile(r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]")
+CJK = re.compile(
+    r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF"
+    r"\U00020000-\U0002FA1F\U00030000-\U000323AF]"
+)
 ASCII_LETTER = re.compile(r"[A-Za-z]")
 FORBIDDEN_CONTROL = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]")
 
@@ -1320,6 +1323,7 @@ def run_self_test() -> list[str]:
     expect(bool(ASCII_IDENTIFIER.fullmatch("DEFAULT_PT_WATR")), "valid identifier")
     expect(not ASCII_IDENTIFIER.fullmatch("default_pt_watr"), "lowercase identifier rejection")
     expect(bool(CJK.search("简体中文")), "CJK detection")
+    expect(bool(CJK.search("𫓧")), "supplementary CJK detection")
     expect(not CJK.search("English only"), "non-CJK rejection")
     reserved = reserved_registry_expectations(196)
     expect(reserved["identifier"] == "RESERVED_PT_196", "reserved identifier")

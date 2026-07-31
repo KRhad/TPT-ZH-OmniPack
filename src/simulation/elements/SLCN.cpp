@@ -1,5 +1,6 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
+#include "simulation/OmniPeriodic.h"
 
 static int update(UPDATE_FUNC_ARGS);
 static int graphics(GRAPHICS_FUNC_ARGS);
@@ -68,6 +69,10 @@ static void initSparkles(Simulation *sim, Particle &part)
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	if (OmniCarbonGroupUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+	{
+		return 1;
+	}
 	if (!parts[i].tmp)
 	{
 		initSparkles(sim, parts[i]);

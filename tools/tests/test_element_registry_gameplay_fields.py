@@ -19,6 +19,9 @@ SPEC.loader.exec_module(element_registry_check)
 
 
 class ElementRegistryGameplayFieldsTest(unittest.TestCase):
+    def test_supplementary_cjk_name_is_recognized(self) -> None:
+        self.assertIsNotNone(element_registry_check.CJK.search("𫓧"))
+
     def validate_rows(self, mutate) -> set[str]:
         source = ROOT / "docs" / "ELEMENT_REGISTRY.csv"
         with source.open(encoding="utf-8", newline="") as stream:

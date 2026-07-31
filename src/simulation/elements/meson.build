@@ -385,7 +385,7 @@ simulation_elem_names = [
 	disabler(), # 383: periodic V reserved
 	disabler(), # 384: periodic Mn reserved
 	'GA',   # 385: periodic Ga
-	disabler(), # 386: periodic Ge reserved
+	'GE',   # 386: periodic Ge
 	disabler(), # 387: periodic As reserved
 	disabler(), # 388: periodic Se reserved
 	disabler(), # 389: periodic Br reserved
@@ -456,7 +456,7 @@ simulation_elem_names = [
 	disabler(), # 454: periodic Rg reserved
 	disabler(), # 455: periodic Cn reserved
 	'NH',   # 456: periodic Nh
-	disabler(), # 457: periodic Fl reserved
+	'FL',   # 457: periodic Fl
 	disabler(), # 458: periodic Mc reserved
 	disabler(), # 459: periodic Lv reserved
 	disabler(), # 460: periodic Ts reserved

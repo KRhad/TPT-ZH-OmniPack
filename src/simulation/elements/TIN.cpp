@@ -1,6 +1,9 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
 #include "simulation/OmniMetallurgy.h"
+#include "simulation/OmniPeriodic.h"
+
+static int update(UPDATE_FUNC_ARGS);
 
 void Element::Element_TIN()
 {
@@ -40,5 +43,14 @@ void Element::Element_TIN()
 	HighTemperature = 505.08f;
 	HighTemperatureTransition = PT_LAVA;
 
-	Update = &OmniMetallurgyMetalUpdate;
+	Update = &update;
+}
+
+static int update(UPDATE_FUNC_ARGS)
+{
+	if (OmniCarbonGroupUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+	{
+		return 1;
+	}
+	return OmniMetallurgyMetalUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 }

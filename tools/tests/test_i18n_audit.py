@@ -20,6 +20,9 @@ SPEC.loader.exec_module(i18n_audit)
 
 
 class I18nAuditTests(unittest.TestCase):
+    def test_supplementary_cjk_text_is_recognized(self) -> None:
+        self.assertIsNotNone(i18n_audit.CJK_RE.search("𫓧"))
+
     def make_repo(
         self,
         root: Path,

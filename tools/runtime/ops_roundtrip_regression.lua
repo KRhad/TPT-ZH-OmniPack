@@ -108,6 +108,8 @@ local definitions = {
     indium = { "OMNI_PT_IN", "IN", 401 },
     thallium = { "OMNI_PT_TL", "TL", 428 },
     nihonium = { "OMNI_PT_NH", "NH", 456 },
+    germanium = { "OMNI_PT_GE", "GE", 386 },
+    flerovium = { "OMNI_PT_FL", "FL", 457 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -134,6 +136,7 @@ local module_keys = {
         "caesium", "rn", "francium", "og", "beryllium", "calcium",
         "strontium", "barium", "radium",
         "boron", "gallium", "indium", "thallium", "nihonium",
+        "germanium", "flerovium",
     },
 }
 
@@ -273,9 +276,9 @@ local carrier_targets = {
         virs_tmp2 = "rshd",
     },
     periodic = {
-        lava = "nihonium",
+        lava = "flerovium",
         spark = "boron",
-        conv_ctype = "gallium",
+        conv_ctype = "germanium",
         conv_tmp = "indium",
         virs_tmp2 = "thallium",
     },

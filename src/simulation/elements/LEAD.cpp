@@ -1,6 +1,9 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
 #include "simulation/OmniMetallurgy.h"
+#include "simulation/OmniPeriodic.h"
+
+static int update(UPDATE_FUNC_ARGS);
 
 void Element::Element_LEAD()
 {
@@ -29,7 +32,8 @@ void Element::Element_LEAD()
 	HeatConduct = 80;
 	HeatCapacity = 0.55f;
 	Description = Localization::Ref().Tr("sim.elem.OMNI_PT_LEAD");
-	Properties = TYPE_SOLID | PROP_CONDUCTS | PROP_NEUTABSORB | PROP_HOT_GLOW;
+	Properties = TYPE_SOLID | PROP_CONDUCTS | PROP_NEUTABSORB |
+		PROP_HOT_GLOW | PROP_DEADLY;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -40,5 +44,14 @@ void Element::Element_LEAD()
 	HighTemperature = 600.61f;
 	HighTemperatureTransition = PT_LAVA;
 
-	Update = &OmniMetallurgyMetalUpdate;
+	Update = &update;
+}
+
+static int update(UPDATE_FUNC_ARGS)
+{
+	if (OmniCarbonGroupUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+	{
+		return 1;
+	}
+	return OmniMetallurgyMetalUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 }
