@@ -8,6 +8,7 @@ simulation_files = files(
 	'OmniChemistry.cpp',
 	'OmniMetallurgy.cpp',
 	'OmniNuclear.cpp',
+	'OmniPeriodic.cpp',
 	'Particle.cpp',
 	'SaveRenderer.cpp',
 	'Sign.cpp',

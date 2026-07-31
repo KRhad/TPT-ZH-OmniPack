@@ -26,14 +26,8 @@ class AutomationAuditTests(unittest.TestCase):
 
     def test_periodic_slot_claimed_by_wrong_module_is_rejected(self) -> None:
         rows = automation_audit.read_csv(ROOT / "docs" / "ELEMENT_REGISTRY.csv", [])
-        target = dict(next(row for row in rows if row["stable_id"] == "359"))
-        target["stable_id"] = "392"
-        target["current_id"] = "392"
-        target["identifier"] = "OMNI_PT_FAKE"
-        target["meson_name"] = "FAKE"
-        target["source_file"] = "src/simulation/elements/FAKE.cpp"
-        target["implementation_status"] = "implemented"
-        rows.append(target)
+        target = next(row for row in rows if row["stable_id"] == "392")
+        target["module"] = "nuclear"
         errors: list[str] = []
         original = automation_audit.read_csv
         try:
@@ -43,7 +37,7 @@ class AutomationAuditTests(unittest.TestCase):
             automation_audit.check_capabilities(ROOT, errors)
         finally:
             automation_audit.read_csv = original
-        self.assertTrue(any("former automation ID 392 must belong to the periodic module" in error for error in errors))
+        self.assertTrue(any("former automation ID 392 must belong to 'omnipack_reserved'" in error for error in errors))
 
     def test_missing_required_scenario_is_rejected(self) -> None:
         source = json.loads(

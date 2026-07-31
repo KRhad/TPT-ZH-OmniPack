@@ -71,6 +71,10 @@ SpikeViper 快照 `134ebf330eda42b4b300a2b7613ede71261697df` 仅作为“氧气�
 
 SpikeViper `134ebf330eda42b4b300a2b7613ede71261697df`、Ultimata `b74971752433652c033559abea415ec3510ac433` 与 Cracker `ebbb9aab6aef27d26517682cebbc0a07147a843a` 的核相关内容只被阅读用于玩法边界和风险评估。`NFUL/MODR/CROD/NCLT/NWST/NGEN/RSHD` 与 `OmniNuclear.cpp` 均由本项目独立实现；没有复制任何第三方核元素更新函数，也没有从二进制或存档推导行为。实现不改写官方 `URAN`、`PLUT`、`NEUT` 或 `DEUT`，只通过 `SPRK(NGEN)` 在本地已存在燃料时创建一个官方中子。静态审计和真实客户端 Lua 回归覆盖控制、冷却、屏蔽及无燃料发生器负例；存档往返和压力样本仍未执行。
 
+### 周期表稀有气体首批来源边界
+
+模组目录对氦、氖等名称的命中只用于确认公开候选覆盖，没有选择任何外部更新函数作为实现来源。`HE/NE/AR/KR/XE/RN/OG`、`OmniPeriodic.cpp`、118 行运行时数据生成器和周期表 UI 均为 OmniPack 在 `21b160a5...` 基线上独立实现，许可证按本仓库 GPL-3.0-only；没有复制 `tpt_remade`、Cyens、Ultimata 或 Lua 包中的属性常量、反应代码和图形函数。物理量为明确标注的沙盒游戏化差异，不声称科研精度。
+
 ## 论坛与文档资料
 
 - Seppo's Metallurgy Mod 公开主题：  
@@ -102,6 +106,7 @@ SpikeViper `134ebf330eda42b4b300a2b7613ede71261697df`、Ultimata `b7497175243365
 - 化学来源：Seppo `ETHL/KERO/GASO` token、Cracker `CHLR/ACTY` token、Cyens 分馏链均为概念参考；对应更新实现独立编写；
 - 局部生态正式登记元素：8 个，稳定 ID `288–295`；Spike 仅作概念参考；
 - 受控核工业正式登记元素：7 个，稳定 ID `328–334`；Spike、Ultimata 与 Cracker 的核内容仅作玩法和风险边界参考；
+- 周期表首批正式登记元素：7 个，固定 ID `370/375/379/390/405/431/461`；实现来源为 OmniPack 原创族逻辑，外部代码复制为 0；
 - 第三方核更新函数逐行复制：0；官方 `URAN/PLUT/NEUT/DEUT` 状态机改写：0；
 - 冶金与化学静态审计、单元测试和 Lua 真实运行回归：PASS；
 - 来源仓库只读审计：9；

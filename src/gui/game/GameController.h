@@ -170,6 +170,7 @@ public:
 	void SaveAsCurrent();
 	void OpenStamps();
 	void OpenElementSearch();
+	void OpenPeriodicTable();
 	void OpenColourPicker();
 	void PlaceSave(ui::Point position);
 	void ClearSim();

@@ -33,7 +33,23 @@
 | 局部生态 8 | PASS | PASS | PASS | 历史 PASS | ID `288..295`；完整/简化均通过 |
 | 受控核工业 7 | PASS | PASS | PASS | 历史 PASS | ID `328..334` |
 | 高级化学 10 | PASS | PASS | PASS | 历史 PASS | ID `360..369` |
+| 周期表首批 7 | PASS | PASS | PASS | 预算帧 PASS | ID `370/375/379/390/405/431/461`；33/118 映射可用 |
 | 多模块混合 | PASS | 历史 PASS | 历史 PASS | 历史 PASS | Phase 1 正式混合压力尚未复跑 |
+
+### 周期表首批证据
+
+| 项目 | 状态 | 证据 |
+|---|---|---|
+| 118 行数据、长式格位、搜索/筛选契约 | PASS | `periodic-runtime-audit` 与 Python 单测 |
+| 7 个新 identifier / 固定 ID / 双语图鉴 | PASS | 元素登记、i18n、内容门禁 |
+| 氦低温、氙放电、氡/鿫衰变 | PASS | `runtime_lua_periodic_test.ps1` |
+| 单帧事件预算 | PASS | 1,200 个 `OG(tmp=1)` 同帧样本记录 `1024` 个事件 |
+| 周期 ID OPS 与携带字段 | PASS | 3 进程、2 重启、2 加载、13 粒子、21 字段断言 |
+| 周期内容无解锁直接选择 | PASS | `OMNI_PERIODIC_ACTIVE=OMNI_PT_HE` |
+| 本批 clean Release build | PASS | `build-periodic-noble-final-clean`，`520/520`；EXE `416A8661228DFD292AECDD344681CAEF88EDB034F4BAF18A9E8B8E910489AC60` |
+| 本批 Meson/Python 全量套件 | PASS | static `21/21`；Python `143/143`，0 skip |
+| 六类与 mixed OPS | PASS | 21 进程、14 重启、14 加载；六类 92 粒子/141 字段断言，mixed 11 粒子/20 字段断言 |
+| 周期表真实窗口排版/双语/DPI | NOT RUN | 仍需可信桌面视觉矩阵；编译和静态 UI 契约不替代视觉结论 |
 
 旧文件名中的 `tutorial` 或 `challenge` 表示开发用反应样例和回归场景，不是玩家任务系统，不参与元素可用性或存档进度。
 

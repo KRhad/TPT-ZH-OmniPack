@@ -169,8 +169,11 @@ def audit(root: Path) -> list[str]:
         errors.append("missing implemented OmniPack elements: " + ",".join(missing))
     if extra:
         errors.append("unknown usage matrix elements: " + ",".join(extra))
-    if len(rows) != 48:
-        errors.append(f"usage matrix must contain exactly 48 rows, found {len(rows)}")
+    if len(rows) != len(registry):
+        errors.append(
+            f"usage matrix must contain exactly {len(registry)} implemented OmniPack rows, "
+            f"found {len(rows)}"
+        )
     return errors
 
 
@@ -194,7 +197,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"element-usage-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("element-usage-audit: PASS (48 implemented OmniPack elements)")
+        implemented, _ = read_registry(
+            args.source_root.resolve() / "docs" / "ELEMENT_REGISTRY.csv"
+        )
+        print(
+            "element-usage-audit: PASS "
+            f"({len(implemented)} implemented OmniPack elements)"
+        )
     return 0
 
 

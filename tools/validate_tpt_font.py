@@ -174,10 +174,12 @@ def validate(
     if replacement is None or not any(pixel for row in glyph_pixels(*replacement) for pixel in row):
         raise ValueError("replacement glyph U+FFFD is missing or empty")
     if missing or invalid_width or empty or roundtrip_failures:
+        missing_text = ",".join(f"U+{codepoint:04X}" for codepoint in missing[:32])
         raise ValueError(
             "validation failed: "
             f"missing={len(missing)} invalid_width={len(invalid_width)} "
-            f"empty={len(empty)} roundtrip={len(roundtrip_failures)}"
+            f"empty={len(empty)} roundtrip={len(roundtrip_failures)} "
+            f"missing_codepoints={missing_text or 'none'}"
         )
 
     known_missing = [character for character in KNOWN_TEXT if ord(character) not in glyphs]

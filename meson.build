@@ -867,6 +867,19 @@ test(
 )
 
 test(
+	'periodic-runtime-audit',
+	python3_prog,
+	args: [
+		files('tools/periodic_audit.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'legacy-progress-save-probe',
 	legacy_progress_save_probe,
 	args: [

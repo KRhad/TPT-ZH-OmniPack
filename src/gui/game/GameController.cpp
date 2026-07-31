@@ -46,6 +46,7 @@
 
 #include "gui/colourpicker/ColourPickerActivity.h"
 #include "gui/elementsearch/ElementSearchActivity.h"
+#include "gui/periodictable/PeriodicTableActivity.h"
 #include "gui/filebrowser/FileBrowserActivity.h"
 #include "gui/profile/ProfileActivity.h"
 #include "gui/save/LocalSaveActivity.h"
@@ -1457,6 +1458,19 @@ void GameController::OpenElementSearch()
 		toolList.push_back(ptr.get());
 	}
 	new ElementSearchActivity(this, toolList);
+}
+
+void GameController::OpenPeriodicTable()
+{
+	std::vector<Tool *> toolList;
+	for (auto &ptr : gameModel->GetTools())
+	{
+		if (ptr)
+		{
+			toolList.push_back(ptr.get());
+		}
+	}
+	new PeriodicTableActivity(this, std::move(toolList));
 }
 
 void GameController::OpenColourPicker()

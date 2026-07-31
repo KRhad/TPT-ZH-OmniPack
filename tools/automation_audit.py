@@ -272,12 +272,20 @@ def check_capabilities(root: Path, errors: list[str]) -> set[str]:
     if generated_ids != list(range(370, 462)):
         errors.append("docs/PERIODIC_ELEMENT_SOURCE_MAP.csv: expected generated IDs 370..461")
     for stable_id in LEGACY_AUTOMATION_IDS:
-        if str(stable_id) not in periodic_by_id:
+        periodic_row = periodic_by_id.get(str(stable_id))
+        if periodic_row is None:
             errors.append(f"periodic source map does not own former automation ID {stable_id}")
         row = by_registry_id.get(str(stable_id))
-        if row is not None and row.get("module") != "periodic":
+        expected_module = (
+            "periodic"
+            if periodic_row is not None and periodic_row.get("status") == "implemented"
+            else "omnipack_reserved"
+        )
+        if row is None:
+            errors.append(f"{registry_path}: former automation ID {stable_id} is not registered")
+        elif row.get("module") != expected_module:
             errors.append(
-                f"{registry_path}: former automation ID {stable_id} must belong to the periodic module, "
+                f"{registry_path}: former automation ID {stable_id} must belong to {expected_module!r}, "
                 f"not {row.get('module')!r}"
             )
         if stable_id < len(meson_slots) and meson_slots[stable_id] is not None and row is None:
@@ -286,7 +294,7 @@ def check_capabilities(root: Path, errors: list[str]) -> set[str]:
                 f"is enabled as {meson_slots[stable_id]!r} without a registry row"
             )
     content = read_text(root / "docs" / "CONTENT_MATRIX.md", errors)
-    if "| 周期表固定区 | `370..461` | 92（规划/分批实现） | 原子序数映射固定，不是解锁顺序 |" not in content:
+    if "| 周期表固定区 | `370..461` |" not in content or "原子序数映射固定，不是解锁顺序" not in content:
         errors.append("docs/CONTENT_MATRIX.md: missing periodic stable-ID allocation")
     omni_content = read_text(root / "src" / "gui" / "game" / "OmniContent.h", errors)
     for marker in (

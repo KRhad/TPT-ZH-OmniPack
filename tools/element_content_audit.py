@@ -20,11 +20,15 @@ sys.modules[CATALOG_SPEC.name] = element_content_catalog
 CATALOG_SPEC.loader.exec_module(element_content_catalog)
 
 
-def audit(root: Path) -> list[str]:
-    _, errors = element_content_catalog.audit_content_registry(
+def audit_with_records(root: Path) -> tuple[dict[str, dict[str, str]], list[str]]:
+    return element_content_catalog.audit_content_registry(
         root / "docs" / "ELEMENT_REGISTRY.csv",
         root / "docs" / "ELEMENT_CONTENT.csv",
     )
+
+
+def audit(root: Path) -> list[str]:
+    _, errors = audit_with_records(root)
     return errors
 
 
@@ -41,14 +45,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    errors = audit(args.source_root.resolve())
+    records, errors = audit_with_records(args.source_root.resolve())
     if errors:
         for error in errors:
             print(f"element-content-audit: ERROR {error}", file=sys.stderr)
         print(f"element-content-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("element-content-audit: PASS (48 implemented OmniPack elements, bilingual content)")
+        print(
+            "element-content-audit: PASS "
+            f"({len(records)} implemented OmniPack elements, bilingual content)"
+        )
     return 0
 
 

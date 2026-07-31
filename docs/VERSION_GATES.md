@@ -35,6 +35,17 @@ periodic_family_tests_pass=true
 
 只有 UI 或百科页面、没有 118 个可放置元素时不得通过。
 
+当前开发树真实状态：
+
+```text
+periodic_table_elements=33
+periodic_table_ui=true
+all_periodic_elements_placeable=false
+periodic_source_map_complete=true
+periodic_family_tests_pass=partial
+periodic_0_2_gate=false
+```
+
 ## `0.3.0`–`0.8.0` 内容批次
 
 每版必须满足登记、ID、双语、图鉴、来源、反应、相变、模块、OPS、性能和许可证测试。纯换色或无玩法差异材料不计入数量。

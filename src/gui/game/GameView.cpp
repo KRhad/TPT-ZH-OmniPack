@@ -328,6 +328,13 @@ GameView::GameView():
 	tempButton->SetActionCallback({ [this] { c->OpenElementSearch(); } });
 	AddComponent(tempButton);
 
+	ui::Button * periodicButton = new ui::Button(
+		ui::Point(WINDOWW-32, WINDOWH-32), ui::Point(15, 15), "P",
+		Localization::Ref().Tr("periodic.table.tooltip"));
+	periodicButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
+	periodicButton->SetActionCallback({ [this] { c->OpenPeriodicTable(); } });
+	AddComponent(periodicButton);
+
 	colourPicker = new ui::Button(ui::Point((XRES/2)-8, YRES+1), ui::Point(16, 16), "", Localization::Ref().Tr("gametools.tooltip.pick_colour"));
 	colourPicker->SetActionCallback({ [this] { c->OpenColourPicker(); } });
 }
@@ -1461,6 +1468,10 @@ void GameView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl,
 			c->SetEdgeMode(c->GetEdgeMode() + 1);
 		else
 			c->OpenElementSearch();
+		break;
+	case SDL_SCANCODE_T:
+		if (!ctrl && !alt)
+			c->OpenPeriodicTable();
 		break;
 	case SDL_SCANCODE_F:
 		if (ctrl)

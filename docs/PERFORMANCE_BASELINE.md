@@ -20,6 +20,7 @@
 | 局部生态 | `1024` 事件/帧，局部传播、营养/寿命约束 |
 | 高级化学 | 登记反应显式预算，局部邻域 |
 | 受控核工业 | 有界中子/控制更新，不允许无界粒子链 |
+| 周期元素族 | `1024` 事件/帧，`3x3` 放电/换热，衰变每次至多一个有限寿命光子 |
 
 ## 内容扩展压力场景
 
@@ -49,6 +50,11 @@
 ```text
 phase1_clean_build_pass=true
 phase1_stress_test=not_tested
+periodic_noble_gas_clean_build_pass=true
+periodic_noble_gas_clean_build_targets=520
+periodic_noble_gas_exe_sha256=416A8661228DFD292AECDD344681CAEF88EDB034F4BAF18A9E8B8E910489AC60
+periodic_noble_gas_budget_runtime=true
+periodic_noble_gas_peak_events_per_frame=1024
 periodic_118_stress_test=not_tested
 mixed_300_material_stress_test=not_tested
 long_run_7200s=not_tested

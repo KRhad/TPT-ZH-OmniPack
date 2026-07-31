@@ -41,6 +41,7 @@ MODULE_PREFIX = {
     "biology": "biology.",
     "chemistry": "chemistry.",
     "advanced_nuclear": "nuclear.",
+    "periodic": "periodic.",
 }
 
 MODULE_BUDGETS = {
@@ -48,6 +49,7 @@ MODULE_BUDGETS = {
     "biology": {"1024/frame"},
     "chemistry": {"1536/frame"},
     "advanced_nuclear": {"512/frame"},
+    "periodic": {"1024/frame"},
 }
 
 REQUIRED_REACTIONS = {
@@ -94,6 +96,10 @@ REQUIRED_REACTIONS = {
     "nuclear.waste_stabilization",
     "nuclear.shield_absorption",
     "nuclear.neutron_generation",
+    "periodic.noble_gas_discharge",
+    "periodic.helium_cryogenic_exchange",
+    "periodic.radon_decay",
+    "periodic.oganesson_decay",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

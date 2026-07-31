@@ -7,14 +7,18 @@ branch=research/mod-source-integration
 audit_start_head=3ee6b0a15cbd7d76f0605af3b614215a3b54a9d4
 phase1_commit=cdbb87e288c4c800d23ed3834c6a07c4960daab2
 mod_catalog_commit=bbb6d805
+periodic_id_infrastructure_commit=21b160a5
 pt_num=512
 pmapbits=9
 official_active_elements=195
-omnipack_active_elements=48
-total_active_elements=243
-registered_slots=370
-reserved_slots=127
+omnipack_active_elements=55
+total_active_elements=250
+registered_slots=462
+reserved_slots=212
 enabled_content_modules=4
+periodic_elements_placeable=33
+periodic_elements_remaining=85
+periodic_table_ui=true
 save_format=OPS1/BZip2
 release_ready=false
 ```
@@ -28,6 +32,18 @@ release_ready=false
 - 周期表 ID/字体基础设施 clean build `509/509`、Meson static `20/20`、Python `136/136`（0 skip）通过；
 - 周期表中文名称的 118 个字符已全部加入确定性字体，新增稀有字形仍待人工桌面可读性检查。
 
+## Phase 2/3：周期表 UI 与稀有气体首批
+
+- 118 行来源映射生成编译时周期表模型；标准长式面板支持中英文名、符号、原子序数、identifier、状态、放射性和金属类别筛选，f 区可展开；
+- 周期表只是直接选择入口，不读取存档进度，不增加解锁或任务状态；未实现的 85 格保留正确位置并明确显示待实现；
+- 复用官方氢 `148`；新增 `HE=370`、`NE=375`、`AR=379`、`KR=390`、`XE=405`、`RN=431`、`OG=461`；
+- 共享 `OmniPeriodic.cpp` 只做 `3x3` 局部检查，放电、氦低温换热和衰变共享 `1024` 次/帧预算；高能光子寿命有限；
+- 真实客户端 Lua 回归：`OMNI_PERIODIC_STATUS=PASS`、7 个新元素、33 个已实现周期映射、压力帧事件恰为 1024；
+- 周期 OPS：3 进程、2 重启、2 加载、13 粒子、21 字段断言、7 个直接大于 255 的类型与五类携带字段通过；
+- 模块/Lua 回归确认 `OMNI_PT_HE` 可直接选择且 Lua 仍优先分配 ID `255`；
+- 全新 `build-periodic-noble-final-clean` Windows x64 Release 构建 `520/520` 通过；EXE SHA-256 `416A8661228DFD292AECDD344681CAEF88EDB034F4BAF18A9E8B8E910489AC60`，Meson static `21/21`、Python `143/143`（0 skip）通过；
+- clean EXE 已复跑周期、模块、六类 OPS 与 mixed OPS：合计 21 个进程、14 次重启、14 次加载验证，周期用例含 7 个大于 255 的直接类型。
+
 ## Phase 1：纯沙盒方向清理
 
 - 删除玩家炼金服务、十阶段进度、元素发现锁、进度窗口和通知；
@@ -38,16 +54,16 @@ release_ready=false
 - 删除五个没有实际内容的玩家设置入口，稳定 ID 区间不变；
 - 新增两个真实旧 OPS 的忽略字段/重存兼容探针；
 - 图鉴正文新增“元素说明 / Element description”标签；
-- 重建 12px 字体：14,713 字形、2,677 个语言与周期表必需字符、SHA-256 `49DFFFD38A3559DA115628DF52E7F1D8D01BC2622D5521D648F9D193E0A7EF48`；
+- 重建 12px 字体：14,719 字形、2,683 个语言与周期表必需字符、SHA-256 `33C5BB78B0086A5FD08BDFF5DA9EADE3960F7118B9FF007DA3A9A7030708B986`；
 - 全新 Release clean build `509/509` 通过，EXE SHA-256 `CAC60B021E92E46C232B8DEF07126BE8CF2F791BDE1722550C341AA02D3A05C4`；Meson static `18/18`、Python `124/124`、0 skip。
 - 当前四模块及完整/简化生态 Lua 回归 `6/6`；0.2 反应样例 `7/7`、回归场景 `8/8`；自动化场景 `9/9`、工程断言组 `6/6`、95 断言、停止增量 0。
 - 官方与四模块 OPS `5/5`：15 个进程、10 次重启、10 次加载、79 粒子、每次加载合计 120 个字段断言。
 
 ## 下一步
 
-1. 提交周期表来源映射、ID 审计、字体覆盖和静态门禁；
-2. 建立周期表数据模型、族共享逻辑与选择 UI；
-3. 实现“氢与稀有气体”第一批并完成登记、构建、反应和 OPS 测试；
-4. 连续推进碱金属、碱土金属和其余元素族。
+1. 提交已完成 clean build 与全量回归的氢/稀有气体批次；
+2. 实现碱金属共享水反应与缺失成员；
+3. 连续推进碱土金属和主族元素；
+4. 每批继续登记、运行回归、OPS 双往返和性能预算验证。
 
 开发回归场景、构建脚本、测试矩阵和版本门禁继续保留；它们不属于已删除的玩家游戏任务。

@@ -290,3 +290,17 @@ element_catalog_data = custom_target(
 	],
 )
 powder_files += element_catalog_data
+
+periodic_table_data = custom_target(
+	'periodic-table-data',
+	input: files('../docs/PERIODIC_ELEMENT_SOURCE_MAP.csv'),
+	output: 'PeriodicTableData.cpp',
+	build_always_stale: true,
+	command: [
+		python3_prog,
+		files('../tools/generate_periodic_table_data.py'),
+		'@OUTPUT@',
+		'@INPUT@',
+	],
+)
+powder_files += periodic_table_data

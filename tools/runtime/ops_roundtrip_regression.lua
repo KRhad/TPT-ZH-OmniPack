@@ -21,6 +21,7 @@ local valid_scenarios = {
     biology = true,
     chemistry = true,
     nuclear = true,
+    periodic = true,
 }
 assert(valid_scenarios[scenario],
     "invalid OPS roundtrip scenario: " .. tostring(scenario))
@@ -86,6 +87,14 @@ local definitions = {
     poly = { "OMNI_PT_POLY", "POLY", 367 },
     pero = { "OMNI_PT_PERO", "PERO", 368 },
     fert = { "OMNI_PT_FERT", "FERT", 369 },
+
+    he = { "OMNI_PT_HE", "HE", 370 },
+    ne = { "OMNI_PT_NE", "NE", 375 },
+    ar = { "OMNI_PT_AR", "AR", 379 },
+    kr = { "OMNI_PT_KR", "KR", 390 },
+    xe = { "OMNI_PT_XE", "XE", 405 },
+    rn = { "OMNI_PT_RN", "RN", 431 },
+    og = { "OMNI_PT_OG", "OG", 461 },
 }
 
 local module_keys = {
@@ -105,6 +114,9 @@ local module_keys = {
     chemistry = {
         "chlr", "amon", "ethl", "kero", "gaso", "acty", "cata",
         "poly", "pero", "fert",
+    },
+    periodic = {
+        "he", "ne", "ar", "kr", "xe", "rn", "og",
     },
 }
 
@@ -242,6 +254,13 @@ local carrier_targets = {
         conv_ctype = "crod",
         conv_tmp = "nwst",
         virs_tmp2 = "rshd",
+    },
+    periodic = {
+        lava = "he",
+        spark = "xe",
+        conv_ctype = "rn",
+        conv_tmp = "og",
+        virs_tmp2 = "kr",
     },
     mixed = {
         lava = "alum",

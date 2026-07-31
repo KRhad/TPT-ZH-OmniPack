@@ -1,0 +1,54 @@
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+import sys
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "tools" / "periodic_audit.py"
+SPEC = importlib.util.spec_from_file_location("periodic_audit", SCRIPT)
+assert SPEC and SPEC.loader
+periodic_audit = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = periodic_audit
+SPEC.loader.exec_module(periodic_audit)
+
+
+class PeriodicAuditTests(unittest.TestCase):
+    def test_repository_passes(self) -> None:
+        self.assertEqual(periodic_audit.audit(ROOT), [])
+
+    def test_missing_budget_is_rejected(self) -> None:
+        engine_path = ROOT / "src" / "simulation" / "OmniPeriodic.cpp"
+        source = engine_path.read_text(encoding="utf-8")
+        original = periodic_audit.read_text
+        errors: list[str] = []
+        try:
+            periodic_audit.read_text = lambda path, output: (
+                source.replace("PeriodicEventsPerFrame = 1024", "PeriodicEventsPerFrame = 0")
+                if path == engine_path else original(path, output)
+            )
+            periodic_audit.check_engine(ROOT, errors)
+        finally:
+            periodic_audit.read_text = original
+        self.assertTrue(any("single-frame budget" in error for error in errors))
+
+    def test_missing_planned_ui_state_is_rejected(self) -> None:
+        ui_path = ROOT / "src" / "gui" / "periodictable" / "PeriodicTableActivity.cpp"
+        source = ui_path.read_text(encoding="utf-8")
+        original = periodic_audit.read_text
+        errors: list[str] = []
+        try:
+            periodic_audit.read_text = lambda path, output: (
+                source.replace("periodic.status.planned", "removed.status")
+                if path == ui_path else original(path, output)
+            )
+            periodic_audit.check_ui(ROOT, errors)
+        finally:
+            periodic_audit.read_text = original
+        self.assertTrue(any("planned state" in error for error in errors))
+
+
+if __name__ == "__main__":
+    unittest.main()
