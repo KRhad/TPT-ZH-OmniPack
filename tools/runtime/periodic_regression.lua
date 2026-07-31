@@ -29,6 +29,12 @@ local ids = {
     barium = must_element("OMNI_PT_BA", "BA", 407),
     radium = must_element("OMNI_PT_RA", "RA", 433),
     magnesium = must_element("OMNI_PT_MAGN", "MAGN", 261),
+    boron = must_element("OMNI_PT_B", "B", 372),
+    aluminium = must_element("OMNI_PT_ALUM", "ALUM", 256),
+    gallium = must_element("OMNI_PT_GA", "GA", 385),
+    indium = must_element("OMNI_PT_IN", "IN", 401),
+    thallium = must_element("OMNI_PT_TL", "TL", 428),
+    nihonium = must_element("OMNI_PT_NH", "NH", 456),
     lithium = must_element("DEFAULT_PT_LITH", "LITH", 191),
     rubidium = must_element("DEFAULT_PT_RBDM", "RBDM", 41),
     hydrogen = must_element("DEFAULT_PT_H2", "HYGN", 148),
@@ -37,6 +43,8 @@ local ids = {
     caustic = must_element("DEFAULT_PT_CAUS", "CAUS", 86),
     salt = must_element("DEFAULT_PT_SALT", "SALT", 26),
     oxygen = must_element("DEFAULT_PT_O2", "OXYG", 61),
+    neutron = must_element("DEFAULT_PT_NEUT", "NEUT", 18),
+    glass = must_element("DEFAULT_PT_GLAS", "GLAS", 45),
     lava = must_element("DEFAULT_PT_LAVA", "LAVA", 6),
     fire = must_element("DEFAULT_PT_FIRE", "FIRE", 4),
     metal = assert(elements.DEFAULT_PT_METL),
@@ -99,6 +107,17 @@ local function run_property_differences()
     assert(elements.property(ids.radium, "Properties")
             ~= elements.property(ids.strontium, "Properties"),
         "radioactive radium and stable strontium have identical properties")
+    assert(elements.property(ids.boron, "Properties")
+            ~= elements.property(ids.aluminium, "Properties"),
+        "metalloid boron and conductive aluminium have identical properties")
+    assert(elements.property(ids.gallium, "HighTemperature")
+            < elements.property(ids.indium, "HighTemperature")
+            and elements.property(ids.indium, "HighTemperature")
+                < elements.property(ids.thallium, "HighTemperature"),
+        "gallium indium and thallium do not retain distinct melting points")
+    assert(elements.property(ids.nihonium, "Properties")
+            ~= elements.property(ids.gallium, "Properties"),
+        "radioactive nihonium and stable gallium have identical properties")
 end
 
 local function run_water_reaction(type, seed)
@@ -305,6 +324,64 @@ local function run_alkaline_earth_oxygen_and_phase()
         "hot molten barium did not enter its finite vaporisation proxy")
 end
 
+local function run_boron_group_reactions()
+    configure(381)
+    local boron = make(ids.boron, 120, 120, 293.15)
+    local neutron = make(ids.neutron, 121, 120, 293.15)
+    sim.partProperty(neutron, "vx", 0.0)
+    sim.partProperty(neutron, "vy", 0.0)
+    step()
+    assert(sim.partProperty(boron, "type") == ids.lithium,
+        "boron neutron capture did not produce the lithium proxy")
+    assert(sim.partProperty(neutron, "type") == ids.he,
+        "boron neutron capture did not produce the helium proxy")
+
+    configure(391)
+    local acid = make(ids.acid, 121, 120, 340.0)
+    local indium = make(ids.indium, 120, 120, 340.0)
+    step()
+    assert(sim.partProperty(indium, "type") == ids.salt
+            and sim.partProperty(acid, "type") == ids.hydrogen,
+        "indium acid reaction did not produce generic salt and hydrogen")
+
+    configure(401)
+    local caustic = make(ids.caustic, 121, 120, 400.0)
+    local aluminium = make(ids.aluminium, 120, 120, 400.0)
+    step()
+    assert(sim.partProperty(aluminium, "type") == ids.salt
+            and sim.partProperty(caustic, "type") == ids.hydrogen,
+        "aluminium caustic route did not produce generic salt and hydrogen")
+
+    configure(411)
+    local gallium = make(ids.gallium, 120, 120, 310.0)
+    aluminium = make(ids.aluminium, 121, 120, 293.15)
+    step()
+    assert(sim.partProperty(aluminium, "type") == ids.scrap
+            and sim.partProperty(aluminium, "ctype") == ids.aluminium,
+        "liquid gallium did not embrittle aluminium into typed scrap")
+    assert(sim.partExists(gallium),
+        "gallium catalyst was incorrectly consumed by aluminium embrittlement")
+
+    configure(421)
+    boron = make(ids.boron, 120, 120, 1100.0)
+    local oxygen = make(ids.oxygen, 121, 120, 1100.0)
+    step()
+    assert(sim.partProperty(boron, "type") == ids.glass
+            and sim.partProperty(oxygen, "type") == ids.fire,
+        "hot boron oxidation did not produce glassy oxide and finite fire proxies: boron="
+            .. tostring(sim.partProperty(boron, "type"))
+            .. " oxygen=" .. tostring(sim.partProperty(oxygen, "type")))
+
+    configure(431)
+    local molten = make(ids.lava, 120, 120, 2500.0)
+    sim.partProperty(molten, "ctype", ids.indium)
+    step()
+    assert(sim.partProperty(molten, "type") == ids.fire
+            and sim.partProperty(molten, "ctype") == ids.indium
+            and sim.partProperty(molten, "life") == 60,
+        "hot molten indium did not enter its finite vaporisation proxy")
+end
+
 local function run_helium_cryogenics()
     configure(81)
     local old_diffusion = elements.property(ids.he, "Diffusion")
@@ -389,6 +466,15 @@ local function run_radioactive_decays()
         "radium decay did not initialize the radon lifetime")
     assert(count_type(ids.photon) == 1,
         "one radium decay did not emit exactly one finite photon")
+
+    configure(118)
+    local nihonium = make(ids.nihonium, 120, 120, 293.15)
+    sim.partProperty(nihonium, "tmp", 1)
+    step()
+    assert(sim.partProperty(nihonium, "type") == ids.polonium,
+        "nihonium did not enter its compressed polonium decay proxy")
+    assert(count_type(ids.photon) == 1,
+        "one nihonium decay did not emit exactly one finite photon")
 end
 
 local function run_decay_budget()
@@ -457,29 +543,54 @@ local function run_radium_budget()
     return events
 end
 
+local function run_nihonium_budget()
+    configure(441)
+    local total = 1200
+    for index = 0, total - 1 do
+        local particle = make(ids.nihonium,
+            50 + (index % 100) * 5,
+            50 + math.floor(index / 100) * 5,
+            293.15)
+        sim.partProperty(particle, "tmp", 1)
+    end
+    step()
+    local metrics = sim.omniEventMetrics()
+    local events = assert(tonumber(metrics.total), "missing nihonium event total")
+    assert(events > 0 and events <= 1024,
+        "one-frame nihonium events were not capped at 1024: " .. tostring(events))
+    assert(count_type(ids.nihonium) >= total - 1024,
+        "event-budget exhaustion did not defer remaining nihonium decays")
+    assert(count_type(ids.photon) <= 1024,
+        "bounded nihonium decays emitted too many photons")
+    return events
+end
+
 local function test()
     run_property_differences()
     run_alkali_water_series()
     run_alkali_acid_oxygen_and_phase()
     run_alkaline_earth_water_series()
     run_alkaline_earth_oxygen_and_phase()
+    run_boron_group_reactions()
     run_helium_cryogenics()
     run_xenon_discharge()
     run_radioactive_decays()
     local noble_budget = run_decay_budget()
     local francium_budget = run_francium_budget()
     local radium_budget = run_radium_budget()
-    return math.max(noble_budget, francium_budget, radium_budget)
+    local nihonium_budget = run_nihonium_budget()
+    return math.max(noble_budget, francium_budget, radium_budget, nihonium_budget)
 end
 
 local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_PERIODIC_STATUS=PASS\n")
-    report:write("OMNI_PERIODIC_NEW_ELEMENTS=16\n")
-    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=42\n")
+    report:write("OMNI_PERIODIC_NEW_ELEMENTS=21\n")
+    report:write("OMNI_PERIODIC_IMPLEMENTED_MAPPINGS=47\n")
     report:write("OMNI_PERIODIC_ALKALI_FAMILY=6\n")
     report:write("OMNI_PERIODIC_ALKALINE_EARTH_FAMILY=6\n")
+    report:write("OMNI_PERIODIC_BORON_GROUP=6\n")
     report:write("OMNI_PERIODIC_BUDGET_EVENTS=" .. tostring(data) .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")

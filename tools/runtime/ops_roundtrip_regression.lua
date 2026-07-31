@@ -103,6 +103,11 @@ local definitions = {
     strontium = { "OMNI_PT_SR", "SR", 391 },
     barium = { "OMNI_PT_BA", "BA", 407 },
     radium = { "OMNI_PT_RA", "RA", 433 },
+    boron = { "OMNI_PT_B", "B", 372 },
+    gallium = { "OMNI_PT_GA", "GA", 385 },
+    indium = { "OMNI_PT_IN", "IN", 401 },
+    thallium = { "OMNI_PT_TL", "TL", 428 },
+    nihonium = { "OMNI_PT_NH", "NH", 456 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -128,6 +133,7 @@ local module_keys = {
         "he", "ne", "ar", "sodium", "potassium", "kr", "xe",
         "caesium", "rn", "francium", "og", "beryllium", "calcium",
         "strontium", "barium", "radium",
+        "boron", "gallium", "indium", "thallium", "nihonium",
     },
 }
 
@@ -267,11 +273,11 @@ local carrier_targets = {
         virs_tmp2 = "rshd",
     },
     periodic = {
-        lava = "radium",
-        spark = "beryllium",
-        conv_ctype = "calcium",
-        conv_tmp = "og",
-        virs_tmp2 = "barium",
+        lava = "nihonium",
+        spark = "boron",
+        conv_ctype = "gallium",
+        conv_tmp = "indium",
+        virs_tmp2 = "thallium",
     },
     mixed = {
         lava = "alum",

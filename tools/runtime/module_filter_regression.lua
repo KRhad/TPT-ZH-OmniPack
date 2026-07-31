@@ -13,6 +13,11 @@ assert(calcium == 381, "periodic calcium stable ID changed: " .. tostring(calciu
 ui.activeTool(0, "OMNI_PT_CA")
 assert(ui.activeTool(0) == "OMNI_PT_CA",
     "always-available alkaline-earth content was blocked by a module gate")
+local boron = assert(elements.OMNI_PT_B)
+assert(boron == 372, "periodic boron stable ID changed: " .. tostring(boron))
+ui.activeTool(0, "OMNI_PT_B")
+assert(ui.activeTool(0) == "OMNI_PT_B",
+    "always-available boron-group content was blocked by a module gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -32,4 +37,5 @@ report:write("OMNI_LUA_ACTIVE=" .. active .. "\n")
 report:write("OMNI_PERIODIC_ACTIVE=OMNI_PT_HE\n")
 report:write("OMNI_PERIODIC_ALKALI_ACTIVE=OMNI_PT_NA\n")
 report:write("OMNI_PERIODIC_ALKALINE_EARTH_ACTIVE=OMNI_PT_CA\n")
+report:write("OMNI_PERIODIC_BORON_GROUP_ACTIVE=OMNI_PT_B\n")
 report:close()

@@ -66,7 +66,8 @@ try {
             $resultText -match "(?m)^OMNI_LUA_ALLOC_ID=255\r?$" -and
             $resultText -match "(?m)^OMNI_LUA_ACTIVE=OMNITEST_PT_LUA1\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_ALKALI_ACTIVE=OMNI_PT_NA\r?$" -and
-            $resultText -match "(?m)^OMNI_PERIODIC_ALKALINE_EARTH_ACTIVE=OMNI_PT_CA\r?$"
+            $resultText -match "(?m)^OMNI_PERIODIC_ALKALINE_EARTH_ACTIVE=OMNI_PT_CA\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_BORON_GROUP_ACTIVE=OMNI_PT_B\r?$"
         ) {
             $passed = $true
             break

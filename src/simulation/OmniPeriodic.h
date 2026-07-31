@@ -14,3 +14,6 @@ void OmniAlkaliMetalCreate(ELEMENT_CREATE_FUNC_ARGS);
 int OmniAlkalineEarthMetalUpdate(UPDATE_FUNC_ARGS);
 int OmniMoltenAlkalineEarthUpdate(UPDATE_FUNC_ARGS);
 void OmniAlkalineEarthMetalCreate(ELEMENT_CREATE_FUNC_ARGS);
+int OmniBoronGroupUpdate(UPDATE_FUNC_ARGS);
+int OmniMoltenBoronGroupUpdate(UPDATE_FUNC_ARGS);
+void OmniBoronGroupCreate(ELEMENT_CREATE_FUNC_ARGS);

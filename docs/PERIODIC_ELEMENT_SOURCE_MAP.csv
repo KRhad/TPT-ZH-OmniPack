@@ -3,7 +3,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 2,He,氦,Helium,,OMNI_PT_HE,tpt_remade,TPT-ZH-OmniPack/original,21b160a5bd25df266c6f82528eb12f3103b39b03,family_generated,370,implemented,runtime-tested
 3,Li,锂,Lithium,DEFAULT_PT_LITH,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,191,implemented,source-verified
 4,Be,铍,Beryllium,,OMNI_PT_BE,,TPT-ZH-OmniPack/original,546b8791ca6b94ddd4791f42ededd5684168c59a,family_generated,371,implemented,runtime-tested
-5,B,硼,Boron,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,372,planned,not_tested
+5,B,硼,Boron,,OMNI_PT_B,,TPT-ZH-OmniPack/original,5d9b99471590428e6430e9070c25a0907710c222,family_generated,372,implemented,runtime-tested
 6,C,碳,Carbon,DEFAULT_PT_DMND,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,28,implemented,source-verified
 7,N,氮,Nitrogen,,,biological_mod,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,373,planned,not_tested
 8,O,氧,Oxygen,DEFAULT_PT_O2,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,61,implemented,source-verified
@@ -29,7 +29,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 28,Ni,镍,Nickel,,OMNI_PT_NICL,,SeppoTPT/Seppo-s-Metallurgy-Mod-SRC,c3a8dd171a1c0fefc9a386e7e069f81d91f1514f,reuse_omnipack,260,implemented,runtime-tested
 29,Cu,铜,Copper,,OMNI_PT_COPR,,cracker1000/The-Powder-Toy,eb474d385ffb5ebd545cf9f5f3cf513ffba9fe35,reuse_omnipack,257,implemented,runtime-tested
 30,Zn,锌,Zinc,,OMNI_PT_ZINC,ultimata,TPT-ZH-OmniPack/original,aeba92d553932a4c3f214457b4f6fe38ea039add,reuse_omnipack,265,implemented,runtime-tested
-31,Ga,镓,Gallium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,385,planned,not_tested
+31,Ga,镓,Gallium,,OMNI_PT_GA,,TPT-ZH-OmniPack/original,5d9b99471590428e6430e9070c25a0907710c222,family_generated,385,implemented,runtime-tested
 32,Ge,锗,Germanium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,386,planned,not_tested
 33,As,砷,Arsenic,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,387,planned,not_tested
 34,Se,硒,Selenium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,388,planned,not_tested
@@ -47,7 +47,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 46,Pd,钯,Palladium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,398,planned,not_tested
 47,Ag,银,Silver,,,chem_mod_lua,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,399,planned,not_tested
 48,Cd,镉,Cadmium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,400,planned,not_tested
-49,In,铟,Indium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,401,planned,not_tested
+49,In,铟,Indium,,OMNI_PT_IN,,TPT-ZH-OmniPack/original,5d9b99471590428e6430e9070c25a0907710c222,family_generated,401,implemented,runtime-tested
 50,Sn,锡,Tin,,OMNI_PT_TIN,ultimata,SeppoTPT/Seppo-s-Metallurgy-Mod-SRC,c3a8dd171a1c0fefc9a386e7e069f81d91f1514f,reuse_omnipack,259,implemented,runtime-tested
 51,Sb,锑,Antimony,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,402,planned,not_tested
 52,Te,碲,Tellurium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,403,planned,not_tested
@@ -79,7 +79,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 78,Pt,铂,Platinum,DEFAULT_PT_PTNM,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,188,implemented,source-verified
 79,Au,金,Gold,DEFAULT_PT_GOLD,,alchemy;biological_mod;bmn_mod;chemistry_mod;cracker1000;cyens;cyens_src;dtttpt;jacob1;magnet_toy;metacircuits;norbs_mod;nucular_mod;powder_better;record_mod;science_toy;seppo;spikeviper;ultimata,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,170,implemented,source-verified
 80,Hg,汞,Mercury,DEFAULT_PT_MERC,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,152,implemented,source-verified
-81,Tl,铊,Thallium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,428,planned,not_tested
+81,Tl,铊,Thallium,,OMNI_PT_TL,,TPT-ZH-OmniPack/original,5d9b99471590428e6430e9070c25a0907710c222,family_generated,428,implemented,runtime-tested
 82,Pb,铅,Lead,,OMNI_PT_LEAD,ultimata,SeppoTPT/Seppo-s-Metallurgy-Mod-SRC,c3a8dd171a1c0fefc9a386e7e069f81d91f1514f,reuse_omnipack,258,implemented,runtime-tested
 83,Bi,铋,Bismuth,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,429,planned,not_tested
 84,Po,钋,Polonium,DEFAULT_PT_POLO,,,The-Powder-Toy/The-Powder-Toy,bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd,reuse_official,182,implemented,source-verified
@@ -111,7 +111,7 @@ atomic_number,symbol,zh_name,en_name,official_mapping,omnipack_mapping,candidate
 110,Ds,𫟼,Darmstadtium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,453,planned,not_tested
 111,Rg,𬬭,Roentgenium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,454,planned,not_tested
 112,Cn,鿔,Copernicium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,455,planned,not_tested
-113,Nh,鿭,Nihonium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,456,planned,not_tested
+113,Nh,鿭,Nihonium,,OMNI_PT_NH,,TPT-ZH-OmniPack/original,5d9b99471590428e6430e9070c25a0907710c222,family_generated,456,implemented,runtime-tested
 114,Fl,𫓧,Flerovium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,457,planned,not_tested
 115,Mc,镆,Moscovium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,458,planned,not_tested
 116,Lv,𫟷,Livermorium,,,,TPT-ZH-OmniPack/family-generated,not_implemented,family_generated,459,planned,not_tested

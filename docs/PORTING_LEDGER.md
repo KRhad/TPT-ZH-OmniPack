@@ -13,7 +13,7 @@
 | Phase 3 工业冶金首批 | Seppo `c3a8dd17...`；Cracker COPR `eb474d38...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、OmniPack contributors | 概念筛选、参数/行为适配、独立更新实现 | 稳定 ID 256–278 + 集中反应引擎 | TESTING | 23 元素、7 配方、5 材料行为；静态门禁与 Lua 运行回归 PASS |
 | Phase 3 基础化学首批 | Seppo `c3a8dd17...`；Cracker `ebbb9aab...`；Cyens `f01d992c...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、cbeimers113、OmniPack contributors | token/玩法需求参考，集中算法独立实现 | 稳定 ID 360–369 + 中央有界反应引擎 | TESTING | 10 元素、11 条反应路径、化学静态门禁与 Lua 真实运行回归 PASS |
 | Phase 5 受控核工业首批 | OmniPack 当前实现；Spike/Ultimata/Cracker 固定快照仅作范围参考 | OmniPack contributors；对应来源作者 | 玩法和风险边界参考，集中算法独立实现 | 稳定 ID 328–334 + 中央有界反应器引擎 | TESTING | 7 元素、4 类受控路径；静态门禁与 Lua 真实运行回归 PASS |
-| Phase 3 周期表前三批 | OmniPack `21b160a5...`、`bcf5accf...`、`546b8791...` 基线；候选目录只核对搜索覆盖 | OmniPack contributors | 原创族逻辑；未复制外部候选实现 | 稀有气体、碱金属及碱土金属 16 个新固定 ID + 共享周期引擎 | TESTING | 16 新元素、42/118 映射；行为、预算、OPS 与直接选择回归 PASS |
+| Phase 3 周期表前四批 | OmniPack `21b160a5...`、`bcf5accf...`、`546b8791...`、`5d9b9947...` 基线；候选目录只核对搜索覆盖 | OmniPack contributors | 原创族逻辑；未复制外部候选实现 | 稀有气体、碱金属、碱土金属及硼族 21 个新固定 ID + 共享周期引擎 | TESTING | 21 新元素、47/118 映射；行为、预算、OPS 与直接选择回归 PASS |
 | 汉化字体 | Dragonrster `445fab51...` | 未知 | 禁止发布 | 替换为可追溯字体 | BLOCKED | 名称、来源、许可证缺失 |
 | Cracker 工业化学 | Cracker `ebbb9aab...` | Cracker1000 等 | token/玩法需求参考 | 中央反应表 | TESTING | `CHLR/ACTY` 以新稳定 ID 独立实现；不复制 5×5 更新，不复用旧 ID |
 | 动力门户 PPTI/PPTO | Cracker `ebbb9aab...`; Jacob `b4926161...` | 各来源作者 | 合并重写 | 单一稳定实现 | DESIGN | 多来源重复、旧 API |
@@ -38,6 +38,8 @@
 周期表碱金属批次复用官方 `LITH=191` 与 `RBDM=41`，没有复制或覆盖其更新函数；`NA=376`、`K=380`、`CS=406`、`FR=432` 的构造器和 `OmniPeriodic.cpp` 共享逻辑均为本项目原创实现。外部 `fun_chemicals` 只作为候选搜索命中保留在来源映射中，不是代码或常量来源，因此第三方 `elements_ported` 和 `elements_rewritten` 仍为 0。
 
 周期表碱土金属批次复用既有 `MAGN=261`，在保留其冶金、合金、碎料与旧 ID 行为的同时增加共享水/酸入口及白色焰色；`BE=371`、`CA=381`、`SR=391`、`BA=407`、`RA=433` 均为本项目原创族实现，没有复制候选模组构造器或更新函数。
+
+周期表硼族批次复用既有 `ALUM=256` 并保留其冶金、合金、碎料与旧 ID 行为；`B=372`、`GA=385`、`IN=401`、`TL=428`、`NH=456` 的构造器和共享逻辑均为本项目原创实现。硼中子俘获、镓脆铝、两性反应代理和鿭压缩衰变没有复制候选模组代码或常量表。
 
 ## Phase 3 冶金来源与实现复核
 

@@ -38,7 +38,7 @@ periodic_family_tests_pass=true
 当前开发树真实状态：
 
 ```text
-periodic_table_elements=42
+periodic_table_elements=47
 periodic_table_ui=true
 all_periodic_elements_placeable=false
 periodic_source_map_complete=true

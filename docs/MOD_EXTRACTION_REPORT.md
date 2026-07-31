@@ -25,13 +25,14 @@ elements_ported=0
 elements_rewritten=0
 elements_rejected=0
 periodic_source_map_complete=true
-periodic_elements_sourced=42
-periodic_elements_remaining=76
+periodic_elements_sourced=47
+periodic_elements_remaining=71
 periodic_noble_gas_batch_complete=true
 periodic_alkali_batch_complete=true
 periodic_alkaline_earth_batch_complete=true
+periodic_boron_group_batch_complete=true
 periodic_table_ui=true
-total_omnipack_elements=64
+total_omnipack_elements=69
 clean_build_pass=true
 element_registry_pass=true
 reaction_registry_pass=true
@@ -44,4 +45,4 @@ first_port_batch_tests_pass=not_tested
 数值只代表当前克隆集和自动扫描。候选数按标准化名称与代号折叠重复分叉；行为差异仍保留在去重报告中。
 `duplicate_definition_records` 是自动拒绝的重复源码定义数，不等于已经人工拒绝的独立材料。
 `license_audit_pass=true` 只能由完成逐文件、README、子模块和资源复核后的显式参数写入。
-当前新增 16 个周期元素是 OmniPack 原创族逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`；外部候选只用于确认搜索覆盖，没有复制其实现。
+当前新增 21 个周期元素是 OmniPack 原创族逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`；外部候选只用于确认搜索覆盖，没有复制其实现。

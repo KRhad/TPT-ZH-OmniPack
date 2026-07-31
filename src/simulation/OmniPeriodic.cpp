@@ -46,6 +46,16 @@ struct AlkalineEarthProperties
 	unsigned int flameColour;
 };
 
+struct BoronGroupProperties
+{
+	float acidThreshold;
+	float oxygenThreshold;
+	float boilingPoint;
+	int reactionHeat;
+	float pressure;
+	unsigned int flameColour;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -122,6 +132,27 @@ AlkalineEarthProperties AlkalineEarthPropertiesFor(int type)
 	}
 }
 
+BoronGroupProperties BoronGroupPropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_B:
+		return { MAX_TEMP, 1000.0f, 4200.0f, 160, 0.3f, 0xFFFFC080 };
+	case PT_ALUM:
+		return { 360.0f, 1100.0f, 2743.0f, 220, 0.7f, 0xFFFFFFFF };
+	case PT_GA:
+		return { 320.0f, 700.0f, 2673.0f, 120, 0.4f, 0xFFA0C0FF };
+	case PT_IN:
+		return { 330.0f, 650.0f, 2345.0f, 130, 0.5f, 0xFF89A8FF };
+	case PT_TL:
+		return { 293.0f, 520.0f, 1746.0f, 180, 0.8f, 0xFF66CC66 };
+	case PT_NH:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 500, 1.0f, 0xFFFF80C0 };
+	default:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 0, 0.0f, 0 };
+	}
+}
+
 bool IsAlkaliMetal(int type)
 {
 	return type == PT_NA || type == PT_K || type == PT_CS || type == PT_FR;
@@ -131,6 +162,12 @@ bool IsAlkalineEarthMetal(int type)
 {
 	return type == PT_BE || type == PT_MAGN || type == PT_CA ||
 		type == PT_SR || type == PT_BA || type == PT_RA;
+}
+
+bool IsBoronGroupElement(int type)
+{
+	return type == PT_B || type == PT_ALUM || type == PT_GA ||
+		type == PT_IN || type == PT_TL || type == PT_NH;
 }
 
 bool IsWaterLike(int type)
@@ -660,6 +697,284 @@ bool UpdateAlkalineEarth(UPDATE_FUNC_ARGS, int sourceType)
 	}
 	return OxidiseHotAlkalineEarth(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
+
+bool DecayNihonium(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_NH || parts[i].type != PT_NH)
+	{
+		return false;
+	}
+	if (parts[i].tmp <= 0)
+	{
+		parts[i].tmp = sim->rng.between(90, 180);
+		return false;
+	}
+	--parts[i].tmp;
+	if (parts[i].tmp > 0)
+	{
+		return false;
+	}
+	if (!ConsumeEvent(sim))
+	{
+		parts[i].tmp = 1;
+		return false;
+	}
+
+	auto temperature = std::min(parts[i].temp + 500.0f, MAX_TEMP);
+	sim->part_change_type(i, x, y, PT_POLO);
+	ResetReactionProduct(parts[i], PT_POLO);
+	parts[i].temp = temperature;
+	int photon = sim->create_part(-3, x, y, PT_PHOT);
+	if (photon >= 0)
+	{
+		parts[photon].ctype = 0x03F03F00;
+		parts[photon].temp = temperature;
+		parts[photon].life = 18;
+	}
+	return true;
+}
+
+bool CaptureBoronNeutron(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_B)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			for (auto packed : { pmap[y + ry][x + rx], sim->photons[y + ry][x + rx] })
+			{
+				if (!packed || TYP(packed) != PT_NEUT)
+				{
+					continue;
+				}
+				if (!ConsumeEvent(sim))
+				{
+					return false;
+				}
+
+				auto neutron = ID(packed);
+				auto temperature = std::min(
+					std::max(parts[i].temp, parts[neutron].temp) + 180.0f,
+					MAX_TEMP);
+				sim->part_change_type(i, x, y, PT_LITH);
+				sim->part_change_type(neutron, x + rx, y + ry, PT_HE);
+				ResetReactionProduct(parts[i], PT_LITH);
+				ResetReactionProduct(parts[neutron], PT_HE);
+				parts[i].temp = temperature;
+				parts[neutron].temp = temperature;
+				AddBoundedPressure(sim, x, y, 0.35f);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool EmbrittleAluminiumWithGallium(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType != PT_GA || parts[i].temp < 302.91f)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed)
+			{
+				continue;
+			}
+			auto neighbour = ID(packed);
+			auto neighbourType = TYP(packed);
+			if (neighbourType != PT_ALUM &&
+				(neighbourType != PT_LAVA || parts[neighbour].ctype != PT_ALUM))
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+
+			auto temperature = parts[neighbour].temp;
+			sim->part_change_type(neighbour, x + rx, y + ry, PT_MSCR);
+			ResetReactionProduct(parts[neighbour], PT_MSCR);
+			parts[neighbour].ctype = PT_ALUM;
+			parts[neighbour].temp = temperature;
+			parts[neighbour].tmp3 = 0;
+			parts[neighbour].tmp4 = 0;
+			parts[i].temp = std::min(parts[i].temp + 12.0f, MAX_TEMP);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool ReactBoronGroupWithAcidOrCaustic(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_B || sourceType == PT_NH)
+	{
+		return false;
+	}
+	auto properties = BoronGroupPropertiesFor(sourceType);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed)
+			{
+				continue;
+			}
+			auto neighbourType = TYP(packed);
+			bool acid = neighbourType == PT_ACID;
+			bool caustic = neighbourType == PT_CAUS &&
+				(sourceType == PT_ALUM || sourceType == PT_GA);
+			if (!acid && !caustic)
+			{
+				continue;
+			}
+			auto neighbour = ID(packed);
+			if (std::max(parts[i].temp, parts[neighbour].temp) < properties.acidThreshold)
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[neighbour].temp) +
+					float(properties.reactionHeat),
+				MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_SALT);
+			sim->part_change_type(neighbour, x + rx, y + ry, PT_H2);
+			ResetReactionProduct(parts[i], PT_SALT);
+			ResetReactionProduct(parts[neighbour], PT_H2);
+			parts[i].temp = temperature;
+			parts[neighbour].temp = temperature;
+			AddBoundedPressure(sim, x, y, properties.pressure);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool OxidiseHotBoronGroup(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_NH)
+	{
+		return false;
+	}
+	auto properties = BoronGroupPropertiesFor(sourceType);
+	if (parts[i].temp < properties.oxygenThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2)
+			{
+				continue;
+			}
+			if (!ConsumeEvent(sim))
+			{
+				return false;
+			}
+
+			auto oxygen = ID(packed);
+			auto oxide = sourceType == PT_B ? PT_GLAS : PT_SALT;
+			auto temperature = std::min(
+				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, oxide);
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
+			ResetReactionProduct(parts[i], oxide);
+			ResetReactionProduct(parts[oxygen], PT_FIRE);
+			parts[i].temp = temperature;
+			parts[oxygen].temp = temperature;
+			parts[oxygen].life = 20;
+			parts[oxygen].dcolour = properties.flameColour;
+			AddBoundedPressure(sim, x, y, properties.pressure * 0.4f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseHotBoronGroup(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (sourceType == PT_NH)
+	{
+		return false;
+	}
+	auto properties = BoronGroupPropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_FIRE);
+	ResetReactionProduct(parts[i], PT_FIRE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 60;
+	parts[i].dcolour = properties.flameColour;
+	AddBoundedPressure(sim, x, y, properties.pressure * 0.25f);
+	return true;
+}
+
+bool UpdateBoronGroup(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsBoronGroupElement(sourceType))
+	{
+		return false;
+	}
+	if (DecayNihonium(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (CaptureBoronNeutron(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (EmbrittleAluminiumWithGallium(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (VaporiseHotBoronGroup(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	if (ReactBoronGroupWithAcidOrCaustic(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return OxidiseHotBoronGroup(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
 }
 
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
@@ -747,5 +1062,27 @@ void OmniAlkalineEarthMetalCreate(ELEMENT_CREATE_FUNC_ARGS)
 	if (t == PT_RA)
 	{
 		sim->parts[i].tmp = sim->rng.between(900, 1800);
+	}
+}
+
+int OmniBoronGroupUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateBoronGroup(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenBoronGroupUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateBoronGroup(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+void OmniBoronGroupCreate(ELEMENT_CREATE_FUNC_ARGS)
+{
+	if (t == PT_NH)
+	{
+		sim->parts[i].tmp = sim->rng.between(90, 180);
 	}
 }

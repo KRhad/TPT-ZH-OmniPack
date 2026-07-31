@@ -110,6 +110,13 @@ REQUIRED_REACTIONS = {
     "periodic.alkaline_earth_oxidation",
     "periodic.alkaline_earth_vaporisation",
     "periodic.radium_decay",
+    "periodic.boron_neutron_capture",
+    "periodic.boron_group_acid",
+    "periodic.boron_group_caustic",
+    "periodic.boron_group_oxidation",
+    "periodic.gallium_embrittlement",
+    "periodic.boron_group_vaporisation",
+    "periodic.nihonium_decay",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

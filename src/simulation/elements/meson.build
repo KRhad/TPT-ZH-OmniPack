@@ -371,7 +371,7 @@ simulation_elem_names = [
 	'FERT', # 369
 	'HE',   # 370: periodic He
 	'BE',   # 371: periodic Be
-	disabler(), # 372: periodic B reserved
+	'B',    # 372: periodic B
 	disabler(), # 373: periodic N reserved
 	disabler(), # 374: periodic F reserved
 	'NE',   # 375: periodic Ne
@@ -384,7 +384,7 @@ simulation_elem_names = [
 	disabler(), # 382: periodic Sc reserved
 	disabler(), # 383: periodic V reserved
 	disabler(), # 384: periodic Mn reserved
-	disabler(), # 385: periodic Ga reserved
+	'GA',   # 385: periodic Ga
 	disabler(), # 386: periodic Ge reserved
 	disabler(), # 387: periodic As reserved
 	disabler(), # 388: periodic Se reserved
@@ -400,7 +400,7 @@ simulation_elem_names = [
 	disabler(), # 398: periodic Pd reserved
 	disabler(), # 399: periodic Ag reserved
 	disabler(), # 400: periodic Cd reserved
-	disabler(), # 401: periodic In reserved
+	'IN',   # 401: periodic In
 	disabler(), # 402: periodic Sb reserved
 	disabler(), # 403: periodic Te reserved
 	disabler(), # 404: periodic I reserved
@@ -427,7 +427,7 @@ simulation_elem_names = [
 	disabler(), # 425: periodic Re reserved
 	disabler(), # 426: periodic Os reserved
 	disabler(), # 427: periodic Ir reserved
-	disabler(), # 428: periodic Tl reserved
+	'TL',   # 428: periodic Tl
 	disabler(), # 429: periodic Bi reserved
 	disabler(), # 430: periodic At reserved
 	'RN',   # 431: periodic Rn
@@ -455,7 +455,7 @@ simulation_elem_names = [
 	disabler(), # 453: periodic Ds reserved
 	disabler(), # 454: periodic Rg reserved
 	disabler(), # 455: periodic Cn reserved
-	disabler(), # 456: periodic Nh reserved
+	'NH',   # 456: periodic Nh
 	disabler(), # 457: periodic Fl reserved
 	disabler(), # 458: periodic Mc reserved
 	disabler(), # 459: periodic Lv reserved
