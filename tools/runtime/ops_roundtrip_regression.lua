@@ -128,6 +128,15 @@ local definitions = {
     scandium = { "OMNI_PT_SC", "SC", 382 },
     vanadium = { "OMNI_PT_V", "V", 383 },
     manganese = { "OMNI_PT_MN", "MN", 384 },
+    yttrium = { "OMNI_PT_Y", "Y", 392 },
+    zirconium = { "OMNI_PT_ZR", "ZR", 393 },
+    niobium = { "OMNI_PT_NB", "NB", 394 },
+    technetium = { "OMNI_PT_TC", "TC", 395 },
+    ruthenium = { "OMNI_PT_RU", "RU", 396 },
+    rhodium = { "OMNI_PT_RH", "RH", 397 },
+    palladium = { "OMNI_PT_PD", "PD", 398 },
+    silver = { "OMNI_PT_AG", "AG", 399 },
+    cadmium = { "OMNI_PT_CD", "CD", 400 },
     og = { "OMNI_PT_OG", "OG", 461 },
 }
 
@@ -159,6 +168,8 @@ local module_keys = {
         "moscovium", "sulfur", "selenium", "tellurium", "livermorium",
         "fluorine", "bromine", "iodine", "astatine", "tennessine",
         "scandium", "vanadium", "manganese",
+        "yttrium", "zirconium", "niobium", "technetium",
+        "ruthenium", "rhodium", "palladium", "silver", "cadmium",
     },
 }
 

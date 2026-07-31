@@ -79,6 +79,18 @@ EXPECTED_FIRST_TRANSITION_ELEMENTS = {
     384: "MN",
 }
 
+EXPECTED_SECOND_TRANSITION_ELEMENTS = {
+    392: "Y",
+    393: "ZR",
+    394: "NB",
+    395: "TC",
+    396: "RU",
+    397: "RH",
+    398: "PD",
+    399: "AG",
+    400: "CD",
+}
+
 EXPECTED_NEW_ELEMENTS = (
     EXPECTED_NOBLE_ELEMENTS
     | EXPECTED_ALKALI_ELEMENTS
@@ -89,6 +101,7 @@ EXPECTED_NEW_ELEMENTS = (
     | EXPECTED_OXYGEN_GROUP_ELEMENTS
     | EXPECTED_HALOGEN_ELEMENTS
     | EXPECTED_FIRST_TRANSITION_ELEMENTS
+    | EXPECTED_SECOND_TRANSITION_ELEMENTS
 )
 
 
@@ -151,9 +164,9 @@ def check_source_map(root: Path, errors: list[str]) -> None:
     if [int(row["atomic_number"]) for row in rows] != list(range(1, 119)):
         errors.append(f"{path}: atomic numbers are not the complete ordered range 1..118")
     implemented = [row for row in rows if row.get("status") == "implemented"]
-    if len(implemented) != 67:
+    if len(implemented) != 76:
         errors.append(
-            f"{path}: expected 67 implemented mappings after the first transition batch "
+            f"{path}: expected 76 implemented mappings after the second transition batch "
             f"and found {len(implemented)}"
         )
     by_number = {int(row["atomic_number"]): row for row in rows}
@@ -171,6 +184,8 @@ def check_source_map(root: Path, errors: list[str]) -> None:
         9: 374, 17: 360, 35: 389, 53: 404, 85: 430, 117: 460,
         21: 382, 22: 144, 23: 383, 24: 262, 25: 384,
         26: 76, 27: 263, 28: 260, 29: 257, 30: 265,
+        39: 392, 40: 393, 41: 394, 42: 264, 43: 395,
+        44: 396, 45: 397, 46: 398, 47: 399, 48: 400,
     }
     for atomic_number, stable_id in expected_atomic.items():
         row = by_number.get(atomic_number, {})
@@ -237,6 +252,16 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "scandium discharge": "ExciteScandium",
         "vanadium tool-steel alloy": "AlloyVanadiumToolSteel",
         "manganese steel deoxidation": "DeoxidiseSteelWithManganese",
+        "second-transition acid chemistry": "ReactSecondTransitionWithAcid",
+        "second-transition oxidation": "OxidiseHotSecondTransition",
+        "second-transition vaporisation": "VaporiseSecondTransition",
+        "yttrium discharge": "ExciteYttrium",
+        "zirconium steam oxidation": "ReactZirconiumWithSteam",
+        "technetium decay": "DecayTechnetium",
+        "platinum-group catalysis": "CatalyseHydrogenWithPlatinumGroup",
+        "palladium hydrogen absorption": "AbsorbPalladiumHydrogen",
+        "palladium hydrogen release": "ReleasePalladiumHydrogen",
+        "silver tarnish": "TarnishSilverWithSulfur",
     }
     for label, marker in required.items():
         if marker not in engine:
@@ -347,6 +372,18 @@ def check_engine(root: Path, errors: list[str]) -> None:
         ):
             if marker not in text:
                 errors.append(f"{path}: missing periodic element marker {marker!r}")
+    for stable_id, name in EXPECTED_SECOND_TRANSITION_ELEMENTS.items():
+        path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
+        text = read_text(path, errors)
+        for marker in (
+            f'Identifier = "OMNI_PT_{name}"',
+            "HeatCapacity =",
+            "Update = &OmniSecondTransitionUpdate",
+            "Graphics = &OmniSecondTransitionGraphics",
+            "Create = &OmniSecondTransitionCreate",
+        ):
+            if marker not in text:
+                errors.append(f"{path}: missing periodic element marker {marker!r}")
     magnesium = read_text(
         root / "src" / "simulation" / "elements" / "MAGN.cpp", errors
     )
@@ -399,6 +436,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         errors.append("LAVA.cpp: molten halogen ctype update hook is missing")
     if "OmniMoltenFirstTransitionUpdate" not in lava:
         errors.append("LAVA.cpp: molten first-transition ctype update hook is missing")
+    if "OmniMoltenSecondTransitionUpdate" not in lava:
+        errors.append("LAVA.cpp: molten second-transition ctype update hook is missing")
     liquid_nitrogen = read_text(
         root / "src" / "simulation" / "elements" / "LNTG.cpp", errors
     )
@@ -509,7 +548,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"periodic-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("periodic-audit: PASS (118 mapped, 67 implemented, 41 new periodic elements, 1024/frame)")
+        print("periodic-audit: PASS (118 mapped, 76 implemented, 50 new periodic elements, 1024/frame)")
     return 0
 
 

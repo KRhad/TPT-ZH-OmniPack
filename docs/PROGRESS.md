@@ -14,17 +14,18 @@ periodic_nitrogen_group_base_commit=2eeab9f39b503e580b259ac6897dc9e177e5244c
 periodic_oxygen_group_base_commit=3c3c623a12c2f17374db26c067d454787ecbd7ae
 periodic_halogen_group_base_commit=8066533aea4bc4a5d6ae73c5d776d56fabf84eb6
 periodic_first_transition_base_commit=6c64c0a0b39ed3e9830f1077b04779b21943c380
+periodic_second_transition_base_commit=b26112f95c08d9daa252e54f65c6e26a05cd17e9
 pt_num=512
 pmapbits=9
 official_active_elements=195
-omnipack_active_elements=89
-total_active_elements=284
+omnipack_active_elements=98
+total_active_elements=293
 registered_slots=462
-reserved_slots=178
+reserved_slots=169
 enabled_content_modules=4
-periodic_elements_placeable=67
-periodic_elements_remaining=51
-reaction_registry_entries=92
+periodic_elements_placeable=76
+periodic_elements_remaining=42
+reaction_registry_entries=102
 periodic_table_ui=true
 save_format=OPS1/BZip2
 release_ready=false
@@ -39,10 +40,10 @@ release_ready=false
 - 周期表 ID/字体基础设施 clean build `509/509`、Meson static `20/20`、Python `136/136`（0 skip）通过；
 - 周期表中文名称的 118 个字符已全部加入确定性字体，新增稀有字形仍待人工桌面可读性检查。
 
-## Phase 2/3：周期表 UI、前八个主族批次与第一过渡系
+## Phase 2/3：周期表 UI、前八个主族批次与前两条过渡系
 
 - 118 行来源映射生成编译时周期表模型；标准长式面板支持中英文名、符号、原子序数、identifier、状态、放射性和金属类别筛选，f 区可展开；
-- 周期表只是直接选择入口，不读取存档进度，不增加解锁或任务状态；未实现的 51 格保留正确位置并明确显示待实现；
+- 周期表只是直接选择入口，不读取存档进度，不增加解锁或任务状态；未实现的 42 格保留正确位置并明确显示待实现；
 - 复用官方氢 `148`；新增 `HE=370`、`NE=375`、`AR=379`、`KR=390`、`XE=405`、`RN=431`、`OG=461`；
 - 复用官方锂 `191` 和铷 `41`；新增 `NA=376`、`K=380`、`CS=406`、`FR=432`，水反应强度依族序增加，熔融态保留反应，钫以 `180..360` 游戏刻压缩衰变为钋和一个有限寿命光子；
 - 复用并增强既有镁 `261`；新增 `BE=371`、`CA=381`、`SR=391`、`BA=407`、`RA=433`，区分铍钝化/毒性、镁白光燃烧、钙锶钡焰色和镭到氡衰变；
@@ -52,12 +53,13 @@ release_ready=false
 - 复用官方 `O2=61`、`LO2=60` 与 `POLO=182`；新增 `S=378`、`SE=388`、`TE=403`、`LV=459`，实现氧液相往返、硫有限烟雾燃烧、硒光敏辉光、硒/碲差异化氧化与汽化、钋质子计数转钚及 `LV → FL → POLO` 两段衰变；
 - 复用既有 `CHLR=360` 并保留其 11 条高级化学路径；新增 `F=374`、`BR=389`、`I=404`、`AT=430`、`TS=460`，实现氟遇水/氢成酸、分级卤化/消毒、溴/碘有限蒸气、碘熔融，以及 `AT → POLO` 与 `TS → MC → NH → POLO` 有界衰变；
 - 第一过渡系复用 `TTAN=144`、`CHRM=262`、`IRON=76`、`COBT=263`、`NICL=260`、`COPR=257`、`ZINC=265`；新增 `SC=382`、`V=383`、`MN=384`，实现钪放电灯辉光、钒工具钢合金、锰钢液脱氧及分级酸蚀/氧化/汽化；
-- 共享 `OmniPeriodic.cpp` 只做 `3x3` 局部检查，放电、低温换热、七类主族、第一过渡系反应和衰变共享 `1024` 次/帧预算；火焰、高能光子和着色蒸气寿命有限；
-- 真实客户端 Lua 回归：`OMNI_PERIODIC_STATUS=PASS`、41 个新元素、67 个已实现周期映射、七个主族各 6 个成员及第一过渡系 10 个成员，压力帧事件恰为 1024；
-- 周期 OPS：3 进程、2 重启、2 加载、47 粒子、55 字段断言、41 个直接大于 255 的类型与携带字段通过；
-- 模块/Lua 回归确认从 `HE` 到 `SC` 的各批代表项均可直接选择且 Lua 仍优先分配 ID `255`；
-- 全新 `build-periodic-first-transition-final-clean` Windows x64 Release 构建 `554/554` 通过；最终 EXE SHA-256 `034592B42F21416D5D9DF59E78E092D7E72F12A5BE2F1E90E73C8D35030500EF`，Meson static `21/21`、Python `154/154`（0 skip）通过；
-- clean EXE 已复跑四模块、完整/简化生态、周期、模块、六类 OPS 与 mixed OPS：合计 21 个进程、14 次重启、14 次加载验证；六类为 126 粒子/175 字段断言，周期用例含 41 个大于 255 的直接类型。
+- 第二过渡系复用 `MOLY=264`；新增 `Y=392`、`ZR=393`、`NB=394`、`TC=395`、`RU=396`、`RH=397`、`PD=398`、`AG=399`、`CD=400`，实现钇放电辉光、锆蒸汽氧化、锝衰变、钌/铑催化、钯储氢、银硫化、镉中子吸收及分级酸蚀/氧化/汽化；
+- 共享 `OmniPeriodic.cpp` 只做 `3x3` 局部检查，放电、低温换热、七类主族、前两条过渡系反应和衰变共享 `1024` 次/帧预算；火焰、高能光子和着色蒸气寿命有限；
+- 真实客户端 Lua 回归：`OMNI_PERIODIC_STATUS=PASS`、50 个新元素、76 个已实现周期映射、七个主族各 6 个成员及两条过渡系各 10 个成员，压力帧事件恰为 1024；
+- 周期 OPS：3 进程、2 重启、2 加载、56 粒子、64 字段断言、50 个直接大于 255 的类型与携带字段通过；
+- 模块/Lua 回归确认从 `HE` 到 `Y` 的各批代表项均可直接选择且 Lua 仍优先分配 ID `255`；
+- 全新 `build-periodic-second-transition-final-clean` Windows x64 Release 构建 `563/563` 通过；最终 EXE SHA-256 `C3FA844BBA6F91286CB5FE7B3D1B54DFF692138BAB19F09E4C7B05107B39D68B`，Meson static `21/21`、Python `155/155`（0 skip）通过；
+- clean EXE 已复跑四模块、完整/简化生态、周期、模块、六类 OPS 与 mixed OPS：合计 21 个进程、14 次重启、14 次加载验证；六类为 135 粒子/184 字段断言，周期用例含 50 个大于 255 的直接类型。
 
 ## Phase 1：纯沙盒方向清理
 
@@ -76,8 +78,8 @@ release_ready=false
 
 ## 下一步
 
-1. 实现第二过渡系共享行为与缺失成员；
-2. 连续推进后续过渡金属、镧系和锕系元素；
+1. 实现第三过渡系共享行为与缺失成员；
+2. 连续推进镧系、锕系和超重元素；
 3. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
 4. 保持 `release_ready=false`，直到 118 元素、300+ 材料和全部 1.0.0 门禁真实完成。
 

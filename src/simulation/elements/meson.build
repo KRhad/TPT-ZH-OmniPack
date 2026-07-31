@@ -391,15 +391,15 @@ simulation_elem_names = [
 	'BR',   # 389: periodic Br
 	'KR',   # 390: periodic Kr
 	'SR',   # 391: periodic Sr
-	disabler(), # 392: periodic Y reserved
-	disabler(), # 393: periodic Zr reserved
-	disabler(), # 394: periodic Nb reserved
-	disabler(), # 395: periodic Tc reserved
-	disabler(), # 396: periodic Ru reserved
-	disabler(), # 397: periodic Rh reserved
-	disabler(), # 398: periodic Pd reserved
-	disabler(), # 399: periodic Ag reserved
-	disabler(), # 400: periodic Cd reserved
+	'Y',    # 392: periodic Y
+	'ZR',   # 393: periodic Zr
+	'NB',   # 394: periodic Nb
+	'TC',   # 395: periodic Tc
+	'RU',   # 396: periodic Ru
+	'RH',   # 397: periodic Rh
+	'PD',   # 398: periodic Pd
+	'AG',   # 399: periodic Ag
+	'CD',   # 400: periodic Cd
 	'IN',   # 401: periodic In
 	'SB',   # 402: periodic Sb
 	'TE',   # 403: periodic Te

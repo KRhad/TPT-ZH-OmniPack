@@ -37,7 +37,7 @@ class AutomationAuditTests(unittest.TestCase):
             automation_audit.check_capabilities(ROOT, errors)
         finally:
             automation_audit.read_csv = original
-        self.assertTrue(any("former automation ID 392 must belong to 'omnipack_reserved'" in error for error in errors))
+        self.assertTrue(any("former automation ID 392 must belong to 'periodic'" in error for error in errors))
 
     def test_missing_required_scenario_is_rejected(self) -> None:
         source = json.loads(

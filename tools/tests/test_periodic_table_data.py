@@ -40,7 +40,7 @@ class PeriodicTableDataTests(unittest.TestCase):
             ROOT / "docs" / "PERIODIC_ELEMENT_SOURCE_MAP.csv"
         )
         implemented = [row for row in rows if row["status"] == "implemented"]
-        self.assertEqual(len(implemented), 67)
+        self.assertEqual(len(implemented), 76)
         self.assertTrue(all(row["official_mapping"] or row["omnipack_mapping"] for row in implemented))
 
     def test_generator_refuses_to_overwrite_header(self) -> None:

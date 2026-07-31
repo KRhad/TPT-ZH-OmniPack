@@ -145,6 +145,16 @@ REQUIRED_REACTIONS = {
     "periodic.scandium_discharge",
     "periodic.vanadium_tool_steel",
     "periodic.manganese_deoxidation",
+    "periodic.second_transition_acid",
+    "periodic.second_transition_oxidation",
+    "periodic.second_transition_vaporisation",
+    "periodic.yttrium_discharge",
+    "periodic.zirconium_steam",
+    "periodic.technetium_decay",
+    "periodic.platinum_group_catalysis",
+    "periodic.palladium_hydrogen_absorption",
+    "periodic.palladium_hydrogen_release",
+    "periodic.silver_tarnish",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

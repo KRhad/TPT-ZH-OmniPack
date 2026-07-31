@@ -6,14 +6,14 @@
 
 ## 当前真实状态
 
-- 当前活动内容：官方 195 个元素，加上 OmniPack 89 个扩展元素，共 284 个活动元素。
-- 当前扩展内容：工业冶金 23、局部生态 8、受控核工业 7、高级化学 10，以及周期新增元素 41；前四个可选模块默认启用，周期元素始终直接可用。
-- 当前稳定空间：`PT_NUM=512`、`PMAPBITS=9`；周期表严格复用 26 个现有纯元素实现，其余 92 个固定为 `370..461`。已完成前八个主族批次及第一过渡系；第一过渡系复用钛、铬、铁、钴、镍、铜、锌并新增钪、钒、锰，因此当前 67/118 个周期元素映射可放置，余下 51 格明确显示“尚未实现”，不会伪装为空壳元素。
+- 当前活动内容：官方 195 个元素，加上 OmniPack 98 个扩展元素，共 293 个活动元素。
+- 当前扩展内容：工业冶金 23、局部生态 8、受控核工业 7、高级化学 10，以及周期新增元素 50；前四个可选模块默认启用，周期元素始终直接可用。
+- 当前稳定空间：`PT_NUM=512`、`PMAPBITS=9`；周期表严格复用 26 个现有纯元素实现，其余 92 个固定为 `370..461`。已完成前八个主族批次、第一过渡系和第二过渡系；第二过渡系复用钼 `264` 并新增钇、锆、铌、锝、钌、铑、钯、银、镉，因此当前 76/118 个周期元素映射可放置，余下 42 格明确显示“尚未实现”，不会伪装为空壳元素。
 - 已加入独立标准长式周期表面板，支持中文名、英文名、符号、原子序数和 identifier 搜索，支持常温状态、放射性、金属/非金属/类金属筛选、类别着色及镧锕系展开；面板只负责选择，不参与解锁。
 - 所有已启用元素均可直接选择、放置，也可由普通 Lua 创建；没有发现进度、配方进度、存档进度或任务完成条件。
 - 旧 OPS 中曾写入的 `omniAlchemy` 字段现在仅作为未知顶层字段被忽略，新存档不再写入它，旧粒子与间接元素字段保持不变。
 - 图鉴在正文前明确显示“元素说明 / Element description”，模组元素说明同时以对应中英文名称开头。
-- 当前仍是开发状态，`release_ready=false`；尚余 51 个周期元素、300+ 材料目标、正式 GUI 视觉矩阵、长跑、公开源码远端、tag 和 Release 未完成。
+- 当前仍是开发状态，`release_ready=false`；尚余 42 个周期元素、300+ 材料目标、正式 GUI 视觉矩阵、长跑、公开源码远端、tag 和 Release 未完成。
 
 ## 内容路线
 
@@ -51,8 +51,8 @@ Windows x64 使用 MSYS2 UCRT64、Meson 和 Ninja。现有构建与测试工具�
 
 ```powershell
 $env:PATH='C:\msys64\ucrt64\bin;C:\msys64\usr\bin;' + $env:PATH
-meson compile -C build-periodic-first-transition-final-clean
-meson test -C build-periodic-first-transition-final-clean --suite static --print-errorlogs
+meson compile -C build-periodic-second-transition-final-clean
+meson test -C build-periodic-second-transition-final-clean --suite static --print-errorlogs
 C:\msys64\ucrt64\bin\python3.exe -m unittest discover -s tools/tests -p 'test_*.py'
 ```
 
