@@ -48,6 +48,26 @@ if (-not $resolvedTestRoot.StartsWith(
     throw "Refusing to create an OPS runtime test outside the temporary directory"
 }
 
+function Remove-OpsTestRoot {
+    if (-not (Test-Path -LiteralPath $resolvedTestRoot)) { return }
+    for ($attempt = 1; $attempt -le 20; $attempt++) {
+        try {
+            Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force -ErrorAction Stop
+            return
+        }
+        catch {
+            if ($attempt -eq 20) {
+                Write-Warning (
+                    "Could not remove OPS temporary directory after 20 attempts: " +
+                    "$resolvedTestRoot ($($_.Exception.Message))"
+                )
+                return
+            }
+            Start-Sleep -Milliseconds 100
+        }
+    }
+}
+
 function Get-ResultValue {
     param(
         [Parameter(Mandatory = $true)]
@@ -103,6 +123,7 @@ function Invoke-OpsPhase {
         throw "Failed to start the client for OPS phase $Phase"
     }
 
+    try {
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     $resultText = ""
     do {
@@ -166,6 +187,16 @@ function Invoke-OpsPhase {
         ProcessId = $process.Id
         Text = $resultText.Trim()
         Stamp = Get-ResultValue -Text $resultText -Key "OMNI_OPS_STAMP"
+    }
+    }
+    finally {
+        if ($process) {
+            if (-not $process.HasExited) {
+                Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                $process.WaitForExit()
+            }
+            $process.Dispose()
+        }
     }
 }
 
@@ -360,6 +391,6 @@ finally {
         -not $KeepArtifacts -and
         (Test-Path -LiteralPath $resolvedTestRoot)
     ) {
-        Remove-Item -LiteralPath $resolvedTestRoot -Recurse -Force
+        Remove-OpsTestRoot
     }
 }
