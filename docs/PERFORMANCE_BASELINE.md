@@ -32,6 +32,10 @@ stress_test=true
 long_run_test=not_tested
 ```
 
+## 0.2.0-dev 针对性正式样本
+
+本地候选 `32336e66`、EXE `08D30ED6...F340B` 和普通包 `2781B8B0...3FA8` 另行顺序完成更新后四条跨模块链对应的 S04/S05/S07/S09。四项均为实际 `60+600` 秒、独立 `assessment.json` 判定 `performance_gate_pass=true`，总事件 `30557`、最大单帧事件 `3072`；每项 `stop_event_delta=0`、恢复断言 `7`，有限观察无界增长和内存泄漏怀疑均为 `false`。精确 run ID、FPS、粒子数、哈希和边界见 `docs/PHASE_0_2_EVIDENCE.md`。该增量不改写上方 0.1 十样本基线，也不替代 1.0 两小时综合长跑。
+
 当前记录的环境只作为未来采样的机器标识，不是低端硬件代表：
 
 | 项目 | 当前记录 |

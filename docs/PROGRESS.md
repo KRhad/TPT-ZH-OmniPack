@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-版本门禁：`0.1.0-test` 仍因 GUI/外部门禁不能公开发布，开发分支为 `development/omnipack-1.0`。不虚报 0.1 完成的同时，0.2 用途审计已进入四条最小跨模块链实现；每条仍须完成运行、OPS、教程和压力证据。
+版本门禁：`0.1.0-test` 仍因 GUI/外部门禁不能公开发布，开发分支为 `development/omnipack-1.0`。0.2 的四条最小跨模块链、7 个示例 OPS、8 项教程及四个针对性正式压力样本已有本地通过证据；`0.2.0-dev` 仍不是公开发布，可信 GUI、公开源码/tag/Release 等 `GATE-020-RELEASE` 项保持 false/not_tested。
 
 ## 2026-07-31 当前候选快照
 
@@ -38,13 +38,24 @@ release_ready=false
 base_head=f8fa2b97
 reaction_registry=43
 meson_static=15/15
-python_tests=100/100
-lua_runtime=5/5
+python_tests=109/109
+python_test_skips=0
+lua_runtime_invocations=6/6
+ops_roundtrip_scenarios=6/6
+example_ops=7/7
+tutorial_challenges=8/8
 stress_smoke=4/4
 stress_smoke_samples=S04,S05,S07,S09
 stress_smoke_gate=not_tested
+formal_stress=4/4
+formal_stress_samples=S04,S05,S07,S09
+formal_stress_event_total=30557
+formal_stress_gate=true
 implementation_commit=98affcd76c9d3a02b136781d1bfa71fefb88302f
-implementation_exe_sha256=EBB33CCEDE76DDCC4F9375F96330519A1A5751080E40E936D3BAEB70763F3D82
+local_candidate_commit=32336e66cecd5dda70b11d5c019a3cdfa6506670
+local_candidate_exe_sha256=08D30ED6753E97EA6605E8553B0C82B06B9A8E4818C6461ABBFD0C0F499F340B
+local_dev_zip_sha256=2781B8B0AC9BF2EF53A6D799081A5C55CBB5F882BDE30226E07DB68CD96F3FA8
+symbols_zip_sha256=F4B6159EB1574AEDB98F9E3B03BD565D29935607003FDDA2469CEB755F4C5EF0
 release_ready=false
 ```
 
@@ -53,7 +64,10 @@ release_ready=false
 - 冶金—核工业：700–1200 K 下 `SSIL + LAVA(LEAD) + SPRK(NCRM) -> 2 RSHD`；缺有效镍铬火花时输入保持不变。
 - 四模块废物：500–620 K 下冷却 `NWST + SLAG + HUMS + POLY + WATR + CATA -> 2 RSHD + FLUX + NUTR + WATR`；水和催化剂保留，高温或输入不全不运行。
 - 四条路径均固定在 `3x3`，复用现有模块每帧预算与同 tick 标记，不新增元素、不移动稳定 ID，粒子数不增加。
-- 当前静态/编译证据为 PASS：43 条 reaction registry、370 槽元素 registry、48/48 内容/用途矩阵、英中 1262/1262、字体覆盖、Meson `15/15`、Python `100/100`。最终 `EBB33CCE...3F3D82` 编译产物的 Lua 回归为完整/简化生物、化学、冶金、核工业 `5/5`；提交 `98affcd7` 绑定的 S04/S05/S07/S09 smoke 为 `4/4`（run `c7da9340`、`28384c3a`、`7af70c0f`、`99403b92`），每项均有事件、OPS 双往返、停止差值 `0` 和 7 条恢复断言，但 smoke 采样约 2 秒且 `stress_gate=not_tested`。这不能替代正式压力样本或公开候选包。
+- 7 个真实 OPS 已生成、固定稳定加载 ID、记录字节数/SHA-256 并由候选 EXE 重载；8 项教程具备双语目标、提示、成功/失败、结果和下一项，实际解题 `8/8`、总 51 条断言。
+- `0.2.0-dev/local-dev` 普通包和符号包绑定提交 `32336e66`；候选 EXE `08D30ED6...F340B` 由固定 `SOURCE_DATE_EPOCH` 两次分离复现，PE/路径/符号/包成员审计及解压启动通过。Authenticode 为 `NotSigned`，启动存活不替代视觉证据。
+- 当前静态/编译证据为 PASS：43 条 reaction registry、370 槽元素 registry、48/48 内容/用途矩阵、英中 1262/1262、字体覆盖、Meson `15/15`、Python `109/109`（0 skip）。候选 Lua 生物 full/simplified、化学、冶金、核工业、模块选择 6 次均通过；官方/四模块/混合 OPS 场景 `6/6`。
+- 提交 `98affcd7` 的 S04/S05/S07/S09 smoke `4/4` 仍只作为历史快速回归；包候选 `32336e66` 已另行顺序完成四项正式 `60+600` 秒样本，独立 `4/4 gate=true`、总事件 `30557`、每项 `stop_event_delta=0`、恢复断言 `7`，有限观察无界增长和内存泄漏怀疑均为 `false`。详细 run ID 与数值见 `docs/PHASE_0_2_EVIDENCE.md`。
 - 用途矩阵当前为 21 项仅直接放置、26 项缺跨模块联动、0 项终点副产物、0 项缺回收、4 项缺明确机器用途、1 项未验证声明和 14 项无已知用途缺口。
 
 ## 2026-07-30 接管基线
@@ -361,7 +375,7 @@ Phase 2 没有新增粒子更新函数，因此没有新增每帧粒子成本。
 1. 完成 0.1.0-test 的禁用模块实际三选项、只读写入/上传和 GUI `.cps` 路径证据。
 2. 从重新打包的便携 ZIP 执行中文/英文切换、DPI、四模块 UI 和代表元素检查，并完成两小时长跑。
 3. 完成本地安全门禁；PAT 撤销、正式远端推送和匿名克隆在取得外部权限后执行。
-4. 在不虚报 0.1 发布状态的前提下，依据已通过的 48 元素用途矩阵登记并实现第一条最小跨模块闭环。
+4. 保持已通过的 0.2 示例/教程/压力工件不可变；取得可信 GUI 与授权公开源码条件后完成 `GATE-020-RELEASE`，在此之前不创建 `v0.2.0` 或宣称进入 0.3 发布阶段。
 
 ## 当前 commit hash
 
@@ -386,3 +400,11 @@ Phase 3 冶金提交：`metallurgy: add bounded industrial materials module`（�
 Phase 7 禁用模块存档加载兼容：`0c2e6cbabbccd40ef380c7953941a3e4e1dbb266`
 
 Phase 8 Windows x64 测试包（本次交付产物源提交）：`f19cf0634e8c024bc5a7711ee1f2c2d652d7d5f6`
+
+0.2 本地跨模块候选：
+
+- 四条实现：`98affcd76c9d3a02b136781d1bfa71fefb88302f`
+- 教程/示例工具：`a81a0a5199809933f13858861e71caf5e4a24c5f`
+- 本地包与正式压力候选：`32336e66cecd5dda70b11d5c019a3cdfa6506670`
+- 运行夹具句柄清理：`c63c5672`
+- 精确工件与 run ID：`docs/PHASE_0_2_EVIDENCE.md`

@@ -49,14 +49,16 @@
 | 48 元素用途矩阵 | 源码/自动 | PASS | `ELEMENT_USAGE_MATRIX.csv` 48/48；生产、主要/次要用途、消耗、副产物、危险、控制、回收、教程、压力风险和处置均非空 |
 | 用途矩阵身份门禁 | 自动 | PASS | 对照 `ELEMENT_REGISTRY.csv` 拒绝缺行、额外元素、稳定 ID/代号/模块漂移、非法 gap/disposition |
 | 缺口分类 | 源码确认 | PASS | 当前为 21 项仅直接放置、26 项缺跨模块联动、0 项终点副产物、0 项缺回收、4 项缺机器用途、1 项未验证声明；没有删除或重排 ID |
-| 开发 HEAD 自动测试 | 自动 | PASS | Meson static `15/15`；Python `100/100`，0 skip；43 条 reaction registry |
-| 生态—化学路径 | 实际运行 | PASS | 当前 `build-0.1.0-test-metrics`：完整/简化生物 Lua 均 PASS；覆盖 `PERO/PATH`、湿 `HUMS/FERT/WATR`、冷温/缺水/热催化剂负例；热催化剂夹具以 700 K 初温确保三帧内实际保持 `>=350 K` |
-| 冶金—化学路径 | 实际运行 | PASS | 当前编译产物化学 Lua PASS（11 条路径）；覆盖温区、缺输入、保留 `CATA` 和 `SLAG/ACID/CATA -> FLUX/WATR` |
-| 冶金—核工业路径 | 实际运行 | PASS | 当前编译产物冶金 Lua PASS（8 配方/5 行为）；覆盖 `SSIL/LAVA(LEAD)/SPRK(NCRM) -> 2 RSHD` 与无效火花负例 |
-| 四模块废物路径 | 实际运行 | PASS | 当前编译产物核工业 Lua PASS（5 条路径）；覆盖冷却稳定化、输入不全/温区负例、水和催化剂保留 |
+| 开发 HEAD 自动测试 | 自动 | PASS | Meson static `15/15`；UCRT64 PATH 下 Python `109/109`、0 skip；43 条 reaction registry |
+| 生态—化学路径 | 实际运行 | PASS | 候选 EXE `08D30ED6...F340B`：完整/简化生物 Lua 均 PASS；覆盖 `PERO/PATH`、湿 `HUMS/FERT/WATR`、冷温/缺水/热催化剂负例；T01–T03 与 S04 正式压力通过 |
+| 冶金—化学路径 | 实际运行 | PASS | 同一候选化学 Lua PASS（11 条路径）；覆盖温区、缺输入、保留 `CATA` 和 `SLAG/ACID/CATA -> FLUX/WATR`；T04 与 S05 正式压力通过 |
+| 冶金—核工业路径 | 实际运行 | PASS | 同一候选冶金 Lua PASS（8 配方/5 行为）；覆盖 `SSIL/LAVA(LEAD)/SPRK(NCRM) -> 2 RSHD` 与无效火花负例；T05 与 S07 正式压力通过 |
+| 四模块废物路径 | 实际运行 | PASS | 同一候选核工业 Lua PASS（5 条路径）；覆盖冷却稳定化、输入不全/温区负例、水和催化剂保留；T06–T08 与 S09 正式压力通过 |
 | 更新后 S04/S05/S07/S09 压力 smoke | 实际运行 | PASS | 提交 `98affcd7` 绑定的 EXE `EBB33CCE...3F3D82` smoke `4/4`（run `c7da9340`、`28384c3a`、`7af70c0f`、`99403b92`）；每项约 `2.01` 秒、`crashed=false`、`hung=false`、`roundtrip_pass=true`、`stop_event_delta=0`、恢复断言 `7`；`gate_result=not_tested`，不能替代正式 10 分钟样本 |
-| 0.2 正式压力样本 | 持续运行 | NOT RUN | 实现提交 `98affcd7` 尚未完成与最终 ZIP 绑定的正式压力样本；旧候选十项和 S09 两小时证据不得混用 |
-| 0.2 示例 OPS / 教程 | 运行 | NOT RUN | 7 个示例 OPS 和 8 项教程/挑战尚未实现 |
+| 0.2 正式压力样本 | 持续运行 | PASS | 包 revision `32336e66`、ZIP `2781B8B0...3FA8`、EXE `08D30ED6...F340B`；S04/S05/S07/S09 顺序完成 `60+600` 秒，独立 `4/4 gate=true`，事件 `30557`、每项停止增量 `0` 和恢复断言 `7` |
+| 0.2 示例 OPS / 教程 | 运行 | PASS | 7 个真实 OPS 生成/哈希/重载通过；8 项教程结构审计和候选 EXE 解题 `8/8`，总 51 条断言 |
+| `0.2.0-dev` 本地包 | 包/实际启动 | PASS | 普通包与符号包白名单/成员/PE/哈希二审通过；解压 EXE 标题正确、句柄非零、`Responding=true`；仅为进程存活证据 |
+| 0.2 双语 GUI / DPI / 只读交互 | 人工 | NOT RUN | 未取得可信窗口内容与点击证据；不得由启动、Lua、OPS 或压力 PASS 替代 |
 
 ## Phase 0 / Phase 1 基线
 

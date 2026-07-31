@@ -8,9 +8,11 @@
 
 **发布候选已具备 Release 构建、静态审计和模块运行回归；尚未达到可公开提供测试下载的门禁。**
 
+开发分支另有明确标记为 `0.2.0-dev/local-dev` 的本地验证包：7 个示例 OPS、8 项可实际完成的教程，以及 S04/S05/S07/S09 四项包绑定正式压力均已通过。它不替代 `0.1.0-test` 的外部门禁，也不是公开 `v0.2.0`；精确提交、哈希、run ID 和未测试边界见 `docs/PHASE_0_2_EVIDENCE.md`。
+
 当前测试版包含 48 个已实现 OmniPack 元素与四个可开关内容模块：工业冶金、局部生态、高级化学和受控核工业。所有元素均有固定 ID、英中名称和图鉴内容；其他预留分区不会显示为已经完成的玩法。
 
-Windows x64 发布候选由 `tools/package_test_release.py` 从剥离后的 Release EXE 自动生成，独立符号包只供崩溃分析。封包流程拒绝 `powder.pref`、个人存档、图章、账户资料、脚本、对象文件和调试符号。包内可离线查看 `TESTING.zh-CN.md`、`SOURCE-AND-LICENSES.zh-CN.md`、`KNOWN-ISSUES.zh-CN.md`、`AI-DISCLOSURE.zh-CN.md` 与字体许可证；构建和发布证据见源码仓库 `docs/RELEASE_HARDENING.md`。
+Windows x64 发布候选由 `tools/package_test_release.py` 从剥离后的 Release EXE 自动生成，独立符号包只供崩溃分析。默认 `0.1.0-test/public-test` 配置拒绝 `powder.pref`、个人存档、图章、账户资料、脚本、对象文件和调试符号；显式 `0.2.0-dev/local-dev` 配置只额外允许清单列出的 7 个项目示例 OPS 和教程数据。包内可离线查看测试、来源、已知问题、AI 披露与字体许可证；构建和发布证据见源码仓库 `docs/RELEASE_HARDENING.md` 与 `docs/PHASE_0_2_EVIDENCE.md`。
 
 ## 法律与来源
 
@@ -30,7 +32,7 @@ Windows x64 基线和 Phase 2 clean build 已按 Meson 与官方静态链接参�
 
 ## 测试
 
-当前已完成 Windows x64 Release clean build、Meson 静态测试、工具单元测试，以及工业冶金、高级化学、局部生态、受控核工业和 Lua 模块选择运行回归。官方、四个单模块与四模块混合的 OPS stamp 已完成真实双往返，包含 `ctype/tmp/tmp2` 间接引用；十个正式压力样本也已完成 60 秒预热 + 600 秒采样，并通过事件、停止/恢复、OPS 和有限观察门禁。GUI 本地 `.cps` 保存路径仍未点击；最终 ZIP 的简体中文/英文切换、DPI、禁用模块三选项和只读上传拦截仍需可信交互证据，两小时长跑也尚未执行。2026-07-30 验收还发现当前环境 PAT 未有撤销证据，故不会推送或公开发布；详见 `docs/FINAL_VALIDATION.md`。简体中文和英文是完整目标语言；其他语言的 OmniPack 新内容回退英文，不显示裸键或空字符串。
+当前已完成 Windows x64 Release clean build、Meson 静态测试、工具单元测试，以及工业冶金、高级化学、局部生态、受控核工业和 Lua 模块选择运行回归。官方、四个单模块与四模块混合的 OPS stamp 已完成真实双往返，包含 `ctype/tmp/tmp2` 间接引用；0.2 的 7 个示例 OPS 和 8 项教程也已由同一候选实际生成/加载/解题。0.1 十个正式压力样本及 0.2 针对四条跨模块链的 S04/S05/S07/S09 均完成 60 秒预热 + 600 秒采样，并通过事件、停止/恢复、OPS 和有限观察门禁。GUI 本地 `.cps` 保存路径仍未点击；最终 ZIP 的简体中文/英文切换、DPI、禁用模块三选项和只读上传拦截仍需可信交互证据，两小时综合长跑也尚未完成。2026-07-30 验收还发现当前环境 PAT 未有撤销证据，故不会推送或公开发布；详见 `docs/FINAL_VALIDATION.md`。简体中文和英文是完整目标语言；其他语言的 OmniPack 新内容回退英文，不显示裸键或空字符串。
 
 ## 校验与签名
 
