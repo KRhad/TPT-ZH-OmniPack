@@ -7,8 +7,9 @@
     "module_gate_bypass_allowed": false,
     "official_behavior_mutation_allowed": false,
     "new_automation_elements": 0,
-    "reserved_id_first": 392,
-    "reserved_id_last": 423
+    "automation_owns_stable_ids": false,
+    "periodic_id_first": 370,
+    "periodic_id_last": 461
   },
   "bounds": {
     "max_sensor_radius": 8,

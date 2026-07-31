@@ -680,6 +680,7 @@ test(
 		'--language-dir', join_paths(meson.project_source_root(), 'src', 'lang'),
 		'--unifont', join_paths(meson.project_source_root(), 'resources', 'third_party', 'unifont_all-16.0.03.hex.gz'),
 		'--fusion-bdf', join_paths(meson.project_source_root(), 'resources', 'third_party', 'fusion-pixel-12px-monospaced-zh_hans-v2026.07.20.bdf'),
+		'--periodic-map', join_paths(meson.project_source_root(), 'docs', 'PERIODIC_ELEMENT_SOURCE_MAP.csv'),
 	],
 	env: static_test_env,
 	suite: 'static',
@@ -846,6 +847,19 @@ test(
 	args: [
 		files('tools/mod_catalog/validate_mod_catalog.py'),
 		'--source-root', meson.project_source_root(),
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'periodic-source-map',
+	python3_prog,
+	args: [
+		files('tools/generate_periodic_source_map.py'),
+		'--source-root', meson.project_source_root(),
+		'--check',
 	],
 	env: static_test_env,
 	suite: 'static',

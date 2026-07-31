@@ -58,7 +58,7 @@ REQUIRED_METRICS = {
 }
 
 MODULES = {"metallurgy", "biology", "nuclear", "chemistry"}
-AUTOMATION_RESERVED_IDS = range(392, 424)
+LEGACY_AUTOMATION_IDS = range(392, 424)
 
 EXPECTED_POLICY: dict[str, Any] = {
     "normal_save_load_path_only": True,
@@ -66,8 +66,9 @@ EXPECTED_POLICY: dict[str, Any] = {
     "module_gate_bypass_allowed": False,
     "official_behavior_mutation_allowed": False,
     "new_automation_elements": 0,
-    "reserved_id_first": 392,
-    "reserved_id_last": 423,
+    "automation_owns_stable_ids": False,
+    "periodic_id_first": 370,
+    "periodic_id_last": 461,
 }
 
 SOURCE_BOUND_MARKERS = {
@@ -258,25 +259,39 @@ def check_capabilities(root: Path, errors: list[str]) -> set[str]:
             if not row.get(field, "").strip():
                 errors.append(f"{matrix_path}: {capability} missing {field}")
 
-    for stable_id in AUTOMATION_RESERVED_IDS:
+    periodic_rows = read_csv(root / "docs" / "PERIODIC_ELEMENT_SOURCE_MAP.csv", errors)
+    periodic_by_id = {row.get("stable_id", ""): row for row in periodic_rows}
+    if len(periodic_rows) != 118:
+        errors.append("docs/PERIODIC_ELEMENT_SOURCE_MAP.csv: expected 118 rows")
+    generated_ids = sorted(
+        int(row["stable_id"])
+        for row in periodic_rows
+        if row.get("implementation_type") == "family_generated"
+        and row.get("stable_id", "").isdigit()
+    )
+    if generated_ids != list(range(370, 462)):
+        errors.append("docs/PERIODIC_ELEMENT_SOURCE_MAP.csv: expected generated IDs 370..461")
+    for stable_id in LEGACY_AUTOMATION_IDS:
+        if str(stable_id) not in periodic_by_id:
+            errors.append(f"periodic source map does not own former automation ID {stable_id}")
         row = by_registry_id.get(str(stable_id))
-        if row is not None:
+        if row is not None and row.get("module") != "periodic":
             errors.append(
-                f"{registry_path}: automation ID {stable_id} is claimed by {row.get('identifier')!r}; "
-                "0.3 reuses official elements and requires no registry row in this range"
+                f"{registry_path}: former automation ID {stable_id} must belong to the periodic module, "
+                f"not {row.get('module')!r}"
             )
-        if stable_id < len(meson_slots) and meson_slots[stable_id] is not None:
+        if stable_id < len(meson_slots) and meson_slots[stable_id] is not None and row is None:
             errors.append(
-                f"{root / 'src/simulation/elements/meson.build'}: automation ID {stable_id} "
-                f"is claimed by {meson_slots[stable_id]!r}"
+                f"{root / 'src/simulation/elements/meson.build'}: periodic ID {stable_id} "
+                f"is enabled as {meson_slots[stable_id]!r} without a registry row"
             )
     content = read_text(root / "docs" / "CONTENT_MATRIX.md", errors)
-    if "| 自动化 | `392..423` | 0 | 只预留，不等于功能已实现 |" not in content:
-        errors.append("docs/CONTENT_MATRIX.md: missing zero-element automation reservation")
+    if "| 周期表固定区 | `370..461` | 92（规划/分批实现） | 原子序数映射固定，不是解锁顺序 |" not in content:
+        errors.append("docs/CONTENT_MATRIX.md: missing periodic stable-ID allocation")
     omni_content = read_text(root / "src" / "gui" / "game" / "OmniContent.h", errors)
     for marker in (
-        "constexpr int OmniAutomationFirstId = 392;",
-        "constexpr int OmniAutomationLastId = 423;",
+        "constexpr int OmniPeriodicFirstId = 370;",
+        "constexpr int OmniPeriodicLastId = 461;",
     ):
         if marker not in omni_content:
             errors.append(f"src/gui/game/OmniContent.h: missing {marker!r}")

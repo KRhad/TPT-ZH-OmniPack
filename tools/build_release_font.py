@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import bz2
+import csv
 import gzip
 import hashlib
 import json
@@ -97,6 +98,16 @@ def required_codepoints(language_paths: Iterable[Path]) -> set[int]:
         for value in data.values():
             codepoints.update(ord(character) for character in value if ord(character) >= 0x20)
     return codepoints
+
+
+def periodic_codepoints(path: Path) -> set[int]:
+    if not path.is_file():
+        return set()
+    with path.open("r", encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    if len(rows) != 118 or any(not row.get("zh_name") for row in rows):
+        raise ValueError(f"invalid periodic element source map: {path}")
+    return {ord(character) for row in rows for character in row["zh_name"] if ord(character) >= 0x20}
 
 
 def parse_unifont(path: Path, required: set[int]) -> dict[int, tuple[int, tuple[int, ...]]]:
@@ -349,6 +360,8 @@ def build_font(source_root: Path, output: Path) -> dict[str, int | str]:
         raise ValueError("no embedded language catalogs found")
     glyphs = parse_tpt_font(upstream_path)
     required = required_codepoints(language_paths)
+    periodic_required = periodic_codepoints(source_root / "docs/PERIODIC_ELEMENT_SOURCE_MAP.csv")
+    required.update(periodic_required)
     zh_path = source_root / "src/lang/zh-CN.json"
     if not zh_path.is_file():
         raise ValueError("Simplified Chinese language catalog is missing")
@@ -378,6 +391,7 @@ def build_font(source_root: Path, output: Path) -> dict[str, int | str]:
         "added_unifont_glyphs": len(unifont),
         "glyphs": len(glyphs),
         "required_glyphs": len(required),
+        "periodic_required_glyphs": len(periodic_required),
         "output_bytes": output.stat().st_size,
         "output_sha256": sha256(output),
         "upstream_font_sha256": sha256(upstream_path),

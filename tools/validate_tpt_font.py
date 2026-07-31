@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import bz2
+import csv
 import json
 import struct
 import sys
@@ -70,6 +71,16 @@ def catalog_codepoints(paths: Iterable[Path]) -> set[int]:
         for value in data.values():
             codepoints.update(ord(character) for character in value if ord(character) >= 0x20)
     return codepoints
+
+
+def periodic_codepoints(path: Path | None) -> set[int]:
+    if path is None or not path.is_file():
+        return set()
+    with path.open("r", encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    if len(rows) != 118 or any(not row.get("zh_name") for row in rows):
+        raise ValueError(f"invalid periodic element source map: {path}")
+    return {ord(character) for row in rows for character in row["zh_name"] if ord(character) >= 0x20}
 
 
 def glyph_pixels(width: int, bitmap: bytes) -> tuple[tuple[int, ...], ...]:
@@ -133,9 +144,12 @@ def validate(
     output: Path | None,
     unifont: Path | None,
     fusion_bdf: Path | None,
+    periodic_map: Path | None = None,
 ) -> dict[str, object]:
     glyphs = parse_font(font)
     required = catalog_codepoints(language_paths)
+    periodic_required = periodic_codepoints(periodic_map)
+    required.update(periodic_required)
     missing = sorted(required - set(glyphs))
     invalid_width = []
     empty = []
@@ -212,6 +226,7 @@ def validate(
         "font_container_valid": True,
         "glyphs": len(glyphs),
         "required_codepoints": len(required),
+        "periodic_required_codepoints": len(periodic_required),
         "font_glyph_coverage_valid": True,
         "font_pack_roundtrip_test": True,
         "unifont_source_decode_test": source_decode_test,
@@ -229,6 +244,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--unifont", type=Path)
     parser.add_argument("--fusion-bdf", type=Path)
+    parser.add_argument("--periodic-map", type=Path, default=Path("docs/PERIODIC_ELEMENT_SOURCE_MAP.csv"))
     args = parser.parse_args()
     try:
         result = validate(
@@ -237,6 +253,7 @@ def main() -> int:
             args.output,
             args.unifont,
             args.fusion_bdf,
+            args.periodic_map,
         )
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"validate-tpt-font: ERROR {error}", file=sys.stderr)

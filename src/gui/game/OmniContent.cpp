@@ -24,12 +24,9 @@ static_assert(OmniReservedLastId + 1 == OmniMetallurgyFirstId);
 static_assert(OmniMetallurgyLastId + 1 == OmniBiologyFirstId);
 static_assert(OmniBiologyLastId + 1 == OmniNuclearFirstId);
 static_assert(OmniNuclearLastId + 1 == OmniChemistryFirstId);
-static_assert(OmniChemistryLastId + 1 == OmniAutomationFirstId);
-static_assert(OmniAutomationLastId + 1 == OmniSpecialPhysicsFirstId);
-static_assert(OmniSpecialPhysicsLastId + 1 == OmniDisastersFirstId);
-static_assert(OmniDisastersLastId + 1 == OmniCompatibilityFirstId);
-static_assert(OmniCompatibilityLastId + 1 == OmniExperimentalFirstId);
-static_assert(OmniExperimentalLastId == PT_NUM - 1);
+static_assert(OmniChemistryLastId + 1 == OmniPeriodicFirstId);
+static_assert(OmniPeriodicLastId + 1 == OmniFutureContentFirstId);
+static_assert(OmniFutureContentLastId == PT_NUM - 1);
 
 OmniSettingDefinition const *DefinitionFor(OmniSetting setting)
 {
@@ -89,23 +86,11 @@ OmniElementModule GetOmniElementModule(int elementId)
 	{
 		return OmniElementModule::Chemistry;
 	}
-	if (elementId <= OmniAutomationLastId)
+	if (elementId <= OmniPeriodicLastId)
 	{
-		return OmniElementModule::Automation;
+		return OmniElementModule::Periodic;
 	}
-	if (elementId <= OmniSpecialPhysicsLastId)
-	{
-		return OmniElementModule::SpecialPhysics;
-	}
-	if (elementId <= OmniDisastersLastId)
-	{
-		return OmniElementModule::Disasters;
-	}
-	if (elementId <= OmniCompatibilityLastId)
-	{
-		return OmniElementModule::Compatibility;
-	}
-	return OmniElementModule::Experimental;
+	return OmniElementModule::FutureContent;
 }
 
 OmniSelectionRestriction GetOmniElementSelectionRestriction(int elementId)
@@ -129,11 +114,8 @@ OmniSelectionRestriction GetOmniElementSelectionRestriction(int elementId)
 	case OmniElementModule::AdvancedNuclear:
 		if (!GetOmniSetting(OmniSetting::AdvancedNuclear)) return OmniSelectionRestriction::ModuleDisabled;
 		break;
-	case OmniElementModule::SpecialPhysics:
-	case OmniElementModule::Disasters:
-	case OmniElementModule::Experimental:
 	case OmniElementModule::Reserved:
-	case OmniElementModule::Compatibility:
+	case OmniElementModule::FutureContent:
 		return OmniSelectionRestriction::ReservedElement;
 	default:
 		break;
@@ -196,6 +178,8 @@ char const *GetOmniElementModuleNameKey(OmniElementModule module)
 		return "options.omni.chemistry";
 	case OmniElementModule::AdvancedNuclear:
 		return "options.omni.advanced_nuclear";
+	case OmniElementModule::Periodic:
+		return "periodic.table.title";
 	default:
 		return "";
 	}
@@ -203,7 +187,7 @@ char const *GetOmniElementModuleNameKey(OmniElementModule module)
 
 std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save)
 {
-	constexpr std::size_t moduleCount = static_cast<std::size_t>(OmniElementModule::Experimental) + 1;
+	constexpr std::size_t moduleCount = static_cast<std::size_t>(OmniElementModule::FutureContent) + 1;
 	std::array<bool, moduleCount> found{};
 	auto const &elements = SimulationData::CRef().elements;
 	auto const &possiblyCarriesType = Particle::PossiblyCarriesType();

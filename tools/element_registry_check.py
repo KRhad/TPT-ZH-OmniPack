@@ -104,7 +104,9 @@ OMNIPACK_MODULE_RANGES = (
     (256, 287, "metallurgy"),
     (288, 327, "biology"),
     (328, 359, "nuclear"),
-    (360, 511, "chemistry"),
+    (360, 369, "chemistry"),
+    (370, 461, "periodic"),
+    (462, 511, "future_content"),
 )
 
 SLOT_STATUSES = frozenset({"active", "reserved"})

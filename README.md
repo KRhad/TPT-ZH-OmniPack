@@ -1,7 +1,9 @@
 TPT-ZH-OmniPack / Omniverse Sandbox Integration
 ================================================
 
-This repository is an unofficial GPL-3.0 integration based on The Powder Toy `100.0.399`. The current product version is `0.1.0-test`; it includes Simplified Chinese and English support plus 48 stable-ID OmniPack elements across metallurgy, local ecology, advanced chemistry, and controlled nuclear modules.
+This repository is an unofficial GPL-3.0, content-first free-sandbox integration based on The Powder Toy `100.0.399`. It has no player tasks, achievements, technology tree, discovery progression, or forced element unlocks: every enabled material is directly available. The current product version is `0.1.0-test`; it includes Simplified Chinese and English support plus 48 stable-ID OmniPack elements across metallurgy, local ecology, advanced chemistry, and controlled nuclear modules.
+
+The 118-element source map now reuses 26 existing pure-element implementations and reserves stable IDs `370..461` for the remaining 92. This is infrastructure evidence, not a claim that all 118 elements or the periodic-table UI are already implemented.
 
 The local Windows candidate has passed a clean Release build, automated tests, detached-symbol/package audits, Lua gameplay regressions, official/single-module/mixed OPS stamp roundtrips, and all ten formal 10-minute stress gates. The development branch also has a separately identified `0.2.0-dev/local-dev` package with seven generated example OPS files, eight executable tutorials, and package-bound S04/S05/S07/S09 formal stress gates. It is **not release-ready**: trusted GUI/DPI checks, the two-hour long run, PAT revocation, an authorized public source remote, anonymous clone verification, tag, and GitHub prerelease remain incomplete. The existing `origin` is a historical Chinese-fork remote and must not be represented as the public source for this candidate.
 

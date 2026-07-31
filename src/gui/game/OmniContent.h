@@ -25,11 +25,8 @@ enum class OmniElementModule : unsigned char
 	Biology,
 	AdvancedNuclear,
 	Chemistry,
-	Automation,
-	SpecialPhysics,
-	Disasters,
-	Compatibility,
-	Experimental,
+	Periodic,
+	FutureContent,
 };
 
 enum class OmniSelectionRestriction : unsigned char
@@ -64,17 +61,11 @@ constexpr int OmniBiologyLastId = 327;
 constexpr int OmniNuclearFirstId = 328;
 constexpr int OmniNuclearLastId = 359;
 constexpr int OmniChemistryFirstId = 360;
-constexpr int OmniChemistryLastId = 391;
-constexpr int OmniAutomationFirstId = 392;
-constexpr int OmniAutomationLastId = 423;
-constexpr int OmniSpecialPhysicsFirstId = 424;
-constexpr int OmniSpecialPhysicsLastId = 439;
-constexpr int OmniDisastersFirstId = 440;
-constexpr int OmniDisastersLastId = 455;
-constexpr int OmniCompatibilityFirstId = 456;
-constexpr int OmniCompatibilityLastId = 479;
-constexpr int OmniExperimentalFirstId = 480;
-constexpr int OmniExperimentalLastId = 511;
+constexpr int OmniChemistryLastId = 369;
+constexpr int OmniPeriodicFirstId = 370;
+constexpr int OmniPeriodicLastId = 461;
+constexpr int OmniFutureContentFirstId = 462;
+constexpr int OmniFutureContentLastId = 511;
 
 std::array<OmniSettingDefinition, OmniSettingCount> const &GetOmniSettingDefinitions();
 bool GetOmniSetting(OmniSetting setting);

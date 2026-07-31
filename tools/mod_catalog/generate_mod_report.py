@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 from pathlib import Path
 import re
 from typing import Any, Sequence
@@ -192,6 +193,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     reactions = read_json(root / "external/metadata/reactions.json", [])
     core = read_json(root / "external/metadata/core_modifications.json", [])
     duplicate_payload = read_json(root / "external/metadata/duplicates.json", {"classifications": []})
+    periodic_path = root / "docs/PERIODIC_ELEMENT_SOURCE_MAP.csv"
+    if periodic_path.is_file():
+        with periodic_path.open("r", encoding="utf-8", newline="") as stream:
+            periodic_rows = list(csv.DictReader(stream))
+    else:
+        periodic_rows = []
+    periodic_map_complete = (
+        len(periodic_rows) == 118
+        and {row.get("atomic_number") for row in periodic_rows} == {str(value) for value in range(1, 119)}
+    )
+    periodic_sourced = sum(row.get("status") == "implemented" for row in periodic_rows)
     reaction_by_key = {
         (row["source_mod"], row["source_file"], row["source_identifier"]): row for row in reactions
     }
@@ -295,7 +307,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"reference_only_candidates={len(reference_keys)}",
         "elements_ported=0", "elements_rewritten=0",
         "elements_rejected=0",
-        "periodic_elements_sourced=not_tested", "periodic_elements_remaining=118",
+        f"periodic_source_map_complete={str(periodic_map_complete).lower()}",
+        f"periodic_elements_sourced={periodic_sourced}",
+        f"periodic_elements_remaining={118 - periodic_sourced if periodic_map_complete else 'not_tested'}",
         "total_omnipack_elements=48",
         f"clean_build_pass={args.clean_build_pass}",
         f"element_registry_pass={args.element_registry_pass}",
