@@ -188,10 +188,39 @@ def analyze(directory: Path) -> dict[str, Any]:
         )
     else:
         scenario_behavior_pass = "not_tested"
+    signal_evidence_complete = (
+        nonnegative_number(result.get("signal_count_total"))
+        and nonnegative_number(result.get("signal_count_peak_per_frame"))
+        and isinstance(result.get("signal_stop_pass"), bool)
+    )
+    automation_sample = result.get("sample_id") in {
+        "S11-AUTOMATION-FACTORY",
+        "S12-AUTOMATION-SIGNAL-LOOP",
+    }
+    signal_behavior_pass: bool | str
+    if signal_evidence_complete:
+        signal_total = result.get("signal_count_total")
+        signal_peak = result.get("signal_count_peak_per_frame")
+        peak_particles = result.get("peak_particles")
+        signal_behavior_pass = (
+            bool(result.get("signal_stop_pass"))
+            and isinstance(signal_total, (int, float))
+            and not isinstance(signal_total, bool)
+            and isinstance(signal_peak, (int, float))
+            and not isinstance(signal_peak, bool)
+            and isinstance(peak_particles, (int, float))
+            and not isinstance(peak_particles, bool)
+            and signal_total > 0
+            and signal_peak > 0
+            and signal_peak <= peak_particles
+        )
+    else:
+        signal_behavior_pass = "not_tested"
     performance_gate_pass = (
         sample_execution_pass
         and event_evidence_complete
         and scenario_behavior_pass is True
+        and (not automation_sample or signal_behavior_pass is True)
     )
 
     return {
@@ -223,6 +252,11 @@ def analyze(directory: Path) -> dict[str, Any]:
         "event_evidence_complete": event_evidence_complete,
         "event_count_total": result.get("event_count_total"),
         "event_count_peak_per_frame": result.get("event_count_peak_per_frame"),
+        "signal_evidence_complete": signal_evidence_complete,
+        "signal_count_total": result.get("signal_count_total"),
+        "signal_count_peak_per_frame": result.get("signal_count_peak_per_frame"),
+        "signal_behavior_pass": signal_behavior_pass,
+        "signal_stop_pass": result.get("signal_stop_pass"),
         "scenario_behavior_pass": scenario_behavior_pass,
         "stop_event_delta": stop_event_delta,
         "scenario_recovery_assertions": recovery_assertions,

@@ -13,7 +13,9 @@ param(
         "S07-REACTOR-STABLE",
         "S08-REACTOR-LOCA",
         "S09-ALL-MODULES",
-        "S10-CARRIERS-ROUNDTRIP"
+        "S10-CARRIERS-ROUNDTRIP",
+        "S11-AUTOMATION-FACTORY",
+        "S12-AUTOMATION-SIGNAL-LOOP"
     )]
     [string] $SampleId,
 
@@ -30,7 +32,7 @@ param(
 
     [string] $PackageZip,
 
-    [ValidateSet("0.1.0-test", "0.2.0-dev")]
+    [ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev")]
     [string] $PackageVersion = "0.1.0-test",
 
     [string] $TemporaryDirectory = [System.IO.Path]::GetTempPath(),
@@ -277,7 +279,10 @@ try {
     if ($process.ExitCode -ne 0 -or $lua.OMNI_STRESS_LUA_STATUS -ne "PASS") {
         throw "Stress Lua failed; exit_code=$($process.ExitCode); error=$($lua.error); artifacts=$testRoot"
     }
-    foreach ($field in @("event_count_total", "event_count_peak_per_frame", "scenario_recovery_assertions")) {
+    foreach ($field in @(
+        "event_count_total", "event_count_peak_per_frame",
+        "signal_count_total", "signal_count_peak_per_frame",
+        "scenario_recovery_assertions")) {
         if (-not $lua.ContainsKey($field) -or $lua[$field] -notmatch '^\d+$') {
             throw "Stress Lua did not provide a nonnegative integer $field"
         }
@@ -285,7 +290,7 @@ try {
     if (-not $lua.ContainsKey("stop_event_delta") -or $lua.stop_event_delta -notmatch '^-?\d+$') {
         throw "Stress Lua did not provide an integer stop_event_delta"
     }
-    foreach ($field in @("scenario_stop_pass", "scenario_recovery_pass")) {
+    foreach ($field in @("signal_stop_pass", "scenario_stop_pass", "scenario_recovery_pass")) {
         if (-not $lua.ContainsKey($field) -or $lua[$field] -notin @("true", "false")) {
             throw "Stress Lua did not provide a boolean $field"
         }
@@ -370,6 +375,9 @@ try {
         peak_private_bytes = $peakPrivateBytes
         event_count_total = [int64]$lua.event_count_total
         event_count_peak_per_frame = [int64]$lua.event_count_peak_per_frame
+        signal_count_total = [int64]$lua.signal_count_total
+        signal_count_peak_per_frame = [int64]$lua.signal_count_peak_per_frame
+        signal_stop_pass = [System.Convert]::ToBoolean($lua.signal_stop_pass)
         save_time_first_ms = [double]$lua.save_time_first_ms
         load_time_first_ms = [double]$lua.load_time_first_ms
         save_time_second_ms = [double]$lua.save_time_second_ms

@@ -29,6 +29,8 @@ SAMPLES = {
     "S08-REACTOR-LOCA",
     "S09-ALL-MODULES",
     "S10-CARRIERS-ROUNDTRIP",
+    "S11-AUTOMATION-FACTORY",
+    "S12-AUTOMATION-SIGNAL-LOOP",
 }
 
 
@@ -82,7 +84,7 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn("PackageZip is required for formal stress runs", self.powershell)
         self.assertIn("TEST-MANIFEST.txt", self.powershell)
         self.assertIn("kind=(public-test|local-dev)", self.powershell)
-        self.assertIn('[ValidateSet("0.1.0-test", "0.2.0-dev")]', self.powershell)
+        self.assertIn('[ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev")]', self.powershell)
         self.assertIn("Package manifest version does not match", self.powershell)
         self.assertIn("revision=([0-9a-f]{40})", self.powershell)
         self.assertIn("member=tpt-zh-omnipack", self.powershell)
@@ -106,6 +108,12 @@ class StressHarnessContractTest(unittest.TestCase):
             "event_count_peak_per_frame = [int64]$lua.event_count_peak_per_frame",
             self.powershell,
         )
+        self.assertIn("signal_count_total = [int64]$lua.signal_count_total", self.powershell)
+        self.assertIn(
+            "signal_count_peak_per_frame = [int64]$lua.signal_count_peak_per_frame",
+            self.powershell,
+        )
+        self.assertIn("signal_stop_pass = [System.Convert]::ToBoolean", self.powershell)
         self.assertIn("scenario_stop_pass = [System.Convert]::ToBoolean", self.powershell)
         self.assertIn("scenario_recovery_pass = [System.Convert]::ToBoolean", self.powershell)
         self.assertIn("scenario_recovery_assertions = [int64]$lua.scenario_recovery_assertions", self.powershell)
@@ -122,6 +130,15 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn("LFUNC(resetOmniEventMetrics)", self.lua_simulation)
         for module in self.event_modules:
             self.assertIn("sim->RecordOmniEvent();", module)
+
+    def test_automation_stress_measures_official_signal_population(self) -> None:
+        self.assertIn("local function automation_factory(bounds)", self.lua)
+        self.assertIn("local function automation_signal_loop(bounds)", self.lua)
+        self.assertIn("sim.elementCount(ids.spark)", self.lua)
+        self.assertIn("runtime.signal_count_total", self.lua)
+        self.assertIn("runtime.signal_count_peak_per_frame", self.lua)
+        self.assertIn('S11-AUTOMATION-FACTORY', self.lua)
+        self.assertIn('S12-AUTOMATION-SIGNAL-LOOP', self.lua)
 
     def test_biology_chemistry_fixture_is_present_in_targeted_stress_samples(self) -> None:
         self.assertIn("local function ecology_chemistry_loop(bounds)", self.lua)

@@ -47,6 +47,19 @@ local ids = {
     acid = assert(elements.DEFAULT_PT_ACID),
     oxygen = assert(elements.DEFAULT_PT_O2),
     neutron = assert(elements.DEFAULT_PT_NEUT),
+    pscn = assert(elements.DEFAULT_PT_PSCN),
+    nscn = assert(elements.DEFAULT_PT_NSCN),
+    metl = assert(elements.DEFAULT_PT_METL),
+    wifi = assert(elements.DEFAULT_PT_WIFI),
+    filt = assert(elements.DEFAULT_PT_FILT),
+    dlay = assert(elements.DEFAULT_PT_DLAY),
+    stor = assert(elements.DEFAULT_PT_STOR),
+    ppip = assert(elements.DEFAULT_PT_PPIP),
+    cray = assert(elements.DEFAULT_PT_CRAY),
+    tsns = assert(elements.DEFAULT_PT_TSNS),
+    dtec = assert(elements.DEFAULT_PT_DTEC),
+    swch = assert(elements.DEFAULT_PT_SWCH),
+    lcry = assert(elements.DEFAULT_PT_LCRY),
     alum = must_element("OMNI_PT_ALUM", "ALUM"),
     magn = must_element("OMNI_PT_MAGN", "MAGN"),
     copr = must_element("OMNI_PT_COPR", "COPR"),
@@ -361,6 +374,57 @@ local function carriers(bounds)
     end)
 end
 
+local function automation_factory(bounds)
+    grid(bounds, function(x, y, n)
+        local kind = n % 4
+        local target
+        if kind == 0 then
+            molten(ids.copr, x, y, 2000.0)
+            molten(ids.copr, x + 1, y, 2000.0)
+            molten(ids.copr, x, y + 1, 2000.0)
+            molten(ids.tin, x + 1, y + 1, 2000.0)
+            target = ids.lava
+        elseif kind == 1 then
+            make(ids.path, x, y, { temp = 300.0 })
+            make(ids.pero, x + 1, y, { temp = 300.0 })
+            target = ids.path
+        elseif kind == 2 then
+            make(ids.nclt, x, y, { temp = 900.0 })
+            make(ids.nwst, x + 1, y, { temp = 1200.0 })
+            target = ids.nwst
+        else
+            make(ids.oil, x, y, { temp = 550.0 })
+            make(ids.cata, x + 1, y, { temp = 550.0 })
+            target = ids.cata
+        end
+        if n % 2 == 0 then
+            make(ids.tsns, x + 2, y, { temp = 450.0, tmp = 0, tmp2 = 2 })
+        else
+            make(ids.dtec, x + 2, y, { ctype = target, tmp2 = 2 })
+        end
+        make(ids.pscn, x + 2, y + 1)
+    end)
+end
+
+local function automation_signal_loop(bounds)
+    grid(bounds, function(x, y, n)
+        local channel_temperature = 173.15 + ((n % 8) * 100.0)
+        make(ids.wifi, x, y, { temp = channel_temperature })
+        local transmitter = make(ids.pscn, x + 1, y)
+        if transmitter and n % 16 == 0 then
+            sim.partProperty(transmitter, "type", ids.spark)
+            sim.partProperty(transmitter, "ctype", ids.pscn)
+            sim.partProperty(transmitter, "life", 4)
+        end
+        make(ids.dlay, x, y + 1, { temp = 275.15 })
+        make(ids.pscn, x + 1, y + 1)
+        make(ids.nscn, x + 2, y + 1)
+        make(ids.swch, x, y + 2, { life = 10 })
+        make(ids.ppip, x + 1, y + 2, { life = 0 })
+        make(ids.lcry, x + 2, y + 2)
+    end)
+end
+
 local scenarios = {
     ["S01-METALLURGY-LARGE"] = function() metallurgy(full) end,
     ["S02-FURNACES-PARALLEL"] = function() furnaces(full) end,
@@ -380,6 +444,8 @@ local scenarios = {
         stable_reactor({ x1 = sim.XRES / 2 + 12, y1 = sim.YRES / 2 + 12, x2 = sim.XRES - 49, y2 = sim.YRES - 49 })
     end,
     ["S10-CARRIERS-ROUNDTRIP"] = function() carriers(full) end,
+    ["S11-AUTOMATION-FACTORY"] = function() automation_factory(full) end,
+    ["S12-AUTOMATION-SIGNAL-LOOP"] = function() automation_signal_loop(full) end,
 }
 
 local function particle_count()
@@ -418,6 +484,7 @@ local function write_success(data)
         "minimum_fps", "first_stamp", "second_stamp", "save_time_first_ms",
         "load_time_first_ms", "save_time_second_ms", "load_time_second_ms",
         "roundtrip_pass", "event_count_total", "event_count_peak_per_frame",
+        "signal_count_total", "signal_count_peak_per_frame", "signal_stop_pass",
         "scenario_stop_pass", "scenario_recovery_pass", "stop_event_delta",
         "scenario_recovery_assertions",
     }) do
@@ -456,6 +523,8 @@ local function begin_sample(now)
     runtime.sample_frame_times = {}
     runtime.last_frame_started = nil
     runtime.sample_peak_particles = particle_count()
+    runtime.signal_count_total = 0
+    runtime.signal_count_peak_per_frame = 0
     runtime.series = assert(io.open(FRAME_SERIES_FILE, "wb"))
     runtime.series:write("elapsed_seconds,frames,particles\n")
     runtime.series:flush()
@@ -505,18 +574,24 @@ local function finish_sample(now)
         "omni event peak is unavailable")
     assert(event_count_total >= 0 and event_count_peak_per_frame >= 0,
         "omni event metrics must be nonnegative")
+    assert(runtime.signal_count_total >= 0
+        and runtime.signal_count_peak_per_frame >= 0,
+        "official signal metrics must be nonnegative")
 
     sim.clearSim()
     for _ = 1, 4 do
         sim.updateUpTo()
     end
     local stopped_particles = particle_count()
+    local stopped_signals = sim.elementCount(ids.spark)
     local stopped_metrics = sim.omniEventMetrics()
     local stop_event_delta = assert(tonumber(stopped_metrics.total),
         "omni event total disappeared after stop") - event_count_total
     local scenario_stop_pass = stopped_particles == 0 and stop_event_delta == 0
+    local signal_stop_pass = stopped_signals == 0
     assert(scenario_stop_pass,
         "cleared stress scenario retained particles or produced omni events")
+    assert(signal_stop_pass, "cleared stress scenario retained official signals")
 
     timed_load(second_stamp)
     local recovered_particles = particle_count()
@@ -553,6 +628,9 @@ local function finish_sample(now)
         roundtrip_pass = "true",
         event_count_total = math.floor(event_count_total),
         event_count_peak_per_frame = math.floor(event_count_peak_per_frame),
+        signal_count_total = math.floor(runtime.signal_count_total),
+        signal_count_peak_per_frame = math.floor(runtime.signal_count_peak_per_frame),
+        signal_stop_pass = tostring(signal_stop_pass),
         scenario_stop_pass = tostring(scenario_stop_pass),
         scenario_recovery_pass = tostring(scenario_recovery_pass),
         stop_event_delta = math.floor(stop_event_delta),
@@ -583,6 +661,13 @@ local function tick_once()
     end
 
     sim.updateUpTo()
+    if runtime.phase == "sample" then
+        local active_signals = sim.elementCount(ids.spark)
+        runtime.signal_count_total = runtime.signal_count_total + active_signals
+        runtime.signal_count_peak_per_frame = math.max(
+            runtime.signal_count_peak_per_frame,
+            active_signals)
+    end
     if runtime.phase == "warmup" then
         runtime.warmup_frames = runtime.warmup_frames + 1
     else

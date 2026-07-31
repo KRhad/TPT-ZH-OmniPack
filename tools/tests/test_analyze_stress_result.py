@@ -138,6 +138,32 @@ class AnalyzeStressResultTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "OPS1/BZip2"):
                 analysis.analyze(directory)
 
+    def test_automation_sample_requires_bounded_signal_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [100, 90, 80, 80, 80, 80, 80, 80],
+                complete_gate_evidence=True,
+            )
+            result_path = directory / "result.json"
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            result.update(
+                sample_id="S11-AUTOMATION-FACTORY",
+                signal_count_total=100,
+                signal_count_peak_per_frame=10,
+                signal_stop_pass=True,
+            )
+            result_path.write_text(json.dumps(result), encoding="utf-8")
+            value = analysis.analyze(directory)
+            self.assertTrue(value["signal_behavior_pass"])
+            self.assertTrue(value["performance_gate_pass"])
+            result["signal_stop_pass"] = False
+            result_path.write_text(json.dumps(result), encoding="utf-8")
+            value = analysis.analyze(directory)
+        self.assertFalse(value["signal_behavior_pass"])
+        self.assertFalse(value["performance_gate_pass"])
+
 
 if __name__ == "__main__":
     unittest.main()
