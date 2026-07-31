@@ -139,6 +139,22 @@ struct LanthanideProperties
 	unsigned int emissionColour;
 };
 
+struct ActinideProperties
+{
+	float acidThreshold;
+	float oxygenThreshold;
+	float boilingPoint;
+	int reactionHeat;
+	int decayProduct;
+	int captureProduct;
+	int lifeMin;
+	int lifeMax;
+	float decayHeat;
+	float captureHeat;
+	float pressure;
+	unsigned int emissionColour;
+};
+
 bool ConsumeEvent(Simulation *sim)
 {
 	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
@@ -414,6 +430,55 @@ LanthanideProperties LanthanidePropertiesFor(int type)
 	}
 }
 
+ActinideProperties ActinidePropertiesFor(int type)
+{
+	switch (type)
+	{
+	case PT_AC:
+		return { 330.0f, 650.0f, 3471.0f, 160, PT_FR, PT_TH,
+			720, 1200, 120.0f, 80.0f, 0.20f, 0xFFB8E8D0 };
+	case PT_TH:
+		return { 500.0f, 850.0f, 5061.0f, 100, PT_RA, PT_PA,
+			1200, 2000, 100.0f, 120.0f, 0.15f, 0xFFD8E8E8 };
+	case PT_PA:
+		return { 450.0f, 720.0f, 4300.0f, 140, PT_URAN, PT_URAN,
+			900, 1500, 140.0f, 150.0f, 0.22f, 0xFFA0D8C8 };
+	case PT_NP:
+		return { 400.0f, 650.0f, 4447.0f, 150, PT_PA, PT_PLUT,
+			720, 1200, 160.0f, 180.0f, 0.28f, 0xFF80B890 };
+	case PT_AM:
+		return { 350.0f, 600.0f, 2284.0f, 170, PT_NP, PT_CM,
+			600, 1000, 190.0f, 200.0f, 0.32f, 0xFFC0D078 };
+	case PT_CM:
+		return { 400.0f, 680.0f, 3383.0f, 180, PT_PLUT, PT_BK,
+			480, 840, 220.0f, 230.0f, 0.38f, 0xFFFFB070 };
+	case PT_BK:
+		return { 380.0f, 640.0f, 2900.0f, 190, PT_AM, PT_CF,
+			420, 720, 250.0f, 260.0f, 0.42f, 0xFFFF9080 };
+	case PT_CF:
+		return { 360.0f, 600.0f, 1743.0f, 210, PT_CM, PT_ES,
+			300, 540, 320.0f, 320.0f, 0.70f, 0xFFFFD060 };
+	case PT_ES:
+		return { 340.0f, 570.0f, 1269.0f, 220, PT_BK, PT_FM,
+			260, 480, 360.0f, 350.0f, 0.48f, 0xFFFF8050 };
+	case PT_FM:
+		return { 330.0f, 550.0f, 2200.0f, 230, PT_CF, PT_MD,
+			220, 420, 400.0f, 380.0f, 0.52f, 0xFFFF6070 };
+	case PT_MD:
+		return { 320.0f, 520.0f, 1400.0f, 240, PT_ES, PT_NO,
+			180, 360, 440.0f, 420.0f, 0.58f, 0xFFE860A0 };
+	case PT_NO:
+		return { 310.0f, 500.0f, 1500.0f, 250, PT_FM, PT_LR,
+			150, 300, 480.0f, 460.0f, 0.64f, 0xFFC870D8 };
+	case PT_LR:
+		return { 300.0f, 480.0f, 2200.0f, 260, PT_MD, NT,
+			120, 240, 520.0f, 500.0f, 0.72f, 0xFFA080FF };
+	default:
+		return { MAX_TEMP, MAX_TEMP, MAX_TEMP, 0, NT, NT,
+			0, 0, 0.0f, 0.0f, 0.0f, 0 };
+	}
+}
+
 bool IsAlkaliMetal(int type)
 {
 	return type == PT_NA || type == PT_K || type == PT_CS || type == PT_FR;
@@ -479,6 +544,15 @@ bool IsLanthanide(int type)
 		type == PT_EU || type == PT_GD || type == PT_TB ||
 		type == PT_DY || type == PT_HO || type == PT_ER ||
 		type == PT_TM || type == PT_YB || type == PT_LU;
+}
+
+bool IsActinideExtension(int type)
+{
+	return type == PT_AC || type == PT_TH || type == PT_PA ||
+		type == PT_NP || type == PT_AM || type == PT_CM ||
+		type == PT_BK || type == PT_CF || type == PT_ES ||
+		type == PT_FM || type == PT_MD || type == PT_NO ||
+		type == PT_LR;
 }
 
 bool IsHalogenReactiveMetal(int type)
@@ -3574,6 +3648,238 @@ bool UpdateLanthanide(UPDATE_FUNC_ARGS, int sourceType)
 	}
 	return OxidiseHotLanthanide(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
 }
+
+void InitialiseActinideState(Simulation *sim, Particle &particle, int type)
+{
+	auto properties = ActinidePropertiesFor(type);
+	particle.tmp = 0;
+	particle.tmp2 = 0;
+	particle.life = properties.lifeMin > 0 ?
+		sim->rng.between(properties.lifeMin, properties.lifeMax) : 0;
+}
+
+void ChangeActinideProduct(UPDATE_FUNC_ARGS, int product)
+{
+	if (parts[i].type == PT_LAVA && IsActinideExtension(product))
+	{
+		parts[i].ctype = product;
+		InitialiseActinideState(sim, parts[i], product);
+		return;
+	}
+	sim->part_change_type(i, x, y, product);
+	ResetReactionProduct(parts[i], product);
+	if (IsActinideExtension(product))
+	{
+		InitialiseActinideState(sim, parts[i], product);
+	}
+	else if (product == PT_FR)
+	{
+		parts[i].tmp = sim->rng.between(180, 360);
+	}
+	else if (product == PT_RA)
+	{
+		parts[i].tmp = sim->rng.between(900, 1800);
+	}
+}
+
+bool DecayActinide(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsActinideExtension(sourceType) || parts[i].life > 0)
+	{
+		return false;
+	}
+	auto properties = ActinidePropertiesFor(sourceType);
+	if (!ConsumeEvent(sim))
+	{
+		parts[i].life = 1;
+		return false;
+	}
+	auto temperature = std::min(parts[i].temp + properties.decayHeat, MAX_TEMP);
+	ChangeActinideProduct(UPDATE_FUNC_SUBCALL_ARGS, properties.decayProduct);
+	parts[i].temp = temperature;
+	int radiationType = sourceType == PT_CF ? PT_NEUT : PT_PHOT;
+	int radiation = sim->create_part(-3, x, y, radiationType);
+	if (radiation >= 0)
+	{
+		parts[radiation].temp = temperature;
+		parts[radiation].life = radiationType == PT_NEUT ? 24 : 18;
+		if (radiationType == PT_PHOT)
+		{
+			parts[radiation].ctype = 0x0003FFF0;
+		}
+	}
+	AddBoundedPressure(sim, x, y, properties.pressure);
+	return true;
+}
+
+bool CaptureActinideNeutron(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = ActinidePropertiesFor(sourceType);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			for (auto packed : { pmap[y + ry][x + rx], sim->photons[y + ry][x + rx] })
+			{
+				if (!packed || TYP(packed) != PT_NEUT)
+				{
+					continue;
+				}
+				auto neutron = ID(packed);
+				auto neutronTemperature = parts[neutron].temp;
+				bool fission = sourceType == PT_CF &&
+					std::max(parts[i].temp, neutronTemperature) >= 900.0f;
+				if (!ConsumeEvent(sim))
+				{
+					return false;
+				}
+				int captureCount = std::min(parts[i].tmp + 1, 255);
+				auto temperature = std::min(
+					std::max(parts[i].temp, neutronTemperature) +
+						properties.captureHeat + (fission ? 280.0f : 0.0f),
+					MAX_TEMP);
+				sim->kill_part(neutron);
+				int product = fission ? PT_CM : properties.captureProduct;
+				if (product != NT)
+				{
+					ChangeActinideProduct(UPDATE_FUNC_SUBCALL_ARGS, product);
+				}
+				else
+				{
+					parts[i].life = std::max(parts[i].life, 60);
+				}
+				parts[i].tmp = captureCount;
+				parts[i].temp = temperature;
+				if (fission)
+				{
+					int outgoing = sim->create_part(-3, x, y, PT_NEUT);
+					if (outgoing >= 0)
+					{
+						parts[outgoing].temp = temperature;
+						parts[outgoing].life = 24;
+					}
+					AddBoundedPressure(sim, x, y, 0.8f);
+				}
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool ReactActinideWithAcid(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = ActinidePropertiesFor(sourceType);
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_ACID)
+			{
+				continue;
+			}
+			auto acid = ID(packed);
+			if (std::max(parts[i].temp, parts[acid].temp) < properties.acidThreshold ||
+				!ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[acid].temp) +
+					float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_MSCR);
+			ResetReactionProduct(parts[i], PT_MSCR);
+			parts[i].ctype = sourceType;
+			sim->part_change_type(acid, x + rx, y + ry, PT_H2);
+			ResetReactionProduct(parts[acid], PT_H2);
+			parts[i].temp = temperature;
+			parts[acid].temp = temperature;
+			AddBoundedPressure(sim, x, y, properties.pressure);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool OxidiseHotActinide(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = ActinidePropertiesFor(sourceType);
+	if (parts[i].temp < properties.oxygenThreshold)
+	{
+		return false;
+	}
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = pmap[y + ry][x + rx];
+			if (!packed || TYP(packed) != PT_O2 || !ConsumeEvent(sim))
+			{
+				continue;
+			}
+			auto oxygen = ID(packed);
+			auto temperature = std::min(
+				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
+			sim->part_change_type(i, x, y, PT_MSCR);
+			ResetReactionProduct(parts[i], PT_MSCR);
+			parts[i].ctype = sourceType;
+			parts[i].temp = temperature;
+			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
+			ResetReactionProduct(parts[oxygen], PT_FIRE);
+			parts[oxygen].temp = temperature;
+			parts[oxygen].life = 20;
+			parts[oxygen].dcolour = properties.emissionColour;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool VaporiseActinide(UPDATE_FUNC_ARGS, int sourceType)
+{
+	auto properties = ActinidePropertiesFor(sourceType);
+	if (parts[i].temp < properties.boilingPoint || !ConsumeEvent(sim))
+	{
+		return false;
+	}
+	auto temperature = parts[i].temp;
+	sim->part_change_type(i, x, y, PT_FIRE);
+	ResetReactionProduct(parts[i], PT_FIRE);
+	parts[i].ctype = sourceType;
+	parts[i].temp = temperature;
+	parts[i].life = 45;
+	parts[i].dcolour = properties.emissionColour;
+	return true;
+}
+
+bool UpdateActinide(UPDATE_FUNC_ARGS, int sourceType)
+{
+	if (!IsActinideExtension(sourceType))
+	{
+		return false;
+	}
+	if (DecayActinide(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		CaptureActinideNeutron(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		VaporiseActinide(UPDATE_FUNC_SUBCALL_ARGS, sourceType) ||
+		ReactActinideWithAcid(UPDATE_FUNC_SUBCALL_ARGS, sourceType))
+	{
+		return true;
+	}
+	return OxidiseHotActinide(UPDATE_FUNC_SUBCALL_ARGS, sourceType);
+}
 }
 
 int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
@@ -3986,4 +4292,39 @@ void OmniLanthanideCreate(ELEMENT_CREATE_FUNC_ARGS)
 	{
 		sim->parts[i].life = 0;
 	}
+}
+
+int OmniActinideUpdate(UPDATE_FUNC_ARGS)
+{
+	return UpdateActinide(UPDATE_FUNC_SUBCALL_ARGS, parts[i].type) ? 1 : 0;
+}
+
+int OmniMoltenActinideUpdate(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_LAVA)
+	{
+		return 0;
+	}
+	return UpdateActinide(UPDATE_FUNC_SUBCALL_ARGS, parts[i].ctype) ? 1 : 0;
+}
+
+int OmniActinideGraphics(GRAPHICS_FUNC_ARGS)
+{
+	if (cpart->life > 0)
+	{
+		auto properties = ActinidePropertiesFor(cpart->type);
+		int intensity = std::min(
+			std::max(24, 150 - std::min(cpart->life / 8, 120)), 150);
+		*firea = intensity;
+		*firer = int((properties.emissionColour >> 16) & 0xFF);
+		*fireg = int((properties.emissionColour >> 8) & 0xFF);
+		*fireb = int(properties.emissionColour & 0xFF);
+		*pixel_mode |= PMODE_GLOW | FIRE_ADD;
+	}
+	return 0;
+}
+
+void OmniActinideCreate(ELEMENT_CREATE_FUNC_ARGS)
+{
+	InitialiseActinideState(sim, sim->parts[i], t);
 }

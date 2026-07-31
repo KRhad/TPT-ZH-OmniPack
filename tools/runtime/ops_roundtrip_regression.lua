@@ -152,6 +152,21 @@ local definitions = {
     thulium = { "OMNI_PT_TM", "TM", 420 },
     ytterbium = { "OMNI_PT_YB", "YB", 421 },
     lutetium = { "OMNI_PT_LU", "LU", 422 },
+    actinium = { "OMNI_PT_AC", "AC", 434 },
+    thorium = { "OMNI_PT_TH", "TH", 435 },
+    protactinium = { "OMNI_PT_PA", "PA", 436 },
+    uranium = { "DEFAULT_PT_URAN", "URAN", 32 },
+    neptunium = { "OMNI_PT_NP", "NP", 437 },
+    plutonium = { "DEFAULT_PT_PLUT", "PLUT", 19 },
+    americium = { "OMNI_PT_AM", "AM", 438 },
+    curium = { "OMNI_PT_CM", "CM", 439 },
+    berkelium = { "OMNI_PT_BK", "BK", 440 },
+    californium = { "OMNI_PT_CF", "CF", 441 },
+    einsteinium = { "OMNI_PT_ES", "ES", 442 },
+    fermium = { "OMNI_PT_FM", "FM", 443 },
+    mendelevium = { "OMNI_PT_MD", "MD", 444 },
+    nobelium = { "OMNI_PT_NO", "NO", 445 },
+    lawrencium = { "OMNI_PT_LR", "LR", 446 },
     hafnium = { "OMNI_PT_HF", "HF", 423 },
     tantalum = { "OMNI_PT_TA", "TA", 424 },
     rhenium = { "OMNI_PT_RE", "RE", 425 },
@@ -194,6 +209,9 @@ local module_keys = {
         "promethium", "samarium", "europium", "gadolinium",
         "terbium", "dysprosium", "holmium", "erbium", "thulium",
         "ytterbium", "lutetium",
+        "actinium", "thorium", "protactinium", "uranium", "neptunium",
+        "plutonium", "americium", "curium", "berkelium", "californium",
+        "einsteinium", "fermium", "mendelevium", "nobelium", "lawrencium",
         "hafnium", "tantalum", "rhenium", "osmium", "iridium",
     },
 }
@@ -235,6 +253,9 @@ elseif scenario ~= "official" then
     for _, key in ipairs(module_keys[scenario]) do
         validate_key(key)
     end
+    if scenario == "periodic" then
+        validate_key("mscr")
+    end
 end
 
 local fixtures = {}
@@ -274,8 +295,9 @@ local function add_fixture(name, particle_key, property_specs, create_key)
 end
 
 local function add_direct_module_fixture(key)
-    add_fixture("direct_" .. key .. "_gt255", key)
-    direct_gt255 = direct_gt255 + 1
+    local is_gt255 = ids[key] > 255
+    add_fixture("direct_" .. key .. (is_gt255 and "_gt255" or "_reused"), key)
+    if is_gt255 then direct_gt255 = direct_gt255 + 1 end
 end
 
 add_fixture("official_dust", "dust", {
@@ -334,11 +356,12 @@ local carrier_targets = {
         virs_tmp2 = "rshd",
     },
     periodic = {
-        lava = "promethium",
-        spark = "erbium",
-        conv_ctype = "lanthanum",
-        conv_tmp = "gadolinium",
-        virs_tmp2 = "lutetium",
+        lava = "californium",
+        spark = "lawrencium",
+        mscr = "actinium",
+        conv_ctype = "thorium",
+        conv_tmp = "americium",
+        virs_tmp2 = "nobelium",
     },
     mixed = {
         lava = "alum",

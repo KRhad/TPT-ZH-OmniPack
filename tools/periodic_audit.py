@@ -117,6 +117,22 @@ EXPECTED_LANTHANIDE_ELEMENTS = {
     422: "LU",
 }
 
+EXPECTED_ACTINIDE_ELEMENTS = {
+    434: "AC",
+    435: "TH",
+    436: "PA",
+    437: "NP",
+    438: "AM",
+    439: "CM",
+    440: "BK",
+    441: "CF",
+    442: "ES",
+    443: "FM",
+    444: "MD",
+    445: "NO",
+    446: "LR",
+}
+
 EXPECTED_NEW_ELEMENTS = (
     EXPECTED_NOBLE_ELEMENTS
     | EXPECTED_ALKALI_ELEMENTS
@@ -130,6 +146,7 @@ EXPECTED_NEW_ELEMENTS = (
     | EXPECTED_SECOND_TRANSITION_ELEMENTS
     | EXPECTED_THIRD_TRANSITION_ELEMENTS
     | EXPECTED_LANTHANIDE_ELEMENTS
+    | EXPECTED_ACTINIDE_ELEMENTS
 )
 
 
@@ -192,9 +209,9 @@ def check_source_map(root: Path, errors: list[str]) -> None:
     if [int(row["atomic_number"]) for row in rows] != list(range(1, 119)):
         errors.append(f"{path}: atomic numbers are not the complete ordered range 1..118")
     implemented = [row for row in rows if row.get("status") == "implemented"]
-    if len(implemented) != 96:
+    if len(implemented) != 109:
         errors.append(
-            f"{path}: expected 96 implemented mappings after the lanthanide batch "
+            f"{path}: expected 109 implemented mappings after the actinide batch "
             f"and found {len(implemented)}"
         )
     by_number = {int(row["atomic_number"]): row for row in rows}
@@ -219,6 +236,9 @@ def check_source_map(root: Path, errors: list[str]) -> None:
         57: 408, 58: 409, 59: 410, 60: 411, 61: 412,
         62: 413, 63: 414, 64: 415, 65: 416, 66: 417,
         67: 418, 68: 419, 69: 420, 70: 421, 71: 422,
+        89: 434, 90: 435, 91: 436, 92: 32, 93: 437,
+        94: 19, 95: 438, 96: 439, 97: 440, 98: 441,
+        99: 442, 100: 443, 101: 444, 102: 445, 103: 446,
     }
     for atomic_number, stable_id in expected_atomic.items():
         row = by_number.get(atomic_number, {})
@@ -316,6 +336,11 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "lanthanide fluorescence": "FluoresceLanthanide",
         "lanthanide photon amplification": "AmplifyLanthanidePhoton",
         "ytterbium water reaction": "ReactYtterbiumWithWater",
+        "actinide decay": "DecayActinide",
+        "actinide neutron transmutation": "CaptureActinideNeutron",
+        "actinide acid chemistry": "ReactActinideWithAcid",
+        "actinide oxidation": "OxidiseHotActinide",
+        "actinide vaporisation": "VaporiseActinide",
     }
     for label, marker in required.items():
         if marker not in engine:
@@ -462,6 +487,19 @@ def check_engine(root: Path, errors: list[str]) -> None:
         ):
             if marker not in text:
                 errors.append(f"{path}: missing periodic element marker {marker!r}")
+    for stable_id, name in EXPECTED_ACTINIDE_ELEMENTS.items():
+        path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
+        text = read_text(path, errors)
+        for marker in (
+            f'Identifier = "OMNI_PT_{name}"',
+            "HeatCapacity =",
+            "PROP_RADIOACTIVE",
+            "Update = &OmniActinideUpdate",
+            "Graphics = &OmniActinideGraphics",
+            "Create = &OmniActinideCreate",
+        ):
+            if marker not in text:
+                errors.append(f"{path}: missing periodic element marker {marker!r}")
     magnesium = read_text(
         root / "src" / "simulation" / "elements" / "MAGN.cpp", errors
     )
@@ -520,6 +558,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         errors.append("LAVA.cpp: molten third-transition ctype update hook is missing")
     if "OmniMoltenLanthanideUpdate" not in lava:
         errors.append("LAVA.cpp: molten lanthanide ctype update hook is missing")
+    if "OmniMoltenActinideUpdate" not in lava:
+        errors.append("LAVA.cpp: molten actinide ctype update hook is missing")
     liquid_nitrogen = read_text(
         root / "src" / "simulation" / "elements" / "LNTG.cpp", errors
     )
@@ -630,7 +670,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"periodic-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("periodic-audit: PASS (118 mapped, 96 implemented, 70 new periodic elements, 1024/frame)")
+        print("periodic-audit: PASS (118 mapped, 109 implemented, 83 new periodic elements, 1024/frame)")
     return 0
 
 

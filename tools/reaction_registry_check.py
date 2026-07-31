@@ -176,6 +176,12 @@ REQUIRED_REACTIONS = {
     "periodic.lanthanide_fluorescence",
     "periodic.lanthanide_photon_amplification",
     "periodic.ytterbium_water",
+    "periodic.actinide_decay",
+    "periodic.actinide_neutron_transmutation",
+    "periodic.californium_fission",
+    "periodic.actinide_acid",
+    "periodic.actinide_oxidation",
+    "periodic.actinide_vaporisation",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

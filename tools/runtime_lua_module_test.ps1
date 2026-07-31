@@ -79,7 +79,8 @@ try {
             $resultText -match "(?m)^OMNI_PERIODIC_FIRST_TRANSITION_ACTIVE=OMNI_PT_SC\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_SECOND_TRANSITION_ACTIVE=OMNI_PT_Y\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_THIRD_TRANSITION_ACTIVE=OMNI_PT_HF\r?$" -and
-            $resultText -match "(?m)^OMNI_PERIODIC_LANTHANIDE_ACTIVE=OMNI_PT_LA\r?$"
+            $resultText -match "(?m)^OMNI_PERIODIC_LANTHANIDE_ACTIVE=OMNI_PT_LA\r?$" -and
+            $resultText -match "(?m)^OMNI_PERIODIC_ACTINIDE_ACTIVE=OMNI_PT_AC\r?$"
         ) {
             $passed = $true
             break

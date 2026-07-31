@@ -4,8 +4,8 @@
 
 ## 审计对象
 
-- 生成时间（UTC）：`2026-07-31T19:52:24+00:00`
-- 当前提交：`7c49278b856461f61cec1cc4974db90c709968bb`
+- 生成时间（UTC）：`2026-07-31T20:32:56+00:00`
+- 当前提交：`54411e08b8215638f403c9bc181afb48d9ca5ea5`
 - 英文文件：`C:\Users\KR\TPT-ZH-OmniPack\src\lang\en-US.json`
 - 中文文件：`C:\Users\KR\TPT-ZH-OmniPack\src\lang\zh-CN.json`
 - 命令：`python tools/i18n_audit.py --check --write-report docs\I18N_AUDIT.md`
@@ -16,8 +16,8 @@
 
 | 指标 | 数量 |
 |---|---:|
-| 英文键总数 | 1438 |
-| 中文键总数 | 1438 |
+| 英文键总数 | 1464 |
+| 中文键总数 | 1464 |
 | 中文缺失键 | 0 |
 | 中文多余键 | 0 |
 | 英文/中文重复键 | 0 |
@@ -29,26 +29,26 @@
 | 结束控制错误 | 0 |
 | 疑似未翻译/保留英文项 | 37 |
 | 乱码/非法字符项 | 0 |
-| 宽度风险 | 0 |
-| 源码登记元素 | 313 |
+| 宽度风险 | 1 |
+| 源码登记元素 | 326 |
 | 缺少英文/中文元素短说明 | 0 |
 | 缺少英文/中文元素正式名称 | 0 |
 | 源码登记菜单 | 16 |
 | 缺少英文/中文菜单键 | 0 |
-| 源码字面量 Tr() 键 | 908 |
+| 源码字面量 Tr() 键 | 921 |
 | 缺少英文/中文 Tr() 键 | 0 |
 | 图鉴登记表行 | 462 |
 | 图鉴枚举所需键 | 31 |
 | 缺少英文/中文图鉴枚举键 | 0 |
 | 未知图鉴菜单类别 | 0 |
 | 发布阻塞错误 | 0 |
-| 人工复核警告 | 37 |
+| 人工复核警告 | 38 |
 
 ## 元素与菜单登记
 
-- 源码元素：313；短说明缺失（英/中）：0/0；正式名称缺失（英/中）：0/0。
+- 源码元素：326；短说明缺失（英/中）：0/0；正式名称缺失（英/中）：0/0。
 - 源码菜单：16；菜单键缺失（英/中）：0/0。
-- 源码字面量 `Tr()` 键：908；缺失（英/中）：0/0。
+- 源码字面量 `Tr()` 键：921；缺失（英/中）：0/0。
 
 元素四字符 `Name` 不视为正式英文/中文名称。当前审计约定正式名称键为 `sim.elem.<Identifier>.name`，现有 `sim.elem.<Identifier>` 继续作为短说明键。
 
@@ -71,6 +71,7 @@
 - `translation.identical` `search.status_publishing_suffix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
 - `translation.identical` `search.status_unfavouring_suffix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
 - `translation.identical` `search.status_unpublishing_suffix`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
+- `layout.width_risk` `sim.elem.OMNI_PT_NO`：启发式显示宽度 58 超过窄 UI 阈值 24；必须以实际字体截图复核。
 - `translation.identical` `sim.gol.2X2.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
 - `translation.identical` `sim.gol.34.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。
 - `translation.identical` `sim.gol.AMOE.name`：英中值完全相同；可能是代号、URL、格式片段或未翻译文本，需人工分类。

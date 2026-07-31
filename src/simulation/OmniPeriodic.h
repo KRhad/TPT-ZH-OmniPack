@@ -48,3 +48,7 @@ int OmniLanthanideUpdate(UPDATE_FUNC_ARGS);
 int OmniMoltenLanthanideUpdate(UPDATE_FUNC_ARGS);
 int OmniLanthanideGraphics(GRAPHICS_FUNC_ARGS);
 void OmniLanthanideCreate(ELEMENT_CREATE_FUNC_ARGS);
+int OmniActinideUpdate(UPDATE_FUNC_ARGS);
+int OmniMoltenActinideUpdate(UPDATE_FUNC_ARGS);
+int OmniActinideGraphics(GRAPHICS_FUNC_ARGS);
+void OmniActinideCreate(ELEMENT_CREATE_FUNC_ARGS);

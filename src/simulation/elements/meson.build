@@ -433,19 +433,19 @@ simulation_elem_names = [
 	'RN',   # 431: periodic Rn
 	'FR',   # 432: periodic Fr
 	'RA',   # 433: periodic Ra
-	disabler(), # 434: periodic Ac reserved
-	disabler(), # 435: periodic Th reserved
-	disabler(), # 436: periodic Pa reserved
-	disabler(), # 437: periodic Np reserved
-	disabler(), # 438: periodic Am reserved
-	disabler(), # 439: periodic Cm reserved
-	disabler(), # 440: periodic Bk reserved
-	disabler(), # 441: periodic Cf reserved
-	disabler(), # 442: periodic Es reserved
-	disabler(), # 443: periodic Fm reserved
-	disabler(), # 444: periodic Md reserved
-	disabler(), # 445: periodic No reserved
-	disabler(), # 446: periodic Lr reserved
+	'AC',   # 434: periodic Ac
+	'TH',   # 435: periodic Th
+	'PA',   # 436: periodic Pa
+	'NP',   # 437: periodic Np
+	'AM',   # 438: periodic Am
+	'CM',   # 439: periodic Cm
+	'BK',   # 440: periodic Bk
+	'CF',   # 441: periodic Cf
+	'ES',   # 442: periodic Es
+	'FM',   # 443: periodic Fm
+	'MD',   # 444: periodic Md
+	'NO',   # 445: periodic No
+	'LR',   # 446: periodic Lr
 	disabler(), # 447: periodic Rf reserved
 	disabler(), # 448: periodic Db reserved
 	disabler(), # 449: periodic Sg reserved
