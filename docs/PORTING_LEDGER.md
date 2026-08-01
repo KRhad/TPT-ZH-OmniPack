@@ -13,6 +13,7 @@
 | Phase 3 工业冶金首批 | Seppo `c3a8dd17...`；Cracker COPR `eb474d38...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、OmniPack contributors | 概念筛选、参数/行为适配、独立更新实现 | 稳定 ID 256–278 + 集中反应引擎 | TESTING | 23 元素、7 配方、5 材料行为；静态门禁与 Lua 运行回归 PASS |
 | Phase 3 基础化学首批 | Seppo `c3a8dd17...`；Cracker `ebbb9aab...`；Cyens `f01d992c...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、cbeimers113、OmniPack contributors | token/玩法需求参考，集中算法独立实现 | 稳定 ID 360–369 + 中央有界反应引擎 | TESTING | 10 元素、11 条反应路径、化学静态门禁与 Lua 真实运行回归 PASS |
 | 有机化学首批 | Cyens Source `1b74504e...`；OmniPack 当前实现 | DaveYognaught / cbeimers113、OmniPack contributors | `ACET/UREA` 为 GPL 概念重写，其余元素独立实现 | `CH4M..FATS=589..601` + `POLY=367` 原位升级 + `OmniOrganics` | TESTING | 13 新元素、15 反应、5 相变、1536 峰值、模块与化学 OPS 运行回归 PASS |
+| 有机/聚合物第二批 | OmniPack `a24af94f...` 基线；官方主元素仅作兼容复用 | OmniPack contributors；TPT contributors | 20 个元素与 13 条路径均为原创；六项同概念内容复用主元素 | `GLUC..EACT=602..621` + 扩展 `OmniOrganics` / 官方酵母挂接 | TESTING | 20 新元素、13 路径、6 聚合物路径、1536 峰值、专项运行回归 PASS |
 | Phase 5 受控核工业首批 | OmniPack 当前实现；Spike/Ultimata/Cracker 固定快照仅作范围参考 | OmniPack contributors；对应来源作者 | 玩法和风险边界参考，集中算法独立实现 | 稳定 ID 328–334 + 中央有界反应器引擎 | TESTING | 7 元素、4 类受控路径；静态门禁与 Lua 真实运行回归 PASS |
 | Phase 3 完整周期表十四批 | OmniPack `21b160a5...`、`bcf5accf...`、`546b8791...`、`5d9b9947...`、`de91bbb6...`、`2eeab9f3...`、`3c3c623a...`、`8066533a...`、`6c64c0a0...`、`b26112f9...`、`248c516a...`、`7c49278b...`、`54411e08...`、`518dd9a4...` 基线；候选目录只核对搜索覆盖 | OmniPack contributors | 原创族逻辑；未复制外部候选实现 | 前八个主族批次、三条过渡系、镧系、锕系及超重系共 92 个新固定 ID + 共享周期引擎 | TESTING | 92 新元素、118/118 映射；行为、预算、118 元素同图 OPS 与直接选择回归 PASS |
 | 汉化字体 | Dragonrster `445fab51...` | 未知 | 禁止发布 | 替换为可追溯字体 | BLOCKED | 名称、来源、许可证缺失 |
@@ -260,6 +261,14 @@ ALNI ALNC TERN MAGX PLTU
 机器可读来源统计因此为：第三方代码直接移植 `elements_ported=0`，有来源概念和文件追踪的重写 `elements_rewritten=2`，第三方更新函数逐行复制 `0`。这两个重写不满足用户要求的 50 元素“第一轮移植”数量，所以 `first_port_batch_complete=false` 继续保持。
 
 有机首批最终证据绑定 `build-organic-batch1-final2-clean`：从零构建 `712/712`、Meson static `27/27`、Python `184/184`，真实客户端有机专项、旧化学及全部既有内容回归通过；化学 OPS 覆盖 79 粒子/87 字段断言，六类合计 300 粒子/352 字段断言。开发 EXE SHA-256 为 `499F30834C8C3655AE14506C6BA936BB23BE7A3BE94699E38BC9BCC789CEFB25`。正式 600 秒压力、长跑和人工 GUI 仍为 `not_tested`。
+
+## 有机/聚合物第二批来源与去重记录
+
+`GLUC/STRC/CELU/PRPE/BDIE/VCHL/STYR/TFET/ADIP/DIAM/ERES/PPLY/PVCL/PSTY/NYLN/RUBR/EPXY/PTFE/BITM/EACT=602..621` 的构造器、属性配置、反应和测试均为本项目实现，没有复制外部模组代码或常量表。批次基线为 `a24af94f3a3efb2d1b87534128a7cd1b1a31ceca`。
+
+去重裁决固定为：官方 `OIL` 继续表示通用石油/润滑油，`WAX/MWAX` 继续作为石蜡相变对，`PLNT/WOOD` 保持生长/结构生物质，`POLY=367` 继续是唯一聚乙烯。`CELU` 因无生长精确纤维素和水解路径独立，`BITM` 因固态重质残余物及热软化路径独立；其余聚合物必须具有不同单体、物态、硬度、热分解、可燃性、毒烟或压力行为。
+
+最终证据绑定 `build-organic-batch2-final-clean`：20 个固定 ID、13 条反应、6 条聚合物路径、6 项 canonical merge 裁决，1,600 对丙烯样本转化 3,072 粒子且共享事件峰值恰为 1,536；从零构建 `732/732`、Meson static `28/28`、Python `188/188`（2 skip）通过。最终 EXE 为 319,076,020 字节，SHA-256 `6008DC000511307F946C1AA8B0DB6259007DE95ADE9BD9829AA7B6A8CCF98362`；同一 EXE 已复跑全部既有模块、六类 320 粒子 OPS、mixed OPS、别名和旧进度兼容。第三方机器统计保持 `elements_ported=0`、`elements_rewritten=2`，正式 600 秒压力、长跑和人工 GUI 仍独立跟踪。
 
 ### 当前测试证据（2026-08-01）
 

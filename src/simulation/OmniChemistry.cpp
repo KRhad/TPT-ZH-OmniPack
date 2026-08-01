@@ -1300,14 +1300,16 @@ int OmniChemistryYeastUpdate(UPDATE_FUNC_ARGS)
 	if (parts[i].type != PT_YEST || parts[i].temp < 295.0f || parts[i].temp > 310.0f
 		|| IsTouched(i, parts, sim))
 		return 0;
-	auto plant = FindLocal(x, y, PT_PLNT, i, parts, pmap, sim);
-	auto water = FindLocal(x, y, PT_WATR, plant.index, parts, pmap, sim);
-	if (plant.index < 0 || water.index < 0 || !ConsumeReactionBudget(sim))
+	auto substrate = FindLocal(x, y, PT_GLUC, i, parts, pmap, sim);
+	if (substrate.index < 0)
+		substrate = FindLocal(x, y, PT_PLNT, i, parts, pmap, sim);
+	auto water = FindLocal(x, y, PT_WATR, substrate.index, parts, pmap, sim);
+	if (substrate.index < 0 || water.index < 0 || !ConsumeReactionBudget(sim))
 		return 0;
 	auto temperature = parts[i].temp;
-	Convert(sim, plant, PT_ETHL, parts, temperature);
+	Convert(sim, substrate, PT_ETHL, parts, temperature);
 	Convert(sim, water, PT_CO2, parts, temperature);
-	Touch(plant.index, parts, sim);
+	Touch(substrate.index, parts, sim);
 	Touch(water.index, parts, sim);
 	Touch(i, parts, sim);
 	return 1;

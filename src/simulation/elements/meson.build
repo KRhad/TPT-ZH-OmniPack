@@ -601,6 +601,26 @@ simulation_elem_names = [
 	'ACTA', # 599: acetic acid
 	'UREA', # 600: urea
 	'FATS', # 601: fats and oils
+	'GLUC', # 602: glucose
+	'STRC', # 603: starch
+	'CELU', # 604: cellulose
+	'PRPE', # 605: propylene
+	'BDIE', # 606: butadiene
+	'VCHL', # 607: vinyl chloride
+	'STYR', # 608: styrene
+	'TFET', # 609: tetrafluoroethylene
+	'ADIP', # 610: adipic acid
+	'DIAM', # 611: diamine
+	'ERES', # 612: uncured epoxy resin
+	'PPLY', # 613: polypropylene
+	'PVCL', # 614: polyvinyl chloride
+	'PSTY', # 615: polystyrene
+	'NYLN', # 616: nylon
+	'RUBR', # 617: rubber
+	'EPXY', # 618: cured epoxy
+	'PTFE', # 619: polytetrafluoroethylene
+	'BITM', # 620: bitumen
+	'EACT', # 621: ethyl acetate
 ]
 
 simulation_elem_src = []

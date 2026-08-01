@@ -27,6 +27,10 @@ local ids = {
     isotope = must_element("OMNI_PT_CF52", 588),
     hydrogen2 = must_element("OMNI_PT_H2IS", 576),
     fats = must_element("OMNI_PT_FATS", 601),
+    epoxy_resin = must_element("OMNI_PT_ERES", 612),
+    epoxy = must_element("OMNI_PT_EPXY", 618),
+    ethyl_acetate = must_element("OMNI_PT_EACT", 621),
+    catalyst = must_element("OMNI_PT_CATA", 366),
     caustic = must_element("DEFAULT_PT_CAUS", 86),
     helium = must_element("OMNI_PT_HE", 370),
     fire = assert(elements.DEFAULT_PT_FIRE),
@@ -78,11 +82,16 @@ local function phase_one()
     local fire = sim.partCreate(-1, 301, 120, ids.fire)
     local fats = sim.partCreate(-1, 320, 120, ids.fats)
     local caustic = sim.partCreate(-1, 321, 120, ids.caustic)
+    local ethyl_acetate = sim.partCreate(-1, 340, 120, ids.ethyl_acetate)
+    local resin_first = sim.partCreate(-1, 360, 120, ids.epoxy_resin)
+    local resin_second = sim.partCreate(-1, 361, 120, ids.epoxy_resin)
+    local catalyst = sim.partCreate(-1, 360, 121, ids.catalyst)
     assert(acid >= 0 and base >= 0 and sterilizer >= 0 and pathogen >= 0
             and coolant >= 0 and waste >= 0 and scrap >= 0 and carbonic >= 0
             and ammonium_chloride >= 0 and engineering >= 0 and material >= 0
             and isotope >= 0 and hydrogen2 >= 0 and fire >= 0
-            and fats >= 0 and caustic >= 0,
+            and fats >= 0 and caustic >= 0 and ethyl_acetate >= 0
+            and resin_first >= 0 and resin_second >= 0 and catalyst >= 0,
         "failed to create enabled module fixtures")
     sim.partProperty(acid, "temp", 300.0)
     sim.partProperty(base, "temp", 300.0)
@@ -93,6 +102,10 @@ local function phase_one()
     sim.partProperty(ammonium_chloride, "temp", 550.0)
     sim.partProperty(fats, "temp", 380.0)
     sim.partProperty(caustic, "temp", 380.0)
+    sim.partProperty(ethyl_acetate, "temp", 340.0)
+    sim.partProperty(resin_first, "temp", 380.0)
+    sim.partProperty(resin_second, "temp", 380.0)
+    sim.partProperty(catalyst, "temp", 380.0)
     local stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
     assert(type(stamp) == "string" and stamp:match("^[0-9A-Fa-f]+$") and #stamp == 10,
         "failed to save enabled chemistry OPS fixture")
@@ -103,7 +116,7 @@ local function phase_one()
         "OMNI_DISABLED_MODULE_PHASE=1",
         "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
         "OMNI_DISABLED_MODULE_STAMP=" .. stamp,
-        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=16",
+        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=20",
     }
 end
 
@@ -119,6 +132,7 @@ local function phase_two()
         { "OMNI_PT_RFBK", ids.material },
         { "OMNI_PT_CF52", ids.isotope },
         { "OMNI_PT_FATS", ids.fats },
+        { "OMNI_PT_EACT", ids.ethyl_acetate },
         { "OMNI_PT_STER", ids.sterilizer },
         { "OMNI_PT_CHLR", ids.chlorine },
         { "OMNI_PT_HCLA", ids.hydrochloric },
@@ -169,6 +183,14 @@ local function phase_two()
     local fats = assert(sim.partID(320, 120), "loaded fats particle is missing")
     local caustic = assert(
         sim.partID(321, 120), "loaded caustic particle is missing")
+    local ethyl_acetate = assert(
+        sim.partID(340, 120), "loaded ethyl acetate particle is missing")
+    local resin_first = assert(
+        sim.partID(360, 120), "loaded first epoxy resin particle is missing")
+    local resin_second = assert(
+        sim.partID(361, 120), "loaded second epoxy resin particle is missing")
+    local catalyst = assert(
+        sim.partID(360, 121), "loaded organic catalyst particle is missing")
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
             and sim.partProperty(carbonic, "type") == ids.carbonic
@@ -180,6 +202,11 @@ local function phase_two()
         "disabled-module OPS load changed or deleted high-ID material")
     assert(sim.partProperty(isotope, "type") == ids.isotope,
         "disabled-module OPS load changed or deleted high-ID isotope")
+    assert(sim.partProperty(ethyl_acetate, "type") == ids.ethyl_acetate
+            and sim.partProperty(resin_first, "type") == ids.epoxy_resin
+            and sim.partProperty(resin_second, "type") == ids.epoxy_resin
+            and sim.partProperty(catalyst, "type") == ids.catalyst,
+        "disabled-module OPS load changed or deleted organic batch 2 particles")
     sim.updateUpTo()
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
@@ -197,6 +224,11 @@ local function phase_two()
     assert(sim.partProperty(fats, "type") == ids.fats
             and sim.partProperty(caustic, "type") == ids.caustic,
         "disabled organic saponification continued after OPS load")
+    assert(sim.partProperty(ethyl_acetate, "type") == ids.ethyl_acetate
+            and sim.partProperty(resin_first, "type") == ids.epoxy_resin
+            and sim.partProperty(resin_second, "type") == ids.epoxy_resin
+            and sim.partProperty(catalyst, "type") == ids.catalyst,
+        "disabled organic batch 2 curing or phase behavior continued after OPS load")
     assert(sim.partProperty(sterilizer, "type") == ids.sterilizer
             and sim.partProperty(pathogen, "type") == ids.pathogen,
         "disabled biology particles continued reacting after OPS load")
@@ -225,8 +257,8 @@ local function phase_two()
         "OMNI_DISABLED_MODULE_BATCH3=OMNI_PT_AMCL",
         "OMNI_DISABLED_MODULE_NUCLEAR=OMNI_PT_NCLT",
         "OMNI_DISABLED_MODULE_ISOTOPE=OMNI_PT_CF52",
-        "OMNI_DISABLED_MODULE_ORGANIC=OMNI_PT_FATS",
-        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=16",
+        "OMNI_DISABLED_MODULE_ORGANIC=OMNI_PT_EACT",
+        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=20",
         "OMNI_DISABLED_MODULE_UPDATE_EVENTS=0",
         "OMNI_DISABLED_MODULE_PERIODIC_ACTIVE=OMNI_PT_HE",
         "OMNI_DISABLED_MODULE_OPS_FORMAT=OPS1",

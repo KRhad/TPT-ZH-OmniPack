@@ -204,7 +204,7 @@ int main()
 	static_assert(PT_NITI == 520);
 	static_assert(PT_RFBK == 532);
 	static_assert(PT_CF52 == 588);
-	static_assert(PT_FATS == 601);
+	static_assert(PT_EACT == 621);
 	static_assert(PMAPBITS == 10);
 	static_assert(PT_NUM == 1024);
 
@@ -215,22 +215,22 @@ int main()
 		simulationData->elements[PT_RFBK].Identifier != "OMNI_PT_RFBK" ||
 		!simulationData->IsElement(PT_CF52) ||
 		simulationData->elements[PT_CF52].Identifier != "OMNI_PT_CF52" ||
-		!simulationData->IsElement(PT_FATS) ||
-		simulationData->elements[PT_FATS].Identifier != "OMNI_PT_FATS")
+		!simulationData->IsElement(PT_EACT) ||
+		simulationData->elements[PT_EACT].Identifier != "OMNI_PT_EACT")
 	{
-		return Fail("SOLD=512 RFBK=532 CF52=588 or FATS=601 is not an active stable element");
+		return Fail("SOLD=512 RFBK=532 CF52=588 or EACT=621 is not an active stable element");
 	}
 
 	constexpr std::array fixtures{
 		Fixture{ PT_SOLD, 0, 0, 0, 0, 0 },
 		Fixture{ PT_RFBK, 0, 0, 0, 0, 0 },
 		Fixture{ PT_CF52, 0, 0, 0, 0, 0 },
-		Fixture{ PT_FATS, 0, 0, 0, 0, 0 },
-		Fixture{ PT_LAVA, PT_FATS, 0, 0, 0, 0 },
-		Fixture{ PT_SPRK, PT_FATS, 0, 0, 0, 4 },
+		Fixture{ PT_EACT, 0, 0, 0, 0, 0 },
+		Fixture{ PT_LAVA, PT_EACT, 0, 0, 0, 0 },
+		Fixture{ PT_SPRK, PT_EACT, 0, 0, 0, 4 },
 		Fixture{ PT_BRMT, PT_NITI, 0, 0, OmniRecoverableScrapMarker, 0 },
-		Fixture{ PT_CONV, PT_FATS, PT_FATS, 0, 0, 0 },
-		Fixture{ PT_VIRS, 0, 0, PT_FATS, 0, 0 },
+		Fixture{ PT_CONV, PT_EACT, PT_EACT, 0, 0, 0 },
+		Fixture{ PT_VIRS, 0, 0, PT_EACT, 0, 0 },
 	};
 
 	GameSave source(Vec2<int>{ 8, 2 });
@@ -258,9 +258,9 @@ int main()
 	}
 	auto payload = DecompressPayload(serialised);
 	if (payload.empty() || !Contains(payload, std::string_view("OMNI_PT_SOLD\0", 13)) ||
-		!Contains(payload, std::string_view("OMNI_PT_FATS\0", 13)))
+		!Contains(payload, std::string_view("OMNI_PT_EACT\0", 13)))
 	{
-		return Fail("OPS palette does not contain the SOLD and FATS stable identifiers");
+		return Fail("OPS palette does not contain the SOLD and EACT stable identifiers");
 	}
 
 	GameSave loaded(serialised);
@@ -336,7 +336,7 @@ int main()
 
 	std::cout << "high-id-save-probe: PASS pmapbits=" << PMAPBITS
 		<< " pt_num=" << PT_NUM
-		<< " high_ids=" << PT_SOLD << "-" << PT_FATS
+		<< " high_ids=" << PT_SOLD << "-" << PT_EACT
 		<< " particles=" << fixtures.size()
 		<< " direct_types=4 ctype_carriers=4 tmp_carriers=1 tmp2_carriers=1"
 		<< " invalid_pmapbits_rejected=2 missing_identifier_detected=1"

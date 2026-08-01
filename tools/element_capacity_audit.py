@@ -37,8 +37,8 @@ def check_constants(root: Path, errors: list[str]) -> None:
         "isotope first": "OmniIsotopeFirstId = 576",
         "isotope last": "OmniIsotopeLastId = 588",
         "organic first": "OmniOrganicFirstId = 589",
-        "organic last": "OmniOrganicLastId = 601",
-        "future first": "OmniFutureContentFirstId = 602",
+        "organic last": "OmniOrganicLastId = 621",
+        "future first": "OmniFutureContentFirstId = 622",
         "future last": "OmniFutureContentLastId = 1023",
     }
     for label, marker in range_markers.items():

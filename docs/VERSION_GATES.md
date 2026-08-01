@@ -64,11 +64,11 @@ inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
 inorganic_elements_total=50
-engine_active_elements=432
+engine_active_elements=452
 compatibility_aliases=1
-total_playable_materials=431
+total_playable_materials=451
 element_registry_valid=true
-reaction_registry_entries=246
+reaction_registry_entries=259
 reaction_registry_valid=true
 inorganic_runtime_test=true
 inorganic_event_budget_test=true
@@ -180,7 +180,31 @@ organic_gui_visual_test=not_tested
 organic_formal_600s_stress_test=not_tested
 ```
 
-三批无机化学、工程合金首批、矿物/陶瓷/玻璃首批、代表性核素首批和有机化学首批通过不等于对应版本内容冻结；后续材料仍须继续去重、登记和验证。同概念候选的有价值行为应合并到主元素，而不是新增重复 ID。
+有机/聚合物第二批当前状态：
+
+```text
+organic_batch2_elements=20
+organic_batch2_ids=602..621
+organic_batch2_reaction_paths=13
+organic_batch2_polymer_paths=6
+organic_batch2_official_merges=6
+organic_batch2_event_budget=1536/frame
+organic_batch2_runtime_test=true
+organic_batch2_module_test=true
+organic_batch2_disabled_module_test=true
+organic_batch2_ops_roundtrip_test=true
+organic_batch2_high_id_probe=true
+organic_batch2_clean_build_pass=true
+organic_batch2_clean_build_targets=732
+organic_batch2_static_tests=28/28
+organic_batch2_python_tests=188/188
+organic_batch2_exe_bytes=319076020
+organic_batch2_exe_sha256=6008DC000511307F946C1AA8B0DB6259007DE95ADE9BD9829AA7B6A8CCF98362
+organic_batch2_gui_visual_test=not_tested
+organic_batch2_formal_600s_stress_test=not_tested
+```
+
+三批无机化学、工程合金首批、矿物/陶瓷/玻璃首批、代表性核素首批和两批有机内容通过不等于对应版本内容冻结；后续材料仍须继续去重、登记和验证。同概念候选的有价值行为应合并到主元素，而不是新增重复 ID。
 
 ## `0.9.0` 整理
 

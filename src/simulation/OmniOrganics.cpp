@@ -221,23 +221,127 @@ bool CrackHydrocarbon(
 	return true;
 }
 
-bool EthylenePolymerisation(UPDATE_FUNC_ARGS)
+bool PairPolymerisation(
+	UPDATE_FUNC_ARGS,
+	int sourceType,
+	int productType,
+	float minimumTemperature,
+	float maximumTemperature)
 {
-	if (parts[i].type != PT_ETHE || parts[i].temp < 430.0f
-		|| parts[i].temp > 650.0f || IsTouched(i, parts, sim))
+	if (parts[i].type != sourceType || parts[i].temp < minimumTemperature
+		|| parts[i].temp > maximumTemperature || IsTouched(i, parts, sim))
 		return false;
-	auto second = FindLocal(x, y, PT_ETHE, { i }, parts, pmap, sim);
+	auto second = FindLocal(x, y, sourceType, { i }, parts, pmap, sim);
 	auto catalyst = FindLocal(x, y, PT_CATA, { i, second.index }, parts, pmap, sim);
 	if (second.index < 0 || catalyst.index < 0
-		|| parts[catalyst.index].temp < 430.0f
+		|| parts[catalyst.index].temp < minimumTemperature
+		|| parts[catalyst.index].temp > maximumTemperature
+		|| !OmniConsumeChemistryEvent(sim))
+		return false;
+	auto temperature = std::min(
+		ReactionTemperature(parts, { i, second.index, catalyst.index }), 400.0f);
+	Convert(sim, { i, x, y }, productType, parts, temperature);
+	Convert(sim, second, productType, parts, temperature);
+	Touch(i, parts, sim);
+	Touch(second.index, parts, sim);
+	return true;
+}
+
+bool BiomoleculeHydrolysis(
+	UPDATE_FUNC_ARGS,
+	int sourceType,
+	float minimumTemperature,
+	float maximumTemperature)
+{
+	if (parts[i].type != sourceType || parts[i].temp < minimumTemperature
+		|| parts[i].temp > maximumTemperature || IsTouched(i, parts, sim))
+		return false;
+	auto water = FindLocal(x, y, PT_WATR, { i }, parts, pmap, sim);
+	auto catalyst = FindLocal(x, y, PT_CATA, { i, water.index }, parts, pmap, sim);
+	if (water.index < 0 || catalyst.index < 0
+		|| parts[catalyst.index].temp < minimumTemperature
+		|| parts[catalyst.index].temp > maximumTemperature
+		|| !OmniConsumeChemistryEvent(sim))
+		return false;
+	auto temperature = std::min(
+		ReactionTemperature(parts, { i, water.index, catalyst.index }), 350.0f);
+	Convert(sim, { i, x, y }, PT_GLUC, parts, temperature);
+	Touch(i, parts, sim);
+	Touch(water.index, parts, sim);
+	return true;
+}
+
+bool NylonCondensation(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_ADIP || parts[i].temp < 420.0f
+		|| parts[i].temp > 650.0f || IsTouched(i, parts, sim))
+		return false;
+	auto diamine = FindLocal(x, y, PT_DIAM, { i }, parts, pmap, sim);
+	auto catalyst = FindLocal(x, y, PT_CATA, { i, diamine.index }, parts, pmap, sim);
+	if (diamine.index < 0 || catalyst.index < 0
+		|| parts[catalyst.index].temp < 420.0f
 		|| parts[catalyst.index].temp > 650.0f
 		|| !OmniConsumeChemistryEvent(sim))
 		return false;
-	auto temperature = ReactionTemperature(parts, { i, second.index, catalyst.index });
-	Convert(sim, { i, x, y }, PT_POLY, parts, temperature);
-	Convert(sim, second, PT_POLY, parts, temperature);
+	auto temperature = std::min(
+		ReactionTemperature(parts, { i, diamine.index, catalyst.index }), 390.0f);
+	Convert(sim, { i, x, y }, PT_NYLN, parts, temperature);
+	Convert(sim, diamine, PT_WATR, parts, temperature);
 	Touch(i, parts, sim);
+	Touch(diamine.index, parts, sim);
+	return true;
+}
+
+bool Esterification(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_ACTA || parts[i].temp < 350.0f
+		|| parts[i].temp > 500.0f || IsTouched(i, parts, sim))
+		return false;
+	auto ethanol = FindLocal(x, y, PT_ETHL, { i }, parts, pmap, sim);
+	auto catalyst = FindLocal(x, y, PT_CATA, { i, ethanol.index }, parts, pmap, sim);
+	if (ethanol.index < 0 || catalyst.index < 0
+		|| parts[catalyst.index].temp < 350.0f
+		|| parts[catalyst.index].temp > 500.0f
+		|| !OmniConsumeChemistryEvent(sim))
+		return false;
+	auto temperature = std::min(
+		ReactionTemperature(parts, { i, ethanol.index, catalyst.index }), 340.0f);
+	Convert(sim, { i, x, y }, PT_EACT, parts, temperature);
+	Convert(sim, ethanol, PT_WATR, parts, temperature);
+	Touch(i, parts, sim);
+	Touch(ethanol.index, parts, sim);
+	return true;
+}
+
+bool BitumenResidue(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_CATA || parts[i].temp < 650.0f)
+		return false;
+	auto first = FindLocal(x, y, PT_OIL, { i }, parts, pmap, sim);
+	auto second = FindLocal(x, y, PT_OIL, { i, first.index }, parts, pmap, sim);
+	if (first.index < 0 || second.index < 0 || !OmniConsumeChemistryEvent(sim))
+		return false;
+	auto temperature = ReactionTemperature(parts, { i, first.index, second.index });
+	Convert(sim, first, PT_BITM, parts, std::min(temperature, 410.0f));
+	Convert(sim, second, PT_GAS, parts, temperature);
+	Touch(first.index, parts, sim);
 	Touch(second.index, parts, sim);
+	return true;
+}
+
+bool PvcThermalDecomposition(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_PVCL || parts[i].temp < 650.0f
+		|| IsTouched(i, parts, sim))
+		return false;
+	auto empty = FindEmpty(x, y, pmap);
+	if (empty.x < 0 || !OmniConsumeChemistryEvent(sim))
+		return false;
+	auto temperature = parts[i].temp;
+	if (CreateProduct(sim, empty, PT_CHLR, parts, temperature) < 0)
+		return false;
+	Convert(sim, { i, x, y }, PT_SMKE, parts, temperature);
+	Touch(i, parts, sim);
 	return true;
 }
 
@@ -468,6 +572,41 @@ void ConfigurePowder(
 	element.HighTemperature = decompositionPoint;
 	element.HighTemperatureTransition = product;
 }
+
+void ConfigureSolid(
+	Element &element,
+	RGB colour,
+	int weight,
+	int flammable,
+	int hardness,
+	int heatConduct,
+	float transitionTemperature,
+	int transitionType,
+	int properties = TYPE_SOLID | PROP_NEUTPASS)
+{
+	ConfigureBase(element, colour);
+	element.MenuSection = SC_SOLIDS;
+	element.Advection = 0.0f;
+	element.AirDrag = 0.0f * CFDS;
+	element.AirLoss = 0.90f;
+	element.Loss = 0.0f;
+	element.Collision = 0.0f;
+	element.Gravity = 0.0f;
+	element.Diffusion = 0.0f;
+	element.HotAir = 0.0f * CFDS;
+	element.Falldown = 0;
+	element.Flammable = flammable;
+	element.Hardness = hardness;
+	element.Weight = weight;
+	element.HeatConduct = heatConduct;
+	element.HeatCapacity = 1.70f;
+	element.Properties = properties;
+	if (transitionTemperature > 0.0f)
+	{
+		element.HighTemperature = transitionTemperature;
+		element.HighTemperatureTransition = transitionType;
+	}
+}
 }
 
 void OmniConfigureOrganicElement(Element &element, int type)
@@ -524,6 +663,75 @@ void OmniConfigureOrganicElement(Element &element, int type)
 		element.Collision = 0.05f;
 		element.Loss = 0.98f;
 		break;
+	case PT_GLUC:
+		ConfigurePowder(element, RGB::Unpack(0xF1E7C7), 44, 35, 455.0f, PT_SMKE);
+		break;
+	case PT_STRC:
+		ConfigurePowder(element, RGB::Unpack(0xEEE8D8), 50, 45, 525.0f, PT_FIRE);
+		break;
+	case PT_CELU:
+		ConfigureSolid(element, RGB::Unpack(0xE2D8B6), 72, 55, 34, 32, 590.0f, PT_FIRE);
+		break;
+	case PT_PRPE:
+		ConfigureGas(element, RGB::Unpack(0x8FD9C7), 1.35f, 6, 900, 1);
+		break;
+	case PT_BDIE:
+		ConfigureGas(element, RGB::Unpack(0x92CFC8), 1.10f, 7, 1000, 1);
+		break;
+	case PT_VCHL:
+		ConfigureGas(element, RGB::Unpack(0xA7D5A7), 1.00f, 9, 700, 1);
+		element.Properties = TYPE_GAS | PROP_NEUTPASS | PROP_DEADLY;
+		break;
+	case PT_STYR:
+		ConfigureLiquid(element, RGB::Unpack(0xD4C890), 38, 650, 418.0f, TYPE_LIQUID | PROP_DEADLY);
+		break;
+	case PT_TFET:
+		ConfigureGas(element, RGB::Unpack(0xC7E8DF), 1.20f, 8, 500, 1);
+		element.Properties = TYPE_GAS | PROP_NEUTPASS | PROP_DEADLY;
+		break;
+	case PT_ADIP:
+		ConfigurePowder(element, RGB::Unpack(0xECE4CF), 58, 20, 455.0f, PT_SMKE);
+		break;
+	case PT_DIAM:
+		ConfigurePowder(element, RGB::Unpack(0xD7D1B8), 54, 35, 480.0f, PT_SMKE);
+		element.Properties = TYPE_PART | PROP_NEUTPASS | PROP_DEADLY;
+		break;
+	case PT_ERES:
+		ConfigureLiquid(element, RGB::Unpack(0xD6A85F), 68, 65, 0.0f);
+		element.Collision = 0.08f;
+		element.Loss = 0.99f;
+		element.HighTemperature = 560.0f;
+		element.HighTemperatureTransition = PT_SMKE;
+		break;
+	case PT_PPLY:
+		ConfigureSolid(element, RGB::Unpack(0xE8E2D3), 88, 35, 38, 9, 445.0f, PT_MWAX);
+		break;
+	case PT_PVCL:
+		ConfigureSolid(element, RGB::Unpack(0xD8DFD0), 112, 8, 48, 8, 0.0f, NT, TYPE_SOLID | PROP_NEUTPASS | PROP_DEADLY);
+		break;
+	case PT_PSTY:
+		ConfigureSolid(element, RGB::Unpack(0xF0E5CC), 82, 45, 28, 7, 465.0f, PT_MWAX);
+		break;
+	case PT_NYLN:
+		ConfigureSolid(element, RGB::Unpack(0xE6DFC8), 94, 20, 58, 18, 535.0f, PT_MWAX);
+		break;
+	case PT_RUBR:
+		ConfigureSolid(element, RGB::Unpack(0x3C3834), 96, 60, 24, 5, 575.0f, PT_SMKE);
+		element.HighPressure = 18.0f;
+		element.HighPressureTransition = PT_PSTE;
+		break;
+	case PT_EPXY:
+		ConfigureSolid(element, RGB::Unpack(0xB9854E), 106, 15, 82, 10, 650.0f, PT_SMKE);
+		break;
+	case PT_PTFE:
+		ConfigureSolid(element, RGB::Unpack(0xF4F4EE), 118, 0, 52, 4, 875.0f, PT_SMKE);
+		break;
+	case PT_BITM:
+		ConfigureSolid(element, RGB::Unpack(0x211B18), 122, 30, 18, 14, 420.0f, PT_OIL);
+		break;
+	case PT_EACT:
+		ConfigureLiquid(element, RGB::Unpack(0xDCE6D0), 34, 800, 350.0f, TYPE_LIQUID | PROP_DEADLY);
+		break;
 	default:
 		break;
 	}
@@ -536,11 +744,23 @@ int OmniOrganicElementUpdate(UPDATE_FUNC_ARGS)
 	if (MethaneSynthesis(UPDATE_FUNC_SUBCALL_ARGS)
 		|| AcetyleneCyclisation(UPDATE_FUNC_SUBCALL_ARGS)
 		|| UreaSynthesis(UPDATE_FUNC_SUBCALL_ARGS)
+		|| BitumenResidue(UPDATE_FUNC_SUBCALL_ARGS)
 		|| MethaneSteamReforming(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CrackHydrocarbon(UPDATE_FUNC_SUBCALL_ARGS, PT_ETHA, PT_H2, 700.0f)
 		|| CrackHydrocarbon(UPDATE_FUNC_SUBCALL_ARGS, PT_PROP, PT_CH4M, 750.0f)
 		|| CrackHydrocarbon(UPDATE_FUNC_SUBCALL_ARGS, PT_BUTA, PT_ETHA, 800.0f)
-		|| EthylenePolymerisation(UPDATE_FUNC_SUBCALL_ARGS)
+		|| PairPolymerisation(UPDATE_FUNC_SUBCALL_ARGS, PT_ETHE, PT_POLY, 430.0f, 650.0f)
+		|| PairPolymerisation(UPDATE_FUNC_SUBCALL_ARGS, PT_PRPE, PT_PPLY, 430.0f, 650.0f)
+		|| PairPolymerisation(UPDATE_FUNC_SUBCALL_ARGS, PT_BDIE, PT_RUBR, 400.0f, 650.0f)
+		|| PairPolymerisation(UPDATE_FUNC_SUBCALL_ARGS, PT_VCHL, PT_PVCL, 430.0f, 650.0f)
+		|| PairPolymerisation(UPDATE_FUNC_SUBCALL_ARGS, PT_STYR, PT_PSTY, 360.0f, 410.0f)
+		|| PairPolymerisation(UPDATE_FUNC_SUBCALL_ARGS, PT_TFET, PT_PTFE, 450.0f, 700.0f)
+		|| PairPolymerisation(UPDATE_FUNC_SUBCALL_ARGS, PT_ERES, PT_EPXY, 330.0f, 450.0f)
+		|| BiomoleculeHydrolysis(UPDATE_FUNC_SUBCALL_ARGS, PT_STRC, 330.0f, 400.0f)
+		|| BiomoleculeHydrolysis(UPDATE_FUNC_SUBCALL_ARGS, PT_CELU, 360.0f, 500.0f)
+		|| NylonCondensation(UPDATE_FUNC_SUBCALL_ARGS)
+		|| Esterification(UPDATE_FUNC_SUBCALL_ARGS)
+		|| PvcThermalDecomposition(UPDATE_FUNC_SUBCALL_ARGS)
 		|| AlcoholOxidation(UPDATE_FUNC_SUBCALL_ARGS, PT_METH, PT_COMO, 450.0f, 700.0f)
 		|| AlcoholOxidation(UPDATE_FUNC_SUBCALL_ARGS, PT_ETHL, PT_ACTA, 330.0f, 520.0f)
 		|| AceticAcidKetonisation(UPDATE_FUNC_SUBCALL_ARGS)

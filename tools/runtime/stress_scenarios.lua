@@ -96,6 +96,26 @@ local ids = {
     poly = must_element("OMNI_PT_POLY", "POLY"),
     pero = must_element("OMNI_PT_PERO", "PERO"),
     fert = must_element("OMNI_PT_FERT", "FERT"),
+    glucose = must_element("OMNI_PT_GLUC", "GLUC"),
+    starch = must_element("OMNI_PT_STRC", "STRC"),
+    cellulose = must_element("OMNI_PT_CELU", "CELU"),
+    propylene = must_element("OMNI_PT_PRPE", "C3H6"),
+    butadiene = must_element("OMNI_PT_BDIE", "C4H6"),
+    vinyl_chloride = must_element("OMNI_PT_VCHL", "VCM"),
+    styrene = must_element("OMNI_PT_STYR", "STYR"),
+    tetrafluoroethylene = must_element("OMNI_PT_TFET", "C2F4"),
+    adipic_acid = must_element("OMNI_PT_ADIP", "ADIP"),
+    diamine = must_element("OMNI_PT_DIAM", "DIAM"),
+    epoxy_resin = must_element("OMNI_PT_ERES", "ERES"),
+    polypropylene = must_element("OMNI_PT_PPLY", "PPLY"),
+    pvc = must_element("OMNI_PT_PVCL", "PVC"),
+    polystyrene = must_element("OMNI_PT_PSTY", "PSTY"),
+    nylon = must_element("OMNI_PT_NYLN", "NYLN"),
+    rubber = must_element("OMNI_PT_RUBR", "RUBR"),
+    epoxy = must_element("OMNI_PT_EPXY", "EPXY"),
+    ptfe = must_element("OMNI_PT_PTFE", "PTFE"),
+    bitumen = must_element("OMNI_PT_BITM", "BITM"),
+    ethyl_acetate = must_element("OMNI_PT_EACT", "EACT"),
 }
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
@@ -293,7 +313,12 @@ local function chemistry(bounds)
     local types = {
         ids.chlr, ids.amon, ids.ethl, ids.kero, ids.gaso,
         ids.acty, ids.cata, ids.poly, ids.pero, ids.fert,
-        ids.oil, ids.water,
+        ids.oil, ids.water, ids.glucose, ids.starch, ids.cellulose,
+        ids.propylene, ids.butadiene, ids.vinyl_chloride, ids.styrene,
+        ids.tetrafluoroethylene, ids.adipic_acid, ids.diamine,
+        ids.epoxy_resin, ids.polypropylene, ids.pvc, ids.polystyrene,
+        ids.nylon, ids.rubber, ids.epoxy, ids.ptfe, ids.bitumen,
+        ids.ethyl_acetate,
     }
     grid(bounds, function(x, y, n)
         make(types[(n % #types) + 1], x, y, { temp = 430.0 })

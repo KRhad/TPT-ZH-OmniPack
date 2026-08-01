@@ -136,7 +136,7 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "methane synthesis": "bool MethaneSynthesis",
         "steam reforming": "bool MethaneSteamReforming",
         "alkane cracking": "bool CrackHydrocarbon",
-        "ethylene polymerisation": "bool EthylenePolymerisation",
+        "pair polymerisation": "bool PairPolymerisation",
         "alcohol oxidation": "bool AlcoholOxidation",
         "acetic ketonisation": "bool AceticAcidKetonisation",
         "aromatic cyclisation": "bool AcetyleneCyclisation",
@@ -159,7 +159,7 @@ def check_engine(root: Path, errors: list[str]) -> None:
         errors.append("OmniChemistry.cpp: obsolete acetylene-to-POLY path remains")
 
     content = read_text(root / "src" / "gui" / "game" / "OmniContent.h", errors)
-    for marker in ("OmniOrganicFirstId = 589", "OmniOrganicLastId = 601"):
+    for marker in ("OmniOrganicFirstId = 589", "OmniOrganicLastId = 621"):
         if marker not in content:
             errors.append(f"OmniContent.h: missing organic range marker {marker!r}")
 

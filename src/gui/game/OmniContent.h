@@ -74,8 +74,8 @@ constexpr int OmniEngineeringLastId = 575;
 constexpr int OmniIsotopeFirstId = 576;
 constexpr int OmniIsotopeLastId = 588;
 constexpr int OmniOrganicFirstId = 589;
-constexpr int OmniOrganicLastId = 601;
-constexpr int OmniFutureContentFirstId = 602;
+constexpr int OmniOrganicLastId = 621;
+constexpr int OmniFutureContentFirstId = 622;
 constexpr int OmniFutureContentLastId = 1023;
 
 std::array<OmniSettingDefinition, OmniSettingCount> const &GetOmniSettingDefinitions();

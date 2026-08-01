@@ -27,17 +27,18 @@ engineering_alloys_batch1_worktree_base=592643e168ffd111d1e11000eb2e538053c29d3c
 materials_batch1_worktree_base=a535656d21fb94c46a05f0091c826151a09adbf7
 isotope_batch1_worktree_base=8fbfb74745ba812acd690202a327f933585b27f0
 organic_batch1_worktree_base=4e001049781afde4bcd9d5db250903d73017b269
+organic_batch2_worktree_base=a24af94f3a3efb2d1b87534128a7cd1b1a31ceca
 pt_num=1024
 pmapbits=10
 official_active_elements=195
-omnipack_registered_elements=237
-omnipack_playable_elements=236
-engine_active_elements=432
+omnipack_registered_elements=257
+omnipack_playable_elements=256
+engine_active_elements=452
 compatibility_aliases=1
-total_playable_materials=431
-registered_slots=602
+total_playable_materials=451
+registered_slots=622
 reserved_slots=170
-unallocated_capacity_slots=422
+unallocated_capacity_slots=402
 enabled_content_modules=4
 periodic_elements_placeable=118
 periodic_elements_remaining=0
@@ -46,7 +47,15 @@ inorganic_batch2_elements=16
 inorganic_batch3_elements=18
 isotope_batch1_elements=13
 organic_batch1_elements=13
-reaction_registry_entries=246
+organic_batch2_elements=20
+organic_elements_total=33
+reaction_registry_entries=259
+organic_batch2_clean_build_pass=true
+organic_batch2_clean_build_targets=732
+organic_batch2_static_tests=28/28
+organic_batch2_python_tests=188/188
+organic_batch2_exe_bytes=319076020
+organic_batch2_exe_sha256=6008DC000511307F946C1AA8B0DB6259007DE95ADE9BD9829AA7B6A8CCF98362
 total_playable_materials_minimum=true
 periodic_table_ui=true
 save_format=OPS1/BZip2
@@ -200,6 +209,15 @@ release_ready=false
 - 全新 `build-organic-batch1-final2-clean` 从零构建 `712/712`，Meson static `27/27`、Python `184/184`（0 skip）通过；同一 EXE 复跑有机、旧化学、冶金、材料、核素、核工业、周期 118/118、生态双模式、模块、禁用模块、别名迁移、六类与 mixed OPS；EXE 为 312,419,572 字节，SHA-256 `499F30834C8C3655AE14506C6BA936BB23BE7A3BE94699E38BC9BCC789CEFB25`；
 - 正式 60 秒预热/600 秒有机压力、7,200 秒长跑、新材料/字形 GUI 与 DPI 视觉均为 `not_tested`，`release_ready=false`。
 
+## Phase 7 有机/聚合物第二批：`602..621`
+
+- 新增 `GLUC/STRC/CELU/PRPE/BDIE/VCHL/STYR/TFET/ADIP/DIAM/ERES/PPLY/PVCL/PSTY/NYLN/RUBR/EPXY/PTFE/BITM/EACT=602..621`；旧 `0..601` ID 与 identifier 全部不变，未来区从 622 开始；
+- 复用并优化主元素：官方 `OIL` 继续表示通用石油/润滑油，`WAX/MWAX` 继续承担蜡态代理，`PLNT/WOOD` 保持生长/结构生物质，`POLY=367` 仍是唯一聚乙烯；精确 `CELU/BITM` 只因独立反应与物态保留；
+- 新增淀粉/纤维素水解、葡萄糖优先发酵、五条单体聚合、尼龙缩合、环氧固化、酯化、沥青残余物及 PVC 热分解共 13 条路径；全部使用固定 `3x3` 邻域并共享化学 `1536/frame` 预算；
+- 开发 EXE 真实客户端专项已通过 20 元素、13 路径、6 聚合物路径、6 项官方主元素合并；1,600 对丙烯样本转化 3,072 粒子，峰值恰为 1,536；Meson static `28/28`、Python `188/188`（2 skip）通过；
+- 当前登记为 622 行、452 活动项、1 兼容别名和 451 可玩材料；OmniPack 为 257 登记 / 256 可玩，反应登记 259 条；全新 `build-organic-batch2-final-clean` 从零完成 `732/732`，static `28/28`、Python `188/188`（2 skip），EXE 为 319,076,020 字节，SHA-256 `6008DC000511307F946C1AA8B0DB6259007DE95ADE9BD9829AA7B6A8CCF98362`；
+- 同一最终 EXE 已复跑两批有机、旧化学、冶金、材料、核素、核工业、周期 118/118、生态双模式、模块直选/禁用、别名迁移、0.2 示例/教程、0.3 自动化、六类 320 粒子 OPS、mixed OPS、旧进度样本和 621 高位探针；正式压力、长跑和新增字形 GUI 仍为 `not_tested`，`release_ready=false`。
+
 ## Phase 1：纯沙盒方向清理
 
 - 删除玩家炼金服务、十阶段进度、元素发现锁、进度窗口和通知；
@@ -217,7 +235,7 @@ release_ready=false
 
 ## 下一步
 
-1. 继续生物分子、聚合物、有机燃料和电子材料批次；工程材料 `533..575` 只补充审计后仍有独立玩法的候选，不得覆盖旧槽或用重复空壳填充 1024 容量；
+1. 继续更多有机燃料、电子材料和生态污染批次；工程材料 `533..575` 只补充审计后仍有独立玩法的候选，不得覆盖旧槽或用重复空壳填充 1024 容量；
 2. 同概念模组候选只把许可证兼容的玩法增量合并到主元素，并登记来源与主元素回归；
 3. 为完整 118 元素与高位内容执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
 4. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
