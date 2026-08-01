@@ -477,6 +477,22 @@ simulation_elem_names = [
 	'SODI', # 475: inorganic sulfur dioxide
 	'NODI', # 476: inorganic nitrogen dioxide
 	'CAOX', # 477: inorganic calcium oxide
+	'CARA', # 478: inorganic carbonic acid
+	'H2SG', # 479: inorganic hydrogen sulfide
+	'AMWA', # 480: inorganic ammonia water
+	'BAOH', # 481: inorganic barium hydroxide
+	'KCL',  # 482: inorganic potassium chloride
+	'CACL', # 483: inorganic calcium chloride
+	'FECL', # 484: inorganic iron chloride
+	'NASF', # 485: inorganic sodium sulfate
+	'AMNT', # 486: inorganic ammonium nitrate
+	'NACO', # 487: inorganic sodium carbonate
+	'KPER', # 488: inorganic potassium permanganate
+	'ALOX', # 489: inorganic aluminium oxide
+	'MGOX', # 490: inorganic magnesium oxide
+	'FEOX', # 491: inorganic iron oxide
+	'CUOX', # 492: inorganic copper oxide
+	'ZNOX', # 493: inorganic zinc oxide
 ]
 
 simulation_elem_src = []

@@ -204,6 +204,21 @@ REQUIRED_REACTIONS = {
     "chemistry.carbon_monoxide_oxidation",
     "chemistry.sulfur_dioxide_recovery",
     "chemistry.nitrogen_dioxide_recovery",
+    "chemistry.ammonia_water_formation",
+    "chemistry.ammonia_water_release",
+    "chemistry.peroxide_metal_oxidation",
+    "chemistry.carbonic_acid_synthesis",
+    "chemistry.carbonic_acid_decomposition",
+    "chemistry.acid_oxide_neutralisation",
+    "chemistry.hydrochloric_metal_chloride",
+    "chemistry.chloride_dissolution",
+    "chemistry.iron_chloride_hydrolysis",
+    "chemistry.ammonium_nitrate_decomposition",
+    "chemistry.permanganate_sulfide_oxidation",
+    "chemistry.permanganate_fuel_oxidation",
+    "chemistry.hydrogen_sulfide_synthesis",
+    "chemistry.hydrogen_sulfide_oxidation",
+    "chemistry.metal_oxide_reduction",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

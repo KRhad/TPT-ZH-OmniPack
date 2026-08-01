@@ -38,6 +38,22 @@ EXPECTED_ELEMENTS = {
     475: "SODI",
     476: "NODI",
     477: "CAOX",
+    478: "CARA",
+    479: "H2SG",
+    480: "AMWA",
+    481: "BAOH",
+    482: "KCL",
+    483: "CACL",
+    484: "FECL",
+    485: "NASF",
+    486: "AMNT",
+    487: "NACO",
+    488: "KPER",
+    489: "ALOX",
+    490: "MGOX",
+    491: "FEOX",
+    492: "CUOX",
+    493: "ZNOX",
 }
 
 
@@ -117,6 +133,21 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "lime cycle": "PT_CAOX",
         "copper sulfate recovery": "PT_CUSF",
         "bounded carbon monoxide oxidation": "PT_COMO",
+        "peroxide metal oxidation": "PeroxideMetalOxidation",
+        "carbonic acid synthesis": "PT_CARA, parts, temperature",
+        "carbonic acid decomposition": "acidType == PT_CARA",
+        "ammonia water cycle": "PT_AMWA",
+        "acid oxide neutralisation": "AcidOxideProduct",
+        "chloride dissolution": "type == PT_KCL || type == PT_CACL",
+        "iron chloride hydrolysis": "type == PT_FECL",
+        "ammonium nitrate decomposition": "type == PT_AMNT",
+        "permanganate oxidation": "type == PT_KPER",
+        "hydrogen sulfide synthesis": "PT_S, i, parts, pmap, sim",
+        "hydrogen sulfide oxidation": "type == PT_H2SG",
+        "inorganic oxide network": "InorganicOxideNetwork",
+        "typed oxide reduction": "OxideReductionProduct",
+        "sodium carbonate product": "PT_NACO",
+        "barium hydroxide product": "PT_BAOH",
     }
     for label, marker in required_markers.items():
         if marker not in text:
@@ -175,7 +206,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"chemistry-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("chemistry-audit: PASS (26 elements, 27 bounded process/integration paths, 3x3 local)")
+        print("chemistry-audit: PASS (42 elements, 42 bounded process/integration paths, 3x3 local)")
     return 0
 
 

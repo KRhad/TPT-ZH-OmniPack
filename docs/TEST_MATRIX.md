@@ -10,7 +10,7 @@
 | 玩家任务、成就、科技树入口不存在 | 源码/文档 | PASS | 没有对应 C++ 玩家系统；路线已改写 |
 | 已启用模块元素可直接选择 | 源码/静态 | PASS | 统一限制仅含非法 ID、保留槽和模块关闭 |
 | Lua 创建门禁 | 编译/静态 | PASS | 不再包含进度分支；保留模块关闭和保留 ID 拦截 |
-| 四模块关闭后的 OPS、选择、创建与更新 | 实际运行 | PASS | 两进程、OPS1、7 个粒子保留、5 个代表元素拒绝选择/创建、模块事件 0，周期 `HE` 仍可用 |
+| 四模块关闭后的 OPS、选择、创建与更新 | 实际运行 | PASS | 两进程、OPS1、8 个粒子保留、6 个代表元素拒绝选择/创建（含 `CARA=478`）、模块事件 0，周期 `HE` 仍可用 |
 | 空模块设置入口 | 源码/i18n | PASS | 只显示四个真实模块及简化生物设置 |
 | 旧进度 OPS 加载与重存 | C++ 运行 | PASS | `legacy-progress-save-probe`，2 个真实旧样本、29 粒子 |
 | 新 OPS 不写 `omniAlchemy` | C++ 运行 | PASS | 解压重存 BSON 并检查字段不存在 |
@@ -33,7 +33,7 @@
 | 工业冶金 23 | PASS | PASS | PASS | 历史 PASS | ID `256..278` |
 | 局部生态 8 | PASS | PASS | PASS | 历史 PASS | ID `288..295`；完整/简化均通过 |
 | 受控核工业 7 | PASS | PASS | PASS | 历史 PASS | ID `328..334` |
-| 化学与无机物 26 | PASS | PASS | PASS | 预算帧 PASS | ID `360..369`、`462..477`；官方 `SALT=26` 复用为氯化钠 |
+| 化学与无机物 42 | PASS | PASS | PASS | 预算帧 PASS | ID `360..369`、`462..493`；官方 `SALT=26` 复用为氯化钠 |
 | 完整周期表十四批 92 | PASS | PASS | PASS | 预算帧 PASS | 新 ID `370..461` 全部启用；118/118 映射可用 |
 | 多模块混合 | PASS | 历史 PASS | 历史 PASS | 历史 PASS | Phase 1 正式混合压力尚未复跑 |
 
@@ -58,7 +58,7 @@
 | 单帧事件预算 | PASS | 1,200 个衰变或反应隔离样本逐批验证；鿔 1,200 粒子样本峰值不超过且可达到 `1024` |
 | 周期 ID OPS 与携带字段 | PASS | 3 进程、2 重启、2 加载、125 粒子、134 字段断言、118 个周期直接类型、103 个大于 255，覆盖 `MSCR.ctype` |
 | 周期内容无解锁直接选择 | PASS | 从 `HE`、`NA`、`CA` 到 `HF`、`LA`、`AC`、`RF` 的各批代表项均可直接选择 |
-| 新增中文字体与 Unicode 路径 | PASS | 字体为 14,742 字形/2,706 必需字符；补充平面 UTF-8 往返、字体查找和完整中文语言包离屏渲染通过；新增字形人工视觉 NOT RUN |
+| 新增中文字体与 Unicode 路径 | PASS | 字体为 14,744 字形/2,708 必需字符；补充平面 UTF-8 往返、字体查找和完整中文语言包离屏渲染通过；第二批新增 `抵/铵` 人工视觉 NOT RUN |
 | 本批 clean Release build | PASS | `build-periodic-superheavy-final-clean`，`605/605`；最终 EXE `EB56694250D2F8D88BFE138879FA50622BB3A1E4FD9D445BA6EC4AD3A611808F` |
 | 本批 Meson/Python 全量套件 | PASS | static `21/21`；Python `159/159`，0 skip |
 | 六类与 mixed OPS | PASS | 21 个 OPS 进程、14 重启、14 加载；六类 204 粒子/254 字段断言和 203 个稳定/调色板 identifier，mixed 11 粒子/20 字段断言 |
@@ -80,6 +80,25 @@
 | mixed OPS | PASS | 11 粒子、20 字段断言 |
 | 本批 clean Release build | PASS | `build-inorganic-batch1-gated-final-clean` 全量 `621/621`；static `21/21`；Python `160/160`，0 skip；最终 EXE 285,101,266 字节，SHA-256 `995317A93E2097FE0A11ADB6576C2697ED868D4593EFDEFC3A8CBDC5B919905B` |
 | 本批 GUI 材料说明、双语与 DPI | NOT RUN | 自动说明前缀和字体覆盖不替代可信桌面视觉检查 |
+
+### 无机化学第二批证据
+
+| 项目 | 状态 | 证据 |
+|---|---|---|
+| 16 个固定 ID、identifier 与模块映射 | PASS | `CARA..ZNOX=478..493`；登记门禁为 494 槽、367 活动、127 保留 |
+| 双语名称、图鉴和材料名前缀 | PASS | i18n 为 `1546/1546` 且缺失 0；内容门禁确认 172 个 OmniPack 元素双语完整；16 个新增说明均以对应材料名开头 |
+| 碳酸、硫化氢与氨水循环 | PASS | 通电催化合成、温度负例、碳酸热解、硫化氢热氧化、氨溶解与 371 K 以上释放均由真实客户端断言 |
+| 精确盐与有界氧化剂 | PASS | `KCL/CACL/FECL/NASF/AMNT/NACO` 精确路径、氯化物溶解/水解、硝酸铵单事件分解及高锰酸钾两条有界氧化路径通过 |
+| 五种氧化物差异 | PASS | 过氧化物生成 `ALOX/MGOX/FEOX/CUOX/ZNOX`；铁/铜/锌分别以 850/650/950 K 阈值由一氧化碳或氢还原，低温负例通过 |
+| 反应登记与静态审计 | PASS | `reaction-registry-check` 166 条；`chemistry-audit` 42 元素、42 个源码门禁标记；全部局部且共享 `1536/frame` |
+| 真实客户端化学回归 | PASS | `PATHS=58`、`ELEMENTS=42`、`INORGANIC_ELEMENTS=32`、`BATCH2_IDS=478-493` |
+| 化学单帧事件预算 | PASS | 1,800 个隔离样本；峰值恰为且不超过 `1536`，剩余输入延后处理 |
+| 模块直选与关闭门禁 | PASS | 启用时 `CARA=478` 可直接选取；四模块禁用 OPS 保留 8 粒子、更新事件 0，第二批代表项拒绝选择与创建 |
+| 化学 OPS 与携带字段 | PASS | 3 进程、2 重启、2 加载、48 粒子、56 字段断言、48 个稳定/调色板 identifier，覆盖全部 42 个化学材料 |
+| 六类与 mixed OPS | PASS | 六类合计 236 粒子、286 字段断言、235 个稳定/调色板 identifier；mixed 11 粒子、20 字段断言 |
+| 字体结构与离屏渲染 | PASS | 新增 `U+62B5/U+94F5` 后 14,744 字形、2,708 必需字符、Fusion 1,954、Unifont 0；Meson 字体验证与渲染探针均通过 |
+| 本批 clean Release build | PASS | `build-inorganic-batch2-final-clean` 全量 `637/637`；static `21/21`；Python 160 项（158 PASS、2 SKIP、0 FAIL）；EXE 290,240,495 字节，SHA-256 `C42AF0C961AA8C1D5645D32BAEC0A587CF704663C33D0427AC40B9C28A624EB7` |
+| 本批 GUI 材料说明、双语与 DPI | NOT RUN | 自动说明前缀、字体覆盖和离屏渲染不替代可信桌面视觉检查 |
 
 旧文件名中的 `tutorial` 或 `challenge` 表示开发用反应样例和回归场景，不是玩家任务系统，不参与元素可用性或存档进度。
 

@@ -65,8 +65,8 @@ constexpr int OmniChemistryLastId = 369;
 constexpr int OmniPeriodicFirstId = 370;
 constexpr int OmniPeriodicLastId = 461;
 constexpr int OmniChemistryExpansionFirstId = 462;
-constexpr int OmniChemistryExpansionLastId = 477;
-constexpr int OmniFutureContentFirstId = 478;
+constexpr int OmniChemistryExpansionLastId = 493;
+constexpr int OmniFutureContentFirstId = 494;
 constexpr int OmniFutureContentLastId = 511;
 
 std::array<OmniSettingDefinition, OmniSettingCount> const &GetOmniSettingDefinitions();

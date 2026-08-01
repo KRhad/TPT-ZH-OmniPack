@@ -57,13 +57,15 @@ periodic_0_2_release_gate=false
 
 每版必须满足登记、ID、双语、图鉴、来源、反应、相变、模块、OPS、性能和许可证测试。纯换色或无玩法差异材料不计入数量。
 
-当前 0.3.0 无机化学首批状态：
+当前 0.3.0 无机化学两批状态：
 
 ```text
 inorganic_batch1_elements=16
-total_playable_materials=351
+inorganic_batch2_elements=16
+inorganic_elements_total=32
+total_playable_materials=367
 element_registry_valid=true
-reaction_registry_entries=151
+reaction_registry_entries=166
 reaction_registry_valid=true
 inorganic_runtime_test=true
 inorganic_event_budget_test=true
@@ -74,7 +76,7 @@ inorganic_gui_visual_test=not_tested
 inorganic_0_3_release_gate=false
 ```
 
-首批通过不等于 0.3.0 内容完成；剩余酸、碱、盐、氧化物和工业无机物仍需继续实现、去重和验证。
+两批通过不等于 0.3.0 内容完成；剩余酸、碱、盐、氧化物和工业无机物仍需继续实现、去重和验证。
 
 ## `0.9.0` 整理
 

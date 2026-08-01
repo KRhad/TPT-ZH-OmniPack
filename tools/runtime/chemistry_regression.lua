@@ -36,6 +36,22 @@ local ids = {
     sulfur_dioxide = must_element("OMNI_PT_SODI", "SODI"),
     nitrogen_dioxide = must_element("OMNI_PT_NODI", "NODI"),
     calcium_oxide = must_element("OMNI_PT_CAOX", "CAOX"),
+    carbonic_acid = must_element("OMNI_PT_CARA", "CARA"),
+    hydrogen_sulfide = must_element("OMNI_PT_H2SG", "H2SG"),
+    ammonia_water = must_element("OMNI_PT_AMWA", "AMWA"),
+    barium_hydroxide = must_element("OMNI_PT_BAOH", "BAOH"),
+    potassium_chloride = must_element("OMNI_PT_KCL", "KCL"),
+    calcium_chloride = must_element("OMNI_PT_CACL", "CACL"),
+    iron_chloride = must_element("OMNI_PT_FECL", "FECL"),
+    sodium_sulfate = must_element("OMNI_PT_NASF", "NASF"),
+    ammonium_nitrate = must_element("OMNI_PT_AMNT", "AMNT"),
+    sodium_carbonate = must_element("OMNI_PT_NACO", "NACO"),
+    potassium_permanganate = must_element("OMNI_PT_KPER", "KPER"),
+    aluminium_oxide = must_element("OMNI_PT_ALOX", "ALOX"),
+    magnesium_oxide = must_element("OMNI_PT_MGOX", "MGOX"),
+    iron_oxide = must_element("OMNI_PT_FEOX", "FEOX"),
+    copper_oxide = must_element("OMNI_PT_CUOX", "CUOX"),
+    zinc_oxide = must_element("OMNI_PT_ZNOX", "ZNOX"),
     pathogen = must_element("OMNI_PT_PATH", "PATH"),
     humus = must_element("OMNI_PT_HUMS", "HUMS"),
     slag = must_element("OMNI_PT_SLAG", "SLAG"),
@@ -51,6 +67,7 @@ local ids = {
     co2 = assert(elements.DEFAULT_PT_CO2),
     spark = assert(elements.DEFAULT_PT_SPRK),
     salt = assert(elements.DEFAULT_PT_SALT),
+    salt_water = assert(elements.DEFAULT_PT_SLTW),
     caustic = assert(elements.DEFAULT_PT_CAUS),
     water_vapour = assert(elements.DEFAULT_PT_WTRV),
     glass = assert(elements.DEFAULT_PT_GLAS),
@@ -60,6 +77,12 @@ local ids = {
     fire = assert(elements.DEFAULT_PT_FIRE),
     aluminium = must_element("OMNI_PT_ALUM", "ALUM"),
     copper = must_element("OMNI_PT_COPR", "COPR"),
+    magnesium = must_element("OMNI_PT_MAGN", "MAGN"),
+    zinc = must_element("OMNI_PT_ZINC", "ZINC"),
+    calcium = must_element("OMNI_PT_CA", "CA"),
+    barium = must_element("OMNI_PT_BA", "BA"),
+    manganese = must_element("OMNI_PT_MN", "MN"),
+    sulfur = must_element("OMNI_PT_S", "S"),
 }
 
 local function configure_simulation()
@@ -400,9 +423,9 @@ local function run_inorganic_lime_and_bases()
     configure_simulation()
     local bicarbonate = make(ids.sodium_bicarbonate, 120, 120, 450.0)
     step()
-    assert(sim.partProperty(bicarbonate, "type") == ids.salt
+    assert(sim.partProperty(bicarbonate, "type") == ids.sodium_carbonate
         and count_type(ids.co2) == 1,
-        "hot sodium bicarbonate did not produce salt and carbon dioxide")
+        "hot sodium bicarbonate did not produce sodium carbonate and carbon dioxide")
 
     configure_simulation()
     base = make(ids.sodium_hydroxide, 120, 120, 340.0)
@@ -411,6 +434,242 @@ local function run_inorganic_lime_and_bases()
     assert(sim.partProperty(base, "type") == ids.salt
         and sim.partProperty(aluminium, "type") == ids.hydrogen,
         "warm sodium hydroxide did not attack aluminium and release hydrogen")
+end
+
+local function run_second_batch_acids_and_bases()
+    configure_simulation()
+    spark_catalyst(120, 120, 300.0)
+    local carbon_dioxide = make(ids.co2, 121, 120, 300.0)
+    local water = make(ids.water, 120, 121, 300.0)
+    local co2_diffusion = elements.property(ids.co2, "Diffusion")
+    elements.property(ids.co2, "Diffusion", 0.0)
+    step()
+    elements.property(ids.co2, "Diffusion", co2_diffusion)
+    assert(sim.partProperty(carbon_dioxide, "type") == ids.carbonic_acid
+        and sim.partProperty(water, "type") == ids.carbonic_acid,
+        "electrified catalyst did not hydrate carbon dioxide into carbonic acid")
+
+    configure_simulation()
+    local carbonic = make(ids.carbonic_acid, 120, 120, 340.0)
+    step()
+    assert(sim.partProperty(carbonic, "type") == ids.water
+        and count_type(ids.co2) == 1,
+        "warm carbonic acid did not release water and carbon dioxide")
+
+    configure_simulation()
+    local ammonia = make(ids.ammonia, 120, 120, 300.0)
+    water = make(ids.water, 121, 120, 300.0)
+    local ammonia_diffusion = elements.property(ids.ammonia, "Diffusion")
+    elements.property(ids.ammonia, "Diffusion", 0.0)
+    step()
+    elements.property(ids.ammonia, "Diffusion", ammonia_diffusion)
+    assert(sim.partProperty(ammonia, "type") == ids.ammonia_water
+        and sim.partProperty(water, "type") == ids.ammonia_water,
+        "cool ammonia and water did not form ammonia water")
+
+    configure_simulation()
+    local ammonia_water = make(ids.ammonia_water, 120, 120, 380.0)
+    step()
+    assert(sim.partProperty(ammonia_water, "type") == ids.ammonia
+        and count_type(ids.water_vapour) == 1,
+        "warm ammonia water did not release ammonia and steam")
+
+    local neutralisations = {
+        { ids.hydrochloric, ids.potassium_hydroxide, ids.potassium_chloride,
+            "hydrochloric acid and potassium hydroxide" },
+        { ids.hydrochloric, ids.calcium_hydroxide, ids.calcium_chloride,
+            "hydrochloric acid and calcium hydroxide" },
+        { ids.sulfuric, ids.sodium_hydroxide, ids.sodium_sulfate,
+            "sulfuric acid and sodium hydroxide" },
+        { ids.nitric, ids.ammonia_water, ids.ammonium_nitrate,
+            "nitric acid and ammonia water" },
+        { ids.carbonic_acid, ids.sodium_hydroxide, ids.sodium_carbonate,
+            "carbonic acid and sodium hydroxide" },
+        { ids.hydrochloric, ids.barium_hydroxide, ids.salt,
+            "hydrochloric acid and barium hydroxide" },
+    }
+    for _, case in ipairs(neutralisations) do
+        configure_simulation()
+        local acid = make(case[1], 120, 120, 300.0)
+        local base = make(case[2], 121, 120, 300.0)
+        step()
+        assert(sim.partProperty(acid, "type") == ids.water
+            and sim.partProperty(base, "type") == case[3],
+            case[4] .. " did not yield water and the expected salt")
+    end
+
+    configure_simulation()
+    local acid = make(ids.hydrochloric, 120, 120, 310.0)
+    local iron = make(ids.iron, 121, 120, 310.0)
+    step()
+    assert(sim.partProperty(acid, "type") == ids.hydrogen
+        and sim.partProperty(iron, "type") == ids.iron_chloride,
+        "hydrochloric acid and iron did not form hydrogen and iron chloride")
+end
+
+local function run_second_batch_salts()
+    configure_simulation()
+    local chloride = make(ids.potassium_chloride, 120, 120, 300.0)
+    local water = make(ids.water, 121, 120, 300.0)
+    step()
+    assert(sim.partProperty(chloride, "type") == ids.salt_water
+        and sim.partProperty(water, "type") == ids.water,
+        "potassium chloride did not dissolve into the salt-water proxy")
+
+    configure_simulation()
+    chloride = make(ids.calcium_chloride, 120, 120, 300.0)
+    water = make(ids.water, 121, 120, 300.0)
+    step()
+    assert(sim.partProperty(chloride, "type") == ids.salt_water
+        and sim.partProperty(water, "temp") > 350.0,
+        "calcium chloride dissolution did not produce warm salt water")
+
+    configure_simulation()
+    local iron_chloride = make(ids.iron_chloride, 120, 120, 300.0)
+    water = make(ids.water, 121, 120, 300.0)
+    step()
+    assert(sim.partProperty(iron_chloride, "type") == ids.iron_oxide
+        and sim.partProperty(water, "type") == ids.hydrochloric,
+        "iron chloride did not hydrolyse into iron oxide and hydrochloric acid")
+
+    configure_simulation()
+    local ammonium_nitrate = make(ids.ammonium_nitrate, 120, 120, 550.0)
+    step()
+    assert(sim.partProperty(ammonium_nitrate, "type") == ids.nitrogen_dioxide
+        and count_type(ids.water_vapour) == 1,
+        "hot ammonium nitrate did not produce bounded nitrogen dioxide and steam")
+
+    configure_simulation()
+    local permanganate = make(ids.potassium_permanganate, 120, 120, 300.0)
+    local sulfide = make(ids.hydrogen_sulfide, 121, 120, 300.0)
+    local sulfide_diffusion = elements.property(ids.hydrogen_sulfide, "Diffusion")
+    elements.property(ids.hydrogen_sulfide, "Diffusion", 0.0)
+    step()
+    elements.property(ids.hydrogen_sulfide, "Diffusion", sulfide_diffusion)
+    assert(sim.partProperty(permanganate, "type") == ids.manganese
+        and sim.partProperty(sulfide, "type") == ids.sulfuric,
+        "permanganate did not oxidise hydrogen sulfide into sulfuric acid")
+
+    configure_simulation()
+    permanganate = make(ids.potassium_permanganate, 120, 120, 500.0)
+    local coal = make(ids.coal, 121, 120, 500.0)
+    step()
+    assert(sim.partProperty(permanganate, "type") == ids.manganese
+        and sim.partProperty(coal, "type") == ids.fire
+        and sim.partProperty(coal, "life") > 0,
+        "hot permanganate did not produce bounded carbonaceous oxidation")
+end
+
+local function run_second_batch_oxides()
+    local oxidation_cases = {
+        { ids.aluminium, ids.aluminium_oxide, "aluminium" },
+        { ids.magnesium, ids.magnesium_oxide, "magnesium" },
+        { ids.iron, ids.iron_oxide, "iron" },
+        { ids.copper, ids.copper_oxide, "copper" },
+        { ids.zinc, ids.zinc_oxide, "zinc" },
+        { ids.barium, ids.barium_hydroxide, "barium" },
+    }
+    for _, case in ipairs(oxidation_cases) do
+        configure_simulation()
+        local peroxide = make(ids.peroxide, 120, 120, 320.0)
+        local metal = make(case[1], 121, 120, 320.0)
+        step()
+        assert(sim.partProperty(peroxide, "type") == ids.water
+            and sim.partProperty(metal, "type") == case[2],
+            "peroxide did not make the expected " .. case[3] .. " product")
+    end
+
+    local reduction_cases = {
+        { ids.copper_oxide, ids.carbon_monoxide, ids.copper, ids.co2, 700.0,
+            "copper oxide" },
+        { ids.iron_oxide, ids.hydrogen, ids.iron, ids.water, 900.0,
+            "iron oxide" },
+        { ids.zinc_oxide, ids.carbon_monoxide, ids.zinc, ids.co2, 1000.0,
+            "zinc oxide" },
+    }
+    for _, case in ipairs(reduction_cases) do
+        configure_simulation()
+        local oxide = make(case[1], 120, 120, case[5])
+        local reducer = make(case[2], 121, 120, case[5])
+        local diffusion = elements.property(case[2], "Diffusion")
+        elements.property(case[2], "Diffusion", 0.0)
+        step()
+        elements.property(case[2], "Diffusion", diffusion)
+        assert(sim.partProperty(oxide, "type") == case[3]
+            and sim.partProperty(reducer, "type") == case[4],
+            "hot reducing gas did not reduce " .. case[6])
+    end
+
+    configure_simulation()
+    local sulfuric = make(ids.sulfuric, 120, 120, 300.0)
+    local copper_oxide = make(ids.copper_oxide, 121, 120, 300.0)
+    step()
+    assert(sim.partProperty(sulfuric, "type") == ids.water
+        and sim.partProperty(copper_oxide, "type") == ids.copper_sulfate,
+        "sulfuric acid and copper oxide did not form copper sulfate")
+
+    configure_simulation()
+    local cold_oxide = make(ids.zinc_oxide, 120, 120, 900.0)
+    local cold_reducer = make(ids.carbon_monoxide, 121, 120, 900.0)
+    local co_diffusion = elements.property(ids.carbon_monoxide, "Diffusion")
+    elements.property(ids.carbon_monoxide, "Diffusion", 0.0)
+    step(3)
+    elements.property(ids.carbon_monoxide, "Diffusion", co_diffusion)
+    assert(sim.partProperty(cold_oxide, "type") == ids.zinc_oxide
+        and sim.partProperty(cold_reducer, "type") == ids.carbon_monoxide,
+        "zinc oxide reduced below its registered temperature threshold")
+end
+
+local function run_hydrogen_sulfide_cycle()
+    configure_simulation()
+    spark_catalyst(120, 120, 600.0)
+    local sulfur = make(ids.sulfur, 121, 120, 600.0)
+    local hydrogen = make(ids.hydrogen, 120, 121, 600.0)
+    local hydrogen_diffusion = elements.property(ids.hydrogen, "Diffusion")
+    elements.property(ids.hydrogen, "Diffusion", 0.0)
+    step()
+    elements.property(ids.hydrogen, "Diffusion", hydrogen_diffusion)
+    assert(sim.partProperty(sulfur, "type") == ids.hydrogen_sulfide
+        and sim.partProperty(hydrogen, "type") == ids.hydrogen_sulfide,
+        "electrified catalyst did not form bounded hydrogen sulfide")
+
+    configure_simulation()
+    local sulfide = make(ids.hydrogen_sulfide, 120, 120, 500.0)
+    local oxygen = make(ids.oxygen, 121, 120, 500.0)
+    local sulfide_diffusion = elements.property(ids.hydrogen_sulfide, "Diffusion")
+    local oxygen_diffusion = elements.property(ids.oxygen, "Diffusion")
+    elements.property(ids.hydrogen_sulfide, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    step()
+    elements.property(ids.hydrogen_sulfide, "Diffusion", sulfide_diffusion)
+    elements.property(ids.oxygen, "Diffusion", oxygen_diffusion)
+    assert(sim.partProperty(sulfide, "type") == ids.sulfur_dioxide
+        and sim.partProperty(oxygen, "type") == ids.water,
+        "hot oxygen did not convert hydrogen sulfide into sulfur dioxide and water")
+
+    configure_simulation()
+    local cold_sulfide = make(ids.hydrogen_sulfide, 120, 120, 400.0)
+    local cold_oxygen = make(ids.oxygen, 121, 120, 400.0)
+    elements.property(ids.hydrogen_sulfide, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    step(3)
+    elements.property(ids.hydrogen_sulfide, "Diffusion", sulfide_diffusion)
+    elements.property(ids.oxygen, "Diffusion", oxygen_diffusion)
+    assert(sim.partProperty(cold_sulfide, "type") == ids.hydrogen_sulfide
+        and sim.partProperty(cold_oxygen, "type") == ids.oxygen,
+        "hydrogen sulfide oxidised below its registered threshold")
+
+    configure_simulation()
+    spark_catalyst(120, 120, 280.0)
+    local cold_co2 = make(ids.co2, 121, 120, 280.0)
+    local cold_water = make(ids.water, 120, 121, 280.0)
+    local co2_diffusion = elements.property(ids.co2, "Diffusion")
+    elements.property(ids.co2, "Diffusion", 0.0)
+    step(3)
+    elements.property(ids.co2, "Diffusion", co2_diffusion)
+    assert(sim.partProperty(cold_co2, "type") == ids.co2
+        and count_type(ids.carbonic_acid) == 0,
+        "cold electrified catalyst hydrated carbon dioxide outside its window")
 end
 
 local function run_inorganic_salts_and_gases()
@@ -512,6 +771,10 @@ local function test()
     run_inorganic_acids()
     run_inorganic_lime_and_bases()
     run_inorganic_salts_and_gases()
+    run_second_batch_acids_and_bases()
+    run_second_batch_salts()
+    run_second_batch_oxides()
+    run_hydrogen_sulfide_cycle()
     return run_inorganic_budget()
 end
 
@@ -519,12 +782,13 @@ local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_CHEMISTRY_STATUS=PASS\n")
-    report:write("OMNI_CHEMISTRY_PATHS=29\n")
-    report:write("OMNI_CHEMISTRY_ELEMENTS=26\n")
-    report:write("OMNI_INORGANIC_ELEMENTS=16\n")
+    report:write("OMNI_CHEMISTRY_PATHS=58\n")
+    report:write("OMNI_CHEMISTRY_ELEMENTS=42\n")
+    report:write("OMNI_INORGANIC_ELEMENTS=32\n")
     report:write("OMNI_CHEMISTRY_BUDGET_EVENTS=" .. tostring(data) .. "\n")
     report:write("OMNI_CHEMISTRY_IDS=" .. ids.chlorine .. "-" .. ids.fertilizer .. "\n")
     report:write("OMNI_INORGANIC_IDS=" .. ids.hydrochloric .. "-" .. ids.calcium_oxide .. "\n")
+    report:write("OMNI_INORGANIC_BATCH2_IDS=" .. ids.carbonic_acid .. "-" .. ids.zinc_oxide .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")
     report:write("OMNI_CHEMISTRY_STATUS=FAIL\n")

@@ -328,14 +328,74 @@ bool AmmoniaReaction(UPDATE_FUNC_ARGS)
 	if (parts[i].type != PT_AMON || IsTouched(i, parts, sim))
 		return false;
 	auto acid = FindLocal(x, y, PT_ACID, i, parts, pmap, sim);
-	if (acid.index < 0 || !ConsumeReactionBudget(sim))
-		return false;
 	auto self = Slot{ i, x, y };
-	auto temperature = (parts[i].temp + parts[acid.index].temp) * 0.5f;
-	Convert(sim, self, PT_FERT, parts, temperature);
-	Convert(sim, acid, PT_FERT, parts, temperature);
+	if (acid.index >= 0 && ConsumeReactionBudget(sim))
+	{
+		auto temperature = (parts[i].temp + parts[acid.index].temp) * 0.5f;
+		Convert(sim, self, PT_FERT, parts, temperature);
+		Convert(sim, acid, PT_FERT, parts, temperature);
+		Touch(i, parts, sim);
+		Touch(acid.index, parts, sim);
+		return true;
+	}
+
+	auto water = FindLocal(x, y, PT_WATR, i, parts, pmap, sim);
+	if (water.index >= 0 && parts[i].temp >= 275.0f && parts[i].temp <= 315.0f
+		&& ConsumeReactionBudget(sim))
+	{
+		auto temperature = (parts[i].temp + parts[water.index].temp) * 0.5f;
+		Convert(sim, self, PT_AMWA, parts, temperature);
+		Convert(sim, water, PT_AMWA, parts, temperature);
+		Touch(i, parts, sim);
+		Touch(water.index, parts, sim);
+		return true;
+	}
+	return false;
+}
+
+int PeroxideOxidationProduct(int metal)
+{
+	switch (metal)
+	{
+	case PT_ALUM:
+		return PT_ALOX;
+	case PT_MAGN:
+		return PT_MGOX;
+	case PT_IRON:
+		return PT_FEOX;
+	case PT_COPR:
+		return PT_CUOX;
+	case PT_ZINC:
+		return PT_ZNOX;
+	case PT_CA:
+		return PT_CAOH;
+	case PT_BA:
+		return PT_BAOH;
+	default:
+		return PT_NONE;
+	}
+}
+
+bool PeroxideMetalOxidation(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].type != PT_PERO || IsTouched(i, parts, sim)
+		|| parts[i].temp < 285.0f || parts[i].temp > 600.0f)
+		return false;
+	auto metal = FindLocalOneOf(
+		x, y, { PT_ALUM, PT_MAGN, PT_IRON, PT_COPR, PT_ZINC, PT_CA, PT_BA },
+		i, parts, pmap, sim);
+	if (metal.index < 0 || !ConsumeReactionBudget(sim))
+		return false;
+	auto product = PeroxideOxidationProduct(parts[metal.index].type);
+	if (product == PT_NONE)
+		return false;
+	auto temperature = std::min(
+		(parts[i].temp + parts[metal.index].temp) * 0.5f + 55.0f,
+		MAX_TEMP);
+	Convert(sim, { i, x, y }, PT_WATR, parts, temperature);
+	Convert(sim, metal, product, parts, temperature);
 	Touch(i, parts, sim);
-	Touch(acid.index, parts, sim);
+	Touch(metal.index, parts, sim);
 	return true;
 }
 
@@ -359,12 +419,53 @@ bool FertilizerUse(UPDATE_FUNC_ARGS)
 bool IsInorganicAcid(int type)
 {
 	return type == PT_HCLA || type == PT_SULA || type == PT_NITA
-		|| type == PT_PHOA || type == PT_HYFA;
+		|| type == PT_PHOA || type == PT_HYFA || type == PT_CARA;
 }
 
 bool IsInorganicBase(int type)
 {
-	return type == PT_NAOH || type == PT_KOH || type == PT_CAOH;
+	return type == PT_NAOH || type == PT_KOH || type == PT_CAOH
+		|| type == PT_BAOH || type == PT_AMWA;
+}
+
+int NeutralisationProduct(int acid, int base)
+{
+	if (acid == PT_HCLA)
+	{
+		if (base == PT_KOH) return PT_KCL;
+		if (base == PT_CAOH) return PT_CACL;
+		if (base == PT_AMWA) return PT_FERT;
+	}
+	if (acid == PT_SULA && base == PT_NAOH) return PT_NASF;
+	if (acid == PT_NITA)
+	{
+		if (base == PT_KOH) return PT_KNIT;
+		if (base == PT_AMWA) return PT_AMNT;
+	}
+	if (acid == PT_PHOA && base == PT_AMWA) return PT_FERT;
+	if (acid == PT_CARA && base == PT_NAOH) return PT_NACO;
+	return PT_SALT;
+}
+
+int AcidOxideProduct(int acid, int oxide)
+{
+	if (acid == PT_HCLA)
+	{
+		if (oxide == PT_CAOX) return PT_CACL;
+		if (oxide == PT_FEOX) return PT_FECL;
+	}
+	if (acid == PT_SULA && oxide == PT_CUOX) return PT_CUSF;
+	return PT_SALT;
+}
+
+int AcidMetalProduct(int acid, int metal)
+{
+	if (acid == PT_HCLA)
+	{
+		if (metal == PT_IRON) return PT_FECL;
+		if (metal == PT_CA) return PT_CACL;
+	}
+	return PT_SALT;
 }
 
 float AcidMetalThreshold(int type)
@@ -393,6 +494,23 @@ bool InorganicAcidNetwork(UPDATE_FUNC_ARGS)
 		return false;
 
 	auto self = Slot{ i, x, y };
+	if (acidType == PT_CARA && parts[i].temp >= 330.0f)
+	{
+		auto empty = FindEmpty(x, y, pmap);
+		if (empty.x >= 0 && ConsumeReactionBudget(sim))
+		{
+			auto carbonDioxide = sim->create_part(-1, empty.x, empty.y, PT_CO2);
+			if (carbonDioxide >= 0)
+			{
+				auto temperature = parts[i].temp;
+				Convert(sim, self, PT_WATR, parts, temperature);
+				parts[carbonDioxide].temp = temperature;
+				Touch(i, parts, sim);
+				Touch(carbonDioxide, parts, sim);
+				return true;
+			}
+		}
+	}
 	if (acidType == PT_HYFA)
 	{
 		auto silica = FindLocalOneOf(
@@ -451,8 +569,23 @@ bool InorganicAcidNetwork(UPDATE_FUNC_ARGS)
 		}
 	}
 
+	auto oxide = FindLocalOneOf(
+		x, y, { PT_CAOX, PT_ALOX, PT_MGOX, PT_FEOX, PT_CUOX, PT_ZNOX },
+		i, parts, pmap, sim);
+	if (oxide.index >= 0 && parts[i].temp >= 285.0f
+		&& ConsumeReactionBudget(sim))
+	{
+		auto temperature = (parts[i].temp + parts[oxide.index].temp) * 0.5f + 35.0f;
+		auto product = AcidOxideProduct(acidType, parts[oxide.index].type);
+		Convert(sim, self, PT_WATR, parts, temperature);
+		Convert(sim, oxide, product, parts, temperature);
+		Touch(i, parts, sim);
+		Touch(oxide.index, parts, sim);
+		return true;
+	}
+
 	auto carbonate = FindLocalOneOf(
-		x, y, { PT_CACO, PT_NABC }, i, parts, pmap, sim);
+		x, y, { PT_CACO, PT_NABC, PT_NACO }, i, parts, pmap, sim);
 	if (carbonate.index >= 0)
 	{
 		auto empty = FindEmpty(x, y, pmap);
@@ -474,11 +607,11 @@ bool InorganicAcidNetwork(UPDATE_FUNC_ARGS)
 	}
 
 	auto base = FindLocalOneOf(
-		x, y, { PT_NAOH, PT_KOH, PT_CAOH }, i, parts, pmap, sim);
+		x, y, { PT_NAOH, PT_KOH, PT_CAOH, PT_BAOH, PT_AMWA },
+		i, parts, pmap, sim);
 	if (base.index >= 0 && ConsumeReactionBudget(sim))
 	{
-		auto product = acidType == PT_NITA && parts[base.index].type == PT_KOH
-			? PT_KNIT : PT_SALT;
+		auto product = NeutralisationProduct(acidType, parts[base.index].type);
 		auto temperature = (parts[i].temp + parts[base.index].temp) * 0.5f + 25.0f;
 		Convert(sim, self, PT_WATR, parts, temperature);
 		Convert(sim, base, product, parts, temperature);
@@ -490,7 +623,8 @@ bool InorganicAcidNetwork(UPDATE_FUNC_ARGS)
 	auto metal = FindLocalOneOf(
 		x, y, { PT_IRON, PT_ZINC, PT_ALUM, PT_MAGN, PT_CA }, i,
 		parts, pmap, sim);
-	if (metal.index >= 0 && parts[i].temp >= AcidMetalThreshold(acidType)
+	auto threshold = AcidMetalThreshold(acidType);
+	if (metal.index >= 0 && threshold < MAX_TEMP && parts[i].temp >= threshold
 		&& ConsumeReactionBudget(sim))
 	{
 		auto temperature = (parts[i].temp + parts[metal.index].temp) * 0.5f + 55.0f;
@@ -502,7 +636,8 @@ bool InorganicAcidNetwork(UPDATE_FUNC_ARGS)
 		else
 		{
 			Convert(sim, self, PT_H2, parts, temperature);
-			Convert(sim, metal, PT_SALT, parts, temperature);
+			Convert(sim, metal, AcidMetalProduct(acidType, parts[metal.index].type),
+				parts, temperature);
 		}
 		Touch(i, parts, sim);
 		Touch(metal.index, parts, sim);
@@ -553,13 +688,33 @@ bool InorganicBaseNetwork(UPDATE_FUNC_ARGS)
 		}
 	}
 
+	if (type == PT_AMWA && parts[i].temp >= 371.0f)
+	{
+		auto empty = FindEmpty(x, y, pmap);
+		if (empty.x >= 0 && ConsumeReactionBudget(sim))
+		{
+			auto steam = sim->create_part(-1, empty.x, empty.y, PT_WTRV);
+			if (steam >= 0)
+			{
+				auto temperature = parts[i].temp;
+				Convert(sim, self, PT_AMON, parts, temperature);
+				parts[steam].temp = temperature;
+				Touch(i, parts, sim);
+				Touch(steam, parts, sim);
+				return true;
+			}
+		}
+	}
+
 	if (type == PT_NAOH || type == PT_CAOH)
 	{
 		auto carbonDioxide = FindLocal(x, y, PT_CO2, i, parts, pmap, sim);
 		if (carbonDioxide.index >= 0 && parts[i].temp >= 285.0f
 			&& parts[i].temp <= 500.0f && ConsumeReactionBudget(sim))
 		{
-			auto product = type == PT_NAOH ? PT_NABC : PT_CACO;
+			auto product = type == PT_NAOH
+				? (parts[i].temp >= 360.0f ? PT_NACO : PT_NABC)
+				: PT_CACO;
 			auto temperature = (parts[i].temp + parts[carbonDioxide.index].temp) * 0.5f;
 			Convert(sim, self, product, parts, temperature);
 			Convert(sim, carbonDioxide, PT_WATR, parts, temperature);
@@ -605,6 +760,37 @@ bool InorganicSaltNetwork(UPDATE_FUNC_ARGS)
 			return true;
 		}
 	}
+	else if (type == PT_KCL || type == PT_CACL)
+	{
+		auto water = FindLocal(x, y, PT_WATR, i, parts, pmap, sim);
+		if (water.index >= 0 && parts[i].temp >= 275.0f
+			&& parts[i].temp <= 500.0f && ConsumeReactionBudget(sim))
+		{
+			auto heat = type == PT_CACL ? 75.0f : 20.0f;
+			auto temperature = std::min(
+				(parts[i].temp + parts[water.index].temp) * 0.5f + heat,
+				MAX_TEMP);
+			Convert(sim, self, PT_SLTW, parts, temperature);
+			parts[water.index].temp = temperature;
+			Touch(i, parts, sim);
+			Touch(water.index, parts, sim);
+			return true;
+		}
+	}
+	else if (type == PT_FECL)
+	{
+		auto water = FindLocal(x, y, PT_WATR, i, parts, pmap, sim);
+		if (water.index >= 0 && parts[i].temp >= 285.0f
+			&& parts[i].temp <= 500.0f && ConsumeReactionBudget(sim))
+		{
+			auto temperature = (parts[i].temp + parts[water.index].temp) * 0.5f + 30.0f;
+			Convert(sim, self, PT_FEOX, parts, temperature);
+			Convert(sim, water, PT_HCLA, parts, temperature);
+			Touch(i, parts, sim);
+			Touch(water.index, parts, sim);
+			return true;
+		}
+	}
 	else if (type == PT_KNIT && parts[i].temp >= 550.0f)
 	{
 		auto fuel = FindLocalOneOf(
@@ -620,6 +806,57 @@ bool InorganicSaltNetwork(UPDATE_FUNC_ARGS)
 			Touch(i, parts, sim);
 			Touch(fuel.index, parts, sim);
 			return true;
+		}
+	}
+	else if (type == PT_AMNT && parts[i].temp >= 520.0f)
+	{
+		auto empty = FindEmpty(x, y, pmap);
+		if (empty.x >= 0 && ConsumeReactionBudget(sim))
+		{
+			auto steam = sim->create_part(-1, empty.x, empty.y, PT_WTRV);
+			if (steam >= 0)
+			{
+				auto temperature = std::min(parts[i].temp + 120.0f, MAX_TEMP);
+				Convert(sim, self, PT_NODI, parts, temperature);
+				parts[steam].temp = temperature;
+				Touch(i, parts, sim);
+				Touch(steam, parts, sim);
+				return true;
+			}
+		}
+	}
+	else if (type == PT_KPER)
+	{
+		auto sulfide = FindLocal(x, y, PT_H2SG, i, parts, pmap, sim);
+		if (sulfide.index >= 0 && parts[i].temp >= 285.0f
+			&& ConsumeReactionBudget(sim))
+		{
+			auto temperature = std::min(
+				(parts[i].temp + parts[sulfide.index].temp) * 0.5f + 90.0f,
+				MAX_TEMP);
+			Convert(sim, self, PT_MN, parts, temperature);
+			Convert(sim, sulfide, PT_SULA, parts, temperature);
+			Touch(i, parts, sim);
+			Touch(sulfide.index, parts, sim);
+			return true;
+		}
+		if (parts[i].temp >= 480.0f)
+		{
+			auto fuel = FindLocalOneOf(
+				x, y, { PT_COAL, PT_BCOL, PT_DUST, PT_WOOD },
+				i, parts, pmap, sim);
+			if (fuel.index >= 0 && ConsumeReactionBudget(sim))
+			{
+				auto temperature = std::min(
+					(parts[i].temp + parts[fuel.index].temp) * 0.5f + 260.0f,
+					MAX_TEMP);
+				Convert(sim, self, PT_MN, parts, temperature);
+				Convert(sim, fuel, PT_FIRE, parts, temperature);
+				parts[fuel.index].life = 18;
+				Touch(i, parts, sim);
+				Touch(fuel.index, parts, sim);
+				return true;
+			}
 		}
 	}
 	else if (type == PT_CACO && parts[i].temp >= 1100.0f)
@@ -648,7 +885,7 @@ bool InorganicSaltNetwork(UPDATE_FUNC_ARGS)
 			if (carbonDioxide >= 0)
 			{
 				auto temperature = parts[i].temp;
-				Convert(sim, self, PT_SALT, parts, temperature);
+				Convert(sim, self, PT_NACO, parts, temperature);
 				parts[carbonDioxide].temp = temperature;
 				Touch(i, parts, sim);
 				Touch(carbonDioxide, parts, sim);
@@ -698,7 +935,81 @@ bool InorganicGasNetwork(UPDATE_FUNC_ARGS)
 			return true;
 		}
 	}
+	else if (type == PT_H2SG)
+	{
+		auto oxygen = FindLocal(x, y, PT_O2, i, parts, pmap, sim);
+		if (oxygen.index >= 0
+			&& std::max(parts[i].temp, parts[oxygen.index].temp) >= 450.0f
+			&& ConsumeReactionBudget(sim))
+		{
+			auto temperature = std::min(
+				std::max(parts[i].temp, parts[oxygen.index].temp) + 140.0f,
+				MAX_TEMP);
+			Convert(sim, self, PT_SODI, parts, temperature);
+			Convert(sim, oxygen, PT_WATR, parts, temperature);
+			Touch(i, parts, sim);
+			Touch(oxygen.index, parts, sim);
+			return true;
+		}
+	}
 	return false;
+}
+
+int OxideReductionProduct(int oxide)
+{
+	switch (oxide)
+	{
+	case PT_FEOX:
+		return PT_IRON;
+	case PT_CUOX:
+		return PT_COPR;
+	case PT_ZNOX:
+		return PT_ZINC;
+	default:
+		return PT_NONE;
+	}
+}
+
+float OxideReductionThreshold(int oxide)
+{
+	switch (oxide)
+	{
+	case PT_CUOX:
+		return 650.0f;
+	case PT_FEOX:
+		return 850.0f;
+	case PT_ZNOX:
+		return 950.0f;
+	default:
+		return MAX_TEMP;
+	}
+}
+
+bool InorganicOxideNetwork(UPDATE_FUNC_ARGS)
+{
+	auto oxideType = parts[i].type;
+	auto product = OxideReductionProduct(oxideType);
+	if (product == PT_NONE || IsTouched(i, parts, sim))
+		return false;
+	auto reducer = FindLocalOneOf(
+		x, y, { PT_COMO, PT_H2 }, i, parts, pmap, sim);
+	if (reducer.index < 0
+		|| std::max(parts[i].temp, parts[reducer.index].temp)
+			< OxideReductionThreshold(oxideType)
+		|| !ConsumeReactionBudget(sim))
+	{
+		return false;
+	}
+	auto reducerType = parts[reducer.index].type;
+	auto temperature = std::min(
+		std::max(parts[i].temp, parts[reducer.index].temp) + 70.0f,
+		MAX_TEMP);
+	Convert(sim, { i, x, y }, product, parts, temperature);
+	Convert(sim, reducer, reducerType == PT_COMO ? PT_CO2 : PT_WATR,
+		parts, temperature);
+	Touch(i, parts, sim);
+	Touch(reducer.index, parts, sim);
+	return true;
 }
 }
 
@@ -711,6 +1022,7 @@ int OmniChemistryElementUpdate(UPDATE_FUNC_ARGS)
 		|| CatalyticCracking(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CatalyticPolymerisation(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CatalyticPeroxideDecomposition(UPDATE_FUNC_SUBCALL_ARGS)
+		|| PeroxideMetalOxidation(UPDATE_FUNC_SUBCALL_ARGS)
 		|| ChlorineReaction(UPDATE_FUNC_SUBCALL_ARGS)
 		|| AmmoniaReaction(UPDATE_FUNC_SUBCALL_ARGS)
 		|| FertilizerUse(UPDATE_FUNC_SUBCALL_ARGS))
@@ -727,6 +1039,7 @@ int OmniInorganicElementUpdate(UPDATE_FUNC_ARGS)
 	if (InorganicAcidNetwork(UPDATE_FUNC_SUBCALL_ARGS)
 		|| InorganicBaseNetwork(UPDATE_FUNC_SUBCALL_ARGS)
 		|| InorganicSaltNetwork(UPDATE_FUNC_SUBCALL_ARGS)
+		|| InorganicOxideNetwork(UPDATE_FUNC_SUBCALL_ARGS)
 		|| InorganicGasNetwork(UPDATE_FUNC_SUBCALL_ARGS))
 	{
 		return 1;
@@ -781,6 +1094,35 @@ int OmniChemistrySparkUpdate(UPDATE_FUNC_ARGS)
 		Touch(hydrogenOne.index, parts, sim);
 		Touch(hydrogenTwo.index, parts, sim);
 		Touch(hydrogenThree.index, parts, sim);
+		Touch(i, parts, sim);
+		return 1;
+	}
+	auto sulfur = FindLocal(x, y, PT_S, i, parts, pmap, sim);
+	auto sulfideHydrogen = FindLocal(x, y, PT_H2, sulfur.index, parts, pmap, sim);
+	if (sulfur.index >= 0 && sulfideHydrogen.index >= 0
+		&& parts[i].temp >= 450.0f && parts[i].temp <= 800.0f
+		&& ConsumeReactionBudget(sim))
+	{
+		auto temperature = parts[i].temp;
+		Convert(sim, sulfur, PT_H2SG, parts, temperature);
+		Convert(sim, sulfideHydrogen, PT_H2SG, parts, temperature);
+		Touch(sulfur.index, parts, sim);
+		Touch(sulfideHydrogen.index, parts, sim);
+		Touch(i, parts, sim);
+		return 1;
+	}
+	auto carbonDioxide = FindLocal(x, y, PT_CO2, i, parts, pmap, sim);
+	auto carbonicWater = FindLocal(
+		x, y, PT_WATR, carbonDioxide.index, parts, pmap, sim);
+	if (carbonDioxide.index >= 0 && carbonicWater.index >= 0
+		&& parts[i].temp >= 285.0f && parts[i].temp <= 325.0f
+		&& ConsumeReactionBudget(sim))
+	{
+		auto temperature = parts[i].temp;
+		Convert(sim, carbonDioxide, PT_CARA, parts, temperature);
+		Convert(sim, carbonicWater, PT_CARA, parts, temperature);
+		Touch(carbonDioxide.index, parts, sim);
+		Touch(carbonicWater.index, parts, sim);
 		Touch(i, parts, sim);
 		return 1;
 	}
