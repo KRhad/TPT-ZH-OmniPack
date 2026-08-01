@@ -226,8 +226,8 @@ release_ready=false
 - 周期表 `P` 按钮与搜索按钮各自保留固定区域，右侧 30 px 元素按钮退至 `WINDOWW-72`；扩展气体改用与官方 `TYPE_GAS` 相同的 `FIRE_BLEND + DECO_FIRE` 云团底层，放电和放射性辉光继续叠加。两项真实 GUI 视觉仍为 `not_tested`；
 - 修复 0.2/0.3 运行生成器会默认改写仓库 OPS 证据的问题：默认改为 `Verify`，源码写回需要显式 `-UpdateSourceArtifacts`；隔离生成/验证全部通过且仓库样本哈希变化为 0，旧 `omniAlchemy` 双样本兼容探针恢复通过；
 - 当前登记为 670 行、472 个活动项、1 个兼容别名和 471 个可玩材料；反应登记 297 条，字体为 14,792 字形、Fusion 2,002，SHA-256 `28DDECAE62C26939B78A4627C1D468AE55A3D047D0D95822C4D41CE41763D0EA`；
-- 最终 `build-ui-gas-electronics-final-clean` 从空目录构建 `754/754`，Meson `30/30`、Python 197 项（0 fail、2 skip）通过；同一 EXE 复跑电子 20 元素/22 合成/16 行为、化学 90 路径、五模块关闭及七类 346 粒子 OPS；EXE 为 326,529,692 字节，SHA-256 `F8547DC0609A70B10567B4ADAA67AA41C11D55EDDB354A6B43E20DD5CFAEB568`；
-- S13 电子密集场景完成 2.011415 秒 smoke：平均 61.150988 FPS、1% low 55.276945、峰值 1,720 粒子、事件峰值 516、未崩溃/未挂起且 OPS 往返通过。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
+- 最终 `build-ui-gas-electronics-final-clean` 从空目录构建 `754/754`，Meson `30/30`、Python 197 项（0 fail、2 skip）通过；提交后重新链接的同一源码 EXE 复跑电子 20 元素/22 合成/16 行为、化学 90 路径、五模块关闭及七类 346 粒子 OPS；EXE 为 326,529,692 字节，SHA-256 `D45D85BCBF7217AA5B578A46C1B829FA69364ED1EB05EC7B8C24DD8F0EC38B73`；
+- S13 电子密集场景 `20260801T171826Z-e1d83574` 绑定提交 `12a646b4` 和上述 EXE，完成 2.010675 秒 smoke：平均 61.173473 FPS、1% low 55.544867、峰值 1,720 粒子、事件峰值 516、未崩溃/未挂起且 OPS 往返通过。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
 
 ## Phase 1：纯沙盒方向清理
 

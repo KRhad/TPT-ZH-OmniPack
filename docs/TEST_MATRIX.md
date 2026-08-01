@@ -242,8 +242,8 @@
 | 五模块禁用 | PASS | 22 个粒子保留，冶金/生物/化学/核工业/电子更新事件为 0，周期氦仍可用 |
 | 七类 OPS 往返 | PASS | 21 个进程、14 次重启、346 粒子、每次加载合计 406 字段断言，电子类覆盖最高 `DIEL=641` |
 | 旧进度样本保护 | PASS | 默认生成模式改为只读验证；两处源码写回均需显式开关。临时目录完成 7/7 示例、8/8 断言场景、9/9 自动化场景和 6/6 工程断言，仓库证据哈希变化 0 |
-| 本批 clean build | PASS | `build-ui-gas-electronics-final-clean` 从空目录 `754/754`；Meson `30/30`；Python 197 项、0 fail、2 skip；EXE 326,529,692 字节，SHA-256 `F8547DC0609A70B10567B4ADAA67AA41C11D55EDDB354A6B43E20DD5CFAEB568` |
-| S13 电子压力 smoke | PASS (SMOKE ONLY) | 2.011415 秒、平均 61.150988 FPS、1% low 55.276945、峰值 1,720 粒子、事件峰值 516、未崩溃/未挂起、OPS 往返通过 |
+| 本批 clean build | PASS | `build-ui-gas-electronics-final-clean` 从空目录 `754/754`；Meson `30/30`；Python 197 项、0 fail、2 skip；提交后重新链接并复跑的 EXE 为 326,529,692 字节，SHA-256 `D45D85BCBF7217AA5B578A46C1B829FA69364ED1EB05EC7B8C24DD8F0EC38B73` |
+| S13 电子压力 smoke | PASS (SMOKE ONLY) | `20260801T171826Z-e1d83574`，提交 `12a646b4`，2.010675 秒、平均 61.173473 FPS、1% low 55.544867、峰值 1,720 粒子、事件峰值 516、未崩溃/未挂起、OPS 往返通过 |
 | S13 正式压力门禁 | NOT RUN | smoke 不替代 60 秒预热 + 600 秒采样；`stress_gate=not_tested` |
 
 ## 后续批次固定测试
