@@ -10,7 +10,7 @@
 | 玩家任务、成就、科技树入口不存在 | 源码/文档 | PASS | 没有对应 C++ 玩家系统；路线已改写 |
 | 已启用模块元素可直接选择 | 源码/静态 | PASS | 统一限制仅含非法 ID、保留槽、模块关闭和明确登记的兼容别名 |
 | Lua 创建门禁 | 编译/静态 | PASS | 不再包含进度分支；保留模块关闭、保留 ID 和兼容别名拦截 |
-| 四模块关闭后的 OPS、选择、创建与更新 | 实际运行 | PASS | 两进程、OPS1、11 个粒子保留；代表项含 `NITI=520`、`RFBK=532`、`CARA=478`、`AMCL=511`，模块事件 0，周期 `HE` 仍可用 |
+| 四模块关闭后的 OPS、选择、创建与更新 | 实际运行 | PASS | 两进程、OPS1、12 个粒子保留；代表项含 `NITI=520`、`RFBK=532`、`CF52=588`、`CARA=478`、`AMCL=511`，模块事件 0，周期 `HE` 仍可用 |
 | 空模块设置入口 | 源码/i18n | PASS | 只显示四个真实模块及简化生物设置 |
 | 旧进度 OPS 加载与重存 | C++ 运行 | PASS | `legacy-progress-save-probe`，2 个真实旧样本、29 粒子 |
 | 新 OPS 不写 `omniAlchemy` | C++ 运行 | PASS | 解压重存 BSON 并检查字段不存在 |
@@ -32,7 +32,7 @@
 | 官方元素基线 | PASS | PASS | PASS | 历史 PASS | Phase 1 clean EXE 已复跑功能/OPS |
 | 工业冶金/工程材料 43 + 兼容别名 1 | PASS | PASS | PASS | 预算帧 PASS | 可玩 ID `256..277` 与 `512..532`；`278` 只迁移旧存档 |
 | 局部生态 8 | PASS | PASS | PASS | 历史 PASS | ID `288..295`；完整/简化均通过 |
-| 受控核工业 7 | PASS | PASS | PASS | 历史 PASS | ID `328..334` |
+| 受控核工业与代表性核素 20 | PASS | PASS | PASS | 核素预算帧 PASS | ID `328..334` 与 `576..588`；两者共享 `512/frame` |
 | 化学与无机物 60 | PASS | PASS | PASS | 预算帧 PASS | ID `360..369`、`462..511`；官方 `SALT=26` 复用为氯化钠 |
 | 完整周期表十四批 92 | PASS | PASS | PASS | 预算帧 PASS | 新 ID `370..461` 全部启用；118/118 映射可用 |
 | 多模块混合 | PASS | 历史 PASS | 历史 PASS | 历史 PASS | Phase 1 正式混合压力尚未复跑 |
@@ -55,7 +55,7 @@
 
 | 项目 | 状态 | 证据 |
 |---|---|---|
-| 稳定容量与旧 ID | PASS | `PMAPBITS=10`、`PT_NUM=1024`；旧 `0..511` 不移动；`512..575` 工程区、`576..1023` 未来区；`element-capacity-audit` fail-closed |
+| 稳定容量与旧 ID | PASS | `PMAPBITS=10`、`PT_NUM=1024`；旧 `0..511` 不移动；容量批固定 `512..575` 工程区，后续又稳定分配 `576..588` 核素区，当前未来区为 `589..1023`；`element-capacity-audit` fail-closed |
 | 高位 OPS 原生探针 | PASS | 直接 `SOLD=512`，`LAVA/SPRK/BRMT/CONV/VIRS` 携带字段及 palette 往返；来源 `pmapbits=11` 的槽 1536 按 identifier 映射到当前 512；损坏 `pmapbits=0/17` 拒绝；缺失高位 identifier 被报告并中和 |
 | Lua 分配边界 | PASS | 真实客户端为首槽 255、一字节末槽 196、第 61 个槽 1023；官方保留 ID 146 未占用，高位元素可选择/创建 |
 | 锡铅合金行为 | PASS | 冶金运行回归为 9 个配方场景、7 类行为、8 个配方帧；覆盖三锡二铅、凝固、反复火花升温、压力回收和 `SOLD=512` |
@@ -95,6 +95,21 @@
 | 字体结构与离屏渲染 | PASS | 新增 `泥/浓/淬/膏` 后为 14,759 字形、2,723 必需字符、Fusion 1,969、Unifont 0；SHA-256 `9EF16CBB818AEBD048CDBBAA0A0108E6088D8D41F7589E3EDCF21B94C9176D55` |
 | 全新 Windows 构建 | PASS | `build-materials-batch1-final-clean`，`684/684`；Meson static `25/25`、Python `177/177`（0 skip）；EXE 303,309,120 字节，SHA-256 `FB2CC9E4B70FEA1E472F2821FED57B9B60267366CC591F58D562A922A28646B4` |
 | 正式压力、长跑与 GUI | NOT RUN | 正式 600 秒压力、7,200 秒长跑和新材料/字形 DPI 视觉尚未执行 |
+
+### 代表性核素首批 `576..588`
+
+| 项目 | 状态 | 证据 |
+|---|---|---|
+| 稳定 ID 与官方隔离 | PASS | `H2IS/H3IS/C14I/CO60/SR90/I131/CS37/TH32/U235/U238/PU39/AM41/CF52=576..588`；官方 `DEUT=95` 仍为液态重水，官方 `URAN/PLUT` 与周期纯元素不替换 |
+| 衰变、中子与点火路径 | PASS | 真实客户端覆盖 12 条代表性衰变、8 条俘获/活化/育种/裂变路径及氢-2/氢-3两条局部点火路径；控制棒抑制和慢化剂条件均断言 |
+| 熔融计时连续性 | PASS | `I131 -> LAVA(ctype=I131) -> I131` 前后压缩寿命只递减 0–1 刻，不重新随机；静态门禁保护通用相变挂钩 |
+| 局部性与事件预算 | PASS | `OmniIsotopes.cpp` 只扫描固定 `3x3`；600 个到期 I131 样本恰有 512 个衰变，核工业共享峰值 `512/frame` |
+| 模块直选与禁用 | PASS | 启用时 `CF52=588` 可选；四模块禁用 OPS 保留 14 粒子、事件 0，并拒绝核素选择/创建且阻止邻近火焰点燃已载入 `H2IS` |
+| 高位 OPS 原生探针 | PASS | 直接 `SOLD=512/RFBK=532/CF52=588`，588 号 `LAVA/SPRK/CONV/VIRS` 携带字段及带 `NITI` 来源的 `BRMT` 往返；来源槽映射、缺失 identifier 和非法位宽继续通过 |
+| 六类与 mixed OPS | PASS | 六类 18 进程、287 粒子、339 字段断言、291 稳定 identifier、287 palette identifier；核类为 26 粒子/34 断言，mixed 为 11 粒子/21 断言 |
+| 字体结构与离屏渲染 | PASS | 新增 `塔/氚/育` 后为 14,762 字形、2,726 必需字符、Fusion 1,972、Unifont 0；SHA-256 `9B6D2D13D592A9436821C9A9BC99C64833FB2E6862D1A95945185EA1D23D80B3` |
+| 全新 Windows 构建 | PASS | `build-isotope-batch1-final-clean`，`698/698`；Meson static `26/26`、Python `180/180`（0 skip）；EXE 307,856,157 字节，SHA-256 `D4A256C66D921FCBD8C226CF4CE9388E53536DCB0AFD81BE7DBA248F30BCC6BE` |
+| 正式压力、长跑与 GUI | NOT RUN | 正式 600 秒核素压力、7,200 秒长跑和新增核素/字形 DPI 视觉尚未执行 |
 
 ### 完整周期表十四批证据
 

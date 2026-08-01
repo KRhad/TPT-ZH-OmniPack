@@ -52,7 +52,7 @@ class ElementRegistryGameplayFieldsTest(unittest.TestCase):
             ROOT / "tools" / "data" / "official_elements_100_0.csv",
         )
         self.assertEqual([], findings.errors)
-        self.assertEqual(533, stats["registry_rows"])
+        self.assertEqual(589, stats["registry_rows"])
 
     def test_alias_drift_is_rejected(self) -> None:
         def mutate(rows):

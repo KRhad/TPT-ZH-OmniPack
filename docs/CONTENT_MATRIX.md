@@ -7,9 +7,10 @@
 ## 当前范围
 
 ```text
-current_work_base=4f473ebefe59e436228ec7799f9363d39fe166b1
+current_work_base=8fbfb74745ba812acd690202a327f933585b27f0
 engineering_alloys_batch1_base=592643e168ffd111d1e11000eb2e538053c29d3c
 materials_batch1_base=a535656d21fb94c46a05f0091c826151a09adbf7
+isotope_batch1_base=8fbfb74745ba812acd690202a327f933585b27f0
 periodic_alkaline_earth_batch_base=546b8791ca6b94ddd4791f42ededd5684168c59a
 periodic_boron_group_batch_base=5d9b99471590428e6430e9070c25a0907710c222
 periodic_carbon_group_batch_base=de91bbb67b2faef85ed178444a52a7b148328136
@@ -23,19 +24,19 @@ periodic_lanthanide_batch_base=7c49278b856461f61cec1cc4974db90c709968bb
 periodic_actinide_batch_base=54411e08b8215638f403c9bc181afb48d9ca5ea5
 periodic_superheavy_batch_base=518dd9a4d5cbb874281635f7e7552b1ce14050ee
 font_implementation_commit=c743db2fcc49c01033e68023cceff897ed4c35f6
-development_gate_head=98affcd7
+development_gate_head=8fbfb747
 official_id_range=0..195
 official_active_elements=195
 official_tombstones=1
-omnipack_registered_elements=211
-omnipack_playable_elements=210
+omnipack_registered_elements=224
+omnipack_playable_elements=223
 compatibility_aliases=1
 periodic_mappings_implemented=118
-engine_active_elements=406
-total_playable_materials=405
-registered_slots=533
-explicit_reserved_slots=127
-unallocated_capacity_slots=491
+engine_active_elements=419
+total_playable_materials=418
+registered_slots=589
+explicit_reserved_slots=170
+unallocated_capacity_slots=435
 pt_num=1024
 pmapbits=10
 ```
@@ -54,7 +55,8 @@ pmapbits=10
 | 无机化学第二批 | `478..493` | 16 | 归入既有化学模块；已实现 ID 不移动 |
 | 无机化学第三批 | `494..511` | 18 | 归入既有化学模块；已实现 ID 不移动 |
 | 工程材料扩展 | `512..575` | 21（`SOLD..RFBK=512..532`） | 归入冶金模块；旧 `0..511` 不移动；`533..575` 保留 |
-| 未来内容容量 | `576..1023` | 0 | 逐批登记后才能使用，不把空槽计入材料数量 |
+| 代表性核素首批 | `576..588` | 13（`H2IS..CF52`） | 归入高级核工业模块；不复用官方重水 `DEUT` 或通用 `URAN/PLUT` |
+| 未来内容容量 | `589..1023` | 0 | 逐批登记后才能使用，不把空槽计入材料数量 |
 
 ## 模块总览
 
@@ -63,12 +65,12 @@ pmapbits=10
 | 工业冶金与工程材料 | 43 可玩 + 1 兼容别名 | `ALUM..CRUC=256..277`、`SOLD..RFBK=512..532`；旧 `MSCR=278` 隐藏 | 冶金 2,048 / 材料 1,536 次成功事件每帧，固定 `3x3` | 合金与材料 Lua、模块直选/禁用、50 粒子冶金 OPS 双往返和 512/532 原生高位探针通过 | GUI/模块视觉与正式 600 秒压力未完成 |
 | 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景、独立 OPS 双往返和 S03/S04 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
 | 化学与无机物 | 60 | `CHLR..FERT=360..369`、`HCLA..AMCL=462..511` | 每帧 1,536 次成功反应，固定 `3x3` | 登记、化学审计、90 路径 Lua、1,800 粒子预算帧和独立 OPS 双往返通过；事件峰值 1,536 | GUI/模块视觉与正式 600 秒压力未完成 |
-| 受控核工业 | 7 | `NFUL MODR CROD NCLT NWST NGEN RSHD` | 每帧 512 次成功事件，固定 `3x3` | 登记、核工业审计、Lua 场景、独立 OPS 双往返和 S06/S07/S08 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
+| 受控核工业与代表性核素 | 20 | `NFUL MODR CROD NCLT NWST NGEN RSHD`、`H2IS..CF52=576..588` | 两部分共享每帧 512 次成功事件，固定 `3x3` | 原核工业 5 路径及核素 12 衰变/8 中子/2 点火/1 相变路径运行通过；26 粒子核 OPS、模块直选/禁用和 512/588 原生高位探针通过 | 正式 600 秒核素压力与 GUI/模块视觉门禁未完成 |
 | 完整周期表十四批 | 92 新增 / 118 映射 | 前八个主族批次、三条过渡系、镧系、锕系和 15 成员超重系列全部完成 | 每帧 1,024 次放电/换热/族反应/衰变/合成事件，固定 `3x3` | 登记、周期审计、Lua 行为与预算、118 元素同图 OPS 双往返通过 | 周期表窗口视觉/DPI 与正式 600 秒压力采样仍未完成 |
 
 五个内容系统上限来自当前源码常量并带同 tick 标记，属于源码确认；它们不是完整 FPS、内存或长跑压力证据。
 
-四个可选模块现在还在每个公开更新入口执行按模拟刻缓存的运行门禁。两进程禁用回归先在启用状态保存 11 个代表粒子，再以四模块全关载入，确认高位 `NITI=520`、最高材料 `RFBK=532`、可回收 `BRMT` 的 `ctype/tmp4` 及其他模块粒子保留，模块事件为 0、代表元素拒绝选择/创建，而周期 `HE` 仍可使用；GUI 三选项仍需人工验证。
+四个可选模块现在还在每个公开更新入口执行按模拟刻缓存的运行门禁。两进程禁用回归先在启用状态保存 12 个代表粒子，再以四模块全关载入，确认高位 `NITI=520`、材料 `RFBK=532`、核素 `CF52=588`、可回收 `BRMT` 的 `ctype/tmp4` 及其他模块粒子保留，模块事件为 0、代表元素拒绝选择/创建，而周期 `HE` 仍可使用；GUI 三选项仍需人工验证。
 
 ## 工业冶金内容
 
@@ -144,6 +146,16 @@ pmapbits=10
 | 333 | `NGEN` 中子发生器 | 当前主要靠直接放置 | 每次 `SPRK(NGEN)` 且附近有燃料时最多生成 1 粒静止 `NEUT` | 断电、无燃料或无空位停止 | 自动联锁尚未实现 |
 | 334 | `RSHD` 辐射屏蔽体 | `SSIL + 熔融 LEAD + SPRK(NCRM)` 或废物稳定化生成 | 吸收局部中子 | 每次吸收升温 60 K，最高 1600 K | 过热失效/维护链仍缺 |
 
+### 代表性核素首批
+
+| ID | 核素 | 主要路径 | 当前玩法差异 |
+|---:|---|---|---|
+| 576–578 | `H2IS H3IS C14I` | `H2IS + NEUT -> H3IS`；氚/碳-14 压缩寿命贝塔衰变 | 气体与粉末状态、寿命、热量和电子产物不同；官方液态重水 `DEUT` 保持独立 |
+| 579–582 | `CO60 SR90 I131 CS37` | 钴中子活化；三种裂变产物分别衰变为镍、钇、氙、钡 | 伽马/贝塔代理、寿命、熔点和迁移性不同，碘/铯具有低熔点污染玩法 |
+| 583–588 | `TH32 U235 U238 PU39 AM41 CF52` | 钍/铀育种、受慢化剂与控制棒约束的裂变、阿尔法/中子源衰变 | 一次裂变最多补回一个中子；锎可不经慢化诱发裂变；全部共享核工业 `512/frame` 预算 |
+
+熔融核素使用 `LAVA(ctype=核素)` 并把剩余压缩寿命保存在 `tmp3`；通用凝固阶段不会重置计时。氢-2与氢-3会被 `3x3` 内的火焰、等离子体或熔岩点燃，点火同样服从模块开关和共享预算。运行回归已覆盖 12 条衰变、8 条中子路径、2 条点火路径、一次熔融/凝固计时连续性和 600 个到期碘-131样本的 `512/frame` 峰值；这是游戏化代表行为，不是完整同位素数据库或科研级剂量模拟。
+
 ## 当前跨模块联动
 
 | 模块组合 | 当前源码确认的直接联动 | 当前判定 | 0.2.0 必需补齐 |
@@ -160,10 +172,10 @@ pmapbits=10
 | 工业冶金 | true | true | 43 可玩 + 1 兼容别名 | 已实现；实际 UI 持久化未测试 |
 | 局部生态 | true | true | 8 元素 | 已实现；另有“简化生物模拟”开关 |
 | 高级化学 | true | true | 60 元素 | 核心 `360..369` 与无机 `462..511` 共用开关；实际 UI 持久化未测试 |
-| 受控核工业 | true | true | 7 元素 | 已实现；实际 UI 持久化未测试 |
+| 受控核工业 | true | true | 20 元素（7 核工业 + 13 核素） | 已实现；实际 UI 持久化未测试 |
 | 元素周期表 | true | 始终可用 | 118/118 映射可选择 | 面板已编译并通过静态/运行契约；视觉矩阵未执行 |
 
-周期表固定区为 `370..461`；无机三批使用 `462..511` 并归入既有化学模块。10 位扩容把 `512..575` 固定给工程材料并归入冶金模块，`576..1023` 保留未来内容；不新增空设置入口。
+周期表固定区为 `370..461`；无机三批使用 `462..511` 并归入既有化学模块。10 位扩容把 `512..575` 固定给工程材料并归入冶金模块，`576..588` 固定给代表性核素并归入高级核工业，`589..1023` 保留未来内容；不新增空设置入口。
 
 ## 内容证据矩阵
 
@@ -175,7 +187,7 @@ pmapbits=10
 | 五类反应引擎 Lua 回归 | 四可选模块 + 完整周期表 | 实际运行确认 | 周期回归覆盖 92 个新增元素、七个六成员主族、7 个稀有气体、三条过渡系、镧系/锕系/超重系各 15 个成员和预算；不替代完整 GUI 或长跑 |
 | 搜索、放置、图鉴 | `ALUM/NUTR/CHLR/HCLA/NFUL/HE/NA` 代表项 | 源码/运行选择 PASS；GUI 视觉 NOT RUN | 需最终 ZIP 人工操作 |
 | 禁用模块存档检查 | 直接类型与载体字段 | 自动测试确认 | 三选项和保存/上传拦截实际 GUI 尚未测试 |
-| OPS 双往返 | 官方、四个单模块、118 周期元素、混合及载体 | 实际运行确认 | 六类为 254 粒子、306 字段断言，冶金包含 `SOLD=512`；高位原生探针覆盖直接类型及 `LAVA/SPRK/BRMT/CONV/VIRS` 携带字段；旧 `MSCR` 另由三进程迁移回归覆盖 |
+| OPS 双往返 | 官方、四个单模块、118 周期元素、混合及载体 | 实际运行确认 | 六类为 287 粒子、339 字段断言，核类覆盖 13 个核素和 `CF52=588` 载体；高位原生探针覆盖直接类型及 `LAVA/SPRK/BRMT/CONV/VIRS` 携带字段；旧 `MSCR` 另由三进程迁移回归覆盖 |
 | 固定压力样本 | 10 类 | 候选已通过；`98affcd7` smoke `4/4` | 旧候选正式证据仍绑定 `ff5945c4`；0.2 的 S04/S05/S07/S09 仅约 2 秒 smoke，`gate_result=not_tested`，正式样本需绑定最终 ZIP |
 
 ## 版本内容增长规则
@@ -195,7 +207,7 @@ pmapbits=10
 
 ## 0.2.0 用途审计入口
 
-`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 211 个 OmniPack 登记项（210 可玩 + 1 兼容别名）；双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、223 条 `REACTION_REGISTRY.csv` 及模块专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
+`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 224 个 OmniPack 登记项（223 可玩 + 1 兼容别名）；双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、232 条 `REACTION_REGISTRY.csv` 及模块专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
 
 ```text
 production

@@ -1,6 +1,9 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
 #include "simulation/OmniMetallurgy.h"
+#include "simulation/OmniIsotopes.h"
+
+static int update(UPDATE_FUNC_ARGS);
 
 void Element::Element_COBT()
 {
@@ -40,5 +43,12 @@ void Element::Element_COBT()
 	HighTemperature = 1768.0f;
 	HighTemperatureTransition = PT_LAVA;
 
-	Update = &OmniMetallurgyMetalUpdate;
+	Update = &update;
+}
+
+static int update(UPDATE_FUNC_ARGS)
+{
+	if (OmniIsotopeSourceUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 1;
+	return OmniMetallurgyMetalUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 }

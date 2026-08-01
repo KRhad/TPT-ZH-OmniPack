@@ -25,24 +25,26 @@ inorganic_batch3_worktree_base=0eb4e11dd41fe4da72b8f8a1db65fa07a77898b1
 capacity_expansion_worktree_base=4f473ebefe59e436228ec7799f9363d39fe166b1
 engineering_alloys_batch1_worktree_base=592643e168ffd111d1e11000eb2e538053c29d3c
 materials_batch1_worktree_base=a535656d21fb94c46a05f0091c826151a09adbf7
+isotope_batch1_worktree_base=8fbfb74745ba812acd690202a327f933585b27f0
 pt_num=1024
 pmapbits=10
 official_active_elements=195
-omnipack_registered_elements=211
-omnipack_playable_elements=210
-engine_active_elements=406
+omnipack_registered_elements=224
+omnipack_playable_elements=223
+engine_active_elements=419
 compatibility_aliases=1
-total_playable_materials=405
-registered_slots=533
-reserved_slots=127
-unallocated_capacity_slots=491
+total_playable_materials=418
+registered_slots=589
+reserved_slots=170
+unallocated_capacity_slots=435
 enabled_content_modules=4
 periodic_elements_placeable=118
 periodic_elements_remaining=0
 inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
-reaction_registry_entries=223
+isotope_batch1_elements=13
+reaction_registry_entries=232
 total_playable_materials_minimum=true
 periodic_table_ui=true
 save_format=OPS1/BZip2
@@ -173,6 +175,18 @@ release_ready=false
 - 当前登记门禁为 533 行、406 活动、1 兼容别名、405 可玩、127 显式保留和 491 未登记容量槽；OmniPack 为 211 登记 / 210 可玩，反应登记 223 条，i18n 为 1624/1624；
 - 全新 `build-materials-batch1-final-clean` 构建 `684/684`、Meson static `25/25`、Python `177/177`（0 skip）通过；开发 EXE 为 303,309,120 字节，SHA-256 `FB2CC9E4B70FEA1E472F2821FED57B9B60267366CC591F58D562A922A28646B4`；该 EXE 已复跑材料、冶金、化学、模块直选、四模块禁用、六类与 mixed OPS。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
 
+## Phase 6 代表性核素首批：`576..588`
+
+- 新增 `H2IS/H3IS/C14I/CO60/SR90/I131/CS37/TH32/U235/U238/PU39/AM41/CF52=576..588`；官方 `DEUT=95` 源码确认为液态重水，继续与纯氢-2分离，官方 `URAN/PLUT` 及周期纯元素映射不替换；
+- `OmniIsotopes.cpp` 使用固定 `3x3` 邻域，实现 12 条压缩寿命衰变、氢-2俘获、钴活化、钍/铀育种、慢化受控的铀-235/钚-239裂变、锎-252有界裂变及氢-2/氢-3局部点火；一次裂变最多补回一个中子；
+- 核素与原核工业共享严格 `512/frame` 成功事件预算；600 个到期 I131 隔离样本恰有 512 个衰变，运行回归同时覆盖 8 条中子路径、2 条氢核素点火路径和控制棒抑制；
+- 修复通用相变阶段会重置核素衰变计时的问题：`LAVA(ctype=核素)` 由核素状态机独占凝固，I131 熔融/凝固前后计时只递减 0–1 刻；衰变电子/光子即时电离产物时以 `SPRK(ctype=产物)` 作为规范载体证据；
+- 模块直选确认 `CF52=588` 可用；四模块禁用 OPS 保留 14 粒子且事件为 0，并确认邻近火焰不会在模块关闭时点燃 `H2IS`；六类 OPS 为 18 进程、287 粒子、339 字段断言、291 个稳定 identifier 和 287 个 palette identifier，核类为 26 粒子/34 断言；mixed 保持 11 粒子/21 断言；
+- 原生高位探针覆盖直接 `SOLD=512/RFBK=532/CF52=588`、588 号 `LAVA/SPRK/CONV/VIRS` 携带字段及 `BRMT(ctype=NITI)`；来源槽映射、缺失 identifier 和非法 `pmapbits` 门禁保持通过；
+- 字体新增 `塔/氚/育` 三个 Fusion 原生字形后为 14,762 字形、2,726 必需字符、Fusion 1,972、Unifont 0，SHA-256 `9B6D2D13D592A9436821C9A9BC99C64833FB2E6862D1A95945185EA1D23D80B3`；结构与离屏渲染通过，人工逐字视觉仍为 `not_tested`；
+- 当前登记门禁为 589 行、419 活动、1 兼容别名、418 可玩、170 显式保留和 435 未登记容量槽；OmniPack 为 224 登记 / 223 可玩，反应登记 232 条，i18n 为 1650/1650；
+- 全新 `build-isotope-batch1-final-clean` 构建 `698/698`、Meson static `26/26`、Python `180/180`（0 skip）通过；开发 EXE 为 307,856,157 字节，SHA-256 `D4A256C66D921FCBD8C226CF4CE9388E53536DCB0AFD81BE7DBA248F30BCC6BE`；该 EXE 已复跑核素（含 2 条点火）、原核工业、模块直选、四模块禁用、六类与 mixed OPS。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
+
 ## Phase 1：纯沙盒方向清理
 
 - 删除玩家炼金服务、十阶段进度、元素发现锁、进度窗口和通知；
@@ -190,7 +204,7 @@ release_ready=false
 
 ## 下一步
 
-1. 在固定工程材料区 `533..575` 审计后补充仍有独立玩法的工程材料，并进入代表性核素、有机物和电子材料批次；不得覆盖旧槽，也不得用重复空壳填充 1024 容量；
+1. 继续有机物、燃料、聚合物和电子材料批次；工程材料 `533..575` 只补充审计后仍有独立玩法的候选，不得覆盖旧槽或用重复空壳填充 1024 容量；
 2. 同概念模组候选只把许可证兼容的玩法增量合并到主元素，并登记来源与主元素回归；
 3. 为完整 118 元素与高位内容执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
 4. 每批继续登记、运行回归、OPS 双往返和性能预算验证；

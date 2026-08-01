@@ -64,11 +64,11 @@ inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
 inorganic_elements_total=50
-engine_active_elements=406
+engine_active_elements=419
 compatibility_aliases=1
-total_playable_materials=405
+total_playable_materials=418
 element_registry_valid=true
-reaction_registry_entries=223
+reaction_registry_entries=232
 reaction_registry_valid=true
 inorganic_runtime_test=true
 inorganic_event_budget_test=true
@@ -128,7 +128,34 @@ materials_batch1_gui_visual_test=not_tested
 materials_batch1_formal_600s_stress_test=not_tested
 ```
 
-三批无机化学、工程合金首批和矿物/陶瓷/玻璃首批通过不等于对应版本内容冻结；后续材料仍须继续去重、登记和验证。同概念候选的有价值行为应合并到主元素，而不是新增重复 ID。
+代表性核素首批状态：
+
+```text
+isotope_batch1_elements=13
+isotope_batch1_ids=576..588
+isotope_batch1_decay_paths=12
+isotope_batch1_neutron_paths=8
+isotope_batch1_ignition_paths=2
+isotope_batch1_phase_paths=1
+isotope_batch1_timer_continuity=true
+isotope_batch1_event_budget=512/frame
+isotope_batch1_official_deut_separate=true
+isotope_batch1_runtime_test=true
+isotope_batch1_module_test=true
+isotope_batch1_disabled_module_test=true
+isotope_batch1_ops_roundtrip_test=true
+isotope_batch1_high_id_probe=true
+isotope_batch1_clean_build_pass=true
+isotope_batch1_clean_build_targets=698
+isotope_batch1_static_tests=26/26
+isotope_batch1_python_tests=180/180
+isotope_batch1_exe_bytes=307856157
+isotope_batch1_exe_sha256=D4A256C66D921FCBD8C226CF4CE9388E53536DCB0AFD81BE7DBA248F30BCC6BE
+isotope_batch1_gui_visual_test=not_tested
+isotope_batch1_formal_600s_stress_test=not_tested
+```
+
+三批无机化学、工程合金首批、矿物/陶瓷/玻璃首批和代表性核素首批通过不等于对应版本内容冻结；后续材料仍须继续去重、登记和验证。同概念候选的有价值行为应合并到主元素，而不是新增重复 ID。
 
 ## `0.9.0` 整理
 

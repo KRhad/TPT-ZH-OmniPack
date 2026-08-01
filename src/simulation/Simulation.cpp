@@ -7,6 +7,7 @@
 #include "SimulationData.h"
 #include "OmniMetallurgy.h"
 #include "OmniMaterials.h"
+#include "OmniIsotopes.h"
 #include "client/GameSave.h"
 #include "common/tpt-rand.h"
 #include "common/Defer.h"
@@ -2629,7 +2630,9 @@ bool SimulationImpl::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 				}
 				else if (t == PT_LAVA)
 				{
-					if (parts[i].ctype > 0 && parts[i].ctype < PT_NUM && parts[i].ctype != PT_LAVA && elements[parts[i].ctype].Enabled)
+					if (OmniIsotopeOwnsMoltenTransition(parts[i]))
+						s = 0;
+					else if (parts[i].ctype > 0 && parts[i].ctype < PT_NUM && parts[i].ctype != PT_LAVA && elements[parts[i].ctype].Enabled)
 					{
 						if (parts[i].ctype == PT_THRM && pt >= elements[PT_BMTL].HighTemperature)
 							s = 0;

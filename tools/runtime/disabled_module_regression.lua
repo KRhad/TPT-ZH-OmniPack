@@ -24,7 +24,10 @@ local ids = {
     ammonium_chloride = must_element("OMNI_PT_AMCL", 511),
     engineering = must_element("OMNI_PT_NITI", 520),
     material = must_element("OMNI_PT_RFBK", 532),
+    isotope = must_element("OMNI_PT_CF52", 588),
+    hydrogen2 = must_element("OMNI_PT_H2IS", 576),
     helium = must_element("OMNI_PT_HE", 370),
+    fire = assert(elements.DEFAULT_PT_FIRE),
 }
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
@@ -68,9 +71,13 @@ local function phase_one()
     local ammonium_chloride = sim.partCreate(-1, 220, 120, ids.ammonium_chloride)
     local engineering = sim.partCreate(-1, 240, 120, ids.engineering)
     local material = sim.partCreate(-1, 260, 120, ids.material)
+    local isotope = sim.partCreate(-1, 280, 120, ids.isotope)
+    local hydrogen2 = sim.partCreate(-1, 300, 120, ids.hydrogen2)
+    local fire = sim.partCreate(-1, 301, 120, ids.fire)
     assert(acid >= 0 and base >= 0 and sterilizer >= 0 and pathogen >= 0
             and coolant >= 0 and waste >= 0 and scrap >= 0 and carbonic >= 0
-            and ammonium_chloride >= 0 and engineering >= 0 and material >= 0,
+            and ammonium_chloride >= 0 and engineering >= 0 and material >= 0
+            and isotope >= 0 and hydrogen2 >= 0 and fire >= 0,
         "failed to create enabled module fixtures")
     sim.partProperty(acid, "temp", 300.0)
     sim.partProperty(base, "temp", 300.0)
@@ -89,7 +96,7 @@ local function phase_one()
         "OMNI_DISABLED_MODULE_PHASE=1",
         "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
         "OMNI_DISABLED_MODULE_STAMP=" .. stamp,
-        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=11",
+        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=14",
     }
 end
 
@@ -103,6 +110,7 @@ local function phase_two()
         { "OMNI_PT_ALUM", ids.aluminium },
         { "OMNI_PT_NITI", ids.engineering },
         { "OMNI_PT_RFBK", ids.material },
+        { "OMNI_PT_CF52", ids.isotope },
         { "OMNI_PT_STER", ids.sterilizer },
         { "OMNI_PT_CHLR", ids.chlorine },
         { "OMNI_PT_HCLA", ids.hydrochloric },
@@ -146,6 +154,10 @@ local function phase_two()
         sim.partID(240, 120), "loaded engineering alloy is missing")
     local material = assert(
         sim.partID(260, 120), "loaded refractory material is missing")
+    local isotope = assert(
+        sim.partID(280, 120), "loaded isotope material is missing")
+    local hydrogen2 = assert(
+        sim.partID(300, 120), "loaded hydrogen-2 isotope is missing")
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
             and sim.partProperty(carbonic, "type") == ids.carbonic
@@ -155,6 +167,8 @@ local function phase_two()
         "disabled-module OPS load changed or deleted high-ID engineering alloy")
     assert(sim.partProperty(material, "type") == ids.material,
         "disabled-module OPS load changed or deleted high-ID material")
+    assert(sim.partProperty(isotope, "type") == ids.isotope,
+        "disabled-module OPS load changed or deleted high-ID isotope")
     sim.updateUpTo()
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
@@ -165,6 +179,10 @@ local function phase_two()
         "disabled metallurgy high-ID particle continued updating after OPS load")
     assert(sim.partProperty(material, "type") == ids.material,
         "disabled metallurgy material continued updating after OPS load")
+    assert(sim.partProperty(isotope, "type") == ids.isotope,
+        "disabled nuclear isotope continued updating after OPS load")
+    assert(sim.partProperty(hydrogen2, "type") == ids.hydrogen2,
+        "disabled hydrogen-2 isotope reacted with fire after OPS load")
     assert(sim.partProperty(sterilizer, "type") == ids.sterilizer
             and sim.partProperty(pathogen, "type") == ids.pathogen,
         "disabled biology particles continued reacting after OPS load")
@@ -192,7 +210,8 @@ local function phase_two()
         "OMNI_DISABLED_MODULE_BATCH2=OMNI_PT_CARA",
         "OMNI_DISABLED_MODULE_BATCH3=OMNI_PT_AMCL",
         "OMNI_DISABLED_MODULE_NUCLEAR=OMNI_PT_NCLT",
-        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=11",
+        "OMNI_DISABLED_MODULE_ISOTOPE=OMNI_PT_CF52",
+        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=14",
         "OMNI_DISABLED_MODULE_UPDATE_EVENTS=0",
         "OMNI_DISABLED_MODULE_PERIODIC_ACTIVE=OMNI_PT_HE",
         "OMNI_DISABLED_MODULE_OPS_FORMAT=OPS1",

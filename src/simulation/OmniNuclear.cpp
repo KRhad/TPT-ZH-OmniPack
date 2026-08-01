@@ -11,29 +11,10 @@ constexpr int NuclearEventsPerFrame = 512;
 constexpr int NuclearSparkEmitted = 0x1;
 thread_local OmniModuleRuntimeCache nuclearRuntimeCache;
 
-bool NuclearModuleEnabled(Simulation *sim)
-{
-	return OmniModuleRuntimeEnabled(
-		nuclearRuntimeCache, sim, sim->currentTick, "Omni.Modules.AdvancedNuclear");
-}
-
 struct ReactionBudget { Simulation *simulation = nullptr; int tick = -1; int remaining = NuclearEventsPerFrame; };
 thread_local ReactionBudget reactionBudget;
 
 struct Slot { int index = -1; int x = -1; int y = -1; };
-
-bool ConsumeEvent(Simulation *sim)
-{
-	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
-	{
-		reactionBudget = { sim, sim->currentTick, NuclearEventsPerFrame };
-	}
-	if (reactionBudget.remaining <= 0)
-		return false;
-	--reactionBudget.remaining;
-	sim->RecordOmniEvent();
-	return true;
-}
 
 bool IsTouched(int index, Parts &parts, Simulation *sim) { return parts[index].tmp3 == sim->currentTick + 1; }
 void Touch(int index, Parts &parts, Simulation *sim) { parts[index].tmp3 = sim->currentTick + 1; }
@@ -102,7 +83,7 @@ bool FuelFission(UPDATE_FUNC_ARGS)
 	auto neutron = FindLocalNeutron(x, y, parts, pmap, sim);
 	auto moderator = FindLocal(x, y, PT_MODR, i, parts, pmap, sim);
 	auto controlRod = FindLocal(x, y, PT_CROD, i, parts, pmap, sim);
-	if (neutron.index < 0 || moderator.index < 0 || controlRod.index >= 0 || !ConsumeEvent(sim))
+	if (neutron.index < 0 || moderator.index < 0 || controlRod.index >= 0 || !OmniConsumeNuclearEvent(sim))
 		return false;
 	sim->kill_part(neutron.index);
 	Convert(sim, { i, x, y }, PT_NWST, parts, 1700.0f);
@@ -116,7 +97,7 @@ bool CoolantBoil(UPDATE_FUNC_ARGS)
 	if (parts[i].type != PT_NCLT || IsTouched(i, parts, sim))
 		return false;
 	auto waste = FindLocal(x, y, PT_NWST, i, parts, pmap, sim);
-	if (waste.index < 0 || parts[waste.index].temp < 1000.0f || !ConsumeEvent(sim))
+	if (waste.index < 0 || parts[waste.index].temp < 1000.0f || !OmniConsumeNuclearEvent(sim))
 		return false;
 	Convert(sim, { i, x, y }, PT_WTRV, parts, parts[waste.index].temp);
 	parts[waste.index].temp = 900.0f;
@@ -130,7 +111,7 @@ bool ShieldAbsorption(UPDATE_FUNC_ARGS)
 	if (parts[i].type != PT_RSHD || IsTouched(i, parts, sim))
 		return false;
 	auto neutron = FindLocalNeutron(x, y, parts, pmap, sim);
-	if (neutron.index < 0 || !ConsumeEvent(sim))
+	if (neutron.index < 0 || !OmniConsumeNuclearEvent(sim))
 		return false;
 	sim->kill_part(neutron.index);
 	parts[i].temp = std::min(parts[i].temp + 60.0f, 1600.0f);
@@ -157,7 +138,7 @@ bool WasteStabilization(UPDATE_FUNC_ARGS)
 	};
 	if (!inWindow(slag.index) || !inWindow(humus.index)
 		|| !inWindow(polymer.index) || !inWindow(water.index)
-		|| !inWindow(catalyst.index) || !ConsumeEvent(sim))
+		|| !inWindow(catalyst.index) || !OmniConsumeNuclearEvent(sim))
 		return false;
 
 	auto temperature = (
@@ -179,9 +160,28 @@ bool WasteStabilization(UPDATE_FUNC_ARGS)
 }
 }
 
+bool OmniNuclearModuleEnabled(Simulation *sim)
+{
+	return OmniModuleRuntimeEnabled(
+		nuclearRuntimeCache, sim, sim->currentTick, "Omni.Modules.AdvancedNuclear");
+}
+
+bool OmniConsumeNuclearEvent(Simulation *sim)
+{
+	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
+	{
+		reactionBudget = { sim, sim->currentTick, NuclearEventsPerFrame };
+	}
+	if (reactionBudget.remaining <= 0)
+		return false;
+	--reactionBudget.remaining;
+	sim->RecordOmniEvent();
+	return true;
+}
+
 int OmniNuclearElementUpdate(UPDATE_FUNC_ARGS)
 {
-	if (!NuclearModuleEnabled(sim))
+	if (!OmniNuclearModuleEnabled(sim))
 		return 0;
 	if (WasteStabilization(UPDATE_FUNC_SUBCALL_ARGS)
 		|| FuelFission(UPDATE_FUNC_SUBCALL_ARGS)
@@ -193,7 +193,7 @@ int OmniNuclearElementUpdate(UPDATE_FUNC_ARGS)
 
 int OmniNuclearSparkUpdate(UPDATE_FUNC_ARGS)
 {
-	if (!NuclearModuleEnabled(sim))
+	if (!OmniNuclearModuleEnabled(sim))
 		return 0;
 	if (parts[i].type != PT_SPRK || parts[i].ctype != PT_NGEN
 		|| (parts[i].tmp4 & NuclearSparkEmitted) || IsTouched(i, parts, sim))
@@ -202,7 +202,7 @@ int OmniNuclearSparkUpdate(UPDATE_FUNC_ARGS)
 	if (fuel.index < 0)
 		return 0;
 	auto empty = FindEmpty(fuel.x, fuel.y, pmap, sim->photons);
-	if (empty.x < 0 || !ConsumeEvent(sim))
+	if (empty.x < 0 || !OmniConsumeNuclearEvent(sim))
 		return 0;
 	auto neutron = sim->create_part(-1, empty.x, empty.y, PT_NEUT);
 	if (neutron < 0)

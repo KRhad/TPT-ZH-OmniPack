@@ -203,6 +203,7 @@ int main()
 	static_assert(PT_SOLD == 512);
 	static_assert(PT_NITI == 520);
 	static_assert(PT_RFBK == 532);
+	static_assert(PT_CF52 == 588);
 	static_assert(PMAPBITS == 10);
 	static_assert(PT_NUM == 1024);
 
@@ -210,19 +211,22 @@ int main()
 	if (!simulationData->IsElement(PT_SOLD) ||
 		simulationData->elements[PT_SOLD].Identifier != "OMNI_PT_SOLD" ||
 		!simulationData->IsElement(PT_RFBK) ||
-		simulationData->elements[PT_RFBK].Identifier != "OMNI_PT_RFBK")
+		simulationData->elements[PT_RFBK].Identifier != "OMNI_PT_RFBK" ||
+		!simulationData->IsElement(PT_CF52) ||
+		simulationData->elements[PT_CF52].Identifier != "OMNI_PT_CF52")
 	{
-		return Fail("SOLD=512 or RFBK=532 is not an active stable element");
+		return Fail("SOLD=512 RFBK=532 or CF52=588 is not an active stable element");
 	}
 
 	constexpr std::array fixtures{
 		Fixture{ PT_SOLD, 0, 0, 0, 0, 0 },
 		Fixture{ PT_RFBK, 0, 0, 0, 0, 0 },
-		Fixture{ PT_LAVA, PT_RFBK, 0, 0, 0, 0 },
-		Fixture{ PT_SPRK, PT_RFBK, 0, 0, 0, 4 },
+		Fixture{ PT_CF52, 0, 0, 0, 0, 0 },
+		Fixture{ PT_LAVA, PT_CF52, 0, 0, 0, 0 },
+		Fixture{ PT_SPRK, PT_CF52, 0, 0, 0, 4 },
 		Fixture{ PT_BRMT, PT_NITI, 0, 0, OmniRecoverableScrapMarker, 0 },
-		Fixture{ PT_CONV, PT_RFBK, PT_RFBK, 0, 0, 0 },
-		Fixture{ PT_VIRS, 0, 0, PT_RFBK, 0, 0 },
+		Fixture{ PT_CONV, PT_CF52, PT_CF52, 0, 0, 0 },
+		Fixture{ PT_VIRS, 0, 0, PT_CF52, 0, 0 },
 	};
 
 	GameSave source(Vec2<int>{ 8, 2 });
@@ -327,9 +331,9 @@ int main()
 
 	std::cout << "high-id-save-probe: PASS pmapbits=" << PMAPBITS
 		<< " pt_num=" << PT_NUM
-		<< " high_ids=" << PT_SOLD << "-" << PT_RFBK
+		<< " high_ids=" << PT_SOLD << "-" << PT_CF52
 		<< " particles=" << fixtures.size()
-		<< " direct_types=2 ctype_carriers=4 tmp_carriers=1 tmp2_carriers=1"
+		<< " direct_types=3 ctype_carriers=4 tmp_carriers=1 tmp2_carriers=1"
 		<< " invalid_pmapbits_rejected=2 missing_identifier_detected=1"
 		<< " wider_source_slot_remapped=1" << std::endl;
 	return 0;

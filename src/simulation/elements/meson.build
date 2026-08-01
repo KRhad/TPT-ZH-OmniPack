@@ -532,6 +532,62 @@ simulation_elem_names = [
 	'BSGL', # 530: borosilicate glass
 	'QGLS', # 531: quartz glass
 	'RFBK', # 532: refractory brick
+	disabler(), # 533: reserved engineering material
+	disabler(), # 534: reserved engineering material
+	disabler(), # 535: reserved engineering material
+	disabler(), # 536: reserved engineering material
+	disabler(), # 537: reserved engineering material
+	disabler(), # 538: reserved engineering material
+	disabler(), # 539: reserved engineering material
+	disabler(), # 540: reserved engineering material
+	disabler(), # 541: reserved engineering material
+	disabler(), # 542: reserved engineering material
+	disabler(), # 543: reserved engineering material
+	disabler(), # 544: reserved engineering material
+	disabler(), # 545: reserved engineering material
+	disabler(), # 546: reserved engineering material
+	disabler(), # 547: reserved engineering material
+	disabler(), # 548: reserved engineering material
+	disabler(), # 549: reserved engineering material
+	disabler(), # 550: reserved engineering material
+	disabler(), # 551: reserved engineering material
+	disabler(), # 552: reserved engineering material
+	disabler(), # 553: reserved engineering material
+	disabler(), # 554: reserved engineering material
+	disabler(), # 555: reserved engineering material
+	disabler(), # 556: reserved engineering material
+	disabler(), # 557: reserved engineering material
+	disabler(), # 558: reserved engineering material
+	disabler(), # 559: reserved engineering material
+	disabler(), # 560: reserved engineering material
+	disabler(), # 561: reserved engineering material
+	disabler(), # 562: reserved engineering material
+	disabler(), # 563: reserved engineering material
+	disabler(), # 564: reserved engineering material
+	disabler(), # 565: reserved engineering material
+	disabler(), # 566: reserved engineering material
+	disabler(), # 567: reserved engineering material
+	disabler(), # 568: reserved engineering material
+	disabler(), # 569: reserved engineering material
+	disabler(), # 570: reserved engineering material
+	disabler(), # 571: reserved engineering material
+	disabler(), # 572: reserved engineering material
+	disabler(), # 573: reserved engineering material
+	disabler(), # 574: reserved engineering material
+	disabler(), # 575: reserved engineering material
+	'H2IS', # 576: hydrogen-2 isotope
+	'H3IS', # 577: hydrogen-3 isotope
+	'C14I', # 578: carbon-14 isotope
+	'CO60', # 579: cobalt-60 isotope
+	'SR90', # 580: strontium-90 isotope
+	'I131', # 581: iodine-131 isotope
+	'CS37', # 582: caesium-137 isotope
+	'TH32', # 583: thorium-232 isotope
+	'U235', # 584: uranium-235 isotope
+	'U238', # 585: uranium-238 isotope
+	'PU39', # 586: plutonium-239 isotope
+	'AM41', # 587: americium-241 isotope
+	'CF52', # 588: californium-252 isotope
 ]
 
 simulation_elem_src = []
