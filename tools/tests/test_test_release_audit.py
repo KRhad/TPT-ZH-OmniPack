@@ -292,17 +292,72 @@ class TestReleaseAuditTests(unittest.TestCase):
                 [],
             )
 
-    def test_private_content_package_uses_current_instructions_without_stale_examples(self) -> None:
+    def test_private_content_packages_use_versioned_instructions_without_stale_examples(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source = self.make_source_root(Path(temporary))
             (source / "docs" / "PRIVATE_TEST_0.6.0.md").write_text(
                 "0.6.0-dev\n不是 1.0.0 正式版\n451\n118/118\n621\nrelease_ready=false\n",
                 encoding="utf-8",
             )
+            (source / "docs" / "PRIVATE_TEST_0.7.0.md").write_text(
+                "0.7.0-dev\n不是 1.0.0 正式版\n487\n118/118\n685\nrelease_ready=false\n",
+                encoding="utf-8",
+            )
+            private_versions = (
+                package_test_release.PREVIOUS_PRIVATE_TEST_VERSION,
+                package_test_release.PRIVATE_TEST_VERSION,
+            )
+            for version in private_versions:
+                with self.subTest(version=version), mock.patch.object(
+                    package_test_release, "git_revision", return_value="a" * 40
+                ):
+                    package, _, symbols, _ = package_test_release.build_package(
+                        source,
+                        source / "tpt-zh-omnipack.exe",
+                        source / "tpt-zh-omnipack.debug",
+                        source / "dist",
+                        version=version,
+                        kind="local-dev",
+                        include_examples=False,
+                    )
+                    self.assertEqual(
+                        test_release_audit.audit_package(
+                            package,
+                            version=version,
+                            kind="local-dev",
+                        ),
+                        [],
+                    )
+                    self.assertEqual(
+                        test_release_audit.audit_package(
+                            symbols,
+                            True,
+                            version=version,
+                        ),
+                        [],
+                    )
+                    with zipfile.ZipFile(package) as archive:
+                        names = archive.namelist()
+                        self.assertFalse(
+                            any("examples/0.2.0" in name for name in names)
+                        )
+                        instructions = archive.read(
+                            f"TPT-ZH-OmniPack-{version}-Windows-x64/TESTING.zh-CN.md"
+                        ).decode("utf-8")
+                        self.assertIn(version, instructions)
+                        self.assertNotIn("0.1.0-test", instructions)
+
+    def test_current_private_content_audit_rejects_stale_counts(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            (source / "docs" / "PRIVATE_TEST_0.7.0.md").write_text(
+                "0.7.0-dev\n不是 1.0.0 正式版\n451\n118/118\n621\nrelease_ready=false\n",
+                encoding="utf-8",
+            )
             with mock.patch.object(
                 package_test_release, "git_revision", return_value="a" * 40
             ):
-                package, _, symbols, _ = package_test_release.build_package(
+                package, _, _, _ = package_test_release.build_package(
                     source,
                     source / "tpt-zh-omnipack.exe",
                     source / "tpt-zh-omnipack.debug",
@@ -311,30 +366,13 @@ class TestReleaseAuditTests(unittest.TestCase):
                     kind="local-dev",
                     include_examples=False,
                 )
-            self.assertEqual(
-                test_release_audit.audit_package(
-                    package,
-                    version=package_test_release.PRIVATE_TEST_VERSION,
-                    kind="local-dev",
-                ),
-                [],
+            errors = test_release_audit.audit_package(
+                package,
+                version=package_test_release.PRIVATE_TEST_VERSION,
+                kind="local-dev",
             )
-            self.assertEqual(
-                test_release_audit.audit_package(
-                    symbols,
-                    True,
-                    version=package_test_release.PRIVATE_TEST_VERSION,
-                ),
-                [],
-            )
-            with zipfile.ZipFile(package) as archive:
-                names = archive.namelist()
-                self.assertFalse(any("examples/0.2.0" in name for name in names))
-                instructions = archive.read(
-                    "TPT-ZH-OmniPack-0.6.0-dev-Windows-x64/TESTING.zh-CN.md"
-                ).decode("utf-8")
-                self.assertIn("0.6.0-dev", instructions)
-                self.assertNotIn("0.1.0-test", instructions)
+            self.assertTrue(any("'487'" in error for error in errors))
+            self.assertTrue(any("'685'" in error for error in errors))
 
     def test_local_dev_profile_must_be_explicit(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -20,7 +20,8 @@ import zipfile
 VERSION = "0.1.0-test"
 DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
-PRIVATE_TEST_VERSION = "0.6.0-dev"
+PREVIOUS_PRIVATE_TEST_VERSION = "0.6.0-dev"
+PRIVATE_TEST_VERSION = "0.7.0-dev"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -95,10 +96,16 @@ AUTOMATION_ONLY_DOCUMENTS = (
     ),
 )
 AUTOMATION_DOCUMENTS = DEV_DOCUMENTS + AUTOMATION_ONLY_DOCUMENTS
-PRIVATE_TEST_INSTRUCTIONS = (
-    "docs/PRIVATE_TEST_0.6.0.md",
-    "TESTING.zh-CN.md",
-)
+PRIVATE_TEST_INSTRUCTIONS = {
+    PREVIOUS_PRIVATE_TEST_VERSION: (
+        "docs/PRIVATE_TEST_0.6.0.md",
+        "TESTING.zh-CN.md",
+    ),
+    PRIVATE_TEST_VERSION: (
+        "docs/PRIVATE_TEST_0.7.0.md",
+        "TESTING.zh-CN.md",
+    ),
+}
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 FORBIDDEN_COMPONENTS = {".git", "__pycache__", "build", "dist"}
 CAN_INSTALL_DEFAULT_RE = re.compile(
@@ -151,7 +158,10 @@ def validate_profile(version: str, kind: str, include_examples: bool) -> None:
         VERSION: ("public-test", False),
         DEV_VERSION: ("local-dev", True),
         AUTOMATION_VERSION: ("local-dev", True),
-        PRIVATE_TEST_VERSION: ("local-dev", False),
+        **{
+            private_version: ("local-dev", False)
+            for private_version in PRIVATE_TEST_INSTRUCTIONS
+        },
     }
     if version not in expected:
         raise ValueError(f"unsupported package version: {version}")
@@ -179,9 +189,9 @@ def development_documents(version: str) -> tuple[tuple[str, str], ...]:
 
 
 def package_documents(version: str) -> tuple[tuple[str, str], ...]:
-    if version != PRIVATE_TEST_VERSION:
+    if version not in PRIVATE_TEST_INSTRUCTIONS:
         return DOCUMENTS
-    private_source, private_archive = PRIVATE_TEST_INSTRUCTIONS
+    private_source, private_archive = PRIVATE_TEST_INSTRUCTIONS[version]
     return tuple(
         (source, archive)
         for source, archive in DOCUMENTS
@@ -347,7 +357,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-directory", type=Path, default=Path("dist"))
     parser.add_argument(
         "--version",
-        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION, PRIVATE_TEST_VERSION),
+        choices=(
+            VERSION,
+            DEV_VERSION,
+            AUTOMATION_VERSION,
+            *PRIVATE_TEST_INSTRUCTIONS,
+        ),
         default=VERSION,
     )
     parser.add_argument("--kind", choices=("public-test", "local-dev"), default="public-test")
