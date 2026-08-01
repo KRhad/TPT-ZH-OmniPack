@@ -1,6 +1,7 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
 #include "simulation/OmniMetallurgy.h"
+#include "simulation/OmniMaterials.h"
 #include "FIRE.h"
 #include <algorithm>
 
@@ -60,6 +61,10 @@ int Element_FIRE_update(UPDATE_FUNC_ARGS)
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
 	int t = parts[i].type;
+	// Quartz-glass quenching must run before upstream LAVA-water handling,
+	// which would otherwise consume the water and solidify the melt as stone.
+	if (t == PT_LAVA && OmniMaterialsLavaUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 0;
 	switch (t)
 	{
 	case PT_PLSM:

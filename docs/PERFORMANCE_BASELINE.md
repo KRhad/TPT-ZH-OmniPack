@@ -17,6 +17,7 @@
 | 系统 | 既有预算/边界 |
 |---|---|
 | 工业冶金 | `2048` 事件/帧，`3x3` 局部配方 |
+| 矿物/陶瓷/玻璃 | `1536` 事件/帧，`3x3` 局部精炼、固化、烧结与水淬 |
 | 局部生态 | `1024` 事件/帧，局部传播、营养/寿命约束 |
 | 化学与无机物 | `1536` 事件/帧，`3x3` 局部反应；新建气体前先检查空槽 |
 | 受控核工业 | 有界中子/控制更新，不允许无界粒子链 |
@@ -149,10 +150,22 @@ engineering_alloys_batch1_behavior_classes=13
 engineering_alloys_batch1_ops_particles=38
 engineering_alloys_batch1_ops_field_assertions=48
 engineering_alloys_batch1_formal_600s_stress_test=not_tested
+materials_batch1_clean_build_pass=true
+materials_batch1_clean_build_targets=684
+materials_batch1_static_tests=25/25
+materials_batch1_python_tests=177/177
+materials_batch1_exe_bytes=303309120
+materials_batch1_exe_sha256=FB2CC9E4B70FEA1E472F2821FED57B9B60267366CC591F58D562A922A28646B4
+materials_batch1_runtime_paths=12
+materials_batch1_budget_samples=1600
+materials_batch1_peak_events_per_frame=1536
+materials_batch1_ops_particles=50
+materials_batch1_ops_field_assertions=60
+materials_batch1_formal_600s_stress_test=not_tested
 disabled_module_runtime_test=true
-disabled_module_loaded_particles=10
+disabled_module_loaded_particles=11
 disabled_module_update_events=0
 periodic_118_stress_test=not_tested
-mixed_385_material_stress_test=not_tested
+mixed_405_material_stress_test=not_tested
 long_run_7200s=not_tested
 ```

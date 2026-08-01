@@ -6,6 +6,7 @@
 #include "ToolClasses.h"
 #include "SimulationData.h"
 #include "OmniMetallurgy.h"
+#include "OmniMaterials.h"
 #include "client/GameSave.h"
 #include "common/tpt-rand.h"
 #include "common/Defer.h"
@@ -25,6 +26,11 @@
 
 namespace
 {
+	bool IsRefractingGlass(int type)
+	{
+		return IsGlassMaterialType(type);
+	}
+
 	struct SimulationImpl : public Simulation
 	{
 		struct Neighbourhood
@@ -1357,7 +1363,7 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 		}
 		case PT_NEUT:
 			//@ NEUT + GLAS/BGLA -> NEUT + GLAS/BGLA + PHOT
-			if (TYP(r) == PT_GLAS || TYP(r) == PT_BGLA)
+			if (IsRefractingGlass(TYP(r)))
 				if (rng.chance(1, 10))
 					create_cherenkov_photon(i);
 			break;
@@ -1617,7 +1623,7 @@ int Simulation::is_blocking(int t, int x, int y) const
 	if (t & REFRACT) {
 		if (x<0 || y<0 || x>=XRES || y>=YRES)
 			return 0;
-		if (TYP(pmap[y][x]) == PT_GLAS || TYP(pmap[y][x]) == PT_BGLA)
+		if (IsRefractingGlass(TYP(pmap[y][x])))
 			return 1;
 		return 0;
 	}
@@ -2056,7 +2062,7 @@ void Simulation::create_cherenkov_photon(int pp)//photons from NEUT going throug
 	auto nx = int(parts[pp].x + 0.5f);
 	auto ny = int(parts[pp].y + 0.5f);
 	auto g = pmap[ny][nx];
-	if (TYP(g) != PT_GLAS && TYP(g) != PT_BGLA)
+	if (!IsRefractingGlass(TYP(g)))
 	{
 		return;
 	}
@@ -2973,8 +2979,8 @@ void SimulationImpl::MovementPhase(int i, Neighbourhood neighbourhood)
 			{
 				int rt = TYP(pmap[fin_y][fin_x]);
 				int lt = TYP(pmap[y][x]);
-				int rt_glas = (rt == PT_GLAS) || (rt == PT_BGLA);
-				int lt_glas = (lt == PT_GLAS) || (lt == PT_BGLA);
+				int rt_glas = IsRefractingGlass(rt);
+				int lt_glas = IsRefractingGlass(lt);
 				if ((rt_glas && !lt_glas) || (lt_glas && !rt_glas))
 				{
 					auto gn = get_normal_interp<true>(*this, REFRACT|t, parts[i].x, parts[i].y, parts[i].vx, parts[i].vy);

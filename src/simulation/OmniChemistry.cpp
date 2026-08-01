@@ -538,7 +538,7 @@ bool InorganicAcidNetwork(UPDATE_FUNC_ARGS)
 	if (acidType == PT_HYFA)
 	{
 		auto silica = FindLocalOneOf(
-			x, y, { PT_GLAS, PT_QRTZ, PT_PQRT }, i, parts, pmap, sim);
+			x, y, { PT_GLAS, PT_QRTZ, PT_PQRT, PT_BSGL, PT_QGLS }, i, parts, pmap, sim);
 		if (silica.index >= 0 && parts[i].temp >= 285.0f
 			&& ConsumeReactionBudget(sim))
 		{

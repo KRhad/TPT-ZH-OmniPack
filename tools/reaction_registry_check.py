@@ -45,7 +45,7 @@ MODULE_PREFIX = {
 }
 
 MODULE_BUDGETS = {
-    "metallurgy": {"2048/frame", "unbudgeted-local-update"},
+    "metallurgy": {"2048/frame", "1536/frame", "unbudgeted-local-update"},
     "biology": {"1024/frame"},
     "chemistry": {"1536/frame"},
     "advanced_nuclear": {"512/frame"},
@@ -87,6 +87,22 @@ REQUIRED_REACTIONS = {
     "metallurgy.wood_charcoal",
     "metallurgy.coal_coke",
     "metallurgy.radiation_shield_assembly",
+    "metallurgy.materials_gypsum_dehydration",
+    "metallurgy.materials_gypsum_rehydration",
+    "metallurgy.materials_bauxite_refining",
+    "metallurgy.materials_copper_ore_reduction",
+    "metallurgy.materials_zinc_ore_reduction",
+    "metallurgy.materials_lead_ore_reduction",
+    "metallurgy.materials_uranium_ore_extraction",
+    "metallurgy.materials_feldspar_glassmaking",
+    "metallurgy.materials_cement_hydration",
+    "metallurgy.materials_cement_curing",
+    "metallurgy.materials_alumina_sintering",
+    "metallurgy.materials_borosilicate_casting",
+    "metallurgy.materials_quartz_glass_quench",
+    "metallurgy.materials_refractory_brick_firing",
+    "metallurgy.materials_special_glass_pressure_break",
+    "metallurgy.materials_refractory_brick_quench",
     "biology.algae_photosynthesis",
     "biology.mycelium_decomposition",
     "biology.spore_germination",
@@ -457,6 +473,7 @@ def audit(root: Path, registry_path: Path | None = None) -> list[str]:
             ">=2.0",
             "abs>=element-specific-threshold",
             "abs=[55;170)",
+            "rapid-delta>96|128",
         }:
             errors.append(f"{path}:{row_number}: invalid pressure condition")
         temperature = row.get("temperature", "")

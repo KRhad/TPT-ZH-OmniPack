@@ -91,7 +91,7 @@ static int update(UPDATE_FUNC_ARGS)
 											sim->part_change_type(ID(rr), x+nxi, y+nxj, elements[t].HighPressureTransition);
 										else if (t == PT_BMTL) //@ DMG + BMTL -> BRMT
 											sim->part_change_type(ID(rr), x+nxi, y+nxj, PT_BRMT);
-										else if (t == PT_GLAS) //@ DMG + GLAS -> BGLA
+										else if (t == PT_GLAS || t == PT_BSGL || t == PT_QGLS) //@ DMG + glass -> BGLA
 											sim->part_change_type(ID(rr), x+nxi, y+nxj, PT_BGLA);
 										else if (t == PT_COAL) //@ DMG + COAL -> BCOL
 											sim->part_change_type(ID(rr), x+nxi, y+nxj, PT_BCOL);

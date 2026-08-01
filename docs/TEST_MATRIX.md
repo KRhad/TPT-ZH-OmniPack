@@ -10,7 +10,7 @@
 | 玩家任务、成就、科技树入口不存在 | 源码/文档 | PASS | 没有对应 C++ 玩家系统；路线已改写 |
 | 已启用模块元素可直接选择 | 源码/静态 | PASS | 统一限制仅含非法 ID、保留槽、模块关闭和明确登记的兼容别名 |
 | Lua 创建门禁 | 编译/静态 | PASS | 不再包含进度分支；保留模块关闭、保留 ID 和兼容别名拦截 |
-| 四模块关闭后的 OPS、选择、创建与更新 | 实际运行 | PASS | 两进程、OPS1、9 个粒子保留、7 个代表元素拒绝选择/创建（含 `CARA=478`、`AMCL=511`）、模块事件 0，周期 `HE` 仍可用 |
+| 四模块关闭后的 OPS、选择、创建与更新 | 实际运行 | PASS | 两进程、OPS1、11 个粒子保留；代表项含 `NITI=520`、`RFBK=532`、`CARA=478`、`AMCL=511`，模块事件 0，周期 `HE` 仍可用 |
 | 空模块设置入口 | 源码/i18n | PASS | 只显示四个真实模块及简化生物设置 |
 | 旧进度 OPS 加载与重存 | C++ 运行 | PASS | `legacy-progress-save-probe`，2 个真实旧样本、29 粒子 |
 | 新 OPS 不写 `omniAlchemy` | C++ 运行 | PASS | 解压重存 BSON 并检查字段不存在 |
@@ -30,7 +30,7 @@
 | 范围 | 自动测试 | 运行回归 | OPS | 压力 | 当前说明 |
 |---|---|---|---|---|---|
 | 官方元素基线 | PASS | PASS | PASS | 历史 PASS | Phase 1 clean EXE 已复跑功能/OPS |
-| 工业冶金/工程材料 23 + 兼容别名 1 | PASS | PASS | PASS | 历史 PASS | 可玩 ID `256..277` 与 `512`；`278` 只迁移旧存档 |
+| 工业冶金/工程材料 43 + 兼容别名 1 | PASS | PASS | PASS | 预算帧 PASS | 可玩 ID `256..277` 与 `512..532`；`278` 只迁移旧存档 |
 | 局部生态 8 | PASS | PASS | PASS | 历史 PASS | ID `288..295`；完整/简化均通过 |
 | 受控核工业 7 | PASS | PASS | PASS | 历史 PASS | ID `328..334` |
 | 化学与无机物 60 | PASS | PASS | PASS | 预算帧 PASS | ID `360..369`、`462..511`；官方 `SALT=26` 复用为氯化钠 |
@@ -78,6 +78,22 @@
 | mixed OPS | PASS | 3 进程、11 粒子、21 字段断言 |
 | 字体结构与离屏渲染 | PASS | 新增 8 个 Fusion 原生字形后为 14,755 字形、2,719 必需字符、Fusion 1,965、Unifont 0；SHA-256 `F13AB9E8850F2B6B6DF70F19C1725A31BCC8DD52D817E6CCD2A13ACDF7BE451F` |
 | 全新 Windows 构建 | PASS | `build-engineering-alloys-batch1-final-clean`，`671/671`；Meson static `24/24`、Python `175/175`（0 skip）；EXE 299,104,507 字节，SHA-256 `BA23A1C2E8225ABBFF4D6AFF3438260184D9D6AF80E6DBF0E2DCE2055FCBE6EB` |
+| 正式压力、长跑与 GUI | NOT RUN | 正式 600 秒压力、7,200 秒长跑和新材料/字形 DPI 视觉尚未执行 |
+
+### 矿物、陶瓷、玻璃与建筑材料首批 `521..532`
+
+| 项目 | 状态 | 证据 |
+|---|---|---|
+| 稳定 ID 与去重 | PASS | 新增 `GYPS/BAUX/CUOR/ZNOR/PBOR/UORE/FELD/CEMT/ALCR/BSGL/QGLS/RFBK=521..532`；石英、普通玻璃、普通陶瓷、混凝土、石灰石/方解石和铁矿主概念复用既有元素，无重复 ID |
+| 生产与材料行为 | PASS | 真实客户端覆盖 12 种材料和 12 条路径：石膏循环、五类矿石处理、长石制玻璃、水泥固化、氧化铝烧结、硼硅配料、石英水淬、特种玻璃压力破坏及耐火砖烧制/水淬 |
+| 局部性与事件预算 | PASS | `OmniMaterials.cpp` 只扫描固定 `3x3`；1,600 粒子样本中事件峰值恰为 `1536/frame` |
+| 官方主元素集成 | PASS | 水泥固化为 `CNCT`、长石产出 `GLAS`；`BSGL/QGLS` 接入折射、Cherenkov、DMG 和氢氟酸边界 |
+| 模块直选与禁用 | PASS | 启用时最高 `RFBK=532` 可选择；四模块禁用 OPS 保留 11 粒子、事件 0，并拒绝对应材料选择/创建 |
+| 高位 OPS 原生探针 | PASS | 直接 `SOLD=512/RFBK=532`，532 号 `LAVA/SPRK/CONV/VIRS` 携带字段及带 `NITI` 来源的 `BRMT` 往返；来源槽 1536 映射、缺失 identifier 和非法位宽继续通过 |
+| 六类 OPS | PASS | 18 进程、274 粒子、326 字段断言、278 稳定 identifier、274 palette identifier；冶金类为 50 粒子/60 断言 |
+| mixed OPS | PASS | 3 进程、11 粒子、21 字段断言 |
+| 字体结构与离屏渲染 | PASS | 新增 `泥/浓/淬/膏` 后为 14,759 字形、2,723 必需字符、Fusion 1,969、Unifont 0；SHA-256 `9EF16CBB818AEBD048CDBBAA0A0108E6088D8D41F7589E3EDCF21B94C9176D55` |
+| 全新 Windows 构建 | PASS | `build-materials-batch1-final-clean`，`684/684`；Meson static `25/25`、Python `177/177`（0 skip）；EXE 303,309,120 字节，SHA-256 `FB2CC9E4B70FEA1E472F2821FED57B9B60267366CC591F58D562A922A28646B4` |
 | 正式压力、长跑与 GUI | NOT RUN | 正式 600 秒压力、7,200 秒长跑和新材料/字形 DPI 视觉尚未执行 |
 
 ### 完整周期表十四批证据

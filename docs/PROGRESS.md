@@ -24,24 +24,25 @@ inorganic_batch2_worktree_base=7eed94db5fbe81a95315cfac29cf142af1b18d6a
 inorganic_batch3_worktree_base=0eb4e11dd41fe4da72b8f8a1db65fa07a77898b1
 capacity_expansion_worktree_base=4f473ebefe59e436228ec7799f9363d39fe166b1
 engineering_alloys_batch1_worktree_base=592643e168ffd111d1e11000eb2e538053c29d3c
+materials_batch1_worktree_base=a535656d21fb94c46a05f0091c826151a09adbf7
 pt_num=1024
 pmapbits=10
 official_active_elements=195
-omnipack_registered_elements=199
-omnipack_playable_elements=198
-engine_active_elements=394
+omnipack_registered_elements=211
+omnipack_playable_elements=210
+engine_active_elements=406
 compatibility_aliases=1
-total_playable_materials=393
-registered_slots=521
+total_playable_materials=405
+registered_slots=533
 reserved_slots=127
-unallocated_capacity_slots=503
+unallocated_capacity_slots=491
 enabled_content_modules=4
 periodic_elements_placeable=118
 periodic_elements_remaining=0
 inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
-reaction_registry_entries=207
+reaction_registry_entries=223
 total_playable_materials_minimum=true
 periodic_table_ui=true
 save_format=OPS1/BZip2
@@ -160,6 +161,18 @@ release_ready=false
 - 当前登记门禁为 521 行、394 活动、1 兼容别名、393 可玩、127 显式保留和 503 未登记容量槽；OmniPack 为 199 登记 / 198 可玩，反应登记 207 条，i18n 为 1600/1600；
 - 全新 `build-engineering-alloys-batch1-final-clean` 构建 `671/671`、Meson static `24/24`、Python `175/175`（0 skip）通过；开发 EXE 为 299,104,507 字节，SHA-256 `BA23A1C2E8225ABBFF4D6AFF3438260184D9D6AF80E6DBF0E2DCE2055FCBE6EB`；该 EXE 已复跑冶金、模块直选、四模块禁用、六类与 mixed OPS。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
 
+## Phase 5 矿物、陶瓷、玻璃与建筑材料首批：`521..532`
+
+- 按“官方/主元素优化”去重：石英、普通玻璃、普通陶瓷、混凝土、石灰石/方解石和赤铁矿/磁铁矿继续由 `QRTZ/GLAS/CRMC/CNCT/CACO/FEOX` 表示；本批没有为这些同概念材料新增 ID；
+- 新增 `GYPS/BAUX/CUOR/ZNOR/PBOR/UORE/FELD/CEMT/ALCR/BSGL/QGLS/RFBK=521..532`，覆盖石膏、五类矿石/矿物、水泥、氧化铝陶瓷、硼硅玻璃、石英玻璃和耐火砖；
+- `OmniMaterials.cpp` 统一使用 `3x3` 局部邻域与 `1536/frame` 预算；真实客户端通过 12 种材料、12 条生产/行为路径和峰值恰为 1536 的 1,600 粒子预算样本；
+- 特种玻璃接入官方折射、Cherenkov 与破坏边界，氢氟酸登记同步覆盖；水泥在 90 次更新后复用官方 `CNCT`，长石产出官方 `GLAS`，不建立重复最终材料；
+- 模块直选确认最高 `RFBK=532`；四模块禁用 OPS 保留 11 粒子且事件为 0；六类 OPS 为 18 进程、274 粒子、326 字段断言、278 个稳定 identifier 和 274 个 palette identifier，冶金单类为 50 粒子/60 断言；mixed 保持 11 粒子/21 断言；
+- 原生高位探针覆盖直接 `SOLD=512/RFBK=532`、532 号 `LAVA/SPRK/CONV/VIRS` 携带字段及 `BRMT(ctype=NITI)`；来源槽 1536 到当前 512、缺失 identifier 和非法 `pmapbits` 门禁保持通过；
+- 字体新增 `泥/浓/淬/膏` 四个 Fusion 原生字形后为 14,759 字形、2,723 必需字符、Fusion 1,969、Unifont 0，SHA-256 `9EF16CBB818AEBD048CDBBAA0A0108E6088D8D41F7589E3EDCF21B94C9176D55`；结构与离屏渲染通过，人工逐字视觉仍为 `not_tested`；
+- 当前登记门禁为 533 行、406 活动、1 兼容别名、405 可玩、127 显式保留和 491 未登记容量槽；OmniPack 为 211 登记 / 210 可玩，反应登记 223 条，i18n 为 1624/1624；
+- 全新 `build-materials-batch1-final-clean` 构建 `684/684`、Meson static `25/25`、Python `177/177`（0 skip）通过；开发 EXE 为 303,309,120 字节，SHA-256 `FB2CC9E4B70FEA1E472F2821FED57B9B60267366CC591F58D562A922A28646B4`；该 EXE 已复跑材料、冶金、化学、模块直选、四模块禁用、六类与 mixed OPS。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
+
 ## Phase 1：纯沙盒方向清理
 
 - 删除玩家炼金服务、十阶段进度、元素发现锁、进度窗口和通知；
@@ -177,7 +190,7 @@ release_ready=false
 
 ## 下一步
 
-1. 在固定工程材料区 `521..575` 继续矿物、陶瓷、玻璃和建筑材料；不得覆盖旧槽，也不得用重复空壳填充 1024 容量；
+1. 在固定工程材料区 `533..575` 审计后补充仍有独立玩法的工程材料，并进入代表性核素、有机物和电子材料批次；不得覆盖旧槽，也不得用重复空壳填充 1024 容量；
 2. 同概念模组候选只把许可证兼容的玩法增量合并到主元素，并登记来源与主元素回归；
 3. 为完整 118 元素与高位内容执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
 4. 每批继续登记、运行回归、OPS 双往返和性能预算验证；

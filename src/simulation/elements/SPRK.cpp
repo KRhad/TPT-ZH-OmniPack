@@ -6,6 +6,7 @@
 #include "ETRD.h"
 #include "simulation/OmniChemistry.h"
 #include "simulation/OmniMetallurgy.h"
+#include "simulation/OmniMaterials.h"
 #include "simulation/OmniNuclear.h"
 
 static int update(UPDATE_FUNC_ARGS);
@@ -65,6 +66,8 @@ static int update(UPDATE_FUNC_ARGS)
 	// A powered chemistry catalyst must consume its bounded local recipe before
 	// generic spark ignition can replace flammable reactants with FIRE.
 	if (ct == PT_CATA && OmniChemistrySparkUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 1;
+	if (ct == PT_NCRM && OmniMaterialsSparkUpdate(UPDATE_FUNC_SUBCALL_ARGS))
 		return 1;
 	Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
 	if (ct == PT_NGEN)

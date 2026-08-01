@@ -84,7 +84,9 @@ try {
             $resultText -match "(?m)^OMNI_PERIODIC_SUPERHEAVY_ACTIVE=OMNI_PT_RF\r?$" -and
             $resultText -match "(?m)^OMNI_INORGANIC_ACTIVE=OMNI_PT_HCLA\r?$" -and
             $resultText -match "(?m)^OMNI_INORGANIC_BATCH2_ACTIVE=OMNI_PT_CARA\r?$" -and
-            $resultText -match "(?m)^OMNI_INORGANIC_BATCH3_ACTIVE=OMNI_PT_AMCL\r?$"
+            $resultText -match "(?m)^OMNI_INORGANIC_BATCH3_ACTIVE=OMNI_PT_AMCL\r?$" -and
+            $resultText -match "(?m)^OMNI_ENGINEERING_HIGH_ID_ACTIVE=OMNI_PT_NITI\r?$" -and
+            $resultText -match "(?m)^OMNI_MATERIALS_HIGH_ID_ACTIVE=OMNI_PT_RFBK\r?$"
         ) {
             $passed = $true
             break

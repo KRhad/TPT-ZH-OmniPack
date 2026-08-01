@@ -520,6 +520,18 @@ simulation_elem_names = [
 	'ZRAL', # 518: engineering zirconium alloy
 	'CNST', # 519: engineering constantan
 	'NITI', # 520: engineering nickel-titanium shape-memory alloy
+	'GYPS', # 521: gypsum
+	'BAUX', # 522: bauxite
+	'CUOR', # 523: copper ore
+	'ZNOR', # 524: zinc ore
+	'PBOR', # 525: lead ore
+	'UORE', # 526: uranium ore
+	'FELD', # 527: feldspar
+	'CEMT', # 528: cement
+	'ALCR', # 529: alumina ceramic
+	'BSGL', # 530: borosilicate glass
+	'QGLS', # 531: quartz glass
+	'RFBK', # 532: refractory brick
 ]
 
 simulation_elem_src = []

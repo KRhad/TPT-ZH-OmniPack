@@ -9,6 +9,7 @@
 ```text
 current_work_base=4f473ebefe59e436228ec7799f9363d39fe166b1
 engineering_alloys_batch1_base=592643e168ffd111d1e11000eb2e538053c29d3c
+materials_batch1_base=a535656d21fb94c46a05f0091c826151a09adbf7
 periodic_alkaline_earth_batch_base=546b8791ca6b94ddd4791f42ededd5684168c59a
 periodic_boron_group_batch_base=5d9b99471590428e6430e9070c25a0907710c222
 periodic_carbon_group_batch_base=de91bbb67b2faef85ed178444a52a7b148328136
@@ -26,15 +27,15 @@ development_gate_head=98affcd7
 official_id_range=0..195
 official_active_elements=195
 official_tombstones=1
-omnipack_registered_elements=199
-omnipack_playable_elements=198
+omnipack_registered_elements=211
+omnipack_playable_elements=210
 compatibility_aliases=1
 periodic_mappings_implemented=118
-engine_active_elements=394
-total_playable_materials=393
-registered_slots=521
+engine_active_elements=406
+total_playable_materials=405
+registered_slots=533
 explicit_reserved_slots=127
-unallocated_capacity_slots=503
+unallocated_capacity_slots=491
 pt_num=1024
 pmapbits=10
 ```
@@ -52,14 +53,14 @@ pmapbits=10
 | 无机化学首批 | `462..477` | 16 | 归入既有化学模块；已实现 ID 不移动 |
 | 无机化学第二批 | `478..493` | 16 | 归入既有化学模块；已实现 ID 不移动 |
 | 无机化学第三批 | `494..511` | 18 | 归入既有化学模块；已实现 ID 不移动 |
-| 工程材料扩展 | `512..575` | 9（`SOLD..NITI=512..520`） | 归入冶金模块；旧 `0..511` 不移动；`521..575` 待后续批次 |
+| 工程材料扩展 | `512..575` | 21（`SOLD..RFBK=512..532`） | 归入冶金模块；旧 `0..511` 不移动；`533..575` 保留 |
 | 未来内容容量 | `576..1023` | 0 | 逐批登记后才能使用，不把空槽计入材料数量 |
 
 ## 模块总览
 
 | 玩家模块 | 元素数 | 元素代号 | 当前反应/事件上限 | 自动证据 | 实际 GUI/OPS/压力 |
 |---|---:|---|---:|---|---|
-| 工业冶金与工程材料 | 31 可玩 + 1 兼容别名 | `ALUM..CRUC=256..277`、`SOLD..NITI=512..520`；旧 `MSCR=278` 隐藏 | 每帧 2,048 次成功反应，固定 `3x3` | 17 配方/13 类行为 Lua、模块直选/禁用、38 粒子冶金 OPS 双往返和 512/520 原生高位探针通过 | GUI/模块视觉与正式 600 秒压力未完成 |
+| 工业冶金与工程材料 | 43 可玩 + 1 兼容别名 | `ALUM..CRUC=256..277`、`SOLD..RFBK=512..532`；旧 `MSCR=278` 隐藏 | 冶金 2,048 / 材料 1,536 次成功事件每帧，固定 `3x3` | 合金与材料 Lua、模块直选/禁用、50 粒子冶金 OPS 双往返和 512/532 原生高位探针通过 | GUI/模块视觉与正式 600 秒压力未完成 |
 | 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景、独立 OPS 双往返和 S03/S04 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
 | 化学与无机物 | 60 | `CHLR..FERT=360..369`、`HCLA..AMCL=462..511` | 每帧 1,536 次成功反应，固定 `3x3` | 登记、化学审计、90 路径 Lua、1,800 粒子预算帧和独立 OPS 双往返通过；事件峰值 1,536 | GUI/模块视觉与正式 600 秒压力未完成 |
 | 受控核工业 | 7 | `NFUL MODR CROD NCLT NWST NGEN RSHD` | 每帧 512 次成功事件，固定 `3x3` | 登记、核工业审计、Lua 场景、独立 OPS 双往返和 S06/S07/S08 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
@@ -67,7 +68,7 @@ pmapbits=10
 
 五个内容系统上限来自当前源码常量并带同 tick 标记，属于源码确认；它们不是完整 FPS、内存或长跑压力证据。
 
-四个可选模块现在还在每个公开更新入口执行按模拟刻缓存的运行门禁。两进程禁用回归先在启用状态保存 10 个代表粒子，再以四模块全关载入，确认高位 `NITI=520`、可回收 `BRMT` 的 `ctype/tmp4` 及其他模块粒子保留，模块事件为 0、代表元素拒绝选择/创建，而周期 `HE` 仍可使用；GUI 三选项仍需人工验证。
+四个可选模块现在还在每个公开更新入口执行按模拟刻缓存的运行门禁。两进程禁用回归先在启用状态保存 11 个代表粒子，再以四模块全关载入，确认高位 `NITI=520`、最高材料 `RFBK=532`、可回收 `BRMT` 的 `ctype/tmp4` 及其他模块粒子保留，模块事件为 0、代表元素拒绝选择/创建，而周期 `HE` 仍可使用；GUI 三选项仍需人工验证。
 
 ## 工业冶金内容
 
@@ -79,6 +80,7 @@ pmapbits=10
 | 工艺材料与兼容位 | `275..278`：`SLAG FLUX CRUC` + `MSCR` 别名 | `FLUX` 在炼钢时转成 `SLAG`；`SLAG` 可经酸处理或四模块稳定化回收 `FLUX`；`CRUC` 提供炭化/炼焦条件；278 只迁移旧碎料 | 可回收逻辑由官方 `BRMT=30` 承接；`SLAG` 有界回收 | `FLUX/CRUC` 仍主要靠直接放置；278 不可复用 |
 | 低熔点工程合金 | `512`：`SOLD` 锡铅合金 | 3 份熔融锡 + 2 份熔融铅在 700 K 以上形成 5 份熔融合金；反复火花升温并可在 460 K 熔断 | 冷却凝固；压力破坏进入带 `ctype=512` 的可回收官方 `BRMT` | 含铅风险采用游戏化说明；正式 GUI 和压力矩阵未完成 |
 | 工程合金首批 | `513..520`：`CSTI CUNI TIAL NSAL WALY ZRAL CNST NITI` | 铸铁渗碳、铜镍比例优先、钛铝钒/镍铬钴/钨镍铁/锆锡/镍钛配方；热冲击、钝化、中子吸收、蒸汽产氢、电阻加热和形状记忆均有有界行为 | 各自熔点和压力阈值不同；破坏后统一由带来源 `ctype` 的官方 `BRMT` 回炉 | 真实客户端已通过；正式 GUI、批量压力和长跑未完成 |
+| 矿物/陶瓷/玻璃首批 | `521..532`：`GYPS BAUX CUOR ZNOR PBOR UORE FELD CEMT ALCR BSGL QGLS RFBK` | 石膏脱水/水合、五类矿石精炼、长石玻璃、水泥固化、氧化铝烧结、硼硅配料、石英熔体水淬和耐火砖烧制 | 共享 `1536/frame` 与 `3x3`；特种玻璃接入官方折射边界；高温水淬和有毒矿物副产物有明确控制 | 真实客户端 12 路径与预算通过；正式 GUI、600 秒压力和长跑未完成 |
 
 `LEAD` 的 `PROP_NEUTABSORB` 已由碳族真实客户端回归使用定向入射中子验证；它仍不等同于完整屏蔽设施，`RSHD` 继续承担可复用吸收、受热和组装玩法。
 
@@ -155,7 +157,7 @@ pmapbits=10
 
 | 设置/系统 | 源码设置可用 | 默认 | 实际内容 | 结论 |
 |---|---:|---:|---|---|
-| 工业冶金 | true | true | 23 可玩 + 1 兼容别名 | 已实现；实际 UI 持久化未测试 |
+| 工业冶金 | true | true | 43 可玩 + 1 兼容别名 | 已实现；实际 UI 持久化未测试 |
 | 局部生态 | true | true | 8 元素 | 已实现；另有“简化生物模拟”开关 |
 | 高级化学 | true | true | 60 元素 | 核心 `360..369` 与无机 `462..511` 共用开关；实际 UI 持久化未测试 |
 | 受控核工业 | true | true | 7 元素 | 已实现；实际 UI 持久化未测试 |
@@ -193,7 +195,7 @@ pmapbits=10
 
 ## 0.2.0 用途审计入口
 
-`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 172 个 OmniPack 元素；双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、166 条 `REACTION_REGISTRY.csv` 及模块专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
+`docs/ELEMENT_USAGE_MATRIX.csv` 已覆盖当前 211 个 OmniPack 登记项（210 可玩 + 1 兼容别名）；双语玩法字段同时由 `ELEMENT_REGISTRY.csv`、`ELEMENT_CONTENT.csv`、223 条 `REACTION_REGISTRY.csv` 及模块专用审计交叉验证。后续材料必须在同一批次同步进入统一用途矩阵。
 
 ```text
 production
