@@ -503,7 +503,7 @@ PowerShell 驱动在独立临时数据目录中启动实际客户端，固定随
 - `SMOG` 调用共用 `OmniGasGraphics`，清除实体中心像素并使用 `FIRE_BLEND | DECO_FIRE`；说明文本只描述材料行为，不把渲染实现写进玩家说明。
 - 关闭 Biology 模块后隐藏新工具并暂停自定义更新，但保留已加载粒子、稳定 ID 和 OPS 字段。
 
-当前工作树真实客户端已覆盖 17 类行为、1,100 个预算样本（1,024 次成功）、模块禁用、环境 OPS 双往返及 `DETG=685` 高位载体；2 秒 S14 smoke 未崩溃且事件峰值 1,024。该 smoke 仍绑定旧 HEAD，clean build、提交绑定复跑、正式 600 秒压力和 GUI 气体观感均尚未完成。
+最终 clean EXE 已覆盖 17 类行为、1,100 个预算样本（1,024 次成功）、完整/简化生态、全部既有模块、模块禁用、环境 OPS 双往返及 `DETG=685` 高位载体。`build-environment-batch1-evidence-clean` 从空目录完成 `771/771`，Meson `31/31`、Python 202 项（0 fail、2 skip）通过；EXE SHA-256 `154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709`。提交绑定 S14 smoke 未崩溃且事件峰值 1,024；正式 600 秒压力和 GUI 气体观感仍尚未完成。
 
 ## 来源 ID 冲突结论
 

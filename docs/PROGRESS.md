@@ -29,6 +29,8 @@ isotope_batch1_worktree_base=8fbfb74745ba812acd690202a327f933585b27f0
 organic_batch1_worktree_base=4e001049781afde4bcd9d5db250903d73017b269
 organic_batch2_worktree_base=a24af94f3a3efb2d1b87534128a7cd1b1a31ceca
 environment_batch1_worktree_base=44d95f433bc935d3d7d2af9a8be2233fa709e7ec
+environment_batch1_implementation_commit=f5cedf2ef474f3539221ea7965ee5cb690d1d678
+environment_batch1_evidence_commit=031c36ff7f2838e7f5d9e76bb2c8f1ec1e6fd424
 pt_num=1024
 pmapbits=10
 official_active_elements=195
@@ -52,6 +54,12 @@ organic_batch2_elements=20
 organic_elements_total=33
 electronics_batch1_elements=20
 environment_batch1_elements=16
+environment_batch1_clean_build_pass=true
+environment_batch1_clean_build_targets=771
+environment_batch1_static_tests=31/31
+environment_batch1_python_tests=202_run_0_fail_2_skip
+environment_batch1_exe_bytes=332363158
+environment_batch1_exe_sha256=154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709
 reaction_registry_entries=328
 organic_batch2_clean_build_pass=true
 organic_batch2_clean_build_targets=732
@@ -71,8 +79,8 @@ release_ready=false
 - `OmniEnvironment.cpp` 只检查固定 `3x3` 邻域，并调用既有 `OmniConsumeBiologyEvent`；新旧生态合计上限仍为 `1024/frame`，没有 `NPART`、全图或元素表扫描；
 - 真实客户端环境回归覆盖 17 类行为；1,100 组压力样本中 1,024 组成功且峰值为 1,024。五模块关闭后保留 25 粒子、环境清洗反应不执行、事件为 0；
 - 新增环境 OPS 类后八类合计 24 进程、368 粒子、436 字段断言，环境类为 22 粒子/30 字段并覆盖最高 `DETG=685` 的携带字段；
-- S14 环境密集场景 `20260801T230412Z-a9ff7054` 完成 2.008112 秒 smoke：平均 61.251551 FPS、1% low 55.549281、峰值 2,387 粒子、事件峰值 1,024、未崩溃/未挂起且 OPS 往返/停止恢复通过。该结果绑定未提交工作树前的 `44d95f43` 标识，只证明 harness 执行；正式 600 秒门禁仍为 `not_tested`；
-- 当前登记 686 行、488 个活动项、1 个兼容别名、487 个可玩材料和 328 条反应；最终 clean build、提交后哈希和 GUI 视觉证据在本批收尾时另行绑定。
+- S14 环境密集场景 `20260801T234731Z-829de648` 绑定提交 `031c36ff` 与最终 EXE，完成 2.014748 秒 smoke：平均 61.049830 FPS、1% low 55.552960、峰值 2,387/最终 1,341 粒子、事件峰值 1,024、未崩溃/未挂起，OPS 往返、停止检查和 14 项恢复断言通过；正式 600 秒门禁仍为 `not_tested`；
+- 当前登记 686 行、488 个活动项、1 个兼容别名、487 个可玩材料和 328 条反应；`build-environment-batch1-evidence-clean` 从空目录完成 `771/771`，Meson `31/31`、Python 202 项（0 fail、2 skip）通过，EXE 为 332,363,158 字节、SHA-256 `154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709`。人工 GUI/DPI、正式压力和长跑仍未完成。
 
 ## 模组素材库与周期表 ID 基础设施
 

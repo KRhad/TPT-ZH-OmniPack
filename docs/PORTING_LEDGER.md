@@ -405,7 +405,7 @@ Phase 5 首批包含 `src/simulation/OmniNuclear.cpp`/`.h`、七个构造器、`
 
 重写边界：Ultimata `SOIL` 的 4×4 扫描、泥土/隧道状态和 Ultimata `BLOD` 的染色、冻结、随机凝血状态机均未复制；Biological Mod `BLD` 的 5×5 扫描和组织专用字段也未复制。当前 `SOIL/BLOD` 只保留可识别的材料概念，使用新的稳定 ID、双语说明、统一 Biology 预算、固定 `3x3` 邻域和当前字段约定。因概念和具体源文件可追踪，二者保守计为 `elements_rewritten=2`；连同 `ACET/UREA`，项目累计 `elements_rewritten=4`、`elements_ported=0`、第三方更新函数逐行复制 `0`。
 
-当前增量证据覆盖 16 个元素、17 类行为、31 条登记反应、`1024/frame` 峰值、模块禁用、22 个环境 OPS 粒子和最高 `DETG=685`；clean build、提交绑定 smoke 和正式 600 秒压力仍需在实现提交后补记。
+最终证据绑定提交 `031c36ff7f2838e7f5d9e76bb2c8f1ec1e6fd424` 与 `build-environment-batch1-evidence-clean`：从空目录构建 `771/771`、Meson `31/31`、Python 202 项（0 fail、2 skip）通过；EXE 332,363,158 字节，SHA-256 `154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709`。同一 EXE 覆盖 16 个元素、17 类行为、31 条登记反应、`1024/frame` 峰值、完整/简化生态、全部既有模块、模块禁用、八类 368 粒子 OPS、环境 22 粒子及最高 `DETG=685` 携带字段。S14 提交绑定 smoke 通过但正式 600 秒压力和人工 GUI 仍为 `not_tested`。
 
 ## 每次实际移植必须补记
 
