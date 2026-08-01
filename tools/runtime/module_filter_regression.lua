@@ -1,143 +1,41 @@
-local helium = assert(elements.OMNI_PT_HE)
-assert(helium == 370, "periodic helium stable ID changed: " .. tostring(helium))
-ui.activeTool(0, "OMNI_PT_HE")
-assert(ui.activeTool(0) == "OMNI_PT_HE",
-    "always-available periodic content was blocked by a module gate")
-local sodium = assert(elements.OMNI_PT_NA)
-assert(sodium == 376, "periodic sodium stable ID changed: " .. tostring(sodium))
-ui.activeTool(0, "OMNI_PT_NA")
-assert(ui.activeTool(0) == "OMNI_PT_NA",
-    "always-available alkali content was blocked by a module gate")
-local calcium = assert(elements.OMNI_PT_CA)
-assert(calcium == 381, "periodic calcium stable ID changed: " .. tostring(calcium))
-ui.activeTool(0, "OMNI_PT_CA")
-assert(ui.activeTool(0) == "OMNI_PT_CA",
-    "always-available alkaline-earth content was blocked by a module gate")
-local boron = assert(elements.OMNI_PT_B)
-assert(boron == 372, "periodic boron stable ID changed: " .. tostring(boron))
-ui.activeTool(0, "OMNI_PT_B")
-assert(ui.activeTool(0) == "OMNI_PT_B",
-    "always-available boron-group content was blocked by a module gate")
-local germanium = assert(elements.OMNI_PT_GE)
-assert(germanium == 386, "periodic germanium stable ID changed: " .. tostring(germanium))
-ui.activeTool(0, "OMNI_PT_GE")
-assert(ui.activeTool(0) == "OMNI_PT_GE",
-    "always-available carbon-group content was blocked by a module gate")
-local flerovium = assert(elements.OMNI_PT_FL)
-assert(flerovium == 457, "periodic flerovium stable ID changed: " .. tostring(flerovium))
-ui.activeTool(0, "OMNI_PT_FL")
-assert(ui.activeTool(0) == "OMNI_PT_FL",
-    "always-available superheavy carbon-group content was blocked by a module gate")
-local nitrogen = assert(elements.OMNI_PT_N)
-assert(nitrogen == 373, "periodic nitrogen stable ID changed: " .. tostring(nitrogen))
-ui.activeTool(0, "OMNI_PT_N")
-assert(ui.activeTool(0) == "OMNI_PT_N",
-    "always-available nitrogen-group content was blocked by a module gate")
-local moscovium = assert(elements.OMNI_PT_MC)
-assert(moscovium == 458, "periodic moscovium stable ID changed: " .. tostring(moscovium))
-ui.activeTool(0, "OMNI_PT_MC")
-assert(ui.activeTool(0) == "OMNI_PT_MC",
-    "always-available superheavy nitrogen-group content was blocked by a module gate")
-local sulfur = assert(elements.OMNI_PT_S)
-assert(sulfur == 378, "periodic sulfur stable ID changed: " .. tostring(sulfur))
-ui.activeTool(0, "OMNI_PT_S")
-assert(ui.activeTool(0) == "OMNI_PT_S",
-    "always-available oxygen-group content was blocked by a module gate")
-local livermorium = assert(elements.OMNI_PT_LV)
-assert(livermorium == 459,
-    "periodic livermorium stable ID changed: " .. tostring(livermorium))
-ui.activeTool(0, "OMNI_PT_LV")
-assert(ui.activeTool(0) == "OMNI_PT_LV",
-    "always-available superheavy oxygen-group content was blocked by a module gate")
-local fluorine = assert(elements.OMNI_PT_F)
-assert(fluorine == 374, "periodic fluorine stable ID changed: " .. tostring(fluorine))
-ui.activeTool(0, "OMNI_PT_F")
-assert(ui.activeTool(0) == "OMNI_PT_F",
-    "always-available halogen content was blocked by a module gate")
-local tennessine = assert(elements.OMNI_PT_TS)
-assert(tennessine == 460,
-    "periodic tennessine stable ID changed: " .. tostring(tennessine))
-ui.activeTool(0, "OMNI_PT_TS")
-assert(ui.activeTool(0) == "OMNI_PT_TS",
-    "always-available superheavy halogen content was blocked by a module gate")
-local scandium = assert(elements.OMNI_PT_SC)
-assert(scandium == 382,
-    "periodic scandium stable ID changed: " .. tostring(scandium))
-ui.activeTool(0, "OMNI_PT_SC")
-assert(ui.activeTool(0) == "OMNI_PT_SC",
-    "always-available first-transition content was blocked by a module gate")
-local yttrium = assert(elements.OMNI_PT_Y)
-assert(yttrium == 392,
-    "periodic yttrium stable ID changed: " .. tostring(yttrium))
-ui.activeTool(0, "OMNI_PT_Y")
-assert(ui.activeTool(0) == "OMNI_PT_Y",
-    "always-available second-transition content was blocked by a module gate")
-local hafnium = assert(elements.OMNI_PT_HF)
-assert(hafnium == 423,
-    "periodic hafnium stable ID changed: " .. tostring(hafnium))
-ui.activeTool(0, "OMNI_PT_HF")
-assert(ui.activeTool(0) == "OMNI_PT_HF",
-    "always-available third-transition content was blocked by a module gate")
-local lanthanum = assert(elements.OMNI_PT_LA)
-assert(lanthanum == 408,
-    "periodic lanthanum stable ID changed: " .. tostring(lanthanum))
-ui.activeTool(0, "OMNI_PT_LA")
-assert(ui.activeTool(0) == "OMNI_PT_LA",
-    "always-available lanthanide content was blocked by a module gate")
-local actinium = assert(elements.OMNI_PT_AC)
-assert(actinium == 434,
-    "periodic actinium stable ID changed: " .. tostring(actinium))
-ui.activeTool(0, "OMNI_PT_AC")
-assert(ui.activeTool(0) == "OMNI_PT_AC",
-    "always-available actinide content was blocked by a module gate")
-local rutherfordium = assert(elements.OMNI_PT_RF)
-assert(rutherfordium == 447,
-    "periodic rutherfordium stable ID changed: " .. tostring(rutherfordium))
-ui.activeTool(0, "OMNI_PT_RF")
-assert(ui.activeTool(0) == "OMNI_PT_RF",
-    "always-available superheavy content was blocked by a module gate")
-local hydrochloric = assert(elements.OMNI_PT_HCLA)
-assert(hydrochloric == 462,
-    "inorganic hydrochloric acid stable ID changed: " .. tostring(hydrochloric))
-ui.activeTool(0, "OMNI_PT_HCLA")
-assert(ui.activeTool(0) == "OMNI_PT_HCLA",
-    "enabled inorganic chemistry content was blocked by its module gate")
-local carbonic = assert(elements.OMNI_PT_CARA)
-assert(carbonic == 478,
-    "second inorganic batch stable ID changed: " .. tostring(carbonic))
-ui.activeTool(0, "OMNI_PT_CARA")
-assert(ui.activeTool(0) == "OMNI_PT_CARA",
-    "enabled second-batch inorganic content was blocked by its module gate")
-local ammonium_chloride = assert(elements.OMNI_PT_AMCL)
-assert(ammonium_chloride == 511,
-    "third inorganic batch stable ID changed: " .. tostring(ammonium_chloride))
-ui.activeTool(0, "OMNI_PT_AMCL")
-assert(ui.activeTool(0) == "OMNI_PT_AMCL",
-    "enabled third-batch inorganic content was blocked by its module gate")
-local engineering_high = assert(elements.OMNI_PT_NITI)
-assert(engineering_high == 520,
-    "engineering high stable ID changed: " .. tostring(engineering_high))
-ui.activeTool(0, "OMNI_PT_NITI")
-assert(ui.activeTool(0) == "OMNI_PT_NITI",
-    "enabled high-ID engineering content was blocked by its metallurgy gate")
-local materials_high = assert(elements.OMNI_PT_RFBK)
-assert(materials_high == 532,
-    "materials high stable ID changed: " .. tostring(materials_high))
-ui.activeTool(0, "OMNI_PT_RFBK")
-assert(ui.activeTool(0) == "OMNI_PT_RFBK",
-    "enabled high-ID material was blocked by its metallurgy gate")
-local isotope_high = assert(elements.OMNI_PT_CF52)
-assert(isotope_high == 588,
-    "isotope high stable ID changed: " .. tostring(isotope_high))
-ui.activeTool(0, "OMNI_PT_CF52")
-assert(ui.activeTool(0) == "OMNI_PT_CF52",
-    "enabled high-ID isotope was blocked by its nuclear gate")
-local organic_high = assert(elements.OMNI_PT_EACT)
-assert(organic_high == 621,
-    "organic high stable ID changed: " .. tostring(organic_high))
-ui.activeTool(0, "OMNI_PT_EACT")
-assert(ui.activeTool(0) == "OMNI_PT_EACT",
-    "enabled high-ID organic material was blocked by its chemistry gate")
+local selectable = {
+    { "OMNI_PT_HE", 370, "periodic helium" },
+    { "OMNI_PT_NA", 376, "periodic sodium" },
+    { "OMNI_PT_CA", 381, "periodic calcium" },
+    { "OMNI_PT_B", 372, "periodic boron" },
+    { "OMNI_PT_GE", 386, "periodic germanium" },
+    { "OMNI_PT_FL", 457, "periodic flerovium" },
+    { "OMNI_PT_N", 373, "periodic nitrogen" },
+    { "OMNI_PT_MC", 458, "periodic moscovium" },
+    { "OMNI_PT_S", 378, "periodic sulfur" },
+    { "OMNI_PT_LV", 459, "periodic livermorium" },
+    { "OMNI_PT_F", 374, "periodic fluorine" },
+    { "OMNI_PT_TS", 460, "periodic tennessine" },
+    { "OMNI_PT_SC", 382, "periodic scandium" },
+    { "OMNI_PT_Y", 392, "periodic yttrium" },
+    { "OMNI_PT_HF", 423, "periodic hafnium" },
+    { "OMNI_PT_LA", 408, "periodic lanthanum" },
+    { "OMNI_PT_AC", 434, "periodic actinium" },
+    { "OMNI_PT_RF", 447, "periodic rutherfordium" },
+    { "OMNI_PT_HCLA", 462, "hydrochloric acid" },
+    { "OMNI_PT_CARA", 478, "carbonic acid" },
+    { "OMNI_PT_AMCL", 511, "ammonium chloride" },
+    { "OMNI_PT_NITI", 520, "engineering alloy" },
+    { "OMNI_PT_RFBK", 532, "refractory material" },
+    { "OMNI_PT_CF52", 588, "californium-252" },
+    { "OMNI_PT_EACT", 621, "ethyl acetate" },
+    { "OMNI_PT_DIEL", 641, "dielectric ceramic" },
+}
+
+for _, entry in ipairs(selectable) do
+    local identifier, expected_id, label = entry[1], entry[2], entry[3]
+    local element_id = assert(elements[identifier], "missing " .. label)
+    assert(element_id == expected_id,
+        label .. " stable ID changed: " .. tostring(element_id))
+    ui.activeTool(0, identifier)
+    assert(ui.activeTool(0) == identifier,
+        label .. " was blocked by its enabled module")
+end
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -208,4 +106,5 @@ report:write("OMNI_ENGINEERING_HIGH_ID_ACTIVE=OMNI_PT_NITI\n")
 report:write("OMNI_MATERIALS_HIGH_ID_ACTIVE=OMNI_PT_RFBK\n")
 report:write("OMNI_ISOTOPE_HIGH_ID_ACTIVE=OMNI_PT_CF52\n")
 report:write("OMNI_ORGANIC_HIGH_ID_ACTIVE=OMNI_PT_EACT\n")
+report:write("OMNI_ELECTRONICS_HIGH_ID_ACTIVE=OMNI_PT_DIEL\n")
 report:close()

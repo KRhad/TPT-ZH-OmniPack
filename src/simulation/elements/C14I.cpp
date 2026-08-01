@@ -5,7 +5,7 @@
 void Element::Element_C14I()
 {
 	Identifier = "OMNI_PT_C14I";
-	Name = "C14";
+	Name = "CTRC";
 	Colour = 0x4A4A4A_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

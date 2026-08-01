@@ -5,7 +5,7 @@
 void Element::Element_PA()
 {
 	Identifier = "OMNI_PT_PA";
-	Name = "PA";
+	Name = "PROA";
 	Colour = 0x90A7A3_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

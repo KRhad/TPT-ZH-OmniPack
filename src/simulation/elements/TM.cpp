@@ -5,7 +5,7 @@
 void Element::Element_TM()
 {
 	Identifier = "OMNI_PT_TM";
-	Name = "TM";
+	Name = "THUL";
 	Colour = 0xA7B8D2_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ElementDefs.h"
+#include "OmniGasGraphics.h"
 
 // Chemistry updates are confined to the current particle's 3x3 neighbourhood.
 // They deliberately avoid changing the state machines of official GAS/OIL/WAX.

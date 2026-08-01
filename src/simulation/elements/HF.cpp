@@ -5,7 +5,7 @@
 void Element::Element_HF()
 {
 	Identifier = "OMNI_PT_HF";
-	Name = "HF";
+	Name = "HAFN";
 	Colour = 0xA7B1BA_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

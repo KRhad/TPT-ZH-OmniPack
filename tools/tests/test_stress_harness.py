@@ -16,6 +16,7 @@ EVENT_MODULES = (
     ROOT / "src" / "simulation" / "OmniBiology.cpp",
     ROOT / "src" / "simulation" / "OmniChemistry.cpp",
     ROOT / "src" / "simulation" / "OmniNuclear.cpp",
+    ROOT / "src" / "simulation" / "OmniElectronics.cpp",
 )
 
 SAMPLES = {
@@ -31,6 +32,7 @@ SAMPLES = {
     "S10-CARRIERS-ROUNDTRIP",
     "S11-AUTOMATION-FACTORY",
     "S12-AUTOMATION-SIGNAL-LOOP",
+    "S13-ELECTRONICS-DENSE",
 }
 
 
@@ -85,7 +87,7 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn("TEST-MANIFEST.txt", self.powershell)
         self.assertIn("kind=(public-test|local-dev)", self.powershell)
         self.assertIn(
-            '[ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev")]',
+            '[ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev")]',
             self.powershell,
         )
         self.assertIn("Package manifest version does not match", self.powershell)
@@ -144,6 +146,13 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn("runtime.signal_count_peak_per_frame", self.lua)
         self.assertIn('S11-AUTOMATION-FACTORY', self.lua)
         self.assertIn('S12-AUTOMATION-SIGNAL-LOOP', self.lua)
+
+    def test_electronics_stress_exercises_high_id_materials(self) -> None:
+        self.assertIn("local function electronics(bounds)", self.lua)
+        self.assertIn('diel = must_element("OMNI_PT_DIEL", "DIEL")', self.lua)
+        self.assertIn('pcmt = must_element("OMNI_PT_PCMT", "PCMT")', self.lua)
+        self.assertIn('S13-ELECTRONICS-DENSE', self.lua)
+        self.assertIn('name = "electronics_conv_fields"', self.lua)
 
     def test_biology_chemistry_fixture_is_present_in_targeted_stress_samples(self) -> None:
         self.assertIn("local function ecology_chemistry_loop(bounds)", self.lua)

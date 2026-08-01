@@ -5,7 +5,7 @@
 void Element::Element_FL()
 {
 	Identifier = "OMNI_PT_FL";
-	Name = "FL";
+	Name = "FLER";
 	Colour = 0xB45F86_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

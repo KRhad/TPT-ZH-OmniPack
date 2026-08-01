@@ -5,7 +5,7 @@
 void Element::Element_H2IS()
 {
 	Identifier = "OMNI_PT_H2IS";
-	Name = "H-2";
+	Name = "DTER";
 	Colour = 0xA8E8FF_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

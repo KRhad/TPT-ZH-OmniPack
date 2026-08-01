@@ -5,7 +5,7 @@
 void Element::Element_U238()
 {
 	Identifier = "OMNI_PT_U238";
-	Name = "U238";
+	Name = "UFRT";
 	Colour = 0x3F7E3C_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

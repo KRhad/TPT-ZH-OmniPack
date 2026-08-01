@@ -5,7 +5,7 @@
 void Element::Element_PRPE()
 {
 	Identifier = "OMNI_PT_PRPE";
-	Name = "C3H6";
+	Name = "PRPE";
 	OmniConfigureOrganicElement(*this, PT_PRPE);
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

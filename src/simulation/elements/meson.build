@@ -621,6 +621,54 @@ simulation_elem_names = [
 	'PTFE', # 619: polytetrafluoroethylene
 	'BITM', # 620: bitumen
 	'EACT', # 621: ethyl acetate
+	'GAAS', # 622: gallium arsenide
+	'GANI', # 623: gallium nitride
+	'FRIT', # 624: ferrite
+	'PMAG', # 625: permanent magnet material
+	'SMAG', # 626: soft magnetic material
+	'PZCR', # 627: piezoelectric ceramic
+	'TELC', # 628: thermoelectric material
+	'SUPC', # 629: superconducting ceramic
+	'GRPH', # 630: graphene
+	'CNTB', # 631: carbon nanotube material
+	'AERG', # 632: aerogel
+	'CFRP', # 633: carbon-fibre composite
+	'LCOB', # 634: lithium cobalt oxide cathode
+	'GRAN', # 635: graphite anode
+	'SELE', # 636: solid electrolyte
+	'ITOX', # 637: indium tin oxide
+	'PCMT', # 638: phase-change memory material
+	'ECHR', # 639: electrochromic material
+	'PHRS', # 640: photoresist
+	'DIEL', # 641: high-k dielectric ceramic
+	disabler(), # 642: reserved electronic material
+	disabler(), # 643: reserved electronic material
+	disabler(), # 644: reserved electronic material
+	disabler(), # 645: reserved electronic material
+	disabler(), # 646: reserved electronic material
+	disabler(), # 647: reserved electronic material
+	disabler(), # 648: reserved electronic material
+	disabler(), # 649: reserved electronic material
+	disabler(), # 650: reserved electronic material
+	disabler(), # 651: reserved electronic material
+	disabler(), # 652: reserved electronic material
+	disabler(), # 653: reserved electronic material
+	disabler(), # 654: reserved electronic material
+	disabler(), # 655: reserved electronic material
+	disabler(), # 656: reserved electronic material
+	disabler(), # 657: reserved electronic material
+	disabler(), # 658: reserved electronic material
+	disabler(), # 659: reserved electronic material
+	disabler(), # 660: reserved electronic material
+	disabler(), # 661: reserved electronic material
+	disabler(), # 662: reserved electronic material
+	disabler(), # 663: reserved electronic material
+	disabler(), # 664: reserved electronic material
+	disabler(), # 665: reserved electronic material
+	disabler(), # 666: reserved electronic material
+	disabler(), # 667: reserved electronic material
+	disabler(), # 668: reserved electronic material
+	disabler(), # 669: reserved electronic material
 ]
 
 simulation_elem_src = []

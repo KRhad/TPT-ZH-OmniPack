@@ -5,7 +5,7 @@
 void Element::Element_BA()
 {
 	Identifier = "OMNI_PT_BA";
-	Name = "BA";
+	Name = "BARI";
 	Colour = 0xB8C2A6_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_EXPLOSIVE;

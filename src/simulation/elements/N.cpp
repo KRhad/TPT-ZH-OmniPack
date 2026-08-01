@@ -5,7 +5,7 @@
 void Element::Element_N()
 {
 	Identifier = "OMNI_PT_N";
-	Name = "N";
+	Name = "NTRG";
 	Colour = 0x8E7CC3_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

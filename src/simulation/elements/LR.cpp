@@ -5,7 +5,7 @@
 void Element::Element_LR()
 {
 	Identifier = "OMNI_PT_LR";
-	Name = "LR";
+	Name = "LAWR";
 	Colour = 0x6D769C_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

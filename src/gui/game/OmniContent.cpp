@@ -16,6 +16,7 @@ constexpr std::array<OmniSettingDefinition, OmniSettingCount> settingDefinitions
 	{ OmniSetting::Metallurgy,            "Omni.Modules.Metallurgy",            "options.omni.metallurgy",             "options.omni.metallurgy.info",             true,  true  },
 	{ OmniSetting::Chemistry,             "Omni.Modules.Chemistry",             "options.omni.chemistry",              "options.omni.chemistry.info",              true,  true  },
 	{ OmniSetting::AdvancedNuclear,       "Omni.Modules.AdvancedNuclear",       "options.omni.advanced_nuclear",       "options.omni.advanced_nuclear.info",       true,  true  },
+	{ OmniSetting::Electronics,           "Omni.Modules.Electronics",           "options.omni.electronics",            "options.omni.electronics.info",            true,  true  },
 	{ OmniSetting::SimplifiedBiology,     "Omni.Simulation.SimplifiedBiology",  "options.omni.simplified_biology",     "options.omni.simplified_biology.info",     false, true  },
 } };
 
@@ -30,7 +31,8 @@ static_assert(OmniPeriodicLastId + 1 == OmniChemistryExpansionFirstId);
 static_assert(OmniChemistryExpansionLastId + 1 == OmniEngineeringFirstId);
 static_assert(OmniEngineeringLastId + 1 == OmniIsotopeFirstId);
 static_assert(OmniIsotopeLastId + 1 == OmniOrganicFirstId);
-static_assert(OmniOrganicLastId + 1 == OmniFutureContentFirstId);
+static_assert(OmniOrganicLastId + 1 == OmniElectronicsFirstId);
+static_assert(OmniElectronicsLastId + 1 == OmniFutureContentFirstId);
 static_assert(OmniFutureContentLastId == PT_NUM - 1);
 
 OmniSettingDefinition const *DefinitionFor(OmniSetting setting)
@@ -111,6 +113,10 @@ OmniElementModule GetOmniElementModule(int elementId)
 	{
 		return OmniElementModule::Chemistry;
 	}
+	if (elementId <= OmniElectronicsLastId)
+	{
+		return OmniElementModule::Electronics;
+	}
 	return OmniElementModule::FutureContent;
 }
 
@@ -139,6 +145,9 @@ OmniSelectionRestriction GetOmniElementSelectionRestriction(int elementId)
 		break;
 	case OmniElementModule::AdvancedNuclear:
 		if (!GetOmniSetting(OmniSetting::AdvancedNuclear)) return OmniSelectionRestriction::ModuleDisabled;
+		break;
+	case OmniElementModule::Electronics:
+		if (!GetOmniSetting(OmniSetting::Electronics)) return OmniSelectionRestriction::ModuleDisabled;
 		break;
 	case OmniElementModule::Reserved:
 	case OmniElementModule::FutureContent:
@@ -204,6 +213,8 @@ char const *GetOmniElementModuleNameKey(OmniElementModule module)
 		return "options.omni.chemistry";
 	case OmniElementModule::AdvancedNuclear:
 		return "options.omni.advanced_nuclear";
+	case OmniElementModule::Electronics:
+		return "options.omni.electronics";
 	case OmniElementModule::Periodic:
 		return "periodic.table.title";
 	default:

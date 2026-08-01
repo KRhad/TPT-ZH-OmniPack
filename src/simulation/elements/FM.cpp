@@ -5,7 +5,7 @@
 void Element::Element_FM()
 {
 	Identifier = "OMNI_PT_FM";
-	Name = "FM";
+	Name = "FERM";
 	Colour = 0xBE6A58_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

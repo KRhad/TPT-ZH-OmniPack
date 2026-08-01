@@ -5,7 +5,7 @@
 void Element::Element_ETHE()
 {
 	Identifier = "OMNI_PT_ETHE";
-	Name = "C2H4";
+	Name = "ETHE";
 	OmniConfigureOrganicElement(*this, PT_ETHE);
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

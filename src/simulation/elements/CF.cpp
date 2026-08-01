@@ -5,7 +5,7 @@
 void Element::Element_CF()
 {
 	Identifier = "OMNI_PT_CF";
-	Name = "CF";
+	Name = "CALF";
 	Colour = 0xC7A15A_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

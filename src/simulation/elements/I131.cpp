@@ -5,7 +5,7 @@
 void Element::Element_I131()
 {
 	Identifier = "OMNI_PT_I131";
-	Name = "I131";
+	Name = "IODR";
 	Colour = 0x694080_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

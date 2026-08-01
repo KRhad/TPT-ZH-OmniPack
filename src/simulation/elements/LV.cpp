@@ -5,7 +5,7 @@
 void Element::Element_LV()
 {
 	Identifier = "OMNI_PT_LV";
-	Name = "LV";
+	Name = "LIVE";
 	Colour = 0xC94F78_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

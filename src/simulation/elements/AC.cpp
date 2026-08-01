@@ -5,7 +5,7 @@
 void Element::Element_AC()
 {
 	Identifier = "OMNI_PT_AC";
-	Name = "AC";
+	Name = "ACTN";
 	Colour = 0xB8C7C0_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

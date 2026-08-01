@@ -5,7 +5,7 @@
 void Element::Element_LA()
 {
 	Identifier = "OMNI_PT_LA";
-	Name = "LA";
+	Name = "LANT";
 	Colour = 0xB9C5CC_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

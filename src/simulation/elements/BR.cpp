@@ -5,7 +5,7 @@
 void Element::Element_BR()
 {
 	Identifier = "OMNI_PT_BR";
-	Name = "BR";
+	Name = "BROM";
 	Colour = 0x8B2F20_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_LIQUID;

@@ -5,7 +5,7 @@
 void Element::Element_RF()
 {
 	Identifier = "OMNI_PT_RF";
-	Name = "RF";
+	Name = "RFTM";
 	Colour = 0x8A9BAC_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

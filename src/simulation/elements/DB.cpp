@@ -5,7 +5,7 @@
 void Element::Element_DB()
 {
 	Identifier = "OMNI_PT_DB";
-	Name = "DB";
+	Name = "DUBN";
 	Colour = 0x7F90A5_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

@@ -218,6 +218,17 @@ release_ready=false
 - 当前登记为 622 行、452 活动项、1 兼容别名和 451 可玩材料；OmniPack 为 257 登记 / 256 可玩，反应登记 259 条；全新 `build-organic-batch2-final-clean` 从零完成 `732/732`，static `28/28`、Python `188/188`（2 skip），EXE 为 319,076,020 字节，SHA-256 `6008DC000511307F946C1AA8B0DB6259007DE95ADE9BD9829AA7B6A8CCF98362`；
 - 同一最终 EXE 已复跑两批有机、旧化学、冶金、材料、核素、核工业、周期 118/118、生态双模式、模块直选/禁用、别名迁移、0.2 示例/教程、0.3 自动化、六类 320 粒子 OPS、mixed OPS、旧进度样本和 621 高位探针；正式压力、长跑和新增字形 GUI 仍为 `not_tested`，`release_ready=false`。
 
+## Phase 8 起步：电子材料首批与玩家界面统一
+
+- 新增 `GAAS/GANI/FRIT/PMAG/SMAG/PZCR/TELC/SUPC/GRPH/CNTB/AERG/CFRP/LCOB/GRAN/SELE/ITOX/PCMT/ECHR/PHRS/DIEL=622..641`，共 20 种电子与特殊材料；`642..669` 继续保留，未来内容从 670 开始；
+- 数据驱动电子系统提供 22 条合成路径与 16 类光电、磁性、电热、储能、压力、氧化和状态切换行为，固定 `3x3` 邻域并共享 `1024/frame` 预算；既有化学配方优先，熔融原料仍可参与电子合成；
+- 277 个已实现 OmniPack 登记项的菜单代号全部统一为唯一四位大写字母，identifier、稳定 ID、周期原子序数及核素科学符号未变；玩家说明去除开发口吻并以材料名开头，图鉴隐藏稳定 ID、源码 commit 与实现/测试门禁字段；
+- 周期表 `P` 按钮与搜索按钮各自保留固定区域，右侧 30 px 元素按钮退至 `WINDOWW-72`；扩展气体改用与官方 `TYPE_GAS` 相同的 `FIRE_BLEND + DECO_FIRE` 云团底层，放电和放射性辉光继续叠加。两项真实 GUI 视觉仍为 `not_tested`；
+- 修复 0.2/0.3 运行生成器会默认改写仓库 OPS 证据的问题：默认改为 `Verify`，源码写回需要显式 `-UpdateSourceArtifacts`；隔离生成/验证全部通过且仓库样本哈希变化为 0，旧 `omniAlchemy` 双样本兼容探针恢复通过；
+- 当前登记为 670 行、472 个活动项、1 个兼容别名和 471 个可玩材料；反应登记 297 条，字体为 14,792 字形、Fusion 2,002，SHA-256 `28DDECAE62C26939B78A4627C1D468AE55A3D047D0D95822C4D41CE41763D0EA`；
+- 最终 `build-ui-gas-electronics-final-clean` 从空目录构建 `754/754`，Meson `30/30`、Python 197 项（0 fail、2 skip）通过；同一 EXE 复跑电子 20 元素/22 合成/16 行为、化学 90 路径、五模块关闭及七类 346 粒子 OPS；EXE 为 326,529,692 字节，SHA-256 `F8547DC0609A70B10567B4ADAA67AA41C11D55EDDB354A6B43E20DD5CFAEB568`；
+- S13 电子密集场景完成 2.011415 秒 smoke：平均 61.150988 FPS、1% low 55.276945、峰值 1,720 粒子、事件峰值 516、未崩溃/未挂起且 OPS 往返通过。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
+
 ## Phase 1：纯沙盒方向清理
 
 - 删除玩家炼金服务、十阶段进度、元素发现锁、进度窗口和通知；

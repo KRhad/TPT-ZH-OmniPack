@@ -5,7 +5,7 @@
 void Element::Element_CM()
 {
 	Identifier = "OMNI_PT_CM";
-	Name = "CM";
+	Name = "CURI";
 	Colour = 0xB08A60_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

@@ -15,7 +15,8 @@ param(
         "S09-ALL-MODULES",
         "S10-CARRIERS-ROUNDTRIP",
         "S11-AUTOMATION-FACTORY",
-        "S12-AUTOMATION-SIGNAL-LOOP"
+        "S12-AUTOMATION-SIGNAL-LOOP",
+        "S13-ELECTRONICS-DENSE"
     )]
     [string] $SampleId,
 
@@ -32,7 +33,7 @@ param(
 
     [string] $PackageZip,
 
-    [ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev")]
+    [ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev")]
     [string] $PackageVersion = "0.1.0-test",
 
     [string] $TemporaryDirectory = [System.IO.Path]::GetTempPath(),
@@ -359,7 +360,7 @@ try {
         display_resolution = "not_tested"
         dpi_percent = "not_tested"
         language = "not_tested"
-        enabled_modules = "metallurgy,biology,chemistry,nuclear"
+        enabled_modules = "metallurgy,biology,chemistry,nuclear,electronics"
         performance_protection = "event-budgets-source-confirmed"
         random_seed = "11,12,13,14"
         warmup_seconds = [double]$lua.actual_warmup_seconds

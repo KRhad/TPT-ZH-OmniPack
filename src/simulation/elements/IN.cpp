@@ -5,7 +5,7 @@
 void Element::Element_IN()
 {
 	Identifier = "OMNI_PT_IN";
-	Name = "IN";
+	Name = "INDI";
 	Colour = 0xAEB8C4_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

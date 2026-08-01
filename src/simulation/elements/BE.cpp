@@ -5,7 +5,7 @@
 void Element::Element_BE()
 {
 	Identifier = "OMNI_PT_BE";
-	Name = "BE";
+	Name = "BERY";
 	Colour = 0xBFC8C5_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

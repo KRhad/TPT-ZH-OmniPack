@@ -5,7 +5,7 @@
 void Element::Element_AM()
 {
 	Identifier = "OMNI_PT_AM";
-	Name = "AM";
+	Name = "AMER";
 	Colour = 0x8A9B6B_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

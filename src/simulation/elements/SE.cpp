@@ -5,7 +5,7 @@
 void Element::Element_SE()
 {
 	Identifier = "OMNI_PT_SE";
-	Name = "SE";
+	Name = "SELN";
 	Colour = 0x8B4C45_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_POWDERS;

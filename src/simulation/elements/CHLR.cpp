@@ -40,6 +40,7 @@ void Element::Element_CHLR()
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
 	Update = &update;
+	Graphics = &OmniHalogenGraphics;
 }
 
 static int update(UPDATE_FUNC_ARGS)

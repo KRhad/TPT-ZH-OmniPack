@@ -5,7 +5,7 @@
 void Element::Element_TS()
 {
 	Identifier = "OMNI_PT_TS";
-	Name = "TS";
+	Name = "TENN";
 	Colour = 0xD84663_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

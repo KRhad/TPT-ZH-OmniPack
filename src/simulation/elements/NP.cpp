@@ -5,7 +5,7 @@
 void Element::Element_NP()
 {
 	Identifier = "OMNI_PT_NP";
-	Name = "NP";
+	Name = "NEPT";
 	Colour = 0x667C69_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

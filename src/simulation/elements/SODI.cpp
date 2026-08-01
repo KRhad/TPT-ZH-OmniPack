@@ -37,4 +37,5 @@ void Element::Element_SODI()
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
 	Update = &OmniInorganicElementUpdate;
+	Graphics = &OmniGasGraphics;
 }

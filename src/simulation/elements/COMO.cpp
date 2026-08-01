@@ -37,4 +37,5 @@ void Element::Element_COMO()
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
 	Update = &OmniInorganicElementUpdate;
+	Graphics = &OmniGasGraphics;
 }

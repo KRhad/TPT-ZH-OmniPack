@@ -5,7 +5,7 @@
 void Element::Element_DS()
 {
 	Identifier = "OMNI_PT_DS";
-	Name = "DS";
+	Name = "DARM";
 	Colour = 0x8C658B_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

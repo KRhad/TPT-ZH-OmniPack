@@ -5,7 +5,7 @@
 void Element::Element_XE()
 {
 	Identifier = "OMNI_PT_XE";
-	Name = "XE";
+	Name = "XENO";
 	Colour = 0x668CFF_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

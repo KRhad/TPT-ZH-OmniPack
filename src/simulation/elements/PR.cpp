@@ -5,7 +5,7 @@
 void Element::Element_PR()
 {
 	Identifier = "OMNI_PT_PR";
-	Name = "PR";
+	Name = "PRAE";
 	Colour = 0xA9B6BC_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

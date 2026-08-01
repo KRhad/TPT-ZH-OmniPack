@@ -37,4 +37,5 @@ void Element::Element_HYCN()
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
 	Update = &OmniInorganicElementUpdate;
+	Graphics = &OmniGasGraphics;
 }

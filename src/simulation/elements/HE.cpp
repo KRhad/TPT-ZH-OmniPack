@@ -5,7 +5,7 @@
 void Element::Element_HE()
 {
 	Identifier = "OMNI_PT_HE";
-	Name = "HE";
+	Name = "HELI";
 	Colour = 0xD9FFFF_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

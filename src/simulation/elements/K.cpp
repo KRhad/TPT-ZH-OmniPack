@@ -5,7 +5,7 @@
 void Element::Element_K()
 {
 	Identifier = "OMNI_PT_K";
-	Name = "K";
+	Name = "POTA";
 	Colour = 0xC8BBD7_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_EXPLOSIVE;

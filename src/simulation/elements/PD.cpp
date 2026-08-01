@@ -5,7 +5,7 @@
 void Element::Element_PD()
 {
 	Identifier = "OMNI_PT_PD";
-	Name = "PD";
+	Name = "PALL";
 	Colour = 0xCED6CC_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -5,7 +5,7 @@
 void Element::Element_EU()
 {
 	Identifier = "OMNI_PT_EU";
-	Name = "EU";
+	Name = "EURO";
 	Colour = 0xD1C3A1_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

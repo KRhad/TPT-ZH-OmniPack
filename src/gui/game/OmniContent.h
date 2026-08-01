@@ -13,6 +13,7 @@ enum class OmniSetting : unsigned char
 	Metallurgy,
 	Chemistry,
 	AdvancedNuclear,
+	Electronics,
 	SimplifiedBiology,
 	Count,
 };
@@ -26,6 +27,7 @@ enum class OmniElementModule : unsigned char
 	AdvancedNuclear,
 	Chemistry,
 	Periodic,
+	Electronics,
 	FutureContent,
 };
 
@@ -75,7 +77,9 @@ constexpr int OmniIsotopeFirstId = 576;
 constexpr int OmniIsotopeLastId = 588;
 constexpr int OmniOrganicFirstId = 589;
 constexpr int OmniOrganicLastId = 621;
-constexpr int OmniFutureContentFirstId = 622;
+constexpr int OmniElectronicsFirstId = 622;
+constexpr int OmniElectronicsLastId = 669;
+constexpr int OmniFutureContentFirstId = 670;
 constexpr int OmniFutureContentLastId = 1023;
 
 std::array<OmniSettingDefinition, OmniSettingCount> const &GetOmniSettingDefinitions();

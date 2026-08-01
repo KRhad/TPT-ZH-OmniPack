@@ -5,7 +5,7 @@
 void Element::Element_DY()
 {
 	Identifier = "OMNI_PT_DY";
-	Name = "DY";
+	Name = "DYSP";
 	Colour = 0xA8B2C7_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

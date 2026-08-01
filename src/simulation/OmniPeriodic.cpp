@@ -1,5 +1,6 @@
 #include "OmniPeriodic.h"
 #include "OmniMetallurgy.h"
+#include "OmniGasGraphics.h"
 
 #include "ElementCommon.h"
 
@@ -4185,6 +4186,7 @@ int OmniNobleGasUpdate(UPDATE_FUNC_ARGS)
 
 int OmniNobleGasGraphics(GRAPHICS_FUNC_ARGS)
 {
+	OmniGasGraphics(GRAPHICS_FUNC_SUBCALL_ARGS);
 	if (cpart->life > 0)
 	{
 		int intensity = std::min(cpart->life * 14, 150);
@@ -4338,6 +4340,10 @@ int OmniMoltenNitrogenGroupUpdate(UPDATE_FUNC_ARGS)
 
 int OmniNitrogenGroupGraphics(GRAPHICS_FUNC_ARGS)
 {
+	if (cpart->type == PT_N)
+	{
+		OmniGasGraphics(GRAPHICS_FUNC_SUBCALL_ARGS);
+	}
 	if (cpart->type == PT_N && cpart->life > 0)
 	{
 		int intensity = std::min(cpart->life * 10, 120);
@@ -4418,6 +4424,10 @@ int OmniMoltenHalogenUpdate(UPDATE_FUNC_ARGS)
 
 int OmniHalogenGraphics(GRAPHICS_FUNC_ARGS)
 {
+	if (cpart->type == PT_F || cpart->type == PT_CHLR)
+	{
+		OmniGasGraphics(GRAPHICS_FUNC_SUBCALL_ARGS);
+	}
 	if (cpart->type == PT_AT || cpart->type == PT_TS)
 	{
 		*pixel_mode |= PMODE_GLOW;

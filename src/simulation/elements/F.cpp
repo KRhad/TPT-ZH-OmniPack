@@ -5,7 +5,7 @@
 void Element::Element_F()
 {
 	Identifier = "OMNI_PT_F";
-	Name = "F";
+	Name = "FLUO";
 	Colour = 0xDFF56A_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

@@ -5,7 +5,7 @@
 void Element::Element_LU()
 {
 	Identifier = "OMNI_PT_LU";
-	Name = "LU";
+	Name = "LUTE";
 	Colour = 0xB0BEC8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -5,7 +5,7 @@
 void Element::Element_BH()
 {
 	Identifier = "OMNI_PT_BH";
-	Name = "BH";
+	Name = "BOHR";
 	Colour = 0x6E82A0_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

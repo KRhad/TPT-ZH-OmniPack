@@ -5,7 +5,7 @@
 void Element::Element_BDIE()
 {
 	Identifier = "OMNI_PT_BDIE";
-	Name = "C4H6";
+	Name = "BDIE";
 	OmniConfigureOrganicElement(*this, PT_BDIE);
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

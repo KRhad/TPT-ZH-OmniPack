@@ -65,7 +65,7 @@ local ids = {
     alum = must_element("OMNI_PT_ALUM", "ALUM"),
     magn = must_element("OMNI_PT_MAGN", "MAGN"),
     copr = must_element("OMNI_PT_COPR", "COPR"),
-    tin = must_element("OMNI_PT_TIN", "TIN"),
+    tin = must_element("OMNI_PT_TIN", "TINN"),
     coke = must_element("OMNI_PT_COKE", "COKE"),
     stel = must_element("OMNI_PT_STEL", "STEL"),
     slag = must_element("OMNI_PT_SLAG", "SLAG"),
@@ -99,16 +99,16 @@ local ids = {
     glucose = must_element("OMNI_PT_GLUC", "GLUC"),
     starch = must_element("OMNI_PT_STRC", "STRC"),
     cellulose = must_element("OMNI_PT_CELU", "CELU"),
-    propylene = must_element("OMNI_PT_PRPE", "C3H6"),
-    butadiene = must_element("OMNI_PT_BDIE", "C4H6"),
-    vinyl_chloride = must_element("OMNI_PT_VCHL", "VCM"),
+    propylene = must_element("OMNI_PT_PRPE", "PRPE"),
+    butadiene = must_element("OMNI_PT_BDIE", "BDIE"),
+    vinyl_chloride = must_element("OMNI_PT_VCHL", "VCHL"),
     styrene = must_element("OMNI_PT_STYR", "STYR"),
-    tetrafluoroethylene = must_element("OMNI_PT_TFET", "C2F4"),
+    tetrafluoroethylene = must_element("OMNI_PT_TFET", "TFET"),
     adipic_acid = must_element("OMNI_PT_ADIP", "ADIP"),
     diamine = must_element("OMNI_PT_DIAM", "DIAM"),
     epoxy_resin = must_element("OMNI_PT_ERES", "ERES"),
     polypropylene = must_element("OMNI_PT_PPLY", "PPLY"),
-    pvc = must_element("OMNI_PT_PVCL", "PVC"),
+    pvc = must_element("OMNI_PT_PVCL", "PVCL"),
     polystyrene = must_element("OMNI_PT_PSTY", "PSTY"),
     nylon = must_element("OMNI_PT_NYLN", "NYLN"),
     rubber = must_element("OMNI_PT_RUBR", "RUBR"),
@@ -116,6 +116,26 @@ local ids = {
     ptfe = must_element("OMNI_PT_PTFE", "PTFE"),
     bitumen = must_element("OMNI_PT_BITM", "BITM"),
     ethyl_acetate = must_element("OMNI_PT_EACT", "EACT"),
+    gaas = must_element("OMNI_PT_GAAS", "GAAS"),
+    gani = must_element("OMNI_PT_GANI", "GANI"),
+    frit = must_element("OMNI_PT_FRIT", "FRIT"),
+    pmag = must_element("OMNI_PT_PMAG", "PMAG"),
+    smag = must_element("OMNI_PT_SMAG", "SMAG"),
+    pzcr = must_element("OMNI_PT_PZCR", "PZCR"),
+    telc = must_element("OMNI_PT_TELC", "TELC"),
+    supc = must_element("OMNI_PT_SUPC", "SUPC"),
+    grph = must_element("OMNI_PT_GRPH", "GRPH"),
+    cntb = must_element("OMNI_PT_CNTB", "CNTB"),
+    aerg = must_element("OMNI_PT_AERG", "AERG"),
+    cfrp = must_element("OMNI_PT_CFRP", "CFRP"),
+    lcob = must_element("OMNI_PT_LCOB", "LCOB"),
+    gran = must_element("OMNI_PT_GRAN", "GRAN"),
+    sele = must_element("OMNI_PT_SELE", "SELE"),
+    itox = must_element("OMNI_PT_ITOX", "ITOX"),
+    pcmt = must_element("OMNI_PT_PCMT", "PCMT"),
+    echr = must_element("OMNI_PT_ECHR", "ECHR"),
+    phrs = must_element("OMNI_PT_PHRS", "PHRS"),
+    diel = must_element("OMNI_PT_DIEL", "DIEL"),
 }
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
@@ -202,6 +222,13 @@ local recovery_markers = {
         y = 8,
         particle_type = ids.virs,
         properties = { tmp2 = ids.alum },
+    },
+    {
+        name = "electronics_conv_fields",
+        x = 20,
+        y = 8,
+        particle_type = ids.conv,
+        properties = { ctype = ids.diel, tmp = ids.pcmt },
     },
 }
 
@@ -334,6 +361,39 @@ local function chemistry(bounds)
             make(ids.poly, x + 1, y + 2, { temp = 550.0 })
             make(ids.cata, x, y + 2, { temp = 550.0 })
             make(ids.water, x, y + 1, { temp = 550.0 })
+        end
+    end)
+end
+
+local function electronics(bounds)
+    sim.airMode(sim.AIR_NOUPDATE)
+    local passive = {
+        ids.gaas, ids.gani, ids.frit, ids.pmag, ids.smag, ids.pzcr,
+        ids.telc, ids.supc, ids.grph, ids.cntb, ids.aerg, ids.cfrp,
+        ids.lcob, ids.gran, ids.sele, ids.itox, ids.pcmt, ids.echr,
+        ids.phrs, ids.diel,
+    }
+    grid(bounds, function(x, y, n)
+        local mode = n % 6
+        if mode == 0 then
+            make(ids.cata, x, y, { temp = 1800.0 })
+            make(ids.coal, x + 1, y, { temp = 1800.0 })
+        elseif mode == 1 then
+            make(ids.cntb, x, y, { temp = 300.0 })
+            sim.pressure(math.floor(x / 4), math.floor(y / 4), 30.0)
+        elseif mode == 2 then
+            make(ids.aerg, x, y, { temp = 300.0 })
+            sim.pressure(math.floor(x / 4), math.floor(y / 4), 12.0)
+        elseif mode == 3 then
+            make(ids.grph, x, y, { temp = 950.0 })
+            make(ids.oxygen, x + 1, y, { temp = 950.0 })
+        elseif mode == 4 then
+            make(ids.lcob, x, y, { temp = 700.0 })
+            make(ids.oxygen, x + 1, y, { temp = 700.0 })
+        else
+            make(passive[(n % #passive) + 1], x, y, { temp = 300.0 })
+            make(passive[((n + 7) % #passive) + 1], x + 1, y,
+                { temp = 300.0 })
         end
     end)
 end
@@ -483,6 +543,7 @@ local scenarios = {
     ["S10-CARRIERS-ROUNDTRIP"] = function() carriers(full) end,
     ["S11-AUTOMATION-FACTORY"] = function() automation_factory(full) end,
     ["S12-AUTOMATION-SIGNAL-LOOP"] = function() automation_signal_loop(full) end,
+    ["S13-ELECTRONICS-DENSE"] = function() electronics(full) end,
 }
 
 local function particle_count()

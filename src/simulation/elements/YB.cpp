@@ -5,7 +5,7 @@
 void Element::Element_YB()
 {
 	Identifier = "OMNI_PT_YB";
-	Name = "YB";
+	Name = "YTTE";
 	Colour = 0xC8C8B8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -1046,7 +1046,9 @@ void GameView::updateToolButtonScroll()
 
 		int offsetDelta = 0;
 
-		int newInitialX = WINDOWW - 56;
+		// Keep the rightmost element button clear of both the periodic-table
+		// shortcut and the search button on the lower toolbar.
+		int newInitialX = WINDOWW - 72;
 		int totalWidth = (toolButtons[0]->Size.X + 1) * toolButtons.size();
 		int scrollSize = (int)(((float)(XRES - BARSIZE))/((float)totalWidth) * ((float)XRES - BARSIZE));
 

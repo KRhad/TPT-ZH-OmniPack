@@ -5,7 +5,7 @@
 void Element::Element_CS37()
 {
 	Identifier = "OMNI_PT_CS37";
-	Name = "CS37";
+	Name = "CSGM";
 	Colour = 0xC7A84E_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

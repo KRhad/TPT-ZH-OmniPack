@@ -5,7 +5,7 @@
 void Element::Element_IR()
 {
 	Identifier = "OMNI_PT_IR";
-	Name = "IR";
+	Name = "IRID";
 	Colour = 0xD0D3D8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

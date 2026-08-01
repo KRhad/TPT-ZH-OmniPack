@@ -5,7 +5,7 @@
 void Element::Element_TE()
 {
 	Identifier = "OMNI_PT_TE";
-	Name = "TE";
+	Name = "TELL";
 	Colour = 0x8F9699_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

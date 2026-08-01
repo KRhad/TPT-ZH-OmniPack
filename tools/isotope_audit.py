@@ -12,19 +12,19 @@ from typing import Sequence
 
 
 EXPECTED = {
-    576: ("H2IS", "H-2"),
-    577: ("H3IS", "H-3"),
-    578: ("C14I", "C-14"),
-    579: ("CO60", "Co-60"),
-    580: ("SR90", "Sr-90"),
-    581: ("I131", "I-131"),
-    582: ("CS37", "Cs-137"),
-    583: ("TH32", "Th-232"),
-    584: ("U235", "U-235"),
-    585: ("U238", "U-238"),
-    586: ("PU39", "Pu-239"),
-    587: ("AM41", "Am-241"),
-    588: ("CF52", "Cf-252"),
+    576: ("H2IS", "H-2", "DTER"),
+    577: ("H3IS", "H-3", "TRIT"),
+    578: ("C14I", "C-14", "CTRC"),
+    579: ("CO60", "Co-60", "COGM"),
+    580: ("SR90", "Sr-90", "SRBT"),
+    581: ("I131", "I-131", "IODR"),
+    582: ("CS37", "Cs-137", "CSGM"),
+    583: ("TH32", "Th-232", "THRT"),
+    584: ("U235", "U-235", "UFIS"),
+    585: ("U238", "U-238", "UFRT"),
+    586: ("PU39", "Pu-239", "PUTF"),
+    587: ("AM41", "Am-241", "AMIS"),
+    588: ("CF52", "Cf-252", "CFNS"),
 }
 
 EXPECTED_NEUTRON_BEHAVIOR = {
@@ -76,7 +76,7 @@ def check_registries(root: Path, errors: list[str]) -> None:
         for row in isotopes
         if row.get("stable_id", "").isdigit()
     }
-    for stable_id, (name, symbol) in EXPECTED.items():
+    for stable_id, (name, symbol, display_code) in EXPECTED.items():
         row = by_id.get(stable_id)
         if not row:
             errors.append(f"{element_path}: missing stable isotope ID {stable_id}")
@@ -84,6 +84,7 @@ def check_registries(root: Path, errors: list[str]) -> None:
         expected = {
             "identifier": f"OMNI_PT_{name}",
             "meson_name": name,
+            "display_code": display_code,
             "module": "nuclear",
             "menu_category": "SC_NUCLEAR",
             "implementation_status": "implemented",
@@ -166,7 +167,7 @@ def check_engine(root: Path, errors: list[str]) -> None:
     if 'Identifier = "DEFAULT_PT_DEUT"' not in deut or "TYPE_LIQUID" not in deut:
         errors.append("DEUT.cpp: official heavy-water DEUT was unexpectedly replaced")
 
-    for _stable_id, (name, _symbol) in EXPECTED.items():
+    for _stable_id, (name, _symbol, _display_code) in EXPECTED.items():
         element_path = root / "src" / "simulation" / "elements" / f"{name}.cpp"
         element = read_text(element_path, errors)
         for marker in (

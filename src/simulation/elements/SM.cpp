@@ -5,7 +5,7 @@
 void Element::Element_SM()
 {
 	Identifier = "OMNI_PT_SM";
-	Name = "SM";
+	Name = "SAMA";
 	Colour = 0xB8BBC4_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

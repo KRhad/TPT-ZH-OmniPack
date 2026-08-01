@@ -42,7 +42,8 @@ $scenarios = @(
     "biology",
     "chemistry",
     "nuclear",
-    "periodic"
+    "periodic",
+    "electronics"
 )
 $results = @()
 foreach ($scenario in $scenarios) {

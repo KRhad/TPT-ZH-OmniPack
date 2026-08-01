@@ -5,7 +5,7 @@
 void Element::Element_ZR()
 {
 	Identifier = "OMNI_PT_ZR";
-	Name = "ZR";
+	Name = "ZIRC";
 	Colour = 0xA9B7C2_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

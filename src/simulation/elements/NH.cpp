@@ -5,7 +5,7 @@
 void Element::Element_NH()
 {
 	Identifier = "OMNI_PT_NH";
-	Name = "NH";
+	Name = "NIHO";
 	Colour = 0xA86C8A_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

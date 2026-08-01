@@ -5,7 +5,7 @@
 void Element::Element_AR()
 {
 	Identifier = "OMNI_PT_AR";
-	Name = "AR";
+	Name = "ARGN";
 	Colour = 0xB98EFF_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

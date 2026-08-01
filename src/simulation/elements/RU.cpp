@@ -5,7 +5,7 @@
 void Element::Element_RU()
 {
 	Identifier = "OMNI_PT_RU";
-	Name = "RU";
+	Name = "RUTH";
 	Colour = 0xAAB4BC_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

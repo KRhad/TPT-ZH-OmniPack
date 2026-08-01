@@ -5,7 +5,7 @@
 void Element::Element_AT()
 {
 	Identifier = "OMNI_PT_AT";
-	Name = "AT";
+	Name = "ASTA";
 	Colour = 0x4E4057_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

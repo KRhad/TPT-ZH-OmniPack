@@ -5,7 +5,7 @@
 void Element::Element_AS()
 {
 	Identifier = "OMNI_PT_AS";
-	Name = "AS";
+	Name = "ARSN";
 	Colour = 0x777B78_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

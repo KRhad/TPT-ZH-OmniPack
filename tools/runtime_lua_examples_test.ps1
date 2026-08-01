@@ -3,7 +3,7 @@ param(
     [string] $Executable,
 
     [ValidateSet("Generate", "Verify", "All")]
-    [string] $Mode = "All",
+    [string] $Mode = "Verify",
 
     [string] $ExamplesDirectory = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) "..\examples\0.2.0"),
 
@@ -11,6 +11,8 @@ param(
 
     [ValidateRange(1, 180)]
     [int] $TimeoutSeconds = 45,
+
+    [switch] $UpdateSourceArtifacts,
 
     [switch] $KeepArtifacts
 )
@@ -29,9 +31,21 @@ foreach ($required in @($autorunSource, $specPath, $tutorialPath)) {
 }
 
 $resolvedExamples = [System.IO.Path]::GetFullPath($ExamplesDirectory)
+$sourceExamples = [System.IO.Path]::GetFullPath((Join-Path $sourceRoot "examples\0.2.0"))
 $resolvedTempParent = [System.IO.Path]::GetFullPath($TemporaryDirectory)
 if (-not (Test-Path -LiteralPath $resolvedTempParent -PathType Container)) {
     throw "Temporary directory does not exist: $resolvedTempParent"
+}
+if (
+    $Mode -in @("Generate", "All") -and
+    $resolvedExamples.Equals($sourceExamples, [System.StringComparison]::OrdinalIgnoreCase) -and
+    -not $UpdateSourceArtifacts
+) {
+    throw (
+        "Refusing to replace repository example evidence. " +
+        "Use -ExamplesDirectory with an isolated directory, or pass " +
+        "-UpdateSourceArtifacts for an intentional evidence refresh."
+    )
 }
 New-Item -ItemType Directory -Path $resolvedExamples -Force | Out-Null
 $spec = Get-Content -LiteralPath $specPath -Raw | ConvertFrom-Json

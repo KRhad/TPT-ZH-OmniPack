@@ -5,7 +5,7 @@
 void Element::Element_TFET()
 {
 	Identifier = "OMNI_PT_TFET";
-	Name = "C2F4";
+	Name = "TFET";
 	OmniConfigureOrganicElement(*this, PT_TFET);
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

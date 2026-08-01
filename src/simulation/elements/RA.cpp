@@ -5,7 +5,7 @@
 void Element::Element_RA()
 {
 	Identifier = "OMNI_PT_RA";
-	Name = "RA";
+	Name = "RADI";
 	Colour = 0xA8CFA4_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

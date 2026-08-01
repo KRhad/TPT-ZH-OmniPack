@@ -5,7 +5,7 @@
 void Element::Element_CH4M()
 {
 	Identifier = "OMNI_PT_CH4M";
-	Name = "CH4";
+	Name = "MTHN";
 	OmniConfigureOrganicElement(*this, PT_CH4M);
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

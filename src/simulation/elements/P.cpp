@@ -5,7 +5,7 @@
 void Element::Element_P()
 {
 	Identifier = "OMNI_PT_P";
-	Name = "P";
+	Name = "PHOS";
 	Colour = 0xEADCBF_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_POWDERS;

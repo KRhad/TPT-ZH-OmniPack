@@ -5,7 +5,7 @@
 void Element::Element_H3IS()
 {
 	Identifier = "OMNI_PT_H3IS";
-	Name = "H-3";
+	Name = "TRIT";
 	Colour = 0x78C8FF_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

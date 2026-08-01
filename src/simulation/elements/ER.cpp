@@ -5,7 +5,7 @@
 void Element::Element_ER()
 {
 	Identifier = "OMNI_PT_ER";
-	Name = "ER";
+	Name = "ERBI";
 	Colour = 0xD0A8B8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

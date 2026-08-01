@@ -38,6 +38,14 @@ class RuntimeWrapperCleanupContractTest(unittest.TestCase):
         self.assertIn('"..\\examples\\0.2.0"', self.examples)
         self.assertNotIn('"..\\..\\examples\\0.2.0"', self.examples)
 
+    def test_repository_evidence_is_read_only_by_default(self) -> None:
+        for wrapper in (self.examples, self.automation):
+            self.assertIn('[string] $Mode = "Verify"', wrapper)
+            self.assertIn('[switch] $UpdateSourceArtifacts', wrapper)
+            self.assertIn('$Mode -in @("Generate", "All")', wrapper)
+            self.assertIn('-not $UpdateSourceArtifacts', wrapper)
+            self.assertIn('Refusing to replace repository', wrapper)
+
 
 if __name__ == "__main__":
     unittest.main()

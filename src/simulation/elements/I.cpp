@@ -5,7 +5,7 @@
 void Element::Element_I()
 {
 	Identifier = "OMNI_PT_I";
-	Name = "I";
+	Name = "IODI";
 	Colour = 0x4B315F_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -5,7 +5,7 @@
 void Element::Element_Y()
 {
 	Identifier = "OMNI_PT_Y";
-	Name = "Y";
+	Name = "YTTR";
 	Colour = 0xB8C8D0_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -5,7 +5,7 @@
 void Element::Element_NO()
 {
 	Identifier = "OMNI_PT_NO";
-	Name = "NO";
+	Name = "NOBE";
 	Colour = 0x826B92_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

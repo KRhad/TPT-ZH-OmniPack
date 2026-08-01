@@ -5,7 +5,7 @@
 void Element::Element_TB()
 {
 	Identifier = "OMNI_PT_TB";
-	Name = "TB";
+	Name = "TERB";
 	Colour = 0xB4C5A4_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

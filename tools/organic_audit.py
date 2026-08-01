@@ -12,11 +12,11 @@ from typing import Sequence
 
 
 EXPECTED = {
-    589: ("CH4M", "CH4", "Methane", "甲烷", "SC_GAS", "gas"),
+    589: ("CH4M", "MTHN", "Methane", "甲烷", "SC_GAS", "gas"),
     590: ("ETHA", "ETHA", "Ethane", "乙烷", "SC_GAS", "gas"),
     591: ("PROP", "PROP", "Propane", "丙烷", "SC_GAS", "gas"),
     592: ("BUTA", "BUTA", "Butane", "丁烷", "SC_GAS", "gas"),
-    593: ("ETHE", "C2H4", "Ethylene", "乙烯", "SC_GAS", "gas"),
+    593: ("ETHE", "ETHE", "Ethylene", "乙烯", "SC_GAS", "gas"),
     594: ("METH", "MEOH", "Methanol", "甲醇", "SC_LIQUID", "liquid"),
     595: ("ACET", "ACET", "Acetone", "丙酮", "SC_LIQUID", "liquid"),
     596: ("BENZ", "BENZ", "Benzene", "苯", "SC_LIQUID", "liquid"),

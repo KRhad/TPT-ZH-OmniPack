@@ -5,7 +5,7 @@
 void Element::Element_OS()
 {
 	Identifier = "OMNI_PT_OS";
-	Name = "OS";
+	Name = "OSMI";
 	Colour = 0x8CA5B5_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

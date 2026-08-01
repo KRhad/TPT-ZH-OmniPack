@@ -5,7 +5,7 @@
 void Element::Element_AG()
 {
 	Identifier = "OMNI_PT_AG";
-	Name = "AG";
+	Name = "SILV";
 	Colour = 0xD8E2EA_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

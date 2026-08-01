@@ -5,7 +5,7 @@
 void Element::Element_SR90()
 {
 	Identifier = "OMNI_PT_SR90";
-	Name = "SR90";
+	Name = "SRBT";
 	Colour = 0xD8C878_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

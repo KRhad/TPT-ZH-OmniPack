@@ -5,7 +5,7 @@
 void Element::Element_VCHL()
 {
 	Identifier = "OMNI_PT_VCHL";
-	Name = "VCM";
+	Name = "VCHL";
 	OmniConfigureOrganicElement(*this, PT_VCHL);
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

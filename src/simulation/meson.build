@@ -6,6 +6,8 @@ simulation_files = files(
 	'GOLString.cpp',
 	'OmniBiology.cpp',
 	'OmniChemistry.cpp',
+	'OmniElectronics.cpp',
+	'OmniGasGraphics.cpp',
 	'OmniIsotopes.cpp',
 	'OmniMetallurgy.cpp',
 	'OmniMaterials.cpp',

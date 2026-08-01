@@ -5,7 +5,7 @@
 void Element::Element_CN()
 {
 	Identifier = "OMNI_PT_CN";
-	Name = "CN";
+	Name = "COPE";
 	Colour = 0xB28E9A_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

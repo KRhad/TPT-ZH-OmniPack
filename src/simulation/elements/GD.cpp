@@ -5,7 +5,7 @@
 void Element::Element_GD()
 {
 	Identifier = "OMNI_PT_GD";
-	Name = "GD";
+	Name = "GADO";
 	Colour = 0xABBFC2_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

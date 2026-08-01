@@ -5,7 +5,7 @@
 void Element::Element_MT()
 {
 	Identifier = "OMNI_PT_MT";
-	Name = "MT";
+	Name = "MEIT";
 	Colour = 0x786A8F_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

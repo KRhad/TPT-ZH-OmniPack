@@ -5,7 +5,7 @@
 void Element::Element_PVCL()
 {
 	Identifier = "OMNI_PT_PVCL";
-	Name = "PVC";
+	Name = "PVCL";
 	OmniConfigureOrganicElement(*this, PT_PVCL);
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -5,7 +5,7 @@
 void Element::Element_SB()
 {
 	Identifier = "OMNI_PT_SB";
-	Name = "SB";
+	Name = "ANTM";
 	Colour = 0xA6A8AC_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -5,7 +5,7 @@
 void Element::Element_SC()
 {
 	Identifier = "OMNI_PT_SC";
-	Name = "SC";
+	Name = "SCAN";
 	Colour = 0xC3CCD4_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

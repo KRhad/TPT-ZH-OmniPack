@@ -5,7 +5,7 @@
 void Element::Element_TH()
 {
 	Identifier = "OMNI_PT_TH";
-	Name = "TH";
+	Name = "THOR";
 	Colour = 0xA9B4B8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

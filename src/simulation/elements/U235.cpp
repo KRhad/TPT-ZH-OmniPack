@@ -5,7 +5,7 @@
 void Element::Element_U235()
 {
 	Identifier = "OMNI_PT_U235";
-	Name = "U235";
+	Name = "UFIS";
 	Colour = 0x4F9B45_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

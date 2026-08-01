@@ -5,7 +5,7 @@
 void Element::Element_BK()
 {
 	Identifier = "OMNI_PT_BK";
-	Name = "BK";
+	Name = "BERK";
 	Colour = 0x8F705F_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

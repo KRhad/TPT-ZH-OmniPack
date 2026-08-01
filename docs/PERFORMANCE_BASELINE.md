@@ -22,6 +22,7 @@
 | 化学与无机物 | `1536` 事件/帧，`3x3` 局部反应；新建气体前先检查空槽 |
 | 受控核工业 | 有界中子/控制更新，不允许无界粒子链 |
 | 周期元素族 | `1024` 事件/帧，`3x3` 放电/换热，衰变每次至多一个有限寿命光子 |
+| 电子与特殊材料 | `1024` 事件/帧，`3x3` 合成和局部光电/磁/热响应；状态切换不全图扫描 |
 
 ## 内容扩展压力场景
 
@@ -210,8 +211,40 @@ organic_batch2_python_tests=188/188
 organic_batch2_exe_bytes=319076020
 organic_batch2_exe_sha256=6008DC000511307F946C1AA8B0DB6259007DE95ADE9BD9829AA7B6A8CCF98362
 organic_batch2_formal_600s_stress_test=not_tested
+electronics_batch1_elements=20
+electronics_batch1_ids=622..641
+electronics_batch1_synthesis_paths=22
+electronics_batch1_behavior_classes=16
+electronics_batch1_budget_samples=1100
+electronics_batch1_reacted_events=1024
+electronics_batch1_peak_events_per_frame=1024
+electronics_batch1_clean_build_pass=true
+electronics_batch1_clean_build_targets=754
+electronics_batch1_static_tests=30/30
+electronics_batch1_python_tests=197_run_0_fail_2_skip
+electronics_batch1_exe_bytes=326529692
+electronics_batch1_exe_sha256=F8547DC0609A70B10567B4ADAA67AA41C11D55EDDB354A6B43E20DD5CFAEB568
+electronics_batch1_ops_particles=26
+electronics_batch1_ops_field_assertions=34
+electronics_batch1_s13_smoke_run=true
+electronics_batch1_s13_smoke_seconds=2.011415
+electronics_batch1_s13_smoke_average_fps=61.150988
+electronics_batch1_s13_smoke_one_percent_low_fps=55.276945
+electronics_batch1_s13_smoke_peak_particles=1720
+electronics_batch1_s13_smoke_peak_events_per_frame=516
+electronics_batch1_s13_smoke_crashed=false
+electronics_batch1_s13_smoke_hung=false
+electronics_batch1_s13_smoke_roundtrip_pass=true
+electronics_batch1_formal_600s_stress_test=not_tested
+omni_four_letter_codes=277
+omni_invalid_display_codes=0
+omni_duplicate_display_codes=0
+repository_example_write_guards=2
+isolated_example_source_hash_changes=0
+periodic_button_gui_visual_test=not_tested
+official_style_gas_gui_visual_test=not_tested
 disabled_module_runtime_test=true
-disabled_module_loaded_particles=20
+disabled_module_loaded_particles=22
 disabled_module_update_events=0
 periodic_118_stress_test=not_tested
 mixed_451_material_stress_test=not_tested

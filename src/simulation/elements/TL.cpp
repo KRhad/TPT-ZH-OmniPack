@@ -5,7 +5,7 @@
 void Element::Element_TL()
 {
 	Identifier = "OMNI_PT_TL";
-	Name = "TL";
+	Name = "THAL";
 	Colour = 0x87948E_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -5,7 +5,7 @@
 void Element::Element_TA()
 {
 	Identifier = "OMNI_PT_TA";
-	Name = "TA";
+	Name = "TANT";
 	Colour = 0x82758B_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

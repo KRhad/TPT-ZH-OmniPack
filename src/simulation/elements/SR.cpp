@@ -5,7 +5,7 @@
 void Element::Element_SR()
 {
 	Identifier = "OMNI_PT_SR";
-	Name = "SR";
+	Name = "STRN";
 	Colour = 0xC9D0BC_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_EXPLOSIVE;

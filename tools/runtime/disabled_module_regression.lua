@@ -30,10 +30,12 @@ local ids = {
     epoxy_resin = must_element("OMNI_PT_ERES", 612),
     epoxy = must_element("OMNI_PT_EPXY", 618),
     ethyl_acetate = must_element("OMNI_PT_EACT", 621),
+    dielectric = must_element("OMNI_PT_DIEL", 641),
     catalyst = must_element("OMNI_PT_CATA", 366),
     caustic = must_element("DEFAULT_PT_CAUS", 86),
     helium = must_element("OMNI_PT_HE", 370),
     fire = assert(elements.DEFAULT_PT_FIRE),
+    metal = assert(elements.DEFAULT_PT_METL),
 }
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
@@ -86,12 +88,15 @@ local function phase_one()
     local resin_first = sim.partCreate(-1, 360, 120, ids.epoxy_resin)
     local resin_second = sim.partCreate(-1, 361, 120, ids.epoxy_resin)
     local catalyst = sim.partCreate(-1, 360, 121, ids.catalyst)
+    local dielectric = sim.partCreate(-1, 380, 120, ids.dielectric)
+    local metal = sim.partCreate(-1, 381, 120, ids.metal)
     assert(acid >= 0 and base >= 0 and sterilizer >= 0 and pathogen >= 0
             and coolant >= 0 and waste >= 0 and scrap >= 0 and carbonic >= 0
             and ammonium_chloride >= 0 and engineering >= 0 and material >= 0
             and isotope >= 0 and hydrogen2 >= 0 and fire >= 0
             and fats >= 0 and caustic >= 0 and ethyl_acetate >= 0
-            and resin_first >= 0 and resin_second >= 0 and catalyst >= 0,
+            and resin_first >= 0 and resin_second >= 0 and catalyst >= 0
+            and dielectric >= 0 and metal >= 0,
         "failed to create enabled module fixtures")
     sim.partProperty(acid, "temp", 300.0)
     sim.partProperty(base, "temp", 300.0)
@@ -106,6 +111,7 @@ local function phase_one()
     sim.partProperty(resin_first, "temp", 380.0)
     sim.partProperty(resin_second, "temp", 380.0)
     sim.partProperty(catalyst, "temp", 380.0)
+    sim.partProperty(dielectric, "tmp", 8)
     local stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
     assert(type(stamp) == "string" and stamp:match("^[0-9A-Fa-f]+$") and #stamp == 10,
         "failed to save enabled chemistry OPS fixture")
@@ -114,9 +120,9 @@ local function phase_one()
     state:close()
     return {
         "OMNI_DISABLED_MODULE_PHASE=1",
-        "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
+        "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear,electronics",
         "OMNI_DISABLED_MODULE_STAMP=" .. stamp,
-        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=20",
+        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=22",
     }
 end
 
@@ -133,6 +139,7 @@ local function phase_two()
         { "OMNI_PT_CF52", ids.isotope },
         { "OMNI_PT_FATS", ids.fats },
         { "OMNI_PT_EACT", ids.ethyl_acetate },
+        { "OMNI_PT_DIEL", ids.dielectric },
         { "OMNI_PT_STER", ids.sterilizer },
         { "OMNI_PT_CHLR", ids.chlorine },
         { "OMNI_PT_HCLA", ids.hydrochloric },
@@ -155,7 +162,7 @@ local function phase_two()
 
     ui.activeTool(0, "OMNI_PT_HE")
     assert(ui.activeTool(0) == "OMNI_PT_HE",
-        "always-available periodic selection was blocked with chemistry disabled")
+        "periodic helium selection was blocked with content modules disabled")
     local helium = sim.partCreate(-1, 102, 100, ids.helium)
     assert(helium >= 0, "periodic creation was blocked with chemistry disabled")
 
@@ -191,6 +198,9 @@ local function phase_two()
         sim.partID(361, 120), "loaded second epoxy resin particle is missing")
     local catalyst = assert(
         sim.partID(360, 121), "loaded organic catalyst particle is missing")
+    local dielectric = assert(
+        sim.partID(380, 120), "loaded dielectric ceramic is missing")
+    local metal = assert(sim.partID(381, 120), "loaded dielectric conductor is missing")
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
             and sim.partProperty(carbonic, "type") == ids.carbonic
@@ -207,6 +217,10 @@ local function phase_two()
             and sim.partProperty(resin_second, "type") == ids.epoxy_resin
             and sim.partProperty(catalyst, "type") == ids.catalyst,
         "disabled-module OPS load changed or deleted organic batch 2 particles")
+    assert(sim.partProperty(dielectric, "type") == ids.dielectric
+            and sim.partProperty(dielectric, "tmp") == 8
+            and sim.partProperty(metal, "type") == ids.metal,
+        "disabled-module OPS load changed the electronics fixture")
     sim.updateUpTo()
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
@@ -229,6 +243,10 @@ local function phase_two()
             and sim.partProperty(resin_second, "type") == ids.epoxy_resin
             and sim.partProperty(catalyst, "type") == ids.catalyst,
         "disabled organic batch 2 curing or phase behavior continued after OPS load")
+    assert(sim.partProperty(dielectric, "type") == ids.dielectric
+            and sim.partProperty(dielectric, "tmp") == 8
+            and sim.partProperty(metal, "type") == ids.metal,
+        "disabled dielectric ceramic discharged after OPS load")
     assert(sim.partProperty(sterilizer, "type") == ids.sterilizer
             and sim.partProperty(pathogen, "type") == ids.pathogen,
         "disabled biology particles continued reacting after OPS load")
@@ -245,7 +263,7 @@ local function phase_two()
 
     return {
         "OMNI_DISABLED_MODULE_PHASE=2",
-        "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
+        "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear,electronics",
         "OMNI_DISABLED_MODULE_METALLURGY=OMNI_PT_ALUM",
         "OMNI_DISABLED_MODULE_ENGINEERING=OMNI_PT_NITI",
         "OMNI_DISABLED_MODULE_MATERIAL=OMNI_PT_RFBK",
@@ -258,7 +276,8 @@ local function phase_two()
         "OMNI_DISABLED_MODULE_NUCLEAR=OMNI_PT_NCLT",
         "OMNI_DISABLED_MODULE_ISOTOPE=OMNI_PT_CF52",
         "OMNI_DISABLED_MODULE_ORGANIC=OMNI_PT_EACT",
-        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=20",
+        "OMNI_DISABLED_MODULE_ELECTRONICS=OMNI_PT_DIEL",
+        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=22",
         "OMNI_DISABLED_MODULE_UPDATE_EVENTS=0",
         "OMNI_DISABLED_MODULE_PERIODIC_ACTIVE=OMNI_PT_HE",
         "OMNI_DISABLED_MODULE_OPS_FORMAT=OPS1",

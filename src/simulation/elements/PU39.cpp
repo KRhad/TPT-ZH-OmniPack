@@ -5,7 +5,7 @@
 void Element::Element_PU39()
 {
 	Identifier = "OMNI_PT_PU39";
-	Name = "PU39";
+	Name = "PUTF";
 	Colour = 0x8B5B34_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

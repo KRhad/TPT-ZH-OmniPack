@@ -5,7 +5,7 @@
 void Element::Element_ND()
 {
 	Identifier = "OMNI_PT_ND";
-	Name = "ND";
+	Name = "NEOD";
 	Colour = 0xA6B8C9_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

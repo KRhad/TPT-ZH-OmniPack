@@ -5,7 +5,7 @@
 void Element::Element_MD()
 {
 	Identifier = "OMNI_PT_MD";
-	Name = "MD";
+	Name = "MEND";
 	Colour = 0x9A5E76_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

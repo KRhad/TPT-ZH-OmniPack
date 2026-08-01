@@ -42,6 +42,7 @@ MODULE_PREFIX = {
     "chemistry": "chemistry.",
     "advanced_nuclear": "nuclear.",
     "periodic": "periodic.",
+    "electronics": "electronics.",
 }
 
 MODULE_BUDGETS = {
@@ -50,6 +51,7 @@ MODULE_BUDGETS = {
     "chemistry": {"1536/frame"},
     "advanced_nuclear": {"512/frame"},
     "periodic": {"1024/frame"},
+    "electronics": {"1024/frame"},
 }
 
 REQUIRED_REACTIONS = {
@@ -166,6 +168,44 @@ REQUIRED_REACTIONS = {
     "nuclear.plutonium239_fission",
     "nuclear.californium252_fission",
     "periodic.noble_gas_discharge",
+	"electronics.synthesis_superconductor",
+	"electronics.synthesis_solid_electrolyte",
+	"electronics.synthesis_permanent_magnet",
+	"electronics.synthesis_piezoelectric_ceramic",
+	"electronics.synthesis_lithium_cobalt_oxide",
+	"electronics.synthesis_indium_tin_oxide",
+	"electronics.synthesis_phase_change_material",
+	"electronics.synthesis_electrochromic_material",
+	"electronics.synthesis_gallium_arsenide",
+	"electronics.synthesis_gallium_nitride",
+	"electronics.synthesis_ferrite",
+	"electronics.synthesis_soft_magnet",
+	"electronics.synthesis_thermoelectric_material",
+	"electronics.synthesis_carbon_nanotube",
+	"electronics.synthesis_carbon_fibre_composite",
+	"electronics.synthesis_photoresist",
+	"electronics.synthesis_dielectric_ceramic",
+	"electronics.synthesis_aerogel",
+	"electronics.synthesis_graphite_anode",
+	"electronics.synthesis_graphene",
+	"electronics.silicon_p_doping",
+	"electronics.silicon_n_doping",
+	"electronics.gaas_photoconduction",
+	"electronics.gani_electroluminescence",
+	"electronics.ferrite_pulse_loss",
+	"electronics.magnetic_deflection",
+	"electronics.piezoelectric_pressure",
+	"electronics.thermoelectric_gradient",
+	"electronics.superconducting_conduction",
+	"electronics.nanotube_pressure_collapse",
+	"electronics.aerogel_pressure_collapse",
+	"electronics.graphene_oxidation",
+	"electronics.battery_charge_transfer",
+	"electronics.battery_thermal_runaway",
+	"electronics.phase_change_memory",
+	"electronics.electrochromic_toggle",
+	"electronics.photoresist_development",
+	"electronics.dielectric_charge_discharge",
     "periodic.helium_cryogenic_exchange",
     "periodic.radon_decay",
     "periodic.oganesson_decay",
@@ -423,6 +463,17 @@ def _valid_temperature(value: str) -> bool:
     return all(re.fullmatch(comparison, item) for item in value.split(";"))
 
 
+def _valid_pressure(value: str) -> bool:
+    if value in {
+        "any",
+        "abs>=element-specific-threshold",
+        "abs=[55;170)",
+        "rapid-delta>96|128",
+    }:
+        return True
+    return bool(re.fullmatch(r"(?:abs)?(?:>=|>)-?[0-9]+(?:\.[0-9]+)?", value))
+
+
 def audit(root: Path, registry_path: Path | None = None) -> list[str]:
     root = root.resolve()
     path = registry_path or root / "docs" / "REACTION_REGISTRY.csv"
@@ -497,6 +548,10 @@ def audit(root: Path, registry_path: Path | None = None) -> list[str]:
             )
         if row.get("electricity") not in {
             "none",
+            "SPRK",
+            "generated",
+            "SPRK(activates=PT_SMAG)",
+            "SPRK(read)",
             "SPRK(ctype=PT_CATA)",
             "SPRK(ctype=PT_NGEN)",
             "SPRK(ctype=PT_NCRM)",
@@ -504,13 +559,7 @@ def audit(root: Path, registry_path: Path | None = None) -> list[str]:
             "SPRK(ctype=PT_CNST)",
         }:
             errors.append(f"{path}:{row_number}: invalid electricity condition")
-        if row.get("pressure") not in {
-            "any",
-            ">=2.0",
-            "abs>=element-specific-threshold",
-            "abs=[55;170)",
-            "rapid-delta>96|128",
-        }:
+        if not _valid_pressure(row.get("pressure", "")):
             errors.append(f"{path}:{row_number}: invalid pressure condition")
         temperature = row.get("temperature", "")
         if not _valid_temperature(temperature):

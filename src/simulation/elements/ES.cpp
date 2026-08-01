@@ -5,7 +5,7 @@
 void Element::Element_ES()
 {
 	Identifier = "OMNI_PT_ES";
-	Name = "ES";
+	Name = "EINS";
 	Colour = 0xD88955_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

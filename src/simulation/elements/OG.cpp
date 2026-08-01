@@ -5,7 +5,7 @@
 void Element::Element_OG()
 {
 	Identifier = "OMNI_PT_OG";
-	Name = "OG";
+	Name = "OGAN";
 	Colour = 0xD95CA8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

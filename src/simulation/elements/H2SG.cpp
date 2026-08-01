@@ -5,7 +5,7 @@
 void Element::Element_H2SG()
 {
 	Identifier = "OMNI_PT_H2SG";
-	Name = "H2SG";
+	Name = "HSUL";
 	Colour = 0xCEDF9B_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_GAS;
@@ -37,4 +37,5 @@ void Element::Element_H2SG()
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
 	Update = &OmniInorganicElementUpdate;
+	Graphics = &OmniGasGraphics;
 }

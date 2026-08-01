@@ -1,6 +1,7 @@
 #include "OmniChemistry.h"
 
 #include "ElementCommon.h"
+#include "OmniElectronics.h"
 #include "OmniModuleRuntime.h"
 #include "OmniOrganics.h"
 
@@ -1260,9 +1261,8 @@ bool OmniConsumeChemistryEvent(Simulation *sim)
 
 int OmniChemistryElementUpdate(UPDATE_FUNC_ARGS)
 {
-	if (!ChemistryModuleEnabled(sim))
-		return 0;
-	if (OmniOrganicElementUpdate(UPDATE_FUNC_SUBCALL_ARGS)
+	if (ChemistryModuleEnabled(sim)
+		&& (OmniOrganicElementUpdate(UPDATE_FUNC_SUBCALL_ARGS)
 		|| PeroxidePathogenTreatment(UPDATE_FUNC_SUBCALL_ARGS)
 		|| SlagAcidLeaching(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CatalyticCracking(UPDATE_FUNC_SUBCALL_ARGS)
@@ -1270,10 +1270,12 @@ int OmniChemistryElementUpdate(UPDATE_FUNC_ARGS)
 		|| PeroxideMetalOxidation(UPDATE_FUNC_SUBCALL_ARGS)
 		|| ChlorineReaction(UPDATE_FUNC_SUBCALL_ARGS)
 		|| AmmoniaReaction(UPDATE_FUNC_SUBCALL_ARGS)
-		|| FertilizerUse(UPDATE_FUNC_SUBCALL_ARGS))
+		|| FertilizerUse(UPDATE_FUNC_SUBCALL_ARGS)))
 	{
 		return 1;
 	}
+	if (OmniElectronicsCatalystUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 1;
 	return 0;
 }
 

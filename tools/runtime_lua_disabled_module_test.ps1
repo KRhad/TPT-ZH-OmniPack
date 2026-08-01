@@ -73,9 +73,9 @@ function Invoke-DisabledModulePhase {
         [System.Text.Encoding]::ASCII
     )
     $preference = if ($ModulesEnabled) {
-        '{"Omni":{"Modules":{"Metallurgy":true,"Biology":true,"Chemistry":true,"AdvancedNuclear":true}}}'
+        '{"Omni":{"Modules":{"Metallurgy":true,"Biology":true,"Chemistry":true,"AdvancedNuclear":true,"Electronics":true}}}'
     } else {
-        '{"Omni":{"Modules":{"Metallurgy":false,"Biology":false,"Chemistry":false,"AdvancedNuclear":false}}}'
+        '{"Omni":{"Modules":{"Metallurgy":false,"Biology":false,"Chemistry":false,"AdvancedNuclear":false,"Electronics":false}}}'
     }
     [System.IO.File]::WriteAllText(
         (Join-Path $resolvedTestRoot "powder.pref"),
@@ -153,7 +153,7 @@ try {
     $phase1 = Invoke-DisabledModulePhase -Phase 1 -ModulesEnabled $true
     $phase2 = Invoke-DisabledModulePhase -Phase 2 -ModulesEnabled $false
     foreach ($required in @(
-        "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
+        "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear,electronics",
         "OMNI_DISABLED_MODULE_METALLURGY=OMNI_PT_ALUM",
         "OMNI_DISABLED_MODULE_ENGINEERING=OMNI_PT_NITI",
         "OMNI_DISABLED_MODULE_MATERIAL=OMNI_PT_RFBK",
@@ -166,7 +166,8 @@ try {
         "OMNI_DISABLED_MODULE_NUCLEAR=OMNI_PT_NCLT",
         "OMNI_DISABLED_MODULE_ISOTOPE=OMNI_PT_CF52",
         "OMNI_DISABLED_MODULE_ORGANIC=OMNI_PT_EACT",
-        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=20",
+        "OMNI_DISABLED_MODULE_ELECTRONICS=OMNI_PT_DIEL",
+        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=22",
         "OMNI_DISABLED_MODULE_UPDATE_EVENTS=0",
         "OMNI_DISABLED_MODULE_PERIODIC_ACTIVE=OMNI_PT_HE",
         "OMNI_DISABLED_MODULE_OPS_FORMAT=OPS1"

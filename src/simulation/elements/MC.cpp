@@ -5,7 +5,7 @@
 void Element::Element_MC()
 {
 	Identifier = "OMNI_PT_MC";
-	Name = "MC";
+	Name = "MOSC";
 	Colour = 0xB44F76_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

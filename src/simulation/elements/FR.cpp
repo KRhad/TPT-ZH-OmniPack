@@ -5,7 +5,7 @@
 void Element::Element_FR()
 {
 	Identifier = "OMNI_PT_FR";
-	Name = "FR";
+	Name = "FRAN";
 	Colour = 0xA96B8F_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

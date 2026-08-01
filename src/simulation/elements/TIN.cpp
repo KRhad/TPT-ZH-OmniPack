@@ -8,7 +8,7 @@ static int update(UPDATE_FUNC_ARGS);
 void Element::Element_TIN()
 {
 	Identifier = "OMNI_PT_TIN";
-	Name = "TIN";
+	Name = "TINN";
 	Colour = 0xB8C0C8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

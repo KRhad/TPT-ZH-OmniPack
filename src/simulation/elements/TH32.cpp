@@ -5,7 +5,7 @@
 void Element::Element_TH32()
 {
 	Identifier = "OMNI_PT_TH32";
-	Name = "TH32";
+	Name = "THRT";
 	Colour = 0xA8B39C_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

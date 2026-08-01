@@ -5,7 +5,7 @@
 void Element::Element_CE()
 {
 	Identifier = "OMNI_PT_CE";
-	Name = "CE";
+	Name = "CERI";
 	Colour = 0xC6B979_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

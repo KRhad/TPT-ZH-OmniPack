@@ -110,6 +110,7 @@ OMNIPACK_MODULE_RANGES = (
     (512, 575, "metallurgy"),
     (576, 588, "nuclear"),
     (589, 621, "chemistry"),
+    (622, 669, "electronics"),
 )
 
 SLOT_STATUSES = frozenset({"active", "reserved"})
@@ -154,6 +155,7 @@ LICENSES = frozenset(
 ASCII_IDENTIFIER = re.compile(r"^[A-Z][A-Z0-9_]*$")
 ASCII_MESON_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
 ASCII_DISPLAY_CODE = re.compile(r"^[\x21-\x7E]+$")
+OMNI_DISPLAY_CODE = re.compile(r"^[A-Z]{4}$")
 HEX_COMMIT = re.compile(r"^[0-9a-f]{40}$")
 CJK = re.compile(
     r"[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF"
@@ -684,6 +686,16 @@ def parse_element_source(
         findings.add("SOURCE_IDENTIFIER", path, f"Identifier {identifier!r} is not uppercase ASCII")
     if display_code and not ASCII_DISPLAY_CODE.fullmatch(display_code):
         findings.add("SOURCE_DISPLAY", path, f"Name {display_code!r} is not printable ASCII")
+    if (
+        identifier.startswith("OMNI_PT_")
+        and display_code
+        and not OMNI_DISPLAY_CODE.fullmatch(display_code)
+    ):
+        findings.add(
+            "SOURCE_DISPLAY_STYLE",
+            path,
+            f"OmniPack Name {display_code!r} must be exactly four uppercase letters",
+        )
     expected_key = f"sim.elem.{identifier}" if identifier else ""
     if description_key and description_key != expected_key:
         findings.add(
@@ -1020,6 +1032,20 @@ def validate_registry(
             findings.add("REGISTRY_MESON", path, f"invalid meson_name {meson_name!r}", row_number)
         if not display_code or not ASCII_DISPLAY_CODE.fullmatch(display_code):
             findings.add("REGISTRY_DISPLAY", path, f"invalid display_code {display_code!r}", row_number)
+        if identifier.startswith("OMNI_PT_") and not OMNI_DISPLAY_CODE.fullmatch(display_code):
+            findings.add(
+                "REGISTRY_DISPLAY_STYLE",
+                path,
+                "OmniPack display_code must be exactly four uppercase letters",
+                row_number,
+            )
+        if identifier.startswith("OMNI_PT_") and row.get("code") != display_code:
+            findings.add(
+                "REGISTRY_CODE_ALIAS",
+                path,
+                f"code={row.get('code')!r} must match display_code={display_code!r}",
+                row_number,
+            )
 
         identifier_folded = identifier.casefold()
         if identifier_folded in identifier_owner:
@@ -1331,6 +1357,8 @@ def run_self_test() -> list[str]:
     expect(eval_numeric_expression("unknown + 1") is None, "unknown identifier rejection")
     expect(bool(ASCII_IDENTIFIER.fullmatch("DEFAULT_PT_WATR")), "valid identifier")
     expect(not ASCII_IDENTIFIER.fullmatch("default_pt_watr"), "lowercase identifier rejection")
+    expect(bool(OMNI_DISPLAY_CODE.fullmatch("WATR")), "valid OmniPack display code")
+    expect(not OMNI_DISPLAY_CODE.fullmatch("H2O"), "invalid OmniPack display code rejection")
     expect(bool(CJK.search("简体中文")), "CJK detection")
     expect(bool(CJK.search("𫓧")), "supplementary CJK detection")
     expect(not CJK.search("English only"), "non-CJK rejection")
@@ -1401,7 +1429,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             for failure in failures:
                 print(f"element-registry-check: SELF-TEST FAIL: {failure}", file=sys.stderr)
         elif not args.quiet:
-            print("element-registry-check: SELF-TEST PASS (12 checks, no files modified)")
+            print("element-registry-check: SELF-TEST PASS (14 checks, no files modified)")
         return 1 if failures else 0
 
     default_root = Path(__file__).resolve().parents[1]

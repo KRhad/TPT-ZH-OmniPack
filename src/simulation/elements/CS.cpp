@@ -5,7 +5,7 @@
 void Element::Element_CS()
 {
 	Identifier = "OMNI_PT_CS";
-	Name = "CS";
+	Name = "CAES";
 	Colour = 0xD7B56D_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_EXPLOSIVE;

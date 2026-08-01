@@ -5,7 +5,7 @@
 void Element::Element_HS()
 {
 	Identifier = "OMNI_PT_HS";
-	Name = "HS";
+	Name = "HASS";
 	Colour = 0x657591_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

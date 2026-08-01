@@ -5,7 +5,7 @@
 void Element::Element_KCL()
 {
 	Identifier = "OMNI_PT_KCL";
-	Name = "KCL";
+	Name = "PTCL";
 	Colour = 0xE9E4F0_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_POWDERS;

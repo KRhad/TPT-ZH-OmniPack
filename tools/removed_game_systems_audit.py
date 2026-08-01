@@ -82,7 +82,9 @@ def audit(root: Path) -> list[str]:
             errors.append(f"{relative}: retired player progression localization remains")
 
     content = read_text(root / "src/gui/game/OmniContent.cpp", errors)
-    for setting in ("Biology", "Metallurgy", "Chemistry", "AdvancedNuclear"):
+    for setting in (
+        "Biology", "Metallurgy", "Chemistry", "AdvancedNuclear", "Electronics"
+    ):
         if f"OmniSetting::{setting}" not in content:
             errors.append(f"OmniContent.cpp: current module setting is missing: {setting}")
     if "OmniSelectionRestriction::ModuleDisabled" not in content:

@@ -5,7 +5,7 @@
 void Element::Element_SG()
 {
 	Identifier = "OMNI_PT_SG";
-	Name = "SG";
+	Name = "SEAB";
 	Colour = 0x7691A8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

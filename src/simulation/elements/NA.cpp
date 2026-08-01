@@ -5,7 +5,7 @@
 void Element::Element_NA()
 {
 	Identifier = "OMNI_PT_NA";
-	Name = "NA";
+	Name = "SODM";
 	Colour = 0xD8D9DC_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_EXPLOSIVE;

@@ -5,6 +5,7 @@
 #include "FIRE.h"
 #include "ETRD.h"
 #include "simulation/OmniChemistry.h"
+#include "simulation/OmniElectronics.h"
 #include "simulation/OmniMetallurgy.h"
 #include "simulation/OmniMaterials.h"
 #include "simulation/OmniNuclear.h"
@@ -63,9 +64,13 @@ static int update(UPDATE_FUNC_ARGS)
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
 	int ct = parts[i].ctype;
-	// A powered chemistry catalyst must consume its bounded local recipe before
-	// generic spark ignition can replace flammable reactants with FIRE.
+	auto electronicsEnabled = OmniElectronicsModuleEnabled(sim);
+	if (!electronicsEnabled && OmniIsElectronicsElement(ct) && parts[i].life > 0)
+		return 0;
+	// Keep established chemistry recipes ahead of newer catalyst families.
 	if (ct == PT_CATA && OmniChemistrySparkUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 1;
+	if (OmniElectronicsSparkUpdate(UPDATE_FUNC_SUBCALL_ARGS))
 		return 1;
 	if (ct == PT_NCRM && OmniMaterialsSparkUpdate(UPDATE_FUNC_SUBCALL_ARGS))
 		return 1;
@@ -237,6 +242,8 @@ static int update(UPDATE_FUNC_ARGS)
 					continue;
 				auto receiver = TYP(r);
 				auto sender = ct;
+				if (!electronicsEnabled && OmniIsElectronicsElement(receiver))
+					continue;
 				auto pavg = sim->parts_avg(ID(r), i,PT_INSL);
 				//receiver is the element SPRK is trying to conduct to
 				//sender is the element the SPRK is on

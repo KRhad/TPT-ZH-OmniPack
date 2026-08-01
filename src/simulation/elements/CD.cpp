@@ -5,7 +5,7 @@
 void Element::Element_CD()
 {
 	Identifier = "OMNI_PT_CD";
-	Name = "CD";
+	Name = "CADM";
 	Colour = 0xA8B4BC_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

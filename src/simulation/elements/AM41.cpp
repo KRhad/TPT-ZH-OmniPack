@@ -5,7 +5,7 @@
 void Element::Element_AM41()
 {
 	Identifier = "OMNI_PT_AM41";
-	Name = "AM41";
+	Name = "AMIS";
 	Colour = 0xAEB84D_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

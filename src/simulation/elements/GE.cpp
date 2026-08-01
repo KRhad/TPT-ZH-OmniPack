@@ -5,7 +5,7 @@
 void Element::Element_GE()
 {
 	Identifier = "OMNI_PT_GE";
-	Name = "GE";
+	Name = "GERM";
 	Colour = 0x8A93A1_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_ELEC;

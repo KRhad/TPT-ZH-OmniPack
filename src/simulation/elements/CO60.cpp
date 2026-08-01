@@ -5,7 +5,7 @@
 void Element::Element_CO60()
 {
 	Identifier = "OMNI_PT_CO60";
-	Name = "CO60";
+	Name = "COGM";
 	Colour = 0x5279B8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

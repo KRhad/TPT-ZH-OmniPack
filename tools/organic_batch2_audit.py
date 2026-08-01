@@ -15,16 +15,16 @@ EXPECTED = {
     602: ("GLUC", "GLUC", "Glucose", "葡萄糖", "SC_POWDERS", "powder"),
     603: ("STRC", "STRC", "Starch", "淀粉", "SC_POWDERS", "powder"),
     604: ("CELU", "CELU", "Cellulose", "纤维素", "SC_SOLIDS", "solid"),
-    605: ("PRPE", "C3H6", "Propylene", "丙烯", "SC_GAS", "gas"),
-    606: ("BDIE", "C4H6", "Butadiene", "丁二烯", "SC_GAS", "gas"),
-    607: ("VCHL", "VCM", "Vinyl Chloride", "氯乙烯", "SC_GAS", "gas"),
+    605: ("PRPE", "PRPE", "Propylene", "丙烯", "SC_GAS", "gas"),
+    606: ("BDIE", "BDIE", "Butadiene", "丁二烯", "SC_GAS", "gas"),
+    607: ("VCHL", "VCHL", "Vinyl Chloride", "氯乙烯", "SC_GAS", "gas"),
     608: ("STYR", "STYR", "Styrene", "苯乙烯", "SC_LIQUID", "liquid"),
-    609: ("TFET", "C2F4", "Tetrafluoroethylene", "四氟乙烯", "SC_GAS", "gas"),
+    609: ("TFET", "TFET", "Tetrafluoroethylene", "四氟乙烯", "SC_GAS", "gas"),
     610: ("ADIP", "ADIP", "Adipic Acid", "己二酸", "SC_POWDERS", "powder"),
     611: ("DIAM", "DIAM", "Diamine", "己二胺", "SC_POWDERS", "powder"),
     612: ("ERES", "ERES", "Epoxy Resin", "环氧树脂", "SC_LIQUID", "liquid"),
     613: ("PPLY", "PPLY", "Polypropylene", "聚丙烯", "SC_SOLIDS", "solid"),
-    614: ("PVCL", "PVC", "Polyvinyl Chloride", "聚氯乙烯", "SC_SOLIDS", "solid"),
+    614: ("PVCL", "PVCL", "Polyvinyl Chloride", "聚氯乙烯", "SC_SOLIDS", "solid"),
     615: ("PSTY", "PSTY", "Polystyrene", "聚苯乙烯", "SC_SOLIDS", "solid"),
     616: ("NYLN", "NYLN", "Nylon", "尼龙", "SC_SOLIDS", "solid"),
     617: ("RUBR", "RUBR", "Rubber", "橡胶", "SC_SOLIDS", "solid"),
@@ -189,7 +189,12 @@ def check_engine(root: Path, errors: list[str]) -> None:
         errors.append("OmniChemistry.cpp: official yeast does not prefer GLUC before PLNT fallback")
 
     content = read_text(root / "src" / "gui" / "game" / "OmniContent.h", errors)
-    for marker in ("OmniOrganicFirstId = 589", "OmniOrganicLastId = 621", "OmniFutureContentFirstId = 622"):
+    for marker in (
+        "OmniOrganicFirstId = 589",
+        "OmniOrganicLastId = 621",
+        "OmniElectronicsFirstId = 622",
+        "OmniFutureContentFirstId = 670",
+    ):
         if marker not in content:
             errors.append(f"OmniContent.h: missing organic batch 2 range marker {marker!r}")
 

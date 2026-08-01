@@ -1,5 +1,7 @@
 #include "OmniIsotopes.h"
 
+#include "OmniGasGraphics.h"
+
 #include "ElementCommon.h"
 #include "OmniNuclear.h"
 
@@ -477,6 +479,10 @@ int OmniIsotopeSourceUpdate(UPDATE_FUNC_ARGS)
 
 int OmniIsotopeGraphics(GRAPHICS_FUNC_ARGS)
 {
+	if (cpart->type == PT_H2IS || cpart->type == PT_H3IS)
+	{
+		OmniGasGraphics(GRAPHICS_FUNC_SUBCALL_ARGS);
+	}
 	auto properties = PropertiesFor(cpart->type);
 	if (!properties.emissionColour)
 		return 0;

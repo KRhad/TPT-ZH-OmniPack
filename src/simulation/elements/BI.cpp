@@ -5,7 +5,7 @@
 void Element::Element_BI()
 {
 	Identifier = "OMNI_PT_BI";
-	Name = "BI";
+	Name = "BISM";
 	Colour = 0xB6A4B8_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

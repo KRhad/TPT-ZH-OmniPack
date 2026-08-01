@@ -5,7 +5,7 @@
 void Element::Element_RH()
 {
 	Identifier = "OMNI_PT_RH";
-	Name = "RH";
+	Name = "RHOD";
 	Colour = 0xD0D8DE_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

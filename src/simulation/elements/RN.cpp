@@ -5,7 +5,7 @@
 void Element::Element_RN()
 {
 	Identifier = "OMNI_PT_RN";
-	Name = "RN";
+	Name = "RADO";
 	Colour = 0xB8D96B_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

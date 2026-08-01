@@ -5,7 +5,7 @@
 void Element::Element_NB()
 {
 	Identifier = "OMNI_PT_NB";
-	Name = "NB";
+	Name = "NIOB";
 	Colour = 0x7E8A96_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

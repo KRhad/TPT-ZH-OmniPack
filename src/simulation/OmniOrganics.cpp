@@ -2,6 +2,7 @@
 
 #include "ElementCommon.h"
 #include "OmniChemistry.h"
+#include "OmniGasGraphics.h"
 
 #include <algorithm>
 #include <initializer_list>
@@ -510,6 +511,7 @@ void ConfigureGas(
 	element.HeatConduct = 120;
 	element.HeatCapacity = 1.40f;
 	element.Properties = TYPE_GAS | PROP_NEUTPASS;
+	element.Graphics = &OmniGasGraphics;
 }
 
 void ConfigureLiquid(

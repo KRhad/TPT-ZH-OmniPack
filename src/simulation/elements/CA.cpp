@@ -5,7 +5,7 @@
 void Element::Element_CA()
 {
 	Identifier = "OMNI_PT_CA";
-	Name = "CA";
+	Name = "CALC";
 	Colour = 0xD8D1B5_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_EXPLOSIVE;

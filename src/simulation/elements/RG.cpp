@@ -5,7 +5,7 @@
 void Element::Element_RG()
 {
 	Identifier = "OMNI_PT_RG";
-	Name = "RG";
+	Name = "ROEN";
 	Colour = 0xA87883_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;

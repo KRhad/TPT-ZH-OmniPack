@@ -37,4 +37,5 @@ void Element::Element_ACTY()
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
 	Update = &OmniChemistryElementUpdate;
+	Graphics = &OmniGasGraphics;
 }

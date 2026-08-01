@@ -5,7 +5,7 @@
 void Element::Element_V()
 {
 	Identifier = "OMNI_PT_V";
-	Name = "V";
+	Name = "VANA";
 	Colour = 0x89939F_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

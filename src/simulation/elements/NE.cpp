@@ -5,7 +5,7 @@
 void Element::Element_NE()
 {
 	Identifier = "OMNI_PT_NE";
-	Name = "NE";
+	Name = "NEON";
 	Colour = 0xFF6A4D_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

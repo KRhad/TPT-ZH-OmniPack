@@ -5,7 +5,7 @@
 void Element::Element_KR()
 {
 	Identifier = "OMNI_PT_KR";
-	Name = "KR";
+	Name = "KRYP";
 	Colour = 0xDCEBFF_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_GAS;

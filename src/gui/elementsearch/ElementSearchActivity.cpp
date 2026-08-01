@@ -134,15 +134,10 @@ ElementSearchActivity::ElementSearchActivity(GameController * gameController, st
 
 		StringBuilder details;
 		details << Localization::Ref().Tr("encyclopedia.identifier") << ": " << CatalogString(record->identifier) << "\n";
-		details << Localization::Ref().Tr("encyclopedia.stable_id") << ": " << record->stableId << "\n";
 		details << Localization::Ref().Tr("encyclopedia.category") << ": " << CatalogCategory(record->menuCategory) << "\n";
 		details << Localization::Ref().Tr("encyclopedia.state") << ": " << CatalogValue("state", record->elementState) << "\n";
 		details << Localization::Ref().Tr("encyclopedia.source") << ": " << CatalogString(record->sourceMod) << "\n";
-		details << Localization::Ref().Tr("encyclopedia.source_commit") << ": " << CatalogString(record->sourceCommit) << "\n";
 		details << Localization::Ref().Tr("encyclopedia.license") << ": " << CatalogString(record->license) << "\n";
-		details << Localization::Ref().Tr("encyclopedia.save_compatibility") << ": " << CatalogValue("save", record->saveCompatibility) << "\n";
-		details << Localization::Ref().Tr("encyclopedia.implementation") << ": " << CatalogValue("implementation", record->implementationStatus) << "\n";
-		details << Localization::Ref().Tr("encyclopedia.test_status") << ": " << CatalogValue("test", record->testStatus) << "\n";
 		auto appendContent = [&](char const *key, std::string_view english, std::string_view chinese) {
 			auto content = CatalogContent(language, english, chinese);
 			if (!content.empty())

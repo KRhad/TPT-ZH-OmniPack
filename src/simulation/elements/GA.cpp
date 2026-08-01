@@ -5,7 +5,7 @@
 void Element::Element_GA()
 {
 	Identifier = "OMNI_PT_GA";
-	Name = "GA";
+	Name = "GALL";
 	Colour = 0xB9C4CF_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

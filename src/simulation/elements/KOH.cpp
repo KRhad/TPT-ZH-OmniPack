@@ -5,7 +5,7 @@
 void Element::Element_KOH()
 {
 	Identifier = "OMNI_PT_KOH";
-	Name = "KOH";
+	Name = "PTOH";
 	Colour = 0xEEEDE4_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_POWDERS;

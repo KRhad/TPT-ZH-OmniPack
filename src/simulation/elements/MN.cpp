@@ -5,7 +5,7 @@
 void Element::Element_MN()
 {
 	Identifier = "OMNI_PT_MN";
-	Name = "MN";
+	Name = "MANG";
 	Colour = 0x9AA0A4_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_SOLIDS;

@@ -5,7 +5,7 @@
 void Element::Element_CF52()
 {
 	Identifier = "OMNI_PT_CF52";
-	Name = "CF52";
+	Name = "CFNS";
 	Colour = 0xE0B84F_rgb;
 	MenuVisible = 1;
 	MenuSection = SC_NUCLEAR;
