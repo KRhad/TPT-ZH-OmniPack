@@ -67,8 +67,12 @@ constexpr int OmniPeriodicFirstId = 370;
 constexpr int OmniPeriodicLastId = 461;
 constexpr int OmniChemistryExpansionFirstId = 462;
 constexpr int OmniChemistryExpansionLastId = 511;
-constexpr int OmniFutureContentFirstId = 512;
-constexpr int OmniFutureContentLastId = 511;
+// The first expanded stable-ID block remains part of the metallurgy module so
+// engineering alloys share its runtime switch and save warning behaviour.
+constexpr int OmniEngineeringFirstId = 512;
+constexpr int OmniEngineeringLastId = 575;
+constexpr int OmniFutureContentFirstId = 576;
+constexpr int OmniFutureContentLastId = 1023;
 
 std::array<OmniSettingDefinition, OmniSettingCount> const &GetOmniSettingDefinitions();
 bool GetOmniSetting(OmniSetting setting);

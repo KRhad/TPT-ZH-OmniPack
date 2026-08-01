@@ -114,6 +114,12 @@ assert(ammonium_chloride == 511,
 ui.activeTool(0, "OMNI_PT_AMCL")
 assert(ui.activeTool(0) == "OMNI_PT_AMCL",
     "enabled third-batch inorganic content was blocked by its module gate")
+local solder = assert(elements.OMNI_PT_SOLD)
+assert(solder == 512,
+    "engineering solder stable ID changed: " .. tostring(solder))
+ui.activeTool(0, "OMNI_PT_SOLD")
+assert(ui.activeTool(0) == "OMNI_PT_SOLD",
+    "enabled high-ID engineering content was blocked by its metallurgy gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -127,9 +133,38 @@ ui.activeTool(0, "OMNITEST_PT_LUA1")
 local active = ui.activeTool(0)
 assert(active == "OMNITEST_PT_LUA1", "module gate blocked runtime Lua element: " .. tostring(active))
 
+local last_preferred = id
+for index = 2, 60 do
+    local runtime_id = string.format("L%03d", index)
+    last_preferred = elements.allocate("OMNITEST", runtime_id)
+    assert(last_preferred == 256 - index,
+        "Lua one-byte buffer allocation drifted at index " .. index
+            .. ": got " .. tostring(last_preferred))
+end
+assert(last_preferred == 196,
+    "Lua one-byte compatibility buffer did not end at stable slot 196")
+
+local high_id = elements.allocate("OMNITEST", "HIGH")
+assert(high_id == 1023,
+    "Lua allocator consumed an official hole or wrong high slot: "
+        .. tostring(high_id))
+elements.property(high_id, "Name", "HIGH")
+elements.property(high_id, "Description", "High-ID Lua capacity regression element")
+elements.property(high_id, "MenuVisible", 1)
+elements.property(high_id, "MenuSection", 8)
+ui.activeTool(0, "OMNITEST_PT_HIGH")
+assert(ui.activeTool(0) == "OMNITEST_PT_HIGH",
+    "module gate blocked a catalog-independent high-ID Lua element")
+local high_particle = sim.partCreate(-1, 100, 100, high_id)
+assert(high_particle >= 0 and sim.partProperty(high_particle, "type") == high_id,
+    "high-ID Lua element could not be directly created")
+
 local report = assert(io.open("lua-module-regression.result", "w"))
 report:write("OMNI_LUA_ALLOC_ID=" .. id .. "\n")
 report:write("OMNI_LUA_ACTIVE=" .. active .. "\n")
+report:write("OMNI_LUA_PREFERRED_LAST=" .. last_preferred .. "\n")
+report:write("OMNI_LUA_HIGH_ID=" .. high_id .. "\n")
+report:write("OMNI_LUA_OFFICIAL_HOLE_PRESERVED=146\n")
 report:write("OMNI_PERIODIC_ACTIVE=OMNI_PT_HE\n")
 report:write("OMNI_PERIODIC_ALKALI_ACTIVE=OMNI_PT_NA\n")
 report:write("OMNI_PERIODIC_ALKALINE_EARTH_ACTIVE=OMNI_PT_CA\n")
@@ -151,4 +186,5 @@ report:write("OMNI_PERIODIC_SUPERHEAVY_ACTIVE=OMNI_PT_RF\n")
 report:write("OMNI_INORGANIC_ACTIVE=OMNI_PT_HCLA\n")
 report:write("OMNI_INORGANIC_BATCH2_ACTIVE=OMNI_PT_CARA\n")
 report:write("OMNI_INORGANIC_BATCH3_ACTIVE=OMNI_PT_AMCL\n")
+report:write("OMNI_ENGINEERING_HIGH_ID_ACTIVE=OMNI_PT_SOLD\n")
 report:close()

@@ -70,11 +70,17 @@ def classify(candidate: dict[str, Any], current: list[dict[str, Any]]) -> dict[s
     elif (same_name or same_code) and score >= 0.75:
         decision = "complete_duplicate"
     elif same_name or same_code:
-        decision = "same_name_different_behavior"
+        # A same-concept candidate with materially different behaviour is not a
+        # second menu element.  When the canonical implementation is official,
+        # queue the useful delta as an official-element enhancement; otherwise
+        # queue it as a rewrite into the existing OmniPack canonical element.
+        decision = (
+            "official_enhancement"
+            if best.get("module") == "official"
+            else "same_name_different_behavior"
+        )
     elif score >= 0.88:
         decision = "different_name_behavior_duplicate"
-    elif best.get("module") == "official" and max(components.get("name", 0), components.get("code", 0)) == 1.0:
-        decision = "official_enhancement"
     else:
         decision = "unique_candidate"
     return {
@@ -118,6 +124,7 @@ def markdown(classifications: list[dict[str, Any]], cross: list[dict[str, Any]])
     lines = [
         "# 模组候选去重报告", "",
         "本报告由结构化属性、名称、代号、状态和属性 token 综合生成；自动分类只是移植审查输入，不能替代人工行为比较。", "",
+        "完全相同且没有行为增量的定义不新增元素；有兼容许可证且确有玩法增量的同概念候选，必须把增量重写进官方或现有 OmniPack 主元素，保留主元素 ID、identifier 和原有行为。`exact_identifier` 只说明 identifier 相同，仍须对主元素源码做增量审计，不能自动当作无变化。旧 OmniPack 重复 ID 只作兼容墓碑，不计入可玩材料。", "",
         "## 统计", "",
     ]
     for key in sorted(counts):

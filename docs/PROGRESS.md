@@ -3,7 +3,7 @@
 ## 当前分支基线
 
 ```text
-branch=research/mod-source-integration
+branch=development/content-expansion-1.0
 audit_start_head=3ee6b0a15cbd7d76f0605af3b614215a3b54a9d4
 phase1_commit=cdbb87e288c4c800d23ed3834c6a07c4960daab2
 mod_catalog_commit=bbb6d805
@@ -22,23 +22,25 @@ periodic_superheavy_base_commit=518dd9a4d5cbb874281635f7e7552b1ce14050ee
 inorganic_batch1_worktree_base=8abe277e1cac49bac4654da89c5271c19bf1e827
 inorganic_batch2_worktree_base=7eed94db5fbe81a95315cfac29cf142af1b18d6a
 inorganic_batch3_worktree_base=0eb4e11dd41fe4da72b8f8a1db65fa07a77898b1
-pt_num=512
-pmapbits=9
+capacity_expansion_worktree_base=4f473ebefe59e436228ec7799f9363d39fe166b1
+pt_num=1024
+pmapbits=10
 official_active_elements=195
-omnipack_registered_elements=190
-omnipack_playable_elements=189
-engine_active_elements=385
+omnipack_registered_elements=191
+omnipack_playable_elements=190
+engine_active_elements=386
 compatibility_aliases=1
-total_playable_materials=384
-registered_slots=512
+total_playable_materials=385
+registered_slots=513
 reserved_slots=127
+unallocated_capacity_slots=511
 enabled_content_modules=4
 periodic_elements_placeable=118
 periodic_elements_remaining=0
 inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
-reaction_registry_entries=190
+reaction_registry_entries=192
 total_playable_materials_minimum=true
 periodic_table_ui=true
 save_format=OPS1/BZip2
@@ -50,7 +52,7 @@ release_ready=false
 - 已审计 41 个来源：27 个固定 Git HEAD 的仓库、2 个按 SHA-256 固定的论坛 Lua 源码；
 - 提取 4,248 条 C++ 与 277 条 Lua 定义，跨分叉折叠为 770 个候选概念，其中 339 个来自根许可证兼容的源码；完整逐文件/资源许可证门禁仍为 `false`；
 - 建立 118 行周期表来源映射：复用 15 个官方和 11 个 OmniPack 纯元素实现，92 个缺失元素固定到 `370..461`；
-- OPS 第二类型字节、palette identifier、`PMAPBITS=9` 携带字段和 Lua `255..196` 首选动态槽已完成源码审计，不需要扩大 `PT_NUM`；
+- 周期表阶段只需 9 位空间；后续无机三批占满 `462..511` 后，已另行完成 10 位扩容：OPS 第二类型字节、palette identifier、旧 8/9 位携带字段重打包、Lua `255..196` 首选动态槽与高位回退均已审计；
 - 周期表 ID/字体基础设施 clean build `509/509`、Meson static `20/20`、Python `136/136`（0 skip）通过；
 - 周期表中文名称的 118 个字符已全部加入确定性字体，新增稀有字形仍待人工桌面可读性检查。
 
@@ -110,7 +112,7 @@ release_ready=false
 - 固定 `SUTR..AMCL=494..511` 共 18 个可直接放置材料，覆盖三氧化硫、一氧化氮、二氧化钛、二氧化铀、磷酸钙、两种硫化物、氰化氢、两种碳化物、两种氮化物、两种氢化物和四种精确氯化物；既有 ID 不移动；
 - `OmniChemistry.cpp` 加入硫/氮氧化物循环、过氧化物钛铀氧化、铀氧化物高温还原、硫化物遇酸放气、湿植物利用磷酸盐、碳化钙/氢化物水解、氯化物水解与置换、碳化硅高温氧化，以及九条数据共享式通电催化合成；所有成功事件继续使用 3×3 邻域与共享 `1536/frame` 预算；
 - `SPRK(CATA)` 在有界化学反应成功时先完成反应再返回，避免通用点火在同一帧抢先把氢化物原料变成 `FIRE`；旧化学、冶金、生态、核工业和周期运行回归均通过；
-- 登记门禁为 512 槽、385 活动、127 保留；内容门禁确认 190 个 OmniPack 元素双语完整，i18n 为 `1582/1582`，反应登记为 190 条，化合物登记对第三批公式/ID/identifier 进行 fail-closed 校验；
+- 该批提交时登记门禁为 512 槽、385 活动、127 保留；内容门禁确认 190 个 OmniPack 元素双语完整，i18n 为 `1582/1582`，反应登记为 190 条，化合物登记对第三批公式/ID/identifier 进行 fail-closed 校验；
 - 真实客户端化学回归为 `PATHS=90`、`ELEMENTS=60`、`INORGANIC_ELEMENTS=50`、`BATCH3_IDS=494-511`，预算压力帧事件恰为 1536；模块直选确认最高 ID `AMCL=511` 可用；
 - 化学 OPS 为 3 进程、2 重启、2 加载、66 粒子、每次加载 74 字段断言和 66 个稳定/调色板 identifier；六类合计 254 粒子、304 字段断言和 253 identifier；mixed OPS 保持 11 粒子、20 字段断言；
 - 四模块禁用两进程 OPS 回归保留 9 个粒子，其中 `AMCL=511` 在模块关闭后不丢失、不热分解且拒绝选择/创建；总 Omni 事件为 0；
@@ -124,12 +126,26 @@ release_ready=false
 - 行为审计确认 `FERT/NUTR`、`PATH/VIRS`、精确酸碱/官方泛化材料、精确纯元素/官方泛化材料等仍有明确玩法差异；当前唯一合并项为 `OMNI_PT_MSCR=278` 与官方 `DEFAULT_PT_BRMT=30`；
 - 可回收来源金属行为已迁入官方 BRMT，使用 `ctype` 保存来源类型、`tmp4=0x4F4D5343` 隔离增强状态；普通官方 BRMT 的 1273 K 相变和 `BRMT+BREC` 状态机保持；
 - `MSCR=278` 继续注册为隐藏兼容别名：菜单/搜索/Lua 直接创建均拒绝，旧 OPS 和间接载体仍能读取，模块启用后一个模拟刻迁移，模块关闭时保持不动，ID 永不复用；
-- 当前计数为 512 登记槽、385 个引擎活动项、1 个兼容别名、384 个可玩材料和 127 个保留槽；OmniPack 为 190 个登记项 / 189 个可玩元素；
+- 合并原则已扩展为“主元素增强”：有兼容许可证且存在玩法增量的同概念候选重写到官方或当前 OmniPack 主元素，不新增第二个 ID；完全相同且无增量的定义无需改代码；
+- 当前计数为 513 个已登记槽、386 个引擎活动项、1 个兼容别名、385 个可玩材料和 127 个显式保留槽；OmniPack 为 191 个登记项 / 190 个可玩元素；
 - 三进程迁移回归通过：旧 278 stamp 为 603 字节、SHA-256 `C057B705FCDE0CF8BD90B8F96139022EDB0606EA92D7A4F8BC2963F7E83E0C5F`；canonical BRMT stamp 为 645 字节、SHA-256 `D01A2DB444980110AFE62217D4B189BF33BB28B7631AF3F97FBBCCE4C25168B3`；
 - 六类 OPS 为 18 进程、12 次重启、12 次加载、253 粒子和每次加载 305 个字段断言；mixed OPS 为 3 进程、11 粒子和 21 个字段断言；周期 OPS 的可回收 BRMT 同时覆盖 `ctype/tmp4`；
 - 全新 `build-element-dedup-final-clean` 构建 `655/655`、Meson static `22/22`、Python `166/166`（0 skip）通过；冶金、周期、模块、四模块禁用、化学、生态双模式、核工业、0.2 示例/教程和临时 0.3 自动化开发探针均通过；
 - 当前 EXE 为 296,063,798 字节，SHA-256 `39EDECDC992A48747E73F582ED340706A5B75A13DB521A593FB2F8946828C352`；S09/S10 两个 2 秒 smoke harness 通过，正式压力门禁仍为 `not_tested`；
 - 该 EXE 为 `release` 优化但 `debug=true`、`strip=false` 的开发证据，不是可发布 1.0.0 二进制；GUI/DPI、正式 600 秒压力和两小时长跑仍未完成，`release_ready=false`。
+
+## Phase 5 起步：10 位容量与锡铅工程合金
+
+- `PMAPBITS` 从 9 安全扩展到 10，`PT_NUM` 从 512 扩展到 1024；旧 `0..511` ID 与 identifier 全部不变，`512..575` 固定为工程材料区，`576..1023` 为后续内容区；
+- OPS 只接受来源 `pmapbits=8..16`，palette 表按来源位宽建立，直接类型先经 identifier 映射再按当前范围过滤，携带字段按来源位宽无符号拆包并按当前 10 位重打包；原生探针覆盖直接 `SOLD=512`、`LAVA/SPRK/BRMT/CONV/VIRS` 携带字段、来源槽 `1536` 到当前 `512` 的映射、缺失高位 identifier 报告/中和以及损坏位宽拒绝；
+- Lua 分配器不再误占官方保留空洞 146，只先使用 `255..196`，耗尽后从 1023 向下；实际客户端确认边界 ID 255、196、1023 均可用；
+- 新增 `SOLD=512` 锡铅合金：三份熔融锡与两份熔融铅在 700 K 以上形成五份熔融合金，460 K 凝固，反复火花每刻升温 45 K，压力阈值 16 并可通过带类型官方 `BRMT` 回炉；
+- 登记门禁为 513 行、386 活动、1 兼容别名、385 可玩、127 显式保留和 511 未登记容量槽；反应登记为 192 条；
+- 容量、冶金、模块/Lua、禁用模块和六类/mixed OPS 已有自动与真实运行证据；正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
+- 全新 `build-capacity-1024-solder-final3-clean` 构建 `663/663`、Meson static `24/24`、Python `175/175`（0 skip）通过；最终开发 EXE 为 296,453,527 字节，SHA-256 `836BCA8AA19BEF2CAFE134DDFB4C1DDDA2E2A31874211B9A0487887B9C4C0699`；
+- 最终 EXE 复跑冶金以及六类与 mixed OPS；六类为 18 进程、254 粒子、306 字段断言、258 稳定 identifier 和 254 palette identifier，mixed 为 3 进程、11 粒子、21 字段断言；周期、化学、生态双模式、核工业、模块直选、四模块禁用和旧别名迁移保留此前 clean EXE 证据，本次未将其误记为新 EXE 复跑；
+- 自动化与示例在系统临时目录隔离副本中以开发探针运行通过，未覆盖仓库内两个含 `omniAlchemy` 的旧字段兼容样本；该结果不替代正式 clean-source 发布证据。
+- 两个不同绝对目录下的同配置 debug 构建哈希不同，且 `strings` 直接检出各自开发路径；这是 `debug=true/strip=false` 开发证据的已确认边界，正式可复现、去路径、剥离发布构建仍未完成。
 
 ## Phase 1：纯沙盒方向清理
 
@@ -148,9 +164,10 @@ release_ready=false
 
 ## 下一步
 
-1. 在继续任何材料批次前完成 `PT_NUM/PMAPBITS/OPS/Lua` 独立扩容审计；`494..511` 已占满，禁止覆盖旧槽或未经决策分配 `512+`；
-2. 为完整 118 元素执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
-3. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
-4. 保持 `release_ready=false`，直到后续材料族、人工 GUI、长跑、发布包和公开发布门禁全部真实完成。
+1. 在固定工程材料区 `513..575` 继续下一批合金、矿物、陶瓷和玻璃；不得覆盖旧槽，也不得用重复空壳填充 1024 容量；
+2. 同概念模组候选只把许可证兼容的玩法增量合并到主元素，并登记来源与主元素回归；
+3. 为完整 118 元素与高位内容执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
+4. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
+5. 保持 `release_ready=false`，直到后续材料族、人工 GUI、长跑、发布包和公开发布门禁全部真实完成。
 
 开发回归场景、构建脚本、测试矩阵和版本门禁继续保留；它们不属于已删除的玩家游戏任务。

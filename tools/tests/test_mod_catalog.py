@@ -19,6 +19,7 @@ duplicates = importlib.import_module("detect_duplicates")
 reactions = importlib.import_module("extract_reactions")
 scanner = importlib.import_module("scan_repositories")
 validator = importlib.import_module("validate_mod_catalog")
+reports = importlib.import_module("generate_mod_report")
 
 
 class ModCatalogTests(unittest.TestCase):
@@ -168,6 +169,79 @@ class ModCatalogTests(unittest.TestCase):
         }]
         result = duplicates.classify(candidate, current)
         self.assertIn(result["classification"], {"complete_duplicate", "same_name_different_behavior"})
+
+    def test_official_behavior_delta_is_merged_by_rewrite(self) -> None:
+        candidate = {
+            "source_mod": "fixture",
+            "source_identifier": "FIXTURE_PT_WATR",
+            "source_name": "Water",
+            "source_code": "WATR",
+            "state": "solid",
+            "properties": {"Update": "bounded catalytic behavior"},
+            "performance_risk": "low",
+            "save_risk": "low",
+            "source_file": "src/simulation/elements/WATR.cpp",
+        }
+        current = [{
+            "identifier": "DEFAULT_PT_WATR", "code": "WATR", "name": "Water",
+            "state": "liquid", "properties": "TYPE_LIQUID", "module": "official", "stable_id": "2",
+        }]
+        duplicate = duplicates.classify(candidate, current)
+        self.assertEqual(duplicate["classification"], "official_enhancement")
+        self.assertEqual(
+            reports.decision(
+                candidate,
+                {
+                    "source_type": "cpp_source",
+                    "license": "GPL-3.0-only",
+                    "license_verified": "true",
+                },
+                duplicate,
+                {},
+            ),
+            "B_rewrite_port",
+        )
+
+    def test_exact_identifier_requires_canonical_delta_review(self) -> None:
+        self.assertEqual(
+            reports.decision(
+                {
+                    "source_identifier": "DEFAULT_PT_WATR",
+                    "performance_risk": "low",
+                    "save_risk": "low",
+                    "source_file": "src/simulation/elements/WATR.cpp",
+                },
+                {
+                    "source_type": "cpp_source",
+                    "license": "GPL-3.0-only",
+                    "license_verified": "true",
+                },
+                {"classification": "exact_identifier"},
+                {},
+            ),
+            "B_rewrite_port",
+        )
+
+    def test_official_namespace_candidate_cannot_direct_port(self) -> None:
+        self.assertEqual(
+            reports.decision(
+                {
+                    "source_identifier": "DEFAULT_PT_146",
+                    "source_id": "146",
+                    "performance_risk": "low",
+                    "save_risk": "low",
+                    "source_file": "src/simulation/elements/BRAN.cpp",
+                },
+                {
+                    "source_type": "cpp_source",
+                    "license": "GPL-3.0-only",
+                    "license_verified": "true",
+                },
+                {"classification": "unique_candidate"},
+                {},
+            ),
+            "B_rewrite_port",
+        )
 
     def test_probability_markers_cover_cpp_and_lua_forms(self) -> None:
         markers = reactions.probability_markers(

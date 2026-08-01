@@ -59,6 +59,7 @@ REQUIRED_REACTIONS = {
     "metallurgy.alloy_brass",
     "metallurgy.alloy_nichrome",
     "metallurgy.alloy_aluminium_magnesium",
+    "metallurgy.alloy_solder",
     "metallurgy.steelmaking",
     "metallurgy.pressure_scrap",
     "metallurgy.scrap_remelt",
@@ -67,6 +68,7 @@ REQUIRED_REACTIONS = {
     "metallurgy.zinc_sacrificial_protection",
     "metallurgy.zinc_corrosion",
     "metallurgy.nichrome_resistive_heating",
+    "metallurgy.solder_fuse_heating",
     "metallurgy.wood_charcoal",
     "metallurgy.coal_coke",
     "metallurgy.radiation_shield_assembly",
@@ -431,6 +433,7 @@ def audit(root: Path, registry_path: Path | None = None) -> list[str]:
             "SPRK(ctype=PT_CATA)",
             "SPRK(ctype=PT_NGEN)",
             "SPRK(ctype=PT_NCRM)",
+            "SPRK(ctype=PT_SOLD)",
         }:
             errors.append(f"{path}:{row_number}: invalid electricity condition")
         if row.get("pressure") not in {"any", ">=2.0", "abs>=element-specific-threshold"}:

@@ -2,11 +2,14 @@
 
 本报告由结构化属性、名称、代号、状态和属性 token 综合生成；自动分类只是移植审查输入，不能替代人工行为比较。
 
+完全相同且没有行为增量的定义不新增元素；有兼容许可证且确有玩法增量的同概念候选，必须把增量重写进官方或现有 OmniPack 主元素，保留主元素 ID、identifier 和原有行为。`exact_identifier` 只说明 identifier 相同，仍须对主元素源码做增量审计，不能自动当作无变化。旧 OmniPack 重复 ID 只作兼容墓碑，不计入可玩材料。
+
 ## 统计
 
 - `exact_identifier`：3762
-- `same_name_different_behavior`：89
-- `unique_candidate`：671
+- `official_enhancement`：74
+- `same_name_different_behavior`：24
+- `unique_candidate`：662
 
 ## 与当前内容的高相似候选
 
@@ -295,6 +298,7 @@
 | biological_mod | DEFAULT_PT_METL | exact_identifier | DEFAULT_PT_METL | 1.0000 |
 | biological_mod | DEFAULT_PT_MORT | exact_identifier | DEFAULT_PT_MORT | 1.0000 |
 | biological_mod | DEFAULT_PT_MWAX | exact_identifier | DEFAULT_PT_MWAX | 1.0000 |
+| biological_mod | DEFAULT_PT_N | same_name_different_behavior | OMNI_PT_N | 0.6000 |
 | biological_mod | DEFAULT_PT_NBHL | exact_identifier | DEFAULT_PT_NBHL | 1.0000 |
 | biological_mod | DEFAULT_PT_NBLE | exact_identifier | DEFAULT_PT_NBLE | 1.0000 |
 | biological_mod | DEFAULT_PT_NEUT | exact_identifier | DEFAULT_PT_NEUT | 1.0000 |
@@ -560,9 +564,12 @@
 | bmn_mod | DEFAULT_PT_WOOD | exact_identifier | DEFAULT_PT_WOOD | 1.0000 |
 | bmn_mod | DEFAULT_PT_WTRV | exact_identifier | DEFAULT_PT_WTRV | 1.0000 |
 | bmn_mod | DEFAULT_PT_YEST | exact_identifier | DEFAULT_PT_YEST | 1.0000 |
+| chem_mod_lua | KEV_PT_AG | same_name_different_behavior | OMNI_PT_AG | 0.4000 |
 | chem_mod_lua | KEV_PT_COPR | same_name_different_behavior | OMNI_PT_COPR | 0.4000 |
-| chem_mod_lua | KEV_PT_ROCK | same_name_different_behavior | DEFAULT_PT_ROCK | 0.4000 |
-| chem_mod_lua | KEV_PT_SEED | same_name_different_behavior | DEFAULT_PT_SEED | 0.4000 |
+| chem_mod_lua | KEV_PT_NAOH | same_name_different_behavior | OMNI_PT_NAOH | 0.4000 |
+| chem_mod_lua | KEV_PT_ROCK | official_enhancement | DEFAULT_PT_ROCK | 0.4000 |
+| chem_mod_lua | KEV_PT_S | same_name_different_behavior | OMNI_PT_S | 0.4000 |
+| chem_mod_lua | KEV_PT_SEED | official_enhancement | DEFAULT_PT_SEED | 0.4000 |
 | chem_mod_lua | KEV_PT_STEL | same_name_different_behavior | OMNI_PT_STEL | 0.4000 |
 | chemistry_mod | DEFAULT_PT_116 | exact_identifier | DEFAULT_PT_116 | 1.0000 |
 | chemistry_mod | DEFAULT_PT_ACEL | exact_identifier | DEFAULT_PT_ACEL | 1.0000 |
@@ -1505,6 +1512,9 @@
 | dtttpt | DEFAULT_PT_WTRV | exact_identifier | DEFAULT_PT_WTRV | 1.0000 |
 | dtttpt | DEFAULT_PT_YEST | exact_identifier | DEFAULT_PT_YEST | 1.0000 |
 | fanmod | FANMOD_PT_SPOR | same_name_different_behavior | OMNI_PT_SPOR | 0.4000 |
+| fun_chemicals | FUNPK1_PT_K | same_name_different_behavior | OMNI_PT_K | 0.6080 |
+| fun_chemicals | FUNPK1_PT_NA | same_name_different_behavior | OMNI_PT_NA | 0.6160 |
+| fun_chemicals | FUNPK1_PT_NEON | same_name_different_behavior | OMNI_PT_NE | 0.6211 |
 | jacob1 | DEFAULT_PT_ACEL | exact_identifier | DEFAULT_PT_ACEL | 1.0000 |
 | jacob1 | DEFAULT_PT_ACID | exact_identifier | DEFAULT_PT_ACID | 1.0000 |
 | jacob1 | DEFAULT_PT_AMTR | exact_identifier | DEFAULT_PT_AMTR | 1.0000 |
@@ -3592,8 +3602,9 @@
 | spikeviper | DEFAULT_PT_WOOD | exact_identifier | DEFAULT_PT_WOOD | 1.0000 |
 | spikeviper | DEFAULT_PT_WTRV | exact_identifier | DEFAULT_PT_WTRV | 1.0000 |
 | spikeviper | DEFAULT_PT_YEST | exact_identifier | DEFAULT_PT_YEST | 1.0000 |
-| tpt_remade | TPT_PT_LEAD | same_name_different_behavior | OMNI_PT_LEAD | 0.4098 |
-| tpt_remade | TPT_PT_VSNS | same_name_different_behavior | DEFAULT_PT_VSNS | 0.5391 |
+| tpt_remade | TPT_PT_HE | same_name_different_behavior | OMNI_PT_HE | 0.4242 |
+| tpt_remade | TPT_PT_LEAD | same_name_different_behavior | OMNI_PT_LEAD | 0.4255 |
+| tpt_remade | TPT_PT_VSNS | official_enhancement | DEFAULT_PT_VSNS | 0.5391 |
 | ultimata | DEFAULT_PT_116 | exact_identifier | DEFAULT_PT_116 | 1.0000 |
 | ultimata | DEFAULT_PT_ACEL | exact_identifier | DEFAULT_PT_ACEL | 1.0000 |
 | ultimata | DEFAULT_PT_ACID | exact_identifier | DEFAULT_PT_ACID | 1.0000 |
@@ -3688,7 +3699,7 @@
 | ultimata | DEFAULT_PT_LAVA | exact_identifier | DEFAULT_PT_LAVA | 1.0000 |
 | ultimata | DEFAULT_PT_LCRY | exact_identifier | DEFAULT_PT_LCRY | 1.0000 |
 | ultimata | DEFAULT_PT_LDTC | exact_identifier | DEFAULT_PT_LDTC | 1.0000 |
-| ultimata | DEFAULT_PT_LEAD | same_name_different_behavior | OMNI_PT_LEAD | 0.6070 |
+| ultimata | DEFAULT_PT_LEAD | same_name_different_behavior | OMNI_PT_LEAD | 0.6062 |
 | ultimata | DEFAULT_PT_LIFE | exact_identifier | DEFAULT_PT_LIFE | 1.0000 |
 | ultimata | DEFAULT_PT_LIGH | exact_identifier | DEFAULT_PT_LIGH | 1.0000 |
 | ultimata | DEFAULT_PT_LITH | exact_identifier | DEFAULT_PT_LITH | 1.0000 |
@@ -3704,6 +3715,7 @@
 | ultimata | DEFAULT_PT_MWAX | exact_identifier | DEFAULT_PT_MWAX | 1.0000 |
 | ultimata | DEFAULT_PT_NBHL | exact_identifier | DEFAULT_PT_NBHL | 1.0000 |
 | ultimata | DEFAULT_PT_NBLE | exact_identifier | DEFAULT_PT_NBLE | 1.0000 |
+| ultimata | DEFAULT_PT_NEON | same_name_different_behavior | OMNI_PT_NE | 0.6067 |
 | ultimata | DEFAULT_PT_NEUT | exact_identifier | DEFAULT_PT_NEUT | 1.0000 |
 | ultimata | DEFAULT_PT_NICE | exact_identifier | DEFAULT_PT_NICE | 1.0000 |
 | ultimata | DEFAULT_PT_NITR | exact_identifier | DEFAULT_PT_NITR | 1.0000 |
@@ -3769,7 +3781,7 @@
 | ultimata | DEFAULT_PT_TESC | exact_identifier | DEFAULT_PT_TESC | 1.0000 |
 | ultimata | DEFAULT_PT_THDR | exact_identifier | DEFAULT_PT_THDR | 1.0000 |
 | ultimata | DEFAULT_PT_THRM | exact_identifier | DEFAULT_PT_THRM | 1.0000 |
-| ultimata | DEFAULT_PT_TIN | same_name_different_behavior | OMNI_PT_TIN | 0.6071 |
+| ultimata | DEFAULT_PT_TIN | same_name_different_behavior | OMNI_PT_TIN | 0.6063 |
 | ultimata | DEFAULT_PT_TRON | exact_identifier | DEFAULT_PT_TRON | 1.0000 |
 | ultimata | DEFAULT_PT_TSNS | exact_identifier | DEFAULT_PT_TSNS | 1.0000 |
 | ultimata | DEFAULT_PT_TTAN | exact_identifier | DEFAULT_PT_TTAN | 1.0000 |
@@ -3792,77 +3804,77 @@
 | ultimata | DEFAULT_PT_WTRV | exact_identifier | DEFAULT_PT_WTRV | 1.0000 |
 | ultimata | DEFAULT_PT_YEST | exact_identifier | DEFAULT_PT_YEST | 1.0000 |
 | ultimata | DEFAULT_PT_ZINC | same_name_different_behavior | OMNI_PT_ZINC | 0.6073 |
-| unproductive | UNPRODUCTIVE_PT_ACID | same_name_different_behavior | DEFAULT_PT_ACID | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_AMTR | same_name_different_behavior | DEFAULT_PT_AMTR | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_ANAR | same_name_different_behavior | DEFAULT_PT_ANAR | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_ARAY | same_name_different_behavior | DEFAULT_PT_ARAY | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_BCLN | same_name_different_behavior | DEFAULT_PT_BCLN | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_BCOL | same_name_different_behavior | DEFAULT_PT_BCOL | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_BIZR | same_name_different_behavior | DEFAULT_PT_BIZR | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_BMTL | same_name_different_behavior | DEFAULT_PT_BMTL | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_BOMB | same_name_different_behavior | DEFAULT_PT_BOMB | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_BOYL | same_name_different_behavior | DEFAULT_PT_BOYL | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_BTRY | same_name_different_behavior | DEFAULT_PT_BTRY | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_C5 | same_name_different_behavior | DEFAULT_PT_C5 | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_CAUS | same_name_different_behavior | DEFAULT_PT_CAUS | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_CLNE | same_name_different_behavior | DEFAULT_PT_CLNE | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_CLST | same_name_different_behavior | DEFAULT_PT_CLST | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_CO2 | same_name_different_behavior | DEFAULT_PT_CO2 | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_COAL | same_name_different_behavior | DEFAULT_PT_COAL | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_CONV | same_name_different_behavior | DEFAULT_PT_CONV | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_DEUT | same_name_different_behavior | DEFAULT_PT_DEUT | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_DLAY | same_name_different_behavior | DEFAULT_PT_DLAY | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_DSTW | same_name_different_behavior | DEFAULT_PT_DSTW | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_FIRW | same_name_different_behavior | DEFAULT_PT_FIRW | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_FOG | same_name_different_behavior | DEFAULT_PT_FOG | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_FRZW | same_name_different_behavior | DEFAULT_PT_FRZW | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_FRZZ | same_name_different_behavior | DEFAULT_PT_FRZZ | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_FSEP | same_name_different_behavior | DEFAULT_PT_FSEP | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_FUSE | same_name_different_behavior | DEFAULT_PT_FUSE | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_FWRK | same_name_different_behavior | DEFAULT_PT_FWRK | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_GBMB | same_name_different_behavior | DEFAULT_PT_GBMB | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_GLAS | same_name_different_behavior | DEFAULT_PT_GLAS | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_GLOW | same_name_different_behavior | DEFAULT_PT_GLOW | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_GOO | same_name_different_behavior | DEFAULT_PT_GOO | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_GPMP | same_name_different_behavior | DEFAULT_PT_GPMP | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_HSWC | same_name_different_behavior | DEFAULT_PT_HSWC | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_ICE | same_name_different_behavior | DEFAULT_PT_ICEI | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_IRON | same_name_different_behavior | DEFAULT_PT_IRON | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_LCRY | same_name_different_behavior | DEFAULT_PT_LCRY | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_MERC | same_name_different_behavior | DEFAULT_PT_MERC | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_MORT | same_name_different_behavior | DEFAULT_PT_MORT | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_NEUT | same_name_different_behavior | DEFAULT_PT_NEUT | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_NONE | same_name_different_behavior | DEFAULT_PT_NONE | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PBCN | same_name_different_behavior | DEFAULT_PT_PBCN | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PCLN | same_name_different_behavior | DEFAULT_PT_PCLN | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PHOT | same_name_different_behavior | DEFAULT_PT_PHOT | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PIPE | same_name_different_behavior | DEFAULT_PT_PIPE | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PLNT | same_name_different_behavior | DEFAULT_PT_PLNT | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PLUT | same_name_different_behavior | DEFAULT_PT_PLUT | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PRTI | same_name_different_behavior | DEFAULT_PT_PRTI | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PRTO | same_name_different_behavior | DEFAULT_PT_PRTO | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PUMP | same_name_different_behavior | DEFAULT_PT_PUMP | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_PVOD | same_name_different_behavior | DEFAULT_PT_PVOD | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_QRTZ | same_name_different_behavior | DEFAULT_PT_QRTZ | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_RIME | same_name_different_behavior | DEFAULT_PT_RIME | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_SHLD | same_name_different_behavior | DEFAULT_PT_SHLD1 | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_SING | same_name_different_behavior | DEFAULT_PT_SING | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_SLTW | same_name_different_behavior | DEFAULT_PT_SLTW | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_SOAP | same_name_different_behavior | DEFAULT_PT_SOAP | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_SPNG | same_name_different_behavior | DEFAULT_PT_SPNG | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_SPRK | same_name_different_behavior | DEFAULT_PT_SPRK | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_STKM | same_name_different_behavior | DEFAULT_PT_STKM | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_STOR | same_name_different_behavior | DEFAULT_PT_STOR | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_SWCH | same_name_different_behavior | DEFAULT_PT_SWCH | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_THDR | same_name_different_behavior | DEFAULT_PT_THDR | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_THRM | same_name_different_behavior | DEFAULT_PT_THRM | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_URAN | same_name_different_behavior | DEFAULT_PT_URAN | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_VINE | same_name_different_behavior | DEFAULT_PT_VINE | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_WARP | same_name_different_behavior | DEFAULT_PT_WARP | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_WATR | same_name_different_behavior | DEFAULT_PT_WATR | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_WIFI | same_name_different_behavior | DEFAULT_PT_WIFI | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_WTRV | same_name_different_behavior | DEFAULT_PT_WTRV | 0.4000 |
-| unproductive | UNPRODUCTIVE_PT_YEST | same_name_different_behavior | DEFAULT_PT_YEST | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_ACID | official_enhancement | DEFAULT_PT_ACID | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_AMTR | official_enhancement | DEFAULT_PT_AMTR | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_ANAR | official_enhancement | DEFAULT_PT_ANAR | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_ARAY | official_enhancement | DEFAULT_PT_ARAY | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_BCLN | official_enhancement | DEFAULT_PT_BCLN | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_BCOL | official_enhancement | DEFAULT_PT_BCOL | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_BIZR | official_enhancement | DEFAULT_PT_BIZR | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_BMTL | official_enhancement | DEFAULT_PT_BMTL | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_BOMB | official_enhancement | DEFAULT_PT_BOMB | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_BOYL | official_enhancement | DEFAULT_PT_BOYL | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_BTRY | official_enhancement | DEFAULT_PT_BTRY | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_C5 | official_enhancement | DEFAULT_PT_C5 | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_CAUS | official_enhancement | DEFAULT_PT_CAUS | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_CLNE | official_enhancement | DEFAULT_PT_CLNE | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_CLST | official_enhancement | DEFAULT_PT_CLST | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_CO2 | official_enhancement | DEFAULT_PT_CO2 | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_COAL | official_enhancement | DEFAULT_PT_COAL | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_CONV | official_enhancement | DEFAULT_PT_CONV | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_DEUT | official_enhancement | DEFAULT_PT_DEUT | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_DLAY | official_enhancement | DEFAULT_PT_DLAY | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_DSTW | official_enhancement | DEFAULT_PT_DSTW | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_FIRW | official_enhancement | DEFAULT_PT_FIRW | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_FOG | official_enhancement | DEFAULT_PT_FOG | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_FRZW | official_enhancement | DEFAULT_PT_FRZW | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_FRZZ | official_enhancement | DEFAULT_PT_FRZZ | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_FSEP | official_enhancement | DEFAULT_PT_FSEP | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_FUSE | official_enhancement | DEFAULT_PT_FUSE | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_FWRK | official_enhancement | DEFAULT_PT_FWRK | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_GBMB | official_enhancement | DEFAULT_PT_GBMB | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_GLAS | official_enhancement | DEFAULT_PT_GLAS | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_GLOW | official_enhancement | DEFAULT_PT_GLOW | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_GOO | official_enhancement | DEFAULT_PT_GOO | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_GPMP | official_enhancement | DEFAULT_PT_GPMP | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_HSWC | official_enhancement | DEFAULT_PT_HSWC | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_ICE | official_enhancement | DEFAULT_PT_ICEI | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_IRON | official_enhancement | DEFAULT_PT_IRON | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_LCRY | official_enhancement | DEFAULT_PT_LCRY | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_MERC | official_enhancement | DEFAULT_PT_MERC | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_MORT | official_enhancement | DEFAULT_PT_MORT | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_NEUT | official_enhancement | DEFAULT_PT_NEUT | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_NONE | official_enhancement | DEFAULT_PT_NONE | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PBCN | official_enhancement | DEFAULT_PT_PBCN | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PCLN | official_enhancement | DEFAULT_PT_PCLN | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PHOT | official_enhancement | DEFAULT_PT_PHOT | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PIPE | official_enhancement | DEFAULT_PT_PIPE | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PLNT | official_enhancement | DEFAULT_PT_PLNT | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PLUT | official_enhancement | DEFAULT_PT_PLUT | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PRTI | official_enhancement | DEFAULT_PT_PRTI | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PRTO | official_enhancement | DEFAULT_PT_PRTO | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PUMP | official_enhancement | DEFAULT_PT_PUMP | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_PVOD | official_enhancement | DEFAULT_PT_PVOD | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_QRTZ | official_enhancement | DEFAULT_PT_QRTZ | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_RIME | official_enhancement | DEFAULT_PT_RIME | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_SHLD | official_enhancement | DEFAULT_PT_SHLD1 | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_SING | official_enhancement | DEFAULT_PT_SING | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_SLTW | official_enhancement | DEFAULT_PT_SLTW | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_SOAP | official_enhancement | DEFAULT_PT_SOAP | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_SPNG | official_enhancement | DEFAULT_PT_SPNG | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_SPRK | official_enhancement | DEFAULT_PT_SPRK | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_STKM | official_enhancement | DEFAULT_PT_STKM | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_STOR | official_enhancement | DEFAULT_PT_STOR | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_SWCH | official_enhancement | DEFAULT_PT_SWCH | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_THDR | official_enhancement | DEFAULT_PT_THDR | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_THRM | official_enhancement | DEFAULT_PT_THRM | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_URAN | official_enhancement | DEFAULT_PT_URAN | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_VINE | official_enhancement | DEFAULT_PT_VINE | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_WARP | official_enhancement | DEFAULT_PT_WARP | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_WATR | official_enhancement | DEFAULT_PT_WATR | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_WIFI | official_enhancement | DEFAULT_PT_WIFI | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_WTRV | official_enhancement | DEFAULT_PT_WTRV | 0.4000 |
+| unproductive | UNPRODUCTIVE_PT_YEST | official_enhancement | DEFAULT_PT_YEST | 0.4000 |
 
 ## 跨模组同名/同代号组
 

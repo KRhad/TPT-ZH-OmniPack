@@ -5,6 +5,12 @@
 #include "simulation/SimulationData.h"
 #include <mutex>
 
+constexpr int LuaPreferredElementFirstId = 196;
+constexpr int LuaPreferredElementLastId = 255;
+
+static_assert(LuaPreferredElementFirstId > 0);
+static_assert(LuaPreferredElementLastId < PT_NUM);
+
 static void getDefaultProperties(lua_State *L, int id)
 {
 	auto &sd = SimulationData::CRef();
@@ -344,8 +350,9 @@ static int allocate(lua_State *L)
 				return luaL_error(L, "Element identifier already in use");
 		}
 
-		// Start out at 255 so that lua element IDs are still one byte (better save compatibility)
-		for (int i = PT_NUM >= 255 ? 255 : PT_NUM; i >= 0; i--)
+		// Keep runtime Lua elements in the explicit one-byte compatibility buffer.
+		// Never consume disabled official IDs (notably the locked slot 146).
+		for (int i = LuaPreferredElementLastId; i >= LuaPreferredElementFirstId; --i)
 		{
 			if (!elements[i].Enabled)
 			{
@@ -353,10 +360,10 @@ static int allocate(lua_State *L)
 				break;
 			}
 		}
-		// If not enough space, then we start with the new maimum ID
+		// If the one-byte buffer is full, allocate down from the expanded high end.
 		if (newID == -1)
 		{
-			for (int i = PT_NUM-1; i >= 255; i--)
+			for (int i = PT_NUM - 1; i > LuaPreferredElementLastId; --i)
 			{
 				if (!elements[i].Enabled)
 				{

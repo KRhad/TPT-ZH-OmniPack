@@ -64,11 +64,11 @@ inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
 inorganic_elements_total=50
-engine_active_elements=385
+engine_active_elements=386
 compatibility_aliases=1
-total_playable_materials=384
+total_playable_materials=385
 element_registry_valid=true
-reaction_registry_entries=190
+reaction_registry_entries=192
 reaction_registry_valid=true
 inorganic_runtime_test=true
 inorganic_event_budget_test=true
@@ -79,7 +79,26 @@ inorganic_gui_visual_test=not_tested
 inorganic_0_3_release_gate=false
 ```
 
-三批通过不等于 0.3.0 内容冻结；下一批材料必须先通过元素空间扩容审计，并继续去重、登记和验证。
+10 位容量与首个工程材料状态：
+
+```text
+pt_num=1024
+pmapbits=10
+legacy_ids_0_511_unchanged=true
+high_id_direct_and_carrier_probe=true
+corrupt_pmapbits_rejected=true
+lua_official_hole_preserved=true
+engineering_materials=1
+solder_runtime_test=true
+capacity_clean_build_pass=true
+capacity_reproducible_build=false
+capacity_developer_paths_removed=false
+capacity_release_exe_stripped=false
+capacity_gui_visual_test=not_tested
+capacity_formal_600s_stress_test=not_tested
+```
+
+三批无机化学与首个工程材料通过不等于对应版本内容冻结；后续批次仍须继续去重、登记和验证。同概念候选的有价值行为应合并到主元素，而不是新增重复 ID。
 
 ## `0.9.0` 整理
 

@@ -22,6 +22,7 @@ local ids = {
     sodium_hydroxide = must_element("OMNI_PT_NAOH", 467),
     carbonic = must_element("OMNI_PT_CARA", 478),
     ammonium_chloride = must_element("OMNI_PT_AMCL", 511),
+    solder = must_element("OMNI_PT_SOLD", 512),
     helium = must_element("OMNI_PT_HE", 370),
 }
 
@@ -64,9 +65,10 @@ local function phase_one()
     local scrap = sim.partCreate(-1, 180, 120, ids.scrap)
     local carbonic = sim.partCreate(-1, 200, 120, ids.carbonic)
     local ammonium_chloride = sim.partCreate(-1, 220, 120, ids.ammonium_chloride)
+    local solder = sim.partCreate(-1, 240, 120, ids.solder)
     assert(acid >= 0 and base >= 0 and sterilizer >= 0 and pathogen >= 0
             and coolant >= 0 and waste >= 0 and scrap >= 0 and carbonic >= 0
-            and ammonium_chloride >= 0,
+            and ammonium_chloride >= 0 and solder >= 0,
         "failed to create enabled module fixtures")
     sim.partProperty(acid, "temp", 300.0)
     sim.partProperty(base, "temp", 300.0)
@@ -85,7 +87,7 @@ local function phase_one()
         "OMNI_DISABLED_MODULE_PHASE=1",
         "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
         "OMNI_DISABLED_MODULE_STAMP=" .. stamp,
-        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=9",
+        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=10",
     }
 end
 
@@ -97,6 +99,7 @@ local function phase_two()
 
     local disabled_representatives = {
         { "OMNI_PT_ALUM", ids.aluminium },
+        { "OMNI_PT_SOLD", ids.solder },
         { "OMNI_PT_STER", ids.sterilizer },
         { "OMNI_PT_CHLR", ids.chlorine },
         { "OMNI_PT_HCLA", ids.hydrochloric },
@@ -136,17 +139,22 @@ local function phase_two()
     local carbonic = assert(sim.partID(200, 120), "loaded carbonic acid is missing")
     local ammonium_chloride = assert(
         sim.partID(220, 120), "loaded ammonium chloride is missing")
+    local solder = assert(sim.partID(240, 120), "loaded solder is missing")
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
             and sim.partProperty(carbonic, "type") == ids.carbonic
             and sim.partProperty(ammonium_chloride, "type") == ids.ammonium_chloride,
         "disabled-module OPS load changed or deleted chemistry particles")
+    assert(sim.partProperty(solder, "type") == ids.solder,
+        "disabled-module OPS load changed or deleted high-ID solder")
     sim.updateUpTo()
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
             and sim.partProperty(carbonic, "type") == ids.carbonic
             and sim.partProperty(ammonium_chloride, "type") == ids.ammonium_chloride,
         "disabled chemistry particles continued reacting after OPS load")
+    assert(sim.partProperty(solder, "type") == ids.solder,
+        "disabled metallurgy high-ID particle continued updating after OPS load")
     assert(sim.partProperty(sterilizer, "type") == ids.sterilizer
             and sim.partProperty(pathogen, "type") == ids.pathogen,
         "disabled biology particles continued reacting after OPS load")
@@ -165,6 +173,7 @@ local function phase_two()
         "OMNI_DISABLED_MODULE_PHASE=2",
         "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
         "OMNI_DISABLED_MODULE_METALLURGY=OMNI_PT_ALUM",
+        "OMNI_DISABLED_MODULE_ENGINEERING=OMNI_PT_SOLD",
         "OMNI_DISABLED_MODULE_SCRAP=DEFAULT_PT_BRMT",
         "OMNI_DISABLED_MODULE_BIOLOGY=OMNI_PT_STER",
         "OMNI_DISABLED_MODULE_CORE=OMNI_PT_CHLR",
@@ -172,7 +181,7 @@ local function phase_two()
         "OMNI_DISABLED_MODULE_BATCH2=OMNI_PT_CARA",
         "OMNI_DISABLED_MODULE_BATCH3=OMNI_PT_AMCL",
         "OMNI_DISABLED_MODULE_NUCLEAR=OMNI_PT_NCLT",
-        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=9",
+        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=10",
         "OMNI_DISABLED_MODULE_UPDATE_EVENTS=0",
         "OMNI_DISABLED_MODULE_PERIODIC_ACTIVE=OMNI_PT_HE",
         "OMNI_DISABLED_MODULE_OPS_FORMAT=OPS1",

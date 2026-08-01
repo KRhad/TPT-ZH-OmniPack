@@ -38,13 +38,14 @@ struct AlloyRecipe
 	float minimumTemperature;
 };
 
-constexpr std::array<AlloyRecipe, 6> AlloyRecipes{ {
+constexpr std::array<AlloyRecipe, 7> AlloyRecipes{ {
 	{ { Ingredient{ PT_STEL, 4 }, Ingredient{ PT_CHRM, 1 }, Ingredient{ PT_NICL, 1 } }, 3, PT_SSIL, 2200.0f },
 	{ { Ingredient{ PT_STEL, 4 }, Ingredient{ PT_COBT, 1 }, Ingredient{ PT_MOLY, 1 } }, 3, PT_TSTL, 2950.0f },
 	{ { Ingredient{ PT_COPR, 3 }, Ingredient{ PT_TIN,  1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_BRNZ, 1375.0f },
 	{ { Ingredient{ PT_COPR, 3 }, Ingredient{ PT_ZINC, 1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_BRAS, 1375.0f },
 	{ { Ingredient{ PT_NICL, 4 }, Ingredient{ PT_CHRM, 1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_NCRM, 2200.0f },
 	{ { Ingredient{ PT_ALUM, 4 }, Ingredient{ PT_MAGN, 1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_ALMG,  950.0f },
+	{ { Ingredient{ PT_TIN,  3 }, Ingredient{ PT_LEAD, 2 }, Ingredient{ PT_NONE, 0 } }, 2, PT_SOLD,  700.0f },
 } };
 
 constexpr int MaxLocalParticles = 9;
@@ -178,6 +179,7 @@ bool IsMoltenMetallurgyComponent(int ctype)
 	case PT_MOLY:
 	case PT_ZINC:
 	case PT_STEL:
+	case PT_SOLD:
 		return true;
 	default:
 		return false;
@@ -190,6 +192,7 @@ float BreakPressureFor(int type)
 	{
 	case PT_LEAD: return 12.0f;
 	case PT_TIN:  return 18.0f;
+	case PT_SOLD: return 16.0f;
 	case PT_MAGN:
 	case PT_ZINC: return 20.0f;
 	case PT_ALUM: return 25.0f;
@@ -709,6 +712,21 @@ int OmniMetallurgyLavaUpdate(UPDATE_FUNC_ARGS)
 		return 1;
 	}
 	return TryAlloyRecipes(i, local, parts, sim) ? 1 : 0;
+}
+
+int OmniMetallurgySparkUpdate(UPDATE_FUNC_ARGS)
+{
+	if (!MetallurgyModuleEnabled(sim)
+		|| parts[i].type != PT_SPRK
+		|| parts[i].ctype != PT_SOLD)
+	{
+		return 0;
+	}
+	auto const &solder = SimulationData::CRef().elements[PT_SOLD];
+	parts[i].temp = std::min(
+		parts[i].temp + 45.0f,
+		solder.HighTemperature + 40.0f);
+	return 0;
 }
 
 int OmniMetallurgyWoodUpdate(UPDATE_FUNC_ARGS)

@@ -3,12 +3,12 @@
 ## 当前发布阻塞
 
 1. 周期表 UI、118 行元数据和 118/118 个可放置映射已实现；正式 60 秒预热/600 秒压力采样、两小时长跑和 GUI 周期表视觉矩阵仍未执行。
-2. 当前引擎活动槽为 385，其中含 1 个隐藏兼容别名；实际可玩材料为 384，`total_playable_materials>=300=true`。这只满足数量下限，不代表后续材料族、质量、性能或发布门禁完成。
+2. 当前引擎活动槽为 386，其中含 1 个隐藏兼容别名；实际可玩材料为 385，`total_playable_materials>=300=true`。这只满足数量下限，不代表后续材料族、质量、性能或发布门禁完成。
 3. 模组来源目录、自动提取和去重报告已建立；逐文件、子模块与资源许可证总审计仍未完成，因此 `license_audit_pass=false`。
-4. Phase 1、完整周期表十四批、无机三批和元素去重批次的全新 clean build、静态/Python、真实客户端、模块和 OPS 回归已通过。去重批次 S09/S10 仅执行了 2 秒 smoke；正式 600 秒压力矩阵和两小时长跑尚未执行。
+4. Phase 1、完整周期表十四批、无机三批、元素去重以及 10 位容量/锡铅合金批次的全新 clean build、静态/Python、真实客户端、模块和 OPS 回归已通过。S09/S10 仍只有 2 秒 smoke；正式 600 秒压力矩阵和两小时长跑尚未执行。
 5. 用户已确认原生 Fusion Pixel Font 的中文可读性；第二批新增 `抵/铵` 以及第三批新增 `氰/盒/矿` 原生字形仍需人工逐字复核，内容界面、双语往返、100%/125%/150% DPI 和所有页面仍需最终 GUI 人工矩阵。
-6. 图鉴已有 190 个 OmniPack 登记项的完整双语内容，其中 189 个是可玩元素、1 个是旧 `MSCR` 兼容别名；新增无机说明均以材料名称开头，后续合金、矿物、核素、有机物和特殊材料说明尚未完成。
-7. 当前元素去重 EXE 仍为 `debug=true`、`strip=false`，并动态依赖 MSYS2 的 GCC 运行库；本批自动运行通过依赖 UCRT64 PATH，不是可直接分发的剥离发布 EXE。
+6. 图鉴已有 191 个 OmniPack 登记项的完整双语内容，其中 190 个是可玩元素、1 个是旧 `MSCR` 兼容别名；所有模组说明先显示“元素说明”，且正文以对应中英文材料名称开头。后续矿物、陶瓷、玻璃、核素、有机物和特殊材料说明尚未完成。
+7. 当前 10 位容量/锡铅合金开发 EXE 仍为 `debug=true`、`strip=false`，并动态依赖 MSYS2 的 GCC 运行库；本批自动运行通过依赖 UCRT64 PATH，不是可直接分发的剥离发布 EXE。相同源码/选项在两个不同构建目录产生不同字节数和哈希，`strings` 确认二进制嵌入各自绝对构建路径，因此 `reproducible_build=false`、`developer_paths_removed=false`。
 8. 当前 `origin` 是旧汉化仓库，不是授权的 OmniPack 正式远端；不能擅自推送或发布。
 9. 既有环境曾发现 GitHub classic PAT；Git 历史和已审计包未发现该模式，但撤销/轮换没有外部证据。
 10. GCC 16 仍对 `OurVariant/Bson`、`PowderToy.cpp` 和 `Simulation::FloodParts` 给出既有优化警告，尚无独立根因结论。
@@ -27,11 +27,13 @@ release_ready=false
 periodic_table_elements=118
 periodic_table_ui=true
 periodic_table_gui_visual_test=not_tested
-engine_active_elements=385
+engine_active_elements=386
 compatibility_aliases=1
-total_playable_materials=384
+total_playable_materials=385
 total_playable_materials_minimum=true
 clean_build_pass=true
+reproducible_build=false
+developer_paths_removed=false
 stress_test=not_tested
 long_run_test=not_tested
 source_public=false

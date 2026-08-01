@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 
-ELEMENT_LIMIT = 512
+ELEMENT_LIMIT = 1024
 FIELDS = (
     "identifier",
     "display_code",

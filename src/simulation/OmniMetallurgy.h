@@ -16,5 +16,6 @@ int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS);
 int OmniMetallurgyScrapUpdate(UPDATE_FUNC_ARGS);
 int OmniMetallurgyLegacyScrapAliasUpdate(UPDATE_FUNC_ARGS);
 int OmniMetallurgyLavaUpdate(UPDATE_FUNC_ARGS);
+int OmniMetallurgySparkUpdate(UPDATE_FUNC_ARGS);
 int OmniMetallurgyWoodUpdate(UPDATE_FUNC_ARGS);
 int OmniMetallurgyCoalUpdate(UPDATE_FUNC_ARGS);

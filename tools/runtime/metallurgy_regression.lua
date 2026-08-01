@@ -44,7 +44,10 @@ local ids = {
     cruc = must_element("OMNI_PT_CRUC", "CRUC"),
     legacy_mscr = must_element("OMNI_PT_MSCR", "MSCR"),
     rshd = must_element("OMNI_PT_RSHD", "RSHD"),
+    sold = must_element("OMNI_PT_SOLD", "SOLD"),
 }
+assert(ids.sold == 512,
+    "SOLD stable high ID changed: expected 512, got " .. tostring(ids.sold))
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
 
@@ -218,6 +221,23 @@ local function run_material_behaviors()
         "nichrome spark did not produce resistive heat")
 
     configure_simulation()
+    local fusible = sim.partCreate(-1, 120, 120, ids.sold)
+    assert(fusible >= 0, "solder fusible-link setup failed")
+    sim.partProperty(fusible, "type", ids.spark)
+    sim.partProperty(fusible, "ctype", ids.sold)
+    sim.partProperty(fusible, "life", 4)
+    sim.partProperty(fusible, "temp", 300.0)
+    for _ = 1, 10 do
+        sim.updateUpTo()
+        if sim.partProperty(fusible, "type") == ids.lava then
+            break
+        end
+    end
+    assert(sim.partProperty(fusible, "type") == ids.lava
+            and sim.partProperty(fusible, "ctype") == ids.sold,
+        "repeated solder spark did not melt into typed high-ID LAVA")
+
+    configure_simulation()
     local soft = sim.partCreate(-1, 120, 120, ids.alum)
     local strong = sim.partCreate(-1, 124, 120, ids.tstl)
     assert(soft >= 0 and strong >= 0, "pressure test setup failed")
@@ -235,6 +255,17 @@ local function run_material_behaviors()
         .. " pressure=" .. tostring(sim.pressure(30, 30)))
     assert(sim.partProperty(strong, "type") == ids.tstl,
         "tool steel failed the differentiated pressure threshold")
+
+    configure_simulation()
+    local solder_scrap = sim.partCreate(-1, 120, 120, ids.sold)
+    assert(solder_scrap >= 0, "high-ID solder pressure setup failed")
+    sim.airMode(sim.AIR_NOUPDATE)
+    sim.pressure(30, 30, 256.0)
+    sim.updateUpTo()
+    assert(sim.partProperty(solder_scrap, "type") == ids.brmt
+            and sim.partProperty(solder_scrap, "ctype") == ids.sold
+            and sim.partProperty(solder_scrap, "tmp4") == RECOVERABLE_SCRAP_MARKER,
+        "SOLD=512 did not survive pressure conversion in BRMT ctype")
 
     configure_simulation()
     local scrap = sim.partCreate(-1, 120, 120, ids.brmt)
@@ -364,6 +395,11 @@ local function test()
         { ids.stel, ids.stel, ids.stel, ids.stel, ids.cobt, ids.moly },
         ids.tstl,
         3500.0)
+    frames.sold = run_alloy(
+        "tin-lead solder",
+        { ids.tin, ids.tin, ids.tin, ids.lead, ids.lead },
+        ids.sold,
+        900.0)
     frames.stel = run_steel()
     run_carbonization()
     run_negative_control()
@@ -376,17 +412,18 @@ local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_METALLURGY_STATUS=PASS\n")
-    report:write("OMNI_METALLURGY_RECIPES=8\n")
-    report:write("OMNI_METALLURGY_BEHAVIORS=5\n")
+    report:write("OMNI_METALLURGY_RECIPES=9\n")
+    report:write("OMNI_METALLURGY_BEHAVIORS=7\n")
     report:write(
         "OMNI_METALLURGY_IDS=" .. ids.alum .. "-" .. ids.cruc .. "\n")
     report:write("OMNI_METALLURGY_CANONICAL_SCRAP=" .. ids.brmt .. "\n")
     report:write("OMNI_METALLURGY_LEGACY_ALIAS=" .. ids.legacy_mscr .. "\n")
+    report:write("OMNI_METALLURGY_HIGH_ID=" .. ids.sold .. "\n")
     report:write(
         "OMNI_METALLURGY_FRAMES="
         .. data.brnz .. "," .. data.bras .. "," .. data.ncrm .. ","
         .. data.almg .. "," .. data.ssil .. "," .. data.tstl .. ","
-        .. data.stel .. "\n")
+        .. data.stel .. "," .. data.sold .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")
     report:write("OMNI_METALLURGY_STATUS=FAIL\n")

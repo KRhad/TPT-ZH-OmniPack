@@ -61,7 +61,10 @@ struct Particle;
 constexpr int OLD_PT_WIND = 147;
 
 // Change this to change the amount of bits used to store type in pmap (and a few elements such as PIPE and CRAY)
-constexpr int PMAPBITS = 9;
+// Ten type bits provide 1024 stable element slots.  OPS stores direct types in
+// up to two bytes and records the source pmap width, so older 8/9-bit saves are
+// remapped through their identifier palette when loaded.
+constexpr int PMAPBITS = 10;
 constexpr int PMAPMASK = ((1 << PMAPBITS) - 1);
 constexpr int ID(int r)
 {
@@ -80,6 +83,11 @@ constexpr int PMAPID(int id)
 	return id << PMAPBITS;
 }
 constexpr int PT_NUM = 1 << PMAPBITS;
+
+static_assert(PMAPBITS >= 8 && PMAPBITS <= 16,
+	"OPS direct element types support an 8-to-16-bit pmap width");
+static_assert(NPART - 1 <= (INT32_MAX >> PMAPBITS),
+	"particle indices and element types must fit in the signed pmap entry");
 
 constexpr bool InBounds(int x, int y)
 {

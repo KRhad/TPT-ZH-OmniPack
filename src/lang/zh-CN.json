@@ -1163,6 +1163,8 @@
   "sim.elem.OMNI_PT_CUCL.name": "氯化铜",
   "sim.elem.OMNI_PT_AMCL": "氯化铵：盐酸与氨水形成的稳定铵盐，强热释放氨和盐酸。",
   "sim.elem.OMNI_PT_AMCL.name": "氯化铵",
+  "sim.elem.OMNI_PT_SOLD": "锡铅合金：低熔点工程合金，可导电、受压易变形，并可作为会熔断的电气连接材料。",
+  "sim.elem.OMNI_PT_SOLD.name": "锡铅合金",
   "sim.elem.OMNI_PT_HE": "氦：极轻的惰性气体，导热性很高，在 20 K 以下进行有界低温换热；放电时产生淡色光子辉光。",
   "sim.elem.OMNI_PT_HE.name": "氦",
   "sim.elem.OMNI_PT_NE": "氖：轻质惰性气体，在有界电气放电中产生强烈的红橙色光子辉光。",

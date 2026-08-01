@@ -20,6 +20,10 @@ constexpr auto nextVersion = Version(100, 0);
 static_assert(!ALLOW_FAKE_NEWER_VERSION || nextVersion >= currentVersion);
 
 constexpr auto effectiveVersion = ALLOW_FAKE_NEWER_VERSION ? nextVersion : currentVersion;
+constexpr int MinimumOpsPmapBits = 8;
+constexpr int MaximumOpsPmapBits = 16;
+
+static_assert(PMAPBITS >= MinimumOpsPmapBits && PMAPBITS <= MaximumOpsPmapBits);
 
 static void TrimAuthorsIn(Bson &b, int depth);
 static std::set<int> GetNestedSaveIDs(const Bson &j);
@@ -68,7 +72,11 @@ void GameSave::MapPalette()
 	//     - in the case of saves older than that
 	//       - pretend that they are 78.1 in terms of validity of element numbers, this is good enough
 
-	std::vector<int> partMap(PT_NUM, 0);
+	// Size the source-number lookup from the save's declared width, not from the
+	// current executable.  A future or third-party OPS may assign a known
+	// identifier to a numeric slot above our PT_NUM; the palette must get a
+	// chance to map that source slot before the current-range guard runs.
+	std::vector<int> partMap(UINT32_C(1) << pmapbits, 0);
 	std::vector<bool> ignoreMissingErrors(PT_NUM, false);
 	if (version <= Version(98, 2))
 	{
@@ -140,7 +148,7 @@ void GameSave::MapPalette()
 	}
 	for (auto &pi : palette)
 	{
-		if (pi.second > 0 && pi.second < PT_NUM)
+		if (pi.second > 0 && static_cast<std::size_t>(pi.second) < partMap.size())
 		{
 			int myId = 0;
 			for (int i = 0; i < PT_NUM; i++)
@@ -158,40 +166,53 @@ void GameSave::MapPalette()
 		}
 	}
 	auto paletteLookup = [this, &partMap](int type, bool ignoreMissingErrors) {
-		if (type > 0 && type < PT_NUM)
+		if (type <= 0)
 		{
-			auto carriedType = partMap[type];
-			if (!carriedType) // type is not 0 so this shouldn't be 0 either
+			return type;
+		}
+		if (static_cast<std::size_t>(type) >= partMap.size())
+		{
+			if (!ignoreMissingErrors)
 			{
-				if (ignoreMissingErrors)
-					return type;
 				missingElements.ids.insert(type);
 			}
-			type = carriedType;
+			return 0;
 		}
-		return type;
+		auto carriedType = partMap[type];
+		if (!carriedType) // type is not 0 so this shouldn't be 0 either
+		{
+			if (ignoreMissingErrors)
+				return type;
+			missingElements.ids.insert(type);
+		}
+		return carriedType;
 	};
 
-	unsigned int pmapmask = (1<<pmapbits)-1;
+	auto pmapmask = (UINT32_C(1) << pmapbits) - 1U;
 	auto &possiblyCarriesType = Particle::PossiblyCarriesType();
 	auto &properties = Particle::GetProperties();
 	for (int n = 0; n < NPART && n < particlesCount; n++)
 	{
 		Particle &tempPart = particles[n];
-		if (tempPart.type <= 0 || tempPart.type >= PT_NUM)
+		if (tempPart.type <= 0)
 		{
 			continue;
 		}
 		tempPart.type = paletteLookup(tempPart.type, false);
+		if (tempPart.type <= 0 || tempPart.type >= PT_NUM)
+		{
+			continue;
+		}
 		for (auto index : possiblyCarriesType)
 		{
 			if (elements[tempPart.type].CarriesTypeIn & (1U << index))
 			{
 				auto *prop = reinterpret_cast<int *>(reinterpret_cast<char *>(&tempPart) + properties[index].Offset);
-				auto carriedType = *prop & int(pmapmask);
-				auto extra = *prop >> pmapbits;
+				auto packed = static_cast<uint32_t>(*prop);
+				auto carriedType = int(packed & pmapmask);
+				auto extra = packed >> pmapbits;
 				carriedType = paletteLookup(carriedType, ignoreMissingErrors[tempPart.type]);
-				*prop = PMAP(extra, carriedType);
+				*prop = static_cast<int>((extra << PMAPBITS) | static_cast<uint32_t>(carriedType));
 			}
 		}
 	}
@@ -660,6 +681,12 @@ void GameSave::readOPS(const std::vector<char> &data)
 
 	copyIfInt32(b, "edgeMode", edgeMode);
 	copyIfInt32(b, "pmapbits", pmapbits);
+	if (pmapbits < MinimumOpsPmapBits || pmapbits > MaximumOpsPmapBits)
+	{
+		throw ParseException(
+			ParseException::Corrupt,
+			String::Build("Invalid OPS pmapbits value: ", pmapbits));
+	}
 	copyIfBool(b, "ensureDeterminism", ensureDeterminism);
 	copyIfInt64(b, "frameCount", reinterpret_cast<int64_t &>(frameCount));
 	if (copyIfUser(b, "rngState", rngState))

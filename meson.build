@@ -655,6 +655,24 @@ legacy_progress_save_probe = executable(
 	override_options: target_options,
 )
 
+high_id_save_probe = executable(
+	'high_id_save_probe',
+	sources: [
+		files('tools/high_id_save_probe.cpp'),
+		files('src/client/GameSave.cpp'),
+		files('src/client/User.cpp'),
+		files('src/graphics/Renderer.cpp'),
+		files('src/prefs/Prefs.cpp'),
+		files('src/simulation/gravity/Fft.cpp'),
+	],
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ threads_dep, fftw_dep, sta_libs['common'], sta_libs['simulation'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
 static_test_env = environment()
 static_test_env.set('PYTHONDONTWRITEBYTECODE', '1')
 
@@ -704,6 +722,19 @@ test(
 	args: [
 		files('tools/element_registry_check.py'),
 		'--root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'element-capacity-audit',
+	python3_prog,
+	args: [
+		files('tools/element_capacity_audit.py'),
+		'--source-root', meson.project_source_root(),
 		'--quiet',
 	],
 	env: static_test_env,
@@ -899,6 +930,13 @@ test(
 		files('examples/0.2.0/01-peroxide-pathogen.stm'),
 		files('examples/0.3.0/09-integrated-factory.stm'),
 	],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'high-id-save-probe',
+	high_id_save_probe,
 	suite: 'static',
 	timeout: 60,
 )

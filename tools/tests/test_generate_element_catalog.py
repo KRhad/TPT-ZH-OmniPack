@@ -393,8 +393,8 @@ class GenerateElementCatalogTests(unittest.TestCase):
     def test_out_of_range_stable_ids_are_rejected_without_overwrite(self) -> None:
         for stable_id, expected_error in (
             ("-1", "invalid stable_id"),
-            ("512", "outside the supported range 0..511"),
-            ("999", "outside the supported range 0..511"),
+            ("1024", "outside the supported range 0..1023"),
+            ("2048", "outside the supported range 0..1023"),
         ):
             with self.subTest(stable_id=stable_id):
                 self.assert_row_rejected_without_output_damage(

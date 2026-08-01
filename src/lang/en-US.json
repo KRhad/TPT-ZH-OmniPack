@@ -1163,6 +1163,8 @@
   "sim.elem.OMNI_PT_CUCL.name": "Copper chloride",
   "sim.elem.OMNI_PT_AMCL": "Ammonium chloride: Stable ammonium salt formed by hydrochloric acid and ammonia water; strong heat releases ammonia and hydrochloric acid.",
   "sim.elem.OMNI_PT_AMCL.name": "Ammonium chloride",
+  "sim.elem.OMNI_PT_SOLD": "Solder: Low-melting tin-lead engineering alloy that conducts electricity, softens under pressure and can act as a fusible electrical joint.",
+  "sim.elem.OMNI_PT_SOLD.name": "Solder",
   "sim.elem.OMNI_PT_HE": "Helium: Very light inert gas with exceptional heat conduction and bounded cryogenic heat exchange below 20 K. Electrical discharge produces a pale photon glow.",
   "sim.elem.OMNI_PT_HE.name": "Helium",
   "sim.elem.OMNI_PT_NE": "Neon: Inert light gas that emits a strong red-orange photon glow during a bounded electrical discharge.",

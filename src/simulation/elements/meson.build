@@ -511,6 +511,7 @@ simulation_elem_names = [
 	'MGCL', # 509: inorganic magnesium chloride
 	'CUCL', # 510: inorganic copper chloride
 	'AMCL', # 511: inorganic ammonium chloride
+	'SOLD', # 512: engineering tin-lead solder
 ]
 
 simulation_elem_src = []

@@ -5,6 +5,7 @@
 #include "FIRE.h"
 #include "ETRD.h"
 #include "simulation/OmniChemistry.h"
+#include "simulation/OmniMetallurgy.h"
 #include "simulation/OmniNuclear.h"
 
 static int update(UPDATE_FUNC_ARGS);
@@ -68,6 +69,8 @@ static int update(UPDATE_FUNC_ARGS)
 	Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
 	if (ct == PT_NGEN)
 		OmniNuclearSparkUpdate(UPDATE_FUNC_SUBCALL_ARGS);
+	if (ct == PT_SOLD)
+		OmniMetallurgySparkUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 
 	if (parts[i].life<=0)
 	{

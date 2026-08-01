@@ -43,8 +43,26 @@ def decision(
         return "D_reject"
     if not compatible_license(mod):
         return "C_reference_only"
-    if duplicate.get("classification") in {"exact_identifier", "complete_duplicate", "different_name_behavior_duplicate"}:
+    # Same-concept candidates are reviewed against and, when useful, rewritten
+    # into the existing official/OmniPack canonical element. Exact identifiers
+    # also require a source delta review before they may be called unchanged.
+    # No second stable ID or duplicate menu entry is allocated.
+    if duplicate.get("classification") in {
+        "exact_identifier",
+        "official_enhancement",
+        "same_name_different_behavior",
+    }:
+        return "B_rewrite_port"
+    if duplicate.get("classification") in {"complete_duplicate", "different_name_behavior_duplicate"}:
         return "D_reject"
+    source_identifier = str(element.get("source_identifier", ""))
+    source_id = str(element.get("source_id", ""))
+    if source_identifier.upper().startswith("DEFAULT_PT_") or (
+        source_id.isdigit() and int(source_id) < 196
+    ):
+        # External definitions in the official namespace or locked official ID
+        # range always require a rewrite, even when the concept itself is new.
+        return "B_rewrite_port"
     if (
         element.get("performance_risk") == "low"
         and element.get("save_risk") == "low"
@@ -140,13 +158,14 @@ def write_license_audit(path: Path, mods: list[dict[str, Any]]) -> None:
 def write_porting(path: Path, elements: list[dict[str, Any]]) -> None:
     groups = {
         "A_direct_port": "A：直接移植候选",
-        "B_rewrite_port": "B：重写移植候选",
+        "B_rewrite_port": "B：重写移植或合并主元素候选",
         "C_reference_only": "C：仅设计参考",
-        "D_reject": "D：拒绝或重复",
+        "D_reject": "D：拒绝或无增量完全重复",
     }
     lines = [
         "# 模组移植计划", "",
         "自动决策只用于排序。任何 A 类仍须人工复核许可证、源码文件头、稳定 ID、模块、图鉴、事件预算和 OPS。", "",
+        "重复名称或代号但行为有价值的 B 类不创建第二个元素：只把经许可证复核的行为增量重写到官方或现有 OmniPack 主元素，并回归验证主元素原行为。`exact_identifier` 先进入 B 类做源码增量审计；确认完全相同且没有增量后才降为 D/no-op。", "",
     ]
     for key, heading in groups.items():
         rows = [row for row in elements if row["port_decision"] == key]
@@ -328,6 +347,39 @@ def main(argv: Sequence[str] | None = None) -> int:
     reference_keys = keys_by_decision["C_reference_only"] - licensed_keys
     candidate_keys = licensed_keys | reference_keys
     rejected_keys = keys_by_decision["D_reject"] - candidate_keys
+    duplicate_classifications = {
+        "exact_identifier",
+        "complete_duplicate",
+        "different_name_behavior_duplicate",
+        "official_enhancement",
+        "same_name_different_behavior",
+    }
+    merge_classifications = {
+        "exact_identifier",
+        "official_enhancement",
+        "same_name_different_behavior",
+    }
+    duplicate_definition_records = 0
+    duplicate_candidate_keys: set[tuple[str, str]] = set()
+    merge_review_keys: set[tuple[str, str]] = set()
+    unique_classified_keys: set[tuple[str, str]] = set()
+    for row in catalog_rows:
+        duplicate = duplicate_by_key.get(
+            f"{row['source_mod']}\0{row['source_identifier']}", {}
+        )
+        classification = duplicate.get("classification", "unique_candidate")
+        key = concept_key(row)
+        if classification in duplicate_classifications:
+            duplicate_definition_records += 1
+            duplicate_candidate_keys.add(key)
+        else:
+            unique_classified_keys.add(key)
+        if (
+            row["port_decision"] == "B_rewrite_port"
+            and classification in merge_classifications
+        ):
+            merge_review_keys.add(key)
+    unique_classified_keys -= duplicate_candidate_keys
     lines = [
         "# 模组提取报告", "", "```text",
         f"repositories_discovered={len(mods)}",
@@ -342,10 +394,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"cpp_elements_detected={len(cpp_elements)}",
         f"lua_elements_detected={len(lua_elements)}",
         f"candidate_definition_records={len(catalog_rows)}",
-        f"unique_candidate_elements={len(candidate_keys)}",
+        f"unique_candidate_elements={len(unique_classified_keys)}",
         f"licensed_source_candidates={len(licensed_keys)}",
-        f"duplicate_candidates={len(rejected_keys)}",
-        f"duplicate_definition_records={decisions['D_reject']}",
+        f"duplicate_candidates={len(duplicate_candidate_keys)}",
+        f"duplicate_definition_records={duplicate_definition_records}",
+        f"canonical_merge_review_candidates={len(merge_review_keys)}",
         f"rejected_candidates={len(rejected_keys)}",
         f"direct_port_candidates={len(direct_keys)}",
         f"rewrite_candidates={len(rewrite_keys)}",
@@ -387,9 +440,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         "first_port_batch_tests_pass=not_tested",
         "```", "",
         "数值只代表当前克隆集和自动扫描。候选数按标准化名称与代号折叠重复分叉；行为差异仍保留在去重报告中。",
-        "`duplicate_definition_records` 是自动拒绝的重复源码定义数，不等于已经人工拒绝的独立材料。",
+        "`duplicate_definition_records` 是自动归入同概念比较的全部源码定义数，包含待主元素增量审计的记录，不等于已经人工拒绝的独立材料。`canonical_merge_review_candidates` 进入 `B_rewrite_port`，目标是合并主元素而不是新增 ID。",
         "`license_audit_pass=true` 只能由完成逐文件、README、子模块和资源复核后的显式参数写入。",
-        "当前新增 92 个周期元素和无机三批 50 个材料均为 OmniPack 原创族/反应逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`；外部候选只用于确认搜索覆盖，没有复制其实现。`first_port_batch_complete=false` 仍是许可证门禁的真实结果，不能把原创内容批次冒充成已完成第三方移植。",
+        "当前新增 92 个周期元素、无机三批 50 个材料和 `SOLD=512` 均为 OmniPack 原创族/反应逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`；外部候选只用于确认搜索覆盖，没有复制其实现。`first_port_batch_complete=false` 仍是许可证门禁的真实结果，不能把原创内容批次冒充成已完成第三方移植。",
         "`OMNI_PT_MSCR=278` 是合并到官方 `DEFAULT_PT_BRMT=30` 的兼容别名；它继续占用稳定槽以读取旧存档，但不计入 `total_omnipack_playable` 或 `total_playable_materials`。",
     ]
     (root / "docs/MOD_EXTRACTION_REPORT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

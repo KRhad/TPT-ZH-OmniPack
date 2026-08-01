@@ -35,6 +35,7 @@ EXPECTED_ELEMENTS = {
     276: "FLUX",
     277: "CRUC",
     278: "MSCR",
+    512: "SOLD",
 }
 
 EXPECTED_ALLOY_INPUTS = {
@@ -44,6 +45,7 @@ EXPECTED_ALLOY_INPUTS = {
     "PT_BRAS": {"PT_COPR": 3, "PT_ZINC": 1},
     "PT_NCRM": {"PT_NICL": 4, "PT_CHRM": 1},
     "PT_ALMG": {"PT_ALUM": 4, "PT_MAGN": 1},
+    "PT_SOLD": {"PT_TIN": 3, "PT_LEAD": 2},
 }
 
 RECIPE_RE = re.compile(
@@ -168,6 +170,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "molten lead shield input": "PT_LAVA, PT_LEAD",
         "nichrome spark assembly condition": "PT_SPRK, PT_NCRM",
         "nuclear shield output": "PT_RSHD",
+        "high-ID solder component": "case PT_SOLD:",
+        "solder spark heating": "OmniMetallurgySparkUpdate",
     }
     for label, marker in required_markers.items():
         if marker not in text:
@@ -244,6 +248,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
     )
     if "case PT_NCRM:" not in spark:
         errors.append("SPRK.cpp: nichrome heating behavior is missing")
+    if "OmniMetallurgySparkUpdate" not in spark:
+        errors.append("SPRK.cpp: solder fusible-link behavior is missing")
 
     for element_name in EXPECTED_ELEMENTS.values():
         element_path = (
@@ -295,7 +301,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args.quiet:
         print(
             "metallurgy-audit: PASS "
-            "(22 playable elements, 1 compatibility alias, 6 alloy recipes, "
+            "(23 playable elements, 1 compatibility alias, 7 alloy recipes, "
             "1 steel recipe, 1 nuclear assembly, 3x3 bounded)"
         )
     return 0
