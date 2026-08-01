@@ -1,6 +1,7 @@
 #include "OmniNuclear.h"
 
 #include "ElementCommon.h"
+#include "OmniModuleRuntime.h"
 
 #include <algorithm>
 
@@ -8,6 +9,13 @@ namespace
 {
 constexpr int NuclearEventsPerFrame = 512;
 constexpr int NuclearSparkEmitted = 0x1;
+thread_local OmniModuleRuntimeCache nuclearRuntimeCache;
+
+bool NuclearModuleEnabled(Simulation *sim)
+{
+	return OmniModuleRuntimeEnabled(
+		nuclearRuntimeCache, sim, sim->currentTick, "Omni.Modules.AdvancedNuclear");
+}
 
 struct ReactionBudget { Simulation *simulation = nullptr; int tick = -1; int remaining = NuclearEventsPerFrame; };
 thread_local ReactionBudget reactionBudget;
@@ -173,6 +181,8 @@ bool WasteStabilization(UPDATE_FUNC_ARGS)
 
 int OmniNuclearElementUpdate(UPDATE_FUNC_ARGS)
 {
+	if (!NuclearModuleEnabled(sim))
+		return 0;
 	if (WasteStabilization(UPDATE_FUNC_SUBCALL_ARGS)
 		|| FuelFission(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CoolantBoil(UPDATE_FUNC_SUBCALL_ARGS)
@@ -183,6 +193,8 @@ int OmniNuclearElementUpdate(UPDATE_FUNC_ARGS)
 
 int OmniNuclearSparkUpdate(UPDATE_FUNC_ARGS)
 {
+	if (!NuclearModuleEnabled(sim))
+		return 0;
 	if (parts[i].type != PT_SPRK || parts[i].ctype != PT_NGEN
 		|| (parts[i].tmp4 & NuclearSparkEmitted) || IsTouched(i, parts, sim))
 		return 0;

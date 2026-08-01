@@ -10,6 +10,7 @@
 | 玩家任务、成就、科技树入口不存在 | 源码/文档 | PASS | 没有对应 C++ 玩家系统；路线已改写 |
 | 已启用模块元素可直接选择 | 源码/静态 | PASS | 统一限制仅含非法 ID、保留槽和模块关闭 |
 | Lua 创建门禁 | 编译/静态 | PASS | 不再包含进度分支；保留模块关闭和保留 ID 拦截 |
+| 四模块关闭后的 OPS、选择、创建与更新 | 实际运行 | PASS | 两进程、OPS1、7 个粒子保留、5 个代表元素拒绝选择/创建、模块事件 0，周期 `HE` 仍可用 |
 | 空模块设置入口 | 源码/i18n | PASS | 只显示四个真实模块及简化生物设置 |
 | 旧进度 OPS 加载与重存 | C++ 运行 | PASS | `legacy-progress-save-probe`，2 个真实旧样本、29 粒子 |
 | 新 OPS 不写 `omniAlchemy` | C++ 运行 | PASS | 解压重存 BSON 并检查字段不存在 |
@@ -32,7 +33,7 @@
 | 工业冶金 23 | PASS | PASS | PASS | 历史 PASS | ID `256..278` |
 | 局部生态 8 | PASS | PASS | PASS | 历史 PASS | ID `288..295`；完整/简化均通过 |
 | 受控核工业 7 | PASS | PASS | PASS | 历史 PASS | ID `328..334` |
-| 高级化学 10 | PASS | PASS | PASS | 历史 PASS | ID `360..369` |
+| 化学与无机物 26 | PASS | PASS | PASS | 预算帧 PASS | ID `360..369`、`462..477`；官方 `SALT=26` 复用为氯化钠 |
 | 完整周期表十四批 92 | PASS | PASS | PASS | 预算帧 PASS | 新 ID `370..461` 全部启用；118/118 映射可用 |
 | 多模块混合 | PASS | 历史 PASS | 历史 PASS | 历史 PASS | Phase 1 正式混合压力尚未复跑 |
 
@@ -62,6 +63,23 @@
 | 本批 Meson/Python 全量套件 | PASS | static `21/21`；Python `159/159`，0 skip |
 | 六类与 mixed OPS | PASS | 21 个 OPS 进程、14 重启、14 加载；六类 204 粒子/254 字段断言和 203 个稳定/调色板 identifier，mixed 11 粒子/20 字段断言 |
 | 周期表真实窗口排版/双语/DPI | NOT RUN | 仍需可信桌面视觉矩阵；编译和静态 UI 契约不替代视觉结论 |
+
+### 无机化学首批证据
+
+| 项目 | 状态 | 证据 |
+|---|---|---|
+| 16 个固定 ID、identifier 与模块映射 | PASS | `HCLA..CAOX=462..477`；登记门禁为 478 槽、351 活动、127 保留 |
+| 双语名称、图鉴和材料名前缀 | PASS | 内容门禁确认 156 个 OmniPack 元素双语完整；16 个新增说明均以对应中英文材料名开头 |
+| 精确盐酸与酸族差异 | PASS | `CHLR + H2 -> HCLA*2`、五酸中和/碳酸盐、氢氟酸腐蚀、硫酸铜、硝酸金属和磷酸肥料均由真实客户端断言 |
+| 碱、盐、石灰和气体路径 | PASS | 碱吸收二氧化碳、氢氧化物腐蚀铝、石灰水合/脱水/煅烧、铁置换铜、硝酸钾氧化、一氧化碳燃烧和硫/氮氧化物回收均通过 |
+| 反应登记与静态审计 | PASS | `reaction-registry-check` 151 条；`chemistry-audit` 26 元素、27 类有界工艺/集成路径 |
+| 真实客户端化学回归 | PASS | `PATHS=29`、`ELEMENTS=26`、`INORGANIC_ELEMENTS=16`、`IDS=462-477` |
+| 化学单帧事件预算 | PASS | 1,800 个隔离碳酸钙样本；峰值恰为且不超过 `1536`，其余输入延后处理 |
+| 模块直选与关闭门禁 | PASS | 启用时 `OMNI_PT_HCLA` 可直接选取；四模块禁用 OPS 回归验证 7 粒子保留、更新事件 0、核心/扩展化学均拒绝选择与创建 |
+| 化学 OPS 与携带字段 | PASS | 3 进程、2 重启、2 加载、32 粒子、40 字段断言、32 个稳定/调色板 identifier，覆盖高 ID 直接类型及 `LAVA/SPRK/CONV/VIRS` |
+| mixed OPS | PASS | 11 粒子、20 字段断言 |
+| 本批 clean Release build | PASS | `build-inorganic-batch1-gated-final-clean` 全量 `621/621`；static `21/21`；Python `160/160`，0 skip；最终 EXE 285,101,266 字节，SHA-256 `995317A93E2097FE0A11ADB6576C2697ED868D4593EFDEFC3A8CBDC5B919905B` |
+| 本批 GUI 材料说明、双语与 DPI | NOT RUN | 自动说明前缀和字体覆盖不替代可信桌面视觉检查 |
 
 旧文件名中的 `tutorial` 或 `challenge` 表示开发用反应样例和回归场景，不是玩家任务系统，不参与元素可用性或存档进度。
 

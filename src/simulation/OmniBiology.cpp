@@ -1,6 +1,7 @@
 #include "OmniBiology.h"
 
 #include "ElementCommon.h"
+#include "OmniModuleRuntime.h"
 #include "prefs/GlobalPrefs.h"
 
 #include <algorithm>
@@ -8,6 +9,13 @@
 namespace
 {
 constexpr int BiologyEventsPerFrame = 1024;
+thread_local OmniModuleRuntimeCache biologyRuntimeCache;
+
+bool BiologyModuleEnabled(Simulation *sim)
+{
+	return OmniModuleRuntimeEnabled(
+		biologyRuntimeCache, sim, sim->currentTick, "Omni.Modules.Biology");
+}
 
 struct ReactionBudget
 {
@@ -225,6 +233,8 @@ bool BiofilmFiltration(UPDATE_FUNC_ARGS)
 
 int OmniBiologyElementUpdate(UPDATE_FUNC_ARGS)
 {
+	if (!BiologyModuleEnabled(sim))
+		return 0;
 	if (AlgaePhotosynthesis(UPDATE_FUNC_SUBCALL_ARGS)
 		|| MyceliumDecomposition(UPDATE_FUNC_SUBCALL_ARGS)
 		|| HumusFertilizerRecovery(UPDATE_FUNC_SUBCALL_ARGS)

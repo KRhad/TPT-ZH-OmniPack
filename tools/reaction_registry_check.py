@@ -187,6 +187,23 @@ REQUIRED_REACTIONS = {
     "periodic.superheavy_acid",
     "periodic.superheavy_oxidation",
     "periodic.superheavy_vaporisation",
+    "chemistry.inorganic_acid_neutralisation",
+    "chemistry.inorganic_acid_carbonate",
+    "chemistry.hydrofluoric_silica",
+    "chemistry.sulfuric_copper",
+    "chemistry.nitric_metal",
+    "chemistry.phosphoric_ammonia",
+    "chemistry.base_carbonation",
+    "chemistry.hydroxide_aluminium",
+    "chemistry.lime_hydration",
+    "chemistry.lime_dehydration",
+    "chemistry.limestone_calcination",
+    "chemistry.bicarbonate_decomposition",
+    "chemistry.copper_sulfate_displacement",
+    "chemistry.potassium_nitrate_oxidiser",
+    "chemistry.carbon_monoxide_oxidation",
+    "chemistry.sulfur_dioxide_recovery",
+    "chemistry.nitrogen_dioxide_recovery",
 }
 
 REACTION_ID = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

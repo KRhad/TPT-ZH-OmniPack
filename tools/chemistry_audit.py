@@ -22,6 +22,22 @@ EXPECTED_ELEMENTS = {
     367: "POLY",
     368: "PERO",
     369: "FERT",
+    462: "HCLA",
+    463: "SULA",
+    464: "NITA",
+    465: "PHOA",
+    466: "HYFA",
+    467: "NAOH",
+    468: "KOH",
+    469: "CAOH",
+    470: "KNIT",
+    471: "CUSF",
+    472: "CACO",
+    473: "NABC",
+    474: "COMO",
+    475: "SODI",
+    476: "NODI",
+    477: "CAOX",
 }
 
 
@@ -91,6 +107,16 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "sparked catalysis": "OmniChemistrySparkUpdate",
         "ammonia synthesis": "PT_LNTG",
         "electrolysis": "PT_WATR",
+        "inorganic update entry": "OmniInorganicElementUpdate",
+        "inorganic acid network": "InorganicAcidNetwork",
+        "inorganic base network": "InorganicBaseNetwork",
+        "inorganic salt network": "InorganicSaltNetwork",
+        "inorganic gas network": "InorganicGasNetwork",
+        "exact hydrochloric acid output": "PT_HCLA",
+        "hydrofluoric silica corrosion": "PT_QRTZ",
+        "lime cycle": "PT_CAOX",
+        "copper sulfate recovery": "PT_CUSF",
+        "bounded carbon monoxide oxidation": "PT_COMO",
     }
     for label, marker in required_markers.items():
         if marker not in text:
@@ -149,7 +175,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"chemistry-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("chemistry-audit: PASS (10 elements, 9 bounded process/integration paths, 3x3 local)")
+        print("chemistry-audit: PASS (26 elements, 27 bounded process/integration paths, 3x3 local)")
     return 0
 
 

@@ -25,7 +25,8 @@ static_assert(OmniMetallurgyLastId + 1 == OmniBiologyFirstId);
 static_assert(OmniBiologyLastId + 1 == OmniNuclearFirstId);
 static_assert(OmniNuclearLastId + 1 == OmniChemistryFirstId);
 static_assert(OmniChemistryLastId + 1 == OmniPeriodicFirstId);
-static_assert(OmniPeriodicLastId + 1 == OmniFutureContentFirstId);
+static_assert(OmniPeriodicLastId + 1 == OmniChemistryExpansionFirstId);
+static_assert(OmniChemistryExpansionLastId + 1 == OmniFutureContentFirstId);
 static_assert(OmniFutureContentLastId == PT_NUM - 1);
 
 OmniSettingDefinition const *DefinitionFor(OmniSetting setting)
@@ -89,6 +90,10 @@ OmniElementModule GetOmniElementModule(int elementId)
 	if (elementId <= OmniPeriodicLastId)
 	{
 		return OmniElementModule::Periodic;
+	}
+	if (elementId <= OmniChemistryExpansionLastId)
+	{
+		return OmniElementModule::Chemistry;
 	}
 	return OmniElementModule::FutureContent;
 }

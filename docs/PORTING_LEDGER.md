@@ -162,9 +162,9 @@ ALNI ALNC TERN MAGX PLTU
 | 277 | `OMNI_PT_CRUC` / `CRUC` | Seppo token/坩埚概念；独立实现 | `src/simulation/elements/CRUC.cpp` |
 | 278 | `OMNI_PT_MSCR` / `MSCR` | OmniPack 原创、携带 `ctype` 的可回收碎料 | `src/simulation/elements/MSCR.cpp` |
 
-## Phase 3 基础化学来源与实现复核
+## 化学核心与无机首批来源和实现复核
 
-化学首批的提交包含 `src/simulation/OmniChemistry.cpp`/`.h`、十个构造器、模块选择门禁、本地化、登记、审计和真实客户端 Lua 回归。所有反应实现由本项目按 TPT 100.0 API 独立编写；没有复制 Cracker、Seppo 或 Cyens 的元素更新函数。
+化学核心和无机首批包含 `src/simulation/OmniChemistry.cpp`/`.h`、26 个构造器、模块选择门禁、本地化、登记、审计和真实客户端 Lua 回归。所有反应实现由本项目按 TPT 100.0 API 独立编写；没有复制 Cracker、Seppo、Cyens 或其他第三方模组的元素更新函数。
 
 | 稳定 ID | identifier / 代号 | 来源方式 | 本项目构造文件 |
 |---:|---|---|---|
@@ -178,6 +178,22 @@ ALNI ALNC TERN MAGX PLTU
 | 367 | `OMNI_PT_POLY` / `POLY` | OmniPack 原创聚合物 | `src/simulation/elements/POLY.cpp` |
 | 368 | `OMNI_PT_PERO` / `PERO` | OmniPack 原创电化学近似 | `src/simulation/elements/PERO.cpp` |
 | 369 | `OMNI_PT_FERT` / `FERT` | OmniPack 原创植物支持循环 | `src/simulation/elements/FERT.cpp` |
+| 462 | `OMNI_PT_HCLA` / `HCLA` | OmniPack 原创精确盐酸与通用酸网络 | `src/simulation/elements/HCLA.cpp` |
+| 463 | `OMNI_PT_SULA` / `SULA` | OmniPack 原创硫酸/硫氧化物循环 | `src/simulation/elements/SULA.cpp` |
+| 464 | `OMNI_PT_NITA` / `NITA` | OmniPack 原创硝酸/氮氧化物循环 | `src/simulation/elements/NITA.cpp` |
+| 465 | `OMNI_PT_PHOA` / `PHOA` | OmniPack 原创磷酸肥料路径 | `src/simulation/elements/PHOA.cpp` |
+| 466 | `OMNI_PT_HYFA` / `HYFA` | OmniPack 原创有界硅质腐蚀代理 | `src/simulation/elements/HYFA.cpp` |
+| 467 | `OMNI_PT_NAOH` / `NAOH` | OmniPack 原创强碱/碳酸化规则 | `src/simulation/elements/NAOH.cpp` |
+| 468 | `OMNI_PT_KOH` / `KOH` | OmniPack 原创强碱/硝酸钾规则 | `src/simulation/elements/KOH.cpp` |
+| 469 | `OMNI_PT_CAOH` / `CAOH` | OmniPack 原创石灰循环 | `src/simulation/elements/CAOH.cpp` |
+| 470 | `OMNI_PT_KNIT` / `KNIT` | OmniPack 原创有界氧化剂玩法 | `src/simulation/elements/KNIT.cpp` |
+| 471 | `OMNI_PT_CUSF` / `CUSF` | OmniPack 原创铜置换与硫酸循环 | `src/simulation/elements/CUSF.cpp` |
+| 472 | `OMNI_PT_CACO` / `CACO` | OmniPack 原创碳酸盐/煅烧规则 | `src/simulation/elements/CACO.cpp` |
+| 473 | `OMNI_PT_NABC` / `NABC` | OmniPack 原创碳酸氢盐分解规则 | `src/simulation/elements/NABC.cpp` |
+| 474 | `OMNI_PT_COMO` / `COMO` | OmniPack 原创有界一氧化碳氧化 | `src/simulation/elements/COMO.cpp` |
+| 475 | `OMNI_PT_SODI` / `SODI` | OmniPack 原创二氧化硫回收路径 | `src/simulation/elements/SODI.cpp` |
+| 476 | `OMNI_PT_NODI` / `NODI` | OmniPack 原创二氧化氮回收路径 | `src/simulation/elements/NODI.cpp` |
+| 477 | `OMNI_PT_CAOX` / `CAOX` | OmniPack 原创氧化钙水合规则 | `src/simulation/elements/CAOX.cpp` |
 
 来源限制与裁决：
 
@@ -185,19 +201,25 @@ ALNI ALNC TERN MAGX PLTU
 - Cracker `CHLR` 使用 5×5 邻域并混合多个概率反应，本项目只保留“氯气与氢气在受控温度下生成酸”的玩法目标，改为确定的 3×3 规则；
 - Cyens 的 `Hydrocarbon.cpp` 改写官方 `GAS/OIL/MWAX/WAX` 且离子体系未完成，本项目没有采用这些状态机或粒子字段；
 - 反应配方集中在 `OmniChemistry.cpp`，成功反应受每帧 1,536 次预算限制，使用 `tmp3` 防止同帧重复输入；
-- 化学 OPS 往返、禁用模块载入提示与压力样本仍未运行，不能据此声称完整存档兼容或大型生产线性能通过。
+- 无机首批没有选取可直接移植的第三方源码；元素名称和常见化学概念不构成第三方代码来源，构造参数、反应表、预算、测试和图鉴均由本项目独立设计；
+- 官方 `DEFAULT_PT_SALT=26` 经行为与 identifier 审计后仅映射为氯化钠，不复制、不改号，也不新增重复 `NaCl` 元素；
+- 化学 OPS、模块直选和 1,800 粒子预算帧已经实测，但正式 600 秒压力采样、GUI 视觉和两小时长跑仍为 `not_tested`。
 
-### 当前测试证据（2026-07-30）
+### 当前测试证据（2026-08-01）
 
 | 测试 | 结果 | 可核对证据 |
 |---|---|---|
-| 化学静态门禁 | PASS | `py tools/chemistry_audit.py`：10 元素、7 类受限工艺、3×3 有界 |
-| 化学审计单元测试 | PASS，2/2 | 正常仓库通过；删除反应预算常量时门禁拒绝 |
-| 全部 Python 工具测试 | PASS，32/32 | 两项生成 C++ 语法验证因该 Python 环境未发现编译器而跳过 |
-| Meson `static` suite | PASS，5/5 | registry、i18n、冶金、化学和工具测试 |
-| Windows x64 增量编译 | PASS | GCC 16.1.0、Ninja；0 error |
-| Lua 真实客户端回归 | PASS | `OMNI_CHEMISTRY_IDS=360-369`、`PATHS=9`；客户端保持响应 |
-| 回归路径 | PASS | 原油/煤油裂化、聚合、过氧化物制备与分解、氨合成、氯氢反应、肥料、中温发酵及冷催化剂负例 |
+| 化学静态门禁 | PASS | `chemistry_audit.py`：26 元素、27 类受限工艺/集成路径、3×3 有界 |
+| 登记与内容门禁 | PASS | 478 槽、351 活动、127 保留；156 个 OmniPack 元素双语内容完整；151 条反应登记有效 |
+| Meson `static` suite | PASS，21/21 | 最终源码树全量静态门禁通过 |
+| 全部 Python 工具测试 | PASS，160/160 | 0 skip；含移除模块运行门禁必须失败的变异测试 |
+| Windows x64 clean 编译 | PASS，621/621 | `build-inorganic-batch1-gated-final-clean`，GCC 16.1.0、Ninja；EXE SHA-256 `995317A93E2097FE0A11ADB6576C2697ED868D4593EFDEFC3A8CBDC5B919905B` |
+| Lua 真实客户端回归 | PASS | `PATHS=29`、`ELEMENTS=26`、`INORGANIC_ELEMENTS=16`、`IDS=462-477` |
+| 预算帧 | PASS | 1,800 个碳酸钙样本，事件峰值恰为 `1536`，剩余反应延后 |
+| 模块直选 | PASS | 化学模块启用时 `OMNI_PT_HCLA` 可直接选取 |
+| 四模块禁用运行 | PASS | 两进程 OPS1；7 粒子保留，冶金/生物/化学/核工业更新事件为 0，周期 `HE` 仍可选取/创建 |
+| 化学 OPS | PASS | 3 进程、2 重启、2 加载、32 粒子、40 字段断言和 32 个稳定/调色板 identifier |
+| 回归路径 | PASS | 精确盐酸、五酸差异、酸碱/碳酸盐、石灰闭环、铜置换、硝酸钾有界氧化、一氧化碳燃烧和硫/氮氧化物回收 |
 
 ### 本项目实现文件
 
@@ -243,7 +265,7 @@ Phase 4 首批的提交包含 `src/simulation/OmniBiology.cpp`/`.h`、八个构�
 - **第三方更新函数逐行复制：0。** SpikeViper 的生物循环没有进入本项目源码；只保留氧气、营养、感染之间存在可控联动的公开玩法目标。
 - **官方状态机改写：0。** `PLNT`、`VIRS`、`WATR`、`LIFE` 保持官方更新函数；新元素仅把这些官方元素作为局部输入或输出。
 - **性能限制：**所有成功事件共享 1,024 次/帧预算，局部搜寻固定为 `3x3`，`tmp3` 防止同帧级联；简化模式不增加粒子数。
-- **未覆盖范围：**生态存档往返、关闭模块后的载入提示、视觉设置交互以及高粒子数压力样本仍未运行。
+- **未覆盖范围：**生态 OPS 往返和四模块关闭后的更新暂停已运行；GUI 三选项、视觉设置交互以及高粒子数正式压力样本仍未运行。
 
 ### 当前测试证据（2026-07-30）
 
@@ -274,7 +296,7 @@ Phase 5 首批包含 `src/simulation/OmniNuclear.cpp`/`.h`、七个构造器、`
 - **第三方核更新函数逐行复制：0。** 所有反应器路径由本项目根据当前 TPT API 独立编写；没有从二进制、论坛描述或第三方存档反推实现。
 - **官方核状态机改写：0。** 新模块只在 `SPRK(NGEN)` 时创建一粒官方 `NEUT`，并在局部路径中消费已经存在的官方 `NEUT`；不修改 `URAN`、`PLUT`、`NEUT` 或 `DEUT` 的源码。
 - **性能限制：**所有成功路径只读取固定 `3x3` 邻域，使用每帧 512 次共享预算和 `tmp3` 同帧级联保护。中子发生器必须先确认局部 `NFUL` 与空槽。
-- **未覆盖范围：**核工业 OPS 往返、关闭模块后的载入提示、视觉设置交互和高粒子数反应堆压力样本仍未运行。
+- **未覆盖范围：**核工业 OPS 往返和四模块关闭后的更新暂停已运行；GUI 三选项、视觉设置交互和高粒子数反应堆正式压力样本仍未运行。
 
 ### 当前测试证据（2026-07-30）
 

@@ -461,6 +461,22 @@ simulation_elem_names = [
 	'LV',   # 459: periodic Lv
 	'TS',   # 460: periodic Ts
 	'OG',   # 461: periodic Og
+	'HCLA', # 462: inorganic hydrochloric acid
+	'SULA', # 463: inorganic sulfuric acid
+	'NITA', # 464: inorganic nitric acid
+	'PHOA', # 465: inorganic phosphoric acid
+	'HYFA', # 466: inorganic hydrofluoric acid
+	'NAOH', # 467: inorganic sodium hydroxide
+	'KOH',  # 468: inorganic potassium hydroxide
+	'CAOH', # 469: inorganic calcium hydroxide
+	'KNIT', # 470: inorganic potassium nitrate
+	'CUSF', # 471: inorganic copper sulfate
+	'CACO', # 472: inorganic calcium carbonate
+	'NABC', # 473: inorganic sodium bicarbonate
+	'COMO', # 474: inorganic carbon monoxide
+	'SODI', # 475: inorganic sulfur dioxide
+	'NODI', # 476: inorganic nitrogen dioxide
+	'CAOX', # 477: inorganic calcium oxide
 ]
 
 simulation_elem_src = []

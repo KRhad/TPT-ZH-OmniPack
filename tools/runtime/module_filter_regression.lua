@@ -96,6 +96,12 @@ assert(rutherfordium == 447,
 ui.activeTool(0, "OMNI_PT_RF")
 assert(ui.activeTool(0) == "OMNI_PT_RF",
     "always-available superheavy content was blocked by a module gate")
+local hydrochloric = assert(elements.OMNI_PT_HCLA)
+assert(hydrochloric == 462,
+    "inorganic hydrochloric acid stable ID changed: " .. tostring(hydrochloric))
+ui.activeTool(0, "OMNI_PT_HCLA")
+assert(ui.activeTool(0) == "OMNI_PT_HCLA",
+    "enabled inorganic chemistry content was blocked by its module gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -130,4 +136,5 @@ report:write("OMNI_PERIODIC_THIRD_TRANSITION_ACTIVE=OMNI_PT_HF\n")
 report:write("OMNI_PERIODIC_LANTHANIDE_ACTIVE=OMNI_PT_LA\n")
 report:write("OMNI_PERIODIC_ACTINIDE_ACTIVE=OMNI_PT_AC\n")
 report:write("OMNI_PERIODIC_SUPERHEAVY_ACTIVE=OMNI_PT_RF\n")
+report:write("OMNI_INORGANIC_ACTIVE=OMNI_PT_HCLA\n")
 report:close()

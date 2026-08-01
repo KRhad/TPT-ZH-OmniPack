@@ -130,6 +130,7 @@ local ids = {
     water = must_element("DEFAULT_PT_WATR", "WATR", 2),
     water_vapor = must_element("DEFAULT_PT_WTRV", "WTRV", 23),
     acid = must_element("DEFAULT_PT_ACID", "ACID", 21),
+    hydrochloric = must_element("OMNI_PT_HCLA", "HCLA", 462),
     caustic = must_element("DEFAULT_PT_CAUS", "CAUS", 86),
     salt = must_element("DEFAULT_PT_SALT", "SALT", 26),
     dust = must_element("DEFAULT_PT_DUST", "DUST", 1),
@@ -965,9 +966,9 @@ local function run_halogen_group_reactions()
     local chlorine = make(ids.chlorine, 120, 120, 450.0)
     local hydrogen = make(ids.hydrogen, 121, 120, 450.0)
     step()
-    assert(sim.partProperty(chlorine, "type") == ids.acid
-            and sim.partProperty(hydrogen, "type") == ids.acid,
-        "reused chlorine chemistry no longer converts hot hydrogen into acid")
+    assert(sim.partProperty(chlorine, "type") == ids.hydrochloric
+            and sim.partProperty(hydrogen, "type") == ids.hydrochloric,
+        "reused chlorine chemistry no longer converts hot hydrogen into hydrochloric acid")
 
     configure(761)
     local fluorine = make(ids.fluorine, 120, 120, 293.15)

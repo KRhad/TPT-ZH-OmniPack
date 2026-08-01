@@ -18,7 +18,7 @@
 |---|---|
 | 工业冶金 | `2048` 事件/帧，`3x3` 局部配方 |
 | 局部生态 | `1024` 事件/帧，局部传播、营养/寿命约束 |
-| 高级化学 | 登记反应显式预算，局部邻域 |
+| 化学与无机物 | `1536` 事件/帧，`3x3` 局部反应；新建气体前先检查空槽 |
 | 受控核工业 | 有界中子/控制更新，不允许无界粒子链 |
 | 周期元素族 | `1024` 事件/帧，`3x3` 放电/换热，衰变每次至多一个有限寿命光子 |
 
@@ -105,6 +105,16 @@ periodic_superheavy_clean_build_targets=605
 periodic_superheavy_exe_sha256=EB56694250D2F8D88BFE138879FA50622BB3A1E4FD9D445BA6EC4AD3A611808F
 periodic_superheavy_budget_runtime=true
 periodic_superheavy_peak_events_per_frame=1024
+inorganic_batch1_clean_build_pass=true
+inorganic_batch1_clean_build_targets=621
+inorganic_batch1_exe_sha256=995317A93E2097FE0A11ADB6576C2697ED868D4593EFDEFC3A8CBDC5B919905B
+inorganic_batch1_budget_runtime=true
+inorganic_batch1_budget_samples=1800
+inorganic_batch1_peak_events_per_frame=1536
+inorganic_batch1_formal_600s_stress_test=not_tested
+disabled_module_runtime_test=true
+disabled_module_loaded_particles=7
+disabled_module_update_events=0
 periodic_118_stress_test=not_tested
 mixed_300_material_stress_test=not_tested
 long_run_7200s=not_tested

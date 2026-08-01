@@ -19,17 +19,19 @@ periodic_third_transition_base_commit=248c516aefcbeae187de95aadb384c22280a678c
 periodic_lanthanide_base_commit=7c49278b856461f61cec1cc4974db90c709968bb
 periodic_actinide_base_commit=54411e08b8215638f403c9bc181afb48d9ca5ea5
 periodic_superheavy_base_commit=518dd9a4d5cbb874281635f7e7552b1ce14050ee
+inorganic_batch1_worktree_base=8abe277e1cac49bac4654da89c5271c19bf1e827
 pt_num=512
 pmapbits=9
 official_active_elements=195
-omnipack_active_elements=140
-total_active_elements=335
-registered_slots=462
+omnipack_active_elements=156
+total_active_elements=351
+registered_slots=478
 reserved_slots=127
 enabled_content_modules=4
 periodic_elements_placeable=118
 periodic_elements_remaining=0
-reaction_registry_entries=134
+inorganic_batch1_elements=16
+reaction_registry_entries=151
 total_playable_materials_minimum=true
 periodic_table_ui=true
 save_format=OPS1/BZip2
@@ -70,6 +72,20 @@ release_ready=false
 - 全新 `build-periodic-superheavy-final-clean` Windows x64 Release 构建 `605/605` 通过；最终 EXE SHA-256 `EB56694250D2F8D88BFE138879FA50622BB3A1E4FD9D445BA6EC4AD3A611808F`，Meson static `21/21`、Python `159/159`（0 skip）通过；
 - clean EXE 已复跑四模块、完整/简化生态、周期、模块、六类 OPS 与 mixed OPS：OPS 合计 21 个进程、14 次重启、14 次加载验证；六类为 204 粒子/254 字段断言和 203 个稳定/调色板 identifier，周期用例同图覆盖全部 118 个周期元素。
 
+## Phase 4：无机化学首批
+
+- 固定 `HCLA..CAOX=462..477` 共 16 个可直接放置材料：5 种酸、3 种碱、硝酸钾/硫酸铜/碳酸钙/碳酸氢钠、一氧化碳/二氧化硫/二氧化氮和氧化钙；官方 `SALT=26` 明确复用为氯化钠；
+- `CHLR + H2` 在 450 K 以上改为生成精确盐酸 `HCLA`，不再生成泛化官方 `ACID`；旧 `ACID` 保留原 ID 和既有行为；
+- 新材料接入原化学模块和 `OmniChemistry.cpp`，所有成功事件继续共享 `1536/frame` 预算，只读取固定 `3x3` 邻域；
+- 反应覆盖酸碱/碳酸盐、氢氟酸腐蚀、硫酸铜与二氧化硫循环、硝酸/二氧化氮循环、磷酸肥料、碱吸收二氧化碳、石灰闭环、铁置换铜、硝酸钾有界氧化和一氧化碳燃烧；
+- 登记门禁当前实测为 478 个槽、351 个活动元素、127 个保留槽；内容门禁确认 156 个 OmniPack 元素均有双语内容，反应登记为 151 条；
+- 真实客户端化学回归为 `PATHS=29`、`ELEMENTS=26`、`INORGANIC_ELEMENTS=16`，压力帧事件恰为 1536；模块直选确认 `OMNI_PT_HCLA` 可用；
+- 化学 OPS 已完成 3 进程、2 重启、2 加载、32 粒子、每次加载 40 字段断言和 32 个稳定/调色板 identifier；mixed OPS 为 11 粒子、20 字段断言；
+- 四个内容模块增加按模拟刻缓存的运行门禁；启用进程保存、全部模块禁用进程加载的 OPS 回归保留 7 个粒子，冶金/生物/化学/核工业反应均暂停且事件为 0，周期元素不受影响；
+- 全新 `build-inorganic-batch1-gated-final-clean` Release 构建 `621/621`、Meson static `21/21`、Python `160/160`（0 skip）通过；EXE 为 285,101,266 字节，SHA-256 `995317A93E2097FE0A11ADB6576C2697ED868D4593EFDEFC3A8CBDC5B919905B`；
+- 最终 EXE 已从冶金开始复跑化学、完整/简化生态、核工业、周期、模块直选、六类 OPS 与 mixed OPS；首次未带 UCRT64 PATH 的启动失败保留为环境失败，正确 PATH 下所有回归通过；
+- 该 EXE 使用 `release` 优化但 `debug=true`、`strip=false`，仅是本批开发证据，不是可公开分发的 1.0.0 发布 EXE。
+
 ## Phase 1：纯沙盒方向清理
 
 - 删除玩家炼金服务、十阶段进度、元素发现锁、进度窗口和通知；
@@ -87,7 +103,7 @@ release_ready=false
 
 ## 下一步
 
-1. 进入 Phase 4 无机化学，优先补齐酸、碱、盐、氧化物和常见工业无机物；
+1. 完成本批最终 clean 构建与回归后，继续无机化学第二批，补齐剩余酸、碱、盐、氧化物和常见工业无机物；
 2. 为完整 118 元素执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
 3. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
 4. 保持 `release_ready=false`，直到后续材料族、人工 GUI、长跑、发布包和公开发布门禁全部真实完成。

@@ -88,10 +88,10 @@ SOURCE_BOUND_MARKERS = {
 }
 
 OMNI_BUDGET_MARKERS = {
-    "src/simulation/OmniMetallurgy.cpp": ("ReactionsPerFrame = 2048", "currentTick + 1"),
-    "src/simulation/OmniBiology.cpp": ("BiologyEventsPerFrame = 1024", "currentTick + 1"),
-    "src/simulation/OmniNuclear.cpp": ("NuclearEventsPerFrame = 512", "currentTick + 1"),
-    "src/simulation/OmniChemistry.cpp": ("ChemistryReactionsPerFrame = 1536", "currentTick + 1"),
+    "src/simulation/OmniMetallurgy.cpp": ("ReactionsPerFrame = 2048", "currentTick + 1", "OmniModuleRuntimeEnabled"),
+    "src/simulation/OmniBiology.cpp": ("BiologyEventsPerFrame = 1024", "currentTick + 1", "OmniModuleRuntimeEnabled"),
+    "src/simulation/OmniNuclear.cpp": ("NuclearEventsPerFrame = 512", "currentTick + 1", "OmniModuleRuntimeEnabled"),
+    "src/simulation/OmniChemistry.cpp": ("ChemistryReactionsPerFrame = 1536", "currentTick + 1", "OmniModuleRuntimeEnabled"),
 }
 
 

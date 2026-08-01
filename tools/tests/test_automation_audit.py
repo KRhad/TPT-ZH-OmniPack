@@ -105,6 +105,22 @@ class AutomationAuditTests(unittest.TestCase):
             automation_audit.read_text = original
         self.assertTrue(any("raw_step(32)" in error for error in errors))
 
+    def test_missing_module_runtime_gate_is_rejected(self) -> None:
+        source_path = ROOT / "src" / "simulation" / "OmniChemistry.cpp"
+        mutated = source_path.read_text(encoding="utf-8").replace(
+            "OmniModuleRuntimeEnabled", "RemovedModuleRuntimeGate", 1
+        )
+        errors: list[str] = []
+        original = automation_audit.read_text
+        try:
+            automation_audit.read_text = lambda path, sink: (
+                mutated if path == source_path else original(path, sink)
+            )
+            automation_audit.check_module_bounds(ROOT, errors)
+        finally:
+            automation_audit.read_text = original
+        self.assertTrue(any("OmniModuleRuntimeEnabled" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

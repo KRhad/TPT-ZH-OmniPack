@@ -1,6 +1,7 @@
 #include "OmniMetallurgy.h"
 
 #include "ElementCommon.h"
+#include "OmniModuleRuntime.h"
 
 #include <algorithm>
 #include <array>
@@ -8,6 +9,14 @@
 
 namespace
 {
+thread_local OmniModuleRuntimeCache metallurgyRuntimeCache;
+
+bool MetallurgyModuleEnabled(Simulation *sim)
+{
+	return OmniModuleRuntimeEnabled(
+		metallurgyRuntimeCache, sim, sim->currentTick, "Omni.Modules.Metallurgy");
+}
+
 enum class PhaseMatch : unsigned char
 {
 	Direct,
@@ -522,6 +531,8 @@ bool TrySteelRecipe(
 
 int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 {
+	if (!MetallurgyModuleEnabled(sim))
+		return 0;
 	if (TryRadiationShieldAssembly(i, x, y, parts, pmap, sim))
 	{
 		return 1;
@@ -616,6 +627,8 @@ int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 
 int OmniMetallurgyScrapUpdate(UPDATE_FUNC_ARGS)
 {
+	if (!MetallurgyModuleEnabled(sim))
+		return 0;
 	auto sourceType = parts[i].ctype;
 	if (BreakPressureFor(sourceType) <= 0.0f)
 	{
@@ -640,6 +653,8 @@ int OmniMetallurgyScrapUpdate(UPDATE_FUNC_ARGS)
 
 int OmniMetallurgyLavaUpdate(UPDATE_FUNC_ARGS)
 {
+	if (!MetallurgyModuleEnabled(sim))
+		return 0;
 	if (parts[i].type != PT_LAVA
 		|| !IsMoltenMetallurgyComponent(parts[i].ctype)
 		|| parts[i].tmp3 == sim->currentTick + 1)
@@ -657,6 +672,8 @@ int OmniMetallurgyLavaUpdate(UPDATE_FUNC_ARGS)
 
 int OmniMetallurgyWoodUpdate(UPDATE_FUNC_ARGS)
 {
+	if (!MetallurgyModuleEnabled(sim))
+		return 0;
 	if (parts[i].type != PT_WOOD
 		|| parts[i].temp < 650.0f
 		|| parts[i].temp >= 873.0f
@@ -678,6 +695,8 @@ int OmniMetallurgyWoodUpdate(UPDATE_FUNC_ARGS)
 
 int OmniMetallurgyCoalUpdate(UPDATE_FUNC_ARGS)
 {
+	if (!MetallurgyModuleEnabled(sim))
+		return 0;
 	if (parts[i].type != PT_COAL
 		|| parts[i].temp < 950.0f
 		|| HasOxygen(x, y, parts, pmap)
