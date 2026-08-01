@@ -33,6 +33,7 @@ SAMPLES = {
     "S11-AUTOMATION-FACTORY",
     "S12-AUTOMATION-SIGNAL-LOOP",
     "S13-ELECTRONICS-DENSE",
+    "S14-ENVIRONMENT-DENSE",
 }
 
 
@@ -153,6 +154,13 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn('pcmt = must_element("OMNI_PT_PCMT", "PCMT")', self.lua)
         self.assertIn('S13-ELECTRONICS-DENSE', self.lua)
         self.assertIn('name = "electronics_conv_fields"', self.lua)
+
+    def test_environment_stress_exercises_pollution_and_recovery(self) -> None:
+        self.assertIn("local function environment(bounds)", self.lua)
+        self.assertIn('detergent = must_element("OMNI_PT_DETG", "DETG")', self.lua)
+        self.assertIn('radioactive_contaminant = must_element("OMNI_PT_RCON", "RCON")', self.lua)
+        self.assertIn('S14-ENVIRONMENT-DENSE', self.lua)
+        self.assertIn('name = "environment_conv_fields"', self.lua)
 
     def test_biology_chemistry_fixture_is_present_in_targeted_stress_samples(self) -> None:
         self.assertIn("local function ecology_chemistry_loop(bounds)", self.lua)

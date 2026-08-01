@@ -7,7 +7,7 @@
 ## 当前范围
 
 ```text
-current_work_base=a24af94f3a3efb2d1b87534128a7cd1b1a31ceca
+current_work_base=44d95f433bc935d3d7d2af9a8be2233fa709e7ec
 engineering_alloys_batch1_base=592643e168ffd111d1e11000eb2e538053c29d3c
 materials_batch1_base=a535656d21fb94c46a05f0091c826151a09adbf7
 isotope_batch1_base=8fbfb74745ba812acd690202a327f933585b27f0
@@ -30,15 +30,15 @@ organic_batch2_worktree_base=a24af94f3a3efb2d1b87534128a7cd1b1a31ceca
 official_id_range=0..195
 official_active_elements=195
 official_tombstones=1
-omnipack_registered_elements=257
-omnipack_playable_elements=256
+omnipack_registered_elements=293
+omnipack_playable_elements=292
 compatibility_aliases=1
 periodic_mappings_implemented=118
-engine_active_elements=452
-total_playable_materials=451
-registered_slots=622
-explicit_reserved_slots=170
-unallocated_capacity_slots=402
+engine_active_elements=488
+total_playable_materials=487
+registered_slots=686
+explicit_reserved_slots=198
+unallocated_capacity_slots=338
 pt_num=1024
 pmapbits=10
 ```
@@ -60,21 +60,24 @@ pmapbits=10
 | 代表性核素首批 | `576..588` | 13（`H2IS..CF52`） | 归入高级核工业模块；不复用官方重水 `DEUT` 或通用 `URAN/PLUT` |
 | 有机化学首批 | `589..601` | 13（`CH4M..FATS`） | 归入高级化学模块；`POLY=367` 原位升级，不覆盖官方 `OIL/GAS/DESL` |
 | 有机/聚合物第二批 | `602..621` | 20（`GLUC..EACT`） | 归入高级化学模块；复用官方通用油、蜡、生物质及既有 `POLY` 主元素 |
-| 未来内容容量 | `622..1023` | 0 | 逐批登记后才能使用，不把空槽计入材料数量 |
+| 电子与特殊材料 | `622..669` | 20（`GAAS..DIEL=622..641`） | 归入电子模块；`642..669` 保留 |
+| 生态与污染扩展 | `670..685` | 16（`SOIL..DETG`） | 归入 Biology 模块；与既有生态共享预算 |
+| 未来内容容量 | `686..1023` | 0 | 逐批登记后才能使用，不把空槽计入材料数量 |
 
 ## 模块总览
 
 | 玩家模块 | 元素数 | 元素代号 | 当前反应/事件上限 | 自动证据 | 实际 GUI/OPS/压力 |
 |---|---:|---|---:|---|---|
 | 工业冶金与工程材料 | 43 可玩 + 1 兼容别名 | `ALUM..CRUC=256..277`、`SOLD..RFBK=512..532`；旧 `MSCR=278` 隐藏 | 冶金 2,048 / 材料 1,536 次成功事件每帧，固定 `3x3` | 合金与材料 Lua、模块直选/禁用、50 粒子冶金 OPS 双往返和 512/532 原生高位探针通过 | GUI/模块视觉与正式 600 秒压力未完成 |
-| 局部生态 | 8 | `NUTR ALGA MYCL SPOR PATH STER HUMS BIOF` | 每帧 1,024 次成功事件，固定 `3x3` | 登记、生物审计、完整/简化 Lua 场景、独立 OPS 双往返和 S03/S04 压力执行通过；事件/停止恢复实际记录 | GUI/模块视觉门禁未完成 |
+| 生态、生物与环境 | 24 | `NUTR..BIOF=288..295`、`SOIL..DETG=670..685` | 新旧内容合计每帧 1,024 次成功事件，固定 `3x3` | 完整/简化生态、环境 17 类行为、1,100 组预算、模块禁用、两类独立 OPS 和 S03/S04/S14 smoke 通过 | GUI/模块视觉与正式 S14 600 秒门禁未完成 |
 | 化学、无机物与两批有机物 | 93 | `CHLR..FERT=360..369`、`HCLA..AMCL=462..511`、`CH4M..EACT=589..621` | 每帧 1,536 次成功反应，固定 `3x3` | 旧化学 90 路径、首批 15 反应/5 相变及第二批 13 路径均通过；1,600 对聚合物预算样本峰值恰为 1,536；99 粒子化学 OPS 双往返通过 | GUI/模块视觉与正式 600 秒压力未完成 |
 | 受控核工业与代表性核素 | 20 | `NFUL MODR CROD NCLT NWST NGEN RSHD`、`H2IS..CF52=576..588` | 两部分共享每帧 512 次成功事件，固定 `3x3` | 原核工业 5 路径及核素 12 衰变/8 中子/2 点火/1 相变路径运行通过；26 粒子核 OPS、模块直选/禁用和 512/588 原生高位探针通过 | 正式 600 秒核素压力与 GUI/模块视觉门禁未完成 |
 | 完整周期表十四批 | 92 新增 / 118 映射 | 前八个主族批次、三条过渡系、镧系、锕系和 15 成员超重系列全部完成 | 每帧 1,024 次放电/换热/族反应/衰变/合成事件，固定 `3x3` | 登记、周期审计、Lua 行为与预算、118 元素同图 OPS 双往返通过 | 周期表窗口视觉/DPI 与正式 600 秒压力采样仍未完成 |
+| 电子与特殊材料 | 20 | `GAAS..DIEL=622..641` | 每帧 1,024 次成功事件，固定 `3x3` | 22 条合成、16 类行为、模块禁用、电子 OPS 与 S13 smoke 通过 | GUI/模块视觉与正式 S13 600 秒门禁未完成 |
 
 五个内容系统上限来自当前源码常量并带同 tick 标记，属于源码确认；它们不是完整 FPS、内存或长跑压力证据。
 
-四个可选模块现在还在每个公开更新入口执行按模拟刻缓存的运行门禁。两进程禁用回归先在启用状态保存 20 个代表粒子，再以四模块全关载入，确认高位 `NITI=520`、材料 `RFBK=532`、核素 `CF52=588`、最高有机物 `EACT=621`、可回收 `BRMT` 的 `ctype/tmp4` 及其他模块粒子保留，`FATS+CAUS` 不继续皂化且 `2×ERES+CATA` 不继续固化，模块事件为 0、代表元素拒绝选择/创建，而周期 `HE` 仍可使用；GUI 三选项仍需人工验证。
+五个可选模块在每个公开更新入口执行按模拟刻缓存的运行门禁。两进程禁用回归先在启用状态保存 25 个代表粒子，再以五模块全关载入，确认高位 `NITI=520`、材料 `RFBK=532`、核素 `CF52=588`、最高有机物 `EACT=621`、电子 `DIEL=641`、环境 `DETG=685`、可回收 `BRMT` 的 `ctype/tmp4` 及其他模块粒子保留；皂化、固化、介电放电和石油清洗均暂停，模块事件为 0、代表元素拒绝选择/创建，而周期 `HE` 仍可使用；GUI 三选项仍需人工验证。
 
 ## 工业冶金内容
 

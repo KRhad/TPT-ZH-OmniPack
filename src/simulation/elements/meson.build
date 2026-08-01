@@ -669,6 +669,22 @@ simulation_elem_names = [
 	disabler(), # 667: reserved electronic material
 	disabler(), # 668: reserved electronic material
 	disabler(), # 669: reserved electronic material
+	'SOIL', # 670: soil
+	'WWTR', # 671: wastewater
+	'PEST', # 672: pesticide
+	'HMET', # 673: heavy-metal contaminant
+	'RCON', # 674: radioactive contaminant
+	'MPLS', # 675: microplastic
+	'OWST', # 676: organic waste
+	'BLOM', # 677: algal bloom
+	'MOLD', # 678: mould
+	'BLOD', # 679: blood
+	'TOXN', # 680: toxin
+	'AMAT', # 681: antimicrobial material
+	'SLUD', # 682: sludge
+	'SMOG', # 683: smog
+	'ARAN', # 684: acid rain
+	'DETG', # 685: detergent
 ]
 
 simulation_elem_src = []

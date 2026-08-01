@@ -28,18 +28,19 @@ materials_batch1_worktree_base=a535656d21fb94c46a05f0091c826151a09adbf7
 isotope_batch1_worktree_base=8fbfb74745ba812acd690202a327f933585b27f0
 organic_batch1_worktree_base=4e001049781afde4bcd9d5db250903d73017b269
 organic_batch2_worktree_base=a24af94f3a3efb2d1b87534128a7cd1b1a31ceca
+environment_batch1_worktree_base=44d95f433bc935d3d7d2af9a8be2233fa709e7ec
 pt_num=1024
 pmapbits=10
 official_active_elements=195
-omnipack_registered_elements=257
-omnipack_playable_elements=256
-engine_active_elements=452
+omnipack_registered_elements=293
+omnipack_playable_elements=292
+engine_active_elements=488
 compatibility_aliases=1
-total_playable_materials=451
-registered_slots=622
-reserved_slots=170
-unallocated_capacity_slots=402
-enabled_content_modules=4
+total_playable_materials=487
+registered_slots=686
+reserved_slots=198
+unallocated_capacity_slots=338
+enabled_content_modules=5
 periodic_elements_placeable=118
 periodic_elements_remaining=0
 inorganic_batch1_elements=16
@@ -49,7 +50,9 @@ isotope_batch1_elements=13
 organic_batch1_elements=13
 organic_batch2_elements=20
 organic_elements_total=33
-reaction_registry_entries=259
+electronics_batch1_elements=20
+environment_batch1_elements=16
+reaction_registry_entries=328
 organic_batch2_clean_build_pass=true
 organic_batch2_clean_build_targets=732
 organic_batch2_static_tests=28/28
@@ -61,6 +64,15 @@ periodic_table_ui=true
 save_format=OPS1/BZip2
 release_ready=false
 ```
+
+## 生态、污染与环境材料首批
+
+- 新增 `SOIL/WWTR/PEST/HMET/RCON/MPLS/OWST/BLOM/MOLD/BLOD/TOXN/AMAT/SLUD/SMOG/ARAN/DETG=670..685`，全部直接可放置并归入既有 Biology 模块；`SOIL` 与 `BLOD` 分别在固定 GPL-3.0 Ultimata 提交上做概念级重写，其余为项目自有实现；
+- `OmniEnvironment.cpp` 只检查固定 `3x3` 邻域，并调用既有 `OmniConsumeBiologyEvent`；新旧生态合计上限仍为 `1024/frame`，没有 `NPART`、全图或元素表扫描；
+- 真实客户端环境回归覆盖 17 类行为；1,100 组压力样本中 1,024 组成功且峰值为 1,024。五模块关闭后保留 25 粒子、环境清洗反应不执行、事件为 0；
+- 新增环境 OPS 类后八类合计 24 进程、368 粒子、436 字段断言，环境类为 22 粒子/30 字段并覆盖最高 `DETG=685` 的携带字段；
+- S14 环境密集场景 `20260801T230412Z-a9ff7054` 完成 2.008112 秒 smoke：平均 61.251551 FPS、1% low 55.549281、峰值 2,387 粒子、事件峰值 1,024、未崩溃/未挂起且 OPS 往返/停止恢复通过。该结果绑定未提交工作树前的 `44d95f43` 标识，只证明 harness 执行；正式 600 秒门禁仍为 `not_tested`；
+- 当前登记 686 行、488 个活动项、1 个兼容别名、487 个可玩材料和 328 条反应；最终 clean build、提交后哈希和 GUI 视觉证据在本批收尾时另行绑定。
 
 ## 模组素材库与周期表 ID 基础设施
 

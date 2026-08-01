@@ -79,7 +79,12 @@ constexpr int OmniOrganicFirstId = 589;
 constexpr int OmniOrganicLastId = 621;
 constexpr int OmniElectronicsFirstId = 622;
 constexpr int OmniElectronicsLastId = 669;
-constexpr int OmniFutureContentFirstId = 670;
+// Environmental and pollution materials remain controlled by the Biology
+// module. This keeps the existing preference and disabled-save warning stable
+// while extending local ecology without adding another progression gate.
+constexpr int OmniEnvironmentFirstId = 670;
+constexpr int OmniEnvironmentLastId = 685;
+constexpr int OmniFutureContentFirstId = 686;
 constexpr int OmniFutureContentLastId = 1023;
 
 std::array<OmniSettingDefinition, OmniSettingCount> const &GetOmniSettingDefinitions();

@@ -25,6 +25,7 @@ local selectable = {
     { "OMNI_PT_CF52", 588, "californium-252" },
     { "OMNI_PT_EACT", 621, "ethyl acetate" },
     { "OMNI_PT_DIEL", 641, "dielectric ceramic" },
+    { "OMNI_PT_DETG", 685, "environmental detergent" },
 }
 
 for _, entry in ipairs(selectable) do
@@ -107,4 +108,5 @@ report:write("OMNI_MATERIALS_HIGH_ID_ACTIVE=OMNI_PT_RFBK\n")
 report:write("OMNI_ISOTOPE_HIGH_ID_ACTIVE=OMNI_PT_CF52\n")
 report:write("OMNI_ORGANIC_HIGH_ID_ACTIVE=OMNI_PT_EACT\n")
 report:write("OMNI_ELECTRONICS_HIGH_ID_ACTIVE=OMNI_PT_DIEL\n")
+report:write("OMNI_ENVIRONMENT_HIGH_ID_ACTIVE=OMNI_PT_DETG\n")
 report:close()

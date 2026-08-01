@@ -89,7 +89,8 @@ try {
             $resultText -match "(?m)^OMNI_MATERIALS_HIGH_ID_ACTIVE=OMNI_PT_RFBK\r?$" -and
             $resultText -match "(?m)^OMNI_ISOTOPE_HIGH_ID_ACTIVE=OMNI_PT_CF52\r?$" -and
             $resultText -match "(?m)^OMNI_ORGANIC_HIGH_ID_ACTIVE=OMNI_PT_EACT\r?$" -and
-            $resultText -match "(?m)^OMNI_ELECTRONICS_HIGH_ID_ACTIVE=OMNI_PT_DIEL\r?$"
+            $resultText -match "(?m)^OMNI_ELECTRONICS_HIGH_ID_ACTIVE=OMNI_PT_DIEL\r?$" -and
+            $resultText -match "(?m)^OMNI_ENVIRONMENT_HIGH_ID_ACTIVE=OMNI_PT_DETG\r?$"
         ) {
             $passed = $true
             break

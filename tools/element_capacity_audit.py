@@ -40,7 +40,9 @@ def check_constants(root: Path, errors: list[str]) -> None:
         "organic last": "OmniOrganicLastId = 621",
         "electronics first": "OmniElectronicsFirstId = 622",
         "electronics last": "OmniElectronicsLastId = 669",
-        "future first": "OmniFutureContentFirstId = 670",
+        "environment first": "OmniEnvironmentFirstId = 670",
+        "environment last": "OmniEnvironmentLastId = 685",
+        "future first": "OmniFutureContentFirstId = 686",
         "future last": "OmniFutureContentLastId = 1023",
     }
     for label, marker in range_markers.items():
@@ -56,6 +58,8 @@ def check_constants(root: Path, errors: list[str]) -> None:
         errors.append("OmniContent.cpp: organic IDs are not routed to chemistry")
     if "elementId <= OmniElectronicsLastId" not in content_cpp:
         errors.append("OmniContent.cpp: electronics IDs are not routed to electronics")
+    if "elementId <= OmniEnvironmentLastId" not in content_cpp:
+        errors.append("OmniContent.cpp: environment IDs are not routed to biology")
 
 
 def check_save_path(root: Path, errors: list[str]) -> None:

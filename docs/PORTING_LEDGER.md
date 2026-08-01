@@ -373,6 +373,40 @@ Phase 5 首批包含 `src/simulation/OmniNuclear.cpp`/`.h`、七个构造器、`
 | Lua 真实客户端回归 | PASS | `PATHS=4`、`IDS=328-334`；客户端保持响应 |
 | 回归路径 | PASS | 有慢化受控转换、控制棒抑制、无燃料发生器负例、冷却剂排热与屏蔽吸收 |
 
+## Phase 9 生态与污染首批来源及重写记录
+
+本批固定稳定 ID `670..685`，继续使用既有 Biology 模块开关与事件预算。没有导入第三方核心、旧元素数组、数值 ID、保存格式或更新函数；所有运行逻辑集中在 `src/simulation/OmniEnvironment.cpp`，按当前 `3x3` 局部查找、模块禁用和 OPS 兼容约束重新实现。
+
+| 稳定 ID | identifier / 代号 | 来源方式 | 本项目构造文件 |
+|---:|---|---|---|
+| 670 | `OMNI_PT_SOIL` / `SOIL` | Ultimata 与 nucular 土壤概念参考；本项目重写储水、干燥、土壤形成和吸附路径 | `src/simulation/elements/SOIL.cpp` |
+| 671 | `OMNI_PT_WWTR` / `WWTR` | OmniPack 原创污水处理路径 | `src/simulation/elements/WWTR.cpp` |
+| 672 | `OMNI_PT_PEST` / `PEST` | OmniPack 原创农药残留路径 | `src/simulation/elements/PEST.cpp` |
+| 673 | `OMNI_PT_HMET` / `HMET` | OmniPack 原创重金属污染与生物膜捕集路径 | `src/simulation/elements/HMET.cpp` |
+| 674 | `OMNI_PT_RCON` / `RCON` | OmniPack 原创有限放射性污染路径 | `src/simulation/elements/RCON.cpp` |
+| 675 | `OMNI_PT_MPLS` / `MPLS` | OmniPack 原创微塑料捕集与热烟霾路径 | `src/simulation/elements/MPLS.cpp` |
+| 676 | `OMNI_PT_OWST` / `OWST` | OmniPack 原创有机废物堆肥路径 | `src/simulation/elements/OWST.cpp` |
+| 677 | `OMNI_PT_BLOM` / `BLOM` | OmniPack 原创耗氧、老化与污泥路径 | `src/simulation/elements/BLOM.cpp` |
+| 678 | `OMNI_PT_MOLD` / `MOLD` | OmniPack 原创原料受限霉菌路径 | `src/simulation/elements/MOLD.cpp` |
+| 679 | `OMNI_PT_BLOD` / `BLOD` | Ultimata 与 Biological Mod 血液概念参考；本项目重写携氧、病原体和凝结路径 | `src/simulation/elements/BLOD.cpp` |
+| 680 | `OMNI_PT_TOXN` / `TOXN` | OmniPack 原创毒素与污水路径 | `src/simulation/elements/TOXN.cpp` |
+| 681 | `OMNI_PT_AMAT` / `AMAT` | OmniPack 原创耐久抗菌表面 | `src/simulation/elements/AMAT.cpp` |
+| 682 | `OMNI_PT_SLUD` / `SLUD` | OmniPack 原创污泥干燥与堆肥路径 | `src/simulation/elements/SLUD.cpp` |
+| 683 | `OMNI_PT_SMOG` / `SMOG` | OmniPack 原创烟霾反应，复用本项目官方式气体图形回调 | `src/simulation/elements/SMOG.cpp` |
+| 684 | `OMNI_PT_ARAN` / `ARAN` | OmniPack 原创酸雨腐蚀与石灰中和路径 | `src/simulation/elements/ARAN.cpp` |
+| 685 | `OMNI_PT_DETG` / `DETG` | OmniPack 原创石油/水乳化处理路径 | `src/simulation/elements/DETG.cpp` |
+
+文件级来源证据：
+
+- Ultimata：`https://github.com/Bowserinator/TPT-Ultimata-Mod.git`，commit `b74971752433652c033559abea415ec3510ac433`；`src/simulation/elements/SOIL.cpp` blob `4fe7ad92b93646f710ec0fb5e7a1c8087bebed49`，`BLOD.cpp` blob `e99d5a47c0c5c47484b7dd66284392a0c4151a3b`。
+- Biological Mod：固定 commit `284a1585db023f62a7147892526899133dd6f41c`；`src/simulation/elements/BLD.cpp` blob `6bbb88a35427a54e64496730ad777fb0e0250f67`，仅用于核对携氧概念。
+- nucular mod：固定 commit `048080a79006c4d6668a1864a0e29758903c64bb`；`src/simulation/elements/SOIL.cpp` blob `f6499ab0590da6ebffa852ac25101046d2d1623a`，仅用于核对储水土壤概念。
+- 三个只读快照根 `LICENSE` 均为 GPL-3.0，SHA-256 `0B383D5A63DA644F628D99C33976EA6487ED89AAA59F0B3257992DEAC1171E6B`。
+
+重写边界：Ultimata `SOIL` 的 4×4 扫描、泥土/隧道状态和 Ultimata `BLOD` 的染色、冻结、随机凝血状态机均未复制；Biological Mod `BLD` 的 5×5 扫描和组织专用字段也未复制。当前 `SOIL/BLOD` 只保留可识别的材料概念，使用新的稳定 ID、双语说明、统一 Biology 预算、固定 `3x3` 邻域和当前字段约定。因概念和具体源文件可追踪，二者保守计为 `elements_rewritten=2`；连同 `ACET/UREA`，项目累计 `elements_rewritten=4`、`elements_ported=0`、第三方更新函数逐行复制 `0`。
+
+当前增量证据覆盖 16 个元素、17 类行为、31 条登记反应、`1024/frame` 峰值、模块禁用、22 个环境 OPS 粒子和最高 `DETG=685`；clean build、提交绑定 smoke 和正式 600 秒压力仍需在实现提交后补记。
+
 ## 每次实际移植必须补记
 
 当状态进入 `PORTING`，新增一条详细记录，至少包含：

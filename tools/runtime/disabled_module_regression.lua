@@ -31,11 +31,14 @@ local ids = {
     epoxy = must_element("OMNI_PT_EPXY", 618),
     ethyl_acetate = must_element("OMNI_PT_EACT", 621),
     dielectric = must_element("OMNI_PT_DIEL", 641),
+    detergent = must_element("OMNI_PT_DETG", 685),
     catalyst = must_element("OMNI_PT_CATA", 366),
     caustic = must_element("DEFAULT_PT_CAUS", 86),
     helium = must_element("OMNI_PT_HE", 370),
     fire = assert(elements.DEFAULT_PT_FIRE),
     metal = assert(elements.DEFAULT_PT_METL),
+    oil = assert(elements.DEFAULT_PT_OIL),
+    water = assert(elements.DEFAULT_PT_WATR),
 }
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
@@ -90,13 +93,17 @@ local function phase_one()
     local catalyst = sim.partCreate(-1, 360, 121, ids.catalyst)
     local dielectric = sim.partCreate(-1, 380, 120, ids.dielectric)
     local metal = sim.partCreate(-1, 381, 120, ids.metal)
+    local detergent = sim.partCreate(-1, 400, 120, ids.detergent)
+    local oil = sim.partCreate(-1, 401, 120, ids.oil)
+    local water = sim.partCreate(-1, 400, 121, ids.water)
     assert(acid >= 0 and base >= 0 and sterilizer >= 0 and pathogen >= 0
             and coolant >= 0 and waste >= 0 and scrap >= 0 and carbonic >= 0
             and ammonium_chloride >= 0 and engineering >= 0 and material >= 0
             and isotope >= 0 and hydrogen2 >= 0 and fire >= 0
             and fats >= 0 and caustic >= 0 and ethyl_acetate >= 0
             and resin_first >= 0 and resin_second >= 0 and catalyst >= 0
-            and dielectric >= 0 and metal >= 0,
+            and dielectric >= 0 and metal >= 0 and detergent >= 0
+            and oil >= 0 and water >= 0,
         "failed to create enabled module fixtures")
     sim.partProperty(acid, "temp", 300.0)
     sim.partProperty(base, "temp", 300.0)
@@ -122,7 +129,7 @@ local function phase_one()
         "OMNI_DISABLED_MODULE_PHASE=1",
         "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear,electronics",
         "OMNI_DISABLED_MODULE_STAMP=" .. stamp,
-        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=22",
+        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=25",
     }
 end
 
@@ -140,6 +147,7 @@ local function phase_two()
         { "OMNI_PT_FATS", ids.fats },
         { "OMNI_PT_EACT", ids.ethyl_acetate },
         { "OMNI_PT_DIEL", ids.dielectric },
+        { "OMNI_PT_DETG", ids.detergent },
         { "OMNI_PT_STER", ids.sterilizer },
         { "OMNI_PT_CHLR", ids.chlorine },
         { "OMNI_PT_HCLA", ids.hydrochloric },
@@ -201,6 +209,9 @@ local function phase_two()
     local dielectric = assert(
         sim.partID(380, 120), "loaded dielectric ceramic is missing")
     local metal = assert(sim.partID(381, 120), "loaded dielectric conductor is missing")
+    local detergent = assert(sim.partID(400, 120), "loaded detergent is missing")
+    local oil = assert(sim.partID(401, 120), "loaded oil fixture is missing")
+    local water = assert(sim.partID(400, 121), "loaded wash-water fixture is missing")
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
             and sim.partProperty(carbonic, "type") == ids.carbonic
@@ -221,6 +232,10 @@ local function phase_two()
             and sim.partProperty(dielectric, "tmp") == 8
             and sim.partProperty(metal, "type") == ids.metal,
         "disabled-module OPS load changed the electronics fixture")
+    assert(sim.partProperty(detergent, "type") == ids.detergent
+            and sim.partProperty(oil, "type") == ids.oil
+            and sim.partProperty(water, "type") == ids.water,
+        "disabled-module OPS load changed the environmental fixture")
     sim.updateUpTo()
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
@@ -247,6 +262,10 @@ local function phase_two()
             and sim.partProperty(dielectric, "tmp") == 8
             and sim.partProperty(metal, "type") == ids.metal,
         "disabled dielectric ceramic discharged after OPS load")
+    assert(sim.partProperty(detergent, "type") == ids.detergent
+            and sim.partProperty(oil, "type") == ids.oil
+            and sim.partProperty(water, "type") == ids.water,
+        "disabled environmental materials continued reacting after OPS load")
     assert(sim.partProperty(sterilizer, "type") == ids.sterilizer
             and sim.partProperty(pathogen, "type") == ids.pathogen,
         "disabled biology particles continued reacting after OPS load")
@@ -277,7 +296,8 @@ local function phase_two()
         "OMNI_DISABLED_MODULE_ISOTOPE=OMNI_PT_CF52",
         "OMNI_DISABLED_MODULE_ORGANIC=OMNI_PT_EACT",
         "OMNI_DISABLED_MODULE_ELECTRONICS=OMNI_PT_DIEL",
-        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=22",
+        "OMNI_DISABLED_MODULE_ENVIRONMENT=OMNI_PT_DETG",
+        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=25",
         "OMNI_DISABLED_MODULE_UPDATE_EVENTS=0",
         "OMNI_DISABLED_MODULE_PERIODIC_ACTIVE=OMNI_PT_HE",
         "OMNI_DISABLED_MODULE_OPS_FORMAT=OPS1",

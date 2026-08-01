@@ -146,6 +146,12 @@ def write_license_audit(path: Path, mods: list[dict[str, Any]]) -> None:
             f"assets={assets}; nested_notice={nested} | {submodules} | {gate} | {boundary} |"
         )
     lines.extend([
+        "", "## 已选文件复核：当前 4 个概念级重写", "",
+        "- Cyens Source：`cbeimers113/cyens-toy-src@1b74504e4642cd967c0079499b57faa7f37d9668`；`ACET.cpp` blob `c17e871fde5ea8e769a48609ff25f616bbfa98ac`，`UREA.cpp` blob `6f324d1fe80dcc759962e7fbfeedc839b79efb76`。",
+        "- Ultimata：`Bowserinator/TPT-Ultimata-Mod@b74971752433652c033559abea415ec3510ac433`；`SOIL.cpp` blob `4fe7ad92b93646f710ec0fb5e7a1c8087bebed49`，`BLOD.cpp` blob `e99d5a47c0c5c47484b7dd66284392a0c4151a3b`。",
+        "- Biological Mod `284a1585db023f62a7147892526899133dd6f41c` 的 `BLD.cpp` blob `6bbb88a35427a54e64496730ad777fb0e0250f67` 与 nucular mod `048080a79006c4d6668a1864a0e29758903c64bb` 的 `SOIL.cpp` blob `f6499ab0590da6ebffa852ac25101046d2d1623a` 仅作交叉概念参考。",
+        "- 上述快照根许可证均为 GNU GPL v3，文件 SHA-256 `0B383D5A63DA644F628D99C33976EA6487ED89AAA59F0B3257992DEAC1171E6B`；未从这些仓库移植字体、图片、声音或二进制。",
+        "- 当前 4 个元素只保留可追溯材料概念；属性、字段、更新、反应、预算、模块和 OPS 逻辑均按当前架构重写，第三方更新函数逐行复制为 0。整个 41 来源目录的逐文件/资源审计仍未完成，不能把该局部结论提升成全局 `license_audit_pass=true`。",
         "", "## 当前门禁", "",
         "- 根许可证自动识别：已执行。",
         "- README、元素源码头、子模块与资源清单自动扫描：已执行于成功检出的仓库。",
@@ -166,6 +172,9 @@ def write_porting(path: Path, elements: list[dict[str, Any]]) -> None:
         "# 模组移植计划", "",
         "自动决策只用于排序。任何 A 类仍须人工复核许可证、源码文件头、稳定 ID、模块、图鉴、事件预算和 OPS。", "",
         "重复名称或代号但行为有价值的 B 类不创建第二个元素：只把经许可证复核的行为增量重写到官方或现有 OmniPack 主元素，并回归验证主元素原行为。`exact_identifier` 先进入 B 类做源码增量审计；确认完全相同且没有增量后才降为 D/no-op。", "",
+        "## 已执行的 B 类子集", "",
+        "`cyens_src@1b74504e...` 的 `ACET/UREA` 与 Ultimata `b749717...` 的 `SOIL/BLOD` 已完成文件级 GPL 复核，并分别重写到稳定 ID `595/600/670/679`。当前实现没有复制旧更新函数：四项均接入当前模块、双语图鉴、统一事件预算、OPS 和运行测试；外部核心、旧 ID 与保存格式均未合并。", "",
+        "机器可读统计为 `elements_ported=0`、`elements_rewritten=4`、`first_port_batch_complete=false`。这只是 50–80 元素首轮移植中的已验证子集，不能冒充整批完成。其余同概念候选继续优先合并到官方或当前主元素。", "",
     ]
     for key, heading in groups.items():
         rows = [row for row in elements if row["port_decision"] == key]
@@ -185,14 +194,20 @@ def write_porting(path: Path, elements: list[dict[str, Any]]) -> None:
 
 def write_rejections(path: Path, elements: list[dict[str, Any]], duplicates: dict[str, dict[str, Any]]) -> None:
     lines = ["# 模组候选拒绝日志", "", "| 来源 | 候选 | 原因 |", "|---|---|---|"]
+    lines.extend([
+        "| `cyens_src@1b74504e` | 旧 `UREA + HNO3 -> UNTR` 高能路径 | 不进入当前尿素实现；只保留材料概念，改为受控加压合成和水解，不提供现实危险配比或沿用旧爆炸产物 |",
+        "| `cyens_src@1b74504e` | 整库保存、网络、协议、UI、Lua 与模拟核心改动 | 当前 OmniPack 是唯一主干；外部核心只读审计，不合并其保存格式、网络协议或旧元素数组 |",
+        "| Ultimata / Biological Mod / nucular | 旧 `SOIL/BLOD/BLD` 更新状态机 | 只保留材料概念；不复制 4×4/5×5 扫描、染色、隧道、组织字段或随机凝结逻辑 |",
+    ])
     for row in elements:
         if row["port_decision"] != "D_reject":
             continue
         duplicate = duplicates.get(f"{row['source_mod']}\0{row['source_identifier']}", {})
         reason = duplicate.get("classification", "source unavailable or binary-only")
         lines.append(f"| {row['source_mod']} | {row['source_identifier']} | {reason} |")
-    if len(lines) == 4:
-        lines.append("| none | none | 当前扫描无自动拒绝项 |")
+    lines.extend([
+        "", "当前拒绝项包含功能和整库合并方案，不代表独立元素候选数量；机器统计 `elements_rejected` 只计算自动分类为 D 的独立候选。",
+    ])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -249,6 +264,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         row.get("implementation_status") == "implemented"
         and row.get("is_duplicate") != "true"
         and row.get("default_enabled") == "true"
+        for row in element_registry_rows
+    )
+    rewritten_stable_ids = {595, 600, 670, 679}
+    elements_rewritten = sum(
+        row.get("implementation_status") == "implemented"
+        and row.get("stable_id", "").isdigit()
+        and int(row["stable_id"]) in rewritten_stable_ids
         for row in element_registry_rows
     )
     periodic_complete = periodic_map_complete and periodic_sourced == 118
@@ -403,7 +425,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"direct_port_candidates={len(direct_keys)}",
         f"rewrite_candidates={len(rewrite_keys)}",
         f"reference_only_candidates={len(reference_keys)}",
-        "elements_ported=0", "elements_rewritten=0",
+        "elements_ported=0", f"elements_rewritten={elements_rewritten}",
         "elements_rejected=0",
         f"periodic_source_map_complete={str(periodic_map_complete).lower()}",
         f"periodic_elements_sourced={periodic_sourced}",
@@ -430,6 +452,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"inorganic_batch1_elements={implemented_in_range(462, 477)}",
         f"inorganic_batch2_elements={implemented_in_range(478, 493)}",
         f"inorganic_batch3_elements={implemented_in_range(494, 511)}",
+        f"engineering_alloys_batch1_elements={implemented_in_range(512, 520)}",
+        f"materials_batch1_elements={implemented_in_range(521, 532)}",
+        f"isotope_batch1_elements={implemented_in_range(576, 588)}",
+        f"organic_batch1_elements={implemented_in_range(589, 601)}",
+        f"organic_batch2_elements={implemented_in_range(602, 621)}",
+        f"electronics_batch1_elements={implemented_in_range(622, 641)}",
+        f"environment_batch1_elements={implemented_in_range(670, 685)}",
         f"reaction_registry_entries={reaction_registry_entries}",
         f"clean_build_pass={args.clean_build_pass}",
         f"element_registry_pass={args.element_registry_pass}",
@@ -442,7 +471,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "数值只代表当前克隆集和自动扫描。候选数按标准化名称与代号折叠重复分叉；行为差异仍保留在去重报告中。",
         "`duplicate_definition_records` 是自动归入同概念比较的全部源码定义数，包含待主元素增量审计的记录，不等于已经人工拒绝的独立材料。`canonical_merge_review_candidates` 进入 `B_rewrite_port`，目标是合并主元素而不是新增 ID。",
         "`license_audit_pass=true` 只能由完成逐文件、README、子模块和资源复核后的显式参数写入。",
-        "当前新增 92 个周期元素、无机三批 50 个材料和 `SOLD=512` 均为 OmniPack 原创族/反应逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`；外部候选只用于确认搜索覆盖，没有复制其实现。`first_port_batch_complete=false` 仍是许可证门禁的真实结果，不能把原创内容批次冒充成已完成第三方移植。",
+        "当前新增 92 个周期元素、无机三批 50 个材料、工程材料、代表性核素、有机/聚合物、电子材料以及生态与污染首批中的 14 个材料均为 OmniPack 原创族/反应逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`。`ACET=595`、`UREA=600`、`SOIL=670` 与 `BLOD=679` 保留兼容 GPL 来源的概念和文件级追踪，当前更新函数均按本项目架构重写，因此保守计为 `elements_rewritten=4`；第三方更新函数逐行复制仍为 0。`first_port_batch_complete=false` 仍是许可证门禁的真实结果，不能把原创内容或 4 个重写项冒充成已完成 50 元素移植。",
         "`OMNI_PT_MSCR=278` 是合并到官方 `DEFAULT_PT_BRMT=30` 的兼容别名；它继续占用稳定槽以读取旧存档，但不计入 `total_omnipack_playable` 或 `total_playable_materials`。",
     ]
     (root / "docs/MOD_EXTRACTION_REPORT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

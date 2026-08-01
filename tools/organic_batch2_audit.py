@@ -193,7 +193,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "OmniOrganicFirstId = 589",
         "OmniOrganicLastId = 621",
         "OmniElectronicsFirstId = 622",
-        "OmniFutureContentFirstId = 670",
+        "OmniEnvironmentFirstId = 670",
+        "OmniFutureContentFirstId = 686",
     ):
         if marker not in content:
             errors.append(f"OmniContent.h: missing organic batch 2 range marker {marker!r}")

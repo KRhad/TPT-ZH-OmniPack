@@ -36,6 +36,7 @@ end
 local ids = {
     dust = assert(elements.DEFAULT_PT_DUST),
     water = assert(elements.DEFAULT_PT_WATR),
+    vapour = assert(elements.DEFAULT_PT_WTRV),
     lava = assert(elements.DEFAULT_PT_LAVA),
     spark = assert(elements.DEFAULT_PT_SPRK),
     conv = assert(elements.DEFAULT_PT_CONV),
@@ -136,6 +137,23 @@ local ids = {
     echr = must_element("OMNI_PT_ECHR", "ECHR"),
     phrs = must_element("OMNI_PT_PHRS", "PHRS"),
     diel = must_element("OMNI_PT_DIEL", "DIEL"),
+    soil = must_element("OMNI_PT_SOIL", "SOIL"),
+    wastewater = must_element("OMNI_PT_WWTR", "WWTR"),
+    pesticide = must_element("OMNI_PT_PEST", "PEST"),
+    heavy_metal = must_element("OMNI_PT_HMET", "HMET"),
+    radioactive_contaminant = must_element("OMNI_PT_RCON", "RCON"),
+    microplastic = must_element("OMNI_PT_MPLS", "MPLS"),
+    organic_waste = must_element("OMNI_PT_OWST", "OWST"),
+    bloom = must_element("OMNI_PT_BLOM", "BLOM"),
+    mold = must_element("OMNI_PT_MOLD", "MOLD"),
+    blood = must_element("OMNI_PT_BLOD", "BLOD"),
+    toxin = must_element("OMNI_PT_TOXN", "TOXN"),
+    antimicrobial = must_element("OMNI_PT_AMAT", "AMAT"),
+    sludge = must_element("OMNI_PT_SLUD", "SLUD"),
+    smog = must_element("OMNI_PT_SMOG", "SMOG"),
+    acid_rain = must_element("OMNI_PT_ARAN", "ARAN"),
+    detergent = must_element("OMNI_PT_DETG", "DETG"),
+    calcium_hydroxide = must_element("OMNI_PT_CAOH", "CAOH"),
 }
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
@@ -229,6 +247,13 @@ local recovery_markers = {
         y = 8,
         particle_type = ids.conv,
         properties = { ctype = ids.diel, tmp = ids.pcmt },
+    },
+    {
+        name = "environment_conv_fields",
+        x = 24,
+        y = 8,
+        particle_type = ids.conv,
+        properties = { ctype = ids.detergent, tmp = ids.radioactive_contaminant },
     },
 }
 
@@ -398,6 +423,64 @@ local function electronics(bounds)
     end)
 end
 
+local function environment(bounds)
+    grid(bounds, function(x, y, n)
+        local mode = n % 12
+        if mode == 0 then
+            make(ids.pesticide, x, y, { temp = 300.0 })
+            make(ids.path, x + 1, y, { temp = 300.0 })
+        elseif mode == 1 then
+            make(ids.heavy_metal, x, y, { temp = 300.0 })
+            make(ids.water, x + 1, y, { temp = 300.0 })
+        elseif mode == 2 then
+            make(ids.wastewater, x, y, { temp = 300.0 })
+            make(ids.alga, x + 1, y, { temp = 300.0 })
+            make(ids.nutr, x, y + 1, { temp = 300.0 })
+        elseif mode == 3 then
+            make(ids.microplastic, x, y, { temp = 300.0 })
+            make(ids.biof, x + 1, y, { temp = 300.0 })
+        elseif mode == 4 then
+            make(ids.organic_waste, x, y, { temp = 300.0 })
+            make(ids.mycl, x + 1, y, { temp = 300.0 })
+            make(ids.water, x, y + 1, { temp = 300.0 })
+        elseif mode == 5 then
+            make(ids.bloom, x, y, { temp = 300.0, tmp = 3 })
+            make(ids.oxygen, x + 1, y, { temp = 300.0 })
+        elseif mode == 6 then
+            make(ids.smog, x, y, { temp = 300.0 })
+            make(ids.vapour, x + 1, y, { temp = 300.0 })
+        elseif mode == 7 then
+            make(ids.detergent, x, y, { temp = 300.0 })
+            make(ids.oil, x + 1, y, { temp = 300.0 })
+            make(ids.water, x, y + 1, { temp = 300.0 })
+        elseif mode == 8 then
+            make(ids.radioactive_contaminant, x, y, { temp = 300.0, life = 33 })
+            make(ids.water, x + 1, y, { temp = 300.0 })
+        elseif mode == 9 then
+            make(ids.mold, x, y, { temp = 300.0 })
+            make(ids.organic_waste, x + 1, y, { temp = 300.0 })
+            make(ids.water, x, y + 1, { temp = 300.0 })
+        elseif mode == 10 then
+            make(ids.blood, x, y, { temp = 300.0 })
+            make(ids.path, x + 1, y, { temp = 300.0 })
+        else
+            local variant = math.floor(n / 12) % 4
+            if variant == 0 then
+                make(ids.antimicrobial, x, y, { temp = 300.0 })
+                make(ids.path, x + 1, y, { temp = 300.0 })
+            elseif variant == 1 then
+                make(ids.soil, x, y, { temp = 300.0, tmp = 1 })
+                make(ids.toxin, x + 1, y, { temp = 300.0 })
+            elseif variant == 2 then
+                make(ids.sludge, x, y, { temp = 400.0 })
+            else
+                make(ids.acid_rain, x, y, { temp = 300.0 })
+                make(ids.calcium_hydroxide, x + 1, y, { temp = 300.0 })
+            end
+        end
+    end)
+end
+
 local function generators(bounds)
     grid(bounds, function(x, y, n)
         spark_generator(x, y, 450.0)
@@ -544,6 +627,7 @@ local scenarios = {
     ["S11-AUTOMATION-FACTORY"] = function() automation_factory(full) end,
     ["S12-AUTOMATION-SIGNAL-LOOP"] = function() automation_signal_loop(full) end,
     ["S13-ELECTRONICS-DENSE"] = function() electronics(full) end,
+    ["S14-ENVIRONMENT-DENSE"] = function() environment(full) end,
 }
 
 local function particle_count()

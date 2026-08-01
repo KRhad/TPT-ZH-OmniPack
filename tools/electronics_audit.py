@@ -148,7 +148,7 @@ def audit(root: Path) -> list[str]:
     content = read_text(root / "src" / "gui" / "game" / "OmniContent.h", errors)
     for marker in (
         "OmniElectronicsFirstId = 622", "OmniElectronicsLastId = 669",
-        "OmniFutureContentFirstId = 670",
+        "OmniEnvironmentFirstId = 670", "OmniFutureContentFirstId = 686",
     ):
         if marker not in content:
             errors.append(f"OmniContent.h: missing electronics range marker {marker!r}")

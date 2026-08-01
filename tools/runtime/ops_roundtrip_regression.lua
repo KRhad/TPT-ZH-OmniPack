@@ -23,6 +23,7 @@ local valid_scenarios = {
     nuclear = true,
     periodic = true,
     electronics = true,
+    environment = true,
 }
 assert(valid_scenarios[scenario],
     "invalid OPS roundtrip scenario: " .. tostring(scenario))
@@ -328,6 +329,22 @@ local definitions = {
     electrochromic = { "OMNI_PT_ECHR", "ECHR", 639 },
     photoresist = { "OMNI_PT_PHRS", "PHRS", 640 },
     dielectric = { "OMNI_PT_DIEL", "DIEL", 641 },
+    soil = { "OMNI_PT_SOIL", "SOIL", 670 },
+    wastewater = { "OMNI_PT_WWTR", "WWTR", 671 },
+    pesticide = { "OMNI_PT_PEST", "PEST", 672 },
+    heavy_metal = { "OMNI_PT_HMET", "HMET", 673 },
+    radioactive_contaminant = { "OMNI_PT_RCON", "RCON", 674 },
+    microplastic = { "OMNI_PT_MPLS", "MPLS", 675 },
+    organic_waste = { "OMNI_PT_OWST", "OWST", 676 },
+    bloom = { "OMNI_PT_BLOM", "BLOM", 677 },
+    mold = { "OMNI_PT_MOLD", "MOLD", 678 },
+    blood = { "OMNI_PT_BLOD", "BLOD", 679 },
+    toxin = { "OMNI_PT_TOXN", "TOXN", 680 },
+    antimicrobial = { "OMNI_PT_AMAT", "AMAT", 681 },
+    sludge = { "OMNI_PT_SLUD", "SLUD", 682 },
+    smog = { "OMNI_PT_SMOG", "SMOG", 683 },
+    acid_rain = { "OMNI_PT_ARAN", "ARAN", 684 },
+    detergent = { "OMNI_PT_DETG", "DETG", 685 },
     hafnium = { "OMNI_PT_HF", "HAFN", 423 },
     tantalum = { "OMNI_PT_TA", "TANT", 424 },
     rhenium = { "OMNI_PT_RE", "RHEN", 425 },
@@ -421,6 +438,12 @@ local module_keys = {
         "nanotube", "aerogel", "carbon_fibre", "lithium_cobalt_oxide",
         "graphite_anode", "solid_electrolyte", "indium_tin_oxide",
         "phase_change", "electrochromic", "photoresist", "dielectric",
+    },
+    environment = {
+        "soil", "wastewater", "pesticide", "heavy_metal",
+        "radioactive_contaminant", "microplastic", "organic_waste",
+        "bloom", "mold", "blood", "toxin", "antimicrobial",
+        "sludge", "smog", "acid_rain", "detergent",
     },
 }
 
@@ -579,6 +602,13 @@ local carrier_targets = {
         conv_ctype = "phase_change",
         conv_tmp = "photoresist",
         virs_tmp2 = "lithium_cobalt_oxide",
+    },
+    environment = {
+        lava = "detergent",
+        spark = "antimicrobial",
+        conv_ctype = "acid_rain",
+        conv_tmp = "radioactive_contaminant",
+        virs_tmp2 = "soil",
     },
     mixed = {
         lava = "alum",

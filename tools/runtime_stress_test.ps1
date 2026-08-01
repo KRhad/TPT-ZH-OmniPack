@@ -16,7 +16,8 @@ param(
         "S10-CARRIERS-ROUNDTRIP",
         "S11-AUTOMATION-FACTORY",
         "S12-AUTOMATION-SIGNAL-LOOP",
-        "S13-ELECTRONICS-DENSE"
+        "S13-ELECTRONICS-DENSE",
+        "S14-ENVIRONMENT-DENSE"
     )]
     [string] $SampleId,
 

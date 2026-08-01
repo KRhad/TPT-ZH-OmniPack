@@ -11,12 +11,6 @@ namespace
 constexpr int BiologyEventsPerFrame = 1024;
 thread_local OmniModuleRuntimeCache biologyRuntimeCache;
 
-bool BiologyModuleEnabled(Simulation *sim)
-{
-	return OmniModuleRuntimeEnabled(
-		biologyRuntimeCache, sim, sim->currentTick, "Omni.Modules.Biology");
-}
-
 struct ReactionBudget
 {
 	Simulation *simulation = nullptr;
@@ -32,21 +26,6 @@ struct Slot
 	int x = -1;
 	int y = -1;
 };
-
-bool ConsumeReactionBudget(Simulation *sim)
-{
-	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
-	{
-		reactionBudget.simulation = sim;
-		reactionBudget.tick = sim->currentTick;
-		reactionBudget.remaining = BiologyEventsPerFrame;
-	}
-	if (reactionBudget.remaining <= 0)
-		return false;
-	--reactionBudget.remaining;
-	sim->RecordOmniEvent();
-	return true;
-}
 
 bool IsTouched(int index, Parts &parts, Simulation *sim)
 {
@@ -113,7 +92,7 @@ bool AlgaePhotosynthesis(UPDATE_FUNC_ARGS)
 	auto water = FindLocal(x, y, PT_WATR, nutrient.index, parts, pmap, sim);
 	auto carbonDioxide = FindLocal(x, y, PT_CO2, nutrient.index, parts, pmap, sim);
 	if (nutrient.index < 0 || water.index < 0 || carbonDioxide.index < 0
-		|| !ConsumeReactionBudget(sim))
+		|| !OmniConsumeBiologyEvent(sim))
 		return false;
 
 	auto temperature = parts[i].temp;
@@ -132,7 +111,7 @@ bool MyceliumDecomposition(UPDATE_FUNC_ARGS)
 		return false;
 	auto wood = FindLocal(x, y, PT_WOOD, i, parts, pmap, sim);
 	auto water = FindLocal(x, y, PT_WATR, wood.index, parts, pmap, sim);
-	if (wood.index < 0 || water.index < 0 || !ConsumeReactionBudget(sim))
+	if (wood.index < 0 || water.index < 0 || !OmniConsumeBiologyEvent(sim))
 		return false;
 
 	auto temperature = parts[i].temp;
@@ -150,7 +129,7 @@ bool HumusFertilizerRecovery(UPDATE_FUNC_ARGS)
 		return false;
 	auto fertilizer = FindLocal(x, y, PT_FERT, i, parts, pmap, sim);
 	auto water = FindLocal(x, y, PT_WATR, fertilizer.index, parts, pmap, sim);
-	if (fertilizer.index < 0 || water.index < 0 || !ConsumeReactionBudget(sim))
+	if (fertilizer.index < 0 || water.index < 0 || !OmniConsumeBiologyEvent(sim))
 		return false;
 
 	auto temperature = (parts[i].temp + parts[fertilizer.index].temp + parts[water.index].temp) / 3.0f;
@@ -168,7 +147,7 @@ bool SporeGermination(UPDATE_FUNC_ARGS)
 		return false;
 	auto nutrient = FindLocal(x, y, PT_NUTR, i, parts, pmap, sim);
 	auto water = FindLocal(x, y, PT_WATR, nutrient.index, parts, pmap, sim);
-	if (nutrient.index < 0 || water.index < 0 || !ConsumeReactionBudget(sim))
+	if (nutrient.index < 0 || water.index < 0 || !OmniConsumeBiologyEvent(sim))
 		return false;
 
 	auto temperature = parts[i].temp;
@@ -187,7 +166,7 @@ bool PathogenInfection(UPDATE_FUNC_ARGS)
 	auto host = FindLocal(x, y, PT_ALGA, i, parts, pmap, sim);
 	if (host.index < 0)
 		host = FindLocal(x, y, PT_MYCL, i, parts, pmap, sim);
-	if (host.index < 0 || !ConsumeReactionBudget(sim))
+	if (host.index < 0 || !OmniConsumeBiologyEvent(sim))
 		return false;
 
 	auto temperature = parts[i].temp;
@@ -202,7 +181,7 @@ bool Sterilization(UPDATE_FUNC_ARGS)
 	if (parts[i].type != PT_STER || IsTouched(i, parts, sim))
 		return false;
 	auto pathogen = FindLocal(x, y, PT_PATH, i, parts, pmap, sim);
-	if (pathogen.index < 0 || !ConsumeReactionBudget(sim))
+	if (pathogen.index < 0 || !OmniConsumeBiologyEvent(sim))
 		return false;
 
 	auto temperature = (parts[i].temp + parts[pathogen.index].temp) * 0.5f;
@@ -219,7 +198,7 @@ bool BiofilmFiltration(UPDATE_FUNC_ARGS)
 		return false;
 	auto pathogen = FindLocal(x, y, PT_PATH, i, parts, pmap, sim);
 	auto water = FindLocal(x, y, PT_WATR, pathogen.index, parts, pmap, sim);
-	if (pathogen.index < 0 || water.index < 0 || !ConsumeReactionBudget(sim))
+	if (pathogen.index < 0 || water.index < 0 || !OmniConsumeBiologyEvent(sim))
 		return false;
 
 	auto temperature = parts[i].temp;
@@ -231,9 +210,30 @@ bool BiofilmFiltration(UPDATE_FUNC_ARGS)
 }
 }
 
+bool OmniBiologyModuleEnabled(Simulation *sim)
+{
+	return OmniModuleRuntimeEnabled(
+		biologyRuntimeCache, sim, sim->currentTick, "Omni.Modules.Biology");
+}
+
+bool OmniConsumeBiologyEvent(Simulation *sim)
+{
+	if (reactionBudget.simulation != sim || reactionBudget.tick != sim->currentTick)
+	{
+		reactionBudget.simulation = sim;
+		reactionBudget.tick = sim->currentTick;
+		reactionBudget.remaining = BiologyEventsPerFrame;
+	}
+	if (reactionBudget.remaining <= 0)
+		return false;
+	--reactionBudget.remaining;
+	sim->RecordOmniEvent();
+	return true;
+}
+
 int OmniBiologyElementUpdate(UPDATE_FUNC_ARGS)
 {
-	if (!BiologyModuleEnabled(sim))
+	if (!OmniBiologyModuleEnabled(sim))
 		return 0;
 	if (AlgaePhotosynthesis(UPDATE_FUNC_SUBCALL_ARGS)
 		|| MyceliumDecomposition(UPDATE_FUNC_SUBCALL_ARGS)

@@ -10,7 +10,8 @@ param(
         "chemistry",
         "nuclear",
         "periodic",
-        "electronics"
+        "electronics",
+        "environment"
     )]
     [string] $Scenario = "mixed",
 

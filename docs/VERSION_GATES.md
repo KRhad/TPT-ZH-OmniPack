@@ -64,11 +64,11 @@ inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
 inorganic_elements_total=50
-engine_active_elements=452
+engine_active_elements=488
 compatibility_aliases=1
-total_playable_materials=451
+total_playable_materials=487
 element_registry_valid=true
-reaction_registry_entries=259
+reaction_registry_entries=328
 reaction_registry_valid=true
 inorganic_runtime_test=true
 inorganic_event_budget_test=true
@@ -204,7 +204,31 @@ organic_batch2_gui_visual_test=not_tested
 organic_batch2_formal_600s_stress_test=not_tested
 ```
 
-三批无机化学、工程合金首批、矿物/陶瓷/玻璃首批、代表性核素首批和两批有机内容通过不等于对应版本内容冻结；后续材料仍须继续去重、登记和验证。同概念候选的有价值行为应合并到主元素，而不是新增重复 ID。
+电子与特殊材料首批、生态与污染首批当前状态：
+
+```text
+electronics_batch1_elements=20
+electronics_batch1_ids=622..641
+electronics_runtime_test=true
+electronics_ops_roundtrip_test=true
+electronics_s13_smoke_test=true
+electronics_formal_600s_stress_test=not_tested
+environment_batch1_elements=16
+environment_batch1_ids=670..685
+environment_reaction_entries=31
+environment_behavior_classes=17
+environment_shared_event_budget=1024/frame
+environment_runtime_test=true
+environment_module_disabled_test=true
+environment_ops_roundtrip_test=true
+environment_s14_smoke_test=true
+environment_formal_600s_stress_test=not_tested
+environment_gui_visual_test=not_tested
+environment_0_8_content_gate=true
+environment_0_8_release_gate=false
+```
+
+三批无机化学、工程合金首批、矿物/陶瓷/玻璃首批、代表性核素首批、两批有机内容、电子首批和生态污染首批通过不等于对应版本内容冻结；后续材料仍须继续去重、登记和验证。同概念候选的有价值行为应合并到主元素，而不是新增重复 ID。
 
 ## `0.9.0` 整理
 

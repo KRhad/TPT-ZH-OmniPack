@@ -43,7 +43,8 @@ $scenarios = @(
     "chemistry",
     "nuclear",
     "periodic",
-    "electronics"
+    "electronics",
+    "environment"
 )
 $results = @()
 foreach ($scenario in $scenarios) {

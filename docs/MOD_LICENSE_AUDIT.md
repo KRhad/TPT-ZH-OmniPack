@@ -48,14 +48,13 @@
 | unproductive | GPL-2.0 (true) | LICENSE | src/python/stdlib/ctypes/macholib/README.ctypes:3:License: Any components of the py2app suite may be distributed under;src/python/stdlib/ctypes/macholib/README.ctypes:4:the MIT or PSF open source licenses. | 83; header_notice=0; restrictive=0 | assets=6; nested_notice=0 | none | B-review | 许可证明确但兼容性需人工法律审查 |
 | yeah_mod | unknown (false) | none | none | 0; header_notice=0; restrictive=0 | assets=0; nested_notice=0 | none | C-unknown | 只能记录概念；不得复制代码或资源 |
 
-## 已选文件复核：Cyens `ACET/UREA`
+## 已选文件复核：当前 4 个概念级重写
 
-- 固定仓库：`cbeimers113/cyens-toy-src`，`master`，`1b74504e4642cd967c0079499b57faa7f37d9668`；
-- 根许可证：GNU GPL v3，文件 SHA-256 `0B383D5A63DA644F628D99C33976EA6487ED89AAA59F0B3257992DEAC1171E6B`；无子模块；
-- 选定文件：`src/simulation/elements/ACET.cpp`（blob `c17e871f...`）与 `UREA.cpp`（blob `6f324d1f...`），提交作者 DaveYognaught；
-- 使用范围：只保留可追溯材料概念和原始 ID 记录，当前属性/更新/反应全部重写，第三方更新函数逐行复制为 0；
-- 资源范围：没有从该仓库移植字体、图片、声音或二进制；
-- 结论：这两个文件的代码范围许可证复核为 `A-code-scope`，但整个 41 来源目录的逐文件/资源审计仍未完成，不能把局部通过提升成全局 `license_audit_pass=true`。
+- Cyens Source：`cbeimers113/cyens-toy-src@1b74504e4642cd967c0079499b57faa7f37d9668`；`ACET.cpp` blob `c17e871fde5ea8e769a48609ff25f616bbfa98ac`，`UREA.cpp` blob `6f324d1fe80dcc759962e7fbfeedc839b79efb76`。
+- Ultimata：`Bowserinator/TPT-Ultimata-Mod@b74971752433652c033559abea415ec3510ac433`；`SOIL.cpp` blob `4fe7ad92b93646f710ec0fb5e7a1c8087bebed49`，`BLOD.cpp` blob `e99d5a47c0c5c47484b7dd66284392a0c4151a3b`。
+- Biological Mod `284a1585db023f62a7147892526899133dd6f41c` 的 `BLD.cpp` blob `6bbb88a35427a54e64496730ad777fb0e0250f67` 与 nucular mod `048080a79006c4d6668a1864a0e29758903c64bb` 的 `SOIL.cpp` blob `f6499ab0590da6ebffa852ac25101046d2d1623a` 仅作交叉概念参考。
+- 上述快照根许可证均为 GNU GPL v3，文件 SHA-256 `0B383D5A63DA644F628D99C33976EA6487ED89AAA59F0B3257992DEAC1171E6B`；未从这些仓库移植字体、图片、声音或二进制。
+- 当前 4 个元素只保留可追溯材料概念；属性、字段、更新、反应、预算、模块和 OPS 逻辑均按当前架构重写，第三方更新函数逐行复制为 0。整个 41 来源目录的逐文件/资源审计仍未完成，不能把该局部结论提升成全局 `license_audit_pass=true`。
 
 ## 当前门禁
 
