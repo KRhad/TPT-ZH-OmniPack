@@ -2,6 +2,7 @@
 
 #include "ElementCommon.h"
 #include "OmniModuleRuntime.h"
+#include "OmniOrganics.h"
 
 #include <algorithm>
 #include <initializer_list>
@@ -263,24 +264,6 @@ bool CatalyticCracking(UPDATE_FUNC_ARGS)
 		}
 	}
 	return false;
-}
-
-bool CatalyticPolymerisation(UPDATE_FUNC_ARGS)
-{
-	if (parts[i].type != PT_CATA || parts[i].temp < 450.0f || parts[i].temp > 800.0f)
-		return false;
-	auto first = FindLocal(x, y, PT_ACTY, i, parts, pmap, sim);
-	if (first.index < 0)
-		return false;
-	auto second = FindLocal(x, y, PT_ACTY, first.index, parts, pmap, sim);
-	if (second.index < 0 || !ConsumeReactionBudget(sim))
-		return false;
-	auto temperature = parts[i].temp;
-	Convert(sim, first, PT_POLY, parts, temperature);
-	Convert(sim, second, PT_POLY, parts, temperature);
-	Touch(first.index, parts, sim);
-	Touch(second.index, parts, sim);
-	return true;
 }
 
 bool CatalyticPeroxideDecomposition(UPDATE_FUNC_ARGS)
@@ -1265,14 +1248,24 @@ bool CatalyticPairSynthesis(
 }
 }
 
+bool OmniChemistryModuleEnabled(Simulation *sim)
+{
+	return ChemistryModuleEnabled(sim);
+}
+
+bool OmniConsumeChemistryEvent(Simulation *sim)
+{
+	return ConsumeReactionBudget(sim);
+}
+
 int OmniChemistryElementUpdate(UPDATE_FUNC_ARGS)
 {
 	if (!ChemistryModuleEnabled(sim))
 		return 0;
-	if (PeroxidePathogenTreatment(UPDATE_FUNC_SUBCALL_ARGS)
+	if (OmniOrganicElementUpdate(UPDATE_FUNC_SUBCALL_ARGS)
+		|| PeroxidePathogenTreatment(UPDATE_FUNC_SUBCALL_ARGS)
 		|| SlagAcidLeaching(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CatalyticCracking(UPDATE_FUNC_SUBCALL_ARGS)
-		|| CatalyticPolymerisation(UPDATE_FUNC_SUBCALL_ARGS)
 		|| CatalyticPeroxideDecomposition(UPDATE_FUNC_SUBCALL_ARGS)
 		|| PeroxideMetalOxidation(UPDATE_FUNC_SUBCALL_ARGS)
 		|| ChlorineReaction(UPDATE_FUNC_SUBCALL_ARGS)

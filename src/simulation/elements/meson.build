@@ -588,6 +588,19 @@ simulation_elem_names = [
 	'PU39', # 586: plutonium-239 isotope
 	'AM41', # 587: americium-241 isotope
 	'CF52', # 588: californium-252 isotope
+	'CH4M', # 589: methane
+	'ETHA', # 590: ethane
+	'PROP', # 591: propane
+	'BUTA', # 592: butane
+	'ETHE', # 593: ethylene
+	'METH', # 594: methanol
+	'ACET', # 595: acetone
+	'BENZ', # 596: benzene
+	'TOLU', # 597: toluene
+	'GLYC', # 598: glycerol
+	'ACTA', # 599: acetic acid
+	'UREA', # 600: urea
+	'FATS', # 601: fats and oils
 ]
 
 simulation_elem_src = []

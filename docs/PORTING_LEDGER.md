@@ -1,6 +1,6 @@
 # 移植账本
 
-> Phase 0 未复制第三方实现代码。Phase 3 当前工作树已登记并实现 23 个冶金元素与 10 个基础化学元素。下文的“没有逐行复制”特指没有复制第三方元素更新函数；`COPR` 的颜色、导热/导电定位、熔点和氧化玩法由 Cracker 源码适配，不能笼统标成完全原创。
+> Phase 0 未复制第三方实现代码。当前工作树保留 Cracker `COPR` 的参数/行为适配，并把 Cyens 的 `ACET/UREA` 两个 GPL 材料概念按现有架构重写；第三方元素更新函数逐行复制仍为 0。下文的“没有逐行复制”不等于没有第三方来源，所有适配与重写都必须保留仓库、commit、文件和作者追踪。
 
 状态值：`AUDITED`、`DESIGN`、`PORTING`、`TESTING`、`ACCEPTED`、`REJECTED`、`BLOCKED`。
 
@@ -12,6 +12,7 @@
 | 模块选择与图鉴框架 | OmniPack `d7312a9b...`、`f28cdcb7...` | OmniPack contributors | 项目原创实现 | 统一门禁、编译时登记目录 | ACCEPTED | clean build、28 单测、Lua 运行回归和枚举本地化门禁 PASS |
 | Phase 3 工业冶金首批 | Seppo `c3a8dd17...`；Cracker COPR `eb474d38...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、OmniPack contributors | 概念筛选、参数/行为适配、独立更新实现 | 稳定 ID 256–278 + 集中反应引擎 | TESTING | 23 元素、7 配方、5 材料行为；静态门禁与 Lua 运行回归 PASS |
 | Phase 3 基础化学首批 | Seppo `c3a8dd17...`；Cracker `ebbb9aab...`；Cyens `f01d992c...`；OmniPack 当前实现 | SeppoTPT、Cracker contributors、cbeimers113、OmniPack contributors | token/玩法需求参考，集中算法独立实现 | 稳定 ID 360–369 + 中央有界反应引擎 | TESTING | 10 元素、11 条反应路径、化学静态门禁与 Lua 真实运行回归 PASS |
+| 有机化学首批 | Cyens Source `1b74504e...`；OmniPack 当前实现 | DaveYognaught / cbeimers113、OmniPack contributors | `ACET/UREA` 为 GPL 概念重写，其余元素独立实现 | `CH4M..FATS=589..601` + `POLY=367` 原位升级 + `OmniOrganics` | TESTING | 13 新元素、15 反应、5 相变、1536 峰值、模块与化学 OPS 运行回归 PASS |
 | Phase 5 受控核工业首批 | OmniPack 当前实现；Spike/Ultimata/Cracker 固定快照仅作范围参考 | OmniPack contributors；对应来源作者 | 玩法和风险边界参考，集中算法独立实现 | 稳定 ID 328–334 + 中央有界反应器引擎 | TESTING | 7 元素、4 类受控路径；静态门禁与 Lua 真实运行回归 PASS |
 | Phase 3 完整周期表十四批 | OmniPack `21b160a5...`、`bcf5accf...`、`546b8791...`、`5d9b9947...`、`de91bbb6...`、`2eeab9f3...`、`3c3c623a...`、`8066533a...`、`6c64c0a0...`、`b26112f9...`、`248c516a...`、`7c49278b...`、`54411e08...`、`518dd9a4...` 基线；候选目录只核对搜索覆盖 | OmniPack contributors | 原创族逻辑；未复制外部候选实现 | 前八个主族批次、三条过渡系、镧系、锕系及超重系共 92 个新固定 ID + 共享周期引擎 | TESTING | 92 新元素、118/118 映射；行为、预算、118 元素同图 OPS 与直接选择回归 PASS |
 | 汉化字体 | Dragonrster `445fab51...` | 未知 | 禁止发布 | 替换为可追溯字体 | BLOCKED | 名称、来源、许可证缺失 |
@@ -35,7 +36,7 @@
 | Cyens 烃网络 | Cyens `f01d992c...` | cbeimers113 | 设计参考 | 不改官方基础语义 | TESTING | 裂化链使用新 `KERO/GASO/ACTY`；未复制其官方 GAS/OIL/WAX 改写 |
 | Cyens 时间/局部重力 | Cyens `f01d992c...` | cbeimers113 | 实验参考 | 默认关闭 | DESIGN | 未完成离子系统、全局风险 |
 
-周期表碱金属批次复用官方 `LITH=191` 与 `RBDM=41`，没有复制或覆盖其更新函数；`NA=376`、`K=380`、`CS=406`、`FR=432` 的构造器和 `OmniPeriodic.cpp` 共享逻辑均为本项目原创实现。外部 `fun_chemicals` 只作为候选搜索命中保留在来源映射中，不是代码或常量来源，因此第三方 `elements_ported` 和 `elements_rewritten` 仍为 0。
+周期表碱金属批次复用官方 `LITH=191` 与 `RBDM=41`，没有复制或覆盖其更新函数；`NA=376`、`K=380`、`CS=406`、`FR=432` 的构造器和 `OmniPeriodic.cpp` 共享逻辑均为本项目原创实现。外部 `fun_chemicals` 只作为候选搜索命中保留在来源映射中，不是代码或常量来源；周期表批次本身的第三方移植/重写数为 0。项目累计 `elements_rewritten=2` 只来自后续有机批的 `ACET/UREA`。
 
 周期表碱土金属批次复用既有 `MAGN=261`，在保留其冶金、合金、碎料与旧 ID 行为的同时增加共享水/酸入口及白色焰色；`BE=371`、`CA=381`、`SR=391`、`BA=407`、`RA=433` 均为本项目原创族实现，没有复制候选模组构造器或更新函数。
 
@@ -244,6 +245,21 @@ ALNI ALNC TERN MAGX PLTU
 - 无机三批没有选取可直接移植的第三方源码；元素名称和常见化学概念不构成第三方代码来源，构造参数、反应表、预算、测试和图鉴均由本项目独立设计；
 - 官方 `DEFAULT_PT_SALT=26` 经行为与 identifier 审计后仅映射为氯化钠，不复制、不改号，也不新增重复 `NaCl` 元素；
 - 化学 OPS、模块直选和 1,800 粒子预算帧已经实测，但正式 600 秒压力采样、GUI 视觉和两小时长跑仍为 `not_tested`。
+
+## 有机化学首批来源与重写记录
+
+固定来源为 `https://github.com/cbeimers113/cyens-toy-src.git`，分支 `master`，commit `1b74504e4642cd967c0079499b57faa7f37d9668`（提交作者 DaveYognaught）。根 `LICENSE` 是 GPL-3.0，SHA-256 为 `0B383D5A63DA644F628D99C33976EA6487ED89AAA59F0B3257992DEAC1171E6B`。只读源码确认旧 `ElementNumbers.h` 使用 `ACET=210`、`UREA=211`；对应文件 blob 分别为 `c17e871fde5ea8e769a48609ff25f616bbfa98ac` 与 `6f324d1fe80dcc759962e7fbfeedc839b79efb76`。
+
+| 原始模组/文件 | 原始概念 | 当前 identifier / ID | 移植类型 | 主要改动 | 当前测试 |
+|---|---|---|---|---|---|
+| Cyens Source `src/simulation/elements/ACET.cpp` | `DEFAULT_PT_ACET=210`，无更新函数的简单液体 | `OMNI_PT_ACET=595` | `rewrite_existing` | 不复制旧属性表；按当前化学网络重做挥发、毒性、乙酸酮化、双语图鉴、模块和预算 | `organic_audit.py`；`organic_regression.lua`；化学 OPS |
+| Cyens Source `src/simulation/elements/UREA.cpp` | `DEFAULT_PT_UREA=211`，旧硝酸邻接会转 `UNTR` | `OMNI_PT_UREA=600` | `rewrite_existing` | 明确不采用旧爆炸物路径；重做加压氨/二氧化碳合成、水解、热分解、粉末物态、双语图鉴、模块和预算 | `organic_audit.py`；`organic_regression.lua`；禁用模块 OPS |
+
+`CH4M/ETHA/PROP/BUTA/ETHE/METH/BENZ/TOLU/GLYC/ACTA/FATS` 与共享 `OmniOrganics.cpp` 为本项目实现，不计入第三方重写数。`POLY=367` 只在原 identifier 和 ID 上改为聚乙烯并切换到乙烯聚合，不新增重复元素。官方 `OIL/GAS/DESL` 构造器与状态机保持；本批没有整库合并 Cyens 的保存、网络、协议、UI、Lua 或模拟核心改动。
+
+机器可读来源统计因此为：第三方代码直接移植 `elements_ported=0`，有来源概念和文件追踪的重写 `elements_rewritten=2`，第三方更新函数逐行复制 `0`。这两个重写不满足用户要求的 50 元素“第一轮移植”数量，所以 `first_port_batch_complete=false` 继续保持。
+
+有机首批最终证据绑定 `build-organic-batch1-final2-clean`：从零构建 `712/712`、Meson static `27/27`、Python `184/184`，真实客户端有机专项、旧化学及全部既有内容回归通过；化学 OPS 覆盖 79 粒子/87 字段断言，六类合计 300 粒子/352 字段断言。开发 EXE SHA-256 为 `499F30834C8C3655AE14506C6BA936BB23BE7A3BE94699E38BC9BCC789CEFB25`。正式 600 秒压力、长跑和人工 GUI 仍为 `not_tested`。
 
 ### 当前测试证据（2026-08-01）
 

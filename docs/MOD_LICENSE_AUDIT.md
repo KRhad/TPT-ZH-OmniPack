@@ -48,6 +48,15 @@
 | unproductive | GPL-2.0 (true) | LICENSE | src/python/stdlib/ctypes/macholib/README.ctypes:3:License: Any components of the py2app suite may be distributed under;src/python/stdlib/ctypes/macholib/README.ctypes:4:the MIT or PSF open source licenses. | 83; header_notice=0; restrictive=0 | assets=6; nested_notice=0 | none | B-review | 许可证明确但兼容性需人工法律审查 |
 | yeah_mod | unknown (false) | none | none | 0; header_notice=0; restrictive=0 | assets=0; nested_notice=0 | none | C-unknown | 只能记录概念；不得复制代码或资源 |
 
+## 已选文件复核：Cyens `ACET/UREA`
+
+- 固定仓库：`cbeimers113/cyens-toy-src`，`master`，`1b74504e4642cd967c0079499b57faa7f37d9668`；
+- 根许可证：GNU GPL v3，文件 SHA-256 `0B383D5A63DA644F628D99C33976EA6487ED89AAA59F0B3257992DEAC1171E6B`；无子模块；
+- 选定文件：`src/simulation/elements/ACET.cpp`（blob `c17e871f...`）与 `UREA.cpp`（blob `6f324d1f...`），提交作者 DaveYognaught；
+- 使用范围：只保留可追溯材料概念和原始 ID 记录，当前属性/更新/反应全部重写，第三方更新函数逐行复制为 0；
+- 资源范围：没有从该仓库移植字体、图片、声音或二进制；
+- 结论：这两个文件的代码范围许可证复核为 `A-code-scope`，但整个 41 来源目录的逐文件/资源审计仍未完成，不能把局部通过提升成全局 `license_audit_pass=true`。
+
 ## 当前门禁
 
 - 根许可证自动识别：已执行。

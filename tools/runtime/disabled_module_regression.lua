@@ -26,6 +26,8 @@ local ids = {
     material = must_element("OMNI_PT_RFBK", 532),
     isotope = must_element("OMNI_PT_CF52", 588),
     hydrogen2 = must_element("OMNI_PT_H2IS", 576),
+    fats = must_element("OMNI_PT_FATS", 601),
+    caustic = must_element("DEFAULT_PT_CAUS", 86),
     helium = must_element("OMNI_PT_HE", 370),
     fire = assert(elements.DEFAULT_PT_FIRE),
 }
@@ -74,10 +76,13 @@ local function phase_one()
     local isotope = sim.partCreate(-1, 280, 120, ids.isotope)
     local hydrogen2 = sim.partCreate(-1, 300, 120, ids.hydrogen2)
     local fire = sim.partCreate(-1, 301, 120, ids.fire)
+    local fats = sim.partCreate(-1, 320, 120, ids.fats)
+    local caustic = sim.partCreate(-1, 321, 120, ids.caustic)
     assert(acid >= 0 and base >= 0 and sterilizer >= 0 and pathogen >= 0
             and coolant >= 0 and waste >= 0 and scrap >= 0 and carbonic >= 0
             and ammonium_chloride >= 0 and engineering >= 0 and material >= 0
-            and isotope >= 0 and hydrogen2 >= 0 and fire >= 0,
+            and isotope >= 0 and hydrogen2 >= 0 and fire >= 0
+            and fats >= 0 and caustic >= 0,
         "failed to create enabled module fixtures")
     sim.partProperty(acid, "temp", 300.0)
     sim.partProperty(base, "temp", 300.0)
@@ -86,6 +91,8 @@ local function phase_one()
     sim.partProperty(scrap, "tmp4", RECOVERABLE_SCRAP_MARKER)
     sim.partProperty(scrap, "temp", 1200.0)
     sim.partProperty(ammonium_chloride, "temp", 550.0)
+    sim.partProperty(fats, "temp", 380.0)
+    sim.partProperty(caustic, "temp", 380.0)
     local stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
     assert(type(stamp) == "string" and stamp:match("^[0-9A-Fa-f]+$") and #stamp == 10,
         "failed to save enabled chemistry OPS fixture")
@@ -96,7 +103,7 @@ local function phase_one()
         "OMNI_DISABLED_MODULE_PHASE=1",
         "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
         "OMNI_DISABLED_MODULE_STAMP=" .. stamp,
-        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=14",
+        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=16",
     }
 end
 
@@ -111,6 +118,7 @@ local function phase_two()
         { "OMNI_PT_NITI", ids.engineering },
         { "OMNI_PT_RFBK", ids.material },
         { "OMNI_PT_CF52", ids.isotope },
+        { "OMNI_PT_FATS", ids.fats },
         { "OMNI_PT_STER", ids.sterilizer },
         { "OMNI_PT_CHLR", ids.chlorine },
         { "OMNI_PT_HCLA", ids.hydrochloric },
@@ -158,6 +166,9 @@ local function phase_two()
         sim.partID(280, 120), "loaded isotope material is missing")
     local hydrogen2 = assert(
         sim.partID(300, 120), "loaded hydrogen-2 isotope is missing")
+    local fats = assert(sim.partID(320, 120), "loaded fats particle is missing")
+    local caustic = assert(
+        sim.partID(321, 120), "loaded caustic particle is missing")
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
             and sim.partProperty(carbonic, "type") == ids.carbonic
@@ -183,6 +194,9 @@ local function phase_two()
         "disabled nuclear isotope continued updating after OPS load")
     assert(sim.partProperty(hydrogen2, "type") == ids.hydrogen2,
         "disabled hydrogen-2 isotope reacted with fire after OPS load")
+    assert(sim.partProperty(fats, "type") == ids.fats
+            and sim.partProperty(caustic, "type") == ids.caustic,
+        "disabled organic saponification continued after OPS load")
     assert(sim.partProperty(sterilizer, "type") == ids.sterilizer
             and sim.partProperty(pathogen, "type") == ids.pathogen,
         "disabled biology particles continued reacting after OPS load")
@@ -211,7 +225,8 @@ local function phase_two()
         "OMNI_DISABLED_MODULE_BATCH3=OMNI_PT_AMCL",
         "OMNI_DISABLED_MODULE_NUCLEAR=OMNI_PT_NCLT",
         "OMNI_DISABLED_MODULE_ISOTOPE=OMNI_PT_CF52",
-        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=14",
+        "OMNI_DISABLED_MODULE_ORGANIC=OMNI_PT_FATS",
+        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=16",
         "OMNI_DISABLED_MODULE_UPDATE_EVENTS=0",
         "OMNI_DISABLED_MODULE_PERIODIC_ACTIVE=OMNI_PT_HE",
         "OMNI_DISABLED_MODULE_OPS_FORMAT=OPS1",

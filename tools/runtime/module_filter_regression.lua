@@ -132,6 +132,12 @@ assert(isotope_high == 588,
 ui.activeTool(0, "OMNI_PT_CF52")
 assert(ui.activeTool(0) == "OMNI_PT_CF52",
     "enabled high-ID isotope was blocked by its nuclear gate")
+local organic_high = assert(elements.OMNI_PT_FATS)
+assert(organic_high == 601,
+    "organic high stable ID changed: " .. tostring(organic_high))
+ui.activeTool(0, "OMNI_PT_FATS")
+assert(ui.activeTool(0) == "OMNI_PT_FATS",
+    "enabled high-ID organic material was blocked by its chemistry gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -201,4 +207,5 @@ report:write("OMNI_INORGANIC_BATCH3_ACTIVE=OMNI_PT_AMCL\n")
 report:write("OMNI_ENGINEERING_HIGH_ID_ACTIVE=OMNI_PT_NITI\n")
 report:write("OMNI_MATERIALS_HIGH_ID_ACTIVE=OMNI_PT_RFBK\n")
 report:write("OMNI_ISOTOPE_HIGH_ID_ACTIVE=OMNI_PT_CF52\n")
+report:write("OMNI_ORGANIC_HIGH_ID_ACTIVE=OMNI_PT_FATS\n")
 report:close()

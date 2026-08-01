@@ -10,6 +10,7 @@ simulation_files = files(
 	'OmniMetallurgy.cpp',
 	'OmniMaterials.cpp',
 	'OmniNuclear.cpp',
+	'OmniOrganics.cpp',
 	'OmniPeriodic.cpp',
 	'Particle.cpp',
 	'SaveRenderer.cpp',

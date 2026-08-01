@@ -23,6 +23,7 @@ Phase 0 审计的九个仓库顶层均含 GPL-3.0 `LICENSE`，本次固定文件
 | TPT-Alchemy | https://github.com/jacob1/TPT-Alchemy | `master` | `9a593ce11536e2e683bc64a698399c0805ce77a1` | 进度/发现系统拒绝；仅可独立评估无解锁的反应概念 |
 | Seppo's Metallurgy Mod SRC | https://github.com/SeppoTPT/Seppo-s-Metallurgy-Mod-SRC | `master` | `c3a8dd171a1c0fefc9a386e7e069f81d91f1514f` | 清洁室需求参考；实现源码缺失 |
 | Cyens Toy | https://github.com/cbeimers113/cyens-toy | `master` | `f01d992c97432ec1c46d84ade05131da521f355a` | 烃化学/气体/特殊物理设计参考，重写 |
+| Cyens Toy Source | https://github.com/cbeimers113/cyens-toy-src | `master` | `1b74504e4642cd967c0079499b57faa7f37d9668` | `ACET/UREA` GPL 文件级概念来源；按当前局部反应架构重写 |
 
 详细版本、元素数、风险与裁决见 `docs/SOURCE_AUDIT.md`；实际文件级来源进入 `docs/PORTING_LEDGER.md`。
 
@@ -35,6 +36,7 @@ Phase 0 审计的九个仓库顶层均含 GPL-3.0 `LICENSE`，本次固定文件
 | Seppo's Metallurgy Mod SRC | `c3a8dd171a1c0fefc9a386e7e069f81d91f1514f` | `ElementNumbers.h` 仅登记 32 个新增元素；32 个对应构造文件全部不存在；`WOOD/IRON/TTAN/COAL/SPRK/NEUT/OIL.cpp` 留有反应碎片 | 12 个 token/行为概念进入独立实现；不得从论坛二进制或描述反推缺失实现 |
 | Cracker1000 COPR | 快照 `ebbb9aab6aef27d26517682cebbc0a07147a843a`；`src/simulation/elements/COPR.cpp` 最后修改 `eb474d385ffb5ebd545cf9f5f3cf513ffba9fe35`；blob `f531fb85ea2c70b19195ceba168abd41b3a522da` | 铜的颜色、导热/导电、熔点和氧化玩法；同时存在未做边界检查的远距读取及高频邻域扫描 | 本项目适配参数/行为并保留 GPL 来源；没有逐行复制原 `update`，改为 3×3 有界腐蚀和带来源类型的官方 `BRMT` 回收路径 |
 | Cyens Toy Hydrocarbon | 快照 `f01d992c97432ec1c46d84ade05131da521f355a`；相关提交锚点 `e60752b6cc0c31a0d323c22ee5a764c66a10033a`；当前主体历史还含 `6bec6d120605889efd9999e905341cc7d88d4e52` | 烃分类、相变估算和命名；同时改写官方 `GAS/OIL/MWAX/WAX` 行为 | `KERO/GASO/ACTY` 的分馏链只作独立需求参考；不覆盖官方语义，不把未完成离子体系包装为正式功能 |
+| Cyens Toy Source `ACET/UREA` | 快照 `1b74504e4642cd967c0079499b57faa7f37d9668`；`ACET.cpp` blob `c17e871f...`；`UREA.cpp` blob `6f324d1f...`；根 GPL-3.0 `LICENSE` SHA-256 `0B383D5A...` | 旧 ID `210/211`、材料名称与简单用途；UREA 旧更新函数含硝酸转 `UNTR` | 只保留材料概念并登记来源；当前 `ACET=595/UREA=600` 的属性、合成、水解、相变和预算全部重写，旧爆炸路径不采用 |
 
 ### Seppo 可读反应碎片与已知问题
 
@@ -96,9 +98,9 @@ SpikeViper `134ebf330eda42b4b300a2b7613ede71261697df`、Ultimata `b7497175243365
 
 ## 当前代码使用情况
 
-截至 Phase 5 受控核工业首批实现：
+截至有机化学首批实现：
 
-- 当前工作树正式登记并实现：23 个元素，稳定 ID `256–278`；
+- 冶金固定区正式登记：23 项，稳定 ID `256–278`，其中 22 个可玩元素与 1 个兼容别名；
 - 第三方更新函数逐行复制：0；
 - Cracker 参数/行为适配：`COPR` 1 项，来源已固定到 `eb474d...`；
 - Seppo 概念参考并独立实现：12 项；
@@ -107,7 +109,12 @@ SpikeViper `134ebf330eda42b4b300a2b7613ede71261697df`、Ultimata `b7497175243365
 - 化学来源：Seppo `ETHL/KERO/GASO` token、Cracker `CHLR/ACTY` token、Cyens 分馏链均为概念参考；对应更新实现独立编写；
 - 局部生态正式登记元素：8 个，稳定 ID `288–295`；Spike 仅作概念参考；
 - 受控核工业正式登记元素：7 个，稳定 ID `328–334`；Spike、Ultimata 与 Cracker 的核内容仅作玩法和风险边界参考；
-- 周期表首批正式登记元素：7 个，固定 ID `370/375/379/390/405/431/461`；实现来源为 OmniPack 原创族逻辑，外部代码复制为 0；
+- 周期表 92 个新增固定 ID 与完整 118 映射均已实现；外部候选只核对覆盖，实现来源为 OmniPack 族逻辑；
+- 无机三批正式登记元素：50 个，稳定 ID `462–511`；名称和常见化学概念不计作第三方代码来源；
+- 工程材料扩展正式登记元素：21 个，稳定 ID `512–532`；重复材料继续合并到主元素；
+- 代表性核素正式登记元素：13 个，稳定 ID `576–588`；第三方核更新函数复制为 0；
+- 有机首批正式登记元素：13 个，稳定 ID `589–601`；`ACET/UREA` 两项保留 Cyens Source GPL 文件级来源并重写，其余 11 项为本项目实现；
+- 当前累计第三方直接移植 `0`、来源概念重写 `2`、第三方更新函数逐行复制 `0`；
 - 第三方核更新函数逐行复制：0；官方 `URAN/PLUT/NEUT/DEUT` 状态机改写：0；
 - 冶金与化学静态审计、单元测试和 Lua 真实运行回归：PASS；
 - 来源仓库只读审计：9；

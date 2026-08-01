@@ -26,17 +26,18 @@ capacity_expansion_worktree_base=4f473ebefe59e436228ec7799f9363d39fe166b1
 engineering_alloys_batch1_worktree_base=592643e168ffd111d1e11000eb2e538053c29d3c
 materials_batch1_worktree_base=a535656d21fb94c46a05f0091c826151a09adbf7
 isotope_batch1_worktree_base=8fbfb74745ba812acd690202a327f933585b27f0
+organic_batch1_worktree_base=4e001049781afde4bcd9d5db250903d73017b269
 pt_num=1024
 pmapbits=10
 official_active_elements=195
-omnipack_registered_elements=224
-omnipack_playable_elements=223
-engine_active_elements=419
+omnipack_registered_elements=237
+omnipack_playable_elements=236
+engine_active_elements=432
 compatibility_aliases=1
-total_playable_materials=418
-registered_slots=589
+total_playable_materials=431
+registered_slots=602
 reserved_slots=170
-unallocated_capacity_slots=435
+unallocated_capacity_slots=422
 enabled_content_modules=4
 periodic_elements_placeable=118
 periodic_elements_remaining=0
@@ -44,7 +45,8 @@ inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
 isotope_batch1_elements=13
-reaction_registry_entries=232
+organic_batch1_elements=13
+reaction_registry_entries=246
 total_playable_materials_minimum=true
 periodic_table_ui=true
 save_format=OPS1/BZip2
@@ -187,6 +189,17 @@ release_ready=false
 - 当前登记门禁为 589 行、419 活动、1 兼容别名、418 可玩、170 显式保留和 435 未登记容量槽；OmniPack 为 224 登记 / 223 可玩，反应登记 232 条，i18n 为 1650/1650；
 - 全新 `build-isotope-batch1-final-clean` 构建 `698/698`、Meson static `26/26`、Python `180/180`（0 skip）通过；开发 EXE 为 307,856,157 字节，SHA-256 `D4A256C66D921FCBD8C226CF4CE9388E53536DCB0AFD81BE7DBA248F30BCC6BE`；该 EXE 已复跑核素（含 2 条点火）、原核工业、模块直选、四模块禁用、六类与 mixed OPS。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
 
+## Phase 7 有机化学首批：`589..601`
+
+- 新增 `CH4M/ETHA/PROP/BUTA/ETHE/METH/ACET/BENZ/TOLU/GLYC/ACTA/UREA/FATS=589..601`；既有 `POLY=367` 保持稳定 ID/identifier 并原位升级为聚乙烯，旧乙炔聚合路线改为乙烯聚合；官方 `OIL/GAS/DESL` 继续表示通用石油、石油气和柴油；
+- `OmniOrganics.cpp` 使用固定 `3x3` 邻域并与旧化学共享严格 `1536/frame` 成功事件预算；运行回归覆盖 15 条反应、5 条相变和 1,600 个乙醇氧化样本，成功反应及峰值均恰为 1,536；
+- `ACET=595/UREA=600` 固定到 GPL-3.0 `cbeimers113/cyens-toy-src@1b74504e...` 的具体源码文件及 blob，材料概念重写但不复制旧更新函数；旧 `UREA+HNO3->UNTR` 路线明确拒绝，其余 11 个新材料为当前项目实现；机器统计为 `elements_rewritten=2`、`elements_ported=0`、`first_port_batch_complete=false`；
+- 模块直选确认 `FATS=601` 可用；四模块禁用 OPS 保留 16 粒子、更新事件为 0，并确认 `FATS+CAUS` 不继续皂化；六类 OPS 为 18 进程、300 粒子、352 字段断言、304 个稳定 identifier 和 300 个 palette identifier；化学类为 79 粒子/87 断言，mixed 保持 11 粒子/21 断言；
+- 原生高位探针覆盖直接 `SOLD=512/RFBK=532/CF52=588/FATS=601`、601 号 `LAVA/SPRK/CONV/VIRS` 携带字段及 `BRMT(ctype=NITI)`；来源槽映射、缺失 identifier 和非法 `pmapbits` 门禁保持通过；
+- 字体新增 `丁/丙/尿/烃/烯/烷/甲/脂/芳/苯/酮/饱/香` 13 个 Fusion 原生字形后为 14,775 字形、2,739 必需字符、Fusion 1,985、Unifont 0，SHA-256 `6C3C62D778B13FC036B7C4B9EB052A5DF2147C2EA22CD4365F90074B9C8508FA`；结构、覆盖和离屏渲染通过，人工逐字视觉仍为 `not_tested`；
+- 全新 `build-organic-batch1-final2-clean` 从零构建 `712/712`，Meson static `27/27`、Python `184/184`（0 skip）通过；同一 EXE 复跑有机、旧化学、冶金、材料、核素、核工业、周期 118/118、生态双模式、模块、禁用模块、别名迁移、六类与 mixed OPS；EXE 为 312,419,572 字节，SHA-256 `499F30834C8C3655AE14506C6BA936BB23BE7A3BE94699E38BC9BCC789CEFB25`；
+- 正式 60 秒预热/600 秒有机压力、7,200 秒长跑、新材料/字形 GUI 与 DPI 视觉均为 `not_tested`，`release_ready=false`。
+
 ## Phase 1：纯沙盒方向清理
 
 - 删除玩家炼金服务、十阶段进度、元素发现锁、进度窗口和通知；
@@ -204,7 +217,7 @@ release_ready=false
 
 ## 下一步
 
-1. 继续有机物、燃料、聚合物和电子材料批次；工程材料 `533..575` 只补充审计后仍有独立玩法的候选，不得覆盖旧槽或用重复空壳填充 1024 容量；
+1. 继续生物分子、聚合物、有机燃料和电子材料批次；工程材料 `533..575` 只补充审计后仍有独立玩法的候选，不得覆盖旧槽或用重复空壳填充 1024 容量；
 2. 同概念模组候选只把许可证兼容的玩法增量合并到主元素，并登记来源与主元素回归；
 3. 为完整 118 元素与高位内容执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
 4. 每批继续登记、运行回归、OPS 双往返和性能预算验证；

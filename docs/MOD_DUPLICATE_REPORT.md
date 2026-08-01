@@ -4,6 +4,13 @@
 
 完全相同且没有行为增量的定义不新增元素；有兼容许可证且确有玩法增量的同概念候选，必须作为官方/现有 OmniPack 主元素优化重写合并，保留主元素 ID、identifier 和原有行为。`exact_identifier` 只说明 identifier 相同，仍须对主元素源码做增量审计，不能自动当作无变化。旧 OmniPack 重复 ID 只作兼容墓碑，不计入可玩材料。
 
+## 已人工裁决的有机首批候选
+
+- `cyens_src:DEFAULT_PT_ACET` 与 `DEFAULT_PT_UREA` 有明确 GPL 源码且当前内容尚无精确主元素，分别重写为 `OMNI_PT_ACET=595`、`OMNI_PT_UREA=600`；不沿用旧 ID、属性表或更新函数。
+- “聚乙烯”不再分配新 ID：既有 `OMNI_PT_POLY=367` 保持 identifier/ID，原位明确为聚乙烯并把生成路线切换为乙烯聚合。
+- Cyens 对官方 `GAS/OIL/DESL/MWAX/WAX` 的改写不合并；官方元素保持通用语义。`CH4M/ETHA/PROP/BUTA/ETHE/FATS` 仅因具备可验证的小分子裂化、重整、压力液化、聚合或皂化差异而作为独立材料。
+- 以上结果使项目累计 `elements_rewritten=2`、直接第三方代码移植 `0`；其余有机首批不是从重复候选复制实现。
+
 ## 统计
 
 - `exact_identifier`：3762

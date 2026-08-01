@@ -186,7 +186,7 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "deterministic cascade guard": "tmp3 == sim->currentTick + 1",
         "oil cracking": "PT_OIL, i, parts, pmap, sim",
         "kerosene cracking": "PT_KERO, i, parts, pmap, sim",
-        "acetylene polymerisation": "PT_ACTY, i, parts, pmap, sim",
+        "organic extension hook": "OmniOrganicElementUpdate",
         "peroxide decomposition": "PT_PERO, i, parts, pmap, sim",
         "peroxide pathogen treatment": "PeroxidePathogenTreatment",
         "biology pathogen input": "PT_PATH, i, parts, pmap, sim",

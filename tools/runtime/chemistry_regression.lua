@@ -17,6 +17,7 @@ local ids = {
     kerosene = must_element("OMNI_PT_KERO", "KERO"),
     gasoline = must_element("OMNI_PT_GASO", "GASO"),
     acetylene = must_element("OMNI_PT_ACTY", "ACTY"),
+    ethylene = must_element("OMNI_PT_ETHE", "C2H4"),
     polymer = must_element("OMNI_PT_POLY", "POLY"),
     peroxide = must_element("OMNI_PT_PERO", "PERO"),
     fertilizer = must_element("OMNI_PT_FERT", "FERT"),
@@ -172,12 +173,12 @@ end
 local function run_polymerisation()
     configure_simulation()
     make(ids.catalyst, 120, 120, 600.0)
-    local first = make(ids.acetylene, 121, 120, 600.0)
-    local second = make(ids.acetylene, 120, 121, 600.0)
-    local diffusion = elements.property(ids.acetylene, "Diffusion")
-    elements.property(ids.acetylene, "Diffusion", 0.0)
+    local first = make(ids.ethylene, 121, 120, 600.0)
+    local second = make(ids.ethylene, 120, 121, 600.0)
+    local diffusion = elements.property(ids.ethylene, "Diffusion")
+    elements.property(ids.ethylene, "Diffusion", 0.0)
     step()
-    elements.property(ids.acetylene, "Diffusion", diffusion)
+    elements.property(ids.ethylene, "Diffusion", diffusion)
     assert(sim.partProperty(first, "type") == ids.polymer
         and sim.partProperty(second, "type") == ids.polymer,
         "moderate catalytic polymerisation did not preserve both polymer particles")

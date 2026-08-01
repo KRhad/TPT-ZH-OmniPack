@@ -10,7 +10,7 @@
 | 玩家任务、成就、科技树入口不存在 | 源码/文档 | PASS | 没有对应 C++ 玩家系统；路线已改写 |
 | 已启用模块元素可直接选择 | 源码/静态 | PASS | 统一限制仅含非法 ID、保留槽、模块关闭和明确登记的兼容别名 |
 | Lua 创建门禁 | 编译/静态 | PASS | 不再包含进度分支；保留模块关闭、保留 ID 和兼容别名拦截 |
-| 四模块关闭后的 OPS、选择、创建与更新 | 实际运行 | PASS | 两进程、OPS1、12 个粒子保留；代表项含 `NITI=520`、`RFBK=532`、`CF52=588`、`CARA=478`、`AMCL=511`，模块事件 0，周期 `HE` 仍可用 |
+| 四模块关闭后的 OPS、选择、创建与更新 | 实际运行 | PASS | 两进程、OPS1、16 个粒子保留；代表项含 `NITI=520`、`RFBK=532`、`CF52=588`、`FATS=601`、`CARA=478`、`AMCL=511`，皂化负例与模块事件 0，周期 `HE` 仍可用 |
 | 空模块设置入口 | 源码/i18n | PASS | 只显示四个真实模块及简化生物设置 |
 | 旧进度 OPS 加载与重存 | C++ 运行 | PASS | `legacy-progress-save-probe`，2 个真实旧样本、29 粒子 |
 | 新 OPS 不写 `omniAlchemy` | C++ 运行 | PASS | 解压重存 BSON 并检查字段不存在 |
@@ -33,7 +33,7 @@
 | 工业冶金/工程材料 43 + 兼容别名 1 | PASS | PASS | PASS | 预算帧 PASS | 可玩 ID `256..277` 与 `512..532`；`278` 只迁移旧存档 |
 | 局部生态 8 | PASS | PASS | PASS | 历史 PASS | ID `288..295`；完整/简化均通过 |
 | 受控核工业与代表性核素 20 | PASS | PASS | PASS | 核素预算帧 PASS | ID `328..334` 与 `576..588`；两者共享 `512/frame` |
-| 化学与无机物 60 | PASS | PASS | PASS | 预算帧 PASS | ID `360..369`、`462..511`；官方 `SALT=26` 复用为氯化钠 |
+| 化学、无机物与有机首批 73 | PASS | PASS | PASS | 预算帧 PASS | ID `360..369`、`462..511`、`589..601`；官方 `SALT/OIL/GAS/DESL` 均保持主语义 |
 | 完整周期表十四批 92 | PASS | PASS | PASS | 预算帧 PASS | 新 ID `370..461` 全部启用；118/118 映射可用 |
 | 多模块混合 | PASS | 历史 PASS | 历史 PASS | 历史 PASS | Phase 1 正式混合压力尚未复跑 |
 
@@ -55,8 +55,8 @@
 
 | 项目 | 状态 | 证据 |
 |---|---|---|
-| 稳定容量与旧 ID | PASS | `PMAPBITS=10`、`PT_NUM=1024`；旧 `0..511` 不移动；容量批固定 `512..575` 工程区，后续又稳定分配 `576..588` 核素区，当前未来区为 `589..1023`；`element-capacity-audit` fail-closed |
-| 高位 OPS 原生探针 | PASS | 直接 `SOLD=512`，`LAVA/SPRK/BRMT/CONV/VIRS` 携带字段及 palette 往返；来源 `pmapbits=11` 的槽 1536 按 identifier 映射到当前 512；损坏 `pmapbits=0/17` 拒绝；缺失高位 identifier 被报告并中和 |
+| 稳定容量与旧 ID | PASS | `PMAPBITS=10`、`PT_NUM=1024`；旧 `0..588` 不移动；容量批固定 `512..575` 工程区，后续稳定分配 `576..588` 核素区与 `589..601` 有机区，当前未来区为 `602..1023`；`element-capacity-audit` fail-closed |
+| 高位 OPS 原生探针 | PASS | 直接 `SOLD=512/RFBK=532/CF52=588/FATS=601`，`LAVA/SPRK/BRMT/CONV/VIRS` 携带字段及 palette 往返；来源 `pmapbits=11` 的槽 1536 按 identifier 映射到当前 512；损坏 `pmapbits=0/17` 拒绝；缺失高位 identifier 被报告并中和 |
 | Lua 分配边界 | PASS | 真实客户端为首槽 255、一字节末槽 196、第 61 个槽 1023；官方保留 ID 146 未占用，高位元素可选择/创建 |
 | 锡铅合金行为 | PASS | 冶金运行回归为 9 个配方场景、7 类行为、8 个配方帧；覆盖三锡二铅、凝固、反复火花升温、压力回收和 `SOLD=512` |
 | 模块直选与禁用 | PASS | 启用时 `SOLD=512` 可选择；四模块禁用 OPS 保留 10 粒子、更新事件 0，并拒绝高位工程元素选择/创建 |
@@ -110,6 +110,22 @@
 | 字体结构与离屏渲染 | PASS | 新增 `塔/氚/育` 后为 14,762 字形、2,726 必需字符、Fusion 1,972、Unifont 0；SHA-256 `9B6D2D13D592A9436821C9A9BC99C64833FB2E6862D1A95945185EA1D23D80B3` |
 | 全新 Windows 构建 | PASS | `build-isotope-batch1-final-clean`，`698/698`；Meson static `26/26`、Python `180/180`（0 skip）；EXE 307,856,157 字节，SHA-256 `D4A256C66D921FCBD8C226CF4CE9388E53536DCB0AFD81BE7DBA248F30BCC6BE` |
 | 正式压力、长跑与 GUI | NOT RUN | 正式 600 秒核素压力、7,200 秒长跑和新增核素/字形 DPI 视觉尚未执行 |
+
+### 有机化学首批 `589..601`
+
+| 项目 | 状态 | 证据 |
+|---|---|---|
+| 稳定 ID 与主元素去重 | PASS | 新增 `CH4M/ETHA/PROP/BUTA/ETHE/METH/ACET/BENZ/TOLU/GLYC/ACTA/UREA/FATS=589..601`；`POLY=367` 原位升级为聚乙烯；官方 `OIL/GAS/DESL` 不覆盖 |
+| 来源与许可证 | PASS | `ACET/UREA` 固定到 GPL-3.0 `cbeimers113/cyens-toy-src@1b74504e...` 及具体文件 blob，按当前架构重写；第三方更新函数逐行复制为 0 |
+| 反应与相变 | PASS | 真实客户端覆盖 15 条反应和 5 条相变，包括甲烷循环、三档裂化、乙烯聚合、醇氧化、芳香合成、尿素循环和皂化 |
+| 局部性与事件预算 | PASS | `OmniOrganics.cpp` 只扫描固定 `3x3`；1,600 个乙醇氧化样本恰有 1,536 个成功事件，峰值 `1536/frame` |
+| 模块直选与禁用 | PASS | 启用时 `FATS=601` 可选；四模块禁用 OPS 保留 16 粒子、事件 0，并拒绝 `FATS` 选择/创建且阻止 `FATS+CAUS` 皂化 |
+| 化学 OPS 双往返 | PASS | 3 进程、2 重启、2 加载、79 粒子、87 字段断言、80 个稳定 identifier；13 个新有机物全部直接覆盖，601 号同时覆盖携带字段 |
+| 六类 OPS | PASS | 18 进程、300 粒子、352 字段断言、304 个稳定 identifier、300 个 palette identifier；mixed 保持 11 粒子/21 断言 |
+| 高位 OPS 原生探针 | PASS | 直接 `SOLD/RFBK/CF52/FATS` 与 601 号 `LAVA/SPRK/CONV/VIRS` 携带字段往返；来源槽映射、缺失 identifier 和非法位宽继续通过 |
+| 字体结构与覆盖 | PASS | 新增 13 个 Fusion 原生字形后为 14,775 字形、2,739 必需字符、Fusion 1,985、Unifont 0；SHA-256 `6C3C62D778B13FC036B7C4B9EB052A5DF2147C2EA22CD4365F90074B9C8508FA` |
+| 全新 Windows 构建 | PASS | `build-organic-batch1-final2-clean` 从零完成 `712/712`；Meson static `27/27`、Python `184/184`（0 skip）；EXE 312,419,572 字节，SHA-256 `499F30834C8C3655AE14506C6BA936BB23BE7A3BE94699E38BC9BCC789CEFB25` |
+| 正式压力、长跑与 GUI | NOT RUN | 正式 600 秒有机压力、7,200 秒长跑和新增材料/字形 DPI 视觉尚未执行 |
 
 ### 完整周期表十四批证据
 
