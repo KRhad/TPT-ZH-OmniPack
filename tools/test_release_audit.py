@@ -16,6 +16,7 @@ import zipfile
 VERSION = "0.1.0-test"
 DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
+PRIVATE_TEST_VERSION = "0.6.0-dev"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -215,6 +216,7 @@ def audit_package(
         VERSION: "public-test",
         DEV_VERSION: "local-dev",
         AUTOMATION_VERSION: "local-dev",
+        PRIVATE_TEST_VERSION: "local-dev",
     }
     if version not in profiles:
         return [f"unsupported package version: {version}"]
@@ -282,13 +284,30 @@ def audit_package(
                             errors.append(f"test instructions are missing marker: {marker!r}")
                 elif kind == "local-dev":
                     executable_hash = sha256_bytes(executable)
-                    audit_0_2_examples(
-                        archive, stem, actual, executable_hash, errors
-                    )
+                    if version in {DEV_VERSION, AUTOMATION_VERSION}:
+                        audit_0_2_examples(
+                            archive, stem, actual, executable_hash, errors
+                        )
                     if version == AUTOMATION_VERSION:
                         audit_0_3_automation(
                             archive, stem, actual, executable_hash, errors
                         )
+                    if version == PRIVATE_TEST_VERSION:
+                        instructions = archive.read(
+                            f"{stem}/TESTING.zh-CN.md"
+                        ).decode("utf-8", errors="replace")
+                        for marker in (
+                            PRIVATE_TEST_VERSION,
+                            "不是 1.0.0 正式版",
+                            "451",
+                            "118/118",
+                            "621",
+                            "release_ready=false",
+                        ):
+                            if marker not in instructions:
+                                errors.append(
+                                    f"private test instructions are missing marker: {marker!r}"
+                                )
     except (OSError, ValueError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
         errors.append(f"cannot read package: {exc}")
     return errors
@@ -308,7 +327,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--symbols", action="store_true")
     parser.add_argument(
         "--version",
-        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION),
+        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION, PRIVATE_TEST_VERSION),
         default=VERSION,
     )
     parser.add_argument("--kind", choices=("public-test", "local-dev"))

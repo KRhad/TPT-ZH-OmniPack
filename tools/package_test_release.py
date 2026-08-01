@@ -20,6 +20,7 @@ import zipfile
 VERSION = "0.1.0-test"
 DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
+PRIVATE_TEST_VERSION = "0.6.0-dev"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -94,6 +95,10 @@ AUTOMATION_ONLY_DOCUMENTS = (
     ),
 )
 AUTOMATION_DOCUMENTS = DEV_DOCUMENTS + AUTOMATION_ONLY_DOCUMENTS
+PRIVATE_TEST_INSTRUCTIONS = (
+    "docs/PRIVATE_TEST_0.6.0.md",
+    "TESTING.zh-CN.md",
+)
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 FORBIDDEN_COMPONENTS = {".git", "__pycache__", "build", "dist"}
 CAN_INSTALL_DEFAULT_RE = re.compile(
@@ -146,6 +151,7 @@ def validate_profile(version: str, kind: str, include_examples: bool) -> None:
         VERSION: ("public-test", False),
         DEV_VERSION: ("local-dev", True),
         AUTOMATION_VERSION: ("local-dev", True),
+        PRIVATE_TEST_VERSION: ("local-dev", False),
     }
     if version not in expected:
         raise ValueError(f"unsupported package version: {version}")
@@ -170,6 +176,17 @@ def development_documents(version: str) -> tuple[tuple[str, str], ...]:
     if version == AUTOMATION_VERSION:
         return AUTOMATION_DOCUMENTS
     return ()
+
+
+def package_documents(version: str) -> tuple[tuple[str, str], ...]:
+    if version != PRIVATE_TEST_VERSION:
+        return DOCUMENTS
+    private_source, private_archive = PRIVATE_TEST_INSTRUCTIONS
+    return tuple(
+        (source, archive)
+        for source, archive in DOCUMENTS
+        if archive != private_archive
+    ) + ((private_source, private_archive),)
 
 
 def validate_member_name(name: str, allow_example_stamp: bool = False) -> None:
@@ -213,7 +230,7 @@ def validate_sources(
             "portable release must default can_install=no to avoid a first-run "
             f"association prompt (got {actual})"
         )
-    for source_name, archive_name in DOCUMENTS:
+    for source_name, archive_name in package_documents(version):
         validate_member_name(archive_name)
         source = source_root / source_name
         if not source.is_file():
@@ -290,7 +307,7 @@ def build_package(
     epoch = source_date_epoch()
     output_directory.mkdir(parents=True, exist_ok=True)
     package_stem, symbol_package_stem = package_stems(version)
-    selected_documents = DOCUMENTS + (
+    selected_documents = package_documents(version) + (
         development_documents(version) if include_examples else ()
     )
     normal_files = [(EXECUTABLE_NAME, executable)] + [
@@ -330,7 +347,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-directory", type=Path, default=Path("dist"))
     parser.add_argument(
         "--version",
-        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION),
+        choices=(VERSION, DEV_VERSION, AUTOMATION_VERSION, PRIVATE_TEST_VERSION),
         default=VERSION,
     )
     parser.add_argument("--kind", choices=("public-test", "local-dev"), default="public-test")
