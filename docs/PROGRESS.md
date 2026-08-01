@@ -25,8 +25,11 @@ inorganic_batch3_worktree_base=0eb4e11dd41fe4da72b8f8a1db65fa07a77898b1
 pt_num=512
 pmapbits=9
 official_active_elements=195
-omnipack_active_elements=190
-total_active_elements=385
+omnipack_registered_elements=190
+omnipack_playable_elements=189
+engine_active_elements=385
+compatibility_aliases=1
+total_playable_materials=384
 registered_slots=512
 reserved_slots=127
 enabled_content_modules=4
@@ -71,7 +74,7 @@ release_ready=false
 - 104–112 号新增 `RF=447`、`DB=448`、`SG=449`、`BH=450`、`HS=451`、`MT=452`、`DS=453`、`RG=454`、`CN=455`；差异化硬度、导热、熔沸点与衰变后代，并用 `900..1700 K` 逐级中子门槛连接 `LR→RF→…→CN→NH`；
 - 共享 `OmniPeriodic.cpp` 只做 `3x3` 局部检查，放电、低温换热、七类主族、三条过渡系、镧系、锕系与超重族反应和衰变共享 `1024` 次/帧预算；火焰、光子、中子和着色蒸气寿命有限；
 - 真实客户端 Lua 回归：`OMNI_PERIODIC_STATUS=PASS`、92 个新元素、118 个已实现周期映射、七个主族各 6 个成员、三条过渡系、镧系/锕系/超重系各 15 个成员，压力帧事件恰为 1024；
-- 周期 OPS：3 进程、2 重启、2 加载、125 粒子、134 字段断言、118 个周期元素直接类型、其中 103 个大于 255，并覆盖 `LAVA/SPRK/MSCR/CONV/VIRS` 携带字段；
+- 周期 OPS：3 进程、2 重启、2 加载、125 粒子、134 字段断言、118 个周期元素直接类型、其中 103 个大于 255，并覆盖 `LAVA/SPRK/BRMT/CONV/VIRS` 携带字段；
 - 模块/Lua 回归确认从 `HE`、`AC` 到 `RF` 的各批代表项均可直接选择且 Lua 仍优先分配 ID `255`；
 - 全新 `build-periodic-superheavy-final-clean` Windows x64 Release 构建 `605/605` 通过；最终 EXE SHA-256 `EB56694250D2F8D88BFE138879FA50622BB3A1E4FD9D445BA6EC4AD3A611808F`，Meson static `21/21`、Python `159/159`（0 skip）通过；
 - clean EXE 已复跑四模块、完整/简化生态、周期、模块、六类 OPS 与 mixed OPS：OPS 合计 21 个进程、14 次重启、14 次加载验证；六类为 204 粒子/254 字段断言和 203 个稳定/调色板 identifier，周期用例同图覆盖全部 118 个周期元素。
@@ -115,6 +118,18 @@ release_ready=false
 - 全新 `build-inorganic-batch3-final-clean` Release 构建 `655/655`、Meson static `21/21`、Python `162/162`（0 skip）通过；最终 EXE 为 296,047,216 字节，SHA-256 `C89B942EB67A6A78C3E8B1E94CFAB52EBDA0CC7CD1E6932D06118D4ED338C58E`；
 - 最终 EXE 已复跑冶金、化学、完整/简化生态、核工业、周期、模块直选、四模块禁用、六类与 mixed OPS；0.2/0.3 开发样例在系统临时目录隔离生成和验证，仓库内旧 `omniAlchemy` 兼容样本保持原字节；
 - 该 EXE 使用 `release` 优化但 `debug=true`、`strip=false`，仅是开发证据；正式 600 秒压力、两小时长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
+
+## Phase 10：元素行为级去重与官方 BRMT 增强
+
+- 行为审计确认 `FERT/NUTR`、`PATH/VIRS`、精确酸碱/官方泛化材料、精确纯元素/官方泛化材料等仍有明确玩法差异；当前唯一合并项为 `OMNI_PT_MSCR=278` 与官方 `DEFAULT_PT_BRMT=30`；
+- 可回收来源金属行为已迁入官方 BRMT，使用 `ctype` 保存来源类型、`tmp4=0x4F4D5343` 隔离增强状态；普通官方 BRMT 的 1273 K 相变和 `BRMT+BREC` 状态机保持；
+- `MSCR=278` 继续注册为隐藏兼容别名：菜单/搜索/Lua 直接创建均拒绝，旧 OPS 和间接载体仍能读取，模块启用后一个模拟刻迁移，模块关闭时保持不动，ID 永不复用；
+- 当前计数为 512 登记槽、385 个引擎活动项、1 个兼容别名、384 个可玩材料和 127 个保留槽；OmniPack 为 190 个登记项 / 189 个可玩元素；
+- 三进程迁移回归通过：旧 278 stamp 为 603 字节、SHA-256 `C057B705FCDE0CF8BD90B8F96139022EDB0606EA92D7A4F8BC2963F7E83E0C5F`；canonical BRMT stamp 为 645 字节、SHA-256 `D01A2DB444980110AFE62217D4B189BF33BB28B7631AF3F97FBBCCE4C25168B3`；
+- 六类 OPS 为 18 进程、12 次重启、12 次加载、253 粒子和每次加载 305 个字段断言；mixed OPS 为 3 进程、11 粒子和 21 个字段断言；周期 OPS 的可回收 BRMT 同时覆盖 `ctype/tmp4`；
+- 全新 `build-element-dedup-final-clean` 构建 `655/655`、Meson static `22/22`、Python `166/166`（0 skip）通过；冶金、周期、模块、四模块禁用、化学、生态双模式、核工业、0.2 示例/教程和临时 0.3 自动化开发探针均通过；
+- 当前 EXE 为 296,063,798 字节，SHA-256 `39EDECDC992A48747E73F582ED340706A5B75A13DB521A593FB2F8946828C352`；S09/S10 两个 2 秒 smoke harness 通过，正式压力门禁仍为 `not_tested`；
+- 该 EXE 为 `release` 优化但 `debug=true`、`strip=false` 的开发证据，不是可发布 1.0.0 二进制；GUI/DPI、正式 600 秒压力和两小时长跑仍未完成，`release_ready=false`。
 
 ## Phase 1：纯沙盒方向清理
 

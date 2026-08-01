@@ -1304,6 +1304,11 @@ def validate_repository(
         "slots": len(slots),
         "active": sum(slot is not None for slot in slots),
         "reserved": sum(slot is None for slot in slots),
+        "compatibility_aliases": sum(
+            row.get("implementation_status") == "implemented"
+            and row.get("is_duplicate") == "true"
+            for row in registry_rows
+        ),
         "registry_rows": len(registry_rows),
         "lock_rows": len(lock_rows),
         "errors": len(findings.errors),
@@ -1425,10 +1430,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             file=sys.stderr,
         )
     elif not args.quiet:
+        canonical_active = stats["active"] - stats["compatibility_aliases"]
         print(
             "element-registry-check: PASS "
             f"({stats['slots']} slots, {stats['active']} active, "
-            f"{stats['reserved']} reserved, PT_NUM={stats['pt_num']}, "
+            f"{stats['compatibility_aliases']} compatibility aliases, "
+            f"{canonical_active} canonical active, {stats['reserved']} reserved, "
+            f"PT_NUM={stats['pt_num']}, "
             f"registry={stats['registry_rows']}, lock={stats['lock_rows']})"
         )
     return 1 if findings.errors else 0

@@ -1,5 +1,6 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
+#include "simulation/OmniMetallurgy.h"
 
 static int update(UPDATE_FUNC_ARGS);
 static int graphics(GRAPHICS_FUNC_ARGS);
@@ -191,12 +192,11 @@ static int update(UPDATE_FUNC_ARGS)
 					else if (parts[i].life >= 10 &&
 						       	(elements[rt].Properties & (TYPE_SOLID|PROP_CONDUCTS)) == (TYPE_SOLID|PROP_CONDUCTS) && sim->rng.chance(1, 10))
 					{
-						//@ BASE + conductive solid -> BASE + BMTL/MSCR
+						//@ BASE + conductive solid -> BASE + BMTL/BRMT
 						if (rt >= PT_ALUM && rt <= PT_TSTL)
 						{
-							sim->createPartTempVel(ID(r), x+rx, y+ry, PT_MSCR);
-							parts[ID(r)].ctype = rt;
-							parts[ID(r)].tmp = 0;
+							sim->createPartTempVel(ID(r), x+rx, y+ry, PT_BRMT);
+							MarkOmniRecoverableScrap(parts[ID(r)], rt);
 						}
 						else
 						{

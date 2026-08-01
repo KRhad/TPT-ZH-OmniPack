@@ -7,6 +7,7 @@
 #include "simulation/Particle.h"
 #include "simulation/ElementDefs.h"
 #include "simulation/SimulationData.h"
+#include "simulation/OmniMetallurgy.h"
 
 namespace
 {
@@ -103,6 +104,11 @@ OmniSelectionRestriction GetOmniElementSelectionRestriction(int elementId)
 	if (elementId < 0 || elementId >= PT_NUM)
 	{
 		return OmniSelectionRestriction::InvalidElement;
+	}
+	if (auto const *record = FindElementCatalogByStableId(elementId);
+		record && !record->duplicateOf.empty())
+	{
+		return OmniSelectionRestriction::CompatibilityAlias;
 	}
 
 	switch (GetOmniElementModule(elementId))
@@ -205,12 +211,19 @@ std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save)
 			return;
 		}
 		auto const *record = FindElementCatalogByStableId(type);
-		if (!record || !record->identifier.starts_with("OMNI_PT_") || record->implementationStatus != "implemented" ||
-			GetOmniElementSelectionRestriction(type) != OmniSelectionRestriction::ModuleDisabled)
+		if (!record || !record->identifier.starts_with("OMNI_PT_") || record->implementationStatus != "implemented")
 		{
 			return;
 		}
-		found[static_cast<std::size_t>(GetOmniElementModule(type))] = true;
+		auto module = GetOmniElementModule(type);
+		auto restriction = GetOmniElementSelectionRestriction(type);
+		if (restriction == OmniSelectionRestriction::ModuleDisabled
+			|| (restriction == OmniSelectionRestriction::CompatibilityAlias
+				&& module == OmniElementModule::Metallurgy
+				&& !GetOmniSetting(OmniSetting::Metallurgy)))
+		{
+			found[static_cast<std::size_t>(module)] = true;
+		}
 	};
 
 	for (int index = 0; index < NPART && index < save.particlesCount && index < static_cast<int>(save.particles.size()); ++index)
@@ -220,6 +233,11 @@ std::vector<OmniElementModule> FindDisabledOmniSaveModules(GameSave const &save)
 		if (type <= 0 || type >= PT_NUM)
 		{
 			continue;
+		}
+		if (IsOmniRecoverableScrap(particle)
+			&& !GetOmniSetting(OmniSetting::Metallurgy))
+		{
+			found[static_cast<std::size_t>(OmniElementModule::Metallurgy)] = true;
 		}
 
 		inspectType(type);

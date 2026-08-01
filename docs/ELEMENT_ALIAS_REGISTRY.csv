@@ -1,0 +1,2 @@
+alias_identifier,alias_stable_id,canonical_identifier,canonical_stable_id,classification,menu_policy,creation_policy,load_policy,save_policy,indirect_type_policy,stable_id_policy,test_status,notes
+OMNI_PT_MSCR,278,DEFAULT_PT_BRMT,30,complete_behavior_duplicate,hidden,blocked,preserve_then_migrate,canonical_after_migration,legacy_alias_resolves,never_reuse,runtime-tested,Recoverable source-metal behavior moved into marked official BRMT while the old identifier remains readable.

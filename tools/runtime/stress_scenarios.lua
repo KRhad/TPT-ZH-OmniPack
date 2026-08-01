@@ -61,6 +61,7 @@ local ids = {
     dtec = assert(elements.DEFAULT_PT_DTEC),
     swch = assert(elements.DEFAULT_PT_SWCH),
     lcry = assert(elements.DEFAULT_PT_LCRY),
+    brmt = assert(elements.DEFAULT_PT_BRMT),
     alum = must_element("OMNI_PT_ALUM", "ALUM"),
     magn = must_element("OMNI_PT_MAGN", "MAGN"),
     copr = must_element("OMNI_PT_COPR", "COPR"),
@@ -70,7 +71,6 @@ local ids = {
     slag = must_element("OMNI_PT_SLAG", "SLAG"),
     flux = must_element("OMNI_PT_FLUX", "FLUX"),
     cruc = must_element("OMNI_PT_CRUC", "CRUC"),
-    mscr = must_element("OMNI_PT_MSCR", "MSCR"),
     nutr = must_element("OMNI_PT_NUTR", "NUTR"),
     alga = must_element("OMNI_PT_ALGA", "ALGA"),
     mycl = must_element("OMNI_PT_MYCL", "MYCL"),
@@ -97,6 +97,8 @@ local ids = {
     pero = must_element("OMNI_PT_PERO", "PERO"),
     fert = must_element("OMNI_PT_FERT", "FERT"),
 }
+
+local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
 
 local function configure_simulation()
     sim.clearSim()
@@ -158,11 +160,14 @@ local full = { x1 = 48, y1 = 48, x2 = sim.XRES - 49, y2 = sim.YRES - 49 }
 
 local recovery_markers = {
     {
-        name = "mscr_ctype",
+        name = "brmt_recoverable_ctype",
         x = 8,
         y = 8,
-        particle_type = ids.mscr,
-        properties = { ctype = ids.alum },
+        particle_type = ids.brmt,
+        properties = {
+            ctype = ids.alum,
+            tmp4 = RECOVERABLE_SCRAP_MARKER,
+        },
     },
     {
         name = "conv_ctype_tmp",
@@ -224,7 +229,11 @@ local function metallurgy(bounds)
             make(ids.coke, x + 1, y, { temp = 1200.0 })
             make(ids.flux, x, y + 1, { temp = 1200.0 })
         else
-            make(ids.mscr, x, y, { ctype = ids.stel, temp = 900.0 })
+            make(ids.brmt, x, y, {
+                ctype = ids.stel,
+                tmp4 = RECOVERABLE_SCRAP_MARKER,
+                temp = 900.0,
+            })
             make(ids.flux, x + 1, y, { temp = 900.0 })
             make(ids.slag, x, y + 1, { temp = 900.0 })
         end
@@ -352,7 +361,7 @@ local function loca(bounds)
 end
 
 local function carriers(bounds)
-    local omni = { ids.alum, ids.nutr, ids.nful, ids.chlr, ids.mscr }
+    local omni = { ids.alum, ids.nutr, ids.nful, ids.chlr, ids.cruc }
     grid(bounds, function(x, y, n)
         local target = omni[(n % #omni) + 1]
         local kind = n % 5
@@ -366,7 +375,10 @@ local function carriers(bounds)
                 sim.partProperty(spark, "life", 4)
             end
         elseif kind == 2 then
-            make(ids.mscr, x, y, { ctype = target })
+            make(ids.brmt, x, y, {
+                ctype = target,
+                tmp4 = RECOVERABLE_SCRAP_MARKER,
+            })
         elseif kind == 3 then
             make(ids.conv, x, y, { ctype = target, tmp = omni[((n + 1) % #omni) + 1] })
         else

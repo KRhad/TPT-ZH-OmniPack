@@ -93,8 +93,10 @@ def check_registry(root: Path, errors: list[str]) -> None:
             "source_file": f"src/simulation/elements/{meson_name}.cpp",
             "implementation_status": "implemented",
             "default_enabled": "true",
-            "is_duplicate": "false",
+            "is_duplicate": "true" if stable_id == 278 else "false",
         }
+        if stable_id == 278:
+            expected["duplicate_of"] = "DEFAULT_PT_BRMT"
         for field, value in expected.items():
             if row.get(field) != value:
                 errors.append(
@@ -157,7 +159,9 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "steel carbon off-gas": "PT_CO2",
         "steel slag output": "PT_SLAG",
         "pressure scrap preservation": "BreakIntoScrap(",
+        "official scrap marker": "MarkOmniRecoverableScrap(",
         "scrap ctype recovery": "parts[i].ctype = sourceType",
+        "legacy alias migration": "OmniMetallurgyLegacyScrapAliasUpdate",
         "charcoal hold time": "++parts[i].tmp3 < 60",
         "coke hold time": "++parts[i].tmp3 < 90",
         "radiation shield assembly": "TryRadiationShieldAssembly(",
@@ -203,9 +207,13 @@ def check_engine(root: Path, errors: list[str]) -> None:
     base = read_text(
         root / "src" / "simulation" / "elements" / "BASE.cpp", errors
     )
-    if "rt >= PT_ALUM && rt <= PT_TSTL" not in base or "PT_MSCR" not in base:
+    if (
+        "rt >= PT_ALUM && rt <= PT_TSTL" not in base
+        or "PT_BRMT" not in base
+        or "MarkOmniRecoverableScrap" not in base
+    ):
         errors.append(
-            "BASE.cpp: custom conductive metals do not preserve ctype in MSCR"
+            "BASE.cpp: custom conductive metals do not preserve ctype in canonical BRMT"
         )
 
     mscr = read_text(
@@ -213,6 +221,17 @@ def check_engine(root: Path, errors: list[str]) -> None:
     )
     if "CarriesTypeIn = 1U << FIELD_CTYPE" not in mscr:
         errors.append("MSCR.cpp: ctype is not declared as save-carried data")
+    if "MenuVisible = 0" not in mscr:
+        errors.append("MSCR.cpp: compatibility alias is visible in the menu")
+
+    brmt = read_text(
+        root / "src" / "simulation" / "elements" / "BRMT.cpp", errors
+    )
+    if (
+        "OmniMetallurgyScrapUpdate" not in brmt
+        or "CarriesTypeIn = 1U << FIELD_CTYPE" not in brmt
+    ):
+        errors.append("BRMT.cpp: canonical recoverable scrap behavior is missing")
 
     lead = read_text(
         root / "src" / "simulation" / "elements" / "LEAD.cpp", errors
@@ -276,7 +295,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args.quiet:
         print(
             "metallurgy-audit: PASS "
-            "(23 elements, 6 alloy recipes, 1 steel recipe, 1 nuclear assembly, 3x3 bounded)"
+            "(22 playable elements, 1 compatibility alias, 6 alloy recipes, "
+            "1 steel recipe, 1 nuclear assembly, 3x3 bounded)"
         )
     return 0
 

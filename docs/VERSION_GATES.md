@@ -64,7 +64,9 @@ inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
 inorganic_elements_total=50
-total_playable_materials=385
+engine_active_elements=385
+compatibility_aliases=1
+total_playable_materials=384
 element_registry_valid=true
 reaction_registry_entries=190
 reaction_registry_valid=true
@@ -134,4 +136,4 @@ release_tag=v1.0.0
 release_ready=true
 ```
 
-当前 `release_ready=false`。不得为赶版本把 `not_tested` 改为 `true`，也不得用重复空壳凑到 300。
+当前 `release_ready=false`。不得为赶版本把 `not_tested` 改为 `true`，也不得用重复空壳或兼容别名凑到 300。

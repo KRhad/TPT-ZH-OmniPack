@@ -30,6 +30,7 @@ EXPECTED_COLUMNS = (
 )
 
 PRODUCTION_STATUSES = {
+    "compatibility_only",
     "direct_only",
     "produced",
     "produced_or_direct",
@@ -46,6 +47,7 @@ GAP_CODES = {
     "missing_production",
     "missing_recovery",
     "missing_secondary_use",
+    "merged_into_official",
     "no_machine_role",
     "single_use",
     "unverified_gameplay_claim",
@@ -56,6 +58,7 @@ DISPOSITIONS = {
     "link_in_0.2",
     "fix_or_test_claim",
     "add_recovery",
+    "merged_alias",
 }
 
 
@@ -153,6 +156,20 @@ def audit(root: Path) -> list[str]:
                 f"ELEMENT_USAGE_MATRIX.csv:{number} direct_only lacks a production disposition for {identifier}"
             )
         if (
+            row["production_status"] == "compatibility_only"
+            and row["disposition"] != "merged_alias"
+        ):
+            errors.append(
+                f"ELEMENT_USAGE_MATRIX.csv:{number} compatibility_only must use merged_alias"
+            )
+        if (
+            row["disposition"] == "merged_alias"
+            and "merged_into_official" not in gap_values
+        ):
+            errors.append(
+                f"ELEMENT_USAGE_MATRIX.csv:{number} merged_alias lacks merged_into_official"
+            )
+        if (
             gap_values not in (["none"], ["direct_only_by_design"])
             and row["disposition"] == "keep"
         ):
@@ -210,7 +227,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         print(
             "element-usage-audit: PASS "
-            f"({len(implemented)} implemented OmniPack elements)"
+            f"({len(implemented)} implemented OmniPack registrations)"
         )
     return 0
 

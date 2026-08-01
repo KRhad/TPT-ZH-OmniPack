@@ -12,7 +12,7 @@ end
 
 local ids = {
     aluminium = must_element("OMNI_PT_ALUM", 256),
-    scrap = must_element("OMNI_PT_MSCR", 278),
+    scrap = must_element("DEFAULT_PT_BRMT", 30),
     pathogen = must_element("OMNI_PT_PATH", 292),
     sterilizer = must_element("OMNI_PT_STER", 293),
     coolant = must_element("OMNI_PT_NCLT", 331),
@@ -24,6 +24,8 @@ local ids = {
     ammonium_chloride = must_element("OMNI_PT_AMCL", 511),
     helium = must_element("OMNI_PT_HE", 370),
 }
+
+local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
 
 local function configure()
     sim.clearSim()
@@ -70,6 +72,7 @@ local function phase_one()
     sim.partProperty(base, "temp", 300.0)
     sim.partProperty(waste, "temp", 1200.0)
     sim.partProperty(scrap, "ctype", ids.aluminium)
+    sim.partProperty(scrap, "tmp4", RECOVERABLE_SCRAP_MARKER)
     sim.partProperty(scrap, "temp", 1200.0)
     sim.partProperty(ammonium_chloride, "temp", 550.0)
     local stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
@@ -93,7 +96,7 @@ local function phase_two()
     assert(stamp and #stamp == 10, "invalid enabled fixture stamp")
 
     local disabled_representatives = {
-        { "OMNI_PT_MSCR", ids.scrap },
+        { "OMNI_PT_ALUM", ids.aluminium },
         { "OMNI_PT_STER", ids.sterilizer },
         { "OMNI_PT_CHLR", ids.chlorine },
         { "OMNI_PT_HCLA", ids.hydrochloric },
@@ -151,7 +154,8 @@ local function phase_two()
             and sim.partProperty(waste, "type") == ids.waste,
         "disabled nuclear particles continued reacting after OPS load")
     assert(sim.partProperty(scrap, "type") == ids.scrap
-            and sim.partProperty(scrap, "ctype") == ids.aluminium,
+            and sim.partProperty(scrap, "ctype") == ids.aluminium
+            and sim.partProperty(scrap, "tmp4") == RECOVERABLE_SCRAP_MARKER,
         "disabled metallurgy scrap continued updating after OPS load")
     local metrics = sim.omniEventMetrics()
     assert(tonumber(metrics.total) == 0,
@@ -160,7 +164,8 @@ local function phase_two()
     return {
         "OMNI_DISABLED_MODULE_PHASE=2",
         "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
-        "OMNI_DISABLED_MODULE_METALLURGY=OMNI_PT_MSCR",
+        "OMNI_DISABLED_MODULE_METALLURGY=OMNI_PT_ALUM",
+        "OMNI_DISABLED_MODULE_SCRAP=DEFAULT_PT_BRMT",
         "OMNI_DISABLED_MODULE_BIOLOGY=OMNI_PT_STER",
         "OMNI_DISABLED_MODULE_CORE=OMNI_PT_CHLR",
         "OMNI_DISABLED_MODULE_EXPANSION=OMNI_PT_HCLA",

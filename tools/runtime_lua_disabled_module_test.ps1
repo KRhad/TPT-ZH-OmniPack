@@ -154,7 +154,8 @@ try {
     $phase2 = Invoke-DisabledModulePhase -Phase 2 -ModulesEnabled $false
     foreach ($required in @(
         "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
-        "OMNI_DISABLED_MODULE_METALLURGY=OMNI_PT_MSCR",
+        "OMNI_DISABLED_MODULE_METALLURGY=OMNI_PT_ALUM",
+        "OMNI_DISABLED_MODULE_SCRAP=DEFAULT_PT_BRMT",
         "OMNI_DISABLED_MODULE_BIOLOGY=OMNI_PT_STER",
         "OMNI_DISABLED_MODULE_CORE=OMNI_PT_CHLR",
         "OMNI_DISABLED_MODULE_EXPANSION=OMNI_PT_HCLA",

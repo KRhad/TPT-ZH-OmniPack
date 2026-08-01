@@ -34,9 +34,12 @@ def check_source(root: Path, errors: list[str]) -> None:
         "packed carried type decoding": "inspectType(TYP(*property));",
         "runtime catalog identity guard": 'record->identifier.starts_with("OMNI_PT_")',
         "disabled module check": (
-            "GetOmniElementSelectionRestriction(type) != "
-            "OmniSelectionRestriction::ModuleDisabled"
+            "restriction == OmniSelectionRestriction::ModuleDisabled"
         ),
+        "compatibility alias module check": (
+            "restriction == OmniSelectionRestriction::CompatibilityAlias"
+        ),
+        "recoverable official carrier": "IsOmniRecoverableScrap(particle)",
     }
     for label, marker in omni_markers.items():
         if marker not in omni:

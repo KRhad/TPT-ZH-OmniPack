@@ -215,6 +215,40 @@ def main(argv: Sequence[str] | None = None) -> int:
         and row.get("implementation_status") == "implemented"
         for row in element_registry_rows
     )
+    compatibility_aliases = sum(
+        row.get("implementation_status") == "implemented"
+        and row.get("is_duplicate") == "true"
+        for row in element_registry_rows
+    )
+    total_omnipack_playable = sum(
+        row.get("identifier", "").startswith("OMNI_PT_")
+        and row.get("implementation_status") == "implemented"
+        and row.get("is_duplicate") != "true"
+        for row in element_registry_rows
+    )
+    total_playable_materials = sum(
+        row.get("implementation_status") == "implemented"
+        and row.get("is_duplicate") != "true"
+        and row.get("default_enabled") == "true"
+        for row in element_registry_rows
+    )
+    periodic_complete = periodic_map_complete and periodic_sourced == 118
+
+    def implemented_in_range(first: int, last: int) -> int:
+        return sum(
+            row.get("implementation_status") == "implemented"
+            and row.get("is_duplicate") != "true"
+            and row.get("stable_id", "").isdigit()
+            and first <= int(row["stable_id"]) <= last
+            for row in element_registry_rows
+        )
+
+    reaction_registry_path = root / "docs/REACTION_REGISTRY.csv"
+    if reaction_registry_path.is_file():
+        with reaction_registry_path.open("r", encoding="utf-8", newline="") as stream:
+            reaction_registry_entries = sum(1 for _ in csv.DictReader(stream))
+    else:
+        reaction_registry_entries = 0
     reaction_by_key = {
         (row["source_mod"], row["source_file"], row["source_identifier"]): row for row in reactions
     }
@@ -321,15 +355,42 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"periodic_source_map_complete={str(periodic_map_complete).lower()}",
         f"periodic_elements_sourced={periodic_sourced}",
         f"periodic_elements_remaining={118 - periodic_sourced if periodic_map_complete else 'not_tested'}",
+        f"periodic_noble_gas_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_alkali_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_alkaline_earth_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_boron_group_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_carbon_group_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_nitrogen_group_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_oxygen_group_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_halogen_group_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_first_transition_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_second_transition_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_third_transition_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_lanthanide_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_actinide_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_superheavy_batch_complete={str(periodic_complete).lower()}",
+        f"periodic_table_ui={str(periodic_complete).lower()}",
         f"total_omnipack_elements={total_omnipack_elements}",
+        f"compatibility_aliases={compatibility_aliases}",
+        f"total_omnipack_playable={total_omnipack_playable}",
+        f"total_playable_materials={total_playable_materials}",
+        f"inorganic_batch1_elements={implemented_in_range(462, 477)}",
+        f"inorganic_batch2_elements={implemented_in_range(478, 493)}",
+        f"inorganic_batch3_elements={implemented_in_range(494, 511)}",
+        f"reaction_registry_entries={reaction_registry_entries}",
         f"clean_build_pass={args.clean_build_pass}",
         f"element_registry_pass={args.element_registry_pass}",
         f"reaction_registry_pass={args.reaction_registry_pass}",
         f"license_audit_pass={args.license_audit_pass}",
+        "first_port_batch_complete=false",
+        "first_port_batch_build_pass=not_tested",
+        "first_port_batch_tests_pass=not_tested",
         "```", "",
         "数值只代表当前克隆集和自动扫描。候选数按标准化名称与代号折叠重复分叉；行为差异仍保留在去重报告中。",
         "`duplicate_definition_records` 是自动拒绝的重复源码定义数，不等于已经人工拒绝的独立材料。",
         "`license_audit_pass=true` 只能由完成逐文件、README、子模块和资源复核后的显式参数写入。",
+        "当前新增 92 个周期元素和无机三批 50 个材料均为 OmniPack 原创族/反应逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`；外部候选只用于确认搜索覆盖，没有复制其实现。`first_port_batch_complete=false` 仍是许可证门禁的真实结果，不能把原创内容批次冒充成已完成第三方移植。",
+        "`OMNI_PT_MSCR=278` 是合并到官方 `DEFAULT_PT_BRMT=30` 的兼容别名；它继续占用稳定槽以读取旧存档，但不计入 `total_omnipack_playable` 或 `total_playable_materials`。",
     ]
     (root / "docs/MOD_EXTRACTION_REPORT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"generate-mod-report: PASS mods={len(mods)} elements={len(catalog_rows)} features={len(feature_rows)}")

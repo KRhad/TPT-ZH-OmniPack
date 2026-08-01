@@ -54,7 +54,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args.quiet:
         print(
             "element-content-audit: PASS "
-            f"({len(records)} implemented OmniPack elements, bilingual content)"
+            f"({len(records)} implemented OmniPack registrations, bilingual content)"
         )
     return 0
 

@@ -35,6 +35,7 @@ local definitions = {
     spark = { "DEFAULT_PT_SPRK", "SPRK", 15 },
     conv = { "DEFAULT_PT_CONV", "CONV", 85 },
     virs = { "DEFAULT_PT_VIRS", "VIRS", 174 },
+    brmt = { "DEFAULT_PT_BRMT", "BRMT", 30 },
 
     hydrogen = { "DEFAULT_PT_H2", "HYGN", 148 },
     lithium = { "DEFAULT_PT_LITH", "LITH", 191 },
@@ -72,7 +73,6 @@ local definitions = {
     slag = { "OMNI_PT_SLAG", "SLAG", 275 },
     flux = { "OMNI_PT_FLUX", "FLUX", 276 },
     cruc = { "OMNI_PT_CRUC", "CRUC", 277 },
-    mscr = { "OMNI_PT_MSCR", "MSCR", 278 },
 
     nutr = { "OMNI_PT_NUTR", "NUTR", 288 },
     alga = { "OMNI_PT_ALGA", "ALGA", 289 },
@@ -253,7 +253,7 @@ local module_keys = {
         "alum", "copr", "lead", "tin", "nicl", "magn", "chrm",
         "cobt", "moly", "zinc", "chrc", "coke", "stel", "brnz",
         "bras", "ssil", "ncrm", "almg", "tstl", "slag", "flux",
-        "cruc", "mscr",
+        "cruc",
     },
     biology = {
         "nutr", "alga", "mycl", "spor", "path", "ster", "hums",
@@ -311,8 +311,11 @@ local module_keys = {
     },
 }
 
-local official_keys = { "dust", "water", "lava", "spark", "conv", "virs" }
-local mixed_keys = { "alum", "mscr", "nutr", "nful", "chlr" }
+local official_keys = {
+    "dust", "water", "lava", "spark", "conv", "virs", "brmt",
+}
+local mixed_keys = { "alum", "nutr", "nful", "chlr" }
+local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
 
 local function must_element(identifier, short_name, stable_id)
     local id = elements[identifier]
@@ -347,9 +350,6 @@ if scenario == "mixed" then
 elseif scenario ~= "official" then
     for _, key in ipairs(module_keys[scenario]) do
         validate_key(key)
-    end
-    if scenario == "periodic" then
-        validate_key("mscr")
     end
 end
 
@@ -426,7 +426,7 @@ local carrier_targets = {
     metallurgy = {
         lava = "alum",
         spark = "stel",
-        mscr = "copr",
+        scrap = "copr",
         conv_ctype = "brnz",
         conv_tmp = "slag",
         virs_tmp2 = "flux",
@@ -455,7 +455,7 @@ local carrier_targets = {
     periodic = {
         lava = "copernicium",
         spark = "roentgenium",
-        mscr = "rutherfordium",
+        scrap = "rutherfordium",
         conv_ctype = "dubnium",
         conv_tmp = "hassium",
         virs_tmp2 = "darmstadtium",
@@ -463,7 +463,7 @@ local carrier_targets = {
     mixed = {
         lava = "alum",
         spark = "nful",
-        mscr = "alum",
+        scrap = "alum",
         conv_ctype = "nful",
         conv_tmp = "nutr",
         virs_tmp2 = "chlr",
@@ -478,9 +478,10 @@ add_fixture("spark_ctype_gt255", "spark", {
     { name = "ctype", element = targets.spark },
     { name = "life", value = 4 },
 }, targets.spark)
-if targets.mscr then
-    add_fixture("mscr_ctype_gt255", "mscr", {
-        { name = "ctype", element = targets.mscr },
+if targets.scrap then
+    add_fixture("brmt_recoverable_ctype_gt255", "brmt", {
+        { name = "ctype", element = targets.scrap },
+        { name = "tmp4", value = RECOVERABLE_SCRAP_MARKER },
     })
 end
 add_fixture("conv_ctype_tmp_gt255", "conv", {
@@ -506,7 +507,7 @@ for _, key in ipairs(validated_keys) do
         definitions[key][1] .. ":" .. ids[key]
 end
 
-local ctype_carriers = targets.mscr and "LAVA,SPRK,MSCR,CONV"
+local ctype_carriers = targets.scrap and "LAVA,SPRK,BRMT,CONV"
     or "LAVA,SPRK,CONV"
 local tmp_carriers = "CONV"
 local tmp2_carriers = "VIRS"

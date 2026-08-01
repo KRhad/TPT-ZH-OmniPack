@@ -1,5 +1,6 @@
 #include "simulation/ElementCommon.h"
 #include "common/Localization.h"
+#include "simulation/OmniMetallurgy.h"
 
 static int update(UPDATE_FUNC_ARGS);
 
@@ -49,6 +50,8 @@ void Element::Element_BRMT()
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	if (IsOmniRecoverableScrap(parts[i]))
+		return OmniMetallurgyScrapUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 	if (parts[i].temp > 523.15f)//250.0f+273.15f
 	{
 		auto tempFactor = int(1000 - ((523.15f-parts[i].temp)*2));

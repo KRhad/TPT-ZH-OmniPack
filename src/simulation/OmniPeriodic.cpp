@@ -1,4 +1,5 @@
 #include "OmniPeriodic.h"
+#include "OmniMetallurgy.h"
 
 #include "ElementCommon.h"
 
@@ -1291,12 +1292,10 @@ bool EmbrittleAluminiumWithGallium(UPDATE_FUNC_ARGS, int sourceType)
 			}
 
 			auto temperature = parts[neighbour].temp;
-			sim->part_change_type(neighbour, x + rx, y + ry, PT_MSCR);
-			ResetReactionProduct(parts[neighbour], PT_MSCR);
-			parts[neighbour].ctype = PT_ALUM;
+			sim->part_change_type(neighbour, x + rx, y + ry, PT_BRMT);
+			ResetReactionProduct(parts[neighbour], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[neighbour], PT_ALUM);
 			parts[neighbour].temp = temperature;
-			parts[neighbour].tmp3 = 0;
-			parts[neighbour].tmp4 = 0;
 			parts[i].temp = std::min(parts[i].temp + 12.0f, MAX_TEMP);
 			return true;
 		}
@@ -1517,9 +1516,9 @@ bool EmbrittleColdTin(UPDATE_FUNC_ARGS, int sourceType)
 	}
 
 	auto temperature = parts[i].temp;
-	sim->part_change_type(i, x, y, PT_MSCR);
-	ResetReactionProduct(parts[i], PT_MSCR);
-	parts[i].ctype = PT_TIN;
+	sim->part_change_type(i, x, y, PT_BRMT);
+	ResetReactionProduct(parts[i], PT_BRMT);
+	MarkOmniRecoverableScrap(parts[i], PT_TIN);
 	parts[i].temp = temperature;
 	return true;
 }
@@ -2471,9 +2470,9 @@ bool OxidiseHotFirstTransition(UPDATE_FUNC_ARGS, int sourceType)
 			auto oxygen = ID(packed);
 			auto temperature = std::min(
 				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = sourceType;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], sourceType);
 			parts[i].temp = temperature;
 			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
 			ResetReactionProduct(parts[oxygen], PT_FIRE);
@@ -2618,9 +2617,9 @@ bool ReactZirconiumWithSteam(UPDATE_FUNC_ARGS, int sourceType)
 			}
 			auto temperature = std::min(
 				std::max(parts[i].temp, parts[water].temp) + 260.0f, MAX_TEMP);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = PT_ZR;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], PT_ZR);
 			parts[i].temp = temperature;
 			sim->part_change_type(water, x + rx, y + ry, PT_H2);
 			ResetReactionProduct(parts[water], PT_H2);
@@ -2771,9 +2770,9 @@ bool TarnishSilverWithSulfur(UPDATE_FUNC_ARGS, int sourceType)
 				continue;
 			}
 			auto sulfur = ID(packed);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = PT_AG;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], PT_AG);
 			parts[i].dcolour = 0xFF303438;
 			sim->part_change_type(sulfur, x + rx, y + ry, PT_DUST);
 			ResetReactionProduct(parts[sulfur], PT_DUST);
@@ -2845,9 +2844,9 @@ bool OxidiseHotSecondTransition(UPDATE_FUNC_ARGS, int sourceType)
 			auto oxygen = ID(packed);
 			auto temperature = std::min(
 				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = sourceType;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], sourceType);
 			parts[i].temp = temperature;
 			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
 			ResetReactionProduct(parts[oxygen], PT_FIRE);
@@ -3211,9 +3210,9 @@ bool OxidiseHotThirdTransition(UPDATE_FUNC_ARGS, int sourceType)
 			auto oxygen = ID(packed);
 			auto temperature = std::min(
 				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = sourceType;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], sourceType);
 			parts[i].temp = temperature;
 			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
 			ResetReactionProduct(parts[oxygen], PT_FIRE);
@@ -3652,9 +3651,9 @@ bool OxidiseHotLanthanide(UPDATE_FUNC_ARGS, int sourceType)
 			auto oxygen = ID(packed);
 			auto temperature = std::min(
 				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = sourceType;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], sourceType);
 			parts[i].temp = temperature;
 			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
 			ResetReactionProduct(parts[oxygen], PT_FIRE);
@@ -3884,9 +3883,9 @@ bool ReactActinideWithAcid(UPDATE_FUNC_ARGS, int sourceType)
 			auto temperature = std::min(
 				std::max(parts[i].temp, parts[acid].temp) +
 					float(properties.reactionHeat), MAX_TEMP);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = sourceType;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], sourceType);
 			sim->part_change_type(acid, x + rx, y + ry, PT_H2);
 			ResetReactionProduct(parts[acid], PT_H2);
 			parts[i].temp = temperature;
@@ -3921,9 +3920,9 @@ bool OxidiseHotActinide(UPDATE_FUNC_ARGS, int sourceType)
 			auto oxygen = ID(packed);
 			auto temperature = std::min(
 				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = sourceType;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], sourceType);
 			parts[i].temp = temperature;
 			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
 			ResetReactionProduct(parts[oxygen], PT_FIRE);
@@ -4087,9 +4086,9 @@ bool ReactSuperheavyWithAcid(UPDATE_FUNC_ARGS, int sourceType)
 			auto temperature = std::min(
 				std::max(parts[i].temp, parts[acid].temp) +
 					float(properties.reactionHeat), MAX_TEMP);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = sourceType;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], sourceType);
 			sim->part_change_type(acid, x + rx, y + ry, PT_H2);
 			ResetReactionProduct(parts[acid], PT_H2);
 			parts[i].temp = temperature;
@@ -4124,9 +4123,9 @@ bool OxidiseHotSuperheavy(UPDATE_FUNC_ARGS, int sourceType)
 			auto oxygen = ID(packed);
 			auto temperature = std::min(
 				parts[i].temp + float(properties.reactionHeat), MAX_TEMP);
-			sim->part_change_type(i, x, y, PT_MSCR);
-			ResetReactionProduct(parts[i], PT_MSCR);
-			parts[i].ctype = sourceType;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			ResetReactionProduct(parts[i], PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], sourceType);
 			parts[i].temp = temperature;
 			sim->part_change_type(oxygen, x + rx, y + ry, PT_FIRE);
 			ResetReactionProduct(parts[oxygen], PT_FIRE);

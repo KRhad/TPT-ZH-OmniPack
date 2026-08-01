@@ -107,7 +107,7 @@ ALNI ALNC TERN MAGX PLTU
 - 原实现是可移动 `TYPE_PART`，本项目使用固定 `TYPE_SOLID`；
 - 原实现用无边界检查的 `±8` 读取模拟低温超导，本项目删除该路径；
 - 原实现每粒子扫描 5×5 邻域，本项目经 `OmniMetallurgyMetalUpdate` 只检查有边界保护的 3×3 邻域；
-- 本项目把氧气、盐水和水造成的腐蚀累积到 `tmp`，最终生成携带 `ctype=COPR` 的 `MSCR`，支持回炉恢复；这是新的兼容/回收设计；
+- 本项目把氧气、盐水和水造成的腐蚀累积到 `tmp`，最终生成携带 `ctype=COPR` 与专用 `tmp4` 标记的官方 `BRMT`，支持回炉恢复；这是新的兼容/回收设计；
 - 铜与锡、锌的 3:1 熔融配方由集中反应表验证，不沿用 Cracker 更新代码。
 
 因此法律与工程标签是“GPL 来源参数/行为适配 + 本项目更新算法重写”，不是“未使用 Cracker”，也不是“逐行复制 Cracker 更新函数”。
@@ -160,7 +160,13 @@ ALNI ALNC TERN MAGX PLTU
 | 275 | `OMNI_PT_SLAG` / `SLAG` | OmniPack 原创工艺副产物 | `src/simulation/elements/SLAG.cpp` |
 | 276 | `OMNI_PT_FLUX` / `FLUX` | OmniPack 原创工艺材料 | `src/simulation/elements/FLUX.cpp` |
 | 277 | `OMNI_PT_CRUC` / `CRUC` | Seppo token/坩埚概念；独立实现 | `src/simulation/elements/CRUC.cpp` |
-| 278 | `OMNI_PT_MSCR` / `MSCR` | OmniPack 原创、携带 `ctype` 的可回收碎料 | `src/simulation/elements/MSCR.cpp` |
+| 278 | `OMNI_PT_MSCR` / `MSCR` | OmniPack 原创旧碎料的隐藏兼容别名；迁移到官方 `BRMT=30`，ID 永不复用 | `src/simulation/elements/MSCR.cpp`、`src/simulation/elements/BRMT.cpp` |
+
+### 官方 BRMT 合并与来源边界
+
+这次合并属于 OmniPack 自身重复内容整理，不是从外部模组复制代码。官方 `BRMT.cpp` 继续使用上游 GPL-3.0 实现及稳定 ID 30；本项目只增加带专用 `tmp4` 标记的来源金属回收分支，并把既有 OmniPack `MSCR` 生产路径改为该 canonical 类型。普通官方 BRMT 不带标记，因此仍按上游 1273 K 相变和 `BRMT+BREC` 逻辑运行。
+
+`MSCR=278` 继续由原文件构造，以便旧 OPS、`CONV/CLNE` 等间接载体和 identifier palette 安全解析；它不出现在菜单和搜索中，也不能由 Lua 直接创建。三进程回归已证明旧粒子迁移后新 OPS 只保存 `DEFAULT_PT_BRMT=30`，同时保留 `ctype/tmp4`。该别名不计入可玩材料或第三方移植数量，稳定 ID 278 永不复用。
 
 ## 化学核心与无机三批来源和实现复核
 
@@ -261,7 +267,7 @@ ALNI ALNC TERN MAGX PLTU
 - `src/simulation/elements/FIRE.cpp`：在官方熔融元素更新中接入合金/炼钢反应；
 - `src/simulation/elements/WOOD.cpp`、`COAL.cpp`：接入坩埚旁缺氧保温的木炭/焦炭生产；
 - `src/simulation/elements/SPRK.cpp`：接入 `NCRM` 电阻发热；
-- `src/simulation/elements/BASE.cpp`：碱液腐蚀自定义金属时改生成 `MSCR` 并保留原 `ctype`；
+- `src/simulation/elements/BASE.cpp`：碱液腐蚀自定义金属时生成带可回收标记的官方 `BRMT` 并保留原 `ctype`；
 - `docs/ELEMENT_REGISTRY.csv`：23 项稳定 ID、双语说明、来源 commit 与兼容状态；
 - `src/lang/en-US.json`、`zh-CN.json`：23 项名称和短说明；
 - `tools/metallurgy_audit.py`、`tools/tests/test_metallurgy_audit.py`：登记、配方、边界和性能门禁；

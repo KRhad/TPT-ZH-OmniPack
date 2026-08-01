@@ -148,13 +148,15 @@ local ids = {
     electron = assert(elements.DEFAULT_PT_ELEC),
     photon = assert(elements.DEFAULT_PT_PHOT),
     polonium = must_element("DEFAULT_PT_POLO", "POLO", 182),
-    scrap = must_element("OMNI_PT_MSCR", "MSCR", 278),
+    scrap = must_element("DEFAULT_PT_BRMT", "BRMT", 30),
     steel = must_element("OMNI_PT_STEL", "STEL", 268),
     tool_steel = must_element("OMNI_PT_TSTL", "TSTL", 274),
     slag = must_element("OMNI_PT_SLAG", "SLAG", 275),
     pathogen = must_element("OMNI_PT_PATH", "PATH", 292),
     peroxide = must_element("OMNI_PT_PERO", "PERO", 368),
 }
+
+local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
 
 local function configure(seed)
     sim.clearSim()
@@ -532,7 +534,8 @@ local function run_alkaline_earth_oxygen_and_phase()
     end
     elements.property(ids.oxygen, "Diffusion", old_diffusion)
     elements.property(ids.oxygen, "Advection", old_advection)
-    assert(sim.partProperty(magnesium, "type") == ids.scrap,
+    assert(sim.partProperty(magnesium, "type") == ids.scrap
+            and sim.partProperty(magnesium, "tmp4") == RECOVERABLE_SCRAP_MARKER,
         "reused magnesium no longer burns to typed recoverable scrap")
     assert(not sim.partExists(oxygen)
             or sim.partProperty(oxygen, "type") ~= ids.oxygen,
@@ -599,7 +602,8 @@ local function run_boron_group_reactions()
     aluminium = make(ids.aluminium, 121, 120, 293.15)
     step()
     assert(sim.partProperty(aluminium, "type") == ids.scrap
-            and sim.partProperty(aluminium, "ctype") == ids.aluminium,
+            and sim.partProperty(aluminium, "ctype") == ids.aluminium
+            and sim.partProperty(aluminium, "tmp4") == RECOVERABLE_SCRAP_MARKER,
         "liquid gallium did not embrittle aluminium into typed scrap")
     assert(sim.partExists(gallium),
         "gallium catalyst was incorrectly consumed by aluminium embrittlement")
@@ -674,7 +678,8 @@ local function run_carbon_group_reactions()
     local tin = make(ids.tin, 120, 120, 250.0)
     step(120)
     assert(sim.partProperty(tin, "type") == ids.scrap
-            and sim.partProperty(tin, "ctype") == ids.tin,
+            and sim.partProperty(tin, "ctype") == ids.tin
+            and sim.partProperty(tin, "tmp4") == RECOVERABLE_SCRAP_MARKER,
         "prolonged cold tin did not become recoverable typed brittle scrap")
 
     configure(501)

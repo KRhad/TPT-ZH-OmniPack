@@ -17,6 +17,9 @@ local ids = {
     wood = assert(elements.DEFAULT_PT_WOOD),
     coal = assert(elements.DEFAULT_PT_COAL),
     co2 = assert(elements.DEFAULT_PT_CO2),
+    brmt = assert(elements.DEFAULT_PT_BRMT),
+    dust = assert(elements.DEFAULT_PT_DUST),
+    conv = assert(elements.DEFAULT_PT_CONV),
     alum = must_element("OMNI_PT_ALUM", "ALUM"),
     copr = must_element("OMNI_PT_COPR", "COPR"),
     lead = must_element("OMNI_PT_LEAD", "LEAD"),
@@ -39,9 +42,11 @@ local ids = {
     slag = must_element("OMNI_PT_SLAG", "SLAG"),
     flux = must_element("OMNI_PT_FLUX", "FLUX"),
     cruc = must_element("OMNI_PT_CRUC", "CRUC"),
-    mscr = must_element("OMNI_PT_MSCR", "MSCR"),
+    legacy_mscr = must_element("OMNI_PT_MSCR", "MSCR"),
     rshd = must_element("OMNI_PT_RSHD", "RSHD"),
 }
+
+local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
 
 local positions = {
     { 0, 0 }, { 1, 0 }, { 0, 1 }, { -1, 0 },
@@ -222,8 +227,9 @@ local function run_material_behaviors()
     sim.updateUpTo()
     local soft_type = sim.partProperty(soft, "type")
     local soft_ctype = sim.partProperty(soft, "ctype")
-    assert(sim.partProperty(soft, "type") == ids.mscr
-        and sim.partProperty(soft, "ctype") == ids.alum,
+    assert(sim.partProperty(soft, "type") == ids.brmt
+        and sim.partProperty(soft, "ctype") == ids.alum
+        and sim.partProperty(soft, "tmp4") == RECOVERABLE_SCRAP_MARKER,
         "soft aluminium did not preserve its type as pressure scrap; type="
         .. tostring(soft_type) .. " ctype=" .. tostring(soft_ctype)
         .. " pressure=" .. tostring(sim.pressure(30, 30)))
@@ -231,14 +237,38 @@ local function run_material_behaviors()
         "tool steel failed the differentiated pressure threshold")
 
     configure_simulation()
-    local scrap = sim.partCreate(-1, 120, 120, ids.mscr)
+    local scrap = sim.partCreate(-1, 120, 120, ids.brmt)
     assert(scrap >= 0, "scrap recycling setup failed")
     sim.partProperty(scrap, "ctype", ids.copr)
+    sim.partProperty(scrap, "tmp4", RECOVERABLE_SCRAP_MARKER)
     sim.partProperty(scrap, "temp", 1600.0)
     sim.updateUpTo()
     assert(sim.partProperty(scrap, "type") == ids.lava
         and sim.partProperty(scrap, "ctype") == ids.copr,
-        "MSCR did not restore its recorded metal as molten ctype")
+        "enhanced BRMT did not restore its recorded metal as molten ctype")
+
+    local alias_ok = pcall(
+        sim.partCreate, -1, 124, 120, ids.legacy_mscr)
+    assert(not alias_ok,
+        "legacy MSCR compatibility alias remained directly creatable")
+    assert(elements.property(ids.legacy_mscr, "MenuVisible") == 0,
+        "legacy MSCR compatibility alias remained visible")
+
+    configure_simulation()
+    local converted = sim.partCreate(-1, 121, 120, ids.dust)
+    local converter = sim.partCreate(-1, 120, 120, ids.conv)
+    assert(converted >= 0 and converter >= 0,
+        "legacy carried-type migration setup failed")
+    sim.partProperty(converter, "ctype", ids.legacy_mscr)
+    sim.updateUpTo()
+    assert(sim.partProperty(converted, "type") == ids.legacy_mscr,
+        "official CONV did not resolve the legacy carried type internally")
+    sim.partKill(converter)
+    sim.updateUpTo()
+    assert(sim.partProperty(converted, "type") == ids.brmt
+            and sim.partProperty(converted, "ctype") == ids.iron
+            and sim.partProperty(converted, "tmp4") == RECOVERABLE_SCRAP_MARKER,
+        "legacy carried MSCR did not migrate to canonical recoverable BRMT")
 
     configure_simulation()
     local oxygen_diffusion = elements.property(ids.oxygen, "Diffusion")
@@ -250,13 +280,14 @@ local function run_material_behaviors()
     sim.partProperty(oxygen, "temp", 850.0)
     for _ = 1, 120 do
         sim.updateUpTo()
-        if sim.partProperty(magnesium, "type") == ids.mscr then
+        if sim.partProperty(magnesium, "type") == ids.brmt then
             break
         end
     end
     elements.property(ids.oxygen, "Diffusion", oxygen_diffusion)
-    assert(sim.partProperty(magnesium, "type") == ids.mscr
-        and sim.partProperty(magnesium, "ctype") == ids.magn,
+    assert(sim.partProperty(magnesium, "type") == ids.brmt
+        and sim.partProperty(magnesium, "ctype") == ids.magn
+        and sim.partProperty(magnesium, "tmp4") == RECOVERABLE_SCRAP_MARKER,
         "hot magnesium did not burn into recoverable magnesium scrap")
 
     configure_simulation()
@@ -348,7 +379,9 @@ if ok then
     report:write("OMNI_METALLURGY_RECIPES=8\n")
     report:write("OMNI_METALLURGY_BEHAVIORS=5\n")
     report:write(
-        "OMNI_METALLURGY_IDS=" .. ids.alum .. "-" .. ids.mscr .. "\n")
+        "OMNI_METALLURGY_IDS=" .. ids.alum .. "-" .. ids.cruc .. "\n")
+    report:write("OMNI_METALLURGY_CANONICAL_SCRAP=" .. ids.brmt .. "\n")
+    report:write("OMNI_METALLURGY_LEGACY_ALIAS=" .. ids.legacy_mscr .. "\n")
     report:write(
         "OMNI_METALLURGY_FRAMES="
         .. data.brnz .. "," .. data.bras .. "," .. data.ncrm .. ","

@@ -7,7 +7,9 @@ void Element::Element_MSCR()
 	Identifier = "OMNI_PT_MSCR";
 	Name = "MSCR";
 	Colour = 0x55585B_rgb;
-	MenuVisible = 1;
+	// Compatibility alias only. New placement and search resolve to the
+	// canonical official BRMT implementation.
+	MenuVisible = 0;
 	MenuSection = SC_POWDERS;
 	Enabled = 1;
 
@@ -41,5 +43,5 @@ void Element::Element_MSCR()
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
 
-	Update = &OmniMetallurgyScrapUpdate;
+	Update = &OmniMetallurgyLegacyScrapAliasUpdate;
 }

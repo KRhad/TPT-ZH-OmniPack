@@ -16,7 +16,9 @@ periodic_elements_implemented=118
 periodic_elements_planned=0
 periodic_new_elements_active=92
 inorganic_expansion_ids=462..511
-active_element_slots=385
+engine_active_element_slots=385
+compatibility_aliases=1
+playable_materials=384
 registered_element_slots=512
 periodic_source_map_valid=true
 pt_num_expansion_required_for_current_content=false
@@ -41,11 +43,11 @@ Lua 分配器先从 255 向下寻找禁用槽，只有该区域耗尽后才从 5
 
 ## 容量
 
-全部 92 个新增周期元素和 50 个无机材料完成后，当前活动元素为 `385`；`494..511` 已由第三批占满，现有冶金、生物和核工业保留区仍分别有 9、32 和 25 个槽，但这些槽带有既有模块所有权，不能未经审计改作跨族通用内容。下一批开始前必须形成独立的 `PT_NUM/PMAPBITS/OPS/Lua` 扩容决策，核对 OPS 第二类型字节、palette、`ctype/tmp/tmp2`、Lua API、菜单、网络存档和 `can_move` 内存开销；在决策完成前不得分配 `512+` 或覆盖任何旧槽。
+全部 92 个新增周期元素和 50 个无机材料完成后，引擎活动槽为 `385`，其中 `MSCR=278` 是兼容别名，实际可玩材料为 `384`。278 为了旧 OPS 和间接载体永久保留，合并到官方 `BRMT=30` 不会释放新 ID。`494..511` 已由第三批占满，现有冶金、生物和核工业保留区仍分别有 9、32 和 25 个槽，但这些槽带有既有模块所有权，不能未经审计改作跨族通用内容。下一批开始前必须形成独立的 `PT_NUM/PMAPBITS/OPS/Lua` 扩容决策，核对 OPS 第二类型字节、palette、`ctype/tmp/tmp2/tmp4`、Lua API、菜单、网络存档和 `can_move` 内存开销；在决策完成前不得分配 `512+` 或覆盖任何旧槽。
 
 ## 仍需实测
 
-- 92 个新周期直接类型及全部 118 个周期映射已在同图 OPS 中完成三进程双往返，`LAVA/SPRK/MSCR/CONV/VIRS` 携带字段同时通过；
+- 92 个新周期直接类型及全部 118 个周期映射已在同图 OPS 中完成三进程双往返，`LAVA/SPRK/BRMT/CONV/VIRS` 携带字段同时通过；
 - 缺失 identifier 的实际 GUI 提示与外部网络保存服务路径；
 - Lua 动态元素与已启用周期元素同时存在时的分配及重载；
 - 网络保存服务与 GUI `.cps` 路径；

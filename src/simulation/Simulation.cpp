@@ -5,6 +5,7 @@
 #include "gravity/Gravity.h"
 #include "ToolClasses.h"
 #include "SimulationData.h"
+#include "OmniMetallurgy.h"
 #include "client/GameSave.h"
 #include "common/tpt-rand.h"
 #include "common/Defer.h"
@@ -2558,8 +2559,15 @@ bool SimulationImpl::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 				}
 				else if (t == PT_BRMT)
 				{
+					if (IsOmniRecoverableScrap(parts[i]))
+					{
+						// The metallurgy update uses the recorded source metal's
+						// melting point. Do not let generic BRMT's 1273 K fallback
+						// erase the carried type first.
+						s = 0;
+					}
 					//@ BRMT(TUNG) -> LAVA(TUNG)
-					if (parts[i].ctype == PT_TUNG)
+					else if (parts[i].ctype == PT_TUNG)
 					{
 						if (ctemph < elements[parts[i].ctype].HighTemperature)
 							s = 0;

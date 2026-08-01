@@ -224,11 +224,11 @@ bool BreakIntoScrap(
 	}
 	auto sourceType = parts[i].type;
 	auto temperature = parts[i].temp;
-	if (sim->part_change_type(i, x, y, PT_MSCR))
+	if (sim->part_change_type(i, x, y, PT_BRMT))
 	{
 		return true;
 	}
-	parts[i].ctype = sourceType;
+	MarkOmniRecoverableScrap(parts[i], sourceType);
 	parts[i].temp = temperature;
 	return true;
 }
@@ -238,6 +238,18 @@ void ResetMoltenMetadata(Particle &part)
 	part.tmp = 0;
 	part.tmp2 = 0;
 	part.life = std::max(part.life, 20);
+}
+
+bool IsRecoverableSourceType(int type)
+{
+	return BreakPressureFor(type) > 0.0f
+		|| type == PT_SC || type == PT_V || type == PT_MN
+		|| type == PT_Y || type == PT_ZR || type == PT_NB || type == PT_TC
+		|| type == PT_RU || type == PT_RH || type == PT_PD || type == PT_AG
+		|| type == PT_CD || type == PT_HF || type == PT_RE || type == PT_IR
+		|| (type >= PT_LA && type <= PT_LU)
+		|| (type >= PT_AC && type <= PT_LR)
+		|| (type >= PT_RF && type <= PT_CN);
 }
 
 bool ConsumeReactionBudget(Simulation *sim)
@@ -529,6 +541,21 @@ bool TrySteelRecipe(
 }
 }
 
+bool IsOmniRecoverableScrap(Particle const &particle)
+{
+	return particle.type == PT_BRMT && particle.tmp4 == OmniRecoverableScrapMarker;
+}
+
+void MarkOmniRecoverableScrap(Particle &particle, int sourceType)
+{
+	particle.life = 0;
+	particle.ctype = IsRecoverableSourceType(sourceType) ? sourceType : PT_IRON;
+	particle.tmp = 0;
+	particle.tmp2 = 0;
+	particle.tmp3 = 0;
+	particle.tmp4 = OmniRecoverableScrapMarker;
+}
+
 int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 {
 	if (!MetallurgyModuleEnabled(sim))
@@ -562,9 +589,8 @@ int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 			}
 			if (parts[i].tmp >= 100)
 			{
-				sim->part_change_type(i, x, y, PT_MSCR);
-				parts[i].ctype = PT_COPR;
-				parts[i].tmp = 0;
+				sim->part_change_type(i, x, y, PT_BRMT);
+				MarkOmniRecoverableScrap(parts[i], PT_COPR);
 				return 1;
 			}
 		}
@@ -587,10 +613,9 @@ int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 					parts[flame].life = 80;
 					parts[flame].dcolour = 0xFFFFFFFF;
 				}
-				sim->part_change_type(i, x, y, PT_MSCR);
-				parts[i].ctype = PT_MAGN;
+				sim->part_change_type(i, x, y, PT_BRMT);
+				MarkOmniRecoverableScrap(parts[i], PT_MAGN);
 				parts[i].temp = 2200.0f;
-				parts[i].tmp = 0;
 				return 1;
 			}
 		}
@@ -611,9 +636,8 @@ int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 			parts[i].tmp = std::min(parts[i].tmp + 1, 100);
 			if (parts[i].tmp >= 100)
 			{
-				sim->part_change_type(i, x, y, PT_MSCR);
-				parts[i].ctype = PT_ZINC;
-				parts[i].tmp = 0;
+				sim->part_change_type(i, x, y, PT_BRMT);
+				MarkOmniRecoverableScrap(parts[i], PT_ZINC);
 				return 1;
 			}
 		}
@@ -627,10 +651,10 @@ int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 
 int OmniMetallurgyScrapUpdate(UPDATE_FUNC_ARGS)
 {
-	if (!MetallurgyModuleEnabled(sim))
+	if (!MetallurgyModuleEnabled(sim) || !IsOmniRecoverableScrap(parts[i]))
 		return 0;
 	auto sourceType = parts[i].ctype;
-	if (BreakPressureFor(sourceType) <= 0.0f)
+	if (!IsRecoverableSourceType(sourceType))
 	{
 		parts[i].ctype = PT_IRON;
 		sourceType = PT_IRON;
@@ -648,6 +672,23 @@ int OmniMetallurgyScrapUpdate(UPDATE_FUNC_ARGS)
 	parts[i].life = 30;
 	parts[i].tmp = 0;
 	parts[i].tmp2 = 0;
+	parts[i].tmp3 = 0;
+	parts[i].tmp4 = 0;
+	return 1;
+}
+
+int OmniMetallurgyLegacyScrapAliasUpdate(UPDATE_FUNC_ARGS)
+{
+	if (!MetallurgyModuleEnabled(sim) || parts[i].type != PT_MSCR)
+		return 0;
+	auto sourceType = parts[i].ctype;
+	auto temperature = parts[i].temp;
+	auto dcolour = parts[i].dcolour;
+	if (sim->part_change_type(i, x, y, PT_BRMT))
+		return 1;
+	MarkOmniRecoverableScrap(parts[i], sourceType);
+	parts[i].temp = temperature;
+	parts[i].dcolour = dcolour;
 	return 1;
 }
 
