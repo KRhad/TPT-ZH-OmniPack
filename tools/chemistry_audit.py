@@ -54,6 +54,45 @@ EXPECTED_ELEMENTS = {
     491: "FEOX",
     492: "CUOX",
     493: "ZNOX",
+    494: "SUTR",
+    495: "NIMO",
+    496: "TIOX",
+    497: "UROX",
+    498: "CAPH",
+    499: "FESF",
+    500: "NASD",
+    501: "HYCN",
+    502: "CACB",
+    503: "SICB",
+    504: "BORN",
+    505: "SINT",
+    506: "NAHY",
+    507: "CAHY",
+    508: "ALCL",
+    509: "MGCL",
+    510: "CUCL",
+    511: "AMCL",
+}
+
+EXPECTED_BATCH3_COMPOUNDS = {
+    494: ("OMNI_PT_SUTR", "SO3"),
+    495: ("OMNI_PT_NIMO", "NO"),
+    496: ("OMNI_PT_TIOX", "TiO2"),
+    497: ("OMNI_PT_UROX", "UO2"),
+    498: ("OMNI_PT_CAPH", "Ca3(PO4)2"),
+    499: ("OMNI_PT_FESF", "FeS"),
+    500: ("OMNI_PT_NASD", "Na2S"),
+    501: ("OMNI_PT_HYCN", "HCN"),
+    502: ("OMNI_PT_CACB", "CaC2"),
+    503: ("OMNI_PT_SICB", "SiC"),
+    504: ("OMNI_PT_BORN", "BN"),
+    505: ("OMNI_PT_SINT", "Si3N4"),
+    506: ("OMNI_PT_NAHY", "NaH"),
+    507: ("OMNI_PT_CAHY", "CaH2"),
+    508: ("OMNI_PT_ALCL", "AlCl3"),
+    509: ("OMNI_PT_MGCL", "MgCl2"),
+    510: ("OMNI_PT_CUCL", "CuCl2"),
+    511: ("OMNI_PT_AMCL", "NH4Cl"),
 }
 
 
@@ -100,6 +139,42 @@ def check_registry(root: Path, errors: list[str]) -> None:
                 )
 
 
+def check_compound_registry(root: Path, errors: list[str]) -> None:
+    path = root / "docs" / "COMPOUND_REGISTRY.csv"
+    try:
+        with path.open("r", encoding="utf-8", newline="") as stream:
+            rows = list(csv.DictReader(stream))
+    except (OSError, csv.Error) as exc:
+        errors.append(f"{path}: cannot read compound registry: {exc}")
+        return
+    by_id: dict[int, dict[str, str]] = {}
+    for row in rows:
+        try:
+            stable_id = int(row.get("stable_id", ""))
+        except ValueError:
+            continue
+        if stable_id in by_id:
+            errors.append(f"{path}: duplicate compound stable ID {stable_id}")
+        by_id[stable_id] = row
+    for stable_id, (identifier, formula) in EXPECTED_BATCH3_COMPOUNDS.items():
+        row = by_id.get(stable_id)
+        if row is None:
+            errors.append(f"{path}: missing batch 3 compound stable ID {stable_id}")
+            continue
+        expected = {
+            "identifier": identifier,
+            "formula": formula,
+            "status": "implemented",
+            "source_mapping": identifier,
+        }
+        for field, value in expected.items():
+            if row.get(field) != value:
+                errors.append(
+                    f"{path}: ID {stable_id} {field}={row.get(field)!r}; "
+                    f"expected {value!r}"
+                )
+
+
 def check_engine(root: Path, errors: list[str]) -> None:
     engine = root / "src" / "simulation" / "OmniChemistry.cpp"
     text = read_text(engine, errors)
@@ -128,6 +203,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "inorganic base network": "InorganicBaseNetwork",
         "inorganic salt network": "InorganicSaltNetwork",
         "inorganic gas network": "InorganicGasNetwork",
+        "inorganic ceramic network": "InorganicCeramicNetwork",
+        "shared catalytic pair synthesis": "CatalyticPairSynthesis",
         "exact hydrochloric acid output": "PT_HCLA",
         "hydrofluoric silica corrosion": "PT_QRTZ",
         "lime cycle": "PT_CAOX",
@@ -148,6 +225,17 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "typed oxide reduction": "OxideReductionProduct",
         "sodium carbonate product": "PT_NACO",
         "barium hydroxide product": "PT_BAOH",
+        "sulfur trioxide cycle": "PT_SUTR",
+        "nitric oxide cycle": "PT_NIMO",
+        "uranium oxide reduction": "PT_UROX",
+        "calcium phosphate integration": "PT_CAPH",
+        "bounded cyanide cleanup": "PT_HYCN",
+        "carbide synthesis": "PT_CACB",
+        "nitride synthesis": "PT_BORN",
+        "pressurised hydride synthesis": "PT_NAHY",
+        "typed chloride synthesis": "PT_ALCL",
+        "copper chloride displacement": "PT_CUCL",
+        "ammonium chloride release": "PT_AMCL",
     }
     for label, marker in required_markers.items():
         if marker not in text:
@@ -180,6 +268,7 @@ def check_engine(root: Path, errors: list[str]) -> None:
 def audit(root: Path) -> list[str]:
     errors: list[str] = []
     check_registry(root, errors)
+    check_compound_registry(root, errors)
     check_engine(root, errors)
     return errors
 
@@ -206,7 +295,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"chemistry-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("chemistry-audit: PASS (42 elements, 42 bounded process/integration paths, 3x3 local)")
+        print("chemistry-audit: PASS (60 elements, 55 bounded process/integration markers, 3x3 local)")
     return 0
 
 

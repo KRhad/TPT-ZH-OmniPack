@@ -15,18 +15,19 @@ periodic_new_id_last=461
 periodic_elements_implemented=118
 periodic_elements_planned=0
 periodic_new_elements_active=92
-inorganic_expansion_ids=462..493
-active_element_slots=367
-registered_element_slots=494
+inorganic_expansion_ids=462..511
+active_element_slots=385
+registered_element_slots=512
 periodic_source_map_valid=true
-pt_num_expansion_required=false
+pt_num_expansion_required_for_current_content=false
+next_batch_capacity_decision_required=true
 ```
 
 ## 分配结论
 
 原子序数不等于内部 ID。`docs/PERIODIC_ELEMENT_SOURCE_MAP.csv` 是 118 行的不可变映射：能代表真实纯元素的官方或 OmniPack 实现保留原 ID，其余元素按原子序数遍历后的缺失顺序固定到 `370..461`。泛化 `METL`、泛化 `NBLE`、化合物 `DEUT` 和只有低温相但缺少常温相的 `LNTG` 不被虚报为完整纯元素映射。
 
-`370..461` 已全部显式登记并启用为周期表固定区。`370..433` 保留前十二批映射，`434..446` 为新增锕系，`447..455` 依次为 `RF/DB/SG/BH/HS/MT/DS/RG/CN`，`456..461` 为 `NH/FL/MC/LV/TS/OG`；固定区当前无保留空槽。无机两批随后固定使用 `462..493`，没有覆盖周期区、既有模块空槽或 Lua 首选动态空间；后续连续内容区从 `494` 开始。既有 `CHLR=360`、`MAGN=261`、`ALUM=256`、`TIN=259`、`LEAD=258`、`CHRM=262`、`COBT=263`、`NICL=260`、`COPR=257`、`MOLY=264`、`ZINC=265` 和官方 `URAN=32`、`PLUT=19`、`TTAN=144`、`TUNG=171`、`PTNM=188`、`GOLD=170`、`MERC=152`、`IRON=76`、`DMND=28`、`SLCN=187`、`O2=61`、`POLO=182` 继续复用且 ID 不变。自动化回归只复用这些既有 identifier，不为同一纯元素分配第二个稳定 ID。
+`370..461` 已全部显式登记并启用为周期表固定区。`370..433` 保留前十二批映射，`434..446` 为新增锕系，`447..455` 依次为 `RF/DB/SG/BH/HS/MT/DS/RG/CN`，`456..461` 为 `NH/FL/MC/LV/TS/OG`；固定区当前无保留空槽。无机三批随后固定使用 `462..511`，没有覆盖周期区、既有模块空槽或 Lua 首选动态空间；高位连续内容区现已占满。既有 `CHLR=360`、`MAGN=261`、`ALUM=256`、`TIN=259`、`LEAD=258`、`CHRM=262`、`COBT=263`、`NICL=260`、`COPR=257`、`MOLY=264`、`ZINC=265` 和官方 `URAN=32`、`PLUT=19`、`TTAN=144`、`TUNG=171`、`PTNM=188`、`GOLD=170`、`MERC=152`、`IRON=76`、`DMND=28`、`SLCN=187`、`O2=61`、`POLO=182` 继续复用且 ID 不变。自动化回归只复用这些既有 identifier，不为同一纯元素分配第二个稳定 ID。
 
 ## OPS 与间接字段
 
@@ -40,7 +41,7 @@ Lua 分配器先从 255 向下寻找禁用槽，只有该区域耗尽后才从 5
 
 ## 容量
 
-全部 92 个新增周期元素和 32 个无机材料完成后，当前活动元素为 `367`；`494..511` 仍有 18 个连续槽，现有冶金、生物和核工业区还分别有 9、32 和 25 个空槽。项目稳定区合计仍可再容纳 84 个活动材料，理论活动上限为 451；达到这一边界前必须优先去重和评估存档架构，不能擅自扩大 `PT_NUM` 或 `PMAPBITS`。
+全部 92 个新增周期元素和 50 个无机材料完成后，当前活动元素为 `385`；`494..511` 已由第三批占满，现有冶金、生物和核工业保留区仍分别有 9、32 和 25 个槽，但这些槽带有既有模块所有权，不能未经审计改作跨族通用内容。下一批开始前必须形成独立的 `PT_NUM/PMAPBITS/OPS/Lua` 扩容决策，核对 OPS 第二类型字节、palette、`ctype/tmp/tmp2`、Lua API、菜单、网络存档和 `can_move` 内存开销；在决策完成前不得分配 `512+` 或覆盖任何旧槽。
 
 ## 仍需实测
 

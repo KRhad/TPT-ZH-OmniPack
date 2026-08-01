@@ -108,6 +108,12 @@ assert(carbonic == 478,
 ui.activeTool(0, "OMNI_PT_CARA")
 assert(ui.activeTool(0) == "OMNI_PT_CARA",
     "enabled second-batch inorganic content was blocked by its module gate")
+local ammonium_chloride = assert(elements.OMNI_PT_AMCL)
+assert(ammonium_chloride == 511,
+    "third inorganic batch stable ID changed: " .. tostring(ammonium_chloride))
+ui.activeTool(0, "OMNI_PT_AMCL")
+assert(ui.activeTool(0) == "OMNI_PT_AMCL",
+    "enabled third-batch inorganic content was blocked by its module gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
 assert(id == 255, "expected first runtime Lua element in reserved slot 255, got " .. tostring(id))
@@ -144,4 +150,5 @@ report:write("OMNI_PERIODIC_ACTINIDE_ACTIVE=OMNI_PT_AC\n")
 report:write("OMNI_PERIODIC_SUPERHEAVY_ACTIVE=OMNI_PT_RF\n")
 report:write("OMNI_INORGANIC_ACTIVE=OMNI_PT_HCLA\n")
 report:write("OMNI_INORGANIC_BATCH2_ACTIVE=OMNI_PT_CARA\n")
+report:write("OMNI_INORGANIC_BATCH3_ACTIVE=OMNI_PT_AMCL\n")
 report:close()

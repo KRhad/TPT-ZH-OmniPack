@@ -21,19 +21,21 @@ periodic_actinide_base_commit=54411e08b8215638f403c9bc181afb48d9ca5ea5
 periodic_superheavy_base_commit=518dd9a4d5cbb874281635f7e7552b1ce14050ee
 inorganic_batch1_worktree_base=8abe277e1cac49bac4654da89c5271c19bf1e827
 inorganic_batch2_worktree_base=7eed94db5fbe81a95315cfac29cf142af1b18d6a
+inorganic_batch3_worktree_base=0eb4e11dd41fe4da72b8f8a1db65fa07a77898b1
 pt_num=512
 pmapbits=9
 official_active_elements=195
-omnipack_active_elements=172
-total_active_elements=367
-registered_slots=494
+omnipack_active_elements=190
+total_active_elements=385
+registered_slots=512
 reserved_slots=127
 enabled_content_modules=4
 periodic_elements_placeable=118
 periodic_elements_remaining=0
 inorganic_batch1_elements=16
 inorganic_batch2_elements=16
-reaction_registry_entries=166
+inorganic_batch3_elements=18
+reaction_registry_entries=190
 total_playable_materials_minimum=true
 periodic_table_ui=true
 save_format=OPS1/BZip2
@@ -100,6 +102,20 @@ release_ready=false
 - 全新 `build-inorganic-batch2-final-clean` Release 构建 `637/637`、Meson static `21/21`、Python 160 项（158 PASS、2 SKIP、0 FAIL）通过；EXE 为 290,240,495 字节，SHA-256 `C42AF0C961AA8C1D5645D32BAEC0A587CF704663C33D0427AC40B9C28A624EB7`；
 - 该 EXE 使用 `release` 优化但 `debug=true`、`strip=false`，仅是开发证据；正式 600 秒压力、两小时长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
 
+## Phase 4：无机化学第三批
+
+- 固定 `SUTR..AMCL=494..511` 共 18 个可直接放置材料，覆盖三氧化硫、一氧化氮、二氧化钛、二氧化铀、磷酸钙、两种硫化物、氰化氢、两种碳化物、两种氮化物、两种氢化物和四种精确氯化物；既有 ID 不移动；
+- `OmniChemistry.cpp` 加入硫/氮氧化物循环、过氧化物钛铀氧化、铀氧化物高温还原、硫化物遇酸放气、湿植物利用磷酸盐、碳化钙/氢化物水解、氯化物水解与置换、碳化硅高温氧化，以及九条数据共享式通电催化合成；所有成功事件继续使用 3×3 邻域与共享 `1536/frame` 预算；
+- `SPRK(CATA)` 在有界化学反应成功时先完成反应再返回，避免通用点火在同一帧抢先把氢化物原料变成 `FIRE`；旧化学、冶金、生态、核工业和周期运行回归均通过；
+- 登记门禁为 512 槽、385 活动、127 保留；内容门禁确认 190 个 OmniPack 元素双语完整，i18n 为 `1582/1582`，反应登记为 190 条，化合物登记对第三批公式/ID/identifier 进行 fail-closed 校验；
+- 真实客户端化学回归为 `PATHS=90`、`ELEMENTS=60`、`INORGANIC_ELEMENTS=50`、`BATCH3_IDS=494-511`，预算压力帧事件恰为 1536；模块直选确认最高 ID `AMCL=511` 可用；
+- 化学 OPS 为 3 进程、2 重启、2 加载、66 粒子、每次加载 74 字段断言和 66 个稳定/调色板 identifier；六类合计 254 粒子、304 字段断言和 253 identifier；mixed OPS 保持 11 粒子、20 字段断言；
+- 四模块禁用两进程 OPS 回归保留 9 个粒子，其中 `AMCL=511` 在模块关闭后不丢失、不热分解且拒绝选择/创建；总 Omni 事件为 0；
+- 新增中文字符 `氰/盒/矿` 后按固定 Fusion 来源重建字体：14,747 字形、2,711 必需字符、Fusion 1,957、Unifont 回退 0、SHA-256 `855A77A8C38734A1045910DC57DA56AD081D9981DC405D7FAF040AB3A1FB2F8D`；来源解码、覆盖和离屏渲染通过，人工新字形视觉为 `not_tested`；
+- 全新 `build-inorganic-batch3-final-clean` Release 构建 `655/655`、Meson static `21/21`、Python `162/162`（0 skip）通过；最终 EXE 为 296,047,216 字节，SHA-256 `C89B942EB67A6A78C3E8B1E94CFAB52EBDA0CC7CD1E6932D06118D4ED338C58E`；
+- 最终 EXE 已复跑冶金、化学、完整/简化生态、核工业、周期、模块直选、四模块禁用、六类与 mixed OPS；0.2/0.3 开发样例在系统临时目录隔离生成和验证，仓库内旧 `omniAlchemy` 兼容样本保持原字节；
+- 该 EXE 使用 `release` 优化但 `debug=true`、`strip=false`，仅是开发证据；正式 600 秒压力、两小时长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
+
 ## Phase 1：纯沙盒方向清理
 
 - 删除玩家炼金服务、十阶段进度、元素发现锁、进度窗口和通知；
@@ -110,14 +126,14 @@ release_ready=false
 - 删除五个没有实际内容的玩家设置入口，稳定 ID 区间不变；
 - 新增两个真实旧 OPS 的忽略字段/重存兼容探针；
 - 图鉴正文新增“元素说明 / Element description”标签；
-- 当前 12px 字体：14,744 字形、2,708 个语言与周期表必需字符、SHA-256 `B10BE53C1678B20FD85B61E4156D2A1A45824F2FB81863FA747289808487C835`；补充平面字符的 UTF-8 往返和完整语言包离屏渲染已通过；
+- 当前 12px 字体：14,747 字形、2,711 个语言与周期表必需字符、SHA-256 `855A77A8C38734A1045910DC57DA56AD081D9981DC405D7FAF040AB3A1FB2F8D`；补充平面字符的 UTF-8 往返和完整语言包离屏渲染已通过；
 - 全新 Release clean build `509/509` 通过，EXE SHA-256 `CAC60B021E92E46C232B8DEF07126BE8CF2F791BDE1722550C341AA02D3A05C4`；Meson static `18/18`、Python `124/124`、0 skip。
 - 当前四模块及完整/简化生态 Lua 回归 `6/6`；0.2 反应样例 `7/7`、回归场景 `8/8`；自动化场景 `9/9`、工程断言组 `6/6`、95 断言、停止增量 0。
 - 官方与四模块 OPS `5/5`：15 个进程、10 次重启、10 次加载、79 粒子、每次加载合计 120 个字段断言。
 
 ## 下一步
 
-1. 继续无机化学后续批次，补齐剩余酸、碱、盐、氧化物和常见工业无机物，并保持 `494..511` 稳定分配审计；
+1. 在继续任何材料批次前完成 `PT_NUM/PMAPBITS/OPS/Lua` 独立扩容审计；`494..511` 已占满，禁止覆盖旧槽或未经决策分配 `512+`；
 2. 为完整 118 元素执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
 3. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
 4. 保持 `release_ready=false`，直到后续材料族、人工 GUI、长跑、发布包和公开发布门禁全部真实完成。

@@ -50,7 +50,13 @@ try {
     do {
         Start-Sleep -Milliseconds 100
         $resultText = if (Test-Path -LiteralPath $result) { [string](Get-Content -LiteralPath $result -Raw) } else { "" }
-        if ($resultText -match "(?m)^OMNI_CHEMISTRY_STATUS=PASS\r?$") {
+        if (
+            $resultText -match "(?m)^OMNI_CHEMISTRY_STATUS=PASS\r?$" -and
+            $resultText -match "(?m)^OMNI_CHEMISTRY_PATHS=90\r?$" -and
+            $resultText -match "(?m)^OMNI_CHEMISTRY_ELEMENTS=60\r?$" -and
+            $resultText -match "(?m)^OMNI_INORGANIC_ELEMENTS=50\r?$" -and
+            $resultText -match "(?m)^OMNI_INORGANIC_BATCH3_IDS=494-511\r?$"
+        ) {
             $passed = $true
             break
         }

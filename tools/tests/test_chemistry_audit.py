@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 
@@ -65,6 +66,27 @@ class ChemistryAuditTests(unittest.TestCase):
         finally:
             chemistry_audit.read_text = original
         self.assertTrue(any("slag acid leaching" in error for error in errors))
+
+    def test_batch3_compound_identity_drift_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            docs = root / "docs"
+            docs.mkdir()
+            source = (ROOT / "docs" / "COMPOUND_REGISTRY.csv").read_text(
+                encoding="utf-8"
+            )
+            (docs / "COMPOUND_REGISTRY.csv").write_text(
+                source.replace(
+                    "compound.sulfur_trioxide,SO3,",
+                    "compound.sulfur_trioxide,BAD,",
+                    1,
+                ),
+                encoding="utf-8",
+                newline="",
+            )
+            errors: list[str] = []
+            chemistry_audit.check_compound_registry(root, errors)
+        self.assertTrue(any("ID 494 formula" in error for error in errors))
 
 
 if __name__ == "__main__":

@@ -493,6 +493,24 @@ simulation_elem_names = [
 	'FEOX', # 491: inorganic iron oxide
 	'CUOX', # 492: inorganic copper oxide
 	'ZNOX', # 493: inorganic zinc oxide
+	'SUTR', # 494: inorganic sulfur trioxide
+	'NIMO', # 495: inorganic nitric oxide
+	'TIOX', # 496: inorganic titanium dioxide
+	'UROX', # 497: inorganic uranium oxide
+	'CAPH', # 498: inorganic calcium phosphate
+	'FESF', # 499: inorganic iron sulfide
+	'NASD', # 500: inorganic sodium sulfide
+	'HYCN', # 501: inorganic hydrogen cyanide
+	'CACB', # 502: inorganic calcium carbide
+	'SICB', # 503: inorganic silicon carbide
+	'BORN', # 504: inorganic boron nitride
+	'SINT', # 505: inorganic silicon nitride
+	'NAHY', # 506: inorganic sodium hydride
+	'CAHY', # 507: inorganic calcium hydride
+	'ALCL', # 508: inorganic aluminium chloride
+	'MGCL', # 509: inorganic magnesium chloride
+	'CUCL', # 510: inorganic copper chloride
+	'AMCL', # 511: inorganic ammonium chloride
 ]
 
 simulation_elem_src = []

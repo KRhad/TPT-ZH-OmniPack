@@ -61,9 +61,11 @@ static int update(UPDATE_FUNC_ARGS)
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
 	int ct = parts[i].ctype;
+	// A powered chemistry catalyst must consume its bounded local recipe before
+	// generic spark ignition can replace flammable reactants with FIRE.
+	if (ct == PT_CATA && OmniChemistrySparkUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+		return 1;
 	Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
-	if (ct == PT_CATA)
-		OmniChemistrySparkUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 	if (ct == PT_NGEN)
 		OmniNuclearSparkUpdate(UPDATE_FUNC_SUBCALL_ARGS);
 

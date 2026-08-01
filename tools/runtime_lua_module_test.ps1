@@ -82,7 +82,9 @@ try {
             $resultText -match "(?m)^OMNI_PERIODIC_LANTHANIDE_ACTIVE=OMNI_PT_LA\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_ACTINIDE_ACTIVE=OMNI_PT_AC\r?$" -and
             $resultText -match "(?m)^OMNI_PERIODIC_SUPERHEAVY_ACTIVE=OMNI_PT_RF\r?$" -and
-            $resultText -match "(?m)^OMNI_INORGANIC_ACTIVE=OMNI_PT_HCLA\r?$"
+            $resultText -match "(?m)^OMNI_INORGANIC_ACTIVE=OMNI_PT_HCLA\r?$" -and
+            $resultText -match "(?m)^OMNI_INORGANIC_BATCH2_ACTIVE=OMNI_PT_CARA\r?$" -and
+            $resultText -match "(?m)^OMNI_INORGANIC_BATCH3_ACTIVE=OMNI_PT_AMCL\r?$"
         ) {
             $passed = $true
             break

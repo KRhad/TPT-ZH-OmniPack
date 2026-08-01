@@ -21,6 +21,7 @@ local ids = {
     hydrochloric = must_element("OMNI_PT_HCLA", 462),
     sodium_hydroxide = must_element("OMNI_PT_NAOH", 467),
     carbonic = must_element("OMNI_PT_CARA", 478),
+    ammonium_chloride = must_element("OMNI_PT_AMCL", 511),
     helium = must_element("OMNI_PT_HE", 370),
 }
 
@@ -60,14 +61,17 @@ local function phase_one()
     local waste = sim.partCreate(-1, 161, 120, ids.waste)
     local scrap = sim.partCreate(-1, 180, 120, ids.scrap)
     local carbonic = sim.partCreate(-1, 200, 120, ids.carbonic)
+    local ammonium_chloride = sim.partCreate(-1, 220, 120, ids.ammonium_chloride)
     assert(acid >= 0 and base >= 0 and sterilizer >= 0 and pathogen >= 0
-            and coolant >= 0 and waste >= 0 and scrap >= 0 and carbonic >= 0,
+            and coolant >= 0 and waste >= 0 and scrap >= 0 and carbonic >= 0
+            and ammonium_chloride >= 0,
         "failed to create enabled module fixtures")
     sim.partProperty(acid, "temp", 300.0)
     sim.partProperty(base, "temp", 300.0)
     sim.partProperty(waste, "temp", 1200.0)
     sim.partProperty(scrap, "ctype", ids.aluminium)
     sim.partProperty(scrap, "temp", 1200.0)
+    sim.partProperty(ammonium_chloride, "temp", 550.0)
     local stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
     assert(type(stamp) == "string" and stamp:match("^[0-9A-Fa-f]+$") and #stamp == 10,
         "failed to save enabled chemistry OPS fixture")
@@ -78,7 +82,7 @@ local function phase_one()
         "OMNI_DISABLED_MODULE_PHASE=1",
         "OMNI_DISABLED_MODULES=metallurgy,biology,chemistry,advanced_nuclear",
         "OMNI_DISABLED_MODULE_STAMP=" .. stamp,
-        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=8",
+        "OMNI_DISABLED_MODULE_FIXTURE_PARTICLES=9",
     }
 end
 
@@ -94,6 +98,7 @@ local function phase_two()
         { "OMNI_PT_CHLR", ids.chlorine },
         { "OMNI_PT_HCLA", ids.hydrochloric },
         { "OMNI_PT_CARA", ids.carbonic },
+        { "OMNI_PT_AMCL", ids.ammonium_chloride },
         { "OMNI_PT_NCLT", ids.coolant },
     }
     local active_before = ui.activeTool(0)
@@ -126,14 +131,18 @@ local function phase_two()
     local waste = assert(sim.partID(161, 120), "loaded nuclear waste is missing")
     local scrap = assert(sim.partID(180, 120), "loaded metal scrap is missing")
     local carbonic = assert(sim.partID(200, 120), "loaded carbonic acid is missing")
+    local ammonium_chloride = assert(
+        sim.partID(220, 120), "loaded ammonium chloride is missing")
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
-            and sim.partProperty(carbonic, "type") == ids.carbonic,
+            and sim.partProperty(carbonic, "type") == ids.carbonic
+            and sim.partProperty(ammonium_chloride, "type") == ids.ammonium_chloride,
         "disabled-module OPS load changed or deleted chemistry particles")
     sim.updateUpTo()
     assert(sim.partProperty(acid, "type") == ids.hydrochloric
             and sim.partProperty(base, "type") == ids.sodium_hydroxide
-            and sim.partProperty(carbonic, "type") == ids.carbonic,
+            and sim.partProperty(carbonic, "type") == ids.carbonic
+            and sim.partProperty(ammonium_chloride, "type") == ids.ammonium_chloride,
         "disabled chemistry particles continued reacting after OPS load")
     assert(sim.partProperty(sterilizer, "type") == ids.sterilizer
             and sim.partProperty(pathogen, "type") == ids.pathogen,
@@ -156,8 +165,9 @@ local function phase_two()
         "OMNI_DISABLED_MODULE_CORE=OMNI_PT_CHLR",
         "OMNI_DISABLED_MODULE_EXPANSION=OMNI_PT_HCLA",
         "OMNI_DISABLED_MODULE_BATCH2=OMNI_PT_CARA",
+        "OMNI_DISABLED_MODULE_BATCH3=OMNI_PT_AMCL",
         "OMNI_DISABLED_MODULE_NUCLEAR=OMNI_PT_NCLT",
-        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=8",
+        "OMNI_DISABLED_MODULE_LOADED_PARTICLES=9",
         "OMNI_DISABLED_MODULE_UPDATE_EVENTS=0",
         "OMNI_DISABLED_MODULE_PERIODIC_ACTIVE=OMNI_PT_HE",
         "OMNI_DISABLED_MODULE_OPS_FORMAT=OPS1",

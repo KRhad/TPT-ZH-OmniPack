@@ -52,6 +52,24 @@ local ids = {
     iron_oxide = must_element("OMNI_PT_FEOX", "FEOX"),
     copper_oxide = must_element("OMNI_PT_CUOX", "CUOX"),
     zinc_oxide = must_element("OMNI_PT_ZNOX", "ZNOX"),
+    sulfur_trioxide = must_element("OMNI_PT_SUTR", "SUTR"),
+    nitric_oxide = must_element("OMNI_PT_NIMO", "NIMO"),
+    titanium_dioxide = must_element("OMNI_PT_TIOX", "TIOX"),
+    uranium_oxide = must_element("OMNI_PT_UROX", "UROX"),
+    calcium_phosphate = must_element("OMNI_PT_CAPH", "CAPH"),
+    iron_sulfide = must_element("OMNI_PT_FESF", "FESF"),
+    sodium_sulfide = must_element("OMNI_PT_NASD", "NASD"),
+    hydrogen_cyanide = must_element("OMNI_PT_HYCN", "HYCN"),
+    calcium_carbide = must_element("OMNI_PT_CACB", "CACB"),
+    silicon_carbide = must_element("OMNI_PT_SICB", "SICB"),
+    boron_nitride = must_element("OMNI_PT_BORN", "BORN"),
+    silicon_nitride = must_element("OMNI_PT_SINT", "SINT"),
+    sodium_hydride = must_element("OMNI_PT_NAHY", "NAHY"),
+    calcium_hydride = must_element("OMNI_PT_CAHY", "CAHY"),
+    aluminium_chloride = must_element("OMNI_PT_ALCL", "ALCL"),
+    magnesium_chloride = must_element("OMNI_PT_MGCL", "MGCL"),
+    copper_chloride = must_element("OMNI_PT_CUCL", "CUCL"),
+    ammonium_chloride = must_element("OMNI_PT_AMCL", "AMCL"),
     pathogen = must_element("OMNI_PT_PATH", "PATH"),
     humus = must_element("OMNI_PT_HUMS", "HUMS"),
     slag = must_element("OMNI_PT_SLAG", "SLAG"),
@@ -83,6 +101,12 @@ local ids = {
     barium = must_element("OMNI_PT_BA", "BA"),
     manganese = must_element("OMNI_PT_MN", "MN"),
     sulfur = must_element("OMNI_PT_S", "S"),
+    sodium = must_element("OMNI_PT_NA", "NA"),
+    boron = must_element("OMNI_PT_B", "B"),
+    periodic_nitrogen = must_element("OMNI_PT_N", "N"),
+    silicon = assert(elements.DEFAULT_PT_SLCN),
+    titanium = assert(elements.DEFAULT_PT_TTAN),
+    uranium = assert(elements.DEFAULT_PT_URAN),
 }
 
 local function configure_simulation()
@@ -742,6 +766,329 @@ local function run_inorganic_salts_and_gases()
         "cold carbon monoxide oxidised below its registered threshold")
 end
 
+local function run_third_batch_typed_reactions()
+    configure_simulation()
+    local chlorine = make(ids.chlorine, 120, 120, 500.0)
+    local copper = make(ids.copper, 121, 120, 500.0)
+    local chlorine_diffusion = elements.property(ids.chlorine, "Diffusion")
+    elements.property(ids.chlorine, "Diffusion", 0.0)
+    step()
+    elements.property(ids.chlorine, "Diffusion", chlorine_diffusion)
+    assert(sim.partProperty(chlorine, "type") == ids.copper_chloride
+        and sim.partProperty(copper, "type") == ids.copper_chloride,
+        "hot chlorine and copper did not form two copper chloride particles")
+
+    configure_simulation()
+    chlorine = make(ids.chlorine, 120, 120, 400.0)
+    copper = make(ids.copper, 121, 120, 400.0)
+    elements.property(ids.chlorine, "Diffusion", 0.0)
+    step(3)
+    elements.property(ids.chlorine, "Diffusion", chlorine_diffusion)
+    assert(sim.partProperty(chlorine, "type") == ids.salt
+        and sim.partProperty(copper, "type") == ids.salt
+        and count_type(ids.copper_chloride) == 0,
+        "sub-threshold copper chlorination bypassed the generic halogen salt fallback")
+
+    local neutralisations = {
+        { ids.hydrochloric, ids.ammonia_water, ids.ammonium_chloride,
+            "hydrochloric acid and ammonia water" },
+        { ids.phosphoric, ids.calcium_hydroxide, ids.calcium_phosphate,
+            "phosphoric acid and calcium hydroxide" },
+    }
+    for _, case in ipairs(neutralisations) do
+        configure_simulation()
+        local acid = make(case[1], 120, 120, 300.0)
+        local base = make(case[2], 121, 120, 300.0)
+        step()
+        assert(sim.partProperty(acid, "type") == ids.water
+            and sim.partProperty(base, "type") == case[3],
+            case[4] .. " did not form its typed salt and water")
+    end
+
+    local metal_chlorides = {
+        { ids.aluminium, ids.aluminium_chloride, "aluminium" },
+        { ids.magnesium, ids.magnesium_chloride, "magnesium" },
+    }
+    for _, case in ipairs(metal_chlorides) do
+        configure_simulation()
+        local acid = make(ids.hydrochloric, 120, 120, 310.0)
+        local metal = make(case[1], 121, 120, 310.0)
+        step()
+        assert(sim.partProperty(acid, "type") == ids.hydrogen
+            and sim.partProperty(metal, "type") == case[2],
+            "hydrochloric acid did not form typed " .. case[3] .. " chloride")
+    end
+
+    local sulfides = {
+        { ids.iron_sulfide, ids.iron_chloride, "iron sulfide" },
+        { ids.sodium_sulfide, ids.salt, "sodium sulfide" },
+    }
+    for _, case in ipairs(sulfides) do
+        configure_simulation()
+        local acid = make(ids.hydrochloric, 120, 120, 310.0)
+        local sulfide = make(case[1], 121, 120, 310.0)
+        step()
+        assert(sim.partProperty(acid, "type") == ids.hydrogen_sulfide
+            and sim.partProperty(sulfide, "type") == case[2],
+            "hydrochloric acid did not release hydrogen sulfide from " .. case[3])
+    end
+
+    configure_simulation()
+    local phosphate = make(ids.calcium_phosphate, 120, 120, 300.0)
+    local plant = make(ids.plant, 121, 120, 300.0)
+    local water = make(ids.water, 120, 121, 300.0)
+    step()
+    assert(sim.partProperty(phosphate, "type") == ids.fertilizer
+        and sim.partProperty(plant, "type") == ids.plant
+        and sim.partProperty(water, "type") == ids.water,
+        "wet plant did not convert calcium phosphate into fertilizer")
+
+    configure_simulation()
+    local carbide = make(ids.calcium_carbide, 120, 120, 300.0)
+    water = make(ids.water, 121, 120, 300.0)
+    step()
+    assert(sim.partProperty(carbide, "type") == ids.calcium_hydroxide
+        and sim.partProperty(water, "type") == ids.acetylene,
+        "calcium carbide hydrolysis did not form lime and acetylene")
+
+    local hydrides = {
+        { ids.sodium_hydride, ids.sodium_hydroxide, "sodium hydride" },
+        { ids.calcium_hydride, ids.calcium_hydroxide, "calcium hydride" },
+    }
+    for _, case in ipairs(hydrides) do
+        configure_simulation()
+        local hydride = make(case[1], 120, 120, 300.0)
+        water = make(ids.water, 121, 120, 300.0)
+        step()
+        assert(sim.partProperty(hydride, "type") == case[2]
+            and sim.partProperty(water, "type") == ids.hydrogen,
+            case[3] .. " hydrolysis did not form hydroxide and hydrogen")
+    end
+
+    local chloride_hydrolysis = {
+        { ids.aluminium_chloride, ids.aluminium_oxide, "aluminium chloride" },
+        { ids.magnesium_chloride, ids.magnesium_oxide, "magnesium chloride" },
+    }
+    for _, case in ipairs(chloride_hydrolysis) do
+        configure_simulation()
+        local chloride = make(case[1], 120, 120, 300.0)
+        water = make(ids.water, 121, 120, 300.0)
+        step()
+        assert(sim.partProperty(chloride, "type") == case[2]
+            and sim.partProperty(water, "type") == ids.hydrochloric,
+            case[3] .. " did not hydrolyse into oxide and hydrochloric acid")
+    end
+
+    configure_simulation()
+    local copper_chloride = make(ids.copper_chloride, 120, 120, 300.0)
+    local iron = make(ids.iron, 121, 120, 300.0)
+    step()
+    assert(sim.partProperty(copper_chloride, "type") == ids.copper
+        and sim.partProperty(iron, "type") == ids.iron_chloride,
+        "iron did not displace copper from copper chloride")
+
+    configure_simulation()
+    local ammonium_chloride = make(ids.ammonium_chloride, 120, 120, 550.0)
+    step()
+    assert(sim.partProperty(ammonium_chloride, "type") == ids.ammonia
+        and count_type(ids.hydrochloric) == 1,
+        "hot ammonium chloride did not release ammonia and hydrochloric acid")
+
+    configure_simulation()
+    local cold_chloride = make(ids.aluminium_chloride, 120, 120, 280.0)
+    water = make(ids.water, 121, 120, 280.0)
+    step(3)
+    assert(sim.partProperty(cold_chloride, "type") == ids.aluminium_chloride
+        and sim.partProperty(water, "type") == ids.water,
+        "aluminium chloride hydrolysed below its registered temperature threshold")
+end
+
+local function run_third_batch_gases_and_oxides()
+    configure_simulation()
+    local sulfur_dioxide = make(ids.sulfur_dioxide, 120, 120, 700.0)
+    local oxygen = make(ids.oxygen, 121, 120, 700.0)
+    local sulfur_diffusion = elements.property(ids.sulfur_dioxide, "Diffusion")
+    local oxygen_diffusion = elements.property(ids.oxygen, "Diffusion")
+    elements.property(ids.sulfur_dioxide, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    step()
+    elements.property(ids.sulfur_dioxide, "Diffusion", sulfur_diffusion)
+    elements.property(ids.oxygen, "Diffusion", oxygen_diffusion)
+    assert(sim.partProperty(sulfur_dioxide, "type") == ids.sulfur_trioxide
+        and sim.partProperty(oxygen, "type") == ids.sulfur_trioxide,
+        "hot sulfur dioxide and oxygen did not form sulfur trioxide")
+
+    configure_simulation()
+    local sulfur_trioxide = make(ids.sulfur_trioxide, 120, 120, 320.0)
+    local water = make(ids.water, 121, 120, 320.0)
+    step()
+    assert(sim.partProperty(sulfur_trioxide, "type") == ids.sulfuric
+        and sim.partProperty(water, "type") == ids.sulfuric,
+        "sulfur trioxide hydration did not form two sulfuric acid particles")
+
+    configure_simulation()
+    local nitric_oxide = make(ids.nitric_oxide, 120, 120, 450.0)
+    oxygen = make(ids.oxygen, 121, 120, 450.0)
+    local nitric_diffusion = elements.property(ids.nitric_oxide, "Diffusion")
+    elements.property(ids.nitric_oxide, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    step()
+    elements.property(ids.nitric_oxide, "Diffusion", nitric_diffusion)
+    elements.property(ids.oxygen, "Diffusion", oxygen_diffusion)
+    assert(sim.partProperty(nitric_oxide, "type") == ids.nitrogen_dioxide
+        and sim.partProperty(oxygen, "type") == ids.nitrogen_dioxide,
+        "warm nitric oxide and oxygen did not form nitrogen dioxide")
+
+    configure_simulation()
+    local cyanide = make(ids.hydrogen_cyanide, 120, 120, 320.0)
+    local peroxide = make(ids.peroxide, 121, 120, 320.0)
+    local cyanide_diffusion = elements.property(ids.hydrogen_cyanide, "Diffusion")
+    elements.property(ids.hydrogen_cyanide, "Diffusion", 0.0)
+    step()
+    elements.property(ids.hydrogen_cyanide, "Diffusion", cyanide_diffusion)
+    assert(sim.partProperty(cyanide, "type") == ids.co2
+        and sim.partProperty(peroxide, "type") == ids.nitric_oxide,
+        "bounded peroxide cleanup did not convert hydrogen cyanide")
+
+    local oxidation_cases = {
+        { ids.titanium, ids.titanium_dioxide, "titanium" },
+        { ids.uranium, ids.uranium_oxide, "uranium" },
+    }
+    for _, case in ipairs(oxidation_cases) do
+        configure_simulation()
+        peroxide = make(ids.peroxide, 120, 120, 320.0)
+        local metal = make(case[1], 121, 120, 320.0)
+        step()
+        assert(sim.partProperty(peroxide, "type") == ids.water
+            and sim.partProperty(metal, "type") == case[2],
+            "peroxide did not make typed " .. case[3] .. " oxide")
+    end
+
+    configure_simulation()
+    local uranium_oxide = make(ids.uranium_oxide, 120, 120, 1250.0)
+    local monoxide = make(ids.carbon_monoxide, 121, 120, 1250.0)
+    local monoxide_diffusion = elements.property(ids.carbon_monoxide, "Diffusion")
+    elements.property(ids.carbon_monoxide, "Diffusion", 0.0)
+    step()
+    elements.property(ids.carbon_monoxide, "Diffusion", monoxide_diffusion)
+    assert(sim.partProperty(uranium_oxide, "type") == ids.uranium
+        and sim.partProperty(monoxide, "type") == ids.co2,
+        "high-temperature reducing gas did not recover uranium")
+
+    configure_simulation()
+    local carbide = make(ids.silicon_carbide, 120, 120, 1700.0)
+    oxygen = make(ids.oxygen, 121, 120, 1700.0)
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    step()
+    elements.property(ids.oxygen, "Diffusion", oxygen_diffusion)
+    assert(sim.partProperty(carbide, "type") == ids.quartz
+        and sim.partProperty(oxygen, "type") == ids.co2,
+        "hot oxygen did not convert silicon carbide into quartz and carbon dioxide")
+
+    configure_simulation()
+    local cold_oxide = make(ids.uranium_oxide, 120, 120, 1100.0)
+    local cold_monoxide = make(ids.carbon_monoxide, 121, 120, 1100.0)
+    elements.property(ids.carbon_monoxide, "Diffusion", 0.0)
+    step(3)
+    elements.property(ids.carbon_monoxide, "Diffusion", monoxide_diffusion)
+    assert(sim.partProperty(cold_oxide, "type") == ids.uranium_oxide
+        and sim.partProperty(cold_monoxide, "type") == ids.carbon_monoxide,
+        "uranium oxide reduced below its registered threshold")
+
+    configure_simulation()
+    local cold_carbide = make(ids.silicon_carbide, 120, 120, 1500.0)
+    local cold_oxygen = make(ids.oxygen, 121, 120, 1500.0)
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    step(3)
+    elements.property(ids.oxygen, "Diffusion", oxygen_diffusion)
+    assert(sim.partProperty(cold_carbide, "type") == ids.silicon_carbide
+        and sim.partProperty(cold_oxygen, "type") == ids.oxygen,
+        "silicon carbide oxidised below its registered threshold")
+end
+
+local function run_catalytic_pair(first_type, second_type, product_type,
+        temperature, pressure, label)
+    configure_simulation()
+    spark_catalyst(120, 120, temperature)
+    local first = make(first_type, 121, 120, temperature)
+    local second = make(second_type, 120, 121, temperature)
+    local first_diffusion = elements.property(first_type, "Diffusion")
+    local second_diffusion = elements.property(second_type, "Diffusion")
+    elements.property(first_type, "Diffusion", 0.0)
+    elements.property(second_type, "Diffusion", 0.0)
+    if pressure then
+        sim.airMode(sim.AIR_NOUPDATE)
+        sim.pressure(30, 30, pressure)
+    end
+    step()
+    elements.property(first_type, "Diffusion", first_diffusion)
+    elements.property(second_type, "Diffusion", second_diffusion)
+    assert(sim.partProperty(first, "type") == product_type
+        and sim.partProperty(second, "type") == product_type,
+        "electrified catalyst did not synthesize " .. label
+            .. "; first=" .. tostring(sim.partProperty(first, "type"))
+            .. " second=" .. tostring(sim.partProperty(second, "type"))
+            .. " product=" .. tostring(product_type)
+            .. " pressure=" .. tostring(sim.pressure(30, 30)))
+end
+
+local function run_third_batch_synthesis()
+    local cases = {
+        { ids.periodic_nitrogen, ids.oxygen, ids.nitric_oxide, 1200.0, nil,
+            "nitric oxide" },
+        { ids.iron, ids.sulfur, ids.iron_sulfide, 900.0, nil,
+            "iron sulfide" },
+        { ids.sodium, ids.sulfur, ids.sodium_sulfide, 700.0, nil,
+            "sodium sulfide" },
+        { ids.calcium_oxide, ids.coal, ids.calcium_carbide, 1600.0, nil,
+            "calcium carbide" },
+        { ids.silicon, ids.coal, ids.silicon_carbide, 2000.0, nil,
+            "silicon carbide" },
+        { ids.boron, ids.periodic_nitrogen, ids.boron_nitride, 1600.0, nil,
+            "boron nitride" },
+        { ids.silicon, ids.periodic_nitrogen, ids.silicon_nitride, 1800.0, nil,
+            "silicon nitride" },
+        { ids.sodium, ids.hydrogen, ids.sodium_hydride, 500.0, 3.0,
+            "sodium hydride" },
+        { ids.calcium, ids.hydrogen, ids.calcium_hydride, 650.0, 3.0,
+            "calcium hydride" },
+    }
+    for _, case in ipairs(cases) do
+        run_catalytic_pair(
+            case[1], case[2], case[3], case[4], case[5], case[6])
+    end
+
+    configure_simulation()
+    spark_catalyst(120, 120, 900.0)
+    local nitrogen = make(ids.periodic_nitrogen, 121, 120, 900.0)
+    local oxygen = make(ids.oxygen, 120, 121, 900.0)
+    local nitrogen_diffusion = elements.property(ids.periodic_nitrogen, "Diffusion")
+    local oxygen_diffusion = elements.property(ids.oxygen, "Diffusion")
+    elements.property(ids.periodic_nitrogen, "Diffusion", 0.0)
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    step(3)
+    elements.property(ids.periodic_nitrogen, "Diffusion", nitrogen_diffusion)
+    elements.property(ids.oxygen, "Diffusion", oxygen_diffusion)
+    assert(sim.partProperty(nitrogen, "type") == ids.periodic_nitrogen
+        and sim.partProperty(oxygen, "type") == ids.oxygen,
+        "nitric oxide synthesis ran below its registered temperature window")
+
+    configure_simulation()
+    spark_catalyst(120, 120, 500.0)
+    local sodium = make(ids.sodium, 121, 120, 500.0)
+    local hydrogen = make(ids.hydrogen, 120, 121, 500.0)
+    local hydrogen_diffusion = elements.property(ids.hydrogen, "Diffusion")
+    elements.property(ids.hydrogen, "Diffusion", 0.0)
+    sim.airMode(sim.AIR_NOUPDATE)
+    sim.pressure(30, 30, 1.0)
+    step(3)
+    elements.property(ids.hydrogen, "Diffusion", hydrogen_diffusion)
+    assert(count_type(ids.sodium_hydride) == 0
+        and sim.partProperty(sodium, "type") ~= ids.sodium_hydride
+        and sim.partProperty(hydrogen, "type") ~= ids.sodium_hydride,
+        "sodium hydride synthesis produced hydride below its pressure threshold")
+end
+
 local function run_inorganic_budget()
     configure_simulation()
     local total = 1800
@@ -775,6 +1122,9 @@ local function test()
     run_second_batch_salts()
     run_second_batch_oxides()
     run_hydrogen_sulfide_cycle()
+    run_third_batch_typed_reactions()
+    run_third_batch_gases_and_oxides()
+    run_third_batch_synthesis()
     return run_inorganic_budget()
 end
 
@@ -782,13 +1132,14 @@ local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_CHEMISTRY_STATUS=PASS\n")
-    report:write("OMNI_CHEMISTRY_PATHS=58\n")
-    report:write("OMNI_CHEMISTRY_ELEMENTS=42\n")
-    report:write("OMNI_INORGANIC_ELEMENTS=32\n")
+    report:write("OMNI_CHEMISTRY_PATHS=90\n")
+    report:write("OMNI_CHEMISTRY_ELEMENTS=60\n")
+    report:write("OMNI_INORGANIC_ELEMENTS=50\n")
     report:write("OMNI_CHEMISTRY_BUDGET_EVENTS=" .. tostring(data) .. "\n")
     report:write("OMNI_CHEMISTRY_IDS=" .. ids.chlorine .. "-" .. ids.fertilizer .. "\n")
     report:write("OMNI_INORGANIC_IDS=" .. ids.hydrochloric .. "-" .. ids.calcium_oxide .. "\n")
     report:write("OMNI_INORGANIC_BATCH2_IDS=" .. ids.carbonic_acid .. "-" .. ids.zinc_oxide .. "\n")
+    report:write("OMNI_INORGANIC_BATCH3_IDS=" .. ids.sulfur_trioxide .. "-" .. ids.ammonium_chloride .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")
     report:write("OMNI_CHEMISTRY_STATUS=FAIL\n")

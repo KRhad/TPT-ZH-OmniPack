@@ -39,6 +39,7 @@ PRODUCTION_STATUSES = {
 
 GAP_CODES = {
     "none",
+    "direct_only_by_design",
     "endpoint_byproduct",
     "invalid_type_fallback",
     "missing_cross_module_link",
@@ -143,11 +144,18 @@ def audit(root: Path) -> list[str]:
             errors.append(
                 f"ELEMENT_USAGE_MATRIX.csv:{number} mixes none with real gaps for {identifier}"
             )
-        if row["production_status"] == "direct_only" and "missing_production" not in gap_values:
+        if (
+            row["production_status"] == "direct_only"
+            and "missing_production" not in gap_values
+            and "direct_only_by_design" not in gap_values
+        ):
             errors.append(
-                f"ELEMENT_USAGE_MATRIX.csv:{number} direct_only lacks missing_production for {identifier}"
+                f"ELEMENT_USAGE_MATRIX.csv:{number} direct_only lacks a production disposition for {identifier}"
             )
-        if gap_values != ["none"] and row["disposition"] == "keep":
+        if (
+            gap_values not in (["none"], ["direct_only_by_design"])
+            and row["disposition"] == "keep"
+        ):
             errors.append(
                 f"ELEMENT_USAGE_MATRIX.csv:{number} unresolved gaps use keep for {identifier}"
             )

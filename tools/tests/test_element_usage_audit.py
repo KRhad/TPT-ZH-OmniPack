@@ -71,7 +71,17 @@ class ElementUsageAuditTests(unittest.TestCase):
                 newline="",
             )
             errors = element_usage_audit.audit(root)
-        self.assertTrue(any("direct_only lacks missing_production" in error for error in errors))
+        self.assertTrue(
+            any("direct_only lacks a production disposition" in error for error in errors)
+        )
+
+    def test_intentional_direct_only_material_is_accepted(self) -> None:
+        self.assertFalse(
+            any(
+                "OMNI_PT_HYCN" in error
+                for error in element_usage_audit.audit(ROOT)
+            )
+        )
 
 
 if __name__ == "__main__":

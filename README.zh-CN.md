@@ -6,15 +6,15 @@
 
 ## 当前真实状态
 
-- 当前活动内容：官方 195 个元素，加上 OmniPack 172 个扩展元素，共 367 个活动元素；`total_playable_materials>=300=true`。
-- 当前扩展内容：工业冶金 23、局部生态 8、受控核工业 7、化学与无机物 42，以及周期新增元素 92；前四个可选模块默认启用，周期元素始终直接可用。
-- 当前稳定空间：`PT_NUM=512`、`PMAPBITS=9`；周期表严格复用 26 个现有纯元素实现，其余 92 个固定为 `370..461`，现已全部实现并达到 118/118 可放置映射。无机两批使用 `462..493`，共 32 种酸、碱、盐、气体和差异化氧化物；官方 `SALT=26` 复用为氯化钠映射，不重复占用 ID，`494..511` 保留给后续材料。
+- 当前活动内容：官方 195 个元素，加上 OmniPack 190 个扩展元素，共 385 个活动元素；`total_playable_materials>=300=true`。
+- 当前扩展内容：工业冶金 23、局部生态 8、受控核工业 7、化学与无机物 60，以及周期新增元素 92；前四个可选模块默认启用，周期元素始终直接可用。
+- 当前稳定空间：`PT_NUM=512`、`PMAPBITS=9`；周期表严格复用 26 个现有纯元素实现，其余 92 个固定为 `370..461`，现已全部实现并达到 118/118 可放置映射。无机三批使用 `462..511`，共 50 种酸、碱、盐、气体、氧化物、碳化物、氮化物和氢化物；官方 `SALT=26` 复用为氯化钠映射，不重复占用 ID。当前连续高位区已占满，后续材料必须先完成 `PT_NUM/PMAPBITS/OPS/Lua` 扩容或保留区复用审计，不得覆盖旧 ID。
 - 已加入独立标准长式周期表面板，支持中文名、英文名、符号、原子序数和 identifier 搜索，支持常温状态、放射性、金属/非金属/类金属筛选、类别着色及镧锕系展开；面板只负责选择，不参与解锁。
 - 所有已启用元素均可直接选择、放置，也可由普通 Lua 创建；没有发现进度、配方进度、存档进度或任务完成条件。
-- 关闭任一内容模块会阻止对应元素的菜单/Lua 选择与新建；已有 OPS 粒子不删除，但对应冶金、生物、化学或核工业更新会在下一模拟刻暂停，重新启用后恢复。四模块禁用 OPS 运行回归已验证 8 个粒子保持且事件为 0，其中包含第二批 `CARA=478`。
+- 关闭任一内容模块会阻止对应元素的菜单/Lua 选择与新建；已有 OPS 粒子不删除，但对应冶金、生物、化学或核工业更新会在下一模拟刻暂停，重新启用后恢复。四模块禁用 OPS 运行回归已验证 9 个粒子保持且事件为 0，其中包含第二批 `CARA=478` 和第三批 `AMCL=511`。
 - 旧 OPS 中曾写入的 `omniAlchemy` 字段现在仅作为未知顶层字段被忽略，新存档不再写入它，旧粒子与间接元素字段保持不变。
 - 图鉴在正文前明确显示“元素说明 / Element description”，模组元素说明同时以对应中英文名称开头。
-- 当前仍是开发状态，`release_ready=false`；虽然活动材料已达到 367、周期表为 118/118 且两批 32 种精确无机材料已完成，后续无机物、合金、核素、有机物、电子与生态材料族、正式 GUI 视觉矩阵、长跑、公开源码远端、tag 和 Release 仍未完成。
+- 当前仍是开发状态，`release_ready=false`；虽然活动材料已达到 385、周期表为 118/118 且三批 50 种精确无机材料已完成，后续合金、矿物、核素、有机物、电子与生态材料族、正式 GUI 视觉矩阵、长跑、公开源码远端、tag 和 Release 仍未完成。
 
 ## 内容路线
 
@@ -52,8 +52,8 @@ Windows x64 使用 MSYS2 UCRT64、Meson 和 Ninja。现有构建与测试工具�
 
 ```powershell
 $env:PATH='C:\msys64\ucrt64\bin;C:\msys64\usr\bin;' + $env:PATH
-meson compile -C build-inorganic-batch2-final-clean
-meson test -C build-inorganic-batch2-final-clean --suite static --print-errorlogs
+meson compile -C build-inorganic-batch3-final-clean
+meson test -C build-inorganic-batch3-final-clean --suite static --print-errorlogs
 C:\msys64\ucrt64\bin\python3.exe -m unittest discover -s tools/tests -p 'test_*.py'
 ```
 
