@@ -114,11 +114,11 @@ assert(ammonium_chloride == 511,
 ui.activeTool(0, "OMNI_PT_AMCL")
 assert(ui.activeTool(0) == "OMNI_PT_AMCL",
     "enabled third-batch inorganic content was blocked by its module gate")
-local solder = assert(elements.OMNI_PT_SOLD)
-assert(solder == 512,
-    "engineering solder stable ID changed: " .. tostring(solder))
-ui.activeTool(0, "OMNI_PT_SOLD")
-assert(ui.activeTool(0) == "OMNI_PT_SOLD",
+local engineering_high = assert(elements.OMNI_PT_NITI)
+assert(engineering_high == 520,
+    "engineering high stable ID changed: " .. tostring(engineering_high))
+ui.activeTool(0, "OMNI_PT_NITI")
+assert(ui.activeTool(0) == "OMNI_PT_NITI",
     "enabled high-ID engineering content was blocked by its metallurgy gate")
 
 local id = elements.allocate("OMNITEST", "LUA1")
@@ -186,5 +186,5 @@ report:write("OMNI_PERIODIC_SUPERHEAVY_ACTIVE=OMNI_PT_RF\n")
 report:write("OMNI_INORGANIC_ACTIVE=OMNI_PT_HCLA\n")
 report:write("OMNI_INORGANIC_BATCH2_ACTIVE=OMNI_PT_CARA\n")
 report:write("OMNI_INORGANIC_BATCH3_ACTIVE=OMNI_PT_AMCL\n")
-report:write("OMNI_ENGINEERING_HIGH_ID_ACTIVE=OMNI_PT_SOLD\n")
+report:write("OMNI_ENGINEERING_HIGH_ID_ACTIVE=OMNI_PT_NITI\n")
 report:close()

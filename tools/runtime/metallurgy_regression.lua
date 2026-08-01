@@ -14,12 +14,17 @@ local ids = {
     iron = assert(elements.DEFAULT_PT_IRON),
     oxygen = assert(elements.DEFAULT_PT_O2),
     water = assert(elements.DEFAULT_PT_WATR),
+    water_vapour = assert(elements.DEFAULT_PT_WTRV),
+    salt_water = assert(elements.DEFAULT_PT_SLTW),
+    neutron = assert(elements.DEFAULT_PT_NEUT),
     wood = assert(elements.DEFAULT_PT_WOOD),
     coal = assert(elements.DEFAULT_PT_COAL),
     co2 = assert(elements.DEFAULT_PT_CO2),
     brmt = assert(elements.DEFAULT_PT_BRMT),
     dust = assert(elements.DEFAULT_PT_DUST),
     conv = assert(elements.DEFAULT_PT_CONV),
+    ttan = assert(elements.DEFAULT_PT_TTAN),
+    tung = assert(elements.DEFAULT_PT_TUNG),
     alum = must_element("OMNI_PT_ALUM", "ALUM"),
     copr = must_element("OMNI_PT_COPR", "COPR"),
     lead = must_element("OMNI_PT_LEAD", "LEAD"),
@@ -45,9 +50,21 @@ local ids = {
     legacy_mscr = must_element("OMNI_PT_MSCR", "MSCR"),
     rshd = must_element("OMNI_PT_RSHD", "RSHD"),
     sold = must_element("OMNI_PT_SOLD", "SOLD"),
+    vanadium = must_element("OMNI_PT_V", "V"),
+    zirconium = must_element("OMNI_PT_ZR", "ZR"),
+    csti = must_element("OMNI_PT_CSTI", "CSTI"),
+    cuni = must_element("OMNI_PT_CUNI", "CUNI"),
+    tial = must_element("OMNI_PT_TIAL", "TIAL"),
+    nsal = must_element("OMNI_PT_NSAL", "NSAL"),
+    waly = must_element("OMNI_PT_WALY", "WALY"),
+    zral = must_element("OMNI_PT_ZRAL", "ZRAL"),
+    cnst = must_element("OMNI_PT_CNST", "CNST"),
+    niti = must_element("OMNI_PT_NITI", "NITI"),
 }
 assert(ids.sold == 512,
     "SOLD stable high ID changed: expected 512, got " .. tostring(ids.sold))
+assert(ids.csti == 513 and ids.niti == 520,
+    "engineering stable range changed: expected 513..520")
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
 
@@ -169,6 +186,42 @@ local function run_steel()
     return frames
 end
 
+local function run_cast_iron()
+    configure_simulation()
+    local iron = {}
+    for index = 1, 4 do
+        iron[index] = create_molten(
+            ids.iron, positions[index], 2300.0)
+    end
+    local coke = sim.partCreate(
+        -1, 120 + positions[5][1], 120 + positions[5][2], ids.coke)
+    assert(coke >= 0, "failed to create cast-iron carbon input")
+    sim.partProperty(coke, "temp", 1100.0)
+
+    local frames = wait_for_ctype(iron, ids.csti, 4)
+    assert(frames, "cast-iron recipe did not convert four molten iron particles")
+    local offgas = sim.partProperty(coke, "type")
+    assert(offgas == elements.DEFAULT_PT_SMKE
+            or offgas == elements.DEFAULT_PT_FIRE,
+        "cast-iron recipe did not convert excess carbon to bounded off-gas; type="
+        .. tostring(offgas))
+    if sim.partExists(coke) then sim.partKill(coke) end
+    for _, particle in ipairs(iron) do
+        sim.partProperty(particle, "temp", 300.0)
+    end
+    for _ = 1, 120 do
+        sim.updateUpTo()
+        if sim.partProperty(iron[1], "type") == ids.csti then
+            break
+        end
+    end
+    for _, particle in ipairs(iron) do
+        assert(sim.partProperty(particle, "type") == ids.csti,
+            "cast iron did not cool to its stable product")
+    end
+    return frames
+end
+
 local function run_carbonization()
     configure_simulation()
     local wood = sim.partCreate(-1, 120, 120, ids.wood)
@@ -221,6 +274,17 @@ local function run_material_behaviors()
         "nichrome spark did not produce resistive heat")
 
     configure_simulation()
+    local moderate_heater = sim.partCreate(-1, 120, 120, ids.cnst)
+    assert(moderate_heater >= 0, "constantan heater setup failed")
+    sim.partProperty(moderate_heater, "type", ids.spark)
+    sim.partProperty(moderate_heater, "ctype", ids.cnst)
+    sim.partProperty(moderate_heater, "life", 4)
+    sim.partProperty(moderate_heater, "temp", 300.0)
+    sim.updateUpTo()
+    assert(sim.partProperty(moderate_heater, "temp") >= 324.0,
+        "constantan spark did not produce its bounded resistive heat")
+
+    configure_simulation()
     local fusible = sim.partCreate(-1, 120, 120, ids.sold)
     assert(fusible >= 0, "solder fusible-link setup failed")
     sim.partProperty(fusible, "type", ids.spark)
@@ -236,6 +300,126 @@ local function run_material_behaviors()
     assert(sim.partProperty(fusible, "type") == ids.lava
             and sim.partProperty(fusible, "ctype") == ids.sold,
         "repeated solder spark did not melt into typed high-ID LAVA")
+
+    configure_simulation()
+    local casting = sim.partCreate(-1, 120, 120, ids.csti)
+    assert(casting >= 0, "cast-iron quench setup failed")
+    sim.partProperty(casting, "temp", 1000.0)
+    for _ = 1, 80 do
+        sim.partProperty(casting, "temp", 1000.0)
+        local quench = sim.partCreate(-1, 121, 120, ids.water)
+        if quench >= 0 then
+            sim.partProperty(quench, "temp", 300.0)
+            sim.updateUpTo()
+            if sim.partProperty(casting, "type") == ids.brmt then
+                break
+            end
+            if sim.partExists(quench) then sim.partKill(quench) end
+        else
+            sim.updateUpTo()
+        end
+        if sim.partProperty(casting, "type") == ids.brmt then
+            break
+        end
+    end
+    assert(sim.partProperty(casting, "type") == ids.brmt
+            and sim.partProperty(casting, "ctype") == ids.csti
+            and sim.partProperty(casting, "tmp4") == RECOVERABLE_SCRAP_MARKER,
+        "hot cast iron did not quench into typed recoverable scrap")
+
+    configure_simulation()
+    local oxygen_diffusion = elements.property(ids.oxygen, "Diffusion")
+    elements.property(ids.oxygen, "Diffusion", 0.0)
+    local passivating = sim.partCreate(-1, 120, 120, ids.tial)
+    assert(passivating >= 0, "titanium-alloy passivation setup failed")
+    for _ = 1, 160 do
+        sim.partProperty(passivating, "temp", 1000.0)
+        local film_oxygen = sim.partCreate(-1, 121, 120, ids.oxygen)
+        if film_oxygen >= 0 then
+            sim.partProperty(film_oxygen, "temp", 300.0)
+            sim.partProperty(film_oxygen, "vx", 0.0)
+            sim.partProperty(film_oxygen, "vy", 0.0)
+            sim.updateUpTo()
+            if sim.partProperty(passivating, "tmp") ~= 1
+                    and sim.partExists(film_oxygen) then
+                sim.partKill(film_oxygen)
+            end
+        else
+            sim.updateUpTo()
+        end
+        if sim.partProperty(passivating, "tmp") == 1 then
+            break
+        end
+    end
+    elements.property(ids.oxygen, "Diffusion", oxygen_diffusion)
+    assert(sim.partProperty(passivating, "tmp") == 1
+            and sim.partProperty(passivating, "dcolour") ~= 0,
+        "hot titanium alloy did not form its bounded passivation state")
+
+    configure_simulation()
+    local shield = sim.partCreate(-1, 120, 120, ids.waly)
+    assert(shield >= 0, "tungsten-heavy-alloy shield setup failed")
+    local absorbed = false
+    for _ = 1, 80 do
+        local test_neutron = sim.partCreate(-1, 121, 120, ids.neutron)
+        if test_neutron >= 0 then
+            sim.partProperty(test_neutron, "vx", 0.0)
+            sim.partProperty(test_neutron, "vy", 0.0)
+            sim.updateUpTo()
+            if not sim.partExists(test_neutron) then
+                absorbed = true
+                break
+            end
+            sim.partKill(test_neutron)
+        else
+            sim.updateUpTo()
+        end
+    end
+    assert(absorbed and sim.partProperty(shield, "temp") > 295.0,
+        "tungsten heavy alloy did not absorb a bounded neutron event")
+
+    configure_simulation()
+    local cladding = sim.partCreate(-1, 120, 120, ids.zral)
+    assert(cladding >= 0, "zirconium-alloy cladding setup failed")
+    sim.partProperty(cladding, "temp", 1400.0)
+    local steam_hydrogen = false
+    for _ = 1, 160 do
+        local steam = sim.partCreate(-1, 121, 120, ids.water_vapour)
+        if steam >= 0 then
+            sim.partProperty(steam, "temp", 1400.0)
+            sim.partProperty(steam, "vx", 0.0)
+            sim.partProperty(steam, "vy", 0.0)
+            sim.updateUpTo()
+            if sim.partProperty(cladding, "type") == ids.brmt then
+                steam_hydrogen = sim.partExists(steam)
+                    and sim.partProperty(steam, "type") == elements.DEFAULT_PT_H2
+                break
+            end
+            if sim.partExists(steam) then sim.partKill(steam) end
+        else
+            sim.updateUpTo()
+        end
+    end
+    assert(steam_hydrogen
+            and sim.partProperty(cladding, "ctype") == ids.zral
+            and sim.partProperty(cladding, "tmp4") == RECOVERABLE_SCRAP_MARKER,
+        "hot zirconium alloy did not produce hydrogen and typed scrap")
+
+    configure_simulation()
+    local memory = sim.partCreate(-1, 120, 120, ids.niti)
+    assert(memory >= 0, "nitinol shape-memory setup failed")
+    sim.airMode(sim.AIR_NOUPDATE)
+    sim.pressure(30, 30, 100.0)
+    sim.updateUpTo()
+    assert(sim.partProperty(memory, "tmp") == 1
+            and sim.partProperty(memory, "dcolour") ~= 0,
+        "moderate pressure did not mark nitinol as deformed")
+    sim.pressure(30, 30, 0.0)
+    sim.partProperty(memory, "temp", 550.0)
+    sim.updateUpTo()
+    assert(sim.partProperty(memory, "tmp") == 0
+            and sim.partProperty(memory, "dcolour") == 0,
+        "heated nitinol did not restore its visual memory state")
 
     configure_simulation()
     local soft = sim.partCreate(-1, 120, 120, ids.alum)
@@ -266,6 +450,18 @@ local function run_material_behaviors()
             and sim.partProperty(solder_scrap, "ctype") == ids.sold
             and sim.partProperty(solder_scrap, "tmp4") == RECOVERABLE_SCRAP_MARKER,
         "SOLD=512 did not survive pressure conversion in BRMT ctype")
+
+    configure_simulation()
+    local high_engineering_scrap = sim.partCreate(-1, 120, 120, ids.niti)
+    assert(high_engineering_scrap >= 0, "NITI=520 pressure setup failed")
+    sim.airMode(sim.AIR_NOUPDATE)
+    sim.pressure(30, 30, 256.0)
+    sim.updateUpTo()
+    assert(sim.partProperty(high_engineering_scrap, "type") == ids.brmt
+            and sim.partProperty(high_engineering_scrap, "ctype") == ids.niti
+            and sim.partProperty(high_engineering_scrap, "tmp4")
+                == RECOVERABLE_SCRAP_MARKER,
+        "NITI=520 did not survive pressure conversion in BRMT ctype")
 
     configure_simulation()
     local scrap = sim.partCreate(-1, 120, 120, ids.brmt)
@@ -400,7 +596,43 @@ local function test()
         { ids.tin, ids.tin, ids.tin, ids.lead, ids.lead },
         ids.sold,
         900.0)
+    frames.nsal = run_alloy(
+        "nickel superalloy",
+        { ids.nicl, ids.nicl, ids.nicl, ids.nicl, ids.chrm, ids.cobt },
+        ids.nsal,
+        2700.0)
+    frames.cnst = run_alloy(
+        "constantan",
+        { ids.copr, ids.copr, ids.copr, ids.nicl, ids.nicl },
+        ids.cnst,
+        2300.0)
+    frames.cuni = run_alloy(
+        "cupronickel",
+        { ids.copr, ids.copr, ids.copr, ids.nicl },
+        ids.cuni,
+        2300.0)
+    frames.tial = run_alloy(
+        "titanium alloy",
+        { ids.ttan, ids.ttan, ids.ttan, ids.ttan, ids.alum, ids.vanadium },
+        ids.tial,
+        2700.0)
+    frames.waly = run_alloy(
+        "tungsten heavy alloy",
+        { ids.tung, ids.tung, ids.tung, ids.tung, ids.nicl, ids.iron },
+        ids.waly,
+        4200.0)
+    frames.zral = run_alloy(
+        "zirconium alloy",
+        { ids.zirconium, ids.zirconium, ids.zirconium, ids.zirconium, ids.tin },
+        ids.zral,
+        2700.0)
+    frames.niti = run_alloy(
+        "nitinol",
+        { ids.nicl, ids.ttan },
+        ids.niti,
+        2300.0)
     frames.stel = run_steel()
+    frames.csti = run_cast_iron()
     run_carbonization()
     run_negative_control()
     run_material_behaviors()
@@ -412,18 +644,23 @@ local ok, data = xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_METALLURGY_STATUS=PASS\n")
-    report:write("OMNI_METALLURGY_RECIPES=9\n")
-    report:write("OMNI_METALLURGY_BEHAVIORS=7\n")
+    report:write("OMNI_METALLURGY_RECIPES=17\n")
+    report:write("OMNI_METALLURGY_BEHAVIORS=13\n")
     report:write(
         "OMNI_METALLURGY_IDS=" .. ids.alum .. "-" .. ids.cruc .. "\n")
     report:write("OMNI_METALLURGY_CANONICAL_SCRAP=" .. ids.brmt .. "\n")
     report:write("OMNI_METALLURGY_LEGACY_ALIAS=" .. ids.legacy_mscr .. "\n")
     report:write("OMNI_METALLURGY_HIGH_ID=" .. ids.sold .. "\n")
     report:write(
+        "OMNI_METALLURGY_ENGINEERING_IDS=" .. ids.sold .. "-" .. ids.niti .. "\n")
+    report:write(
         "OMNI_METALLURGY_FRAMES="
         .. data.brnz .. "," .. data.bras .. "," .. data.ncrm .. ","
         .. data.almg .. "," .. data.ssil .. "," .. data.tstl .. ","
-        .. data.stel .. "," .. data.sold .. "\n")
+        .. data.stel .. "," .. data.sold .. "," .. data.nsal .. ","
+        .. data.cnst .. "," .. data.cuni .. "," .. data.tial .. ","
+        .. data.waly .. "," .. data.zral .. "," .. data.niti .. ","
+        .. data.csti .. "\n")
 else
     local error_text = tostring(data):gsub("[\r\n]+", " | ")
     report:write("OMNI_METALLURGY_STATUS=FAIL\n")

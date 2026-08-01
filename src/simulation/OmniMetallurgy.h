@@ -8,6 +8,7 @@
 constexpr int OmniRecoverableScrapMarker = 0x4F4D5343; // "OMSC"
 
 bool IsOmniRecoverableScrap(Particle const &particle);
+bool IsOmniRecoverableMetalType(int type);
 void MarkOmniRecoverableScrap(Particle &particle, int sourceType);
 
 // All routines in this file are deliberately local-neighbour updates.  They

@@ -193,7 +193,7 @@ static int update(UPDATE_FUNC_ARGS)
 						       	(elements[rt].Properties & (TYPE_SOLID|PROP_CONDUCTS)) == (TYPE_SOLID|PROP_CONDUCTS) && sim->rng.chance(1, 10))
 					{
 						//@ BASE + conductive solid -> BASE + BMTL/BRMT
-						if (rt >= PT_ALUM && rt <= PT_TSTL)
+						if (IsOmniRecoverableMetalType(rt))
 						{
 							sim->createPartTempVel(ID(r), x+rx, y+ry, PT_BRMT);
 							MarkOmniRecoverableScrap(parts[ID(r)], rt);

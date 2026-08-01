@@ -43,14 +43,14 @@ periodic_lanthanide_batch_complete=true
 periodic_actinide_batch_complete=true
 periodic_superheavy_batch_complete=true
 periodic_table_ui=true
-total_omnipack_elements=191
+total_omnipack_elements=199
 compatibility_aliases=1
-total_omnipack_playable=190
-total_playable_materials=385
+total_omnipack_playable=198
+total_playable_materials=393
 inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
-reaction_registry_entries=192
+reaction_registry_entries=207
 clean_build_pass=true
 element_registry_pass=true
 reaction_registry_pass=true
@@ -63,5 +63,5 @@ first_port_batch_tests_pass=not_tested
 数值只代表当前克隆集和自动扫描。候选数按标准化名称与代号折叠重复分叉；行为差异仍保留在去重报告中。
 `duplicate_definition_records` 是自动归入同概念比较的全部源码定义数，包含待主元素增量审计的记录，不等于已经人工拒绝的独立材料。`canonical_merge_review_candidates` 进入 `B_rewrite_port`，目标是合并主元素而不是新增 ID。
 `license_audit_pass=true` 只能由完成逐文件、README、子模块和资源复核后的显式参数写入。
-当前新增 92 个周期元素、无机三批 50 个材料和 `SOLD=512` 均为 OmniPack 原创族/反应逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`；外部候选只用于确认搜索覆盖，没有复制其实现。`first_port_batch_complete=false` 仍是许可证门禁的真实结果，不能把原创内容批次冒充成已完成第三方移植。
+当前新增 92 个周期元素、无机三批 50 个材料和工程合金 `SOLD..NITI=512..520` 均为 OmniPack 原创族/反应逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`；外部候选只用于确认搜索覆盖，没有复制其实现。`first_port_batch_complete=false` 仍是许可证门禁的真实结果，不能把原创内容批次冒充成已完成第三方移植。
 `OMNI_PT_MSCR=278` 是合并到官方 `DEFAULT_PT_BRMT=30` 的兼容别名；它继续占用稳定槽以读取旧存档，但不计入 `total_omnipack_playable` 或 `total_playable_materials`。

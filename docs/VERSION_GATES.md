@@ -64,11 +64,11 @@ inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
 inorganic_elements_total=50
-engine_active_elements=386
+engine_active_elements=394
 compatibility_aliases=1
-total_playable_materials=385
+total_playable_materials=393
 element_registry_valid=true
-reaction_registry_entries=192
+reaction_registry_entries=207
 reaction_registry_valid=true
 inorganic_runtime_test=true
 inorganic_event_budget_test=true
@@ -79,7 +79,7 @@ inorganic_gui_visual_test=not_tested
 inorganic_0_3_release_gate=false
 ```
 
-10 位容量与首个工程材料状态：
+10 位容量与工程合金首批状态：
 
 ```text
 pt_num=1024
@@ -88,8 +88,18 @@ legacy_ids_0_511_unchanged=true
 high_id_direct_and_carrier_probe=true
 corrupt_pmapbits_rejected=true
 lua_official_hole_preserved=true
-engineering_materials=1
+engineering_materials=9
+engineering_alloy_batch1_elements=8
+engineering_recipe_scenarios=17
+engineering_behavior_classes=13
 solder_runtime_test=true
+engineering_batch1_runtime_test=true
+engineering_batch1_ops_roundtrip_test=true
+engineering_batch1_clean_build_pass=true
+engineering_batch1_clean_build_targets=671
+engineering_batch1_static_tests=24/24
+engineering_batch1_python_tests=175/175
+engineering_batch1_exe_sha256=BA23A1C2E8225ABBFF4D6AFF3438260184D9D6AF80E6DBF0E2DCE2055FCBE6EB
 capacity_clean_build_pass=true
 capacity_reproducible_build=false
 capacity_developer_paths_removed=false
@@ -98,7 +108,7 @@ capacity_gui_visual_test=not_tested
 capacity_formal_600s_stress_test=not_tested
 ```
 
-三批无机化学与首个工程材料通过不等于对应版本内容冻结；后续批次仍须继续去重、登记和验证。同概念候选的有价值行为应合并到主元素，而不是新增重复 ID。
+三批无机化学与工程合金首批通过不等于对应版本内容冻结；后续矿物、陶瓷、玻璃和建筑材料仍须继续去重、登记和验证。同概念候选的有价值行为应合并到主元素，而不是新增重复 ID。
 
 ## `0.9.0` 整理
 

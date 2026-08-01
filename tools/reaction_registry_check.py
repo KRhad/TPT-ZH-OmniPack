@@ -69,6 +69,21 @@ REQUIRED_REACTIONS = {
     "metallurgy.zinc_corrosion",
     "metallurgy.nichrome_resistive_heating",
     "metallurgy.solder_fuse_heating",
+    "metallurgy.cast_iron",
+    "metallurgy.alloy_nickel_superalloy",
+    "metallurgy.alloy_constantan",
+    "metallurgy.alloy_cupronickel",
+    "metallurgy.alloy_titanium",
+    "metallurgy.alloy_tungsten_heavy",
+    "metallurgy.alloy_zirconium",
+    "metallurgy.alloy_nitinol",
+    "metallurgy.cast_iron_quench",
+    "metallurgy.titanium_alloy_passivation",
+    "metallurgy.tungsten_heavy_neutron_absorption",
+    "metallurgy.zirconium_alloy_steam_oxidation",
+    "metallurgy.constantan_resistive_heating",
+    "metallurgy.nitinol_pressure_deformation",
+    "metallurgy.nitinol_heat_recovery",
     "metallurgy.wood_charcoal",
     "metallurgy.coal_coke",
     "metallurgy.radiation_shield_assembly",
@@ -434,9 +449,15 @@ def audit(root: Path, registry_path: Path | None = None) -> list[str]:
             "SPRK(ctype=PT_NGEN)",
             "SPRK(ctype=PT_NCRM)",
             "SPRK(ctype=PT_SOLD)",
+            "SPRK(ctype=PT_CNST)",
         }:
             errors.append(f"{path}:{row_number}: invalid electricity condition")
-        if row.get("pressure") not in {"any", ">=2.0", "abs>=element-specific-threshold"}:
+        if row.get("pressure") not in {
+            "any",
+            ">=2.0",
+            "abs>=element-specific-threshold",
+            "abs=[55;170)",
+        }:
             errors.append(f"{path}:{row_number}: invalid pressure condition")
         temperature = row.get("temperature", "")
         if not _valid_temperature(temperature):

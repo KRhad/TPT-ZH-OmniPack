@@ -38,9 +38,19 @@ struct AlloyRecipe
 	float minimumTemperature;
 };
 
-constexpr std::array<AlloyRecipe, 7> AlloyRecipes{ {
+// More specific recipes precede overlapping simpler ratios.  For example a
+// 3:2 copper/nickel charge must become constantan before the 3:1 cupronickel
+// recipe is considered, and nickel superalloy must precede nichrome.
+constexpr std::array<AlloyRecipe, 14> AlloyRecipes{ {
 	{ { Ingredient{ PT_STEL, 4 }, Ingredient{ PT_CHRM, 1 }, Ingredient{ PT_NICL, 1 } }, 3, PT_SSIL, 2200.0f },
 	{ { Ingredient{ PT_STEL, 4 }, Ingredient{ PT_COBT, 1 }, Ingredient{ PT_MOLY, 1 } }, 3, PT_TSTL, 2950.0f },
+	{ { Ingredient{ PT_NICL, 4 }, Ingredient{ PT_CHRM, 1 }, Ingredient{ PT_COBT, 1 } }, 3, PT_NSAL, 2250.0f },
+	{ { Ingredient{ PT_TTAN, 4 }, Ingredient{ PT_ALUM, 1 }, Ingredient{ PT_V,    1 } }, 3, PT_TIAL, 2250.0f },
+	{ { Ingredient{ PT_TUNG, 4 }, Ingredient{ PT_NICL, 1 }, Ingredient{ PT_IRON, 1 } }, 3, PT_WALY, 3800.0f },
+	{ { Ingredient{ PT_ZR,   4 }, Ingredient{ PT_TIN,  1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_ZRAL, 2250.0f },
+	{ { Ingredient{ PT_COPR, 3 }, Ingredient{ PT_NICL, 2 }, Ingredient{ PT_NONE, 0 } }, 2, PT_CNST, 1800.0f },
+	{ { Ingredient{ PT_COPR, 3 }, Ingredient{ PT_NICL, 1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_CUNI, 1800.0f },
+	{ { Ingredient{ PT_NICL, 1 }, Ingredient{ PT_TTAN, 1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_NITI, 2050.0f },
 	{ { Ingredient{ PT_COPR, 3 }, Ingredient{ PT_TIN,  1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_BRNZ, 1375.0f },
 	{ { Ingredient{ PT_COPR, 3 }, Ingredient{ PT_ZINC, 1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_BRAS, 1375.0f },
 	{ { Ingredient{ PT_NICL, 4 }, Ingredient{ PT_CHRM, 1 }, Ingredient{ PT_NONE, 0 } }, 2, PT_NCRM, 2200.0f },
@@ -106,6 +116,26 @@ int FindNeighbour(
 			if (ctype == PT_NONE || parts[neighbour].ctype == ctype)
 			{
 				return neighbour;
+			}
+		}
+	}
+	return -1;
+}
+
+int FindEnergyNeighbour(int x, int y, int type, Simulation *sim)
+{
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if (!InBounds(x + rx, y + ry))
+			{
+				continue;
+			}
+			auto packed = sim->photons[y + ry][x + rx];
+			if (packed && TYP(packed) == type)
+			{
+				return ID(packed);
 			}
 		}
 	}
@@ -180,6 +210,18 @@ bool IsMoltenMetallurgyComponent(int ctype)
 	case PT_ZINC:
 	case PT_STEL:
 	case PT_SOLD:
+	case PT_TTAN:
+	case PT_V:
+	case PT_TUNG:
+	case PT_ZR:
+	case PT_CSTI:
+	case PT_CUNI:
+	case PT_TIAL:
+	case PT_NSAL:
+	case PT_WALY:
+	case PT_ZRAL:
+	case PT_CNST:
+	case PT_NITI:
 		return true;
 	default:
 		return false;
@@ -197,17 +239,25 @@ float BreakPressureFor(int type)
 	case PT_ZINC: return 20.0f;
 	case PT_ALUM: return 25.0f;
 	case PT_ALMG: return 45.0f;
+	case PT_CSTI: return 65.0f;
 	case PT_COPR: return 48.0f;
 	case PT_BRAS: return 60.0f;
 	case PT_NCRM: return 70.0f;
+	case PT_CNST: return 82.0f;
 	case PT_BRNZ: return 75.0f;
 	case PT_NICL: return 82.0f;
+	case PT_CUNI: return 100.0f;
 	case PT_COBT: return 90.0f;
 	case PT_CHRM:
 	case PT_STEL: return 105.0f;
 	case PT_MOLY:
 	case PT_SSIL: return 125.0f;
+	case PT_ZRAL: return 145.0f;
 	case PT_TSTL: return 155.0f;
+	case PT_NITI: return 170.0f;
+	case PT_TIAL: return 180.0f;
+	case PT_NSAL: return 195.0f;
+	case PT_WALY: return 220.0f;
 	default:      return 0.0f;
 	}
 }
@@ -468,6 +518,10 @@ bool TryAlloyRecipes(
 			parts[entry.index].temp = temperature;
 			ResetMoltenMetadata(parts[entry.index]);
 			parts[entry.index].tmp3 = touchedMarker;
+			if (recipe.product == PT_TIAL || recipe.product == PT_NITI)
+			{
+				parts[entry.index].dcolour = 0;
+			}
 		}
 		return true;
 	}
@@ -542,6 +596,61 @@ bool TrySteelRecipe(
 	parts[fluxEntry.index].tmp3 = touchedMarker;
 	return true;
 }
+
+bool TryCastIronRecipe(
+	int i,
+	LocalParticles const &local,
+	Parts &parts,
+	Simulation *sim)
+{
+	if (parts[i].ctype != PT_IRON)
+	{
+		return false;
+	}
+	auto touchedMarker = sim->currentTick + 1;
+	std::array<bool, MaxLocalParticles> used{};
+	Selection iron;
+	Selection coke;
+	if (!AddIngredient(
+			local, parts, PT_IRON, 4, PhaseMatch::Molten, 1750.0f,
+			touchedMarker, used, iron)
+		|| !AddIngredient(
+			local, parts, PT_COKE, 1, PhaseMatch::Direct, 950.0f,
+			touchedMarker, used, coke)
+		|| !used[0]
+		|| !ConsumeReactionBudget(sim))
+	{
+		return false;
+	}
+
+	float castingTemperature = 0.0f;
+	for (int selected = 0; selected < iron.count; ++selected)
+	{
+		auto const &entry = local.items[iron.localIndices[selected]];
+		castingTemperature += parts[entry.index].temp;
+	}
+	castingTemperature /= float(iron.count);
+	for (int selected = 0; selected < iron.count; ++selected)
+	{
+		auto const &entry = local.items[iron.localIndices[selected]];
+		parts[entry.index].ctype = PT_CSTI;
+		parts[entry.index].temp = castingTemperature;
+		parts[entry.index].dcolour = 0;
+		ResetMoltenMetadata(parts[entry.index]);
+		parts[entry.index].tmp3 = touchedMarker;
+	}
+
+	auto const &cokeEntry = local.items[coke.localIndices[0]];
+	sim->part_change_type(cokeEntry.index, cokeEntry.x, cokeEntry.y, PT_SMKE);
+	parts[cokeEntry.index].temp = std::min(castingTemperature, 500.0f);
+	parts[cokeEntry.index].life = 45;
+	parts[cokeEntry.index].ctype = PT_NONE;
+	parts[cokeEntry.index].tmp = 0;
+	parts[cokeEntry.index].tmp2 = 0;
+	parts[cokeEntry.index].tmp3 = touchedMarker;
+	parts[cokeEntry.index].tmp4 = 0;
+	return true;
+}
 }
 
 bool IsOmniRecoverableScrap(Particle const &particle)
@@ -549,10 +658,15 @@ bool IsOmniRecoverableScrap(Particle const &particle)
 	return particle.type == PT_BRMT && particle.tmp4 == OmniRecoverableScrapMarker;
 }
 
+bool IsOmniRecoverableMetalType(int type)
+{
+	return IsRecoverableSourceType(type);
+}
+
 void MarkOmniRecoverableScrap(Particle &particle, int sourceType)
 {
 	particle.life = 0;
-	particle.ctype = IsRecoverableSourceType(sourceType) ? sourceType : PT_IRON;
+	particle.ctype = IsOmniRecoverableMetalType(sourceType) ? sourceType : PT_IRON;
 	particle.tmp = 0;
 	particle.tmp2 = 0;
 	particle.tmp3 = 0;
@@ -574,6 +688,30 @@ int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 
 	switch (parts[i].type)
 	{
+	case PT_CSTI:
+	{
+		int waterX = 0;
+		int waterY = 0;
+		auto water = FindNeighbourAt(
+			x, y, PT_WATR, PT_NONE, parts, pmap, waterX, waterY);
+		if (water < 0)
+		{
+			water = FindNeighbourAt(
+				x, y, PT_SLTW, PT_NONE, parts, pmap, waterX, waterY);
+		}
+		if (parts[i].temp > 850.0f && water >= 0
+			&& sim->rng.chance(1, 8) && ConsumeReactionBudget(sim))
+		{
+			auto temperature = parts[i].temp;
+			sim->part_change_type(i, x, y, PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], PT_CSTI);
+			parts[i].temp = std::max(temperature - 120.0f, 730.0f);
+			sim->part_change_type(water, waterX, waterY, PT_WTRV);
+			parts[water].temp = std::max(parts[water].temp, 430.0f);
+			return 1;
+		}
+		break;
+	}
 	case PT_COPR:
 	{
 		auto oxygen = FindNeighbour(x, y, PT_O2, PT_NONE, parts, pmap);
@@ -646,6 +784,83 @@ int OmniMetallurgyMetalUpdate(UPDATE_FUNC_ARGS)
 		}
 		break;
 	}
+	case PT_TIAL:
+	{
+		if (parts[i].tmp == 0 && parts[i].temp > 900.0f)
+		{
+			auto oxygen = FindNeighbour(x, y, PT_O2, PT_NONE, parts, pmap);
+			if (oxygen >= 0 && sim->rng.chance(1, 32)
+				&& ConsumeReactionBudget(sim))
+			{
+				sim->kill_part(oxygen);
+				parts[i].tmp = 1;
+				parts[i].dcolour = 0xFFB8C4D0;
+				return 1;
+			}
+		}
+		break;
+	}
+	case PT_WALY:
+	{
+		auto neutron = FindEnergyNeighbour(x, y, PT_NEUT, sim);
+		if (neutron >= 0 && sim->rng.chance(1, 4)
+			&& ConsumeReactionBudget(sim))
+		{
+			sim->kill_part(neutron);
+			parts[i].temp = std::min(parts[i].temp + 40.0f, 3275.0f);
+			return 1;
+		}
+		break;
+	}
+	case PT_ZRAL:
+	{
+		if (parts[i].temp <= 1250.0f)
+		{
+			break;
+		}
+		int waterX = 0;
+		int waterY = 0;
+		auto water = FindNeighbourAt(
+			x, y, PT_WTRV, PT_NONE, parts, pmap, waterX, waterY);
+		if (water < 0)
+		{
+			water = FindNeighbourAt(
+				x, y, PT_WATR, PT_NONE, parts, pmap, waterX, waterY);
+		}
+		if (water >= 0 && sim->rng.chance(1, 24)
+			&& ConsumeReactionBudget(sim))
+		{
+			auto temperature = parts[i].temp;
+			sim->part_change_type(water, waterX, waterY, PT_H2);
+			parts[water].temp = std::max(parts[water].temp, 700.0f);
+			sim->part_change_type(i, x, y, PT_BRMT);
+			MarkOmniRecoverableScrap(parts[i], PT_ZRAL);
+			parts[i].temp = std::min(temperature + 120.0f, 1875.0f);
+			return 1;
+		}
+		break;
+	}
+	case PT_NITI:
+	{
+		if (parts[i].tmp == 1 && parts[i].temp >= 500.0f)
+		{
+			if (ConsumeReactionBudget(sim))
+			{
+				parts[i].tmp = 0;
+				parts[i].dcolour = 0;
+			}
+			break;
+		}
+		auto pressure = std::abs(sim->pv[y / CELL][x / CELL]);
+		if (parts[i].tmp == 0 && pressure >= 55.0f && pressure < 170.0f
+			&& ConsumeReactionBudget(sim))
+		{
+			parts[i].tmp = 1;
+			parts[i].dcolour = 0xFF746F79;
+			parts[i].temp = std::min(parts[i].temp + 8.0f, 490.0f);
+		}
+		break;
+	}
 	default:
 		break;
 	}
@@ -708,6 +923,10 @@ int OmniMetallurgyLavaUpdate(UPDATE_FUNC_ARGS)
 
 	auto local = CollectLocalParticles(i, x, y, parts, pmap);
 	if (TrySteelRecipe(i, local, parts, sim))
+	{
+		return 1;
+	}
+	if (TryCastIronRecipe(i, local, parts, sim))
 	{
 		return 1;
 	}

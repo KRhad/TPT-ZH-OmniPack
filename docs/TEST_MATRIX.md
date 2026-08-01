@@ -66,6 +66,20 @@
 | 当前 EXE 运行回归 | PASS | 冶金、六类 OPS 和 mixed OPS 已在 final3 clean EXE 上复跑；周期、化学、生态完整/简化、核工业、别名迁移、模块与 isolated 自动化/示例保留此前 clean EXE 证据 |
 | 正式压力与 GUI | NOT RUN | 正式 60 秒预热 + 600 秒采样、7,200 秒长跑、双语/DPI/图鉴视觉仍未执行 |
 
+### 工程合金首批 `513..520`
+
+| 项目 | 状态 | 证据 |
+|---|---|---|
+| 稳定 ID 与去重 | PASS | `CSTI/CUNI/TIAL/NSAL/WALY/ZRAL/CNST/NITI=513..520`；碳钢合并到 `STEL`，高温电阻行为合并到 `NCRM`，无重复 ID |
+| 配方与行为 | PASS | 真实客户端 `17` 个配方场景、`13` 类行为、`16` 个配方帧；重叠配方优先级、凝固、热冲击、钝化、中子、蒸汽、电阻和记忆状态均通过 |
+| 模块直选与禁用 | PASS | 启用时最高 `NITI=520` 可选择；四模块禁用 OPS 保留 10 粒子、事件 0，并拒绝选择/创建 |
+| 高位 OPS 原生探针 | PASS | 直接 `SOLD=512/NITI=520` 及 520 号 `LAVA/SPRK/BRMT/CONV/VIRS` 携带字段往返；来源槽 1536 映射、缺失 identifier 和非法位宽仍通过 |
+| 六类 OPS | PASS | 18 进程、262 粒子、314 字段断言、266 稳定 identifier、262 palette identifier；冶金类为 38 粒子/48 断言 |
+| mixed OPS | PASS | 3 进程、11 粒子、21 字段断言 |
+| 字体结构与离屏渲染 | PASS | 新增 8 个 Fusion 原生字形后为 14,755 字形、2,719 必需字符、Fusion 1,965、Unifont 0；SHA-256 `F13AB9E8850F2B6B6DF70F19C1725A31BCC8DD52D817E6CCD2A13ACDF7BE451F` |
+| 全新 Windows 构建 | PASS | `build-engineering-alloys-batch1-final-clean`，`671/671`；Meson static `24/24`、Python `175/175`（0 skip）；EXE 299,104,507 字节，SHA-256 `BA23A1C2E8225ABBFF4D6AFF3438260184D9D6AF80E6DBF0E2DCE2055FCBE6EB` |
+| 正式压力、长跑与 GUI | NOT RUN | 正式 600 秒压力、7,200 秒长跑和新材料/字形 DPI 视觉尚未执行 |
+
 ### 完整周期表十四批证据
 
 | 项目 | 状态 | 证据 |

@@ -214,6 +214,12 @@ static int update(UPDATE_FUNC_ARGS)
 			parts[i].temp + 12.0f,
 			elements[PT_NCRM].HighTemperature - 25.0f);
 		break;
+	case PT_CNST:
+		// Constantan is a moderate heater below the hotter nichrome envelope.
+		parts[i].temp = std::min(
+			parts[i].temp + 24.0f,
+			elements[PT_CNST].HighTemperature - 25.0f);
+		break;
 	default:
 		break;
 	}

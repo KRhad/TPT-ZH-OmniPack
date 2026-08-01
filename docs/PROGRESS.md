@@ -23,24 +23,25 @@ inorganic_batch1_worktree_base=8abe277e1cac49bac4654da89c5271c19bf1e827
 inorganic_batch2_worktree_base=7eed94db5fbe81a95315cfac29cf142af1b18d6a
 inorganic_batch3_worktree_base=0eb4e11dd41fe4da72b8f8a1db65fa07a77898b1
 capacity_expansion_worktree_base=4f473ebefe59e436228ec7799f9363d39fe166b1
+engineering_alloys_batch1_worktree_base=592643e168ffd111d1e11000eb2e538053c29d3c
 pt_num=1024
 pmapbits=10
 official_active_elements=195
-omnipack_registered_elements=191
-omnipack_playable_elements=190
-engine_active_elements=386
+omnipack_registered_elements=199
+omnipack_playable_elements=198
+engine_active_elements=394
 compatibility_aliases=1
-total_playable_materials=385
-registered_slots=513
+total_playable_materials=393
+registered_slots=521
 reserved_slots=127
-unallocated_capacity_slots=511
+unallocated_capacity_slots=503
 enabled_content_modules=4
 periodic_elements_placeable=118
 periodic_elements_remaining=0
 inorganic_batch1_elements=16
 inorganic_batch2_elements=16
 inorganic_batch3_elements=18
-reaction_registry_entries=192
+reaction_registry_entries=207
 total_playable_materials_minimum=true
 periodic_table_ui=true
 save_format=OPS1/BZip2
@@ -127,7 +128,7 @@ release_ready=false
 - 可回收来源金属行为已迁入官方 BRMT，使用 `ctype` 保存来源类型、`tmp4=0x4F4D5343` 隔离增强状态；普通官方 BRMT 的 1273 K 相变和 `BRMT+BREC` 状态机保持；
 - `MSCR=278` 继续注册为隐藏兼容别名：菜单/搜索/Lua 直接创建均拒绝，旧 OPS 和间接载体仍能读取，模块启用后一个模拟刻迁移，模块关闭时保持不动，ID 永不复用；
 - 合并原则已扩展为“主元素增强”：有兼容许可证且存在玩法增量的同概念候选重写到官方或当前 OmniPack 主元素，不新增第二个 ID；完全相同且无增量的定义无需改代码；
-- 当前计数为 513 个已登记槽、386 个引擎活动项、1 个兼容别名、385 个可玩材料和 127 个显式保留槽；OmniPack 为 191 个登记项 / 190 个可玩元素；
+- 该去重批提交时计数为 513 个已登记槽、386 个引擎活动项、1 个兼容别名、385 个可玩材料和 127 个显式保留槽；OmniPack 为 191 个登记项 / 190 个可玩元素；
 - 三进程迁移回归通过：旧 278 stamp 为 603 字节、SHA-256 `C057B705FCDE0CF8BD90B8F96139022EDB0606EA92D7A4F8BC2963F7E83E0C5F`；canonical BRMT stamp 为 645 字节、SHA-256 `D01A2DB444980110AFE62217D4B189BF33BB28B7631AF3F97FBBCCE4C25168B3`；
 - 六类 OPS 为 18 进程、12 次重启、12 次加载、253 粒子和每次加载 305 个字段断言；mixed OPS 为 3 进程、11 粒子和 21 个字段断言；周期 OPS 的可回收 BRMT 同时覆盖 `ctype/tmp4`；
 - 全新 `build-element-dedup-final-clean` 构建 `655/655`、Meson static `22/22`、Python `166/166`（0 skip）通过；冶金、周期、模块、四模块禁用、化学、生态双模式、核工业、0.2 示例/教程和临时 0.3 自动化开发探针均通过；
@@ -147,6 +148,18 @@ release_ready=false
 - 自动化与示例在系统临时目录隔离副本中以开发探针运行通过，未覆盖仓库内两个含 `omniAlchemy` 的旧字段兼容样本；该结果不替代正式 clean-source 发布证据。
 - 两个不同绝对目录下的同配置 debug 构建哈希不同，且 `strings` 直接检出各自开发路径；这是 `debug=true/strip=false` 开发证据的已确认边界，正式可复现、去路径、剥离发布构建仍未完成。
 
+## Phase 5 工程合金首批：`513..520`
+
+- 重复候选按“主元素优化”处理：碳钢继续使用 `STEL`，高温电阻材料继续使用 `NCRM`；只为八种有独立配方或行为的材料分配 `CSTI/CUNI/TIAL/NSAL/WALY/ZRAL/CNST/NITI=513..520`；
+- 数据驱动合金表从 7 条扩为 14 条，并按具体程度排序，确保镍铬钴先于镍铬、3:2 铜镍先于 3:1 铜镍；另加入不需要助熔剂的铸铁渗碳配方；
+- 有界差异行为覆盖铸铁淬水热冲击、钛合金一次钝化、钨重合金中子吸收、锆合金热蒸汽产氢、康铜电阻升温和镍钛压力/热记忆；全部使用局部邻域和冶金 `2048/frame` 预算或无粒子创建的自更新；
+- 真实客户端冶金回归通过 `17` 个配方场景、`13` 类行为和 `16` 个配方帧；模块直选确认最高 `NITI=520`，四模块禁用 OPS 保留 10 粒子且事件为 0；
+- 六类 OPS 为 18 进程、262 粒子、314 字段断言、266 个稳定 identifier 和 262 个 palette identifier；冶金单类为 38 粒子、48 字段断言并覆盖全部 31 个可玩冶金材料；mixed OPS 保持 11 粒子、21 字段断言；
+- 原生高位探针扩展到直接 `SOLD=512/NITI=520` 与 520 号 `ctype/tmp/tmp2` 载体；来源槽 1536 到当前 512、缺失 identifier 和损坏位宽门禁保持通过；
+- 新文案补入 `铸/壳/富/康/忆/承/洋/觉` 八个 Fusion 原生字形：字体为 14,755 字形、2,719 必需字符、Fusion 1,965、Unifont 0，SHA-256 `F13AB9E8850F2B6B6DF70F19C1725A31BCC8DD52D817E6CCD2A13ACDF7BE451F`；离屏渲染通过，人工逐字视觉仍为 `not_tested`；
+- 当前登记门禁为 521 行、394 活动、1 兼容别名、393 可玩、127 显式保留和 503 未登记容量槽；OmniPack 为 199 登记 / 198 可玩，反应登记 207 条，i18n 为 1600/1600；
+- 全新 `build-engineering-alloys-batch1-final-clean` 构建 `671/671`、Meson static `24/24`、Python `175/175`（0 skip）通过；开发 EXE 为 299,104,507 字节，SHA-256 `BA23A1C2E8225ABBFF4D6AFF3438260184D9D6AF80E6DBF0E2DCE2055FCBE6EB`；该 EXE 已复跑冶金、模块直选、四模块禁用、六类与 mixed OPS。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
+
 ## Phase 1：纯沙盒方向清理
 
 - 删除玩家炼金服务、十阶段进度、元素发现锁、进度窗口和通知；
@@ -164,7 +177,7 @@ release_ready=false
 
 ## 下一步
 
-1. 在固定工程材料区 `513..575` 继续下一批合金、矿物、陶瓷和玻璃；不得覆盖旧槽，也不得用重复空壳填充 1024 容量；
+1. 在固定工程材料区 `521..575` 继续矿物、陶瓷、玻璃和建筑材料；不得覆盖旧槽，也不得用重复空壳填充 1024 容量；
 2. 同概念模组候选只把许可证兼容的玩法增量合并到主元素，并登记来源与主元素回归；
 3. 为完整 118 元素与高位内容执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
 4. 每批继续登记、运行回归、OPS 双往返和性能预算验证；

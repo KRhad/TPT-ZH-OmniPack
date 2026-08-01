@@ -18,7 +18,7 @@
 | `resources/third_party/FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt` | Cubic 11 许可证 | Fusion Pixel Font 上游许可证清单 | SIL OFL 1.1 | `2B6E5938E5CFFA0B9E183BD05F8C363E174E7EBED1A0556E2855FD1707FA2188` | 随二进制包分发 |
 | `resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt` | Galmuri 许可证 | Fusion Pixel Font 上游许可证清单 | SIL OFL 1.1 | `86A3EE9495F942F0243F18C103DA9FACA27ADB88142613EDB8BB852E56C892C1` | 随二进制包分发 |
 
-生成步骤只将所需语言 JSON 中的字符加入上游字体，并保持官方 TPT 字形优先。缺失字符先从 Fusion Pixel Font 的 `zh_hans` BDF 取出；BDF 全局格为 12×12、ascent 10、descent 2，直接按基线坐标映射到 TPT 12 行单色像素，不做缩放、灰度膨胀或插值。只有 Fusion 不覆盖的其他语言字符才使用 GNU Unifont 的确定性 16→12 面积覆盖回退。当前嵌入目录的 1,957 个缺失字符均由 Fusion 覆盖，Unifont 回退数为 0。`tools/build_release_font.py` 会先核对全部输入和许可证的固定 SHA-256，并在简体中文目录存在任何非 Fusion 缺字时失败。
+生成步骤只将所需语言 JSON 中的字符加入上游字体，并保持官方 TPT 字形优先。缺失字符先从 Fusion Pixel Font 的 `zh_hans` BDF 取出；BDF 全局格为 12×12、ascent 10、descent 2，直接按基线坐标映射到 TPT 12 行单色像素，不做缩放、灰度膨胀或插值。只有 Fusion 不覆盖的其他语言字符才使用 GNU Unifont 的确定性 16→12 面积覆盖回退。当前嵌入目录的 1,965 个缺失字符均由 Fusion 覆盖，Unifont 回退数为 0。`tools/build_release_font.py` 会先核对全部输入和许可证的固定 SHA-256，并在简体中文目录存在任何非 Fusion 缺字时失败。
 
 ## 2026-07-30 中文字体故障与修复
 
@@ -33,7 +33,7 @@
 
 私有试包绑定提交 `ca3cccbee13a41c37ee0b7975c4b5f060cb34a95`，ZIP SHA-256 为 `E52E746BF925B2096ED93D659E54A52876179230D29D9534D4E579EB755E4081`。用户从 ZIP 解压运行后确认其中文显示仍不如既有出版中文 EXE（SHA-256 `3B96CFEC060705A48681645074AE3C5F53E9A2D40AE56FF76B0E906C2FDBD406`）。该人工结论使中文可读性/字形质量门禁失败；试包仅保留作失败对照，不得称为可发布候选。该结论没有发现或推断进程崩溃。
 
-当前原生 12px 方案生成 `resources/font.bz2` SHA-256 `855A77A8C38734A1045910DC57DA56AD081D9981DC405D7FAF040AB3A1FB2F8D`，包含 14,747 个字形，其中官方 TPT 基线 12,790 个、Fusion 补充 1,957 个、Unifont 回退 0 个。固定测试逐行比较 `U+4E2D/U+6587/U+7B80/U+4F53/U+5DE5/U+4E1A` 的 BDF 单色矩阵与 TPT 解包矩阵，并验证 2,711 个嵌入语言与周期表必需字符、替换字形、容器边界、码点排序、宽度和 pack/unpack。118 个周期表中文名称所需字符全部存在且非空；补充平面元素名的四字节 UTF-8 路径、无替换字形及完整语言包离屏渲染均有断言。无机第二批说明新增 `抵`（U+62B5）和 `铵`（U+94F5）；第三批说明新增 `氰`（U+6C30）、`盒`（U+76D2）和 `矿`（U+77FF）。这些字形均直接取自固定 Fusion 原生 12px BDF；重建后的来源解码、覆盖、pack/unpack 和引擎离屏渲染通过。既有 Fusion 中文显示曾由用户确认；本批新增字形仍未完成人工桌面逐字可读性检查，自动结果不替代最终视觉门禁。
+当前原生 12px 方案生成 `resources/font.bz2` SHA-256 `F13AB9E8850F2B6B6DF70F19C1725A31BCC8DD52D817E6CCD2A13ACDF7BE451F`，包含 14,755 个字形，其中官方 TPT 基线 12,790 个、Fusion 补充 1,965 个、Unifont 回退 0 个。固定测试逐行比较 `U+4E2D/U+6587/U+7B80/U+4F53/U+5DE5/U+4E1A` 的 BDF 单色矩阵与 TPT 解包矩阵，并验证 2,719 个嵌入语言与周期表必需字符、替换字形、容器边界、码点排序、宽度和 pack/unpack。118 个周期表中文名称所需字符全部存在且非空；补充平面元素名的四字节 UTF-8 路径、无替换字形及完整语言包离屏渲染均有断言。工程合金首批新增 `铸/壳/富/康/忆/承/洋/觉` 八个 Fusion 原生字形；重建后的来源解码、覆盖、pack/unpack 和引擎离屏渲染通过。既有 Fusion 中文显示曾由用户确认；本批新增字形仍未完成人工桌面逐字可读性检查，自动结果不替代最终视觉门禁。
 
 该方案的私有人工试包绑定提交 `c743db2fcc49c01033e68023cceff897ed4c35f6`，普通 ZIP SHA-256 `943DA2A60C0B371A1D3F921FEC525FB3F7B5AEBC7C5CE7775A8AEFA883C13F14`，符号 ZIP SHA-256 `BE14C7D53658963DF1C6B1ECFAA44AC51F8004883530CB7DF922E4282FC11031`。ZIP 内容与 PE 审计通过，从 ZIP 解压后以 20 个全新数据目录启动均响应，进程崩溃 0；人工可读性仍为 `not_tested`。
 

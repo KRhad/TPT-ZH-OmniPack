@@ -512,6 +512,14 @@ simulation_elem_names = [
 	'CUCL', # 510: inorganic copper chloride
 	'AMCL', # 511: inorganic ammonium chloride
 	'SOLD', # 512: engineering tin-lead solder
+	'CSTI', # 513: engineering cast iron
+	'CUNI', # 514: engineering cupronickel
+	'TIAL', # 515: engineering titanium alloy
+	'NSAL', # 516: engineering nickel superalloy
+	'WALY', # 517: engineering tungsten heavy alloy
+	'ZRAL', # 518: engineering zirconium alloy
+	'CNST', # 519: engineering constantan
+	'NITI', # 520: engineering nickel-titanium shape-memory alloy
 ]
 
 simulation_elem_src = []

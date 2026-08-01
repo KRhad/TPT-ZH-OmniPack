@@ -36,6 +36,14 @@ EXPECTED_ELEMENTS = {
     277: "CRUC",
     278: "MSCR",
     512: "SOLD",
+    513: "CSTI",
+    514: "CUNI",
+    515: "TIAL",
+    516: "NSAL",
+    517: "WALY",
+    518: "ZRAL",
+    519: "CNST",
+    520: "NITI",
 }
 
 EXPECTED_ALLOY_INPUTS = {
@@ -46,6 +54,13 @@ EXPECTED_ALLOY_INPUTS = {
     "PT_NCRM": {"PT_NICL": 4, "PT_CHRM": 1},
     "PT_ALMG": {"PT_ALUM": 4, "PT_MAGN": 1},
     "PT_SOLD": {"PT_TIN": 3, "PT_LEAD": 2},
+    "PT_CUNI": {"PT_COPR": 3, "PT_NICL": 1},
+    "PT_TIAL": {"PT_TTAN": 4, "PT_ALUM": 1, "PT_V": 1},
+    "PT_NSAL": {"PT_NICL": 4, "PT_CHRM": 1, "PT_COBT": 1},
+    "PT_WALY": {"PT_TUNG": 4, "PT_NICL": 1, "PT_IRON": 1},
+    "PT_ZRAL": {"PT_ZR": 4, "PT_TIN": 1},
+    "PT_CNST": {"PT_COPR": 3, "PT_NICL": 2},
+    "PT_NITI": {"PT_NICL": 1, "PT_TTAN": 1},
 }
 
 RECIPE_RE = re.compile(
@@ -172,6 +187,13 @@ def check_engine(root: Path, errors: list[str]) -> None:
         "nuclear shield output": "PT_RSHD",
         "high-ID solder component": "case PT_SOLD:",
         "solder spark heating": "OmniMetallurgySparkUpdate",
+        "cast iron recipe": "TryCastIronRecipe(",
+        "cast iron thermal shock": "case PT_CSTI:",
+        "titanium alloy passivation": "case PT_TIAL:",
+        "tungsten neutron absorption": "case PT_WALY:",
+        "zirconium steam oxidation": "case PT_ZRAL:",
+        "nitinol shape memory": "case PT_NITI:",
+        "recoverable engineering type predicate": "IsOmniRecoverableMetalType",
     }
     for label, marker in required_markers.items():
         if marker not in text:
@@ -212,7 +234,7 @@ def check_engine(root: Path, errors: list[str]) -> None:
         root / "src" / "simulation" / "elements" / "BASE.cpp", errors
     )
     if (
-        "rt >= PT_ALUM && rt <= PT_TSTL" not in base
+        "IsOmniRecoverableMetalType(rt)" not in base
         or "PT_BRMT" not in base
         or "MarkOmniRecoverableScrap" not in base
     ):
@@ -248,6 +270,8 @@ def check_engine(root: Path, errors: list[str]) -> None:
     )
     if "case PT_NCRM:" not in spark:
         errors.append("SPRK.cpp: nichrome heating behavior is missing")
+    if "case PT_CNST:" not in spark:
+        errors.append("SPRK.cpp: constantan heating behavior is missing")
     if "OmniMetallurgySparkUpdate" not in spark:
         errors.append("SPRK.cpp: solder fusible-link behavior is missing")
 
@@ -301,8 +325,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args.quiet:
         print(
             "metallurgy-audit: PASS "
-            "(23 playable elements, 1 compatibility alias, 7 alloy recipes, "
-            "1 steel recipe, 1 nuclear assembly, 3x3 bounded)"
+            "(31 playable elements, 1 compatibility alias, 14 alloy recipes, "
+            "1 steel recipe, 1 cast-iron recipe, 1 nuclear assembly, 3x3 bounded)"
         )
     return 0
 

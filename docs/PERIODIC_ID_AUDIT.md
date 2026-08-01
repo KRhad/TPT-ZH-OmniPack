@@ -23,7 +23,7 @@ compatibility_aliases=1
 playable_materials=385
 registered_element_slots=513
 explicit_reserved_slots=127
-unallocated_capacity_slots=511
+unallocated_capacity_slots=503
 periodic_source_map_valid=true
 pt_num_expansion_complete=true
 next_batch_capacity_decision_required=false
@@ -58,7 +58,7 @@ Lua 分配器只把 `255..196` 作为一字节首选缓冲，不再扫描官方 
 
 ## 容量与内存
 
-`PT_NUM=1024` 使原生 `can_move` 和 Lua `customCanMove` 各包含 `1024²` 个单字节条目，即各 1,048,576 字节。当前登记只到 512：共有 386 个活动项，其中 `MSCR=278` 是兼容别名，实际可玩材料为 385；显式保留槽 127 个，`513..1023` 仍有 511 个尚未登记的容量槽。
+`PT_NUM=1024` 使原生 `can_move` 和 Lua `customCanMove` 各包含 `1024²` 个单字节条目，即各 1,048,576 字节。当前登记到 520：共有 394 个活动项，其中 `MSCR=278` 是兼容别名，实际可玩材料为 393；显式保留槽 127 个，`521..1023` 仍有 503 个尚未登记的容量槽。
 
 旧 ID `0..511`、identifier 与模块所有权全部保持。兼容别名 278 永久保留，不因行为合并而释放。继续新增内容仍需逐批登记、预算和 OPS 测试，但本轮 10 位容量决策已经完成，不再以“禁止分配 512+”阻塞工程材料批次。
 
@@ -66,6 +66,6 @@ Lua 分配器只把 `255..196` 作为一字节首选缓冲，不再扫描官方 
 
 - 缺失高位 identifier 的实际 GUI 提示与外部网络保存服务路径；
 - GUI `.cps` 保存、覆盖和取消的完整点击路径；
-- 包含全部 385 个可玩材料的大型 OPS 反复加载；
+- 包含全部 393 个可玩材料的大型 OPS 反复加载；
 - 正式 60 秒预热 + 600 秒压力以及两小时综合长跑；
 - 最终发布包中的高位 Lua 元素、模块切换和多次保存/加载组合。

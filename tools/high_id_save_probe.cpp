@@ -201,6 +201,7 @@ struct Fixture
 int main()
 {
 	static_assert(PT_SOLD == 512);
+	static_assert(PT_NITI == 520);
 	static_assert(PMAPBITS == 10);
 	static_assert(PT_NUM == 1024);
 
@@ -213,11 +214,12 @@ int main()
 
 	constexpr std::array fixtures{
 		Fixture{ PT_SOLD, 0, 0, 0, 0, 0 },
-		Fixture{ PT_LAVA, PT_SOLD, 0, 0, 0, 0 },
-		Fixture{ PT_SPRK, PT_SOLD, 0, 0, 0, 4 },
-		Fixture{ PT_BRMT, PT_SOLD, 0, 0, OmniRecoverableScrapMarker, 0 },
-		Fixture{ PT_CONV, PT_SOLD, PT_SOLD, 0, 0, 0 },
-		Fixture{ PT_VIRS, 0, 0, PT_SOLD, 0, 0 },
+		Fixture{ PT_NITI, 0, 0, 0, 0, 0 },
+		Fixture{ PT_LAVA, PT_NITI, 0, 0, 0, 0 },
+		Fixture{ PT_SPRK, PT_NITI, 0, 0, 0, 4 },
+		Fixture{ PT_BRMT, PT_NITI, 0, 0, OmniRecoverableScrapMarker, 0 },
+		Fixture{ PT_CONV, PT_NITI, PT_NITI, 0, 0, 0 },
+		Fixture{ PT_VIRS, 0, 0, PT_NITI, 0, 0 },
 	};
 
 	GameSave source(Vec2<int>{ 8, 2 });
@@ -322,9 +324,9 @@ int main()
 
 	std::cout << "high-id-save-probe: PASS pmapbits=" << PMAPBITS
 		<< " pt_num=" << PT_NUM
-		<< " high_id=" << PT_SOLD
+		<< " high_ids=" << PT_SOLD << "-" << PT_NITI
 		<< " particles=" << fixtures.size()
-		<< " direct_types=1 ctype_carriers=4 tmp_carriers=1 tmp2_carriers=1"
+		<< " direct_types=2 ctype_carriers=4 tmp_carriers=1 tmp2_carriers=1"
 		<< " invalid_pmapbits_rejected=2 missing_identifier_detected=1"
 		<< " wider_source_slot_remapped=1" << std::endl;
 	return 0;
