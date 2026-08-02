@@ -96,9 +96,16 @@ def audit(root: Path) -> list[str]:
 
     game_view = read_text(root / "src" / "gui" / "game" / "GameView.cpp", errors)
     for marker in (
-        "ui::Point(WINDOWW-32, WINDOWH-32)",
         "ui::Point(WINDOWW-16, WINDOWH-32)",
-        "int newInitialX = WINDOWW - 72;",
+        "ui::Point(WINDOWW-16, WINDOWH-48)",
+        "int currentY = WINDOWH-64;",
+        "int newInitialX = WINDOWW - 56;",
+        "Vec2(RES.X - 1, 18)",
+        "RemoveComponent(periodicTableButton);",
+        "AddComponent(periodicTableButton);",
+        "RemoveComponent(elementSearchButton);",
+        "AddComponent(elementSearchButton);",
+        "((newInitialX - (WINDOWW - 56)) / buttonStride) * buttonStride",
     ):
         if marker not in game_view:
             errors.append(f"GameView.cpp: missing lower-toolbar clearance marker {marker!r}")

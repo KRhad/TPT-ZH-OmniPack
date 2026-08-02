@@ -323,17 +323,17 @@ GameView::GameView():
 	pauseButton->SetActionCallback({ [this] { c->SetPaused(pauseButton->GetToggleState()); } });
 	AddComponent(pauseButton);
 
-	ui::Button * tempButton = new ui::Button(ui::Point(WINDOWW-16, WINDOWH-32), ui::Point(15, 15), 0xE065, Localization::Ref().Tr("gametools.tooltip.search_elements"));
-	tempButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
-	tempButton->SetActionCallback({ [this] { c->OpenElementSearch(); } });
-	AddComponent(tempButton);
+	elementSearchButton = new ui::Button(ui::Point(WINDOWW-16, WINDOWH-32), ui::Point(15, 15), 0xE065, Localization::Ref().Tr("gametools.tooltip.search_elements"));
+	elementSearchButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
+	elementSearchButton->SetActionCallback({ [this] { c->OpenElementSearch(); } });
+	AddComponent(elementSearchButton);
 
-	ui::Button * periodicButton = new ui::Button(
-		ui::Point(WINDOWW-32, WINDOWH-32), ui::Point(15, 15), "P",
+	periodicTableButton = new ui::Button(
+		ui::Point(WINDOWW-16, WINDOWH-48), ui::Point(15, 15), "P",
 		Localization::Ref().Tr("periodic.table.tooltip"));
-	periodicButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
-	periodicButton->SetActionCallback({ [this] { c->OpenPeriodicTable(); } });
-	AddComponent(periodicButton);
+	periodicTableButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
+	periodicTableButton->SetActionCallback({ [this] { c->OpenPeriodicTable(); } });
+	AddComponent(periodicTableButton);
 
 	colourPicker = new ui::Button(ui::Point((XRES/2)-8, YRES+1), ui::Point(16, 16), "", Localization::Ref().Tr("gametools.tooltip.pick_colour"));
 	colourPicker->SetActionCallback({ [this] { c->OpenColourPicker(); } });
@@ -403,7 +403,9 @@ void GameView::NotifyQuickOptionsChanged(GameModel * sender)
 
 void GameView::NotifyMenuListChanged(GameModel * sender)
 {
-	int currentY = WINDOWH-48;//-(sender->GetMenuList().size()*16);
+	// Leave the bottom three right-toolbar rows for pause, element search,
+	// and the periodic table shortcut.
+	int currentY = WINDOWH-64;//-(sender->GetMenuList().size()*16);
 	for (size_t i = 0; i < menuButtons.size(); i++)
 	{
 		RemoveComponent(menuButtons[i]);
@@ -659,6 +661,12 @@ void GameView::NotifyActiveMenuToolListChanged(GameModel * sender)
 		AddComponent(tempButton);
 		toolButtons.push_back(tempButton);
 	}
+	// Dynamic tool buttons are added after the permanent toolbar. Reinsert both
+	// shortcuts so they remain the topmost draw and hit-test targets.
+	RemoveComponent(periodicTableButton);
+	AddComponent(periodicTableButton);
+	RemoveComponent(elementSearchButton);
+	AddComponent(elementSearchButton);
 	if (sender->GetActiveMenu() != SC_DECO)
 		lastMenu = sender->GetActiveMenu();
 
@@ -1046,9 +1054,9 @@ void GameView::updateToolButtonScroll()
 
 		int offsetDelta = 0;
 
-		// Keep the rightmost element button clear of both the periodic-table
-		// shortcut and the search button on the lower toolbar.
-		int newInitialX = WINDOWW - 72;
+		// Both catalog shortcuts live in the right toolbar, so the element row
+		// can use its normal width while still ending before that column.
+		int newInitialX = WINDOWW - 56;
 		int totalWidth = (toolButtons[0]->Size.X + 1) * toolButtons.size();
 		int scrollSize = (int)(((float)(XRES - BARSIZE))/((float)totalWidth) * ((float)XRES - BARSIZE));
 
@@ -1076,6 +1084,15 @@ void GameView::updateToolButtonScroll()
 			mouseLocation = (float)(XRES - 3)/(float)((XRES - 2) - mouseX); // mouseLocation adjusted slightly in case you have 200 elements in one menu
 
 			newInitialX += (int)(overflow/mouseLocation);
+			if (newInitialX > WINDOWW - 56)
+			{
+				// Keep every scroll position aligned to a full button stride. This
+				// leaves the rightmost visible tool ending at WINDOWW - 26 and
+				// prevents a partial hitbox from entering the right toolbar.
+				int buttonStride = toolButtons[0]->Size.X + 1;
+				newInitialX = (WINDOWW - 56)
+					+ ((newInitialX - (WINDOWW - 56)) / buttonStride) * buttonStride;
+			}
 		}
 		else
 		{

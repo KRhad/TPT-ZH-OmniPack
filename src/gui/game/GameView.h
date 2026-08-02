@@ -115,6 +115,8 @@ private:
 	ui::Button * simulationOptionButton;
 	ui::Button * displayModeButton;
 	ui::Button * pauseButton;
+	ui::Button * elementSearchButton;
+	ui::Button * periodicTableButton;
 
 	ui::Button * colourPicker;
 	std::vector<ToolButton*> colourPresets;
