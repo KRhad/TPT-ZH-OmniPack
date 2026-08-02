@@ -942,6 +942,32 @@ test(
 )
 
 test(
+	'content-menu-policy',
+	python3_prog,
+	args: [
+		files('tools/content_menu_policy_check.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'periodic-content-links',
+	python3_prog,
+	args: [
+		files('tools/periodic_content_links_check.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'legacy-progress-save-probe',
 	legacy_progress_save_probe,
 	args: [
