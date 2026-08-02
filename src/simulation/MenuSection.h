@@ -25,3 +25,5 @@ constexpr int SC_LIFE      = 12;
 constexpr int SC_TOOL      = 13;
 constexpr int SC_FAVORITES = 14;
 constexpr int SC_DECO      = 15;
+constexpr int SC_OMNI_ORGANIC = 16;
+constexpr int SC_OMNI_ALLOY   = 17;

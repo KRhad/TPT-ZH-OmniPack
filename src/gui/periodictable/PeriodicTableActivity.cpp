@@ -1,4 +1,5 @@
 #include "PeriodicTableActivity.h"
+#include "PeriodicElementDetailActivity.h"
 
 #include "common/Localization.h"
 #include "graphics/Graphics.h"
@@ -10,17 +11,20 @@
 #include "gui/interface/Button.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
+#include "prefs/GlobalPrefs.h"
+#include "simulation/PeriodicContentLinks.h"
 #include "simulation/PeriodicTableData.h"
 
 #include <SDL.h>
 #include <algorithm>
+#include <map>
 #include <string>
 #include <utility>
 
 namespace
 {
 constexpr int GridX = 12;
-constexpr int GridY = 44;
+constexpr int GridY = 62;
 constexpr int CellWidth = 32;
 constexpr int CellHeight = 28;
 constexpr int SeriesGap = 6;
@@ -146,7 +150,7 @@ bool MatchesRadioactivity(PeriodicElementRecord const &record, int filter)
 PeriodicTableActivity::PeriodicTableActivity(
 	GameController *gameController,
 	std::vector<Tool *> tools):
-	WindowActivity(ui::Point(-1, -1), ui::Point(600, 338)),
+	WindowActivity(ui::Point(-1, -1), ui::Point(600, 365)),
 	gameController(gameController),
 	tools(std::move(tools))
 {
@@ -158,12 +162,12 @@ PeriodicTableActivity::PeriodicTableActivity(
 	AddComponent(title);
 
 	searchField = new ui::Textbox(
-		ui::Point(8, 20), ui::Point(146, 17), "",
+		ui::Point(8, 20), ui::Point(526, 17), "",
 		Localization::Ref().Tr("periodic.table.search_placeholder"));
 	searchField->SetActionCallback({ [this] { RebuildElements(); } });
 	AddComponent(searchField);
 
-	stateFilterButton = new ui::Button(ui::Point(158, 20), ui::Point(92, 17));
+	stateFilterButton = new ui::Button(ui::Point(8, 40), ui::Point(136, 17));
 	stateFilterButton->SetActionCallback({ [this] {
 		stateFilter = (stateFilter + 1) % 5;
 		RefreshFilterLabels();
@@ -171,7 +175,7 @@ PeriodicTableActivity::PeriodicTableActivity(
 	} });
 	AddComponent(stateFilterButton);
 
-	classFilterButton = new ui::Button(ui::Point(254, 20), ui::Point(92, 17));
+	classFilterButton = new ui::Button(ui::Point(148, 40), ui::Point(136, 17));
 	classFilterButton->SetActionCallback({ [this] {
 		classFilter = (classFilter + 1) % 5;
 		RefreshFilterLabels();
@@ -179,7 +183,7 @@ PeriodicTableActivity::PeriodicTableActivity(
 	} });
 	AddComponent(classFilterButton);
 
-	radioactivityFilterButton = new ui::Button(ui::Point(350, 20), ui::Point(88, 17));
+	radioactivityFilterButton = new ui::Button(ui::Point(288, 40), ui::Point(136, 17));
 	radioactivityFilterButton->SetActionCallback({ [this] {
 		radioactivityFilter = (radioactivityFilter + 1) % 3;
 		RefreshFilterLabels();
@@ -187,7 +191,7 @@ PeriodicTableActivity::PeriodicTableActivity(
 	} });
 	AddComponent(radioactivityFilterButton);
 
-	seriesButton = new ui::Button(ui::Point(442, 20), ui::Point(92, 17));
+	seriesButton = new ui::Button(ui::Point(428, 40), ui::Point(164, 17));
 	seriesButton->SetActionCallback({ [this] {
 		showSeries = !showSeries;
 		RefreshFilterLabels();
@@ -202,7 +206,7 @@ PeriodicTableActivity::PeriodicTableActivity(
 	AddComponent(closeButton);
 
 	statusLabel = new ui::Label(
-		ui::Point(8, 314), ui::Point(Size.X - 16, 16),
+		ui::Point(8, Size.Y - 24), ui::Point(Size.X - 16, 16),
 		Localization::Ref().Tr("periodic.table.hover_hint"));
 	statusLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	statusLabel->SetTextColour(ui::Colour(205, 205, 205, 255));
@@ -266,6 +270,41 @@ void PeriodicTableActivity::RebuildElements()
 	elementButtons.clear();
 
 	auto query = searchField->GetText().ToLower();
+	std::map<int, PeriodicContentLink const *> relatedSearchMatches;
+	if (!query.empty())
+	{
+		for (auto const &link : GetPeriodicContentLinks())
+		{
+			if (!link.periodicVisible || link.contentKind == PeriodicContentKind::PeriodicElement)
+				continue;
+			auto searchable = String::Build(
+				Utf8(link.formula), " ", Utf8(link.chineseName), " ",
+				Utf8(link.englishName), " ", Utf8(link.toolIdentifier)).ToLower();
+			if (!searchable.Contains(query))
+				continue;
+			for (int atomicNumber = 1; atomicNumber <= 118; ++atomicNumber)
+			{
+				if (PeriodicContentRelatesTo(link, atomicNumber))
+					relatedSearchMatches.try_emplace(atomicNumber, &link);
+			}
+		}
+	}
+	if (!query.empty() && !relatedSearchMatches.empty())
+	{
+		auto const *match = relatedSearchMatches.begin()->second;
+		auto chineseInterface = GlobalPrefs::Ref().Get("Language", 1) == 1;
+		auto relatedSeparator = chineseInterface ? String("：[") : String(": [");
+		statusLabel->SetText(String::Build(
+			Localization::Ref().Tr("periodic.search.related_material"),
+			relatedSeparator,
+			Utf8(match->formula), "] ",
+			chineseInterface ? Utf8(match->chineseName) : Utf8(match->englishName)));
+	}
+	else
+	{
+		statusLabel->SetText(Localization::Ref().Tr("periodic.table.hover_hint"));
+	}
+
 	for (auto const &record : GetPeriodicTableData())
 	{
 		if (!showSeries && record.tableRow >= 7)
@@ -284,7 +323,7 @@ void PeriodicTableActivity::RebuildElements()
 				record.atomicNumber, " ", Utf8(record.symbol), " ",
 				Utf8(record.chineseName), " ", Utf8(record.englishName), " ",
 				Utf8(record.identifier)).ToLower();
-			if (!searchable.Contains(query))
+			if (!searchable.Contains(query) && !relatedSearchMatches.contains(record.atomicNumber))
 			{
 				continue;
 			}
@@ -301,12 +340,25 @@ void PeriodicTableActivity::RebuildElements()
 		{
 			status = Localization::Ref().Tr("periodic.status.module_disabled");
 		}
+		auto chineseInterface = GlobalPrefs::Ref().Get("Language", 1) == 1;
+		auto primaryName = chineseInterface ? Utf8(record.chineseName) : Utf8(record.englishName);
+		auto secondaryName = chineseInterface ? Utf8(record.englishName) : Utf8(record.chineseName);
 		auto details = String::Build(
 			record.atomicNumber, " ", Utf8(record.symbol), " — ",
-			Utf8(record.chineseName), " / ", Utf8(record.englishName), " — ",
+			primaryName, " (", secondaryName, ") — ",
 			LocalizedValue("periodic.family.", record.family), " — ",
 			LocalizedValue("periodic.class.", ClassName(record.materialClass)), " — ",
 			LocalizedValue("periodic.state.", StateName(record.standardState)));
+		auto related = relatedSearchMatches.find(record.atomicNumber);
+		if (related != relatedSearchMatches.end())
+		{
+			auto const *match = related->second;
+			auto relatedSeparator = chineseInterface ? String("：[") : String(": [");
+			details += String::Build(
+				" — ", Localization::Ref().Tr("periodic.search.related_material"),
+				relatedSeparator, Utf8(match->formula), "] ",
+				chineseInterface ? Utf8(match->chineseName) : Utf8(match->englishName));
+		}
 		if (!status.empty())
 		{
 			details += String::Build(" — ", status);
@@ -319,17 +371,17 @@ void PeriodicTableActivity::RebuildElements()
 				GridX + record.tableColumn * CellWidth,
 				GridY + record.tableRow * CellHeight + extraGap),
 			ui::Point(CellWidth - 1, CellHeight - 1), record, selectable, details);
+		std::string highlightedIdentifier;
+		if (related != relatedSearchMatches.end())
+			highlightedIdentifier = std::string(related->second->toolIdentifier);
 		button->SetActionCallback({
-			[this, recordPointer, tool, selectable, status] {
-				if (!selectable)
-				{
-					new InformationMessage(
-						String::Build(Utf8(recordPointer->chineseName), " / ", Utf8(recordPointer->englishName)),
-						status, false);
-					return;
-				}
-				gameController->SetActiveTool(0, tool);
-				exit = true;
+			[this, recordPointer, highlightedIdentifier] {
+				new PeriodicElementDetailActivity(
+					gameController, tools, *recordPointer, highlightedIdentifier,
+					[this](Tool *selectedTool) {
+						gameController->SetActiveTool(0, selectedTool);
+						exit = true;
+					});
 			},
 			nullptr,
 			[this, details] { statusLabel->SetText(details); },

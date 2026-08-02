@@ -664,11 +664,26 @@ def check_ui(root: Path, errors: list[str]) -> None:
         "expandable f block": "showSeries = !showSeries",
         "planned state": "periodic.status.planned",
         "module-disabled state": "periodic.status.module_disabled",
-        "direct selection": "gameController->SetActiveTool(0, tool)",
+        "material picker": "PeriodicElementDetailActivity",
+        "compound search": "GetPeriodicContentLinks()",
     }
     for label, marker in required.items():
         if marker not in ui:
             errors.append(f"{ui_path}: missing {label}: {marker!r}")
+    if "gameController->SetActiveTool(0, tool)" in ui:
+        errors.append(f"{ui_path}: periodic grid still performs direct selection")
+    detail_path = (
+        root / "src" / "gui" / "periodictable" / "PeriodicElementDetailActivity.cpp"
+    )
+    detail = read_text(detail_path, errors)
+    for label, marker in {
+        "explicit content links": "GetPeriodicContentLinks()",
+        "scrollable picker": "ui::ScrollPanel",
+        "module restriction": "GetOmniElementSelectionRestriction",
+        "selection callback": "selectedCallback(tool)",
+    }.items():
+        if marker not in detail:
+            errors.append(f"{detail_path}: missing {label}: {marker!r}")
     controller = read_text(root / "src" / "gui" / "game" / "GameController.cpp", errors)
     view = read_text(root / "src" / "gui" / "game" / "GameView.cpp", errors)
     if "OpenPeriodicTable" not in controller or "PeriodicTableActivity" not in controller:

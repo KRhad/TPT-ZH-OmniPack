@@ -304,3 +304,35 @@ periodic_table_data = custom_target(
 	],
 )
 powder_files += periodic_table_data
+
+content_menu_policy_data = custom_target(
+	'content-menu-policy-data',
+	input: files('../docs/CONTENT_MENU_POLICY.csv'),
+	output: 'OmniContentPresentationData.cpp',
+	build_always_stale: true,
+	command: [
+		python3_prog,
+		files('../tools/generate_content_menu_policy.py'),
+		'@OUTPUT@',
+		'@INPUT@',
+	],
+)
+powder_files += content_menu_policy_data
+
+periodic_content_links_data = custom_target(
+	'periodic-content-links-data',
+	input: files('../docs/PERIODIC_CONTENT_LINKS.csv'),
+	output: 'PeriodicContentLinksData.cpp',
+	build_always_stale: true,
+	command: [
+		python3_prog,
+		files('../tools/generate_periodic_content_links.py'),
+		'@OUTPUT@',
+		'@INPUT@',
+	],
+)
+powder_files += periodic_content_links_data
+powder_files += files(
+	'simulation/OmniContentPresentation.cpp',
+	'simulation/PeriodicContentLinks.cpp',
+)

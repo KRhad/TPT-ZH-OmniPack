@@ -94,6 +94,8 @@ static std::vector<menu_section> LoadMenus()
 		{0xE057, String("sim.menu.tools"), 0, 1},
 		{0xE067, String("sim.menu.favorites"), 0, 1},
 		{0xE064, String("sim.menu.deco"), 0, 1},
+		{0xE069, String("sim.menu.omni_organic"), 0, 1},
+		{0xE051, String("sim.menu.omni_alloy"), 0, 1},
 	};
 }
 

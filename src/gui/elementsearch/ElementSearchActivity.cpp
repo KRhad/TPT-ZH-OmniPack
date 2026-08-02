@@ -125,15 +125,16 @@ ElementSearchActivity::ElementSearchActivity(GameController * gameController, st
 		auto currentName = language == 1 && !record->chineseName.empty()
 			? CatalogString(record->chineseName)
 			: CatalogString(record->englishName);
-		auto title = currentName;
-		if (language == 1 && record->chineseName != record->englishName)
-		{
-			title += " / " + CatalogString(record->englishName);
-		}
-		title += " [" + CatalogString(record->displayCode) + "]";
+		auto secondaryName = language == 1
+			? CatalogString(record->englishName)
+			: CatalogString(record->chineseName);
+		auto title = language == 1
+			? String::Build(currentName, "（", CatalogString(record->displayCode), "）")
+			: String::Build(currentName, " (", CatalogString(record->displayCode), ")");
 
 		StringBuilder details;
-		details << Localization::Ref().Tr("encyclopedia.identifier") << ": " << CatalogString(record->identifier) << "\n";
+		if (!secondaryName.empty() && secondaryName != currentName)
+			details << secondaryName << "\n";
 		details << Localization::Ref().Tr("encyclopedia.category") << ": " << CatalogCategory(record->menuCategory) << "\n";
 		details << Localization::Ref().Tr("encyclopedia.state") << ": " << CatalogValue("state", record->elementState) << "\n";
 		details << Localization::Ref().Tr("encyclopedia.source") << ": " << CatalogString(record->sourceMod) << "\n";

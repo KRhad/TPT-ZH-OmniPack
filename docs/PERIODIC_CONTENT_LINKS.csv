@@ -1,0 +1,184 @@
+tool_identifier,content_kind,primary_atomic_number,related_atomic_numbers,compound_group,display_order,periodic_visible,formula,zh_name,en_name
+DEFAULT_PT_H2,periodic_element,1,1,element,0,true,H,氢,Hydrogen
+OMNI_PT_HE,periodic_element,2,2,element,0,true,He,氦,Helium
+DEFAULT_PT_LITH,periodic_element,3,3,element,0,true,Li,锂,Lithium
+OMNI_PT_BE,periodic_element,4,4,element,0,true,Be,铍,Beryllium
+OMNI_PT_B,periodic_element,5,5,element,0,true,B,硼,Boron
+DEFAULT_PT_DMND,periodic_element,6,6,element,0,true,C,碳,Carbon
+OMNI_PT_N,periodic_element,7,7,element,0,true,N,氮,Nitrogen
+DEFAULT_PT_O2,periodic_element,8,8,element,0,true,O,氧,Oxygen
+OMNI_PT_F,periodic_element,9,9,element,0,true,F,氟,Fluorine
+OMNI_PT_NE,periodic_element,10,10,element,0,true,Ne,氖,Neon
+OMNI_PT_NA,periodic_element,11,11,element,0,true,Na,钠,Sodium
+OMNI_PT_MAGN,periodic_element,12,12,element,0,true,Mg,镁,Magnesium
+OMNI_PT_ALUM,periodic_element,13,13,element,0,true,Al,铝,Aluminium
+DEFAULT_PT_SLCN,periodic_element,14,14,element,0,true,Si,硅,Silicon
+OMNI_PT_P,periodic_element,15,15,element,0,true,P,磷,Phosphorus
+OMNI_PT_S,periodic_element,16,16,element,0,true,S,硫,Sulfur
+OMNI_PT_CHLR,periodic_element,17,17,element,0,true,Cl,氯,Chlorine
+OMNI_PT_AR,periodic_element,18,18,element,0,true,Ar,氩,Argon
+OMNI_PT_K,periodic_element,19,19,element,0,true,K,钾,Potassium
+OMNI_PT_CA,periodic_element,20,20,element,0,true,Ca,钙,Calcium
+OMNI_PT_SC,periodic_element,21,21,element,0,true,Sc,钪,Scandium
+DEFAULT_PT_TTAN,periodic_element,22,22,element,0,true,Ti,钛,Titanium
+OMNI_PT_V,periodic_element,23,23,element,0,true,V,钒,Vanadium
+OMNI_PT_CHRM,periodic_element,24,24,element,0,true,Cr,铬,Chromium
+OMNI_PT_MN,periodic_element,25,25,element,0,true,Mn,锰,Manganese
+DEFAULT_PT_IRON,periodic_element,26,26,element,0,true,Fe,铁,Iron
+OMNI_PT_COBT,periodic_element,27,27,element,0,true,Co,钴,Cobalt
+OMNI_PT_NICL,periodic_element,28,28,element,0,true,Ni,镍,Nickel
+OMNI_PT_COPR,periodic_element,29,29,element,0,true,Cu,铜,Copper
+OMNI_PT_ZINC,periodic_element,30,30,element,0,true,Zn,锌,Zinc
+OMNI_PT_GA,periodic_element,31,31,element,0,true,Ga,镓,Gallium
+OMNI_PT_GE,periodic_element,32,32,element,0,true,Ge,锗,Germanium
+OMNI_PT_AS,periodic_element,33,33,element,0,true,As,砷,Arsenic
+OMNI_PT_SE,periodic_element,34,34,element,0,true,Se,硒,Selenium
+OMNI_PT_BR,periodic_element,35,35,element,0,true,Br,溴,Bromine
+OMNI_PT_KR,periodic_element,36,36,element,0,true,Kr,氪,Krypton
+DEFAULT_PT_RBDM,periodic_element,37,37,element,0,true,Rb,铷,Rubidium
+OMNI_PT_SR,periodic_element,38,38,element,0,true,Sr,锶,Strontium
+OMNI_PT_Y,periodic_element,39,39,element,0,true,Y,钇,Yttrium
+OMNI_PT_ZR,periodic_element,40,40,element,0,true,Zr,锆,Zirconium
+OMNI_PT_NB,periodic_element,41,41,element,0,true,Nb,铌,Niobium
+OMNI_PT_MOLY,periodic_element,42,42,element,0,true,Mo,钼,Molybdenum
+OMNI_PT_TC,periodic_element,43,43,element,0,true,Tc,锝,Technetium
+OMNI_PT_RU,periodic_element,44,44,element,0,true,Ru,钌,Ruthenium
+OMNI_PT_RH,periodic_element,45,45,element,0,true,Rh,铑,Rhodium
+OMNI_PT_PD,periodic_element,46,46,element,0,true,Pd,钯,Palladium
+OMNI_PT_AG,periodic_element,47,47,element,0,true,Ag,银,Silver
+OMNI_PT_CD,periodic_element,48,48,element,0,true,Cd,镉,Cadmium
+OMNI_PT_IN,periodic_element,49,49,element,0,true,In,铟,Indium
+OMNI_PT_TIN,periodic_element,50,50,element,0,true,Sn,锡,Tin
+OMNI_PT_SB,periodic_element,51,51,element,0,true,Sb,锑,Antimony
+OMNI_PT_TE,periodic_element,52,52,element,0,true,Te,碲,Tellurium
+OMNI_PT_I,periodic_element,53,53,element,0,true,I,碘,Iodine
+OMNI_PT_XE,periodic_element,54,54,element,0,true,Xe,氙,Xenon
+OMNI_PT_CS,periodic_element,55,55,element,0,true,Cs,铯,Caesium
+OMNI_PT_BA,periodic_element,56,56,element,0,true,Ba,钡,Barium
+OMNI_PT_LA,periodic_element,57,57,element,0,true,La,镧,Lanthanum
+OMNI_PT_CE,periodic_element,58,58,element,0,true,Ce,铈,Cerium
+OMNI_PT_PR,periodic_element,59,59,element,0,true,Pr,镨,Praseodymium
+OMNI_PT_ND,periodic_element,60,60,element,0,true,Nd,钕,Neodymium
+OMNI_PT_PM,periodic_element,61,61,element,0,true,Pm,钷,Promethium
+OMNI_PT_SM,periodic_element,62,62,element,0,true,Sm,钐,Samarium
+OMNI_PT_EU,periodic_element,63,63,element,0,true,Eu,铕,Europium
+OMNI_PT_GD,periodic_element,64,64,element,0,true,Gd,钆,Gadolinium
+OMNI_PT_TB,periodic_element,65,65,element,0,true,Tb,铽,Terbium
+OMNI_PT_DY,periodic_element,66,66,element,0,true,Dy,镝,Dysprosium
+OMNI_PT_HO,periodic_element,67,67,element,0,true,Ho,钬,Holmium
+OMNI_PT_ER,periodic_element,68,68,element,0,true,Er,铒,Erbium
+OMNI_PT_TM,periodic_element,69,69,element,0,true,Tm,铥,Thulium
+OMNI_PT_YB,periodic_element,70,70,element,0,true,Yb,镱,Ytterbium
+OMNI_PT_LU,periodic_element,71,71,element,0,true,Lu,镥,Lutetium
+OMNI_PT_HF,periodic_element,72,72,element,0,true,Hf,铪,Hafnium
+OMNI_PT_TA,periodic_element,73,73,element,0,true,Ta,钽,Tantalum
+DEFAULT_PT_TUNG,periodic_element,74,74,element,0,true,W,钨,Tungsten
+OMNI_PT_RE,periodic_element,75,75,element,0,true,Re,铼,Rhenium
+OMNI_PT_OS,periodic_element,76,76,element,0,true,Os,锇,Osmium
+OMNI_PT_IR,periodic_element,77,77,element,0,true,Ir,铱,Iridium
+DEFAULT_PT_PTNM,periodic_element,78,78,element,0,true,Pt,铂,Platinum
+DEFAULT_PT_GOLD,periodic_element,79,79,element,0,true,Au,金,Gold
+DEFAULT_PT_MERC,periodic_element,80,80,element,0,true,Hg,汞,Mercury
+OMNI_PT_TL,periodic_element,81,81,element,0,true,Tl,铊,Thallium
+OMNI_PT_LEAD,periodic_element,82,82,element,0,true,Pb,铅,Lead
+OMNI_PT_BI,periodic_element,83,83,element,0,true,Bi,铋,Bismuth
+DEFAULT_PT_POLO,periodic_element,84,84,element,0,true,Po,钋,Polonium
+OMNI_PT_AT,periodic_element,85,85,element,0,true,At,砹,Astatine
+OMNI_PT_RN,periodic_element,86,86,element,0,true,Rn,氡,Radon
+OMNI_PT_FR,periodic_element,87,87,element,0,true,Fr,钫,Francium
+OMNI_PT_RA,periodic_element,88,88,element,0,true,Ra,镭,Radium
+OMNI_PT_AC,periodic_element,89,89,element,0,true,Ac,锕,Actinium
+OMNI_PT_TH,periodic_element,90,90,element,0,true,Th,钍,Thorium
+OMNI_PT_PA,periodic_element,91,91,element,0,true,Pa,镤,Protactinium
+DEFAULT_PT_URAN,periodic_element,92,92,element,0,true,U,铀,Uranium
+OMNI_PT_NP,periodic_element,93,93,element,0,true,Np,镎,Neptunium
+DEFAULT_PT_PLUT,periodic_element,94,94,element,0,true,Pu,钚,Plutonium
+OMNI_PT_AM,periodic_element,95,95,element,0,true,Am,镅,Americium
+OMNI_PT_CM,periodic_element,96,96,element,0,true,Cm,锔,Curium
+OMNI_PT_BK,periodic_element,97,97,element,0,true,Bk,锫,Berkelium
+OMNI_PT_CF,periodic_element,98,98,element,0,true,Cf,锎,Californium
+OMNI_PT_ES,periodic_element,99,99,element,0,true,Es,锿,Einsteinium
+OMNI_PT_FM,periodic_element,100,100,element,0,true,Fm,镄,Fermium
+OMNI_PT_MD,periodic_element,101,101,element,0,true,Md,钔,Mendelevium
+OMNI_PT_NO,periodic_element,102,102,element,0,true,No,锘,Nobelium
+OMNI_PT_LR,periodic_element,103,103,element,0,true,Lr,铹,Lawrencium
+OMNI_PT_RF,periodic_element,104,104,element,0,true,Rf,𬬻,Rutherfordium
+OMNI_PT_DB,periodic_element,105,105,element,0,true,Db,𬭊,Dubnium
+OMNI_PT_SG,periodic_element,106,106,element,0,true,Sg,𬭳,Seaborgium
+OMNI_PT_BH,periodic_element,107,107,element,0,true,Bh,𬭛,Bohrium
+OMNI_PT_HS,periodic_element,108,108,element,0,true,Hs,𬭶,Hassium
+OMNI_PT_MT,periodic_element,109,109,element,0,true,Mt,鿏,Meitnerium
+OMNI_PT_DS,periodic_element,110,110,element,0,true,Ds,𫟼,Darmstadtium
+OMNI_PT_RG,periodic_element,111,111,element,0,true,Rg,𬬭,Roentgenium
+OMNI_PT_CN,periodic_element,112,112,element,0,true,Cn,鿔,Copernicium
+OMNI_PT_NH,periodic_element,113,113,element,0,true,Nh,鿭,Nihonium
+OMNI_PT_FL,periodic_element,114,114,element,0,true,Fl,𫓧,Flerovium
+OMNI_PT_MC,periodic_element,115,115,element,0,true,Mc,镆,Moscovium
+OMNI_PT_LV,periodic_element,116,116,element,0,true,Lv,𫟷,Livermorium
+OMNI_PT_TS,periodic_element,117,117,element,0,true,Ts,鿬,Tennessine
+OMNI_PT_OG,periodic_element,118,118,element,0,true,Og,鿫,Oganesson
+OMNI_PT_H2IS,isotope,1,1,isotope,10,true,H-2,氢-2,Hydrogen-2
+OMNI_PT_H3IS,isotope,1,1,isotope,11,true,H-3,氢-3,Hydrogen-3
+OMNI_PT_C14I,isotope,6,6,isotope,12,true,C-14,碳-14,Carbon-14
+OMNI_PT_CO60,isotope,27,27,isotope,13,true,Co-60,钴-60,Cobalt-60
+OMNI_PT_SR90,isotope,38,38,isotope,14,true,Sr-90,锶-90,Strontium-90
+OMNI_PT_I131,isotope,53,53,isotope,15,true,I-131,碘-131,Iodine-131
+OMNI_PT_CS37,isotope,55,55,isotope,16,true,Cs-137,铯-137,Caesium-137
+OMNI_PT_TH32,isotope,90,90,isotope,17,true,Th-232,钍-232,Thorium-232
+OMNI_PT_U235,isotope,92,92,isotope,18,true,U-235,铀-235,Uranium-235
+OMNI_PT_U238,isotope,92,92,isotope,19,true,U-238,铀-238,Uranium-238
+OMNI_PT_PU39,isotope,94,94,isotope,20,true,Pu-239,钚-239,Plutonium-239
+OMNI_PT_AM41,isotope,95,95,isotope,21,true,Am-241,镅-241,Americium-241
+OMNI_PT_CF52,isotope,98,98,isotope,22,true,Cf-252,锎-252,Californium-252
+DEFAULT_PT_WATR,inorganic_compound,8,1|8,other,20,true,H2O,水,Water
+DEFAULT_PT_SALT,inorganic_compound,11,11|17,salt,21,true,NaCl,氯化钠,Sodium chloride
+DEFAULT_PT_CO2,inorganic_compound,6,6|8,oxide,22,true,CO2,二氧化碳,Carbon dioxide
+OMNI_PT_AMON,inorganic_compound,7,1|7,other,23,true,NH3,氨,Ammonia
+OMNI_PT_PERO,inorganic_compound,8,1|8,oxide,24,true,H2O2,过氧化氢,Hydrogen peroxide
+OMNI_PT_HCLA,inorganic_compound,17,1|17,acid,25,true,HCl(aq),盐酸,Hydrochloric acid
+OMNI_PT_SULA,inorganic_compound,16,1|8|16,acid,26,true,H2SO4,硫酸,Sulfuric acid
+OMNI_PT_NITA,inorganic_compound,7,1|7|8,acid,27,true,HNO3,硝酸,Nitric acid
+OMNI_PT_PHOA,inorganic_compound,15,1|8|15,acid,28,true,H3PO4,磷酸,Phosphoric acid
+OMNI_PT_HYFA,inorganic_compound,9,1|9,acid,29,true,HF(aq),氢氟酸,Hydrofluoric acid
+OMNI_PT_NAOH,inorganic_compound,11,1|8|11,hydroxide,30,true,NaOH,氢氧化钠,Sodium hydroxide
+OMNI_PT_KOH,inorganic_compound,19,1|8|19,hydroxide,31,true,KOH,氢氧化钾,Potassium hydroxide
+OMNI_PT_CAOH,inorganic_compound,20,1|8|20,hydroxide,32,true,Ca(OH)2,氢氧化钙,Calcium hydroxide
+OMNI_PT_KNIT,inorganic_compound,19,7|8|19,salt,33,true,KNO3,硝酸钾,Potassium nitrate
+OMNI_PT_CUSF,inorganic_compound,29,8|16|29,salt,34,true,CuSO4,硫酸铜,Copper sulfate
+OMNI_PT_CACO,inorganic_compound,20,6|8|20,salt,35,true,CaCO3,碳酸钙,Calcium carbonate
+OMNI_PT_NABC,inorganic_compound,11,1|6|8|11,salt,36,true,NaHCO3,碳酸氢钠,Sodium bicarbonate
+OMNI_PT_COMO,inorganic_compound,6,6|8,oxide,37,true,CO,一氧化碳,Carbon monoxide
+OMNI_PT_SODI,inorganic_compound,16,8|16,oxide,38,true,SO2,二氧化硫,Sulfur dioxide
+OMNI_PT_NODI,inorganic_compound,7,7|8,oxide,39,true,NO2,二氧化氮,Nitrogen dioxide
+OMNI_PT_CAOX,inorganic_compound,20,8|20,oxide,40,true,CaO,氧化钙,Calcium oxide
+OMNI_PT_CARA,inorganic_compound,6,1|6|8,acid,41,true,H2CO3,碳酸,Carbonic acid
+OMNI_PT_H2SG,inorganic_compound,16,1|16,sulfide,42,true,H2S,硫化氢,Hydrogen sulfide
+OMNI_PT_AMWA,inorganic_compound,7,1|7|8,base,43,true,NH3(aq),氨水,Ammonia water
+OMNI_PT_BAOH,inorganic_compound,56,1|8|56,hydroxide,44,true,Ba(OH)2,氢氧化钡,Barium hydroxide
+OMNI_PT_KCL,inorganic_compound,19,17|19,halide,45,true,KCl,氯化钾,Potassium chloride
+OMNI_PT_CACL,inorganic_compound,20,17|20,halide,46,true,CaCl2,氯化钙,Calcium chloride
+OMNI_PT_FECL,inorganic_compound,26,17|26,halide,47,true,FeCl3,氯化铁,Iron chloride
+OMNI_PT_NASF,inorganic_compound,11,8|11|16,salt,48,true,Na2SO4,硫酸钠,Sodium sulfate
+OMNI_PT_AMNT,inorganic_compound,7,1|7|8,salt,49,true,NH4NO3,硝酸铵,Ammonium nitrate
+OMNI_PT_NACO,inorganic_compound,11,6|8|11,salt,50,true,Na2CO3,碳酸钠,Sodium carbonate
+OMNI_PT_KPER,inorganic_compound,25,8|19|25,salt,51,true,KMnO4,高锰酸钾,Potassium permanganate
+OMNI_PT_ALOX,inorganic_compound,13,8|13,oxide,52,true,Al2O3,氧化铝,Aluminium oxide
+OMNI_PT_MGOX,inorganic_compound,12,8|12,oxide,53,true,MgO,氧化镁,Magnesium oxide
+OMNI_PT_FEOX,inorganic_compound,26,8|26,oxide,54,true,Fe2O3,氧化铁,Iron oxide
+OMNI_PT_CUOX,inorganic_compound,29,8|29,oxide,55,true,CuO,氧化铜,Copper oxide
+OMNI_PT_ZNOX,inorganic_compound,30,8|30,oxide,56,true,ZnO,氧化锌,Zinc oxide
+OMNI_PT_SUTR,inorganic_compound,16,8|16,oxide,57,true,SO3,三氧化硫,Sulfur trioxide
+OMNI_PT_NIMO,inorganic_compound,7,7|8,oxide,58,true,NO,一氧化氮,Nitric oxide
+OMNI_PT_TIOX,inorganic_compound,22,8|22,oxide,59,true,TiO2,二氧化钛,Titanium dioxide
+OMNI_PT_UROX,inorganic_compound,92,8|92,oxide,60,true,UO2,二氧化铀,Uranium dioxide
+OMNI_PT_CAPH,inorganic_compound,20,8|15|20,salt,61,true,Ca3(PO4)2,磷酸钙,Calcium phosphate
+OMNI_PT_FESF,inorganic_compound,26,16|26,sulfide,62,true,FeS,硫化铁,Iron sulfide
+OMNI_PT_NASD,inorganic_compound,11,11|16,sulfide,63,true,Na2S,硫化钠,Sodium sulfide
+OMNI_PT_HYCN,inorganic_compound,6,1|6|7,other,64,true,HCN,氰化氢,Hydrogen cyanide
+OMNI_PT_CACB,inorganic_compound,20,6|20,carbide,65,true,CaC2,碳化钙,Calcium carbide
+OMNI_PT_NAHY,inorganic_compound,11,1|11,hydride,66,true,NaH,氢化钠,Sodium hydride
+OMNI_PT_CAHY,inorganic_compound,20,1|20,hydride,67,true,CaH2,氢化钙,Calcium hydride
+OMNI_PT_ALCL,inorganic_compound,13,13|17,halide,68,true,AlCl3,氯化铝,Aluminium chloride
+OMNI_PT_MGCL,inorganic_compound,12,12|17,halide,69,true,MgCl2,氯化镁,Magnesium chloride
+OMNI_PT_CUCL,inorganic_compound,29,17|29,halide,70,true,CuCl2,氯化铜,Copper chloride
+OMNI_PT_AMCL,inorganic_compound,7,1|7|17,halide,71,true,NH4Cl,氯化铵,Ammonium chloride

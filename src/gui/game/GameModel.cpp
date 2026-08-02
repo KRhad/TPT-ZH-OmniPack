@@ -15,6 +15,7 @@
 #include "lua/CommandInterface.h"
 #include "prefs/GlobalPrefs.h"
 #include "gui/game/OmniContent.h"
+#include "simulation/OmniContentPresentation.h"
 #include "client/Client.h"
 #include "client/GameSave.h"
 #include "client/SaveFile.h"
@@ -1954,9 +1955,10 @@ void GameModel::BuildMenus()
 		{
 			continue;
 		}
-		if (tool->MenuSection >= 0 && tool->MenuSection < int(sd.msections.size()) && tool->MenuVisible && IsOmniToolSelectable(*tool))
+		auto menuSection = GetOmniStandardMenuSection(*tool);
+		if (menuSection && *menuSection >= 0 && *menuSection < int(sd.msections.size()) && IsOmniToolSelectable(*tool))
 		{
-			menuList[tool->MenuSection]->AddTool(tool.get());
+			menuList[*menuSection]->AddTool(tool.get());
 		}
 	}
 
