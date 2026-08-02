@@ -98,11 +98,9 @@ def audit(root: Path) -> list[str]:
     if required_positioning not in readme:
         errors.append("README.zh-CN.md: required free-sandbox positioning is missing")
 
-    encyclopedia = read_text(
-        root / "src/gui/elementsearch/ElementSearchActivity.cpp", errors
-    )
+    encyclopedia = read_text(root / "src/gui/elementsearch/ElementInfo.cpp", errors)
     if 'Tr("encyclopedia.description")' not in encyclopedia:
-        errors.append("ElementSearchActivity.cpp: element description label is missing")
+        errors.append("ElementInfo.cpp: element description label is missing")
     for language in ("en-US", "zh-CN"):
         text = read_text(root / "src/lang" / f"{language}.json", errors)
         if '"encyclopedia.description"' not in text:

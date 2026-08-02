@@ -117,6 +117,15 @@ def audit(root: Path) -> list[str]:
         "RemoveComponent(elementSearchButton);",
         "AddComponent(elementSearchButton);",
         "periodicTableButton->SetIcon(IconPeriodicTable);",
+        "ui::Point(WINDOWW-48, WINDOWH-16)",
+        "ui::Point(WINDOWW-32, WINDOWH-16)",
+        "ui::Point(Size.X-80, Size.Y-16)",
+        "ui::Point(Size.X-64, Size.Y-16)",
+        "ui::Point(WINDOWW - 402, 15)",
+        "ui::Point(Size.X-159, Size.Y-16)",
+        "ui::Point(Size.X-141, Size.Y-16), ui::Point(60, 15)",
+        "tempButton->SetIcon(IconOrganicMaterials);",
+        "tempButton->SetIcon(IconAlloyEngineering);",
     ):
         if marker not in game_view:
             errors.append(f"GameView.cpp: missing lower-toolbar clearance marker {marker!r}")
@@ -153,6 +162,11 @@ def audit(root: Path) -> list[str]:
         errors.append("Icons.h: missing IconPeriodicTable")
     if "case IconPeriodicTable:" not in graphics:
         errors.append("Graphics.cpp: missing periodic-table icon renderer")
+    for marker in ("IconOrganicMaterials", "IconAlloyEngineering"):
+        if marker not in icons:
+            errors.append(f"Icons.h: missing {marker}")
+        if f"case {marker}:" not in graphics:
+            errors.append(f"Graphics.cpp: missing {marker} renderer")
     for marker in (
         "x + column - 1",
         "y + row + 3",
@@ -161,6 +175,44 @@ def audit(root: Path) -> list[str]:
             errors.append(f"Graphics.cpp: missing centred periodic-table icon marker {marker!r}")
     if re.search(r'periodicTableButton\s*=\s*new ui::Button\([\s\S]*?WINDOWH-48[\s\S]*?,\s*"P"\s*,', game_view):
         errors.append("GameView.cpp: periodic-table shortcut still uses the letter P")
+
+    button = read_text(root / "src" / "gui" / "interface" / "Button.cpp", errors)
+    for marker in (
+        "Platform::GetTime() - longPressStarted < LongPressDelayMs",
+        "auto action = longPressAction;",
+        "action();",
+    ):
+        if marker not in button:
+            errors.append(f"Button.cpp: missing release-time long-press marker {marker!r}")
+    if "void Button::Tick()" in button:
+        errors.append("Button.cpp: long press still opens a window while the mouse is held")
+
+    element_info = read_text(root / "src" / "gui" / "elementsearch" / "ElementInfo.cpp", errors)
+    for forbidden in ("record->sourceMod", "record->license", "secondaryName"):
+        if forbidden in element_info:
+            errors.append(f"ElementInfo.cpp: player-facing full description contains {forbidden!r}")
+
+    periodic_table = read_text(root / "src" / "gui" / "periodictable" / "PeriodicTableActivity.cpp", errors)
+    periodic_detail = read_text(root / "src" / "gui" / "periodictable" / "PeriodicElementDetailActivity.cpp", errors)
+    element_search = read_text(root / "src" / "gui" / "elementsearch" / "ElementSearchActivity.cpp", errors)
+    for path, text, marker in (
+        ("GameView.cpp", game_view, "SetLongPressCallback([tool] { OpenElementInfo(tool); });"),
+        ("ElementSearchActivity.cpp", element_search, "SetLongPressCallback([tool] { OpenElementInfo(tool); });"),
+        ("PeriodicTableActivity.cpp", periodic_table, "SetLongPressCallback([tool] { OpenElementInfo(tool); });"),
+        ("PeriodicElementDetailActivity.cpp", periodic_detail, "SetLongPressCallback([tool] { OpenElementInfo(tool); });"),
+    ):
+        if marker not in text:
+            errors.append(f"{path}: missing full-description long-press binding")
+    for marker in (
+        "searchField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;",
+        "gameController->ShowElementDescription(selectedTool);",
+    ):
+        if marker not in periodic_table:
+            errors.append(f"PeriodicTableActivity.cpp: missing interaction marker {marker!r}")
+    if "constexpr int MaterialColumns = 2;" not in periodic_detail:
+        errors.append("PeriodicElementDetailActivity.cpp: material picker is not two-column")
+    if 'secondaryName, " · ",' in periodic_detail:
+        errors.append("PeriodicElementDetailActivity.cpp: English subtitle remains below the title")
 
     for locale in ("en-US", "zh-CN"):
         path = root / "src" / "lang" / f"{locale}.json"

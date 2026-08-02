@@ -32,7 +32,7 @@ class RemovedGameSystemsAuditTests(unittest.TestCase):
         self.assertTrue(any("retired marker" in error for error in errors))
 
     def test_missing_element_description_label_is_rejected(self) -> None:
-        target = ROOT / "src" / "gui" / "elementsearch" / "ElementSearchActivity.cpp"
+        target = ROOT / "src" / "gui" / "elementsearch" / "ElementInfo.cpp"
         original = audit_module.read_text
         try:
             audit_module.read_text = lambda path, errors: (
