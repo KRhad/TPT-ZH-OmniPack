@@ -278,8 +278,9 @@
 | API 21 Java 兼容 | PASS | CA 证书编码改用 `android.util.Base64`，不再调用 API 26 才有的 `java.util.Base64` |
 | APK 签名 | PASS | 仓库外测试证书；v1/v2/v3 签名验证通过，RSA 3072，证书 SHA-256 `2D376C8F99747B00D2714C05241AD5BCBB658788BDB686E2494E09C11085A32F` |
 | 16 KB 页兼容 | PASS | ARM64 ELF 三个 `LOAD` 段对齐均为 `0x4000`；`zipalign -c -P 16 -v 4` 通过 |
+| 分发原生库剥离 | PASS | 构建目录保留未剥离诊断库，APK 只封装 `llvm-strip --strip-unneeded` 生成的副本；最终包不得包含 `.debug_*`、`.symtab` 或 `.strtab` |
 | ZIP 与入口 | PASS | ZIP CRC 完整；包含 `lib/arm64-v8a/libpowder.so`、`classes.dex`、Manifest 和启动资源；SDL JNI、`JNI_OnLoad`、`SDL_main` 均在动态符号表 |
-| Android 静态专项门禁 | PASS | `tools/android_port_audit.py` 共 16 项全部通过 |
+| Android 静态专项门禁 | PASS | `tools/android_port_audit.py` 共 18 项全部通过 |
 | 真机安装与启动 | NOT RUN | 当前 `adb devices -l` 没有连接设备，不能用 APK 静态审计替代安装和启动证据 |
 | 触控、中文输入法与生命周期 | NOT RUN | 需要真机验证绘制、长按、滚动、周期表、软键盘、后台/前台和旋转锁定 |
 | Android OPS 跨平台往返 | NOT RUN | 桌面 OPS 代码相同，但仍需在真机保存、导出并由 Windows 客户端重新载入 |

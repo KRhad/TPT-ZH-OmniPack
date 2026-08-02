@@ -88,6 +88,7 @@ android_ndk_toolchain_prefix = android_ndk_toolchain_prefix
 android_platform = '$AndroidPlatform'
 android_platform_jar = '$(MesonPath $platformJar)'
 java_runtime_jar = '$(MesonPath $javaRuntimeJar)'
+android_strip = '$(MesonPath $strip)'
 
 [binaries]
 cpp = '$(MesonPath $compiler)'

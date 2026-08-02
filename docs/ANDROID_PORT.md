@@ -31,7 +31,7 @@ $env:ANDROID_KEYSTORE_PASS = '<在本机设置，不写入仓库>'
 .\tools\build_android.ps1 -Keystore 'D:\安全位置\omnipack-test.jks'
 ```
 
-构建脚本会检查 APK Manifest、16 KB ZIP 对齐和签名，并在 `artifacts/android/` 下输出 SHA-256。
+构建图保留本地未剥离 ARM64 库供诊断，但 APK 只封装移除调试段和非必要符号后的副本。构建脚本会检查 APK Manifest、16 KB ZIP 对齐和签名，并在 `artifacts/android/` 下输出 SHA-256。
 
 ## 兼容边界
 
