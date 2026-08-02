@@ -200,6 +200,10 @@ class StressHarnessContractTest(unittest.TestCase):
             'validate_type_list(types, 487, "full catalog", false)',
             self.lua,
         )
+        self.assertIn(
+            'enabled_range(589, 621, 33, "organics"), 700.0, true',
+            self.lua,
+        )
         self.assertIn("type ~= LEGACY_ALIAS_ID", self.lua)
         self.assertIn(
             'pcall(elements.property, type, "Enabled")',

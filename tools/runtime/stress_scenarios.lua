@@ -736,7 +736,7 @@ local scenarios = {
         catalog_fixture(full, enabled_range(576, 588, 13, "isotopes"), 450.0, true)
     end,
     ["S19-ORGANICS-DENSE"] = function()
-        catalog_fixture(full, enabled_range(589, 621, 33, "organics"), 430.0, true)
+        catalog_fixture(full, enabled_range(589, 621, 33, "organics"), 700.0, true)
     end,
     ["S20-FULL-CATALOG"] = function()
         catalog_fixture(full, playable_catalog(), 300.0, false)

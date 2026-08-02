@@ -188,6 +188,7 @@ class AnalyzeStressResultTest(unittest.TestCase):
             )
             value = analysis.analyze(directory)
             self.assertTrue(value["fixture_evidence_complete"])
+            self.assertTrue(value["fixture_activity_pass"])
             self.assertTrue(value["performance_gate_pass"])
             result_path = directory / "result.json"
             result = json.loads(result_path.read_text(encoding="utf-8"))
@@ -195,6 +196,27 @@ class AnalyzeStressResultTest(unittest.TestCase):
             result_path.write_text(json.dumps(result), encoding="utf-8")
             value = analysis.analyze(directory)
         self.assertFalse(value["fixture_evidence_complete"])
+        self.assertFalse(value["performance_gate_pass"])
+
+    def test_catalog_samples_require_observed_activity(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [200, 190, 180, 180, 180, 180, 180, 180],
+                complete_gate_evidence=True,
+                sample_id="S19-ORGANICS-DENSE",
+                fixture_type_count=33,
+                fixture_created_type_count=33,
+                fixture_visible_type_count=33,
+            )
+            result_path = directory / "result.json"
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            result["event_count_total"] = 0
+            result["event_count_peak_per_frame"] = 0
+            result_path.write_text(json.dumps(result), encoding="utf-8")
+            value = analysis.analyze(directory)
+        self.assertFalse(value["fixture_activity_pass"])
         self.assertFalse(value["performance_gate_pass"])
 
     def test_full_catalog_distinguishes_active_and_directly_selectable_types(self) -> None:

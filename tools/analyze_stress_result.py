@@ -231,6 +231,7 @@ def analyze(directory: Path) -> dict[str, Any]:
     fixture_visible_type_count = result.get("fixture_visible_type_count")
     if fixture_expected is None:
         fixture_evidence_complete = True
+        fixture_activity_pass = True
     else:
         expected_types, expected_created, expected_visible = fixture_expected
         fixture_evidence_complete = (
@@ -248,11 +249,20 @@ def analyze(directory: Path) -> dict[str, Any]:
                 or fixture_created_type_count == expected_created
             )
         )
+        fixture_activity_pass = (
+            isinstance(result.get("event_count_total"), (int, float))
+            and not isinstance(result.get("event_count_total"), bool)
+            and result.get("event_count_total") > 0
+            and isinstance(result.get("event_count_peak_per_frame"), (int, float))
+            and not isinstance(result.get("event_count_peak_per_frame"), bool)
+            and result.get("event_count_peak_per_frame") > 0
+        )
     performance_gate_pass = (
         sample_execution_pass
         and event_evidence_complete
         and scenario_behavior_pass is True
         and fixture_evidence_complete
+        and fixture_activity_pass
         and (not automation_sample or signal_behavior_pass is True)
     )
 
@@ -291,6 +301,7 @@ def analyze(directory: Path) -> dict[str, Any]:
         "signal_behavior_pass": signal_behavior_pass,
         "signal_stop_pass": result.get("signal_stop_pass"),
         "fixture_evidence_complete": fixture_evidence_complete,
+        "fixture_activity_pass": fixture_activity_pass,
         "fixture_type_count": fixture_type_count,
         "fixture_created_type_count": fixture_created_type_count,
         "fixture_visible_type_count": fixture_visible_type_count,
