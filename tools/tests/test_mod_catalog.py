@@ -252,6 +252,24 @@ class ModCatalogTests(unittest.TestCase):
     def test_repository_generated_catalogs_pass(self) -> None:
         self.assertEqual(validator.validate(ROOT), [])
 
+    def test_directly_selectable_excludes_eraser_hidden_and_alias_types(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "VISIBLE.cpp"
+            source.write_text("MenuVisible = 1;\n", encoding="utf-8")
+            base = {
+                "implementation_status": "implemented",
+                "is_duplicate": "false",
+                "default_enabled": "true",
+                "stable_id": "42",
+                "source_file": "VISIBLE.cpp",
+            }
+            self.assertTrue(reports.directly_selectable(root, base))
+            self.assertFalse(reports.directly_selectable(root, {**base, "stable_id": "0"}))
+            self.assertFalse(reports.directly_selectable(root, {**base, "is_duplicate": "true"}))
+            source.write_text("MenuVisible = 0;\n", encoding="utf-8")
+            self.assertFalse(reports.directly_selectable(root, base))
+
 
 if __name__ == "__main__":
     unittest.main()

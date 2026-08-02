@@ -74,6 +74,7 @@ PRIVATE_TEST_MARKERS = {
         PRIVATE_TEST_VERSION,
         "不是 1.0.0 正式版",
         "487",
+        "466",
         "118/118",
         "685",
         "release_ready=false",

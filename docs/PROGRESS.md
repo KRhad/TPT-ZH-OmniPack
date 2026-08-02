@@ -38,7 +38,9 @@ omnipack_registered_elements=293
 omnipack_playable_elements=292
 engine_active_elements=488
 compatibility_aliases=1
-total_playable_materials=487
+active_non_alias_types=487
+directly_selectable_materials=466
+total_playable_materials=466
 registered_slots=686
 reserved_slots=198
 unallocated_capacity_slots=338
@@ -71,6 +73,10 @@ private_test_0_7_python_tests=203/203
 private_test_0_7_release_exe_sha256=429C3FC72E415931BD9D6DCDF07602D7F590864EC76275524214651CEDD07CD1
 private_test_0_7_zip_sha256=C375BA1BD85F5C6838282FDF8979DFBC010B02FF0E0D0216CD08D342B70CE05F
 private_test_0_7_package_audit=true
+content_freeze_smoke_s15_s20=true
+full_catalog_fixture_types=487
+full_catalog_fixture_created=484
+full_catalog_fixture_visible=466
 reaction_registry_entries=328
 organic_batch2_clean_build_pass=true
 organic_batch2_clean_build_targets=732
@@ -91,7 +97,7 @@ release_ready=false
 - 真实客户端环境回归覆盖 17 类行为；1,100 组压力样本中 1,024 组成功且峰值为 1,024。五模块关闭后保留 25 粒子、环境清洗反应不执行、事件为 0；
 - 新增环境 OPS 类后八类合计 24 进程、368 粒子、436 字段断言，环境类为 22 粒子/30 字段并覆盖最高 `DETG=685` 的携带字段；
 - S14 环境密集场景 `20260801T234731Z-829de648` 先以提交 `031c36ff` 的开发 EXE 完成 2.014748 秒 smoke；随后 `20260802T000456Z-a012fd04` 绑定 `0.7.0-dev` 私测 ZIP，完成 60.001206 秒预热和 600.000936 秒采样：平均 60.001573 FPS、1% low 55.356465、未崩溃/挂起，OPS 往返、停止检查和 14 项恢复断言通过，独立 `performance_gate_pass=true`；
-- 当前登记 686 行、488 个活动项、1 个兼容别名、487 个可玩材料和 328 条反应；`build-environment-batch1-evidence-clean` 从空目录完成 `771/771`，Meson `31/31`、Python 202 项（0 fail、2 skip）通过，EXE 为 332,363,158 字节、SHA-256 `154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709`。环境正式压力已完成；人工 GUI/DPI 和综合长跑仍未完成。
+- 当前登记 686 行、488 个活动项、1 个兼容别名、487 个活动非别名类型、466 个菜单材料和 328 条反应；`build-environment-batch1-evidence-clean` 从空目录完成 `771/771`，Meson `31/31`、Python 202 项（0 fail、2 skip）通过，EXE 为 332,363,158 字节、SHA-256 `154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709`。环境正式压力已完成；人工 GUI/DPI 和综合长跑仍未完成。
 
 ## 0.7.0-dev 私测包
 
@@ -100,6 +106,13 @@ release_ready=false
 - 剥离 EXE 为 19,252,827 字节，SHA-256 `429C3FC72E415931BD9D6DCDF07602D7F590864EC76275524214651CEDD07CD1`；PE 安全标志、调试段、开发路径及动态 GCC 运行库审计通过；
 - 普通 ZIP 为 6,107,003 字节，SHA-256 `C375BA1BD85F5C6838282FDF8979DFBC010B02FF0E0D0216CD08D342B70CE05F`；符号 ZIP 为 88,879,329 字节，SHA-256 `FA46279490D9A3EDF0426130588C4B5CEC46BECC0070D6AFCB59CEEDAA2B4532`。manifest、成员、许可证文件、个人数据路径及解压哈希审计通过；
 - 包内 revision 为 `ee75bc2773bae67958a8b07eba6e896569045cea`。该私测包已完成 S14 正式门禁，但未签名，GUI/DPI、7,200 秒综合长跑、完整许可证总审计和公开发布仍未完成，`release_ready=false`。
+
+## 1.0.0 内容冻结压力框架
+
+- 提交 `b0d2dba4` 新增 S15–S20：完整周期 118、无机 50、工程/矿物材料 21、核素 13、有机 33，以及全部活动非别名类型；分析器对类型数、成功创建数和菜单可见数执行精确 fail-closed 检查；
+- 新 harness smoke 分别为 S15 `20260802T012213Z-1a2471cc`、S16 `20260802T012217Z-7f81b8a7`、S17 `20260802T012221Z-4ee2a3c6`、S18 `20260802T012225Z-0b8f6e5a`、S19 `20260802T012418Z-cb4f9f99`；对应 fixture 为 `118/118/118`、`50/50/50`、`21/21/21`、`13/13/13`、`33/33/33`，S19 在 700 K 观察到 62 次受预算事件；
+- S20 `20260802T011044Z-a4fd999f` 精确枚举 487 个活动非别名类型、成功创建 484 个、确认 466 个普通菜单材料；OPS 往返、停止和 14 项恢复断言通过；
+- 六场均约 2 秒，只证明 fixture 和 harness 行为，`performance_gate_pass=false`；正式 60 秒预热/600 秒采样必须绑定后续 1.0.0 冻结 ZIP，不能用这些 smoke 冒充。
 
 ## 模组素材库与周期表 ID 基础设施
 
@@ -285,10 +298,10 @@ release_ready=false
 
 ## 下一步
 
-1. 继续更多有机燃料、电子材料和生态污染批次；工程材料 `533..575` 只补充审计后仍有独立玩法的候选，不得覆盖旧槽或用重复空壳填充 1024 容量；
-2. 同概念模组候选只把许可证兼容的玩法增量合并到主元素，并登记来源与主元素回归；
-3. 继续为完整 118 元素及其他尚未覆盖的高位内容执行正式 60 秒预热/600 秒压力采样，并完成后续两小时综合长跑；
-4. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
-5. 保持 `release_ready=false`，直到后续材料族、人工 GUI、长跑、发布包和公开发布门禁全部真实完成。
+1. 内容数量冻结为 466 个菜单材料、487 个活动非别名类型；不再为凑数新增重复空壳，保留 `533..575`、`642..669` 及 `686..1023` 的稳定容量；
+2. 完成最终第三方源码、字体、资源和发布通知审计；同概念来源只保留已登记的兼容玩法增量；
+3. 完成人工 GUI、双语往返、周期表、气体绘制、模块关闭加载对话框及 100%/125%/150% DPI 矩阵；
+4. 从干净提交构建并审计 1.0.0 冻结候选 ZIP，再绑定该 ZIP 执行 S15–S20 的 60 秒预热/600 秒正式采样和 7,200 秒综合长跑；
+5. 保持 `release_ready=false`，直到匿名源码克隆重建、授权远端、正式 tag 和 Release 门禁全部真实完成。
 
 开发回归场景、构建脚本、测试矩阵和版本门禁继续保留；它们不属于已删除的玩家游戏任务。

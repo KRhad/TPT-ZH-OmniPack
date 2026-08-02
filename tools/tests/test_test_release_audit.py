@@ -300,7 +300,7 @@ class TestReleaseAuditTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (source / "docs" / "PRIVATE_TEST_0.7.0.md").write_text(
-                "0.7.0-dev\n不是 1.0.0 正式版\n487\n118/118\n685\nrelease_ready=false\n",
+                "0.7.0-dev\n不是 1.0.0 正式版\n487\n466\n118/118\n685\nrelease_ready=false\n",
                 encoding="utf-8",
             )
             private_versions = (
@@ -372,6 +372,7 @@ class TestReleaseAuditTests(unittest.TestCase):
                 kind="local-dev",
             )
             self.assertTrue(any("'487'" in error for error in errors))
+            self.assertTrue(any("'466'" in error for error in errors))
             self.assertTrue(any("'685'" in error for error in errors))
 
     def test_local_dev_profile_must_be_explicit(self) -> None:

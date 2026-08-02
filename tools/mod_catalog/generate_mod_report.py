@@ -33,6 +33,26 @@ def compatible_license(row: dict[str, Any]) -> bool:
     )
 
 
+def directly_selectable(root: Path, row: dict[str, Any]) -> bool:
+    """Count real menu materials, excluding the eraser and hidden helpers."""
+    if (
+        row.get("implementation_status") != "implemented"
+        or row.get("is_duplicate") == "true"
+        or row.get("default_enabled") != "true"
+        or row.get("stable_id") == "0"
+    ):
+        return False
+    source_file = str(row.get("source_file", ""))
+    if not source_file:
+        return False
+    path = root / source_file
+    if not path.is_file():
+        return False
+    return re.search(
+        r"\bMenuVisible\s*=\s*1\s*;", path.read_text(encoding="utf-8")
+    ) is not None
+
+
 def decision(
     element: dict[str, Any],
     mod: dict[str, Any],
@@ -260,11 +280,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         and row.get("is_duplicate") != "true"
         for row in element_registry_rows
     )
-    total_playable_materials = sum(
+    active_non_alias_types = sum(
         row.get("implementation_status") == "implemented"
         and row.get("is_duplicate") != "true"
         and row.get("default_enabled") == "true"
         for row in element_registry_rows
+    )
+    directly_selectable_materials = sum(
+        directly_selectable(root, row) for row in element_registry_rows
     )
     rewritten_stable_ids = {595, 600, 670, 679}
     elements_rewritten = sum(
@@ -448,7 +471,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"total_omnipack_elements={total_omnipack_elements}",
         f"compatibility_aliases={compatibility_aliases}",
         f"total_omnipack_playable={total_omnipack_playable}",
-        f"total_playable_materials={total_playable_materials}",
+        f"active_non_alias_types={active_non_alias_types}",
+        f"directly_selectable_materials={directly_selectable_materials}",
+        f"total_playable_materials={directly_selectable_materials}",
         f"inorganic_batch1_elements={implemented_in_range(462, 477)}",
         f"inorganic_batch2_elements={implemented_in_range(478, 493)}",
         f"inorganic_batch3_elements={implemented_in_range(494, 511)}",
@@ -472,7 +497,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "`duplicate_definition_records` 是自动归入同概念比较的全部源码定义数，包含待主元素增量审计的记录，不等于已经人工拒绝的独立材料。`canonical_merge_review_candidates` 进入 `B_rewrite_port`，目标是合并主元素而不是新增 ID。",
         "`license_audit_pass=true` 只能由完成逐文件、README、子模块和资源复核后的显式参数写入。",
         "当前新增 92 个周期元素、无机三批 50 个材料、工程材料、代表性核素、有机/聚合物、电子材料以及生态与污染首批中的 14 个材料均为 OmniPack 原创族/反应逻辑，不计入第三方 `elements_ported` 或 `elements_rewritten`。`ACET=595`、`UREA=600`、`SOIL=670` 与 `BLOD=679` 保留兼容 GPL 来源的概念和文件级追踪，当前更新函数均按本项目架构重写，因此保守计为 `elements_rewritten=4`；第三方更新函数逐行复制仍为 0。`first_port_batch_complete=false` 仍是许可证门禁的真实结果，不能把原创内容或 4 个重写项冒充成已完成 50 元素移植。",
-        "`OMNI_PT_MSCR=278` 是合并到官方 `DEFAULT_PT_BRMT=30` 的兼容别名；它继续占用稳定槽以读取旧存档，但不计入 `total_omnipack_playable` 或 `total_playable_materials`。",
+        "`OMNI_PT_MSCR=278` 是合并到官方 `DEFAULT_PT_BRMT=30` 的兼容别名；它继续占用稳定槽以读取旧存档，但不计入 `total_omnipack_playable`、`active_non_alias_types` 或 `total_playable_materials`。`total_playable_materials` 只统计普通菜单可直接选择的真实材料，不包含擦除工具和官方隐藏过渡/辅助类型。",
     ]
     (root / "docs/MOD_EXTRACTION_REPORT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"generate-mod-report: PASS mods={len(mods)} elements={len(catalog_rows)} features={len(feature_rows)}")
