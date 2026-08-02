@@ -2,13 +2,13 @@
 
 ## 当前发布阻塞
 
-1. 周期表 UI、118 行元数据和 118/118 个可放置映射已实现；正式 60 秒预热/600 秒压力采样、两小时长跑和 GUI 周期表视觉矩阵仍未执行。
+1. 周期表 UI、118 行元数据和 118/118 个可放置映射已实现；环境 S14 已完成正式 60 秒预热/600 秒采样，但完整周期表专门压力、两小时长跑和 GUI 周期表视觉矩阵仍未执行。
 2. 当前引擎活动槽为 488，其中含 1 个隐藏兼容别名；实际可玩材料为 487，`total_playable_materials>=300=true`。这只满足数量下限，不代表后续材料族、质量、性能或发布门禁完成。
 3. 模组来源目录、自动提取和去重报告已建立；逐文件、子模块与资源许可证总审计仍未完成，因此 `license_audit_pass=false`。
-4. Phase 1、完整周期表十四批、无机三批、元素去重、10 位容量、工程合金首批、矿物/陶瓷/玻璃首批、代表性核素首批、两批有机内容、电子材料首批及生态污染首批的静态、真实客户端、模块和 OPS 证据已形成。电子 S13 与环境 S14 压力场景都只有 2 秒 smoke；正式 600 秒压力矩阵和两小时长跑尚未执行。
+4. Phase 1、完整周期表十四批、无机三批、元素去重、10 位容量、工程合金首批、矿物/陶瓷/玻璃首批、代表性核素首批、两批有机内容、电子材料首批及生态污染首批的静态、真实客户端、模块和 OPS 证据已形成。环境 S14 已完成正式 600 秒门禁，电子 S13 仍只有 2 秒 smoke；完整压力矩阵和两小时长跑尚未执行。
 5. 用户已确认原生 Fusion Pixel Font 的中文可读性；既有新增字形和第二批新增 `橡/沥/淀/糖/纤/胺/萄/葡/酯/韧/龙` 原生字形仍需人工逐字复核，内容界面、双语往返、100%/125%/150% DPI 和所有页面仍需最终 GUI 人工矩阵。
 6. 图鉴已有 293 个 OmniPack 登记项的完整双语内容，其中 292 个是可玩元素、1 个是旧 `MSCR` 兼容别名；所有模组说明先显示“元素说明”，正文以对应中英文材料名称开头，且玩家窗口不再显示稳定 ID、源码 commit、实现/测试状态等开发门禁字段。生态和污染已完成首批 16 个新材料，后续批次仍待内容审计。
-7. 当前开发 EXE 仍为 `debug=true`、`strip=false`，并动态依赖 MSYS2 的 GCC 运行库；本批自动运行通过依赖 UCRT64 PATH，不是可直接分发的剥离发布 EXE。相同源码/选项在两个不同构建目录产生不同字节数和哈希，`strings` 确认二进制嵌入各自绝对构建路径，因此 `reproducible_build=false`、`developer_paths_removed=false`。
+7. 环境开发证据 EXE 仍为 `debug=true`、`strip=false` 并动态依赖 MSYS2 GCC 运行库；它不是分发文件。另行生成的 `0.7.0-dev` 私测 EXE 已静态链接、剥离并通过开发路径与 PE 审计，但只证明该私测包的便携二进制门禁；完整可复现构建、签名和正式发布门禁仍未完成。
 8. 当前 `origin` 是旧汉化仓库，不是授权的 OmniPack 正式远端；不能擅自推送或发布。
 9. 既有环境曾发现 GitHub classic PAT；Git 历史和已审计包未发现该模式，但撤销/轮换没有外部证据。
 10. GCC 16 仍对 `OurVariant/Bson`、`PowderToy.cpp` 和 `Simulation::FloodParts` 给出既有优化警告，尚无独立根因结论。
@@ -47,14 +47,20 @@ environment_batch1_elements=16
 environment_runtime_test=true
 environment_ops_roundtrip_test=true
 environment_s14_smoke_test=true
+environment_s14_formal_test=true
+environment_s14_performance_gate=true
 environment_clean_build_pass=true
 environment_clean_build_commit=031c36ff7f2838e7f5d9e76bb2c8f1ec1e6fd424
 environment_clean_exe_sha256=154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709
-environment_formal_600s_stress_test=not_tested
+environment_formal_600s_stress_test=true
 electronics_formal_600s_stress_test=not_tested
 clean_build_pass=true
 reproducible_build=false
 developer_paths_removed=false
+private_test_0_7_package_audit=true
+private_test_0_7_release_exe_stripped=true
+private_test_0_7_developer_paths_removed=true
+private_test_0_7_pe_security_flags_preserved=true
 stress_test=not_tested
 long_run_test=not_tested
 source_public=false

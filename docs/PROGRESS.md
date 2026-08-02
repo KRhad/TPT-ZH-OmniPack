@@ -60,6 +60,15 @@ environment_batch1_static_tests=31/31
 environment_batch1_python_tests=202_run_0_fail_2_skip
 environment_batch1_exe_bytes=332363158
 environment_batch1_exe_sha256=154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709
+environment_batch1_formal_s14=true
+environment_batch1_formal_s14_performance_gate=true
+private_test_0_7_manifest_revision=ee75bc2773bae67958a8b07eba6e896569045cea
+private_test_0_7_static_build_targets=771/771
+private_test_0_7_static_tests=31/31
+private_test_0_7_python_tests=203/203
+private_test_0_7_release_exe_sha256=429C3FC72E415931BD9D6DCDF07602D7F590864EC76275524214651CEDD07CD1
+private_test_0_7_zip_sha256=C375BA1BD85F5C6838282FDF8979DFBC010B02FF0E0D0216CD08D342B70CE05F
+private_test_0_7_package_audit=true
 reaction_registry_entries=328
 organic_batch2_clean_build_pass=true
 organic_batch2_clean_build_targets=732
@@ -79,8 +88,16 @@ release_ready=false
 - `OmniEnvironment.cpp` 只检查固定 `3x3` 邻域，并调用既有 `OmniConsumeBiologyEvent`；新旧生态合计上限仍为 `1024/frame`，没有 `NPART`、全图或元素表扫描；
 - 真实客户端环境回归覆盖 17 类行为；1,100 组压力样本中 1,024 组成功且峰值为 1,024。五模块关闭后保留 25 粒子、环境清洗反应不执行、事件为 0；
 - 新增环境 OPS 类后八类合计 24 进程、368 粒子、436 字段断言，环境类为 22 粒子/30 字段并覆盖最高 `DETG=685` 的携带字段；
-- S14 环境密集场景 `20260801T234731Z-829de648` 绑定提交 `031c36ff` 与最终 EXE，完成 2.014748 秒 smoke：平均 61.049830 FPS、1% low 55.552960、峰值 2,387/最终 1,341 粒子、事件峰值 1,024、未崩溃/未挂起，OPS 往返、停止检查和 14 项恢复断言通过；正式 600 秒门禁仍为 `not_tested`；
-- 当前登记 686 行、488 个活动项、1 个兼容别名、487 个可玩材料和 328 条反应；`build-environment-batch1-evidence-clean` 从空目录完成 `771/771`，Meson `31/31`、Python 202 项（0 fail、2 skip）通过，EXE 为 332,363,158 字节、SHA-256 `154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709`。人工 GUI/DPI、正式压力和长跑仍未完成。
+- S14 环境密集场景 `20260801T234731Z-829de648` 先以提交 `031c36ff` 的开发 EXE 完成 2.014748 秒 smoke；随后 `20260802T000456Z-a012fd04` 绑定 `0.7.0-dev` 私测 ZIP，完成 60.001206 秒预热和 600.000936 秒采样：平均 60.001573 FPS、1% low 55.356465、未崩溃/挂起，OPS 往返、停止检查和 14 项恢复断言通过，独立 `performance_gate_pass=true`；
+- 当前登记 686 行、488 个活动项、1 个兼容别名、487 个可玩材料和 328 条反应；`build-environment-batch1-evidence-clean` 从空目录完成 `771/771`，Meson `31/31`、Python 202 项（0 fail、2 skip）通过，EXE 为 332,363,158 字节、SHA-256 `154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709`。环境正式压力已完成；人工 GUI/DPI 和综合长跑仍未完成。
+
+## 0.7.0-dev 私测包
+
+- 打包配置保留旧 `0.6.0-dev` profile，并为 `0.7.0-dev` 使用独立说明、目录、ZIP 和符号包；旧私测包未覆盖；
+- `build-0.7.0-dev-private-static-clean` 从空目录完成 `771/771`，Meson `31/31`、Python `203/203`；原始静态 EXE 为 337,395,645 字节，SHA-256 `46172C2AD4DC91780E8930704B3AFCD71A16C255244A915F857D3A02EF326134`；
+- 剥离 EXE 为 19,252,827 字节，SHA-256 `429C3FC72E415931BD9D6DCDF07602D7F590864EC76275524214651CEDD07CD1`；PE 安全标志、调试段、开发路径及动态 GCC 运行库审计通过；
+- 普通 ZIP 为 6,107,003 字节，SHA-256 `C375BA1BD85F5C6838282FDF8979DFBC010B02FF0E0D0216CD08D342B70CE05F`；符号 ZIP 为 88,879,329 字节，SHA-256 `FA46279490D9A3EDF0426130588C4B5CEC46BECC0070D6AFCB59CEEDAA2B4532`。manifest、成员、许可证文件、个人数据路径及解压哈希审计通过；
+- 包内 revision 为 `ee75bc2773bae67958a8b07eba6e896569045cea`。该私测包已完成 S14 正式门禁，但未签名，GUI/DPI、7,200 秒综合长跑、完整许可证总审计和公开发布仍未完成，`release_ready=false`。
 
 ## 模组素材库与周期表 ID 基础设施
 
@@ -268,7 +285,7 @@ release_ready=false
 
 1. 继续更多有机燃料、电子材料和生态污染批次；工程材料 `533..575` 只补充审计后仍有独立玩法的候选，不得覆盖旧槽或用重复空壳填充 1024 容量；
 2. 同概念模组候选只把许可证兼容的玩法增量合并到主元素，并登记来源与主元素回归；
-3. 为完整 118 元素与高位内容执行正式 60 秒预热/600 秒压力采样及后续两小时综合长跑；
+3. 继续为完整 118 元素、电子及其他高位内容执行尚未覆盖的正式 60 秒预热/600 秒压力采样，并完成后续两小时综合长跑；
 4. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
 5. 保持 `release_ready=false`，直到后续材料族、人工 GUI、长跑、发布包和公开发布门禁全部真实完成。
 
