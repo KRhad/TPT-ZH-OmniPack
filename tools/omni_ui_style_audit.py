@@ -110,11 +110,12 @@ def audit(root: Path) -> list[str]:
         "AddComponent(periodicTableButton);",
         "RemoveComponent(elementSearchButton);",
         "AddComponent(elementSearchButton);",
-        "((newInitialX - (WINDOWW - 56)) / buttonStride) * buttonStride",
         "periodicTableButton->SetIcon(IconPeriodicTable);",
     ):
         if marker not in game_view:
             errors.append(f"GameView.cpp: missing lower-toolbar clearance marker {marker!r}")
+    if "((newInitialX - (WINDOWW - 56)) / buttonStride) * buttonStride" in game_view:
+        errors.append("GameView.cpp: obsolete periodic-button scroll snapping is still present")
 
     gas = read_text(root / "src" / "simulation" / "OmniGasGraphics.cpp", errors)
     for marker in (

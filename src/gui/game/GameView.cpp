@@ -1085,15 +1085,6 @@ void GameView::updateToolButtonScroll()
 			mouseLocation = (float)(XRES - 3)/(float)((XRES - 2) - mouseX); // mouseLocation adjusted slightly in case you have 200 elements in one menu
 
 			newInitialX += (int)(overflow/mouseLocation);
-			if (newInitialX > WINDOWW - 56)
-			{
-				// Keep every scroll position aligned to a full button stride. This
-				// leaves the rightmost visible tool ending at WINDOWW - 26 and
-				// prevents a partial hitbox from entering the right toolbar.
-				int buttonStride = toolButtons[0]->Size.X + 1;
-				newInitialX = (WINDOWW - 56)
-					+ ((newInitialX - (WINDOWW - 56)) / buttonStride) * buttonStride;
-			}
 		}
 		else
 		{
