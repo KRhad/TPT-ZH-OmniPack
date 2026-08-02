@@ -35,7 +35,9 @@ class TestReleaseAuditTests(unittest.TestCase):
         source = root / "source"
         (source / "docs").mkdir(parents=True)
         (source / "LICENSE").write_text("GPL test\n", encoding="utf-8")
+        (source / "README.md").write_text("English readme\n", encoding="utf-8")
         (source / "README.zh-CN.md").write_text("Readme\n", encoding="utf-8")
+        (source / "changelog.txt").write_text("English changes\n", encoding="utf-8")
         (source / "CHANGELOG.zh-CN.md").write_text("Changes\n", encoding="utf-8")
         (source / "meson_options.txt").write_text(
             "option('can_install', type: 'combo', choices: ['no', 'yes', 'yes_check', 'auto'], value: 'no')\n",
@@ -43,6 +45,11 @@ class TestReleaseAuditTests(unittest.TestCase):
         )
         (source / "docs" / "TEST_RELEASE.md").write_text(
             "Windows x64\n不属于本测试版\n已知测试限制\n未签名\n",
+            encoding="utf-8",
+        )
+        (source / "docs" / "RELEASE_CANDIDATE_1.0.0.md").write_text(
+            "1.0.0-rc1\n本地发布候选\n不是正式发布\n487\n484\n466\n"
+            "118/118\nrelease_ready=false\n未签名\n",
             encoding="utf-8",
         )
         (source / "docs" / "THIRD_PARTY_SOURCES.md").write_text("Sources\n", encoding="utf-8")
@@ -386,6 +393,60 @@ class TestReleaseAuditTests(unittest.TestCase):
             self.assertTrue(any("'487'" in error for error in errors))
             self.assertTrue(any("'466'" in error for error in errors))
             self.assertTrue(any("'685'" in error for error in errors))
+
+    def test_release_candidate_profile_is_explicit_and_auditable(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            with mock.patch.object(
+                package_test_release, "git_revision", return_value="d" * 40
+            ):
+                package, _, symbols, _ = package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.RELEASE_CANDIDATE_VERSION,
+                    kind="release-candidate",
+                    include_examples=False,
+                )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    package,
+                    version=package_test_release.RELEASE_CANDIDATE_VERSION,
+                    kind="release-candidate",
+                ),
+                [],
+            )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    symbols,
+                    True,
+                    version=package_test_release.RELEASE_CANDIDATE_VERSION,
+                ),
+                [],
+            )
+            with zipfile.ZipFile(package) as archive:
+                fields, _ = test_release_audit.parse_manifest(
+                    archive.read(
+                        "TPT-ZH-OmniPack-1.0.0-rc1-Windows-x64/TEST-MANIFEST.txt"
+                    )
+                )
+                self.assertEqual(fields["kind"], "release-candidate")
+                self.assertFalse(any(name.endswith(".stm") for name in archive.namelist()))
+
+    def test_release_candidate_profile_cannot_use_local_dev_kind(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            with self.assertRaisesRegex(ValueError, "requires kind=release-candidate"):
+                package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.RELEASE_CANDIDATE_VERSION,
+                    kind="local-dev",
+                    include_examples=False,
+                )
 
     def test_local_dev_profile_must_be_explicit(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

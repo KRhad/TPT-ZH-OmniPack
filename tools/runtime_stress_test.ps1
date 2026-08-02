@@ -40,7 +40,7 @@ param(
 
     [string] $PackageZip,
 
-    [ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev")]
+    [ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev", "1.0.0-rc1")]
     [string] $PackageVersion = "0.1.0-test",
 
     [string] $TemporaryDirectory = [System.IO.Path]::GetTempPath(),
@@ -146,7 +146,7 @@ function Get-PackageProvenance {
         }
         $kindMatches = [regex]::Matches(
             $manifestText,
-            '(?m)^kind=(public-test|local-dev)\r?$'
+            '(?m)^kind=(public-test|local-dev|release-candidate)\r?$'
         )
         if ($kindMatches.Count -ne 1) {
             throw "Package manifest must contain one supported package kind"

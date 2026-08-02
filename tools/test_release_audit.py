@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail closed when a public test-release ZIP is incomplete or unsafe."""
+"""Fail closed when a test or release-candidate ZIP is incomplete or unsafe."""
 
 from __future__ import annotations
 
@@ -18,12 +18,14 @@ DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
 PREVIOUS_PRIVATE_TEST_VERSION = "0.6.0-dev"
 PRIVATE_TEST_VERSION = "0.7.0-dev"
+RELEASE_CANDIDATE_VERSION = "1.0.0-rc1"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
 SYMBOL_NAME = "tpt-zh-omnipack.debug"
 NORMAL_DOCUMENTS = {
-    "LICENSE", "README.zh-CN.md", "CHANGELOG.zh-CN.md", "TESTING.zh-CN.md",
+    "LICENSE", "README.en.md", "README.zh-CN.md", "CHANGELOG.en.txt",
+    "CHANGELOG.zh-CN.md", "TESTING.zh-CN.md",
     "SOURCE-AND-LICENSES.zh-CN.md", "KNOWN-ISSUES.zh-CN.md", "AI-DISCLOSURE.zh-CN.md",
     "FONT-AUDIT.md", "LICENSES/GNU-UNIFONT-OFL-1.1.txt",
     "LICENSES/THIRD-PARTY-MANIFEST.csv",
@@ -88,6 +90,19 @@ PRIVATE_TEST_MARKERS = {
         "release_ready=false",
     ),
 }
+RELEASE_CANDIDATE_MARKERS = {
+    RELEASE_CANDIDATE_VERSION: (
+        RELEASE_CANDIDATE_VERSION,
+        "本地发布候选",
+        "不是正式发布",
+        "487",
+        "484",
+        "466",
+        "118/118",
+        "release_ready=false",
+        "未签名",
+    ),
+}
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 PATH_MARKERS = (b"C:\\Users\\", b"/Users/", b"\\build-", b"/build-")
 
@@ -127,7 +142,7 @@ def development_documents(version: str) -> set[str]:
 
 
 def expected_members(stem: str, kind: str, version: str) -> set[str]:
-    if kind == "public-test":
+    if kind in {"public-test", "release-candidate"}:
         files = {EXECUTABLE_NAME, *NORMAL_DOCUMENTS}
     elif kind == "local-dev":
         files = {
@@ -248,6 +263,7 @@ def audit_package(
             private_version: "local-dev"
             for private_version in PRIVATE_TEST_MARKERS
         },
+        RELEASE_CANDIDATE_VERSION: "release-candidate",
     }
     if version not in profiles:
         return [f"unsupported package version: {version}"]
@@ -332,6 +348,15 @@ def audit_package(
                                 errors.append(
                                     f"private test instructions are missing marker: {marker!r}"
                                 )
+                elif kind == "release-candidate":
+                    instructions = archive.read(
+                        f"{stem}/TESTING.zh-CN.md"
+                    ).decode("utf-8", errors="replace")
+                    for marker in RELEASE_CANDIDATE_MARKERS[version]:
+                        if marker not in instructions:
+                            errors.append(
+                                f"release candidate instructions are missing marker: {marker!r}"
+                            )
     except (OSError, ValueError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
         errors.append(f"cannot read package: {exc}")
     return errors
@@ -356,10 +381,13 @@ def build_parser() -> argparse.ArgumentParser:
             DEV_VERSION,
             AUTOMATION_VERSION,
             *PRIVATE_TEST_MARKERS,
+            *RELEASE_CANDIDATE_MARKERS,
         ),
         default=VERSION,
     )
-    parser.add_argument("--kind", choices=("public-test", "local-dev"))
+    parser.add_argument(
+        "--kind", choices=("public-test", "local-dev", "release-candidate")
+    )
     return parser
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create deterministic public-test and detached-symbol ZIP archives."""
+"""Create deterministic test, release-candidate, and symbol ZIP archives."""
 
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
 PREVIOUS_PRIVATE_TEST_VERSION = "0.6.0-dev"
 PRIVATE_TEST_VERSION = "0.7.0-dev"
+RELEASE_CANDIDATE_VERSION = "1.0.0-rc1"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -52,7 +53,9 @@ LIBRARY_LICENSE_DOCUMENTS = tuple(
 )
 DOCUMENTS = (
     ("LICENSE", "LICENSE"),
+    ("README.md", "README.en.md"),
     ("README.zh-CN.md", "README.zh-CN.md"),
+    ("changelog.txt", "CHANGELOG.en.txt"),
     ("CHANGELOG.zh-CN.md", "CHANGELOG.zh-CN.md"),
     ("docs/TEST_RELEASE.md", "TESTING.zh-CN.md"),
     ("docs/THIRD_PARTY_SOURCES.md", "SOURCE-AND-LICENSES.zh-CN.md"),
@@ -132,6 +135,16 @@ PRIVATE_TEST_INSTRUCTIONS = {
         "TESTING.zh-CN.md",
     ),
 }
+RELEASE_CANDIDATE_INSTRUCTIONS = {
+    RELEASE_CANDIDATE_VERSION: (
+        "docs/RELEASE_CANDIDATE_1.0.0.md",
+        "TESTING.zh-CN.md",
+    ),
+}
+VERSIONED_INSTRUCTIONS = {
+    **PRIVATE_TEST_INSTRUCTIONS,
+    **RELEASE_CANDIDATE_INSTRUCTIONS,
+}
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 FORBIDDEN_COMPONENTS = {".git", "__pycache__", "build", "dist"}
 CAN_INSTALL_DEFAULT_RE = re.compile(
@@ -184,6 +197,7 @@ def validate_profile(version: str, kind: str, include_examples: bool) -> None:
         VERSION: ("public-test", False),
         DEV_VERSION: ("local-dev", True),
         AUTOMATION_VERSION: ("local-dev", True),
+        RELEASE_CANDIDATE_VERSION: ("release-candidate", False),
         **{
             private_version: ("local-dev", False)
             for private_version in PRIVATE_TEST_INSTRUCTIONS
@@ -215,9 +229,9 @@ def development_documents(version: str) -> tuple[tuple[str, str], ...]:
 
 
 def package_documents(version: str) -> tuple[tuple[str, str], ...]:
-    if version not in PRIVATE_TEST_INSTRUCTIONS:
+    if version not in VERSIONED_INSTRUCTIONS:
         return DOCUMENTS
-    private_source, private_archive = PRIVATE_TEST_INSTRUCTIONS[version]
+    private_source, private_archive = VERSIONED_INSTRUCTIONS[version]
     return tuple(
         (source, archive)
         for source, archive in DOCUMENTS
@@ -387,11 +401,15 @@ def build_parser() -> argparse.ArgumentParser:
             VERSION,
             DEV_VERSION,
             AUTOMATION_VERSION,
-            *PRIVATE_TEST_INSTRUCTIONS,
+            *VERSIONED_INSTRUCTIONS,
         ),
         default=VERSION,
     )
-    parser.add_argument("--kind", choices=("public-test", "local-dev"), default="public-test")
+    parser.add_argument(
+        "--kind",
+        choices=("public-test", "local-dev", "release-candidate"),
+        default="public-test",
+    )
     parser.add_argument("--include-examples", action="store_true")
     parser.add_argument("--objdump", help="Path to objdump for mandatory PE auditing.")
     parser.add_argument("--strings", help="Path to strings for mandatory path auditing.")
