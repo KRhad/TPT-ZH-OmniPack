@@ -37,6 +37,15 @@
 | 完整周期表十四批 92 | PASS | PASS | PASS | 预算帧 PASS | 新 ID `370..461` 全部启用；118/118 映射可用 |
 | 多模块混合 | PASS | 历史 PASS | 历史 PASS | 历史 PASS | Phase 1 正式混合压力尚未复跑 |
 
+### 粉末与固体碰撞
+
+| 项目 | 状态 | 证据 |
+|---|---|---|
+| 普通粉末阻挡 | PASS | `solid-barrier-probe` 遍历 29,278 组启用的 `TYPE_PART -> TYPE_SOLID` 组合；`DUST -> AERG`、`SAND -> GRPH`、`DUST -> CFRP` 均为禁止换位 |
+| 可移动材料密度交换 | PASS | `SAND -> WATR` 仍按重量交换，粉末进入空格仍正常 |
+| 官方特殊入口 | PASS | `BHOL/VOID/INVIS` 及 `ANAR -> WHOL` 保持吞噬、条件通行或特殊交互矩阵 |
+| 完整静态回归 | PASS | Windows 静态客户端链接通过；Meson static `33/33`、Python `218/218`（2 skip） |
+
 ### 元素行为级去重与官方 BRMT 增强
 
 | 项目 | 状态 | 证据 |

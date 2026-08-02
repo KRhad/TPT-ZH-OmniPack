@@ -127,6 +127,13 @@ void SimulationData::init_can_move()
 			if (elements[movingType].Weight <= elements[destinationType].Weight || destinationType == PT_GEL)
 				can_move[movingType][destinationType] = 0;
 
+			// Density controls swaps between movable materials, but a powder must not
+			// displace a fixed solid. Without this state check, light solids such as
+			// aerogel are swapped out of the way and appear permeable to dust.
+			if ((elements[movingType].Properties & TYPE_PART) &&
+				(elements[destinationType].Properties & TYPE_SOLID))
+				can_move[movingType][destinationType] = 0;
+
 			//other checks for NEUT and energy particles
 			if (movingType == PT_NEUT && (elements[destinationType].Properties&PROP_NEUTPASS))
 				can_move[movingType][destinationType] = 2;
