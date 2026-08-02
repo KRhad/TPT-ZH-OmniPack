@@ -63,6 +63,8 @@ meson test -C build-ui-gas-electronics-final-clean --suite static --print-errorl
 C:\msys64\ucrt64\bin\python3.exe -m unittest discover -s tools/tests -p 'test_*.py'
 ```
 
+Android ARM64 直接移植版使用同一套模拟、元素 ID、中文字体与 OPS 存档代码。移动端构建和签名方法见 [Android 直接移植版](docs/ANDROID_PORT.md)；当前 APK 已完成交叉编译、Manifest、签名、ZIP 和 16 KB ELF 对齐审计，但在连接真实 Android 设备前，触控、输入法、后台恢复和实际帧率仍记为未测试。
+
 测试结果、未测试边界和正式门禁分别见 [TEST_MATRIX](docs/TEST_MATRIX.md)、[KNOWN_ISSUES](docs/KNOWN_ISSUES.md) 和 [VERSION_GATES](docs/VERSION_GATES.md)。自动测试通过不等于 GUI、视觉、长跑或公开发布通过。
 
 ## 法律与发布边界

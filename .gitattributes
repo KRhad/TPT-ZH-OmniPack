@@ -2,3 +2,5 @@
 .gitignore export-ignore
 resources/third_party/fusion-pixel-12px-monospaced-zh_hans-v2026.07.20.bdf text eol=lf
 resources/third_party/FUSION_PIXEL_FONT_*.txt text eol=lf
+resources/third_party/GNU_UNIFONT_COPYING.txt text eol=lf
+resources/third_party/library_licenses/*.LICENSE text eol=lf -whitespace

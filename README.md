@@ -11,6 +11,8 @@ All 195 canonical upstream elements now have bilingual long-form encyclopedia ro
 
 Earlier committed baselines have clean-build, automated registration, bilingual content, gameplay, disabled-module, OPS roundtrip, and content-freeze evidence. The `f970a534` rc9 reference candidate passed ordinary/symbol package audits and all six S15-S20 30-second stability gates; those results do not automatically apply to later working-tree builds. A dirty rc9 validation package must explicitly record its base revision, source state, worktree SHA-256, and untracked-file count, and must never be represented as a clean release candidate. The source, mod-reference, font, resource, and static-library license closure also passes with unknown sources excluded, but the project is **not release-ready**: trusted GUI/DPI checks, the separate two-hour long run, an authorized public source remote, tag, signing, and public release remain incomplete. The existing `origin` is a historical Chinese-fork remote and must not be represented as the public source for this candidate.
 
+The Android ARM64 direct port builds the same simulation, stable element IDs, Chinese font, and OPS save code into a landscape SDL application. See [docs/ANDROID_PORT.md](docs/ANDROID_PORT.md). A signed test APK still requires real-device touch, IME, lifecycle, save interchange, and performance validation before it can be described as a mobile release.
+
 See [README.zh-CN.md](README.zh-CN.md), [docs/VERSION_GATES.md](docs/VERSION_GATES.md), [docs/PHASE_0_2_EVIDENCE.md](docs/PHASE_0_2_EVIDENCE.md), and [dist/release-report-0.1.0-test.md](dist/release-report-0.1.0-test.md) for the scoped evidence and blockers.
 
 Upstream The Powder Toy README - June 2026

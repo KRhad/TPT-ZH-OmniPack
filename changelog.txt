@@ -13,6 +13,7 @@ v1.0.0-rc4 - OmniPack pure-sandbox content freeze
 - Added a fail-closed 7,200-second full-catalog gate with ten same-process OPS, bilingual-state, and module-toggle cycles
 - Aligned the periodic-table and element-search shortcuts in the right toolbar and retained the normal element-row width
 - Added official-style soft gas rendering for periodic, inorganic, isotope, and organic gases
+- Added an Android ARM64 direct-port build using the same simulation, stable IDs, Chinese font, Lua, and OPS code, with API 21 compatibility and 16 KB page alignment
 - Repaired negative or stale element counts after dense mixed reactions with a cheap invariant check and on-demand exact recount
 - Added deterministic Windows release-candidate, detached-symbol, license-manifest, PE, path, ZIP, and source-archive audits
 - This local candidate is unsigned and remains release_ready=false until all stress, long-run, GUI/DPI, public-source, tag, and release gates pass

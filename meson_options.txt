@@ -179,6 +179,13 @@ option(
 	description: 'Signing key alias for signing an APK, only used for Android development'
 )
 option(
+	'android_version_code',
+	type: 'integer',
+	min: 0,
+	value: 0,
+	description: 'Android versionCode; 0 derives a monotonic value from the display version'
+)
+option(
 	'app_name',
 	type: 'string',
 	value: 'TPT-ZH-OmniPack',

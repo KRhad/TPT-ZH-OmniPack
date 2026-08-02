@@ -366,3 +366,12 @@ release_ready=false
 5. 保持 `release_ready=false`，直到匿名源码克隆重建、授权远端、正式 tag 和 Release 门禁全部真实完成。
 
 开发回归场景、构建脚本、测试矩阵和版本门禁继续保留；它们不属于已删除的玩家游戏任务。
+
+## Android ARM64 直接移植
+
+- 分支 `development/android-direct-port-1.0` 从 Windows RC7 源码基线建立在独立 D 盘工作树，不影响 Windows 发布验证；
+- 官方 Android SDL 后端直接承载全部 OmniPack 内容；NDK r29 基线原生编译 `751/751`，可复现封装构建 `755/755`；
+- 修复 Windows 主机上的 `aapt2` 资源路径、APK 内 POSIX 路径、Android 1.0.0 正版本号、API 21 Base64、数据目录空值和 16 KB 页面对齐；
+- 已生成 v1/v2/v3 测试签名 APK，包名 `org.tptzh.omnipack`、中文启动器名称“万象沙盘”、版本 `1.0.0`，只申请网络和振动权限；
+- `android_port_audit=16/16`；APK 签名、ZIP、Manifest、JNI/SDL 入口与 ELF 对齐通过；
+- ADB 当前无设备，真机安装、触控、输入法、OPS 跨平台往返和移动端压力均保持 `not_tested`，不能把该 APK 宣称为已完成真机验收的正式手机版。

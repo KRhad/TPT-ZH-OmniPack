@@ -309,6 +309,23 @@
 | 第三方许可证闭包 | PASS | 24 组件 manifest；41 个来源、4,522 条候选、22 个实际登记外部来源元素、16 个跟踪二进制资源、6 个真实仓库快照均通过；20 个未知/未验证来源保持拒绝/仅参考；打包器强制携带第三方 manifest、字体及 12 份静态库许可证 |
 | 长跑与 GUI | NOT RUN | 周期表按钮的 96 DPI/2× 定点鼠标交互已通过；7,200 秒综合长跑、气体云团、125%/150% DPI 和完整双语 GUI 人工视觉仍未执行 |
 
+### Android ARM64 直接移植版
+
+| 项目 | 状态 | 证据 |
+|---|---|---|
+| 同源 ARM64 原生编译 | PASS | NDK r29 / API 21，完整 `755/755`；周期表、化学、冶金、核素、有机、电子、生态、中文字体和 Lua 均编入同一 `libpowder.so` |
+| APK Manifest | PASS | `org.tptzh.omnipack`、`versionCode=1000000`、`versionName=1.0.0`、min SDK 21、target SDK 33、横屏启动，中文标签“万象沙盘” |
+| 权限与数据目录 | PASS | 只申请网络和振动；不申请旧式外部存储或全盘管理权限；外部应用专属目录不可用时回退内部应用目录 |
+| API 21 Java 兼容 | PASS | CA 证书编码改用 `android.util.Base64`，不再调用 API 26 才有的 `java.util.Base64` |
+| APK 签名 | PASS | 仓库外测试证书；v1/v2/v3 签名验证通过，RSA 3072，证书 SHA-256 `2D376C8F99747B00D2714C05241AD5BCBB658788BDB686E2494E09C11085A32F` |
+| 16 KB 页兼容 | PASS | ARM64 ELF 三个 `LOAD` 段对齐均为 `0x4000`；`zipalign -c -P 16 -v 4` 通过 |
+| ZIP 与入口 | PASS | ZIP CRC 完整；包含 `lib/arm64-v8a/libpowder.so`、`classes.dex`、Manifest 和启动资源；SDL JNI、`JNI_OnLoad`、`SDL_main` 均在动态符号表 |
+| Android 静态专项门禁 | PASS | `tools/android_port_audit.py` 共 16 项全部通过 |
+| 真机安装与启动 | NOT RUN | 当前 `adb devices -l` 没有连接设备，不能用 APK 静态审计替代安装和启动证据 |
+| 触控、中文输入法与生命周期 | NOT RUN | 需要真机验证绘制、长按、滚动、周期表、软键盘、后台/前台和旋转锁定 |
+| Android OPS 跨平台往返 | NOT RUN | 桌面 OPS 代码相同，但仍需在真机保存、导出并由 Windows 客户端重新载入 |
+| Android 压力和长跑 | NOT RUN | 需要在实际 ARM64 手机记录帧率、温度、内存、暂停/恢复及大规模内容场景 |
+
 ## 后续批次固定测试
 
 每个元素或材料批次至少执行：

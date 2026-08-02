@@ -29,6 +29,14 @@ conf_data.set('SNAPSHOT', is_snapshot.to_string())
 conf_data.set('DISPLAY_VERSION_MAJOR', display_version[0].to_int())
 conf_data.set('DISPLAY_VERSION_MINOR', display_version[1].to_int())
 conf_data.set('BUILD_NUM', display_version[2].to_int())
+android_version_code = get_option('android_version_code')
+if android_version_code == 0
+	android_version_code = display_version[0].to_int() * 1000000 + display_version[1].to_int() * 1000 + display_version[2].to_int()
+endif
+if host_platform == 'android' and android_version_code < 1
+	error('Android versionCode must be positive')
+endif
+conf_data.set('ANDROID_VERSION_CODE', android_version_code)
 conf_data.set('UPSTREAM_VERSION_MAJOR', upstream_version[0].to_int())
 conf_data.set('UPSTREAM_VERSION_MINOR', upstream_version[1].to_int())
 conf_data.set('UPSTREAM_BUILD_NUM', upstream_version[2].to_int())
