@@ -886,7 +886,9 @@ local function finish_sample(now)
         "omni event metrics must be nonnegative")
     assert(runtime.signal_count_total >= 0
         and runtime.signal_count_peak_per_frame >= 0,
-        "official signal metrics must be nonnegative")
+        "official signal metrics must be nonnegative: total="
+        .. tostring(runtime.signal_count_total) .. ",peak="
+        .. tostring(runtime.signal_count_peak_per_frame))
 
     sim.clearSim()
     for _ = 1, 4 do

@@ -157,6 +157,28 @@ class StressHarnessContractTest(unittest.TestCase):
         for module in self.event_modules:
             self.assertIn("sim->RecordOmniEvent();", module)
 
+    def test_element_recount_finishes_from_the_final_live_particle_set(self) -> None:
+        self.assertIn("bool elementRecountAfterSim;", self.simulation_header)
+        self.assertIn(
+            "elementRecountAfterSim = elementRecount;", self.simulation_cpp
+        )
+        self.assertIn("bool repairElementCounts", self.simulation_cpp)
+        self.assertIn("elementCount[type] < 0", self.simulation_cpp)
+        self.assertIn("countedParticles != NUM_PARTS", self.simulation_cpp)
+        self.assertIn(
+            "public element counts cannot remain negative or stale",
+            self.simulation_cpp,
+        )
+        self.assertIn(
+            "std::fill(elementCount, elementCount + PT_NUM, 0);",
+            self.simulation_cpp,
+        )
+        self.assertIn("for (int i = 0; i < parts.active; i++)", self.simulation_cpp)
+        self.assertIn(
+            "type > PT_NONE && type < PT_NUM && elements[type].Enabled",
+            self.simulation_cpp,
+        )
+
     def test_automation_stress_measures_official_signal_population(self) -> None:
         self.assertIn("local function automation_factory(bounds)", self.lua)
         self.assertIn("local function automation_signal_loop(bounds)", self.lua)

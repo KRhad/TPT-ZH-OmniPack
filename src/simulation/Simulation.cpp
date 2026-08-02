@@ -1058,6 +1058,7 @@ void Simulation::clear_sim(void)
 	Element_PPIP_ppip_changed = 0;
 	std::fill(elementCount, elementCount+PT_NUM, 0);
 	elementRecount = true;
+	elementRecountAfterSim = false;
 	fighcount = 0;
 	player.spwn = 0;
 	player.spawnID = -1;
@@ -3796,6 +3797,7 @@ void Simulation::BeforeSim(bool willUpdate)
 		omniEventCountCurrentFrame.store(0, std::memory_order_relaxed);
 
 		elementRecount |= !(currentTick%180);
+		elementRecountAfterSim = elementRecount;
 		if (elementRecount)
 			std::fill(elementCount, elementCount+PT_NUM, 0);
 	}
@@ -3963,6 +3965,39 @@ void Simulation::BeforeSim(bool willUpdate)
 void Simulation::AfterSim()
 {
 	debug_mostRecentlyUpdated = -1;
+	bool repairElementCounts = elementRecountAfterSim;
+	if (!repairElementCounts)
+	{
+		int64_t countedParticles = 0;
+		for (int type = PT_NONE + 1; type < PT_NUM; type++)
+		{
+			if (elementCount[type] < 0)
+			{
+				repairElementCounts = true;
+				break;
+			}
+			countedParticles += elementCount[type];
+		}
+		if (!repairElementCounts && countedParticles != NUM_PARTS)
+			repairElementCounts = true;
+	}
+	if (repairElementCounts)
+	{
+		// The update loop can delete or change a later particle before that
+		// particle has contributed to the in-progress recount. Rebuild from the
+		// final live set so public element counts cannot remain negative or stale
+		// whenever the cheap per-frame invariant check detects mismatched totals,
+		// while retaining the periodic repair.
+		auto &elements = SimulationData::CRef().elements;
+		std::fill(elementCount, elementCount + PT_NUM, 0);
+		for (int i = 0; i < parts.active; i++)
+		{
+			auto type = parts[i].type;
+			if (type > PT_NONE && type < PT_NUM && elements[type].Enabled)
+				elementCount[type]++;
+		}
+		elementRecountAfterSim = false;
+	}
 
 	if (emp_trigger_count)
 	{

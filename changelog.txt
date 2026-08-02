@@ -1,6 +1,19 @@
 # This file is used by the starcatcher.us update server to pull changelogs for mod releases
 # Erase and replace the changelog for every release, do not just append changes to the end
 # Lines starting with # and empty lines are ignored
+v1.0.0-rc1 - OmniPack pure-sandbox content freeze
+- Removed player tasks, achievements, challenges, technology trees, alchemy progression, and forced unlocks
+- Added a directly selectable 118-element periodic table with stable save mappings
+- Frozen the catalog at 487 active non-alias types, 484 creatable types, and 466 directly selectable menu materials
+- Added inorganic chemistry, engineering alloys, minerals, ceramics, glass, isotopes, organics, polymers, electronics, ecology, and pollution systems
+- Kept stable identifiers, 10-bit element capacity, compatibility aliases, module-disable behavior, and OPS roundtrips
+- Standardized OmniPack menu codes as unique four-letter uppercase labels and rewrote player descriptions without development notes
+- Aligned the periodic-table and element-search shortcuts in the right toolbar and retained the normal element-row width
+- Added official-style soft gas rendering for periodic, inorganic, isotope, and organic gases
+- Repaired negative or stale element counts after dense mixed reactions with a cheap invariant check and on-demand exact recount
+- Added deterministic Windows release-candidate, detached-symbol, license-manifest, PE, path, ZIP, and source-archive audits
+- This local candidate is unsigned and remains release_ready=false until all stress, long-run, GUI/DPI, public-source, tag, and release gates pass
+
 v1.0.3 - i18n: Multi-language support and Chinese localization
 - Introduced multi-language framework (Localization) with JSON key-value translations
 - Supports 12 languages: en-US, zh-CN, zh-TW, de-DE, es-ES, fr-FR, it-IT, ja-JP, ko-KR, pt-BR, ru-RU, lzh

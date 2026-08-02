@@ -164,6 +164,7 @@ public:
 
 	// initialized in clear_sim
 	bool elementRecount;
+	bool elementRecountAfterSim;
 	unsigned char fighcount; //Contains the number of fighters
 	uint64_t frameCount;
 	bool ensureDeterminism;
