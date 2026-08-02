@@ -17,6 +17,7 @@ def main() -> int:
     activity = (root / "android/PowderActivity.template.java").read_text(encoding="utf-8")
     packer = (root / "android/build-apk.py").read_text(encoding="utf-8")
     aligner = (root / "android/align-apk.py").read_text(encoding="utf-8")
+    android_meson = (root / "android/meson.build").read_text(encoding="utf-8")
     root_meson = (root / "meson.build").read_text(encoding="utf-8")
     src_meson = (root / "src/meson.build").read_text(encoding="utf-8")
     resources_meson = (root / "android/res/meson.build").read_text(encoding="utf-8")
@@ -41,6 +42,7 @@ def main() -> int:
         "windows_resource_paths_normalized": "resource_paths" in packer and "os.path.abspath" in packer,
         "portable_apk_entry_separator": "sha_apk_path" in packer and "'/'.join" in packer,
         "zipalign_16k": "'-P', '16'" in aligner,
+        "distribution_library_stripped": "strip-android-library" in android_meson and "--strip-unneeded" in android_meson,
         "elf_page_alignment_16k": "max-page-size=16384" in root_meson,
         "android_platform_identifier": "ANDROIDARM64" in root_meson,
         "zh_cn_launcher_label": "values-zh-rCN" in resources_meson and "万象沙盘" in zh_label,
