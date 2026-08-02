@@ -18,10 +18,31 @@
 #include "simulation/gravity/Gravity.h"
 #include "simulation/Snapshot.h"
 #include "simulation/ToolClasses.h"
+#include "prefs/GlobalPrefs.h"
+#include <algorithm>
+#include <array>
+#include <string_view>
 #include <type_traits>
 
 namespace
 {
+struct LuaOmniSetting
+{
+	std::string_view name;
+	OmniSetting setting;
+};
+
+constexpr std::array luaOmniSettings{
+	LuaOmniSetting{ "biology", OmniSetting::Biology },
+	LuaOmniSetting{ "metallurgy", OmniSetting::Metallurgy },
+	LuaOmniSetting{ "chemistry", OmniSetting::Chemistry },
+	LuaOmniSetting{ "advanced_nuclear", OmniSetting::AdvancedNuclear },
+	LuaOmniSetting{ "electronics", OmniSetting::Electronics },
+	LuaOmniSetting{ "simplified_biology", OmniSetting::SimplifiedBiology },
+};
+
+constexpr int LuaLanguageCount = 12;
+
 void RequireOmniElementCreation(lua_State *L, int type)
 {
 	if (type < 0)
@@ -137,6 +158,50 @@ static int resetOmniEventMetrics(lua_State *L)
 	lsi->AssertInterfaceEvent();
 	lsi->sim->ResetOmniEventMetrics();
 	return 0;
+}
+
+static int omniModuleEnabled(lua_State *L)
+{
+	auto moduleName = std::string_view(luaL_checkstring(L, 1));
+	auto definition = std::find_if(luaOmniSettings.begin(), luaOmniSettings.end(),
+		[moduleName](LuaOmniSetting const &candidate) {
+			return candidate.name == moduleName;
+		});
+	if (definition == luaOmniSettings.end())
+	{
+		return luaL_error(L, "Unknown OmniPack module: %s", moduleName.data());
+	}
+
+	auto *lsi = GetLSI();
+	if (lua_gettop(L) >= 2)
+	{
+		lsi->AssertInterfaceEvent();
+		SetOmniSetting(definition->setting, lua_toboolean(L, 2));
+		lsi->gameModel->RefreshOmniContentSettings();
+	}
+	lua_pushboolean(L, GetOmniSetting(definition->setting));
+	return 1;
+}
+
+static int omniLanguage(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	auto language = GlobalPrefs::Ref().Get("Language", 1);
+	if (lua_gettop(L) >= 1)
+	{
+		lsi->AssertInterfaceEvent();
+		language = luaL_checkint(L, 1);
+		if (language < 0 || language >= LuaLanguageCount)
+		{
+			return luaL_error(L, "Invalid language index: %d", language);
+		}
+		GlobalPrefs::Ref().Set("Language", language);
+		Localization::Ref().SetLanguageIndex(language);
+		lsi->gameModel->BuildMenus();
+	}
+	lua_pushinteger(L, language);
+	tpt_lua_pushString(L, Localization::Ref().Tr("common.error"));
+	return 2;
 }
 
 static int decoSpace(lua_State *L)
@@ -2185,6 +2250,8 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(partCount),
 		LFUNC(omniEventMetrics),
 		LFUNC(resetOmniEventMetrics),
+		LFUNC(omniModuleEnabled),
+		LFUNC(omniLanguage),
 		LFUNC(decoSpace),
 		LFUNC(fanVelocityX),
 		LFUNC(fanVelocityY),

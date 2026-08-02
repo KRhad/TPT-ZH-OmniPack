@@ -34,6 +34,7 @@ class AnalyzeStressResultTest(unittest.TestCase):
         fixture_type_count: int | None = None,
         fixture_created_type_count: int | None = None,
         fixture_visible_type_count: int | None = None,
+        long_run: bool = False,
     ) -> None:
         ops1 = b"OPS1" + b"\0" * 8 + b"BZh" + b"input"
         ops2 = b"OPS1" + b"\0" * 8 + b"BZh" + b"output"
@@ -49,7 +50,7 @@ class AnalyzeStressResultTest(unittest.TestCase):
             "input_ops_sha256": digest(ops1),
             "output_ops_second_sha256": digest(ops2),
             "warmup_seconds": 0.0 if smoke else 60.0,
-            "sample_seconds": 2.0 if smoke else 600.0,
+            "sample_seconds": 2.0 if smoke else (7200.0 if long_run else 600.0),
             "initial_particles": particles[0],
             "peak_particles": max(particles),
             "final_particles": particles[-1],
@@ -63,8 +64,20 @@ class AnalyzeStressResultTest(unittest.TestCase):
             "crashed": False,
             "hung": False,
             "roundtrip_pass": True,
+            "long_run": long_run,
             "smoke_run": smoke,
         }
+        if long_run:
+            result.update(
+                {
+                    "long_run_save_load_cycles": 10,
+                    "long_run_language_switches": 10,
+                    "long_run_module_toggle_cycles": 10,
+                    "long_run_settings_recovery_pass": True,
+                    "long_run_checkpoint_save_ms_total": 100.0,
+                    "long_run_checkpoint_load_ms_total": 80.0,
+                }
+            )
         if complete_gate_evidence:
             result.update(
                 {
@@ -234,6 +247,54 @@ class AnalyzeStressResultTest(unittest.TestCase):
             value = analysis.analyze(directory)
         self.assertTrue(value["fixture_evidence_complete"])
         self.assertTrue(value["performance_gate_pass"])
+
+    def test_long_run_requires_all_same_process_cycles(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [500, 490, 480, 480, 480, 480, 480, 480],
+                complete_gate_evidence=True,
+                sample_id="S20-FULL-CATALOG",
+                fixture_type_count=487,
+                fixture_created_type_count=484,
+                fixture_visible_type_count=466,
+                long_run=True,
+            )
+            value = analysis.analyze(directory)
+            self.assertTrue(value["long_run_evidence_complete"])
+            self.assertTrue(value["long_run_duration_pass"])
+            self.assertTrue(value["long_run_behavior_pass"])
+            self.assertTrue(value["long_run_gate_pass"])
+            self.assertTrue(value["performance_gate_pass"])
+
+            result_path = directory / "result.json"
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            result["long_run_save_load_cycles"] = 9
+            result_path.write_text(json.dumps(result), encoding="utf-8")
+            value = analysis.analyze(directory)
+        self.assertFalse(value["long_run_behavior_pass"])
+        self.assertFalse(value["long_run_gate_pass"])
+        self.assertFalse(value["performance_gate_pass"])
+
+    def test_long_run_smoke_cannot_pass_duration_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [500, 490, 480, 480, 480, 480, 480, 480],
+                smoke=True,
+                complete_gate_evidence=True,
+                sample_id="S20-FULL-CATALOG",
+                fixture_type_count=487,
+                fixture_created_type_count=484,
+                fixture_visible_type_count=466,
+                long_run=True,
+            )
+            value = analysis.analyze(directory)
+        self.assertFalse(value["long_run_duration_pass"])
+        self.assertFalse(value["long_run_gate_pass"])
+        self.assertFalse(value["performance_gate_pass"])
 
 
 if __name__ == "__main__":

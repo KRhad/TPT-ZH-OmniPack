@@ -45,6 +45,8 @@ param(
 
     [string] $TemporaryDirectory = [System.IO.Path]::GetTempPath(),
 
+    [switch] $LongRun,
+
     [switch] $Smoke,
 
     [switch] $KeepArtifacts
@@ -55,6 +57,13 @@ if ($Smoke) {
     $WarmupSeconds = 0
     $SampleSeconds = 2
     $FixtureStride = [Math]::Max($FixtureStride, 12)
+}
+elseif ($LongRun) {
+    $WarmupSeconds = 60
+    $SampleSeconds = 7200
+}
+if ($LongRun -and $SampleId -ne "S20-FULL-CATALOG") {
+    throw "LongRun requires S20-FULL-CATALOG"
 }
 if (-not $OutputDirectory) {
     $OutputDirectory = "artifacts/performance/$PackageVersion"
@@ -234,7 +243,9 @@ try {
             "sample_id=$SampleId",
             "warmup_seconds=$WarmupSeconds",
             "sample_seconds=$SampleSeconds",
-            "fixture_stride=$FixtureStride"
+            "fixture_stride=$FixtureStride",
+            "smoke_run=$(([bool]$Smoke).ToString().ToLowerInvariant())",
+            "long_run=$(([bool]$LongRun).ToString().ToLowerInvariant())"
         ),
         [System.Text.Encoding]::ASCII
     )
@@ -292,7 +303,9 @@ try {
         "signal_count_total", "signal_count_peak_per_frame",
         "fixture_type_count", "fixture_created_type_count",
         "fixture_visible_type_count",
-        "scenario_recovery_assertions")) {
+        "scenario_recovery_assertions",
+        "long_run_save_load_cycles", "long_run_language_switches",
+        "long_run_module_toggle_cycles")) {
         if (-not $lua.ContainsKey($field) -or $lua[$field] -notmatch '^\d+$') {
             throw "Stress Lua did not provide a nonnegative integer $field"
         }
@@ -300,10 +313,15 @@ try {
     if (-not $lua.ContainsKey("stop_event_delta") -or $lua.stop_event_delta -notmatch '^-?\d+$') {
         throw "Stress Lua did not provide an integer stop_event_delta"
     }
-    foreach ($field in @("signal_stop_pass", "scenario_stop_pass", "scenario_recovery_pass")) {
+    foreach ($field in @(
+        "signal_stop_pass", "scenario_stop_pass", "scenario_recovery_pass",
+        "long_run", "long_run_settings_recovery_pass")) {
         if (-not $lua.ContainsKey($field) -or $lua[$field] -notin @("true", "false")) {
             throw "Stress Lua did not provide a boolean $field"
         }
+    }
+    if ([System.Convert]::ToBoolean($lua.long_run) -ne [bool]$LongRun) {
+        throw "Stress Lua long_run state does not match the requested mode"
     }
 
     $firstOps = Get-StampInfo -Stamp $lua.first_stamp
@@ -403,9 +421,16 @@ try {
         scenario_recovery_pass = [System.Convert]::ToBoolean($lua.scenario_recovery_pass)
         stop_event_delta = [int64]$lua.stop_event_delta
         scenario_recovery_assertions = [int64]$lua.scenario_recovery_assertions
+        long_run = [System.Convert]::ToBoolean($lua.long_run)
+        long_run_save_load_cycles = [int64]$lua.long_run_save_load_cycles
+        long_run_language_switches = [int64]$lua.long_run_language_switches
+        long_run_module_toggle_cycles = [int64]$lua.long_run_module_toggle_cycles
+        long_run_settings_recovery_pass = [System.Convert]::ToBoolean($lua.long_run_settings_recovery_pass)
+        long_run_checkpoint_save_ms_total = [double]$lua.long_run_checkpoint_save_ms_total
+        long_run_checkpoint_load_ms_total = [double]$lua.long_run_checkpoint_load_ms_total
         smoke_run = [bool]$Smoke
         gate_result = if ($Smoke) { "not_tested" } else { "pending_independent_assessment" }
-        notes = "Simulation FPS is measured as completed sim.updateUpTo calls per wall-clock second. Event metrics count successful Omni budget consumptions from post-load warmup through sample completion. GUI frame presentation, display/DPI, and long-term boundedness are not inferred."
+        notes = "Simulation FPS is measured as completed stress-loop sim.updateUpTo calls per wall-clock second. Long-run checkpoints perform ten additional same-process OPS cycles, bilingual state switches, and five-module disable/enable cycles. GUI frame presentation, display/DPI, and mathematical long-term boundedness are not inferred."
     }
     $jsonPath = Join-Path $artifactDirectory "result.json"
     [System.IO.File]::WriteAllText(
@@ -416,6 +441,7 @@ try {
     $completed = $true
     Write-Output "runtime-stress-test: PASS (harness execution)"
     Write-Output "sample_id=$SampleId"
+    Write-Output "long_run=$([bool]$LongRun)"
     Write-Output "smoke_run=$([bool]$Smoke)"
     Write-Output "stress_gate=not_tested"
     Write-Output "result_json=$jsonPath"

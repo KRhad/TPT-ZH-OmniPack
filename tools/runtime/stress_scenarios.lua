@@ -21,8 +21,16 @@ local sample_id = assert(config.sample_id, "sample_id is required")
 local warmup_seconds = assert(tonumber(config.warmup_seconds), "invalid warmup_seconds")
 local sample_seconds = assert(tonumber(config.sample_seconds), "invalid sample_seconds")
 local stride = assert(tonumber(config.fixture_stride), "invalid fixture_stride")
+local smoke_run = config.smoke_run == "true"
+local long_run = config.long_run == "true"
 assert(warmup_seconds >= 0 and sample_seconds > 0, "invalid duration")
 assert(stride >= 3 and stride <= 24, "fixture_stride must be between 3 and 24")
+if long_run then
+    assert(sample_id == "S20-FULL-CATALOG",
+        "long run requires the full catalog scenario")
+    assert((smoke_run and sample_seconds >= 2) or sample_seconds >= 7200,
+        "formal long run requires at least 7200 sample seconds")
+end
 assert(socket and type(socket.getTime) == "function", "socket.getTime is unavailable")
 
 local function must_element(identifier, short_name)
@@ -797,6 +805,9 @@ local function write_success(data)
         "fixture_visible_type_count",
         "scenario_stop_pass", "scenario_recovery_pass", "stop_event_delta",
         "scenario_recovery_assertions",
+        "long_run", "long_run_save_load_cycles", "long_run_language_switches",
+        "long_run_module_toggle_cycles", "long_run_settings_recovery_pass",
+        "long_run_checkpoint_save_ms_total", "long_run_checkpoint_load_ms_total",
     }) do
         result:write(key .. "=" .. tostring(data[key]) .. "\n")
     end
@@ -806,8 +817,68 @@ end
 local runtime = {
     callback_registered = false,
     series = nil,
+    long_run_save_load_cycles = 0,
+    long_run_language_switches = 0,
+    long_run_module_toggle_cycles = 0,
+    long_run_checkpoint_save_ms_total = 0.0,
+    long_run_checkpoint_load_ms_total = 0.0,
+    language_probes = {},
 }
 local tick_callback
+
+local long_run_modules = {
+    "metallurgy",
+    "biology",
+    "chemistry",
+    "advanced_nuclear",
+    "electronics",
+}
+
+local function run_long_run_checkpoint()
+    local particles_before = particle_count()
+    local checkpoint_stamp, save_ms = timed_save()
+    local load_ms = timed_load(checkpoint_stamp)
+    local particles_after = particle_count()
+    assert(particles_after == particles_before,
+        "long-run OPS cycle changed particle count: "
+        .. tostring(particles_before) .. ">" .. tostring(particles_after))
+    sim.deleteStamp(checkpoint_stamp)
+    runtime.long_run_save_load_cycles = runtime.long_run_save_load_cycles + 1
+    runtime.long_run_checkpoint_save_ms_total =
+        runtime.long_run_checkpoint_save_ms_total + save_ms
+    runtime.long_run_checkpoint_load_ms_total =
+        runtime.long_run_checkpoint_load_ms_total + load_ms
+
+    local target_language = runtime.long_run_language_switches % 2 == 0 and 0 or 1
+    local actual_language, probe = sim.omniLanguage(target_language)
+    assert(actual_language == target_language,
+        "language switch did not apply in the running process")
+    assert(type(probe) == "string" and #probe > 0,
+        "language switch returned an empty translation probe")
+    if runtime.language_probes[target_language] then
+        assert(runtime.language_probes[target_language] == probe,
+            "language translation probe changed during long run")
+    else
+        runtime.language_probes[target_language] = probe
+    end
+    if runtime.language_probes[0] and runtime.language_probes[1] then
+        assert(runtime.language_probes[0] ~= runtime.language_probes[1],
+            "English and Chinese translation probes are identical")
+    end
+    runtime.long_run_language_switches = runtime.long_run_language_switches + 1
+
+    for _, module_name in ipairs(long_run_modules) do
+        assert(sim.omniModuleEnabled(module_name, false) == false,
+            "module did not disable: " .. module_name)
+    end
+    sim.updateUpTo()
+    for _, module_name in ipairs(long_run_modules) do
+        assert(sim.omniModuleEnabled(module_name, true) == true,
+            "module did not re-enable: " .. module_name)
+    end
+    runtime.long_run_module_toggle_cycles =
+        runtime.long_run_module_toggle_cycles + 1
+end
 
 local function write_failure(error_text)
     if runtime.series then
@@ -835,6 +906,11 @@ local function begin_sample(now)
     runtime.sample_peak_particles = particle_count()
     runtime.signal_count_total = 0
     runtime.signal_count_peak_per_frame = 0
+    if long_run then
+        runtime.long_run_checkpoint_interval = sample_seconds / 10.0
+        runtime.next_long_run_checkpoint =
+            now + runtime.long_run_checkpoint_interval
+    end
     runtime.series = assert(io.open(FRAME_SERIES_FILE, "wb"))
     runtime.series:write("elapsed_seconds,frames,particles\n")
     runtime.series:flush()
@@ -864,6 +940,24 @@ local function finish_sample(now)
         math.ceil(#runtime.sample_frame_times * 0.99))
     local maximum_frame_time = runtime.sample_frame_times[
         #runtime.sample_frame_times]
+
+    local long_run_settings_recovery_pass = true
+    if long_run then
+        assert(runtime.long_run_save_load_cycles == 10,
+            "long run did not complete ten OPS cycles")
+        assert(runtime.long_run_language_switches == 10,
+            "long run did not complete ten language switches")
+        assert(runtime.long_run_module_toggle_cycles == 10,
+            "long run did not complete ten module toggle cycles")
+        local final_language = sim.omniLanguage()
+        long_run_settings_recovery_pass = final_language == runtime.initial_language
+        for _, module_name in ipairs(long_run_modules) do
+            long_run_settings_recovery_pass = long_run_settings_recovery_pass
+                and sim.omniModuleEnabled(module_name) == true
+        end
+        assert(long_run_settings_recovery_pass,
+            "long-run language or module settings were not restored")
+    end
 
     create_recovery_markers()
     local expected_recovered_particles = final_before_save + #recovery_markers
@@ -950,6 +1044,16 @@ local function finish_sample(now)
         scenario_recovery_pass = tostring(scenario_recovery_pass),
         stop_event_delta = math.floor(stop_event_delta),
         scenario_recovery_assertions = initial_recovery_assertions,
+        long_run = tostring(long_run),
+        long_run_save_load_cycles = runtime.long_run_save_load_cycles,
+        long_run_language_switches = runtime.long_run_language_switches,
+        long_run_module_toggle_cycles = runtime.long_run_module_toggle_cycles,
+        long_run_settings_recovery_pass =
+            tostring(long_run_settings_recovery_pass),
+        long_run_checkpoint_save_ms_total = string.format(
+            "%.6f", runtime.long_run_checkpoint_save_ms_total),
+        long_run_checkpoint_load_ms_total = string.format(
+            "%.6f", runtime.long_run_checkpoint_load_ms_total),
     })
     os.exit(0)
 end
@@ -990,6 +1094,15 @@ local function tick_once()
     end
 
     local now = socket.getTime()
+    if runtime.phase == "sample" and long_run then
+        while runtime.long_run_save_load_cycles < 10
+            and now >= runtime.next_long_run_checkpoint do
+            run_long_run_checkpoint()
+            runtime.next_long_run_checkpoint = runtime.next_long_run_checkpoint
+                + runtime.long_run_checkpoint_interval
+            now = socket.getTime()
+        end
+    end
     if now >= runtime.next_particle_sample then
         local particles = particle_count()
         if runtime.phase == "warmup" then
@@ -1038,6 +1151,16 @@ local function start()
         "first immediate OPS reload changed particle count: "
         .. tostring(runtime.initial_particles) .. ">" .. tostring(reloaded_particles))
     sim.resetOmniEventMetrics()
+
+    runtime.initial_language, runtime.language_probes[1] = sim.omniLanguage()
+    if long_run then
+        assert(runtime.initial_language == 1,
+            "isolated long-run profile did not start in Simplified Chinese")
+        for _, module_name in ipairs(long_run_modules) do
+            assert(sim.omniModuleEnabled(module_name) == true,
+                "isolated long-run module did not start enabled: " .. module_name)
+        end
+    end
 
     local now = socket.getTime()
     runtime.warmup_frames = 0

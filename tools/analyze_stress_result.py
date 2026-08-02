@@ -34,6 +34,7 @@ REQUIRED_RESULT_FIELDS = {
     "crashed",
     "hung",
     "roundtrip_pass",
+    "long_run",
     "smoke_run",
 }
 
@@ -129,6 +130,8 @@ def analyze(directory: Path) -> dict[str, Any]:
     missing = sorted(REQUIRED_RESULT_FIELDS - result.keys())
     if missing:
         raise ValueError(f"result.json lacks fields: {', '.join(missing)}")
+    if not isinstance(result["long_run"], bool):
+        raise ValueError("result.json long_run must be a boolean")
     frames = read_numeric_series(
         frame_path,
         ("elapsed_seconds", "frames", "particles"),
@@ -257,13 +260,56 @@ def analyze(directory: Path) -> dict[str, Any]:
             and not isinstance(result.get("event_count_peak_per_frame"), bool)
             and result.get("event_count_peak_per_frame") > 0
         )
-    performance_gate_pass = (
+    base_performance_gate_pass = (
         sample_execution_pass
         and event_evidence_complete
         and scenario_behavior_pass is True
         and fixture_evidence_complete
         and fixture_activity_pass
         and (not automation_sample or signal_behavior_pass is True)
+    )
+
+    long_run_requested = result["long_run"]
+    if long_run_requested:
+        long_run_evidence_complete: bool | str = (
+            result.get("sample_id") == "S20-FULL-CATALOG"
+            and nonnegative_number(result.get("long_run_save_load_cycles"))
+            and nonnegative_number(result.get("long_run_language_switches"))
+            and nonnegative_number(result.get("long_run_module_toggle_cycles"))
+            and isinstance(result.get("long_run_settings_recovery_pass"), bool)
+            and nonnegative_number(
+                result.get("long_run_checkpoint_save_ms_total")
+            )
+            and nonnegative_number(
+                result.get("long_run_checkpoint_load_ms_total")
+            )
+        )
+        long_run_duration_pass: bool | str = (
+            not bool(result["smoke_run"])
+            and float(result["warmup_seconds"]) >= 60.0
+            and float(result["sample_seconds"]) >= 7200.0
+        )
+        long_run_behavior_pass: bool | str = (
+            long_run_evidence_complete is True
+            and result.get("long_run_save_load_cycles", 0) >= 10
+            and result.get("long_run_language_switches", 0) >= 10
+            and result.get("long_run_module_toggle_cycles", 0) >= 10
+            and result.get("long_run_settings_recovery_pass") is True
+        )
+        long_run_gate_pass: bool | str = (
+            base_performance_gate_pass
+            and long_run_duration_pass is True
+            and long_run_behavior_pass is True
+        )
+    else:
+        long_run_evidence_complete = "not_tested"
+        long_run_duration_pass = "not_tested"
+        long_run_behavior_pass = "not_tested"
+        long_run_gate_pass = "not_tested"
+
+    performance_gate_pass = (
+        base_performance_gate_pass
+        and (not long_run_requested or long_run_gate_pass is True)
     )
 
     return {
@@ -308,6 +354,17 @@ def analyze(directory: Path) -> dict[str, Any]:
         "scenario_behavior_pass": scenario_behavior_pass,
         "stop_event_delta": stop_event_delta,
         "scenario_recovery_assertions": recovery_assertions,
+        "long_run_requested": long_run_requested,
+        "long_run_evidence_complete": long_run_evidence_complete,
+        "long_run_duration_pass": long_run_duration_pass,
+        "long_run_behavior_pass": long_run_behavior_pass,
+        "long_run_save_load_cycles": result.get("long_run_save_load_cycles"),
+        "long_run_language_switches": result.get("long_run_language_switches"),
+        "long_run_module_toggle_cycles": result.get("long_run_module_toggle_cycles"),
+        "long_run_settings_recovery_pass": result.get(
+            "long_run_settings_recovery_pass"
+        ),
+        "long_run_gate_pass": long_run_gate_pass,
         "performance_gate_pass": performance_gate_pass,
         "classification_note": (
             "unbounded_growth reports only whether the final half of observed "
@@ -344,6 +401,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "stress-result-analysis: PASS "
         f"sample={assessment['sample_id']} "
         f"execution={str(assessment['sample_execution_pass']).lower()} "
+        f"long_run={str(assessment['long_run_gate_pass']).lower()} "
         f"gate={str(assessment['performance_gate_pass']).lower()} "
         f"output={output}"
     )

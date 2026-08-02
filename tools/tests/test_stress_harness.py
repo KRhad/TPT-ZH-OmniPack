@@ -78,6 +78,29 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn("event.unregister(event.tick, tick_callback)", self.lua)
         self.assertNotIn("while socket.getTime() - started < seconds", self.lua)
 
+    def test_long_run_performs_required_same_process_cycles(self) -> None:
+        self.assertIn("[switch] $LongRun", self.powershell)
+        self.assertIn("$SampleSeconds = 7200", self.powershell)
+        self.assertIn('LongRun requires S20-FULL-CATALOG', self.powershell)
+        self.assertIn('"long_run=$(([bool]$LongRun)', self.powershell)
+        for field in (
+            "long_run_save_load_cycles",
+            "long_run_language_switches",
+            "long_run_module_toggle_cycles",
+            "long_run_settings_recovery_pass",
+        ):
+            self.assertIn(field, self.lua)
+            self.assertIn(field, self.powershell)
+        self.assertIn("local function run_long_run_checkpoint()", self.lua)
+        self.assertIn("runtime.long_run_save_load_cycles < 10", self.lua)
+        self.assertIn("sim.omniLanguage(target_language)", self.lua)
+        self.assertIn("sim.omniModuleEnabled(module_name, false)", self.lua)
+        self.assertIn("sim.omniModuleEnabled(module_name, true)", self.lua)
+        self.assertIn("LFUNC(omniLanguage)", self.lua_simulation)
+        self.assertIn("LFUNC(omniModuleEnabled)", self.lua_simulation)
+        self.assertIn("RefreshOmniContentSettings()", self.lua_simulation)
+        self.assertIn("Localization::Ref().SetLanguageIndex", self.lua_simulation)
+
     def test_required_raw_series_and_ops_evidence_are_persisted(self) -> None:
         for filename in (
             "frame-series.csv",
