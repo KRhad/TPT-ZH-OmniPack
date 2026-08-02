@@ -51,6 +51,25 @@
 
 单帧总事件峰值包含压力场景中全部启用模块的成功事件计数；环境/生态自己的共享预算仍由专项 1,100 样本回归确认不超过 `1024/frame`。
 
+## S13 正式压力
+
+运行目录：`artifacts/performance/0.7.0-dev/DESKTOP-14BQH2Q-276049E7945C/S13-ELECTRONICS-DENSE/20260802T002510Z-f82f7be8`
+
+| 指标 | 结果 |
+|---|---:|
+| 预热 | 60.011821 秒 |
+| 采样 | 600.001043 秒 |
+| 平均 FPS | 60.001562 |
+| 1% low FPS | 53.485131 |
+| 最低 FPS | 49.774571 |
+| 初始 / 峰值 / 最终粒子 | 27,520 / 27,520 / 18,299 |
+| 成功事件总数 / 单帧峰值 | 38,625 / 1,024 |
+| 峰值工作集 / 私有字节 | 141,160,448 / 140,238,848 |
+| 停止后事件增量 | 0 |
+| 恢复断言 | 14 |
+
+`result.json` SHA-256 为 `81A4779CA69B5763BB17D503F2E150814646D3F43AB05FF679927AFC31851DBF`；独立 `assessment.json` SHA-256 为 `77940FDACA01C3084163175D9C716E025F7C1DD18F4F6D5F8231D711941B7CA0`。运行未崩溃、未挂起，OPS 往返、场景停止和恢复均通过；有限观测未发现持续粒子增长或同时增长的内存尾部，`performance_gate_pass=true`。该场景的 harness 提交为 `b60a613df1b485a9a7a061c7b8d6c2b1d3ab1a63`，包来源仍为不可变的 `ee75bc2773bae67958a8b07eba6e896569045cea`。
+
 ## 机器可读状态
 
 ```text
@@ -69,6 +88,8 @@ extracted_exe_hash_match=true
 old_0_6_private_package_preserved=true
 environment_s14_formal_600s=true
 environment_s14_performance_gate=true
+electronics_s13_formal_600s=true
+electronics_s13_performance_gate=true
 periodic_table_gui_visual_test=not_tested
 official_style_gas_gui_visual_test=not_tested
 dpi_visual_test=not_tested

@@ -53,6 +53,8 @@ organic_batch1_elements=13
 organic_batch2_elements=20
 organic_elements_total=33
 electronics_batch1_elements=20
+electronics_batch1_formal_s13=true
+electronics_batch1_formal_s13_performance_gate=true
 environment_batch1_elements=16
 environment_batch1_clean_build_pass=true
 environment_batch1_clean_build_targets=771
@@ -264,7 +266,7 @@ release_ready=false
 - 修复 0.2/0.3 运行生成器会默认改写仓库 OPS 证据的问题：默认改为 `Verify`，源码写回需要显式 `-UpdateSourceArtifacts`；隔离生成/验证全部通过且仓库样本哈希变化为 0，旧 `omniAlchemy` 双样本兼容探针恢复通过；
 - 当前登记为 670 行、472 个活动项、1 个兼容别名和 471 个可玩材料；反应登记 297 条，字体为 14,792 字形、Fusion 2,002，SHA-256 `28DDECAE62C26939B78A4627C1D468AE55A3D047D0D95822C4D41CE41763D0EA`；
 - 最终 `build-ui-gas-electronics-final-clean` 从空目录构建 `754/754`，Meson `30/30`、Python 197 项（0 fail、2 skip）通过；提交后重新链接的同一源码 EXE 复跑电子 20 元素/22 合成/16 行为、化学 90 路径、五模块关闭及七类 346 粒子 OPS；EXE 为 326,529,692 字节，SHA-256 `D45D85BCBF7217AA5B578A46C1B829FA69364ED1EB05EC7B8C24DD8F0EC38B73`；
-- S13 电子密集场景 `20260801T171826Z-e1d83574` 绑定提交 `12a646b4` 和上述 EXE，完成 2.010675 秒 smoke：平均 61.173473 FPS、1% low 55.544867、峰值 1,720 粒子、事件峰值 516、未崩溃/未挂起且 OPS 往返通过。正式 600 秒压力、7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
+- S13 电子密集场景 `20260801T171826Z-e1d83574` 先以提交 `12a646b4` 的开发 EXE 完成 2.010675 秒 smoke；随后 `20260802T002510Z-f82f7be8` 绑定 `0.7.0-dev` 私测 ZIP，完成 60.011821 秒预热和 600.001043 秒采样：平均 60.001562 FPS、1% low 53.485131、事件峰值 1,024，未崩溃/挂起，OPS 往返、停止和 14 项恢复断言通过，独立 `performance_gate_pass=true`。7,200 秒长跑和 GUI/DPI 仍为 `not_tested`，`release_ready=false`。
 
 ## Phase 1：纯沙盒方向清理
 
@@ -285,7 +287,7 @@ release_ready=false
 
 1. 继续更多有机燃料、电子材料和生态污染批次；工程材料 `533..575` 只补充审计后仍有独立玩法的候选，不得覆盖旧槽或用重复空壳填充 1024 容量；
 2. 同概念模组候选只把许可证兼容的玩法增量合并到主元素，并登记来源与主元素回归；
-3. 继续为完整 118 元素、电子及其他高位内容执行尚未覆盖的正式 60 秒预热/600 秒压力采样，并完成后续两小时综合长跑；
+3. 继续为完整 118 元素及其他尚未覆盖的高位内容执行正式 60 秒预热/600 秒压力采样，并完成后续两小时综合长跑；
 4. 每批继续登记、运行回归、OPS 双往返和性能预算验证；
 5. 保持 `release_ready=false`，直到后续材料族、人工 GUI、长跑、发布包和公开发布门禁全部真实完成。
 
