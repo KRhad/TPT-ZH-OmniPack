@@ -464,7 +464,7 @@ void Graphics::draw_icon(int x, int y, Icon icon, unsigned char alpha, bool inve
 						row >= 6 ? 0xC888FF_rgb :
 						column < 2 ? 0x70A8FF_rgb :
 						column >= 8 ? 0x72E0A0_rgb : 0xFFD060_rgb;
-					BlendPixel({ x + column, y + row + 1 }, colour.WithAlpha(alpha));
+					BlendPixel({ x + column - 1, y + row + 3 }, colour.WithAlpha(alpha));
 				}
 			}
 		}

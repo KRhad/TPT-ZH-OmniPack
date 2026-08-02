@@ -146,6 +146,12 @@ def audit(root: Path) -> list[str]:
         errors.append("Icons.h: missing IconPeriodicTable")
     if "case IconPeriodicTable:" not in graphics:
         errors.append("Graphics.cpp: missing periodic-table icon renderer")
+    for marker in (
+        "x + column - 1",
+        "y + row + 3",
+    ):
+        if marker not in graphics:
+            errors.append(f"Graphics.cpp: missing centred periodic-table icon marker {marker!r}")
     if re.search(r'periodicTableButton\s*=\s*new ui::Button\([\s\S]*?WINDOWH-48[\s\S]*?,\s*"P"\s*,', game_view):
         errors.append("GameView.cpp: periodic-table shortcut still uses the letter P")
 
