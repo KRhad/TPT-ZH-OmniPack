@@ -4,4 +4,5 @@ android_resources = files(
 )
 
 subdir('values')
+subdir('values-zh-rCN')
 subdir('mipmap-mdpi')

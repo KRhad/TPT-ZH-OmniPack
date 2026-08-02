@@ -7,6 +7,8 @@ The 118-element source map reuses 26 existing pure-element implementations and f
 
 The development branch has committed clean-build, automated registration, bilingual content, gameplay, disabled-module, OPS roundtrip, and content-freeze stress-smoke evidence. The source, mod-reference, font, resource, and static-library license closure now passes with unknown sources excluded, but the project is **not release-ready**: trusted GUI/DPI checks, formal 600-second stress sampling, the two-hour long run, a final package audit, an authorized public source remote, tag, and public release remain incomplete. The existing `origin` is a historical Chinese-fork remote and must not be represented as the public source for this candidate.
 
+The Android ARM64 direct port builds the same simulation, stable element IDs, Chinese font, and OPS save code into a landscape SDL application. See [docs/ANDROID_PORT.md](docs/ANDROID_PORT.md). A signed test APK still requires real-device touch, IME, lifecycle, save interchange, and performance validation before it can be described as a mobile release.
+
 See [README.zh-CN.md](README.zh-CN.md), [docs/VERSION_GATES.md](docs/VERSION_GATES.md), [docs/PHASE_0_2_EVIDENCE.md](docs/PHASE_0_2_EVIDENCE.md), and [dist/release-report-0.1.0-test.md](dist/release-report-0.1.0-test.md) for the scoped evidence and blockers.
 
 Upstream The Powder Toy README - June 2026

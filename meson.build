@@ -408,6 +408,9 @@ elif host_platform == 'android'
 	# the alternative would be to grab libc++_shared.so from the NDK and ship it with
 	# the app alongside libpowder.so, and possibly add it to SDL's list of libraries to load
 	project_link_args += [ '-static-libstdc++' ]
+	if is_64bit
+		project_link_args += [ '-Wl,-z,max-page-size=16384' ]
+	endif
 	project_cpp_args += args_ccomp_android
 endif
 
@@ -433,6 +436,8 @@ elif host_platform == 'linux'
 	ident_platform = is_64bit ? 'LIN64' : 'LIN32'
 elif host_platform == 'darwin'
 	ident_platform = host_arch == 'aarch64' ? 'MACOSARM' : 'MACOSX'
+elif host_platform == 'android'
+	ident_platform = host_arch == 'aarch64' ? 'ANDROIDARM64' : 'ANDROID'
 else
 	ident_platform = 'UNKNOWN'
 endif
@@ -640,6 +645,7 @@ font_render_probe = executable(
 legacy_progress_save_probe = executable(
 	'legacy_progress_save_probe',
 	sources: [
+		vcs_tag_header,
 		files('tools/legacy_progress_save_probe.cpp'),
 		files('src/client/GameSave.cpp'),
 		files('src/client/User.cpp'),
@@ -658,6 +664,7 @@ legacy_progress_save_probe = executable(
 high_id_save_probe = executable(
 	'high_id_save_probe',
 	sources: [
+		vcs_tag_header,
 		files('tools/high_id_save_probe.cpp'),
 		files('src/client/GameSave.cpp'),
 		files('src/client/User.cpp'),
@@ -1032,6 +1039,18 @@ test(
 		files('tools/omni_ui_style_audit.py'),
 		'--source-root', meson.project_source_root(),
 		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'android-port-audit',
+	python3_prog,
+	args: [
+		files('tools/android_port_audit.py'),
+		'--source-root', meson.project_source_root(),
 	],
 	env: static_test_env,
 	suite: 'static',

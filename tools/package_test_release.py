@@ -27,10 +27,7 @@ PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
 SYMBOL_NAME = "tpt-zh-omnipack.debug"
-PREBUILT_LICENSE_ROOT = (
-    "subprojects/tpt-libs-prebuilt-x86_64-windows-mingw-static-release-"
-    "v20251019131007/licenses"
-)
+PREBUILT_LICENSE_ROOT = "resources/third_party/library_licenses"
 LIBRARY_LICENSE_DOCUMENTS = tuple(
     (
         f"{PREBUILT_LICENSE_ROOT}/{name}.LICENSE",
