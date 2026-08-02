@@ -43,6 +43,12 @@ CONTENT_FIELDS = (
     "hazard_en",
     "hazard_zh",
 )
+OPTIONAL_CONTENT_PAIRS = (("production_en", "production_zh"),)
+REQUIRED_CONTENT_FIELDS = tuple(
+    field
+    for field in CONTENT_FIELDS
+    if all(field not in pair for pair in OPTIONAL_CONTENT_PAIRS)
+)
 REQUIRED_FIELDS = (
     "identifier",
     "display_code",
@@ -160,9 +166,23 @@ def read_content_records(
                     f"forbidden control character U+{ord(control.group()):04X}"
                 )
             clean[field] = value.strip()
-        if any(not clean[field] for field in CONTENT_FIELDS):
-            missing = next(field for field in CONTENT_FIELDS if not clean[field])
+        if any(not clean[field] for field in REQUIRED_CONTENT_FIELDS):
+            missing = next(field for field in REQUIRED_CONTENT_FIELDS if not clean[field])
             errors.append(f"content registry:{line_number}: empty required field {missing!r}")
+            continue
+        invalid_pair = next(
+            (
+                pair
+                for pair in OPTIONAL_CONTENT_PAIRS
+                if bool(clean[pair[0]]) != bool(clean[pair[1]])
+            ),
+            None,
+        )
+        if invalid_pair:
+            errors.append(
+                f"content registry:{line_number}: {invalid_pair[0]} and "
+                f"{invalid_pair[1]} must both be empty or both be populated"
+            )
             continue
         identifier = clean["identifier"]
         folded = identifier.casefold()
@@ -170,12 +190,12 @@ def read_content_records(
             errors.append(f"content registry:{line_number}: duplicate identifier {identifier}")
             continue
         for field in ("recipe_en", "production_en", "use_en", "hazard_en"):
-            if not ASCII_LETTER.search(clean[field]):
+            if clean[field] and not ASCII_LETTER.search(clean[field]):
                 errors.append(
                     f"content registry:{line_number}: {field} must contain an ASCII letter"
                 )
         for field in ("recipe_zh", "production_zh", "use_zh", "hazard_zh"):
-            if not CJK.search(clean[field]):
+            if clean[field] and not CJK.search(clean[field]):
                 errors.append(
                     f"content registry:{line_number}: {field} must contain a CJK character"
                 )

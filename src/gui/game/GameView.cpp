@@ -329,9 +329,10 @@ GameView::GameView():
 	AddComponent(elementSearchButton);
 
 	periodicTableButton = new ui::Button(
-		ui::Point(WINDOWW-16, WINDOWH-48), ui::Point(15, 15), "P",
+		ui::Point(WINDOWW-16, WINDOWH-48), ui::Point(15, 15), "",
 		Localization::Ref().Tr("periodic.table.tooltip"));
 	periodicTableButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
+	periodicTableButton->SetIcon(IconPeriodicTable);
 	periodicTableButton->SetActionCallback({ [this] { c->OpenPeriodicTable(); } });
 	AddComponent(periodicTableButton);
 

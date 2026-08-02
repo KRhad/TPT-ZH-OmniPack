@@ -292,17 +292,25 @@ void PeriodicTableActivity::RebuildElements()
 
 		auto *tool = record.implemented ? FindTool(record.identifier) : nullptr;
 		bool selectable = tool && IsOmniToolSelectable(*tool);
-		auto statusKey = !record.implemented || !tool
-			? "periodic.status.planned"
-			: selectable ? "periodic.status.available" : "periodic.status.module_disabled";
-		auto status = Localization::Ref().Tr(statusKey);
+		String status;
+		if (!record.implemented || !tool)
+		{
+			status = Localization::Ref().Tr("periodic.status.planned");
+		}
+		else if (!selectable)
+		{
+			status = Localization::Ref().Tr("periodic.status.module_disabled");
+		}
 		auto details = String::Build(
 			record.atomicNumber, " ", Utf8(record.symbol), " — ",
 			Utf8(record.chineseName), " / ", Utf8(record.englishName), " — ",
 			LocalizedValue("periodic.family.", record.family), " — ",
 			LocalizedValue("periodic.class.", ClassName(record.materialClass)), " — ",
-			LocalizedValue("periodic.state.", StateName(record.standardState)), " — ",
-			status);
+			LocalizedValue("periodic.state.", StateName(record.standardState)));
+		if (!status.empty())
+		{
+			details += String::Build(" — ", status);
+		}
 
 		int extraGap = record.tableRow >= 7 ? SeriesGap : 0;
 		auto const *recordPointer = &record;

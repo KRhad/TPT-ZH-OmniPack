@@ -39,5 +39,6 @@ enum Icon
 	IconHeat,
 	IconLife,
 	IconGradient,
-	IconVort
+	IconVort,
+	IconPeriodicTable
 };

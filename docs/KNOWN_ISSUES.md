@@ -2,7 +2,7 @@
 
 ## 当前发布阻塞
 
-1. 周期表 UI、118 行元数据和 118/118 个可放置映射已实现；最右侧 `P` 按钮已在 96 DPI、游戏 2× 缩放下完成实屏鼠标点击并成功打开周期表。环境 S14 已完成正式 60 秒预热/600 秒采样，但完整周期表专门压力、两小时长跑及 125%/150% DPI 与完整周期表视觉矩阵仍未执行。
+1. 周期表 UI、118 行元数据和 118/118 个可放置映射已实现；最右侧入口已从 `P` 改为专属像素图标，位置、点击回调、构建和运行回归通过。旧 `P` 入口的 96 DPI/2× 实屏点击证据不能替代新图标视觉；专属图标、完整周期表、125%/150% DPI 和两小时长跑仍未完成人工矩阵。
 2. 当前引擎活动槽为 488，其中含 1 个隐藏兼容别名；活动非别名类型为 487，普通菜单可直接选择的真实材料为 466，`total_playable_materials>=300=true`。其余类型是擦除工具及官方隐藏过渡/辅助类型；这只满足数量下限，不代表质量、性能或发布门禁完成。
 3. 模组来源、选用文件、字体、跟踪资源和静态库许可证总审计已完成，`license_audit_pass=true`；旧 `0.7.0-dev` 私测 ZIP 没有携带新增的静态库许可证清单，因此只保留为历史包，最终 1.0.0 ZIP 仍须重新执行成员级许可证审计。
 4. Phase 1、完整周期表十四批、无机三批、元素去重、10 位容量、工程合金首批、矿物/陶瓷/玻璃首批、代表性核素首批、两批有机内容、电子材料首批及生态污染首批的静态、真实客户端、模块和 OPS 证据已形成。电子 S13 与环境 S14 均已完成正式 600 秒门禁；其他内容族的完整压力矩阵和两小时长跑尚未执行。
@@ -27,8 +27,10 @@ release_ready=false
 periodic_table_elements=118
 periodic_table_ui=true
 periodic_table_gui_visual_test=not_tested
-periodic_button_scale2_visual_test=true
-periodic_button_click_open_test=true
+periodic_icon_static_test=true
+periodic_icon_visual_test=not_tested
+periodic_button_scale2_visual_test=not_tested
+periodic_button_click_open_test=not_tested
 engine_active_elements=488
 compatibility_aliases=1
 active_non_alias_types=487

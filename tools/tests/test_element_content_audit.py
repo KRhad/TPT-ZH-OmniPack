@@ -78,6 +78,30 @@ class ElementContentAuditTests(unittest.TestCase):
             errors = element_content_audit.audit(root)
         self.assertTrue(any("canonical registry spelling" in error for error in errors))
 
+    def test_empty_bilingual_production_pair_is_allowed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            content = Path(temp) / "content.csv"
+            content.write_text(
+                "identifier,recipe_en,recipe_zh,production_en,production_zh,use_en,use_zh,hazard_en,hazard_zh\n"
+                "OMNI_PT_TEST,Recipe,配方,,,Use,用途,Hazard,危险\n",
+                encoding="utf-8",
+                newline="",
+            )
+            _, errors = element_content_audit.element_content_catalog.read_content_records(content)
+        self.assertEqual([], errors)
+
+    def test_one_sided_production_pair_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            content = Path(temp) / "content.csv"
+            content.write_text(
+                "identifier,recipe_en,recipe_zh,production_en,production_zh,use_en,use_zh,hazard_en,hazard_zh\n"
+                "OMNI_PT_TEST,Recipe,配方,Production,,Use,用途,Hazard,危险\n",
+                encoding="utf-8",
+                newline="",
+            )
+            _, errors = element_content_audit.element_content_catalog.read_content_records(content)
+        self.assertTrue(any("must both be empty or both be populated" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

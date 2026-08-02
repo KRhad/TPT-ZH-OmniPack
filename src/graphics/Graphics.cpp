@@ -442,6 +442,34 @@ void Graphics::draw_icon(int x, int y, Icon icon, unsigned char alpha, bool inve
 		else
 			BlendChar({ x + 1, y + 1 }, 0xE054, 0xC27BA0_rgb .WithAlpha(alpha));
 		break;
+	case IconPeriodicTable:
+	{
+		static constexpr char rows[][13] = {
+			"##........##",
+			"##....######",
+			"##....######",
+			"############",
+			"############",
+			"............",
+			"..########..",
+			"..########..",
+		};
+		for (int row = 0; row < 8; ++row)
+		{
+			for (int column = 0; column < 12; ++column)
+			{
+				if (rows[row][column] == '#')
+				{
+					auto colour = invert ? 0x000000_rgb :
+						row >= 6 ? 0xC888FF_rgb :
+						column < 2 ? 0x70A8FF_rgb :
+						column >= 8 ? 0x72E0A0_rgb : 0xFFD060_rgb;
+					BlendPixel({ x + column, y + row + 1 }, colour.WithAlpha(alpha));
+				}
+			}
+		}
+		break;
+	}
 	default:
 		if(invert)
 			BlendChar({ x, y }, 't', 0x000000_rgb .WithAlpha(alpha));

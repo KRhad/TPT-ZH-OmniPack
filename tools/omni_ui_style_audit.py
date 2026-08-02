@@ -12,15 +12,20 @@ import sys
 from typing import Sequence
 
 
-DISPLAY_CODE = re.compile(r"^[A-Z]{4}$")
+DISPLAY_CODE = re.compile(r"^[A-Z]{3,4}$")
 FORBIDDEN_STYLE = re.compile(
     r"\b(?:bounded|proxy|game-scaled|gameplay|global scan|event budget|"
     r"stable-ID|typed scrap|compatibility alias|this batch|first batch|"
     r"future work|periodic carbon mapping|canonical|four-module|"
-    r"cross-module|registered route|documented follow-up|simplified model)\b"
+    r"cross-module|registered route|documented follow-up|simplified model|"
+    r"no unlock(?:s|ing)?|direct(?:ly)? select(?:able|ion)?|"
+    r"place(?:d)? directly|direct placement|directly place(?:able)?|"
+    r"direct sandbox placement|unrestricted sandbox|production prerequisite|"
+    r"available (?:immediately|now|by default)|default(?:ly)? available)\b"
     r"|有界|游戏化|代理|玩法|全图扫描|事件预算|稳定 ID|带类型碎料|"
     r"兼容别名|本批|第一批|后续工作|周期表碳的映射|简化规则|"
-    r"规范|四模块|跨模块|登记路线|简化模型",
+    r"规范|四模块|跨模块|登记路线|简化模型|无需解锁|直接选择|"
+    r"(?:可|仅可)?直接放置|默认可用|默认开放|现在可直接使用",
     re.IGNORECASE,
 )
 DIRECT_GAS_GRAPHICS = {
@@ -71,7 +76,7 @@ def audit(root: Path) -> list[str]:
         code = name.group(1)
         source_codes[identifier.group(1)] = code
         if not DISPLAY_CODE.fullmatch(code):
-            errors.append(f"{path}: Name {code!r} must be four uppercase letters")
+            errors.append(f"{path}: Name {code!r} must be three or four uppercase letters")
         if code in owners:
             errors.append(f"{path}: Name {code!r} duplicates {owners[code]}")
         owners[code] = path.name
@@ -106,6 +111,7 @@ def audit(root: Path) -> list[str]:
         "RemoveComponent(elementSearchButton);",
         "AddComponent(elementSearchButton);",
         "((newInitialX - (WINDOWW - 56)) / buttonStride) * buttonStride",
+        "periodicTableButton->SetIcon(IconPeriodicTable);",
     ):
         if marker not in game_view:
             errors.append(f"GameView.cpp: missing lower-toolbar clearance marker {marker!r}")
@@ -134,6 +140,15 @@ def audit(root: Path) -> list[str]:
         if marker not in read_text(path, errors):
             errors.append(f"{path}: missing shared gas rendering call {marker!r}")
 
+    icons = read_text(root / "src" / "graphics" / "Icons.h", errors)
+    graphics = read_text(root / "src" / "graphics" / "Graphics.cpp", errors)
+    if "IconPeriodicTable" not in icons:
+        errors.append("Icons.h: missing IconPeriodicTable")
+    if "case IconPeriodicTable:" not in graphics:
+        errors.append("Graphics.cpp: missing periodic-table icon renderer")
+    if re.search(r'periodicTableButton\s*=\s*new ui::Button\([\s\S]*?WINDOWH-48[\s\S]*?,\s*"P"\s*,', game_view):
+        errors.append("GameView.cpp: periodic-table shortcut still uses the letter P")
+
     for locale in ("en-US", "zh-CN"):
         path = root / "src" / "lang" / f"{locale}.json"
         try:
@@ -146,6 +161,7 @@ def audit(root: Path) -> list[str]:
                 continue
             if (
                 key.startswith("sim.elem.OMNI_PT_")
+                or key.startswith("periodic.")
                 or key in {
                     "sim.elem.DEFAULT_PT_SLCN",
                     "options.omni.chemistry.info",
@@ -174,7 +190,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"omni-ui-style-audit: FAIL ({len(errors)} errors)", file=sys.stderr)
         return 1
     if not args.quiet:
-        print("omni-ui-style-audit: PASS (four-letter codes, prose, toolbar and gas rendering)")
+        print("omni-ui-style-audit: PASS (three/four-letter codes, prose, toolbar icon and gas rendering)")
     return 0
 
 
