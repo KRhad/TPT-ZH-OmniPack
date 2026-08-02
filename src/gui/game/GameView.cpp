@@ -2,6 +2,7 @@
 
 #include "common/Localization.h"
 #include "Brush.h"
+#include "gui/elementsearch/ElementInfo.h"
 #include "tool/DecorationTool.h"
 #include "tool/PropertyTool.h"
 #include "Favorite.h"
@@ -39,12 +40,27 @@
 #include "gui/interface/Button.h"
 #include "gui/interface/Colour.h"
 #include "gui/interface/Engine.h"
+#include "prefs/GlobalPrefs.h"
 
 #include "Config.h"
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
 #include <SDL.h>
+
+namespace
+{
+bool IsChineseInterfaceLanguage()
+{
+	auto language = GlobalPrefs::Ref().Get("Language", 1);
+	return language == 1 || language == 2 || language == 11;
+}
+
+bool IsStandaloneOmniMenu(int menuID)
+{
+	return menuID == SC_OMNI_ORGANIC || menuID == SC_OMNI_ALLOY;
+}
+}
 
 class SplitButton : public ui::Button
 {
@@ -296,7 +312,7 @@ GameView::GameView():
 	clearSimButton->SetActionCallback({ [this] { c->ClearSim(); } });
 	AddComponent(clearSimButton);
 
-	loginButton = new SplitButton(ui::Point(Size.X-141, Size.Y-16), ui::Point(92, 15), Localization::Ref().Tr("gameview.sign_in"), Localization::Ref().Tr("gameview.sign_in_tooltip"), Localization::Ref().Tr("gameview.edit_profile"), 19);
+	loginButton = new SplitButton(ui::Point(Size.X-141, Size.Y-16), ui::Point(60, 15), Localization::Ref().Tr("gameview.sign_in"), Localization::Ref().Tr("gameview.sign_in_tooltip"), Localization::Ref().Tr("gameview.edit_profile"), 19);
 	loginButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	loginButton->SetIcon(IconLogin);
 	loginButton->SetSplitActionCallback({
@@ -305,13 +321,13 @@ GameView::GameView():
 	});
 	AddComponent(loginButton);
 
-	simulationOptionButton = new ui::Button(ui::Point(Size.X-48, Size.Y-16), ui::Point(15, 15), "", Localization::Ref().Tr("gametools.tooltip.settings"));
+	simulationOptionButton = new ui::Button(ui::Point(Size.X-80, Size.Y-16), ui::Point(15, 15), "", Localization::Ref().Tr("gametools.tooltip.settings"));
 	simulationOptionButton->SetIcon(IconSimulationSettings);
 	simulationOptionButton->Appearance.Margin.Left+=2;
 	simulationOptionButton->SetActionCallback({ [this] { c->OpenOptions(); } });
 	AddComponent(simulationOptionButton);
 
-	displayModeButton = new ui::Button(ui::Point(Size.X-32, Size.Y-16), ui::Point(15, 15), "", Localization::Ref().Tr("gametools.tooltip.renderer"));
+	displayModeButton = new ui::Button(ui::Point(Size.X-64, Size.Y-16), ui::Point(15, 15), "", Localization::Ref().Tr("gametools.tooltip.renderer"));
 	displayModeButton->SetIcon(IconRenderSettings);
 	displayModeButton->Appearance.Margin.Left+=2;
 	displayModeButton->SetActionCallback({ [this] { c->OpenRenderOptions(); } });
@@ -407,6 +423,8 @@ void GameView::NotifyMenuListChanged(GameModel * sender)
 	// Leave the bottom three right-toolbar rows for pause, element search,
 	// and the periodic table shortcut.
 	int currentY = WINDOWH-64;//-(sender->GetMenuList().size()*16);
+	// Keep the original TPT sections in their established right column. The
+	// two OmniPack material sections live beside the bottom controls.
 	for (size_t i = 0; i < menuButtons.size(); i++)
 	{
 		RemoveComponent(menuButtons[i]);
@@ -425,12 +443,22 @@ void GameView::NotifyMenuListChanged(GameModel * sender)
 		if (menuList[i]->GetVisible())
 		{
 			String tempString = "";
-			tempString += menuList[i]->GetIcon();
+			if (!IsStandaloneOmniMenu(i))
+				tempString += menuList[i]->GetIcon();
 			String description = menuList[i]->GetDescription();
 			if (i == SC_FAVORITES && !Favorite::Ref().AnyFavorites())
 				description += " (Use ctrl+shift+click to toggle the favorite status of an element)";
-			auto *tempButton = new MenuButton(ui::Point(WINDOWW-16, currentY), ui::Point(15, 15), tempString, description);
+			auto buttonPosition = i == SC_OMNI_ORGANIC
+				? ui::Point(WINDOWW-48, WINDOWH-16)
+				: i == SC_OMNI_ALLOY
+					? ui::Point(WINDOWW-32, WINDOWH-16)
+					: ui::Point(WINDOWW-16, currentY);
+			auto *tempButton = new MenuButton(buttonPosition, ui::Point(15, 15), tempString, description);
 			tempButton->Appearance.Margin = ui::Border(0, 2, 3, 2);
+			if (i == SC_OMNI_ORGANIC)
+				tempButton->SetIcon(IconOrganicMaterials);
+			else if (i == SC_OMNI_ALLOY)
+				tempButton->SetIcon(IconAlloyEngineering);
 			tempButton->menuID = i;
 			tempButton->needsClick = i == SC_DECO;
 			tempButton->SetTogglable(true);
@@ -448,7 +476,8 @@ void GameView::NotifyMenuListChanged(GameModel * sender)
 					mouseEnterCallback();
 			};
 			tempButton->SetActionCallback({ actionCallback, nullptr, mouseEnterCallback });
-			currentY-=16;
+			if (!IsStandaloneOmniMenu(i))
+				currentY -= 16;
 			AddComponent(tempButton);
 			menuButtons.push_back(tempButton);
 		}
@@ -639,6 +668,8 @@ void GameView::NotifyActiveMenuToolListChanged(GameModel * sender)
 		tempButton->Appearance.SetTexture(std::move(tempTexture));
 
 		tempButton->Appearance.BackgroundInactive = toolList[i]->Colour.WithAlpha(0xFF);
+		if (tool->IsElement)
+			tempButton->SetLongPressCallback([tool] { OpenElementInfo(tool); });
 
 		if(sender->GetActiveTool(0) == toolList[i])
 		{
@@ -1338,7 +1369,7 @@ void GameView::ToolTip(ui::Point senderPosition, String toolTip)
 		}
 	}
 	// quickoption and menu tooltips
-	else if(senderPosition.X > Size.X-BARSIZE)// < Size.Y-(quickOptionButtons.size()+1)*16)
+	else if(senderPosition.X > Size.X-BARSIZE)// quick options and menu tooltips
 	{
 		this->toolTip = toolTip;
 		toolTipPosition = ui::Point(Size.X-27-(Graphics::TextSize(toolTip).X - 1), senderPosition.Y+3);
@@ -1353,6 +1384,16 @@ void GameView::ToolTip(ui::Point senderPosition, String toolTip)
 		toolTipPosition = ui::Point(Size.X-27-(Graphics::TextSize(toolTip).X - 1), Size.Y-MENUSIZE-10);
 		isToolTipFadingIn = true;
 	}
+}
+
+void GameView::ShowElementDescription(String description)
+{
+	toolTip = std::move(description);
+	toolTipPosition = ui::Point(
+		Size.X - 27 - (Graphics::TextSize(toolTip).X - 1),
+		Size.Y - MENUSIZE - 10);
+	toolTipPresence = 120;
+	isToolTipFadingIn = false;
 }
 
 void GameView::OnMouseWheel(int x, int y, int d)
@@ -2702,7 +2743,7 @@ void GameView::OnDraw()
 
 	if(toolTipPresence && toolTipPosition.X!=-1 && toolTipPosition.Y!=-1 && toolTip.length())
 	{
-		if (toolTipPosition.Y == Size.Y-MENUSIZE-10)
+		if (toolTipPosition.Y == Size.Y-MENUSIZE-10 && !IsChineseInterfaceLanguage())
 			g->BlendTextOutline(toolTipPosition, toolTip, 0xFFFFFF_rgb .WithAlpha(toolTipPresence>51?255:toolTipPresence*5));
 		else
 			g->BlendText(toolTipPosition, toolTip, 0xFFFFFF_rgb .WithAlpha(toolTipPresence>51?255:toolTipPresence*5));

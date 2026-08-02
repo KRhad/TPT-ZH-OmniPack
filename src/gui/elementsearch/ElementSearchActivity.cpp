@@ -1,5 +1,6 @@
 #include "ElementSearchActivity.h"
 #include "ElementCatalog.h"
+#include "ElementInfo.h"
 
 #include <set>
 #include <map>
@@ -7,7 +8,6 @@
 #include <SDL.h>
 
 #include "common/Localization.h"
-#include "prefs/GlobalPrefs.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/ScrollPanel.h"
 #include "gui/interface/Label.h"
@@ -18,10 +18,8 @@
 #include "gui/game/GameController.h"
 #include "gui/game/OmniContent.h"
 #include "gui/game/ToolButton.h"
-#include "gui/dialogues/InformationMessage.h"
 
 #include "graphics/Graphics.h"
-#include "simulation/SimulationData.h"
 
 namespace
 {
@@ -30,55 +28,6 @@ String CatalogString(std::string_view value)
 	return ByteString(value.data(), value.size()).FromUtf8();
 }
 
-String CatalogValue(char const *kind, std::string_view value)
-{
-	ByteString key = "encyclopedia.value.";
-	key += kind;
-	key += ".";
-	key.append(value.data(), value.size());
-	auto fallback = ByteString(value.data(), value.size());
-	return Localization::Ref().Tr(key.c_str(), fallback.c_str());
-}
-
-String CatalogCategory(std::string_view category)
-{
-	static constexpr std::pair<std::string_view, char const *> categoryKeys[] = {
-		{ "SC_WALL", "sim.menu.walls" },
-		{ "SC_ELEC", "sim.menu.electronics" },
-		{ "SC_POWERED", "sim.menu.powered" },
-		{ "SC_SENSOR", "sim.menu.sensors" },
-		{ "SC_FORCE", "sim.menu.force" },
-		{ "SC_EXPLOSIVE", "sim.menu.explosives" },
-		{ "SC_GAS", "sim.menu.gases" },
-		{ "SC_LIQUID", "sim.menu.liquids" },
-		{ "SC_POWDERS", "sim.menu.powders" },
-		{ "SC_SOLIDS", "sim.menu.solids" },
-		{ "SC_NUCLEAR", "sim.menu.radioactive" },
-		{ "SC_SPECIAL", "sim.menu.special" },
-		{ "SC_LIFE", "sim.menu.gol" },
-		{ "SC_TOOL", "sim.menu.tools" },
-		{ "SC_FAVORITES", "sim.menu.favorites" },
-		{ "SC_DECO", "sim.menu.deco" },
-	};
-	for (auto const &[value, key] : categoryKeys)
-	{
-		if (category == value)
-		{
-			return Localization::Ref().Tr(key);
-		}
-	}
-	return CatalogValue("category", category);
-}
-
-String CatalogContent(
-	int language,
-	std::string_view english,
-	std::string_view chinese)
-{
-	return language == 1 && !chinese.empty()
-		? CatalogString(chinese)
-		: CatalogString(english);
-}
 }
 
 ElementSearchActivity::ElementSearchActivity(GameController * gameController, std::vector<Tool*> tools) :
@@ -109,60 +58,7 @@ ElementSearchActivity::ElementSearchActivity(GameController * gameController, st
 	closeButton->SetActionCallback({ [this] { exit = true; } });
 	ui::Button * encyclopediaButton = new ui::Button(ui::Point(thirdWidth, Size.Y-15), ui::Point(thirdWidth+1, 15), Localization::Ref().Tr("elementsearch.encyclopedia"));
 	encyclopediaButton->SetActionCallback({ [this] {
-		auto *tool = GetFirstResult();
-		auto const *record = tool ? FindElementCatalogByIdentifier(tool->Identifier) : nullptr;
-		if (!tool || !record)
-		{
-			new InformationMessage(
-				Localization::Ref().Tr("elementsearch.encyclopedia"),
-				Localization::Ref().Tr("elementsearch.encyclopedia_unavailable"),
-				false
-			);
-			return;
-		}
-
-		auto language = GlobalPrefs::Ref().Get("Language", 1);
-		auto currentName = language == 1 && !record->chineseName.empty()
-			? CatalogString(record->chineseName)
-			: CatalogString(record->englishName);
-		auto secondaryName = language == 1
-			? CatalogString(record->englishName)
-			: CatalogString(record->chineseName);
-		auto title = language == 1
-			? String::Build(currentName, "（", CatalogString(record->displayCode), "）")
-			: String::Build(currentName, " (", CatalogString(record->displayCode), ")");
-
-		StringBuilder details;
-		if (!secondaryName.empty() && secondaryName != currentName)
-			details << secondaryName << "\n";
-		details << Localization::Ref().Tr("encyclopedia.category") << ": " << CatalogCategory(record->menuCategory) << "\n";
-		details << Localization::Ref().Tr("encyclopedia.state") << ": " << CatalogValue("state", record->elementState) << "\n";
-		details << Localization::Ref().Tr("encyclopedia.source") << ": " << CatalogString(record->sourceMod) << "\n";
-		details << Localization::Ref().Tr("encyclopedia.license") << ": " << CatalogString(record->license) << "\n";
-		auto appendContent = [&](char const *key, std::string_view english, std::string_view chinese) {
-			auto content = CatalogContent(language, english, chinese);
-			if (!content.empty())
-				details << Localization::Ref().Tr(key) << ": " << content << "\n";
-		};
-		appendContent("encyclopedia.recipe", record->recipeEnglish, record->recipeChinese);
-		appendContent("encyclopedia.production", record->productionEnglish, record->productionChinese);
-		appendContent("encyclopedia.use", record->useEnglish, record->useChinese);
-		appendContent("encyclopedia.hazard", record->hazardEnglish, record->hazardChinese);
-
-		if (record->stableId >= 0 && record->stableId < PT_NUM)
-		{
-			auto const &element = SimulationData::Ref().elements[record->stableId];
-			details << Localization::Ref().Tr("encyclopedia.heat_conductivity") << ": " << int(element.HeatConduct) << "\n";
-			details << Localization::Ref().Tr("encyclopedia.heat_capacity") << ": " << element.HeatCapacity << "\n";
-			details << Localization::Ref().Tr("encyclopedia.low_temperature") << ": " << element.LowTemperature << " K\n";
-			details << Localization::Ref().Tr("encyclopedia.high_temperature") << ": " << element.HighTemperature << " K\n\n";
-			auto catalogDescription = language == 1
-				? CatalogString(record->chineseDescription)
-				: CatalogString(record->englishDescription);
-			details << Localization::Ref().Tr("encyclopedia.description") << ": "
-				<< (catalogDescription.empty() ? element.Description : catalogDescription);
-		}
-		new InformationMessage(title, details.Build(), true);
+		OpenElementInfo(GetFirstResult());
 	} });
 	ui::Button * okButton = new ui::Button(ui::Point(thirdWidth*2, Size.Y-15), ui::Point(Size.X-thirdWidth*2, 15), Localization::Ref().Tr("dialog.ok"));
 	okButton->SetActionCallback({ [this] {
@@ -299,6 +195,8 @@ void ElementSearchActivity::searchTools(String query)
 
 		tempButton->Appearance.SetTexture(std::move(tempTexture));
 		tempButton->Appearance.BackgroundInactive = tool->Colour.WithAlpha(0xFF);
+		if (tool->IsElement)
+			tempButton->SetLongPressCallback([tool] { OpenElementInfo(tool); });
 		tempButton->SetActionCallback({ [this, tempButton, tool] {
 			if (tempButton->GetSelectionState() >= 0 && tempButton->GetSelectionState() <= 2)
 				SetActiveTool(tempButton->GetSelectionState(), tool);

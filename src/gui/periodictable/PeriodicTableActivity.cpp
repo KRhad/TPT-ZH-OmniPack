@@ -5,6 +5,7 @@
 #include "graphics/Graphics.h"
 #include "gui/Style.h"
 #include "gui/dialogues/InformationMessage.h"
+#include "gui/elementsearch/ElementInfo.h"
 #include "gui/game/GameController.h"
 #include "gui/game/OmniContent.h"
 #include "gui/game/tool/Tool.h"
@@ -164,6 +165,7 @@ PeriodicTableActivity::PeriodicTableActivity(
 	searchField = new ui::Textbox(
 		ui::Point(8, 20), ui::Point(526, 17), "",
 		Localization::Ref().Tr("periodic.table.search_placeholder"));
+	searchField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	searchField->SetActionCallback({ [this] { RebuildElements(); } });
 	AddComponent(searchField);
 
@@ -380,12 +382,15 @@ void PeriodicTableActivity::RebuildElements()
 					gameController, tools, *recordPointer, highlightedIdentifier,
 					[this](Tool *selectedTool) {
 						gameController->SetActiveTool(0, selectedTool);
+						gameController->ShowElementDescription(selectedTool);
 						exit = true;
 					});
 			},
 			nullptr,
 			[this, details] { statusLabel->SetText(details); },
 		});
+		if (tool)
+			button->SetLongPressCallback([tool] { OpenElementInfo(tool); });
 		AddComponent(button);
 		elementButtons.push_back(button);
 	}

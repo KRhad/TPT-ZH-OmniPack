@@ -40,5 +40,7 @@ enum Icon
 	IconLife,
 	IconGradient,
 	IconVort,
-	IconPeriodicTable
+	IconPeriodicTable,
+	IconOrganicMaterials,
+	IconAlloyEngineering
 };

@@ -147,6 +147,7 @@ public:
 	Tool * GetActiveTool(int selection);
 	void SetActiveTool(int toolSelection, Tool * tool);
 	void SetActiveTool(int toolSelection, ByteString identifier);
+	void ShowElementDescription(Tool const *tool);
 	void SetLastTool(Tool * tool);
 	Tool *GetLastTool();
 	int GetReplaceModeFlags();

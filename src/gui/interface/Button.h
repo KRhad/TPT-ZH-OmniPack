@@ -36,6 +36,7 @@ public:
 	bool GetToggleState();
 	void SetToggleState(bool state);
 	inline void SetActionCallback(ButtonAction const &action) { actionCallback = action; }
+	void SetLongPressCallback(std::function<void ()> action);
 	// inline ButtonAction const &GetActionCallback() const { return actionCallback; }
 	void SetText(String buttonText);
 	void SetIcon(Icon icon);
@@ -43,11 +44,16 @@ public:
 	void SetToolTip(String newToolTip) { toolTip = newToolTip; }
 
 protected:
+	bool ConsumeLongPress();
+
 	String ButtonText;
 	String toolTip;
 	String buttonDisplayText;
 
 	bool isButtonDown, isAltButtonDown, state, isMouseInside, isTogglable, toggle;
+	bool longPressArmed = false;
+	unsigned long longPressStarted = 0;
 	ButtonAction actionCallback;
+	std::function<void ()> longPressAction;
 };
 }

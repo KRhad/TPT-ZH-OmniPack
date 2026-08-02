@@ -1191,6 +1191,12 @@ void GameController::SetActiveTool(int toolSelection, ByteString identifier)
 	SetActiveTool(toolSelection, tool);
 }
 
+void GameController::ShowElementDescription(Tool const *tool)
+{
+	if (tool && !tool->Description.empty())
+		gameView->ShowElementDescription(tool->Description);
+}
+
 void GameController::SetLastTool(Tool * tool)
 {
 	gameModel->SetLastTool(tool);

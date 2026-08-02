@@ -470,6 +470,33 @@ void Graphics::draw_icon(int x, int y, Icon icon, unsigned char alpha, bool inve
 		}
 		break;
 	}
+	case IconOrganicMaterials:
+	{
+		auto ring = (invert ? 0x000000_rgb : 0x72E0A0_rgb).WithAlpha(alpha);
+		auto bond = (invert ? 0x303030_rgb : 0xFFD060_rgb).WithAlpha(alpha);
+		BlendLine({ x + 3, y + 2 }, { x + 8, y + 2 }, ring);
+		BlendLine({ x + 8, y + 2 }, { x + 11, y + 5 }, ring);
+		BlendLine({ x + 11, y + 5 }, { x + 8, y + 8 }, ring);
+		BlendLine({ x + 8, y + 8 }, { x + 3, y + 8 }, ring);
+		BlendLine({ x + 3, y + 8 }, { x, y + 5 }, ring);
+		BlendLine({ x, y + 5 }, { x + 3, y + 2 }, ring);
+		BlendLine({ x + 3, y + 4 }, { x + 7, y + 4 }, bond);
+		BlendLine({ x + 8, y + 5 }, { x + 7, y + 7 }, bond);
+		BlendLine({ x + 3, y + 7 }, { x + 2, y + 5 }, bond);
+		break;
+	}
+	case IconAlloyEngineering:
+	{
+		auto steel = (invert ? 0x202020_rgb : 0xB8D0E8_rgb).WithAlpha(alpha);
+		auto copper = (invert ? 0x505050_rgb : 0xE09858_rgb).WithAlpha(alpha);
+		auto join = (invert ? 0x000000_rgb : 0xFFF0B0_rgb).WithAlpha(alpha);
+		BlendFilledRect(RectSized(Vec2{ x, y + 2 }, Vec2{ 7, 7 }), steel);
+		BlendFilledRect(RectSized(Vec2{ x + 5, y + 5 }, Vec2{ 7, 7 }), copper);
+		BlendFilledRect(RectSized(Vec2{ x + 5, y + 5 }, Vec2{ 2, 4 }), join);
+		BlendRect(RectSized(Vec2{ x, y + 2 }, Vec2{ 7, 7 }), join);
+		BlendRect(RectSized(Vec2{ x + 5, y + 5 }, Vec2{ 7, 7 }), join);
+		break;
+	}
 	default:
 		if(invert)
 			BlendChar({ x, y }, 't', 0x000000_rgb .WithAlpha(alpha));

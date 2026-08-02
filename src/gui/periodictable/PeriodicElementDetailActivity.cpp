@@ -5,6 +5,7 @@
 #include "gui/Style.h"
 #include "gui/dialogues/ConfirmPrompt.h"
 #include "gui/dialogues/InformationMessage.h"
+#include "gui/elementsearch/ElementInfo.h"
 #include "gui/game/GameController.h"
 #include "gui/game/OmniContent.h"
 #include "gui/game/tool/Tool.h"
@@ -77,7 +78,7 @@ PeriodicElementDetailActivity::PeriodicElementDetailActivity(
 	PeriodicElementRecord const &element,
 	std::string highlightedIdentifier,
 	std::function<void(Tool *)> selectedCallback):
-	WindowActivity(ui::Point(-1, -1), ui::Point(390, 330)),
+	WindowActivity(ui::Point(-1, -1), ui::Point(420, 350)),
 	gameController(gameController),
 	tools(std::move(tools)),
 	element(element),
@@ -86,12 +87,10 @@ PeriodicElementDetailActivity::PeriodicElementDetailActivity(
 {
 	auto chineseInterface = GlobalPrefs::Ref().Get("Language", 1) == 1;
 	auto primaryName = chineseInterface ? Utf8(element.chineseName) : Utf8(element.englishName);
-	auto secondaryName = chineseInterface ? Utf8(element.englishName) : Utf8(element.chineseName);
 	auto titleText = chineseInterface
 		? String::Build(primaryName, "（", Utf8(element.symbol), "）")
 		: String::Build(primaryName, " (", Utf8(element.symbol), ")");
 	auto subtitleText = String::Build(
-		secondaryName, " · ",
 		Localization::Ref().Tr("periodic.detail.atomic_number"), " ",
 		element.atomicNumber);
 
@@ -112,9 +111,6 @@ PeriodicElementDetailActivity::PeriodicElementDetailActivity(
 	backButton->SetActionCallback({ [this] { exit = true; } });
 	AddComponent(backButton);
 
-	contentPanel = new ui::ScrollPanel(
-		ui::Point(8, 42), ui::Point(Size.X - 16, Size.Y - 50));
-	AddComponent(contentPanel);
 	BuildContent();
 }
 
@@ -147,7 +143,6 @@ void PeriodicElementDetailActivity::BuildContent()
 	});
 
 	auto chineseInterface = GlobalPrefs::Ref().Get("Language", 1) == 1;
-	int y = 0;
 	auto elemental = std::find_if(links.begin(), links.end(), [](auto const *link) {
 		return link->contentKind == PeriodicContentKind::PeriodicElement;
 	});
@@ -155,28 +150,39 @@ void PeriodicElementDetailActivity::BuildContent()
 		? FindTool((*elemental)->toolIdentifier)
 		: nullptr;
 	auto *descriptionTitle = new ui::Label(
-		ui::Point(3, y), ui::Point(contentPanel->Size.X - 14, 17),
+		ui::Point(8, 42), ui::Point(Size.X - 16, 17),
 		Localization::Ref().Tr("encyclopedia.description"));
 	descriptionTitle->SetTextColour(style::Colour::InformationTitle);
 	descriptionTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-	contentPanel->AddChild(descriptionTitle);
-	y += 18;
+	AddComponent(descriptionTitle);
 
 	auto description = elementTool && !elementTool->Description.empty()
 		? elementTool->Description
 		: Localization::Ref().Tr("periodic.detail.not_implemented");
 	auto *descriptionLabel = new ui::Label(
-		ui::Point(3, y), ui::Point(contentPanel->Size.X - 20, -1), description);
+		ui::Point(8, 60), ui::Point(Size.X - 16, -1), description);
 	descriptionLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	descriptionLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;
-	descriptionLabel->SetTextColour(ui::Colour(205, 205, 205, 255));
+	descriptionLabel->SetTextColour(chineseInterface
+		? ui::Colour(255, 255, 255, 255)
+		: ui::Colour(205, 205, 205, 255));
 	descriptionLabel->SetMultiline(true);
-	contentPanel->AddChild(descriptionLabel);
-	y += descriptionLabel->Size.Y + 8;
+	AddComponent(descriptionLabel);
+
+	auto materialsTop = descriptionLabel->Position.Y + descriptionLabel->Size.Y + 10;
+	contentPanel = new ui::ScrollPanel(
+		ui::Point(8, materialsTop), ui::Point(Size.X - 16, Size.Y - materialsTop - 8));
+	AddComponent(contentPanel);
+	int y = 0;
 
 	std::set<std::string_view> identifiers;
 	PeriodicCompoundGroup previousGroup = PeriodicCompoundGroup::Other;
 	bool haveGroup = false;
+	int materialColumn = 0;
+	constexpr int MaterialColumns = 2;
+	constexpr int MaterialGap = 4;
+	auto materialButtonWidth =
+		(contentPanel->Size.X - 10 - MaterialGap) / MaterialColumns;
 	int highlightedY = -1;
 	for (auto const *link : links)
 	{
@@ -184,6 +190,11 @@ void PeriodicElementDetailActivity::BuildContent()
 			continue;
 		if (!haveGroup || link->compoundGroup != previousGroup)
 		{
+			if (materialColumn)
+			{
+				y += 24;
+				materialColumn = 0;
+			}
 			auto *groupLabel = new ui::Label(
 				ui::Point(3, y), ui::Point(contentPanel->Size.X - 14, 17),
 				Localization::Ref().Tr(GroupKey(link->compoundGroup)));
@@ -210,7 +221,8 @@ void PeriodicElementDetailActivity::BuildContent()
 			toolTip += String::Build(" · ", tool->Description);
 
 		auto *button = new ui::Button(
-			ui::Point(3, y), ui::Point(contentPanel->Size.X - 14, 22),
+			ui::Point(3 + materialColumn * (materialButtonWidth + MaterialGap), y),
+			ui::Point(materialButtonWidth, 22),
 			buttonText, toolTip);
 		button->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		button->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
@@ -251,9 +263,15 @@ void PeriodicElementDetailActivity::BuildContent()
 				selectedCallback(tool);
 			exit = true;
 		} });
+		if (tool)
+			button->SetLongPressCallback([tool] { OpenElementInfo(tool); });
 		contentPanel->AddChild(button);
-		y += 24;
+		materialColumn = (materialColumn + 1) % MaterialColumns;
+		if (!materialColumn)
+			y += 24;
 	}
+	if (materialColumn)
+		y += 24;
 	contentPanel->InnerSize = ui::Point(contentPanel->Size.X, std::max(y + 4, contentPanel->Size.Y));
 	if (highlightedY >= 0)
 		contentPanel->SetScrollPosition(std::max(0, highlightedY - 20));

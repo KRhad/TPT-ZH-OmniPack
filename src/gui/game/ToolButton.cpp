@@ -19,7 +19,8 @@ ToolButton::ToolButton(ui::Point position, ui::Point size, String text, ByteStri
 
 void ToolButton::OnMouseDown(int x, int y, unsigned int button)
 {
-	if (MouseDownInside)
+	ui::Button::OnMouseDown(x, y, button);
+	if (MouseDownInside && button != SDL_BUTTON_LEFT)
 	{
 		isButtonDown = true;
 	}
@@ -27,6 +28,8 @@ void ToolButton::OnMouseDown(int x, int y, unsigned int button)
 
 void ToolButton::OnMouseClick(int x, int y, unsigned int button)
 {
+	if (ConsumeLongPress())
+		return;
 	if(isButtonDown)
 	{
 		isButtonDown = false;
@@ -42,8 +45,7 @@ void ToolButton::OnMouseClick(int x, int y, unsigned int button)
 
 void ToolButton::OnMouseUp(int x, int y, unsigned int button)
 {
-	// mouse was unclicked, reset variables in case the unclick happened outside
-	isButtonDown = false;
+	ui::Button::OnMouseUp(x, y, button);
 }
 
 void ToolButton::Draw(const ui::Point& screenPos)

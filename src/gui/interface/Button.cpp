@@ -1,13 +1,20 @@
 #include "gui/interface/Button.h"
 #include "gui/interface/Window.h"
 #include "gui/interface/Engine.h"
+#include "common/platform/Platform.h"
 #include "graphics/Graphics.h"
 #include "Misc.h"
 #include "Colour.h"
 #include <cmath>
 #include <numbers>
+#include <utility>
 
 namespace ui {
+
+namespace
+{
+constexpr unsigned long LongPressDelayMs = 550;
+}
 
 Button::Button(Point position, Point size, String buttonText, String toolTip):
 	Component(position, size),
@@ -41,6 +48,25 @@ void Button::SetIcon(Icon icon)
 {
 	Appearance.icon = icon;
 	TextPosition(ButtonText);
+}
+
+void Button::SetLongPressCallback(std::function<void ()> action)
+{
+	longPressAction = std::move(action);
+	longPressArmed = false;
+}
+
+bool Button::ConsumeLongPress()
+{
+	if (!longPressArmed || !longPressAction)
+		return false;
+	longPressArmed = false;
+	if (Platform::GetTime() - longPressStarted < LongPressDelayMs)
+		return false;
+	isButtonDown = false;
+	auto action = longPressAction;
+	action();
+	return true;
 }
 
 void Button::SetText(String buttonText)
@@ -147,6 +173,8 @@ void Button::Draw(const Point& screenPos)
 
 void Button::OnMouseClick(int x, int y, unsigned int button)
 {
+	if (ConsumeLongPress())
+		return;
 	if(button == 1)
 	{
 		if(isButtonDown)
@@ -174,10 +202,12 @@ void Button::OnMouseUp(int x, int y, unsigned int button)
 	// mouse was unclicked, reset variables in case the unclick happened outside
 	isButtonDown = false;
 	isAltButtonDown = false;
+	longPressArmed = false;
 }
 
 void Button::OnMouseDown(int x, int y, unsigned int button)
 {
+	longPressArmed = false;
 	if (MouseDownInside)
 	{
 		if(!Enabled)
@@ -185,6 +215,11 @@ void Button::OnMouseDown(int x, int y, unsigned int button)
 		if(button == 1)
 		{
 			isButtonDown = true;
+			if (longPressAction)
+			{
+				longPressStarted = Platform::GetTime();
+				longPressArmed = true;
+			}
 		}
 		else if(button == 3)
 		{
@@ -214,6 +249,7 @@ void Button::OnMouseLeave(int x, int y)
 {
 	isMouseInside = false;
 	isButtonDown = false;
+	longPressArmed = false;
 }
 
 void Button::DoAction()

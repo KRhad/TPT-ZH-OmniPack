@@ -239,6 +239,7 @@ public:
 	void NotifyInfoTipChanged(GameModel * sender);
 	void NotifyQuickOptionsChanged(GameModel * sender);
 	void NotifyLastToolChanged(GameModel * sender);
+	void ShowElementDescription(String description);
 
 
 	void ToolTip(ui::Point senderPosition, String toolTip) override;
