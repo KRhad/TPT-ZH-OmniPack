@@ -48,7 +48,7 @@ class TestReleaseAuditTests(unittest.TestCase):
             encoding="utf-8",
         )
         (source / "docs" / "RELEASE_CANDIDATE_1.0.0.md").write_text(
-            "1.0.0-rc1\n本地发布候选\n不是正式发布\n487\n484\n466\n"
+            "1.0.0-rc2\n本地发布候选\n不是正式发布\n487\n484\n466\n"
             "118/118\nrelease_ready=false\n未签名\n",
             encoding="utf-8",
         )
@@ -428,7 +428,7 @@ class TestReleaseAuditTests(unittest.TestCase):
             with zipfile.ZipFile(package) as archive:
                 fields, _ = test_release_audit.parse_manifest(
                     archive.read(
-                        "TPT-ZH-OmniPack-1.0.0-rc1-Windows-x64/TEST-MANIFEST.txt"
+                        "TPT-ZH-OmniPack-1.0.0-rc2-Windows-x64/TEST-MANIFEST.txt"
                     )
                 )
                 self.assertEqual(fields["kind"], "release-candidate")

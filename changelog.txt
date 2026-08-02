@@ -1,7 +1,7 @@
 # This file is used by the starcatcher.us update server to pull changelogs for mod releases
 # Erase and replace the changelog for every release, do not just append changes to the end
 # Lines starting with # and empty lines are ignored
-v1.0.0-rc1 - OmniPack pure-sandbox content freeze
+v1.0.0-rc2 - OmniPack pure-sandbox content freeze
 - Removed player tasks, achievements, challenges, technology trees, alchemy progression, and forced unlocks
 - Added a directly selectable 118-element periodic table with stable save mappings
 - Frozen the catalog at 487 active non-alias types, 484 creatable types, and 466 directly selectable menu materials
