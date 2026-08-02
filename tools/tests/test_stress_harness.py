@@ -119,7 +119,7 @@ class StressHarnessContractTest(unittest.TestCase):
             "kind=(public-test|local-dev|release-candidate)", self.powershell
         )
         self.assertIn(
-            '[ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev", "1.0.0-rc5")]',
+            '[ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev", "1.0.0-rc6")]',
             self.powershell,
         )
         self.assertIn("Package manifest version does not match", self.powershell)
