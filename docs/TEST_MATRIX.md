@@ -272,7 +272,7 @@
 
 | 项目 | 状态 | 证据 |
 |---|---|---|
-| 同源 ARM64 原生编译 | PASS | NDK r29 / API 21，完整 `755/755`；周期表、化学、冶金、核素、有机、电子、生态、中文字体和 Lua 均编入同一 `libpowder.so` |
+| 同源 ARM64 原生编译 | PASS | NDK r29 / API 21，完整 `758/758`；周期表、化学、冶金、核素、有机、电子、生态、中文字体和 Lua 均编入同一 `libpowder.so` |
 | APK Manifest | PASS | `org.tptzh.omnipack`、`versionCode=1000000`、`versionName=1.0.0`、min SDK 21、target SDK 33、横屏启动，中文标签“万象沙盘” |
 | 权限与数据目录 | PASS | 只申请网络和振动；不申请旧式外部存储或全盘管理权限；外部应用专属目录不可用时回退内部应用目录 |
 | API 21 Java 兼容 | PASS | CA 证书编码改用 `android.util.Base64`，不再调用 API 26 才有的 `java.util.Base64` |

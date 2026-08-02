@@ -328,7 +328,7 @@ release_ready=false
 ## Android ARM64 直接移植
 
 - 分支 `development/android-direct-port-1.0` 从 Windows RC7 源码基线建立在独立 D 盘工作树，不影响 Windows 发布验证；
-- 官方 Android SDL 后端直接承载全部 OmniPack 内容；NDK r29 基线原生编译 `751/751`，可复现封装构建 `755/755`；
+- 官方 Android SDL 后端直接承载全部 OmniPack 内容；NDK r29 基线原生编译 `751/751`，可复现封装构建 `758/758`；
 - 修复 Windows 主机上的 `aapt2` 资源路径、APK 内 POSIX 路径、Android 1.0.0 正版本号、API 21 Base64、数据目录空值和 16 KB 页面对齐；
 - 已生成 v1/v2/v3 测试签名 APK，包名 `org.tptzh.omnipack`、中文启动器名称“万象沙盘”、版本 `1.0.0`，只申请网络和振动权限；
 - `android_port_audit=18/18`；APK 签名、ZIP、Manifest、JNI/SDL 入口、ELF 对齐和分发库剥离通过；
