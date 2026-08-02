@@ -147,10 +147,36 @@ void PeriodicElementDetailActivity::BuildContent()
 	});
 
 	auto chineseInterface = GlobalPrefs::Ref().Get("Language", 1) == 1;
+	int y = 0;
+	auto elemental = std::find_if(links.begin(), links.end(), [](auto const *link) {
+		return link->contentKind == PeriodicContentKind::PeriodicElement;
+	});
+	auto *elementTool = elemental != links.end()
+		? FindTool((*elemental)->toolIdentifier)
+		: nullptr;
+	auto *descriptionTitle = new ui::Label(
+		ui::Point(3, y), ui::Point(contentPanel->Size.X - 14, 17),
+		Localization::Ref().Tr("encyclopedia.description"));
+	descriptionTitle->SetTextColour(style::Colour::InformationTitle);
+	descriptionTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	contentPanel->AddChild(descriptionTitle);
+	y += 18;
+
+	auto description = elementTool && !elementTool->Description.empty()
+		? elementTool->Description
+		: Localization::Ref().Tr("periodic.detail.not_implemented");
+	auto *descriptionLabel = new ui::Label(
+		ui::Point(3, y), ui::Point(contentPanel->Size.X - 20, -1), description);
+	descriptionLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	descriptionLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;
+	descriptionLabel->SetTextColour(ui::Colour(205, 205, 205, 255));
+	descriptionLabel->SetMultiline(true);
+	contentPanel->AddChild(descriptionLabel);
+	y += descriptionLabel->Size.Y + 8;
+
 	std::set<std::string_view> identifiers;
 	PeriodicCompoundGroup previousGroup = PeriodicCompoundGroup::Other;
 	bool haveGroup = false;
-	int y = 0;
 	int highlightedY = -1;
 	for (auto const *link : links)
 	{
