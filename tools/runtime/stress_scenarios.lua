@@ -154,10 +154,12 @@ local ids = {
     acid_rain = must_element("OMNI_PT_ARAN", "ARAN"),
     detergent = must_element("OMNI_PT_DETG", "DETG"),
     calcium_hydroxide = must_element("OMNI_PT_CAOH", "CAOH"),
+    fighter = assert(elements.DEFAULT_PT_FIGH),
 }
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
 local LEGACY_ALIAS_ID = 278
+local FIGHTER_SAVE_LIMIT = 50
 local fixture_type_count = 0
 local fixture_created_type_count = 0
 local fixture_visible_type_count = 0
@@ -275,15 +277,26 @@ end
 
 local function catalog_fixture(bounds, types, temperature, require_all_created)
     local created = {}
+    local created_instances = {}
+    local function place(type, x, y)
+        -- Official FIGH accepts more live instances than OPS restores. Keep the
+        -- fixture at the official save-compatible fighter limit so an immediate
+        -- roundtrip tests content preservation instead of deliberate FIGH
+        -- normalization from an invalid over-cap population.
+        if type == ids.fighter
+            and (created_instances[type] or 0) >= FIGHTER_SAVE_LIMIT then
+            return
+        end
+        if make(type, x, y, { temp = temperature }) then
+            created[type] = true
+            created_instances[type] = (created_instances[type] or 0) + 1
+        end
+    end
     grid(bounds, function(x, y, n)
         local first = types[((n - 1) % #types) + 1]
         local second = types[((n + 36) % #types) + 1]
-        if make(first, x, y, { temp = temperature }) then
-            created[first] = true
-        end
-        if make(second, x + 1, y, { temp = temperature }) then
-            created[second] = true
-        end
+        place(first, x, y)
+        place(second, x + 1, y)
     end)
     local created_count = 0
     local visible_count = 0
@@ -1018,8 +1031,10 @@ local function start()
 
     runtime.first_stamp, runtime.save_time_first_ms = timed_save()
     runtime.load_time_first_ms = timed_load(runtime.first_stamp)
-    assert(particle_count() == runtime.initial_particles,
-        "first immediate OPS reload changed particle count")
+    local reloaded_particles = particle_count()
+    assert(reloaded_particles == runtime.initial_particles,
+        "first immediate OPS reload changed particle count: "
+        .. tostring(runtime.initial_particles) .. ">" .. tostring(reloaded_particles))
     sim.resetOmniEventMetrics()
 
     local now = socket.getTime()

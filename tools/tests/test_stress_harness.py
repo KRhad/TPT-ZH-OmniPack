@@ -212,6 +212,13 @@ class StressHarnessContractTest(unittest.TestCase):
             self.lua,
         )
         self.assertIn("catalog fixture could not create", self.lua)
+        self.assertIn("fighter = assert(elements.DEFAULT_PT_FIGH)", self.lua)
+        self.assertIn("local FIGHTER_SAVE_LIMIT = 50", self.lua)
+        self.assertIn("created_instances", self.lua)
+        self.assertIn("type == ids.fighter", self.lua)
+        self.assertIn(
+            "first immediate OPS reload changed particle count: ", self.lua
+        )
 
     def test_biology_chemistry_fixture_is_present_in_targeted_stress_samples(self) -> None:
         self.assertIn("local function ecology_chemistry_loop(bounds)", self.lua)
