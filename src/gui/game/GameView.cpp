@@ -662,8 +662,14 @@ void GameView::NotifyActiveMenuToolListChanged(GameModel * sender)
 		AddComponent(tempButton);
 		toolButtons.push_back(tempButton);
 	}
-	// Dynamic tool buttons are added after the permanent toolbar. Reinsert both
-	// shortcuts so they remain the topmost draw and hit-test targets.
+	// Dynamic tool buttons are added after the permanent toolbar. Reinsert the
+	// right-side controls so they remain the topmost draw and hit-test targets.
+	RemoveComponent(simulationOptionButton);
+	AddComponent(simulationOptionButton);
+	RemoveComponent(displayModeButton);
+	AddComponent(displayModeButton);
+	RemoveComponent(pauseButton);
+	AddComponent(pauseButton);
 	RemoveComponent(periodicTableButton);
 	AddComponent(periodicTableButton);
 	RemoveComponent(elementSearchButton);
