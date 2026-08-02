@@ -157,6 +157,10 @@ local ids = {
 }
 
 local RECOVERABLE_SCRAP_MARKER = 0x4F4D5343
+local LEGACY_ALIAS_ID = 278
+local fixture_type_count = 0
+local fixture_created_type_count = 0
+local fixture_visible_type_count = 0
 
 local function configure_simulation()
     sim.clearSim()
@@ -215,6 +219,93 @@ local function grid(bounds, callback)
 end
 
 local full = { x1 = 48, y1 = 48, x2 = sim.XRES - 49, y2 = sim.YRES - 49 }
+
+local periodic_types = {
+    148, 370, 191, 371, 372, 28, 373, 61, 374, 375, 376, 261,
+    256, 187, 377, 378, 360, 379, 380, 381, 382, 144, 383, 262,
+    384, 76, 263, 260, 257, 265, 385, 386, 387, 388, 389, 390,
+    41, 391, 392, 393, 394, 264, 395, 396, 397, 398, 399, 400,
+    401, 259, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411,
+    412, 413, 414, 415, 416, 417, 418, 419, 420, 421, 422, 423,
+    424, 171, 425, 426, 427, 188, 170, 152, 428, 258, 429, 182,
+    430, 431, 432, 433, 434, 435, 436, 32, 437, 19, 438, 439,
+    440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451,
+    452, 453, 454, 455, 456, 457, 458, 459, 460, 461,
+}
+
+local function validate_type_list(types, expected_count, label, require_visible)
+    assert(#types == expected_count,
+        label .. " fixture count changed: " .. tostring(#types))
+    local seen = {}
+    for _, type in ipairs(types) do
+        assert(type >= 0 and type < 1024, label .. " fixture contains invalid ID")
+        assert(not seen[type], label .. " fixture repeats ID " .. tostring(type))
+        seen[type] = true
+        assert(elements.property(type, "Enabled") == 1,
+            label .. " fixture contains disabled ID " .. tostring(type))
+        if require_visible ~= false then
+            assert(elements.property(type, "MenuVisible") == 1,
+                label .. " fixture contains hidden ID " .. tostring(type))
+        end
+    end
+    return types
+end
+
+local function enabled_range(first, last, expected_count, label)
+    local types = {}
+    for type = first, last do
+        if elements.property(type, "Enabled") == 1
+            and elements.property(type, "MenuVisible") == 1 then
+            types[#types + 1] = type
+        end
+    end
+    return validate_type_list(types, expected_count, label)
+end
+
+local function playable_catalog()
+    local types = {}
+    for type = 0, 1023 do
+        local valid, enabled = pcall(elements.property, type, "Enabled")
+        if valid and enabled == 1 and type ~= LEGACY_ALIAS_ID then
+            types[#types + 1] = type
+        end
+    end
+    return validate_type_list(types, 487, "full catalog", false)
+end
+
+local function catalog_fixture(bounds, types, temperature, require_all_created)
+    local created = {}
+    grid(bounds, function(x, y, n)
+        local first = types[((n - 1) % #types) + 1]
+        local second = types[((n + 36) % #types) + 1]
+        if make(first, x, y, { temp = temperature }) then
+            created[first] = true
+        end
+        if make(second, x + 1, y, { temp = temperature }) then
+            created[second] = true
+        end
+    end)
+    local created_count = 0
+    local visible_count = 0
+    local missing = {}
+    for _, type in ipairs(types) do
+        if created[type] then
+            created_count = created_count + 1
+        else
+            missing[#missing + 1] = elements.property(type, "Identifier")
+        end
+        if type ~= 0 and elements.property(type, "MenuVisible") == 1 then
+            visible_count = visible_count + 1
+        end
+    end
+    fixture_type_count = #types
+    fixture_created_type_count = created_count
+    fixture_visible_type_count = visible_count
+    if require_all_created then
+        assert(created_count == #types,
+            "catalog fixture could not create: " .. table.concat(missing, ","))
+    end
+end
 
 local recovery_markers = {
     {
@@ -628,6 +719,28 @@ local scenarios = {
     ["S12-AUTOMATION-SIGNAL-LOOP"] = function() automation_signal_loop(full) end,
     ["S13-ELECTRONICS-DENSE"] = function() electronics(full) end,
     ["S14-ENVIRONMENT-DENSE"] = function() environment(full) end,
+    ["S15-PERIODIC-ALL"] = function()
+        catalog_fixture(
+            full,
+            validate_type_list(periodic_types, 118, "periodic table"),
+            300.0,
+            true)
+    end,
+    ["S16-INORGANIC-DENSE"] = function()
+        catalog_fixture(full, enabled_range(462, 511, 50, "inorganic"), 430.0, true)
+    end,
+    ["S17-MATERIALS-DENSE"] = function()
+        catalog_fixture(full, enabled_range(512, 532, 21, "materials"), 900.0, true)
+    end,
+    ["S18-ISOTOPES-DENSE"] = function()
+        catalog_fixture(full, enabled_range(576, 588, 13, "isotopes"), 450.0, true)
+    end,
+    ["S19-ORGANICS-DENSE"] = function()
+        catalog_fixture(full, enabled_range(589, 621, 33, "organics"), 430.0, true)
+    end,
+    ["S20-FULL-CATALOG"] = function()
+        catalog_fixture(full, playable_catalog(), 300.0, false)
+    end,
 }
 
 local function particle_count()
@@ -667,6 +780,8 @@ local function write_success(data)
         "load_time_first_ms", "save_time_second_ms", "load_time_second_ms",
         "roundtrip_pass", "event_count_total", "event_count_peak_per_frame",
         "signal_count_total", "signal_count_peak_per_frame", "signal_stop_pass",
+        "fixture_type_count", "fixture_created_type_count",
+        "fixture_visible_type_count",
         "scenario_stop_pass", "scenario_recovery_pass", "stop_event_delta",
         "scenario_recovery_assertions",
     }) do
@@ -812,6 +927,9 @@ local function finish_sample(now)
         event_count_peak_per_frame = math.floor(event_count_peak_per_frame),
         signal_count_total = math.floor(runtime.signal_count_total),
         signal_count_peak_per_frame = math.floor(runtime.signal_count_peak_per_frame),
+        fixture_type_count = fixture_type_count,
+        fixture_created_type_count = fixture_created_type_count,
+        fixture_visible_type_count = fixture_visible_type_count,
         signal_stop_pass = tostring(signal_stop_pass),
         scenario_stop_pass = tostring(scenario_stop_pass),
         scenario_recovery_pass = tostring(scenario_recovery_pass),

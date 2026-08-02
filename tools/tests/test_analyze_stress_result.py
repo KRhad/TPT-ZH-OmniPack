@@ -30,6 +30,10 @@ class AnalyzeStressResultTest(unittest.TestCase):
         particles: list[int],
         smoke: bool = False,
         complete_gate_evidence: bool = False,
+        sample_id: str = "S01-METALLURGY-LARGE",
+        fixture_type_count: int | None = None,
+        fixture_created_type_count: int | None = None,
+        fixture_visible_type_count: int | None = None,
     ) -> None:
         ops1 = b"OPS1" + b"\0" * 8 + b"BZh" + b"input"
         ops2 = b"OPS1" + b"\0" * 8 + b"BZh" + b"output"
@@ -37,7 +41,7 @@ class AnalyzeStressResultTest(unittest.TestCase):
         (directory / "output-second.stm").write_bytes(ops2)
         result = {
             "schema_version": 1,
-            "sample_id": "S01-METALLURGY-LARGE",
+            "sample_id": sample_id,
             "run_id": "fixture",
             "source_commit": "a" * 40,
             "public_zip_sha256": "B" * 64,
@@ -72,6 +76,12 @@ class AnalyzeStressResultTest(unittest.TestCase):
                     "scenario_recovery_assertions": 7,
                 }
             )
+        if fixture_type_count is not None:
+            result["fixture_type_count"] = fixture_type_count
+        if fixture_created_type_count is not None:
+            result["fixture_created_type_count"] = fixture_created_type_count
+        if fixture_visible_type_count is not None:
+            result["fixture_visible_type_count"] = fixture_visible_type_count
         (directory / "result.json").write_text(
             json.dumps(result), encoding="utf-8"
         )
@@ -163,6 +173,45 @@ class AnalyzeStressResultTest(unittest.TestCase):
             value = analysis.analyze(directory)
         self.assertFalse(value["signal_behavior_pass"])
         self.assertFalse(value["performance_gate_pass"])
+
+    def test_catalog_samples_require_exact_fixture_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [200, 190, 180, 180, 180, 180, 180, 180],
+                complete_gate_evidence=True,
+                sample_id="S15-PERIODIC-ALL",
+                fixture_type_count=118,
+                fixture_created_type_count=118,
+                fixture_visible_type_count=118,
+            )
+            value = analysis.analyze(directory)
+            self.assertTrue(value["fixture_evidence_complete"])
+            self.assertTrue(value["performance_gate_pass"])
+            result_path = directory / "result.json"
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            result["fixture_created_type_count"] = 117
+            result_path.write_text(json.dumps(result), encoding="utf-8")
+            value = analysis.analyze(directory)
+        self.assertFalse(value["fixture_evidence_complete"])
+        self.assertFalse(value["performance_gate_pass"])
+
+    def test_full_catalog_distinguishes_active_and_directly_selectable_types(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [500, 490, 480, 480, 480, 480, 480, 480],
+                complete_gate_evidence=True,
+                sample_id="S20-FULL-CATALOG",
+                fixture_type_count=487,
+                fixture_created_type_count=484,
+                fixture_visible_type_count=466,
+            )
+            value = analysis.analyze(directory)
+        self.assertTrue(value["fixture_evidence_complete"])
+        self.assertTrue(value["performance_gate_pass"])
 
 
 if __name__ == "__main__":

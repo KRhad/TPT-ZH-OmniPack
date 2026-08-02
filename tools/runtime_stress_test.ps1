@@ -17,7 +17,13 @@ param(
         "S11-AUTOMATION-FACTORY",
         "S12-AUTOMATION-SIGNAL-LOOP",
         "S13-ELECTRONICS-DENSE",
-        "S14-ENVIRONMENT-DENSE"
+        "S14-ENVIRONMENT-DENSE",
+        "S15-PERIODIC-ALL",
+        "S16-INORGANIC-DENSE",
+        "S17-MATERIALS-DENSE",
+        "S18-ISOTOPES-DENSE",
+        "S19-ORGANICS-DENSE",
+        "S20-FULL-CATALOG"
     )]
     [string] $SampleId,
 
@@ -284,6 +290,8 @@ try {
     foreach ($field in @(
         "event_count_total", "event_count_peak_per_frame",
         "signal_count_total", "signal_count_peak_per_frame",
+        "fixture_type_count", "fixture_created_type_count",
+        "fixture_visible_type_count",
         "scenario_recovery_assertions")) {
         if (-not $lua.ContainsKey($field) -or $lua[$field] -notmatch '^\d+$') {
             throw "Stress Lua did not provide a nonnegative integer $field"
@@ -379,6 +387,9 @@ try {
         event_count_peak_per_frame = [int64]$lua.event_count_peak_per_frame
         signal_count_total = [int64]$lua.signal_count_total
         signal_count_peak_per_frame = [int64]$lua.signal_count_peak_per_frame
+        fixture_type_count = [int64]$lua.fixture_type_count
+        fixture_created_type_count = [int64]$lua.fixture_created_type_count
+        fixture_visible_type_count = [int64]$lua.fixture_visible_type_count
         signal_stop_pass = [System.Convert]::ToBoolean($lua.signal_stop_pass)
         save_time_first_ms = [double]$lua.save_time_first_ms
         load_time_first_ms = [double]$lua.load_time_first_ms

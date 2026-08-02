@@ -34,6 +34,12 @@ SAMPLES = {
     "S12-AUTOMATION-SIGNAL-LOOP",
     "S13-ELECTRONICS-DENSE",
     "S14-ENVIRONMENT-DENSE",
+    "S15-PERIODIC-ALL",
+    "S16-INORGANIC-DENSE",
+    "S17-MATERIALS-DENSE",
+    "S18-ISOTOPES-DENSE",
+    "S19-ORGANICS-DENSE",
+    "S20-FULL-CATALOG",
 }
 
 
@@ -128,6 +134,18 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn("scenario_stop_pass", self.lua)
         self.assertIn("scenario_recovery_pass", self.lua)
         self.assertIn("scenario_recovery_assertions", self.lua)
+        self.assertIn("fixture_type_count", self.lua)
+        self.assertIn("fixture_created_type_count", self.lua)
+        self.assertIn("fixture_visible_type_count", self.lua)
+        self.assertIn("fixture_type_count = [int64]$lua.fixture_type_count", self.powershell)
+        self.assertIn(
+            "fixture_created_type_count = [int64]$lua.fixture_created_type_count",
+            self.powershell,
+        )
+        self.assertIn(
+            "fixture_visible_type_count = [int64]$lua.fixture_visible_type_count",
+            self.powershell,
+        )
         self.assertIn("void ResetOmniEventMetrics();", self.simulation_header)
         self.assertIn("void RecordOmniEvent();", self.simulation_header)
         self.assertIn("void Simulation::RecordOmniEvent()", self.simulation_cpp)
@@ -161,6 +179,33 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn('radioactive_contaminant = must_element("OMNI_PT_RCON", "RCON")', self.lua)
         self.assertIn('S14-ENVIRONMENT-DENSE', self.lua)
         self.assertIn('name = "environment_conv_fields"', self.lua)
+
+    def test_content_freeze_stress_samples_are_counted_and_fail_closed(self) -> None:
+        self.assertIn("local periodic_types = {", self.lua)
+        self.assertIn(
+            'validate_type_list(periodic_types, 118, "periodic table")',
+            self.lua,
+        )
+        for first, last, count, label in (
+            (462, 511, 50, "inorganic"),
+            (512, 532, 21, "materials"),
+            (576, 588, 13, "isotopes"),
+            (589, 621, 33, "organics"),
+        ):
+            self.assertIn(
+                f'enabled_range({first}, {last}, {count}, "{label}")',
+                self.lua,
+            )
+        self.assertIn(
+            'validate_type_list(types, 487, "full catalog", false)',
+            self.lua,
+        )
+        self.assertIn("type ~= LEGACY_ALIAS_ID", self.lua)
+        self.assertIn(
+            'pcall(elements.property, type, "Enabled")',
+            self.lua,
+        )
+        self.assertIn("catalog fixture could not create", self.lua)
 
     def test_biology_chemistry_fixture_is_present_in_targeted_stress_samples(self) -> None:
         self.assertIn("local function ecology_chemistry_loop(bounds)", self.lua)

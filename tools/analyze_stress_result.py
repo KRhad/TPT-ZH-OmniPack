@@ -37,6 +37,15 @@ REQUIRED_RESULT_FIELDS = {
     "smoke_run",
 }
 
+FIXTURE_EXPECTATIONS = {
+    "S15-PERIODIC-ALL": (118, 118, 118),
+    "S16-INORGANIC-DENSE": (50, 50, 50),
+    "S17-MATERIALS-DENSE": (21, 21, 21),
+    "S18-ISOTOPES-DENSE": (13, 13, 13),
+    "S19-ORGANICS-DENSE": (33, 33, 33),
+    "S20-FULL-CATALOG": (487, 484, 466),
+}
+
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -216,10 +225,34 @@ def analyze(directory: Path) -> dict[str, Any]:
         )
     else:
         signal_behavior_pass = "not_tested"
+    fixture_expected = FIXTURE_EXPECTATIONS.get(str(result.get("sample_id")))
+    fixture_type_count = result.get("fixture_type_count")
+    fixture_created_type_count = result.get("fixture_created_type_count")
+    fixture_visible_type_count = result.get("fixture_visible_type_count")
+    if fixture_expected is None:
+        fixture_evidence_complete = True
+    else:
+        expected_types, expected_created, expected_visible = fixture_expected
+        fixture_evidence_complete = (
+            isinstance(fixture_type_count, (int, float))
+            and not isinstance(fixture_type_count, bool)
+            and fixture_type_count == expected_types
+            and isinstance(fixture_created_type_count, (int, float))
+            and not isinstance(fixture_created_type_count, bool)
+            and fixture_created_type_count > 0
+            and isinstance(fixture_visible_type_count, (int, float))
+            and not isinstance(fixture_visible_type_count, bool)
+            and fixture_visible_type_count == expected_visible
+            and (
+                expected_created is None
+                or fixture_created_type_count == expected_created
+            )
+        )
     performance_gate_pass = (
         sample_execution_pass
         and event_evidence_complete
         and scenario_behavior_pass is True
+        and fixture_evidence_complete
         and (not automation_sample or signal_behavior_pass is True)
     )
 
@@ -257,6 +290,10 @@ def analyze(directory: Path) -> dict[str, Any]:
         "signal_count_peak_per_frame": result.get("signal_count_peak_per_frame"),
         "signal_behavior_pass": signal_behavior_pass,
         "signal_stop_pass": result.get("signal_stop_pass"),
+        "fixture_evidence_complete": fixture_evidence_complete,
+        "fixture_type_count": fixture_type_count,
+        "fixture_created_type_count": fixture_created_type_count,
+        "fixture_visible_type_count": fixture_visible_type_count,
         "scenario_behavior_pass": scenario_behavior_pass,
         "stop_event_delta": stop_event_delta,
         "scenario_recovery_assertions": recovery_assertions,
