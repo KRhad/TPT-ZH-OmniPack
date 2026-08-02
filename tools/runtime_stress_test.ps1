@@ -40,7 +40,7 @@ param(
 
     [string] $PackageZip,
 
-    [ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev", "1.0.0-rc2")]
+    [ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev", "1.0.0-rc3")]
     [string] $PackageVersion = "0.1.0-test",
 
     [string] $TemporaryDirectory = [System.IO.Path]::GetTempPath(),
