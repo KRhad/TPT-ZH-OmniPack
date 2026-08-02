@@ -300,3 +300,14 @@ release_ready=true
 ```
 
 当前 `release_ready=false`。不得为赶版本把 `not_tested` 改为 `true`，也不得用重复空壳或兼容别名凑到 300。
+
+当前许可证子门禁：
+
+```text
+font_license_resolved=true
+third_party_license_audit=true
+third_party_license_manifest_components=24
+unknown_or_unverified_sources_excluded=20
+implemented_external_elements_audited=22
+final_1_0_zip_license_member_audit=not_tested
+```

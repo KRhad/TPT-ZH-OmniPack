@@ -105,6 +105,7 @@ SpikeViper `134ebf330eda42b4b300a2b7613ede71261697df`、Ultimata `b7497175243365
 - Fusion Pixel Font 主 OFL 1.1 及 Ark Pixel Font、Cubic 11、Galmuri 上游 OFL 文本均随包置于 `LICENSES/`；GNU Unifont 的 SIL OFL 1.1 / GPL 字体嵌入例外文本随包提供为 `LICENSES/GNU-UNIFONT-OFL-1.1.txt`。
 - Phase 0 没有引入新音效、图片或第三方二进制。
 - 发布包不会包含任何只有二进制而没有对应合法源码的模组实现。
+- Windows 静态发行包另行携带 `LICENSES/THIRD-PARTY-MANIFEST.csv` 和 `LICENSES/LIBRARIES/` 下 12 份预构建库许可证；固定版本、用途、许可证文件及 SHA-256 见 `docs/THIRD_PARTY_LICENSE_MANIFEST.csv`。
 
 ## 当前代码使用情况
 
@@ -130,6 +131,7 @@ SpikeViper `134ebf330eda42b4b300a2b7613ede71261697df`、Ultimata `b7497175243365
 - 当前累计第三方直接移植 `0`、来源概念重写 `4`、第三方更新函数逐行复制 `0`；
 - 第三方核更新函数逐行复制：0；官方 `URAN/PLUT/NEUT/DEUT` 状态机改写：0；
 - 冶金与化学静态审计、单元测试和 Lua 真实运行回归：PASS；
-- 来源目录已登记 41 个模组记录，其中 27 个仓库快照和 2 个源码包可本地只读检查；完整逐资源许可证门禁仍为 `false`；
+- 来源目录已登记并分类 41 个模组记录，其中 27 个仓库快照和 2 个源码包可本地只读检查；20 个授权未知或未验证来源均保持 `C_reference_only` / `D_reject`；
+- 最终发行许可证 manifest 为 24 项，实际登记的 22 个外部来源元素、字体、跟踪资源、静态库及发行通知映射均通过 `tools/third_party_license_audit.py`，`license_audit_pass=true`；
 - 未解决字体授权项：0；字体视觉/高 DPI 人工复核仍待执行；
 - 缺失源码项：Seppo 自定义元素实现 32 项。

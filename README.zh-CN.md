@@ -46,7 +46,7 @@
 - `docs/THIRD_PARTY_SOURCES.md`
 - `docs/PORTING_LEDGER.md`
 
-模组素材库已完成自动搜索、固定、提取和初步许可证分类；`license_audit_pass=false` 仍表示最终移植文件及资源的逐项人工复核尚未全部完成。
+模组素材库已完成搜索、固定、提取和许可证分类。最终发行闭包登记 24 个代码、模组、字体和静态库组件；41 个来源中 20 个授权未知或未验证来源继续保持拒绝/仅参考，22 个实际登记的外部来源元素均来自 GPL-3.0 固定提交。`license_audit_pass=true`；后续仍须对最终 1.0.0 ZIP 实际成员再执行一次许可证映射审计。
 
 ## 构建与测试
 
@@ -63,7 +63,7 @@ C:\msys64\ucrt64\bin\python3.exe -m unittest discover -s tools/tests -p 'test_*.
 
 ## 法律与发布边界
 
-本项目整体依据 GNU GPL v3 发布，并保留 The Powder Toy 及兼容来源作者的版权与通知。发布包不得包含 `powder.pref`、令牌、个人存档、未登记图章、调试对象或开发者绝对路径。
+本项目整体依据 GNU GPL v3 发布，并保留 The Powder Toy 及兼容来源作者的版权与通知。发布包必须携带项目 GPL、字体许可证、第三方 manifest 以及 12 份固定静态库许可证；不得包含 `powder.pref`、令牌、个人存档、未登记图章、调试对象或开发者绝对路径。
 
 当前 `origin` 仍指向历史汉化仓库 `Dragonrster/The-Powder-Toy-Chinese`，不是已授权的 OmniPack 正式源码远端，因此不得擅自推送、打 `v1.0.0` tag 或创建公开 Release。只有完整门禁全部为真时，才允许声明正式 `1.0.0`。
 

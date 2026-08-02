@@ -54,11 +54,13 @@
 - Ultimata：`Bowserinator/TPT-Ultimata-Mod@b74971752433652c033559abea415ec3510ac433`；`SOIL.cpp` blob `4fe7ad92b93646f710ec0fb5e7a1c8087bebed49`，`BLOD.cpp` blob `e99d5a47c0c5c47484b7dd66284392a0c4151a3b`。
 - Biological Mod `284a1585db023f62a7147892526899133dd6f41c` 的 `BLD.cpp` blob `6bbb88a35427a54e64496730ad777fb0e0250f67` 与 nucular mod `048080a79006c4d6668a1864a0e29758903c64bb` 的 `SOIL.cpp` blob `f6499ab0590da6ebffa852ac25101046d2d1623a` 仅作交叉概念参考。
 - 上述快照根许可证均为 GNU GPL v3，文件 SHA-256 `0B383D5A63DA644F628D99C33976EA6487ED89AAA59F0B3257992DEAC1171E6B`；未从这些仓库移植字体、图片、声音或二进制。
-- 当前 4 个元素只保留可追溯材料概念；属性、字段、更新、反应、预算、模块和 OPS 逻辑均按当前架构重写，第三方更新函数逐行复制为 0。整个 41 来源目录的逐文件/资源审计仍未完成，不能把该局部结论提升成全局 `license_audit_pass=true`。
+- 当前 4 个元素只保留可追溯材料概念；属性、字段、更新、反应、预算、模块和 OPS 逻辑均按当前架构重写，第三方更新函数逐行复制为 0。
 
 ## 当前门禁
 
 - 根许可证自动识别：已执行。
 - README、元素源码头、子模块与资源清单自动扫描：已执行于成功检出的仓库。
-- 每个最终移植文件的人工作者/许可证/资源兼容复核：尚未完成。
-- 因此当前 `license_audit_pass=false`。未知许可证、仅二进制和下载失效来源不得复制。
+- 41 个素材来源已经逐项分类；20 个许可证未知或未验证来源全部保持 `C_reference_only` / `D_reject`，不进入实现、资源或发行包。
+- 最终实际使用边界为 22 个登记的兼容来源元素（其中 4 个文件级概念重写、18 个参数/token/行为概念独立实现），第三方更新函数逐行复制为 0。
+- `docs/THIRD_PARTY_LICENSE_MANIFEST.csv` 固定 24 个代码、模组、字体和静态库组件；发行映射同时携带字体及 12 份预构建库许可证文本。
+- `tools/third_party_license_audit.py` 已核对 manifest 哈希、登记来源/commit、候选授权决策、只读外部目录、跟踪资源与发行通知映射；当前 `license_audit_pass=true`。

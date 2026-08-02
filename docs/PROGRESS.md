@@ -73,6 +73,11 @@ private_test_0_7_python_tests=203/203
 private_test_0_7_release_exe_sha256=429C3FC72E415931BD9D6DCDF07602D7F590864EC76275524214651CEDD07CD1
 private_test_0_7_zip_sha256=C375BA1BD85F5C6838282FDF8979DFBC010B02FF0E0D0216CD08D342B70CE05F
 private_test_0_7_package_audit=true
+third_party_license_audit=true
+third_party_license_manifest_components=24
+external_source_elements_audited=22
+mod_sources_cataloged=41
+mod_sources_unknown_or_unverified=20
 content_freeze_smoke_s15_s20=true
 full_catalog_fixture_types=487
 full_catalog_fixture_created=484
@@ -113,6 +118,13 @@ release_ready=false
 - 新 harness smoke 分别为 S15 `20260802T012213Z-1a2471cc`、S16 `20260802T012217Z-7f81b8a7`、S17 `20260802T012221Z-4ee2a3c6`、S18 `20260802T012225Z-0b8f6e5a`、S19 `20260802T012418Z-cb4f9f99`；对应 fixture 为 `118/118/118`、`50/50/50`、`21/21/21`、`13/13/13`、`33/33/33`，S19 在 700 K 观察到 62 次受预算事件；
 - S20 `20260802T011044Z-a4fd999f` 精确枚举 487 个活动非别名类型、成功创建 484 个、确认 466 个普通菜单材料；OPS 往返、停止和 14 项恢复断言通过；
 - 六场均约 2 秒，只证明 fixture 和 harness 行为，`performance_gate_pass=false`；正式 60 秒预热/600 秒采样必须绑定后续 1.0.0 冻结 ZIP，不能用这些 smoke 冒充。
+
+## 1.0.0 第三方许可证闭包
+
+- `docs/THIRD_PARTY_LICENSE_MANIFEST.csv` 固定 24 个上游代码、模组概念来源、字体和预构建库组件；项目 GPL、五份字体许可证及 12 份库许可证均有发行目标路径和固定 SHA-256；
+- `tools/third_party_license_audit.py --verify-external-snapshots` 已核对 41 个模组来源、4,522 条候选、22 个实际登记外部来源元素、16 个跟踪二进制资源和 Cracker/Seppo/Cyens Source/Ultimata/Biological/nucular 六个真实仓库 HEAD 与根 GPL；报告 `third_party_license_audit=true`、错误 0；
+- 20 个授权未知或未验证来源没有 A/B 移植决策，外部只读源码目录没有进入 Git、构建或发行包；第三方更新函数逐行复制仍为 0；
+- 旧 0.7 私测包保持原哈希，但按新门禁会因缺少第三方 manifest、12 份库许可证和修正后的 466 菜单材料说明而被拒绝；不覆盖旧包，后续只构建新的 1.0.0 冻结候选。
 
 ## 模组素材库与周期表 ID 基础设施
 

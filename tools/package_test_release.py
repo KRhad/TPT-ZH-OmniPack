@@ -26,6 +26,30 @@ PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
 SYMBOL_NAME = "tpt-zh-omnipack.debug"
+PREBUILT_LICENSE_ROOT = (
+    "subprojects/tpt-libs-prebuilt-x86_64-windows-mingw-static-release-"
+    "v20251019131007/licenses"
+)
+LIBRARY_LICENSE_DOCUMENTS = tuple(
+    (
+        f"{PREBUILT_LICENSE_ROOT}/{name}.LICENSE",
+        f"LICENSES/LIBRARIES/{name}.LICENSE.txt",
+    )
+    for name in (
+        "bzip2",
+        "fftw3f",
+        "jsoncpp",
+        "libcurl",
+        "libpng",
+        "lua5.1",
+        "lua5.2",
+        "luajit",
+        "mbedtls",
+        "nghttp2",
+        "sdl2",
+        "zlib",
+    )
+)
 DOCUMENTS = (
     ("LICENSE", "LICENSE"),
     ("README.zh-CN.md", "README.zh-CN.md"),
@@ -35,11 +59,13 @@ DOCUMENTS = (
     ("docs/KNOWN_ISSUES.md", "KNOWN-ISSUES.zh-CN.md"),
     ("docs/AI_DISCLOSURE.md", "AI-DISCLOSURE.zh-CN.md"),
     ("docs/FONT_AUDIT.md", "FONT-AUDIT.md"),
+    ("docs/THIRD_PARTY_LICENSE_MANIFEST.csv", "LICENSES/THIRD-PARTY-MANIFEST.csv"),
     ("resources/third_party/GNU_UNIFONT_COPYING.txt", "LICENSES/GNU-UNIFONT-OFL-1.1.txt"),
     ("resources/third_party/FUSION_PIXEL_FONT_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-OFL-1.1.txt"),
     ("resources/third_party/FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt"),
     ("resources/third_party/FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt"),
     ("resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt"),
+    *LIBRARY_LICENSE_DOCUMENTS,
 )
 DEV_DOCUMENTS = (
     ("docs/TUTORIALS_0.2.json", "TUTORIALS-0.2.0.json"),

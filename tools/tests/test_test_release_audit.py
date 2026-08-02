@@ -49,6 +49,9 @@ class TestReleaseAuditTests(unittest.TestCase):
         (source / "docs" / "KNOWN_ISSUES.md").write_text("Issues\n", encoding="utf-8")
         (source / "docs" / "AI_DISCLOSURE.md").write_text("AI\n", encoding="utf-8")
         (source / "docs" / "FONT_AUDIT.md").write_text("Font\n", encoding="utf-8")
+        (source / "docs" / "THIRD_PARTY_LICENSE_MANIFEST.csv").write_text(
+            "component,license\nfixture,MIT\n", encoding="utf-8"
+        )
         third_party = source / "resources" / "third_party"
         third_party.mkdir(parents=True)
         (third_party / "GNU_UNIFONT_COPYING.txt").write_text("OFL\n", encoding="utf-8")
@@ -59,6 +62,15 @@ class TestReleaseAuditTests(unittest.TestCase):
             "FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt",
         ):
             (third_party / name).write_text("OFL\n", encoding="utf-8")
+        library_licenses = source / package_test_release.PREBUILT_LICENSE_ROOT
+        library_licenses.mkdir(parents=True)
+        for name in (
+            "bzip2", "fftw3f", "jsoncpp", "libcurl", "libpng", "lua5.1",
+            "lua5.2", "luajit", "mbedtls", "nghttp2", "sdl2", "zlib",
+        ):
+            (library_licenses / f"{name}.LICENSE").write_text(
+                f"{name} license\n", encoding="utf-8"
+            )
         executable = source / "tpt-zh-omnipack.exe"
         executable.write_bytes(b"MZ test executable")
         (source / "tpt-zh-omnipack.debug").write_bytes(b"MZ test debug symbols")

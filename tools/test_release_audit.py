@@ -26,10 +26,18 @@ NORMAL_DOCUMENTS = {
     "LICENSE", "README.zh-CN.md", "CHANGELOG.zh-CN.md", "TESTING.zh-CN.md",
     "SOURCE-AND-LICENSES.zh-CN.md", "KNOWN-ISSUES.zh-CN.md", "AI-DISCLOSURE.zh-CN.md",
     "FONT-AUDIT.md", "LICENSES/GNU-UNIFONT-OFL-1.1.txt",
+    "LICENSES/THIRD-PARTY-MANIFEST.csv",
     "LICENSES/FUSION-PIXEL-FONT-OFL-1.1.txt",
     "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt",
     "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt",
     "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt",
+    *{
+        f"LICENSES/LIBRARIES/{name}.LICENSE.txt"
+        for name in (
+            "bzip2", "fftw3f", "jsoncpp", "libcurl", "libpng", "lua5.1",
+            "lua5.2", "luajit", "mbedtls", "nghttp2", "sdl2", "zlib",
+        )
+    },
 }
 DEV_DOCUMENTS = {
     "TUTORIALS-0.2.0.json",
