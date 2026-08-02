@@ -1,13 +1,15 @@
 # This file is used by the starcatcher.us update server to pull changelogs for mod releases
 # Erase and replace the changelog for every release, do not just append changes to the end
 # Lines starting with # and empty lines are ignored
-v1.0.0-rc3 - OmniPack pure-sandbox content freeze
+v1.0.0-rc4 - OmniPack pure-sandbox content freeze
 - Removed player tasks, achievements, challenges, technology trees, alchemy progression, and forced unlocks
 - Added a directly selectable 118-element periodic table with stable save mappings
 - Frozen the catalog at 487 active non-alias types, 484 creatable types, and 466 directly selectable menu materials
 - Added inorganic chemistry, engineering alloys, minerals, ceramics, glass, isotopes, organics, polymers, electronics, ecology, and pollution systems
 - Kept stable identifiers, 10-bit element capacity, compatibility aliases, module-disable behavior, and OPS roundtrips
-- Standardized OmniPack menu codes as unique four-letter uppercase labels and rewrote player descriptions without development notes
+- Kept existing menu codes stable while allowing three- or four-letter uppercase labels for future content
+- Replaced the periodic-table letter shortcut with a dedicated pixel icon and simplified its title
+- Removed direct-placement boilerplate from the bilingual element catalog and hid empty production sections
 - Added a fail-closed 7,200-second full-catalog gate with ten same-process OPS, bilingual-state, and module-toggle cycles
 - Aligned the periodic-table and element-search shortcuts in the right toolbar and retained the normal element-row width
 - Added official-style soft gas rendering for periodic, inorganic, isotope, and organic gases
