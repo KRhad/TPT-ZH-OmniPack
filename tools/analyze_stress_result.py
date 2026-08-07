@@ -46,6 +46,8 @@ FIXTURE_EXPECTATIONS = {
     "S19-ORGANICS-DENSE": (33, 33, 33),
     "S20-FULL-CATALOG": (487, 484, 466),
 }
+MEMORY_GROWTH_MINIMUM_BYTES = 1024 * 1024
+MEMORY_GROWTH_MINIMUM_RATIO = 0.01
 
 
 def sha256(path: Path) -> str:
@@ -89,6 +91,18 @@ def strictly_observed_monotonic_growth(values: Sequence[float]) -> bool:
         and values[-1] > values[0]
         and all(right >= left for left, right in zip(values, values[1:]))
     )
+
+
+def materially_observed_memory_growth(values: Sequence[float]) -> bool:
+    """True for monotonic growth that exceeds the documented noise floor."""
+    if not strictly_observed_monotonic_growth(values):
+        return False
+    growth = values[-1] - values[0]
+    threshold = max(
+        MEMORY_GROWTH_MINIMUM_BYTES,
+        abs(values[0]) * MEMORY_GROWTH_MINIMUM_RATIO,
+    )
+    return growth >= threshold
 
 
 def tail_values(rows: Sequence[dict[str, float]], field: str, fraction: float) -> list[float]:
@@ -150,10 +164,10 @@ def analyze(directory: Path) -> dict[str, Any]:
     working_set_tail = tail_values(processes, "working_set_bytes", 0.25)
     private_tail = tail_values(processes, "private_bytes", 0.25)
     sustained_particle_growth = strictly_observed_monotonic_growth(particle_tail)
-    sustained_working_set_growth = strictly_observed_monotonic_growth(
+    sustained_working_set_growth = materially_observed_memory_growth(
         working_set_tail
     )
-    sustained_private_growth = strictly_observed_monotonic_growth(private_tail)
+    sustained_private_growth = materially_observed_memory_growth(private_tail)
     memory_leak_suspected = (
         sustained_working_set_growth and sustained_private_growth
     )
@@ -329,8 +343,14 @@ def analyze(directory: Path) -> dict[str, Any]:
         "unbounded_growth": sustained_particle_growth,
         "working_set_tail_first": int(working_set_tail[0]),
         "working_set_tail_last": int(working_set_tail[-1]),
+        "working_set_tail_growth_bytes": int(
+            working_set_tail[-1] - working_set_tail[0]
+        ),
         "private_tail_first": int(private_tail[0]),
         "private_tail_last": int(private_tail[-1]),
+        "private_tail_growth_bytes": int(private_tail[-1] - private_tail[0]),
+        "memory_growth_minimum_bytes": MEMORY_GROWTH_MINIMUM_BYTES,
+        "memory_growth_minimum_ratio": MEMORY_GROWTH_MINIMUM_RATIO,
         "memory_leak_suspected": memory_leak_suspected,
         "input_ops": input_ops,
         "output_ops": output_ops,
@@ -369,7 +389,8 @@ def analyze(directory: Path) -> dict[str, Any]:
             "unbounded_growth reports only whether the final half of observed "
             "particle samples is nondecreasing with at least one increase; "
             "memory_leak_suspected requires the final quarter of both working-set "
-            "and private-byte samples to meet the same finite-observation rule. "
+            "and private-byte samples to be nondecreasing and each to grow by at "
+            "least max(1 MiB, 1% of its tail-first value). "
             "This is not a proof of long-term boundedness."
         ),
     }

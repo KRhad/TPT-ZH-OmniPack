@@ -115,6 +115,25 @@ class AnalyzeStressResultTest(unittest.TestCase):
             for index in range(max(8, len(particles))):
                 writer.writerow((index * 10, 120000000 - index, 110000000 - index))
 
+    def write_process_series(
+        self,
+        directory: Path,
+        working_set: list[int],
+        private: list[int],
+    ) -> None:
+        self.assertEqual(len(working_set), len(private))
+        with (directory / "process-series.csv").open(
+            "w", encoding="utf-8", newline=""
+        ) as stream:
+            writer = csv.writer(stream, lineterminator="\n")
+            writer.writerow(
+                ("elapsed_seconds", "working_set_bytes", "private_bytes")
+            )
+            for index, (working, private_bytes) in enumerate(
+                zip(working_set, private)
+            ):
+                writer.writerow((index, working, private_bytes))
+
     def test_stable_full_run_is_gated_by_evidence_completeness(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
@@ -144,6 +163,45 @@ class AnalyzeStressResultTest(unittest.TestCase):
             value = analysis.analyze(directory)
         self.assertTrue(value["unbounded_growth"])
         self.assertFalse(value["sample_execution_pass"])
+
+    def test_page_scale_memory_growth_does_not_trigger_leak_signal(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [100, 90, 80, 80, 80, 80, 80, 80],
+                complete_gate_evidence=True,
+            )
+            self.write_process_series(
+                directory,
+                [120000000] * 7 + [120049152],
+                [110000000] * 7 + [110049152],
+            )
+            value = analysis.analyze(directory)
+        self.assertEqual(value["working_set_tail_growth_bytes"], 49152)
+        self.assertEqual(value["private_tail_growth_bytes"], 49152)
+        self.assertFalse(value["memory_leak_suspected"])
+        self.assertTrue(value["performance_gate_pass"])
+
+    def test_material_monotonic_memory_growth_triggers_leak_signal(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [100, 90, 80, 80, 80, 80, 80, 80],
+                complete_gate_evidence=True,
+            )
+            self.write_process_series(
+                directory,
+                [120000000 + index * 2000000 for index in range(8)],
+                [110000000 + index * 2000000 for index in range(8)],
+            )
+            value = analysis.analyze(directory)
+        self.assertEqual(value["memory_growth_minimum_bytes"], 1048576)
+        self.assertEqual(value["memory_growth_minimum_ratio"], 0.01)
+        self.assertTrue(value["memory_leak_suspected"])
+        self.assertFalse(value["sample_execution_pass"])
+        self.assertFalse(value["performance_gate_pass"])
 
     def test_smoke_run_cannot_be_an_execution_pass(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
