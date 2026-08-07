@@ -284,7 +284,10 @@ disabled_module_test=true
 save_compatibility_test=true
 standard_stability_warmup_seconds=0
 standard_stability_sample_seconds=30
-content_freeze_stability_s15_s20=not_tested
+content_freeze_stability_s15_s20=true
+content_freeze_stability_performance_gates=6/6
+rc9_candidate_manifest_revision=f970a5342a96fa69121902368196acdf1a71aa83
+rc9_candidate_zip_sha256=3BB794F707B267FD6E5D32ED19F91E994814A38B5AA2E3B6CD49E43AD67EC4EC
 stress_test=true
 long_run_test=true
 
@@ -312,5 +315,6 @@ third_party_license_audit=true
 third_party_license_manifest_components=24
 unknown_or_unverified_sources_excluded=20
 implemented_external_elements_audited=22
+rc9_candidate_zip_license_member_audit=true
 final_1_0_zip_license_member_audit=not_tested
 ```

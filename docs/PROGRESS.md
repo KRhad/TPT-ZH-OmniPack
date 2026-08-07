@@ -103,7 +103,14 @@ rc9_current_scale_zh_gui_smoke=true
 rc9_full_bilingual_dpi_gui_matrix=false
 standard_stability_warmup_seconds=0
 standard_stability_sample_seconds=30
-content_freeze_stability_s15_s20=not_tested
+content_freeze_stability_s15_s20=true
+content_freeze_stability_passed=6/6
+rc9_30s_candidate_manifest_revision=f970a5342a96fa69121902368196acdf1a71aa83
+rc9_30s_candidate_zip_sha256=3BB794F707B267FD6E5D32ED19F91E994814A38B5AA2E3B6CD49E43AD67EC4EC
+rc9_30s_candidate_symbols_zip_sha256=CB929986FB9AD5812971511CFBE6BB6E458F0851FE9A68C9F57F3911F7E3AE75
+rc9_30s_candidate_exe_sha256=5B4F574B75E56A6FF311BAB4E8BB37494BD4BCC59B50817E645D861D0A3EDE6A
+rc9_30s_static_tests=35/35
+rc9_30s_python_tests=226_run_0_fail_2_skip
 long_run_7200s=not_tested
 total_playable_materials_minimum=true
 periodic_table_ui=true
@@ -134,6 +141,9 @@ release_ready=false
 - 新 harness smoke 分别为 S15 `20260802T012213Z-1a2471cc`、S16 `20260802T012217Z-7f81b8a7`、S17 `20260802T012221Z-4ee2a3c6`、S18 `20260802T012225Z-0b8f6e5a`、S19 `20260802T012418Z-cb4f9f99`；对应 fixture 为 `118/118/118`、`50/50/50`、`21/21/21`、`13/13/13`、`33/33/33`，S19 在 700 K 观察到 62 次受预算事件；
 - S20 `20260802T011044Z-a4fd999f` 精确枚举 487 个活动非别名类型、成功创建 484 个、确认 466 个普通菜单材料；OPS 往返、停止和 14 项恢复断言通过；
 - 六场均约 2 秒，只证明 fixture 和 harness 行为，`performance_gate_pass=false`；当前标准门禁改为无预热的 30 秒采样，仍必须逐项绑定 1.0.0 冻结 ZIP 并独立判定，不能用这些 smoke 冒充。
+- 最终候选普通 ZIP SHA-256 为 `3BB794F707B267FD6E5D32ED19F91E994814A38B5AA2E3B6CD49E43AD67EC4EC`，manifest 和 harness 均绑定 `f970a5342a96fa69121902368196acdf1a71aa83`；ZIP 内 EXE SHA-256 为 `5B4F574B75E56A6FF311BAB4E8BB37494BD4BCC59B50817E645D861D0A3EDE6A`，普通/符号 ZIP 审计通过且未覆盖旧候选；
+- S15-S20 最终 run 依次为 `20260807T162500Z-2ff5105c`、`20260807T162704Z-af7755ba`、`20260807T162905Z-15ad38a2`、`20260807T163103Z-249b9f96`、`20260807T163315Z-fea5a873`、`20260807T163721Z-2eb411d0`，实际采样均不少于 30 秒，精确 fixture 为 `118/118/118`、`50/50/50`、`21/21/21`、`13/13/13`、`33/33/33`、`487/484/466`；
+- 六项均通过事件、OPS、停止、恢复及独立 assessment，`performance_gate_pass=6/6`；没有崩溃、挂起、持续粒子增长或采样期实质内存增长信号。完整套件为 Meson static `35/35`、Python `226` 项（0 fail、2 skip）；7,200 秒长跑明确保持 `not_tested`。
 
 ## 1.0.0 第三方许可证闭包
 
@@ -345,14 +355,14 @@ release_ready=false
 - 开发验证 EXE 为 339,388,714 字节，SHA-256 `559986FE9A047194464F515DA66331C283510882CE4CBD05617D2A9935779CDE`；PE `FileVersion`、`ProductVersion` 和可见窗口标题均为 `1.0.0-rc9`；
 - 打包器和 ZIP 审计器同时要求 EXE 中存在请求版本的 ASCII 运行时标签与 UTF-16LE PE 资源标签；负向单测确认 `rc8` EXE 不能再伪装成 `rc9` 包；
 - 可信 Windows 应用控制在当前桌面尺度、1260×900 窗口和简体中文下实际打开周期表，进入氢元素详情，查看单质/同位素/氧化物/氢氧化物/酸分组，滚动、返回、关闭并选择氢；底部白色说明显示“长按查看完整说明”；
-- 上述仅是当前尺度的简中 smoke。英文、100%/125%/150% DPI 完整矩阵、真实按住手势、其他重点元素页和全部窗口仍为 `NOT RUN`；S15-S20 的 30 秒稳定性门禁、7,200 秒长跑、匿名克隆重建、tag 与 Release 仍未执行，`release_ready=false`。
+- 上述仅是当前尺度的简中 GUI smoke。S15-S20 的 30 秒稳定性门禁和 rc9 候选 ZIP 审计已完成；英文、100%/125%/150% DPI 完整矩阵、真实按住手势、其他重点元素页、7,200 秒长跑、匿名克隆重建、tag 与 Release 仍未执行，`release_ready=false`。
 
 ## 下一步
 
 1. 内容数量冻结为 466 个菜单材料、487 个活动非别名类型；不再为凑数新增重复空壳，保留 `533..575`、`642..669` 及 `686..1023` 的稳定容量；
 2. 完成最终第三方源码、字体、资源和发布通知审计；同概念来源只保留已登记的兼容玩法增量；
 3. 完成人工 GUI、双语往返、周期表、气体绘制、模块关闭加载对话框及 100%/125%/150% DPI 矩阵；
-4. 从干净提交构建并审计 1.0.0 冻结候选 ZIP，再绑定该 ZIP 顺序执行 S15–S20 各 30 秒稳定性门禁；7,200 秒综合长跑保持独立门禁，本轮不执行；
+4. 保留 S15–S20 30 秒稳定性证据及其候选 provenance；7,200 秒综合长跑继续作为独立 `not_tested` 门禁，除非另行明确要求，否则不启动；
 5. 保持 `release_ready=false`，直到匿名源码克隆重建、授权远端、正式 tag 和 Release 门禁全部真实完成。
 
 开发回归场景、构建脚本、测试矩阵和版本门禁继续保留；它们不属于已删除的玩家游戏任务。
