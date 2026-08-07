@@ -31,6 +31,7 @@ organic_batch2_worktree_base=a24af94f3a3efb2d1b87534128a7cd1b1a31ceca
 environment_batch1_worktree_base=44d95f433bc935d3d7d2af9a8be2233fa709e7ec
 environment_batch1_implementation_commit=f5cedf2ef474f3539221ea7965ee5cb690d1d678
 environment_batch1_evidence_commit=031c36ff7f2838e7f5d9e76bb2c8f1ec1e6fd424
+rc9_content_entry_worktree_base=e58a21e48eef7c1e9df3d093605d0766a4c2eca8
 pt_num=1024
 pmapbits=10
 official_active_elements=195
@@ -41,6 +42,9 @@ compatibility_aliases=1
 active_non_alias_types=487
 directly_selectable_materials=466
 total_playable_materials=466
+selectable_materials_all_entries=466
+standard_menu_materials=301
+periodic_only_omnipack_materials=165
 registered_slots=686
 reserved_slots=198
 unallocated_capacity_slots=338
@@ -89,6 +93,14 @@ organic_batch2_static_tests=28/28
 organic_batch2_python_tests=188/188
 organic_batch2_exe_bytes=319076020
 organic_batch2_exe_sha256=6008DC000511307F946C1AA8B0DB6259007DE95ADE9BD9829AA7B6A8CCF98362
+rc9_precommit_clean_build_targets=786/786
+rc9_precommit_static_tests=35/35
+rc9_precommit_python_tests=222/222
+rc9_precommit_exe_bytes=339388714
+rc9_precommit_exe_sha256=559986FE9A047194464F515DA66331C283510882CE4CBD05617D2A9935779CDE
+rc9_release_label_gate=true
+rc9_current_scale_zh_gui_smoke=true
+rc9_full_bilingual_dpi_gui_matrix=false
 total_playable_materials_minimum=true
 periodic_table_ui=true
 save_format=OPS1/BZip2
@@ -321,6 +333,15 @@ release_ready=false
 - 密度交换仍适用于粉末、液体和气体等可移动材料；黑洞、虚空、隐形墙及反物质/白洞特殊交互继续由官方例外控制；
 - `solid-barrier-probe` 遍历 29,278 组启用粉末/固体组合，并单独验证 `DUST/AERG`、`SAND/GRPH`、`DUST/CFRP`、空格移动、沙/水交换和特殊入口；
 - Windows 客户端增量链接通过；Meson static `33/33`、Python `218/218`（2 skip）通过。
+
+## rc9 内容入口与周期表详情预提交验证
+
+- 基于 `e58a21e48eef7c1e9df3d093605d0766a4c2eca8` 的当前工作树，从空目录 `build-1.0.0-rc9-content-entry-clean` 完成 `786/786`；这是独立构建目录验证，不冒充“干净 Git 提交构建”；
+- Meson static `35/35`、Python `222/222` 通过；同一 EXE 的模块直选、周期 118/118、五模块禁用和 mixed OPS 三进程双往返通过；
+- 开发验证 EXE 为 339,388,714 字节，SHA-256 `559986FE9A047194464F515DA66331C283510882CE4CBD05617D2A9935779CDE`；PE `FileVersion`、`ProductVersion` 和可见窗口标题均为 `1.0.0-rc9`；
+- 打包器和 ZIP 审计器同时要求 EXE 中存在请求版本的 ASCII 运行时标签与 UTF-16LE PE 资源标签；负向单测确认 `rc8` EXE 不能再伪装成 `rc9` 包；
+- 可信 Windows 应用控制在当前桌面尺度、1260×900 窗口和简体中文下实际打开周期表，进入氢元素详情，查看单质/同位素/氧化物/氢氧化物/酸分组，滚动、返回、关闭并选择氢；底部白色说明显示“长按查看完整说明”；
+- 上述仅是当前尺度的简中 smoke。英文、100%/125%/150% DPI 完整矩阵、真实按住手势、其他重点元素页和全部窗口仍为 `NOT RUN`；未生成 rc9 ZIP，正式压力、7,200 秒长跑、匿名克隆重建、tag 与 Release 也未执行，`release_ready=false`。
 
 ## 下一步
 

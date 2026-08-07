@@ -94,6 +94,14 @@ String CatalogContent(
 }
 }
 
+String ElementDescriptionWithLongPressHint(String description)
+{
+	auto hint = Localization::Ref().Tr("element.long_press_hint");
+	if (description.empty())
+		return hint;
+	return String::Build(std::move(description), " · ", hint);
+}
+
 void OpenElementInfo(Tool const *tool)
 {
 	if (!tool || !tool->IsElement)

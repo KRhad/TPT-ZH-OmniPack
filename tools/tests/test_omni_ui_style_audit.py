@@ -40,6 +40,36 @@ class OmniUiStyleAuditTests(unittest.TestCase):
         self.assertIsNotNone(audit_module.FORBIDDEN_STYLE.search("直接选择"))
         self.assertIsNotNone(audit_module.FORBIDDEN_STYLE.search("可直接放置"))
 
+    def test_periodic_grid_long_press_is_rejected(self) -> None:
+        target = ROOT / "src" / "gui" / "periodictable" / "PeriodicTableActivity.cpp"
+        original = audit_module.read_text
+        try:
+            audit_module.read_text = lambda path, errors: (
+                original(path, errors) + "\nSetLongPressCallback\n"
+                if path == target
+                else original(path, errors)
+            )
+            errors = audit_module.audit(ROOT)
+        finally:
+            audit_module.read_text = original
+        self.assertTrue(any("outer periodic grid" in error for error in errors))
+
+    def test_missing_long_press_hint_is_rejected(self) -> None:
+        target = ROOT / "src" / "gui" / "elementsearch" / "ElementInfo.cpp"
+        original = audit_module.read_text
+        try:
+            audit_module.read_text = lambda path, errors: (
+                original(path, errors).replace(
+                    'Tr("element.long_press_hint")', 'Tr("removed.long_press_hint")'
+                )
+                if path == target
+                else original(path, errors)
+            )
+            errors = audit_module.audit(ROOT)
+        finally:
+            audit_module.read_text = original
+        self.assertTrue(any("description hint marker" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -181,6 +181,9 @@ void ElementSearchActivity::searchTools(String query)
 	for (auto &match : matches)
 	{
 		Tool *tool = tools[match.toolIndex];
+		auto toolTip = tool->IsElement
+			? ElementDescriptionWithLongPressHint(tool->Description)
+			: tool->Description;
 
 		if(!firstResult)
 			firstResult = tool;
@@ -189,9 +192,9 @@ void ElementSearchActivity::searchTools(String query)
 		ToolButton * tempButton;
 
 		if(tempTexture)
-			tempButton = new ToolButton(current+viewPosition, ui::Point(30, 18), "", tool->Identifier, tool->Description);
+			tempButton = new ToolButton(current+viewPosition, ui::Point(30, 18), "", tool->Identifier, toolTip);
 		else
-			tempButton = new ToolButton(current+viewPosition, ui::Point(30, 18), tool->Name, tool->Identifier, tool->Description);
+			tempButton = new ToolButton(current+viewPosition, ui::Point(30, 18), tool->Name, tool->Identifier, toolTip);
 
 		tempButton->Appearance.SetTexture(std::move(tempTexture));
 		tempButton->Appearance.BackgroundInactive = tool->Colour.WithAlpha(0xFF);

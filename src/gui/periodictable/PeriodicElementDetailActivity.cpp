@@ -157,7 +157,7 @@ void PeriodicElementDetailActivity::BuildContent()
 	AddComponent(descriptionTitle);
 
 	auto description = elementTool && !elementTool->Description.empty()
-		? elementTool->Description
+		? ElementDescriptionWithLongPressHint(elementTool->Description)
 		: Localization::Ref().Tr("periodic.detail.not_implemented");
 	auto *descriptionLabel = new ui::Label(
 		ui::Point(8, 60), ui::Point(Size.X - 16, -1), description);

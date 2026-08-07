@@ -48,7 +48,7 @@ class TestReleaseAuditTests(unittest.TestCase):
             encoding="utf-8",
         )
         (source / "docs" / "RELEASE_CANDIDATE_1.0.0.md").write_text(
-            "1.0.0-rc8\n本地发布候选\n不是正式发布\n487\n484\n466\n"
+            "1.0.0-rc9\n本地发布候选\n不是正式发布\n487\n484\n466\n301\n165\n"
             "118/118\nrelease_ready=false\n未签名\n",
             encoding="utf-8",
         )
@@ -79,7 +79,20 @@ class TestReleaseAuditTests(unittest.TestCase):
                 f"{name} license\n", encoding="utf-8"
             )
         executable = source / "tpt-zh-omnipack.exe"
-        executable.write_bytes(b"MZ test executable")
+        release_labels = (
+            package_test_release.VERSION,
+            package_test_release.DEV_VERSION,
+            package_test_release.AUTOMATION_VERSION,
+            package_test_release.PREVIOUS_PRIVATE_TEST_VERSION,
+            package_test_release.PRIVATE_TEST_VERSION,
+            package_test_release.RELEASE_CANDIDATE_VERSION,
+        )
+        executable.write_bytes(
+            b"MZ test executable\0"
+            + b"\0".join(label.encode("ascii") for label in release_labels)
+            + b"\0"
+            + b"\0\0".join(label.encode("utf-16le") for label in release_labels)
+        )
         (source / "tpt-zh-omnipack.debug").write_bytes(b"MZ test debug symbols")
         return source
 
@@ -246,6 +259,28 @@ class TestReleaseAuditTests(unittest.TestCase):
             self.assertTrue(
                 any("duplicate ZIP member" in error or "manifest" in error for error in errors)
             )
+            self.assertTrue(any("release label" in error for error in errors))
+
+    def test_packaging_rejects_stale_executable_release_label(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            stale_version = "1.0.0-rc8"
+            (source / "tpt-zh-omnipack.exe").write_bytes(
+                b"MZ stale executable\0"
+                + stale_version.encode("ascii")
+                + b"\0"
+                + stale_version.encode("utf-16le")
+            )
+            with self.assertRaisesRegex(ValueError, "release label"):
+                package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.RELEASE_CANDIDATE_VERSION,
+                    kind="release-candidate",
+                    include_examples=False,
+                )
 
     def test_local_dev_package_includes_bound_examples(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -428,7 +463,7 @@ class TestReleaseAuditTests(unittest.TestCase):
             with zipfile.ZipFile(package) as archive:
                 fields, _ = test_release_audit.parse_manifest(
                     archive.read(
-                        "TPT-ZH-OmniPack-1.0.0-rc8-Windows-x64/TEST-MANIFEST.txt"
+                        "TPT-ZH-OmniPack-1.0.0-rc9-Windows-x64/TEST-MANIFEST.txt"
                     )
                 )
                 self.assertEqual(fields["kind"], "release-candidate")

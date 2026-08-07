@@ -602,6 +602,9 @@ void GameView::NotifyActiveMenuToolListChanged(GameModel * sender)
 	{
 		auto *tool = toolList[i];
 		auto tempTexture = tool->GetTexture(Vec2(26, 14));
+		auto toolTip = tool->IsElement
+			? ElementDescriptionWithLongPressHint(tool->Description)
+			: tool->Description;
 		ToolButton * tempButton;
 
 		//get decotool texture manually, since it changes depending on it's own color
@@ -609,9 +612,9 @@ void GameView::NotifyActiveMenuToolListChanged(GameModel * sender)
 			tempTexture = static_cast<DecorationTool *>(tool)->GetIcon(tool->ToolID, Vec2(26, 14));
 
 		if (tempTexture)
-			tempButton = new ToolButton(ui::Point(currentX, YRES+1), ui::Point(30, 18), "", tool->Identifier, tool->Description);
+			tempButton = new ToolButton(ui::Point(currentX, YRES+1), ui::Point(30, 18), "", tool->Identifier, toolTip);
 		else
-			tempButton = new ToolButton(ui::Point(currentX, YRES+1), ui::Point(30, 18), tool->Name, tool->Identifier, tool->Description);
+			tempButton = new ToolButton(ui::Point(currentX, YRES+1), ui::Point(30, 18), tool->Name, tool->Identifier, toolTip);
 
 		tempButton->ClipRect = RectSized(Vec2(1, RES.Y + 1), Vec2(RES.X - 1, 18));
 

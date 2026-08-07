@@ -1776,6 +1776,7 @@
   "encyclopedia.use": "Use",
   "encyclopedia.hazard": "Hazard",
   "encyclopedia.description": "Element description",
+  "element.long_press_hint": "Long-press for full details",
   "encyclopedia.heat_conductivity": "Heat conductivity",
   "encyclopedia.heat_capacity": "Heat capacity",
   "encyclopedia.low_temperature": "Low-temperature transition",

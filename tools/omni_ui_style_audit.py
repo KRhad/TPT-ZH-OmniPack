@@ -191,6 +191,9 @@ def audit(root: Path) -> list[str]:
     for forbidden in ("record->sourceMod", "record->license", "secondaryName"):
         if forbidden in element_info:
             errors.append(f"ElementInfo.cpp: player-facing full description contains {forbidden!r}")
+    for marker in ('Tr("element.long_press_hint")', '" · "'):
+        if marker not in element_info:
+            errors.append(f"ElementInfo.cpp: missing description hint marker {marker!r}")
 
     periodic_table = read_text(root / "src" / "gui" / "periodictable" / "PeriodicTableActivity.cpp", errors)
     periodic_detail = read_text(root / "src" / "gui" / "periodictable" / "PeriodicElementDetailActivity.cpp", errors)
@@ -198,11 +201,19 @@ def audit(root: Path) -> list[str]:
     for path, text, marker in (
         ("GameView.cpp", game_view, "SetLongPressCallback([tool] { OpenElementInfo(tool); });"),
         ("ElementSearchActivity.cpp", element_search, "SetLongPressCallback([tool] { OpenElementInfo(tool); });"),
-        ("PeriodicTableActivity.cpp", periodic_table, "SetLongPressCallback([tool] { OpenElementInfo(tool); });"),
         ("PeriodicElementDetailActivity.cpp", periodic_detail, "SetLongPressCallback([tool] { OpenElementInfo(tool); });"),
     ):
         if marker not in text:
             errors.append(f"{path}: missing full-description long-press binding")
+    if "SetLongPressCallback" in periodic_table:
+        errors.append("PeriodicTableActivity.cpp: outer periodic grid still handles long press")
+    for path, text in (
+        ("GameView.cpp", game_view),
+        ("ElementSearchActivity.cpp", element_search),
+        ("PeriodicElementDetailActivity.cpp", periodic_detail),
+    ):
+        if "ElementDescriptionWithLongPressHint" not in text:
+            errors.append(f"{path}: white element description lacks the long-press hint")
     for marker in (
         "searchField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;",
         "gameController->ShowElementDescription(selectedTool);",
@@ -221,6 +232,9 @@ def audit(root: Path) -> list[str]:
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             errors.append(f"{path}: invalid localization JSON: {exc}")
             continue
+        expected_hint = "长按查看完整说明" if locale == "zh-CN" else "Long-press for full details"
+        if language.get("element.long_press_hint") != expected_hint:
+            errors.append(f"{path}: element.long_press_hint is missing or incorrect")
         for key, value in language.items():
             if not isinstance(value, str):
                 continue

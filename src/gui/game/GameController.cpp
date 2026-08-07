@@ -46,6 +46,7 @@
 
 #include "gui/colourpicker/ColourPickerActivity.h"
 #include "gui/elementsearch/ElementSearchActivity.h"
+#include "gui/elementsearch/ElementInfo.h"
 #include "gui/periodictable/PeriodicTableActivity.h"
 #include "gui/filebrowser/FileBrowserActivity.h"
 #include "gui/profile/ProfileActivity.h"
@@ -1194,7 +1195,8 @@ void GameController::SetActiveTool(int toolSelection, ByteString identifier)
 void GameController::ShowElementDescription(Tool const *tool)
 {
 	if (tool && !tool->Description.empty())
-		gameView->ShowElementDescription(tool->Description);
+		gameView->ShowElementDescription(
+			ElementDescriptionWithLongPressHint(tool->Description));
 }
 
 void GameController::SetLastTool(Tool * tool)

@@ -5,7 +5,6 @@
 #include "graphics/Graphics.h"
 #include "gui/Style.h"
 #include "gui/dialogues/InformationMessage.h"
-#include "gui/elementsearch/ElementInfo.h"
 #include "gui/game/GameController.h"
 #include "gui/game/OmniContent.h"
 #include "gui/game/tool/Tool.h"
@@ -389,8 +388,6 @@ void PeriodicTableActivity::RebuildElements()
 			nullptr,
 			[this, details] { statusLabel->SetText(details); },
 		});
-		if (tool)
-			button->SetLongPressCallback([tool] { OpenElementInfo(tool); });
 		AddComponent(button);
 		elementButtons.push_back(button);
 	}

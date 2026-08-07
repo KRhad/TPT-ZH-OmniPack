@@ -187,10 +187,13 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
         errors.append("periodic table still lacks the material picker transition")
     if "gameController->SetActiveTool(0, tool)" in periodic_activity:
         errors.append("periodic grid still selects the elemental tool directly")
+    if "SetLongPressCallback" in periodic_activity:
+        errors.append("periodic grid still handles long press")
     for token in (
         "GetPeriodicContentLinks", "GetOmniElementSelectionRestriction",
         "ConfirmPrompt", "OpenOptions", "ui::ScrollPanel",
         'Tr("encyclopedia.description")', "elementTool->Description",
+        "ElementDescriptionWithLongPressHint",
     ):
         if token not in detail_activity:
             errors.append(f"periodic detail integration is missing {token}")

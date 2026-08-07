@@ -1,6 +1,6 @@
-# TPT-ZH-OmniPack 1.0.0-rc8 本地发布候选说明
+# TPT-ZH-OmniPack 1.0.0-rc9 本地发布候选说明
 
-这是 Windows x64 的 1.0.0-rc8 本地发布候选，不是正式发布。它用于把冻结内容、静态剥离二进制、许可证、存档、压力和长稳门禁绑定到同一个可审计 ZIP；在全部门禁完成前保持：
+这是 Windows x64 的 1.0.0-rc9 本地发布候选，不是正式发布。它用于验证新的内容入口、周期表材料选择器、静态剥离二进制、许可证、存档、压力和长稳门禁；在全部门禁完成前保持：
 
 ```text
 release_ready=false
@@ -14,13 +14,15 @@ release_ready=false
 periodic_table_elements=118/118
 active_non_alias_types=487
 creatable_types=484
-directly_selectable_menu_materials=466
+selectable_materials_all_entries=466
+standard_menu_materials=301
+periodic_only_omnipack_materials=165
 reaction_registry_entries=328
 highest_registered_stable_id=685
 element_capacity=1024
 ```
 
-三个数量含义不同：487 是活动非别名类型；其中 484 个可由引擎成功创建；其中 466 个是普通菜单可直接选择的材料。其余是擦除工具或官方隐藏过渡/辅助类型，不能冒充菜单材料。
+这些数量含义不同：487 是活动非别名类型，其中 484 个可由引擎成功创建；466 个真实材料可从全部入口选择。标准菜单展示 301 个，另有 165 个 OmniPack 周期单质、核素和无机物仅在周期表详情中显示。其余是擦除工具或官方隐藏过渡/辅助类型，不能冒充材料数量。
 
 ## 运行方式
 
@@ -28,6 +30,7 @@ element_capacity=1024
 2. 运行 `tpt-zh-omnipack.exe`。
 3. 默认简体中文，可在设置中切换英文。
 4. 周期表图标和元素搜索按钮位于最右侧竖列；周期表也可按 `T` 打开。
+5. 单击元素格后，先阅读“元素说明”，再从单质、同位素和无机化合物分组中选择；有机材料和合金/工程材料使用右侧独立菜单。
 
 ## 本候选仍未关闭的正式发布门禁
 

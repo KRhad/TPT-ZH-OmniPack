@@ -1776,6 +1776,7 @@
   "encyclopedia.use": "用途",
   "encyclopedia.hazard": "危险",
   "encyclopedia.description": "元素说明",
+  "element.long_press_hint": "长按查看完整说明",
   "encyclopedia.heat_conductivity": "导热性",
   "encyclopedia.heat_capacity": "热容量",
   "encyclopedia.low_temperature": "低温相变",

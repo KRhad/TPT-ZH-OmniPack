@@ -18,7 +18,7 @@ DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
 PREVIOUS_PRIVATE_TEST_VERSION = "0.6.0-dev"
 PRIVATE_TEST_VERSION = "0.7.0-dev"
-RELEASE_CANDIDATE_VERSION = "1.0.0-rc8"
+RELEASE_CANDIDATE_VERSION = "1.0.0-rc9"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -98,6 +98,8 @@ RELEASE_CANDIDATE_MARKERS = {
         "487",
         "484",
         "466",
+        "301",
+        "165",
         "118/118",
         "release_ready=false",
         "未签名",
@@ -323,6 +325,15 @@ def audit_package(
                 executable = archive.read(f"{stem}/{EXECUTABLE_NAME}")
                 if not executable.startswith(b"MZ"):
                     errors.append("packaged executable does not begin with PE MZ header")
+                release_markers = (
+                    version.encode("ascii"),
+                    version.encode("utf-16le"),
+                )
+                if any(marker not in executable for marker in release_markers):
+                    errors.append(
+                        "packaged executable release label does not match "
+                        f"manifest version: {version}"
+                    )
                 if any(marker.lower() in executable.lower() for marker in PATH_MARKERS):
                     errors.append("packaged executable leaks a development path")
                 if kind == "public-test":

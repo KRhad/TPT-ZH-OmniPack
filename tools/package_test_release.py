@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import hashlib
+import mmap
 import os
 from pathlib import Path
 import re
@@ -22,7 +23,7 @@ DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
 PREVIOUS_PRIVATE_TEST_VERSION = "0.6.0-dev"
 PRIVATE_TEST_VERSION = "0.7.0-dev"
-RELEASE_CANDIDATE_VERSION = "1.0.0-rc8"
+RELEASE_CANDIDATE_VERSION = "1.0.0-rc9"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -266,8 +267,22 @@ def validate_sources(
     validate_profile(version, kind, include_examples)
     if executable.name != EXECUTABLE_NAME:
         raise ValueError(f"executable must be named {EXECUTABLE_NAME!r}, got {executable.name!r}")
-    if not executable.is_file() or executable.read_bytes()[:2] != b"MZ":
+    if not executable.is_file():
         raise ValueError(f"executable is not a Windows PE file: {executable}")
+    with executable.open("rb") as executable_file:
+        if executable_file.read(2) != b"MZ":
+            raise ValueError(f"executable is not a Windows PE file: {executable}")
+        executable_file.seek(0)
+        with mmap.mmap(executable_file.fileno(), 0, access=mmap.ACCESS_READ) as image:
+            release_markers = (
+                version.encode("ascii"),
+                version.encode("utf-16le"),
+            )
+            if any(image.find(marker) < 0 for marker in release_markers):
+                raise ValueError(
+                    "executable release label does not match requested package "
+                    f"version {version}: {executable}"
+                )
     if not symbols.is_file() or symbols.stat().st_size == 0:
         raise ValueError(f"debug symbol file is missing or empty: {symbols}")
     options_path = source_root / "meson_options.txt"
