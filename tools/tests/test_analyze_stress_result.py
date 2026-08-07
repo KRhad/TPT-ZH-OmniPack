@@ -113,15 +113,18 @@ class AnalyzeStressResultTest(unittest.TestCase):
                 ("elapsed_seconds", "working_set_bytes", "private_bytes")
             )
             for index in range(max(8, len(particles))):
-                writer.writerow((index * 10, 120000000 - index, 110000000 - index))
+                writer.writerow((index, 120000000 - index, 110000000 - index))
 
     def write_process_series(
         self,
         directory: Path,
         working_set: list[int],
         private: list[int],
+        elapsed: list[float] | None = None,
     ) -> None:
         self.assertEqual(len(working_set), len(private))
+        elapsed = elapsed or list(range(len(working_set)))
+        self.assertEqual(len(working_set), len(elapsed))
         with (directory / "process-series.csv").open(
             "w", encoding="utf-8", newline=""
         ) as stream:
@@ -129,10 +132,10 @@ class AnalyzeStressResultTest(unittest.TestCase):
             writer.writerow(
                 ("elapsed_seconds", "working_set_bytes", "private_bytes")
             )
-            for index, (working, private_bytes) in enumerate(
-                zip(working_set, private)
+            for seconds, working, private_bytes in zip(
+                elapsed, working_set, private
             ):
-                writer.writerow((index, working, private_bytes))
+                writer.writerow((seconds, working, private_bytes))
 
     def test_stable_full_run_is_gated_by_evidence_completeness(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -180,6 +183,27 @@ class AnalyzeStressResultTest(unittest.TestCase):
             value = analysis.analyze(directory)
         self.assertEqual(value["working_set_tail_growth_bytes"], 49152)
         self.assertEqual(value["private_tail_growth_bytes"], 49152)
+        self.assertFalse(value["memory_leak_suspected"])
+        self.assertTrue(value["performance_gate_pass"])
+
+    def test_post_sample_memory_allocation_is_not_a_leak_signal(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [100, 90, 80, 80, 80, 80, 80, 80],
+                complete_gate_evidence=True,
+            )
+            self.write_process_series(
+                directory,
+                [120000000] * 7 + [150000000],
+                [110000000] * 7 + [140000000],
+                elapsed=[0, 5, 10, 15, 20, 25, 30, 30.5],
+            )
+            value = analysis.analyze(directory)
+        self.assertEqual(value["process_samples"], 8)
+        self.assertEqual(value["memory_process_samples"], 7)
+        self.assertEqual(value["memory_observation_cutoff_seconds"], 30.0)
         self.assertFalse(value["memory_leak_suspected"])
         self.assertTrue(value["performance_gate_pass"])
 

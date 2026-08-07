@@ -160,9 +160,25 @@ def analyze(directory: Path) -> dict[str, Any]:
         str(result["output_ops_second_sha256"]),
     )
 
+    memory_observation_cutoff_seconds = (
+        float(result["warmup_seconds"]) + float(result["sample_seconds"])
+    )
+    memory_processes = [
+        row
+        for row in processes
+        if row["elapsed_seconds"] <= memory_observation_cutoff_seconds
+    ]
+    if len(memory_processes) < 2:
+        raise ValueError(
+            "process-series.csv needs at least two samples inside the declared "
+            "warmup and sampling window"
+        )
+
     particle_tail = tail_values(frames, "particles", 0.5)
-    working_set_tail = tail_values(processes, "working_set_bytes", 0.25)
-    private_tail = tail_values(processes, "private_bytes", 0.25)
+    working_set_tail = tail_values(
+        memory_processes, "working_set_bytes", 0.25
+    )
+    private_tail = tail_values(memory_processes, "private_bytes", 0.25)
     sustained_particle_growth = strictly_observed_monotonic_growth(particle_tail)
     sustained_working_set_growth = materially_observed_memory_growth(
         working_set_tail
@@ -336,6 +352,8 @@ def analyze(directory: Path) -> dict[str, Any]:
         "result_json_sha256": sha256(result_path),
         "frame_samples": len(frames),
         "process_samples": len(processes),
+        "memory_process_samples": len(memory_processes),
+        "memory_observation_cutoff_seconds": memory_observation_cutoff_seconds,
         "observed_particle_min": int(min(row["particles"] for row in frames)),
         "observed_particle_max": int(max(row["particles"] for row in frames)),
         "particle_tail_first": int(particle_tail[0]),
@@ -388,9 +406,10 @@ def analyze(directory: Path) -> dict[str, Any]:
         "classification_note": (
             "unbounded_growth reports only whether the final half of observed "
             "particle samples is nondecreasing with at least one increase; "
-            "memory_leak_suspected requires the final quarter of both working-set "
-            "and private-byte samples to be nondecreasing and each to grow by at "
-            "least max(1 MiB, 1% of its tail-first value). "
+            "memory_leak_suspected uses only process samples inside the declared "
+            "warmup plus sampling window and requires the final quarter of both "
+            "working-set and private-byte samples to be nondecreasing and each to "
+            "grow by at least max(1 MiB, 1% of its tail-first value). "
             "This is not a proof of long-term boundedness."
         ),
     }
