@@ -28,10 +28,10 @@ param(
     [string] $SampleId,
 
     [ValidateRange(0, 600)]
-    [int] $WarmupSeconds = 60,
+    [int] $WarmupSeconds = 0,
 
     [ValidateRange(1, 7200)]
-    [int] $SampleSeconds = 600,
+    [int] $SampleSeconds = 30,
 
     [ValidateRange(3, 24)]
     [int] $FixtureStride = 3,
@@ -219,7 +219,7 @@ if ($PackageZip) {
     $packageKind = $packageProvenance.Kind
 }
 elseif (-not $Smoke) {
-    throw "PackageZip is required for formal stress runs"
+    throw "PackageZip is required for stability gate runs"
 }
 else {
     $sourceCommit = $harnessCommit

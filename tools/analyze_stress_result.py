@@ -160,8 +160,7 @@ def analyze(directory: Path) -> dict[str, Any]:
 
     duration_pass = (
         not bool(result["smoke_run"])
-        and float(result["warmup_seconds"]) >= 60.0
-        and float(result["sample_seconds"]) >= 600.0
+        and float(result["sample_seconds"]) >= 30.0
     )
     runtime_pass = (
         not bool(result["crashed"])

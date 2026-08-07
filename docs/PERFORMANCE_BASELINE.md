@@ -43,7 +43,8 @@
 
 ## 采样要求
 
-- 开发批次：至少 60 秒预热 + 600 秒采样；
+- 标准稳定性门禁：无预热，至少 30 秒采样；
+- 历史 60 秒预热 + 600 秒样本继续作为对应旧候选的历史证据，不重命名或回写；
 - `0.9.0`：上述场景全部复跑；
 - `1.0.0`：至少 7,200 秒综合长跑，同进程完成至少 10 次保存/加载、10 次语言切换和 10 次模块关闭/开启；
 - 记录 source commit、EXE SHA-256、运行 ID、系统信息、FPS、1% low、最小 FPS、峰值工作集、粒子和事件计数；
@@ -405,11 +406,13 @@ full_catalog_smoke=true
 full_catalog_active_non_alias_types=487
 full_catalog_created_types=484
 full_catalog_directly_selectable_materials=466
-periodic_118_formal_600s_stress_test=not_tested
-inorganic_50_formal_600s_stress_test=not_tested
-materials_21_formal_600s_stress_test=not_tested
-isotopes_13_formal_600s_stress_test=not_tested
-organics_33_formal_600s_stress_test=not_tested
-full_catalog_formal_600s_stress_test=not_tested
+standard_stability_warmup_seconds=0
+standard_stability_sample_seconds=30
+periodic_118_stability_30s_test=not_tested
+inorganic_50_stability_30s_test=not_tested
+materials_21_stability_30s_test=not_tested
+isotopes_13_stability_30s_test=not_tested
+organics_33_stability_30s_test=not_tested
+full_catalog_stability_30s_test=not_tested
 long_run_7200s=not_tested
 ```

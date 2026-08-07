@@ -49,8 +49,8 @@ class AnalyzeStressResultTest(unittest.TestCase):
             "exe_sha256": "C" * 64,
             "input_ops_sha256": digest(ops1),
             "output_ops_second_sha256": digest(ops2),
-            "warmup_seconds": 0.0 if smoke else 60.0,
-            "sample_seconds": 2.0 if smoke else (7200.0 if long_run else 600.0),
+            "warmup_seconds": 60.0 if long_run and not smoke else 0.0,
+            "sample_seconds": 2.0 if smoke else (7200.0 if long_run else 30.0),
             "initial_particles": particles[0],
             "peak_particles": max(particles),
             "final_particles": particles[-1],
@@ -152,6 +152,27 @@ class AnalyzeStressResultTest(unittest.TestCase):
             value = analysis.analyze(directory)
         self.assertFalse(value["duration_pass"])
         self.assertFalse(value["sample_execution_pass"])
+
+    def test_standard_gate_requires_at_least_thirty_seconds(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [100, 90, 80, 80, 80, 80, 80, 80],
+                complete_gate_evidence=True,
+            )
+            result_path = directory / "result.json"
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            result["sample_seconds"] = 29.999
+            result_path.write_text(json.dumps(result), encoding="utf-8")
+            value = analysis.analyze(directory)
+            self.assertFalse(value["duration_pass"])
+            self.assertFalse(value["performance_gate_pass"])
+            result["sample_seconds"] = 30.0
+            result_path.write_text(json.dumps(result), encoding="utf-8")
+            value = analysis.analyze(directory)
+        self.assertTrue(value["duration_pass"])
+        self.assertTrue(value["performance_gate_pass"])
 
     def test_ops_hash_tampering_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

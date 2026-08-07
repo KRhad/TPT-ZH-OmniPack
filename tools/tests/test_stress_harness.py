@@ -58,9 +58,9 @@ class StressHarnessContractTest(unittest.TestCase):
             self.assertIn(f'["{sample}"]', self.lua)
             self.assertIn(f'"{sample}"', self.powershell)
 
-    def test_gate_defaults_are_ten_minutes_after_one_minute_warmup(self) -> None:
-        self.assertRegex(self.powershell, r"\[int\] \$WarmupSeconds = 60")
-        self.assertRegex(self.powershell, r"\[int\] \$SampleSeconds = 600")
+    def test_gate_defaults_are_thirty_seconds_without_warmup(self) -> None:
+        self.assertRegex(self.powershell, r"\[int\] \$WarmupSeconds = 0")
+        self.assertRegex(self.powershell, r"\[int\] \$SampleSeconds = 30")
         self.assertIn("$SampleSeconds = 2", self.powershell)
         self.assertIn('gate_result = if ($Smoke) { "not_tested" }', self.powershell)
 
@@ -80,6 +80,7 @@ class StressHarnessContractTest(unittest.TestCase):
 
     def test_long_run_performs_required_same_process_cycles(self) -> None:
         self.assertIn("[switch] $LongRun", self.powershell)
+        self.assertIn("$WarmupSeconds = 60", self.powershell)
         self.assertIn("$SampleSeconds = 7200", self.powershell)
         self.assertIn('LongRun requires S20-FULL-CATALOG', self.powershell)
         self.assertIn('"long_run=$(([bool]$LongRun)', self.powershell)
@@ -112,8 +113,8 @@ class StressHarnessContractTest(unittest.TestCase):
             self.assertIn(filename, self.powershell)
         self.assertIn('GetString($bytes, 0, 4) -ne "OPS1"', self.powershell)
 
-    def test_formal_runs_bind_the_package_manifest_and_executable(self) -> None:
-        self.assertIn("PackageZip is required for formal stress runs", self.powershell)
+    def test_stability_gate_runs_bind_the_package_manifest_and_executable(self) -> None:
+        self.assertIn("PackageZip is required for stability gate runs", self.powershell)
         self.assertIn("TEST-MANIFEST.txt", self.powershell)
         self.assertIn(
             "kind=(public-test|local-dev|release-candidate)", self.powershell

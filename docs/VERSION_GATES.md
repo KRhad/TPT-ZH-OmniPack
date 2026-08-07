@@ -282,6 +282,9 @@ font_visual_test=true
 ops_roundtrip_test=true
 disabled_module_test=true
 save_compatibility_test=true
+standard_stability_warmup_seconds=0
+standard_stability_sample_seconds=30
+content_freeze_stability_s15_s20=not_tested
 stress_test=true
 long_run_test=true
 
