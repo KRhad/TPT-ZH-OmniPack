@@ -878,6 +878,11 @@ void GameModel::SetSave(std::unique_ptr<SaveInfo> newSave, bool invertIncludePre
 		view->PauseRendererThread();
 		ren->ClearAccumulation();
 		sim->Load(saveData, !invertIncludePressure, { 0, 0 });
+		// clear_sim resets frameCount and ensureDeterminism, and loading particles
+		// can invoke Create callbacks that advance the RNG. Restore the saved
+		// continuation state after loading. The first application is still needed
+		// because clear_sim uses the save's Air, edge and gravity settings.
+		SaveToSimParameters(*saveData);
 		// This save was created before logging existed
 		// Add in the correct info
 		if (saveData->authors.size() == 0)
@@ -930,6 +935,8 @@ void GameModel::SetSaveFile(std::unique_ptr<SaveFile> newSave, bool invertInclud
 		view->PauseRendererThread();
 		ren->ClearAccumulation();
 		sim->Load(saveData, !invertIncludePressure, { 0, 0 });
+		// See SetSave: restore deterministic continuation state after loading.
+		SaveToSimParameters(*saveData);
 		Client::Ref().OverwriteAuthorInfo(saveData->authors);
 	}
 
