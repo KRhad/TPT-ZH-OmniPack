@@ -23,7 +23,6 @@
 #include <iostream>
 #include <numbers>
 #include <set>
-#include <stack>
 
 namespace
 {
@@ -731,7 +730,7 @@ bool Simulation::flood_water(int x, int y, int i)
 			}
 			while (x2 < XRES-CELL)
 			{
-				if (elements[TYP(pmap[y][x2 + 1])].Falldown != 2 || bitmap[(y * XRES) + x1 - 1])
+				if (elements[TYP(pmap[y][x2 + 1])].Falldown != 2 || bitmap[(y * XRES) + x2 + 1])
 					break;
 				x2++;
 			}
@@ -1930,10 +1929,14 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	{
 		int oldX = (int)(parts[p].x + 0.5f);
 		int oldY = (int)(parts[p].y + 0.5f);
-		if (pmap[oldY][oldX] && ID(pmap[oldY][oldX]) == p)
-			pmap[oldY][oldX] = 0;
-		if (photons[oldY][oldX] && ID(photons[oldY][oldX]) == p)
-			photons[oldY][oldX] = 0;
+
+		if (InBounds(oldX, oldY))
+		{
+			if (pmap[oldY][oldX] && ID(pmap[oldY][oldX]) == p)
+				pmap[oldY][oldX] = 0;
+			if (photons[oldY][oldX] && ID(photons[oldY][oldX]) == p)
+				photons[oldY][oldX] = 0;
+		}
 
 		oldType = parts[p].type;
 
