@@ -12,7 +12,7 @@ foundation work. No production OmniAtmosphere state or solver will be integrated
 |---:|---|---|
 | -1 | external research and license audit | YELLOW: classifications complete; no new artifact redistribution authorized |
 | 0 | latest upstream adaptation | GREEN source sub-gate; G0 overall RED |
-| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED |
+| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; strict/fast build modes complete |
 | 2 | physical scale and unit system | proposal written / RED |
 | 3 | AtmosphereBench | planned / BLOCKED by Phase 1-2 foundations |
 | 4 | solver selection | BLOCKED |
@@ -28,8 +28,8 @@ foundation work. No production OmniAtmosphere state or solver will be integrated
 
 The next integration commits should be small and independently reversible:
 
-1. `tests/strict-fp`: add explicit Legacy-fast and OmniCore-strict build modes without
-   changing current simulation behavior.
+1. `tests/strict-fp`: COMPLETE in `abeca81bd`; explicit Legacy-fast/default and
+   strict modes build and pass the bounded suites. Numerical comparison remains open.
 2. `tests/kernel-benchmark`: add an uncapped fixed-step runner and structured machine/
    build/result manifest by extending existing infrastructure.
 3. `tests/characterization`: create C01-C14 deterministic generators/saves and

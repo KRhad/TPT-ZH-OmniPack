@@ -5,7 +5,7 @@
 | ID | Severity | Area | Evidence / failure mode | Required mitigation | Gate |
 |---|---|---|---|---|---|
 | C-01 | CRITICAL | correctness/performance | 4 mm cells with real sound speed make explicit compressible CFL far smaller than a game tick | select and validate time/acoustic/all-speed policy in AtmosphereBench | RED |
-| C-02 | CRITICAL | numerical | global `-ffast-math` and unsafe math can invalidate conservation and finite checks | strict target plus double/float/fast differential matrix | RED |
+| C-02 | CRITICAL | numerical | Legacy optimized builds use `-ffast-math`; an explicit strict build now exists, but conservation/finite comparisons do not | double/float/fast fixed-step differential matrix | YELLOW foundation, RED comparison |
 | C-03 | CRITICAL | conservation | floors/clamps could silently create mass/species/energy | correction ledger, limits and fail-closed tests | RED |
 | C-04 | HIGH | correctness | Legacy particle updates directly write Air and depend on iteration/same-frame state | characterization saves, AST/manual inventory, compatibility adapter | RED |
 | C-05 | HIGH | correctness | scale/time/effective depth are not yet accepted | Phase 2 contract and dimensional checks | RED |
@@ -39,6 +39,9 @@ DATA_LOSS_RISK=not_observed
 BUILD=GREEN
 BOUNDED_LEGACY_LUA_OPS=GREEN
 UPSTREAM_SOURCE_ADAPTATION=GREEN
+LEGACY_FAST_BUILD=GREEN
+STRICT_FP_BUILD=GREEN
+STRICT_FAST_NUMERICAL_COMPARISON=RED
 BENCHMARK=RED
 NUMERICAL_FOUNDATION=RED
 PHYSICAL_SCALE=RED
