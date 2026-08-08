@@ -2093,8 +2093,8 @@ static int resetVelocity(lua_State *L)
 
 	x1 = std::clamp(x1, 0, XCELLS - 1);
 	y1 = std::clamp(y1, 0, YCELLS - 1);
-	width = std::clamp(width, 0, XCELLS - 1 - x1);
-	height = std::clamp(height, 0, YCELLS - 1 - y1);
+	width = std::clamp(width, 0, XCELLS - x1);
+	height = std::clamp(height, 0, YCELLS - y1);
 
 	for (int nx = x1; nx < x1 + width; nx++)
 		for (int ny = y1; ny < y1 + height; ny++)
