@@ -69,6 +69,9 @@ private:
 	ui::Fade toolTipPresence{ ui::Fade::LinearProfile{ 120.f, 60.f }, 0, 0 };
 	String toolTip;
 	bool isToolTipFadingIn;
+	bool elementDescriptionActive = false;
+	bool suppressToolTipsUntilMouseMove = false;
+	unsigned long elementDescriptionShownAt = 0;
 	ui::Point toolTipPosition;
 	ui::Fade infoTipPresence{ ui::Fade::LinearProfile{ 60.f, 60.f }, 0, 0 };
 	String infoTip;

@@ -13,6 +13,7 @@
 - 精简主材料菜单，保留官方元素、OmniPack 独立玩法材料和必要快捷入口；
 - 支持中文名、英文名、元素符号、化学式、原子序数和内部代号搜索；
 - 195 个官方规范元素具备双语完整说明，OmniPack 材料另有配方、生产、用途和危险信息；
+- 所有玩家可见的说明字段均纳入发布字体覆盖门禁，触屏选择后的简要说明会自动淡出；
 - Windows 与 Android 共用模拟规则、稳定 ID、模块开关和 OPS 存档映射；
 - 开始界面直接显示项目 GitHub 地址，并通过公开静态清单检查更新。
 
@@ -61,11 +62,13 @@ Windows 与 Android 开始界面均显示 `https://github.com/KRhad/TPT-ZH-OmniP
 公开源码不包含 `tests/`、`tools/tests/`、`tools/runtime/`、压力测试脚本与样本、测试报告、日志、截图、私测存档、性能工件、本地配置或个人数据。使用 Meson 时关闭开发测试目标：
 
 ```powershell
-meson setup build --buildtype=release -Dbuild_tests=false -Dstatic=prebuilt -Drelease_label=1.0.0
+meson setup build --buildtype=release -Dbuild_tests=false -Dstatic=prebuilt -Drelease_label=1.0.0 -Doverride_display_version=1.0.0 -Dupdate_build=1
 meson compile -C build
 ```
 
-Android ARM64 使用 `tools/build_android.ps1`。需要 Android SDK、NDK r29、Build Tools 35.0.0、Platform 31、JDK 8、JDK 17+ 与 MSYS2 UCRT64；脚本固定 `build_tests=false`，密钥必须位于仓库外。详细参数见 [Android 构建说明](./docs/ANDROID_PORT.md)。
+`update_build=1` 是 1.0.0 公开快照的内部更新修订号，不改变界面、文件名或 Android `versionName` 中的 `1.0.0`。它让较早的 1.0.0 build 0 客户端只更新一次，并防止更新后的客户端反复提示同一资产。
+
+Android ARM64 使用 `tools/build_android.ps1 -UpdateBuild 1 -AndroidVersionCode 1000001`。需要 Android SDK、NDK r29、Build Tools 35.0.0、Platform 31、JDK 8、JDK 17+ 与 MSYS2 UCRT64；脚本固定 `build_tests=false`，密钥必须位于仓库外。详细参数见 [Android 构建说明](./docs/ANDROID_PORT.md)。
 
 ## 许可证与来源
 

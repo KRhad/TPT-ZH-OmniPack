@@ -12,6 +12,11 @@ if override_display_version != ''
 endif
 display_version = display_version.split('.')
 upstream_version = upstream_version.split('.')
+display_version_patch = display_version[2].to_int()
+update_build = get_option('update_build')
+if update_build < 0
+	update_build = display_version_patch
+endif
 
 x86_kill_denormals = is_x86 and x86_sse_level != 0
 
@@ -28,7 +33,8 @@ conf_data.set('MOD', is_mod.to_string())
 conf_data.set('SNAPSHOT', is_snapshot.to_string())
 conf_data.set('DISPLAY_VERSION_MAJOR', display_version[0].to_int())
 conf_data.set('DISPLAY_VERSION_MINOR', display_version[1].to_int())
-conf_data.set('BUILD_NUM', display_version[2].to_int())
+conf_data.set('DISPLAY_VERSION_PATCH', display_version_patch)
+conf_data.set('BUILD_NUM', update_build)
 android_version_code = get_option('android_version_code')
 if android_version_code == 0
 	android_version_code = display_version[0].to_int() * 1000000 + display_version[1].to_int() * 1000 + display_version[2].to_int()

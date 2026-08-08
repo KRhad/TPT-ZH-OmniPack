@@ -7,7 +7,10 @@ TPT-ZH-OmniPack 1.0.0
 - Added dedicated Organic Materials and Alloys & Engineering categories.
 - Improved bilingual material search, scrolling, long-form descriptions, description layout, and right-toolbar interaction.
 - Completed bilingual long-form description routes for canonical upstream and OmniPack materials.
+- Fixed stale Android touch hover repeatedly renewing the brief material description; it now fades automatically and is forcibly hidden within 2.5 seconds.
+- Added release-font coverage gates for full descriptions, recipes, production, uses, and hazards so missing glyphs cannot appear as question marks or replacement symbols.
 - Retained stable material IDs, OPS save mappings, module behavior, Lua selection, and high-ID compatibility.
 - Kept the game as a freely selectable sandbox without tasks, achievements, technology trees, or forced unlocks.
 - Added an ARM64 Android direct port using the same simulation, stable IDs, bilingual resources, and OPS save format.
 - Added touch-first local save access, online-browser long press, and reliable in-app language restart on Android.
+- Added internal update build 1 while retaining the visible 1.0.0 version, allowing earlier 1.0.0 build 0 snapshots to update once without repeated prompts.

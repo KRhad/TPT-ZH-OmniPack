@@ -13,6 +13,7 @@ param(
     [string]$UpdateServer = 'https://raw.githubusercontent.com/KRhad/TPT-ZH-OmniPack/public-source',
     [string]$ProjectUrl = 'https://github.com/KRhad/TPT-ZH-OmniPack',
     [int]$AndroidVersionCode = 0,
+    [int]$UpdateBuild = -1,
     [string]$Keystore = '',
     [string]$KeyAlias = 'androidkey',
     [switch]$RequireCleanSource
@@ -46,6 +47,9 @@ function MesonPath([string]$Path) {
 
 if (-not $SdkRoot) {
     throw 'Set ANDROID_SDK_ROOT or pass -SdkRoot'
+}
+if ($UpdateBuild -lt -1 -or $UpdateBuild -gt 999) {
+    throw 'UpdateBuild must be -1 or an integer from 0 through 999'
 }
 
 $SdkRoot = Resolve-RequiredPath $SdkRoot 'Android SDK'
@@ -152,6 +156,9 @@ $setupArgs = @(
     "-Dandroid_version_code=$AndroidVersionCode",
     "-Dandroid_keyalias=$KeyAlias"
 )
+if ($UpdateBuild -ge 0) {
+    $setupArgs += "-Dupdate_build=$UpdateBuild"
+}
 if ($Keystore) {
     $Keystore = Resolve-RequiredPath $Keystore 'Android keystore'
     $setupArgs += "-Dandroid_keystore=$Keystore"
@@ -271,6 +278,7 @@ $manifest = [ordered]@{
     package_name = $packageName
     version_code = [int64]$versionCode
     version_name = $versionName
+    update_build = if ($UpdateBuild -ge 0) { $UpdateBuild } else { [int]($Version.Split('.')[2]) }
     minimum_sdk = [int]$minimumSdk
     target_sdk = [int]$targetSdk
     abi = $nativeCode
@@ -297,6 +305,7 @@ $manifest = [ordered]@{
 Write-Output "android_apk=$outputApk"
 Write-Output "android_apk_sha256=$hash"
 Write-Output "android_apk_package=$packageLine"
+Write-Output "android_update_build=$(if ($UpdateBuild -ge 0) { $UpdateBuild } else { [int]($Version.Split('.')[2]) })"
 Write-Output "android_apk_signed=$([bool]$Keystore)"
 Write-Output 'android_apk_zipalign_16k=true'
 Write-Output 'android_elf_load_alignment_16k=true'

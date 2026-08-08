@@ -23,15 +23,17 @@ Android 版与 Windows 版使用同一套模拟、元素登记、反应、中文
 $env:ANDROID_SDK_ROOT = 'D:\CodexWork\AndroidToolchain\sdk'
 $env:JAVA8_HOME = '<JDK 8 根目录>'
 $env:JAVA_HOME = '<JDK 17 或更高版本根目录>'
-.\tools\build_android.ps1 -RequireCleanSource
+.\tools\build_android.ps1 -RequireCleanSource -UpdateBuild 1 -AndroidVersionCode 1000001
 ```
 
 不提供密钥时生成对齐后的未签名 APK。若要生成可安装测试包，应在仓库外准备密钥，并通过进程环境传入密码：
 
 ```powershell
 $env:ANDROID_KEYSTORE_PASS = '<在本机设置，不写入仓库>'
-.\tools\build_android.ps1 -Keystore 'D:\安全位置\omnipack-test.jks'
+.\tools\build_android.ps1 -Keystore 'D:\安全位置\omnipack-test.jks' -UpdateBuild 1 -AndroidVersionCode 1000001
 ```
+
+公开 1.0.0 快照保持 `versionName=1.0.0`，内部使用 `update_build=1` 与递增的 `versionCode=1000001`。这样较早的 1.0.0 build 0 可以升级一次，而更新后的客户端不会循环下载同一版本。
 
 构建图保留本地未剥离 ARM64 库供诊断，但 APK 只封装移除调试段和非必要符号后的副本。构建脚本固定使用 `build_tests=false`，检查 APK Manifest、16 KB ZIP 对齐和签名，并在 `artifacts/android/1.0.0/` 输出：
 

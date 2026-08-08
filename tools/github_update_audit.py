@@ -32,6 +32,7 @@ def validate_manifest(path: Path, asset_root: Path | None = None) -> dict[str, b
         "manifest_schema": document.get("SchemaVersion") == 1,
         "manifest_product": document.get("Product") == "TPT-ZH-OmniPack",
         "manifest_project_url": document.get("ProjectURL") == PROJECT_URL,
+        "manifest_vcs_tag": isinstance(document.get("VcsTag"), str) and bool(document["VcsTag"]),
         "manifest_release_conservative": document.get("ReleaseReady") is False,
         "manifest_no_public_tests": document.get("PublicTestsIncluded") is False,
         "manifest_platforms": set(platforms) == {"WIN64", "ANDROIDARM64"},
@@ -80,6 +81,7 @@ def audit_source(root: Path) -> dict[str, bool]:
     en = json.loads((root / "src/lang/en-US.json").read_text(encoding="utf-8"))
     zh = json.loads((root / "src/lang/zh-CN.json").read_text(encoding="utf-8"))
     package_tool = root / "tools/package_github_update.py"
+    android_manifest = (root / "android/AndroidManifest.template.xml").read_text(encoding="utf-8")
     return {
         "github_update_server_default": UPDATE_SERVER in meson_options,
         "automatic_checks_enabled_default": "'ignore_updates'" in meson_options
@@ -121,6 +123,10 @@ def audit_source(root: Path) -> dict[str, bool]:
         and PROJECT_URL in meson_options,
         "startup_github_localized": "intro.project.github" in en and "intro.project.github" in zh,
         "package_generator_present": package_tool.is_file(),
+        "internal_update_build_configurable": "'update_build'" in meson_options
+        and "get_option('update_build')" in (root / "src/meson.build").read_text(encoding="utf-8"),
+        "android_marketing_version_stable": "@DISPLAY_VERSION_PATCH@" in android_manifest
+        and "@BUILD_NUM@" not in android_manifest,
     }
 
 

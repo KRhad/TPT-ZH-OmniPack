@@ -2,8 +2,9 @@
   "SchemaVersion": 1,
   "Product": "TPT-ZH-OmniPack",
   "ProjectURL": "https://github.com/KRhad/TPT-ZH-OmniPack",
-  "SourceRevision": "f6ac7ce6501773fbea41f5229b855ea2feb01717",
-  "PublishedAt": "2026-08-08T10:38:45Z",
+  "SourceRevision": "4d77fe58b2327721db4ada2a8389a06b743bd783",
+  "VcsTag": "v100.0.399-213-g4d77fe58b",
+  "PublishedAt": "2026-08-08T13:24:32Z",
   "Session": true,
   "MessageOfTheDay": "",
   "Notifications": [],
@@ -11,24 +12,24 @@
     "Stable": {
       "Major": 1,
       "Minor": 0,
-      "Build": 0,
+      "Build": 1,
       "Version": "1.0.0",
-      "VersionCode": 1000000,
+      "VersionCode": 1000001,
       "MinimumVersion": "1.0.0",
-      "Changelog": "TPT-ZH-OmniPack 1.0.0：Windows 与 Android 共用材料系统、完整周期表、完整元素说明，并使用经大小与 SHA-256 双重校验的 GitHub 自动更新。",
+      "Changelog": "TPT-ZH-OmniPack 1.0.0 build 1：修复触屏说明自动淡出并补齐完整说明字体，保留稳定 ID 与双平台更新校验。",
       "ReleaseNotesURL": "https://github.com/KRhad/TPT-ZH-OmniPack",
       "Platforms": {
         "WIN64": {
           "File": "/updates/TPT-ZH-OmniPack-1.0.0-Windows-x64.update",
           "Format": "butt-executable",
-          "Size": 5689686,
-          "Sha256": "E3A5BFF44EC9A7B553FE3DB32A29222C2B1DE8E51047F5E35493A7A26572B242"
+          "Size": 5692073,
+          "Sha256": "DF73052014E4A79C9E6FC4789A547B2DC389D1BA1238ECDCCBCD60BB6D08AD52"
         },
         "ANDROIDARM64": {
           "File": "/updates/TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk",
           "Format": "android-apk",
           "Size": 4641323,
-          "Sha256": "A91D866148F641E5242543A064628D950A53FF08CA6222EBF6313FE9A29AC563"
+          "Sha256": "4D6C7A70DFD70C9C9C60F4F606068CEB1F5346AC5B0CB164CA7B7063A7D7A40C"
         }
       }
     }
