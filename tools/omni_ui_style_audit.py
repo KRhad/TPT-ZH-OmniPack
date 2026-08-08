@@ -210,10 +210,43 @@ def audit(root: Path) -> list[str]:
     for path, text in (
         ("GameView.cpp", game_view),
         ("ElementSearchActivity.cpp", element_search),
-        ("PeriodicElementDetailActivity.cpp", periodic_detail),
     ):
         if "ElementDescriptionWithLongPressHint" not in text:
             errors.append(f"{path}: white element description lacks the long-press hint")
+    for marker in ('Tr("element.long_press_hint")', 'String::Build("· ",'):
+        if marker not in periodic_detail:
+            errors.append(
+                "PeriodicElementDetailActivity.cpp: standalone long-press hint "
+                f"is missing {marker!r}"
+            )
+    for forbidden in (
+        'Tr("encyclopedia.description")',
+        "elementTool->Description",
+        "ElementDescriptionWithLongPressHint",
+    ):
+        if forbidden in periodic_detail:
+            errors.append(
+                "PeriodicElementDetailActivity.cpp: periodic picker repeats the "
+                f"element description via {forbidden!r}"
+            )
+    for marker in (
+        "void GameView::LayoutToolTip",
+        "constexpr int TooltipMaxWidth = 420;",
+        "ui::TextWrapper wrapper;",
+        "std::clamp(preferredY, minimumY, maximumY)",
+        "g->BlendFilledRect(",
+    ):
+        if marker not in game_view:
+            errors.append(f"GameView.cpp: bounded tooltip layout is missing {marker!r}")
+    for forbidden in (
+        "Size.X-27-(Graphics::TextSize(toolTip).X - 1)",
+        "Size.X - 27 - (Graphics::TextSize(toolTip).X - 1)",
+    ):
+        if forbidden in game_view:
+            errors.append(
+                "GameView.cpp: tooltip still uses unbounded right alignment "
+                f"{forbidden!r}"
+            )
     for marker in (
         "searchField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;",
         "gameController->ShowElementDescription(selectedTool);",
@@ -222,9 +255,20 @@ def audit(root: Path) -> list[str]:
             errors.append(f"PeriodicTableActivity.cpp: missing interaction marker {marker!r}")
     if "constexpr int MaterialColumns = 2;" not in periodic_detail:
         errors.append("PeriodicElementDetailActivity.cpp: material picker is not two-column")
-    if 'secondaryName, " · ",' in periodic_detail:
-        errors.append("PeriodicElementDetailActivity.cpp: English subtitle remains below the title")
-
+    if 'secondaryName, " · ", Localization::Ref().Tr("periodic.detail.atomic_number")' not in periodic_detail:
+        errors.append(
+            "PeriodicElementDetailActivity.cpp: secondary-language name is not "
+            "shown above the material list"
+        )
+    for marker in (
+        'Tr("periodic.detail.material_count")',
+        "relatedMaterials.size()",
+    ):
+        if marker not in periodic_detail:
+            errors.append(
+                "PeriodicElementDetailActivity.cpp: related-material count is "
+                f"missing {marker!r}"
+            )
     for locale in ("en-US", "zh-CN"):
         path = root / "src" / "lang" / f"{locale}.json"
         try:
@@ -235,6 +279,9 @@ def audit(root: Path) -> list[str]:
         expected_hint = "长按查看完整说明" if locale == "zh-CN" else "Long-press for full details"
         if language.get("element.long_press_hint") != expected_hint:
             errors.append(f"{path}: element.long_press_hint is missing or incorrect")
+        expected_material_count = "材料数" if locale == "zh-CN" else "Materials"
+        if language.get("periodic.detail.material_count") != expected_material_count:
+            errors.append(f"{path}: periodic.detail.material_count is missing or incorrect")
         for key, value in language.items():
             if not isinstance(value, str):
                 continue

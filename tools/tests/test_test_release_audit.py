@@ -443,6 +443,11 @@ class TestReleaseAuditTests(unittest.TestCase):
                     version=package_test_release.RELEASE_CANDIDATE_VERSION,
                     kind="release-candidate",
                     include_examples=False,
+                    source_provenance={
+                        "source_state": "dirty",
+                        "source_worktree_sha256": "B" * 64,
+                        "source_untracked_files": "9",
+                    },
                 )
             self.assertEqual(
                 test_release_audit.audit_package(
@@ -467,7 +472,47 @@ class TestReleaseAuditTests(unittest.TestCase):
                     )
                 )
                 self.assertEqual(fields["kind"], "release-candidate")
+                self.assertEqual(fields["source_state"], "dirty")
+                self.assertEqual(fields["source_worktree_sha256"], "B" * 64)
+                self.assertEqual(fields["source_untracked_files"], "9")
                 self.assertFalse(any(name.endswith(".stm") for name in archive.namelist()))
+
+    def test_worktree_provenance_hashes_selected_file_bytes_not_patch_text(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary)
+            (source / "tracked.txt").write_bytes(b"tracked\r\ncontent\r\n")
+            (source / "new.txt").write_bytes(b"untracked\ncontent\n")
+
+            def git_result(args, **_kwargs):
+                if "diff" in args:
+                    self.assertIn("--name-only", args)
+                    self.assertIn("--ignore-space-at-eol", args)
+                    return mock.Mock(
+                        returncode=0,
+                        stdout=b"tracked.txt\0deleted.txt\0",
+                        stderr=b"",
+                    )
+                self.assertIn("ls-files", args)
+                return mock.Mock(
+                    returncode=0, stdout=b"new.txt\0", stderr=b""
+                )
+
+            with mock.patch.object(
+                package_test_release.subprocess, "run", side_effect=git_result
+            ):
+                first = package_test_release.git_worktree_provenance(source)
+                second = package_test_release.git_worktree_provenance(source)
+                (source / "tracked.txt").write_bytes(b"tracked\nchanged\n")
+                changed = package_test_release.git_worktree_provenance(source)
+
+            self.assertEqual(first, second)
+            self.assertEqual(first["source_state"], "dirty")
+            self.assertEqual(first["source_untracked_files"], "1")
+            self.assertRegex(first["source_worktree_sha256"], r"^[0-9A-F]{64}$")
+            self.assertNotEqual(
+                first["source_worktree_sha256"],
+                changed["source_worktree_sha256"],
+            )
 
     def test_release_candidate_profile_cannot_use_local_dev_kind(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

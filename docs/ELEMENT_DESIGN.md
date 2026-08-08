@@ -21,8 +21,10 @@ Phase 2 已冻结官方元素和兼容缓冲区；工业冶金、局部生态、
 - `src/simulation/OmniNuclear.cpp` 以本地中子、慢化剂、控制棒、冷却剂和屏蔽体组成有限反应器玩法，并与核素共享 `512/frame` 预算；不改写官方 `URAN`、`PLUT`、`NEUT` 或液态重水 `DEUT` 的状态机。
 - `docs/ELEMENT_REGISTRY.csv` 已为 293 个已实现 OmniPack 登记项记录生产、用途、危险、控制和清理字段，其中 292 个是可玩元素、1 个是兼容别名；来源、许可证、稳定 ID 与测试状态继续保留，官方元素使用明确的上游管理标记，保留槽使用明确的无元素标记。
 - `docs/ELEMENT_CONTENT.csv` 为同一批 293 个登记项提供中英文配方、生产、用途和危险说明；构建时生成只读图鉴目录，兼容别名不会进入可选内容，官方元素不凭空补写工艺内容。
+- `docs/OFFICIAL_ELEMENT_DESCRIPTIONS.csv` 为全部 195 个官方规范条目提供中英文完整说明。22 个液体保留逐项人工整理的 Wiki/源码说明；其余分类由 `tools/refresh_official_element_descriptions.py` 使用锁定且确认不是空页或 Anubis 挑战页的 Wiki 分类快照、上游摘要和显式人工修正确定性生成，运行及构建过程均不联网。主界面继续使用语言包短说明，长按图鉴才读取长文本与当前生成温度、热学、重量、重力、耐酸蚀、可燃/爆炸、导电、中子吸收及温压相变目标。
 - `docs/CONTENT_MENU_POLICY.csv` 覆盖 `196..685` 的 490 个非官方稳定槽，只决定标准菜单入口：周期单质/核素/无机物使用 `periodic_only`，有机物和合金工程材料使用独立菜单，特殊内容使用 `preserve_existing`。该层不改写元素自身 `MenuSection`、`MenuVisible` 或任何物理属性。
-- `docs/PERIODIC_CONTENT_LINKS.csv` 登记 183 个工具入口：118 个单质、13 个核素和 52 个无机物。关联以明确原子序数列表保存，同一工具在多个元素页复用，不复制实现、identifier 或稳定 ID。
+- `docs/PERIODIC_CONTENT_LINKS.csv` 保留 rc9 的 183 个基础工具入口：118 个单质、13 个核素和 52 个无机物；`docs/MATERIAL_PERIODIC_INDEX.csv` 另为 38 个有机/聚合物与 55 个合金、矿物、陶瓷、玻璃、半导体、复合及工程材料登记补充关系。合并后的 276 个入口均使用明确原子序数列表，同一工具在多个元素页复用，不复制实现、identifier 或稳定 ID；补充关系同时记录依据、模块、来源、置信度和备注。
+- `docs/MATERIAL_UI_AUDIT.csv` 由门禁确定性生成，逐行覆盖当前 488 个 implemented 槽（487 个规范记录和 1 个兼容别名），记录来源分类、原菜单、rc9 入口、目标入口、周期关联、重复映射、模块禁用和存档兼容说明。
 
 ## 不可变规则
 
@@ -44,7 +46,7 @@ Phase 2 已冻结官方元素和兼容缓冲区；工业冶金、局部生态、
 - 用途：在当前沙盘中可观察到的工程用途；
 - 危险：当前规则导致的可玩风险，不能外推为现实安全结论。
 
-`tools/element_registry_check.py` 拒绝别名漂移、模块区间错误、官方/保留槽伪造玩法声明，以及任何已实现 OmniPack 元素缺少具体生产、用途、危险、控制或清理信息。构建生成器和 `tools/element_content_audit.py` 继续拒绝缺少已实现元素、未知或大小写不一致 identifier、空字段、非法控制字符和不完整双语记录。图鉴只对内容非空的字段显示对应行，搜索同时索引这八个内容字段。官方元素继续显示其登记说明和热学属性，避免把本项目没有实现的生产路线写成事实。
+`tools/element_registry_check.py` 拒绝别名漂移、模块区间错误、官方/保留槽伪造玩法声明，以及任何已实现 OmniPack 元素缺少具体生产、用途、危险、控制或清理信息。构建生成器和 `tools/element_content_audit.py` 继续拒绝缺少已实现元素、未知或大小写不一致 identifier、空字段、非法控制字符和不完整双语记录。`tools/official_element_descriptions_audit.py` 要求 195/195 个官方规范条目覆盖、官方 Wiki URL、快照时间和足够长度的双语长说明；刷新工具的 `--check` 门禁拒绝过期生成表，`tools/element_description_coverage_audit.py` 再验证全部 487 个规范材料都能到达完整说明路线。图鉴只对内容非空的字段显示对应行，搜索同时索引这些内容字段；官方条目的配方与反应只描述 Wiki 和当前源码均能支持的行为。
 
 ## 稳定 ID 区间
 

@@ -144,6 +144,7 @@ class GenerateElementCatalogTests(unittest.TestCase):
         registry: Path,
         source_root: Path | None = None,
         content: Path | None = None,
+        official_descriptions: Path | None = None,
     ) -> tuple[int, str, str]:
         stdout = io.StringIO()
         stderr = io.StringIO()
@@ -153,6 +154,9 @@ class GenerateElementCatalogTests(unittest.TestCase):
         if content is not None:
             assert source_root is not None
             argv.append(str(content))
+        if official_descriptions is not None:
+            assert source_root is not None and content is not None
+            argv.append(str(official_descriptions))
         with mock.patch.object(sys, "argv", argv):
             with contextlib.redirect_stdout(stdout):
                 with contextlib.redirect_stderr(stderr):
@@ -274,6 +278,111 @@ class GenerateElementCatalogTests(unittest.TestCase):
             self.assertEqual(result, 0, error)
             generated = output.read_text(encoding="utf-8")
             self.assertIn('"Recipe", "配方", "Production", "生产", "Use", "用途", "Hazard", "危险"', generated)
+
+    def test_official_full_description_overrides_registry_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            registry = root / "registry.csv"
+            content = root / "content.csv"
+            descriptions = root / "official.csv"
+            output = root / "catalog.cpp"
+            short_english = "Short official summary."
+            short_chinese = "官方短说明。"
+            long_english = (
+                "This complete official liquid description is intentionally long "
+                "enough to explain its phase changes, reactions, and practical "
+                "behaviour inside the simulation."
+            )
+            long_chinese = (
+                "这是一段完整的官方液体说明，长度足以介绍它在模拟中的相变、"
+                "主要反应、使用方式和需要观察的行为，而不是只有一句短提示。"
+                "它还会说明生成条件、相邻材料影响及温度压力变化，确保长按窗口"
+                "得到的是可用于实际操作的完整内容。"
+            )
+            self.write_registry(
+                registry,
+                [
+                    self.make_row(
+                        source_mod=generate_element_catalog.OFFICIAL_REPOSITORY,
+                        menu_category="SC_LIQUID",
+                        english_description=short_english,
+                        chinese_description=short_chinese,
+                    )
+                ],
+            )
+            content.write_text(
+                ",".join(generate_element_catalog.CONTENT_FIELDS) + "\n",
+                encoding="utf-8",
+                newline="",
+            )
+            with descriptions.open("w", encoding="utf-8", newline="") as stream:
+                writer = csv.DictWriter(
+                    stream,
+                    fieldnames=generate_element_catalog.OFFICIAL_DESCRIPTION_FIELDS,
+                )
+                writer.writeheader()
+                writer.writerow(
+                    {
+                        "identifier": "DEFAULT_PT_TEST",
+                        "wiki_url": (
+                            "https://powdertoy.co.uk/Wiki/W/Element:TEST.html"
+                        ),
+                        "wiki_snapshot": "20240528002851",
+                        "english_description": long_english,
+                        "chinese_description": long_chinese,
+                    }
+                )
+            with mock.patch.object(
+                generate_element_catalog, "validate_repository", return_value=True
+            ):
+                result, _, error = self.run_main(
+                    output, registry, root, content, descriptions
+                )
+            self.assertEqual(result, 0, error)
+            generated = output.read_text(encoding="utf-8")
+            self.assertIn(generate_element_catalog.cpp_string(long_english), generated)
+            self.assertIn(generate_element_catalog.cpp_string(long_chinese), generated)
+            self.assertNotIn(generate_element_catalog.cpp_string(short_english), generated)
+
+    def test_official_full_description_requires_complete_official_coverage(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            registry = root / "registry.csv"
+            descriptions = root / "official.csv"
+            self.write_registry(
+                registry,
+                [
+                    self.make_row(
+                        identifier="DEFAULT_PT_ONE",
+                        stable_id="1",
+                        source_mod=generate_element_catalog.OFFICIAL_REPOSITORY,
+                        menu_category="SC_LIQUID",
+                    ),
+                    self.make_row(
+                        identifier="DEFAULT_PT_TWO",
+                        stable_id="2",
+                        source_mod=generate_element_catalog.OFFICIAL_REPOSITORY,
+                        menu_category="SC_SOLIDS",
+                    ),
+                ],
+            )
+            descriptions.write_text(
+                ",".join(generate_element_catalog.OFFICIAL_DESCRIPTION_FIELDS)
+                + "\n",
+                encoding="utf-8",
+                newline="",
+            )
+            _, errors = (
+                generate_element_catalog.audit_official_description_registry(
+                    registry, descriptions
+                )
+            )
+            self.assertTrue(
+                any(
+                    "missing canonical implemented official elements" in error
+                    for error in errors
+                )
+            )
 
     def test_missing_column_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

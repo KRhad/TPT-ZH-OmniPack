@@ -125,10 +125,21 @@ class StressHarnessContractTest(unittest.TestCase):
         )
         self.assertIn("Package manifest version does not match", self.powershell)
         self.assertIn("revision=([0-9a-f]{40})", self.powershell)
+        self.assertIn("source_state=(clean|dirty)", self.powershell)
+        self.assertIn("source_worktree_sha256=([0-9A-F]{64})", self.powershell)
         self.assertIn("member=tpt-zh-omnipack", self.powershell)
         self.assertIn("Package executable size does not match", self.powershell)
         self.assertIn("Package executable hash does not match", self.powershell)
         self.assertIn("$sourceCommit = $packageProvenance.Revision", self.powershell)
+        self.assertIn("$sourceState = $packageProvenance.SourceState", self.powershell)
+        self.assertIn(
+            "$sourceWorktreeSha256 = $packageProvenance.SourceWorktreeSha256",
+            self.powershell,
+        )
+        self.assertIn("source_state = $sourceState", self.powershell)
+        self.assertIn(
+            "source_worktree_sha256 = $sourceWorktreeSha256", self.powershell
+        )
         self.assertIn("harness_commit = $harnessCommit", self.powershell)
         self.assertIn("elseif (-not $Smoke)", self.powershell)
         self.assertEqual(self.powershell.count("rev-parse HEAD"), 1)

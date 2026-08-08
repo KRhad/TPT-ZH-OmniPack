@@ -21,7 +21,7 @@ EXPECTED_KIND_POLICY = {
     "isotope": {"periodic_only"},
     "inorganic_compound": {"periodic_only"},
     "organic_material": {"organic_menu"},
-    "alloy_engineering": {"alloy_menu", "existing_dedicated_menu"},
+    "alloy_engineering": {"alloy_menu"},
     "ecology_material": {"preserve_existing"},
     "nuclear_device": {"existing_dedicated_menu"},
     "custom_special": {"preserve_existing"},
@@ -183,12 +183,24 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
         errors.append(f"{links_path}: cannot read: {exc}")
         link_rows = []
     linked = {row.get("tool_identifier", "") for row in link_rows}
+    related_path = root / "docs" / "MATERIAL_PERIODIC_INDEX.csv"
+    try:
+        with related_path.open("r", encoding="utf-8-sig", newline="") as stream:
+            related_rows = list(csv.DictReader(stream))
+    except (OSError, csv.Error) as exc:
+        errors.append(f"{related_path}: cannot read: {exc}")
+        related_rows = []
+    related = {row.get("tool_identifier", "") for row in related_rows}
     for row in policy_rows:
         kind = row["content_kind"]
         if row["main_menu_policy"] == "periodic_only" and row["identifier"] not in linked:
             errors.append(f"periodic-only content has no picker link: {row['identifier']}")
+        if kind in {"organic_material", "alloy_engineering"} and row["identifier"] not in related:
+            errors.append(f"material-library content has no periodic relation: {row['identifier']}")
         if kind in {"organic_material", "alloy_engineering", "custom_special"} and row["identifier"] in linked:
-            errors.append(f"periodic table wrongly includes {kind}: {row['identifier']}")
+            errors.append(f"base periodic index wrongly includes {kind}: {row['identifier']}")
+        if kind == "custom_special" and row["identifier"] in related:
+            errors.append(f"custom special wrongly moved into supplemental index: {row['identifier']}")
 
     expected_organic = {
         "OMNI_PT_CH4M", "OMNI_PT_ETHL", "OMNI_PT_ACET", "OMNI_PT_BENZ",
@@ -200,7 +212,8 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
             errors.append(f"organic menu smoke item misplaced: {identifier}")
     expected_alloys = {
         "OMNI_PT_STEL", "OMNI_PT_SSIL", "OMNI_PT_BRNZ", "OMNI_PT_BRAS",
-        "OMNI_PT_NCRM", "OMNI_PT_TIAL",
+        "OMNI_PT_NCRM", "OMNI_PT_TIAL", "OMNI_PT_GAAS", "OMNI_PT_PZCR",
+        "OMNI_PT_LCOB", "OMNI_PT_DIEL",
     }
     for identifier in expected_alloys:
         row = policy_by_identifier.get(identifier)

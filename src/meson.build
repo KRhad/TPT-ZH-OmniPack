@@ -277,7 +277,11 @@ embedded_files += [
 
 element_catalog_data = custom_target(
 	'element-catalog-data',
-	input: files('../docs/ELEMENT_REGISTRY.csv', '../docs/ELEMENT_CONTENT.csv'),
+	input: files(
+		'../docs/ELEMENT_REGISTRY.csv',
+		'../docs/ELEMENT_CONTENT.csv',
+		'../docs/OFFICIAL_ELEMENT_DESCRIPTIONS.csv',
+	),
 	output: 'ElementCatalogData.cpp',
 	build_always_stale: true,
 	command: [
@@ -287,6 +291,7 @@ element_catalog_data = custom_target(
 		'@INPUT0@',
 		meson.project_source_root(),
 		'@INPUT1@',
+		'@INPUT2@',
 	],
 )
 powder_files += element_catalog_data
@@ -321,14 +326,20 @@ powder_files += content_menu_policy_data
 
 periodic_content_links_data = custom_target(
 	'periodic-content-links-data',
-	input: files('../docs/PERIODIC_CONTENT_LINKS.csv'),
+	input: files(
+		'../docs/PERIODIC_CONTENT_LINKS.csv',
+		'../docs/MATERIAL_PERIODIC_INDEX.csv',
+		'../docs/ELEMENT_REGISTRY.csv',
+	),
 	output: 'PeriodicContentLinksData.cpp',
 	build_always_stale: true,
 	command: [
 		python3_prog,
 		files('../tools/generate_periodic_content_links.py'),
 		'@OUTPUT@',
-		'@INPUT@',
+		'@INPUT0@',
+		'@INPUT1@',
+		'@INPUT2@',
 	],
 )
 powder_files += periodic_content_links_data

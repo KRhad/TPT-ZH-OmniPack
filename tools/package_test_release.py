@@ -175,6 +175,72 @@ def git_revision(source_root: Path) -> str:
     return revision
 
 
+def git_worktree_provenance(source_root: Path) -> dict[str, str]:
+    """Hash real changed files without depending on Git's patch formatting.
+
+    Windows Git and MSYS2 Git can emit different ``git diff --binary`` bytes for
+    the same CRLF checkout.  Git therefore only selects paths here, with
+    line-ending-only changes ignored.  The snapshot itself hashes the actual
+    working-tree bytes in a stable path order.
+    """
+    changed = subprocess.run(
+        [
+            "git", "diff", "--name-only", "-z", "--no-renames",
+            "--ignore-space-at-eol", "--no-ext-diff", "HEAD", "--", ".",
+        ],
+        cwd=source_root,
+        check=False,
+        capture_output=True,
+    )
+    if changed.returncode:
+        raise ValueError(
+            "cannot determine tracked working-tree changes: "
+            + changed.stderr.decode("utf-8", errors="replace").strip()
+        )
+    untracked = subprocess.run(
+        ["git", "ls-files", "--others", "--exclude-standard", "-z", "--", "."],
+        cwd=source_root,
+        check=False,
+        capture_output=True,
+    )
+    if untracked.returncode:
+        raise ValueError(
+            "cannot determine untracked working-tree files: "
+            + untracked.stderr.decode("utf-8", errors="replace").strip()
+        )
+    tracked_paths = sorted(
+        path.decode("utf-8", errors="strict")
+        for path in changed.stdout.split(b"\0")
+        if path
+    )
+    untracked_paths = sorted(
+        path.decode("utf-8", errors="strict")
+        for path in untracked.stdout.split(b"\0")
+        if path
+    )
+    digest = hashlib.sha256()
+    digest.update(b"TPT-ZH-OmniPack worktree snapshot v2\0")
+    for kind, relative in (
+        *(("tracked", path) for path in tracked_paths),
+        *(("untracked", path) for path in untracked_paths),
+    ):
+        encoded = relative.encode("utf-8")
+        path = source_root / relative
+        exists = path.is_file()
+        data = path.read_bytes() if exists else b""
+        digest.update(b"T" if kind == "tracked" else b"U")
+        digest.update(len(encoded).to_bytes(4, "big"))
+        digest.update(encoded)
+        digest.update(b"F" if exists else b"D")
+        digest.update(len(data).to_bytes(8, "big"))
+        digest.update(data)
+    return {
+        "source_state": "dirty" if tracked_paths or untracked_paths else "clean",
+        "source_worktree_sha256": digest.hexdigest().upper(),
+        "source_untracked_files": str(len(untracked_paths)),
+    }
+
+
 def source_date_epoch() -> int:
     value = os.environ.get("SOURCE_DATE_EPOCH")
     if value is None:
@@ -314,6 +380,7 @@ def manifest(
     build_epoch: int,
     kind: str,
     version: str = VERSION,
+    source_provenance: dict[str, str] | None = None,
 ) -> str:
     lines = [
         "format=2",
@@ -322,6 +389,15 @@ def manifest(
         f"revision={revision}",
         f"build_epoch={build_epoch}",
     ]
+    if source_provenance is not None:
+        lines.extend(
+            f"{key}={source_provenance[key]}"
+            for key in (
+                "source_state",
+                "source_worktree_sha256",
+                "source_untracked_files",
+            )
+        )
     for name, path in members:
         lines.append(f"member={name}|{path.stat().st_size}|{sha256(path)}")
     return "\n".join(lines) + "\n"
@@ -355,6 +431,7 @@ def build_package(
     version: str = VERSION,
     kind: str = "public-test",
     include_examples: bool = False,
+    source_provenance: dict[str, str] | None = None,
 ) -> tuple[Path, Path, Path, Path]:
     source_root = source_root.resolve()
     executable = executable.resolve()
@@ -389,14 +466,20 @@ def build_package(
             normal_temp,
             package_stem,
             normal_files,
-            manifest(revision, normal_files, epoch, kind, version),
+            manifest(
+                revision, normal_files, epoch, kind, version,
+                source_provenance=source_provenance,
+            ),
             epoch,
         )
         write_zip(
             symbols_temp,
             symbol_package_stem,
             symbol_files,
-            manifest(revision, symbol_files, epoch, "debug-symbols", version),
+            manifest(
+                revision, symbol_files, epoch, "debug-symbols", version,
+                source_provenance=source_provenance,
+            ),
             epoch,
         )
         shutil.move(normal_temp, package_path)
@@ -426,6 +509,14 @@ def build_parser() -> argparse.ArgumentParser:
         default="public-test",
     )
     parser.add_argument("--include-examples", action="store_true")
+    parser.add_argument(
+        "--allow-dirty-validation",
+        action="store_true",
+        help=(
+            "Allow a dirty release-candidate worktree only for local validation; "
+            "the manifest records its exact source snapshot digest."
+        ),
+    )
     parser.add_argument("--objdump", help="Path to objdump for mandatory PE auditing.")
     parser.add_argument("--strings", help="Path to strings for mandatory path auditing.")
     return parser
@@ -436,6 +527,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     source_root = args.source_root.resolve()
     output_directory = args.output_directory if args.output_directory.is_absolute() else source_root / args.output_directory
     try:
+        source_provenance = None
+        if args.kind == "release-candidate":
+            source_provenance = git_worktree_provenance(source_root)
+            if (
+                source_provenance["source_state"] == "dirty"
+                and not args.allow_dirty_validation
+            ):
+                raise ValueError(
+                    "release-candidate source tree is dirty; commit it or use "
+                    "--allow-dirty-validation for a non-release validation package"
+                )
+        elif args.allow_dirty_validation:
+            raise ValueError(
+                "--allow-dirty-validation is only valid for release-candidate packages"
+            )
         audit_command = [
             sys.executable,
             str(Path(__file__).with_name("release_binary_audit.py")),
@@ -459,6 +565,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             version=args.version,
             kind=args.kind,
             include_examples=args.include_examples,
+            source_provenance=source_provenance,
         )
     except (OSError, ValueError) as exc:
         print(f"test-release-package: ERROR {exc}", file=sys.stderr)

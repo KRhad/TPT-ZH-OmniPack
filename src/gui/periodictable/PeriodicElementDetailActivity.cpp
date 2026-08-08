@@ -34,6 +34,7 @@ char const *GroupKey(PeriodicCompoundGroup group)
 	switch (group)
 	{
 	case PeriodicCompoundGroup::Element: return "periodic.detail.element";
+	case PeriodicCompoundGroup::Allotrope: return "periodic.detail.allotrope";
 	case PeriodicCompoundGroup::Isotope: return "periodic.detail.isotope";
 	case PeriodicCompoundGroup::Oxide: return "periodic.detail.oxide";
 	case PeriodicCompoundGroup::Hydroxide: return "periodic.detail.hydroxide";
@@ -45,6 +46,15 @@ char const *GroupKey(PeriodicCompoundGroup group)
 	case PeriodicCompoundGroup::Nitride: return "periodic.detail.nitride";
 	case PeriodicCompoundGroup::Carbide: return "periodic.detail.carbide";
 	case PeriodicCompoundGroup::Hydride: return "periodic.detail.hydride";
+	case PeriodicCompoundGroup::Organic: return "periodic.detail.organic";
+	case PeriodicCompoundGroup::Polymer: return "periodic.detail.polymer";
+	case PeriodicCompoundGroup::Alloy: return "periodic.detail.alloy";
+	case PeriodicCompoundGroup::Mineral: return "periodic.detail.mineral";
+	case PeriodicCompoundGroup::Ceramic: return "periodic.detail.ceramic";
+	case PeriodicCompoundGroup::Glass: return "periodic.detail.glass";
+	case PeriodicCompoundGroup::Semiconductor: return "periodic.detail.semiconductor";
+	case PeriodicCompoundGroup::Composite: return "periodic.detail.composite";
+	case PeriodicCompoundGroup::Engineering: return "periodic.detail.engineering";
 	case PeriodicCompoundGroup::Other: return "periodic.detail.other";
 	}
 	return "periodic.detail.other";
@@ -55,20 +65,30 @@ int GroupOrder(PeriodicCompoundGroup group)
 	switch (group)
 	{
 	case PeriodicCompoundGroup::Element: return 0;
-	case PeriodicCompoundGroup::Isotope: return 1;
-	case PeriodicCompoundGroup::Oxide: return 2;
-	case PeriodicCompoundGroup::Hydroxide: return 3;
-	case PeriodicCompoundGroup::Acid: return 4;
-	case PeriodicCompoundGroup::Base: return 5;
-	case PeriodicCompoundGroup::Salt: return 6;
-	case PeriodicCompoundGroup::Halide: return 7;
-	case PeriodicCompoundGroup::Sulfide: return 8;
-	case PeriodicCompoundGroup::Nitride: return 9;
-	case PeriodicCompoundGroup::Carbide: return 10;
-	case PeriodicCompoundGroup::Hydride: return 11;
-	case PeriodicCompoundGroup::Other: return 12;
+	case PeriodicCompoundGroup::Allotrope: return 1;
+	case PeriodicCompoundGroup::Isotope: return 2;
+	case PeriodicCompoundGroup::Oxide: return 3;
+	case PeriodicCompoundGroup::Hydroxide: return 4;
+	case PeriodicCompoundGroup::Acid: return 5;
+	case PeriodicCompoundGroup::Base: return 6;
+	case PeriodicCompoundGroup::Salt: return 7;
+	case PeriodicCompoundGroup::Halide: return 8;
+	case PeriodicCompoundGroup::Sulfide: return 9;
+	case PeriodicCompoundGroup::Nitride: return 10;
+	case PeriodicCompoundGroup::Carbide: return 11;
+	case PeriodicCompoundGroup::Hydride: return 12;
+	case PeriodicCompoundGroup::Organic: return 13;
+	case PeriodicCompoundGroup::Polymer: return 14;
+	case PeriodicCompoundGroup::Alloy: return 15;
+	case PeriodicCompoundGroup::Mineral: return 16;
+	case PeriodicCompoundGroup::Ceramic: return 17;
+	case PeriodicCompoundGroup::Glass: return 18;
+	case PeriodicCompoundGroup::Semiconductor: return 19;
+	case PeriodicCompoundGroup::Composite: return 20;
+	case PeriodicCompoundGroup::Engineering: return 21;
+	case PeriodicCompoundGroup::Other: return 22;
 	}
-	return 13;
+	return 23;
 }
 }
 
@@ -86,13 +106,22 @@ PeriodicElementDetailActivity::PeriodicElementDetailActivity(
 	selectedCallback(std::move(selectedCallback))
 {
 	auto chineseInterface = GlobalPrefs::Ref().Get("Language", 1) == 1;
+	std::set<std::string_view> relatedMaterials;
+	for (auto const &link : GetPeriodicContentLinks())
+	{
+		if (link.periodicVisible && PeriodicContentRelatesTo(link, element.atomicNumber))
+			relatedMaterials.insert(link.toolIdentifier);
+	}
 	auto primaryName = chineseInterface ? Utf8(element.chineseName) : Utf8(element.englishName);
+	auto secondaryName = chineseInterface ? Utf8(element.englishName) : Utf8(element.chineseName);
 	auto titleText = chineseInterface
 		? String::Build(primaryName, "（", Utf8(element.symbol), "）")
 		: String::Build(primaryName, " (", Utf8(element.symbol), ")");
 	auto subtitleText = String::Build(
-		Localization::Ref().Tr("periodic.detail.atomic_number"), " ",
-		element.atomicNumber);
+		secondaryName, " · ", Localization::Ref().Tr("periodic.detail.atomic_number"),
+		" ", element.atomicNumber, " · ",
+		Localization::Ref().Tr("periodic.detail.material_count"), " ",
+		relatedMaterials.size());
 
 	auto *title = new ui::Label(ui::Point(8, 4), ui::Point(Size.X - 78, 17), titleText);
 	title->SetTextColour(style::Colour::InformationTitle);
@@ -143,33 +172,16 @@ void PeriodicElementDetailActivity::BuildContent()
 	});
 
 	auto chineseInterface = GlobalPrefs::Ref().Get("Language", 1) == 1;
-	auto elemental = std::find_if(links.begin(), links.end(), [](auto const *link) {
-		return link->contentKind == PeriodicContentKind::PeriodicElement;
-	});
-	auto *elementTool = elemental != links.end()
-		? FindTool((*elemental)->toolIdentifier)
-		: nullptr;
-	auto *descriptionTitle = new ui::Label(
+	auto *longPressHint = new ui::Label(
 		ui::Point(8, 42), ui::Point(Size.X - 16, 17),
-		Localization::Ref().Tr("encyclopedia.description"));
-	descriptionTitle->SetTextColour(style::Colour::InformationTitle);
-	descriptionTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-	AddComponent(descriptionTitle);
-
-	auto description = elementTool && !elementTool->Description.empty()
-		? ElementDescriptionWithLongPressHint(elementTool->Description)
-		: Localization::Ref().Tr("periodic.detail.not_implemented");
-	auto *descriptionLabel = new ui::Label(
-		ui::Point(8, 60), ui::Point(Size.X - 16, -1), description);
-	descriptionLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-	descriptionLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;
-	descriptionLabel->SetTextColour(chineseInterface
+		String::Build("· ", Localization::Ref().Tr("element.long_press_hint")));
+	longPressHint->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	longPressHint->SetTextColour(chineseInterface
 		? ui::Colour(255, 255, 255, 255)
 		: ui::Colour(205, 205, 205, 255));
-	descriptionLabel->SetMultiline(true);
-	AddComponent(descriptionLabel);
+	AddComponent(longPressHint);
 
-	auto materialsTop = descriptionLabel->Position.Y + descriptionLabel->Size.Y + 10;
+	auto materialsTop = longPressHint->Position.Y + longPressHint->Size.Y + 6;
 	contentPanel = new ui::ScrollPanel(
 		ui::Point(8, materialsTop), ui::Point(Size.X - 16, Size.Y - materialsTop - 8));
 	AddComponent(contentPanel);

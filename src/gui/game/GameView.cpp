@@ -40,9 +40,11 @@
 #include "gui/interface/Button.h"
 #include "gui/interface/Colour.h"
 #include "gui/interface/Engine.h"
+#include "gui/interface/TextWrapper.h"
 #include "prefs/GlobalPrefs.h"
 
 #include "Config.h"
+#include <algorithm>
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
@@ -1360,6 +1362,32 @@ void GameView::OnMouseUp(int x, int y, unsigned button)
 	UpdateDrawMode();
 }
 
+void GameView::LayoutToolTip(String text, int preferredY, bool anchorToMenu)
+{
+	constexpr int TooltipMaxWidth = 420;
+	constexpr int TooltipMargin = 8;
+	constexpr int TooltipPadding = 3;
+	const int simulationRight = std::min(XRES, Size.X - BARSIZE) - TooltipMargin;
+	const int textLeft = TooltipMargin + TooltipPadding;
+	const int wrapWidth = std::max(
+		1, std::min(TooltipMaxWidth, simulationRight - textLeft));
+
+	ui::TextWrapper wrapper;
+	wrapper.Update(text, true, wrapWidth);
+	toolTip = wrapper.WrappedText();
+	auto textSize = Graphics::TextSize(toolTip);
+	auto textWidth = std::max(0, textSize.X - 1);
+	auto x = std::max(textLeft, simulationRight - textWidth);
+	auto minimumY = TooltipMargin + TooltipPadding;
+	auto maximumY = std::max(
+		minimumY,
+		Size.Y - MENUSIZE - TooltipMargin - TooltipPadding - textSize.Y);
+	auto y = anchorToMenu
+		? maximumY
+		: std::clamp(preferredY, minimumY, maximumY);
+	toolTipPosition = ui::Point(x, y);
+}
+
 void GameView::ToolTip(ui::Point senderPosition, String toolTip)
 {
 	// buttom button tooltips
@@ -1367,34 +1395,29 @@ void GameView::ToolTip(ui::Point senderPosition, String toolTip)
 	{
 		if (selectMode == PlaceSave || selectMode == SelectNone)
 		{
-			buttonTip = toolTip;
+			ui::TextWrapper wrapper;
+			wrapper.Update(toolTip, true, XRES - 32);
+			buttonTip = wrapper.WrappedText();
 			isButtonTipFadingIn = true;
 		}
 	}
 	// quickoption and menu tooltips
 	else if(senderPosition.X > Size.X-BARSIZE)// quick options and menu tooltips
 	{
-		this->toolTip = toolTip;
-		toolTipPosition = ui::Point(Size.X-27-(Graphics::TextSize(toolTip).X - 1), senderPosition.Y+3);
-		if(toolTipPosition.Y+10 > Size.Y-MENUSIZE)
-			toolTipPosition = ui::Point(Size.X-27-(Graphics::TextSize(toolTip).X - 1), Size.Y-MENUSIZE-10);
+		LayoutToolTip(std::move(toolTip), senderPosition.Y + 3, false);
 		isToolTipFadingIn = true;
 	}
 	// element tooltips
 	else
 	{
-		this->toolTip = toolTip;
-		toolTipPosition = ui::Point(Size.X-27-(Graphics::TextSize(toolTip).X - 1), Size.Y-MENUSIZE-10);
+		LayoutToolTip(std::move(toolTip), 0, true);
 		isToolTipFadingIn = true;
 	}
 }
 
 void GameView::ShowElementDescription(String description)
 {
-	toolTip = std::move(description);
-	toolTipPosition = ui::Point(
-		Size.X - 27 - (Graphics::TextSize(toolTip).X - 1),
-		Size.Y - MENUSIZE - 10);
+	LayoutToolTip(std::move(description), 0, true);
 	toolTipPresence = 120;
 	isToolTipFadingIn = false;
 }
@@ -2746,7 +2769,12 @@ void GameView::OnDraw()
 
 	if(toolTipPresence && toolTipPosition.X!=-1 && toolTipPosition.Y!=-1 && toolTip.length())
 	{
-		if (toolTipPosition.Y == Size.Y-MENUSIZE-10 && !IsChineseInterfaceLanguage())
+		auto alpha = toolTipPresence > 51 ? 255 : int(toolTipPresence) * 5;
+		auto textSize = Graphics::TextSize(toolTip);
+		g->BlendFilledRect(
+			RectSized(toolTipPosition - Vec2{ 3, 2 }, textSize + Vec2{ 5, 4 }),
+			0x000000_rgb .WithAlpha(std::min(190, alpha * 3 / 4)));
+		if (!IsChineseInterfaceLanguage())
 			g->BlendTextOutline(toolTipPosition, toolTip, 0xFFFFFF_rgb .WithAlpha(toolTipPresence>51?255:toolTipPresence*5));
 		else
 			g->BlendText(toolTipPosition, toolTip, 0xFFFFFF_rgb .WithAlpha(toolTipPresence>51?255:toolTipPresence*5));
@@ -2754,7 +2782,13 @@ void GameView::OnDraw()
 
 	if(buttonTipShow > 0)
 	{
-		g->BlendText({ 16, Size.Y-MENUSIZE-24 }, buttonTip, 0xFFFFFF_rgb .WithAlpha(buttonTipShow>51?255:buttonTipShow*5));
+		auto alpha = buttonTipShow > 51 ? 255 : int(buttonTipShow) * 5;
+		auto textSize = Graphics::TextSize(buttonTip);
+		auto position = Vec2{ 16, std::max(8, Size.Y - MENUSIZE - textSize.Y - 6) };
+		g->BlendFilledRect(
+			RectSized(position - Vec2{ 3, 2 }, textSize + Vec2{ 5, 4 }),
+			0x000000_rgb .WithAlpha(std::min(190, alpha * 3 / 4)));
+		g->BlendText(position, buttonTip, 0xFFFFFF_rgb .WithAlpha(alpha));
 	}
 
 	//Introduction text

@@ -942,11 +942,64 @@ test(
 )
 
 test(
+	'official-element-descriptions-audit',
+	python3_prog,
+	args: [
+		files('tools/official_element_descriptions_audit.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'official-element-descriptions-current',
+	python3_prog,
+	args: [
+		files('tools/refresh_official_element_descriptions.py'),
+		'--source-root', meson.project_source_root(),
+		'--check',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'element-description-coverage-audit',
+	python3_prog,
+	args: [
+		files('tools/element_description_coverage_audit.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'content-menu-policy',
 	python3_prog,
 	args: [
 		files('tools/content_menu_policy_check.py'),
 		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'material-ui-audit',
+	python3_prog,
+	args: [
+		files('tools/generate_material_ui_audit.py'),
+		'--source-root', meson.project_source_root(),
+		'--check',
 		'--quiet',
 	],
 	env: static_test_env,

@@ -311,6 +311,19 @@ def audit_package(
                 errors.append("package manifest metadata is invalid")
             if not re.fullmatch(r"[0-9a-f]{40}", fields.get("revision", "")):
                 errors.append("package manifest Git revision is invalid")
+            source_state = fields.get("source_state")
+            if source_state is not None:
+                if source_state not in {"clean", "dirty"}:
+                    errors.append("package manifest source state is invalid")
+                if not re.fullmatch(
+                    r"[0-9A-F]{64}", fields.get("source_worktree_sha256", "")
+                ):
+                    errors.append("package manifest worktree digest is invalid")
+                untracked = fields.get("source_untracked_files", "")
+                if not re.fullmatch(r"[0-9]+", untracked):
+                    errors.append("package manifest untracked-file count is invalid")
+                elif source_state == "clean" and untracked != "0":
+                    errors.append("clean package manifest reports untracked files")
             expected_relative = {name.removeprefix(f"{stem}/") for name in expected - {manifest_name}}
             if set(members) != expected_relative:
                 errors.append("package manifest members do not match ZIP members")

@@ -92,6 +92,25 @@ String CatalogContent(
 		? CatalogString(chinese)
 		: CatalogString(english);
 }
+
+String BooleanValue(bool value)
+{
+	return Localization::Ref().Tr(value
+		? "encyclopedia.value.boolean.yes"
+		: "encyclopedia.value.boolean.no");
+}
+
+String TransitionTarget(int transition)
+{
+	constexpr int RemovedTransition = 0;
+	if (transition == RemovedTransition)
+		return Localization::Ref().Tr("encyclopedia.value.transition.removed");
+	if (transition == ST)
+		return Localization::Ref().Tr("encyclopedia.value.transition.special");
+	if (transition > RemovedTransition && transition < PT_NUM)
+		return SimulationData::Ref().elements[transition].Name;
+	return Localization::Ref().Tr("encyclopedia.value.transition.unknown");
+}
 }
 
 String ElementDescriptionWithLongPressHint(String description)
@@ -142,16 +161,43 @@ void OpenElementInfo(Tool const *tool)
 		<< (record ? CatalogCategory(record->menuCategory) : RuntimeCategory(element)) << "\n";
 	details << Localization::Ref().Tr("encyclopedia.state") << ": "
 		<< (record ? CatalogValue("state", record->elementState) : RuntimeState(element)) << "\n";
+	details << "\n" << Localization::Ref().Tr("encyclopedia.simulation_properties") << "\n";
+	details << Localization::Ref().Tr("encyclopedia.spawn_temperature") << ": "
+		<< element.DefaultProperties.temp << " K\n";
 	details << Localization::Ref().Tr("encyclopedia.heat_conductivity") << ": "
 		<< int(element.HeatConduct) << "\n";
 	details << Localization::Ref().Tr("encyclopedia.heat_capacity") << ": "
 		<< element.HeatCapacity << "\n";
+	details << Localization::Ref().Tr("encyclopedia.weight") << ": "
+		<< element.Weight << "\n";
+	details << Localization::Ref().Tr("encyclopedia.gravity") << ": "
+		<< element.Gravity << "\n";
+	details << Localization::Ref().Tr("encyclopedia.hardness") << ": "
+		<< element.Hardness << "\n";
+	details << Localization::Ref().Tr("encyclopedia.flammability") << ": "
+		<< element.Flammable << "\n";
+	details << Localization::Ref().Tr("encyclopedia.explosiveness") << ": "
+		<< element.Explosive << "\n";
+	details << Localization::Ref().Tr("encyclopedia.conductive") << ": "
+		<< BooleanValue(element.Properties & PROP_CONDUCTS) << "\n";
+	details << Localization::Ref().Tr("encyclopedia.neutron_absorbing") << ": "
+		<< BooleanValue(element.Properties & PROP_NEUTABSORB) << "\n";
+	if (element.LowPressureTransition != NT)
+		details << Localization::Ref().Tr("encyclopedia.low_pressure") << ": "
+			<< element.LowPressure << " P → "
+			<< TransitionTarget(element.LowPressureTransition) << "\n";
+	if (element.HighPressureTransition != NT)
+		details << Localization::Ref().Tr("encyclopedia.high_pressure") << ": "
+			<< element.HighPressure << " P → "
+			<< TransitionTarget(element.HighPressureTransition) << "\n";
 	if (element.LowTemperatureTransition != NT)
 		details << Localization::Ref().Tr("encyclopedia.low_temperature") << ": "
-			<< element.LowTemperature << " K\n";
+			<< element.LowTemperature << " K → "
+			<< TransitionTarget(element.LowTemperatureTransition) << "\n";
 	if (element.HighTemperatureTransition != NT)
 		details << Localization::Ref().Tr("encyclopedia.high_temperature") << ": "
-			<< element.HighTemperature << " K\n";
+			<< element.HighTemperature << " K → "
+			<< TransitionTarget(element.HighTemperatureTransition) << "\n";
 
 	if (record)
 	{

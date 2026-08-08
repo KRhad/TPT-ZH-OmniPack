@@ -70,6 +70,64 @@ class OmniUiStyleAuditTests(unittest.TestCase):
             audit_module.read_text = original
         self.assertTrue(any("description hint marker" in error for error in errors))
 
+    def test_periodic_picker_duplicate_description_is_rejected(self) -> None:
+        target = (
+            ROOT
+            / "src"
+            / "gui"
+            / "periodictable"
+            / "PeriodicElementDetailActivity.cpp"
+        )
+        original = audit_module.read_text
+        try:
+            audit_module.read_text = lambda path, errors: (
+                original(path, errors) + '\nTr("encyclopedia.description");\n'
+                if path == target
+                else original(path, errors)
+            )
+            errors = audit_module.audit(ROOT)
+        finally:
+            audit_module.read_text = original
+        self.assertTrue(any("periodic picker repeats" in error for error in errors))
+
+    def test_periodic_picker_missing_material_count_is_rejected(self) -> None:
+        target = (
+            ROOT
+            / "src"
+            / "gui"
+            / "periodictable"
+            / "PeriodicElementDetailActivity.cpp"
+        )
+        original = audit_module.read_text
+        try:
+            audit_module.read_text = lambda path, errors: (
+                original(path, errors).replace(
+                    'Tr("periodic.detail.material_count")',
+                    'Tr("removed.material_count")',
+                )
+                if path == target
+                else original(path, errors)
+            )
+            errors = audit_module.audit(ROOT)
+        finally:
+            audit_module.read_text = original
+        self.assertTrue(any("related-material count" in error for error in errors))
+
+    def test_unbounded_tooltip_alignment_is_rejected(self) -> None:
+        target = ROOT / "src" / "gui" / "game" / "GameView.cpp"
+        original = audit_module.read_text
+        try:
+            audit_module.read_text = lambda path, errors: (
+                original(path, errors)
+                + "\nSize.X - 27 - (Graphics::TextSize(toolTip).X - 1);\n"
+                if path == target
+                else original(path, errors)
+            )
+            errors = audit_module.audit(ROOT)
+        finally:
+            audit_module.read_text = original
+        self.assertTrue(any("unbounded right alignment" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,10 +15,20 @@ FIELDS = (
     "related_atomic_numbers", "compound_group", "display_order",
     "periodic_visible", "formula", "zh_name", "en_name",
 )
-KINDS = {"periodic_element", "isotope", "inorganic_compound"}
+RELATED_FIELDS = (
+    "tool_identifier", "stable_id", "content_kind", "primary_atomic_number",
+    "related_atomic_numbers", "compound_group", "display_order",
+    "periodic_visible", "formula", "zh_name", "en_name", "relation_basis",
+    "module", "source_reference", "confidence", "notes",
+)
+KINDS = {
+    "periodic_element", "isotope", "inorganic_compound", "related_material",
+}
 GROUPS = {
-    "element", "isotope", "oxide", "hydroxide", "acid", "base", "salt",
-    "halide", "sulfide", "nitride", "carbide", "hydride", "other",
+    "element", "allotrope", "isotope", "oxide", "hydroxide", "acid",
+    "base", "salt", "halide", "sulfide", "nitride", "carbide", "hydride",
+    "organic", "polymer", "alloy", "mineral", "ceramic", "glass",
+    "semiconductor", "composite", "engineering", "other",
 }
 
 
@@ -50,9 +60,32 @@ def generic_rows(path: Path, errors: list[str]) -> list[dict[str, str]]:
         return []
 
 
+def related_rows(path: Path, errors: list[str]) -> list[dict[str, str]]:
+    try:
+        with path.open("r", encoding="utf-8-sig", newline="") as stream:
+            reader = csv.DictReader(stream)
+            if tuple(reader.fieldnames or ()) != RELATED_FIELDS:
+                errors.append(f"{path}: unexpected columns {reader.fieldnames}")
+                return []
+            result = list(reader)
+    except (OSError, UnicodeDecodeError, csv.Error) as exc:
+        errors.append(f"{path}: cannot read CSV: {exc}")
+        return []
+    for line_number, row in enumerate(result, 2):
+        if None in row or any(row[field] is None for field in RELATED_FIELDS):
+            errors.append(f"{path}:{line_number}: row width does not match header")
+            continue
+        row.update({field: row[field].strip() for field in RELATED_FIELDS})
+    return result
+
+
 def audit(root: Path) -> tuple[list[str], dict[str, int]]:
     errors: list[str] = []
-    link_rows = rows(root / "docs" / "PERIODIC_CONTENT_LINKS.csv", errors)
+    base_link_rows = rows(root / "docs" / "PERIODIC_CONTENT_LINKS.csv", errors)
+    supplemental_rows = related_rows(
+        root / "docs" / "MATERIAL_PERIODIC_INDEX.csv", errors
+    )
+    link_rows = base_link_rows + supplemental_rows
     registry = {
         row["identifier"]: row
         for row in generic_rows(root / "docs" / "ELEMENT_REGISTRY.csv", errors)
@@ -96,6 +129,18 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
         element = registry.get(identifier)
         if not element or element.get("implementation_status") != "implemented":
             errors.append(f"periodic links:{line_number}: unknown or unimplemented tool {identifier}")
+        elif row["content_kind"] == "related_material":
+            if row["stable_id"] != element.get("stable_id"):
+                errors.append(f"periodic links:{line_number}: related stable ID mismatch")
+            if row["zh_name"] != element.get("chinese_name") or row["en_name"] != element.get("english_name"):
+                errors.append(f"periodic links:{line_number}: related material names mismatch")
+            if row["module"] != element.get("module"):
+                errors.append(f"periodic links:{line_number}: related material module mismatch")
+            if row["confidence"] not in {"high", "medium", "low"}:
+                errors.append(f"periodic links:{line_number}: invalid relation confidence")
+            for field in ("relation_basis", "source_reference", "notes"):
+                if not row[field]:
+                    errors.append(f"periodic links:{line_number}: empty relation metadata {field}")
         for atom in atoms:
             related_counts[atom] += 1
 
@@ -141,13 +186,28 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
         extra = sorted(actual_inorganic - (policy_inorganic | official_inorganic))
         errors.append(f"inorganic link set mismatch: missing={missing} extra={extra}")
 
-    forbidden = {
-        identifier for identifier, row in policy.items()
-        if row.get("content_kind") in {"organic_material", "alloy_engineering", "custom_special"}
+    expected_related = {
+        identifier
+        for identifier, row in policy.items()
+        if row.get("content_kind") in {"organic_material", "alloy_engineering"}
+        and registry.get(identifier, {}).get("implementation_status") == "implemented"
     }
-    wrong = sorted(forbidden & set(by_identifier))
-    if wrong:
-        errors.append(f"periodic table includes excluded content: {wrong}")
+    actual_related = {
+        identifier for identifier, row in by_identifier.items()
+        if row["content_kind"] == "related_material"
+    }
+    if actual_related != expected_related:
+        missing = sorted(expected_related - actual_related)
+        extra = sorted(actual_related - expected_related)
+        errors.append(
+            f"supplemental material index mismatch: missing={missing} extra={extra}"
+        )
+    for identifier in actual_related:
+        placement = policy[identifier]["main_menu_policy"]
+        if placement not in {"organic_menu", "alloy_menu"}:
+            errors.append(
+                f"supplemental relation changed main-menu placement: {identifier}"
+            )
     if any(count == 0 for count in related_counts.values()):
         errors.append("one or more periodic elements has no selectable content")
     groups_by_atom = {atomic_number: set() for atomic_number in range(1, 119)}
@@ -155,12 +215,13 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
         for value in row["related_atomic_numbers"].split("|"):
             groups_by_atom[int(value)].add(row["compound_group"])
     required_smoke_groups = {
-        1: {"element", "isotope", "acid"},
-        6: {"element", "isotope", "oxide", "acid"},
-        8: {"element", "oxide", "hydroxide"},
+        1: {"element", "isotope", "acid", "organic", "polymer"},
+        6: {"element", "isotope", "oxide", "acid", "allotrope", "alloy"},
+        8: {"element", "oxide", "hydroxide", "ceramic", "glass"},
+        14: {"element", "carbide", "nitride", "glass", "ceramic"},
         11: {"element", "hydroxide", "salt", "hydride"},
         17: {"element", "acid", "halide"},
-        26: {"element", "oxide", "halide", "sulfide"},
+        26: {"element", "oxide", "halide", "sulfide", "alloy"},
         29: {"element", "oxide", "salt", "halide"},
         92: {"element", "oxide"},
     }
@@ -192,11 +253,18 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
     for token in (
         "GetPeriodicContentLinks", "GetOmniElementSelectionRestriction",
         "ConfirmPrompt", "OpenOptions", "ui::ScrollPanel",
-        'Tr("encyclopedia.description")', "elementTool->Description",
-        "ElementDescriptionWithLongPressHint",
+        'Tr("element.long_press_hint")', 'String::Build("· ",',
+        'secondaryName, " · ", Localization::Ref().Tr("periodic.detail.atomic_number")',
+        'Tr("periodic.detail.material_count")',
     ):
         if token not in detail_activity:
             errors.append(f"periodic detail integration is missing {token}")
+    for token in (
+        'Tr("encyclopedia.description")', "elementTool->Description",
+        "ElementDescriptionWithLongPressHint",
+    ):
+        if token in detail_activity:
+            errors.append(f"periodic detail repeats the element description via {token}")
 
     try:
         en = json.loads((root / "src" / "lang" / "en-US.json").read_text(encoding="utf-8"))
@@ -209,6 +277,21 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
         errors.append("English periodic search placeholder is not player-facing")
     if zh.get("periodic.table.search_placeholder") != "搜索元素、符号或原子序数":
         errors.append("Chinese periodic search placeholder is not player-facing")
+    if en.get("periodic.detail.material_count") != "Materials":
+        errors.append("English periodic material-count label is missing")
+    if zh.get("periodic.detail.material_count") != "材料数":
+        errors.append("Chinese periodic material-count label is missing")
+    expected_group_keys = {
+        "periodic.detail.allotrope", "periodic.detail.organic",
+        "periodic.detail.polymer", "periodic.detail.alloy",
+        "periodic.detail.mineral", "periodic.detail.ceramic",
+        "periodic.detail.glass", "periodic.detail.semiconductor",
+        "periodic.detail.composite", "periodic.detail.engineering",
+    }
+    for locale, catalog in (("en-US", en), ("zh-CN", zh)):
+        missing = sorted(expected_group_keys - catalog.keys())
+        if missing:
+            errors.append(f"{locale} misses related-material group labels: {missing}")
     for catalog in (en, zh):
         for key, value in catalog.items():
             if key.startswith("periodic.") and "identifier" in str(value).casefold():
@@ -216,9 +299,11 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
 
     stats = {
         "links": len(link_rows),
+        "base_links": len(base_link_rows),
         "periodic_elements": len(actual_elements),
         "isotopes": len(actual_isotopes),
         "inorganic_compounds": len(actual_inorganic),
+        "related_materials": len(actual_related),
     }
     return errors, stats
 

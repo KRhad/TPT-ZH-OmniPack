@@ -174,6 +174,30 @@ function Get-PackageProvenance {
         if ($revisionMatches.Count -ne 1) {
             throw "Package manifest must contain exactly one lowercase 40-character revision"
         }
+        $sourceStateMatches = [regex]::Matches(
+            $manifestText,
+            '(?m)^source_state=(clean|dirty)\r?$'
+        )
+        $sourceWorktreeMatches = [regex]::Matches(
+            $manifestText,
+            '(?m)^source_worktree_sha256=([0-9A-F]{64})\r?$'
+        )
+        if ($sourceStateMatches.Count -gt 1 -or $sourceWorktreeMatches.Count -gt 1) {
+            throw "Package manifest contains duplicate source provenance fields"
+        }
+        if ($sourceStateMatches.Count -ne $sourceWorktreeMatches.Count) {
+            throw "Package manifest source provenance is incomplete"
+        }
+        $sourceState = if ($sourceStateMatches.Count -eq 1) {
+            $sourceStateMatches[0].Groups[1].Value
+        } else {
+            "legacy_commit_only"
+        }
+        $sourceWorktreeSha256 = if ($sourceWorktreeMatches.Count -eq 1) {
+            $sourceWorktreeMatches[0].Groups[1].Value
+        } else {
+            "not_recorded"
+        }
         $executableMatches = [regex]::Matches(
             $manifestText,
             '(?m)^member=tpt-zh-omnipack\.exe\|([0-9]+)\|([0-9A-F]{64})\r?$'
@@ -195,6 +219,8 @@ function Get-PackageProvenance {
             Revision = $revisionMatches[0].Groups[1].Value
             Sha256 = (Get-FileHash -LiteralPath $resolvedPackage -Algorithm SHA256).Hash
             Kind = $kindMatches[0].Groups[1].Value
+            SourceState = $sourceState
+            SourceWorktreeSha256 = $sourceWorktreeSha256
         }
     }
     finally {
@@ -207,6 +233,8 @@ if ($LASTEXITCODE -ne 0 -or $harnessCommit -notmatch '^[0-9a-f]{40}$') {
     throw "Cannot resolve the stress harness commit"
 }
 $sourceCommit = $null
+$sourceState = "not_tested"
+$sourceWorktreeSha256 = "not_tested"
 $publicZipSha256 = "not_tested"
 $packageKind = "not_tested"
 if ($PackageZip) {
@@ -215,6 +243,8 @@ if ($PackageZip) {
         -ExecutablePath $resolvedExecutable `
         -ExpectedVersion $PackageVersion
     $sourceCommit = $packageProvenance.Revision
+    $sourceState = $packageProvenance.SourceState
+    $sourceWorktreeSha256 = $packageProvenance.SourceWorktreeSha256
     $publicZipSha256 = $packageProvenance.Sha256
     $packageKind = $packageProvenance.Kind
 }
@@ -223,6 +253,8 @@ elseif (-not $Smoke) {
 }
 else {
     $sourceCommit = $harnessCommit
+    $sourceState = "unpackaged_smoke"
+    $sourceWorktreeSha256 = "not_recorded"
 }
 
 $completed = $false
@@ -368,6 +400,8 @@ try {
         sample_id = $SampleId
         run_id = $runId
         source_commit = $sourceCommit
+        source_state = $sourceState
+        source_worktree_sha256 = $sourceWorktreeSha256
         harness_commit = $harnessCommit
         release_tag = "not_tested"
         version = $PackageVersion

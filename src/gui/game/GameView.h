@@ -153,6 +153,7 @@ private:
 	void disableAltBehaviour();
 	void UpdateDrawMode();
 	void UpdateToolStrength();
+	void LayoutToolTip(String text, int preferredY, bool anchorToMenu);
 
 	Vec2<int> PlaceSavePos() const;
 
