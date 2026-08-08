@@ -8,6 +8,7 @@ IMPLEMENTATION_COMMIT=abeca81bd1ed5a69fd1b3ca6d639282723fbc169
 LEGACY_FAST_BUILD=GREEN
 STRICT_FP_BUILD=GREEN
 DEFAULT_BEHAVIOR_CHANGED=false
+FIXED_STEP_RUNNER=GREEN
 STRICT_FAST_NUMERICAL_COMPARISON=RED
 OMNICORE_FAST_MATH_ALLOWED=false
 G0_UPSTREAM_BASELINE=RED
@@ -70,6 +71,11 @@ These hashes identify the tested local artifacts; they are not a reproducibility
 claim. The generated-data targets relink on subsequent compile invocations and the
 PE output is not bit-reproducible under this development configuration.
 
+The later clean fixed-step baseline at `c4490463f` relinked the same two
+configurations and recorded current hashes `4644B9C9...E998E1E` (Legacy) and
+`77FDAFCF...FF593A4` (Strict). Full hashes and compile provenance are in
+`phase-1-fixed-step-benchmark.md`.
+
 ## Runtime portability boundary
 
 The first isolated Strict Lua launch exited with Windows status `0xC0000135`. The
@@ -90,10 +96,12 @@ a clean-machine test. This phase makes no portability or release claim.
 
 ## Numerical, performance and memory evidence
 
-- Numerical conservation/drift comparison: `not_tested`; no OmniCore solver exists.
+- Numerical conservation/drift comparison: `not_tested`; no OmniCore ledger exists.
 - NaN/Inf, positivity and floor comparison: `not_tested`.
-- Throughput before/after: `not_tested`; compilation/test duration is not a benchmark.
-- Runtime RAM/VRAM before/after: `not_tested`.
+- Throughput: fixed-step empty and mixed baselines are recorded for both modes.
+- State comparison: empty hashes match; identical generated mixed state diverges by
+  60 warmup steps and later particle counts differ.
+- Runtime process RAM: measured; process VRAM remains `not_tested`.
 - Static data-structure memory change: zero.
 
 Passing the same Legacy static/Lua checks in both modes proves build viability, not
@@ -106,7 +114,8 @@ optimized builds retain their prior flags. Debug (`optimization=0/g`) still avoi
 the Legacy fast flags; selecting `strict` explicitly adds the strict contract.
 
 Remaining risks are compiler/platform coverage, external user-supplied flags,
-prebuilt dependency FP behavior and the absent fixed-step numerical runner.
+prebuilt dependency FP behavior, first-divergence diagnosis and absent
+conservation/positivity/finite-value ledgers.
 
 Rollback commit is `fa41561a1`. Reverting `abeca81bd` removes only the option and its
 contract test; it does not require save/data migration.

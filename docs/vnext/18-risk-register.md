@@ -5,7 +5,7 @@
 | ID | Severity | Area | Evidence / failure mode | Required mitigation | Gate |
 |---|---|---|---|---|---|
 | C-01 | CRITICAL | correctness/performance | 4 mm cells with real sound speed make explicit compressible CFL far smaller than a game tick | select and validate time/acoustic/all-speed policy in AtmosphereBench | RED |
-| C-02 | CRITICAL | numerical | Legacy optimized builds use `-ffast-math`; an explicit strict build now exists, but conservation/finite comparisons do not | double/float/fast fixed-step differential matrix | YELLOW foundation, RED comparison |
+| C-02 | CRITICAL | numerical | identical generated mixed state diverges between Legacy-fast and Strict by 60 warmup steps; conservation/finite error is unknown | first-divergence capture plus double/float/fast conservation/positivity matrix | YELLOW foundation, RED comparison |
 | C-03 | CRITICAL | conservation | floors/clamps could silently create mass/species/energy | correction ledger, limits and fail-closed tests | RED |
 | C-04 | HIGH | correctness | Legacy particle updates directly write Air and depend on iteration/same-frame state | characterization saves, AST/manual inventory, compatibility adapter | RED |
 | C-05 | HIGH | correctness | scale/time/effective depth are not yet accepted | Phase 2 contract and dimensional checks | RED |
@@ -17,12 +17,13 @@
 | L-04 | HIGH | upstream | future stable may touch Air, Particle, Heat, Lua, Save or build | phase-start `ls-remote/fetch`, isolated impact Worker, regression conversion | YELLOW |
 | L-05 | HIGH | gameplay | replacing FIRE/pressure/vacuum could break old works | immutable Classic backend and differential traces | RED for replacement |
 | L-06 | MEDIUM | legacy formats | PSv/fuC and GUI save/load lack current runtime fixtures | add safe fixed fixtures and visible GUI pass | YELLOW |
-| P-01 | CRITICAL | benchmark | no current uncapped fixed-step throughput baseline | kernel runner bound to commit/hash/settings/hardware | RED |
+| P-01 | HIGH | benchmark | current two-scene fixed-step baseline exists, but no accepted noise model, repeat matrix, subsystem timings or regression budget | expand characterization, repeat across controlled runs, set evidence-based budgets | YELLOW |
 | P-02 | HIGH | memory | multi-species state/flux/scratch can exceed budget | report persistent/peak bytes per cell for every design | RED |
 | P-03 | HIGH | rendering | renderer snapshot already copies about 14.596 MiB lower bound per frame | selected-plane debug copies and measured snapshot timing | YELLOW |
 | P-04 | HIGH | GPU | CPU-special/GPU-generic may force full readback and stalls | residency design and upload/readback/fence metrics | RED |
 | P-05 | HIGH | GPU semantics | allocator, movement and same-pass neighbor writes are order-conflicted | multi-pass proposal/arbitration/apply and bounded request queues | RED |
 | P-06 | HIGH | element coverage | 488 classifications remain UNKNOWN; lexical risk flags 420 high | AST/path-sensitive/manual classification before GPU coverage claims | RED |
+| P-07 | HIGH | benchmark determinism | Legacy `clear_sim()` leaves derived Air blocking maps; mixed replay diverged before an explicit empty-step sanitation | centralize pristine-reset contract and add cache-state regression before differential traces | YELLOW, runner-controlled |
 | D-01 | CRITICAL | data license | NIST WebBook is SRD with explicit copyright restrictions | reference-only unless item-specific redistribution permission is recorded | RED for bundling |
 | D-02 | HIGH | code license | tpt-bench has no detected license | reference-only; write independent runner and cases | RED for reuse |
 | D-03 | HIGH | mechanism data | Cantera code license does not license every mechanism/data file | per-input provenance/license audit | RED for bundling |
@@ -42,7 +43,10 @@ UPSTREAM_SOURCE_ADAPTATION=GREEN
 LEGACY_FAST_BUILD=GREEN
 STRICT_FP_BUILD=GREEN
 STRICT_FAST_NUMERICAL_COMPARISON=RED
-BENCHMARK=RED
+FIXED_STEP_BENCHMARK_FOUNDATION=GREEN
+PERFORMANCE_REGRESSION_BUDGET=RED
+PROCESS_RAM_BASELINE=GREEN
+PROCESS_VRAM_BASELINE=RED
 NUMERICAL_FOUNDATION=RED
 PHYSICAL_SCALE=RED
 ATMOSPHERE_IMPLEMENTATION=RED
