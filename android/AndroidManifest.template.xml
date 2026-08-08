@@ -3,7 +3,7 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	package="@APPID@"
 	android:versionCode="@ANDROID_VERSION_CODE@"
-	android:versionName="@DISPLAY_VERSION_MAJOR@.@DISPLAY_VERSION_MINOR@.@BUILD_NUM@"
+	android:versionName="@DISPLAY_VERSION_MAJOR@.@DISPLAY_VERSION_MINOR@.@DISPLAY_VERSION_PATCH@"
 	android:installLocation="auto"
 >
 	<uses-sdk

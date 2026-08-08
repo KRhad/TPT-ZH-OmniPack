@@ -75,15 +75,21 @@ def build_startup_manifest(
     android_asset: tuple[str, bytes],
     *,
     source_revision: str,
+    source_vcs_tag: str,
     published_at: str,
     changelog: str,
+    update_build: int | None = None,
 ) -> dict[str, object]:
     major, minor, patch = parse_version(version)
+    build = patch if update_build is None else update_build
+    if build < 0 or build > 999:
+        raise ValueError("update build must be from 0 through 999")
     return {
         "SchemaVersion": 1,
         "Product": "TPT-ZH-OmniPack",
         "ProjectURL": PROJECT_URL,
         "SourceRevision": source_revision,
+        "VcsTag": source_vcs_tag,
         "PublishedAt": published_at,
         "Session": True,
         "MessageOfTheDay": "",
@@ -92,9 +98,9 @@ def build_startup_manifest(
             "Stable": {
                 "Major": major,
                 "Minor": minor,
-                "Build": patch,
+                "Build": build,
                 "Version": version,
-                "VersionCode": android_version_code((major, minor, patch)),
+                "VersionCode": android_version_code((major, minor, build)),
                 "MinimumVersion": "1.0.0",
                 "Changelog": changelog,
                 "ReleaseNotesURL": PROJECT_URL,
@@ -131,11 +137,15 @@ def build_package(
     output_directory: Path,
     version: str,
     changelog: str,
+    update_build: int | None = None,
 ) -> list[Path]:
     version_tuple = parse_version(version)
     source_revision = git_text(source_root, "rev-parse", "HEAD")
     if not re.fullmatch(r"[0-9a-f]{40}", source_revision):
         raise ValueError("could not determine the source revision")
+    source_vcs_tag = git_text(source_root, "describe", "--tags", "--always", "--dirty")
+    if not source_vcs_tag or source_vcs_tag.endswith("-dirty"):
+        raise ValueError("could not determine a clean source VCS tag")
     published_at = git_text(source_root, "show", "-s", "--format=%cI", "HEAD")
     published_at = datetime.fromisoformat(published_at).astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -156,6 +166,8 @@ def build_package(
         source_revision=source_revision,
         published_at=published_at,
         changelog=changelog,
+        source_vcs_tag=source_vcs_tag,
+        update_build=update_build,
     )
 
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -174,8 +186,10 @@ def build_package(
         "kind=github-static-update-channel",
         "product=TPT-ZH-OmniPack",
         f"version={version}",
-        f"version_code={android_version_code(version_tuple)}",
+        f"version_code={android_version_code((version_tuple[0], version_tuple[1], version_tuple[2] if update_build is None else update_build))}",
+        f"update_build={version_tuple[2] if update_build is None else update_build}",
         f"source_revision={source_revision}",
+        f"source_vcs_tag={source_vcs_tag}",
         f"published_at={published_at}",
         f"asset={windows_name}|{len(windows_data)}|{sha256(windows_data)}|butt-executable",
         f"asset={android_name}|{len(android_data)}|{sha256(android_data)}|android-apk",
@@ -201,6 +215,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--android-apk", type=Path, required=True)
     parser.add_argument("--output-directory", type=Path, required=True)
     parser.add_argument("--version", default="1.0.0")
+    parser.add_argument("--update-build", type=int)
     parser.add_argument("--changelog", default="TPT-ZH-OmniPack stable update")
     return parser
 
@@ -215,6 +230,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.output_directory.resolve(),
             args.version,
             args.changelog,
+            args.update_build,
         )
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         print(f"github-update-package: ERROR {error}")

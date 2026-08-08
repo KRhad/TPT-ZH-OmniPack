@@ -258,6 +258,14 @@ option(
 	description: 'Used by ghactions workflows, not useful otherwise'
 )
 option(
+	'update_build',
+	type: 'integer',
+	value: -1,
+	min: -1,
+	max: 999,
+	description: 'Internal update build; -1 uses the patch component of the display version'
+)
+option(
 	'render_icons_with_inkscape',
 	type: 'feature',
 	value: 'disabled',

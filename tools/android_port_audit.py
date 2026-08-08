@@ -35,6 +35,8 @@ def main() -> int:
     checks = {
         "stable_app_id": 'package="@APPID@"' in manifest and "org.tptzh.omnipack" in (root / "meson_options.txt").read_text(encoding="utf-8"),
         "version_code_is_positive_mapping": "@ANDROID_VERSION_CODE@" in manifest and "android_version_code" in src_meson,
+        "marketing_version_independent_of_update_build": "@DISPLAY_VERSION_PATCH@" in manifest
+        and "@BUILD_NUM@" not in manifest,
         "minimum_sdk_21": 'android:minSdkVersion="21"' in manifest,
         "target_sdk_33": 'android:targetSdkVersion="33"' in manifest,
         "landscape_direct_port": 'android:screenOrientation="landscape"' in manifest,
@@ -80,6 +82,7 @@ def main() -> int:
         "public_build_excludes_tests": "-Dbuild_tests=false" in build_script,
         "public_build_enables_updates": "-Dignore_updates=false" in build_script
         and "raw.githubusercontent.com/KRhad/TPT-ZH-OmniPack/public-source" in build_script,
+        "public_build_has_update_revision": "-Dupdate_build=$UpdateBuild" in build_script,
         "build_script_present": (root / "tools/build_android.ps1").is_file(),
     }
     passed = all(checks.values())

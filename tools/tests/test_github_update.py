@@ -38,6 +38,7 @@ class GithubUpdateTests(unittest.TestCase):
             ("/updates/windows.update", b"windows"),
             ("/updates/android.apk", b"android"),
             source_revision="a" * 40,
+            source_vcs_tag="v1.2.3-1-gabcdef123",
             published_at="2026-08-08T00:00:00Z",
             changelog="fixture",
         )
@@ -47,6 +48,23 @@ class GithubUpdateTests(unittest.TestCase):
         self.assertEqual(set(stable["Platforms"]), {"WIN64", "ANDROIDARM64"})
         self.assertEqual(stable["Platforms"]["WIN64"]["Sha256"], package.sha256(b"windows"))
         self.assertFalse(manifest["ReleaseReady"])
+
+    def test_marketing_version_can_publish_a_new_internal_update_build(self) -> None:
+        manifest = package.build_startup_manifest(
+            "1.0.0",
+            ("/updates/windows.update", b"windows"),
+            ("/updates/android.apk", b"android"),
+            source_revision="b" * 40,
+            source_vcs_tag="v100.0.399-213-gabcdef123",
+            published_at="2026-08-08T00:00:00Z",
+            changelog="fixture",
+            update_build=1,
+        )
+        stable = manifest["Updates"]["Stable"]
+        self.assertEqual(stable["Version"], "1.0.0")
+        self.assertEqual((stable["Major"], stable["Minor"], stable["Build"]), (1, 0, 1))
+        self.assertEqual(stable["VersionCode"], 1_000_001)
+        self.assertEqual(manifest["VcsTag"], "v100.0.399-213-gabcdef123")
 
     def test_source_contract_is_complete(self) -> None:
         checks = audit.audit_source(ROOT)
