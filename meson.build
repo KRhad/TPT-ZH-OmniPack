@@ -262,13 +262,13 @@ else
 endif
 json_dep = dependency('jsoncpp', static: is_static)
 
+fp_mode = get_option('fp_mode')
+message('Floating-point mode: ' + fp_mode)
+
 if not is_debug
 	args_ccomp_opt = []
 	if cpp_compiler.get_argument_syntax() == 'msvc'
-		args_ccomp_opt += [
-			'/Oy-',
-			'/fp:fast',
-		]
+		args_ccomp_opt += [ '/Oy-' ]
 		project_link_args += [
 			'/OPT:REF',
 			'/OPT:ICF',
@@ -276,12 +276,31 @@ if not is_debug
 	else
 		args_ccomp_opt += [
 			'-ftree-vectorize',
-			'-funsafe-math-optimizations',
-			'-ffast-math',
 			'-fomit-frame-pointer',
 		]
 	endif
 	project_cpp_args += args_ccomp_opt
+endif
+
+if fp_mode == 'strict'
+	if cpp_compiler.get_argument_syntax() == 'msvc'
+		project_cpp_args += [ '/fp:strict' ]
+	else
+		project_cpp_args += [
+			'-fno-fast-math',
+			'-fno-unsafe-math-optimizations',
+			'-ffp-contract=off',
+		]
+	endif
+elif not is_debug
+	if cpp_compiler.get_argument_syntax() == 'msvc'
+		project_cpp_args += [ '/fp:fast' ]
+	else
+		project_cpp_args += [
+			'-funsafe-math-optimizations',
+			'-ffast-math',
+		]
+	endif
 endif
 
 lto = get_option('lto')

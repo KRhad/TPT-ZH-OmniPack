@@ -12,6 +12,13 @@ option(
 	description: 'Link-time optimization, mostly a wrapper around the b_lto built-in option'
 )
 option(
+	'fp_mode',
+	type: 'combo',
+	choices: [ 'legacy_fast', 'strict' ],
+	value: 'legacy_fast',
+	description: 'Floating-point contract: preserve optimized Legacy fast-math or use strict IEEE-oriented flags for numerical validation'
+)
+option(
 	'beta',
 	type: 'boolean',
 	value: false,
