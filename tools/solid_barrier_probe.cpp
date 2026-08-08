@@ -98,7 +98,21 @@ int main()
 		return Fail("runtime barrier particle positions changed", PT_DUST, PT_AERG);
 	}
 
+	constexpr int reusedX = 140;
+	constexpr int reusedY = 140;
+	auto reusedIndex = simulation->create_part(-1, reusedX - 1, reusedY, PT_DUST);
+	if (reusedIndex < 0)
+		return Fail("could not create the out-of-bounds reuse fixture");
+	simulation->parts[reusedIndex].x = 1000000.0f;
+	simulation->parts[reusedIndex].y = -1000000.0f;
+	if (simulation->create_part(reusedIndex, reusedX, reusedY, PT_DUST) != reusedIndex ||
+		TYP(simulation->pmap[reusedY][reusedX]) != PT_DUST)
+	{
+		return Fail("reusing a particle with an out-of-bounds old position failed");
+	}
+
 	std::cout << "solid_barrier_probe_pass=true\n";
 	std::cout << "powder_solid_pairs_checked=" << checkedPairs << '\n';
+	std::cout << "out_of_bounds_particle_reuse_pass=true\n";
 	return 0;
 }

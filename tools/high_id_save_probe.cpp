@@ -250,6 +250,19 @@ int main()
 		particle.x = static_cast<float>(2 + index * 3);
 		particle.y = 2.0f;
 	}
+	source.authors["type"] = "save";
+	source.authors["id"] = 123;
+	source.authors["username"] = "upstream-regression";
+	for (int index = 0; index < 64; ++index)
+	{
+		Json::Value link;
+		link["id"] = 1000 + index;
+		link["username"] = "nested-author";
+		Json::Value nested;
+		nested["id"] = 2000 + index;
+		link["links"].append(nested);
+		source.authors["links"].append(link);
+	}
 
 	auto serialised = source.Serialise().second;
 	if (serialised.empty())
@@ -267,6 +280,20 @@ int main()
 	if (loaded.pmapbits != PMAPBITS || loaded.particlesCount != static_cast<int>(fixtures.size()))
 	{
 		return Fail("OPS metadata or particle count changed after high-ID load");
+	}
+	if (loaded.authors["type"] != "save" || loaded.authors["id"].asInt() != 123 ||
+		!loaded.authors["links"].isArray() || loaded.authors["links"].empty() ||
+		loaded.authors["links"].size() > 51 ||
+		loaded.authors["links"][0]["id"].asInt() != 1000)
+	{
+		std::cerr << "high-id-save-probe: authors diagnostic type="
+			<< loaded.authors["type"].asString()
+			<< " id=" << loaded.authors["id"].asInt()
+			<< " links_is_array=" << loaded.authors["links"].isArray()
+			<< " links_size=" << loaded.authors["links"].size()
+			<< " first_id=" << loaded.authors["links"][0]["id"].asInt()
+			<< std::endl;
+		return Fail("complex author information did not survive a bounded OPS round trip");
 	}
 
 	GameSave widerSourceFixture(Vec2<int>{ 2, 2 });
@@ -340,6 +367,6 @@ int main()
 		<< " particles=" << fixtures.size()
 		<< " direct_types=4 ctype_carriers=4 tmp_carriers=1 tmp2_carriers=1"
 		<< " invalid_pmapbits_rejected=2 missing_identifier_detected=1"
-		<< " wider_source_slot_remapped=1" << std::endl;
+		<< " wider_source_slot_remapped=1 complex_authors_roundtrip=1" << std::endl;
 	return 0;
 }

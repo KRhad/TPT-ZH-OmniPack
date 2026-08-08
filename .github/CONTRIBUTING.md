@@ -9,7 +9,7 @@ Thank you for your interest in contributing to TPT. Our GitHub repository is ope
 
 ### AI
 * Code written with AI/LLMs will be declined. By submitting code to this project the user certifies that they wrote the code and it can be licensed under GPLv3.
-* The use of AI tools for finding bugs is allowed, but issues must be verified and written by a human. Indicate clearly which tools were used. 
+* The use of AI tools for finding bugs is allowed, but issues must be verified and written by a human. Indicate clearly which tools were used.
 
 
 Contributions not adhering to these guidelines may be rejected without any explanation.
