@@ -6,7 +6,7 @@
 
 Windows 与 Android 开始界面显示 `https://github.com/KRhad/TPT-ZH-OmniPack`。静态更新通道使用内部 build `1`：玩家可见版本与 Android `versionName` 仍为 `1.0.0`，Android `versionCode=1000001`。Windows `.update` 和 Android APK 均校验精确大小及 SHA-256；Android APK 保持旧公开 build `0` 的同一测试证书，并通过 v1/v2/v3 签名、16 KB ZIP/ELF 对齐检查。代码与最终本地资产审计 `47/47` 通过。
 
-当前 build `1` 的远端下载、Windows 原地替换、Android 系统安装确认，以及中文/英文和 GUI/DPI 人工视觉矩阵仍未完成，因此这些项目继续标记为 `not_tested` 或 `false`。签名、编译、进程存活和自动化探针均不单独作为 GUI 通过证据。
+已使用隔离的 Windows build `0` 和 MuMu Android build `0` 完成两条真实更新闭环。Windows 客户端经公开 GitHub 通道原地替换并重启，更新后 EXE 与 build `1` 发布哈希一致；Android 经系统安装流程从 `versionCode=1000000` 升至 `1000001`，已安装 APK 与公开资产逐字节一致、证书保持不变，并且 build `1` 不再循环显示更新提示。当前 build `1` 的完整中文/英文切换和 GUI/DPI 人工视觉矩阵仍未完成，因此视觉项目继续标记为 `not_tested` 或 `false`。签名、编译、进程存活和自动化探针均不单独作为 GUI 通过证据。
 
 未完成的正式发布门禁：
 
@@ -34,8 +34,12 @@ android_arm64_clean_signed_build=767/767
 android_signature_v1_v2_v3=true
 android_upgrade_certificate_preserved=true
 github_update_asset_audit=47/47
-windows_update_runtime=not_tested
-android_update_runtime=not_tested
+windows_update_runtime=true
+windows_update_hash_match=true
+android_update_runtime=true
+android_update_hash_match=true
+android_update_certificate_preserved=true
+android_update_no_loop=true
 current_build_zh_en_runtime=not_tested
 gui_visual_pass=not_tested
 github_release_created=false
