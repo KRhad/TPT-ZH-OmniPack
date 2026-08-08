@@ -38,6 +38,7 @@ constexpr ForceWindowFrameOps FORCE_WINDOW_FRAME_OPS = @FORCE_WINDOW_FRAME_OPS@;
 constexpr char SERVER[]         = "@SERVER@";
 constexpr char STATICSERVER[]   = "@STATICSERVER@";
 constexpr char UPDATESERVER[]   = "@UPDATESERVER@";
+constexpr char PROJECT_URL[]    = "@PROJECT_URL@";
 constexpr char IDENT_PLATFORM[] = "@IDENT_PLATFORM@";
 constexpr char IDENT[]          = "@IDENT@";
 constexpr char APPNAME[]        = "@APPNAME@";

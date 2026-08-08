@@ -217,6 +217,13 @@ endif
 project_link_args = []
 project_cpp_args = []
 
+if host_platform == 'windows' and is_static and cpp_compiler.get_argument_syntax() != 'msvc'
+	# Public Windows packages contain one portable EXE. Keep the MinGW C/C++ and
+	# threading runtimes inside it so players do not need an MSYS2 installation,
+	# and so the in-place updater can safely replace a single file.
+	project_link_args += [ '-static' ]
+endif
+
 fftw_dep = dependency('fftw3f', static: is_static)
 threads_dep = dependency('threads')
 if host_platform == 'emscripten'
@@ -1155,6 +1162,29 @@ test(
 	timeout: 60,
 )
 
+sha256_probe = executable(
+	'sha256_probe',
+	sources: files('tools/sha256_probe.cpp'),
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ sta_libs['common'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
+test(
+	'github-update-audit',
+	python3_prog,
+	args: [
+		files('tools/github_update_audit.py'),
+		'--source-root', meson.project_source_root(),
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
 test(
 	'high-id-save-probe',
 	high_id_save_probe,
@@ -1165,6 +1195,13 @@ test(
 test(
 	'solid-barrier-probe',
 	solid_barrier_probe,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'sha256-probe',
+	sha256_probe,
 	suite: 'static',
 	timeout: 60,
 )

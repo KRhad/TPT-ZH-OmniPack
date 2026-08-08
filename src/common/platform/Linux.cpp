@@ -97,6 +97,16 @@ bool CanUpdate()
 	return true;
 }
 
+bool CanInstallUpdatePackage()
+{
+	return false;
+}
+
+bool InstallUpdatePackage(ByteString filename)
+{
+	return false;
+}
+
 bool Install()
 {
 	bool ok = true;

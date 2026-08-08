@@ -67,5 +67,9 @@
 				<data android:mimeType="*/*" />
 			</intent-filter> -->
 		</activity>
+		<receiver
+			android:name=".PowderActivity$UpdateInstallReceiver"
+			android:exported="false"
+		/>
 	</application>
 </manifest>

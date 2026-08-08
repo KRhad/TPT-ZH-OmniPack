@@ -243,6 +243,16 @@ bool CanUpdate()
 	return true;
 }
 
+bool CanInstallUpdatePackage()
+{
+	return false;
+}
+
+bool InstallUpdatePackage(ByteString filename)
+{
+	return false;
+}
+
 bool Install()
 {
 	bool ok = true;
@@ -329,12 +339,14 @@ bool UpdateStart(std::span<const char> data)
 	if (!WriteFile(data, exeName))
 	{
 		Platform::RemoveFile(exeName);
+		RenameFile(updName, exeName, true);
 		return false;
 	}
 
 	if ((uintptr_t)ShellExecute(nullptr, L"open", Platform::WinWiden(exeName).c_str(), nullptr, nullptr, SW_SHOWNORMAL) <= 32)
 	{
 		Platform::RemoveFile(exeName);
+		RenameFile(updName, exeName, true);
 		return false;
 	}
 

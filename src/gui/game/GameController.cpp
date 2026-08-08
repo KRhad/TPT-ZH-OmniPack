@@ -1767,12 +1767,17 @@ void GameController::NotifyUpdateAvailable(Client * sender)
 			StringBuilder updateMessage;
 			if (Platform::CanUpdate())
 			{
-				updateMessage << "Are you sure you want to run the updater? Please save any changes before updating.\n\nCurrent version:\n ";
+				updateMessage << Localization::Ref().Tr("update.confirm_windows");
+			}
+			else if (Platform::CanInstallUpdatePackage())
+			{
+				updateMessage << Localization::Ref().Tr("update.confirm_android");
 			}
 			else
 			{
-				updateMessage << "Click \"Continue\" to download the latest version from our website.\n\nCurrent version:\n ";
+				updateMessage << Localization::Ref().Tr("update.confirm_browser");
 			}
+			updateMessage << Localization::Ref().Tr("update.current_version");
 
 			if constexpr (MOD)
 			{
@@ -1791,7 +1796,7 @@ void GameController::NotifyUpdateAvailable(Client * sender)
 				updateMessage << DISPLAY_VERSION[0] << "." << DISPLAY_VERSION[1] << " Stable, Build " << APP_VERSION.build;
 			}
 
-			updateMessage << "\nNew version:\n ";
+			updateMessage << Localization::Ref().Tr("update.new_version");
 			if (info.channel == UpdateInfo::channelBeta)
 			{
 				updateMessage << info.major << "." << info.minor << " Beta, Build " << info.build;
@@ -1813,7 +1818,7 @@ void GameController::NotifyUpdateAvailable(Client * sender)
 			}
 
 			if (info.changeLog.length())
-				updateMessage << "\n\nChangelog:\n" << info.changeLog;
+				updateMessage << Localization::Ref().Tr("update.changelog") << info.changeLog;
 
 			new ConfirmPrompt(Localization::Ref().Tr("gamecontroller.run_updater"), updateMessage.Build(), { [this, info] { c->RunUpdater(info); } });
 		}
@@ -1829,18 +1834,18 @@ void GameController::NotifyUpdateAvailable(Client * sender)
 		case UpdateInfo::channelSnapshot:
 			if constexpr (MOD)
 			{
-				gameModel->AddNotification(new UpdateNotification(this, "A new mod update is available - click here to update"));
+				gameModel->AddNotification(new UpdateNotification(this, Localization::Ref().Tr("update.available_mod")));
 			}
 			else
 			{
-				gameModel->AddNotification(new UpdateNotification(this, "A new snapshot is available - click here to update"));
+				gameModel->AddNotification(new UpdateNotification(this, Localization::Ref().Tr("update.available_snapshot")));
 			}
 			break;
 		case UpdateInfo::channelStable:
-			gameModel->AddNotification(new UpdateNotification(this, "A new version is available - click here to update"));
+			gameModel->AddNotification(new UpdateNotification(this, Localization::Ref().Tr("update.available_stable")));
 			break;
 		case UpdateInfo::channelBeta:
-			gameModel->AddNotification(new UpdateNotification(this, "A new beta is available - click here to update"));
+			gameModel->AddNotification(new UpdateNotification(this, Localization::Ref().Tr("update.available_beta")));
 			break;
 	}
 }
@@ -1852,7 +1857,7 @@ void GameController::RemoveNotification(Notification * notification)
 
 void GameController::RunUpdater(UpdateInfo info)
 {
-	if (Platform::CanUpdate())
+	if (Platform::CanUpdate() || Platform::CanInstallUpdatePackage())
 	{
 		Exit();
 		new UpdateActivity(info);

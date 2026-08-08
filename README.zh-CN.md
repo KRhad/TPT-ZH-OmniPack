@@ -21,6 +21,7 @@
 - 生态与污染首批已绑定提交 `031c36ff` 完成最终 clean build：`771/771`、Meson `31/31`、Python 202 项（0 fail、2 skip）；同一 EXE 已复跑全部内容模块、完整/简化生态、模块禁用、八类 OPS、mixed OPS、旧别名和旧进度兼容。该开发 EXE 的 SHA-256 为 `154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709`。
 - rc9 候选 `f970a534` 的普通/符号 ZIP 审计通过；绑定同一候选的 S15-S20 六项无预热 30 秒稳定性门禁均经独立 assessment 通过，fixture 分别为 `118/118/118`、`50/50/50`、`21/21/21`、`13/13/13`、`33/33/33` 和 `487/484/466`。
 - 当前仍是开发状态，`release_ready=false`；`f970a534` 只作为只读参考候选，其哈希和 S15-S20 结论不能转移给后续工作树构建。脏工作树验证包必须在清单中明确记录基线 revision、`source_state`、工作树 SHA-256 和未跟踪文件数，不能冒充干净发布候选。独立的 `public-source` 历史已经公开且完成一次无测试源码构建；Windows 签名、完整桌面 GUI/DPI 人工矩阵、独立两小时长跑、正式 tag 和 GitHub Release 仍未完成。
+- Windows 与 Android 开始界面显示 `https://github.com/KRhad/TPT-ZH-OmniPack`。发布构建从公开 `public-source` 分支自动检查更新，并在下载后强制校验大小与 SHA-256；Android 的最终安装始终由系统确认。
 
 ## 内容路线
 

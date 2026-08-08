@@ -10,6 +10,8 @@ Extract the ZIP to a new directory and run `tpt-zh-omnipack.exe`. This is a port
 
 The Windows executable is currently unsigned. Windows may therefore display a publisher warning; verify the SHA-256 file supplied beside the ZIP before running it.
 
+The startup screen shows `https://github.com/KRhad/TPT-ZH-OmniPack`. The game checks that public repository for updates and verifies exact size and SHA-256 before applying a download. Windows replaces the portable EXE; Android always delegates final confirmation to the system installer.
+
 ## Source and licenses
 
 The project is distributed under GNU GPL v3. Third-party notices and the licenses for bundled fonts and libraries are included in the `LICENSES` directory. Source attribution is recorded in `SOURCE-AND-LICENSES.zh-CN.md`.

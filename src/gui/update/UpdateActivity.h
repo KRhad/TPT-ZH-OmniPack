@@ -7,6 +7,7 @@ class UpdateActivity
 {
 	Task * updateDownloadTask;
 	TaskWindow * updateWindow;
+	bool exitGameAfterUpdate;
 public:
 	UpdateActivity(UpdateInfo info);
 	virtual ~UpdateActivity();

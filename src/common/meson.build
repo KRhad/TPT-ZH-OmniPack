@@ -3,6 +3,7 @@ common_files += files(
 	'String.cpp',
 	'tpt-rand.cpp',
 	'Localization.cpp',
+	'Sha256.cpp',
 )
 
 subdir('clipboard')

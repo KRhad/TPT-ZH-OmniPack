@@ -15,8 +15,8 @@ TPT-ZH-OmniPack 是基于 [The Powder Toy](https://powdertoy.co.uk/) 100.0.399 �
 
 - [Windows x64 用户包](./TPT-ZH-OmniPack-1.0.0-Windows-x64.zip)
 - [Windows x64 SHA-256](./TPT-ZH-OmniPack-1.0.0-Windows-x64.zip.sha256)
-- [Android ARM64 APK](./TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk)
-- [Android APK SHA-256](./TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk.sha256)
+- [Android ARM64 APK](./updates/TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk)
+- [Android APK SHA-256](./updates/TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk.sha256)
 - [Android 包清单](./ANDROID-MANIFEST.json) / [Android 使用说明](./README-Android.md)
 - [1.0.0 对应源码](./TPT-ZH-OmniPack-1.0.0-Source.zip)
 - [源码 SHA-256](./TPT-ZH-OmniPack-1.0.0-Source.zip.sha256)
@@ -24,6 +24,8 @@ TPT-ZH-OmniPack 是基于 [The Powder Toy](https://powdertoy.co.uk/) 100.0.399 �
 用户包为便携版，解压后运行 `tpt-zh-omnipack.exe`。当前 Windows 程序未签名，运行前请核对 SHA-256。
 
 Android APK 仅支持 `arm64-v8a`，最低 Android 5.0。它使用项目测试证书签名，不是 Google Play 或正式商店签名；安装和升级前请核对 APK SHA-256。触屏短按左下角打开图标浏览本地存档，长按进入在线浏览器。
+
+Windows 与 Android 开始界面均显示项目地址 `https://github.com/KRhad/TPT-ZH-OmniPack`。发布构建会从本仓库 `public-source` 分支读取静态更新清单；下载内容必须同时通过精确大小和 SHA-256 校验。Windows 随后替换便携 EXE，Android 则调用系统安装程序，并保留“安装未知应用”授权与最终安装确认，游戏不会静默安装。
 
 ## 从源码构建
 

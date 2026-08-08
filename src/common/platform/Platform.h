@@ -52,6 +52,8 @@ namespace Platform
 	extern std::string sharedCwd;
 
 	bool CanUpdate();
+	bool CanInstallUpdatePackage();
+	bool InstallUpdatePackage(ByteString filename);
 
 	bool Install();
 

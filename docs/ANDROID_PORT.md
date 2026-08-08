@@ -13,6 +13,7 @@ Android 版与 Windows 版使用同一套模拟、元素登记、反应、中文
 - 数据目录：应用专属外部目录，不申请旧式全盘存储权限
 - 中文启动器名称：`万象沙盘`
 - 应用 ID：`org.tptzh.omnipack`
+- 更新：从公开 GitHub `Startup.json` 按 `ANDROIDARM64` 选择 APK，校验大小与 SHA-256 后通过系统 `PackageInstaller` 请求用户确认安装
 
 ## 构建
 
@@ -40,6 +41,8 @@ $env:ANDROID_KEYSTORE_PASS = '<在本机设置，不写入仓库>'
 - `README-Android.md` 用户说明。
 
 `-RequireCleanSource` 会拒绝从脏工作树生成最终候选。密钥、密码和私有验证证据均不得放入仓库或 APK 交付目录。
+
+自动更新不会绕过 Android 安全模型。Android 8 及以上版本若未授权本应用安装未知来源软件，会先打开系统授权页；授权后仍由系统显示最终安装确认。APK 在 C++ 层完成大小和 SHA-256 校验后才会交给 Java 安装会话。
 
 ## 已完成的真实客户端检查
 

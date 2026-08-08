@@ -12,6 +12,8 @@ Android：在 Android 5.0 或更高版本的 ARM64 设备上安装 `TPT-ZH-OmniP
 
 当前 Windows 可执行文件没有数字签名，因此 Windows 可能显示未知发布者提示。Android APK 使用项目测试证书，而不是 Google Play 或正式商店证书。两种平台均应先使用旁置 SHA-256 文件核对下载内容。
 
+开始界面显示 `https://github.com/KRhad/TPT-ZH-OmniPack`。游戏会从该公开仓库自动检查更新，下载内容通过大小和 SHA-256 核对后才应用；Windows 更新替换便携 EXE，Android 更新仍需通过系统安装确认。
+
 ## 源码与许可证
 
 项目整体依据 GNU GPL v3 发布。`LICENSES` 目录内包含字体、静态库及其他第三方组件的许可证和通知，源码来源记录见 `SOURCE-AND-LICENSES.zh-CN.md`。

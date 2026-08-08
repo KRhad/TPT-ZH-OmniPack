@@ -2,6 +2,7 @@
 #include "client/http/Request.h"
 #include "prefs/GlobalPrefs.h"
 #include "common/Localization.h"
+#include "common/Sha256.h"
 #include "common/platform/Platform.h"
 #include "tasks/Task.h"
 #include "tasks/TaskWindow.h"
@@ -10,14 +11,15 @@
 #include "Config.h"
 #include <bzlib.h>
 #include <memory>
+#include <utility>
 
 class UpdateDownloadTask : public Task
 {
 public:
-	UpdateDownloadTask(ByteString updateName, UpdateActivity * a) : a(a), updateName(updateName) {}
+	UpdateDownloadTask(UpdateInfo updateInfo, UpdateActivity * a) : a(a), updateInfo(std::move(updateInfo)) {}
 private:
 	UpdateActivity * a;
-	ByteString updateName;
+	UpdateInfo updateInfo;
 	void notifyDoneMain() override {
 		a->NotifyDone(this);
 	}
@@ -34,7 +36,7 @@ private:
 			return false;
 		};
 
-		auto request = std::make_unique<http::Request>(updateName);
+		auto request = std::make_unique<http::Request>(updateInfo.file);
 		request->Start();
 		notifyStatus(Localization::Ref().Tr("update.downloading"));
 		notifyProgress(-1);
@@ -70,6 +72,39 @@ private:
 		if (!data.size())
 		{
 			return niceNotifyError("Server did not return any data");
+		}
+		if (updateInfo.size > 0 && int64_t(data.size()) != updateInfo.size)
+		{
+			return niceNotifyError(String::Build("Package size mismatch: expected ", updateInfo.size, ", got ", data.size()));
+		}
+		if (updateInfo.sha256.size())
+		{
+			notifyStatus(Localization::Ref().Tr("update.verifying"));
+			notifyProgress(-1);
+			auto actualHash = Sha256Hex(std::span<const char>(data.data(), data.size()));
+			if (actualHash != updateInfo.sha256)
+			{
+				return niceNotifyError(String::Build("SHA-256 mismatch: expected ", updateInfo.sha256.FromAscii(), ", got ", actualHash.FromAscii()));
+			}
+		}
+
+		if (updateInfo.packageType == UpdateInfo::packageAndroidApk)
+		{
+			if (!Platform::CanInstallUpdatePackage())
+				return niceNotifyError("This platform cannot install an Android package");
+			if (data.size() < 4 || data[0] != 'P' || data[1] != 'K' || data[2] != 3 || data[3] != 4)
+				return niceNotifyError("Invalid APK/ZIP header");
+			auto packagePath = ByteString::Build(Platform::DefaultDdir(), PATH_SEP_CHAR, "TPT-ZH-OmniPack-update.apk");
+			if (!Platform::WriteFile(std::span<const char>(data.data(), data.size()), packagePath))
+				return niceNotifyError("Could not write the verified APK to app storage");
+			notifyStatus(Localization::Ref().Tr("update.android_install"));
+			notifyProgress(-1);
+			if (!Platform::InstallUpdatePackage(packagePath))
+			{
+				Platform::RemoveFile(packagePath);
+				return niceNotifyError("Could not start the Android system installer");
+			}
+			return true;
 		}
 
 		notifyStatus(Localization::Ref().Tr("update.unpacking"));
@@ -116,10 +151,11 @@ private:
 	}
 };
 
-UpdateActivity::UpdateActivity(UpdateInfo info)
+UpdateActivity::UpdateActivity(UpdateInfo info) :
+	exitGameAfterUpdate(info.packageType == UpdateInfo::packageLegacyExecutable && Platform::CanUpdate())
 {
-	updateDownloadTask = new UpdateDownloadTask(info.file, this);
-	updateWindow = new TaskWindow("Downloading update...", updateDownloadTask, true);
+	updateDownloadTask = new UpdateDownloadTask(std::move(info), this);
+	updateWindow = new TaskWindow(Localization::Ref().Tr("update.window_title"), updateDownloadTask, true);
 }
 
 void UpdateActivity::NotifyDone(Task * sender)
@@ -133,7 +169,8 @@ void UpdateActivity::NotifyDone(Task * sender)
 void UpdateActivity::Exit()
 {
 	updateWindow->Exit();
-	ui::Engine::Ref().Exit();
+	if (exitGameAfterUpdate)
+		ui::Engine::Ref().Exit();
 	delete this;
 }
 
@@ -150,10 +187,7 @@ void UpdateActivity::NotifyError(Task * sender)
 	}
 	sb << Localization::Ref().Tr("update.autoupdate_failed_error_prefix") << sender->GetError();
 	new ConfirmPrompt(Localization::Ref().Tr("update.autoupdate_failed_title"), sb.Build(), { [this] {
-		if constexpr (!USE_UPDATESERVER)
-		{
-			Platform::OpenURI(ByteString::Build(SERVER, "/Download.html"));
-		}
+		Platform::OpenURI(PROJECT_URL);
 		Exit();
 	}, [this] { Exit(); } });
 }

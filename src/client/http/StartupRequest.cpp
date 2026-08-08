@@ -2,6 +2,27 @@
 #include "client/Client.h"
 #include "Config.h"
 
+namespace
+{
+	bool IsNewerVersion(int major, int minor, int build)
+	{
+		if (major != int(APP_VERSION.displayVersion[0]))
+			return major > int(APP_VERSION.displayVersion[0]);
+		if (minor != int(APP_VERSION.displayVersion[1]))
+			return minor > int(APP_VERSION.displayVersion[1]);
+		return build > int(APP_VERSION.build);
+	}
+
+	ByteString ResolveUpdateUrl(ByteString base, ByteString file)
+	{
+		if (file.BeginsWith("https://"))
+			return file;
+		if (!file.BeginsWith("/"))
+			file = "/" + file;
+		return base + file;
+	}
+}
+
 namespace http
 {
 	// TODO: update Client::messageOfTheDay
@@ -64,16 +85,50 @@ namespace http
 						return info[key].asInt();
 					};
 					auto build = getOr(key == "Snapshot" ? "Snapshot" : "Build", 0);
-					if (size_t(build) <= APP_VERSION.build)
+					auto major = getOr("Major", 0);
+					auto minor = getOr("Minor", 0);
+					if (key == "Snapshot" ? size_t(build) <= APP_VERSION.build : !IsNewerVersion(major, minor, build))
 					{
 						return;
 					}
+
+					const Json::Value *asset = &info;
+					if (info.isMember("Platforms"))
+					{
+						auto &platforms = info["Platforms"];
+						if (!platforms.isObject() || !platforms.isMember(IDENT_PLATFORM))
+							return;
+						asset = &platforms[IDENT_PLATFORM];
+					}
+					if (!asset->isObject() || !asset->isMember("File"))
+						throw RequestError("Update manifest has no file for this platform");
+
+					auto packageType = UpdateInfo::packageLegacyExecutable;
+					if (asset->isMember("Format"))
+					{
+						auto format = ByteString((*asset)["Format"].asString());
+						if (format == "android-apk")
+							packageType = UpdateInfo::packageAndroidApk;
+						else if (format != "butt-executable")
+							throw RequestError("Update manifest has an unsupported package format");
+					}
+					auto sha256 = asset->isMember("Sha256") ? ByteString((*asset)["Sha256"].asString()).ToUpper() : ByteString{};
+					if (info.isMember("Platforms") && (sha256.size() != 64 || sha256.find_first_not_of("0123456789ABCDEF") != ByteString::npos))
+						throw RequestError("Update manifest has an invalid SHA-256");
+					auto size = asset->isMember("Size") ? (*asset)["Size"].asInt64() : int64_t(-1);
+					if (info.isMember("Platforms") && size <= 0)
+						throw RequestError("Update manifest has an invalid package size");
+
+					auto base = ByteString(alternate ? UPDATESERVER : SERVER);
 					startupInfo.updateInfo = UpdateInfo{
 						channel,
-						ByteString::Build(alternate ? UPDATESERVER : SERVER, info["File"].asString()),
+						ResolveUpdateUrl(base, ByteString((*asset)["File"].asString())),
+						sha256,
 						ByteString(info["Changelog"].asString()).FromUtf8(),
-						getOr("Major", 0),
-						getOr("Minor", 0),
+						packageType,
+						size,
+						major,
+						minor,
 						build,
 					};
 				};

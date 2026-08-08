@@ -12,6 +12,16 @@ bool CanUpdate()
 	return false;
 }
 
+bool CanInstallUpdatePackage()
+{
+	return false;
+}
+
+bool InstallUpdatePackage(ByteString filename)
+{
+	return false;
+}
+
 void SetupCrt()
 {
 }

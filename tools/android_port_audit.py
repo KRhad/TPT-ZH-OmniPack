@@ -52,6 +52,19 @@ def main() -> int:
             )
         )
         and 'CallActivityVoidFunc("restartApplication")' in android_platform,
+        "android_open_uri_bridge": "public void openUri" in activity
+        and 'CallActivityVoidFunc("openUri", uri)' in android_platform,
+        "android_verified_update_installer": all(
+            token in activity
+            for token in (
+                "PackageInstaller.SessionParams",
+                "STATUS_PENDING_USER_ACTION",
+                "canRequestPackageInstalls",
+                "ACTION_MANAGE_UNKNOWN_APP_SOURCES",
+            )
+        )
+        and "android.permission.REQUEST_INSTALL_PACKAGES" in src_meson
+        and 'CallActivityVoidFunc("installApkUpdate", filename)' in android_platform,
         "posix_self_exec_disabled_on_android": "#ifndef __ANDROID__\nvoid DoRestart()" in posix_process,
         "touch_ui_default": "default_touch_ui = true" in src_meson,
         "touch_local_save_primary_action": "CtrlBehaviour() || ui::Engine::Ref().TouchUI" in game_view,
@@ -65,6 +78,8 @@ def main() -> int:
         "android_platform_identifier": "ANDROIDARM64" in root_meson,
         "zh_cn_launcher_label": "values-zh-rCN" in resources_meson and "万象沙盘" in zh_label,
         "public_build_excludes_tests": "-Dbuild_tests=false" in build_script,
+        "public_build_enables_updates": "-Dignore_updates=false" in build_script
+        and "raw.githubusercontent.com/KRhad/TPT-ZH-OmniPack/public-source" in build_script,
         "build_script_present": (root / "tools/build_android.ps1").is_file(),
     }
     passed = all(checks.values())

@@ -11,7 +11,10 @@ namespace Platform
 {
 void OpenURI(ByteString uri)
 {
-	fprintf(stderr, "cannot open URI: not implemented\n");
+	if (!CallActivityVoidFunc("openUri", uri))
+	{
+		fprintf(stderr, "cannot open URI: Android activity request failed\n");
+	}
 }
 
 long unsigned int GetTime()
@@ -29,6 +32,16 @@ ByteString ExecutableNameFirstApprox()
 bool CanUpdate()
 {
 	return false;
+}
+
+bool CanInstallUpdatePackage()
+{
+	return true;
+}
+
+bool InstallUpdatePackage(ByteString filename)
+{
+	return CallActivityVoidFunc("installApkUpdate", filename);
 }
 
 void SetupCrt()
@@ -109,6 +122,45 @@ bool CallActivityVoidFunc(const char *funcName)
 			env->ExceptionDescribe();
 			env->ExceptionClear();
 			throw std::runtime_error("Android activity method threw");
+		}
+		return true;
+	}
+	catch (const std::exception &ex)
+	{
+		__android_log_print(ANDROID_LOG_ERROR, APPID, "CallActivityVoidFunc/%s failed: %s", funcName, ex.what());
+		return false;
+	}
+}
+
+bool CallActivityVoidFunc(const char *funcName, ByteString argument)
+{
+	try
+	{
+		auto *env = (JNIEnv *)SDL_AndroidGetJNIEnv();
+		auto activityInst = (jobject)SDL_AndroidGetActivity();
+		if (!env || !activityInst)
+			throw std::runtime_error("Android activity unavailable");
+		auto activityCls = env->GetObjectClass(activityInst);
+		if (!activityCls)
+			throw std::runtime_error("Android activity class unavailable");
+		Defer deleteActivityClass([env, activityCls]() { env->DeleteLocalRef(activityCls); });
+		auto funcMth = env->GetMethodID(activityCls, funcName, "(Ljava/lang/String;)V");
+		if (!funcMth)
+		{
+			if (env->ExceptionCheck())
+				env->ExceptionClear();
+			throw std::runtime_error("Android activity string method unavailable");
+		}
+		auto stringArgument = env->NewStringUTF(argument.c_str());
+		if (!stringArgument)
+			throw std::runtime_error("Android string allocation failed");
+		Defer deleteArgument([env, stringArgument]() { env->DeleteLocalRef(stringArgument); });
+		env->CallVoidMethod(activityInst, funcMth, stringArgument);
+		if (env->ExceptionCheck())
+		{
+			env->ExceptionDescribe();
+			env->ExceptionClear();
+			throw std::runtime_error("Android activity string method threw");
 		}
 		return true;
 	}

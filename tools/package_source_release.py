@@ -35,7 +35,9 @@ ALLOWED_TOOLS = {
     "tools/generate_element_catalog.py",
     "tools/generate_periodic_content_links.py",
     "tools/generate_periodic_table_data.py",
+    "tools/github_update_audit.py",
     "tools/package_source_release.py",
+    "tools/package_github_update.py",
     "tools/prepare_windows_release.py",
     "tools/refresh_official_element_descriptions.py",
     "tools/sync_element_localization.py",
@@ -62,9 +64,11 @@ REQUIRED_MEMBERS = {
     "resources/font.bz2",
     "tools/generate_element_catalog.py",
     "tools/generate_periodic_table_data.py",
+    "tools/github_update_audit.py",
     "tools/build_android.ps1",
     "tools/generate_content_menu_policy.py",
     "tools/generate_periodic_content_links.py",
+    "tools/package_github_update.py",
 }
 FORBIDDEN_SUFFIXES = (
     ".debug",
