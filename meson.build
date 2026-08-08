@@ -733,6 +733,7 @@ test(
 		'--unifont', join_paths(meson.project_source_root(), 'resources', 'third_party', 'unifont_all-16.0.03.hex.gz'),
 		'--fusion-bdf', join_paths(meson.project_source_root(), 'resources', 'third_party', 'fusion-pixel-12px-monospaced-zh_hans-v2026.07.20.bdf'),
 		'--periodic-map', join_paths(meson.project_source_root(), 'docs', 'PERIODIC_ELEMENT_SOURCE_MAP.csv'),
+		'--source-root', meson.project_source_root(),
 	],
 	env: static_test_env,
 	suite: 'static',

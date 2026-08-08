@@ -52,6 +52,8 @@
 
 namespace
 {
+constexpr unsigned long ElementDescriptionMaximumMs = 2500;
+
 bool IsChineseInterfaceLanguage()
 {
 	auto language = GlobalPrefs::Ref().Get("Language", 1);
@@ -1177,6 +1179,12 @@ void GameView::updateToolButtonScroll()
 
 void GameView::OnMouseMove(int x, int y, int dx, int dy)
 {
+	if (suppressToolTipsUntilMouseMove && (dx || dy))
+	{
+		suppressToolTipsUntilMouseMove = false;
+		elementDescriptionActive = false;
+		toolTipPresence.SetTarget(0);
+	}
 	bool newMouseInZoom = c->MouseInZoom(ui::Point(x, y));
 	mousePosition = c->PointTranslate(ui::Point(x, y));
 	currentMouse = ui::Point(x, y);
@@ -1225,6 +1233,12 @@ void GameView::OnMouseMove(int x, int y, int dx, int dy)
 
 void GameView::OnMouseDown(int x, int y, unsigned button)
 {
+	if (suppressToolTipsUntilMouseMove)
+	{
+		suppressToolTipsUntilMouseMove = false;
+		elementDescriptionActive = false;
+		toolTipPresence.SetTarget(0);
+	}
 	currentMouse = ui::Point(x, y);
 	if (altBehaviour && !shiftBehaviour && !ctrlBehaviour)
 		button = SDL_BUTTON_MIDDLE;
@@ -1402,6 +1416,12 @@ void GameView::LayoutToolTip(String text, int preferredY, bool anchorToMenu)
 
 void GameView::ToolTip(ui::Point senderPosition, String toolTip)
 {
+	// SDL keeps the last touch position as a mouse hover on Android.  Without
+	// this guard, the button under that stale position renews its tooltip every
+	// frame and the post-selection element description never disappears.
+	if (suppressToolTipsUntilMouseMove)
+		return;
+
 	// buttom button tooltips
 	if (senderPosition.Y > Size.Y-17)
 	{
@@ -1431,7 +1451,11 @@ void GameView::ShowElementDescription(String description)
 {
 	LayoutToolTip(std::move(description), 0, true);
 	toolTipPresence = 120;
+	toolTipPresence.SetTarget(0);
 	isToolTipFadingIn = false;
+	elementDescriptionActive = true;
+	elementDescriptionShownAt = Platform::GetTime();
+	suppressToolTipsUntilMouseMove = true;
 }
 
 void GameView::OnMouseWheel(int x, int y, int d)
@@ -1907,7 +1931,22 @@ void GameView::OnTick()
 	{
 		buttonTipShow.SetTarget(0);
 	}
-	if (isToolTipFadingIn)
+	if (elementDescriptionActive)
+	{
+		isToolTipFadingIn = false;
+		toolTipPresence.SetTarget(0);
+		if (Platform::GetTime() - elementDescriptionShownAt >= ElementDescriptionMaximumMs)
+		{
+			elementDescriptionActive = false;
+			toolTipPresence = 0;
+		}
+	}
+	else if (suppressToolTipsUntilMouseMove)
+	{
+		isToolTipFadingIn = false;
+		toolTipPresence.SetTarget(0);
+	}
+	else if (isToolTipFadingIn)
 	{
 		isToolTipFadingIn = false;
 		toolTipPresence.SetTarget(120);

@@ -44,6 +44,44 @@ PINNED_INPUT_SHA256 = {
 }
 FUSION_XLFD = "-TakWolf-Fusion Pixel 12px Mono zh_hans-Regular-R-Normal-Sans Serif-12-120-75-75-M-118-ISO10646-1"
 
+PLAYER_TEXT_CSV_FIELDS = (
+    (
+        "docs/ELEMENT_REGISTRY.csv",
+        (
+            "display_code",
+            "english_name",
+            "chinese_name",
+            "english_description",
+            "chinese_description",
+        ),
+        ("chinese_name", "chinese_description"),
+    ),
+    (
+        "docs/ELEMENT_CONTENT.csv",
+        (
+            "recipe_en",
+            "recipe_zh",
+            "production_en",
+            "production_zh",
+            "use_en",
+            "use_zh",
+            "hazard_en",
+            "hazard_zh",
+        ),
+        ("recipe_zh", "production_zh", "use_zh", "hazard_zh"),
+    ),
+    (
+        "docs/OFFICIAL_ELEMENT_DESCRIPTIONS.csv",
+        ("english_description", "chinese_description"),
+        ("chinese_description",),
+    ),
+    (
+        "docs/PERIODIC_CONTENT_LINKS.csv",
+        ("formula", "zh_name", "en_name"),
+        ("zh_name",),
+    ),
+)
+
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -108,6 +146,34 @@ def periodic_codepoints(path: Path) -> set[int]:
     if len(rows) != 118 or any(not row.get("zh_name") for row in rows):
         raise ValueError(f"invalid periodic element source map: {path}")
     return {ord(character) for row in rows for character in row["zh_name"] if ord(character) >= 0x20}
+
+
+def player_text_codepoints(source_root: Path) -> tuple[set[int], set[int]]:
+    """Return all and Chinese codepoints embedded in player-facing material text."""
+    required: set[int] = set()
+    chinese_required: set[int] = set()
+    for relative, fields, chinese_fields in PLAYER_TEXT_CSV_FIELDS:
+        path = source_root / relative
+        with path.open("r", encoding="utf-8-sig", newline="") as stream:
+            reader = csv.DictReader(stream)
+            fieldnames = tuple(reader.fieldnames or ())
+            missing_fields = sorted(set(fields) - set(fieldnames))
+            if missing_fields:
+                raise ValueError(
+                    f"player text CSV {path} is missing fields: "
+                    + ", ".join(missing_fields)
+                )
+            for row in reader:
+                for field in fields:
+                    codepoints = {
+                        ord(character)
+                        for character in (row.get(field) or "")
+                        if ord(character) >= 0x20
+                    }
+                    required.update(codepoints)
+                    if field in chinese_fields:
+                        chinese_required.update(codepoints)
+    return required, chinese_required
 
 
 def parse_unifont(path: Path, required: set[int]) -> dict[int, tuple[int, tuple[int, ...]]]:
@@ -362,10 +428,14 @@ def build_font(source_root: Path, output: Path) -> dict[str, int | str]:
     required = required_codepoints(language_paths)
     periodic_required = periodic_codepoints(source_root / "docs/PERIODIC_ELEMENT_SOURCE_MAP.csv")
     required.update(periodic_required)
+    player_text_required, player_text_zh_required = player_text_codepoints(source_root)
+    required.update(player_text_required)
     zh_path = source_root / "src/lang/zh-CN.json"
     if not zh_path.is_file():
         raise ValueError("Simplified Chinese language catalog is missing")
     zh_required = required_codepoints([zh_path])
+    zh_required.update(periodic_required)
+    zh_required.update(player_text_zh_required)
     missing = required - set(glyphs)
     fusion = parse_fusion_bdf(fusion_path, missing)
     missing_zh_fusion = sorted((zh_required - set(glyphs)) - set(fusion))
@@ -392,6 +462,8 @@ def build_font(source_root: Path, output: Path) -> dict[str, int | str]:
         "glyphs": len(glyphs),
         "required_glyphs": len(required),
         "periodic_required_glyphs": len(periodic_required),
+        "player_text_required_glyphs": len(player_text_required),
+        "player_text_zh_required_glyphs": len(player_text_zh_required),
         "output_bytes": output.stat().st_size,
         "output_sha256": sha256(output),
         "upstream_font_sha256": sha256(upstream_path),

@@ -15,12 +15,21 @@ from build_release_font import (
     convert_unifont_glyph,
     pack_tpt_pixels,
     parse_fusion_bdf,
+    parse_tpt_font,
+    player_text_codepoints,
     unpack_tpt_glyph,
 )
 from validate_tpt_font import save_glyph_png
 
 
 class ReleaseFontTests(unittest.TestCase):
+    def test_player_visible_material_text_is_covered_by_release_font(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        required, chinese_required = player_text_codepoints(root)
+        glyphs = parse_tpt_font(root / "resources/font.bz2")
+        self.assertTrue({ord(character) for character in "玩芯焊"} <= chinese_required)
+        self.assertEqual(required - set(glyphs), set())
+
     def test_native_bdf_glyph_maps_directly_without_scaling(self) -> None:
         width, bitmap = convert_bdf_glyph(
             4,

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 from pathlib import Path
+import re
 from typing import Sequence
 
 
@@ -16,6 +17,10 @@ REQUIRED_CONTENT_FIELDS = (
 FULL_DESCRIPTION_FIELDS = (
     "identifier", "wiki_url", "wiki_snapshot", "english_description",
     "chinese_description",
+)
+STRONG_TEXT_CORRUPTION = re.compile(
+    r"\uFFFD|锟斤拷|烫烫烫|屯屯屯|ï¿½|(?:\?{2,}|？{2,})",
+    re.IGNORECASE,
 )
 
 
@@ -56,6 +61,32 @@ def audit(root: Path) -> tuple[list[str], dict[str, int]]:
         for field in ("english_description", "chinese_description"):
             if not (row.get(field) or "").strip():
                 errors.append(f"{identifier}: empty bilingual summary field {field}")
+
+    for path, rows, fields in (
+        (
+            root / "docs" / "ELEMENT_REGISTRY.csv",
+            registry_rows,
+            ("english_description", "chinese_description"),
+        ),
+        (
+            root / "docs" / "ELEMENT_CONTENT.csv",
+            content_rows,
+            REQUIRED_CONTENT_FIELDS + ("production_en", "production_zh"),
+        ),
+        (
+            root / "docs" / "OFFICIAL_ELEMENT_DESCRIPTIONS.csv",
+            full_rows,
+            ("english_description", "chinese_description"),
+        ),
+    ):
+        for row in rows:
+            identifier = row.get("identifier", "")
+            for field in fields:
+                if STRONG_TEXT_CORRUPTION.search(row.get(field, "") or ""):
+                    errors.append(
+                        f"{path}: {identifier} {field} contains replacement text or "
+                        "a question-mark placeholder"
+                    )
 
     expected_full = {row["identifier"] for row in official}
     if set(full) != expected_full:

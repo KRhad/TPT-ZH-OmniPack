@@ -23,6 +23,7 @@ from build_release_font import (
     convert_unifont_glyph,
     parse_fusion_bdf,
     parse_unifont,
+    player_text_codepoints,
     unpack_tpt_glyph,
 )
 
@@ -145,11 +146,16 @@ def validate(
     unifont: Path | None,
     fusion_bdf: Path | None,
     periodic_map: Path | None = None,
+    source_root: Path | None = None,
 ) -> dict[str, object]:
     glyphs = parse_font(font)
     required = catalog_codepoints(language_paths)
     periodic_required = periodic_codepoints(periodic_map)
     required.update(periodic_required)
+    player_text_required: set[int] = set()
+    if source_root is not None:
+        player_text_required, _ = player_text_codepoints(source_root)
+        required.update(player_text_required)
     missing = sorted(required - set(glyphs))
     invalid_width = []
     empty = []
@@ -229,6 +235,7 @@ def validate(
         "glyphs": len(glyphs),
         "required_codepoints": len(required),
         "periodic_required_codepoints": len(periodic_required),
+        "player_text_required_codepoints": len(player_text_required),
         "font_glyph_coverage_valid": True,
         "font_pack_roundtrip_test": True,
         "unifont_source_decode_test": source_decode_test,
@@ -247,6 +254,12 @@ def main() -> int:
     parser.add_argument("--unifont", type=Path)
     parser.add_argument("--fusion-bdf", type=Path)
     parser.add_argument("--periodic-map", type=Path, default=Path("docs/PERIODIC_ELEMENT_SOURCE_MAP.csv"))
+    parser.add_argument(
+        "--source-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="repository root containing player-facing material CSV files",
+    )
     args = parser.parse_args()
     try:
         result = validate(
@@ -256,6 +269,7 @@ def main() -> int:
             args.unifont,
             args.fusion_bdf,
             args.periodic_map,
+            args.source_root.resolve(),
         )
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"validate-tpt-font: ERROR {error}", file=sys.stderr)

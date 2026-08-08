@@ -40,6 +40,22 @@ class ElementDescriptionCoverageTests(unittest.TestCase):
             module.load_csv = original
         self.assertTrue(any("OMNI_PT_ETHL" in error and "use_zh" in error for error in errors))
 
+    def test_question_mark_placeholder_in_description_is_rejected(self) -> None:
+        original = module.load_csv
+
+        def altered(path: Path, errors: list[str]):
+            rows = copy.deepcopy(original(path, errors))
+            if path.name == "OFFICIAL_ELEMENT_DESCRIPTIONS.csv":
+                rows[0]["chinese_description"] += "??"
+            return rows
+
+        module.load_csv = altered
+        try:
+            errors, _ = module.audit(ROOT)
+        finally:
+            module.load_csv = original
+        self.assertTrue(any("question-mark placeholder" in error for error in errors))
+
     def test_known_legacy_description_defects_are_repaired(self) -> None:
         errors: list[str] = []
         rows = {

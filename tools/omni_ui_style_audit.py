@@ -247,6 +247,31 @@ def audit(root: Path) -> list[str]:
                 "GameView.cpp: tooltip still uses unbounded right alignment "
                 f"{forbidden!r}"
             )
+    game_view_header = read_text(root / "src" / "gui" / "game" / "GameView.h", errors)
+    for marker in (
+        "bool elementDescriptionActive = false;",
+        "bool suppressToolTipsUntilMouseMove = false;",
+        "unsigned long elementDescriptionShownAt = 0;",
+    ):
+        if marker not in game_view_header:
+            errors.append(f"GameView.h: missing transient description marker {marker!r}")
+    for marker in (
+        "constexpr unsigned long ElementDescriptionMaximumMs = 2500;",
+        "if (suppressToolTipsUntilMouseMove && (dx || dy))",
+        "elementDescriptionShownAt = Platform::GetTime();",
+        "Platform::GetTime() - elementDescriptionShownAt >= ElementDescriptionMaximumMs",
+    ):
+        if marker not in game_view:
+            errors.append(f"GameView.cpp: missing transient description marker {marker!r}")
+    if not re.search(
+        r"void GameView::ToolTip\([^)]*\)\s*\{[\s\S]{0,700}?"
+        r"if \(suppressToolTipsUntilMouseMove\)\s*return;",
+        game_view,
+    ):
+        errors.append(
+            "GameView.cpp: stale Android hover is not blocked while the transient "
+            "description expires"
+        )
     for marker in (
         "searchField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;",
         "gameController->ShowElementDescription(selectedTool);",

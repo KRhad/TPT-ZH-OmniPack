@@ -128,6 +128,41 @@ class OmniUiStyleAuditTests(unittest.TestCase):
             audit_module.read_text = original
         self.assertTrue(any("unbounded right alignment" in error for error in errors))
 
+    def test_missing_transient_description_timeout_is_rejected(self) -> None:
+        target = ROOT / "src" / "gui" / "game" / "GameView.cpp"
+        original = audit_module.read_text
+        try:
+            audit_module.read_text = lambda path, errors: (
+                original(path, errors).replace(
+                    "constexpr unsigned long ElementDescriptionMaximumMs = 2500;",
+                    "constexpr unsigned long RemovedDescriptionMaximumMs = 2500;",
+                )
+                if path == target
+                else original(path, errors)
+            )
+            errors = audit_module.audit(ROOT)
+        finally:
+            audit_module.read_text = original
+        self.assertTrue(any("transient description marker" in error for error in errors))
+
+    def test_missing_stale_android_hover_guard_is_rejected(self) -> None:
+        target = ROOT / "src" / "gui" / "game" / "GameView.cpp"
+        original = audit_module.read_text
+        try:
+            audit_module.read_text = lambda path, errors: (
+                original(path, errors).replace(
+                    "if (suppressToolTipsUntilMouseMove)\n\t\treturn;",
+                    "if (suppressToolTipsUntilMouseMove)\n\t\tisToolTipFadingIn = true;",
+                    1,
+                )
+                if path == target
+                else original(path, errors)
+            )
+            errors = audit_module.audit(ROOT)
+        finally:
+            audit_module.read_text = original
+        self.assertTrue(any("stale Android hover" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()
