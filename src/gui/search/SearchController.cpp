@@ -1,0 +1,452 @@
+#include "SearchController.h"
+
+#include "Controller.h"
+#include "SearchModel.h"
+#include "SearchView.h"
+
+#include "common/Localization.h"
+#include "client/Client.h"
+#include "client/SaveInfo.h"
+#include "client/GameSave.h"
+#include "client/http/DeleteSaveRequest.h"
+#include "client/http/PublishSaveRequest.h"
+#include "client/http/UnpublishSaveRequest.h"
+#include "client/http/FavouriteSaveRequest.h"
+#include "client/http/SearchSavesRequest.h"
+#include "client/http/SearchTagsRequest.h"
+#include "common/platform/Platform.h"
+#include "graphics/Graphics.h"
+#include "graphics/VideoBuffer.h"
+#include "tasks/Task.h"
+#include "tasks/TaskWindow.h"
+
+#include "gui/dialogues/ConfirmPrompt.h"
+#include "gui/preview/PreviewController.h"
+#include "gui/preview/PreviewView.h"
+#include "SimulationConfig.h"
+#include <algorithm>
+
+SearchController::SearchController(std::function<void ()> onDone_):
+	activePreview(nullptr),
+	nextQueryTime(0.0f),
+	nextQueryDone(true),
+	instantOpen(false),
+	doRefresh(false),
+	HasExited(false)
+{
+	searchModel = new SearchModel();
+	searchView = new SearchView();
+	searchModel->AddObserver(searchView);
+	searchView->AttachController(this);
+
+	searchModel->UpdateSaveList(1, "");
+
+	onDone = onDone_;
+}
+
+const SaveInfo *SearchController::GetLoadedSave() const
+{
+	return searchModel->GetLoadedSave();
+}
+
+std::unique_ptr<SaveInfo> SearchController::TakeLoadedSave()
+{
+	return searchModel->TakeLoadedSave();
+}
+
+void SearchController::Update()
+{
+	if (doRefresh)
+	{
+		if (searchModel->UpdateSaveList(searchModel->GetPageNum(), searchModel->GetLastQuery()))
+		{
+			nextQueryDone = true;
+			doRefresh = false;
+		}
+	}
+	else if (!nextQueryDone && nextQueryTime < Platform::GetTime())
+	{
+		if (searchModel->UpdateSaveList(1, nextQuery))
+			nextQueryDone = true;
+	}
+	searchModel->Update();
+	if(activePreview && activePreview->HasExited)
+	{
+		delete activePreview;
+		activePreview = nullptr;
+		if(searchModel->GetLoadedSave())
+		{
+			Exit();
+		}
+	}
+}
+
+void SearchController::Exit()
+{
+	InstantOpen(false);
+	searchView->CloseActiveWindow();
+	if (onDone)
+		onDone();
+	//HasExited = true;
+}
+
+SearchController::~SearchController()
+{
+	delete activePreview;
+	delete searchModel;
+	searchView->CloseActiveWindow();
+	delete searchView;
+}
+
+void SearchController::DoSearch(String query, bool now)
+{
+	nextQuery = query;
+	if (!now)
+	{
+		nextQueryTime = Platform::GetTime()+600;
+		nextQueryDone = false;
+	}
+	else
+	{
+		nextQueryDone = searchModel->UpdateSaveList(1, nextQuery);
+	}
+}
+
+void SearchController::DoSearch2(String query)
+{
+	// calls SearchView function to set textbox text, then calls DoSearch
+	searchView->Search(query);
+}
+
+void SearchController::Refresh()
+{
+	doRefresh = true;
+}
+
+void SearchController::SetPage(int page)
+{
+	if (page != searchModel->GetPageNum() && page > 0 && page <= searchModel->GetPageCount())
+		searchModel->UpdateSaveList(page, searchModel->GetLastQuery());
+}
+
+void SearchController::SetPageRelative(int offset)
+{
+	int page = std::min(std::max(searchModel->GetPageNum() + offset, 1), searchModel->GetPageCount());
+	if (page != searchModel->GetPageNum())
+		searchModel->UpdateSaveList(page, searchModel->GetLastQuery());
+}
+
+void SearchController::ChangePeriod(int period)
+{
+	switch(period)
+	{
+		case 0:
+			searchModel->SetPeriod(http::allSaves);
+			break;
+		case 1:
+			searchModel->SetPeriod(http::todaySaves);
+			break;
+		case 2:
+			searchModel->SetPeriod(http::weekSaves);
+			break;
+		case 3:
+			searchModel->SetPeriod(http::monthSaves);
+			break;
+		case 4:
+			searchModel->SetPeriod(http::yearSaves);
+			break;
+		default:
+			searchModel->SetPeriod(http::allSaves);
+	}
+
+	searchModel->UpdateSaveList(1, searchModel->GetLastQuery());
+}
+
+void SearchController::ChangeSort()
+{
+	if(searchModel->GetSort() == http::sortByDate)
+	{
+		searchModel->SetSort(http::sortByVotes);
+	}
+	else
+	{
+		searchModel->SetSort(http::sortByDate);
+	}
+	searchModel->UpdateSaveList(1, searchModel->GetLastQuery());
+}
+
+void SearchController::ShowOwn(bool show)
+{
+	if(Client::Ref().GetAuthUser())
+	{
+		searchModel->SetShowFavourite(false);
+		searchModel->SetShowOwn(show);
+	}
+	else
+		searchModel->SetShowOwn(false);
+	searchModel->UpdateSaveList(1, searchModel->GetLastQuery());
+}
+
+void SearchController::ShowFavourite(bool show)
+{
+	if(Client::Ref().GetAuthUser())
+	{
+		searchModel->SetShowOwn(false);
+		searchModel->SetShowFavourite(show);
+	}
+	else
+		searchModel->SetShowFavourite(false);
+	searchModel->UpdateSaveList(1, searchModel->GetLastQuery());
+}
+
+void SearchController::Selected(int saveID, bool selected)
+{
+	if(!Client::Ref().GetAuthUser())
+		return;
+
+	if(selected)
+		searchModel->SelectSave(saveID);
+	else
+		searchModel->DeselectSave(saveID);
+}
+
+void SearchController::SelectAllSaves() 
+{
+	auto user = Client::Ref().GetAuthUser();
+	if (!user)
+		return;
+	if (searchModel->GetShowOwn() || 
+		user->UserElevation == User::ElevationMod || 
+		user->UserElevation == User::ElevationAdmin)
+		searchModel->SelectAllSaves();
+
+}
+
+void SearchController::InstantOpen(bool instant)
+{
+	instantOpen = instant;
+}
+
+void SearchController::OpenSaveDone()
+{
+	if (activePreview->GetDoOpen() && activePreview->GetSaveInfo())
+	{
+		searchModel->SetLoadedSave(activePreview->TakeSaveInfo());
+	}
+	else
+	{
+		searchModel->SetLoadedSave(nullptr);
+	}
+}
+
+void SearchController::OpenSave(int saveID, int saveDate, std::unique_ptr<VideoBuffer> thumbnail)
+{
+	delete activePreview;
+	Graphics * g = searchView->GetGraphics();
+	g->BlendFilledRect(RectSized(Vec2{ XRES/3, WINDOWH-20 }, Vec2{ XRES/3, 20 }), 0x000000_rgb .WithAlpha(150)); //dim the "Page X of Y" a little to make the CopyTextButton more noticeable
+	activePreview = new PreviewController(saveID, saveDate, instantOpen ? savePreviewInstant : savePreviewNormal, [this] { OpenSaveDone(); }, std::move(thumbnail));
+	activePreview->GetView()->MakeActiveWindow();
+}
+
+void SearchController::ClearSelection()
+{
+	searchModel->ClearSelected();
+}
+
+void SearchController::RemoveSelected()
+{
+	StringBuilder desc;
+	auto count = searchModel->GetSelected().size();
+	desc << Localization::Ref().Tr("search.confirm_delete_prefix") << count << (count > 1 ? Localization::Ref().Tr("search.confirm_delete_suffix_many") : Localization::Ref().Tr("search.confirm_delete_suffix_one"));
+	new ConfirmPrompt(Localization::Ref().Tr("search.confirm_delete_title"), desc.Build(), { [this] {
+		removeSelectedC();
+	} });
+}
+
+void SearchController::removeSelectedC()
+{
+	class RemoveSavesTask : public Task
+	{
+		SearchController *c;
+		std::vector<int> saves;
+	public:
+		RemoveSavesTask(std::vector<int> saves_, SearchController *c_) { saves = saves_; c = c_; }
+		bool doWork() override
+		{
+			for (size_t i = 0; i < saves.size(); i++)
+			{
+				notifyStatus(String::Build(Localization::Ref().Tr("search.status_deleting"), saves[i], Localization::Ref().Tr("search.status_deleting_suffix")));
+				auto deleteSaveRequest = std::make_unique<http::DeleteSaveRequest>(saves[i]);
+				deleteSaveRequest->Start();
+				deleteSaveRequest->Wait();
+				try
+				{
+					deleteSaveRequest->Finish();
+				}
+				catch (const http::RequestError &ex)
+				{
+					notifyError(String::Build(Localization::Ref().Tr("search.error_delete_failed"), saves[i], Localization::Ref().Tr("search.error_delete_failed_suffix"), ByteString(ex.what()).FromAscii()));
+					c->Refresh();
+					return false;
+				}
+				notifyProgress((i + 1) * 100 / saves.size());
+			}
+			c->Refresh();
+			return true;
+		}
+	};
+
+	std::vector<int> selected = searchModel->GetSelected();
+	new TaskWindow(Localization::Ref().Tr("search.task_removing"), new RemoveSavesTask(selected, this));
+	ClearSelection();
+	searchModel->UpdateSaveList(searchModel->GetPageNum(), searchModel->GetLastQuery());
+}
+
+void SearchController::UnpublishSelected(bool publish)
+{
+	StringBuilder desc;
+	auto count = searchModel->GetSelected().size();
+	desc << (publish ? Localization::Ref().Tr("search.confirm_publish_prefix") : Localization::Ref().Tr("search.confirm_unpublish_prefix")) << count << (count > 1 ? Localization::Ref().Tr("search.confirm_delete_suffix_many") : Localization::Ref().Tr("search.confirm_delete_suffix_one"));
+	new ConfirmPrompt(publish ? Localization::Ref().Tr("search.confirm_publish_title") : Localization::Ref().Tr("search.confirm_unpublish_title"), desc.Build(), { [this, publish] {
+		unpublishSelectedC(publish);
+	} });
+}
+
+void SearchController::unpublishSelectedC(bool publish)
+{
+	class UnpublishSavesTask : public Task
+	{
+		std::vector<int> saves;
+		SearchController *c;
+		bool publish;
+	public:
+		UnpublishSavesTask(std::vector<int> saves_, SearchController *c_, bool publish_) { saves = saves_; c = c_; publish = publish_; }
+
+		void PublishSave(int saveID)
+		{
+			notifyStatus(String::Build(Localization::Ref().Tr("search.status_publishing"), saveID, Localization::Ref().Tr("search.status_publishing_suffix")));
+			auto publishSaveRequest = std::make_unique<http::PublishSaveRequest>(saveID);
+			publishSaveRequest->Start();
+			publishSaveRequest->Wait();
+			publishSaveRequest->Finish();
+		}
+
+		void UnpublishSave(int saveID)
+		{
+			notifyStatus(String::Build(Localization::Ref().Tr("search.status_unpublishing"), saveID, Localization::Ref().Tr("search.status_unpublishing_suffix")));
+			auto unpublishSaveRequest = std::make_unique<http::UnpublishSaveRequest>(saveID);
+			unpublishSaveRequest->Start();
+			unpublishSaveRequest->Wait();
+			unpublishSaveRequest->Finish();
+		}
+
+		bool doWork() override
+		{
+			for (size_t i = 0; i < saves.size(); i++)
+			{
+				try
+				{
+					if (publish)
+					{
+						PublishSave(saves[i]);
+					}
+					else
+					{
+						UnpublishSave(saves[i]);
+					}
+				}
+				catch (const http::RequestError &ex)
+				{
+					if (publish) // uses html page so error message will be spam
+					{
+						notifyError(String::Build(Localization::Ref().Tr("search.error_publish_failed"), saves[i], Localization::Ref().Tr("search.error_publish_failed_suffix")));
+					}
+					else
+					{
+						notifyError(String::Build(Localization::Ref().Tr("search.error_unpublish_failed"), saves[i], Localization::Ref().Tr("search.error_unpublish_failed_suffix"), ByteString(ex.what()).FromAscii()));
+					}
+					c->Refresh();
+					return false;
+				}
+				notifyProgress((i + 1) * 100 / saves.size());
+			}
+			c->Refresh();
+			return true;
+		}
+	};
+
+	std::vector<int> selected = searchModel->GetSelected();
+	new TaskWindow(publish ? Localization::Ref().Tr("search.task_publishing") : Localization::Ref().Tr("search.task_unpublishing"), new UnpublishSavesTask(selected, this, publish));
+}
+
+void SearchController::FavouriteSelected()
+{
+	class FavouriteSavesTask : public Task
+	{
+		std::vector<int> saves;
+		SearchController *c;
+	public:
+		FavouriteSavesTask(std::vector<int> saves_, SearchController *c_) { saves = saves_; c = c_; }
+		bool doWork() override
+		{
+			for (size_t i = 0; i < saves.size(); i++)
+			{
+				notifyStatus(String::Build(Localization::Ref().Tr("search.status_favouring"), saves[i], Localization::Ref().Tr("search.status_favouring_suffix")));
+				auto favouriteSaveRequest = std::make_unique<http::FavouriteSaveRequest>(saves[i], true);
+				favouriteSaveRequest->Start();
+				favouriteSaveRequest->Wait();
+				try
+				{
+					favouriteSaveRequest->Finish();
+				}
+				catch (const http::RequestError &ex)
+				{
+					notifyError(String::Build(Localization::Ref().Tr("search.error_favourite_failed"), saves[i], Localization::Ref().Tr("search.error_favourite_failed_suffix"), ByteString(ex.what()).FromAscii()));
+					c->Refresh();
+					return false;
+				}
+				notifyProgress((i + 1) * 100 / saves.size());
+			}
+			c->Refresh();
+			return true;
+		}
+	};
+
+	class UnfavouriteSavesTask : public Task
+	{
+		std::vector<int> saves;
+		SearchController *c;
+	public:
+		UnfavouriteSavesTask(std::vector<int> saves_, SearchController *c_) { saves = saves_; c = c_; }
+		bool doWork() override
+		{
+			for (size_t i = 0; i < saves.size(); i++)
+			{
+				notifyStatus(String::Build(Localization::Ref().Tr("search.status_unfavouring"), saves[i], Localization::Ref().Tr("search.status_unfavouring_suffix")));
+				auto unfavouriteSaveRequest = std::make_unique<http::FavouriteSaveRequest>(saves[i], false);
+				unfavouriteSaveRequest->Start();
+				unfavouriteSaveRequest->Wait();
+				try
+				{
+					unfavouriteSaveRequest->Finish();
+				}
+				catch (const http::RequestError &ex)
+				{
+					notifyError(String::Build(Localization::Ref().Tr("search.error_unfavourite_failed"), saves[i], Localization::Ref().Tr("search.error_unfavourite_failed_suffix"), ByteString(ex.what()).FromAscii()));
+					c->Refresh();
+					return false;
+				}
+				notifyProgress((i + 1) * 100 / saves.size());
+			}
+			c->Refresh();
+			return true;
+		}
+	};
+
+	std::vector<int> selected = searchModel->GetSelected();
+	if (!searchModel->GetShowFavourite())
+		new TaskWindow(Localization::Ref().Tr("search.task_favouring"), new FavouriteSavesTask(selected, this));
+	else
+		new TaskWindow(Localization::Ref().Tr("search.task_unfavouring"), new UnfavouriteSavesTask(selected, this));
+	ClearSelection();
+}

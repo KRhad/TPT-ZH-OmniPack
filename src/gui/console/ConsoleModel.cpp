@@ -1,0 +1,72 @@
+#include "ConsoleModel.h"
+#include "ConsoleView.h"
+#include "prefs/GlobalPrefs.h"
+
+ConsoleModel::ConsoleModel() {
+	std::vector<String> previousHistory = GlobalPrefs::Ref().Get("Console.History", std::vector<String>{});
+	for(std::vector<String>::reverse_iterator iter = previousHistory.rbegin(), end = previousHistory.rend(); iter != end; ++iter)
+	{
+		if(previousCommands.size()<25)
+		{
+			previousCommands.push_front(ConsoleCommand(*iter, 0, ""));
+			currentCommandIndex = previousCommands.size();
+		}
+	}
+}
+
+void ConsoleModel::AddObserver(ConsoleView * observer)
+{
+	observers.push_back(observer);
+	observer->NotifyPreviousCommandsChanged(this);
+}
+
+size_t ConsoleModel::GetCurrentCommandIndex()
+{
+	return currentCommandIndex;
+}
+
+void ConsoleModel::SetCurrentCommandIndex(size_t index)
+{
+	currentCommandIndex = index;
+	notifyCurrentCommandChanged();
+}
+
+ConsoleCommand ConsoleModel::GetCurrentCommand()
+{
+	if (currentCommandIndex >= previousCommands.size())
+	{
+		return ConsoleCommand("", 0, "");
+	}
+	return previousCommands[currentCommandIndex];
+}
+
+void ConsoleModel::AddLastCommand(ConsoleCommand command)
+{
+	previousCommands.push_back(command);
+	if(previousCommands.size()>25)
+		previousCommands.pop_front();
+	currentCommandIndex = previousCommands.size();
+	GlobalPrefs::Ref().Set("Console.History", std::vector<String>(previousCommands.begin(), previousCommands.end()));
+	notifyPreviousCommandsChanged();
+}
+
+std::deque<ConsoleCommand> ConsoleModel::GetPreviousCommands()
+{
+	return previousCommands;
+}
+
+void ConsoleModel::notifyPreviousCommandsChanged()
+{
+	for (size_t i = 0; i < observers.size(); i++)
+	{
+		observers[i]->NotifyPreviousCommandsChanged(this);
+	}
+}
+
+void ConsoleModel::notifyCurrentCommandChanged()
+{
+	for (size_t i = 0; i < observers.size(); i++)
+	{
+		observers[i]->NotifyCurrentCommandChanged(this);
+	}
+}

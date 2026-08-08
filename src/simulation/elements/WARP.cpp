@@ -1,0 +1,100 @@
+#include "simulation/ElementCommon.h"
+#include "common/Localization.h"
+
+static int update(UPDATE_FUNC_ARGS);
+static int graphics(GRAPHICS_FUNC_ARGS);
+static void create(ELEMENT_CREATE_FUNC_ARGS);
+
+void Element::Element_WARP()
+{
+	Identifier = "DEFAULT_PT_WARP";
+	Name = "WARP";
+	Colour = 0x101010_rgb;
+	MenuVisible = 1;
+	MenuSection = SC_NUCLEAR;
+	Enabled = 1;
+
+	Advection = 0.8f;
+	AirDrag = 0.00f * CFDS;
+	AirLoss = 0.9f;
+	Loss = 0.70f;
+	Collision = -0.1f;
+	Gravity = 0.0f;
+	Diffusion = 3.00f;
+	HotAir = 0.000f	* CFDS;
+	Falldown = 0;
+
+	Flammable = 0;
+	Explosive = 0;
+	Meltable = 0;
+	Hardness = 30;
+
+	Weight = 1;
+
+	HeatConduct = 100;
+	Description = Localization::Ref().Tr("sim.elem.DEFAULT_PT_WARP");
+
+	Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL;
+
+	LowPressure = IPL;
+	LowPressureTransition = NT;
+	HighPressure = IPH;
+	HighPressureTransition = NT;
+	LowTemperature = ITL;
+	LowTemperatureTransition = NT;
+	HighTemperature = ITH;
+	HighTemperatureTransition = NT;
+
+	Update = &update;
+	Graphics = &graphics;
+	Create = &create;
+}
+
+static int update(UPDATE_FUNC_ARGS)
+{
+	if (parts[i].tmp2 > 2000)
+	{
+		parts[i].temp = 10000;
+		sim->pv[y/CELL][x/CELL] = restrict_flt(sim->pv[y/CELL][x/CELL] + (parts[i].tmp2 / 5000) * CFDS, MIN_PRESSURE, MAX_PRESSURE);
+		//@ WARP -> WARP + ELEC
+		if (sim->rng.chance(1, 50))
+			sim->create_part(-3, x, y, PT_ELEC);
+	}
+	for (int trade = 0; trade < 5; trade ++)
+	{
+		int rx = sim->rng.between(-1, 1);
+		int ry = sim->rng.between(-1, 1);
+		if (rx || ry)
+		{
+			int r = pmap[y + ry][x + rx];
+			if (!r)
+				continue;
+			if (TYP(r) != PT_WARP && TYP(r) != PT_STKM && TYP(r) != PT_STKM2 && TYP(r) != PT_DMND && TYP(r) != PT_CLNE && TYP(r) != PT_BCLN && TYP(r) != PT_PCLN)
+			{
+				parts[i].x = parts[ID(r)].x;
+				parts[i].y = parts[ID(r)].y;
+				parts[ID(r)].x = float(x);
+				parts[ID(r)].y = float(y);
+				parts[ID(r)].vx = sim->rng.between(-2, 1) + 0.5f;
+				parts[ID(r)].vy = float(sim->rng.between(-2, 1));
+				parts[i].life += 4;
+				pmap[y][x] = r;
+				pmap[y + ry][x + rx] = PMAP(i, parts[i].type);
+				trade = 5;
+			}
+		}
+	}
+	return 0;
+}
+
+static int graphics(GRAPHICS_FUNC_ARGS)
+{
+	*colr = *colg = *colb = *cola = 0;
+	*pixel_mode |= NO_DECO;
+	return 0;
+}
+
+static void create(ELEMENT_CREATE_FUNC_ARGS)
+{
+	sim->parts[i].life = sim->rng.between(70, 164);
+}

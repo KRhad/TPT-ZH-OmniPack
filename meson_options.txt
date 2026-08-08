@@ -1,0 +1,314 @@
+option(
+	'static',
+	type: 'combo',
+	choices: [ 'none', 'system', 'prebuilt' ],
+	value: 'none',
+	description: 'Build statically using libraries present on the system (\'system\') or using prebuilt libraries official builds use (\'prebuilt\')'
+)
+option(
+	'lto',
+	type: 'boolean',
+	value: false,
+	description: 'Link-time optimization, mostly a wrapper around the b_lto built-in option'
+)
+option(
+	'beta',
+	type: 'boolean',
+	value: false,
+	description: 'Beta build'
+)
+option(
+	'ignore_updates',
+	type: 'boolean',
+	value: true,
+	description: 'Don\'t show notifications about available updates'
+)
+option(
+	'can_install',
+	type: 'combo',
+	choices: [ 'no', 'yes', 'yes_check', 'auto' ],
+	value: 'no',
+	description: 'Portable OmniPack builds do not alter file or URL associations by default; opt in with yes or yes_check'
+)
+option(
+	'shared_data_folder',
+	type: 'boolean',
+	value: true,
+	description: 'Handle the shared data folder, e.g. automatically chdir over to it and offering migration to it'
+)
+option(
+	'http',
+	type: 'boolean',
+	value: true,
+	description: 'Enable HTTP via libcurl'
+)
+option(
+	'snapshot',
+	type: 'boolean',
+	value: false,
+	description: 'Snapshot build'
+)
+option(
+	'mod_id',
+	type: 'integer',
+	min: 0,
+	value: 0,
+	description: 'Mod ID, used on the https://starcatcher.us/TPT build server, the build server will compile for all platforms for you and send updates in-game, see jacob1 to get a mod ID'
+)
+option(
+	'lua',
+	type: 'combo',
+	choices: [ 'none', 'lua5.1', 'lua5.2', 'luajit', 'auto' ],
+	value: 'auto',
+	description: 'Lua library to use'
+)
+option(
+	'x86_sse',
+	type: 'combo',
+	choices: [ 'none', 'sse', 'sse2', 'sse3', 'sse4.1', 'sse4.2', 'avx', 'avx2', 'avx512', 'auto' ],
+	value: 'auto',
+	description: 'Enable SSE (available only on x86)'
+)
+option(
+	'build_powder',
+	type: 'boolean',
+	value: true,
+	description: 'Build the game'
+)
+option(
+	'build_tests',
+	type: 'boolean',
+	value: true,
+	description: 'Build and register developer validation targets'
+)
+option(
+	'build_render',
+	type: 'boolean',
+	value: false,
+	description: 'Build the thumbnail renderer'
+)
+option(
+	'build_font',
+	type: 'boolean',
+	value: false,
+	description: 'Build the font editor'
+)
+option(
+	'server',
+	type: 'string',
+	value: 'powdertoy.co.uk',
+	description: 'Simulation server'
+)
+option(
+	'static_server',
+	type: 'string',
+	value: 'static.powdertoy.co.uk',
+	description: 'Static simulation server'
+)
+option(
+	'update_server',
+	type: 'string',
+	value: '',
+	description: 'Update server, only used by snapshots and mods, see \'snapshot\' and \'mod_id\''
+)
+option(
+	'workaround_noncpp_lua',
+	type: 'boolean',
+	value: false,
+	description: 'Allow linking against a non-C++ system Lua'
+)
+option(
+	'workaround_elusive_bzip2',
+	type: 'combo',
+	choices: [ 'none', 'simple', 'manual' ],
+	value: 'simple',
+	description: 'Find bzip2 via the compiler and its built-in library directories, rather than via pkg-config or similar'
+)
+option(
+	'workaround_elusive_bzip2_lib_name',
+	type: 'string',
+	value: 'bz2',
+	description: 'bzip2 library name, see \'workaround_elusive_bzip2\''
+)
+option(
+	'workaround_elusive_bzip2_lib_dir',
+	type: 'string',
+	value: '/usr/lib/x86_64-linux-gnu',
+	description: 'bzip2 library directory, see \'workaround_elusive_bzip2\''
+)
+option(
+	'workaround_elusive_bzip2_include_name',
+	type: 'string',
+	value: 'bzlib.h',
+	description: 'bzip2 header name, see \'workaround_elusive_bzip2\''
+)
+option(
+	'workaround_elusive_bzip2_include_dir',
+	type: 'string',
+	value: '/usr/include',
+	description: 'bzip2 header directory, see \'workaround_elusive_bzip2\''
+)
+option(
+	'workaround_elusive_bzip2_static',
+	type: 'boolean',
+	value: false,
+	description: 'bzip2 static setting, see \'workaround_elusive_bzip2\''
+)
+option(
+	'tpt_libs_vtag',
+	type: 'string',
+	value: '',
+	description: 'tpt-libs vtag override, only used for tpt-libs development'
+)
+option(
+	'package_mode',
+	type: 'string',
+	value: 'default',
+	description: 'Package mode override, only used by official builds, see prepare.py'
+)
+option(
+	'android_keystore',
+	type: 'string',
+	value: '',
+	description: 'Path to Java keystore for signing an APK, only used for Android development'
+)
+option(
+	'android_keyalias',
+	type: 'string',
+	value: 'androidkey',
+	description: 'Signing key alias for signing an APK, only used for Android development'
+)
+option(
+	'app_name',
+	type: 'string',
+	value: 'TPT-ZH-OmniPack',
+	description: 'App name, used for desktop integration and the window title, change if you work on a mod'
+)
+option(
+	'release_label',
+	type: 'string',
+	value: '0.1.0-test',
+	description: 'OmniPack product release label shown in the UI and Windows metadata'
+)
+option(
+	'app_comment',
+	type: 'string',
+	value: 'Simplified Chinese integrated physics sandbox',
+	description: 'App comment, used for desktop integration, change if you work on a mod'
+)
+option(
+	'app_exe',
+	type: 'string',
+	value: 'tpt-zh-omnipack',
+	description: 'App executable name, used for desktop integration, change if you work on a mod'
+)
+option(
+	'app_id',
+	type: 'string',
+	value: 'org.tptzh.omnipack',
+	description: 'App ID, a D-Bus well-known name, used for desktop integration, change if you work on a mod'
+)
+option(
+	'app_data',
+	type: 'string',
+	value: 'TPT-ZH-OmniPack',
+	description: 'App data directory name, do not change even if you work on a mod, only if you know what you are doing'
+)
+option(
+	'app_vendor',
+	type: 'string',
+	value: 'tptzh',
+	description: 'App vendor prefix, used for desktop integration, do not change even if you work on a mod, only if you know what you are doing'
+)
+option(
+	'enforce_https',
+	type: 'boolean',
+	value: true,
+	description: 'Enforce encrypted HTTP traffic, may be disabled for debugging'
+)
+option(
+	'secure_ciphers_only',
+	type: 'boolean',
+	value: false,
+	description: 'Use only secure ciphers for encrypted HTTP traffic, please review cipher list before enabling'
+)
+option(
+	'prepare',
+	type: 'boolean',
+	value: false,
+	description: 'Used by ghactions workflows, not useful otherwise'
+)
+option(
+	'override_display_version',
+	type: 'string',
+	value: '',
+	description: 'Used by ghactions workflows, not useful otherwise'
+)
+option(
+	'render_icons_with_inkscape',
+	type: 'feature',
+	value: 'disabled',
+	description: 'Render icons with Inkscape (inkscape binary needs to be in PATH)'
+)
+option(
+	'resolve_vcs_tag',
+	type: 'combo',
+	choices: [ 'no', 'static_release_only', 'yes' ],
+	value: 'static_release_only',
+	description: 'Enable VCS tag resolution, introduces an always-stale custom target'
+)
+option(
+	'manifest_copyright',
+	type: 'string',
+	value: 'Copyright © 2008-2011 Stanislaw K Skowrenek, Copyright © 2011-2026 Simon Robertshaw, Copyright © 2016-2026 jacob1',
+	description: 'Copyright string, don\'t take too seriously, subject to change'
+)
+option(
+	'manifest_macos_min_ver',
+	type: 'string',
+	value: '',
+	description: 'MacOS minimum allowed platform version string, used by ghactions workflows, not useful otherwise'
+)
+option(
+	'manifest_date',
+	type: 'string',
+	value: '',
+	description: 'Build date string, used by ghactions workflows, not useful otherwise'
+)
+option(
+	'platform_clipboard',
+	type: 'boolean',
+	value: true,
+	description: 'Enable platform clipboard, allows copying simulation data between different windows'
+)
+option(
+	'use_bluescreen',
+	type: 'combo',
+	choices: [ 'no', 'yes', 'auto' ],
+	value: 'auto',
+	description: 'Show blue error screen upon unhandled signals and exceptions'
+)
+option(
+	'windows_icons',
+	type: 'boolean',
+	value: true,
+	description: 'Add icon resources to the executable on Windows'
+)
+option(
+	'windows_utf8cp',
+	type: 'boolean',
+	value: true,
+	description: 'Ask Windows nicely for UTF-8 as the codepage'
+)
+option(
+	'export_lua_symbols',
+	type: 'boolean',
+	value: false,
+	description: 'Export Lua symbols to enable loading of Lua shared modules'
+)
+option(
+	'clang_tidy',
+	type: 'boolean',
+	value: false,
+	description: 'Run clang-tidy to lint programming issues'
+)

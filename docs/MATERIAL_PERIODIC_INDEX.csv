@@ -1,0 +1,94 @@
+tool_identifier,stable_id,content_kind,primary_atomic_number,related_atomic_numbers,compound_group,display_order,periodic_visible,formula,zh_name,en_name,relation_basis,module,source_reference,confidence,notes
+OMNI_PT_CHRC,266,related_material,6,6,engineering,266,true,C,木炭,Charcoal,material_family,metallurgy,docs/ELEMENT_CONTENT.csv,medium,Carbon-rich engineering material
+OMNI_PT_COKE,267,related_material,6,6,engineering,267,true,C,焦炭,Coke,material_family,metallurgy,docs/ELEMENT_CONTENT.csv,medium,Carbon-rich engineering material
+OMNI_PT_STEL,268,related_material,26,6|26,alloy,268,true,Fe-C,钢,Steel,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Iron-carbon alloy
+OMNI_PT_BRNZ,269,related_material,29,29|50,alloy,269,true,Cu-Sn,青铜,Bronze,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Copper-tin alloy
+OMNI_PT_BRAS,270,related_material,29,29|30,alloy,270,true,Cu-Zn,黄铜,Brass,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Copper-zinc alloy
+OMNI_PT_SSIL,271,related_material,26,24|26|28,alloy,271,true,Fe-Cr-Ni,不锈钢,Stainless Steel,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Iron-chromium-nickel alloy
+OMNI_PT_NCRM,272,related_material,28,24|28,alloy,272,true,Ni-Cr,镍铬合金,Nichrome,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Nickel-chromium alloy
+OMNI_PT_ALMG,273,related_material,13,12|13,alloy,273,true,Al-Mg,铝镁合金,Aluminium-Magnesium Alloy,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Aluminium-magnesium alloy
+OMNI_PT_TSTL,274,related_material,26,6|26|27|42,alloy,274,true,Fe-Co-Mo-C,工具钢,Tool Steel,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Iron-cobalt-molybdenum-carbon alloy
+OMNI_PT_SLAG,275,related_material,26,8|14|20|26,engineering,275,true,SLAG,炉渣,Slag,gameplay_composition,metallurgy,src/simulation/OmniMetallurgy.cpp,medium,Generic silicate-rich metallurgical by-product
+OMNI_PT_FLUX,276,related_material,20,8|9|14|20,engineering,276,true,FLUX,助熔剂,Flux,material_family,metallurgy,docs/ELEMENT_CONTENT.csv,medium,Generic mineral flux family
+OMNI_PT_CRUC,277,related_material,13,8|13|14,ceramic,277,true,CRUC,工业坩埚,Industrial Crucible,material_family,metallurgy,docs/ELEMENT_CONTENT.csv,medium,Generic aluminosilicate refractory
+OMNI_PT_ETHL,362,related_material,6,1|6|8,organic,362,true,C2H6O,乙醇,Ethanol,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_KERO,363,related_material,6,1|6,organic,363,true,C-H,煤油,Kerosene,material_family,chemistry,docs/ELEMENT_CONTENT.csv,medium,Hydrocarbon mixture
+OMNI_PT_GASO,364,related_material,6,1|6,organic,364,true,C-H,汽油,Gasoline,material_family,chemistry,docs/ELEMENT_CONTENT.csv,medium,Hydrocarbon mixture
+OMNI_PT_ACTY,365,related_material,6,1|6,organic,365,true,C2H2,乙炔,Acetylene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_POLY,367,related_material,6,1|6,polymer,367,true,(C2H4)n,聚乙烯,Polyethylene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Polyethylene repeat unit
+OMNI_PT_SICB,503,related_material,14,6|14,carbide,503,true,SiC,碳化硅,Silicon carbide,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact compound composition
+OMNI_PT_BORN,504,related_material,5,5|7,nitride,504,true,BN,氮化硼,Boron nitride,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact compound composition
+OMNI_PT_SINT,505,related_material,14,7|14,nitride,505,true,Si3N4,氮化硅,Silicon nitride,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact compound composition
+OMNI_PT_SOLD,512,related_material,50,50|82,alloy,512,true,Sn-Pb,锡铅合金,Solder,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Tin-lead alloy
+OMNI_PT_CSTI,513,related_material,26,6|26,alloy,513,true,Fe-C,铸铁,Cast Iron,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Iron-carbon alloy
+OMNI_PT_CUNI,514,related_material,29,28|29,alloy,514,true,Cu-Ni,白铜,Cupronickel,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Copper-nickel alloy
+OMNI_PT_TIAL,515,related_material,22,13|22|23,alloy,515,true,Ti-Al-V,钛合金,Titanium Alloy,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Titanium-aluminium-vanadium alloy
+OMNI_PT_NSAL,516,related_material,28,24|27|28,alloy,516,true,Ni-Cr-Co,镍基高温合金,Nickel Superalloy,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Nickel-chromium-cobalt alloy
+OMNI_PT_WALY,517,related_material,74,26|28|74,alloy,517,true,W-Ni-Fe,钨重合金,Tungsten Heavy Alloy,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Tungsten-nickel-iron alloy
+OMNI_PT_ZRAL,518,related_material,40,40|50,alloy,518,true,Zr-Sn,锆合金,Zirconium Alloy,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Zirconium-tin alloy
+OMNI_PT_CNST,519,related_material,29,28|29,alloy,519,true,Cu-Ni,康铜,Constantan,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Copper-nickel resistance alloy
+OMNI_PT_NITI,520,related_material,28,22|28,alloy,520,true,Ni-Ti,镍钛记忆合金,Nitinol,implemented_recipe,metallurgy,src/simulation/OmniMetallurgy.cpp,high,Nickel-titanium shape-memory alloy
+OMNI_PT_GYPS,521,related_material,20,1|8|16|20,mineral,521,true,CaSO4·2H2O,石膏,Gypsum,composition,metallurgy,docs/ELEMENT_CONTENT.csv,high,Hydrated calcium sulfate
+OMNI_PT_BAUX,522,related_material,13,1|8|13,mineral,522,true,Al-O-H,铝土矿,Bauxite,material_family,metallurgy,docs/ELEMENT_CONTENT.csv,medium,Hydrated aluminium oxide ore family
+OMNI_PT_CUOR,523,related_material,29,8|29,mineral,523,true,Cu-O,铜矿石,Copper Ore,gameplay_composition,metallurgy,src/simulation/OmniMaterials.cpp,medium,Oxidised copper ore proxy
+OMNI_PT_ZNOR,524,related_material,30,8|30,mineral,524,true,Zn-O,锌矿石,Zinc Ore,gameplay_composition,metallurgy,src/simulation/OmniMaterials.cpp,medium,Oxidised zinc ore proxy
+OMNI_PT_PBOR,525,related_material,82,16|82,mineral,525,true,Pb-S,铅矿石,Lead Ore,gameplay_composition,metallurgy,src/simulation/OmniMaterials.cpp,medium,Sulfidic lead ore proxy
+OMNI_PT_UORE,526,related_material,92,8|92,mineral,526,true,U-O,铀矿石,Uranium Ore,gameplay_composition,metallurgy,src/simulation/OmniMaterials.cpp,medium,Oxidised uranium ore proxy
+OMNI_PT_FELD,527,related_material,14,8|11|13|14|19|20,mineral,527,true,FELD,长石,Feldspar,material_family,metallurgy,docs/ELEMENT_CONTENT.csv,medium,Generic alkali aluminosilicate family
+OMNI_PT_CEMT,528,related_material,20,8|14|20,engineering,528,true,Ca-Si-O,水泥,Cement,material_family,metallurgy,docs/ELEMENT_CONTENT.csv,medium,Generic calcium silicate cement
+OMNI_PT_ALCR,529,related_material,13,8|13,ceramic,529,true,Al2O3,氧化铝陶瓷,Alumina Ceramic,composition,metallurgy,docs/ELEMENT_CONTENT.csv,high,Alumina ceramic
+OMNI_PT_BSGL,530,related_material,14,5|8|14,glass,530,true,B-Si-O,硼硅玻璃,Borosilicate Glass,material_family,metallurgy,docs/ELEMENT_CONTENT.csv,high,Borosilicate glass family
+OMNI_PT_QGLS,531,related_material,14,8|14,glass,531,true,SiO2,石英玻璃,Quartz Glass,composition,metallurgy,docs/ELEMENT_CONTENT.csv,high,Fused silica
+OMNI_PT_RFBK,532,related_material,13,8|13|14,ceramic,532,true,Al-Si-O,耐火砖,Refractory Brick,material_family,metallurgy,docs/ELEMENT_CONTENT.csv,medium,Generic aluminosilicate refractory
+OMNI_PT_CH4M,589,related_material,6,1|6,organic,589,true,CH4,甲烷,Methane,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_ETHA,590,related_material,6,1|6,organic,590,true,C2H6,乙烷,Ethane,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_PROP,591,related_material,6,1|6,organic,591,true,C3H8,丙烷,Propane,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_BUTA,592,related_material,6,1|6,organic,592,true,C4H10,丁烷,Butane,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_ETHE,593,related_material,6,1|6,organic,593,true,C2H4,乙烯,Ethylene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_METH,594,related_material,6,1|6|8,organic,594,true,CH4O,甲醇,Methanol,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_ACET,595,related_material,6,1|6|8,organic,595,true,C3H6O,丙酮,Acetone,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_BENZ,596,related_material,6,1|6,organic,596,true,C6H6,苯,Benzene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_TOLU,597,related_material,6,1|6,organic,597,true,C7H8,甲苯,Toluene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_GLYC,598,related_material,6,1|6|8,organic,598,true,C3H8O3,甘油,Glycerol,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_ACTA,599,related_material,6,1|6|8,organic,599,true,C2H4O2,乙酸,Acetic Acid,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_UREA,600,related_material,6,1|6|7|8,organic,600,true,CH4N2O,尿素,Urea,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_FATS,601,related_material,6,1|6|8,organic,601,true,C-H-O,油脂,Fats,material_family,chemistry,docs/ELEMENT_CONTENT.csv,medium,Generic triglyceride family
+OMNI_PT_GLUC,602,related_material,6,1|6|8,organic,602,true,C6H12O6,葡萄糖,Glucose,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_STRC,603,related_material,6,1|6|8,polymer,603,true,(C6H10O5)n,淀粉,Starch,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Polysaccharide repeat unit
+OMNI_PT_CELU,604,related_material,6,1|6|8,polymer,604,true,(C6H10O5)n,纤维素,Cellulose,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Polysaccharide repeat unit
+OMNI_PT_PRPE,605,related_material,6,1|6,organic,605,true,C3H6,丙烯,Propylene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_BDIE,606,related_material,6,1|6,organic,606,true,C4H6,丁二烯,Butadiene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_VCHL,607,related_material,6,1|6|17,organic,607,true,C2H3Cl,氯乙烯,Vinyl Chloride,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_STYR,608,related_material,6,1|6,organic,608,true,C8H8,苯乙烯,Styrene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_TFET,609,related_material,6,6|9,organic,609,true,C2F4,四氟乙烯,Tetrafluoroethylene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_ADIP,610,related_material,6,1|6|8,organic,610,true,C6H10O4,己二酸,Adipic Acid,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_DIAM,611,related_material,6,1|6|7,organic,611,true,C6H16N2,己二胺,Diamine,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Hexamethylenediamine proxy
+OMNI_PT_ERES,612,related_material,6,1|6|8,polymer,612,true,C-H-O,环氧树脂,Epoxy Resin,material_family,chemistry,docs/ELEMENT_CONTENT.csv,medium,Generic uncured epoxy family
+OMNI_PT_PPLY,613,related_material,6,1|6,polymer,613,true,(C3H6)n,聚丙烯,Polypropylene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Polypropylene repeat unit
+OMNI_PT_PVCL,614,related_material,6,1|6|17,polymer,614,true,(C2H3Cl)n,聚氯乙烯,Polyvinyl Chloride,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Polyvinyl chloride repeat unit
+OMNI_PT_PSTY,615,related_material,6,1|6,polymer,615,true,(C8H8)n,聚苯乙烯,Polystyrene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Polystyrene repeat unit
+OMNI_PT_NYLN,616,related_material,6,1|6|7|8,polymer,616,true,C-H-N-O,尼龙,Nylon,material_family,chemistry,docs/ELEMENT_CONTENT.csv,high,Polyamide family
+OMNI_PT_RUBR,617,related_material,6,1|6,polymer,617,true,C-H,橡胶,Rubber,material_family,chemistry,docs/ELEMENT_CONTENT.csv,medium,Generic hydrocarbon elastomer
+OMNI_PT_EPXY,618,related_material,6,1|6|8,polymer,618,true,C-H-O,固化环氧,Cured Epoxy,material_family,chemistry,docs/ELEMENT_CONTENT.csv,medium,Generic cured epoxy family
+OMNI_PT_PTFE,619,related_material,6,6|9,polymer,619,true,(C2F4)n,聚四氟乙烯,Polytetrafluoroethylene,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,PTFE repeat unit
+OMNI_PT_BITM,620,related_material,6,1|6,organic,620,true,C-H,沥青,Bitumen,material_family,chemistry,docs/ELEMENT_CONTENT.csv,medium,Generic heavy hydrocarbon mixture
+OMNI_PT_EACT,621,related_material,6,1|6|8,organic,621,true,C4H8O2,乙酸乙酯,Ethyl Acetate,composition,chemistry,docs/ELEMENT_CONTENT.csv,high,Exact molecular composition
+OMNI_PT_GAAS,622,related_material,31,31|33,semiconductor,622,true,GaAs,砷化镓,Gallium Arsenide,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Gallium-arsenic semiconductor
+OMNI_PT_GANI,623,related_material,31,7|31,semiconductor,623,true,GaN,氮化镓,Gallium Nitride,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Gallium-nitrogen semiconductor
+OMNI_PT_FRIT,624,related_material,26,8|26|30,ceramic,624,true,Fe-Zn-O,铁氧体,Ferrite,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Iron-zinc oxide ceramic
+OMNI_PT_PMAG,625,related_material,26,5|26|60,alloy,625,true,Nd-Fe-B,永磁材料,Permanent Magnet,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Neodymium-iron-boron magnet
+OMNI_PT_SMAG,626,related_material,26,14|26,alloy,626,true,Fe-Si,软磁材料,Soft Magnet,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Iron-silicon magnetic material
+OMNI_PT_PZCR,627,related_material,82,8|22|40|82,ceramic,627,true,Pb-Zr-Ti-O,压电陶瓷,Piezoelectric Ceramic,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Lead-zirconium-titanium oxide ceramic
+OMNI_PT_TELC,628,related_material,83,52|83,semiconductor,628,true,Bi-Te,热电材料,Thermoelectric Material,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Bismuth-tellurium thermoelectric material
+OMNI_PT_SUPC,629,related_material,39,8|29|39|56,ceramic,629,true,Y-Ba-Cu-O,超导材料,Superconductor,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Yttrium-barium-copper oxide ceramic
+OMNI_PT_GRPH,630,related_material,6,6,allotrope,630,true,C,石墨烯,Graphene,composition,electronics,docs/ELEMENT_CONTENT.csv,high,Carbon allotrope
+OMNI_PT_CNTB,631,related_material,6,6,allotrope,631,true,C,碳纳米管,Carbon Nanotube,composition,electronics,docs/ELEMENT_CONTENT.csv,high,Carbon allotrope
+OMNI_PT_CFRP,633,related_material,6,1|6|8,composite,633,true,C-C-H-O,碳纤维复合材料,Carbon-Fiber Composite,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Carbon reinforcement with epoxy matrix
+OMNI_PT_LCOB,634,related_material,27,3|8|27,oxide,634,true,Li-Co-O,钴酸锂,Lithium Cobalt Oxide,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Lithium-cobalt oxide cathode
+OMNI_PT_GRAN,635,related_material,6,6,allotrope,635,true,C,石墨负极,Graphite Anode,composition,electronics,docs/ELEMENT_CONTENT.csv,high,Graphitic carbon material
+OMNI_PT_SELE,636,related_material,3,3|8|40|57,ceramic,636,true,Li-La-Zr-O,固态电解质,Solid Electrolyte,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Lithium-lanthanum-zirconium oxide ceramic
+OMNI_PT_ITOX,637,related_material,49,8|49|50,oxide,637,true,In-Sn-O,氧化铟锡,Indium Tin Oxide,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Indium-tin oxide material
+OMNI_PT_PCMT,638,related_material,32,32|51|52,semiconductor,638,true,Ge-Sb-Te,相变存储材料,Phase-Change Material,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Germanium-antimony-tellurium chalcogenide
+OMNI_PT_ECHR,639,related_material,74,8|14|74,oxide,639,true,W-Si-O,电致变色材料,Electrochromic Material,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Tungsten oxide on silica proxy
+OMNI_PT_PHRS,640,related_material,6,1|6|8,polymer,640,true,C-H-O,光刻胶,Photoresist,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,medium,Epoxy-polystyrene photoresist proxy
+OMNI_PT_DIEL,641,related_material,56,8|22|56,ceramic,641,true,Ba-Ti-O,介电陶瓷,Dielectric Ceramic,implemented_recipe,electronics,src/simulation/OmniElectronics.cpp,high,Barium-titanium oxide ceramic

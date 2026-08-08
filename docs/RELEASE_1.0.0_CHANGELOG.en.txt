@@ -1,0 +1,11 @@
+TPT-ZH-OmniPack 1.0.0
+
+- Added a complete 118-element periodic-table picker with localized primary and secondary names.
+- Added grouped material panels for elemental substances, allotropes, isotopes, oxides, hydrides, acids, bases, salts, and related compounds.
+- Added periodic-table links for existing organic, alloy, mineral, ceramic, glass, polymer, semiconductor, composite, and engineering materials without duplicating their stable records.
+- Simplified the main material menu while retaining upstream TPT elements, OmniPack special materials, and useful shortcuts.
+- Added dedicated Organic Materials and Alloys & Engineering categories.
+- Improved bilingual material search, scrolling, long-form descriptions, description layout, and right-toolbar interaction.
+- Completed bilingual long-form description routes for canonical upstream and OmniPack materials.
+- Retained stable material IDs, OPS save mappings, module behavior, Lua selection, and high-ID compatibility.
+- Kept the game as a freely selectable sandbox without tasks, achievements, technology trees, or forced unlocks.

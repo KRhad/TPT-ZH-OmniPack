@@ -1,0 +1,88 @@
+#pragma once
+#include "common/String.h"
+#include "gui/interface/Window.h"
+#include "gui/interface/ScrollPanel.h"
+#include "gui/game/OmniContent.h"
+#include <array>
+#include <optional>
+
+namespace ui
+{
+	class Checkbox;
+	class DropDown;
+	class Textbox;
+	class Button;
+	class Label;
+}
+
+class OptionsModel;
+class OptionsController;
+class OptionsView: public ui::Window
+{
+	OptionsController *c{};
+	ui::Checkbox *heatSimulation{};
+	ui::Checkbox *ambientHeatSimulation{};
+	ui::Checkbox *newtonianGravity{};
+	ui::Checkbox *waterEqualisation{};
+	ui::DropDown *airMode{};
+	ui::Textbox *ambientAirTemp{};
+	ui::Button *ambientAirTempPreview{};
+	ui::Textbox *edgePressure{};
+	ui::Button *edgePressurePreview{};
+	ui::Button *edgeVelocityChange{};
+	ui::Textbox *vorticityCoeff{};
+	ui::DropDown *convectionMode{};
+	ui::DropDown *gravityMode{};
+	ui::DropDown *edgeMode{};
+	ui::DropDown *temperatureScale{};
+	ui::DropDown *scale{};
+	ui::DropDown *fpsLimit{};
+	ui::Textbox *fpsLimitText{};
+	ui::DropDown *drawLimit{};
+	ui::Textbox *drawLimitText{};
+	ui::Checkbox *resizable{};
+	ui::Checkbox *fullscreen{};
+	ui::Checkbox *changeResolution{};
+	ui::Checkbox *forceIntegerScaling{};
+	ui::Checkbox *blurryScaling{};
+	ui::Checkbox *fastquit{};
+	ui::Checkbox *globalQuit{};
+	ui::DropDown *decoSpace{};
+	ui::DropDown *language{};
+	ui::Label *titleLabel{};       // 顶部标题（设置）
+	ui::Checkbox *showAvatars{};
+	ui::Checkbox *momentumScroll{};
+	ui::Checkbox *mouseClickRequired{};
+	ui::Checkbox *includePressure{};
+	ui::Checkbox *perfectCircle{};
+	ui::Checkbox *graveExitsConsole{};
+	ui::Checkbox *nativeClipoard{};
+	ui::Checkbox *threadedRendering{};
+	ui::Checkbox *redirectStd{};
+	ui::Checkbox *autoStartupRequest{};
+	ui::Label *startupRequestStatus{};
+	std::array<ui::Checkbox *, OmniSettingCount> omniSettings{};
+	ui::ScrollPanel *scrollPanel{};
+	float customGravityX, customGravityY;
+	float edgeVelocityX, edgeVelocityY;
+	void UpdateAmbientAirTempPreview(float airTemp, bool isValid);
+	void AmbientAirTempToTextBox(float airTemp);
+	void UpdateAirTemp(String temp, bool isDefocus);
+	void UpdateEdgePressurePreview(float pres, bool isValid);
+	void EdgePressureToTextBox(float pres);
+	void UpdateEdgePressure(String pres, bool isDefocus);
+	void VorticityCoeffToTextBox(float vorticity);
+	void UpdateVorticityCoeff(String cort, bool isDefocus);
+	void UpdateStartupRequestStatus();
+	void UpdateFpsLimit(bool isDefocus);
+	void FpsLimitToInterface(SimFpsLimit limit);
+	void UpdateDrawLimit(bool isDefocus);
+	void DrawLimitToInterface(DrawLimit limit);
+public:
+	OptionsView();
+	void NotifySettingsChanged(OptionsModel * sender);
+	void AttachController(OptionsController * c_);
+	void OnDraw() override;
+	void OnTick() final override;
+	void OnTryExit(ExitMethod method) override;
+};

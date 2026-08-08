@@ -1,0 +1,120 @@
+# Misc extensions, system files
+*.zip
+*.txt
+*.gz
+*.out
+*.sh
+*.py
+*.png
+*.ppm
+*.swp
+*~
+.DS_Store
+
+# Build files
+build*/*
+/dist/
+/.omni-test-tmp/
+/artifacts/
+*.o
+*.exe
+*.dmg
+*.dll
+*.a
+*.la
+
+# Legacy SCons files
+config.log
+*.sconsign.dblite
+*.sconf_temp
+/site_scons/
+/generated/
+
+# User data
+/stamps/
+/Saves/
+/scripts/
+/recordings/
+*.def
+*.pref
+*.lua
+screenshot_*
+
+# Project-owned, reviewed automation and runtime regression sources.
+!tools/*.py
+!tools/tests/*.py
+!tools/runtime/*.lua
+!tools/mod_catalog/
+!tools/mod_catalog/*.py
+
+# External repositories and raw Lua downloads are read-only research inputs.
+# Only curated metadata, patches and placeholder files are committed.
+/external/repositories/*
+!/external/repositories/.gitkeep
+/external/lua-mods/*
+!/external/lua-mods/.gitkeep
+/external/rejected/*
+!/external/rejected/.gitkeep
+/external/metadata/*.json
+
+# Audited font source and licenses used by the deterministic release font build.
+!resources/third_party/FUSION_PIXEL_FONT_*.txt
+!resources/third_party/fusion-pixel-12px-monospaced-zh_hans-v2026.07.20.bdf
+
+# Visual studio
+/Debug/
+/Release/
+/includes/
+*.vcxproj*
+*.user
+*.filter
+*.sln
+*.suo
+*.manifest
+*.manifest.res
+*manifest.rc
+*res.res
+*.idb
+*.obj
+*.tlog
+*.lib
+*.ipch
+*.ilk
+*.log
+*.lastbuildstate
+*.unsuccessfulbuild
+*.pdb
+*.db
+
+# QtCreator / KDevelop
+*.user
+*.config
+*.creator*
+*.cflags
+*.cxxflags
+*.files
+*.includes
+*.kdev4
+/.kdev4
+
+# Other IDEs / misc
+/.idea
+.vscode/
+.vs/
+*.sublime-*
+*.project
+*.cproject
+*.settings
+*.cbp
+*.layout
+*.gch
+*.pyc
+*.xcodeproj
+*.plist
+*.lproj
+*.opensdf
+*.sdf
+/font/
+compile_commands.json
+ignore/
+*.bat

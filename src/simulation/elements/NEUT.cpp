@@ -1,0 +1,291 @@
+#include "simulation/ElementCommon.h"
+#include "common/Localization.h"
+#include "FIRE.h"
+#include "PLNT.h"
+
+static int update(UPDATE_FUNC_ARGS);
+static int graphics(GRAPHICS_FUNC_ARGS);
+static void create(ELEMENT_CREATE_FUNC_ARGS);
+static int DeutExplosion(Simulation * sim, int n, int x, int y, float temp, int t);
+
+void Element::Element_NEUT()
+{
+	Identifier = "DEFAULT_PT_NEUT";
+	Name = "NEUT";
+	Colour = 0x20E0FF_rgb;
+	MenuVisible = 1;
+	MenuSection = SC_NUCLEAR;
+	Enabled = 1;
+
+	Advection = 0.0f;
+	AirDrag = 0.00f * CFDS;
+	AirLoss = 1.00f;
+	Loss = 1.00f;
+	Collision = -0.99f;
+	Gravity = 0.0f;
+	Diffusion = 0.01f;
+	HotAir = 0.002f	* CFDS;
+	Falldown = 0;
+
+	Flammable = 0;
+	Explosive = 0;
+	Meltable = 0;
+	Hardness = 0;
+
+	Weight = -1;
+
+	DefaultProperties.temp = R_TEMP + 4.0f + 273.15f;
+	HeatConduct = 60;
+	Description = Localization::Ref().Tr("sim.elem.DEFAULT_PT_NEUT");
+
+	Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
+
+	LowPressure = IPL;
+	LowPressureTransition = NT;
+	HighPressure = IPH;
+	HighPressureTransition = NT;
+	LowTemperature = ITL;
+	LowTemperatureTransition = NT;
+	HighTemperature = ITH;
+	HighTemperatureTransition = NT;
+
+	Update = &update;
+	Graphics = &graphics;
+	Create = &create;
+}
+
+static int update(UPDATE_FUNC_ARGS)
+{
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+	unsigned int pressureFactor = 3 + (int)sim->pv[y/CELL][x/CELL];
+	for (int rx = -1; rx <= 1; rx++)
+	{
+		for (int ry = -1; ry <= 1; ry++)
+		{
+			auto r = pmap[y+ry][x+rx];
+			switch (TYP(r))
+			{
+			case PT_WATR:
+				//@ NEUT + WATR -> NEUT + DSTW
+				if (sim->rng.chance(3, 20))
+					sim->part_change_type(ID(r),x+rx,y+ry,PT_DSTW);
+			case PT_ICEI:
+			case PT_SNOW:
+				parts[i].vx *= 0.995f;
+				parts[i].vy *= 0.995f;
+				break;
+			case PT_PLUT:
+				if (sim->rng.chance(pressureFactor, 1000))
+				{
+					if (sim->rng.chance(1, 3))
+					{
+						//@ NEUT + PLUT -> NEUT + URAN/LAVA(PLUT)
+						sim->create_part(ID(r), x+rx, y+ry, sim->rng.chance(2, 3) ? PT_LAVA : PT_URAN);
+						parts[ID(r)].temp = MAX_TEMP;
+						if (parts[ID(r)].type==PT_LAVA) {
+							parts[ID(r)].tmp = 100;
+							parts[ID(r)].ctype = PT_PLUT;
+						}
+					}
+					else
+					{
+						//@ NEUT + PLUT -> 2xNEUT
+						sim->create_part(ID(r), x+rx, y+ry, PT_NEUT);
+						parts[ID(r)].vx = 0.25f*parts[ID(r)].vx + parts[i].vx;
+						parts[ID(r)].vy = 0.25f*parts[ID(r)].vy + parts[i].vy;
+					}
+					sim->pv[y/CELL][x/CELL] += 10.0f * CFDS; //Used to be 2, some people said nukes weren't powerful enough
+					Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
+				}
+				break;
+			case PT_DEUT:
+				if (sim->rng.chance(pressureFactor + 1 + (parts[ID(r)].life/100), 1000))
+				{
+					//@ NEUT + DEUT -> 2xNEUT
+					DeutExplosion(sim, parts[ID(r)].life, x+rx, y+ry, restrict_flt(parts[ID(r)].temp + parts[ID(r)].life*500.0f, MIN_TEMP, MAX_TEMP), PT_NEUT);
+					sim->kill_part(ID(r));
+				}
+				break;
+			case PT_GUNP:
+				//@ NEUT + GUNP -> NEUT + DUST
+				if (sim->rng.chance(3, 200))
+					sim->part_change_type(ID(r),x+rx,y+ry,PT_DUST);
+				break;
+			case PT_DYST:
+				//@ NEUT + DYST -> NEUT + YEST
+				if (sim->rng.chance(3, 200))
+					sim->part_change_type(ID(r),x+rx,y+ry,PT_YEST);
+				break;
+			case PT_YEST:
+				//@ NEUT + YEST -> NEUT + DYST
+				sim->part_change_type(ID(r),x+rx,y+ry,PT_DYST);
+				break;
+			case PT_PLEX:
+				//@ NEUT + PLEX -> NEUT + GOO
+				if (sim->rng.chance(3, 200))
+					sim->part_change_type(ID(r),x+rx,y+ry,PT_GOO);
+				break;
+			case PT_NITR:
+				//@ NEUT + NITR -> NEUT + DESL
+				if (sim->rng.chance(3, 200))
+					sim->part_change_type(ID(r),x+rx,y+ry,PT_DESL);
+				break;
+			case PT_PLNT:
+				//@ NEUT + PLNT -> NEUT + WOOD
+				if (sim->rng.chance(1, 20))
+					sim->create_part(ID(r), x+rx, y+ry, PT_WOOD);
+				break;
+			case PT_DESL:
+			case PT_OIL:
+				//@ NEUT + DESL/OIL -> NEUT + GAS
+				if (sim->rng.chance(3, 200))
+					sim->part_change_type(ID(r),x+rx,y+ry,PT_GAS);
+				break;
+			case PT_COAL:
+				//@ NEUT + COAL -> NEUT + WOOD
+				if (sim->rng.chance(1, 20))
+					sim->create_part(ID(r), x+rx, y+ry, PT_WOOD);
+				break;
+			case PT_BCOL:
+				//@ NEUT + BCOL -> NEUT + SAWD
+				if (sim->rng.chance(1, 20))
+					sim->create_part(ID(r), x+rx, y+ry, PT_SAWD);
+				break;
+			case PT_DUST:
+				//@ NEUT + DUST -> NEUT + FWRK
+				if (sim->rng.chance(1, 20))
+					sim->part_change_type(ID(r), x+rx, y+ry, PT_FWRK);
+				break;
+			case PT_FWRK:
+				if (sim->rng.chance(1, 20))
+					parts[ID(r)].ctype = PT_DUST;
+				break;
+			case PT_ACID:
+				//@ NEUT + ACID -> NEUT + ISOZ
+				if (sim->rng.chance(1, 20))
+					sim->create_part(ID(r), x+rx, y+ry, PT_ISOZ);
+				break;
+			case PT_TTAN:
+				if (sim->rng.chance(1, 20))
+				{
+					sim->kill_part(i);
+					return 1;
+				}
+				break;
+			case PT_EXOT:
+				if (sim->rng.chance(1, 20))
+					parts[ID(r)].life = 1500;
+				break;
+			case PT_RFRG:
+				//@ NEUT + RFRG -> NEUT + GAS/CAUS
+				if (sim->rng.chance(1, 2))
+					sim->create_part(ID(r), x+rx, y+ry, PT_GAS);
+				else
+					sim->create_part(ID(r), x+rx, y+ry, PT_CAUS);
+				break;
+			case PT_RSSS:
+				if(!rx && !ry)
+				{
+					int ct_under, tmp_under;
+
+					ct_under = parts[ID(r)].ctype;
+					tmp_under = parts[ID(r)].tmp;
+
+					//If there's a correct ctype set, liquefy into it
+					if(ct_under > 0 && ct_under < PT_NUM)
+					{
+						//@ NEUT + RSSS(ctype) -> ctype
+						sim->create_part(ID(r), x, y, ct_under);
+
+						//If there's a correct tmp set, use it for ctype
+						if((tmp_under > 0) && (tmp_under < PT_NUM) && (elements[ct_under].CarriesTypeIn & (1U << FIELD_CTYPE)))
+							parts[ID(r)].ctype = tmp_under;
+					}
+					else //@ NEUT + RSSS -> RSST
+						sim->part_change_type(ID(r), x, y, PT_RSST); //Default to RSST if no ctype
+
+					sim->kill_part(i);
+
+					return 1;
+				}
+				break;
+			case PT_BASE:
+				//@ NEUT + BASE -> NEUT + LRBD
+				if (parts[ID(r)].temp > (50 + 273.15) && sim->rng.chance(1, 35))
+					sim->create_part(ID(r), x+rx, y+ry, PT_LRBD);
+				break;
+			case PT_SEED:
+				if(!rx && !ry)
+				{
+					// Flip a random gene with 1/2 chance
+					switch (sim->rng.between(0, 9))
+					{
+						case 0:
+							parts[ID(r)].ctype ^= 1 << sim->rng.between(PLNT_COLOUR, PLNT_LIFE-1);
+							break;
+						case 1:
+							parts[ID(r)].tmp ^= 1 << sim->rng.between(0, PLNT_TOTAL_TMP-1);
+							break;
+						case 2:
+							parts[ID(r)].tmp2 ^= 1 << sim->rng.between(0, PLNT_TOTAL_TMP-1);
+							break;
+						case 3:
+							parts[ID(r)].tmp3 ^= 1 << sim->rng.between(0, PLNT_TOTAL_TMP-1);
+							break;
+						case 4:
+							parts[ID(r)].tmp4 ^= 1 << sim->rng.between(0, PLNT_TOTAL_TMP-1);
+							break;
+						default:
+							break;
+					}
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	return 0;
+}
+
+static int graphics(GRAPHICS_FUNC_ARGS)
+{
+	*firea = 120;
+	*firer = 10;
+	*fireg = 80;
+	*fireb = 120;
+
+	*pixel_mode |= FIRE_ADD;
+	return 1;
+}
+
+static void create(ELEMENT_CREATE_FUNC_ARGS)
+{
+	float r = sim->rng.between(128, 255) / 127.0f;
+	float a = sim->rng.between(0, 359) * std::numbers::pi_v<float> / 180.0f;
+	sim->parts[i].life = sim->rng.between(480, 959);
+	sim->parts[i].vx = r * cosf(a);
+	sim->parts[i].vy = r * sinf(a);
+}
+
+static int DeutExplosion(Simulation * sim, int n, int x, int y, float temp, int t)//testing a new deut create part
+{
+	int i;
+	n = (n/50);
+	if (n < 1)
+		n = 1;
+	else if (n > 340)
+		n = 340;
+
+	for (int c = 0; c < n; c++)
+	{
+		i = sim->create_part(-3, x, y, t);
+		if (i >= 0)
+			sim->parts[i].temp = temp;
+		else if (sim->parts.MaxPartsReached())
+			break;
+	}
+	sim->pv[y/CELL][x/CELL] += (6.0f * CFDS)*n;
+	return 0;
+}

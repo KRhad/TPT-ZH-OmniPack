@@ -1,0 +1,79 @@
+#include "ConfirmPrompt.h"
+
+#include "common/Localization.h"
+#include "gui/Style.h"
+
+#include "gui/interface/Button.h"
+#include "gui/interface/Engine.h"
+#include "gui/interface/Label.h"
+#include "gui/interface/ScrollPanel.h"
+
+#include "PowderToySDL.h"
+
+#include "graphics/Graphics.h"
+
+ConfirmPrompt::ConfirmPrompt(String title, String message, ResultCallback callback_, String buttonText):
+	ui::Window(ui::Point(-1, -1), ui::Point(250, 50)),
+	callback(callback_)
+{
+	if (buttonText.empty())
+		buttonText = Localization::Ref().Tr("gui.default_confirm_button");
+	ui::Label * titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 15), title);
+	titleLabel->SetTextColour(style::Colour::WarningTitle);
+	titleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	titleLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	AddComponent(titleLabel);
+
+
+	ui::ScrollPanel *messagePanel = new ui::ScrollPanel(ui::Point(4, 24), ui::Point(Size.X-8, 206));
+	AddComponent(messagePanel);
+
+	ui::Label * messageLabel = new ui::Label(ui::Point(4, 0), ui::Point(Size.X-28, -1), message);
+	messageLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	messageLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;
+	messageLabel->SetMultiline(true);
+	messagePanel->AddChild(messageLabel);
+
+	messagePanel->InnerSize = ui::Point(messagePanel->Size.X, messageLabel->Size.Y+4);
+
+	if (messageLabel->Size.Y < messagePanel->Size.Y)
+		messagePanel->Size.Y = messageLabel->Size.Y+4;
+	Size.Y += messagePanel->Size.Y+12;
+	Position.Y = (GetGraphics()->Size().Y - Size.Y)/2;
+
+	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X-75, 16), Localization::Ref().Tr("dialog.cancel"));
+	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	cancelButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	cancelButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
+	cancelButton->SetActionCallback({ [this] {
+		CloseActiveWindow();
+		if (callback.cancel)
+			callback.cancel();
+		SelfDestruct();
+	} });
+	AddComponent(cancelButton);
+	SetCancelButton(cancelButton);
+
+	ui::Button * okayButton = new ui::Button(ui::Point(Size.X-76, Size.Y-16), ui::Point(76, 16), buttonText);
+	okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	okayButton->Appearance.TextInactive = style::Colour::WarningTitle;
+	okayButton->SetActionCallback({ [this] {
+		CloseActiveWindow();
+		if (callback.okay)
+			callback.okay();
+		SelfDestruct();
+	} });
+	AddComponent(okayButton);
+	SetOkayButton(okayButton);
+
+	MakeActiveWindow();
+}
+
+void ConfirmPrompt::OnDraw()
+{
+	Graphics * g = GetGraphics();
+
+	g->DrawFilledRect(RectSized(Position - Vec2{ 1, 1 }, Size + Vec2{ 2, 2 }), 0x000000_rgb);
+	g->DrawRect(RectSized(Position, Size), 0xC8C8C8_rgb);
+}

@@ -1,0 +1,290 @@
+#include "ElementCommon.h"
+#include "StructProperty.h"
+
+Element::Element():
+	Identifier("DEFAULT_INVALID"),
+	Name(""),
+	Colour(0xFF00FF_rgb),
+	MenuVisible(0),
+	MenuSection(0),
+	MenuSort(0),
+	Enabled(0),
+
+	Advection(0.0f),
+	AirDrag(-0.0f * CFDS),
+	AirLoss(1.0f),
+	Loss(1.0f),
+	Collision(0.0f),
+	Gravity(0.0f),
+	NewtonianGravity(1.0f),
+	Diffusion(0.0f),
+	HotAir(0.0f * CFDS),
+	Falldown(0),
+
+	Flammable(0),
+	Explosive(0),
+	Meltable(0),
+	Hardness(30),
+	PhotonReflectWavelengths(0x3FFFFFFF),
+
+	Weight(50),
+
+	HeatConduct(128),
+	HeatCapacity(1.0f),
+	Description("No description"),
+
+	Properties(TYPE_SOLID),
+	CarriesTypeIn(0),
+
+	LowPressure(IPL),
+	LowPressureTransition(NT),
+	HighPressure(IPH),
+	HighPressureTransition(NT),
+	LowTemperature(ITL),
+	LowTemperatureTransition(NT),
+	HighTemperature(ITH),
+	HighTemperatureTransition(NT),
+
+	Update(nullptr),
+	Graphics(&Element::defaultGraphics),
+	CtypeDraw(nullptr),
+	IconGenerator(nullptr)
+{
+	memset(&DefaultProperties, 0, sizeof(Particle));
+	DefaultProperties.temp = R_TEMP + 273.15f;
+}
+
+std::vector<StructProperty> const &Element::GetProperties()
+{
+	struct DoOnce
+	{
+		std::vector<StructProperty> properties;
+
+		DoOnce()
+		{
+			properties = {
+				{ "Name",                      StructProperty::String,   offsetof(Element, Name                     ) },
+				{ "Colour",                    StructProperty::Colour,   offsetof(Element, Colour                   ) },
+				{ "Color",                     StructProperty::Colour,   offsetof(Element, Colour                   ) },
+				{ "MenuVisible",               StructProperty::Integer,  offsetof(Element, MenuVisible              ) },
+				{ "MenuSort",                  StructProperty::Integer,  offsetof(Element, MenuSort                 ) },
+				{ "MenuSection",               StructProperty::Integer,  offsetof(Element, MenuSection              ) },
+				{ "Enabled",                   StructProperty::Integer,  offsetof(Element, Enabled                  ) },
+				{ "Advection",                 StructProperty::Float,    offsetof(Element, Advection                ) },
+				{ "AirDrag",                   StructProperty::Float,    offsetof(Element, AirDrag                  ) },
+				{ "AirLoss",                   StructProperty::Float,    offsetof(Element, AirLoss                  ) },
+				{ "Loss",                      StructProperty::Float,    offsetof(Element, Loss                     ) },
+				{ "Collision",                 StructProperty::Float,    offsetof(Element, Collision                ) },
+				{ "Gravity",                   StructProperty::Float,    offsetof(Element, Gravity                  ) },
+				{ "NewtonianGravity",          StructProperty::Float,    offsetof(Element, NewtonianGravity         ) },
+				{ "Diffusion",                 StructProperty::Float,    offsetof(Element, Diffusion                ) },
+				{ "HotAir",                    StructProperty::Float,    offsetof(Element, HotAir                   ) },
+				{ "Falldown",                  StructProperty::Integer,  offsetof(Element, Falldown                 ) },
+				{ "Flammable",                 StructProperty::Integer,  offsetof(Element, Flammable                ) },
+				{ "Explosive",                 StructProperty::Integer,  offsetof(Element, Explosive                ) },
+				{ "Meltable",                  StructProperty::Integer,  offsetof(Element, Meltable                 ) },
+				{ "Hardness",                  StructProperty::Integer,  offsetof(Element, Hardness                 ) },
+				{ "PhotonReflectWavelengths",  StructProperty::UInteger, offsetof(Element, PhotonReflectWavelengths ) },
+				{ "CarriesTypeIn",             StructProperty::UInteger, offsetof(Element, CarriesTypeIn            ) },
+				{ "Weight",                    StructProperty::Integer,  offsetof(Element, Weight                   ) },
+				{ "Temperature",               StructProperty::Float,    offsetof(Element, DefaultProperties.temp   ) },
+				{ "HeatConduct",               StructProperty::UChar,    offsetof(Element, HeatConduct              ) },
+				{ "HeatCapacity",              StructProperty::Float,    offsetof(Element, HeatCapacity             ) },
+				{ "Description",               StructProperty::String,   offsetof(Element, Description              ) },
+				{ "State",                     StructProperty::Removed,  0                                            },
+				{ "Properties",                StructProperty::Integer,  offsetof(Element, Properties               ) },
+				{ "LowPressure",               StructProperty::Float,    offsetof(Element, LowPressure              ) },
+				{ "LowPressureTransition",     StructProperty::TransitionType,  offsetof(Element, LowPressureTransition    ) },
+				{ "HighPressure",              StructProperty::Float,    offsetof(Element, HighPressure             ) },
+				{ "HighPressureTransition",    StructProperty::TransitionType,  offsetof(Element, HighPressureTransition   ) },
+				{ "LowTemperature",            StructProperty::Float,    offsetof(Element, LowTemperature           ) },
+				{ "LowTemperatureTransition",  StructProperty::TransitionType,  offsetof(Element, LowTemperatureTransition ) },
+				{ "HighTemperature",           StructProperty::Float,    offsetof(Element, HighTemperature          ) },
+				{ "HighTemperatureTransition", StructProperty::TransitionType,  offsetof(Element, HighTemperatureTransition) }
+			};
+		}
+	};
+	static DoOnce doOnce;
+	return doOnce.properties;
+}
+
+int Element::legacyUpdate(UPDATE_FUNC_ARGS) {
+	int r, rx, ry;
+	int t = parts[i].type;
+	if (t==PT_WTRV) {
+		for (rx=-2; rx<3; rx++)
+			for (ry=-2; ry<3; ry++)
+				if (x+rx>=0 && y+ry>0 &&
+				        x+rx<XRES && y+ry<YRES && (rx || ry))
+				{
+					r = pmap[y+ry][x+rx];
+					if (!r)
+						continue;
+					if ((TYP(r)==PT_WATR||TYP(r)==PT_DSTW||TYP(r)==PT_SLTW) && sim->rng.chance(1, 1000))
+					{
+						sim->part_change_type(i,x,y,PT_WATR);
+						sim->part_change_type(ID(r),x+rx,y+ry,PT_WATR);
+					}
+					if ((TYP(r)==PT_ICEI || TYP(r)==PT_SNOW) && sim->rng.chance(1, 1000))
+					{
+						sim->part_change_type(i,x,y,PT_WATR);
+						if (sim->rng.chance(1, 1000))
+							sim->part_change_type(ID(r),x+rx,y+ry,PT_WATR);
+					}
+				}
+	}
+	else if (t==PT_WATR) {
+		for (rx=-2; rx<3; rx++)
+			for (ry=-2; ry<3; ry++)
+				if (x+rx>=0 && y+ry>0 &&
+				        x+rx<XRES && y+ry<YRES && (rx || ry))
+				{
+					r = pmap[y+ry][x+rx];
+					if (!r)
+						continue;
+					if ((TYP(r)==PT_FIRE || TYP(r)==PT_LAVA) && sim->rng.chance(1, 10))
+					{
+						sim->part_change_type(i,x,y,PT_WTRV);
+					}
+				}
+	}
+	else if (t==PT_SLTW) {
+		for (rx=-2; rx<3; rx++)
+			for (ry=-2; ry<3; ry++)
+				if (x+rx>=0 && y+ry>0 &&
+				        x+rx<XRES && y+ry<YRES && (rx || ry))
+				{
+					r = pmap[y+ry][x+rx];
+					if (!r)
+						continue;
+					if ((TYP(r)==PT_FIRE || TYP(r)==PT_LAVA) && sim->rng.chance(1, 10))
+					{
+						if (sim->rng.chance(1, 4))
+							sim->part_change_type(i,x,y,PT_SALT);
+						else
+							sim->part_change_type(i,x,y,PT_WTRV);
+					}
+				}
+	}
+	else if (t==PT_DSTW) {
+		for (rx=-2; rx<3; rx++)
+			for (ry=-2; ry<3; ry++)
+				if (x+rx>=0 && y+ry>0 &&
+				        x+rx<XRES && y+ry<YRES && (rx || ry))
+				{
+					r = pmap[y+ry][x+rx];
+					if (!r)
+						continue;
+					if ((TYP(r)==PT_FIRE || TYP(r)==PT_LAVA) && sim->rng.chance(1, 10))
+					{
+						sim->part_change_type(i,x,y,PT_WTRV);
+					}
+				}
+	}
+	else if (t==PT_ICEI) {
+		for (rx=-2; rx<3; rx++)
+			for (ry=-2; ry<3; ry++)
+				if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
+				{
+					r = pmap[y+ry][x+rx];
+					if (!r)
+						continue;
+					if ((TYP(r)==PT_WATR || TYP(r)==PT_DSTW) && sim->rng.chance(1, 1000))
+					{
+						sim->part_change_type(i,x,y,PT_ICEI);
+						sim->part_change_type(ID(r),x+rx,y+ry,PT_ICEI);
+					}
+				}
+	}
+	else if (t==PT_SNOW) {
+		for (rx=-2; rx<3; rx++)
+			for (ry=-2; ry<3; ry++)
+				if (x+rx>=0 && y+ry>0 && x+rx<XRES && y+ry<YRES && (rx || ry))
+				{
+					r = pmap[y+ry][x+rx];
+					if (!r)
+						continue;
+					if ((TYP(r)==PT_WATR || TYP(r)==PT_DSTW) && sim->rng.chance(1, 1000))
+					{
+						sim->part_change_type(i,x,y,PT_ICEI);
+						sim->part_change_type(ID(r),x+rx,y+ry,PT_ICEI);
+					}
+					if ((TYP(r)==PT_WATR || TYP(r)==PT_DSTW) && sim->rng.chance(3, 200))
+						sim->part_change_type(i,x,y,PT_WATR);
+				}
+	}
+	if (t==PT_WTRV && sim->pv[y/CELL][x/CELL]>4.0f)
+		sim->part_change_type(i,x,y,PT_DSTW);
+	if (t==PT_OIL && sim->pv[y/CELL][x/CELL]<-6.0f)
+		sim->part_change_type(i,x,y,PT_GAS);
+	if (t==PT_GAS && sim->pv[y/CELL][x/CELL]>6.0f)
+		sim->part_change_type(i,x,y,PT_OIL);
+	if (t==PT_DESL && sim->pv[y/CELL][x/CELL]>12.0f)
+	{
+		sim->part_change_type(i,x,y,PT_FIRE);
+		parts[i].life = sim->rng.between(120, 169);
+	}
+	return 0;
+}
+
+int Element::defaultGraphics(GRAPHICS_FUNC_ARGS)
+{
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+	int t = cpart->type;
+	//Property based defaults
+	if(elements[t].Properties & PROP_RADIOACTIVE) *pixel_mode |= PMODE_GLOW;
+	if(elements[t].Properties & TYPE_LIQUID)
+	{
+		*pixel_mode |= PMODE_BLUR;
+	}
+	if(elements[t].Properties & TYPE_GAS)
+	{
+		*pixel_mode &= ~PMODE;
+		*pixel_mode |= FIRE_BLEND;
+		*firer = *colr/2;
+		*fireg = *colg/2;
+		*fireb = *colb/2;
+		*firea = 125;
+		*pixel_mode |= DECO_FIRE;
+	}
+	return 1;
+}
+
+bool Element::basicCtypeDraw(CTYPEDRAW_FUNC_ARGS)
+{
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+	if (sim->parts[i].type == t || elements[t].Properties & PROP_NOCTYPEDRAW)
+	{
+		return false;
+	}
+	sim->parts[i].ctype = t;
+	return true;
+}
+
+bool Element::ctypeDrawVInTmp(CTYPEDRAW_FUNC_ARGS)
+{
+	if (!Element::basicCtypeDraw(CTYPEDRAW_FUNC_SUBCALL_ARGS))
+	{
+		return false;
+	}
+	if (t == PT_LIFE)
+	{
+		sim->parts[i].tmp = v;
+	}
+	return true;
+}
+
+bool Element::ctypeDrawVInCtype(CTYPEDRAW_FUNC_ARGS)
+{
+	if (!Element::basicCtypeDraw(CTYPEDRAW_FUNC_SUBCALL_ARGS))
+	{
+		return false;
+	}
+	if (t == PT_LIFE)
+	{
+		sim->parts[i].ctype |= PMAPID(v);
+	}
+	return true;
+}

@@ -1,0 +1,46 @@
+#include "simulation/ElementCommon.h"
+#include "common/Localization.h"
+#include "RFRG.h"
+
+void Element::Element_RFGL()
+{
+	Identifier = "DEFAULT_PT_RFGL";
+	Name = "RFGL";
+	Colour = 0x84C2CF_rgb;
+	MenuVisible = 0;
+	MenuSection = SC_LIQUID;
+	Enabled = 1;
+
+	Advection = 0.6f;
+	AirDrag = 0.01f * CFDS;
+	AirLoss = 0.98f;
+	Loss = 0.95f;
+	Collision = 0.0f;
+	Gravity = 0.1f;
+	Diffusion = 0.00f;
+	HotAir = 0.000f	* CFDS;
+	Falldown = 2;
+
+	Flammable = 0;
+	Explosive = 0;
+	Meltable = 0;
+	Hardness = 21;
+
+	Weight = 10;
+
+	HeatConduct = 3;
+	Description = Localization::Ref().Tr("sim.elem.DEFAULT_PT_RFGL");
+
+	Properties = TYPE_LIQUID|PROP_DEADLY;
+
+	LowPressure = 2;
+	LowPressureTransition = PT_RFRG; //@ RFGL -> RFRG
+	HighPressure = IPH;
+	HighPressureTransition = NT;
+	LowTemperature = ITL;
+	LowTemperatureTransition = NT;
+	HighTemperature = ITH;
+	HighTemperatureTransition = NT;
+
+	Update = &Element_RFRG_update;
+}

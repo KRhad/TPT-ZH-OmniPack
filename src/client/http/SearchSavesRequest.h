@@ -1,0 +1,22 @@
+#pragma once
+#include "APIRequest.h"
+#include "client/SaveInfo.h"
+#include "client/Search.h"
+
+namespace http
+{
+	class SearchSavesRequest : public APIRequest
+	{
+		bool includesFp;
+
+	public:
+		SearchSavesRequest(int start, int count, ByteString query, Period period, Sort sort, Category category);
+
+		bool GetIncludesFp() const
+		{
+			return includesFp;
+		}
+
+		std::pair<int, std::vector<std::unique_ptr<SaveInfo>>> Finish();
+	};
+}

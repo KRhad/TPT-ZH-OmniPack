@@ -1,0 +1,46 @@
+name: Compile public source (no tests)
+
+on:
+  push:
+    branches:
+      - public-source
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-windows-x64:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Check out public source
+        uses: actions/checkout@v4
+
+      - name: Install MSYS2 UCRT64 toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          cache: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-meson
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-python
+
+      - name: Configure without developer tests
+        shell: msys2 {0}
+        run: >-
+          meson setup build
+          --buildtype=release
+          -Dbuild_tests=false
+          -Dstatic=prebuilt
+          -Drelease_label=1.0.0
+          -Dresolve_vcs_tag=no
+
+      - name: Compile
+        shell: msys2 {0}
+        run: meson compile -C build

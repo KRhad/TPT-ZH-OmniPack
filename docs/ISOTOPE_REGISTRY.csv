@@ -1,0 +1,14 @@
+isotope_id,atomic_number,symbol,zh_name,en_name,stable_id,identifier,half_life_model,decay_type,decay_product,heat,particles,neutron_behavior,status,tests,notes
+isotope.hydrogen_2,1,H-2,氢-2,Hydrogen-2,576,OMNI_PT_H2IS,stable,none,none,none,none,capture_to_H3IS,implemented,runtime-tested,official DEUT is deuterium oxide; bounded local ignition is shared with H-3
+isotope.hydrogen_3,1,H-3,氢-3,Hydrogen-3,577,OMNI_PT_H3IS,long,beta,PT_HE,low,PT_ELEC,neutral,implemented,runtime-tested,game-scaled half-life; bounded local ignition is shared with H-2
+isotope.carbon_14,6,C-14,碳-14,Carbon-14,578,OMNI_PT_C14I,long,beta,PT_N,low,PT_ELEC,neutral,implemented,runtime-tested,game-scaled tracer decay
+isotope.cobalt_60,27,Co-60,钴-60,Cobalt-60,579,OMNI_PT_CO60,medium,beta_gamma,PT_NICL,medium,PT_PHOT,activation_product,implemented,runtime-tested,solid COBT activation source
+isotope.strontium_90,38,Sr-90,锶-90,Strontium-90,580,OMNI_PT_SR90,medium,beta,PT_Y,medium,PT_ELEC,neutral,implemented,runtime-tested,bounded waste hazard
+isotope.iodine_131,53,I-131,碘-131,Iodine-131,581,OMNI_PT_I131,short,beta_gamma,PT_XE,medium,PT_PHOT,neutral,implemented,runtime-tested,volatile low-melting fission product
+isotope.caesium_137,55,Cs-137,铯-137,Caesium-137,582,OMNI_PT_CS37,medium,beta_gamma,PT_BA,medium,PT_PHOT,neutral,implemented,runtime-tested,mobile contamination proxy
+isotope.thorium_232,90,Th-232,钍-232,Thorium-232,583,OMNI_PT_TH32,very_long,alpha,PT_RA,low,PT_HE,fertile_to_NFUL,implemented,runtime-tested,compressed thorium breeding proxy
+isotope.uranium_235,92,U-235,铀-235,Uranium-235,584,OMNI_PT_U235,very_long,alpha_fission,PT_TH_or_fission_product,high,PT_HE_or_PT_NEUT,moderated_fissile,implemented,runtime-tested,distinct from official generic URAN
+isotope.uranium_238,92,U-238,铀-238,Uranium-238,585,OMNI_PT_U238,very_long,alpha,PT_TH,low,PT_HE,fertile_to_PU39,implemented,runtime-tested,bounded breeding and shielding interaction
+isotope.plutonium_239,94,Pu-239,钚-239,Plutonium-239,586,OMNI_PT_PU39,very_long,alpha_fission,PT_URAN_or_fission_product,high,PT_HE_or_PT_NEUT,moderated_fissile,implemented,runtime-tested,distinct from official generic PLUT
+isotope.americium_241,95,Am-241,镅-241,Americium-241,587,OMNI_PT_AM41,long,alpha_gamma,PT_NP,medium,PT_HE,neutral,implemented,runtime-tested,source and waste gameplay
+isotope.californium_252,98,Cf-252,锎-252,Californium-252,588,OMNI_PT_CF52,short,alpha_spontaneous_fission,PT_CM_or_fission_product,high,PT_NEUT,unmoderated_fissile_neutron_source,implemented,runtime-tested,shares strict 512-frame nuclear budget
