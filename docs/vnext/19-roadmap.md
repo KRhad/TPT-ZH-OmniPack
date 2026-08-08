@@ -2,10 +2,10 @@
 
 ## Current phase decision
 
-The official 100.1 source adaptation, explicit FP modes and current fixed-step
-throughput/process-RAM baseline and C01-C14 deterministic restart suite are
-integrated. The overall G0 gate remains RED, so the roadmap stays in Phase 1
-differential/profiler work. No production
+The official 100.1 source adaptation, explicit FP modes, current fixed-step
+throughput/process-RAM baseline, C01-C14 deterministic restart suite and scoped
+Legacy-fast/Strict CPU first-divergence capture are integrated. The overall G0 gate
+remains RED, so the roadmap stays in Phase 1 ledger/profiler work. No production
 OmniAtmosphere state or solver will be integrated yet.
 
 ## Phase status
@@ -14,7 +14,7 @@ OmniAtmosphere state or solver will be integrated yet.
 |---:|---|---|
 | -1 | external research and license audit | YELLOW: classifications complete; no new artifact redistribution authorized |
 | 0 | latest upstream adaptation | GREEN source sub-gate; G0 overall RED |
-| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; FP modes, fixed-step baseline and C01-C14 saves complete |
+| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; FP modes, fixed-step baseline, C01-C14 saves and scoped first-divergence capture complete |
 | 2 | physical scale and unit system | proposal written / RED |
 | 3 | AtmosphereBench | planned / BLOCKED by Phase 1-2 foundations |
 | 4 | solver selection | BLOCKED |
@@ -36,16 +36,20 @@ The next integration commits should be small and independently reversible:
    deterministic state signatures and structured machine/build/result manifest.
 3. `tests/characterization`: COMPLETE in `1b8586877`; C01-C14 deterministic
    generators, private OPS artifacts, exact restart traces and aggregate manifest.
-4. `tests/differential`: record first divergence plus particle/atmosphere/neighborhood
-   state and conservation ledgers.
-5. `tests/profiler-export`: add subsystem spans plus process VRAM without perturbing
+4. `tests/differential-first-frame`: COMPLETE in `c6eecaa77`; clean same-source
+   Legacy-fast/Strict CPU trace locates step 1 and captures Particle, Air and
+   neighborhood state. Omni CPU/GPU topology remains unimplemented.
+5. `tests/conservation-ledger`: add Legacy mass/energy/momentum, positivity and
+   finite-value evidence plus the still-open OPS load-boundary field comparison.
+6. `tests/profiler-export`: add subsystem spans plus process VRAM without perturbing
    the short CPU benchmark.
-6. Re-run G0. GREEN may advance to Physical Scale plus standalone AtmosphereBench;
+7. Re-run G0. GREEN may advance to Physical Scale plus standalone AtmosphereBench;
    RED continues only on the remaining blockers.
 
-The mixed benchmark starts from the same generated Strict/Legacy hash but diverges by
-60 warmup steps. Characterization and differential work must therefore capture the
-first differing frame and local state before any fast-math safety decision.
+The mixed benchmark starts from the same generated Strict/Legacy hash; the later
+capture locates the first difference after update step 1 in both Particle and Air
+state. This does not identify the correct result, so conservation/finite-value
+ledgers remain mandatory before any fast-math safety decision.
 
 Each commit records goal, base, files, tests, benchmark/memory evidence, compatibility,
 risks, gate and rollback parent. Before each new phase, re-query official stable and
@@ -75,7 +79,7 @@ the Main Orchestrator chooses adaptation timing.
 | Does Lua depend on particle properties? | Yes, through stable property names/indices and C++ `offsetof` access. |
 | How is Air saved? | Quantized OPS `pressMap/vxMap/vyMap`, integer-K `ambientMap`, block/fan maps and simulation options. |
 | Release math optimizations? | Vectorization, unsafe/fast math, omit frame pointer and SSE2; current validated build is `-O2`, `lto=false`. |
-| Fast-math risk? | Critical for conservation, positivity and NaN/Inf detection; disallowed for OmniCore until strict/fast comparison passes. |
+| Fast-math risk? | Critical: clean evidence diverges at step 1 in Particle and Air state, without identifying a correct side; disallowed for OmniCore until conservation/positivity/finite comparison passes. |
 | AtmosphereBench schemes? | Legacy-like, Rusanov, HLLE, HLLC, LBM and, if justified, hybrid/all-speed. |
 | Leading PoC and why? | Strict-double first-order HLLE FVM: directly conserves mass/momentum/energy/species and is robust around shocks/rarefactions; benchmark may overturn it. |
 | Near vacuum? | Positive density/pressure/internal-energy floors, robust flux fallback and a fully visible correction ledger; never ordinary `rho=0`. |
@@ -92,7 +96,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Remove remaining G0 blockers: first-divergence/load-boundary ledger runner and subsystem profiler/VRAM export. |
+| Next stage? | Remove remaining G0 blockers: Legacy conservation/finite-value plus load-boundary ledger work, or subsystem profiler/process-VRAM export. |
 
 ## Long-term acceptance
 

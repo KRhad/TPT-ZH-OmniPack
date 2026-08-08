@@ -5,9 +5,9 @@
 | ID | Severity | Area | Evidence / failure mode | Required mitigation | Gate |
 |---|---|---|---|---|---|
 | C-01 | CRITICAL | correctness/performance | 4 mm cells with real sound speed make explicit compressible CFL far smaller than a game tick | select and validate time/acoustic/all-speed policy in AtmosphereBench | RED |
-| C-02 | CRITICAL | numerical | identical generated mixed state diverges between Legacy-fast and Strict by 60 warmup steps; conservation/finite error is unknown | first-divergence capture plus double/float/fast conservation/positivity matrix | YELLOW foundation, RED comparison |
+| C-02 | CRITICAL | numerical | identical generated mixed state diverges on step 1: 4,935 particle IDs and 2,074 Air cells differ; physical/conservation error remains unknown | retain scoped capture and add double/float/fast conservation, positivity and finite-value matrix | GREEN capture, RED numerical comparison |
 | C-03 | CRITICAL | conservation | floors/clamps could silently create mass/species/energy | correction ledger, limits and fail-closed tests | RED |
-| C-04 | HIGH | correctness | Legacy particle updates directly write Air and depend on iteration/same-frame state | C01-C14 saves and inventory now exist; add field-level differential capture and compatibility adapter | YELLOW foundation, RED replacement |
+| C-04 | HIGH | correctness | Legacy particle updates directly write Air and depend on iteration/same-frame state | C01-C14, inventory and same-source FP field capture exist; add OPS load-boundary capture and Classic/Omni compatibility adapter | YELLOW foundation, RED replacement |
 | C-05 | HIGH | correctness | scale/time/effective depth are not yet accepted | Phase 2 contract and dimensional checks | RED |
 | C-06 | HIGH | chemistry | current reactions lack generic atom/charge validation and kinetics | versioned species/reaction loader with rejection tests | RED |
 | C-07 | HIGH | thermal | phase changes lack latent heat and unified energy | enthalpy model and closed energy experiments | RED |
@@ -18,7 +18,7 @@
 | L-05 | HIGH | gameplay | replacing FIRE/pressure/vacuum could break old works | immutable Classic backend and differential traces | RED for replacement |
 | L-06 | MEDIUM | legacy formats | PSv/fuC and GUI save/load lack current runtime fixtures | add safe fixed fixtures and visible GUI pass | YELLOW |
 | L-07 | HIGH | save/differential | pre-save versus loaded Snapshot hash differs in 14/14 characterization cases because OPS normalizes/quantizes state | treat loaded OPS as baseline and add field-level load-boundary report; never claim bit-exact checkpointing | YELLOW |
-| P-01 | HIGH | benchmark | two-scene fixed-step and 14-scene process-RAM characterization exist, but no accepted noise model, subsystem timings or regression budget | controlled repeats, profiler export and evidence-based budgets | YELLOW |
+| P-01 | HIGH | benchmark | two-scene fixed-step and 14-scene process-RAM characterization exist; differential process diagnostics are not a benchmark; no accepted noise model, subsystem timings or regression budget exists | controlled repeats, profiler export and evidence-based budgets | YELLOW |
 | P-02 | HIGH | memory | multi-species state/flux/scratch can exceed budget | report persistent/peak bytes per cell for every design | RED |
 | P-03 | HIGH | rendering | renderer snapshot already copies about 14.596 MiB lower bound per frame | selected-plane debug copies and measured snapshot timing | YELLOW |
 | P-04 | HIGH | GPU | CPU-special/GPU-generic may force full readback and stalls | residency design and upload/readback/fence metrics | RED |
@@ -46,6 +46,11 @@ UPSTREAM_SOURCE_ADAPTATION=GREEN
 LEGACY_FAST_BUILD=GREEN
 STRICT_FP_BUILD=GREEN
 STRICT_FAST_NUMERICAL_COMPARISON=RED
+FIRST_DIVERGENCE_FIELD_CAPTURE=GREEN
+LOAD_BOUNDARY_FIELD_DIFF=RED
+LEGACY_CPU_VS_OMNI_CPU=RED
+OMNI_CPU_VS_OMNI_GPU=RED
+CONSERVATION_POSITIVITY_FINITE_LEDGER=RED
 FIXED_STEP_BENCHMARK_FOUNDATION=GREEN
 PERFORMANCE_REGRESSION_BUDGET=RED
 PROCESS_RAM_BASELINE=GREEN

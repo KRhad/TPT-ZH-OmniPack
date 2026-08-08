@@ -19,7 +19,8 @@ two fresh client processes and produced identical per-step traces. Raw saves,
 traces, process logs and result JSON remain under ignored `artifacts/` and are not
 publication assets.
 
-G0 remains **RED**. First-divergence field capture, conservation/finite-value
+G0 remains **RED**. The later same-source Legacy-fast/Strict CPU first-divergence
+capture is GREEN, but OPS load-boundary field comparison, conservation/finite-value
 ledgers, subsystem profiling, process VRAM and accepted performance budgets are
 still missing. No production OmniAtmosphere implementation is permitted.
 
@@ -114,8 +115,9 @@ particle allocation and quantizes persistent fields, so the generated state and 
 loaded state have different `Snapshot::Hash` values. The authoritative
 characterization baseline is therefore the independently repeatable loaded state.
 The manifest exposes `snapshot_hash_equal=false` for every case instead of treating
-the mismatch as equality. A later differential runner must report the responsible
-fields rather than infer them from the combined hash.
+the mismatch as equality. The later differential runner reports generated-scene FP
+field differences, but it has not yet compared these pre-save and loaded states;
+OPS load-boundary field attribution remains RED.
 
 ## Correctness fixes found by the suite
 
@@ -148,6 +150,12 @@ lane around the barrier and places BTRY within its real two-pixel activation ran
   `368` particles and `436` field assertions per load).
 - Existing mixed OPS matrix: PASS (`3` processes, `2` restart loads, `11` particles
   and `21` field assertions per load).
+
+Post-integration at `c6eecaa77`, the current-HEAD Strict Meson suite is
+`39/39 PASS` and the Python suite is 281 run, 281 passed, 0 skipped, 0 failed with
+the UCRT64 compiler explicitly on PATH. These later results include eight
+first-divergence contracts; they do not rewrite the historical formal
+characterization binding above.
 
 The two GameModel changes affect only complete save loading. Partial paste semantics
 remain unchanged. Existing stable IDs, Particle layout, OPS schema and Classic
@@ -187,7 +195,10 @@ DETERMINISTIC_RESTART_TRACES=GREEN
 BOUNDED_SAVE_LOAD=GREEN
 CHARACTERIZATION_PROCESS_RAM=GREEN
 LOAD_BOUNDARY_FIELD_DIFF=RED
-FIRST_DIVERGENCE_RUNNER=RED
+FIRST_DIVERGENCE_RUNNER=GREEN
+SAME_SOURCE_CPU_FP_DIFFERENTIAL=GREEN
+LEGACY_CPU_VS_OMNI_CPU=RED
+OMNI_CPU_VS_OMNI_GPU=RED
 SUBSYSTEM_PROFILER=RED
 PROCESS_VRAM=RED
 STRICT_FAST_NUMERICAL_COMPARISON=RED
@@ -196,5 +207,5 @@ G0_UPSTREAM_BASELINE=RED
 
 Rollback base is `b9ae20bf03232cd13418064b2951e993df6c9f20`. The three bounded
 commits can be reverted independently in reverse order; no rollback is recommended.
-The next permitted integration work is the first-divergence/field-difference runner,
-followed by profiler/VRAM export and G0 reassessment.
+The next permitted integration work is the OPS load-boundary/conservation/finite
+ledger or profiler/VRAM export, followed by G0 reassessment.

@@ -17,6 +17,9 @@ files under `docs/vnext/` for the first-round report commit.
 | Worker-Chemistry | read-only | main worktree | read-only chemistry/library inspection | every write | `729f72cba` | OmniChem gap analysis | COMPLETE |
 | Worker-Materials | read-only | main worktree | read-only property/provenance inspection | every write | `729f72cba` | material-data research | COMPLETE |
 | Worker-SDLGPU | read-only | main worktree | read-only SDL/GPU inspection | every write | `729f72cba` | SDL3/SDL_GPU research | COMPLETE |
+| Worker-Differential-Evidence | read-only | main worktree | formal artifact verification and ignored recompute outputs | tracked-file writes | `c6eecaa77` | independently recompute first-divergence comparisons | COMPLETE, PASS |
+| Worker-Strict-Head | read-only | main worktree | existing build/test outputs | tracked-file writes | `c6eecaa77` | re-run current-HEAD Strict and Python suites | COMPLETE, PASS |
+| Worker-Differential-Docs | read-only | main worktree | read-only report/evidence review | every write | `c6eecaa77` | audit first-divergence report scope and gates | COMPLETE, PASS |
 
 ## Coordination rules
 

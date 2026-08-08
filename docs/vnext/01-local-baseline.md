@@ -10,6 +10,7 @@
 | Original common base | `bff38ce6959e1c1a7a4d17d0d5d44d127a0dfcbd` |
 | Benchmark implementation commit | `c4490463f3819695cab734414f827e0e4e4be118` |
 | Characterization implementation commit | `1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2` |
+| Differential implementation commit | `c6eecaa77cd7d6025ef997c5dd46e53d112c6e08` |
 | Report commit | `SELF` |
 | Stable/master upstream | `d768aeb89acad986bd252d7e904bf44bb374545f` |
 | Particle layout | 56-byte AoS, `NPART=235008` |
@@ -19,9 +20,11 @@
 ## Current build artifacts
 
 The original `build-vnext-g0-clean` build completed `787/787` actions. Current
-formal fixed-step and characterization evidence uses `build-vnext-fp-mode-legacy`
-and `build-vnext-fp-mode-strict`. The formal Legacy characterization executable was
-relinked `9/9` at clean commit `1b8586877` with Windows Git first on PATH.
+formal fixed-step, characterization and differential evidence uses
+`build-vnext-fp-mode-legacy` and `build-vnext-fp-mode-strict`. The formal Legacy
+characterization executable was relinked `9/9` at clean commit `1b8586877` with
+Windows Git first on PATH. The tooling-only first-divergence commit reused the bound
+executables below and recorded its own clean source/tool hashes.
 
 | Mode | Executable bytes | SHA-256 |
 |---|---:|---|
@@ -41,7 +44,7 @@ GCC emitted a `-Wmaybe-uninitialized` warning in the `ByteString`/`optional` pat
 | Check | Result | Scope |
 |---|---:|---|
 | Meson registered tests | Legacy `39/39`; Strict `39/39 PASS` | current explicit FP builds |
-| Nested Python unit tests | 273 run: 271 passed, 2 skipped, 0 failed | audit/generator/benchmark/characterization tests |
+| Nested Python unit tests | 281 run: 281 passed, 0 skipped, 0 failed | current HEAD with UCRT64 compiler on PATH; includes 8 differential tests |
 | Lua module regression | `PASS` | isolated client process |
 | Lua 100.1 boundary regression | `11/11 PASS` | reset pressure/velocity/neighbors boundaries |
 | OPS scenario cases | `8 PASS` | fixed scenario set |
@@ -62,12 +65,18 @@ GCC emitted a `-Wmaybe-uninitialized` warning in the `ByteString`/`optional` pat
 | C01-C14 characterization | `14/14 PASS` | clean source, 42 processes, 28 restart loads |
 | Characterization restart traces | `14/14 equal` | loaded baseline, fixed seed and frame count |
 | Characterization process RAM | `42/42 measured` | 133,210,112-186,638,336 peak working-set bytes |
+| First-divergence trace/capture | `PASS` | same Legacy source, Legacy-fast CPU versus Strict CPU |
+| First divergent step | `1` | equal step-0 hash/RNG; Particle and Air fields differ after first update |
+| Differential artifact integrity | `24/24 PASS` | manifest lengths/SHA-256 plus byte-identical trace/capture recomputation |
+| Legacy CPU vs Omni CPU | `not_implemented` | no Omni solver exists |
+| Omni CPU vs Omni GPU | `not_implemented` | no GPU compute backend exists |
 
 Formal throughput is 1,682.069895/1,655.224824 steps/s for empty and
 189.868348/189.808193 steps/s for mixed Legacy/Strict. Mixed starts from the same
 generated hash but diverges by 60 warmup steps, so this is a throughput baseline and
 numerical-risk signal, not proof of FP equivalence. See
-`phase-1-fixed-step-benchmark.md`.
+`phase-1-fixed-step-benchmark.md`. The later field runner locates the first mixed
+divergence at step 1; see `phase-1-first-divergence.md`.
 
 ## G0 gate
 
@@ -89,11 +98,17 @@ CURRENT_PROCESS_VRAM_BASELINE=RED
 PERFORMANCE_REGRESSION_BUDGET=RED
 CHARACTERIZATION_SAVES=GREEN
 STRICT_FP_NUMERICAL_BASELINE=RED
-DIFFERENTIAL_RUNNER=RED
+FIRST_DIVERGENCE_RUNNER=GREEN
+SAME_SOURCE_CPU_FP_DIFFERENTIAL=GREEN
+LOAD_BOUNDARY_FIELD_DIFF=RED
+CONSERVATION_FINITE_LEDGER=RED
+LEGACY_CPU_VS_OMNI_CPU=RED
+OMNI_CPU_VS_OMNI_GPU=RED
 G0_UPSTREAM_BASELINE=RED
 ```
 
-The gate is fail-closed: benchmark and characterization foundations are now GREEN,
-but they do not substitute for first-divergence/ledger evidence, subsystem profiling,
-VRAM measurement or strict/fast numerical validation. See
-`phase-1-legacy-characterization.md`.
+The gate is fail-closed: benchmark, characterization and same-source CPU
+first-divergence foundations are GREEN, but they do not substitute for conservation
+and finite-value ledgers, load-boundary field evidence, subsystem profiling, VRAM
+measurement or Omni CPU/GPU differential validation. See
+`phase-1-legacy-characterization.md` and `phase-1-first-divergence.md`.

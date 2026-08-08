@@ -33,6 +33,12 @@ global fast-math until strict and fast builds compare conservation, positivity,
 NaN/Inf behavior and performance. In particular, finite-value assumptions can make
 NaN/Inf checks unreliable under aggressive optimization.
 
+The clean mixed-medium differential now shows that Legacy-fast and Strict first
+diverge on update step 1: 4,935 particle IDs and 2,074 Air cells already differ.
+This materially confirms sensitivity to the FP contract but does not identify the
+correct result. No mass, momentum, energy, positivity or per-step finite-value ledger
+exists, so `OMNICORE_FAST_MATH_ALLOWED=false` remains the fail-closed decision.
+
 Required matrix, keeping `-O2`, SSE2 and `lto=false` constant initially:
 
 1. double, strict FP reference;
@@ -61,6 +67,8 @@ p50/p95/p99/max output.
 CURRENT_HEAD_THROUGHPUT_BASELINE=true
 UNCAPPED_FIXED_STEP_RUNNER=true
 SAME_BUILD_DETERMINISTIC_REPLAY=true
+FIRST_DIVERGENCE_FIELD_CAPTURE=true
+STRICT_FAST_CONSERVATION_COMPARISON=false
 SUBSYSTEM_TIMING_BASELINE=false
 CURRENT_PROCESS_RAM_BASELINE=true
 CURRENT_PROCESS_VRAM_BASELINE=false
@@ -116,7 +124,8 @@ their own build. Empty produced equal Strict/Legacy final hashes. Mixed began fr
 the same generated hash but diverged by the end of 60 warmup steps and ended with
 different hashes and particle counts. Its strict/fast throughput delta is therefore
 not a same-trajectory performance comparison. Full evidence and artifact hashes are
-in `phase-1-fixed-step-benchmark.md`.
+in `phase-1-fixed-step-benchmark.md`. The later non-timed differential runner locates
+the first divergence at step 1; see `phase-1-first-divergence.md`.
 
 Required counters/timings include Frame, Simulation, Particle, Air, AmbientHeat,
 Gravity dispatch/wait, Thermal, Chemistry, Lua before/after, RenderSnapshotCopy,
@@ -126,15 +135,29 @@ conservation ledger.
 
 ## Characterization set
 
-Create self-generated, source-controlled manifests for C01-C14:
+The self-generated, source-controlled C01-C14 set is complete:
 
 `sand`, `water`, `gas`, `fire`, `explosion`, `vacuum`, `pressure`, `heat`,
 `electrical`, `photons`, `PIPE`, `complex-electronics`, `mixed`, and
 `maximum-particle`.
 
 Each fixes generator/save SHA-256, provenance/license, seed, world settings, warmup
-and measurement steps, expected invariants and Legacy trace/hash. Do not use private
-user saves or the unlicensed tpt-bench save.
+and measurement steps, expected invariants and Legacy trace/hash. The clean formal
+run is `14/14 PASS`; its raw saves and traces stay private under ignored `artifacts/`.
+No private user save or unlicensed tpt-bench content is used.
+
+## First-divergence status
+
+The clean `c6eecaa77` same-source CPU comparison traces steps 0-120, reruns the
+first differing step and exports every active Particle plus `pv/vx/vy/hv`, wall,
+electrical, fan and gravity cells. Step 0 is equal and step 1 differs in Particle
+velocity and Air state with `unexplained_hash_divergence=false`. The formal manifest
+sets `performance_gate=not_evaluated`; its four short process timings are evidence-
+collection diagnostics, not a throughput benchmark.
+
+Legacy CPU versus future Omni CPU and Omni CPU versus future Omni GPU remain
+unimplemented. Load-boundary field comparison and conservation/finite-value ledgers
+also remain RED.
 
 ## Memory baseline
 
@@ -150,8 +173,9 @@ selected derived plane and profile `RenderSnapshotCopy`.
 
 ## Gate
 
-Build/test capability, the explicit Strict build, fixed-step runner and current
-two-scene throughput/process-RAM baseline are GREEN. Subsystem profiling, process
-VRAM, accepted performance budgets and strict/fast numerical equivalence remain RED.
-The next G0 work is C01-C14 characterization plus first-divergence/ledger tooling;
-production OmniAtmosphere remains blocked.
+Build/test capability, the explicit Strict build, fixed-step runner, current
+two-scene throughput/process-RAM baseline, C01-C14 characterization and scoped
+first-divergence capture are GREEN. Subsystem profiling, process VRAM, accepted
+performance budgets and strict/fast conservation/finite-value comparison remain RED.
+The next G0 work is a Legacy ledger/load-boundary comparison or subsystem
+profiler/VRAM export; production OmniAtmosphere remains blocked.
