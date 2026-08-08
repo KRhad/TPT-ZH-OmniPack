@@ -56,6 +56,18 @@ class TestReleaseAuditTests(unittest.TestCase):
         (source / "docs" / "KNOWN_ISSUES.md").write_text("Issues\n", encoding="utf-8")
         (source / "docs" / "AI_DISCLOSURE.md").write_text("AI\n", encoding="utf-8")
         (source / "docs" / "FONT_AUDIT.md").write_text("Font\n", encoding="utf-8")
+        (source / "docs" / "RELEASE_1.0.0_README.en.md").write_text(
+            "Final English readme\n", encoding="utf-8"
+        )
+        (source / "docs" / "RELEASE_1.0.0_README.zh-CN.md").write_text(
+            "Final Chinese readme\n", encoding="utf-8"
+        )
+        (source / "docs" / "RELEASE_1.0.0_CHANGELOG.en.txt").write_text(
+            "Final English changes\n", encoding="utf-8"
+        )
+        (source / "docs" / "RELEASE_1.0.0_CHANGELOG.zh-CN.md").write_text(
+            "Final Chinese changes\n", encoding="utf-8"
+        )
         (source / "docs" / "THIRD_PARTY_LICENSE_MANIFEST.csv").write_text(
             "component,license\nfixture,MIT\n", encoding="utf-8"
         )
@@ -86,6 +98,7 @@ class TestReleaseAuditTests(unittest.TestCase):
             package_test_release.PREVIOUS_PRIVATE_TEST_VERSION,
             package_test_release.PRIVATE_TEST_VERSION,
             package_test_release.RELEASE_CANDIDATE_VERSION,
+            package_test_release.FINAL_VERSION,
         )
         executable.write_bytes(
             b"MZ test executable\0"
@@ -476,6 +489,48 @@ class TestReleaseAuditTests(unittest.TestCase):
                 self.assertEqual(fields["source_worktree_sha256"], "B" * 64)
                 self.assertEqual(fields["source_untracked_files"], "9")
                 self.assertFalse(any(name.endswith(".stm") for name in archive.namelist()))
+
+    def test_final_release_omits_test_assets_and_uses_release_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            with mock.patch.object(
+                package_test_release, "git_revision", return_value="e" * 40
+            ):
+                package, _, symbols, _ = package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.FINAL_VERSION,
+                    kind="release",
+                    include_examples=False,
+                    source_provenance={
+                        "source_state": "clean",
+                        "source_worktree_sha256": "C" * 64,
+                        "source_untracked_files": "0",
+                    },
+                )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    package,
+                    version=package_test_release.FINAL_VERSION,
+                    kind="release",
+                ),
+                [],
+            )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    symbols,
+                    True,
+                    version=package_test_release.FINAL_VERSION,
+                ),
+                [],
+            )
+            with zipfile.ZipFile(package) as archive:
+                names = archive.namelist()
+                self.assertTrue(any(name.endswith("/MANIFEST.txt") for name in names))
+                self.assertFalse(any("TEST" in name.upper() for name in names))
+                self.assertFalse(any(name.endswith("/FONT-AUDIT.md") for name in names))
 
     def test_worktree_provenance_hashes_selected_file_bytes_not_patch_text(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

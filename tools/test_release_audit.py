@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail closed when a test or release-candidate ZIP is incomplete or unsafe."""
+"""Fail closed when a test, candidate, or release ZIP is incomplete or unsafe."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ AUTOMATION_VERSION = "0.3.0-dev"
 PREVIOUS_PRIVATE_TEST_VERSION = "0.6.0-dev"
 PRIVATE_TEST_VERSION = "0.7.0-dev"
 RELEASE_CANDIDATE_VERSION = "1.0.0-rc9"
+FINAL_VERSION = "1.0.0"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -40,6 +41,11 @@ NORMAL_DOCUMENTS = {
             "lua5.2", "luajit", "mbedtls", "nghttp2", "sdl2", "zlib",
         )
     },
+}
+FINAL_DOCUMENTS = NORMAL_DOCUMENTS - {
+    "TESTING.zh-CN.md",
+    "FONT-AUDIT.md",
+    "KNOWN-ISSUES.zh-CN.md",
 }
 DEV_DOCUMENTS = {
     "TUTORIALS-0.2.0.json",
@@ -143,9 +149,15 @@ def development_documents(version: str) -> set[str]:
     return set()
 
 
+def manifest_name(version: str) -> str:
+    return "MANIFEST.txt" if version == FINAL_VERSION else "TEST-MANIFEST.txt"
+
+
 def expected_members(stem: str, kind: str, version: str) -> set[str]:
     if kind in {"public-test", "release-candidate"}:
         files = {EXECUTABLE_NAME, *NORMAL_DOCUMENTS}
+    elif kind == "release":
+        files = {EXECUTABLE_NAME, *FINAL_DOCUMENTS}
     elif kind == "local-dev":
         files = {
             EXECUTABLE_NAME,
@@ -156,7 +168,7 @@ def expected_members(stem: str, kind: str, version: str) -> set[str]:
         files = {SYMBOL_NAME}
     else:
         return set()
-    return {f"{stem}/{name}" for name in files | {"TEST-MANIFEST.txt"}}
+    return {f"{stem}/{name}" for name in files | {manifest_name(version)}}
 
 
 def audit_0_2_examples(
@@ -266,6 +278,7 @@ def audit_package(
             for private_version in PRIVATE_TEST_MARKERS
         },
         RELEASE_CANDIDATE_VERSION: "release-candidate",
+        FINAL_VERSION: "release",
     }
     if version not in profiles:
         return [f"unsupported package version: {version}"]
@@ -302,11 +315,11 @@ def audit_package(
                 )
                 if lowered.endswith(FORBIDDEN_SUFFIXES) and not allowed_stamp:
                     errors.append(f"package contains forbidden data: {name}")
-            manifest_name = f"{stem}/TEST-MANIFEST.txt"
-            if manifest_name not in actual:
+            archive_manifest_name = f"{stem}/{manifest_name(version)}"
+            if archive_manifest_name not in actual:
                 errors.append("package manifest is missing")
                 return errors
-            fields, members = parse_manifest(archive.read(manifest_name))
+            fields, members = parse_manifest(archive.read(archive_manifest_name))
             if fields.get("format") != "2" or fields.get("kind") != kind or fields.get("version") != version:
                 errors.append("package manifest metadata is invalid")
             if not re.fullmatch(r"[0-9a-f]{40}", fields.get("revision", "")):
@@ -324,7 +337,12 @@ def audit_package(
                     errors.append("package manifest untracked-file count is invalid")
                 elif source_state == "clean" and untracked != "0":
                     errors.append("clean package manifest reports untracked files")
-            expected_relative = {name.removeprefix(f"{stem}/") for name in expected - {manifest_name}}
+            if kind == "release" and source_state != "clean":
+                errors.append("release package source state is not clean")
+            expected_relative = {
+                name.removeprefix(f"{stem}/")
+                for name in expected - {archive_manifest_name}
+            }
             if set(members) != expected_relative:
                 errors.append("package manifest members do not match ZIP members")
             for name, (size, digest) in members.items():
@@ -406,11 +424,12 @@ def build_parser() -> argparse.ArgumentParser:
             AUTOMATION_VERSION,
             *PRIVATE_TEST_MARKERS,
             *RELEASE_CANDIDATE_MARKERS,
+            FINAL_VERSION,
         ),
         default=VERSION,
     )
     parser.add_argument(
-        "--kind", choices=("public-test", "local-dev", "release-candidate")
+        "--kind", choices=("public-test", "local-dev", "release-candidate", "release")
     )
     return parser
 

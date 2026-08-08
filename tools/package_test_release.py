@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create deterministic test, release-candidate, and symbol ZIP archives."""
+"""Create deterministic test, release-candidate, release, and symbol ZIP archives."""
 
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ AUTOMATION_VERSION = "0.3.0-dev"
 PREVIOUS_PRIVATE_TEST_VERSION = "0.6.0-dev"
 PRIVATE_TEST_VERSION = "0.7.0-dev"
 RELEASE_CANDIDATE_VERSION = "1.0.0-rc9"
+FINAL_VERSION = "1.0.0"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -63,6 +64,22 @@ DOCUMENTS = (
     ("docs/KNOWN_ISSUES.md", "KNOWN-ISSUES.zh-CN.md"),
     ("docs/AI_DISCLOSURE.md", "AI-DISCLOSURE.zh-CN.md"),
     ("docs/FONT_AUDIT.md", "FONT-AUDIT.md"),
+    ("docs/THIRD_PARTY_LICENSE_MANIFEST.csv", "LICENSES/THIRD-PARTY-MANIFEST.csv"),
+    ("resources/third_party/GNU_UNIFONT_COPYING.txt", "LICENSES/GNU-UNIFONT-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt"),
+    *LIBRARY_LICENSE_DOCUMENTS,
+)
+FINAL_DOCUMENTS = (
+    ("LICENSE", "LICENSE"),
+    ("docs/RELEASE_1.0.0_README.en.md", "README.en.md"),
+    ("docs/RELEASE_1.0.0_README.zh-CN.md", "README.zh-CN.md"),
+    ("docs/RELEASE_1.0.0_CHANGELOG.en.txt", "CHANGELOG.en.txt"),
+    ("docs/RELEASE_1.0.0_CHANGELOG.zh-CN.md", "CHANGELOG.zh-CN.md"),
+    ("docs/THIRD_PARTY_SOURCES.md", "SOURCE-AND-LICENSES.zh-CN.md"),
+    ("docs/AI_DISCLOSURE.md", "AI-DISCLOSURE.zh-CN.md"),
     ("docs/THIRD_PARTY_LICENSE_MANIFEST.csv", "LICENSES/THIRD-PARTY-MANIFEST.csv"),
     ("resources/third_party/GNU_UNIFONT_COPYING.txt", "LICENSES/GNU-UNIFONT-OFL-1.1.txt"),
     ("resources/third_party/FUSION_PIXEL_FONT_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-OFL-1.1.txt"),
@@ -265,6 +282,7 @@ def validate_profile(version: str, kind: str, include_examples: bool) -> None:
         DEV_VERSION: ("local-dev", True),
         AUTOMATION_VERSION: ("local-dev", True),
         RELEASE_CANDIDATE_VERSION: ("release-candidate", False),
+        FINAL_VERSION: ("release", False),
         **{
             private_version: ("local-dev", False)
             for private_version in PRIVATE_TEST_INSTRUCTIONS
@@ -296,6 +314,8 @@ def development_documents(version: str) -> tuple[tuple[str, str], ...]:
 
 
 def package_documents(version: str) -> tuple[tuple[str, str], ...]:
+    if version == FINAL_VERSION:
+        return FINAL_DOCUMENTS
     if version not in VERSIONED_INSTRUCTIONS:
         return DOCUMENTS
     private_source, private_archive = VERSIONED_INSTRUCTIONS[version]
@@ -403,7 +423,18 @@ def manifest(
     return "\n".join(lines) + "\n"
 
 
-def write_zip(path: Path, root: str, files: Iterable[tuple[str, Path]], manifest_text: str, epoch: int) -> None:
+def manifest_name(version: str) -> str:
+    return "MANIFEST.txt" if version == FINAL_VERSION else "TEST-MANIFEST.txt"
+
+
+def write_zip(
+    path: Path,
+    root: str,
+    files: Iterable[tuple[str, Path]],
+    manifest_text: str,
+    epoch: int,
+    manifest_filename: str = "TEST-MANIFEST.txt",
+) -> None:
     timestamp = zip_datetime(epoch)
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9, strict_timestamps=True) as archive:
         for name, source in sorted(files):
@@ -411,7 +442,7 @@ def write_zip(path: Path, root: str, files: Iterable[tuple[str, Path]], manifest
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o100644 << 16
             archive.writestr(info, source.read_bytes())
-        info = zipfile.ZipInfo(f"{root}/TEST-MANIFEST.txt", date_time=timestamp)
+        info = zipfile.ZipInfo(f"{root}/{manifest_filename}", date_time=timestamp)
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o100644 << 16
         archive.writestr(info, manifest_text.encode("utf-8"))
@@ -452,6 +483,7 @@ def build_package(
     selected_documents = package_documents(version) + (
         development_documents(version) if include_examples else ()
     )
+    archive_manifest_name = manifest_name(version)
     normal_files = [(EXECUTABLE_NAME, executable)] + [
         (name, source_root / source) for source, name in selected_documents
     ]
@@ -471,6 +503,7 @@ def build_package(
                 source_provenance=source_provenance,
             ),
             epoch,
+            archive_manifest_name,
         )
         write_zip(
             symbols_temp,
@@ -481,6 +514,7 @@ def build_package(
                 source_provenance=source_provenance,
             ),
             epoch,
+            archive_manifest_name,
         )
         shutil.move(normal_temp, package_path)
         shutil.move(symbols_temp, symbols_path)
@@ -500,12 +534,13 @@ def build_parser() -> argparse.ArgumentParser:
             DEV_VERSION,
             AUTOMATION_VERSION,
             *VERSIONED_INSTRUCTIONS,
+            FINAL_VERSION,
         ),
         default=VERSION,
     )
     parser.add_argument(
         "--kind",
-        choices=("public-test", "local-dev", "release-candidate"),
+        choices=("public-test", "local-dev", "release-candidate", "release"),
         default="public-test",
     )
     parser.add_argument("--include-examples", action="store_true")
@@ -528,20 +563,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     output_directory = args.output_directory if args.output_directory.is_absolute() else source_root / args.output_directory
     try:
         source_provenance = None
-        if args.kind == "release-candidate":
+        if args.allow_dirty_validation and args.kind != "release-candidate":
+            raise ValueError(
+                "--allow-dirty-validation is only valid for release-candidate packages"
+            )
+        if args.kind in {"release-candidate", "release"}:
             source_provenance = git_worktree_provenance(source_root)
             if (
                 source_provenance["source_state"] == "dirty"
-                and not args.allow_dirty_validation
+                and (
+                    args.kind == "release"
+                    or not args.allow_dirty_validation
+                )
             ):
+                if args.kind == "release":
+                    raise ValueError("release source tree is dirty; commit it before packaging")
                 raise ValueError(
                     "release-candidate source tree is dirty; commit it or use "
                     "--allow-dirty-validation for a non-release validation package"
                 )
-        elif args.allow_dirty_validation:
-            raise ValueError(
-                "--allow-dirty-validation is only valid for release-candidate packages"
-            )
         audit_command = [
             sys.executable,
             str(Path(__file__).with_name("release_binary_audit.py")),
