@@ -29,6 +29,7 @@ EXCLUDED_PREFIXES = (
 )
 ALLOWED_TOOLS = {
     "tools/build_release_font.py",
+    "tools/element_registry_check.py",
     "tools/generate_content_menu_policy.py",
     "tools/generate_element_catalog.py",
     "tools/generate_periodic_content_links.py",
