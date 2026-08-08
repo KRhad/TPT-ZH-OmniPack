@@ -9,11 +9,20 @@
 5. 用户已确认原生 Fusion Pixel Font 的中文可读性；既有新增字形和第二批新增 `橡/沥/淀/糖/纤/胺/萄/葡/酯/韧/龙` 原生字形仍需人工逐字复核，内容界面、双语往返、100%/125%/150% DPI 和所有页面仍需最终 GUI 人工矩阵。
 6. 图鉴已有 293 个 OmniPack 登记项的完整双语内容，其中 292 个是可玩元素、1 个是旧 `MSCR` 兼容别名；所有模组说明先显示“元素说明”，正文以对应中英文材料名称开头，且玩家窗口不再显示稳定 ID、源码 commit、实现/测试状态等开发门禁字段。内容数量现已冻结，不再以新增重复材料作为发布前工作。
 7. 环境开发证据 EXE 仍为 `debug=true`、`strip=false` 并动态依赖 MSYS2 GCC 运行库；它不是分发文件。另行生成的 `0.7.0-dev` 私测 EXE 已静态链接、剥离并通过开发路径与 PE 审计，但只证明该私测包的便携二进制门禁；完整可复现构建、签名和正式发布门禁仍未完成。
-8. 当前 `origin` 是旧汉化仓库，不是授权的 OmniPack 正式远端；不能擅自推送或发布。
+8. `origin` 仍是旧汉化仓库，不能作为 OmniPack 发布远端；已授权的 `omnipack` 远端使用独立 `public-source` 历史公开无测试源码。正式 tag 和 GitHub Release 尚未创建。
 9. 既有环境曾发现 GitHub classic PAT；Git 历史和已审计包未发现该模式，但撤销/轮换没有外部证据。
 10. GCC 16 仍对 `OurVariant/Bson`、`PowderToy.cpp` 和 `Simulation::FloodParts` 给出既有优化警告，尚无独立根因结论。
 11. 外部模组只有明确兼容许可证的源码才可直接移植；二进制、许可证不明或不兼容来源只能拒绝或独立设计参考。
 12. 五模块关闭后的选择、Lua 创建、OPS 粒子保留和更新暂停已经自动验证；实际 GUI 的“正常加载/只读加载/取消”三选项仍为 `not_tested`。
+
+## Android 直接移植版边界
+
+- ARM64 原生库、APK 封装、测试签名、Manifest、权限、ZIP 完整性和 16 KB 页面对齐已经验证。
+- 已在独立 MuMu Android 15 实例完成安装、首次启动、触控绘制、中文输入、双语自动重启、周期表/说明页、三组显示参数、本地保存/重新打开和在线浏览入口验证。
+- 该实例通过 ARM64 转译运行 APK，不是物理 ARM64 手机；物理设备安装升级、后台恢复、温度、耗电、持续帧率和长跑仍为 `not_tested`。
+- 测试 APK 使用仓库外的专用测试证书，不是 Google Play 或正式移动发行证书；证书必须持续保留才能覆盖安装后续测试包。
+- 当前仅构建 `arm64-v8a`。32 位 ARM、x86/x86_64 模拟器和 AAB 不属于本批完成证据。
+- Android 应用数据位于应用专属目录；在确认卸载保留策略前，应先导出需要保留的 OPS 存档。
 
 ## Phase 1 边界
 
@@ -75,11 +84,13 @@ stress_test=true
 long_run_test=not_tested
 source_public=true
 public_tests_included=false
-private_test_evidence_preserved=true
 public_source_buildable=true
 public_source_commit_available=true
 github_release_created=false
-authenticode_signed=false
 third_party_license_audit=true
 release_tag=not_tested
+android_emulator_runtime_pass=true
+android_zh_en_restart_pass=true
+android_local_save_reopen_pass=true
+android_physical_device_pass=not_tested
 ```

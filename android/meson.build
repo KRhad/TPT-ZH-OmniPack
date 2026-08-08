@@ -13,6 +13,7 @@ subdir('res')
 
 android_platform_jar = meson.get_external_property('android_platform_jar')
 java_runtime_jar = meson.get_external_property('java_runtime_jar')
+android_strip = find_program(meson.get_external_property('android_strip'))
 android_keystore = get_option('android_keystore')
 sdl_jar = tpt_libs.get_variable('sdl_jar')
 powder_jar = custom_target(
@@ -34,10 +35,21 @@ powder_jar = custom_target(
 		powder_jar_sources,
 	],
 )
+stripped_powder_sha = custom_target(
+	'strip-android-library',
+	output: app_exe + '.stripped.so',
+	input: powder_sha,
+	command: [
+		android_strip,
+		'--strip-unneeded',
+		'-o', '@OUTPUT@',
+		'@INPUT@',
+	],
+)
 unaligned_apk = custom_target(
 	'build-apk',
 	output: app_exe + '.unaligned.apk',
-	input: powder_sha,
+	input: stripped_powder_sha,
 	command: [
 		python3_prog,
 		files('build-apk.py'),

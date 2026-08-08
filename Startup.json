@@ -1,0 +1,38 @@
+{
+  "SchemaVersion": 1,
+  "Product": "TPT-ZH-OmniPack",
+  "ProjectURL": "https://github.com/KRhad/TPT-ZH-OmniPack",
+  "SourceRevision": "772546a43fef659cc7c839fe74031d690e8f0a86",
+  "PublishedAt": "2026-08-08T09:23:32Z",
+  "Session": true,
+  "MessageOfTheDay": "",
+  "Notifications": [],
+  "Updates": {
+    "Stable": {
+      "Major": 1,
+      "Minor": 0,
+      "Build": 0,
+      "Version": "1.0.0",
+      "VersionCode": 1000000,
+      "MinimumVersion": "1.0.0",
+      "Changelog": "TPT-ZH-OmniPack 1.0.0：Windows 与 Android 共用材料系统、完整周期表和经 SHA-256 核对的 GitHub 更新通道。",
+      "ReleaseNotesURL": "https://github.com/KRhad/TPT-ZH-OmniPack",
+      "Platforms": {
+        "WIN64": {
+          "File": "/updates/TPT-ZH-OmniPack-1.0.0-Windows-x64.update",
+          "Format": "butt-executable",
+          "Size": 5688175,
+          "Sha256": "A9E75E158BBA1652FCDE5923073048EA600DDA3FE05554F523BF2E5A686431B0"
+        },
+        "ANDROIDARM64": {
+          "File": "/updates/TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk",
+          "Format": "android-apk",
+          "Size": 4641323,
+          "Sha256": "34E1F6B31947FCA05369DBC6272CE0D566B898ABC860204A2ED236E998954B7D"
+        }
+      }
+    }
+  },
+  "PublicTestsIncluded": false,
+  "ReleaseReady": false
+}

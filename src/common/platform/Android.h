@@ -5,4 +5,6 @@
 namespace Platform
 {
 	std::optional<ByteString> CallActivityStringFunc(const char *funcName);
+	bool CallActivityVoidFunc(const char *funcName);
+	bool CallActivityVoidFunc(const char *funcName, ByteString argument);
 }

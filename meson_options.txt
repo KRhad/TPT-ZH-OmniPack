@@ -20,7 +20,7 @@ option(
 option(
 	'ignore_updates',
 	type: 'boolean',
-	value: true,
+	value: false,
 	description: 'Don\'t show notifications about available updates'
 )
 option(
@@ -108,8 +108,14 @@ option(
 option(
 	'update_server',
 	type: 'string',
-	value: '',
-	description: 'Update server, only used by snapshots and mods, see \'snapshot\' and \'mod_id\''
+	value: 'https://raw.githubusercontent.com/KRhad/TPT-ZH-OmniPack/public-source',
+	description: 'Update manifest base URL; TPT-ZH-OmniPack uses the public GitHub source branch'
+)
+option(
+	'project_url',
+	type: 'string',
+	value: 'https://github.com/KRhad/TPT-ZH-OmniPack',
+	description: 'Public project URL shown in the startup interface and update fallbacks'
 )
 option(
 	'workaround_noncpp_lua',
@@ -177,6 +183,13 @@ option(
 	type: 'string',
 	value: 'androidkey',
 	description: 'Signing key alias for signing an APK, only used for Android development'
+)
+option(
+	'android_version_code',
+	type: 'integer',
+	min: 0,
+	value: 0,
+	description: 'Android versionCode; 0 derives a monotonic value from the display version'
 )
 option(
 	'app_name',

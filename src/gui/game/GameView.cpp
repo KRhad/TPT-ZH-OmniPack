@@ -245,16 +245,28 @@ GameView::GameView():
 	scrollBar->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(scrollBar);
 
-	searchButton = new ui::Button(ui::Point(currentX, Size.Y-16), ui::Point(17, 15), "", Localization::Ref().Tr("gametools.tooltip.find_open"));
+	searchButton = new ui::Button(
+		ui::Point(currentX, Size.Y-16),
+		ui::Point(17, 15),
+		"",
+		Localization::Ref().Tr(ui::Engine::Ref().TouchUI
+			? "gameview.tooltip.find_open_hard_drive"
+			: "gametools.tooltip.find_open"));
 	searchButton->SetIcon(IconOpen);
 	currentX+=18;
 	searchButton->SetTogglable(false);
 	searchButton->SetActionCallback({ [this] {
-		if (CtrlBehaviour())
+		if (CtrlBehaviour() || ui::Engine::Ref().TouchUI)
 			c->OpenLocalBrowse();
 		else
 			c->OpenSearch("");
 	} });
+	searchButton->SetLongPressCallback([this] {
+		if (ui::Engine::Ref().TouchUI)
+			c->OpenSearch("");
+		else
+			c->OpenLocalBrowse();
+	});
 	AddComponent(searchButton);
 
 	reloadButton = new ui::Button(ui::Point(currentX, Size.Y-16), ui::Point(17, 15), "", Localization::Ref().Tr("gametools.tooltip.reload"));
@@ -2158,7 +2170,8 @@ void GameView::enableCtrlBehaviour()
 		searchButton->Appearance.BackgroundInactive = searchButton->Appearance.BackgroundHover = ui::Colour(255, 255, 255);
 		searchButton->Appearance.TextInactive = searchButton->Appearance.TextHover = ui::Colour(0, 0, 0);
 
-		searchButton->SetToolTip(Localization::Ref().Tr("gameview.tooltip.find_open_hard_drive"));
+		if (!ui::Engine::Ref().TouchUI)
+			searchButton->SetToolTip(Localization::Ref().Tr("gameview.tooltip.find_open_hard_drive"));
 		if (currentSaveType == 2)
 			saveSimulationButton->SetShowSplit(true);
 	}
@@ -2182,7 +2195,8 @@ void GameView::disableCtrlBehaviour()
 		searchButton->Appearance.BackgroundInactive = ui::Colour(0, 0, 0);
 		searchButton->Appearance.BackgroundHover = ui::Colour(20, 20, 20);
 		searchButton->Appearance.TextInactive = searchButton->Appearance.TextHover = ui::Colour(255, 255, 255);
-		searchButton->SetToolTip(Localization::Ref().Tr("gametools.tooltip.find_open"));
+		if (!ui::Engine::Ref().TouchUI)
+			searchButton->SetToolTip(Localization::Ref().Tr("gametools.tooltip.find_open"));
 		if (currentSaveType == 2)
 			saveSimulationButton->SetShowSplit(false);
 	}

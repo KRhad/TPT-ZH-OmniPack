@@ -72,6 +72,7 @@ inline ByteString IntroText()
 	{
 		sb << tr("intro.online.register") << "\br" << SERVER << "/Register.html\n";
 	}
+	sb << tr("intro.project.github") << "\br" << PROJECT_URL << "\n";
 	sb << tr("intro.version_prefix") << VersionInfo();
 	return sb.Build();
 }

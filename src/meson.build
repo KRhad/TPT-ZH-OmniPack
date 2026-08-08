@@ -29,6 +29,14 @@ conf_data.set('SNAPSHOT', is_snapshot.to_string())
 conf_data.set('DISPLAY_VERSION_MAJOR', display_version[0].to_int())
 conf_data.set('DISPLAY_VERSION_MINOR', display_version[1].to_int())
 conf_data.set('BUILD_NUM', display_version[2].to_int())
+android_version_code = get_option('android_version_code')
+if android_version_code == 0
+	android_version_code = display_version[0].to_int() * 1000000 + display_version[1].to_int() * 1000 + display_version[2].to_int()
+endif
+if host_platform == 'android' and android_version_code < 1
+	error('Android versionCode must be positive')
+endif
+conf_data.set('ANDROID_VERSION_CODE', android_version_code)
 conf_data.set('UPSTREAM_VERSION_MAJOR', upstream_version[0].to_int())
 conf_data.set('UPSTREAM_VERSION_MINOR', upstream_version[1].to_int())
 conf_data.set('UPSTREAM_BUILD_NUM', upstream_version[2].to_int())
@@ -43,6 +51,7 @@ enforce_https = get_option('enforce_https')
 server = get_option('server')
 static_server = get_option('static_server')
 update_server = get_option('update_server')
+project_url = get_option('project_url')
 
 if not (server.startswith('http://') or server.startswith('https://'))
 	server = 'https://' + server
@@ -67,8 +76,12 @@ if update_server != ''
 		error('enforce_https is true but update_server is a http:// URL base')
 	endif
 endif
+if not project_url.startswith('https://')
+	error('project_url must be an https:// URL')
+endif
 conf_data.set('USE_UPDATESERVER', use_update_server.to_string())
 conf_data.set('UPDATESERVER', update_server)
+conf_data.set('PROJECT_URL', project_url)
 
 platform_clipboard = get_option('platform_clipboard')
 allow_quit = true
@@ -115,6 +128,7 @@ if host_platform == 'android'
 	if enable_http
 		android_permissions += [
 			'<uses-permission android:name="android.permission.INTERNET" />',
+			'<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />',
 		]
 	endif
 	android_properties = []

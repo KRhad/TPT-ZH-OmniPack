@@ -9,3 +9,5 @@ TPT-ZH-OmniPack 1.0.0
 - Completed bilingual long-form description routes for canonical upstream and OmniPack materials.
 - Retained stable material IDs, OPS save mappings, module behavior, Lua selection, and high-ID compatibility.
 - Kept the game as a freely selectable sandbox without tasks, achievements, technology trees, or forced unlocks.
+- Added an ARM64 Android direct port using the same simulation, stable IDs, bilingual resources, and OPS save format.
+- Added touch-first local save access, online-browser long press, and reliable in-app language restart on Android.

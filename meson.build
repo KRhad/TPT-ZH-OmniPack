@@ -217,6 +217,13 @@ endif
 project_link_args = []
 project_cpp_args = []
 
+if host_platform == 'windows' and is_static and cpp_compiler.get_argument_syntax() != 'msvc'
+	# Public Windows packages contain one portable EXE. Keep the MinGW C/C++ and
+	# threading runtimes inside it so players do not need an MSYS2 installation,
+	# and so the in-place updater can safely replace a single file.
+	project_link_args += [ '-static' ]
+endif
+
 fftw_dep = dependency('fftw3f', static: is_static)
 threads_dep = dependency('threads')
 if host_platform == 'emscripten'
@@ -408,6 +415,9 @@ elif host_platform == 'android'
 	# the alternative would be to grab libc++_shared.so from the NDK and ship it with
 	# the app alongside libpowder.so, and possibly add it to SDL's list of libraries to load
 	project_link_args += [ '-static-libstdc++' ]
+	if is_64bit
+		project_link_args += [ '-Wl,-z,max-page-size=16384' ]
+	endif
 	project_cpp_args += args_ccomp_android
 endif
 
@@ -433,6 +443,8 @@ elif host_platform == 'linux'
 	ident_platform = is_64bit ? 'LIN64' : 'LIN32'
 elif host_platform == 'darwin'
 	ident_platform = host_arch == 'aarch64' ? 'MACOSARM' : 'MACOSX'
+elif host_platform == 'android'
+	ident_platform = host_arch == 'aarch64' ? 'ANDROIDARM64' : 'ANDROID'
 else
 	ident_platform = 'UNKNOWN'
 endif
@@ -641,6 +653,7 @@ font_render_probe = executable(
 legacy_progress_save_probe = executable(
 	'legacy_progress_save_probe',
 	sources: [
+		vcs_tag_header,
 		files('tools/legacy_progress_save_probe.cpp'),
 		files('src/client/GameSave.cpp'),
 		files('src/client/User.cpp'),
@@ -659,6 +672,7 @@ legacy_progress_save_probe = executable(
 high_id_save_probe = executable(
 	'high_id_save_probe',
 	sources: [
+		vcs_tag_header,
 		files('tools/high_id_save_probe.cpp'),
 		files('src/client/GameSave.cpp'),
 		files('src/client/User.cpp'),
@@ -677,6 +691,7 @@ high_id_save_probe = executable(
 solid_barrier_probe = executable(
 	'solid_barrier_probe',
 	sources: [
+		vcs_tag_header,
 		files('tools/solid_barrier_probe.cpp'),
 		files('src/client/GameSave.cpp'),
 		files('src/client/User.cpp'),
@@ -1137,6 +1152,41 @@ test(
 )
 
 test(
+	'android-port-audit',
+	python3_prog,
+	args: [
+		files('tools/android_port_audit.py'),
+		'--source-root', meson.project_source_root(),
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+sha256_probe = executable(
+	'sha256_probe',
+	sources: files('tools/sha256_probe.cpp'),
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ sta_libs['common'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
+test(
+	'github-update-audit',
+	python3_prog,
+	args: [
+		files('tools/github_update_audit.py'),
+		'--source-root', meson.project_source_root(),
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'high-id-save-probe',
 	high_id_save_probe,
 	suite: 'static',
@@ -1146,6 +1196,13 @@ test(
 test(
 	'solid-barrier-probe',
 	solid_barrier_probe,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'sha256-probe',
+	sha256_probe,
 	suite: 'static',
 	timeout: 60,
 )
