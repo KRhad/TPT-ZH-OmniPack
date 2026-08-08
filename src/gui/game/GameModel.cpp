@@ -848,7 +848,7 @@ void GameModel::SaveToSimParameters(const GameSave &saveData)
 	sim->air->edgeVelocityY = saveData.edgeVelocityY;
 	sim->air->vorticityCoeff = saveData.vorticityCoeff;
 	sim->air->convectionMode = saveData.convectionMode;
-	sim->edgeMode = saveData.edgeMode;
+	SetEdgeMode(saveData.edgeMode);
 	sim->legacy_enable = saveData.legacyEnable;
 	sim->water_equal_test = saveData.waterEEnabled;
 	sim->aheat_enable = saveData.aheatEnable;

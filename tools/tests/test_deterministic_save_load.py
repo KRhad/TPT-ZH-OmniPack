@@ -30,6 +30,13 @@ class DeterministicSaveLoadContractTest(unittest.TestCase):
         self.assertIn("loading particles", self.game_model)
         self.assertIn("advance the RNG", self.game_model)
 
+    def test_loaded_edge_mode_updates_model_and_simulation_together(self) -> None:
+        start = self.game_model.index("void GameModel::SaveToSimParameters(")
+        end = self.game_model.index("\n}\n", start)
+        body = self.game_model[start:end]
+        self.assertIn("SetEdgeMode(saveData.edgeMode);", body)
+        self.assertNotIn("sim->edgeMode = saveData.edgeMode;", body)
+
 
 if __name__ == "__main__":
     unittest.main()
