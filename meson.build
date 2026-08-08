@@ -626,6 +626,7 @@ if get_option('clang_tidy')
 	)
 endif
 
+if get_option('build_tests')
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),
@@ -1186,6 +1187,7 @@ test(
 	suite: 'static',
 	timeout: 60,
 )
+endif
 
 if host_platform == 'emscripten'
 	run_target(

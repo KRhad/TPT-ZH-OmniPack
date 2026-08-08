@@ -76,6 +76,12 @@ option(
 	description: 'Build the game'
 )
 option(
+	'build_tests',
+	type: 'boolean',
+	value: true,
+	description: 'Build and register developer validation targets'
+)
+option(
 	'build_render',
 	type: 'boolean',
 	value: false,
