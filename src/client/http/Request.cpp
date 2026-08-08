@@ -49,6 +49,12 @@ namespace http
 		handle->headers.push_back(header);
 	}
 
+	void Request::ForceHttp1_1()
+	{
+		assert(handle->state == RequestHandle::ready);
+		handle->forceHttp1_1 = true;
+	}
+
 	void Request::AddPostData(PostData data)
 	{
 		assert(handle->state == RequestHandle::ready);

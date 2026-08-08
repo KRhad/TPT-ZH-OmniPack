@@ -30,6 +30,10 @@ namespace http
 		Request(ByteString::Build(newAlternate ? UPDATESERVER : SERVER, "/Startup.json")),
 		alternate(newAlternate)
 	{
+		if (alternate)
+		{
+			ForceHttp1_1();
+		}
 		auto user = Client::Ref().GetAuthUser();
 		if (user)
 		{

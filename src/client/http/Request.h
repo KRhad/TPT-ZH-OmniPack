@@ -32,6 +32,7 @@ namespace http
 
 		void Verb(ByteString newVerb);
 		void AddHeader(Header header);
+		void ForceHttp1_1();
 
 		void AddPostData(PostData data);
 		void AuthHeaders(ByteString ID, ByteString session);

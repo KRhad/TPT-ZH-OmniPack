@@ -36,56 +36,80 @@ private:
 			return false;
 		};
 
-		auto request = std::make_unique<http::Request>(updateInfo.file);
-		request->Start();
-		notifyStatus(Localization::Ref().Tr("update.downloading"));
-		notifyProgress(-1);
-		while(!request->CheckDone())
-		{
-			int64_t total, done;
-			std::tie(total, done) = request->CheckProgress();
-			if (total == -1)
-			{
-				notifyProgress(-1);
-			}
-			else
-			{
-				notifyProgress(total ? done * 100 / total : 0);
-			}
-			Platform::Millisleep(1);
-		}
-
-		int status;
 		ByteString data;
-		try
+		String downloadError;
+		bool downloadVerified = false;
+		constexpr int updateDownloadAttempts = 2;
+		for (int attempt = 0; attempt < updateDownloadAttempts; ++attempt)
 		{
-			std::tie(status, data) = request->Finish();
-		}
-		catch (const http::RequestError &ex)
-		{
-			return niceNotifyError("Could not download update: " + String::Build("Server responded with Status ", ByteString(ex.what()).FromAscii()));
-		}
-		if (status!=200)
-		{
-			return niceNotifyError("Could not download update: " + String::Build("Server responded with Status ", status));
-		}
-		if (!data.size())
-		{
-			return niceNotifyError("Server did not return any data");
-		}
-		if (updateInfo.size > 0 && int64_t(data.size()) != updateInfo.size)
-		{
-			return niceNotifyError(String::Build("Package size mismatch: expected ", updateInfo.size, ", got ", data.size()));
-		}
-		if (updateInfo.sha256.size())
-		{
-			notifyStatus(Localization::Ref().Tr("update.verifying"));
+			data = ByteString{};
+			downloadError = String{};
+			auto request = std::make_unique<http::Request>(updateInfo.file);
+			request->ForceHttp1_1();
+			request->Start();
+			notifyStatus(Localization::Ref().Tr("update.downloading"));
 			notifyProgress(-1);
-			auto actualHash = Sha256Hex(std::span<const char>(data.data(), data.size()));
-			if (actualHash != updateInfo.sha256)
+			while(!request->CheckDone())
 			{
-				return niceNotifyError(String::Build("SHA-256 mismatch: expected ", updateInfo.sha256.FromAscii(), ", got ", actualHash.FromAscii()));
+				int64_t total, done;
+				std::tie(total, done) = request->CheckProgress();
+				if (total == -1)
+				{
+					notifyProgress(-1);
+				}
+				else
+				{
+					notifyProgress(total ? done * 100 / total : 0);
+				}
+				Platform::Millisleep(1);
 			}
+
+			int status = 0;
+			try
+			{
+				std::tie(status, data) = request->Finish();
+			}
+			catch (const http::RequestError &ex)
+			{
+				downloadError = "Could not download update: " + String::Build("Server responded with Status ", ByteString(ex.what()).FromAscii());
+			}
+			if (!downloadError.size() && status != 200)
+			{
+				downloadError = "Could not download update: " + String::Build("Server responded with Status ", status);
+			}
+			if (!downloadError.size() && !data.size())
+			{
+				downloadError = "Server did not return any data";
+			}
+			if (!downloadError.size() && updateInfo.size > 0 && int64_t(data.size()) != updateInfo.size)
+			{
+				downloadError = String::Build("Package size mismatch: expected ", updateInfo.size, ", got ", data.size());
+			}
+			if (!downloadError.size() && updateInfo.sha256.size())
+			{
+				notifyStatus(Localization::Ref().Tr("update.verifying"));
+				notifyProgress(-1);
+				auto actualHash = Sha256Hex(std::span<const char>(data.data(), data.size()));
+				if (actualHash != updateInfo.sha256)
+				{
+					downloadError = String::Build("SHA-256 mismatch: expected ", updateInfo.sha256.FromAscii(), ", got ", actualHash.FromAscii());
+				}
+			}
+			if (!downloadError.size())
+			{
+				downloadVerified = true;
+				break;
+			}
+			if (attempt + 1 < updateDownloadAttempts)
+			{
+				data = ByteString{};
+				notifyProgress(-1);
+				Platform::Millisleep(250);
+			}
+		}
+		if (!downloadVerified)
+		{
+			return niceNotifyError(downloadError);
 		}
 
 		if (updateInfo.packageType == UpdateInfo::packageAndroidApk)

@@ -1,0 +1,12 @@
+format=1
+kind=github-static-update-channel
+product=TPT-ZH-OmniPack
+version=1.0.0
+version_code=1000000
+source_revision=f6ac7ce6501773fbea41f5229b855ea2feb01717
+published_at=2026-08-08T10:38:45Z
+asset=TPT-ZH-OmniPack-1.0.0-Windows-x64.update|5689686|E3A5BFF44EC9A7B553FE3DB32A29222C2B1DE8E51047F5E35493A7A26572B242|butt-executable
+asset=TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk|4641323|A91D866148F641E5242543A064628D950A53FF08CA6222EBF6313FE9A29AC563|android-apk
+startup_json_sha256=55AC703925CF50D3502ABEA9634C7DA26DD512FF7590D2D66B8AD92463D3A3E1
+public_tests_included=false
+release_ready=false
