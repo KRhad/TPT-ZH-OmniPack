@@ -1,49 +1,76 @@
 # TPT-ZH-OmniPack 1.0.0 / 万象沙盘整合版
 
-TPT-ZH-OmniPack 是基于 [The Powder Toy](https://powdertoy.co.uk/) 100.0.399 的非官方 GPL-3.0 双语物理沙盒整合版，提供简体中文与英文界面。游戏保持自由沙盒定位，不包含任务、成就、科技树或强制解锁。
+面向 Windows x64 与 Android ARM64 的双语物理沙盒整合版。它以 [The Powder Toy](https://powdertoy.co.uk/) 100.0.399 为基础，把简体中文界面、完整元素说明、118 元素周期表和多类现实材料统一到一个仍然自由开放的沙盒中。
 
-## 主要内容
+没有任务、成就、科技树、发现进度或强制解锁。启用的材料可以直接选择；同一种材料从周期表、材料分类或搜索进入时，始终落到同一个稳定材料 ID，不复制概念，也不破坏旧存档。
 
-- 完整的 118 元素周期表选择器；
-- 单质、同素异形体、同位素、氧化物、氢化物和酸碱盐分组；
-- 有机物、合金、矿物、陶瓷、玻璃、聚合物、半导体和工程材料关联；
-- 精简的主材料菜单，以及独立的“有机材料”和“合金与工程材料”分类；
-- 中英文材料搜索、完整元素说明、可滚动材料面板和长按图鉴；
-- 稳定材料 ID、OPS 存档映射、模块启用/禁用行为及高 ID 材料兼容。
+> **发布状态：** 当前公开的是 1.0.0 构建快照，不是已经完成全部门禁的签名正式版。Windows 程序尚无 Authenticode 签名，Android APK 使用项目测试证书；物理 Android 设备、完整 GUI/DPI 人工矩阵和独立长跑仍未全部完成，尚未创建 `v1.0.0` tag 或 GitHub Release，因此 `release_ready=false`。
+
+## 核心特色
+
+- 完整显示并可访问 118 个化学元素；元素面板按单质、同素异形体、同位素、氧化物、氢化物、酸碱盐及相关材料分组；
+- 466 种可直接选择的材料，覆盖冶金、无机/有机化学、核工业、电子、生态、污染、矿物、陶瓷、玻璃、聚合物、半导体与工程材料；
+- 精简主材料菜单，保留官方元素、OmniPack 独立玩法材料和必要快捷入口；
+- 支持中文名、英文名、元素符号、化学式、原子序数和内部代号搜索；
+- 195 个官方规范元素具备双语完整说明，OmniPack 材料另有配方、生产、用途和危险信息；
+- Windows 与 Android 共用模拟规则、稳定 ID、模块开关和 OPS 存档映射；
+- 开始界面直接显示项目 GitHub 地址，并通过公开静态清单检查更新。
+
+源码可以直接浏览：[src](./src/)、[resources](./resources/)、[Meson 配置](./meson.build)和[必要生成器](./tools/)。公开历史从无测试源码快照建立，不包含开发分支的私有测试历史。
 
 ## 下载
 
-- [Windows x64 用户包](./TPT-ZH-OmniPack-1.0.0-Windows-x64.zip)
-- [Windows x64 SHA-256](./TPT-ZH-OmniPack-1.0.0-Windows-x64.zip.sha256)
-- [Android ARM64 APK](./updates/TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk)
-- [Android APK SHA-256](./updates/TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk.sha256)
-- [Android 包清单](./ANDROID-MANIFEST.json) / [Android 使用说明](./README-Android.md)
-- [1.0.0 对应源码](./TPT-ZH-OmniPack-1.0.0-Source.zip)
-- [源码 SHA-256](./TPT-ZH-OmniPack-1.0.0-Source.zip.sha256)
+| 平台 / 内容 | 文件 | 说明 |
+|---|---|---|
+| Windows x64 | [用户 ZIP](./TPT-ZH-OmniPack-1.0.0-Windows-x64.zip) · [SHA-256](./TPT-ZH-OmniPack-1.0.0-Windows-x64.zip.sha256) | 便携版；解压后运行 `tpt-zh-omnipack.exe` |
+| Android ARM64 | [APK](./updates/TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk) · [SHA-256](./updates/TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk.sha256) | Android 5.0+、仅 `arm64-v8a`；安装和升级由系统确认 |
+| 调试符号 | [Symbols ZIP](./TPT-ZH-OmniPack-1.0.0-Symbols-Windows-x64.zip) · [SHA-256](./TPT-ZH-OmniPack-1.0.0-Symbols-Windows-x64.zip.sha256) | 供崩溃定位，不是运行必需文件 |
+| 对应源码 | [Source ZIP](./TPT-ZH-OmniPack-1.0.0-Source.zip) · [SHA-256](./TPT-ZH-OmniPack-1.0.0-Source.zip.sha256) | 完整可构建、无公开测试目录的源码快照 |
 
-用户包为便携版，解压后运行 `tpt-zh-omnipack.exe`。当前 Windows 程序未签名，运行前请核对 SHA-256。
+补充文件：[Android 包清单](./ANDROID-MANIFEST.json)、[Android 使用说明](./README-Android.md)、[发布清单](./RELEASE-MANIFEST.txt)和[更新通道清单](./updates/UPDATE-MANIFEST.txt)。运行未签名程序前请核对旁置 SHA-256。
 
-Android APK 仅支持 `arm64-v8a`，最低 Android 5.0。它使用项目测试证书签名，不是 Google Play 或正式商店签名；安装和升级前请核对 APK SHA-256。触屏短按左下角打开图标浏览本地存档，长按进入在线浏览器。
+## 自动更新如何工作
 
-Windows 与 Android 开始界面均显示项目地址 `https://github.com/KRhad/TPT-ZH-OmniPack`。发布构建会从本仓库 `public-source` 分支读取静态更新清单；下载内容必须同时通过精确大小和 SHA-256 校验。Windows 随后替换便携 EXE，Android 则调用系统安装程序，并保留“安装未知应用”授权与最终安装确认，游戏不会静默安装。
+Windows 与 Android 开始界面均显示 `https://github.com/KRhad/TPT-ZH-OmniPack`。发布构建从本仓库 `public-source` 分支读取 `Startup.json`，按平台选择 Windows 更新包或 Android APK，并在应用前同时核对精确字节数和 SHA-256。
+
+- Windows 下载 BuTT + bzip2 更新包，在保留失败回滚路径的前提下替换便携 EXE；
+- Android 下载并核对 APK 后调用系统 `PackageInstaller`；Android 8+ 如未授权，会先打开“安装未知应用”设置，最终安装始终需要系统界面和用户确认；
+- 游戏不会静默安装 Android APK，也不会在运行时联网获取材料分类或元素说明。
+
+## 参考模组与致谢
+
+本项目以 [The Powder Toy](https://github.com/The-Powder-Toy/The-Powder-Toy) 为底座，并参考了以下社区模组。表中的“参考/重写”不表示直接合并整个模组：本项目没有打包这些模组的源码树或二进制，也没有逐行复制第三方元素更新函数；实际采用的材料概念、参数适配与文件级来源均保留稳定 commit 和许可证记录。
+
+| 模组 / 作者 | 本项目中的参考边界 |
+|---|---|
+| [Cracker1000 TPT](https://github.com/cracker1000/The-Powder-Toy) / cracker1000 | 铜的参数与玩法定位、自动化设计参考；更新逻辑改为当前架构下的局部有界实现 |
+| [SpikeViper Biology](https://github.com/SpikeViper/The-Powder-Toy) / SpikeViper | 生物及核内容的玩法边界参考；OmniPack 对应模块独立实现 |
+| [TPT Ultimata Mod](https://github.com/Bowserinator/TPT-Ultimata-Mod) / Bowserinator | 特殊物理、电子、核内容及 `SOIL/BLOD` 概念参考；采用项重新实现 |
+| [Jacob1 Mod](https://github.com/jacob1/The-Powder-Toy) / jacob1 | 自动化、界面体验和存档来源识别参考 |
+| [TPT-Alchemy](https://github.com/jacob1/TPT-Alchemy) / jacob1 | 仅评估无解锁的反应概念；进度、发现和强制解锁系统明确不采用 |
+| [Seppo's Metallurgy Mod SRC](https://github.com/SeppoTPT/Seppo-s-Metallurgy-Mod-SRC) / SeppoTPT | 冶金命名与公开反应碎片参考；缺失实现不从二进制反推，相关玩法按清洁室方式实现 |
+| [Cyens Toy](https://github.com/cbeimers113/cyens-toy) / cbeimers113 | 烃化学、分馏和特殊物理概念参考；不覆盖官方元素语义 |
+| [Cyens Toy Source](https://github.com/cbeimers113/cyens-toy-src) / cbeimers113 | `ACET/UREA` 的 GPL 文件级材料概念来源；属性、反应和预算重新实现 |
+| [TPT Biological Mod](https://github.com/sam-astro/TPT-Biological-Mod) / sam-astro | `BLOD` 携氧概念的交叉核对；状态机未复制 |
+| [nucular's Mod](https://github.com/nucular/The-Powder-Toy-nuculars-mod) / nucular | `SOIL` 储水及核主题行为的交叉核对；采用内容重新实现 |
+
+精确 commit、文件级锚点、采用/拒绝结论和许可证见[第三方来源说明](./docs/THIRD_PARTY_SOURCES.md)、[移植台账](./docs/PORTING_LEDGER.md)、[模组来源目录](./docs/MOD_SOURCE_CATALOG.csv)及[第三方许可证清单](./docs/THIRD_PARTY_LICENSE_MANIFEST.csv)。授权不明或源码缺失的候选只保留审计记录，不进入构建与发布包。
 
 ## 从源码构建
 
-公开源码包不包含开发测试目录、测试脚本和测试报告。使用 Meson 配置时请关闭测试目标：
+公开源码不包含 `tests/`、`tools/tests/`、`tools/runtime/`、压力测试脚本与样本、测试报告、日志、截图、私测存档、性能工件、本地配置或个人数据。使用 Meson 时关闭开发测试目标：
 
 ```powershell
-meson setup build --buildtype=release -Dbuild_tests=false -Drelease_label=1.0.0
+meson setup build --buildtype=release -Dbuild_tests=false -Dstatic=prebuilt -Drelease_label=1.0.0
 meson compile -C build
 ```
 
-静态 Windows 构建可再加 `-Dstatic=prebuilt`，Meson 会按照 `subprojects` 中的固定 wrap 下载对应依赖。
-
-Android ARM64 构建使用仓库中的 `tools/build_android.ps1`。需要 Android SDK、NDK r29、Build Tools 35.0.0、Platform 31、JDK 8、JDK 17+ 与 MSYS2 UCRT64；脚本固定 `build_tests=false`，详细参数见 [Android 构建说明](./docs/ANDROID_PORT.md)。密钥必须放在仓库外。
+Android ARM64 使用 `tools/build_android.ps1`。需要 Android SDK、NDK r29、Build Tools 35.0.0、Platform 31、JDK 8、JDK 17+ 与 MSYS2 UCRT64；脚本固定 `build_tests=false`，密钥必须位于仓库外。详细参数见 [Android 构建说明](./docs/ANDROID_PORT.md)。
 
 ## 许可证与来源
 
-项目整体依据 GNU GPL v3 发布，并保留 The Powder Toy 及兼容来源作者的版权和通知。用户包和源码包均包含第三方来源记录、字体许可证及依赖许可证信息。项目开发使用了 OpenAI Codex / AI 辅助，披露见源码中的 `docs/AI_DISCLOSURE.md`。
+项目整体依据 GNU GPL v3 发布，并保留 The Powder Toy 及兼容来源作者的版权与通知。用户包和源码包均携带第三方来源记录、字体许可证及依赖许可证。项目开发使用了 OpenAI Codex / AI 辅助，披露见 [AI_DISCLOSURE.md](./docs/AI_DISCLOSURE.md)。
 
 ---
 
-TPT-ZH-OmniPack is an unofficial GPL-3.0 bilingual physics-sandbox integration based on The Powder Toy 100.0.399. It includes a complete 118-element periodic-table picker, unified material routing, bilingual search and descriptions, stable save IDs, and directly selectable sandbox content. The public source archive omits developer test assets; configure it with `-Dbuild_tests=false`.
+TPT-ZH-OmniPack is an unofficial GPL-3.0 bilingual physics-sandbox integration based on The Powder Toy 100.0.399. It supports Windows x64 and Android ARM64, provides a complete 118-element picker, unified material routing, bilingual search and descriptions, stable save IDs, and SHA-256-verified GitHub updates. Public source omits private developer tests; configure it with `-Dbuild_tests=false`. This snapshot remains `release_ready=false` until the outstanding signing, device, long-run, and visual gates are completed.

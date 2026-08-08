@@ -18,4 +18,6 @@ Android：在 Android 5.0 或更高版本的 ARM64 设备上安装 `TPT-ZH-OmniP
 
 项目整体依据 GNU GPL v3 发布。`LICENSES` 目录内包含字体、静态库及其他第三方组件的许可证和通知，源码来源记录见 `SOURCE-AND-LICENSES.zh-CN.md`。
 
+本项目以 The Powder Toy 为底座，并明确致谢 Cracker1000 TPT、SpikeViper Biology、TPT Ultimata Mod、Jacob1 Mod、TPT-Alchemy、Seppo's Metallurgy Mod SRC、Cyens Toy / Cyens Toy Source、TPT Biological Mod 与 nucular's Mod。它们分别用于玩法边界、材料概念、参数或界面设计参考；项目没有整库合并这些模组，也没有逐行复制第三方元素更新函数。精确仓库、commit、文件级来源、许可证和采用/拒绝结论随源码包提供。
+
 公开下载只包含玩家程序、可选符号包、完整可构建源码和必要文档，不包含测试样本、测试报告、偏好文件、截图、日志或个人存档。
