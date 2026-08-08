@@ -1,0 +1,54 @@
+# OmniCore vNext risk register
+
+## Active risks
+
+| ID | Severity | Area | Evidence / failure mode | Required mitigation | Gate |
+|---|---|---|---|---|---|
+| C-01 | CRITICAL | correctness/performance | 4 mm cells with real sound speed make explicit compressible CFL far smaller than a game tick | select and validate time/acoustic/all-speed policy in AtmosphereBench | RED |
+| C-02 | CRITICAL | numerical | global `-ffast-math` and unsafe math can invalidate conservation and finite checks | strict target plus double/float/fast differential matrix | RED |
+| C-03 | CRITICAL | conservation | floors/clamps could silently create mass/species/energy | correction ledger, limits and fail-closed tests | RED |
+| C-04 | HIGH | correctness | Legacy particle updates directly write Air and depend on iteration/same-frame state | characterization saves, AST/manual inventory, compatibility adapter | RED |
+| C-05 | HIGH | correctness | scale/time/effective depth are not yet accepted | Phase 2 contract and dimensional checks | RED |
+| C-06 | HIGH | chemistry | current reactions lack generic atom/charge validation and kinetics | versioned species/reaction loader with rejection tests | RED |
+| C-07 | HIGH | thermal | phase changes lack latent heat and unified energy | enthalpy model and closed energy experiments | RED |
+| L-01 | CRITICAL | Lua compatibility | scripts directly use Legacy `pv/vx/vy/hv` semantics | preserve Classic fields and versioned Enhanced APIs/projection | RED for replacement |
+| L-02 | CRITICAL | save compatibility | no versioned conservative atmosphere schema or unknown-species fallback | independent OPS object/chunk plus old/new/corrupt fixture matrix | RED |
+| L-03 | HIGH | Particle ABI | AoS pointers, `offsetof` and FIELD indices are widely depended upon | ParticleAccessor/View first; defer SoA | RED for layout rewrite |
+| L-04 | HIGH | upstream | future stable may touch Air, Particle, Heat, Lua, Save or build | phase-start `ls-remote/fetch`, isolated impact Worker, regression conversion | YELLOW |
+| L-05 | HIGH | gameplay | replacing FIRE/pressure/vacuum could break old works | immutable Classic backend and differential traces | RED for replacement |
+| L-06 | MEDIUM | legacy formats | PSv/fuC and GUI save/load lack current runtime fixtures | add safe fixed fixtures and visible GUI pass | YELLOW |
+| P-01 | CRITICAL | benchmark | no current uncapped fixed-step throughput baseline | kernel runner bound to commit/hash/settings/hardware | RED |
+| P-02 | HIGH | memory | multi-species state/flux/scratch can exceed budget | report persistent/peak bytes per cell for every design | RED |
+| P-03 | HIGH | rendering | renderer snapshot already copies about 14.596 MiB lower bound per frame | selected-plane debug copies and measured snapshot timing | YELLOW |
+| P-04 | HIGH | GPU | CPU-special/GPU-generic may force full readback and stalls | residency design and upload/readback/fence metrics | RED |
+| P-05 | HIGH | GPU semantics | allocator, movement and same-pass neighbor writes are order-conflicted | multi-pass proposal/arbitration/apply and bounded request queues | RED |
+| P-06 | HIGH | element coverage | 488 classifications remain UNKNOWN; lexical risk flags 420 high | AST/path-sensitive/manual classification before GPU coverage claims | RED |
+| D-01 | CRITICAL | data license | NIST WebBook is SRD with explicit copyright restrictions | reference-only unless item-specific redistribution permission is recorded | RED for bundling |
+| D-02 | HIGH | code license | tpt-bench has no detected license | reference-only; write independent runner and cases | RED for reuse |
+| D-03 | HIGH | mechanism data | Cantera code license does not license every mechanism/data file | per-input provenance/license audit | RED for bundling |
+| D-04 | HIGH | data quality | current real-material values are not uniformly source/range/units documented | property-level provenance schema and validation | RED |
+| B-01 | MEDIUM | build provenance | MSYS2 Git first on PATH falsely marks CRLF checkout dirty and adds `+` VCS tag | enforce Windows Git first and assert status/tag | YELLOW, controlled |
+| B-02 | MEDIUM | build warning | GCC reports possible uninitialized `ByteString` optional path | isolate/reproduce and compare upstream before disposition | YELLOW |
+| S-01 | HIGH | SDL migration | 505 Lua SDL2 constants plus window/input/clipboard behavior | independent SDL3 phase and compatibility table | RED |
+| S-02 | HIGH | shader pipeline | no local dxc/glslc/validation/shadercross | isolated toolchain PoC and transitive license audit | RED |
+
+## Gate summary
+
+```text
+DATA_LOSS_RISK=not_observed
+BUILD=GREEN
+BOUNDED_LEGACY_LUA_OPS=GREEN
+UPSTREAM_SOURCE_ADAPTATION=GREEN
+BENCHMARK=RED
+NUMERICAL_FOUNDATION=RED
+PHYSICAL_SCALE=RED
+ATMOSPHERE_IMPLEMENTATION=RED
+SDL3=RED
+GPU=RED
+OMNICHEM=RED
+MATERIAL_DATA_IMPORT=RED
+G0_UPSTREAM_BASELINE=RED
+```
+
+RED stops the affected downstream path. It does not prohibit work whose sole purpose
+is to remove the stated blocker.

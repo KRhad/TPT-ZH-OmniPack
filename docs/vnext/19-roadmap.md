@@ -1,0 +1,94 @@
+# OmniCore vNext roadmap
+
+## Current phase decision
+
+The official 100.1 source adaptation is integrated and its bounded build/Lua/OPS
+checks pass. The overall G0 gate remains RED, so the roadmap stays in Phase 1
+foundation work. No production OmniAtmosphere state or solver will be integrated yet.
+
+## Phase status
+
+| Phase | Scope | Status / next gate |
+|---:|---|---|
+| -1 | external research and license audit | YELLOW: classifications complete; no new artifact redistribution authorized |
+| 0 | latest upstream adaptation | GREEN source sub-gate; G0 overall RED |
+| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED |
+| 2 | physical scale and unit system | proposal written / RED |
+| 3 | AtmosphereBench | planned / BLOCKED by Phase 1-2 foundations |
+| 4 | solver selection | BLOCKED |
+| 5 | CPU single-species OmniAtmosphere MVP | BLOCKED |
+| 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
+| 11-18 | humidity, OmniThermal, materials, offline tools, OmniChem, mixtures/corrosion | BLOCKED |
+| 19 | Particle access abstraction | planned; no AoS rewrite before audit |
+| 20 | SDL3 stable migration | RED / independent after simulation baselines |
+| 21-25 | SDL_GPU PoC and GPU/hybrid optimization | RED / CPU reference prerequisite |
+| 26 | Scientific advanced systems | BLOCKED |
+
+## Immediate executable work
+
+The next integration commits should be small and independently reversible:
+
+1. `tests/strict-fp`: add explicit Legacy-fast and OmniCore-strict build modes without
+   changing current simulation behavior.
+2. `tests/kernel-benchmark`: add an uncapped fixed-step runner and structured machine/
+   build/result manifest by extending existing infrastructure.
+3. `tests/characterization`: create C01-C14 deterministic generators/saves and
+   manifests; keep private runtime artifacts out of publication packages.
+4. `tests/differential`: record first divergence plus particle/atmosphere/neighborhood
+   state and conservation ledgers.
+5. Re-run G0. GREEN may advance to Physical Scale plus standalone AtmosphereBench;
+   RED continues only on the remaining blockers.
+
+Each commit records goal, base, files, tests, benchmark/memory evidence, compatibility,
+risks, gate and rollback parent. Before each new phase, re-query official stable and
+master. A new upstream release triggers an isolated read-only impact analysis before
+the Main Orchestrator chooses adaptation timing.
+
+## First-round required answers
+
+| Question | Answer |
+|---|---|
+| Current latest stable? | TPT `100.1 build 400`, tag `v100.1.400`. |
+| Current upstream master? | `d768aeb89acad986bd252d7e904bf44bb374545f`, equal to stable at audit time. |
+| What is local OmniPack based on? | Common base `bff38ce6959...`; pre-vNext fork tip `fb72d5e8f`; stable is now merged into `f1320b48d`. |
+| Distance to stable/master? | Pre-adaptation: 181 local-only / 13 upstream-only. Current: 186 local-only / 0 upstream-only. |
+| SDL2? | Yes, `2.30.9-tpt-libs`; no SDL3 production code. |
+| Current Air? | Existing coarse pressure/velocity/temperature solver with advection, smoothing, walls, fans, vorticity and convection approximations. |
+| `pv/vx/vy/hv`? | Dimensionless pressure-like field; two velocity-like fields; Kelvin-like ambient temperature, respectively. |
+| Real gas density/mass/composition/partial pressure? | All `false`. |
+| Current vacuum? | Negative `pv`, not low conserved gas mass. |
+| Does combustion consume atmosphere O2? | No; selected rules consume O2 particles only. |
+| Does boiling use ambient pressure? | It shifts thresholds by Legacy `-2*pv`; it does not use absolute pressure/saturation curves. |
+| Humidity / latent heat? | Both absent. |
+| Mass / energy conserved? | No global conservation contract or ledger; particle creation/deletion and direct temperature/pressure rules can source/sink both. |
+| Which elements write Air? | Static custom-update scan detects DMG writing Air velocity, LIGH writing Air heat, and 86 elements/38 roots writing pressure; complete IDs/evidence are in `element-update-inventory.json`. Generic `AirDrag/AirLoss/HotAir` adds more coupling. |
+| Most dangerous GPU elements? | WARP, PSTN, PIPE/PPIP, PRTI/PRTO, ARAY/CRAY/DRAY, WIFI, SPRK, stickmen/fighters and shared Omni update roots. Formal classifications remain 488 UNKNOWN. |
+| Who depends on Particle layout? | Lua/property descriptors, renderers, tools, updates, callbacks, pmap/photons and snapshot/copy paths. |
+| Does Lua depend on particle properties? | Yes, through stable property names/indices and C++ `offsetof` access. |
+| How is Air saved? | Quantized OPS `pressMap/vxMap/vyMap`, integer-K `ambientMap`, block/fan maps and simulation options. |
+| Release math optimizations? | Vectorization, unsafe/fast math, omit frame pointer and SSE2; current validated build is `-O2`, `lto=false`. |
+| Fast-math risk? | Critical for conservation, positivity and NaN/Inf detection; disallowed for OmniCore until strict/fast comparison passes. |
+| AtmosphereBench schemes? | Legacy-like, Rusanov, HLLE, HLLC, LBM and, if justified, hybrid/all-speed. |
+| Leading PoC and why? | Strict-double first-order HLLE FVM: directly conserves mass/momentum/energy/species and is robust around shocks/rarefactions; benchmark may overturn it. |
+| Near vacuum? | Positive density/pressure/internal-energy floors, robust flux fallback and a fully visible correction ledger; never ordinary `rho=0`. |
+| Physical scale? | Candidate 1 mm pixel, 4 mm Air cell and 4 mm effective depth; fixed tick independent of rendering, but physical-time/acoustic mapping remains a RED decision. |
+| Atmosphere cell state? | `rho`, `rho*u`, `rho*v`, `rho*E`, and active species partial densities; pressure/temperature/composition are derived. |
+| Expected bytes/cell? | 40-48 persistent float32 bytes and about 128-180 working bytes for five common species; strict double reference can exceed 300. |
+| Species storage? | Benchmark per-world active registry with dense common channels plus sparse trace chunks against fixed/shared alternatives. |
+| Cantera role? | Optional offline validation, reduction and compact-database generation; not per-cell runtime. |
+| CoolProp role? | Optional offline property/reference/table validation; not per-cell flash by default. |
+| Useful NIST validation? | Thermochemistry, reaction enthalpy, Cp/Cv, phase transitions, vapor pressure, density and transport references. |
+| What NIST data can be redistributed? | None by default from WebBook SRD 69; require item-specific permission/license and provenance. |
+| Directly usable third parties? | Cantera and CoolProp offline; SDL/SDL_shadercross only through later gated adaptation. |
+| Reference-only candidates? | tpt-bench, Athena++, hydro-cl-lua, NIST WebBook, and unpinned TPT/GPU falling-sand experiments. |
+| Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
+| Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
+| Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
+| Next stage? | Remove G0 blockers: strict FP targets, uncapped fixed-step benchmark/profiler, C01-C14 saves and differential/ledger runner. |
+
+## Long-term acceptance
+
+Success requires all target phenomena to emerge from shared state, data and solvers
+while Classic, old saves, Lua and CPU reference remain available. GPU coverage and
+modernity never outrank correctness, data safety, compatibility or measurable
+real-time behavior.
