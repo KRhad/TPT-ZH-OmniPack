@@ -489,6 +489,10 @@ namespace http
 				{
 					HandleCURLcode(curl_easy_setopt(handle->curlEasy, CURLOPT_CUSTOMREQUEST, handle->verb->c_str()));
 				}
+				if (handle->forceHttp1_1)
+				{
+					HandleCURLcode(curl_easy_setopt(handle->curlEasy, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1));
+				}
 				HandleCURLcode(curl_easy_setopt(handle->curlEasy, CURLOPT_FOLLOWLOCATION, 1L));
 				if constexpr (ENFORCE_HTTPS)
 				{

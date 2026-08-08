@@ -53,6 +53,19 @@ class GithubUpdateTests(unittest.TestCase):
         self.assertTrue(checks)
         self.assertTrue(all(checks.values()), checks)
 
+    def test_github_download_transport_is_bounded_and_verified(self) -> None:
+        checks = audit.audit_source(ROOT)
+        for name in (
+            "request_http1_1_flag",
+            "libcurl_http1_1_enforced",
+            "github_startup_http1_1",
+            "update_download_http1_1",
+            "update_download_bounded_retry",
+            "download_sha256_verified",
+            "download_size_verified",
+        ):
+            self.assertTrue(checks[name], name)
+
 
 if __name__ == "__main__":
     unittest.main()

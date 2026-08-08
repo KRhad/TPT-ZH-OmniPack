@@ -64,6 +64,10 @@ def validate_manifest(path: Path, asset_root: Path | None = None) -> dict[str, b
 def audit_source(root: Path) -> dict[str, bool]:
     meson_options = (root / "meson_options.txt").read_text(encoding="utf-8")
     config = (root / "src/Config.template.h").read_text(encoding="utf-8")
+    request_header = (root / "src/client/http/Request.h").read_text(encoding="utf-8")
+    request_impl = (root / "src/client/http/Request.cpp").read_text(encoding="utf-8")
+    request_manager = (root / "src/client/http/requestmanager/RequestManager.h").read_text(encoding="utf-8")
+    libcurl = (root / "src/client/http/requestmanager/Libcurl.cpp").read_text(encoding="utf-8")
     startup = (root / "src/client/http/StartupRequest.cpp").read_text(encoding="utf-8")
     updater = (root / "src/gui/update/UpdateActivity.cpp").read_text(encoding="utf-8")
     platform = (root / "src/common/platform/Platform.h").read_text(encoding="utf-8")
@@ -85,6 +89,16 @@ def audit_source(root: Path) -> dict[str, bool]:
         and "IDENT_PLATFORM" in startup,
         "manifest_sha256_required": "invalid SHA-256" in startup and 'asset->isMember("Sha256")' in startup,
         "manifest_size_required": "invalid package size" in startup and 'asset->isMember("Size")' in startup,
+        "request_http1_1_flag": "void ForceHttp1_1();" in request_header
+        and "handle->forceHttp1_1 = true;" in request_impl
+        and "bool forceHttp1_1 = false;" in request_manager,
+        "libcurl_http1_1_enforced": "CURLOPT_HTTP_VERSION" in libcurl
+        and "CURL_HTTP_VERSION_1_1" in libcurl,
+        "github_startup_http1_1": "if (alternate)" in startup and "ForceHttp1_1();" in startup,
+        "update_download_http1_1": "request->ForceHttp1_1();" in updater,
+        "update_download_bounded_retry": "constexpr int updateDownloadAttempts = 2;" in updater
+        and "attempt < updateDownloadAttempts" in updater
+        and "data = ByteString{};" in updater,
         "download_sha256_verified": "Sha256Hex" in updater and "SHA-256 mismatch" in updater,
         "download_size_verified": "Package size mismatch" in updater,
         "windows_existing_updater_used": "Platform::UpdateStart(res)" in updater,

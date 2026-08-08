@@ -27,6 +27,7 @@ namespace http
 		ByteString uri;
 		std::optional<ByteString> verb;
 		bool isPost = false;
+		bool forceHttp1_1 = false;
 		PostData postData;
 		std::vector<Header> headers;
 
