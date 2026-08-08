@@ -363,15 +363,17 @@ release_ready=false
 2. 完成最终第三方源码、字体、资源和发布通知审计；同概念来源只保留已登记的兼容玩法增量；
 3. 完成人工 GUI、双语往返、周期表、气体绘制、模块关闭加载对话框及 100%/125%/150% DPI 矩阵；
 4. 保留 S15–S20 30 秒稳定性证据及其候选 provenance；7,200 秒综合长跑继续作为独立 `not_tested` 门禁，除非另行明确要求，否则不启动；
-5. 保持 `release_ready=false`，直到匿名源码克隆重建、授权远端、正式 tag 和 Release 门禁全部真实完成。
+5. 保持 `release_ready=false`，直到物理 Android/桌面 GUI 门禁、独立长跑、签名、正式 tag 和 GitHub Release 等剩余门禁全部真实完成。
 
 开发回归场景、构建脚本、测试矩阵和版本门禁继续保留；它们不属于已删除的玩家游戏任务。
 
 ## Android ARM64 直接移植
 
-- 分支 `development/android-direct-port-1.0` 从 Windows RC7 源码基线建立在独立 D 盘工作树，不影响 Windows 发布验证；
-- 官方 Android SDL 后端直接承载全部 OmniPack 内容；NDK r29 基线原生编译 `751/751`，可复现封装构建 `755/755`；
-- 修复 Windows 主机上的 `aapt2` 资源路径、APK 内 POSIX 路径、Android 1.0.0 正版本号、API 21 Base64、数据目录空值和 16 KB 页面对齐；
-- 已生成 v1/v2/v3 测试签名 APK，包名 `org.tptzh.omnipack`、中文启动器名称“万象沙盘”、版本 `1.0.0`，只申请网络和振动权限；
-- `android_port_audit=18/18`；APK 签名、ZIP、Manifest、JNI/SDL 入口、ELF 对齐和分发库剥离通过；
-- ADB 当前无设备，真机安装、触控、输入法、OPS 跨平台往返和移动端压力均保持 `not_tested`，不能把该 APK 宣称为已完成真机验收的正式手机版。
+- 最终移植分支 `development/android-direct-port-1.0-final` 基于 Windows 1.0.0 源码 `fb72d5e8f658053842d31366486b5314104b4c41`，位于独立工作树，不改写 rc9 只读候选或旧 Android 分支；
+- 官方 Android SDL 后端直接承载全部 OmniPack 内容；NDK r29 ARM64 Release 全图曾完成 `766/766`，公开构建配置固定 `build_tests=false`；
+- 修复 Windows 主机上的 `aapt2` 资源路径、APK 内 POSIX 路径、Android 1.0.0 正版本号、API 21 Base64、数据目录空值、分发库剥离和 16 KB 页面对齐；
+- 修复 Android 语言切换只退出不重启：Java Activity task 重启桥接实测 PID 两次变化，重启后的简中/英文状态均正确；
+- 修复触屏无法按住 Ctrl 打开本地存档：短按左下角打开按钮进入本地 `.cps` 浏览器，长按保留在线浏览器；
+- 已生成 v1/v2/v3 测试签名 APK，包名 `org.tptzh.omnipack`、中文启动器名称“万象沙盘”、版本 `1.0.0`，只申请网络和振动权限；`android_port_audit=23/23`；
+- 当前整合工作树重新完成 Python `244` 项（242 pass、0 fail、2 skip）、Windows x64 clean Release `786/786` 与 Meson static `40/40`；许可证清单同步到 Git 跟踪的 LF 字节后总审计通过；
+- 独立 MuMu Android 15 实例已验证触控绘制、中文输入、周期表/详情/滚动/长说明、简中与英文重启、三组分辨率/DPI、本地保存及重新打开；物理 ARM64 手机的后台生命周期、温度、耗电、持续性能和长跑仍为 `not_tested`，因此 `release_ready=false`。

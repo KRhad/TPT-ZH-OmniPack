@@ -20,7 +20,7 @@
 - 长按图鉴在正文前明确显示“元素说明 / Element description”。全部 195 个官方规范条目均有参考锁定 Wiki 分类页/条目页并由当前源码校正的双语完整说明；22 个液体保留逐项人工说明，其余旧条目使用上游行为摘要并显式修正已知错译、相态错误和截断文本。图鉴还直接读取当前生成温度、热学、重量、重力、耐酸蚀、可燃/爆炸、导电、中子吸收及温压相变目标；292 个 OmniPack 规范材料另有双语配方、生产、用途和危险字段。稳定 ID、源码 commit、实现/测试状态等开发字段不在玩家图鉴中显示。全部 OmniPack 菜单代号统一为唯一四位大写字母；底部周期表按钮与搜索按钮各自保留空间，扩展气体采用与官方气体一致的柔和云团绘制。
 - 生态与污染首批已绑定提交 `031c36ff` 完成最终 clean build：`771/771`、Meson `31/31`、Python 202 项（0 fail、2 skip）；同一 EXE 已复跑全部内容模块、完整/简化生态、模块禁用、八类 OPS、mixed OPS、旧别名和旧进度兼容。该开发 EXE 的 SHA-256 为 `154A8D24FA52B54A3F3038C14E7B96728E09B1C6415503D7AB61DE90F634C709`。
 - rc9 候选 `f970a534` 的普通/符号 ZIP 审计通过；绑定同一候选的 S15-S20 六项无预热 30 秒稳定性门禁均经独立 assessment 通过，fixture 分别为 `118/118/118`、`50/50/50`、`21/21/21`、`13/13/13`、`33/33/33` 和 `487/484/466`。
-- 当前仍是开发状态，`release_ready=false`；`f970a534` 只作为只读参考候选，其哈希和 S15-S20 结论不能转移给后续工作树构建。脏工作树验证包必须在清单中明确记录基线 revision、`source_state`、工作树 SHA-256 和未跟踪文件数，不能冒充干净发布候选。正式 GUI 双语/DPI 视觉矩阵、独立两小时长跑、匿名源码重建、公开源码远端、签名、tag 和 Release 仍未完成。
+- 当前仍是开发状态，`release_ready=false`；`f970a534` 只作为只读参考候选，其哈希和 S15-S20 结论不能转移给后续工作树构建。脏工作树验证包必须在清单中明确记录基线 revision、`source_state`、工作树 SHA-256 和未跟踪文件数，不能冒充干净发布候选。独立的 `public-source` 历史已经公开且完成一次无测试源码构建；Windows 签名、完整桌面 GUI/DPI 人工矩阵、独立两小时长跑、正式 tag 和 GitHub Release 仍未完成。
 
 ## 内容路线
 
@@ -63,7 +63,7 @@ meson test -C build-ui-gas-electronics-final-clean --suite static --print-errorl
 C:\msys64\ucrt64\bin\python3.exe -m unittest discover -s tools/tests -p 'test_*.py'
 ```
 
-Android ARM64 直接移植版使用同一套模拟、元素 ID、中文字体与 OPS 存档代码。移动端构建和签名方法见 [Android 直接移植版](docs/ANDROID_PORT.md)；当前 APK 已完成交叉编译、Manifest、签名、ZIP 和 16 KB ELF 对齐审计，但在连接真实 Android 设备前，触控、输入法、后台恢复和实际帧率仍记为未测试。
+Android ARM64 直接移植版使用同一套模拟、元素 ID、中文字体与 OPS 存档代码。移动端构建和签名方法见 [Android 直接移植版](docs/ANDROID_PORT.md)；当前 APK 已完成交叉编译、Manifest、签名、ZIP 和 16 KB ELF 对齐审计，并在隔离 Android 15 模拟器中验证触控绘制、中文输入、语言自动重启、周期表、说明页、本地保存及重新打开。物理 ARM64 设备性能、后台生命周期和移动端长跑仍未完成。
 
 测试结果、未测试边界和正式门禁分别见 [TEST_MATRIX](docs/TEST_MATRIX.md)、[KNOWN_ISSUES](docs/KNOWN_ISSUES.md) 和 [VERSION_GATES](docs/VERSION_GATES.md)。自动测试通过不等于 GUI、视觉、长跑或公开发布通过。
 

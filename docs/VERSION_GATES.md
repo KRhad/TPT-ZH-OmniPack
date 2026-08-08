@@ -307,6 +307,29 @@ release_ready=true
 
 当前 `release_ready=false`。不得为赶版本把 `not_tested` 改为 `true`，也不得用重复空壳或兼容别名凑到 300。
 
+当前公开源码与 Android 直接移植快照：
+
+```text
+public_tests_included=false
+private_test_evidence_preserved=true
+public_source_buildable=true
+public_source_commit_available=true
+android_arm64_apk_build=true
+android_apk_signed_with_test_certificate=true
+android_static_audit=23/23
+android_emulator_install_launch=true
+android_touch_ime_ui_pass=true
+android_zh_en_restart_pass=true
+android_local_save_reopen_pass=true
+android_physical_device_pass=not_tested
+android_mobile_long_run=not_tested
+github_release_created=false
+release_tag_created=false
+release_ready=false
+```
+
+模拟器真实客户端通过不能替代物理 ARM64 设备的温度、耗电、后台生命周期和长跑门禁；项目测试证书也不能替代商店或正式发布签名。
+
 当前许可证子门禁：
 
 ```text

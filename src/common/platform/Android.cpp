@@ -78,6 +78,55 @@ std::optional<ByteString> CallActivityStringFunc(const char *funcName)
 	return result;
 }
 
+bool CallActivityVoidFunc(const char *funcName)
+{
+	try
+	{
+		auto *env = (JNIEnv *)SDL_AndroidGetJNIEnv();
+		auto activityInst = (jobject)SDL_AndroidGetActivity();
+		if (!env || !activityInst)
+		{
+			throw std::runtime_error("Android activity unavailable");
+		}
+		auto activityCls = env->GetObjectClass(activityInst);
+		if (!activityCls)
+		{
+			throw std::runtime_error("Android activity class unavailable");
+		}
+		Defer deleteActivityClass([env, activityCls]() { env->DeleteLocalRef(activityCls); });
+		auto funcMth = env->GetMethodID(activityCls, funcName, "()V");
+		if (!funcMth)
+		{
+			if (env->ExceptionCheck())
+			{
+				env->ExceptionClear();
+			}
+			throw std::runtime_error("Android activity method unavailable");
+		}
+		env->CallVoidMethod(activityInst, funcMth);
+		if (env->ExceptionCheck())
+		{
+			env->ExceptionDescribe();
+			env->ExceptionClear();
+			throw std::runtime_error("Android activity method threw");
+		}
+		return true;
+	}
+	catch (const std::exception &ex)
+	{
+		__android_log_print(ANDROID_LOG_ERROR, APPID, "CallActivityVoidFunc/%s failed: %s", funcName, ex.what());
+		return false;
+	}
+}
+
+void DoRestart()
+{
+	if (!CallActivityVoidFunc("restartApplication"))
+	{
+		__android_log_print(ANDROID_LOG_ERROR, APPID, "restart request failed; reopen the app to apply the saved language");
+	}
+}
+
 ByteString DefaultDdir()
 {
 	auto result = CallActivityStringFunc("getDefaultDdir");

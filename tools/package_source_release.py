@@ -29,6 +29,7 @@ EXCLUDED_PREFIXES = (
 )
 ALLOWED_TOOLS = {
     "tools/build_release_font.py",
+    "tools/build_android.ps1",
     "tools/element_registry_check.py",
     "tools/generate_content_menu_policy.py",
     "tools/generate_element_catalog.py",
@@ -51,11 +52,17 @@ REQUIRED_MEMBERS = {
     "README.zh-CN.md",
     "meson.build",
     "meson_options.txt",
+    "android/AndroidManifest.template.xml",
+    "android/PowderActivity.template.java",
+    "android/cross/aarch64.ini",
+    "docs/ANDROID_PORT.md",
+    "docs/ANDROID_USER_GUIDE.md",
     "src/PowderToy.cpp",
     "src/Config.template.h",
     "resources/font.bz2",
     "tools/generate_element_catalog.py",
     "tools/generate_periodic_table_data.py",
+    "tools/build_android.ps1",
     "tools/generate_content_menu_policy.py",
     "tools/generate_periodic_content_links.py",
 }

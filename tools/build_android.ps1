@@ -7,16 +7,29 @@ param(
     [string]$Jdk8Root = $env:JAVA8_HOME,
     [string]$JavaRuntimeRoot = $env:JAVA_HOME,
     [string]$BuildDirectory = 'build-android-arm64',
-    [string]$OutputDirectory = 'artifacts/android/1.0.0-mobile-test1',
+    [string]$OutputDirectory = 'artifacts/android/1.0.0',
     [string]$Version = '1.0.0',
-    [string]$ReleaseLabel = '1.0.0-mobile-test1',
+    [string]$ReleaseLabel = '1.0.0',
     [int]$AndroidVersionCode = 0,
     [string]$Keystore = '',
-    [string]$KeyAlias = 'androidkey'
+    [string]$KeyAlias = 'androidkey',
+    [switch]$RequireCleanSource
 )
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$sourceRevision = (& git -C $repoRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or $sourceRevision -notmatch '^[0-9a-f]{40}$') {
+    throw 'Unable to resolve the source Git revision'
+}
+$sourceStatus = @(& git -C $repoRoot status --porcelain=v1 --untracked-files=all)
+if ($LASTEXITCODE -ne 0) {
+    throw 'Unable to inspect the source worktree state'
+}
+$sourceTreeState = if ($sourceStatus.Count) { 'dirty' } else { 'clean' }
+if ($RequireCleanSource -and $sourceTreeState -ne 'clean') {
+    throw 'The Android release build requires a clean source worktree'
+}
 
 function Resolve-RequiredPath([string]$Path, [string]$Description) {
     if (-not $Path -or -not (Test-Path -LiteralPath $Path)) {
@@ -56,6 +69,7 @@ $javaRuntimeJar = Resolve-RequiredPath (Join-Path $Jdk8Root 'jre\lib\rt.jar') 'J
 $ndkBin = Join-Path $ndkRoot 'toolchains\llvm\prebuilt\windows-x86_64\bin'
 $compiler = Resolve-RequiredPath (Join-Path $ndkBin 'aarch64-linux-android21-clang++.cmd') 'ARM64 Android compiler'
 $strip = Resolve-RequiredPath (Join-Path $ndkBin 'llvm-strip.exe') 'LLVM strip'
+$readelf = Resolve-RequiredPath (Join-Path $ndkBin 'llvm-readelf.exe') 'LLVM readelf'
 $archiver = Resolve-RequiredPath (Join-Path $ndkBin 'llvm-ar.exe') 'LLVM archiver'
 $javac = Resolve-RequiredPath (Join-Path $Jdk8Root 'bin\javac.exe') 'JDK 8 javac'
 $jar = Resolve-RequiredPath (Join-Path $Jdk8Root 'bin\jar.exe') 'JDK 8 jar'
@@ -127,6 +141,7 @@ $setupArgs = @(
     "-Doverride_display_version=$Version",
     "-Drelease_label=$ReleaseLabel",
     '-Dresolve_vcs_tag=yes',
+    '-Dbuild_tests=false',
     '-Dbuild_render=false',
     '-Dbuild_font=false',
     "-Dandroid_version_code=$AndroidVersionCode",
@@ -165,6 +180,7 @@ try {
 }
 
 $builtApk = Resolve-RequiredPath (Join-Path $buildPath "android\$apkName") 'Built APK'
+$strippedLibrary = Resolve-RequiredPath (Join-Path $buildPath 'android\tpt-zh-omnipack.stripped.so') 'Stripped ARM64 library'
 [IO.Directory]::CreateDirectory($outputPath) | Out-Null
 $outputApk = Join-Path $outputPath "TPT-ZH-OmniPack-$ReleaseLabel-Android-arm64-v8a.apk"
 [IO.File]::Copy($builtApk, $outputApk, $true)
@@ -174,20 +190,111 @@ if ($LASTEXITCODE -ne 0) {
     throw 'APK 16 KB zip alignment verification failed'
 }
 if ($Keystore) {
-    & $apksigner verify --verbose --print-certs $outputApk
+    $signatureDetails = @(& $apksigner verify --verbose --print-certs $outputApk 2>&1)
     if ($LASTEXITCODE -ne 0) {
         throw 'APK signature verification failed'
     }
+    $signatureDetails | Write-Output
+    $signatureText = $signatureDetails -join "`n"
+    foreach ($scheme in ('v1', 'v2', 'v3')) {
+        if ($signatureText -notmatch "Verified using $scheme scheme .*: true") {
+            throw "APK signature scheme $scheme verification failed"
+        }
+    }
 }
 
-$badging = & $aapt dump badging $outputApk
+$programHeaders = @(& $readelf -lW $strippedLibrary)
+if ($LASTEXITCODE -ne 0) {
+    throw 'Unable to inspect ARM64 ELF program headers'
+}
+$loadSegments = @($programHeaders | Where-Object { $_ -match '^\s*LOAD\s' })
+if ($loadSegments.Count -lt 2 -or @($loadSegments | Where-Object { $_ -notmatch '\s0x4000\s*$' }).Count) {
+    throw 'ARM64 ELF LOAD segments are not all aligned to 16 KB'
+}
+$sectionHeaders = @(& $readelf -SW $strippedLibrary)
+if ($LASTEXITCODE -ne 0) {
+    throw 'Unable to inspect ARM64 ELF section headers'
+}
+if (($sectionHeaders -join "`n") -match '\.(?:debug_[A-Za-z0-9_]*|symtab|strtab)\b') {
+    throw 'Packaged ARM64 library still contains debug or symbol-table sections'
+}
+
+$badging = @(& $aapt dump badging $outputApk)
 if ($LASTEXITCODE -ne 0) {
     throw 'APK manifest inspection failed'
 }
 $packageLine = $badging | Select-Object -First 1
 $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $outputApk).Hash
+$size = (Get-Item -LiteralPath $outputApk).Length
+$packageName = if ($packageLine -match "name='([^']+)'" ) { $Matches[1] } else { '' }
+$versionCode = if ($packageLine -match "versionCode='([^']+)'" ) { $Matches[1] } else { '' }
+$versionName = if ($packageLine -match "versionName='([^']+)'" ) { $Matches[1] } else { '' }
+$minimumSdk = if (($badging -join "`n") -match "sdkVersion:'([^']+)'" ) { $Matches[1] } else { '' }
+$targetSdk = if (($badging -join "`n") -match "targetSdkVersion:'([^']+)'" ) { $Matches[1] } else { '' }
+$nativeCode = if (($badging -join "`n") -match "native-code:\s+(.+)$" ) { $Matches[1].Replace("'", '').Trim() } else { '' }
+$certificateSha256 = ''
+if ($Keystore) {
+    $certificateLine = $signatureDetails | Where-Object { $_ -match 'certificate SHA-256 digest:' } | Select-Object -First 1
+    if ($certificateLine -and $certificateLine -match 'digest:\s*([0-9A-Fa-f]+)') {
+        $certificateSha256 = $Matches[1].ToUpperInvariant()
+    }
+    if ($certificateSha256 -notmatch '^[0-9A-F]{64}$') {
+        throw 'Unable to read the APK signing certificate SHA-256'
+    }
+}
+if ($packageName -ne 'org.tptzh.omnipack' -or $versionName -ne $Version -or
+    $minimumSdk -ne '21' -or $targetSdk -ne '33' -or $nativeCode -ne 'arm64-v8a') {
+    throw 'APK manifest metadata does not match the Android release contract'
+}
+
+$shaPath = "$outputApk.sha256"
+[IO.File]::WriteAllText(
+    $shaPath,
+    "$hash  $([IO.Path]::GetFileName($outputApk))`n",
+    [Text.Encoding]::ASCII)
+$guideSource = Resolve-RequiredPath (Join-Path $repoRoot 'docs\ANDROID_USER_GUIDE.md') 'Android user guide'
+$guidePath = Join-Path $outputPath 'README-Android.md'
+[IO.File]::Copy($guideSource, $guidePath, $true)
+$manifestPath = Join-Path $outputPath 'ANDROID-MANIFEST.json'
+$manifest = [ordered]@{
+    schema_version = 1
+    product = 'TPT-ZH-OmniPack'
+    version = $Version
+    release_label = $ReleaseLabel
+    source_revision = $sourceRevision
+    source_tree_state = $sourceTreeState
+    package_name = $packageName
+    version_code = [int64]$versionCode
+    version_name = $versionName
+    minimum_sdk = [int]$minimumSdk
+    target_sdk = [int]$targetSdk
+    abi = $nativeCode
+    apk_file = [IO.Path]::GetFileName($outputApk)
+    apk_bytes = $size
+    apk_sha256 = $hash
+    signed = [bool]$Keystore
+    signing_certificate_sha256 = $certificateSha256
+    zip_alignment_16k = $true
+    elf_load_alignment_16k = $true
+    stripped_native_library = $true
+    signature_schemes = if ($Keystore) { @('v1', 'v2', 'v3') } else { @() }
+    build_tests = $false
+    public_tests_included = $false
+    release_ready = $false
+}
+[IO.File]::WriteAllText(
+    $manifestPath,
+    ($manifest | ConvertTo-Json -Depth 4) + "`n",
+    [Text.UTF8Encoding]::new($false))
 Write-Output "android_apk=$outputApk"
 Write-Output "android_apk_sha256=$hash"
 Write-Output "android_apk_package=$packageLine"
 Write-Output "android_apk_signed=$([bool]$Keystore)"
 Write-Output 'android_apk_zipalign_16k=true'
+Write-Output 'android_elf_load_alignment_16k=true'
+Write-Output 'android_native_library_stripped=true'
+Write-Output "android_apk_sha256_file=$shaPath"
+Write-Output "android_manifest=$manifestPath"
+Write-Output "android_user_guide=$guidePath"
+Write-Output "android_source_revision=$sourceRevision"
+Write-Output "android_source_tree_state=$sourceTreeState"

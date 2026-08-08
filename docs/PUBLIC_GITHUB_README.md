@@ -15,10 +15,15 @@ TPT-ZH-OmniPack 是基于 [The Powder Toy](https://powdertoy.co.uk/) 100.0.399 �
 
 - [Windows x64 用户包](./TPT-ZH-OmniPack-1.0.0-Windows-x64.zip)
 - [Windows x64 SHA-256](./TPT-ZH-OmniPack-1.0.0-Windows-x64.zip.sha256)
+- [Android ARM64 APK](./TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk)
+- [Android APK SHA-256](./TPT-ZH-OmniPack-1.0.0-Android-arm64-v8a.apk.sha256)
+- [Android 包清单](./ANDROID-MANIFEST.json) / [Android 使用说明](./README-Android.md)
 - [1.0.0 对应源码](./TPT-ZH-OmniPack-1.0.0-Source.zip)
 - [源码 SHA-256](./TPT-ZH-OmniPack-1.0.0-Source.zip.sha256)
 
 用户包为便携版，解压后运行 `tpt-zh-omnipack.exe`。当前 Windows 程序未签名，运行前请核对 SHA-256。
+
+Android APK 仅支持 `arm64-v8a`，最低 Android 5.0。它使用项目测试证书签名，不是 Google Play 或正式商店签名；安装和升级前请核对 APK SHA-256。触屏短按左下角打开图标浏览本地存档，长按进入在线浏览器。
 
 ## 从源码构建
 
@@ -30,6 +35,8 @@ meson compile -C build
 ```
 
 静态 Windows 构建可再加 `-Dstatic=prebuilt`，Meson 会按照 `subprojects` 中的固定 wrap 下载对应依赖。
+
+Android ARM64 构建使用仓库中的 `tools/build_android.ps1`。需要 Android SDK、NDK r29、Build Tools 35.0.0、Platform 31、JDK 8、JDK 17+ 与 MSYS2 UCRT64；脚本固定 `build_tests=false`，详细参数见 [Android 构建说明](./docs/ANDROID_PORT.md)。密钥必须放在仓库外。
 
 ## 许可证与来源
 

@@ -10,10 +10,10 @@
 | 完整说明覆盖 | 数据/静态 | PASS | 官方双语完整说明 195/195（含旧错译/截断回归），OmniPack 结构化详情 292，合计 487/487；全部继续叠加当前运行属性 |
 | 周期表与材料路由 | 静态/运行 | PASS | 118 个元素、13 个核素、52 个无机物、93 个补充材料；周期真实回归 118/118；多入口只引用同一稳定 ID |
 | 名称信息层级 | 源码/本地化 | PASS | 主语言名、弱化辅助语言名、元素符号、原子序数和去重关联材料数；英中各 1839 键、缺失 0 |
-| 自动化与 Release 构建 | Python/Meson/Release | PASS | Python `239/239`，0 fail/0 skip；Meson static `39/39`；独立 clean Release `786/786` |
+| 自动化与 Release 构建 | Python/Meson/Release | PASS | Python `244` 项：242 pass、0 fail、2 skip；Meson static `40/40`；当前独立 Windows x64 clean Release `786/786` |
 | 模块、OPS 与旧存档 | 实际运行/C++ | PASS | 12 个功能回归；五模块关闭时 25 粒子保留、事件 0；8 类 OPS 为 24 进程/16 重启/368 粒子/436 字段断言；旧进度 2 样本/29 粒子，高 ID 和旧别名迁移通过 |
 | 简中/英文真实交互、长按、滚动、缩放与 DPI | 人工 GUI | NOT RUN | 当前 Computer Use 原生管道未向测试 REPL 授权；自动化、进程存活与离屏渲染不替代该结论 |
-| 发布门禁 | 发布 | NOT RUN | 未签名、无匿名克隆重建、无 7,200 秒长跑、无可信 GUI/DPI 人工矩阵；`release_ready=false` |
+| 发布门禁 | 发布 | NOT RUN | 无测试公开源码已完成一次独立 Release 编译；Windows 未签名、无 7,200 秒长跑、无完整桌面 GUI/DPI 人工矩阵、无 tag/GitHub Release；`release_ready=false` |
 
 ## Phase 1：纯沙盒方向清理
 
@@ -313,7 +313,7 @@
 
 | 项目 | 状态 | 证据 |
 |---|---|---|
-| 同源 ARM64 原生编译 | PASS | NDK r29 / API 21，完整 `755/755`；周期表、化学、冶金、核素、有机、电子、生态、中文字体和 Lua 均编入同一 `libpowder.so` |
+| 同源 ARM64 原生编译 | PASS | NDK r29 / API 21，Release 全图 `766/766`；周期表、化学、冶金、核素、有机、电子、生态、中文字体和 Lua 均编入同一 `libpowder.so`；公开配置固定 `build_tests=false` |
 | APK Manifest | PASS | `org.tptzh.omnipack`、`versionCode=1000000`、`versionName=1.0.0`、min SDK 21、target SDK 33、横屏启动，中文标签“万象沙盘” |
 | 权限与数据目录 | PASS | 只申请网络和振动；不申请旧式外部存储或全盘管理权限；外部应用专属目录不可用时回退内部应用目录 |
 | API 21 Java 兼容 | PASS | CA 证书编码改用 `android.util.Base64`，不再调用 API 26 才有的 `java.util.Base64` |
@@ -321,11 +321,14 @@
 | 16 KB 页兼容 | PASS | ARM64 ELF 三个 `LOAD` 段对齐均为 `0x4000`；`zipalign -c -P 16 -v 4` 通过 |
 | 分发原生库剥离 | PASS | 构建目录保留未剥离诊断库，APK 只封装 `llvm-strip --strip-unneeded` 生成的副本；最终包不得包含 `.debug_*`、`.symtab` 或 `.strtab` |
 | ZIP 与入口 | PASS | ZIP CRC 完整；包含 `lib/arm64-v8a/libpowder.so`、`classes.dex`、Manifest 和启动资源；SDL JNI、`JNI_OnLoad`、`SDL_main` 均在动态符号表 |
-| Android 静态专项门禁 | PASS | `tools/android_port_audit.py` 共 18 项全部通过 |
-| 真机安装与启动 | NOT RUN | 当前 `adb devices -l` 没有连接设备，不能用 APK 静态审计替代安装和启动证据 |
-| 触控、中文输入法与生命周期 | NOT RUN | 需要真机验证绘制、长按、滚动、周期表、软键盘、后台/前台和旋转锁定 |
-| Android OPS 跨平台往返 | NOT RUN | 桌面 OPS 代码相同，但仍需在真机保存、导出并由 Windows 客户端重新载入 |
-| Android 压力和长跑 | NOT RUN | 需要在实际 ARM64 手机记录帧率、温度、内存、暂停/恢复及大规模内容场景 |
+| Android 静态专项门禁 | PASS | `tools/android_port_audit.py` 共 23 项全部通过，覆盖语言重启桥、触屏本地/在线存档入口和公开源码禁用测试目标 |
+| 模拟器安装与启动 | PASS | 独立 MuMu Android 15 实例，ADB `127.0.0.1:16416`；ABI 列表 `x86_64,arm64-v8a,x86`，APK 通过 ARM64 转译安装并进入 SDL 主界面；既有索引 0 未修改 |
+| 触控、输入法与内容 UI | PASS | 简中/英文周期表、氢材料面板、详情滚动、长按完整说明、搜索输入和触控绘制均通过；证据 `artifacts/android/private-validation/04..36-*.png` |
+| 语言自动重启 | PASS | English→简体中文 PID `3756→3898`，简体中文→English PID `3898→4165`；两次均先落盘 `powder.pref`，新进程界面语言正确 |
+| 分辨率与 DPI | PASS | `1600x900/240 dpi`、`1280x720/160 dpi`、`1920x1080/320 dpi`；周期表、材料面板、搜索和长说明未见明显遮挡或越界 |
+| Android OPS 本地往返 | PASS | 客户端生成 517 字节 `android_ops_test.cps`，清空后短按本地打开入口，从浏览器点击同一存档并恢复粒子轨迹；证据 `39-zh-local-save-roundtrip.png` |
+| 本地/在线打开手势 | PASS | 触屏短按左下角按钮进入本地存档浏览器；750 ms 长按进入在线浏览器；证据 `39-zh-local-save-roundtrip.png`、`40-zh-longpress-online-browser.png` |
+| 物理设备生命周期与长跑 | NOT RUN | 仍需在实际 ARM64 手机上记录后台/前台、温度、耗电、持续帧率、内存和大规模内容长跑；模拟器结果不能替代 |
 
 ## 后续批次固定测试
 

@@ -9,6 +9,7 @@
 
 namespace Platform
 {
+#ifndef __ANDROID__
 void DoRestart()
 {
 	ByteString exename = ExecutableName();
@@ -24,6 +25,7 @@ void DoRestart()
 	}
 	Exit(-1);
 }
+#endif
 
 ByteString ExecutableName()
 {

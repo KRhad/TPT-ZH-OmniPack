@@ -1,5 +1,8 @@
 package @APPID@;
 
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.os.Build;
 import org.libsdl.app.SDLActivity;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -11,6 +14,31 @@ import android.util.Base64;
 
 public class PowderActivity extends SDLActivity
 {
+	public void restartApplication()
+	{
+		runOnUiThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				Intent restartIntent = Intent.makeRestartActivityTask(getComponentName());
+				int flags = PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_ONE_SHOT;
+				if (Build.VERSION.SDK_INT >= 23) {
+					flags |= PendingIntent.FLAG_IMMUTABLE;
+				}
+				PendingIntent restart = PendingIntent.getActivity(
+					PowderActivity.this, 0x545054, restartIntent, flags);
+				try {
+					restart.send();
+				} catch (PendingIntent.CanceledException e) {
+					startActivity(restartIntent);
+				}
+				finishAffinity();
+				android.os.Process.killProcess(android.os.Process.myPid());
+			}
+		});
+	}
+
 	public String getCertificateBundle()
 	{
 		String allPems = "";
