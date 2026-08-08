@@ -64,6 +64,24 @@ passes. Official master still contained the off-by-one at the 2026-08-09 check.
 The upstream many-authors change required local JSON/BSON adaptation. Commit
 `729f72cba` preserves nested author links; the high-ID/complex-author probe passes.
 
+## Deterministic full-save fixes
+
+The C01-C14 runner found that complete save loading restored parameters before
+`clear_sim()`, which then reset `frameCount` and `ensureDeterminism`; particle Create
+callbacks could also advance the restored RNG during `Load`. Commit `908878f74`
+reapplies continuation state after loading in both complete-save paths.
+
+It also found that saved `edgeMode` was written directly to `Simulation` while the
+Lua/UI getter reads `GameModel`. Commit `ce8087d07` uses the existing model setter so
+both states remain synchronized. The complete suite now passes 28 independent
+restart loads. Partial paste behavior is unchanged.
+
+OPS remains a normalized, partly quantized persistence format rather than a
+bit-exact Snapshot checkpoint: generated versus loaded Snapshot hashes differ in
+14/14 cases, while the two independent loaded traces match in 14/14. Differential
+work must use the loaded state as its authoritative baseline and report load-boundary
+field changes explicitly.
+
 ## OmniAtmosphere save contract
 
 - Store conservative atmosphere state in a separate versioned object/chunk; never
@@ -84,6 +102,8 @@ The upstream many-authors change required local JSON/BSON adaptation. Commit
 | High-ID OPS and complex authors | PASS |
 | Legacy OPS samples | PASS (`2` samples, `29` particles) |
 | Eight OPS restart scenarios | PASS |
+| C01-C14 deterministic loaded traces | PASS (`14/14`, 28 restart loads) |
+| Saved RNG/particle/required counts restored | PASS (`14/14`) |
 | Lua 100.1 boundary cases | PASS (`11/11`) |
 | GUI save/load | `not_tested` |
 | PSv/fuC runtime fixtures | `not_tested` |

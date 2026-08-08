@@ -3,8 +3,9 @@
 ## Current phase decision
 
 The official 100.1 source adaptation, explicit FP modes and current fixed-step
-throughput/process-RAM baseline are integrated. The overall G0 gate remains RED, so
-the roadmap stays in Phase 1 characterization/differential work. No production
+throughput/process-RAM baseline and C01-C14 deterministic restart suite are
+integrated. The overall G0 gate remains RED, so the roadmap stays in Phase 1
+differential/profiler work. No production
 OmniAtmosphere state or solver will be integrated yet.
 
 ## Phase status
@@ -13,7 +14,7 @@ OmniAtmosphere state or solver will be integrated yet.
 |---:|---|---|
 | -1 | external research and license audit | YELLOW: classifications complete; no new artifact redistribution authorized |
 | 0 | latest upstream adaptation | GREEN source sub-gate; G0 overall RED |
-| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; FP modes and two-scene fixed-step baseline complete |
+| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; FP modes, fixed-step baseline and C01-C14 saves complete |
 | 2 | physical scale and unit system | proposal written / RED |
 | 3 | AtmosphereBench | planned / BLOCKED by Phase 1-2 foundations |
 | 4 | solver selection | BLOCKED |
@@ -33,8 +34,8 @@ The next integration commits should be small and independently reversible:
    strict modes build and pass the bounded suites. Numerical comparison remains open.
 2. `tests/kernel-benchmark`: COMPLETE in `c4490463f`; uncapped fixed-step runner,
    deterministic state signatures and structured machine/build/result manifest.
-3. `tests/characterization`: create C01-C14 deterministic generators/saves and
-   manifests; keep private runtime artifacts out of publication packages.
+3. `tests/characterization`: COMPLETE in `1b8586877`; C01-C14 deterministic
+   generators, private OPS artifacts, exact restart traces and aggregate manifest.
 4. `tests/differential`: record first divergence plus particle/atmosphere/neighborhood
    state and conservation ledgers.
 5. `tests/profiler-export`: add subsystem spans plus process VRAM without perturbing
@@ -91,7 +92,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Remove remaining G0 blockers: C01-C14 saves, first-divergence/ledger runner and subsystem profiler/VRAM export. |
+| Next stage? | Remove remaining G0 blockers: first-divergence/load-boundary ledger runner and subsystem profiler/VRAM export. |
 
 ## Long-term acceptance
 
