@@ -2,7 +2,7 @@
 
 这里的 `1.0.0` 是产品版本号。当前内容作为 Windows x64 与 Android ARM64 的公开构建快照发布在 `public-source` 分支，不等同于已经完成全部发布门禁的 `v1.0.0` GitHub Release。
 
-公开源码由 `4d77fe58b2327721db4ada2a8389a06b743bd783` 对应的 Source ZIP 全新同步而来；公开 Git 历史从单独的无测试根提交开始，不包含开发分支或私有测试历史。该无测试源码包已在独立目录使用 `build_tests=false` 完成全新构建（`764/764`）。开发树同一源码提交的 Windows clean Release 构建为 `790/790`，完整 Meson 测试为 `42/42`，Python 检查为 `253 passed, 2 skipped`，Android ARM64 clean signed build 为 `767/767`。
+公开源码由 `4d77fe58b2327721db4ada2a8389a06b743bd783` 对应的 Source ZIP 全新同步而来；公开 Git 历史从单独的无测试根提交开始，不包含开发分支或私有测试历史。该无测试源码包已在独立目录使用 `build_tests=false` 完成全新构建（`764/764`）。开发树同一源码提交的 Windows clean Release 构建为 `790/790`，完整 Meson 测试为 `42/42`，Python 检查共 `253` 项（`251 passed, 2 skipped`），Android ARM64 clean signed build 为 `767/767`。
 
 Windows 与 Android 开始界面显示 `https://github.com/KRhad/TPT-ZH-OmniPack`。静态更新通道使用内部 build `1`：玩家可见版本与 Android `versionName` 仍为 `1.0.0`，Android `versionCode=1000001`。Windows `.update` 和 Android APK 均校验精确大小及 SHA-256；Android APK 保持旧公开 build `0` 的同一测试证书，并通过 v1/v2/v3 签名、16 KB ZIP/ELF 对齐检查。代码与最终本地资产审计 `47/47` 通过。
 
@@ -29,7 +29,7 @@ public_source_build_targets=764/764
 public_source_commit_available=true
 development_windows_release_build=790/790
 development_meson_tests=42/42
-development_python_checks=253_passed_2_skipped
+development_python_checks=251_passed_2_skipped_total_253
 android_arm64_clean_signed_build=767/767
 android_signature_v1_v2_v3=true
 android_upgrade_certificate_preserved=true
