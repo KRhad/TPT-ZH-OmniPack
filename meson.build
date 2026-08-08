@@ -691,6 +691,7 @@ high_id_save_probe = executable(
 solid_barrier_probe = executable(
 	'solid_barrier_probe',
 	sources: [
+		vcs_tag_header,
 		files('tools/solid_barrier_probe.cpp'),
 		files('src/client/GameSave.cpp'),
 		files('src/client/User.cpp'),
