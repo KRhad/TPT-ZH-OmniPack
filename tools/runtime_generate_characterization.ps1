@@ -77,6 +77,62 @@ function Get-FileSha256 {
     }
 }
 
+function Get-BytesSha256 {
+    param([Parameter(Mandatory = $true)][byte[]] $Bytes)
+    $hasher = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([System.BitConverter]::ToString($hasher.ComputeHash($Bytes))).Replace("-", "")
+    }
+    finally {
+        $hasher.Dispose()
+    }
+}
+
+function New-FrozenInput {
+    param(
+        [Parameter(Mandatory = $true)][string] $Name,
+        [Parameter(Mandatory = $true)][string] $SourcePath
+    )
+    $resolvedSourcePath = (Resolve-Path -LiteralPath $SourcePath).Path
+    [byte[]]$bytes = [System.IO.File]::ReadAllBytes($resolvedSourcePath)
+    return [pscustomobject]@{
+        Name = $Name
+        SourcePath = $resolvedSourcePath
+        Bytes = $bytes
+        Sha256 = Get-BytesSha256 -Bytes $bytes
+    }
+}
+
+function Get-ArtifactRelativePath {
+    param(
+        [Parameter(Mandatory = $true)][string] $Root,
+        [Parameter(Mandatory = $true)][string] $Path
+    )
+    $rootPath = [System.IO.Path]::GetFullPath($Root).TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    )
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
+    $prefix = $rootPath + [System.IO.Path]::DirectorySeparatorChar
+    if (-not $fullPath.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Artifact file escaped its suite root: $Path"
+    }
+    return $fullPath.Substring($prefix.Length).Replace("\", "/")
+}
+
+function Get-ArtifactFileInventory {
+    param([Parameter(Mandatory = $true)][string] $Root)
+    $records = [System.Collections.Generic.List[object]]::new()
+    foreach ($file in @(Get-ChildItem -LiteralPath $Root -Recurse -File)) {
+        $records.Add([pscustomobject][ordered]@{
+            relative_path = Get-ArtifactRelativePath -Root $Root -Path $file.FullName
+            length_bytes = [int64]$file.Length
+            sha256 = Get-FileSha256 -Path $file.FullName
+        })
+    }
+    return @($records | Sort-Object relative_path)
+}
+
 function Read-KeyValueFile {
     param([Parameter(Mandatory = $true)][string] $Path)
     $values = @{}
@@ -253,6 +309,17 @@ function Get-CanonicalOpsInfo {
         throw "OPS canonicalization failed: $Path"
     }
     return $json | ConvertFrom-Json
+}
+
+function Get-BuildProvenanceSha256 {
+    param([Parameter(Mandatory = $true)] $Build)
+    $material = [ordered]@{
+        fp_mode = $Build.FpMode
+        options = $Build.Options
+        compiler = $Build.Compiler
+        simulation_compile_command = $Build.SimulationCompileCommand
+    }
+    return Get-TextSha256 -Text ($material | ConvertTo-Json -Depth 20 -Compress)
 }
 
 function Resolve-PhaseOutputFile {
@@ -519,18 +586,32 @@ foreach ($id in $selectedIds) {
 }
 $selectedCases = @($allCases | Where-Object { $_.id -in $selectedIds } | Sort-Object id)
 
+$frozenLua = New-FrozenInput -Name "characterization_scenarios.lua" -SourcePath $luaSource
+$frozenCases = New-FrozenInput -Name "characterization_cases.json" -SourcePath $casesSource
+$frozenCanonicalizer = New-FrozenInput `
+    -Name "characterization_ops_canonical.py" -SourcePath $canonicalizerSource
+$frozenLoadBoundaryComparator = New-FrozenInput `
+    -Name "load_boundary_compare.py" -SourcePath $loadBoundaryComparatorSource
+$frozenWrapper = New-FrozenInput `
+    -Name "runtime_generate_characterization.ps1" -SourcePath $PSCommandPath
+$frozenInputs = @(
+    $frozenLua,
+    $frozenCases,
+    $frozenCanonicalizer,
+    $frozenLoadBoundaryComparator,
+    $frozenWrapper
+)
+
 $gitState = Get-GitState -Repository $sourceRoot
 $build = Get-BuildProvenance -Directory $resolvedBuildDirectory
+$buildProvenanceSha256 = Get-BuildProvenanceSha256 -Build $build
 $executableInfo = Get-Item -LiteralPath $resolvedExecutable
 $executableSha256 = Get-FileSha256 -Path $resolvedExecutable
-$luaSha256 = Get-FileSha256 -Path $luaSource
-$casesSha256 = Get-FileSha256 -Path $casesSource
-$canonicalizerSha256 = (
-    Get-FileSha256 -Path $canonicalizerSource
-)
-$loadBoundaryComparatorSha256 = (
-    Get-FileSha256 -Path $loadBoundaryComparatorSource
-)
+$luaSha256 = $frozenLua.Sha256
+$casesSha256 = $frozenCases.Sha256
+$canonicalizerSha256 = $frozenCanonicalizer.Sha256
+$loadBoundaryComparatorSha256 = $frozenLoadBoundaryComparator.Sha256
+$wrapperSha256 = $frozenWrapper.Sha256
 $tempParent = [System.IO.Path]::GetFullPath($TemporaryDirectory)
 if (-not (Test-Path -LiteralPath $tempParent -PathType Container)) {
     throw "Temporary directory does not exist: $tempParent"
@@ -570,14 +651,12 @@ $suiteArtifactRoot = Join-Path $artifactBase (
 New-Item -ItemType Directory -Path $suiteArtifactRoot -Force | Out-Null
 $frozenInputsRoot = Join-Path $suiteArtifactRoot "frozen-inputs"
 New-Item -ItemType Directory -Path $frozenInputsRoot | Out-Null
-foreach ($input in @(
-    [pscustomobject]@{ Name = "characterization_scenarios.lua"; Path = $luaSource },
-    [pscustomobject]@{ Name = "characterization_cases.json"; Path = $casesSource },
-    [pscustomobject]@{ Name = "characterization_ops_canonical.py"; Path = $canonicalizerSource },
-    [pscustomobject]@{ Name = "load_boundary_compare.py"; Path = $loadBoundaryComparatorSource },
-    [pscustomobject]@{ Name = "runtime_generate_characterization.ps1"; Path = $PSCommandPath }
-)) {
-    Copy-Item -LiteralPath $input.Path -Destination (Join-Path $frozenInputsRoot $input.Name)
+foreach ($input in $frozenInputs) {
+    $destination = Join-Path $frozenInputsRoot $input.Name
+    [System.IO.File]::WriteAllBytes($destination, $input.Bytes)
+    if ((Get-FileSha256 -Path $destination) -ne $input.Sha256) {
+        throw "Frozen characterization input hash mismatch: $($input.Name)"
+    }
 }
 
 $caseResults = [System.Collections.Generic.List[object]]::new()
@@ -854,6 +933,34 @@ foreach ($case in $selectedCases) {
     }
 }
 
+$finalGitState = Get-GitState -Repository $sourceRoot
+if ($finalGitState.Commit -ne $gitState.Commit -or
+    $finalGitState.StateSha256 -ne $gitState.StateSha256) {
+    throw "Characterization source worktree changed during execution"
+}
+foreach ($input in $frozenInputs) {
+    if ((Get-FileSha256 -Path $input.SourcePath) -ne $input.Sha256) {
+        throw "Characterization source input changed during execution: $($input.Name)"
+    }
+    $artifactInputPath = Join-Path $frozenInputsRoot $input.Name
+    if ((Get-FileSha256 -Path $artifactInputPath) -ne $input.Sha256) {
+        throw "Frozen characterization artifact input changed during execution: $($input.Name)"
+    }
+}
+$executableInfoAfter = Get-Item -LiteralPath $resolvedExecutable
+if ($executableInfoAfter.Length -ne $executableInfo.Length -or
+    (Get-FileSha256 -Path $resolvedExecutable) -ne $executableSha256) {
+    throw "Characterization executable changed during execution"
+}
+$buildAfter = Get-BuildProvenance -Directory $resolvedBuildDirectory
+if ((Get-BuildProvenanceSha256 -Build $buildAfter) -ne $buildProvenanceSha256) {
+    throw "Characterization build provenance changed during execution"
+}
+$artifactFiles = Get-ArtifactFileInventory -Root $suiteArtifactRoot
+$artifactDirectoryCount = @(
+    Get-ChildItem -LiteralPath $suiteArtifactRoot -Recurse -Directory
+).Count
+
 $manifest = [ordered]@{
     schema_version = 1
     suite_id = [string]$caseDocument.suite_id
@@ -868,16 +975,29 @@ $manifest = [ordered]@{
         dirty = [bool]$gitState.Dirty
         worktree_state_sha256 = $gitState.StateSha256
         status_lines = [string[]]$gitState.StatusLines
+        tool_inputs_frozen_before_execution = $true
+        source_unchanged_after_execution = $true
         lua_sha256 = $luaSha256
         case_definitions_sha256 = $casesSha256
         ops_canonicalizer_sha256 = $canonicalizerSha256
         load_boundary_comparator_sha256 = $loadBoundaryComparatorSha256
-        wrapper_sha256 = Get-FileSha256 -Path $PSCommandPath
+        wrapper_sha256 = $wrapperSha256
+        frozen_inputs = @($frozenInputs | ForEach-Object {
+            [ordered]@{
+                name = $_.Name
+                artifact_relative_path = "frozen-inputs/$($_.Name)"
+                sha256 = $_.Sha256
+            }
+        })
     }
     executable = [ordered]@{
         sha256 = $executableSha256
         length_bytes = [int64]$executableInfo.Length
         build_directory = $resolvedBuildDirectory
+        build_provenance_sha256 = $buildProvenanceSha256
+        executable_rehashed_after_execution = $true
+        build_provenance_rehashed_after_execution = $true
+        source_commit_embedded_in_executable = "not_verified"
         fp_mode = $build.FpMode
         compiler = $build.Compiler
         meson_options = $build.Options
@@ -899,6 +1019,9 @@ $manifest = [ordered]@{
     simulation_dt_unit = [string]$caseDocument.simulation_dt_unit
     provenance = [string]$caseDocument.provenance
     artifact_policy = [string]$caseDocument.artifact_policy
+    artifact_file_count_excluding_manifest = $artifactFiles.Count
+    artifact_directory_count = [int]$artifactDirectoryCount
+    artifact_files = $artifactFiles
     cases = [object[]]$caseResults
 }
 $manifestPath = Join-Path $suiteArtifactRoot "manifest.json"
