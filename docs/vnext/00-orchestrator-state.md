@@ -12,6 +12,7 @@ LEGACY_LEDGER_IMPLEMENTATION_HEAD=b3aa56cf3914ab18da60d1ac9ff1e492377f6e88
 ALL_TICK_LEDGER_IMPLEMENTATION_HEAD=632665650
 PHYSICAL_LEDGER_FEASIBILITY_HEAD=86a2b3386
 RUNTIME_RECORD_LIFECYCLE_LEDGER_HEAD=4fa0ec2f3
+RUNTIME_CORRECTION_OBSERVER_HEAD=4c9f3b909
 LOAD_BOUNDARY_IMPLEMENTATION_HEAD=971687a24
 LOAD_BOUNDARY_CLOSURE_HEAD=a09c6d716
 REPORT_COMMIT=SELF
@@ -28,8 +29,11 @@ ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
 UNSAMPLED_FULL_STATE_FINITE=RED
 PHYSICAL_LEDGER_FEASIBILITY=GREEN
 RUNTIME_RECORD_LIFECYCLE_OBSERVER=GREEN
+RUNTIME_CORRECTION_OBSERVER=GREEN
+AUDITED_AIR_CAPS_RUNTIME_EVIDENCE=GREEN
 LOAD_BOUNDARY_FIELD_DIFF=GREEN
 PHYSICAL_CONSERVATION_LEDGER=RED
+SOURCE_SINK_CORRECTION_LEDGER=RED
 G0_UPSTREAM_BASELINE=RED
 PRODUCTION_OMNIATMOSPHERE_ALLOWED=false
 ```
@@ -47,11 +51,13 @@ benchmark, differential or sampled-ledger foundations.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
-ledger feasibility audit, record-only runtime lifecycle observer and OPS
-load-boundary field-attribution sub-gates are also GREEN. The lifecycle observer
-does not give records physical units. Physical mass, momentum, energy, runtime
-source/sink attribution, correction events, full state and pressure positivity
-remain RED and still block G0.
+ledger feasibility audit, record-only runtime lifecycle observer, audited-Air-cap
+correction observer and OPS load-boundary field-attribution sub-gates are also
+GREEN. The lifecycle observer does not give records physical units, and the
+correction observer is explicitly limited to 12 Legacy Air cap branches. Physical
+mass, momentum, energy, complete runtime source/sink attribution, complete
+correction accounting, full state and pressure positivity remain RED and still
+block G0.
 
 ## Capability audit
 
@@ -62,8 +68,8 @@ remain RED and still block G0.
 | Sub-agents | `true` | Worker slots were available; three requested read-only ledger audits exhausted service retries with 429 and contributed no evidence. Main Orchestrator independently reran clients, tests, artifact hashes and replay |
 | Multiple shells/tool calls | `true` | Independent PowerShell commands can run concurrently |
 | Git worktree | `true` | upstream/element worktrees remain isolated; formal load-boundary and all-tick-ledger runs used clean detached worktrees |
-| Compile project | `true` | fresh lifecycle-ledger target completed successfully; its app SHA-256 is recorded in `phase-1-runtime-lifecycle-ledger.md` |
-| Run automated tests | `true` | fresh lifecycle-ledger Meson suite `39/39`; nested Python discovery `327` run, `2` declared skips, no failures |
+| Compile project | `true` | fresh correction-ledger target completed successfully; app SHA-256 is recorded in `phase-1-runtime-correction-ledger.md` |
+| Run automated tests | `true` | fresh correction-ledger Meson suite `39/39`; nested Python discovery `331` run, `2` declared skips, no failures |
 | GPU hardware | `true` | NVIDIA GeForce RTX 5070 Ti Laptop GPU, driver 591.86, reported 12,227 MiB, compute capability 12.0 |
 | SDL application process | `true` | isolated Lua/runtime clients execute; visible interactive GUI acceptance is `not_tested` |
 | SDL3 / SDL_GPU runtime | `false` | repository is SDL2; no SDL3 build or GPU compute pipeline exists |
@@ -125,6 +131,7 @@ with an explicit maintenance decision.
 | `971687a24` | OPS load-boundary field capture and attribution | tooling/tests only |
 | `a09c6d716` | close frozen-input and recursive artifact manifest | tooling/tests only |
 | `4fa0ec2f3` | optional record-level lifecycle reconciliation observer | additive diagnostics; disabled by default |
+| `4c9f3b909` | bounded runtime observer for 12 audited Legacy Air cap branches, Lua fixture, and overflow replay | additive diagnostics; disabled by default |
 
 ## Phase report
 
@@ -133,8 +140,8 @@ with an explicit maintenance decision.
 - Base commit: `fb72d5e8f` (pre-vNext OmniPack).
 - Architecture changes: no OmniCore physical state model; upstream integration,
   two bounded correctness fixes, isolated benchmark/characterization/differential/
-  ledger tooling, and a disabled-by-default record-only lifecycle diagnostic are
-  integrated.
+  ledger tooling, a disabled-by-default record-only lifecycle diagnostic, and a
+  disabled-by-default audited-Air-cap correction diagnostic are integrated.
 - Numerical verification: identical generated mixed state first diverges between FP
   modes at update step 1 in Particle velocity and Air state. A clean 1,000-step
   ledger then found `0` non-finite/range/bound observations across 102 sampled
@@ -160,16 +167,19 @@ with an explicit maintenance decision.
   audit inventories Lifecycle/correction anchors and proves the current lack of
   authoritative physical fields. `4fa0ec2f3` adds a record-only runtime observer;
   its isolated eight-tick client reports zero reconciliation failures and zero
-  unattributed delta, with direct SPRK and BRMT/TUNG paths observed. Physical
-  conservation claims remain explicitly false.
+  unattributed delta, with direct SPRK and BRMT/TUNG paths observed. `4c9f3b909`
+  adds the scoped Air-cap observer: the base fixture reports 4 events and the
+  overflow fixture reports 2,048 total, 256 retained, 1,792 dropped, with a
+  contiguous retained sequence window. Physical conservation claims remain
+  explicitly false.
 - Compatibility: automated build/Lua/OPS evidence passes; GUI, PSv/fuC, portable
   runtime, broad external Lua corpus, and visual behavior remain `not_tested`.
 - Known deviation: `resetVelocity` final-edge fix is ahead of official master.
 - Gate: fixed-step, characterization, first-divergence, sampled/all-tick
-  proxy-ledger, physical-ledger feasibility, record-only runtime lifecycle ledger
-  and load-boundary field-attribution foundations are GREEN; runtime physical
-  conservation/source/correction ledgers, profiler/VRAM and performance budgets
-  keep G0 RED.
+  proxy-ledger, physical-ledger feasibility, record-only runtime lifecycle ledger,
+  audited-Air-cap correction observer and load-boundary field-attribution
+  foundations are GREEN; runtime physical conservation, complete source/sink and
+  correction ledgers, profiler/VRAM and performance budgets keep G0 RED.
 - Rollback point: `fb72d5e8f` for all vNext integration, or the parent of each bounded
   commit for phase-local rollback. No rollback is currently recommended.
 
@@ -177,7 +187,8 @@ with an explicit maintenance decision.
 
 Only G0 blockers may proceed:
 
-1. runtime correction observer and internal/full-state finite/positivity work;
+1. complete physical correction/source-sink attribution and internal/full-state
+   finite/positivity work beyond the audited-Air-cap observer;
 2. subsystem profiler export and process VRAM measurement;
 3. strict/fast drift comparison and an accepted performance regression budget.
 

@@ -29,8 +29,10 @@ claims remain `NOT_EVALUATED` and G0 remains RED.
 
 This is the historical feasibility snapshot at `86a2b3386`. Its runtime-lifecycle
 status is superseded by the record-only observer report at
-`phase-1-runtime-lifecycle-ledger.md`; all physical and correction claims above
-remain unchanged.
+`phase-1-runtime-lifecycle-ledger.md`, and its correction status is superseded by
+the scoped audited-Air-cap observer report at
+`phase-1-runtime-correction-ledger.md`. The historical physical/source claims
+remain unchanged; complete correction and physical ledger work is still RED.
 
 ## Method and reproducibility
 

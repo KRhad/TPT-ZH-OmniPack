@@ -6,7 +6,7 @@
 |---|---|---|---|---|---|
 | C-01 | CRITICAL | correctness/performance | 4 mm cells with real sound speed make explicit compressible CFL far smaller than a game tick | select and validate time/acoustic/all-speed policy in AtmosphereBench | RED |
 | C-02 | CRITICAL | numerical | identical generated mixed state diverges on step 1; 1,001 post-update exported-float states remain finite/in Legacy range, but RNG splits by step 34 and physical/conservation error remains unknown | retain field/proxy evidence and add double/float/fast physical conservation, positivity, correction and internal/full-state matrix | GREEN capture/proxy, RED physical comparison |
-| C-03 | CRITICAL | conservation | floors/clamps could silently create mass/species/energy; source audit identifies 12 explicit Air cap branches but no runtime correction ledger | optional branch-outcome observer, correction limits and fail-closed reconciliation tests | RED |
+| C-03 | CRITICAL | conservation | floors/clamps could silently create mass/species/energy; 12 explicit Air cap branches now have a bounded Legacy-field observer, but all other correction/source paths remain unobserved and no physical units exist | extend branch-outcome coverage beyond audited Air caps, then add physical source/sink attribution and correction limits after the scale/state contract | GREEN audited Air-cap sub-gate, RED complete physical ledger |
 | C-08 | HIGH | lifecycle accounting | record observer covers central APIs plus three audited direct paths, but not physical units, all raw writes, correction branches or full state | retain reconciliation failure as evidence, expand only with explicit branch hooks and never promote record deltas to physical conservation | YELLOW foundation, RED physical |
 | C-04 | HIGH | correctness | Legacy particle updates directly write Air and depend on iteration/same-frame state | C01-C14, inventory, same-source FP field capture and OPS load-boundary field attribution exist; add Classic/Omni compatibility adapter | YELLOW foundation, RED replacement |
 | C-05 | HIGH | correctness | scale/time/effective depth are not yet accepted | Phase 2 contract and dimensional checks | RED |
@@ -55,6 +55,8 @@ STRICT_FAST_SAMPLED_PROXY_COMPARISON=GREEN
 ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
 PHYSICAL_LEDGER_FEASIBILITY=GREEN
 RUNTIME_RECORD_LIFECYCLE_OBSERVER=GREEN
+RUNTIME_CORRECTION_OBSERVER=GREEN
+AUDITED_AIR_CAPS_RUNTIME_EVIDENCE=GREEN
 UNSAMPLED_FULL_STATE_FINITE=RED
 PHYSICAL_CONSERVATION_LEDGER=RED
 SOURCE_SINK_CORRECTION_LEDGER=RED

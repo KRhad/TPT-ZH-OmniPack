@@ -112,7 +112,10 @@ type-change path. The test never uses a fixture-specific observer exception.
   reported as outside-tick events when they pass an instrumented anchor; they form
   the next tick's baseline rather than an in-tick conservation claim.
 - Actual clamp/floor branch outcomes, Air scratch state, fan/gravity/wall auxiliary
-  state, internal subphases, and correction amounts remain unobserved.
+  state, internal subphases, and correction amounts remain unobserved by this
+  record-ledger phase. The later scoped audited-Air-cap observer is documented in
+  `phase-1-runtime-correction-ledger.md`; it does not change this report's
+  record-only or physical-conservation limits.
 - This record observer does not alter `Weight`/`HeatCapacity` meanings and does not
   establish a physical scale contract.
 
