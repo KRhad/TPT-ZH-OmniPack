@@ -108,6 +108,25 @@ class LegacyLedgerComparatorTest(unittest.TestCase):
         self.assertFalse(result["claims"]["physical_mass_conservation_evaluated"])
         self.assertFalse(result["claims"]["physical_energy_conservation_evaluated"])
         self.assertTrue(result["claims"]["legacy_field_proxies_only"])
+        self.assertTrue(result["claims"]["all_tick_post_update_exported_fields"])
+        self.assertFalse(result["claims"]["sampled_states_only"])
+
+    def test_sampled_interval_keeps_unsampled_scope_explicit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = [root / name for name in ("left.csv", "right.csv", "lt.csv", "rt.csv")]
+            rows = [ledger_row(step) for step in (0, 1, 2, 4)]
+            write_ledger(paths[0], rows)
+            write_ledger(paths[1], rows)
+            types = [record for step in (0, 1, 2, 4) for record in type_rows(step, {1: 2})]
+            write_types(paths[2], types)
+            write_types(paths[3], types)
+            result = comparator.compare_ledgers(
+                paths[0], paths[1], paths[2], paths[3], total_steps=4, sample_interval=2
+            )
+
+        self.assertFalse(result["claims"]["all_tick_post_update_exported_fields"])
+        self.assertTrue(result["claims"]["sampled_states_only"])
 
     def test_first_metric_and_type_divergence_are_reported(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -489,6 +508,8 @@ class LegacyLedgerSourceContractTest(unittest.TestCase):
             "result does not match CSV endpoints",
             "observation total mismatch",
             "sampled_states_only",
+            "all_tick_post_update_exported_fields",
+            "all_observed_post_update_exported_fields",
             "Assert-AllCompileCommandsCompatible",
             "ninja_target_built_before_execution",
             "runtime_directory_dll_inventory",

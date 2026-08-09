@@ -1136,9 +1136,10 @@ try {
         }
     }
     if (-not $comparison.claims.legacy_field_proxies_only -or
-        -not $comparison.claims.sampled_states_only -or
-        -not $comparison.claims.exported_particle_float_subset_only) {
-        throw "Legacy ledger comparison omitted its sampled/proxy scope"
+        -not $comparison.claims.exported_particle_float_subset_only -or
+        ($SampleInterval -gt 1 -and -not $comparison.claims.sampled_states_only) -or
+        ($SampleInterval -eq 1 -and -not $comparison.claims.all_tick_post_update_exported_fields)) {
+        throw "Legacy ledger comparison omitted its sampling/proxy scope"
     }
 
     $finalGitState = Get-GitState -Repository $sourceRoot
@@ -1307,9 +1308,15 @@ try {
             source_commit_embedded_in_executable = "not_verified"
         }
         sampling_scope = [ordered]@{
-            sampled_states_only = $true
+            sampled_states_only = [bool]$comparison.claims.sampled_states_only
+            all_tick_post_update_exported_fields = [bool]$comparison.claims.all_tick_post_update_exported_fields
+            unsampled_ticks_finite_state = if ($SampleInterval -eq 1) {
+                "all_observed_post_update_exported_fields"
+            }
+            else {
+                "not_tested"
+            }
             exported_particle_float_subset_only = $true
-            unsampled_ticks_finite_state = "not_tested"
         }
         ledger_semantics = [ordered]@{
             particle_count_unit = "records"
@@ -1384,6 +1391,8 @@ try {
     Write-Output "first_sampled_metric_divergence_step=$($comparison.first_sampled_metric_divergence.step)"
     Write-Output "left_finite_exported_state=$($comparison.left.finite_exported_state.ToString().ToLowerInvariant())"
     Write-Output "right_finite_exported_state=$($comparison.right.finite_exported_state.ToString().ToLowerInvariant())"
+    Write-Output "all_tick_post_update_exported_fields=$($comparison.claims.all_tick_post_update_exported_fields.ToString().ToLowerInvariant())"
+    Write-Output "sampled_states_only=$($comparison.claims.sampled_states_only.ToString().ToLowerInvariant())"
     Write-Output "physical_mass_conservation_evaluated=false"
     Write-Output "physical_energy_conservation_evaluated=false"
     Write-Output "source_commit=$($gitState.Commit)"

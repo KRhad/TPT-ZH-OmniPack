@@ -465,6 +465,7 @@ def compare_ledgers(
     total_steps: int,
     sample_interval: int,
 ) -> dict[str, Any]:
+    all_tick_post_update_exported_fields = sample_interval == 1
     left = read_ledger(
         left_ledger_path,
         total_steps=total_steps,
@@ -571,7 +572,8 @@ def compare_ledgers(
             "physical_momentum_conservation_evaluated": False,
             "source_sink_attribution_evaluated": False,
             "correction_events_evaluated": False,
-            "sampled_states_only": True,
+            "sampled_states_only": not all_tick_post_update_exported_fields,
+            "all_tick_post_update_exported_fields": all_tick_post_update_exported_fields,
             "exported_particle_float_subset_only": True,
         },
     }
