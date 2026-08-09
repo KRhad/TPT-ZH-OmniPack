@@ -161,8 +161,9 @@ sets `performance_gate=not_evaluated`; its four short process timings are eviden
 collection diagnostics, not a throughput benchmark.
 
 Legacy CPU versus future Omni CPU and Omni CPU versus future Omni GPU remain
-unimplemented. The OPS load-boundary field-attribution sub-gate is GREEN; physical
-conservation accounting and unsampled/full-state finite evidence remain RED.
+unimplemented. The OPS load-boundary and all-tick exported-float sub-gates are
+GREEN; physical conservation accounting and internal/full-state finite evidence
+remain RED.
 
 ## OPS load-boundary field attribution
 
@@ -179,6 +180,21 @@ and mass/momentum/energy/source-sink claims are explicitly false. See
 The CSV export and comparison are intentionally not included in the fixed-step
 throughput baseline. Their process timings and C14 memory are evidence-collection
 costs, not a simulation speed claim.
+
+## All-tick exported-float ledger
+
+The clean `632665650` run uses `SampleInterval=1`, so it scans step 0 and every
+post-update state through step 1,000: 1,001 records per Legacy-fast/Strict mode.
+All active Particle `x/y/vx/vy/temp` and every Air `pv/vx/vy/hv` record is finite
+and within the Legacy range contract; the scope-aware comparator explicitly emits
+`all_tick_post_update_exported_fields=true` and `sampled_states_only=false`.
+
+This is deliberately narrower than full state: private Air scratch planes,
+fan/gravity/wall auxiliary state, internal subphases and correction events are not
+observed, while signed Legacy `pv` is not physical pressure positivity. The two
+probe wall times (47.501361/47.919276 seconds) and sampled process working sets
+(139,460,608/138,895,360 bytes) are evidence-collection costs, not a benchmark.
+See `phase-1-all-tick-ledger.md`.
 
 ## Legacy sampled proxy-ledger status
 
@@ -210,9 +226,10 @@ selected derived plane and profile `RenderSnapshotCopy`.
 ## Gate
 
 Build/test capability, the explicit Strict build, fixed-step runner, current
-two-scene throughput/process-RAM baseline, C01-C14 characterization and scoped
-first-divergence capture plus OPS field attribution are GREEN. Subsystem profiling, process VRAM, accepted
-performance budgets, physical conservation/source/correction accounting and
-unsampled/full-state finite/positivity comparison remain RED. The next G0 work is
-the physical Legacy ledger or subsystem profiler/VRAM export;
+two-scene throughput/process-RAM baseline, C01-C14 characterization, scoped
+first-divergence capture, OPS field attribution and all-tick exported-float ledger
+are GREEN. Subsystem profiling, process VRAM, accepted performance budgets, physical
+conservation/source/correction accounting and internal/full-state finite/positivity
+comparison remain RED. The next G0 work is the physical Legacy ledger or subsystem
+profiler/VRAM export;
 production OmniAtmosphere remains blocked.

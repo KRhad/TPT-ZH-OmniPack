@@ -12,6 +12,8 @@ CHARACTERIZATION_SAVES=GREEN
 LOAD_BOUNDARY_IMPLEMENTATION=971687a24
 LOAD_BOUNDARY_CLOSURE=a09c6d716
 LOAD_BOUNDARY_FIELD_DIFF=GREEN
+ALL_TICK_LEDGER_SCOPE=632665650
+ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
 G0_UPSTREAM_BASELINE=RED
 PRODUCTION_OMNIATMOSPHERE_ALLOWED=false
 ```
@@ -23,8 +25,9 @@ traces, process logs and result JSON remain under ignored `artifacts/` and are n
 publication assets.
 
 G0 remains **RED**. The later same-source Legacy-fast/Strict CPU first-divergence
-capture and the OPS load-boundary field-attribution sub-gate are GREEN, but
-conservation/finite-value ledgers, subsystem profiling, process VRAM and accepted
+capture, the OPS load-boundary field-attribution sub-gate and the all-tick
+exported-float sub-gate are GREEN, but conservation/finite-value ledgers,
+internal/full-state finite evidence, subsystem profiling, process VRAM and accepted
 performance budgets are still missing. No production OmniAtmosphere implementation
 is permitted.
 
@@ -151,6 +154,9 @@ lane around the barrier and places BTRY within its real two-pixel activation ran
 - Full Python suite: 273 run, 271 passed, 2 skipped, 0 failed.
 - Later formal load-boundary Python suite: `321/321 OK`; its Legacy-fast Meson
   suite is `39/39 PASS`.
+- Later clean all-tick scope run: both fresh Meson suites `39/39 PASS`; Python
+  discovery is 322 run, 2 declared skips, zero failures; see
+  `phase-1-all-tick-ledger.md`.
 - Characterization contracts: `15/15 PASS` before the formal run.
 - Lua upstream 100.1 boundary regression: PASS (`11` bounds assertions).
 - Existing eight-class OPS matrix: PASS (`24` processes, `16` restart loads,
@@ -192,7 +198,9 @@ memory budget. Process VRAM remains `not_tested`.
   fields without claiming bit-exact checkpointing or physical conservation. See
   `phase-1-load-boundary.md`.
 - C14 records Legacy border culling after allocator saturation.
-- No conservation, positivity, NaN/Inf, energy, mass or species ledger exists yet.
+- All-tick exported Particle/Air float observations are finite/in Legacy range, but
+  no physical conservation, positivity, full-state, energy, mass or species ledger
+  exists yet; see `phase-1-all-tick-ledger.md`.
 - The runner records process RAM but not subsystem time or process VRAM.
 
 ## Gate and rollback
@@ -204,6 +212,7 @@ DETERMINISTIC_RESTART_TRACES=GREEN
 BOUNDED_SAVE_LOAD=GREEN
 CHARACTERIZATION_PROCESS_RAM=GREEN
 LOAD_BOUNDARY_FIELD_DIFF=GREEN
+ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
 FIRST_DIVERGENCE_RUNNER=GREEN
 SAME_SOURCE_CPU_FP_DIFFERENTIAL=GREEN
 LEGACY_CPU_VS_OMNI_CPU=RED
@@ -217,5 +226,5 @@ G0_UPSTREAM_BASELINE=RED
 Rollback base is `b9ae20bf03232cd13418064b2951e993df6c9f20`. The three bounded
 commits can be reverted independently in reverse order; no rollback is recommended.
 The next permitted integration work is the physical Legacy conservation/source/
-correction ledger, unsampled/full-state finite/positivity evidence or
-profiler/VRAM export, followed by G0 reassessment.
+correction ledger, internal/full-state finite/positivity evidence or profiler/VRAM
+export, followed by G0 reassessment.

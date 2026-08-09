@@ -9,16 +9,21 @@ BENCHMARK_IMPLEMENTATION_HEAD=c4490463f3819695cab734414f827e0e4e4be118
 CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
 LEGACY_LEDGER_IMPLEMENTATION_HEAD=b3aa56cf3914ab18da60d1ac9ff1e492377f6e88
+ALL_TICK_LEDGER_IMPLEMENTATION_HEAD=632665650
 LOAD_BOUNDARY_IMPLEMENTATION_HEAD=971687a24
 LOAD_BOUNDARY_CLOSURE_HEAD=a09c6d716
 REPORT_COMMIT=SELF
 WORKTREE_DIRTY_AT_REPORT_START=false
 UPSTREAM_STABLE_VERSION=100.1 build 400
 UPSTREAM_MASTER_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
+UPSTREAM_PHASE_RECHECK=GREEN
+LOCAL_HISTORICAL_TAG_COLLISION=YELLOW
 FIXED_STEP_BENCHMARK=GREEN
 CHARACTERIZATION_SAVES=GREEN
 FIRST_DIVERGENCE_FIELD_CAPTURE=GREEN
 LEGACY_SAMPLED_FINITE_PROXY_LEDGER=GREEN
+ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
+UNSAMPLED_FULL_STATE_FINITE=RED
 LOAD_BOUNDARY_FIELD_DIFF=GREEN
 PHYSICAL_CONSERVATION_LEDGER=RED
 G0_UPSTREAM_BASELINE=RED
@@ -30,16 +35,17 @@ build, static tests, Lua 100.1 boundary regression, OPS round trips, explicit FP
 builds, the current two-scene uncapped fixed-step baseline, C01-C14 deterministic
 restart characterization and same-source CPU first-divergence field capture pass.
 G0 is still **RED** because physical conservation/source/correction accounting,
-unsampled full-state finite/positivity evidence, subsystem profiling, process VRAM
-and an accepted performance budget do not yet exist. The red gate blocks production
+unsampled **full-state** finite/positivity evidence, subsystem profiling, process
+VRAM and an accepted performance budget do not yet exist. The all-tick result is
+limited to post-update exported floats. The red gate blocks production
 OmniAtmosphere work; it does not roll back verified upstream,
 benchmark, differential or sampled-ledger foundations.
 
-The new Legacy ledger exports finite/range observations and diagnostic proxies at
-fixed samples. The OPS load-boundary field-attribution sub-gate is now GREEN for
-complete, replayable, non-physical field reporting. Physical mass, momentum,
-energy, source/sink attribution, correction events, unsampled ticks and pressure
-positivity remain RED and still block G0.
+The Legacy ledger exports finite/range observations and diagnostic proxies. Its
+all-tick post-update exported-float sub-gate is GREEN; the OPS load-boundary
+field-attribution sub-gate is also GREEN for complete, replayable, non-physical
+field reporting. Physical mass, momentum, energy, source/sink attribution,
+correction events, full state and pressure positivity remain RED and still block G0.
 
 ## Capability audit
 
@@ -49,9 +55,9 @@ positivity remain RED and still block G0.
 | Git | `true` | Windows Git at `E:/Git/cmd/git.exe`; branch, log, remotes and worktrees inspected |
 | Sub-agents | `true` | Worker slots were available; three requested read-only ledger audits exhausted service retries with 429 and contributed no evidence. Main Orchestrator independently reran clients, tests, artifact hashes and replay |
 | Multiple shells/tool calls | `true` | Independent PowerShell commands can run concurrently |
-| Git worktree | `true` | upstream/element worktrees remain isolated; the formal load-boundary run used clean detached `ledger-formal-9b336` |
-| Compile project | `true` | independent load-boundary formal build completed `786/786` plus the generated `9/9` relink; final binary was rehashed |
-| Run automated tests | `true` | formal Legacy-fast Meson suite `39/39`; nested Python suite `321/321 OK` with UCRT64 compiler on PATH |
+| Git worktree | `true` | upstream/element worktrees remain isolated; formal load-boundary and all-tick-ledger runs used clean detached worktrees |
+| Compile project | `true` | fresh all-tick Legacy-fast and Strict targets each completed `763/763`; both final binaries were rehashed |
+| Run automated tests | `true` | fresh all-tick Meson suites `39/39` each; nested Python discovery `322` run, `2` declared skips, no failures |
 | GPU hardware | `true` | NVIDIA GeForce RTX 5070 Ti Laptop GPU, driver 591.86, reported 12,227 MiB, compute capability 12.0 |
 | SDL application process | `true` | isolated Lua/runtime clients execute; visible interactive GUI acceptance is `not_tested` |
 | SDL3 / SDL_GPU runtime | `false` | repository is SDL2; no SDL3 build or GPU compute pipeline exists |
@@ -80,6 +86,13 @@ not precede Windows Git on this CRLF checkout: doing so transiently reports roug
 1,116 false dirty paths and contaminates the VCS tag with `+`. The validated command
 PATH begins with `E:/Git/cmd`, then UCRT64, then MSYS2 `usr/bin`.
 
+The Phase 1 recheck read the official download page and official Git refs:
+`v100.1.400` and `master` remain `d768aeb89`. `git fetch official --tags --prune`
+safely rejected replacement of the local historical `v99.5.394` tag (local object
+`7fa5ccf6...`, official tag object `f40a5862...`). It was not overwritten and has
+no effect on the current 100.1 baseline; resolve that unrelated tag collision only
+with an explicit maintenance decision.
+
 ## Integrated phase commits
 
 | Commit | Purpose | Production behavior |
@@ -101,6 +114,7 @@ PATH begins with `E:/Git/cmd`, then UCRT64, then MSYS2 `usr/bin`.
 | `4765fc123` | formal first-divergence report and gate update | docs only |
 | `8bd640c3e` | sampled Legacy numerical proxy ledger | tooling/tests only |
 | `b3aa56cf3` | platform-independent byte-stable ledger JSON replay | tooling/tests only |
+| `632665650` | make all-tick ledger scope explicit | tooling/tests only |
 | `971687a24` | OPS load-boundary field capture and attribution | tooling/tests only |
 | `a09c6d716` | close frozen-input and recursive artifact manifest | tooling/tests only |
 
@@ -115,9 +129,9 @@ PATH begins with `E:/Git/cmd`, then UCRT64, then MSYS2 `usr/bin`.
 - Numerical verification: identical generated mixed state first diverges between FP
   modes at update step 1 in Particle velocity and Air state. A clean 1,000-step
   ledger then found `0` non-finite/range/bound observations across 102 sampled
-  exported states on each side. This does not select a correct build or evaluate
-  physical conservation, pressure positivity, unsampled ticks, CFL, near vacuum or
-  species.
+  exported states and 1,001 all-tick post-update exported states on each side. This
+  does not select a correct build or evaluate physical conservation, pressure
+  positivity, full state, CFL, near vacuum or species.
 - Benchmark: clean `c4490463f` fixed-step baseline records 1,682.07/1,655.22 steps/s
   for empty and 189.87/189.81 for mixed Legacy/Strict. No speed winner is claimed.
 - Memory: no production data structure added; measured whole-process peaks range
@@ -127,16 +141,17 @@ PATH begins with `E:/Git/cmd`, then UCRT64, then MSYS2 `usr/bin`.
 - Differential: clean-source Legacy-fast/Strict CPU trace is `PASS`; step 1 contains
   4,935 differing particle IDs and 2,074 differing Air cells, with
   `unexplained_hash_divergence=false`. Omni CPU/GPU comparisons do not yet exist.
-- Ledger: clean-source Legacy-fast/Strict sampled proxy comparison is `PASS`; the
-  historical ledger remains bound to its closed `b3aa56cf3` artifact. The new OPS
-  load-boundary formal manifest is `F47F4119...8DC6C`, with 369 declared files plus
-  the manifest, 15 directories, 14/14 byte-identical comparator replays and no
-  physical claims. Physical conservation claims remain explicitly false.
+- Ledger: clean-source Legacy-fast/Strict all-tick proxy comparison is `PASS`; the
+  `632665650` artifact records 1,001 post-update scans per mode, 18 declared files
+  plus the manifest and byte-identical frozen replay. The OPS load-boundary formal
+  manifest is `F47F4119...8DC6C`, with 369 declared files plus the manifest, 15
+  directories and 14/14 byte-identical comparator replays. Physical conservation
+  claims remain explicitly false.
 - Compatibility: automated build/Lua/OPS evidence passes; GUI, PSv/fuC, portable
   runtime, broad external Lua corpus, and visual behavior remain `not_tested`.
 - Known deviation: `resetVelocity` final-edge fix is ahead of official master.
-- Gate: fixed-step, characterization, first-divergence, sampled proxy-ledger and
-  load-boundary field-attribution foundations are GREEN; physical
+- Gate: fixed-step, characterization, first-divergence, sampled/all-tick
+  proxy-ledger and load-boundary field-attribution foundations are GREEN; physical
   conservation/source/correction ledgers, profiler/VRAM and performance budgets
   keep G0 RED.
 - Rollback point: `fb72d5e8f` for all vNext integration, or the parent of each bounded
@@ -146,7 +161,7 @@ PATH begins with `E:/Git/cmd`, then UCRT64, then MSYS2 `usr/bin`.
 
 Only G0 blockers may proceed:
 
-1. physical Legacy conservation/source/correction evidence and unsampled/full-state
+1. physical Legacy conservation/source/correction evidence and internal/full-state
    finite/positivity work;
 2. subsystem profiler export and process VRAM measurement;
 3. strict/fast drift comparison and an accepted performance regression budget.

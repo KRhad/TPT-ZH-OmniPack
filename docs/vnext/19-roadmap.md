@@ -4,10 +4,10 @@
 
 The official 100.1 source adaptation, explicit FP modes, current fixed-step
 throughput/process-RAM baseline, C01-C14 deterministic restart suite and scoped
-Legacy-fast/Strict CPU first-divergence capture plus sampled numerical proxy ledger
-and OPS load-boundary field attribution are integrated. The overall G0 gate remains
-RED, so the roadmap stays in Phase 1 physical-ledger/profiler work. No production
-OmniAtmosphere state or solver will be integrated yet.
+Legacy-fast/Strict CPU first-divergence capture plus sampled/all-tick numerical
+proxy ledger and OPS load-boundary field attribution are integrated. The overall G0
+gate remains RED, so the roadmap stays in Phase 1 physical-ledger/profiler work. No
+production OmniAtmosphere state or solver will be integrated yet.
 
 ## Phase status
 
@@ -15,7 +15,7 @@ OmniAtmosphere state or solver will be integrated yet.
 |---:|---|---|
 | -1 | external research and license audit | YELLOW: classifications complete; no new artifact redistribution authorized |
 | 0 | latest upstream adaptation | GREEN source sub-gate; G0 overall RED |
-| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; FP modes, fixed-step baseline, C01-C14 saves, first-divergence capture, sampled proxy ledger and OPS field attribution complete |
+| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; FP modes, fixed-step baseline, C01-C14 saves, first-divergence capture, sampled/all-tick proxy ledger and OPS field attribution complete |
 | 2 | physical scale and unit system | proposal written / RED |
 | 3 | AtmosphereBench | planned / BLOCKED by Phase 1-2 foundations |
 | 4 | solver selection | BLOCKED |
@@ -42,26 +42,28 @@ The next integration commits should be small and independently reversible:
    neighborhood state. Omni CPU/GPU topology remains unimplemented.
 5. `tests/legacy-proxy-ledger`: COMPLETE in `8bd640c3e` plus byte-stable replay fix
    `b3aa56cf3`; 102 sampled exported states per FP mode are finite/in Legacy range.
-   Physical mass/energy/momentum, source/sink/correction attribution and unsampled/
-   full-state finite/positivity remain open.
-6. `tests/load-boundary`: COMPLETE in `971687a24` plus closure commit `a09c6d716`;
+6. `tests/all-tick-ledger`: COMPLETE in `632665650`; `SampleInterval=1` records
+   1,001 post-update exported-float states per FP mode as finite/in Legacy range.
+   It does not claim internal/full state or pressure positivity.
+7. `tests/load-boundary`: COMPLETE in `971687a24` plus closure commit `a09c6d716`;
    clean C01-C14 pre-save/loaded fields, loaded-A/B byte equality, 369 declared
    private files and frozen-comparator replay are recorded without a bit-exact or
    physical claim.
-7. `tests/physical-legacy-ledger`: add source/sink/correction-aware mass, momentum,
-   energy and positivity accounting or record why each Legacy quantity is undefined.
-8. `tests/profiler-export`: add subsystem spans plus process VRAM without perturbing
+8. `tests/physical-legacy-ledger`: add source/sink/correction-aware mass, momentum,
+   energy and positivity accounting or record why each Legacy quantity is undefined;
+   add internal/full-state boundaries beyond the all-tick exported fields.
+9. `tests/profiler-export`: add subsystem spans plus process VRAM without perturbing
    the short CPU benchmark.
-9. Re-run G0. GREEN may advance to Physical Scale plus standalone AtmosphereBench;
+10. Re-run G0. GREEN may advance to Physical Scale plus standalone AtmosphereBench;
    RED continues only on the remaining blockers.
 
 The mixed benchmark starts from the same generated Strict/Legacy hash; the later
 capture locates the first difference after update step 1 in both Particle and Air
-state. The sampled ledger finds no exported non-finite/range violation but observes
-RNG/type divergence by sampled step 40 and particle-count divergence by sampled step
-90. This does not identify the correct result, so physical conservation/correction
-and unsampled/full-state finite evidence remain mandatory before any fast-math
-safety decision.
+state. The all-tick ledger finds no exported non-finite/range violation across all
+1,001 post-update observations but observes RNG divergence by step 34. This
+does not identify the correct result, so physical conservation/correction and
+internal/full-state finite evidence remain mandatory before any fast-math safety
+decision.
 
 Each commit records goal, base, files, tests, benchmark/memory evidence, compatibility,
 risks, gate and rollback parent. Before each new phase, re-query official stable and
@@ -84,7 +86,7 @@ the Main Orchestrator chooses adaptation timing.
 | Does combustion consume atmosphere O2? | No; selected rules consume O2 particles only. |
 | Does boiling use ambient pressure? | It shifts thresholds by Legacy `-2*pv`; it does not use absolute pressure/saturation curves. |
 | Humidity / latent heat? | Both absent. |
-| Mass / energy conserved? | No physical conservation contract or ledger; the sampled proxy ledger is finite/in Legacy range but its counts/sums are not mass or energy. Particle creation/deletion and direct temperature/pressure rules can source/sink both. |
+| Mass / energy conserved? | No physical conservation contract or ledger; sampled/all-tick proxy fields are finite/in Legacy range but their counts/sums are not mass or energy. Particle creation/deletion and direct temperature/pressure rules can source/sink both. |
 | Which elements write Air? | Static custom-update scan detects DMG writing Air velocity, LIGH writing Air heat, and 86 elements/38 roots writing pressure; complete IDs/evidence are in `element-update-inventory.json`. Generic `AirDrag/AirLoss/HotAir` adds more coupling. |
 | Most dangerous GPU elements? | WARP, PSTN, PIPE/PPIP, PRTI/PRTO, ARAY/CRAY/DRAY, WIFI, SPRK, stickmen/fighters and shared Omni update roots. Formal classifications remain 488 UNKNOWN. |
 | Who depends on Particle layout? | Lua/property descriptors, renderers, tools, updates, callbacks, pmap/photons and snapshot/copy paths. |
@@ -108,7 +110,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Remove remaining G0 blockers: physical Legacy source/sink/correction and unsampled/full-state finite/positivity work, or subsystem profiler/process-VRAM export. |
+| Next stage? | Remove remaining G0 blockers: physical Legacy source/sink/correction and internal/full-state finite/positivity work, or subsystem profiler/process-VRAM export. |
 
 ## Long-term acceptance
 

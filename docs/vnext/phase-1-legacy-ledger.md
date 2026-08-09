@@ -31,6 +31,13 @@ PRODUCTION_OMNIATMOSPHERE_ALLOWED=false
 > does not change this report's sampled-proxy findings or any of its remaining
 > physical-ledger `RED` gates.
 
+> Historical status annotation (2026-08-09): this report's
+> `UNSAMPLED_TICK_FINITE_STATE=NOT_TESTED` remains accurate for its 102-sample
+> artifact. The later [all-tick exported-float report](phase-1-all-tick-ledger.md)
+> uses the same fail-closed ledger at `SampleInterval=1` and closes only that later
+> post-update exported-field sub-gate. It does not change this report's physical,
+> source/sink, correction or full-state limitations.
+
 The sampled Legacy proxy-ledger foundation is **GREEN**. On one clean-source,
 1,000-step mixed run, both Legacy-fast and Strict builds exported finite Particle
 and Air values at all 102 scheduled samples and stayed inside the documented Legacy
@@ -278,6 +285,6 @@ The rollback point is `4765fc123`. Reverting `b3aa56cf3` and `8bd640c3e` removes
 only the private ledger tools/tests; no save or data migration is required. No
 rollback is recommended.
 
-The next permitted work is either the still-open OPS load-boundary field comparison,
-a real source/sink/correction-aware conservation ledger, or subsystem profiler plus
-process-VRAM export. Production OmniAtmosphere remains blocked.
+The current permitted work is a real source/sink/correction-aware conservation
+ledger with internal/full-state boundaries, or subsystem profiler plus process-VRAM
+export. Production OmniAtmosphere remains blocked.

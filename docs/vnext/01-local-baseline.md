@@ -13,6 +13,7 @@
 | Differential implementation commit | `c6eecaa77cd7d6025ef997c5dd46e53d112c6e08` |
 | Legacy ledger implementation commit | `8bd640c3e2aca501a17987aa462b2489901e6694` |
 | Byte-stable ledger replay fix | `b3aa56cf3914ab18da60d1ac9ff1e492377f6e88` |
+| All-tick ledger scope commit | `63266565007a85f9fb3b6726bcf4de349b093051` |
 | Load-boundary implementation commit | `971687a24` |
 | Load-boundary artifact-closure commit | `a09c6d716` |
 | Report commit | `SELF` |
@@ -37,6 +38,11 @@ Windows PowerShell 5. It built `786/786` targets plus the expected always-stale
 generated `9/9` relink, then re-hashed the executable and Meson provenance after
 the C01-C14 run. Its executable is 321,491,196 bytes with SHA-256
 `AD4BE609CB25A58943F858FE39EACE2D2481DD242F4DB5C6E1B0A8321152126B`.
+
+The all-tick ledger formal run used clean detached source `632665650`, fresh
+`builds/ledger-632-legacy` and `builds/ledger-632-strict` directories, and
+`SampleInterval=1` for 1,001 post-update records per mode. Both 763-step app
+builds, 39-test Meson suites and the final executable/provenance checks passed.
 
 | Mode | Executable bytes | SHA-256 |
 |---|---:|---|
@@ -86,12 +92,16 @@ GCC emitted a `-Wmaybe-uninitialized` warning in the `ByteString`/`optional` pat
 | Ledger nonfinite/range/bound observations | `0 / 0 / 0` both modes | sampled observations; not internal correction events |
 | Ledger artifact integrity | `18/18 PASS` | 19 files/0 directories, manifest lengths/SHA-256, 44/44 DLLs, 754/754 compile commands |
 | Frozen ledger comparison replay | byte-identical `PASS` | 13,848 bytes, SHA-256 `54D3B2BB...FBC1` |
+| All-tick exported-float ledger | `PASS` | clean 1,000-step Legacy-fast versus Strict, 1,001 records each |
+| All-tick exported finite/range | `true / true` both modes | all active Particle `x/y/vx/vy/temp` and all Air `pv/vx/vy/hv` after every update |
+| All-tick ledger artifact integrity | `18/18 PASS` | plus manifest; zero missing/extra/hash mismatch or `__pycache__` |
+| All-tick frozen comparator replay | byte-identical `PASS` | 21,875 bytes, SHA-256 `4B8D9765...BEFE77B` |
 | OPS load-boundary field attribution | `14/14 PASS` | before-save versus loaded-A fields; loaded-A/B captures are byte-identical |
 | Load-boundary artifact integrity | `369/369 PASS` | plus manifest, 15 directories, frozen inputs and result/capture references |
 | Frozen load-boundary comparator replay | byte-identical `14/14 PASS` | no artifact writes or `__pycache__` |
 | Physical mass/momentum/energy conservation | `not_evaluated` | proxy sums are not physical units |
 | Source/sink and correction attribution | `not_evaluated` | no event ledger exists |
-| Unsampled/full-state finite and pressure positivity | `not_tested` | sampled Legacy range is not physical positivity |
+| Internal/full-state finite and pressure positivity | `not_tested` | all-tick exported floats are not internal/full state or physical positivity |
 | Legacy CPU vs Omni CPU | `not_implemented` | no Omni solver exists |
 | Omni CPU vs Omni GPU | `not_implemented` | no GPU compute backend exists |
 
@@ -132,6 +142,7 @@ FIRST_DIVERGENCE_RUNNER=GREEN
 SAME_SOURCE_CPU_FP_DIFFERENTIAL=GREEN
 LEGACY_SAMPLED_FINITE_PROXY_LEDGER=GREEN
 STRICT_FAST_SAMPLED_PROXY_COMPARISON=GREEN
+ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
 UNSAMPLED_FULL_STATE_FINITE=RED
 PHYSICAL_CONSERVATION_LEDGER=RED
 SOURCE_SINK_CORRECTION_LEDGER=RED
@@ -143,10 +154,10 @@ G0_UPSTREAM_BASELINE=RED
 ```
 
 The gate is fail-closed: benchmark, characterization and same-source CPU
-first-divergence, sampled proxy-ledger and load-boundary field-attribution
+first-divergence, sampled/all-tick proxy-ledger and load-boundary field-attribution
 foundations are GREEN, but they do not substitute for physical conservation/source/
-correction accounting, unsampled/full-state finite/positivity evidence, subsystem
+correction accounting, internal/full-state finite/positivity evidence, subsystem
 profiling, VRAM measurement or Omni CPU/GPU differential validation. See
 `phase-1-legacy-characterization.md`, `phase-1-first-divergence.md` and
-`phase-1-legacy-ledger.md`; load-boundary scope and evidence are in
-`phase-1-load-boundary.md`.
+`phase-1-legacy-ledger.md`; all-tick scope is in `phase-1-all-tick-ledger.md` and
+load-boundary scope and evidence are in `phase-1-load-boundary.md`.
