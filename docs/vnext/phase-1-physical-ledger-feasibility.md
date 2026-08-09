@@ -27,6 +27,11 @@ Particle record, `Weight`, `HeatCapacity`, temperature, velocity or `pv` into a
 physical quantity. No runtime observer exists yet, so all physical/source/correction
 claims remain `NOT_EVALUATED` and G0 remains RED.
 
+This is the historical feasibility snapshot at `86a2b3386`. Its runtime-lifecycle
+status is superseded by the record-only observer report at
+`phase-1-runtime-lifecycle-ledger.md`; all physical and correction claims above
+remain unchanged.
+
 ## Method and reproducibility
 
 `tools/physical_ledger_feasibility.py` scans the 651 C++ header/source files under

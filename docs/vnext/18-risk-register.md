@@ -7,6 +7,7 @@
 | C-01 | CRITICAL | correctness/performance | 4 mm cells with real sound speed make explicit compressible CFL far smaller than a game tick | select and validate time/acoustic/all-speed policy in AtmosphereBench | RED |
 | C-02 | CRITICAL | numerical | identical generated mixed state diverges on step 1; 1,001 post-update exported-float states remain finite/in Legacy range, but RNG splits by step 34 and physical/conservation error remains unknown | retain field/proxy evidence and add double/float/fast physical conservation, positivity, correction and internal/full-state matrix | GREEN capture/proxy, RED physical comparison |
 | C-03 | CRITICAL | conservation | floors/clamps could silently create mass/species/energy; source audit identifies 12 explicit Air cap branches but no runtime correction ledger | optional branch-outcome observer, correction limits and fail-closed reconciliation tests | RED |
+| C-08 | HIGH | lifecycle accounting | record observer covers central APIs plus three audited direct paths, but not physical units, all raw writes, correction branches or full state | retain reconciliation failure as evidence, expand only with explicit branch hooks and never promote record deltas to physical conservation | YELLOW foundation, RED physical |
 | C-04 | HIGH | correctness | Legacy particle updates directly write Air and depend on iteration/same-frame state | C01-C14, inventory, same-source FP field capture and OPS load-boundary field attribution exist; add Classic/Omni compatibility adapter | YELLOW foundation, RED replacement |
 | C-05 | HIGH | correctness | scale/time/effective depth are not yet accepted | Phase 2 contract and dimensional checks | RED |
 | C-06 | HIGH | chemistry | current reactions lack generic atom/charge validation and kinetics | versioned species/reaction loader with rejection tests | RED |
@@ -25,6 +26,7 @@
 | P-05 | HIGH | GPU semantics | allocator, movement and same-pass neighbor writes are order-conflicted | multi-pass proposal/arbitration/apply and bounded request queues | RED |
 | P-06 | HIGH | element coverage | 488 classifications remain UNKNOWN; lexical risk flags 420 high | AST/path-sensitive/manual classification before GPU coverage claims | RED |
 | P-07 | HIGH | benchmark determinism | Legacy `clear_sim()` leaves derived Air blocking maps; mixed replay diverged before an explicit empty-step sanitation | centralize pristine-reset contract and add cache-state regression before differential traces | YELLOW, runner-controlled |
+| P-08 | MEDIUM | diagnostic overhead | enabled lifecycle observer scans `parts.active` twice/tick and keeps two `PT_NUM` int64 histograms (16,384-byte array floor at current capacity) | keep default disabled; benchmark enabled cost before using it in long-run evidence | YELLOW |
 | D-01 | CRITICAL | data license | NIST WebBook is SRD with explicit copyright restrictions | reference-only unless item-specific redistribution permission is recorded | RED for bundling |
 | D-02 | HIGH | code license | tpt-bench has no detected license | reference-only; write independent runner and cases | RED for reuse |
 | D-03 | HIGH | mechanism data | Cantera code license does not license every mechanism/data file | per-input provenance/license audit | RED for bundling |
@@ -52,6 +54,7 @@ LEGACY_SAMPLED_FINITE_PROXY_LEDGER=GREEN
 STRICT_FAST_SAMPLED_PROXY_COMPARISON=GREEN
 ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
 PHYSICAL_LEDGER_FEASIBILITY=GREEN
+RUNTIME_RECORD_LIFECYCLE_OBSERVER=GREEN
 UNSAMPLED_FULL_STATE_FINITE=RED
 PHYSICAL_CONSERVATION_LEDGER=RED
 SOURCE_SINK_CORRECTION_LEDGER=RED

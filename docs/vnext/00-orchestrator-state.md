@@ -11,6 +11,7 @@ DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
 LEGACY_LEDGER_IMPLEMENTATION_HEAD=b3aa56cf3914ab18da60d1ac9ff1e492377f6e88
 ALL_TICK_LEDGER_IMPLEMENTATION_HEAD=632665650
 PHYSICAL_LEDGER_FEASIBILITY_HEAD=86a2b3386
+RUNTIME_RECORD_LIFECYCLE_LEDGER_HEAD=4fa0ec2f3
 LOAD_BOUNDARY_IMPLEMENTATION_HEAD=971687a24
 LOAD_BOUNDARY_CLOSURE_HEAD=a09c6d716
 REPORT_COMMIT=SELF
@@ -26,6 +27,7 @@ LEGACY_SAMPLED_FINITE_PROXY_LEDGER=GREEN
 ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
 UNSAMPLED_FULL_STATE_FINITE=RED
 PHYSICAL_LEDGER_FEASIBILITY=GREEN
+RUNTIME_RECORD_LIFECYCLE_OBSERVER=GREEN
 LOAD_BOUNDARY_FIELD_DIFF=GREEN
 PHYSICAL_CONSERVATION_LEDGER=RED
 G0_UPSTREAM_BASELINE=RED
@@ -45,9 +47,11 @@ benchmark, differential or sampled-ledger foundations.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
-ledger feasibility audit and OPS load-boundary field-attribution sub-gate are also
-GREEN. Physical mass, momentum, energy, runtime source/sink attribution, correction
-events, full state and pressure positivity remain RED and still block G0.
+ledger feasibility audit, record-only runtime lifecycle observer and OPS
+load-boundary field-attribution sub-gates are also GREEN. The lifecycle observer
+does not give records physical units. Physical mass, momentum, energy, runtime
+source/sink attribution, correction events, full state and pressure positivity
+remain RED and still block G0.
 
 ## Capability audit
 
@@ -58,8 +62,8 @@ events, full state and pressure positivity remain RED and still block G0.
 | Sub-agents | `true` | Worker slots were available; three requested read-only ledger audits exhausted service retries with 429 and contributed no evidence. Main Orchestrator independently reran clients, tests, artifact hashes and replay |
 | Multiple shells/tool calls | `true` | Independent PowerShell commands can run concurrently |
 | Git worktree | `true` | upstream/element worktrees remain isolated; formal load-boundary and all-tick-ledger runs used clean detached worktrees |
-| Compile project | `true` | fresh all-tick Legacy-fast and Strict targets each completed `763/763`; both final binaries were rehashed |
-| Run automated tests | `true` | fresh all-tick Meson suites `39/39` each; nested Python discovery `324` run, `2` declared skips, no failures |
+| Compile project | `true` | fresh lifecycle-ledger target completed successfully; its app SHA-256 is recorded in `phase-1-runtime-lifecycle-ledger.md` |
+| Run automated tests | `true` | fresh lifecycle-ledger Meson suite `39/39`; nested Python discovery `327` run, `2` declared skips, no failures |
 | GPU hardware | `true` | NVIDIA GeForce RTX 5070 Ti Laptop GPU, driver 591.86, reported 12,227 MiB, compute capability 12.0 |
 | SDL application process | `true` | isolated Lua/runtime clients execute; visible interactive GUI acceptance is `not_tested` |
 | SDL3 / SDL_GPU runtime | `false` | repository is SDL2; no SDL3 build or GPU compute pipeline exists |
@@ -120,15 +124,17 @@ with an explicit maintenance decision.
 | `86a2b3386` | source-bound physical-ledger feasibility audit | tooling/tests only |
 | `971687a24` | OPS load-boundary field capture and attribution | tooling/tests only |
 | `a09c6d716` | close frozen-input and recursive artifact manifest | tooling/tests only |
+| `4fa0ec2f3` | optional record-level lifecycle reconciliation observer | additive diagnostics; disabled by default |
 
 ## Phase report
 
 - Goal: establish latest-upstream, compatibility, research, and inventory evidence
   before any state-model replacement.
 - Base commit: `fb72d5e8f` (pre-vNext OmniPack).
-- Architecture changes: none to OmniCore production state; upstream integration,
-  two bounded correctness fixes and isolated benchmark/characterization/differential/
-  ledger tooling are integrated.
+- Architecture changes: no OmniCore physical state model; upstream integration,
+  two bounded correctness fixes, isolated benchmark/characterization/differential/
+  ledger tooling, and a disabled-by-default record-only lifecycle diagnostic are
+  integrated.
 - Numerical verification: identical generated mixed state first diverges between FP
   modes at update step 1 in Particle velocity and Air state. A clean 1,000-step
   ledger then found `0` non-finite/range/bound observations across 102 sampled
@@ -137,8 +143,10 @@ with an explicit maintenance decision.
   positivity, full state, CFL, near vacuum or species.
 - Benchmark: clean `c4490463f` fixed-step baseline records 1,682.07/1,655.22 steps/s
   for empty and 189.87/189.81 for mixed Legacy/Strict. No speed winner is claimed.
-- Memory: no production data structure added; measured whole-process peaks range
-  from 132,689,920 to 155,041,792 bytes working set. Process VRAM is `not_tested`.
+- Memory: the observer adds two `int64_t[PT_NUM]` arrays (16,384-byte array floor)
+  plus scalar state per `Simulation`; enabled-overhead benchmark and process VRAM
+  are `not_tested`. Earlier measured whole-process peaks range from 132,689,920 to
+  155,041,792 bytes.
 - Characterization: clean-source C01-C14 is `14/14 PASS`; 28 independent restart
   loads have identical traces, RNG, particle count and required-element counts.
 - Differential: clean-source Legacy-fast/Strict CPU trace is `PASS`; step 1 contains
@@ -150,15 +158,18 @@ with an explicit maintenance decision.
   manifest is `F47F4119...8DC6C`, with 369 declared files plus the manifest, 15
   directories and 14/14 byte-identical comparator replays. The physical-ledger
   audit inventories Lifecycle/correction anchors and proves the current lack of
-  authoritative physical fields. Physical conservation claims remain explicitly
-  false.
+  authoritative physical fields. `4fa0ec2f3` adds a record-only runtime observer;
+  its isolated eight-tick client reports zero reconciliation failures and zero
+  unattributed delta, with direct SPRK and BRMT/TUNG paths observed. Physical
+  conservation claims remain explicitly false.
 - Compatibility: automated build/Lua/OPS evidence passes; GUI, PSv/fuC, portable
   runtime, broad external Lua corpus, and visual behavior remain `not_tested`.
 - Known deviation: `resetVelocity` final-edge fix is ahead of official master.
 - Gate: fixed-step, characterization, first-divergence, sampled/all-tick
-  proxy-ledger, physical-ledger feasibility and load-boundary field-attribution
-  foundations are GREEN; runtime physical conservation/source/correction ledgers,
-  profiler/VRAM and performance budgets keep G0 RED.
+  proxy-ledger, physical-ledger feasibility, record-only runtime lifecycle ledger
+  and load-boundary field-attribution foundations are GREEN; runtime physical
+  conservation/source/correction ledgers, profiler/VRAM and performance budgets
+  keep G0 RED.
 - Rollback point: `fb72d5e8f` for all vNext integration, or the parent of each bounded
   commit for phase-local rollback. No rollback is currently recommended.
 
@@ -166,8 +177,7 @@ with an explicit maintenance decision.
 
 Only G0 blockers may proceed:
 
-1. optional runtime Lifecycle/correction observer and internal/full-state
-   finite/positivity work;
+1. runtime correction observer and internal/full-state finite/positivity work;
 2. subsystem profiler export and process VRAM measurement;
 3. strict/fast drift comparison and an accepted performance regression budget.
 
