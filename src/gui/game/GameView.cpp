@@ -2234,6 +2234,12 @@ void GameView::SetSaveButtonTooltips()
 
 void GameView::RenderSimulation(const RenderableSimulation &sim, bool handleEvents)
 {
+	auto frameTime = c->GetFrameTime();
+	if (!handleEvents && frameTime)
+	{
+		frameTime->RecordThreadedRenderingObserved();
+	}
+	FrameTime::SubsystemSpan renderingSpan(std::move(frameTime), FrameTime::Subsystem::Rendering);
 	ren->sim = &sim;
 	ren->Clear();
 	ren->RenderBackground();
@@ -2286,7 +2292,10 @@ void GameView::OnDraw()
 		}
 	}
 
-	std::copy_n(rendererFrame->data(), rendererFrame->Size().X * rendererFrame->Size().Y, g->Data());
+	{
+		FrameTime::SubsystemSpan copySpan(c->GetFrameTime(), FrameTime::Subsystem::RenderSnapshotCopy);
+		std::copy_n(rendererFrame->data(), rendererFrame->Size().X * rendererFrame->Size().Y, g->Data());
+	}
 
 	if (showBrush && selectMode == SelectNone && (!zoomEnabled || zoomCursorFixed) && activeBrush && (isMouseDown || (currentMouse.X >= 0 && currentMouse.X < XRES && currentMouse.Y >= 0 && currentMouse.Y < YRES)))
 	{
@@ -2740,7 +2749,7 @@ void GameView::OnDraw()
 				fpsInfo << Localization::Ref().Tr("gameview.fps.default_suffix");
 			}
 		}
-		if (auto *frameTime = c->GetFrameTime())
+		if (auto frameTime = c->GetFrameTime())
 		{
 			for (auto &span : frameTime->GetLastSpans())
 			{

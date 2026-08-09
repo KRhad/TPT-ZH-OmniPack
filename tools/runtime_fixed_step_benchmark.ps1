@@ -32,6 +32,8 @@ param(
 
     [switch] $Smoke,
 
+    [switch] $EnableOmniProfiler,
+
     [switch] $KeepTemporary
 )
 
@@ -307,6 +309,7 @@ try {
             "warmup_steps=$WarmupSteps",
             "steps_per_pass=$StepsPerPass",
             "passes=$Passes",
+            "omni_profiler_enabled=$([int][bool]$EnableOmniProfiler)",
             "seed_a=$SeedA",
             "seed_b=$SeedB",
             "seed_c=$SeedC",
@@ -422,7 +425,7 @@ try {
     foreach ($field in @(
         "schema_version", "scenario", "warmup_steps", "steps_per_pass", "passes",
         "seed", "atmosphere_cells", "simulation_dt_value", "simulation_dt_unit",
-        "reset_sanitization_steps", "timing_scope", "generated_particles", "initial_particles", "final_particles",
+        "reset_sanitization_steps", "timing_scope", "omni_profiler_enabled", "generated_particles", "initial_particles", "final_particles",
         "initial_state_hash", "final_state_hash", "deterministic_replay"
     )) {
         if (-not $lua.ContainsKey($field)) {
@@ -437,6 +440,9 @@ try {
         (Convert-NonnegativeInteger $lua.passes "passes") -ne $Passes) {
         throw "Fixed-step Lua step counts do not match the requested run"
     }
+    if ($lua.omni_profiler_enabled -ne $EnableOmniProfiler.ToString().ToLowerInvariant()) {
+        throw "Fixed-step Lua profiler state does not match the requested run"
+    }
     if ($lua.deterministic_replay -ne "true") {
         throw "Fixed-step Lua did not prove same-process deterministic replay"
     }
@@ -447,7 +453,7 @@ try {
         $prefix = "pass_$($pass)_"
         foreach ($suffix in @(
             "elapsed_seconds", "generated_hash", "initial_hash", "final_hash",
-            "initial_particles", "final_particles"
+            "initial_particles", "final_particles", "profiler_frame_calls", "profiler_simulation_calls"
         )) {
             if (-not $lua.ContainsKey($prefix + $suffix)) {
                 throw "Fixed-step Lua result is missing field: $prefix$suffix"
@@ -456,6 +462,12 @@ try {
         $elapsed = Convert-InvariantDouble $lua[$prefix + "elapsed_seconds"] ($prefix + "elapsed_seconds")
         if ($elapsed -le 0.0) {
             throw "Fixed-step Lua pass elapsed time is not positive: $pass"
+        }
+        $expectedProfilerCalls = if ($EnableOmniProfiler) { [int64]$StepsPerPass } else { [int64]0 }
+        foreach ($profilerField in @("profiler_frame_calls", "profiler_simulation_calls")) {
+            if ((Convert-NonnegativeInteger $lua[$prefix + $profilerField] ($prefix + $profilerField)) -ne $expectedProfilerCalls) {
+                throw "Fixed-step Lua profiler calls do not match the requested mode: $prefix$profilerField"
+            }
         }
         $elapsedValues.Add($elapsed)
         $passRecords.Add([pscustomobject][ordered]@{
@@ -469,6 +481,8 @@ try {
             final_state_hash_fnv1a32 = [string]$lua[$prefix + "final_hash"]
             initial_particles = Convert-NonnegativeInteger $lua[$prefix + "initial_particles"] ($prefix + "initial_particles")
             final_particles = Convert-NonnegativeInteger $lua[$prefix + "final_particles"] ($prefix + "final_particles")
+            omni_profiler_frame_calls = Convert-NonnegativeInteger $lua[$prefix + "profiler_frame_calls"] ($prefix + "profiler_frame_calls")
+            omni_profiler_simulation_calls = Convert-NonnegativeInteger $lua[$prefix + "profiler_simulation_calls"] ($prefix + "profiler_simulation_calls")
         })
     }
 
@@ -588,6 +602,7 @@ try {
             runtime_path_injected = [bool]$resolvedRuntimeDirectory
             runtime_directory = if ($resolvedRuntimeDirectory) { $resolvedRuntimeDirectory } else { "not_injected" }
             portable_runtime_tested = $false
+            omni_profiler_enabled = [bool]$EnableOmniProfiler
             secret_environment_removed = @("GITHUB_PAT_TOKEN", "GITHUB_TOKEN", "GH_TOKEN")
         }
         machine = [ordered]@{
@@ -634,6 +649,7 @@ try {
             initial_state_hash_fnv1a32 = [string]$lua.initial_state_hash
             final_state_hash_fnv1a32 = [string]$lua.final_state_hash
             timing_scope = [string]$lua.timing_scope
+            omni_profiler_enabled = [bool]$EnableOmniProfiler
             scene_generation_in_timed_region = $false
             reset_sanitization_in_timed_region = $false
             warmup_in_timed_region = $false
@@ -660,7 +676,7 @@ try {
         limitations = @(
             "This is the real client Simulation path driven synchronously through Lua, not a pure C++ microbenchmark.",
             "The timed region has no frame limiter or renderer call, but it includes Lua-to-C dispatch for each fixed step.",
-            "Subsystem timings and per-process VRAM are not available in this foundation runner.",
+            "Per-process VRAM is not available in this foundation runner; detailed subsystem exports remain in the separate profiler runtime fixture.",
             "Performance thresholds and regression budgets are not evaluated by this execution."
         )
     }

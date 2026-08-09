@@ -222,5 +222,5 @@ public:
 	void SetToolIndex(ByteString identifier, std::optional<int> index);
 	void InitCommandInterface();
 
-	FrameTime *GetFrameTime() const;
+	std::shared_ptr<FrameTime> GetFrameTime() const;
 };

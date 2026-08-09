@@ -106,6 +106,16 @@ class FixedStepBenchmarkContractTest(unittest.TestCase):
         self.assertIn("aggregate_steps_per_second", self.powershell)
         self.assertIn("passes_detail", self.powershell)
 
+    def test_optional_profiler_mode_is_outside_the_timed_loop_and_provenanced(self) -> None:
+        self.assertIn("[switch] $EnableOmniProfiler", self.powershell)
+        self.assertIn('"omni_profiler_enabled=$([int][bool]$EnableOmniProfiler)"', self.powershell)
+        self.assertIn("omni_profiler_enabled = [bool]$EnableOmniProfiler", self.powershell)
+        self.assertIn("sim.omniProfilerEnabled(omni_profiler_enabled)", self.lua)
+        self.assertIn("sim.resetOmniProfiler()", self.lua)
+        self.assertIn("profiler_frame_calls", self.lua)
+        self.assertIn("profiler_simulation_calls", self.lua)
+        self.assertIn("local started = socket.getTime()", self.lua)
+
     def test_timing_boundaries_are_explicit_in_json(self) -> None:
         for field in (
             "scene_generation_in_timed_region = $false",

@@ -4075,13 +4075,20 @@ void Simulation::BeforeSim(bool willUpdate)
 	{
 		{
 			FrameTime::Span span(frameTime, "Air::update_air");
+			FrameTime::SubsystemSpan profilerSpan(frameTime, FrameTime::Subsystem::Air);
 			air->update_air();
 		}
 
 		if(aheat_enable)
+		{
+			FrameTime::SubsystemSpan profilerSpan(frameTime, FrameTime::Subsystem::AmbientHeat);
 			air->update_airh();
+		}
 
-		DispatchNewtonianGravity();
+		{
+			FrameTime::SubsystemSpan profilerSpan(frameTime, FrameTime::Subsystem::Gravity);
+			DispatchNewtonianGravity();
+		}
 		// gravIn::mass is now potentially garbage, which is ok, we were going to clear it for the frame anyway
 		for (auto p : gravIn.mass.Size().OriginRect())
 		{

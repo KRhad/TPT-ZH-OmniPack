@@ -12,6 +12,7 @@
 #include <optional>
 #include <functional>
 #include <array>
+#include <mutex>
 
 constexpr auto NUM_TOOLINDICES = 4;
 
@@ -331,6 +332,13 @@ public:
 	int SelectNextTool;
 
 	void UpdateUpTo(int upTo);
+	void SetOmniProfilerEnabled(bool enabled);
+	bool GetOmniProfilerEnabled() const;
+	void ResetOmniProfiler();
+	FrameTime::SubsystemMetrics GetOmniProfilerMetrics() const;
+	std::shared_ptr<FrameTime> GetFrameTime() const;
+	void EnsureFrameTime();
+	void ReleaseFrameTimeIfProfilerDisabled();
 	void BeforeSim();
 	void AfterSim();
 
@@ -352,5 +360,8 @@ public:
 		return !paused || queuedFrames;
 	}
 
-	std::unique_ptr<FrameTime> frameTime;
+
+private:
+	mutable std::mutex frameTimeMutex;
+	std::shared_ptr<FrameTime> frameTime;
 };

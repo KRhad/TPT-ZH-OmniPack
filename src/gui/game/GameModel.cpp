@@ -42,6 +42,7 @@
 #include "gui/game/tool/WallTool.h"
 #include "gui/interface/Engine.h"
 #include "common/Localization.h"
+#include "common/Defer.h"
 #include "gui/dialogues/ErrorMessage.h"
 #include <iostream>
 #include <algorithm>
@@ -1701,6 +1702,17 @@ std::optional<CustomGOLData> GameModel::CheckCustomGol(String ruleString, String
 
 void GameModel::UpdateUpTo(int upTo)
 {
+	auto frameTime = GetFrameTime();
+	auto *previousFrameTime = sim->frameTime;
+	if (frameTime)
+	{
+		sim->frameTime = frameTime.get();
+	}
+	Defer restoreFrameTime([&]() {
+		sim->frameTime = previousFrameTime;
+	});
+	FrameTime::OptionalFrame profilerFrame(frameTime.get());
+	FrameTime::SubsystemSpan simulationSpan(frameTime.get(), FrameTime::Subsystem::Simulation);
 	FrameTime::Span span(frameTime.get(), "GameModel::UpdateUpTo");
 	if (upTo < sim->debug_nextToUpdate)
 	{
@@ -1710,7 +1722,10 @@ void GameModel::UpdateUpTo(int upTo)
 	{
 		BeforeSim();
 	}
-	sim->UpdateParticles(sim->debug_nextToUpdate, upTo);
+	{
+		FrameTime::SubsystemSpan particleSpan(frameTime.get(), FrameTime::Subsystem::ParticleUpdate);
+		sim->UpdateParticles(sim->debug_nextToUpdate, upTo);
+	}
 	if (queuedFrames)
 	{
 		queuedFrames--;
@@ -1726,12 +1741,80 @@ void GameModel::UpdateUpTo(int upTo)
 	}
 }
 
+void GameModel::SetOmniProfilerEnabled(bool enabled)
+{
+	std::shared_ptr<FrameTime> profiler;
+	{
+		std::lock_guard lock(frameTimeMutex);
+		if (enabled && !frameTime)
+		{
+			frameTime = std::make_shared<FrameTime>();
+		}
+		profiler = frameTime;
+	}
+	if (profiler)
+	{
+		profiler->SetSubsystemProfilerEnabled(enabled);
+	}
+}
+
+bool GameModel::GetOmniProfilerEnabled() const
+{
+	auto profiler = GetFrameTime();
+	return profiler && profiler->GetSubsystemMetrics().enabled;
+}
+
+void GameModel::ResetOmniProfiler()
+{
+	if (auto profiler = GetFrameTime())
+	{
+		profiler->ResetSubsystemProfiler();
+	}
+}
+
+FrameTime::SubsystemMetrics GameModel::GetOmniProfilerMetrics() const
+{
+	if (auto profiler = GetFrameTime())
+	{
+		return profiler->GetSubsystemMetrics();
+	}
+	FrameTime::SubsystemMetrics metrics{};
+	metrics.processVramStatus = "not_tested_no_gpu_backend";
+	return metrics;
+}
+
+std::shared_ptr<FrameTime> GameModel::GetFrameTime() const
+{
+	std::lock_guard lock(frameTimeMutex);
+	return frameTime;
+}
+
+void GameModel::EnsureFrameTime()
+{
+	std::lock_guard lock(frameTimeMutex);
+	if (!frameTime)
+	{
+		frameTime = std::make_shared<FrameTime>();
+	}
+}
+
+void GameModel::ReleaseFrameTimeIfProfilerDisabled()
+{
+	std::lock_guard lock(frameTimeMutex);
+	if (frameTime && !frameTime->GetSubsystemMetrics().enabled)
+	{
+		frameTime.reset();
+	}
+}
+
 void GameModel::BeforeSim()
 {
+	auto frameTime = GetFrameTime();
 	FrameTime::Span span(frameTime.get(), "GameModel::BeforeSim");
 	auto willUpdate = IsSimRunning();
 	if (willUpdate)
 	{
+		FrameTime::SubsystemSpan luaSpan(frameTime.get(), FrameTime::Subsystem::Lua);
 		CommandInterface::Ref().HandleEvent(BeforeSimEvent{});
 	}
 	sim->BeforeSim(willUpdate);
@@ -1739,9 +1822,13 @@ void GameModel::BeforeSim()
 
 void GameModel::AfterSim()
 {
+	auto frameTime = GetFrameTime();
 	FrameTime::Span span(frameTime.get(), "GameModel::AfterSim");
 	sim->AfterSim();
-	CommandInterface::Ref().HandleEvent(AfterSimEvent{});
+	{
+		FrameTime::SubsystemSpan luaSpan(frameTime.get(), FrameTime::Subsystem::Lua);
+		CommandInterface::Ref().HandleEvent(AfterSimEvent{});
+	}
 }
 
 Tool *GameModel::GetToolByIndex(int index)

@@ -33,6 +33,7 @@ assert(scenario_name == "empty" or scenario_name == "mixed-medium",
 local warmup_steps = required_integer("warmup_steps", 0, 100000)
 local steps_per_pass = required_integer("steps_per_pass", 1, 1000000)
 local pass_count = required_integer("passes", 1, 50)
+local omni_profiler_enabled = required_integer("omni_profiler_enabled", 0, 1) == 1
 local seed = {
     required_integer("seed_a", 0, 4294967295),
     required_integer("seed_b", 0, 4294967295),
@@ -45,6 +46,9 @@ assert(type(sim.updateUpTo) == "function", "sim.updateUpTo is unavailable")
 assert(type(sim.hash) == "function", "sim.hash is unavailable")
 assert(type(sim.ensureDeterminism) == "function", "sim.ensureDeterminism is unavailable")
 assert(type(sim.randomSeed) == "function", "sim.randomSeed is unavailable")
+assert(type(sim.omniProfilerEnabled) == "function", "sim.omniProfilerEnabled is unavailable")
+assert(type(sim.omniProfiler) == "function", "sim.omniProfiler is unavailable")
+assert(type(sim.resetOmniProfiler) == "function", "sim.resetOmniProfiler is unavailable")
 
 local ids = {
     brck = assert(elements.DEFAULT_PT_BRCK),
@@ -107,9 +111,11 @@ local function reset_world()
     -- restores frame/RNG/Air state before the actual scene is generated.
     sim.clearSim()
     configure_simulation()
+    sim.omniProfilerEnabled(omni_profiler_enabled)
     sim.updateUpTo()
     sim.clearSim()
     configure_simulation()
+    sim.resetOmniProfiler()
 end
 
 local function generate_empty()
@@ -192,7 +198,7 @@ local function run_benchmark()
         order = {
             "schema_version", "scenario", "warmup_steps", "steps_per_pass",
             "passes", "seed", "atmosphere_cells", "simulation_dt_value",
-            "simulation_dt_unit", "reset_sanitization_steps", "timing_scope", "generated_particles",
+            "simulation_dt_unit", "reset_sanitization_steps", "timing_scope", "omni_profiler_enabled", "generated_particles",
             "initial_particles", "final_particles", "initial_state_hash",
             "final_state_hash", "deterministic_replay",
         },
@@ -207,6 +213,7 @@ local function run_benchmark()
         simulation_dt_unit = "legacy_tick",
         reset_sanitization_steps = 1,
         timing_scope = "synchronous_sim_updateUpTo_loop",
+        omni_profiler_enabled = tostring(omni_profiler_enabled),
     }
 
     local reference_generated_hash
@@ -229,6 +236,10 @@ local function run_benchmark()
         end
         collectgarbage("collect")
 
+        -- This reset is outside the timed region. When enabled, the following
+        -- metrics therefore describe exactly the synchronous fixed-step loop.
+        sim.resetOmniProfiler()
+
         local initial_particles = sim.partCount()
         local initial_hash = sim.hash()
         local started = socket.getTime()
@@ -238,6 +249,18 @@ local function run_benchmark()
         local elapsed_seconds = socket.getTime() - started
         local final_particles = sim.partCount()
         local final_hash = sim.hash()
+        local profiler = sim.omniProfiler()
+
+        assert(profiler.enabled == omni_profiler_enabled,
+            "profiler enable state does not match benchmark configuration")
+        local expected_profiler_calls = omni_profiler_enabled and steps_per_pass or 0
+        for _, subsystem in ipairs({
+            "frame", "simulation", "particle_update", "air", "ambient_heat",
+            "gravity_dispatch_wait",
+        }) do
+            assert(profiler.subsystems[subsystem].calls == expected_profiler_calls,
+                "unexpected profiler calls for " .. subsystem)
+        end
 
         assert(elapsed_seconds > 0.0, "benchmark pass elapsed time is not positive")
 
@@ -268,6 +291,7 @@ local function run_benchmark()
         for _, key in ipairs({
             "elapsed_seconds", "generated_hash", "initial_hash", "final_hash",
             "initial_particles", "final_particles",
+            "profiler_frame_calls", "profiler_simulation_calls",
         }) do
             result.order[#result.order + 1] = "pass_" .. pass .. "_" .. key
         end
@@ -277,6 +301,8 @@ local function run_benchmark()
         result["pass_" .. pass .. "_final_hash"] = final_hash
         result["pass_" .. pass .. "_initial_particles"] = initial_particles
         result["pass_" .. pass .. "_final_particles"] = final_particles
+        result["pass_" .. pass .. "_profiler_frame_calls"] = profiler.subsystems.frame.calls
+        result["pass_" .. pass .. "_profiler_simulation_calls"] = profiler.subsystems.simulation.calls
     end
 
     result.generated_particles = reference_created

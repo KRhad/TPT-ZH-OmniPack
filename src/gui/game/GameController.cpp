@@ -775,7 +775,10 @@ void GameController::Blur()
 	// Tell lua that mouse is up (even if it really isn't)
 	MouseUp(0, 0, 0, mouseUpBlur);
 	commandInterface->HandleEvent(BlurEvent{});
-	gameModel->frameTime.reset();
+	if (!gameModel->GetOmniProfilerEnabled())
+	{
+		gameModel->ReleaseFrameTimeIfProfilerDisabled();
+	}
 }
 
 void GameController::Exit()
@@ -903,20 +906,22 @@ void GameController::LoadRenderPreset(int presetNum)
 
 void GameController::Update()
 {
-	if ((debugFlags & DEBUG_FRAMETIME) && !gameModel->frameTime)
+	if (debugFlags & DEBUG_FRAMETIME)
 	{
-		gameModel->frameTime = std::make_unique<FrameTime>();
+		gameModel->EnsureFrameTime();
 	}
-	if (!(debugFlags & DEBUG_FRAMETIME) && gameModel->frameTime)
+	if (!(debugFlags & DEBUG_FRAMETIME) && !gameModel->GetOmniProfilerEnabled())
 	{
-		gameModel->frameTime.reset();
+		gameModel->ReleaseFrameTimeIfProfilerDisabled();
 	}
-	gameModel->GetSimulation()->frameTime = gameModel->frameTime.get();
+	auto frameTime = gameModel->GetFrameTime();
+	gameModel->GetSimulation()->frameTime = frameTime.get();
 	Defer removeFrameTime([&]() {
 		gameModel->GetSimulation()->frameTime = nullptr;
 	});
-	FrameTime::Frame frame(gameModel->frameTime.get());
-	FrameTime::Span span(gameModel->frameTime.get(), "GameController::Update");
+	FrameTime::Frame frame(frameTime.get());
+	FrameTime::SubsystemSpan frameSpan(frameTime.get(), FrameTime::Subsystem::Frame);
+	FrameTime::Span span(frameTime.get(), "GameController::Update");
 
 	auto &sd = SimulationData::CRef();
 	ui::Point pos = gameView->GetMousePosition();
@@ -1901,7 +1906,7 @@ void GameController::SetToolIndex(ByteString identifier, std::optional<int> inde
 	}
 }
 
-FrameTime *GameController::GetFrameTime() const
+std::shared_ptr<FrameTime> GameController::GetFrameTime() const
 {
-	return gameModel->frameTime.get();
+	return gameModel->GetFrameTime();
 }

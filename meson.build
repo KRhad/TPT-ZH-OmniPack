@@ -664,6 +664,17 @@ font_render_probe = executable(
 	override_options: target_options,
 )
 
+omni_profiler_thread_probe = executable(
+	'omni_profiler_thread_probe',
+	sources: files('tools/omni_profiler_thread_probe.cpp'),
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ threads_dep, sta_libs['common'], sta_libs['simulation'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
 legacy_progress_save_probe = executable(
 	'legacy_progress_save_probe',
 	sources: [
@@ -760,6 +771,13 @@ test(
 		join_paths(meson.project_source_root(), 'artifacts', 'zh-ui-fix', 'render-probe'),
 		join_paths(meson.project_source_root(), 'src', 'lang', 'zh-CN.json'),
 	],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'omni-profiler-thread-probe',
+	omni_profiler_thread_probe,
 	suite: 'static',
 	timeout: 60,
 )

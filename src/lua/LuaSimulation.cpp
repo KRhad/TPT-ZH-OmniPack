@@ -326,6 +326,143 @@ static int resetOmniCorrectionLedger(lua_State *L)
 	return 0;
 }
 
+static bool omniProfilerSubsystemInstrumented(FrameTime::Subsystem subsystem)
+{
+	switch (subsystem)
+	{
+	case FrameTime::Subsystem::Frame:
+	case FrameTime::Subsystem::Simulation:
+	case FrameTime::Subsystem::ParticleUpdate:
+	case FrameTime::Subsystem::Air:
+	case FrameTime::Subsystem::AmbientHeat:
+	case FrameTime::Subsystem::Gravity:
+	case FrameTime::Subsystem::Lua:
+	case FrameTime::Subsystem::RenderSnapshotCopy:
+	case FrameTime::Subsystem::Rendering:
+		return true;
+	case FrameTime::Subsystem::Thermal:
+	case FrameTime::Subsystem::Chemistry:
+	case FrameTime::Subsystem::Gpu:
+	case FrameTime::Subsystem::GpuSynchronization:
+	case FrameTime::Subsystem::Count:
+		return false;
+	}
+	return false;
+}
+
+static char const *omniProfilerSubsystemStatus(FrameTime::Subsystem subsystem)
+{
+	switch (subsystem)
+	{
+	case FrameTime::Subsystem::Thermal:
+		return "not_instrumented_legacy_per_particle";
+	case FrameTime::Subsystem::Chemistry:
+		return "not_instrumented_legacy_per_element";
+	case FrameTime::Subsystem::Gpu:
+		return "not_tested_no_gpu_backend";
+	case FrameTime::Subsystem::GpuSynchronization:
+		return "not_tested_no_gpu_backend";
+	case FrameTime::Subsystem::Frame:
+	case FrameTime::Subsystem::Simulation:
+	case FrameTime::Subsystem::ParticleUpdate:
+	case FrameTime::Subsystem::Air:
+	case FrameTime::Subsystem::AmbientHeat:
+	case FrameTime::Subsystem::Gravity:
+	case FrameTime::Subsystem::Lua:
+	case FrameTime::Subsystem::RenderSnapshotCopy:
+	case FrameTime::Subsystem::Rendering:
+		return "instrumented";
+	case FrameTime::Subsystem::Count:
+		break;
+	}
+	return "unknown";
+}
+
+static int omniProfiler(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	auto metrics = lsi->gameModel->GetOmniProfilerMetrics();
+	lua_newtable(L);
+	auto setBoolean = [L](char const *field, bool value) {
+		lua_pushboolean(L, value);
+		lua_setfield(L, -2, field);
+	};
+	auto setInteger = [L](char const *field, auto value) {
+		lua_pushinteger(L, static_cast<lua_Integer>(value));
+		lua_setfield(L, -2, field);
+	};
+	setBoolean("enabled", metrics.enabled);
+	lua_pushstring(L, "steady_clock_monotonic");
+	lua_setfield(L, -2, "clock");
+	lua_pushstring(L, "legacy_cpu_serial");
+	lua_setfield(L, -2, "backend");
+	lua_pushstring(L, "GameModel_update_boundary");
+	lua_setfield(L, -2, "simulation_scope");
+	setInteger("live_particle_records", lsi->sim->NUM_PARTS);
+	setInteger("particle_storage_active_slots", lsi->sim->parts.active);
+	setInteger("atmosphere_cells", XCELLS * YCELLS);
+	setBoolean("authoritative_atmosphere_state", false);
+	setBoolean("threaded_rendering_observed", metrics.threadedRenderingObserved);
+	lua_pushstring(L, "not_implemented");
+	lua_setfield(L, -2, "active_chunks_status");
+	lua_pushstring(L, "not_tested_legacy_reaction_callbacks");
+	lua_setfield(L, -2, "reaction_candidates_status");
+	setBoolean("process_vram_available", metrics.processVramAvailable);
+	if (metrics.processVramAvailable)
+	{
+		setInteger("process_vram_bytes", metrics.processVramBytes);
+	}
+	else
+	{
+		lua_pushstring(L, "not_tested");
+		lua_setfield(L, -2, "process_vram_bytes");
+	}
+	lua_pushstring(L, metrics.processVramStatus);
+	lua_setfield(L, -2, "process_vram_status");
+	setBoolean("gpu_backend_active", metrics.gpuBackendActive);
+	setBoolean("gpu_timings_available", metrics.gpuTimingsAvailable);
+	setBoolean("gpu_synchronization_timings_available", metrics.gpuSynchronizationTimingsAvailable);
+
+	lua_newtable(L);
+	for (size_t index = 0; index < FrameTime::SubsystemCount; index++)
+	{
+		auto subsystem = static_cast<FrameTime::Subsystem>(index);
+		auto const &metric = metrics.subsystems[index];
+		lua_newtable(L);
+		setBoolean("instrumented", omniProfilerSubsystemInstrumented(subsystem));
+		lua_pushstring(L, omniProfilerSubsystemStatus(subsystem));
+		lua_setfield(L, -2, "status");
+		setInteger("calls", metric.calls);
+		setInteger("last_nanoseconds", metric.lastNanoseconds);
+		setInteger("total_nanoseconds", metric.totalNanoseconds);
+		setInteger("maximum_nanoseconds", metric.maximumNanoseconds);
+		lua_setfield(L, -2, FrameTime::SubsystemName(subsystem));
+	}
+	lua_setfield(L, -2, "subsystems");
+	return 1;
+}
+
+static int omniProfilerEnabled(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	lsi->AssertInterfaceEvent();
+	if (lua_gettop(L))
+	{
+		lsi->gameModel->SetOmniProfilerEnabled(lua_toboolean(L, 1));
+		return 0;
+	}
+	lua_pushboolean(L, lsi->gameModel->GetOmniProfilerEnabled());
+	return 1;
+}
+
+static int resetOmniProfiler(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	lsi->AssertInterfaceEvent();
+	lsi->gameModel->ResetOmniProfiler();
+	return 0;
+}
+
 static int omniModuleEnabled(lua_State *L)
 {
 	auto moduleName = std::string_view(luaL_checkstring(L, 1));
@@ -2420,6 +2557,9 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(omniCorrectionLedger),
 		LFUNC(omniCorrectionLedgerEnabled),
 		LFUNC(resetOmniCorrectionLedger),
+		LFUNC(omniProfiler),
+		LFUNC(omniProfilerEnabled),
+		LFUNC(resetOmniProfiler),
 		LFUNC(omniModuleEnabled),
 		LFUNC(omniLanguage),
 		LFUNC(decoSpace),
