@@ -7,8 +7,10 @@ numbered report fixes the first-round conclusions to the current integration poi
 |---|---:|---:|---|
 | common base `bff38ce` vs pre-vNext `fb72d5e8f` | 181 | 0 | OmniPack development |
 | pre-vNext `fb72d5e8f` vs stable `d768aeb89` | 181 | 13 | fork had local work and lacked 13 upstream commits |
-| current `f1320b48d` vs stable/master | 186 | 0 | upstream now integrated; five bounded vNext commits follow it |
+| current `430b3bd28` vs stable/master | 214 | 0 | upstream remains integrated; 2026-08-10 refresh found no new official commits |
 
 All 13 previously missing upstream commits are classified in the canonical report.
-The upstream merge is present, but `G0_UPSTREAM_BASELINE=RED` until performance,
-characterization, strict-FP, and differential baselines exist.
+The 1.0.2 official website/release/Git refresh found stable and master unchanged at
+`d768aeb89`; no new change impact or adaptation was required. `G0_UPSTREAM_BASELINE`
+remains RED for physical conservation/positivity, VRAM and accepted performance
+budget work, not because the current official source is absent.

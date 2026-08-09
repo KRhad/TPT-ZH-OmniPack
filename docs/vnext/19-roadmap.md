@@ -2,11 +2,11 @@
 
 ## Current phase decision
 
-Version **1.0.1** is closed. Its final `97d2fc2c1` build/test/runtime/concurrency
-gate is GREEN, including steady-clock subsystem export, real threaded-render
-heartbeat and sequential profiler OFF/ON measurement. The next permitted version
-is **1.0.2 Latest TPT Compatibility**: refresh official stable/master, produce a
-fresh impact audit and integrate only applicable upstream deltas.
+Versions **1.0.1** and **1.0.2** are closed. 1.0.1 supplied the final
+`97d2fc2c1` diagnostics build/test/runtime/concurrency gate; 1.0.2 refreshed the
+official website, GitHub release, tag and master and found no upstream delta after
+the local 100.1 merge. The next permitted version is **1.0.3 UI & Material
+Organization**, beginning with a reversible UI/ID/Lua compatibility audit.
 
 The official 100.1 source adaptation, explicit FP modes, fixed-step
 throughput/process-RAM baseline, C01-C14 deterministic restart suite and scoped
@@ -21,7 +21,7 @@ OmniAtmosphere state or solver will be integrated yet.
 | Phase | Scope | Status / next gate |
 |---:|---|---|
 | -1 | external research and license audit | YELLOW: classifications complete; no new artifact redistribution authorized |
-| 0 | latest upstream adaptation | 1.0.2 NEXT: fresh official refresh and change-impact audit required; 100.1 source sub-gate was GREEN at prior audit |
+| 0 | latest upstream adaptation | 1.0.2 COMPLETE / GREEN: official stable/master unchanged at `d768aeb89`; no adaptation required |
 | 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
 | 2 | physical scale and unit system | proposal written / RED |
 | 3 | AtmosphereBench | planned / BLOCKED by Phase 1-2 foundations |
@@ -70,8 +70,11 @@ The next integration commits should be small and independently reversible:
    `97d2fc2c1`; final build has 40/40 Meson, 342 Python pass/2 skipped, runtime
    worker heartbeat and sequential OFF/ON pairs. Process VRAM remains explicitly
    `not_tested_no_gpu_backend`.
-12. `upstream-impact`: NEXT in 1.0.2. Refresh official stable/master and classify
-   Air, heat, particle, Lua, save, element and build impact before any adaptation.
+12. `upstream-impact`: COMPLETE in 1.0.2. Official stable/master remained
+   `d768aeb89`; the tag-fetch collision is isolated to unrelated historical
+   `v99.5.394`, and no source adaptation was needed.
+13. `ui-material-organization`: NEXT in 1.0.3. Inventory all selector/search/
+   periodic/detail routes and stable IDs before a narrow UI-only implementation.
 
 The mixed benchmark starts from the same generated Strict/Legacy hash; the later
 capture locates the first difference after update step 1 in both Particle and Air
@@ -126,7 +129,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Start 1.0.2 with a fresh official stable/master refresh and impact audit. Global physical correction/source-sink, full-state finite/positivity, VRAM and performance-budget work remains tracked but does not authorize OmniAtmosphere. |
+| Next stage? | Start 1.0.3 with a UI/material route and compatibility audit. Global physical correction/source-sink, full-state finite/positivity, VRAM and performance-budget work remains tracked but does not authorize OmniAtmosphere. |
 
 ## Long-term acceptance
 

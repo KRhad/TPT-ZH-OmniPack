@@ -5,15 +5,18 @@
 ```text
 REPORT_DATE=2026-08-10
 CURRENT_BRANCH=integration/omnicore-vnext
-CURRENT_VERSION=1.0.1
+CURRENT_VERSION=1.0.2
 CURRENT_VERSION_GATE=GREEN
-NEXT_VERSION=1.0.2
-NEXT_PHASE=latest upstream compatibility impact audit
+NEXT_VERSION=1.0.3
+NEXT_PHASE=UI and material organization audit
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
 PROFILER_OVERHEAD_MEASURED=GREEN
 INDEPENDENT_PROFILER_REVIEW=not_available
+UPSTREAM_REFRESH_DATE=2026-08-10
+UPSTREAM_REFRESH=GREEN_NO_NEW_DELTA
+UPSTREAM_TAG_FETCH=YELLOW_LOCAL_V99_5_394_COLLISION_NOT_OVERWRITTEN
 BENCHMARK_IMPLEMENTATION_HEAD=c4490463f3819695cab734414f827e0e4e4be118
 CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
@@ -61,6 +64,12 @@ no longer a missing G0 foundation: its spans, concurrency safety and measured
 OFF/ON behavior are recorded in `phase-1-profiler-export.md`. The red gate blocks
 production OmniAtmosphere work; it does not prevent beginning the isolated 1.0.2
 upstream compatibility audit.
+
+The 1.0.2 refresh is also **GREEN**: the official download page, GitHub latest
+release, annotated `v100.1.400` tag and official `master` all resolve to the same
+`d768aeb89` commit. A branch-only official fetch passed and zero upstream commits
+exist after the local 100.1 merge. The rejected tag-inclusive fetch was limited to
+the unrelated historical `v99.5.394` collision and did not overwrite local data.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
@@ -205,11 +214,11 @@ with an explicit maintenance decision.
 
 ## Next permitted work
 
-The 1.0.1 version gate authorizes only 1.0.2 latest-upstream compatibility work:
+The 1.0.2 version gate authorizes only 1.0.3 UI/material-organization audit work:
 
-1. refresh official stable/master references and release notes;
-2. compare them with the current integration baseline and record change impact;
-3. integrate only applicable upstream changes with regression coverage.
+1. inventory selector, search, periodic-table and material-detail entry points;
+2. map existing stable Element IDs and Lua identifiers to proposed UI routes;
+3. define a narrow, reversible UI implementation plan before changing production UI.
 
 Production Air replacement, multi-species runtime, SDL3 migration and GPU compute
 remain blocked by global G0. Physical correction/source-sink attribution,

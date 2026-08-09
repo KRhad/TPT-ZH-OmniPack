@@ -8,11 +8,21 @@
 | CURRENT LOCAL OMNIPACK before vNext | `fb72d5e8f` |
 | LATEST STABLE | `d768aeb89acad986bd252d7e904bf44bb374545f` (`v100.1.400`) |
 | LATEST UPSTREAM MASTER | `d768aeb89acad986bd252d7e904bf44bb374545f` |
-| CURRENT INTEGRATION | `f1320b48dfd5a570edc353a6d52dcd8adc094345` |
+| CURRENT INTEGRATION | `430b3bd2868c17ba3d15c9a4580289173bcc79a6` |
 
 Stable and master are identical at this audit time. The pre-vNext fork and stable
 share LOCAL BASE. Pre-vNext had 181 local commits and was missing 13 upstream
 commits; current integration contains both histories.
+
+## 2026-08-10 refresh
+
+The official download page, GitHub latest-release metadata and direct Git remote
+all still identify `v100.1.400`; its peeled commit and `master` are both
+`d768aeb89acad986bd252d7e904bf44bb374545f`. `git fetch official --prune` passed,
+and `git rev-list ba30cd2e6..official/master` is zero. The tag-inclusive fetch
+remains YELLOW only because it would clobber an unrelated local historical
+`v99.5.394` tag; it was not overwritten. There is no new upstream delta after the
+local 100.1 merge and thus no new category classification or source adaptation.
 
 ## Exhaustive classification of the 13 upstream commits
 

@@ -1,12 +1,16 @@
 # OmniCore incremental version state
 
 ```text
-CURRENT_VERSION=1.0.1
-CURRENT_PHASE=Diagnostics & Stability Foundation
+CURRENT_VERSION=1.0.2
+CURRENT_PHASE=Latest TPT Upstream Compatibility
 PHASE_STATUS=COMPLETE
-BASE_COMMIT=ca3d643c8b24a8588a5e84477e145312707d354b
-IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
+BASE_COMMIT=430b3bd2868c17ba3d15c9a4580289173bcc79a6
+IMPLEMENTATION_HEAD=no production adaptation required
 BRANCH=integration/omnicore-vnext
+UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
+UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
+UPSTREAM_STATUS=GREEN_NO_NEW_DELTA
+HISTORICAL_TAG_COLLISION=YELLOW_v99.5.394_not_overwritten
 BUILD=GREEN
 TESTS=GREEN
 RUNTIME=GREEN
@@ -16,14 +20,15 @@ PROFILER_OVERHEAD=MEASURED
 SAVE_LUA_SMOKE=GREEN
 INDEPENDENT_PROFILER_REVIEW=not_available
 KNOWN_BLOCKERS=G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget
-NEXT_VERSION=1.0.2
-NEXT_PHASE=Latest TPT Upstream Compatibility
+NEXT_VERSION=1.0.3
+NEXT_PHASE=UI & Material Organization
 ```
 
-The 1.0.1 gate is GREEN because its own required diagnostics, runtime and
-benchmark evidence is complete. Global OmniCore G0 remains RED and continues to
-forbid OmniAtmosphere implementation. The next version begins with a fresh
-official stable/master check and an impact audit; it does not enter the 1.0.3 UI
-or materials scope.
+The 1.0.2 refresh is GREEN: official download, GitHub release, tag and master all
+resolve to 100.1 build 400 at `d768aeb89`, and no upstream commit arrived after
+the local 100.1 merge. No code adaptation was required. Global OmniCore G0 remains
+RED and continues to forbid OmniAtmosphere implementation. The next version may
+enter only the 1.0.3 UI/material-organization scope.
 
-The milestone report is [phase-1-profiler-export.md](../vnext/phase-1-profiler-export.md).
+Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md)
+and [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md).

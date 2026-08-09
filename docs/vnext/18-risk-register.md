@@ -15,7 +15,7 @@
 | L-01 | CRITICAL | Lua compatibility | scripts directly use Legacy `pv/vx/vy/hv` semantics | preserve Classic fields and versioned Enhanced APIs/projection | RED for replacement |
 | L-02 | CRITICAL | save compatibility | no versioned conservative atmosphere schema or unknown-species fallback | independent OPS object/chunk plus old/new/corrupt fixture matrix | RED |
 | L-03 | HIGH | Particle ABI | AoS pointers, `offsetof` and FIELD indices are widely depended upon | ParticleAccessor/View first; defer SoA | RED for layout rewrite |
-| L-04 | HIGH | upstream | future stable may touch Air, Particle, Heat, Lua, Save or build | phase-start `ls-remote/fetch`, isolated impact Worker, regression conversion | YELLOW |
+| L-04 | HIGH | upstream | future stable may touch Air, Particle, Heat, Lua, Save or build; 2026-08-10 refresh found no new commit after 100.1, while unrelated local `v99.5.394` blocks only tag-inclusive fetch | phase-start `ls-remote/fetch`, isolated impact Worker, regression conversion; never force-overwrite historical tags | YELLOW |
 | L-05 | HIGH | gameplay | replacing FIRE/pressure/vacuum could break old works | immutable Classic backend and differential traces | RED for replacement |
 | L-06 | MEDIUM | legacy formats | PSv/fuC and GUI save/load lack current runtime fixtures | add safe fixed fixtures and visible GUI pass | YELLOW |
 | L-07 | HIGH | save/differential | pre-save versus loaded Snapshot hash differs in 14/14 characterization cases because OPS normalizes/quantizes state | formal field-level report now attributes Particle/Air/settings differences and loaded-A/B is repeatable; treat loaded OPS as baseline and never claim bit-exact checkpointing | YELLOW, characterized |
