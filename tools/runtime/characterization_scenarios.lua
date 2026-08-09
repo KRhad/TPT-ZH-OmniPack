@@ -59,6 +59,19 @@ assert(type(sim.updateUpTo) == "function", "sim.updateUpTo is unavailable")
 assert(type(sim.hash) == "function", "sim.hash is unavailable")
 assert(type(sim.ensureDeterminism) == "function", "sim.ensureDeterminism is unavailable")
 assert(type(sim.randomSeed) == "function", "sim.randomSeed is unavailable")
+assert(type(sim.parts) == "function", "sim.parts is unavailable")
+assert(type(sim.partProperty) == "function", "sim.partProperty is unavailable")
+assert(type(sim.pressure) == "function", "sim.pressure is unavailable")
+assert(type(sim.velocityX) == "function", "sim.velocityX is unavailable")
+assert(type(sim.velocityY) == "function", "sim.velocityY is unavailable")
+assert(type(sim.ambientHeat) == "function", "sim.ambientHeat is unavailable")
+assert(type(sim.wallMap) == "function", "sim.wallMap is unavailable")
+assert(type(sim.elecMap) == "function", "sim.elecMap is unavailable")
+assert(type(sim.fanVelocityX) == "function", "sim.fanVelocityX is unavailable")
+assert(type(sim.fanVelocityY) == "function", "sim.fanVelocityY is unavailable")
+assert(type(sim.gravityMass) == "function", "sim.gravityMass is unavailable")
+assert(type(sim.gravityMask) == "function", "sim.gravityMask is unavailable")
+assert(type(sim.gravityField) == "function", "sim.gravityField is unavailable")
 
 local ids = {
     aray = assert(elements.DEFAULT_PT_ARAY),
@@ -458,6 +471,134 @@ local function rng_text()
     return table.concat({ a, b, c, d }, ",")
 end
 
+local function integer_text(value)
+    return string.format("%.0f", value)
+end
+
+local function float_text(value)
+    return string.format("%.9g", value)
+end
+
+local function bool_text(value)
+    return value and "true" or "false"
+end
+
+local load_boundary_particle_fields = {
+    "type", "life", "ctype", "x", "y", "vx", "vy", "temp", "flags",
+    "tmp", "tmp2", "tmp3", "tmp4", "dcolour",
+}
+
+local function dump_load_boundary_particles(path)
+    local records = {}
+    for runtime_id in sim.parts() do
+        local values = {}
+        for _, field in ipairs(load_boundary_particle_fields) do
+            values[field] = sim.partProperty(runtime_id, field)
+        end
+        records[#records + 1] = {
+            runtime_id = runtime_id,
+            pixel_x = math.floor(values.x + 0.5),
+            pixel_y = math.floor(values.y + 0.5),
+            values = values,
+        }
+    end
+    -- GameSave::serialiseOPS groups by rounded pixel in top-to-bottom/left-to-right
+    -- order, retaining ascending pre-save Particle ID inside each pixel. The ordinal
+    -- is the save-order matching key; runtime IDs are diagnostics only after loading.
+    table.sort(records, function(left, right)
+        if left.pixel_y ~= right.pixel_y then
+            return left.pixel_y < right.pixel_y
+        end
+        if left.pixel_x ~= right.pixel_x then
+            return left.pixel_x < right.pixel_x
+        end
+        return left.runtime_id < right.runtime_id
+    end)
+    local file = assert(io.open(path, "wb"))
+    file:write("save_ordinal,runtime_id,pixel_x,pixel_y,type,life,ctype,x,y,vx,vy,temp,flags,tmp,tmp2,tmp3,tmp4,dcolour\n")
+    for index, record in ipairs(records) do
+        local values = record.values
+        file:write((index - 1) .. "," .. integer_text(record.runtime_id) .. ","
+            .. integer_text(record.pixel_x) .. "," .. integer_text(record.pixel_y) .. ","
+            .. integer_text(values.type) .. "," .. integer_text(values.life) .. ","
+            .. integer_text(values.ctype) .. "," .. float_text(values.x) .. ","
+            .. float_text(values.y) .. "," .. float_text(values.vx) .. ","
+            .. float_text(values.vy) .. "," .. float_text(values.temp) .. ","
+            .. integer_text(values.flags) .. "," .. integer_text(values.tmp) .. ","
+            .. integer_text(values.tmp2) .. "," .. integer_text(values.tmp3) .. ","
+            .. integer_text(values.tmp4) .. "," .. integer_text(values.dcolour) .. "\n")
+    end
+    file:close()
+    return #records
+end
+
+local function dump_load_boundary_cells(path)
+    local file = assert(io.open(path, "wb"))
+    file:write("cx,cy,pressure,velocity_x,velocity_y,ambient_heat,wall_map,elec_map,"
+        .. "fan_velocity_x,fan_velocity_y,gravity_mass,gravity_mask,gravity_force_x,gravity_force_y\n")
+    local count = 0
+    for cy = 0, sim.YCELLS - 1 do
+        for cx = 0, sim.XCELLS - 1 do
+            local gravity_x, gravity_y = sim.gravityField(cx, cy)
+            file:write(cx .. "," .. cy .. "," .. float_text(sim.pressure(cx, cy)) .. ","
+                .. float_text(sim.velocityX(cx, cy)) .. ","
+                .. float_text(sim.velocityY(cx, cy)) .. ","
+                .. float_text(sim.ambientHeat(cx, cy)) .. ","
+                .. integer_text(sim.wallMap(cx, cy)) .. ","
+                .. integer_text(sim.elecMap(cx, cy)) .. ","
+                .. float_text(sim.fanVelocityX(cx, cy)) .. ","
+                .. float_text(sim.fanVelocityY(cx, cy)) .. ","
+                .. float_text(sim.gravityMass(cx, cy)) .. ","
+                .. integer_text(sim.gravityMask(cx, cy)) .. ","
+                .. float_text(gravity_x) .. "," .. float_text(gravity_y) .. "\n")
+            count = count + 1
+        end
+    end
+    file:close()
+    return count
+end
+
+local function dump_load_boundary_settings(path)
+    local edge_velocity_x, edge_velocity_y = sim.edgeVelocity()
+    local records = {
+        { "paused", "bool", bool_text(sim.paused()) },
+        { "ensure_determinism", "bool", bool_text(sim.ensureDeterminism()) },
+        { "edge_mode", "int", integer_text(sim.edgeMode()) },
+        { "gravity_mode", "int", integer_text(sim.gravityMode()) },
+        { "newtonian_gravity", "bool", bool_text(sim.newtonianGravity()) },
+        { "air_mode", "int", integer_text(sim.airMode()) },
+        { "convection_mode", "int", integer_text(sim.convectionMode()) },
+        { "ambient_heat_sim", "bool", bool_text(sim.ambientHeatSim()) },
+        { "heat_sim", "bool", bool_text(sim.heatSim()) },
+        { "water_equalization", "int", integer_text(sim.waterEqualization()) },
+        { "ambient_air_temperature", "float", float_text(sim.ambientAirTemp()) },
+        { "edge_pressure", "float", float_text(sim.edgePressure()) },
+        { "edge_velocity_x", "float", float_text(edge_velocity_x) },
+        { "edge_velocity_y", "float", float_text(edge_velocity_y) },
+    }
+    local file = assert(io.open(path, "wb"))
+    file:write("name,kind,value\n")
+    for _, record in ipairs(records) do
+        file:write(record[1] .. "," .. record[2] .. "," .. record[3] .. "\n")
+    end
+    file:close()
+    return #records
+end
+
+local function dump_load_boundary_capture(prefix)
+    local particle_path = prefix .. "-particles.csv"
+    local cell_path = prefix .. "-cells.csv"
+    local settings_path = prefix .. "-settings.csv"
+    return {
+        particle_path = particle_path,
+        particle_records = dump_load_boundary_particles(particle_path),
+        cell_path = cell_path,
+        cell_records = dump_load_boundary_cells(cell_path),
+        settings_path = settings_path,
+        settings_records = dump_load_boundary_settings(settings_path),
+    }
+end
+
 local function write_result(status, values)
     local path = "characterization-" .. phase .. ".result"
     local result = assert(io.open(path, "wb"))
@@ -515,6 +656,15 @@ local function run_generate()
     local counts_before_save = required_counts(true)
     local hash_before_save = sim.hash()
     local rng_before_save = rng_text()
+    local load_boundary = dump_load_boundary_capture("before-save")
+    assert(load_boundary.particle_records == particles_before_save,
+        "pre-save load-boundary particle dump count mismatch")
+    assert(load_boundary.cell_records == sim.NCELL,
+        "pre-save load-boundary cell dump count mismatch")
+    assert(sim.hash() == hash_before_save,
+        "load-boundary capture changed Simulation state before save")
+    assert(rng_text() == rng_before_save,
+        "load-boundary capture changed Simulation RNG before save")
     local first_stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
     local second_stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
     assert(type(first_stamp) == "string" and first_stamp:match("^[0-9A-Fa-f]+$")
@@ -529,6 +679,9 @@ local function run_generate()
     append_fields(result, {
         "generated_particles", "generated_hash", "particles_before_save",
         "hash_before_save", "rng_before_save", "required_counts_before_save",
+        "load_boundary_particle_file", "load_boundary_particle_records",
+        "load_boundary_cell_file", "load_boundary_cell_records",
+        "load_boundary_settings_file", "load_boundary_settings_records",
         "first_stamp", "second_stamp", "reset_sanitization_steps",
     })
     result.generated_particles = generated_particles
@@ -537,6 +690,12 @@ local function run_generate()
     result.hash_before_save = hash_before_save
     result.rng_before_save = rng_before_save
     result.required_counts_before_save = counts_before_save
+    result.load_boundary_particle_file = load_boundary.particle_path
+    result.load_boundary_particle_records = load_boundary.particle_records
+    result.load_boundary_cell_file = load_boundary.cell_path
+    result.load_boundary_cell_records = load_boundary.cell_records
+    result.load_boundary_settings_file = load_boundary.settings_path
+    result.load_boundary_settings_records = load_boundary.settings_records
     result.first_stamp = first_stamp
     result.second_stamp = second_stamp
     result.reset_sanitization_steps = 1
@@ -564,6 +723,15 @@ local function verify_loaded_state()
             local loaded_counts = required_counts(true)
             local loaded_hash = sim.hash()
             local loaded_rng = rng_text()
+            local load_boundary = dump_load_boundary_capture("loaded")
+            assert(load_boundary.particle_records == loaded_particles,
+                "loaded load-boundary particle dump count mismatch")
+            assert(load_boundary.cell_records == sim.NCELL,
+                "loaded load-boundary cell dump count mismatch")
+            assert(sim.hash() == loaded_hash,
+                "load-boundary capture changed loaded Simulation state")
+            assert(rng_text() == loaded_rng,
+                "load-boundary capture changed loaded Simulation RNG")
             local trace_path = "characterization-" .. phase .. ".csv"
             local trace = assert(io.open(trace_path, "wb"))
             trace:write("frame_offset,state_hash_fnv1a32,particles,required_counts\n")
@@ -585,6 +753,9 @@ local function verify_loaded_state()
                 "loaded_particles", "loaded_hash", "loaded_rng",
                 "loaded_required_counts", "final_particles", "final_hash",
                 "final_rng", "final_required_counts", "trace_file",
+                "load_boundary_particle_file", "load_boundary_particle_records",
+                "load_boundary_cell_file", "load_boundary_cell_records",
+                "load_boundary_settings_file", "load_boundary_settings_records",
             })
             result.loaded_particles = loaded_particles
             result.loaded_hash = loaded_hash
@@ -595,6 +766,12 @@ local function verify_loaded_state()
             result.final_rng = final_rng
             result.final_required_counts = final_counts
             result.trace_file = trace_path
+            result.load_boundary_particle_file = load_boundary.particle_path
+            result.load_boundary_particle_records = load_boundary.particle_records
+            result.load_boundary_cell_file = load_boundary.cell_path
+            result.load_boundary_cell_records = load_boundary.cell_records
+            result.load_boundary_settings_file = load_boundary.settings_path
+            result.load_boundary_settings_records = load_boundary.settings_records
             write_result("PASS", result)
         end, debug.traceback)
         if not ok then

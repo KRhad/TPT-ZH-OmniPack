@@ -35,7 +35,13 @@ $resolvedRuntimeDirectory = (Resolve-Path -LiteralPath $RuntimeDirectory).Path
 $luaSource = Join-Path $PSScriptRoot "runtime\characterization_scenarios.lua"
 $casesSource = Join-Path $PSScriptRoot "runtime\characterization_cases.json"
 $canonicalizerSource = Join-Path $PSScriptRoot "characterization_ops_canonical.py"
-foreach ($requiredPath in @($luaSource, $casesSource, $canonicalizerSource)) {
+$loadBoundaryComparatorSource = Join-Path $PSScriptRoot "load_boundary_compare.py"
+foreach ($requiredPath in @(
+    $luaSource,
+    $casesSource,
+    $canonicalizerSource,
+    $loadBoundaryComparatorSource
+)) {
     if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
         throw "Missing characterization source: $requiredPath"
     }
@@ -44,11 +50,31 @@ $resolvedPythonExecutable = (Resolve-Path -LiteralPath $PythonExecutable).Path
 
 function Get-TextSha256 {
     param([Parameter(Mandatory = $true)][string] $Text)
-    return [Convert]::ToHexString(
-        [System.Security.Cryptography.SHA256]::HashData(
-            [System.Text.Encoding]::UTF8.GetBytes($Text)
-        )
-    )
+    $hasher = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
+        # SHA256.HashData and Convert.ToHexString are unavailable in Windows
+        # PowerShell 5's .NET Framework. BitConverter keeps the evidence wrapper
+        # byte-identical while supporting both PS5 and PS7.
+        return ([System.BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace("-", "")
+    }
+    finally {
+        $hasher.Dispose()
+    }
+}
+
+function Get-FileSha256 {
+    param([Parameter(Mandatory = $true)][string] $Path)
+    $resolvedPath = (Resolve-Path -LiteralPath $Path).Path
+    $stream = [System.IO.File]::OpenRead($resolvedPath)
+    $hasher = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([System.BitConverter]::ToString($hasher.ComputeHash($stream))).Replace("-", "")
+    }
+    finally {
+        $hasher.Dispose()
+        $stream.Dispose()
+    }
 }
 
 function Read-KeyValueFile {
@@ -133,7 +159,7 @@ function Get-GitState {
     )) {
         $fullPath = Join-Path $Repository $relativePath
         if (Test-Path -LiteralPath $fullPath -PathType Leaf) {
-            $hash = (Get-FileHash -LiteralPath $fullPath -Algorithm SHA256).Hash
+            $hash = Get-FileSha256 -Path $fullPath
             [void]$material.AppendLine("UNTRACKED=$relativePath|$hash")
         }
     }
@@ -216,7 +242,7 @@ function Test-OpsFile {
         Path = $path
         Length = [int64]$bytes.Length
         PayloadLength = [uint64]$payloadLength
-        Sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+        Sha256 = Get-FileSha256 -Path $path
     }
 }
 
@@ -227,6 +253,87 @@ function Get-CanonicalOpsInfo {
         throw "OPS canonicalization failed: $Path"
     }
     return $json | ConvertFrom-Json
+}
+
+function Resolve-PhaseOutputFile {
+    param(
+        [Parameter(Mandatory = $true)][string] $Root,
+        [Parameter(Mandatory = $true)][string] $RelativePath,
+        [Parameter(Mandatory = $true)][string] $Field
+    )
+    if ([System.IO.Path]::IsPathRooted($RelativePath)) {
+        throw "Characterization phase output must be relative: field=$Field; path=$RelativePath"
+    }
+    $candidate = [System.IO.Path]::GetFullPath((Join-Path $Root $RelativePath))
+    $prefix = [System.IO.Path]::GetFullPath($Root).TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    ) + [System.IO.Path]::DirectorySeparatorChar
+    if (-not $candidate.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Characterization phase output escaped its isolated root: field=$Field; path=$RelativePath"
+    }
+    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+        throw "Characterization phase output is missing: field=$Field; path=$candidate"
+    }
+    return $candidate
+}
+
+function Get-LoadBoundaryCapture {
+    param(
+        [Parameter(Mandatory = $true)][string] $Root,
+        [Parameter(Mandatory = $true)] $Values,
+        [Parameter(Mandatory = $true)][string] $Phase
+    )
+    $fields = @(
+        [pscustomobject]@{ Name = "particle"; FileField = "load_boundary_particle_file"; CountField = "load_boundary_particle_records" },
+        [pscustomobject]@{ Name = "cell"; FileField = "load_boundary_cell_file"; CountField = "load_boundary_cell_records" },
+        [pscustomobject]@{ Name = "settings"; FileField = "load_boundary_settings_file"; CountField = "load_boundary_settings_records" }
+    )
+    $capture = [ordered]@{}
+    foreach ($field in $fields) {
+        if (-not $Values.ContainsKey($field.FileField) -or -not $Values.ContainsKey($field.CountField)) {
+            throw "Characterization $Phase omitted load-boundary capture field: $($field.Name)"
+        }
+        $path = Resolve-PhaseOutputFile -Root $Root -RelativePath $Values[$field.FileField] -Field $field.FileField
+        $capture[$field.Name] = [pscustomobject]@{
+            Path = $path
+            Records = Convert-NonnegativeInteger $Values[$field.CountField] $field.CountField
+            Sha256 = Get-FileSha256 -Path $path
+        }
+    }
+    return [pscustomobject]$capture
+}
+
+function Invoke-LoadBoundaryComparison {
+    param(
+        [Parameter(Mandatory = $true)] $Before,
+        [Parameter(Mandatory = $true)] $Loaded,
+        [Parameter(Mandatory = $true)][string] $OutputPath
+    )
+    $oldDontWriteBytecode = $env:PYTHONDONTWRITEBYTECODE
+    try {
+        $env:PYTHONDONTWRITEBYTECODE = "1"
+        & $resolvedPythonExecutable -B $loadBoundaryComparatorSource `
+            --before-particles $Before.particle.Path `
+            --loaded-particles $Loaded.particle.Path `
+            --before-cells $Before.cell.Path `
+            --loaded-cells $Loaded.cell.Path `
+            --before-settings $Before.settings.Path `
+            --loaded-settings $Loaded.settings.Path `
+            --output $OutputPath
+        if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $OutputPath -PathType Leaf)) {
+            throw "Load-boundary comparison failed: output=$OutputPath"
+        }
+    }
+    finally {
+        if ($null -eq $oldDontWriteBytecode) {
+            Remove-Item Env:PYTHONDONTWRITEBYTECODE -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:PYTHONDONTWRITEBYTECODE = $oldDontWriteBytecode
+        }
+    }
+    return Get-Content -LiteralPath $OutputPath -Raw | ConvertFrom-Json
 }
 
 function Write-PhaseFiles {
@@ -264,7 +371,15 @@ function Write-PhaseFiles {
         ),
         [System.Text.Encoding]::ASCII
     )
-    return (Get-FileHash -LiteralPath $configPath -Algorithm SHA256).Hash
+    return Get-FileSha256 -Path $configPath
+}
+
+function ConvertTo-ProcessArgument {
+    param([Parameter(Mandatory = $true)][string] $Value)
+    if ($Value.Contains('"')) {
+        throw "Unsupported quote in characterization process argument"
+    }
+    return '"' + $Value + '"'
 }
 
 function Invoke-CharacterizationPhase {
@@ -283,16 +398,35 @@ function Invoke-CharacterizationPhase {
     $startInfo.CreateNoWindow = $true
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
-    $startInfo.ArgumentList.Add("ddir")
-    $startInfo.ArgumentList.Add($Root)
-    if ($OpenSave) {
-        $startInfo.ArgumentList.Add("open")
-        $startInfo.ArgumentList.Add($OpenSave)
+    if ($null -ne $startInfo.PSObject.Properties["ArgumentList"]) {
+        # Keep the modern path explicit so its command line remains easy to
+        # inspect. Windows PowerShell 5 lacks ArgumentList and uses the
+        # quoted Arguments fallback below.
+        $startInfo.ArgumentList.Add("ddir")
+        $startInfo.ArgumentList.Add($Root)
+        if ($OpenSave) {
+            $startInfo.ArgumentList.Add("open")
+            $startInfo.ArgumentList.Add($OpenSave)
+        }
     }
-    $startInfo.Environment["PATH"] = $resolvedRuntimeDirectory +
+    else {
+        $arguments = @("ddir", $Root)
+        if ($OpenSave) {
+            $arguments += @("open", $OpenSave)
+        }
+        $startInfo.Arguments = (@($arguments | ForEach-Object {
+            ConvertTo-ProcessArgument -Value $_
+        }) -join " ")
+    }
+    # EnvironmentVariables is available in both Windows PowerShell 5 and
+    # PowerShell 7. PS5 exposes an incompatible adapter through Environment,
+    # so select the legacy dictionary API deliberately instead of feature-
+    # detecting by property name.
+    $childEnvironment = $startInfo.EnvironmentVariables
+    $childEnvironment["PATH"] = $resolvedRuntimeDirectory +
         [System.IO.Path]::PathSeparator + $env:PATH
     foreach ($secretName in @("GITHUB_PAT_TOKEN", "GITHUB_TOKEN", "GH_TOKEN")) {
-        [void]$startInfo.Environment.Remove($secretName)
+        [void]$childEnvironment.Remove($secretName)
     }
 
     $started = [DateTime]::UtcNow
@@ -388,12 +522,15 @@ $selectedCases = @($allCases | Where-Object { $_.id -in $selectedIds } | Sort-Ob
 $gitState = Get-GitState -Repository $sourceRoot
 $build = Get-BuildProvenance -Directory $resolvedBuildDirectory
 $executableInfo = Get-Item -LiteralPath $resolvedExecutable
-$executableSha256 = (Get-FileHash -LiteralPath $resolvedExecutable -Algorithm SHA256).Hash
-$luaSha256 = (Get-FileHash -LiteralPath $luaSource -Algorithm SHA256).Hash
-$casesSha256 = (Get-FileHash -LiteralPath $casesSource -Algorithm SHA256).Hash
+$executableSha256 = Get-FileSha256 -Path $resolvedExecutable
+$luaSha256 = Get-FileSha256 -Path $luaSource
+$casesSha256 = Get-FileSha256 -Path $casesSource
 $canonicalizerSha256 = (
-    Get-FileHash -LiteralPath $canonicalizerSource -Algorithm SHA256
-).Hash
+    Get-FileSha256 -Path $canonicalizerSource
+)
+$loadBoundaryComparatorSha256 = (
+    Get-FileSha256 -Path $loadBoundaryComparatorSource
+)
 $tempParent = [System.IO.Path]::GetFullPath($TemporaryDirectory)
 if (-not (Test-Path -LiteralPath $tempParent -PathType Container)) {
     throw "Temporary directory does not exist: $tempParent"
@@ -431,6 +568,17 @@ $suiteArtifactRoot = Join-Path $artifactBase (
     Join-Path $machineId (Join-Path $gitState.Commit.Substring(0, 10) $suiteRunId)
 )
 New-Item -ItemType Directory -Path $suiteArtifactRoot -Force | Out-Null
+$frozenInputsRoot = Join-Path $suiteArtifactRoot "frozen-inputs"
+New-Item -ItemType Directory -Path $frozenInputsRoot | Out-Null
+foreach ($input in @(
+    [pscustomobject]@{ Name = "characterization_scenarios.lua"; Path = $luaSource },
+    [pscustomobject]@{ Name = "characterization_cases.json"; Path = $casesSource },
+    [pscustomobject]@{ Name = "characterization_ops_canonical.py"; Path = $canonicalizerSource },
+    [pscustomobject]@{ Name = "load_boundary_compare.py"; Path = $loadBoundaryComparatorSource },
+    [pscustomobject]@{ Name = "runtime_generate_characterization.ps1"; Path = $PSCommandPath }
+)) {
+    Copy-Item -LiteralPath $input.Path -Destination (Join-Path $frozenInputsRoot $input.Name)
+}
 
 $caseResults = [System.Collections.Generic.List[object]]::new()
 foreach ($case in $selectedCases) {
@@ -475,8 +623,8 @@ foreach ($case in $selectedCases) {
         $traceBPath = (Resolve-Path -LiteralPath (
             Join-Path $verifyBRoot $verifyB.Values.trace_file
         )).Path
-        $traceASha256 = (Get-FileHash -LiteralPath $traceAPath -Algorithm SHA256).Hash
-        $traceBSha256 = (Get-FileHash -LiteralPath $traceBPath -Algorithm SHA256).Hash
+        $traceASha256 = Get-FileSha256 -Path $traceAPath
+        $traceBSha256 = Get-FileSha256 -Path $traceBPath
         if ($traceASha256 -ne $traceBSha256) {
             throw "Cross-restart characterization traces differ: case=$($case.id)"
         }
@@ -505,6 +653,47 @@ foreach ($case in $selectedCases) {
             throw "OPS load changed required element counts: case=$($case.id)"
         }
 
+        $beforeBoundary = Get-LoadBoundaryCapture `
+            -Root $generationRoot -Values $generation.Values -Phase "generate"
+        $loadedBoundaryA = Get-LoadBoundaryCapture `
+            -Root $verifyARoot -Values $verifyA.Values -Phase "verify-a"
+        $loadedBoundaryB = Get-LoadBoundaryCapture `
+            -Root $verifyBRoot -Values $verifyB.Values -Phase "verify-b"
+        if ($beforeBoundary.particle.Records -ne
+            (Convert-NonnegativeInteger $generation.Values.particles_before_save "particles_before_save")) {
+            throw "Pre-save load-boundary particle count differs from generation result: case=$($case.id)"
+        }
+        if ($beforeBoundary.cell.Records -le 0 -or $beforeBoundary.settings.Records -le 0) {
+            throw "Pre-save load-boundary capture is incomplete: case=$($case.id)"
+        }
+        foreach ($captureName in @("particle", "cell", "settings")) {
+            if ($loadedBoundaryA.$captureName.Records -ne $loadedBoundaryB.$captureName.Records) {
+                throw "Cross-restart load-boundary record count differs: case=$($case.id); capture=$captureName"
+            }
+            if ($loadedBoundaryA.$captureName.Sha256 -ne $loadedBoundaryB.$captureName.Sha256) {
+                throw "Cross-restart load-boundary capture differs: case=$($case.id); capture=$captureName"
+            }
+        }
+        if ($loadedBoundaryA.particle.Records -ne
+            (Convert-NonnegativeInteger $verifyA.Values.loaded_particles "loaded_particles")) {
+            throw "Loaded load-boundary particle count differs from verify result: case=$($case.id)"
+        }
+        $loadBoundaryComparisonTempPath = Join-Path $testRoot "load-boundary-comparison.json"
+        $loadBoundaryComparison = Invoke-LoadBoundaryComparison `
+            -Before $beforeBoundary -Loaded $loadedBoundaryA `
+            -OutputPath $loadBoundaryComparisonTempPath
+        if ($loadBoundaryComparison.status -ne "PASS" -or
+            -not $loadBoundaryComparison.claims.load_boundary_capture_complete) {
+            throw "Load-boundary comparison did not report a complete capture: case=$($case.id)"
+        }
+        if ($loadBoundaryComparison.claims.physical_mass_conservation_evaluated -or
+            $loadBoundaryComparison.claims.physical_momentum_conservation_evaluated -or
+            $loadBoundaryComparison.claims.physical_energy_conservation_evaluated -or
+            $loadBoundaryComparison.claims.source_sink_attribution_evaluated) {
+            throw "Load-boundary comparator claimed physical accounting: case=$($case.id)"
+        }
+        $loadBoundaryComparisonSha256 = Get-FileSha256 -Path $loadBoundaryComparisonTempPath
+
         $caseArtifact = Join-Path $suiteArtifactRoot ($case.id + "-" + $case.slug)
         New-Item -ItemType Directory -Path $caseArtifact -Force | Out-Null
         Copy-Item -LiteralPath $firstOps.Path -Destination (
@@ -530,6 +719,26 @@ foreach ($case in $selectedCases) {
         }
         Copy-Item -LiteralPath $traceAPath -Destination (Join-Path $caseArtifact "trace-a.csv")
         Copy-Item -LiteralPath $traceBPath -Destination (Join-Path $caseArtifact "trace-b.csv")
+        foreach ($captureRecord in @(
+            [pscustomobject]@{ Prefix = "before-save"; Data = $beforeBoundary },
+            [pscustomobject]@{ Prefix = "loaded-a"; Data = $loadedBoundaryA },
+            [pscustomobject]@{ Prefix = "loaded-b"; Data = $loadedBoundaryB }
+        )) {
+            foreach ($captureName in @("particle", "cell", "settings")) {
+                $artifactFileName = switch ($captureName) {
+                    "particle" { "particles.csv" }
+                    "cell" { "cells.csv" }
+                    "settings" { "settings.csv" }
+                    default { throw "Unknown load-boundary capture name: $captureName" }
+                }
+                Copy-Item -LiteralPath $captureRecord.Data.$captureName.Path -Destination (
+                    Join-Path $caseArtifact ($captureRecord.Prefix + "-" + $artifactFileName)
+                )
+            }
+        }
+        Copy-Item -LiteralPath $loadBoundaryComparisonTempPath -Destination (
+            Join-Path $caseArtifact "load-boundary-comparison.json"
+        )
 
         $caseDefinitionText = $case | ConvertTo-Json -Depth 6 -Compress
         $caseRecord = [ordered]@{
@@ -583,12 +792,32 @@ foreach ($case in $selectedCases) {
                 trace_line_count = $traceLineCount
             }
             load_boundary = [ordered]@{
+                load_boundary_capture_complete = $true
+                comparison_kind = [string]$loadBoundaryComparison.comparison_kind
+                comparison_sha256 = $loadBoundaryComparisonSha256
+                cross_restart_capture_equal = $true
+                particle_records_before_save = [int64]$beforeBoundary.particle.Records
+                particle_records_loaded = [int64]$loadedBoundaryA.particle.Records
+                particle_save_order_aligned_records = [int64]$loadBoundaryComparison.particles.save_order_pixel_alignment.aligned_records
+                particle_save_order_misaligned_records = [int64]$loadBoundaryComparison.particles.save_order_pixel_alignment.misaligned_records
+                particle_runtime_id_equal_records = [int64]$loadBoundaryComparison.particles.runtime_id.equal_records
+                particle_runtime_id_changed_records = [int64]$loadBoundaryComparison.particles.runtime_id.changed_records
+                particle_differing_records = [int64]$loadBoundaryComparison.particles.differing_records
+                cell_records_before_save = [int64]$beforeBoundary.cell.Records
+                cell_records_loaded = [int64]$loadedBoundaryA.cell.Records
+                differing_cells = [int64]$loadBoundaryComparison.cells.differing_cells
+                setting_records_before_save = [int64]$beforeBoundary.settings.Records
+                setting_records_loaded = [int64]$loadedBoundaryA.settings.Records
+                differing_settings = [int64]$loadBoundaryComparison.settings.differing_settings
+                particle_payload_field_summary = $loadBoundaryComparison.particles.payload_field_summary
+                cell_payload_field_summary = $loadBoundaryComparison.cells.payload_field_summary
+                settings_field_summary = $loadBoundaryComparison.settings.field_summary
                 particle_count_equal = $true
                 required_counts_equal = $true
                 rng_equal = $true
                 snapshot_hash_equal = $verifyA.Values.loaded_hash -eq
                     $generation.Values.hash_before_save
-                interpretation = "Legacy OPS may normalize or quantize state; independent loaded baselines must still match"
+                interpretation = "Field-attribution capture only: Legacy OPS may normalize or quantize state, reorder runtime IDs or reconstruct derived maps; unequal fields are reported, not silently accepted as bit-exact equality"
             }
             phase_process_metrics = @(
                 [ordered]@{ phase = "generate"; wall_seconds = $generation.WallSeconds; cpu_seconds = $generation.CpuSeconds; peak_working_set_bytes = $generation.PeakWorkingSetBytes; peak_private_bytes = $generation.PeakPrivateBytes },
@@ -608,9 +837,7 @@ foreach ($case in $selectedCases) {
             ($caseRecord | ConvertTo-Json -Depth 10) + [Environment]::NewLine,
             [System.Text.UTF8Encoding]::new($false)
         )
-        $caseRecord["result_json_sha256"] = (
-            Get-FileHash -LiteralPath $caseJsonPath -Algorithm SHA256
-        ).Hash
+        $caseRecord["result_json_sha256"] = Get-FileSha256 -Path $caseJsonPath
         $caseResults.Add([pscustomobject]$caseRecord)
         $caseCompleted = $true
         Write-Output "characterization-case: PASS"
@@ -644,7 +871,8 @@ $manifest = [ordered]@{
         lua_sha256 = $luaSha256
         case_definitions_sha256 = $casesSha256
         ops_canonicalizer_sha256 = $canonicalizerSha256
-        wrapper_sha256 = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash
+        load_boundary_comparator_sha256 = $loadBoundaryComparatorSha256
+        wrapper_sha256 = Get-FileSha256 -Path $PSCommandPath
     }
     executable = [ordered]@{
         sha256 = $executableSha256
@@ -686,5 +914,5 @@ Write-Output "case_count=$($caseResults.Count)"
 Write-Output "full_suite=$(([bool]($caseResults.Count -eq 14)).ToString().ToLowerInvariant())"
 Write-Output "source_commit=$($gitState.Commit)"
 Write-Output "source_dirty=$($gitState.Dirty.ToString().ToLowerInvariant())"
-Write-Output "manifest_sha256=$((Get-FileHash -LiteralPath $manifestPath -Algorithm SHA256).Hash)"
+Write-Output "manifest_sha256=$(Get-FileSha256 -Path $manifestPath)"
 Write-Output "manifest_json=$manifestPath"
