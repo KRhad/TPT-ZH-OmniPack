@@ -3843,6 +3843,78 @@ Simulation::OmniLifecycleLedgerMetrics Simulation::GetOmniLifecycleLedgerMetrics
 	};
 }
 
+void Simulation::SetOmniCorrectionLedgerEnabled(bool enabled)
+{
+	omniCorrectionLedgerEnabled = enabled;
+	ResetOmniCorrectionLedger();
+}
+
+void Simulation::ResetOmniCorrectionLedger()
+{
+	omniCorrectionLedgerTotalEvents = 0;
+	omniCorrectionLedgerDroppedEvents = 0;
+	omniCorrectionLedgerNextEvent = 0;
+	omniCorrectionLedgerRetainedEvents = 0;
+	std::fill(omniCorrectionLedgerKindCounts.begin(), omniCorrectionLedgerKindCounts.end(), 0);
+	std::fill(omniCorrectionLedgerEvents.begin(), omniCorrectionLedgerEvents.end(), OmniCorrectionEvent{});
+}
+
+Simulation::OmniCorrectionLedgerMetrics Simulation::GetOmniCorrectionLedgerMetrics() const
+{
+	OmniCorrectionLedgerMetrics metrics{};
+	metrics.enabled = omniCorrectionLedgerEnabled;
+	metrics.legacyFieldUnitsOnly = true;
+	metrics.auditedAirCapsOnly = true;
+	metrics.totalEvents = omniCorrectionLedgerTotalEvents;
+	metrics.retainedEvents = omniCorrectionLedgerRetainedEvents;
+	metrics.droppedEvents = omniCorrectionLedgerDroppedEvents;
+	metrics.kindCounts = omniCorrectionLedgerKindCounts;
+	if (omniCorrectionLedgerRetainedEvents)
+	{
+		auto first = (omniCorrectionLedgerNextEvent + OmniCorrectionLedgerEventCapacity
+			- omniCorrectionLedgerRetainedEvents) % OmniCorrectionLedgerEventCapacity;
+		for (size_t offset = 0; offset < omniCorrectionLedgerRetainedEvents; offset++)
+		{
+			metrics.events[offset] = omniCorrectionLedgerEvents[
+				(first + offset) % OmniCorrectionLedgerEventCapacity
+			];
+		}
+	}
+	return metrics;
+}
+
+void Simulation::RecordOmniCorrection(
+	OmniCorrectionKind kind,
+	int cellX,
+	int cellY,
+	float before,
+	float after
+)
+{
+	if (!omniCorrectionLedgerEnabled)
+		return;
+
+	const auto kindIndex = static_cast<size_t>(kind);
+	if (kindIndex >= OmniCorrectionKindCount)
+		return;
+	omniCorrectionLedgerKindCounts[kindIndex]++;
+	omniCorrectionLedgerTotalEvents++;
+	omniCorrectionLedgerEvents[omniCorrectionLedgerNextEvent] = {
+		omniCorrectionLedgerTotalEvents,
+		cellX,
+		cellY,
+		before,
+		after,
+		kind,
+	};
+	if (omniCorrectionLedgerRetainedEvents < OmniCorrectionLedgerEventCapacity)
+		omniCorrectionLedgerRetainedEvents++;
+	else
+		omniCorrectionLedgerDroppedEvents++;
+	omniCorrectionLedgerNextEvent = (omniCorrectionLedgerNextEvent + 1)
+		% OmniCorrectionLedgerEventCapacity;
+}
+
 void Simulation::BeginOmniLifecycleLedgerTick()
 {
 	if (!omniLifecycleLedgerEnabled)

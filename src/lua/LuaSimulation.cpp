@@ -219,6 +219,113 @@ static int resetOmniLifecycleLedger(lua_State *L)
 	return 0;
 }
 
+static char const *omniCorrectionKindName(Simulation::OmniCorrectionKind kind)
+{
+	switch (kind)
+	{
+	case Simulation::OmniCorrectionKind::AirAmbientHeatTemperatureCapHigh:
+		return "air_ambient_heat_temperature_cap_high";
+	case Simulation::OmniCorrectionKind::AirAmbientHeatTemperatureCapLow:
+		return "air_ambient_heat_temperature_cap_low";
+	case Simulation::OmniCorrectionKind::AirAmbientHeatVelocityXCapHigh:
+		return "air_ambient_heat_velocity_x_cap_high";
+	case Simulation::OmniCorrectionKind::AirAmbientHeatVelocityXCapLow:
+		return "air_ambient_heat_velocity_x_cap_low";
+	case Simulation::OmniCorrectionKind::AirAmbientHeatVelocityYCapHigh:
+		return "air_ambient_heat_velocity_y_cap_high";
+	case Simulation::OmniCorrectionKind::AirAmbientHeatVelocityYCapLow:
+		return "air_ambient_heat_velocity_y_cap_low";
+	case Simulation::OmniCorrectionKind::AirDynamicsPressureCapHigh:
+		return "air_dynamics_pressure_cap_high";
+	case Simulation::OmniCorrectionKind::AirDynamicsPressureCapLow:
+		return "air_dynamics_pressure_cap_low";
+	case Simulation::OmniCorrectionKind::AirDynamicsVelocityXCapHigh:
+		return "air_dynamics_velocity_x_cap_high";
+	case Simulation::OmniCorrectionKind::AirDynamicsVelocityXCapLow:
+		return "air_dynamics_velocity_x_cap_low";
+	case Simulation::OmniCorrectionKind::AirDynamicsVelocityYCapHigh:
+		return "air_dynamics_velocity_y_cap_high";
+	case Simulation::OmniCorrectionKind::AirDynamicsVelocityYCapLow:
+		return "air_dynamics_velocity_y_cap_low";
+	case Simulation::OmniCorrectionKind::Count:
+		break;
+	}
+	return "unknown";
+}
+
+static int omniCorrectionLedger(lua_State *L)
+{
+	auto metrics = GetLSI()->sim->GetOmniCorrectionLedgerMetrics();
+	lua_newtable(L);
+	auto setBoolean = [L](char const *field, bool value) {
+		lua_pushboolean(L, value);
+		lua_setfield(L, -2, field);
+	};
+	auto setInteger = [L](char const *field, auto value) {
+		lua_pushinteger(L, static_cast<lua_Integer>(value));
+		lua_setfield(L, -2, field);
+	};
+	setBoolean("enabled", metrics.enabled);
+	setBoolean("legacy_field_units_only", metrics.legacyFieldUnitsOnly);
+	setBoolean("audited_air_caps_only", metrics.auditedAirCapsOnly);
+	setInteger("total_events", metrics.totalEvents);
+	setInteger("retained_events", metrics.retainedEvents);
+	setInteger("dropped_events", metrics.droppedEvents);
+	setInteger("event_capacity", Simulation::OmniCorrectionLedgerEventCapacity);
+
+	lua_newtable(L);
+	for (size_t index = 0; index < Simulation::OmniCorrectionKindCount; index++)
+	{
+		auto kind = static_cast<Simulation::OmniCorrectionKind>(index);
+		lua_pushinteger(L, static_cast<lua_Integer>(metrics.kindCounts[index]));
+		lua_setfield(L, -2, omniCorrectionKindName(kind));
+	}
+	lua_setfield(L, -2, "counts");
+
+	lua_newtable(L);
+	for (size_t index = 0; index < metrics.retainedEvents; index++)
+	{
+		auto const &event = metrics.events[index];
+		lua_newtable(L);
+		lua_pushinteger(L, static_cast<lua_Integer>(event.sequence));
+		lua_setfield(L, -2, "sequence");
+		lua_pushinteger(L, static_cast<lua_Integer>(event.cellX));
+		lua_setfield(L, -2, "cell_x");
+		lua_pushinteger(L, static_cast<lua_Integer>(event.cellY));
+		lua_setfield(L, -2, "cell_y");
+		lua_pushnumber(L, event.before);
+		lua_setfield(L, -2, "before");
+		lua_pushnumber(L, event.after);
+		lua_setfield(L, -2, "after");
+		lua_pushstring(L, omniCorrectionKindName(event.kind));
+		lua_setfield(L, -2, "kind");
+		lua_rawseti(L, -2, static_cast<lua_Integer>(index + 1));
+	}
+	lua_setfield(L, -2, "events");
+	return 1;
+}
+
+static int omniCorrectionLedgerEnabled(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	lsi->AssertInterfaceEvent();
+	if (lua_gettop(L))
+	{
+		lsi->sim->SetOmniCorrectionLedgerEnabled(lua_toboolean(L, 1));
+		return 0;
+	}
+	lua_pushboolean(L, lsi->sim->GetOmniCorrectionLedgerMetrics().enabled);
+	return 1;
+}
+
+static int resetOmniCorrectionLedger(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	lsi->AssertInterfaceEvent();
+	lsi->sim->ResetOmniCorrectionLedger();
+	return 0;
+}
+
 static int omniModuleEnabled(lua_State *L)
 {
 	auto moduleName = std::string_view(luaL_checkstring(L, 1));
@@ -2310,6 +2417,9 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(omniLifecycleLedger),
 		LFUNC(omniLifecycleLedgerEnabled),
 		LFUNC(resetOmniLifecycleLedger),
+		LFUNC(omniCorrectionLedger),
+		LFUNC(omniCorrectionLedgerEnabled),
+		LFUNC(resetOmniCorrectionLedger),
 		LFUNC(omniModuleEnabled),
 		LFUNC(omniLanguage),
 		LFUNC(decoSpace),

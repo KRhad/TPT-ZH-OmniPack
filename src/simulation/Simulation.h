@@ -206,6 +206,49 @@ public:
 		int64_t lastInvalidTypeRecords;
 	};
 
+	// This is a Legacy-field diagnostic. A correction event reports a specific
+	// executed cap branch; it is not a physical source/sink or conservation term.
+	enum class OmniCorrectionKind : uint8_t
+	{
+		AirAmbientHeatTemperatureCapHigh,
+		AirAmbientHeatTemperatureCapLow,
+		AirAmbientHeatVelocityXCapHigh,
+		AirAmbientHeatVelocityXCapLow,
+		AirAmbientHeatVelocityYCapHigh,
+		AirAmbientHeatVelocityYCapLow,
+		AirDynamicsPressureCapHigh,
+		AirDynamicsPressureCapLow,
+		AirDynamicsVelocityXCapHigh,
+		AirDynamicsVelocityXCapLow,
+		AirDynamicsVelocityYCapHigh,
+		AirDynamicsVelocityYCapLow,
+		Count,
+	};
+	static constexpr size_t OmniCorrectionKindCount = static_cast<size_t>(OmniCorrectionKind::Count);
+	static constexpr size_t OmniCorrectionLedgerEventCapacity = 256;
+
+	struct OmniCorrectionEvent
+	{
+		uint64_t sequence{};
+		int cellX{};
+		int cellY{};
+		float before{};
+		float after{};
+		OmniCorrectionKind kind{};
+	};
+
+	struct OmniCorrectionLedgerMetrics
+	{
+		bool enabled;
+		bool legacyFieldUnitsOnly;
+		bool auditedAirCapsOnly;
+		uint64_t totalEvents;
+		uint64_t retainedEvents;
+		uint64_t droppedEvents;
+		std::array<uint64_t, OmniCorrectionKindCount> kindCounts;
+		std::array<OmniCorrectionEvent, OmniCorrectionLedgerEventCapacity> events;
+	};
+
 	// initialized very late >_>
 	int NUM_PARTS;
 	int sandcolour;
@@ -270,6 +313,9 @@ public:
 	void SetOmniLifecycleLedgerEnabled(bool enabled);
 	void ResetOmniLifecycleLedger();
 	OmniLifecycleLedgerMetrics GetOmniLifecycleLedgerMetrics() const;
+	void SetOmniCorrectionLedgerEnabled(bool enabled);
+	void ResetOmniCorrectionLedger();
+	OmniCorrectionLedgerMetrics GetOmniCorrectionLedgerMetrics() const;
 
 	void SetEdgeMode(int newEdgeMode);
 	void SetDecoSpace(int newDecoSpace);
@@ -333,6 +379,7 @@ protected:
 	void RecordOmniLifecycleMutation(int oldType, int newType, OmniLifecycleMutationKind kind);
 
 private:
+	friend class Air;
 
 	std::atomic<uint64_t> omniEventCountTotal{ 0 };
 	std::atomic<uint64_t> omniEventCountCurrentFrame{ 0 };
@@ -366,8 +413,19 @@ private:
 	std::array<int64_t, PT_NUM> omniLifecycleLedgerBeginHistogram{};
 	std::array<int64_t, PT_NUM> omniLifecycleLedgerEventDelta{};
 
+	bool omniCorrectionLedgerEnabled = false;
+	uint64_t omniCorrectionLedgerTotalEvents = 0;
+	uint64_t omniCorrectionLedgerDroppedEvents = 0;
+	size_t omniCorrectionLedgerNextEvent = 0;
+	size_t omniCorrectionLedgerRetainedEvents = 0;
+	std::array<uint64_t, OmniCorrectionKindCount> omniCorrectionLedgerKindCounts{};
+	std::array<OmniCorrectionEvent, OmniCorrectionLedgerEventCapacity> omniCorrectionLedgerEvents{};
+
 	void BeginOmniLifecycleLedgerTick();
 	void EndOmniLifecycleLedgerTick();
+	// The current Air solver is serial. A future parallel backend must record
+	// per-worker events and merge them deterministically before exposing them.
+	void RecordOmniCorrection(OmniCorrectionKind kind, int cellX, int cellY, float before, float after);
 
 	CoordStack& getCoordStackSingleton();
 

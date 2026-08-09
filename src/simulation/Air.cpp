@@ -183,8 +183,24 @@ void Air::update_airh(void)
 				dh = hv[y][x];
 
 			// Temp caps
-			if (dh > MAX_TEMP) dh = MAX_TEMP;
-			if (dh < MIN_TEMP) dh = MIN_TEMP;
+			if (dh > MAX_TEMP)
+			{
+				auto before = dh;
+				dh = MAX_TEMP;
+				sim.RecordOmniCorrection(
+					Simulation::OmniCorrectionKind::AirAmbientHeatTemperatureCapHigh,
+					x, y, before, dh
+				);
+			}
+			if (dh < MIN_TEMP)
+			{
+				auto before = dh;
+				dh = MIN_TEMP;
+				sim.RecordOmniCorrection(
+					Simulation::OmniCorrectionKind::AirAmbientHeatTemperatureCapLow,
+					x, y, before, dh
+				);
+			}
 
 			ohv[y][x] = dh;
 
@@ -240,10 +256,42 @@ void Air::update_airh(void)
 			}
 
 			// Velocity cap
-			if (dvx > MAX_PRESSURE) dvx = MAX_PRESSURE;
-			if (dvx < MIN_PRESSURE) dvx = MIN_PRESSURE;
-			if (dvy > MAX_PRESSURE) dvy = MAX_PRESSURE;
-			if (dvy < MIN_PRESSURE) dvy = MIN_PRESSURE;
+			if (dvx > MAX_PRESSURE)
+			{
+				auto before = dvx;
+				dvx = MAX_PRESSURE;
+				sim.RecordOmniCorrection(
+					Simulation::OmniCorrectionKind::AirAmbientHeatVelocityXCapHigh,
+					x, y, before, dvx
+				);
+			}
+			if (dvx < MIN_PRESSURE)
+			{
+				auto before = dvx;
+				dvx = MIN_PRESSURE;
+				sim.RecordOmniCorrection(
+					Simulation::OmniCorrectionKind::AirAmbientHeatVelocityXCapLow,
+					x, y, before, dvx
+				);
+			}
+			if (dvy > MAX_PRESSURE)
+			{
+				auto before = dvy;
+				dvy = MAX_PRESSURE;
+				sim.RecordOmniCorrection(
+					Simulation::OmniCorrectionKind::AirAmbientHeatVelocityYCapHigh,
+					x, y, before, dvy
+				);
+			}
+			if (dvy < MIN_PRESSURE)
+			{
+				auto before = dvy;
+				dvy = MIN_PRESSURE;
+				sim.RecordOmniCorrection(
+					Simulation::OmniCorrectionKind::AirAmbientHeatVelocityYCapLow,
+					x, y, before, dvy
+				);
+			}
 
 			vx[y][x] = dvx;
 			vy[y][x] = dvy;
@@ -456,12 +504,60 @@ void Air::update_air(void)
 					dy += fvy[y][x];
 				}
 				// pressure/velocity caps
-				if (dp > MAX_PRESSURE) dp = MAX_PRESSURE;
-				if (dp < MIN_PRESSURE) dp = MIN_PRESSURE;
-				if (dx > MAX_PRESSURE) dx = MAX_PRESSURE;
-				if (dx < MIN_PRESSURE) dx = MIN_PRESSURE;
-				if (dy > MAX_PRESSURE) dy = MAX_PRESSURE;
-				if (dy < MIN_PRESSURE) dy = MIN_PRESSURE;
+				if (dp > MAX_PRESSURE)
+				{
+					auto before = dp;
+					dp = MAX_PRESSURE;
+					sim.RecordOmniCorrection(
+						Simulation::OmniCorrectionKind::AirDynamicsPressureCapHigh,
+						x, y, before, dp
+					);
+				}
+				if (dp < MIN_PRESSURE)
+				{
+					auto before = dp;
+					dp = MIN_PRESSURE;
+					sim.RecordOmniCorrection(
+						Simulation::OmniCorrectionKind::AirDynamicsPressureCapLow,
+						x, y, before, dp
+					);
+				}
+				if (dx > MAX_PRESSURE)
+				{
+					auto before = dx;
+					dx = MAX_PRESSURE;
+					sim.RecordOmniCorrection(
+						Simulation::OmniCorrectionKind::AirDynamicsVelocityXCapHigh,
+						x, y, before, dx
+					);
+				}
+				if (dx < MIN_PRESSURE)
+				{
+					auto before = dx;
+					dx = MIN_PRESSURE;
+					sim.RecordOmniCorrection(
+						Simulation::OmniCorrectionKind::AirDynamicsVelocityXCapLow,
+						x, y, before, dx
+					);
+				}
+				if (dy > MAX_PRESSURE)
+				{
+					auto before = dy;
+					dy = MAX_PRESSURE;
+					sim.RecordOmniCorrection(
+						Simulation::OmniCorrectionKind::AirDynamicsVelocityYCapHigh,
+						x, y, before, dy
+					);
+				}
+				if (dy < MIN_PRESSURE)
+				{
+					auto before = dy;
+					dy = MIN_PRESSURE;
+					sim.RecordOmniCorrection(
+						Simulation::OmniCorrectionKind::AirDynamicsVelocityYCapLow,
+						x, y, before, dy
+					);
+				}
 
 
 				switch (airMode)
