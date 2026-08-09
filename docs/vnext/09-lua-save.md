@@ -104,10 +104,17 @@ field changes explicitly.
 | Eight OPS restart scenarios | PASS |
 | C01-C14 deterministic loaded traces | PASS (`14/14`, 28 restart loads) |
 | Saved RNG/particle/required counts restored | PASS (`14/14`) |
+| OPS load-boundary fields | PASS (`14/14` complete attribution; loaded-A/B captures byte-identical) |
+| Load-boundary physical conservation / checkpoint identity | `not_evaluated` / `false` |
 | Lua 100.1 boundary cases | PASS (`11/11`) |
 | GUI save/load | `not_tested` |
 | PSv/fuC runtime fixtures | `not_tested` |
 | External Lua corpus | `not_tested` |
 
-The bounded Lua/OPS sub-gate is GREEN. Broad Legacy compatibility remains YELLOW,
-and new atmosphere persistence is RED pending schema and fallback tests.
+The bounded Lua/OPS sub-gate is GREEN. The formal field-attribution artifact binds
+369 declared private files plus its manifest, 15 directories and byte-identical
+frozen-comparator replay for all 14 cases. It shows that deterministic loaded state
+is not a bit-exact pre-save in-memory checkpoint; this is reported rather than
+silently accepted. See `phase-1-load-boundary.md`. Broad Legacy compatibility
+remains YELLOW, and new atmosphere persistence is RED pending schema and fallback
+tests.

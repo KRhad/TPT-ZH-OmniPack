@@ -18,6 +18,13 @@ G0_UPSTREAM_BASELINE=RED
 PRODUCTION_OMNIATMOSPHERE_ALLOWED=false
 ```
 
+> Historical status annotation (2026-08-09): `LOAD_BOUNDARY_FIELD_DIFF=RED` in
+> this report describes the state at its report commit. The later
+> [OPS load-boundary field-attribution report](phase-1-load-boundary.md) closes
+> that independent sub-gate at `GREEN` with a clean `9b336fc40` artifact. This
+> does not change this report's differential findings or any of its other `RED`
+> gates.
+
 The first-divergence and field-capture sub-gate is **GREEN**. A clean-source run
 compared the same Legacy simulation in `legacy_fast` and `strict` CPU builds from
 one generated mixed state, located the first hash divergence at update step 1,

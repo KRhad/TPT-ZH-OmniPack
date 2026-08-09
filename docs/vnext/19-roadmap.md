@@ -5,9 +5,9 @@
 The official 100.1 source adaptation, explicit FP modes, current fixed-step
 throughput/process-RAM baseline, C01-C14 deterministic restart suite and scoped
 Legacy-fast/Strict CPU first-divergence capture plus sampled numerical proxy ledger
-are integrated. The overall G0 gate remains RED, so the roadmap stays in Phase 1
-physical-ledger/load-boundary/profiler work. No production OmniAtmosphere state or
-solver will be integrated yet.
+and OPS load-boundary field attribution are integrated. The overall G0 gate remains
+RED, so the roadmap stays in Phase 1 physical-ledger/profiler work. No production
+OmniAtmosphere state or solver will be integrated yet.
 
 ## Phase status
 
@@ -15,7 +15,7 @@ solver will be integrated yet.
 |---:|---|---|
 | -1 | external research and license audit | YELLOW: classifications complete; no new artifact redistribution authorized |
 | 0 | latest upstream adaptation | GREEN source sub-gate; G0 overall RED |
-| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; FP modes, fixed-step baseline, C01-C14 saves, first-divergence capture and sampled proxy ledger complete |
+| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; FP modes, fixed-step baseline, C01-C14 saves, first-divergence capture, sampled proxy ledger and OPS field attribution complete |
 | 2 | physical scale and unit system | proposal written / RED |
 | 3 | AtmosphereBench | planned / BLOCKED by Phase 1-2 foundations |
 | 4 | solver selection | BLOCKED |
@@ -42,14 +42,17 @@ The next integration commits should be small and independently reversible:
    neighborhood state. Omni CPU/GPU topology remains unimplemented.
 5. `tests/legacy-proxy-ledger`: COMPLETE in `8bd640c3e` plus byte-stable replay fix
    `b3aa56cf3`; 102 sampled exported states per FP mode are finite/in Legacy range.
-   Physical mass/energy/momentum, source/sink/correction attribution, unsampled/full-
-   state finite/positivity and the OPS load-boundary field comparison remain open.
-6. `tests/physical-legacy-ledger`: add source/sink/correction-aware mass, momentum,
-   energy and positivity accounting or record why each Legacy quantity is undefined;
-   complete the OPS load-boundary field comparison.
-7. `tests/profiler-export`: add subsystem spans plus process VRAM without perturbing
+   Physical mass/energy/momentum, source/sink/correction attribution and unsampled/
+   full-state finite/positivity remain open.
+6. `tests/load-boundary`: COMPLETE in `971687a24` plus closure commit `a09c6d716`;
+   clean C01-C14 pre-save/loaded fields, loaded-A/B byte equality, 369 declared
+   private files and frozen-comparator replay are recorded without a bit-exact or
+   physical claim.
+7. `tests/physical-legacy-ledger`: add source/sink/correction-aware mass, momentum,
+   energy and positivity accounting or record why each Legacy quantity is undefined.
+8. `tests/profiler-export`: add subsystem spans plus process VRAM without perturbing
    the short CPU benchmark.
-8. Re-run G0. GREEN may advance to Physical Scale plus standalone AtmosphereBench;
+9. Re-run G0. GREEN may advance to Physical Scale plus standalone AtmosphereBench;
    RED continues only on the remaining blockers.
 
 The mixed benchmark starts from the same generated Strict/Legacy hash; the later
@@ -105,7 +108,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Remove remaining G0 blockers: physical Legacy source/sink/correction and unsampled/full-state finite/positivity work plus load-boundary fields, or subsystem profiler/process-VRAM export. |
+| Next stage? | Remove remaining G0 blockers: physical Legacy source/sink/correction and unsampled/full-state finite/positivity work, or subsystem profiler/process-VRAM export. |
 
 ## Long-term acceptance
 

@@ -161,8 +161,24 @@ sets `performance_gate=not_evaluated`; its four short process timings are eviden
 collection diagnostics, not a throughput benchmark.
 
 Legacy CPU versus future Omni CPU and Omni CPU versus future Omni GPU remain
-unimplemented. Load-boundary field comparison, physical conservation accounting and
-unsampled/full-state finite evidence also remain RED.
+unimplemented. The OPS load-boundary field-attribution sub-gate is GREEN; physical
+conservation accounting and unsampled/full-state finite evidence remain RED.
+
+## OPS load-boundary field attribution
+
+The clean `9b336fc40` formal run exports Particle payloads, Air/wall/fan/gravity
+cells and simulation settings immediately before saving and immediately after two
+fresh loads. It completed C01-C14, including photons, PIPE and full allocator
+saturation. The 369-file private artifact is hash-closed, loaded-A/B captures are
+byte-identical and the frozen comparator replays all 14 comparison JSON files
+byte-identically. This is a save-compatibility characterization only: pre-save and
+loaded Snapshot hashes remain unequal, runtime Particle IDs are diagnostic only,
+and mass/momentum/energy/source-sink claims are explicitly false. See
+`phase-1-load-boundary.md`.
+
+The CSV export and comparison are intentionally not included in the fixed-step
+throughput baseline. Their process timings and C14 memory are evidence-collection
+costs, not a simulation speed claim.
 
 ## Legacy sampled proxy-ledger status
 
@@ -195,8 +211,8 @@ selected derived plane and profile `RenderSnapshotCopy`.
 
 Build/test capability, the explicit Strict build, fixed-step runner, current
 two-scene throughput/process-RAM baseline, C01-C14 characterization and scoped
-first-divergence capture are GREEN. Subsystem profiling, process VRAM, accepted
+first-divergence capture plus OPS field attribution are GREEN. Subsystem profiling, process VRAM, accepted
 performance budgets, physical conservation/source/correction accounting and
 unsampled/full-state finite/positivity comparison remain RED. The next G0 work is
-load-boundary fields, a physical Legacy ledger, or subsystem profiler/VRAM export;
+the physical Legacy ledger or subsystem profiler/VRAM export;
 production OmniAtmosphere remains blocked.

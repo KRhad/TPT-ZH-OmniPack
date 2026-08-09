@@ -13,6 +13,8 @@
 | Differential implementation commit | `c6eecaa77cd7d6025ef997c5dd46e53d112c6e08` |
 | Legacy ledger implementation commit | `8bd640c3e2aca501a17987aa462b2489901e6694` |
 | Byte-stable ledger replay fix | `b3aa56cf3914ab18da60d1ac9ff1e492377f6e88` |
+| Load-boundary implementation commit | `971687a24` |
+| Load-boundary artifact-closure commit | `a09c6d716` |
 | Report commit | `SELF` |
 | Stable/master upstream | `d768aeb89acad986bd252d7e904bf44bb374545f` |
 | Particle layout | 56-byte AoS, `NPART=235008` |
@@ -28,6 +30,13 @@ characterization executable was relinked `9/9` at clean commit `1b8586877` with
 Windows Git first on PATH. The final Legacy ledger run at clean commit `b3aa56cf3`
 used Ninja to build both targets immediately before probing, then re-hashed the
 executables and build provenance after execution.
+
+The final OPS load-boundary run used a new clean detached source worktree at
+`9b336fc40`, its own `builds/ledger-9b336-legacy` Legacy-fast directory and
+Windows PowerShell 5. It built `786/786` targets plus the expected always-stale
+generated `9/9` relink, then re-hashed the executable and Meson provenance after
+the C01-C14 run. Its executable is 321,491,196 bytes with SHA-256
+`AD4BE609CB25A58943F858FE39EACE2D2481DD242F4DB5C6E1B0A8321152126B`.
 
 | Mode | Executable bytes | SHA-256 |
 |---|---:|---|
@@ -47,8 +56,8 @@ GCC emitted a `-Wmaybe-uninitialized` warning in the `ByteString`/`optional` pat
 
 | Check | Result | Scope |
 |---|---:|---|
-| Meson registered tests | Legacy `39/39`; Strict `39/39 PASS` | current explicit FP builds |
-| Nested Python unit tests | 302 run: 302 passed, 0 skipped, 0 failed | current HEAD with UCRT64 compiler on PATH; includes 21 ledger tests |
+| Meson registered tests | formal Legacy `39/39 PASS`; historical Strict `39/39 PASS` | explicit FP builds |
+| Nested Python unit tests | `321/321 OK` | formal clean load-boundary source with UCRT64 compiler on PATH |
 | Lua module regression | `PASS` | isolated client process |
 | Lua 100.1 boundary regression | `11/11 PASS` | reset pressure/velocity/neighbors boundaries |
 | OPS scenario cases | `8 PASS` | fixed scenario set |
@@ -77,6 +86,9 @@ GCC emitted a `-Wmaybe-uninitialized` warning in the `ByteString`/`optional` pat
 | Ledger nonfinite/range/bound observations | `0 / 0 / 0` both modes | sampled observations; not internal correction events |
 | Ledger artifact integrity | `18/18 PASS` | 19 files/0 directories, manifest lengths/SHA-256, 44/44 DLLs, 754/754 compile commands |
 | Frozen ledger comparison replay | byte-identical `PASS` | 13,848 bytes, SHA-256 `54D3B2BB...FBC1` |
+| OPS load-boundary field attribution | `14/14 PASS` | before-save versus loaded-A fields; loaded-A/B captures are byte-identical |
+| Load-boundary artifact integrity | `369/369 PASS` | plus manifest, 15 directories, frozen inputs and result/capture references |
+| Frozen load-boundary comparator replay | byte-identical `14/14 PASS` | no artifact writes or `__pycache__` |
 | Physical mass/momentum/energy conservation | `not_evaluated` | proxy sums are not physical units |
 | Source/sink and correction attribution | `not_evaluated` | no event ledger exists |
 | Unsampled/full-state finite and pressure positivity | `not_tested` | sampled Legacy range is not physical positivity |
@@ -123,7 +135,7 @@ STRICT_FAST_SAMPLED_PROXY_COMPARISON=GREEN
 UNSAMPLED_FULL_STATE_FINITE=RED
 PHYSICAL_CONSERVATION_LEDGER=RED
 SOURCE_SINK_CORRECTION_LEDGER=RED
-LOAD_BOUNDARY_FIELD_DIFF=RED
+LOAD_BOUNDARY_FIELD_DIFF=GREEN
 CONSERVATION_POSITIVITY_FULL_STATE_FINITE_LEDGER=RED
 LEGACY_CPU_VS_OMNI_CPU=RED
 OMNI_CPU_VS_OMNI_GPU=RED
@@ -131,9 +143,10 @@ G0_UPSTREAM_BASELINE=RED
 ```
 
 The gate is fail-closed: benchmark, characterization and same-source CPU
-first-divergence and sampled proxy-ledger foundations are GREEN, but they do not
-substitute for physical conservation/source/correction accounting, unsampled/full-
-state finite/positivity evidence, load-boundary fields, subsystem profiling, VRAM
-measurement or Omni CPU/GPU differential validation. See
+first-divergence, sampled proxy-ledger and load-boundary field-attribution
+foundations are GREEN, but they do not substitute for physical conservation/source/
+correction accounting, unsampled/full-state finite/positivity evidence, subsystem
+profiling, VRAM measurement or Omni CPU/GPU differential validation. See
 `phase-1-legacy-characterization.md`, `phase-1-first-divergence.md` and
-`phase-1-legacy-ledger.md`.
+`phase-1-legacy-ledger.md`; load-boundary scope and evidence are in
+`phase-1-load-boundary.md`.

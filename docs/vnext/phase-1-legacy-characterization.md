@@ -9,6 +9,9 @@ SAVE_CONTINUATION_FIX=908878f747a4703bf9380868fb7e2407efaeaf41
 SAVE_EDGE_MODE_FIX=ce8087d07573ca07b80e9a6cdcae33adb53fa56b
 CHARACTERIZATION_IMPLEMENTATION=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 CHARACTERIZATION_SAVES=GREEN
+LOAD_BOUNDARY_IMPLEMENTATION=971687a24
+LOAD_BOUNDARY_CLOSURE=a09c6d716
+LOAD_BOUNDARY_FIELD_DIFF=GREEN
 G0_UPSTREAM_BASELINE=RED
 PRODUCTION_OMNIATMOSPHERE_ALLOWED=false
 ```
@@ -20,9 +23,10 @@ traces, process logs and result JSON remain under ignored `artifacts/` and are n
 publication assets.
 
 G0 remains **RED**. The later same-source Legacy-fast/Strict CPU first-divergence
-capture is GREEN, but OPS load-boundary field comparison, conservation/finite-value
-ledgers, subsystem profiling, process VRAM and accepted performance budgets are
-still missing. No production OmniAtmosphere implementation is permitted.
+capture and the OPS load-boundary field-attribution sub-gate are GREEN, but
+conservation/finite-value ledgers, subsystem profiling, process VRAM and accepted
+performance budgets are still missing. No production OmniAtmosphere implementation
+is permitted.
 
 ## Goal and scope
 
@@ -116,8 +120,9 @@ loaded state have different `Snapshot::Hash` values. The authoritative
 characterization baseline is therefore the independently repeatable loaded state.
 The manifest exposes `snapshot_hash_equal=false` for every case instead of treating
 the mismatch as equality. The later differential runner reports generated-scene FP
-field differences, but it has not yet compared these pre-save and loaded states;
-OPS load-boundary field attribution remains RED.
+field differences. The formal C01-C14 pre-save/loaded attribution now completes
+this boundary comparison with loaded-A/B byte equality, while preserving the
+non-bit-exact limitation; see `phase-1-load-boundary.md`.
 
 ## Correctness fixes found by the suite
 
@@ -144,6 +149,8 @@ lane around the barrier and places BTRY within its real two-pixel activation ran
 - Legacy-fast Meson: `39/39 PASS`.
 - Strict Meson: `39/39 PASS`.
 - Full Python suite: 273 run, 271 passed, 2 skipped, 0 failed.
+- Later formal load-boundary Python suite: `321/321 OK`; its Legacy-fast Meson
+  suite is `39/39 PASS`.
 - Characterization contracts: `15/15 PASS` before the formal run.
 - Lua upstream 100.1 boundary regression: PASS (`11` bounds assertions).
 - Existing eight-class OPS matrix: PASS (`24` processes, `16` restart loads,
@@ -181,7 +188,9 @@ memory budget. Process VRAM remains `not_tested`.
   and synchronize edge mode; both fixes are ahead of audited official master and
   require explicit review during future upstream merges.
 - Loaded OPS state is deterministic but not identical to the pre-save in-memory
-  Snapshot. Field-level load-boundary characterization is still required.
+  Snapshot. The field-level attribution is now complete; it reports the unequal
+  fields without claiming bit-exact checkpointing or physical conservation. See
+  `phase-1-load-boundary.md`.
 - C14 records Legacy border culling after allocator saturation.
 - No conservation, positivity, NaN/Inf, energy, mass or species ledger exists yet.
 - The runner records process RAM but not subsystem time or process VRAM.
@@ -194,7 +203,7 @@ PRIVATE_ARTIFACT_POLICY=GREEN
 DETERMINISTIC_RESTART_TRACES=GREEN
 BOUNDED_SAVE_LOAD=GREEN
 CHARACTERIZATION_PROCESS_RAM=GREEN
-LOAD_BOUNDARY_FIELD_DIFF=RED
+LOAD_BOUNDARY_FIELD_DIFF=GREEN
 FIRST_DIVERGENCE_RUNNER=GREEN
 SAME_SOURCE_CPU_FP_DIFFERENTIAL=GREEN
 LEGACY_CPU_VS_OMNI_CPU=RED
@@ -207,5 +216,6 @@ G0_UPSTREAM_BASELINE=RED
 
 Rollback base is `b9ae20bf03232cd13418064b2951e993df6c9f20`. The three bounded
 commits can be reverted independently in reverse order; no rollback is recommended.
-The next permitted integration work is the OPS load-boundary/conservation/finite
-ledger or profiler/VRAM export, followed by G0 reassessment.
+The next permitted integration work is the physical Legacy conservation/source/
+correction ledger, unsampled/full-state finite/positivity evidence or
+profiler/VRAM export, followed by G0 reassessment.

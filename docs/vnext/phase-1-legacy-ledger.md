@@ -24,6 +24,13 @@ G0_UPSTREAM_BASELINE=RED
 PRODUCTION_OMNIATMOSPHERE_ALLOWED=false
 ```
 
+> Historical status annotation (2026-08-09): `LOAD_BOUNDARY_FIELD_DIFF=RED` in
+> this report describes the state at its report commit. The later
+> [OPS load-boundary field-attribution report](phase-1-load-boundary.md) closes
+> that independent sub-gate at `GREEN` with a clean `9b336fc40` artifact. This
+> does not change this report's sampled-proxy findings or any of its remaining
+> physical-ledger `RED` gates.
+
 The sampled Legacy proxy-ledger foundation is **GREEN**. On one clean-source,
 1,000-step mixed run, both Legacy-fast and Strict builds exported finite Particle
 and Air values at all 102 scheduled samples and stayed inside the documented Legacy

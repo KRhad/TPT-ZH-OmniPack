@@ -9,6 +9,8 @@ BENCHMARK_IMPLEMENTATION_HEAD=c4490463f3819695cab734414f827e0e4e4be118
 CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
 LEGACY_LEDGER_IMPLEMENTATION_HEAD=b3aa56cf3914ab18da60d1ac9ff1e492377f6e88
+LOAD_BOUNDARY_IMPLEMENTATION_HEAD=971687a24
+LOAD_BOUNDARY_CLOSURE_HEAD=a09c6d716
 REPORT_COMMIT=SELF
 WORKTREE_DIRTY_AT_REPORT_START=false
 UPSTREAM_STABLE_VERSION=100.1 build 400
@@ -17,6 +19,7 @@ FIXED_STEP_BENCHMARK=GREEN
 CHARACTERIZATION_SAVES=GREEN
 FIRST_DIVERGENCE_FIELD_CAPTURE=GREEN
 LEGACY_SAMPLED_FINITE_PROXY_LEDGER=GREEN
+LOAD_BOUNDARY_FIELD_DIFF=GREEN
 PHYSICAL_CONSERVATION_LEDGER=RED
 G0_UPSTREAM_BASELINE=RED
 PRODUCTION_OMNIATMOSPHERE_ALLOWED=false
@@ -33,7 +36,8 @@ OmniAtmosphere work; it does not roll back verified upstream,
 benchmark, differential or sampled-ledger foundations.
 
 The new Legacy ledger exports finite/range observations and diagnostic proxies at
-fixed samples. It is GREEN only for that sampled subset. Physical mass, momentum,
+fixed samples. The OPS load-boundary field-attribution sub-gate is now GREEN for
+complete, replayable, non-physical field reporting. Physical mass, momentum,
 energy, source/sink attribution, correction events, unsampled ticks and pressure
 positivity remain RED and still block G0.
 
@@ -43,11 +47,11 @@ positivity remain RED and still block G0.
 |---|---|---|
 | Internet access | `true` | Official site, Git refs, GitHub releases and license files queried on 2026-08-09 |
 | Git | `true` | Windows Git at `E:/Git/cmd/git.exe`; branch, log, remotes and worktrees inspected |
-| Sub-agents | `true` | Three bounded read-only ledger Workers reviewed Lua, Python/schema and wrapper/provenance; Main Orchestrator independently reran clients, tests, artifact hashes and replay |
+| Sub-agents | `true` | Worker slots were available; three requested read-only ledger audits exhausted service retries with 429 and contributed no evidence. Main Orchestrator independently reran clients, tests, artifact hashes and replay |
 | Multiple shells/tool calls | `true` | Independent PowerShell commands can run concurrently |
-| Git worktree | `true` | upstream/element worktrees remain isolated; the formal ledger ran from clean detached `ledger-formal-b3aa` |
-| Compile project | `true` | clean baseline completed `787/787`; the final ledger wrapper built both current targets before probing and verified 754 compile commands per FP mode |
-| Run automated tests | `true` | both current Meson suites `39/39`; Python 302 run, 302 passed, 0 skipped with UCRT64 compiler on PATH |
+| Git worktree | `true` | upstream/element worktrees remain isolated; the formal load-boundary run used clean detached `ledger-formal-9b336` |
+| Compile project | `true` | independent load-boundary formal build completed `786/786` plus the generated `9/9` relink; final binary was rehashed |
+| Run automated tests | `true` | formal Legacy-fast Meson suite `39/39`; nested Python suite `321/321 OK` with UCRT64 compiler on PATH |
 | GPU hardware | `true` | NVIDIA GeForce RTX 5070 Ti Laptop GPU, driver 591.86, reported 12,227 MiB, compute capability 12.0 |
 | SDL application process | `true` | isolated Lua/runtime clients execute; visible interactive GUI acceptance is `not_tested` |
 | SDL3 / SDL_GPU runtime | `false` | repository is SDL2; no SDL3 build or GPU compute pipeline exists |
@@ -97,6 +101,8 @@ PATH begins with `E:/Git/cmd`, then UCRT64, then MSYS2 `usr/bin`.
 | `4765fc123` | formal first-divergence report and gate update | docs only |
 | `8bd640c3e` | sampled Legacy numerical proxy ledger | tooling/tests only |
 | `b3aa56cf3` | platform-independent byte-stable ledger JSON replay | tooling/tests only |
+| `971687a24` | OPS load-boundary field capture and attribution | tooling/tests only |
+| `a09c6d716` | close frozen-input and recursive artifact manifest | tooling/tests only |
 
 ## Phase report
 
@@ -122,15 +128,17 @@ PATH begins with `E:/Git/cmd`, then UCRT64, then MSYS2 `usr/bin`.
   4,935 differing particle IDs and 2,074 differing Air cells, with
   `unexplained_hash_divergence=false`. Omni CPU/GPU comparisons do not yet exist.
 - Ledger: clean-source Legacy-fast/Strict sampled proxy comparison is `PASS`; the
-  final manifest is `5F57C3F5...743390D`, artifact files are `18/18`, directory
-  closure is 19 files/0 subdirectories, and frozen CSV replay is byte-identical.
-  Physical conservation claims remain explicitly false.
+  historical ledger remains bound to its closed `b3aa56cf3` artifact. The new OPS
+  load-boundary formal manifest is `F47F4119...8DC6C`, with 369 declared files plus
+  the manifest, 15 directories, 14/14 byte-identical comparator replays and no
+  physical claims. Physical conservation claims remain explicitly false.
 - Compatibility: automated build/Lua/OPS evidence passes; GUI, PSv/fuC, portable
   runtime, broad external Lua corpus, and visual behavior remain `not_tested`.
 - Known deviation: `resetVelocity` final-edge fix is ahead of official master.
-- Gate: fixed-step, characterization, first-divergence and sampled proxy-ledger
-  foundations are GREEN; physical conservation/source/correction ledgers,
-  load-boundary fields, profiler/VRAM and performance budgets keep G0 RED.
+- Gate: fixed-step, characterization, first-divergence, sampled proxy-ledger and
+  load-boundary field-attribution foundations are GREEN; physical
+  conservation/source/correction ledgers, profiler/VRAM and performance budgets
+  keep G0 RED.
 - Rollback point: `fb72d5e8f` for all vNext integration, or the parent of each bounded
   commit for phase-local rollback. No rollback is currently recommended.
 
@@ -139,7 +147,7 @@ PATH begins with `E:/Git/cmd`, then UCRT64, then MSYS2 `usr/bin`.
 Only G0 blockers may proceed:
 
 1. physical Legacy conservation/source/correction evidence and unsampled/full-state
-   finite/positivity work, including the still-open load-boundary field comparison;
+   finite/positivity work;
 2. subsystem profiler export and process VRAM measurement;
 3. strict/fast drift comparison and an accepted performance regression budget.
 
