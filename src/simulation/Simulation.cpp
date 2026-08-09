@@ -239,7 +239,9 @@ void Simulation::Load(const GameSave *save, bool includePressure, Vec2<int> bloc
 			else
 			{
 				// Should not be possible because we verify with CanAlloc above this
+				auto oldType = parts[i].type;
 				parts[i].type = 0;
+				RecordOmniLifecycleMutation(oldType, PT_NONE, OmniLifecycleMutationKind::LoadFallback);
 			}
 			break;
 		}
@@ -1789,6 +1791,7 @@ void Simulation::kill_part(int i)//kills particle number i
 		return;
 
 	elementCount[t]--;
+	RecordOmniLifecycleMutation(t, PT_NONE, OmniLifecycleMutationKind::Kill);
 
 	parts.Free(i);
 	NUM_PARTS -= 1;
@@ -1830,7 +1833,9 @@ bool Simulation::part_change_type(int i, int x, int y, int t)
 		elementCount[parts[i].type]--;
 	elementCount[t]++;
 
+	auto oldType = parts[i].type;
 	parts[i].type = t;
+	RecordOmniLifecycleMutation(oldType, t, OmniLifecycleMutationKind::TypeChange);
 	if (elements[t].Properties & TYPE_ENERGY)
 	{
 		photons[y][x] = PMAP(i, t);
@@ -1874,6 +1879,7 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 			return index;
 		}
 		parts[index].type = PT_SPRK;
+		RecordOmniLifecycleMutation(type, PT_SPRK, OmniLifecycleMutationKind::SparkFastPath);
 		parts[index].life = 4;
 		parts[index].ctype = type;
 		pmap[y][x] = (pmap[y][x]&~PMAPMASK) | PT_SPRK;
@@ -1950,6 +1956,10 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 
 	parts[i] = elements[t].DefaultProperties;
 	parts[i].type = t;
+	if (oldType == PT_NONE)
+		RecordOmniLifecycleMutation(PT_NONE, t, OmniLifecycleMutationKind::Create);
+	else
+		RecordOmniLifecycleMutation(oldType, t, OmniLifecycleMutationKind::Replacement);
 	parts[i].x = (float)x;
 	parts[i].y = (float)y;
 
@@ -2582,11 +2592,13 @@ bool SimulationImpl::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 					{
 						if (ctemph < elements[parts[i].ctype].HighTemperature)
 							s = 0;
-						else
-						{
-							t = PT_LAVA;
-							parts[i].type = PT_TUNG;
-						}
+					else
+					{
+						t = PT_LAVA;
+						auto oldType = parts[i].type;
+						parts[i].type = PT_TUNG;
+						RecordOmniLifecycleMutation(oldType, PT_TUNG, OmniLifecycleMutationKind::BrmtTungPreparation);
+					}
 					}
 					else if (ctemph >= elements[t].HighTemperature)
 						t = PT_LAVA;
@@ -3769,9 +3781,224 @@ Simulation::OmniEventMetrics Simulation::GetOmniEventMetrics() const
 	};
 }
 
+void Simulation::SetOmniLifecycleLedgerEnabled(bool enabled)
+{
+	omniLifecycleLedgerEnabled = enabled;
+	ResetOmniLifecycleLedger();
+}
+
+void Simulation::ResetOmniLifecycleLedger()
+{
+	omniLifecycleLedgerActiveTick = false;
+	omniLifecycleLedgerLastFrameReconciled = false;
+	omniLifecycleLedgerTicksStarted = 0;
+	omniLifecycleLedgerTicksCompleted = 0;
+	omniLifecycleLedgerReconciliationFailures = 0;
+	omniLifecycleLedgerCreates = 0;
+	omniLifecycleLedgerKills = 0;
+	omniLifecycleLedgerTypeTransitions = 0;
+	omniLifecycleLedgerReplacements = 0;
+	omniLifecycleLedgerDirectTypeTransitions = 0;
+	omniLifecycleLedgerSparkFastPathTransitions = 0;
+	omniLifecycleLedgerBrmtTungPreparationTransitions = 0;
+	omniLifecycleLedgerLoadFallbackTransitions = 0;
+	omniLifecycleLedgerOutsideTickEvents = 0;
+	omniLifecycleLedgerOutsideTickDirectTransitions = 0;
+	omniLifecycleLedgerLastBeginRecords = 0;
+	omniLifecycleLedgerLastEndRecords = 0;
+	omniLifecycleLedgerLastUnattributedRecordDeltaAbs = 0;
+	omniLifecycleLedgerTotalUnattributedRecordDeltaAbs = 0;
+	omniLifecycleLedgerLastFirstMismatchedType = -1;
+	omniLifecycleLedgerLastInvalidTypeRecords = 0;
+	std::fill(omniLifecycleLedgerBeginHistogram.begin(), omniLifecycleLedgerBeginHistogram.end(), 0);
+	std::fill(omniLifecycleLedgerEventDelta.begin(), omniLifecycleLedgerEventDelta.end(), 0);
+}
+
+Simulation::OmniLifecycleLedgerMetrics Simulation::GetOmniLifecycleLedgerMetrics() const
+{
+	return {
+		omniLifecycleLedgerEnabled,
+		omniLifecycleLedgerActiveTick,
+		true,
+		omniLifecycleLedgerLastFrameReconciled,
+		omniLifecycleLedgerTicksStarted,
+		omniLifecycleLedgerTicksCompleted,
+		omniLifecycleLedgerReconciliationFailures,
+		omniLifecycleLedgerCreates,
+		omniLifecycleLedgerKills,
+		omniLifecycleLedgerTypeTransitions,
+		omniLifecycleLedgerReplacements,
+		omniLifecycleLedgerDirectTypeTransitions,
+		omniLifecycleLedgerSparkFastPathTransitions,
+		omniLifecycleLedgerBrmtTungPreparationTransitions,
+		omniLifecycleLedgerLoadFallbackTransitions,
+		omniLifecycleLedgerOutsideTickEvents,
+		omniLifecycleLedgerOutsideTickDirectTransitions,
+		omniLifecycleLedgerLastBeginRecords,
+		omniLifecycleLedgerLastEndRecords,
+		omniLifecycleLedgerLastUnattributedRecordDeltaAbs,
+		omniLifecycleLedgerTotalUnattributedRecordDeltaAbs,
+		omniLifecycleLedgerLastFirstMismatchedType,
+		omniLifecycleLedgerLastInvalidTypeRecords,
+	};
+}
+
+void Simulation::BeginOmniLifecycleLedgerTick()
+{
+	if (!omniLifecycleLedgerEnabled)
+		return;
+
+	if (omniLifecycleLedgerActiveTick)
+	{
+		// A nested boundary would invalidate the prior frame's reconciliation.
+		// There is no such path in the current dispatcher, but fail closed if one
+		// is introduced later.
+		omniLifecycleLedgerReconciliationFailures++;
+		omniLifecycleLedgerLastFrameReconciled = false;
+	}
+
+	std::fill(omniLifecycleLedgerBeginHistogram.begin(), omniLifecycleLedgerBeginHistogram.end(), 0);
+	std::fill(omniLifecycleLedgerEventDelta.begin(), omniLifecycleLedgerEventDelta.end(), 0);
+	int64_t records = 0;
+	int64_t invalidTypeRecords = 0;
+	for (int i = 0; i < parts.active; i++)
+	{
+		auto type = parts[i].type;
+		if (type != PT_NONE)
+		{
+			records++;
+			if (type > PT_NONE && type < PT_NUM)
+				omniLifecycleLedgerBeginHistogram[type]++;
+			else
+				invalidTypeRecords++;
+		}
+	}
+
+	omniLifecycleLedgerLastBeginRecords = records;
+	omniLifecycleLedgerLastInvalidTypeRecords = invalidTypeRecords;
+	omniLifecycleLedgerActiveTick = true;
+	omniLifecycleLedgerTicksStarted++;
+}
+
+void Simulation::EndOmniLifecycleLedgerTick()
+{
+	if (!omniLifecycleLedgerEnabled || !omniLifecycleLedgerActiveTick)
+		return;
+
+	std::array<int64_t, PT_NUM> endHistogram{};
+	int64_t records = 0;
+	int64_t invalidTypeRecords = 0;
+	for (int i = 0; i < parts.active; i++)
+	{
+		auto type = parts[i].type;
+		if (type != PT_NONE)
+		{
+			records++;
+			if (type > PT_NONE && type < PT_NUM)
+				endHistogram[type]++;
+			else
+				invalidTypeRecords++;
+		}
+	}
+
+	auto absoluteRecordDelta = [](int64_t value) -> uint64_t {
+		if (value >= 0)
+			return static_cast<uint64_t>(value);
+		return static_cast<uint64_t>(-(value + 1)) + 1;
+	};
+
+	uint64_t unattributedRecordDeltaAbs = 0;
+	int firstMismatchedType = -1;
+	for (int type = PT_NONE + 1; type < PT_NUM; type++)
+	{
+		auto expected = omniLifecycleLedgerBeginHistogram[type] + omniLifecycleLedgerEventDelta[type];
+		auto delta = endHistogram[type] - expected;
+		if (delta)
+		{
+			unattributedRecordDeltaAbs += absoluteRecordDelta(delta);
+			if (firstMismatchedType == -1)
+				firstMismatchedType = type;
+		}
+	}
+	if (invalidTypeRecords != omniLifecycleLedgerLastInvalidTypeRecords)
+	{
+		unattributedRecordDeltaAbs += absoluteRecordDelta(
+			invalidTypeRecords - omniLifecycleLedgerLastInvalidTypeRecords
+		);
+		if (firstMismatchedType == -1)
+			firstMismatchedType = PT_NUM; // invalid-type sentinel, never a live Element ID
+	}
+
+	omniLifecycleLedgerLastEndRecords = records;
+	omniLifecycleLedgerLastInvalidTypeRecords = invalidTypeRecords;
+	omniLifecycleLedgerLastUnattributedRecordDeltaAbs = unattributedRecordDeltaAbs;
+	omniLifecycleLedgerTotalUnattributedRecordDeltaAbs += unattributedRecordDeltaAbs;
+	omniLifecycleLedgerLastFirstMismatchedType = firstMismatchedType;
+	omniLifecycleLedgerLastFrameReconciled = unattributedRecordDeltaAbs == 0;
+	if (!omniLifecycleLedgerLastFrameReconciled)
+		omniLifecycleLedgerReconciliationFailures++;
+	omniLifecycleLedgerActiveTick = false;
+	omniLifecycleLedgerTicksCompleted++;
+}
+
+void Simulation::RecordOmniLifecycleMutation(int oldType, int newType, OmniLifecycleMutationKind kind)
+{
+	if (!omniLifecycleLedgerEnabled)
+		return;
+
+	bool direct = false;
+	switch (kind)
+	{
+	case OmniLifecycleMutationKind::Create:
+		omniLifecycleLedgerCreates++;
+		break;
+	case OmniLifecycleMutationKind::Kill:
+		omniLifecycleLedgerKills++;
+		break;
+	case OmniLifecycleMutationKind::TypeChange:
+		omniLifecycleLedgerTypeTransitions++;
+		break;
+	case OmniLifecycleMutationKind::Replacement:
+		omniLifecycleLedgerTypeTransitions++;
+		omniLifecycleLedgerReplacements++;
+		break;
+	case OmniLifecycleMutationKind::SparkFastPath:
+		omniLifecycleLedgerTypeTransitions++;
+		omniLifecycleLedgerSparkFastPathTransitions++;
+		direct = true;
+		break;
+	case OmniLifecycleMutationKind::BrmtTungPreparation:
+		omniLifecycleLedgerTypeTransitions++;
+		omniLifecycleLedgerBrmtTungPreparationTransitions++;
+		direct = true;
+		break;
+	case OmniLifecycleMutationKind::LoadFallback:
+		omniLifecycleLedgerTypeTransitions++;
+		omniLifecycleLedgerLoadFallbackTransitions++;
+		direct = true;
+		break;
+	}
+	if (direct)
+		omniLifecycleLedgerDirectTypeTransitions++;
+
+	if (!omniLifecycleLedgerActiveTick)
+	{
+		omniLifecycleLedgerOutsideTickEvents++;
+		if (direct)
+			omniLifecycleLedgerOutsideTickDirectTransitions++;
+		return;
+	}
+
+	if (oldType > PT_NONE && oldType < PT_NUM)
+		omniLifecycleLedgerEventDelta[oldType]--;
+	if (newType > PT_NONE && newType < PT_NUM)
+		omniLifecycleLedgerEventDelta[newType]++;
+}
+
 //updates pmap, gol, and some other simulation stuff (but not particles)
 void Simulation::BeforeSim(bool willUpdate)
 {
+	BeginOmniLifecycleLedgerTick();
 	if (willUpdate)
 	{
 		{
@@ -4009,6 +4236,7 @@ void Simulation::AfterSim()
 		emp_trigger_count = 0;
 	}
 
+	EndOmniLifecycleLedgerTick();
 	frameCount += 1;
 }
 

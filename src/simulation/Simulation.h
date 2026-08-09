@@ -19,6 +19,7 @@
 #include <atomic>
 #include <vector>
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <optional>
 
@@ -176,6 +177,35 @@ public:
 		uint64_t peakPerFrame;
 	};
 
+	// Audit-only record accounting. These counters deliberately have no mass,
+	// amount-of-substance, momentum or energy units.
+	struct OmniLifecycleLedgerMetrics
+	{
+		bool enabled;
+		bool activeTick;
+		bool recordUnitsOnly;
+		bool lastFrameReconciled;
+		uint64_t ticksStarted;
+		uint64_t ticksCompleted;
+		uint64_t reconciliationFailures;
+		uint64_t creates;
+		uint64_t kills;
+		uint64_t typeTransitions;
+		uint64_t replacements;
+		uint64_t directTypeTransitions;
+		uint64_t sparkFastPathTransitions;
+		uint64_t brmtTungPreparationTransitions;
+		uint64_t loadFallbackTransitions;
+		uint64_t outsideTickEvents;
+		uint64_t outsideTickDirectTransitions;
+		int64_t lastBeginRecords;
+		int64_t lastEndRecords;
+		uint64_t lastUnattributedRecordDeltaAbs;
+		uint64_t totalUnattributedRecordDeltaAbs;
+		int lastFirstMismatchedType;
+		int64_t lastInvalidTypeRecords;
+	};
+
 	// initialized very late >_>
 	int NUM_PARTS;
 	int sandcolour;
@@ -237,6 +267,9 @@ public:
 	void ResetOmniEventMetrics();
 	void RecordOmniEvent();
 	OmniEventMetrics GetOmniEventMetrics() const;
+	void SetOmniLifecycleLedgerEnabled(bool enabled);
+	void ResetOmniLifecycleLedger();
+	OmniLifecycleLedgerMetrics GetOmniLifecycleLedgerMetrics() const;
 
 	void SetEdgeMode(int newEdgeMode);
 	void SetDecoSpace(int newDecoSpace);
@@ -286,10 +319,55 @@ public:
 
 	static std::unique_ptr<Simulation> Factory();
 
+protected:
+	enum class OmniLifecycleMutationKind : uint8_t
+	{
+		Create,
+		Kill,
+		TypeChange,
+		Replacement,
+		SparkFastPath,
+		BrmtTungPreparation,
+		LoadFallback,
+	};
+	void RecordOmniLifecycleMutation(int oldType, int newType, OmniLifecycleMutationKind kind);
+
 private:
+
 	std::atomic<uint64_t> omniEventCountTotal{ 0 };
 	std::atomic<uint64_t> omniEventCountCurrentFrame{ 0 };
 	std::atomic<uint64_t> omniEventCountPeakPerFrame{ 0 };
+
+	// The current SimulationImpl particle dispatcher is serial. A future
+	// parallel dispatcher must add a deterministic per-worker reduction before
+	// recording into these per-type arrays.
+	bool omniLifecycleLedgerEnabled = false;
+	bool omniLifecycleLedgerActiveTick = false;
+	bool omniLifecycleLedgerLastFrameReconciled = false;
+	uint64_t omniLifecycleLedgerTicksStarted = 0;
+	uint64_t omniLifecycleLedgerTicksCompleted = 0;
+	uint64_t omniLifecycleLedgerReconciliationFailures = 0;
+	uint64_t omniLifecycleLedgerCreates = 0;
+	uint64_t omniLifecycleLedgerKills = 0;
+	uint64_t omniLifecycleLedgerTypeTransitions = 0;
+	uint64_t omniLifecycleLedgerReplacements = 0;
+	uint64_t omniLifecycleLedgerDirectTypeTransitions = 0;
+	uint64_t omniLifecycleLedgerSparkFastPathTransitions = 0;
+	uint64_t omniLifecycleLedgerBrmtTungPreparationTransitions = 0;
+	uint64_t omniLifecycleLedgerLoadFallbackTransitions = 0;
+	uint64_t omniLifecycleLedgerOutsideTickEvents = 0;
+	uint64_t omniLifecycleLedgerOutsideTickDirectTransitions = 0;
+	int64_t omniLifecycleLedgerLastBeginRecords = 0;
+	int64_t omniLifecycleLedgerLastEndRecords = 0;
+	uint64_t omniLifecycleLedgerLastUnattributedRecordDeltaAbs = 0;
+	uint64_t omniLifecycleLedgerTotalUnattributedRecordDeltaAbs = 0;
+	int omniLifecycleLedgerLastFirstMismatchedType = -1;
+	int64_t omniLifecycleLedgerLastInvalidTypeRecords = 0;
+	std::array<int64_t, PT_NUM> omniLifecycleLedgerBeginHistogram{};
+	std::array<int64_t, PT_NUM> omniLifecycleLedgerEventDelta{};
+
+	void BeginOmniLifecycleLedgerTick();
+	void EndOmniLifecycleLedgerTick();
 
 	CoordStack& getCoordStackSingleton();
 

@@ -160,6 +160,65 @@ static int resetOmniEventMetrics(lua_State *L)
 	return 0;
 }
 
+static int omniLifecycleLedger(lua_State *L)
+{
+	auto metrics = GetLSI()->sim->GetOmniLifecycleLedgerMetrics();
+	lua_newtable(L);
+	auto setBoolean = [L](char const *field, bool value) {
+		lua_pushboolean(L, value);
+		lua_setfield(L, -2, field);
+	};
+	auto setInteger = [L](char const *field, auto value) {
+		lua_pushinteger(L, static_cast<lua_Integer>(value));
+		lua_setfield(L, -2, field);
+	};
+	setBoolean("enabled", metrics.enabled);
+	setBoolean("active_tick", metrics.activeTick);
+	setBoolean("record_units_only", metrics.recordUnitsOnly);
+	setBoolean("last_frame_reconciled", metrics.lastFrameReconciled);
+	setInteger("ticks_started", metrics.ticksStarted);
+	setInteger("ticks_completed", metrics.ticksCompleted);
+	setInteger("reconciliation_failures", metrics.reconciliationFailures);
+	setInteger("creates", metrics.creates);
+	setInteger("kills", metrics.kills);
+	setInteger("type_transitions", metrics.typeTransitions);
+	setInteger("replacements", metrics.replacements);
+	setInteger("direct_type_transitions", metrics.directTypeTransitions);
+	setInteger("spark_fast_path_transitions", metrics.sparkFastPathTransitions);
+	setInteger("brmt_tung_preparation_transitions", metrics.brmtTungPreparationTransitions);
+	setInteger("load_fallback_transitions", metrics.loadFallbackTransitions);
+	setInteger("outside_tick_events", metrics.outsideTickEvents);
+	setInteger("outside_tick_direct_transitions", metrics.outsideTickDirectTransitions);
+	setInteger("last_begin_records", metrics.lastBeginRecords);
+	setInteger("last_end_records", metrics.lastEndRecords);
+	setInteger("last_unattributed_record_delta_abs", metrics.lastUnattributedRecordDeltaAbs);
+	setInteger("total_unattributed_record_delta_abs", metrics.totalUnattributedRecordDeltaAbs);
+	setInteger("last_first_mismatched_type", metrics.lastFirstMismatchedType);
+	setInteger("last_invalid_type_records", metrics.lastInvalidTypeRecords);
+	return 1;
+}
+
+static int omniLifecycleLedgerEnabled(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	lsi->AssertInterfaceEvent();
+	if (lua_gettop(L))
+	{
+		lsi->sim->SetOmniLifecycleLedgerEnabled(lua_toboolean(L, 1));
+		return 0;
+	}
+	lua_pushboolean(L, lsi->sim->GetOmniLifecycleLedgerMetrics().enabled);
+	return 1;
+}
+
+static int resetOmniLifecycleLedger(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	lsi->AssertInterfaceEvent();
+	lsi->sim->ResetOmniLifecycleLedger();
+	return 0;
+}
+
 static int omniModuleEnabled(lua_State *L)
 {
 	auto moduleName = std::string_view(luaL_checkstring(L, 1));
@@ -2248,6 +2307,9 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(partCount),
 		LFUNC(omniEventMetrics),
 		LFUNC(resetOmniEventMetrics),
+		LFUNC(omniLifecycleLedger),
+		LFUNC(omniLifecycleLedgerEnabled),
+		LFUNC(resetOmniLifecycleLedger),
 		LFUNC(omniModuleEnabled),
 		LFUNC(omniLanguage),
 		LFUNC(decoSpace),
