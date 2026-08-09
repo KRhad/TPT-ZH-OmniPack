@@ -7,7 +7,7 @@ files under `docs/vnext/` for the first-round report commit.
 
 | Worker | Branch | Worktree | Allowed paths | Forbidden paths | Base commit | Task | Status |
 |---|---|---|---|---|---|---|---|
-| Main Orchestrator | `integration/omnicore-vnext` | `D:/CodexWork/OmniPack/repos/TPT-ZH-OmniPack` | integration, review, `docs/vnext/**`, `docs/roadmap/**` | destructive Git operations, push/release | `fb72d5e8f` | close 1.0.2 refresh and start isolated 1.0.3 UI/material compatibility audit | ACTIVE |
+| Main Orchestrator | `integration/omnicore-vnext` | `D:/CodexWork/OmniPack/repos/TPT-ZH-OmniPack` | integration, review, 1.0.3 UI contracts, `docs/vnext/**`, `docs/roadmap/**` | destructive Git operations, push/release, Simulation/Particle/Air/Save/Lua core | `c8a0190c1` | complete only the 1.0.3 UI/material-organization gate | ACTIVE, YELLOW pending real 100/125/150% DPI matrix |
 | Worker-Upstream | `vnext/upstream-100.1` | `D:/CodexWork/OmniPack/worktrees/upstream-100.1` | upstream adaptation and isolated regression tools | unrelated OmniCore production architecture | `635eb9f92` | adapt TPT 100.1 build 400 | COMPLETE, merged through `729f72cba` |
 | Worker-Elements | `vnext/element-inventory` | `D:/CodexWork/OmniPack/worktrees/element-inventory` | `tools/vnext/element_update_inventory.py`, inventory report/JSON | production simulation | `729f72cba` | static update inventory | COMPLETE, integrated as `f1320b48d` |
 | Worker-LuaSave | read-only | main worktree | read-only Lua, Particle, Save inspection | every write | `729f72cba` | Lua/Save compatibility audit | COMPLETE |
@@ -39,6 +39,7 @@ files under `docs/vnext/` for the first-round report commit.
 | Worker-Profiler-Design-Review | N/A; read-only task interrupted | N/A; local service unavailable | read-only profiler design review | every write | `97d2fc2c1` | independent 1.0.1 design review | NO_EVIDENCE; platform returned 504 before an auditable result |
 | Worker-Profiler-Final-Review | N/A; read-only task interrupted | N/A; local service unavailable | read-only final profiler review | every write | `97d2fc2c1` | independent 1.0.1 final review | NO_EVIDENCE; platform returned 504 before an auditable result |
 | Worker-Correction-Observer-Review | read-only | main worktree | correction observer sources, fixture and reports | every write | `9274fdb3a` | independent scope review of audited Air-cap observer | COMPLETE, PASS_WITH_DECLARED_LIMITS; not physical conservation evidence |
+| Worker-UI-Material-Audit | read-only | main worktree | UI routes, periodic/search/detail views, localization and compatibility audits | every write | `c8a0190c1` | independent 1.0.3 UI/material-organization review | COMPLETE; data model accepted, visual DPI matrix remained YELLOW |
 
 ## Coordination rules
 

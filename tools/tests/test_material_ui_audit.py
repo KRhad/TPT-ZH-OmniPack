@@ -42,6 +42,38 @@ class MaterialUiAuditTests(unittest.TestCase):
         self.assertEqual(alias["record_status"], "compatibility_alias")
         self.assertEqual(alias["canonical_identifier"], "DEFAULT_PT_BRMT")
 
+    def test_material_routes_follow_declared_menu_policy(self) -> None:
+        rendered, _ = module.render(ROOT)
+        rows = list(csv.DictReader(io.StringIO(rendered)))
+        by_policy: dict[str, list[dict[str, str]]] = {}
+        for row in rows:
+            by_policy.setdefault(row["main_menu_policy"], []).append(row)
+
+        periodic_only = by_policy["periodic_only"]
+        self.assertEqual(len(periodic_only), 165)
+        self.assertTrue(all(
+            row["target_entry"] == "periodic_table" for row in periodic_only
+        ))
+
+        organic = by_policy["organic_menu"]
+        self.assertEqual(len(organic), 38)
+        self.assertTrue(all(
+            row["target_entry"] == "material_library:organic+periodic_table"
+            for row in organic
+        ))
+
+        alloy = by_policy["alloy_menu"]
+        self.assertEqual(len(alloy), 55)
+        self.assertTrue(all(
+            row["target_entry"]
+            == "material_library:alloy_engineering+periodic_table"
+            for row in alloy
+        ))
+
+        hidden = by_policy["hidden"]
+        self.assertEqual(len(hidden), 1)
+        self.assertEqual(hidden[0]["target_entry"], "hidden_or_runtime_only")
+
 
 if __name__ == "__main__":
     unittest.main()

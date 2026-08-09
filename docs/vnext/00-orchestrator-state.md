@@ -5,10 +5,10 @@
 ```text
 REPORT_DATE=2026-08-10
 CURRENT_BRANCH=integration/omnicore-vnext
-CURRENT_VERSION=1.0.2
-CURRENT_VERSION_GATE=GREEN
+CURRENT_VERSION=1.0.3
+CURRENT_VERSION_GATE=YELLOW
 NEXT_VERSION=1.0.3
-NEXT_PHASE=UI and material organization audit
+NEXT_PHASE=complete the required 100/125/150 percent UI DPI matrix
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -17,6 +17,14 @@ INDEPENDENT_PROFILER_REVIEW=not_available
 UPSTREAM_REFRESH_DATE=2026-08-10
 UPSTREAM_REFRESH=GREEN_NO_NEW_DELTA
 UPSTREAM_TAG_FETCH=YELLOW_LOCAL_V99_5_394_COLLISION_NOT_OVERWRITTEN
+UI_ROUTE_CONTRACT=GREEN_488_487_1
+I18N_STATIC=GREEN_1839_1839_0_ERRORS_38_WARNINGS
+UI_STATIC_BUILD=GREEN_40_40
+UI_PYTHON_DISCOVERY=GREEN_343_PASS_2_SKIPPED
+UI_PERIODIC_RUNTIME=GREEN_118_MAPPINGS
+UI_MATERIAL_RUNTIME=GREEN_IDS_521_532
+UI_ZH_EN_CURRENT_SYSTEM_DPI_200=GREEN
+UI_DPI_100_125_150=NOT_TESTED
 BENCHMARK_IMPLEMENTATION_HEAD=c4490463f3819695cab734414f827e0e4e4be118
 CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
@@ -71,6 +79,16 @@ release, annotated `v100.1.400` tag and official `master` all resolve to the sam
 exist after the local 100.1 merge. The rejected tag-inclusive fetch was limited to
 the unrelated historical `v99.5.394` collision and did not overwrite local data.
 
+The 1.0.3 UI/material checkpoint is **YELLOW**, not a simulation phase. The
+pre-existing data-driven material organization passes a new route-policy contract,
+the current localization report is synchronized, and an isolated static client
+passes 40/40 Meson tests, 343 Python tests, periodic/material runtime checks, and
+visible Chinese/English UI paths at the host's 200% system DPI. No production UI
+route, ID, Lua identifier, save format, material behavior, or simulation code was
+changed. The required 100%, 125%, and 150% system-DPI matrix remains untested, so
+the version cannot advance to 1.0.4. Details are in
+[`phase-3-ui-material-organization.md`](phase-3-ui-material-organization.md).
+
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
 ledger feasibility audit, record-only runtime lifecycle observer, audited-Air-cap
@@ -93,7 +111,7 @@ block G0.
 | Compile project | `true` | final clean 1.0.1 rebuild passed; final app SHA-256 is `EA2C8517...2B279D` |
 | Run automated tests | `true` | final Meson suite `40/40`; Python discovery `342` passed with `2` declared skips |
 | GPU hardware | `true` | NVIDIA GeForce RTX 5070 Ti Laptop GPU, driver 591.86, reported 12,227 MiB, compute capability 12.0 |
-| SDL application process | `true` | isolated Lua/runtime clients execute; visible interactive GUI acceptance is `not_tested` |
+| SDL application process | `true` | isolated Lua/runtime clients execute; Chinese/English periodic, detail, scroll, long press, and search are visibly checked at 200% system DPI; 100/125/150% remains `not_tested` |
 | SDL3 / SDL_GPU runtime | `false` | repository is SDL2; no SDL3 build or GPU compute pipeline exists |
 | Shader toolchain | `false` | `dxc`, `glslc`, `spirv-val`, `shadercross`, and `sdl3-config` unavailable on PATH |
 | Collect process metrics | `true` | fixed-step runner records process CPU/RAM and final profiler off/on pairs; per-process VRAM is `not_tested_no_gpu_backend` |
