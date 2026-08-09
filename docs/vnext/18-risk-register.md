@@ -6,7 +6,7 @@
 |---|---|---|---|---|---|
 | C-01 | CRITICAL | correctness/performance | 4 mm cells with real sound speed make explicit compressible CFL far smaller than a game tick | select and validate time/acoustic/all-speed policy in AtmosphereBench | RED |
 | C-02 | CRITICAL | numerical | identical generated mixed state diverges on step 1; 1,001 post-update exported-float states remain finite/in Legacy range, but RNG splits by step 34 and physical/conservation error remains unknown | retain field/proxy evidence and add double/float/fast physical conservation, positivity, correction and internal/full-state matrix | GREEN capture/proxy, RED physical comparison |
-| C-03 | CRITICAL | conservation | floors/clamps could silently create mass/species/energy | correction ledger, limits and fail-closed tests | RED |
+| C-03 | CRITICAL | conservation | floors/clamps could silently create mass/species/energy; source audit identifies 12 explicit Air cap branches but no runtime correction ledger | optional branch-outcome observer, correction limits and fail-closed reconciliation tests | RED |
 | C-04 | HIGH | correctness | Legacy particle updates directly write Air and depend on iteration/same-frame state | C01-C14, inventory, same-source FP field capture and OPS load-boundary field attribution exist; add Classic/Omni compatibility adapter | YELLOW foundation, RED replacement |
 | C-05 | HIGH | correctness | scale/time/effective depth are not yet accepted | Phase 2 contract and dimensional checks | RED |
 | C-06 | HIGH | chemistry | current reactions lack generic atom/charge validation and kinetics | versioned species/reaction loader with rejection tests | RED |
@@ -51,6 +51,7 @@ FIRST_DIVERGENCE_FIELD_CAPTURE=GREEN
 LEGACY_SAMPLED_FINITE_PROXY_LEDGER=GREEN
 STRICT_FAST_SAMPLED_PROXY_COMPARISON=GREEN
 ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
+PHYSICAL_LEDGER_FEASIBILITY=GREEN
 UNSAMPLED_FULL_STATE_FINITE=RED
 PHYSICAL_CONSERVATION_LEDGER=RED
 SOURCE_SINK_CORRECTION_LEDGER=RED

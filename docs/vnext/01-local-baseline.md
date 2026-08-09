@@ -14,6 +14,7 @@
 | Legacy ledger implementation commit | `8bd640c3e2aca501a17987aa462b2489901e6694` |
 | Byte-stable ledger replay fix | `b3aa56cf3914ab18da60d1ac9ff1e492377f6e88` |
 | All-tick ledger scope commit | `63266565007a85f9fb3b6726bcf4de349b093051` |
+| Physical-ledger feasibility commit | `86a2b338634c36ea4f0da9cc49401e7dd4b48eae` |
 | Load-boundary implementation commit | `971687a24` |
 | Load-boundary artifact-closure commit | `a09c6d716` |
 | Report commit | `SELF` |
@@ -96,6 +97,7 @@ GCC emitted a `-Wmaybe-uninitialized` warning in the `ByteString`/`optional` pat
 | All-tick exported finite/range | `true / true` both modes | all active Particle `x/y/vx/vy/temp` and all Air `pv/vx/vy/hv` after every update |
 | All-tick ledger artifact integrity | `18/18 PASS` | plus manifest; zero missing/extra/hash mismatch or `__pycache__` |
 | All-tick frozen comparator replay | byte-identical `PASS` | 21,875 bytes, SHA-256 `4B8D9765...BEFE77B` |
+| Physical-ledger feasibility audit | `PASS` | clean source, 651 C++ source/header files, no runtime physical claim |
 | OPS load-boundary field attribution | `14/14 PASS` | before-save versus loaded-A fields; loaded-A/B captures are byte-identical |
 | Load-boundary artifact integrity | `369/369 PASS` | plus manifest, 15 directories, frozen inputs and result/capture references |
 | Frozen load-boundary comparator replay | byte-identical `14/14 PASS` | no artifact writes or `__pycache__` |
@@ -143,6 +145,7 @@ SAME_SOURCE_CPU_FP_DIFFERENTIAL=GREEN
 LEGACY_SAMPLED_FINITE_PROXY_LEDGER=GREEN
 STRICT_FAST_SAMPLED_PROXY_COMPARISON=GREEN
 ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
+PHYSICAL_LEDGER_FEASIBILITY=GREEN
 UNSAMPLED_FULL_STATE_FINITE=RED
 PHYSICAL_CONSERVATION_LEDGER=RED
 SOURCE_SINK_CORRECTION_LEDGER=RED
@@ -154,10 +157,12 @@ G0_UPSTREAM_BASELINE=RED
 ```
 
 The gate is fail-closed: benchmark, characterization and same-source CPU
-first-divergence, sampled/all-tick proxy-ledger and load-boundary field-attribution
-foundations are GREEN, but they do not substitute for physical conservation/source/
-correction accounting, internal/full-state finite/positivity evidence, subsystem
-profiling, VRAM measurement or Omni CPU/GPU differential validation. See
+first-divergence, sampled/all-tick proxy-ledger, physical-ledger feasibility and
+load-boundary field-attribution foundations are GREEN, but they do not substitute
+for runtime physical conservation/source/correction accounting, internal/full-state
+finite/positivity evidence, subsystem profiling, VRAM measurement or Omni CPU/GPU
+differential validation. See
 `phase-1-legacy-characterization.md`, `phase-1-first-divergence.md` and
-`phase-1-legacy-ledger.md`; all-tick scope is in `phase-1-all-tick-ledger.md` and
+`phase-1-legacy-ledger.md`; all-tick scope is in `phase-1-all-tick-ledger.md`,
+physical feasibility is in `phase-1-physical-ledger-feasibility.md`, and
 load-boundary scope and evidence are in `phase-1-load-boundary.md`.

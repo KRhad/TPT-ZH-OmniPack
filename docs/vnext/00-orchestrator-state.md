@@ -10,6 +10,7 @@ CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
 LEGACY_LEDGER_IMPLEMENTATION_HEAD=b3aa56cf3914ab18da60d1ac9ff1e492377f6e88
 ALL_TICK_LEDGER_IMPLEMENTATION_HEAD=632665650
+PHYSICAL_LEDGER_FEASIBILITY_HEAD=86a2b3386
 LOAD_BOUNDARY_IMPLEMENTATION_HEAD=971687a24
 LOAD_BOUNDARY_CLOSURE_HEAD=a09c6d716
 REPORT_COMMIT=SELF
@@ -24,6 +25,7 @@ FIRST_DIVERGENCE_FIELD_CAPTURE=GREEN
 LEGACY_SAMPLED_FINITE_PROXY_LEDGER=GREEN
 ALL_TICK_POST_UPDATE_EXPORTED_FLOATS=GREEN
 UNSAMPLED_FULL_STATE_FINITE=RED
+PHYSICAL_LEDGER_FEASIBILITY=GREEN
 LOAD_BOUNDARY_FIELD_DIFF=GREEN
 PHYSICAL_CONSERVATION_LEDGER=RED
 G0_UPSTREAM_BASELINE=RED
@@ -42,10 +44,10 @@ OmniAtmosphere work; it does not roll back verified upstream,
 benchmark, differential or sampled-ledger foundations.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
-all-tick post-update exported-float sub-gate is GREEN; the OPS load-boundary
-field-attribution sub-gate is also GREEN for complete, replayable, non-physical
-field reporting. Physical mass, momentum, energy, source/sink attribution,
-correction events, full state and pressure positivity remain RED and still block G0.
+all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
+ledger feasibility audit and OPS load-boundary field-attribution sub-gate are also
+GREEN. Physical mass, momentum, energy, runtime source/sink attribution, correction
+events, full state and pressure positivity remain RED and still block G0.
 
 ## Capability audit
 
@@ -57,7 +59,7 @@ correction events, full state and pressure positivity remain RED and still block
 | Multiple shells/tool calls | `true` | Independent PowerShell commands can run concurrently |
 | Git worktree | `true` | upstream/element worktrees remain isolated; formal load-boundary and all-tick-ledger runs used clean detached worktrees |
 | Compile project | `true` | fresh all-tick Legacy-fast and Strict targets each completed `763/763`; both final binaries were rehashed |
-| Run automated tests | `true` | fresh all-tick Meson suites `39/39` each; nested Python discovery `322` run, `2` declared skips, no failures |
+| Run automated tests | `true` | fresh all-tick Meson suites `39/39` each; nested Python discovery `324` run, `2` declared skips, no failures |
 | GPU hardware | `true` | NVIDIA GeForce RTX 5070 Ti Laptop GPU, driver 591.86, reported 12,227 MiB, compute capability 12.0 |
 | SDL application process | `true` | isolated Lua/runtime clients execute; visible interactive GUI acceptance is `not_tested` |
 | SDL3 / SDL_GPU runtime | `false` | repository is SDL2; no SDL3 build or GPU compute pipeline exists |
@@ -115,6 +117,7 @@ with an explicit maintenance decision.
 | `8bd640c3e` | sampled Legacy numerical proxy ledger | tooling/tests only |
 | `b3aa56cf3` | platform-independent byte-stable ledger JSON replay | tooling/tests only |
 | `632665650` | make all-tick ledger scope explicit | tooling/tests only |
+| `86a2b3386` | source-bound physical-ledger feasibility audit | tooling/tests only |
 | `971687a24` | OPS load-boundary field capture and attribution | tooling/tests only |
 | `a09c6d716` | close frozen-input and recursive artifact manifest | tooling/tests only |
 
@@ -145,15 +148,17 @@ with an explicit maintenance decision.
   `632665650` artifact records 1,001 post-update scans per mode, 18 declared files
   plus the manifest and byte-identical frozen replay. The OPS load-boundary formal
   manifest is `F47F4119...8DC6C`, with 369 declared files plus the manifest, 15
-  directories and 14/14 byte-identical comparator replays. Physical conservation
-  claims remain explicitly false.
+  directories and 14/14 byte-identical comparator replays. The physical-ledger
+  audit inventories Lifecycle/correction anchors and proves the current lack of
+  authoritative physical fields. Physical conservation claims remain explicitly
+  false.
 - Compatibility: automated build/Lua/OPS evidence passes; GUI, PSv/fuC, portable
   runtime, broad external Lua corpus, and visual behavior remain `not_tested`.
 - Known deviation: `resetVelocity` final-edge fix is ahead of official master.
 - Gate: fixed-step, characterization, first-divergence, sampled/all-tick
-  proxy-ledger and load-boundary field-attribution foundations are GREEN; physical
-  conservation/source/correction ledgers, profiler/VRAM and performance budgets
-  keep G0 RED.
+  proxy-ledger, physical-ledger feasibility and load-boundary field-attribution
+  foundations are GREEN; runtime physical conservation/source/correction ledgers,
+  profiler/VRAM and performance budgets keep G0 RED.
 - Rollback point: `fb72d5e8f` for all vNext integration, or the parent of each bounded
   commit for phase-local rollback. No rollback is currently recommended.
 
@@ -161,7 +166,7 @@ with an explicit maintenance decision.
 
 Only G0 blockers may proceed:
 
-1. physical Legacy conservation/source/correction evidence and internal/full-state
+1. optional runtime Lifecycle/correction observer and internal/full-state
    finite/positivity work;
 2. subsystem profiler export and process VRAM measurement;
 3. strict/fast drift comparison and an accepted performance regression budget.
