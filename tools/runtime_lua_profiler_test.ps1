@@ -42,6 +42,13 @@ $process = $null
 $passed = $false
 try {
     New-Item -ItemType Directory -Path $resolvedTestRoot | Out-Null
+    # A real but empty isolated profile prevents first-run modal UI without
+    # importing user preferences or account state into this runtime fixture.
+    [System.IO.File]::WriteAllText(
+        (Join-Path $resolvedTestRoot "powder.pref"),
+        "{}" + [Environment]::NewLine,
+        [System.Text.UTF8Encoding]::new($false)
+    )
     Copy-Item -LiteralPath $autorunSource -Destination (Join-Path $resolvedTestRoot "autorun.lua")
     $result = Join-Path $resolvedTestRoot "omni-profiler.result"
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()

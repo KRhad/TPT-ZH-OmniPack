@@ -22,6 +22,16 @@ local function run()
     local callback
     callback = function()
         ticks = ticks + 1
+        -- Keep a bounded diagnostic heartbeat so a stalled UI/renderer path is
+        -- distinguishable from an autorun script that never started.
+        write_result("RUNNING", {
+            order = {
+                "OMNI_PROFILER_RENDERING_TICKS",
+                "OMNI_PROFILER_RENDERING_PHASE",
+            },
+            OMNI_PROFILER_RENDERING_TICKS = ticks,
+            OMNI_PROFILER_RENDERING_PHASE = phase,
+        })
         local metrics = sim.omniProfiler()
         if phase == "warmup" then
             if metrics.threaded_rendering_observed then
@@ -82,6 +92,14 @@ local function run()
         end
         assert(ticks < 120, "renderer worker was not observed after profiler re-enable")
     end
+    write_result("RUNNING", {
+        order = {
+            "OMNI_PROFILER_RENDERING_TICKS",
+            "OMNI_PROFILER_RENDERING_PHASE",
+        },
+        OMNI_PROFILER_RENDERING_TICKS = ticks,
+        OMNI_PROFILER_RENDERING_PHASE = "registered_pending",
+    })
     event.register(event.TICK, callback)
 end
 

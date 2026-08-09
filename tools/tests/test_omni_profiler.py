@@ -121,6 +121,8 @@ class OmniProfilerContractTest(unittest.TestCase):
     def test_wrapper_isolated_and_vram_status_is_explicit(self) -> None:
         self.assertIn('$startInfo.ArgumentList.Add("ddir")', self.runtime_wrapper)
         self.assertIn('$startInfo.Environment["PATH"]', self.runtime_wrapper)
+        self.assertIn('(Join-Path $resolvedTestRoot "powder.pref")', self.runtime_wrapper)
+        self.assertIn('"{}" + [Environment]::NewLine', self.runtime_wrapper)
         self.assertIn("Refusing to create profiler test outside", self.runtime_wrapper)
         self.assertIn("OMNI_PROFILER_PROCESS_VRAM_AVAILABLE=false", self.runtime_wrapper)
         self.assertIn("OMNI_PROFILER_PROCESS_VRAM_STATUS=not_tested_no_gpu_backend", self.runtime_wrapper)
@@ -153,6 +155,8 @@ class OmniProfilerContractTest(unittest.TestCase):
         self.assertNotIn("RenderSimulation(", self.rendering_runtime_lua)
         self.assertIn('report:write("OMNI_PROFILER_RENDERING_STATUS=", status', self.rendering_runtime_lua)
         self.assertIn('$startInfo.Environment["PATH"]', self.rendering_runtime_wrapper)
+        self.assertIn('(Join-Path $resolvedTestRoot "powder.pref")', self.rendering_runtime_wrapper)
+        self.assertIn('"{}" + [Environment]::NewLine', self.rendering_runtime_wrapper)
         self.assertIn("OMNI_PROFILER_RENDERING_COPY_CALLS", self.rendering_runtime_wrapper)
         self.assertIn("OMNI_PROFILER_THREADED_RENDERING_OBSERVED=true", self.rendering_runtime_wrapper)
 
