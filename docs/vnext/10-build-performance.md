@@ -36,8 +36,10 @@ NaN/Inf checks unreliable under aggressive optimization.
 The clean mixed-medium differential now shows that Legacy-fast and Strict first
 diverge on update step 1: 4,935 particle IDs and 2,074 Air cells already differ.
 This materially confirms sensitivity to the FP contract but does not identify the
-correct result. No mass, momentum, energy, positivity or per-step finite-value ledger
-exists, so `OMNICORE_FAST_MATH_ALLOWED=false` remains the fail-closed decision.
+correct result. No physical mass, momentum, energy or positivity ledger exists. A
+later 1,000-step tool finds no non-finite or Legacy-range violation in 102 sampled
+exported states, but does not observe unsampled ticks or physical conserved
+quantities. `OMNICORE_FAST_MATH_ALLOWED=false` therefore remains fail-closed.
 
 Required matrix, keeping `-O2`, SSE2 and `lto=false` constant initially:
 
@@ -68,7 +70,10 @@ CURRENT_HEAD_THROUGHPUT_BASELINE=true
 UNCAPPED_FIXED_STEP_RUNNER=true
 SAME_BUILD_DETERMINISTIC_REPLAY=true
 FIRST_DIVERGENCE_FIELD_CAPTURE=true
+LEGACY_SAMPLED_FINITE_PROXY_LEDGER=true
+STRICT_FAST_SAMPLED_PROXY_COMPARISON=true
 STRICT_FAST_CONSERVATION_COMPARISON=false
+UNSAMPLED_FULL_STATE_FINITE=false
 SUBSYSTEM_TIMING_BASELINE=false
 CURRENT_PROCESS_RAM_BASELINE=true
 CURRENT_PROCESS_VRAM_BASELINE=false
@@ -156,8 +161,23 @@ sets `performance_gate=not_evaluated`; its four short process timings are eviden
 collection diagnostics, not a throughput benchmark.
 
 Legacy CPU versus future Omni CPU and Omni CPU versus future Omni GPU remain
-unimplemented. Load-boundary field comparison and conservation/finite-value ledgers
-also remain RED.
+unimplemented. Load-boundary field comparison, physical conservation accounting and
+unsampled/full-state finite evidence also remain RED.
+
+## Legacy sampled proxy-ledger status
+
+The clean `b3aa56cf3` ledger compares Legacy-fast and Strict over 1,000 mixed-scene
+updates at steps `0`, `1`, every tenth step and `1000`. Both sides report zero
+sampled non-finite, range-violation and exact-bound observations across active
+Particle `x/y/vx/vy/temp` and every Air cell's `pv/vx/vy/hv`. Frozen CSV replay is
+byte-identical to the stored 13,848-byte comparison JSON.
+
+This extends diagnosis without changing the fast-math decision. State/proxy metrics
+split at step 1, RNG and type histograms at sampled step 40, and total particle count
+at sampled step 90. Final counts are 50,471 and 50,477. The tool deliberately marks
+physical mass, momentum, energy, source/sink attribution and correction events as
+`not_evaluated`; unsampled ticks and physical pressure positivity are also absent.
+See `phase-1-legacy-ledger.md`.
 
 ## Memory baseline
 
@@ -176,6 +196,7 @@ selected derived plane and profile `RenderSnapshotCopy`.
 Build/test capability, the explicit Strict build, fixed-step runner, current
 two-scene throughput/process-RAM baseline, C01-C14 characterization and scoped
 first-divergence capture are GREEN. Subsystem profiling, process VRAM, accepted
-performance budgets and strict/fast conservation/finite-value comparison remain RED.
-The next G0 work is a Legacy ledger/load-boundary comparison or subsystem
-profiler/VRAM export; production OmniAtmosphere remains blocked.
+performance budgets, physical conservation/source/correction accounting and
+unsampled/full-state finite/positivity comparison remain RED. The next G0 work is
+load-boundary fields, a physical Legacy ledger, or subsystem profiler/VRAM export;
+production OmniAtmosphere remains blocked.
