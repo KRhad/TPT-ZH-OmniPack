@@ -19,7 +19,7 @@
 | L-05 | HIGH | gameplay | replacing FIRE/pressure/vacuum could break old works | immutable Classic backend and differential traces | RED for replacement |
 | L-06 | MEDIUM | legacy formats | PSv/fuC and GUI save/load lack current runtime fixtures | add safe fixed fixtures and visible GUI pass | YELLOW |
 | L-07 | HIGH | save/differential | pre-save versus loaded Snapshot hash differs in 14/14 characterization cases because OPS normalizes/quantizes state | formal field-level report now attributes Particle/Air/settings differences and loaded-A/B is repeatable; treat loaded OPS as baseline and never claim bit-exact checkpointing | YELLOW, characterized |
-| P-01 | HIGH | benchmark | two-scene fixed-step and 14-scene process-RAM characterization exist; differential/ledger process diagnostics are not benchmarks; no accepted noise model, subsystem timings or regression budget exists | controlled repeats, profiler export and evidence-based budgets | YELLOW |
+| P-01 | HIGH | benchmark | fixed-step/process-RAM characterization and default-off subsystem timing now exist; final profiler OFF/ON pairs are deterministic but span `-2.493%` through `+4.663%`, with no accepted noise model or regression budget | retain raw paired evidence, define workload/repeat/noise policy and set evidence-based budgets | YELLOW |
 | P-02 | HIGH | memory | multi-species state/flux/scratch can exceed budget | report persistent/peak bytes per cell for every design | RED |
 | P-03 | HIGH | rendering | renderer snapshot already copies about 14.596 MiB lower bound per frame | selected-plane debug copies and measured snapshot timing | YELLOW |
 | P-04 | HIGH | GPU | CPU-special/GPU-generic may force full readback and stalls | residency design and upload/readback/fence metrics | RED |
@@ -65,6 +65,9 @@ LEGACY_CPU_VS_OMNI_CPU=RED
 OMNI_CPU_VS_OMNI_GPU=RED
 CONSERVATION_POSITIVITY_FINITE_LEDGER=RED
 FIXED_STEP_BENCHMARK_FOUNDATION=GREEN
+SUBSYSTEM_PROFILER_EXPORT=GREEN
+PROFILER_OVERHEAD_MEASURED=GREEN
+INDEPENDENT_PROFILER_REVIEW=not_available
 PERFORMANCE_REGRESSION_BUDGET=RED
 PROCESS_RAM_BASELINE=GREEN
 PROCESS_VRAM_BASELINE=RED

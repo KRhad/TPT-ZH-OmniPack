@@ -3,8 +3,17 @@
 ## Outcome
 
 ```text
-REPORT_DATE=2026-08-09
+REPORT_DATE=2026-08-10
 CURRENT_BRANCH=integration/omnicore-vnext
+CURRENT_VERSION=1.0.1
+CURRENT_VERSION_GATE=GREEN
+NEXT_VERSION=1.0.2
+NEXT_PHASE=latest upstream compatibility impact audit
+PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
+PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
+PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
+PROFILER_OVERHEAD_MEASURED=GREEN
+INDEPENDENT_PROFILER_REVIEW=not_available
 BENCHMARK_IMPLEMENTATION_HEAD=c4490463f3819695cab734414f827e0e4e4be118
 CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
@@ -38,16 +47,20 @@ G0_UPSTREAM_BASELINE=RED
 PRODUCTION_OMNIATMOSPHERE_ALLOWED=false
 ```
 
-The official stable source is now an ancestor of the integration branch, and the
-build, static tests, Lua 100.1 boundary regression, OPS round trips, explicit FP
-builds, the current two-scene uncapped fixed-step baseline, C01-C14 deterministic
-restart characterization and same-source CPU first-divergence field capture pass.
-G0 is still **RED** because physical conservation/source/correction accounting,
-unsampled **full-state** finite/positivity evidence, subsystem profiling, process
-VRAM and an accepted performance budget do not yet exist. The all-tick result is
-limited to post-update exported floats. The red gate blocks production
-OmniAtmosphere work; it does not roll back verified upstream,
-benchmark, differential or sampled-ledger foundations.
+The 1.0.1 diagnostics gate is **GREEN**. The final clean build at `97d2fc2c1`
+passes the 40-test Meson suite, 342 Python tests with two declared skips, the
+upstream Lua smoke, nine OPS round-trip scenarios, lifecycle/correction ledger
+smokes, ordinary and real threaded-render profiler fixtures, and the explicit
+lifetime race probe. The final rebuilt executable is bound to SHA-256
+`EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D`.
+
+The global G0 gate is still **RED** because physical conservation/source/correction
+accounting, unsampled **full-state** finite/positivity evidence, per-process VRAM
+and an accepted performance regression budget do not exist. The profiler itself is
+no longer a missing G0 foundation: its spans, concurrency safety and measured
+OFF/ON behavior are recorded in `phase-1-profiler-export.md`. The red gate blocks
+production OmniAtmosphere work; it does not prevent beginning the isolated 1.0.2
+upstream compatibility audit.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
@@ -68,13 +81,13 @@ block G0.
 | Sub-agents | `true` | Worker slots were available; three requested read-only ledger audits exhausted service retries with 429 and contributed no evidence. Main Orchestrator independently reran clients, tests, artifact hashes and replay |
 | Multiple shells/tool calls | `true` | Independent PowerShell commands can run concurrently |
 | Git worktree | `true` | upstream/element worktrees remain isolated; formal load-boundary and all-tick-ledger runs used clean detached worktrees |
-| Compile project | `true` | fresh correction-ledger target completed successfully; app SHA-256 is recorded in `phase-1-runtime-correction-ledger.md` |
-| Run automated tests | `true` | fresh correction-ledger Meson suite `39/39`; nested Python discovery `331` run, `2` declared skips, no failures |
+| Compile project | `true` | final clean 1.0.1 rebuild passed; final app SHA-256 is `EA2C8517...2B279D` |
+| Run automated tests | `true` | final Meson suite `40/40`; Python discovery `342` passed with `2` declared skips |
 | GPU hardware | `true` | NVIDIA GeForce RTX 5070 Ti Laptop GPU, driver 591.86, reported 12,227 MiB, compute capability 12.0 |
 | SDL application process | `true` | isolated Lua/runtime clients execute; visible interactive GUI acceptance is `not_tested` |
 | SDL3 / SDL_GPU runtime | `false` | repository is SDL2; no SDL3 build or GPU compute pipeline exists |
 | Shader toolchain | `false` | `dxc`, `glslc`, `spirv-val`, `shadercross`, and `sdl3-config` unavailable on PATH |
-| Collect process metrics | `true` | fixed-step and ledger runners record process CPU/RAM; per-process VRAM is `not_tested` |
+| Collect process metrics | `true` | fixed-step runner records process CPU/RAM and final profiler off/on pairs; per-process VRAM is `not_tested_no_gpu_backend` |
 | Accepted throughput benchmark | `true` | two generated scenes, two FP modes, clean commit/hash/settings/machine provenance |
 
 The Intel graphics adapter reports an error through WMI and two virtual adapters are
@@ -132,6 +145,8 @@ with an explicit maintenance decision.
 | `a09c6d716` | close frozen-input and recursive artifact manifest | tooling/tests only |
 | `4fa0ec2f3` | optional record-level lifecycle reconciliation observer | additive diagnostics; disabled by default |
 | `4c9f3b909` | bounded runtime observer for 12 audited Legacy Air cap branches, Lua fixture, and overflow replay | additive diagnostics; disabled by default |
+| `2b6b6e39e` | default-off steady-clock profiler, Lua export, runtime fixtures and race probe | additive diagnostics; disabled by default |
+| `97d2fc2c1` | isolated normal-UI profiler fixture and threaded-render heartbeat stabilization | test/runtime wrapper only |
 
 ## Phase report
 
@@ -141,7 +156,9 @@ with an explicit maintenance decision.
 - Architecture changes: no OmniCore physical state model; upstream integration,
   two bounded correctness fixes, isolated benchmark/characterization/differential/
   ledger tooling, a disabled-by-default record-only lifecycle diagnostic, and a
-  disabled-by-default audited-Air-cap correction diagnostic are integrated.
+  disabled-by-default audited-Air-cap correction diagnostic are integrated. Version
+  1.0.1 additionally adds a default-off `steady_clock` profiler with mutex/generation
+  protected aggregation and a shared renderer-lifetime owner.
 - Numerical verification: identical generated mixed state first diverges between FP
   modes at update step 1 in Particle velocity and Air state. A clean 1,000-step
   ledger then found `0` non-finite/range/bound observations across 102 sampled
@@ -151,9 +168,9 @@ with an explicit maintenance decision.
 - Benchmark: clean `c4490463f` fixed-step baseline records 1,682.07/1,655.22 steps/s
   for empty and 189.87/189.81 for mixed Legacy/Strict. No speed winner is claimed.
 - Memory: the observer adds two `int64_t[PT_NUM]` arrays (16,384-byte array floor)
-  plus scalar state per `Simulation`; enabled-overhead benchmark and process VRAM
-  are `not_tested`. Earlier measured whole-process peaks range from 132,689,920 to
-  155,041,792 bytes.
+  plus scalar state per `Simulation`; the final profiler off/on pairs sampled
+  155,156,480-156,524,544 byte working sets. Per-process VRAM remains
+  `not_tested_no_gpu_backend`.
 - Characterization: clean-source C01-C14 is `14/14 PASS`; 28 independent restart
   loads have identical traces, RNG, particle count and required-element counts.
 - Differential: clean-source Legacy-fast/Strict CPU trace is `PASS`; step 1 contains
@@ -178,19 +195,23 @@ with an explicit maintenance decision.
 - Gate: fixed-step, characterization, first-divergence, sampled/all-tick
   proxy-ledger, physical-ledger feasibility, record-only runtime lifecycle ledger,
   audited-Air-cap correction observer and load-boundary field-attribution
-  foundations are GREEN; runtime physical conservation, complete source/sink and
-  correction ledgers, profiler/VRAM and performance budgets keep G0 RED.
+  foundations are GREEN. The 1.0.1 profiler/export gate is also GREEN: final build,
+  `40/40` Meson, `342` Python pass plus `2` skips, runtime and race probe pass, and
+  sequential OFF/ON measurement is recorded. Runtime physical conservation,
+  complete source/sink and correction ledgers, VRAM and an accepted performance
+  budget keep global G0 RED.
 - Rollback point: `fb72d5e8f` for all vNext integration, or the parent of each bounded
   commit for phase-local rollback. No rollback is currently recommended.
 
 ## Next permitted work
 
-Only G0 blockers may proceed:
+The 1.0.1 version gate authorizes only 1.0.2 latest-upstream compatibility work:
 
-1. complete physical correction/source-sink attribution and internal/full-state
-   finite/positivity work beyond the audited-Air-cap observer;
-2. subsystem profiler export and process VRAM measurement;
-3. strict/fast drift comparison and an accepted performance regression budget.
+1. refresh official stable/master references and release notes;
+2. compare them with the current integration baseline and record change impact;
+3. integrate only applicable upstream changes with regression coverage.
 
-Production Air replacement, multi-species runtime, SDL3 migration, and GPU compute
-remain blocked.
+Production Air replacement, multi-species runtime, SDL3 migration and GPU compute
+remain blocked by global G0. Physical correction/source-sink attribution,
+unsampled full-state finite/positivity, process VRAM and a performance budget stay
+in the risk register; none is silently reclassified as complete.

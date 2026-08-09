@@ -2,22 +2,27 @@
 
 ## Current phase decision
 
-The official 100.1 source adaptation, explicit FP modes, current fixed-step
+Version **1.0.1** is closed. Its final `97d2fc2c1` build/test/runtime/concurrency
+gate is GREEN, including steady-clock subsystem export, real threaded-render
+heartbeat and sequential profiler OFF/ON measurement. The next permitted version
+is **1.0.2 Latest TPT Compatibility**: refresh official stable/master, produce a
+fresh impact audit and integrate only applicable upstream deltas.
+
+The official 100.1 source adaptation, explicit FP modes, fixed-step
 throughput/process-RAM baseline, C01-C14 deterministic restart suite and scoped
 Legacy-fast/Strict CPU first-divergence capture plus sampled/all-tick numerical
 proxy ledger, physical-ledger feasibility audit, optional record-level lifecycle
 reconciliation, audited-Air-cap correction observation and OPS load-boundary field
-attribution are integrated. The overall G0 gate remains RED, so the roadmap stays
-in Phase 1 physical-ledger/profiler work.
-No production OmniAtmosphere state or solver will be integrated yet.
+attribution are integrated. Overall OmniCore G0 remains RED. No production
+OmniAtmosphere state or solver will be integrated yet.
 
 ## Phase status
 
 | Phase | Scope | Status / next gate |
 |---:|---|---|
 | -1 | external research and license audit | YELLOW: classifications complete; no new artifact redistribution authorized |
-| 0 | latest upstream adaptation | GREEN source sub-gate; G0 overall RED |
-| 1 | Legacy characterization, regression, profiler, benchmark | IN PROGRESS / RED; FP modes, fixed-step baseline, C01-C14 saves, first-divergence capture, sampled/all-tick proxy ledger, physical-ledger feasibility, record-only lifecycle reconciliation, audited-Air-cap correction observer and OPS field attribution complete |
+| 0 | latest upstream adaptation | 1.0.2 NEXT: fresh official refresh and change-impact audit required; 100.1 source sub-gate was GREEN at prior audit |
+| 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
 | 2 | physical scale and unit system | proposal written / RED |
 | 3 | AtmosphereBench | planned / BLOCKED by Phase 1-2 foundations |
 | 4 | solver selection | BLOCKED |
@@ -61,10 +66,12 @@ The next integration commits should be small and independently reversible:
     Air cap branches, including a real FAN fixture and 2,048-event overflow
     replay. Complete correction/source-sink accounting and internal/full-state
     boundaries remain RED; do not call the current observer physical mass/energy.
-11. `tests/profiler-export`: add subsystem spans plus process VRAM without perturbing
-   the short CPU benchmark.
-12. Re-run G0. GREEN may advance to Physical Scale plus standalone AtmosphereBench;
-   RED continues only on the remaining blockers.
+11. `tests/profiler-export`: COMPLETE in `2b6b6e39e` plus fixture stabilization
+   `97d2fc2c1`; final build has 40/40 Meson, 342 Python pass/2 skipped, runtime
+   worker heartbeat and sequential OFF/ON pairs. Process VRAM remains explicitly
+   `not_tested_no_gpu_backend`.
+12. `upstream-impact`: NEXT in 1.0.2. Refresh official stable/master and classify
+   Air, heat, particle, Lua, save, element and build impact before any adaptation.
 
 The mixed benchmark starts from the same generated Strict/Legacy hash; the later
 capture locates the first difference after update step 1 in both Particle and Air
@@ -119,7 +126,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Remove remaining G0 blockers: complete physical correction/source-sink attribution and internal/full-state finite/positivity evidence, or subsystem profiler/process-VRAM export. The record-only lifecycle and audited-Air-cap observers are complete. |
+| Next stage? | Start 1.0.2 with a fresh official stable/master refresh and impact audit. Global physical correction/source-sink, full-state finite/positivity, VRAM and performance-budget work remains tracked but does not authorize OmniAtmosphere. |
 
 ## Long-term acceptance
 

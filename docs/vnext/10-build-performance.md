@@ -50,18 +50,29 @@ Required matrix, keeping `-O2`, SSE2 and `lto=false` constant initially:
 GCC strict flags must at least counter global settings with `-fno-fast-math`,
 `-fno-unsafe-math-optimizations` and `-ffp-contract=off`; MSVC uses `/fp:strict`.
 
-## Existing profiler limits
+## 1.0.1 profiler status
 
-Current `FrameTime` has only seven relevant spans: frame, controller/model update,
-before/after simulation, free-particle recalculation and Air update. It uses a
-high-resolution clock, dynamic vector/map work and a HUD EWMA. It lacks raw export,
-percentiles, thread aggregation and dedicated timings for particle updates, ambient
-heat, gravity wait, Lua, rendering copy, chemistry, GPU passes and synchronization.
-Frame time also includes presentation/wait/limiting and is not pure simulation time.
+`2b6b6e39e` and `97d2fc2c1` complete the additive profiler foundation. It uses
+`std::chrono::steady_clock`, stable numeric subsystem IDs and default-off metrics
+exported through `sim.omniProfiler()`, `sim.omniProfilerEnabled([boolean])` and
+`sim.resetOmniProfiler()`.
 
-The replacement profiler should use `steady_clock`, stable numeric span IDs,
-allocation-free thread-local events, inclusive/exclusive aggregation and structured
-p50/p95/p99/max output.
+The implemented Legacy-path spans are Frame, Simulation, Particle update, Air,
+Ambient heat, Gravity dispatch/wait, Lua, RenderSnapshotCopy and Rendering.
+The renderer worker is observed through its normal `handleEvents=false` path;
+`SubsystemSpan` retains a shared owner, and aggregation/reset is guarded by mutex
+and generation checks. The final thread probe reports 64 frame, 64 simulation and
+4096 rendering calls with the disable/reset lifetime race passing.
+
+Each span exports calls, total, maximum and last-completed nanoseconds. The last
+value is deliberately not called a UI-frame duration because a renderer worker may
+complete asynchronously. The implementation does not yet calculate percentiles or
+exclusive time. `thermal` and `chemistry` are `not_instrumented`; `gpu`, GPU
+synchronization and process VRAM are `not_tested_no_gpu_backend`, not zero.
+
+The final 1.0.1 runtime fixture observed all implemented Legacy categories and a
+separate normal-UI threaded-rendering fixture observed three UI ticks and one real
+renderer-worker heartbeat. Human visual acceptance is still `not_tested`.
 
 ## Benchmark status
 
@@ -74,7 +85,7 @@ LEGACY_SAMPLED_FINITE_PROXY_LEDGER=true
 STRICT_FAST_SAMPLED_PROXY_COMPARISON=true
 STRICT_FAST_CONSERVATION_COMPARISON=false
 UNSAMPLED_FULL_STATE_FINITE=false
-SUBSYSTEM_TIMING_BASELINE=false
+SUBSYSTEM_TIMING_BASELINE=true
 CURRENT_PROCESS_RAM_BASELINE=true
 CURRENT_PROCESS_VRAM_BASELINE=false
 PERFORMANCE_REGRESSION_BUDGET=false
@@ -228,8 +239,8 @@ selected derived plane and profile `RenderSnapshotCopy`.
 Build/test capability, the explicit Strict build, fixed-step runner, current
 two-scene throughput/process-RAM baseline, C01-C14 characterization, scoped
 first-divergence capture, OPS field attribution and all-tick exported-float ledger
-are GREEN. Subsystem profiling, process VRAM, accepted performance budgets, physical
-conservation/source/correction accounting and internal/full-state finite/positivity
-comparison remain RED. The next G0 work is the physical Legacy ledger or subsystem
-profiler/VRAM export;
-production OmniAtmosphere remains blocked.
+are GREEN. The 1.0.1 subsystem profiler/export, runtime rendering heartbeat and
+OFF/ON measurement are also GREEN. Process VRAM, an accepted performance budget,
+physical conservation/source/correction accounting and internal/full-state
+finite/positivity comparison remain RED. The next version is the isolated 1.0.2
+upstream compatibility audit; production OmniAtmosphere remains blocked.
