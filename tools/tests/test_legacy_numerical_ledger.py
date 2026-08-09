@@ -393,6 +393,18 @@ class LegacyLedgerComparatorTest(unittest.TestCase):
                     paths[0], paths[1], paths[2], paths[3], total_steps=1, sample_interval=1
                 )
 
+    def test_json_output_has_platform_independent_lf_newlines(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "comparison.json"
+            comparator._write_json(path, {"status": "PASS", "nested": {"value": 1}})
+            payload = path.read_bytes()
+        self.assertNotIn(b"\r\n", payload)
+        self.assertTrue(payload.endswith(b"\n"))
+        self.assertEqual(
+            payload,
+            b'{\n  "nested": {\n    "value": 1\n  },\n  "status": "PASS"\n}\n',
+        )
+
 
 class LegacyLedgerSourceContractTest(unittest.TestCase):
     @classmethod
