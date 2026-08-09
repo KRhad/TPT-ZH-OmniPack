@@ -330,6 +330,21 @@ class LoadBoundarySourceContractTest(unittest.TestCase):
         self.assertIn('"settings" { "settings.csv" }', self.wrapper)
         self.assertNotIn('$captureName + "s.csv"', self.wrapper)
 
+    def test_wrapper_closes_frozen_inputs_and_recursive_artifact_inventory(self) -> None:
+        for text in (
+            "function New-FrozenInput",
+            "function Get-ArtifactFileInventory",
+            "tool_inputs_frozen_before_execution = $true",
+            "source_unchanged_after_execution = $true",
+            "Characterization source worktree changed during execution",
+            "Characterization executable changed during execution",
+            "Characterization build provenance changed during execution",
+            "artifact_file_count_excluding_manifest",
+            "artifact_files = $artifactFiles",
+            "frozen-inputs/$($_.Name)",
+        ):
+            self.assertIn(text, self.wrapper)
+
 
 if __name__ == "__main__":
     unittest.main()
