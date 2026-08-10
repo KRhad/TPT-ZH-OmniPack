@@ -754,6 +754,14 @@ test(
 	timeout: 60,
 )
 
+test(
+	'atmospherebench-rusanov-open-boundary-leak',
+	atmospherebench,
+	args: [ '--run-rusanov-open-boundary-leak' ],
+	suite: 'static',
+	timeout: 60,
+)
+
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),

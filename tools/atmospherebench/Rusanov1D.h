@@ -13,6 +13,8 @@ struct RusanovProbeSummary
 	ConservationLedger ledger;
 	NumericalCorrectionLedger corrections{};
 	ConservativeState boundaryExchange{};
+	ConservativeState leftBoundaryExchange{};
+	ConservativeState rightBoundaryExchange{};
 	double maximumCfl = 0.0;
 	double minimumDensity = 0.0;
 	double maximumDensity = 0.0;
@@ -74,6 +76,7 @@ RusanovProbeSummary RunRusanovDensityAdvection();
 RusanovProbeSummary RunRusanovContactDiscontinuity();
 RusanovProbeSummary RunRusanovNearVacuumExpansion();
 RusanovProbeSummary RunRusanovSodShockTube();
+RusanovProbeSummary RunRusanovOpenBoundaryLeak();
 RusanovRefinementSummary RunRusanovDensityAdvectionRefinement();
 RusanovLowMachSummary RunRusanovLowMachAdvection();
 bool WriteRusanovUniformProbe(std::ostream &output);
@@ -82,6 +85,7 @@ bool WriteRusanovDensityAdvectionProbe(std::ostream &output);
 bool WriteRusanovContactDiscontinuityProbe(std::ostream &output);
 bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output);
 bool WriteRusanovSodShockTubeProbe(std::ostream &output);
+bool WriteRusanovOpenBoundaryLeakProbe(std::ostream &output);
 bool WriteRusanovDensityAdvectionRefinementProbe(std::ostream &output);
 bool WriteRusanovLowMachAdvectionProbe(std::ostream &output);
 

@@ -17,6 +17,8 @@ param(
 
     [switch] $RunRusanovLowMachAdvection,
 
+    [switch] $RunRusanovOpenBoundaryLeak,
+
     [Parameter(Mandatory = $true)]
     [string] $BuildDirectory,
 
@@ -203,16 +205,19 @@ $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection,
 		$RunRusanovContactDiscontinuity, $RunRusanovNearVacuumExpansion,
 		$RunRusanovSodShockTube, $RunRusanovDensityAdvectionRefinement,
-		$RunRusanovLowMachAdvection) |
+		$RunRusanovLowMachAdvection, $RunRusanovOpenBoundaryLeak) |
         Where-Object { $_ }).Count -gt 1) {
     throw "Select only one AtmosphereBench run mode"
 }
 $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunRusanovDensityAdvection -or $RunRusanovContactDiscontinuity `
 	-or $RunRusanovNearVacuumExpansion -or $RunRusanovSodShockTube `
-	-or $RunRusanovDensityAdvectionRefinement -or $RunRusanovLowMachAdvection
+	-or $RunRusanovDensityAdvectionRefinement -or $RunRusanovLowMachAdvection `
+	-or $RunRusanovOpenBoundaryLeak
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
-$runMode = if ($RunRusanovLowMachAdvection) {
+$runMode = if ($RunRusanovOpenBoundaryLeak) {
+	"rusanov_open_boundary_leak"
+} elseif ($RunRusanovLowMachAdvection) {
 	"rusanov_low_mach_advection"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	"rusanov_density_advection_refinement"
@@ -228,10 +233,12 @@ $runMode = if ($RunRusanovLowMachAdvection) {
     "rusanov_pressure_pulse"
 } elseif ($RunRusanovUniform) {
     "rusanov_uniform"
-} else {
+} elseif ($RunRusanovLowMachAdvection) {
 	"contract_uniform"
 }
-$runArgument = if ($RunRusanovLowMachAdvection) {
+$runArgument = if ($RunRusanovOpenBoundaryLeak) {
+	"--run-rusanov-open-boundary-leak"
+} elseif ($RunRusanovLowMachAdvection) {
 	"--run-rusanov-low-mach-advection"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	"--run-rusanov-density-advection-refinement"
@@ -266,7 +273,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
-    "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_probes|solver_implemented=true",
+    "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -643,7 +650,7 @@ if (-not $isRusanovProbe) {
             throw "Rusanov refinement drift exceeds tolerance: $driftKey"
         }
     }
-} else {
+} elseif ($RunRusanovLowMachAdvection) {
     $benchmarkKind = "atmospherebench_rusanov_low_mach_advection_probe"
     $performanceGate = "not_evaluated_candidate_probe"
     $timingScope = "standalone_rusanov_low_mach_advection_probe"
@@ -684,6 +691,46 @@ if (-not $isRusanovProbe) {
         if ([double]::IsNaN($cfl) -or [double]::IsInfinity($cfl) -or $cfl -le 0.0 -or $cfl -gt 1.0) {
             throw "Rusanov low-Mach CFL is outside the strict positivity contract: $cflKey"
         }
+    }
+} else {
+    $benchmarkKind = "atmospherebench_rusanov_open_boundary_leak_probe"
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = "standalone_rusanov_open_boundary_leak_probe"
+    $candidateImplementations = "fvm_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "Rusanov open-boundary leak probe must not claim solver selection"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract";
+        "boundary_mode" = "sealed_left_open_right_reservoir";
+        "grid_cells_x" = "128"; "grid_cells_y" = "1"; "grid_cell_count" = "128";
+        "cell_length" = "0.0078125"; "case_timestep" = "0.001";
+        "case_step_count" = "120"; "positivity_preserved" = "true";
+        "state_evolved" = "true"; "boundary_ledger_closes" = "true";
+        "mass_decreased" = "true"; "numerical_correction_count" = "0";
+        "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "Rusanov open-boundary leak contract drifted: $($probeKey.Key)"
+        }
+    }
+    $rightBoundaryMassOut = [double](Read-KeyValue -Text $text -Key "right_boundary_mass_out")
+    if ([double]::IsNaN($rightBoundaryMassOut) -or [double]::IsInfinity($rightBoundaryMassOut) -or
+        $rightBoundaryMassOut -le 0.0) {
+        throw "Rusanov open-boundary leak did not record positive mass outflow"
+    }
+    if ([Math]::Abs([double](Read-KeyValue -Text $text -Key "left_boundary_mass_exchange")) -gt 1e-12) {
+        throw "Rusanov open-boundary leak crossed the sealed left wall"
+    }
+    foreach ($balanceKey in @("mass_balance_error", "momentum_x_balance_error", "momentum_y_balance_error", "energy_balance_error")) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $balanceKey)) -gt 1e-9) {
+            throw "Rusanov open-boundary leak ledger exceeds tolerance: $balanceKey"
+        }
+    }
+    $maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
+    if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
+        $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+        throw "Rusanov open-boundary leak CFL is outside the strict positivity contract"
     }
 }
 $finalSourceState = Get-SourceState -Repository $sourceRoot -GitCommand $gitCommand
@@ -736,6 +783,16 @@ $boundaryMassExchange = $null
 $boundaryMomentumXExchange = $null
 $boundaryMomentumYExchange = $null
 $boundaryEnergyExchange = $null
+$leftBoundaryMassExchange = $null
+$leftBoundaryMomentumXExchange = $null
+$leftBoundaryMomentumYExchange = $null
+$leftBoundaryEnergyExchange = $null
+$rightBoundaryMassExchange = $null
+$rightBoundaryMomentumXExchange = $null
+$rightBoundaryMomentumYExchange = $null
+$rightBoundaryEnergyExchange = $null
+$massDecreased = $null
+$rightBoundaryMassOut = $null
 $massBalanceError = $null
 $momentumXBalanceError = $null
 $momentumYBalanceError = $null
@@ -884,7 +941,41 @@ if ($isRusanovProbe) {
 			throw "Rusanov low-Mach suitability result is invalid"
 		}
 		$lowMachSuitabilityPassed = $lowMachSuitabilityText -eq "true"
-    }
+	} elseif ($RunRusanovOpenBoundaryLeak) {
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$eosGamma = [double](Read-KeyValue -Text $text -Key "eos_gamma")
+		$eosSpecificGasConstant = [double](Read-KeyValue -Text $text -Key "eos_specific_gas_constant")
+		$initialLeftDensity = [double](Read-KeyValue -Text $text -Key "initial_left_density")
+		$initialLeftPressure = [double](Read-KeyValue -Text $text -Key "initial_left_pressure")
+		$initialRightDensity = [double](Read-KeyValue -Text $text -Key "initial_right_density")
+		$initialRightPressure = [double](Read-KeyValue -Text $text -Key "initial_right_pressure")
+		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
+		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "maximum_pressure")
+		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+		$simulatedTime = [double](Read-KeyValue -Text $text -Key "simulated_time")
+		$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+		$stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+		$boundaryLedgerCloses = (Read-KeyValue -Text $text -Key "boundary_ledger_closes") -eq "true"
+		$boundaryMassExchange = [double](Read-KeyValue -Text $text -Key "boundary_mass_exchange")
+		$boundaryMomentumXExchange = [double](Read-KeyValue -Text $text -Key "boundary_momentum_x_exchange")
+		$boundaryMomentumYExchange = [double](Read-KeyValue -Text $text -Key "boundary_momentum_y_exchange")
+		$boundaryEnergyExchange = [double](Read-KeyValue -Text $text -Key "boundary_energy_exchange")
+		$leftBoundaryMassExchange = [double](Read-KeyValue -Text $text -Key "left_boundary_mass_exchange")
+		$leftBoundaryMomentumXExchange = [double](Read-KeyValue -Text $text -Key "left_boundary_momentum_x_exchange")
+		$leftBoundaryMomentumYExchange = [double](Read-KeyValue -Text $text -Key "left_boundary_momentum_y_exchange")
+		$leftBoundaryEnergyExchange = [double](Read-KeyValue -Text $text -Key "left_boundary_energy_exchange")
+		$rightBoundaryMassExchange = [double](Read-KeyValue -Text $text -Key "right_boundary_mass_exchange")
+		$rightBoundaryMomentumXExchange = [double](Read-KeyValue -Text $text -Key "right_boundary_momentum_x_exchange")
+		$rightBoundaryMomentumYExchange = [double](Read-KeyValue -Text $text -Key "right_boundary_momentum_y_exchange")
+		$rightBoundaryEnergyExchange = [double](Read-KeyValue -Text $text -Key "right_boundary_energy_exchange")
+		$massDecreased = (Read-KeyValue -Text $text -Key "mass_decreased") -eq "true"
+		$rightBoundaryMassOut = [double](Read-KeyValue -Text $text -Key "right_boundary_mass_out")
+		$massBalanceError = [double](Read-KeyValue -Text $text -Key "mass_balance_error")
+		$momentumXBalanceError = [double](Read-KeyValue -Text $text -Key "momentum_x_balance_error")
+		$momentumYBalanceError = [double](Read-KeyValue -Text $text -Key "momentum_y_balance_error")
+		$energyBalanceError = [double](Read-KeyValue -Text $text -Key "energy_balance_error")
+		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+	}
 } else {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "state_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "state_pressure")
@@ -893,7 +984,9 @@ $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
 	"No HLLE, LBM, source-term, TPT wall-coupling, or multi-species candidate is implemented in this scaffold."
 )
-if ($RunRusanovLowMachAdvection) {
+if ($RunRusanovOpenBoundaryLeak) {
+	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
+} elseif ($RunRusanovLowMachAdvection) {
 	$limitations += "Rusanov low-Mach characterization records the measured diffusion and suitability result; it is not an all-speed solver or production performance claim."
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	$limitations += "Rusanov has one three-level smooth-advection refinement study; it does not establish low-Mach, multidimensional, leak, source-term or production performance behavior."
@@ -1002,6 +1095,16 @@ $result = [ordered]@{
 		boundary_momentum_x_exchange = $boundaryMomentumXExchange
 		boundary_momentum_y_exchange = $boundaryMomentumYExchange
 		boundary_energy_exchange = $boundaryEnergyExchange
+		left_boundary_mass_exchange = $leftBoundaryMassExchange
+		left_boundary_momentum_x_exchange = $leftBoundaryMomentumXExchange
+		left_boundary_momentum_y_exchange = $leftBoundaryMomentumYExchange
+		left_boundary_energy_exchange = $leftBoundaryEnergyExchange
+		right_boundary_mass_exchange = $rightBoundaryMassExchange
+		right_boundary_momentum_x_exchange = $rightBoundaryMomentumXExchange
+		right_boundary_momentum_y_exchange = $rightBoundaryMomentumYExchange
+		right_boundary_energy_exchange = $rightBoundaryEnergyExchange
+		mass_decreased = $massDecreased
+		right_boundary_mass_out = $rightBoundaryMassOut
 		mass_balance_error = $massBalanceError
 		momentum_x_balance_error = $momentumXBalanceError
 		momentum_y_balance_error = $momentumYBalanceError

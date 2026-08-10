@@ -61,6 +61,14 @@ namespace
 	constexpr double ModerateMachVelocity = 0.5;
 	constexpr double LowMachVelocity = 0.05;
 	constexpr double VeryLowMachVelocity = 0.005;
+	constexpr std::size_t LeakCells = 128;
+	constexpr std::size_t LeakSteps = 120;
+	constexpr double LeakCellLength = 1.0 / static_cast<double>(LeakCells);
+	constexpr double LeakTimeStep = 0.001;
+	constexpr double LeakInteriorDensity = 1.0;
+	constexpr double LeakInteriorPressure = 1.0;
+	constexpr double LeakExteriorDensity = 0.125;
+	constexpr double LeakExteriorPressure = 0.1;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -195,17 +203,23 @@ namespace
 		bool requireEvolution,
 		bool requirePeakReduction,
 		double conservationTolerance,
+		const ConservativeState *leftBoundaryState,
+		const ConservativeState *rightBoundaryState,
 		std::vector<ConservativeState> *finalCellsOutput)
 	{
 		RusanovProbeSummary summary{benchmarkCase};
 		if (!summary.benchmarkCase.IsValid() || !eos.IsValid()
 			|| initialCells.size() != summary.benchmarkCase.grid.CellCount()
 			|| (summary.benchmarkCase.grid.boundaryMode != BoundaryMode::Periodic
-				&& summary.benchmarkCase.grid.boundaryMode != BoundaryMode::Sealed))
+				&& summary.benchmarkCase.grid.boundaryMode != BoundaryMode::Sealed
+				&& summary.benchmarkCase.grid.boundaryMode != BoundaryMode::Open))
 			return summary;
 
 		std::vector<ConservativeState> cells = initialCells;
 		const bool periodic = summary.benchmarkCase.grid.boundaryMode == BoundaryMode::Periodic;
+		const bool open = summary.benchmarkCase.grid.boundaryMode == BoundaryMode::Open;
+		if (open && rightBoundaryState == nullptr)
+			return summary;
 		std::vector<ConservativeState> fluxes(cells.size() + (periodic ? 0 : 1));
 		std::vector<ConservativeState> next(cells.size());
 		const double lambda = summary.benchmarkCase.timeStep / summary.benchmarkCase.grid.cellLength;
@@ -243,12 +257,20 @@ namespace
 			}
 			else
 			{
-				fluxes.front() = SealedWallFluxX(cells.front(), eos);
+				fluxes.front() = open && leftBoundaryState
+					? RusanovFluxX(*leftBoundaryState, cells.front(), eos)
+					: SealedWallFluxX(cells.front(), eos);
 				for (std::size_t face = 1; face < cells.size(); ++face)
 					fluxes[face] = RusanovFluxX(cells[face - 1], cells[face], eos);
-				fluxes.back() = SealedWallFluxX(cells.back(), eos);
+				fluxes.back() = open
+					? RusanovFluxX(cells.back(), *rightBoundaryState, eos)
+					: SealedWallFluxX(cells.back(), eos);
+				const auto leftExchange = Scale(lambda, fluxes.front());
+				const auto rightExchange = Scale(-lambda, fluxes.back());
+				summary.leftBoundaryExchange = Add(summary.leftBoundaryExchange, leftExchange);
+				summary.rightBoundaryExchange = Add(summary.rightBoundaryExchange, rightExchange);
 				summary.boundaryExchange = Add(summary.boundaryExchange,
-					Scale(lambda, Subtract(fluxes.front(), fluxes.back())));
+					Add(leftExchange, rightExchange));
 				for (std::size_t cell = 0; cell < cells.size(); ++cell)
 				{
 					next[cell] = Subtract(cells[cell],
@@ -314,7 +336,8 @@ namespace
 		if (benchmarkCase.grid.boundaryMode != BoundaryMode::Periodic)
 			return {benchmarkCase};
 		return RunOneDimensionalProbe(benchmarkCase, std::move(initialCells), eos,
-			requireEvolution, requirePeakReduction, conservationTolerance, finalCellsOutput);
+			requireEvolution, requirePeakReduction, conservationTolerance,
+			nullptr, nullptr, finalCellsOutput);
 	}
 
 	RusanovProbeSummary RunSealedProbe(
@@ -328,7 +351,24 @@ namespace
 		if (benchmarkCase.grid.boundaryMode != BoundaryMode::Sealed)
 			return {benchmarkCase};
 		return RunOneDimensionalProbe(benchmarkCase, std::move(initialCells), eos,
-			requireEvolution, false, conservationTolerance, finalCellsOutput);
+			requireEvolution, false, conservationTolerance,
+			nullptr, nullptr, finalCellsOutput);
+	}
+
+	RusanovProbeSummary RunOpenProbe(
+		BenchmarkCase benchmarkCase,
+		std::vector<ConservativeState> initialCells,
+		const ConservativeState &rightBoundaryState,
+		const IdealGasEOS &eos,
+		bool requireEvolution,
+		double conservationTolerance,
+		std::vector<ConservativeState> *finalCellsOutput)
+	{
+		if (benchmarkCase.grid.boundaryMode != BoundaryMode::Open)
+			return {benchmarkCase};
+		return RunOneDimensionalProbe(benchmarkCase, std::move(initialCells), eos,
+			requireEvolution, false, conservationTolerance,
+			nullptr, &rightBoundaryState, finalCellsOutput);
 	}
 
 	void EvaluateAdvectedDensity(
@@ -603,6 +643,33 @@ RusanovProbeSummary RunRusanovSodShockTube()
 		&& summary.shockPosition >= 0.8
 		&& summary.shockPosition <= 0.9;
 	summary.passed = summary.passed && summary.shockReferencePassed;
+	return summary;
+}
+
+RusanovProbeSummary RunRusanovOpenBoundaryLeak()
+{
+	const IdealGasEOS eos(Gamma, SpecificGasConstant);
+	const auto initialState = eos.FromPrimitive(
+		LeakInteriorDensity, 0.0, 0.0, LeakInteriorPressure);
+	const auto exteriorState = eos.FromPrimitive(
+		LeakExteriorDensity, 0.0, 0.0, LeakExteriorPressure);
+	std::vector<ConservativeState> final;
+	auto summary = RunOpenProbe(
+		{"rusanov_open_boundary_leak_1d",
+			{LeakCells, 1, LeakCellLength, BoundaryMode::Open},
+			TimeDomain::NondimensionalContract, LeakTimeStep, LeakSteps},
+		std::vector<ConservativeState>(LeakCells, initialState),
+		exteriorState, eos, true, 1e-9, &final);
+	if (final.size() != LeakCells)
+		return summary;
+	summary.simulatedTime = LeakTimeStep * static_cast<double>(LeakSteps);
+	const double massChange = summary.ledger.final.density - summary.ledger.initial.density;
+	const double rightMassExchange = summary.rightBoundaryExchange.density;
+	summary.passed = summary.passed
+		&& massChange < -1e-6
+		&& rightMassExchange < -1e-6
+		&& std::abs(summary.leftBoundaryExchange.density) <= 1e-12
+		&& std::abs(massChange - summary.boundaryExchange.density) <= 1e-9;
 	return summary;
 }
 
@@ -998,6 +1065,93 @@ bool WriteRusanovSodShockTubeProbe(std::ostream &output)
 	output << "energy_balance_error="
 		<< (final.totalEnergyDensity - expectedFinal.totalEnergyDensity) << '\n';
 	output << "boundary_ledger_closes=" << (summary.boundaryLedgerCloses ? "true" : "false") << '\n';
+	output << "minimum_density=" << summary.minimumDensity << '\n';
+	output << "maximum_density=" << summary.maximumDensity << '\n';
+	output << "minimum_pressure=" << summary.minimumPressure << '\n';
+	output << "maximum_pressure=" << summary.finalMaximumPressure << '\n';
+	output << "minimum_energy_density=" << summary.minimumEnergyDensity << '\n';
+	output << "state_change_l1=" << summary.stateChangeL1 << '\n';
+	output << "state_evolved=" << (summary.stateEvolved ? "true" : "false") << '\n';
+	output << "positivity_preserved=" << (summary.positivityPreserved ? "true" : "false") << '\n';
+	output << "numerical_correction_count=" << summary.corrections.eventCount << '\n';
+	output << "correction_mass_added=" << summary.corrections.massAdded << '\n';
+	output << "correction_mass_removed=" << summary.corrections.massRemoved << '\n';
+	output << "correction_momentum_x_added=" << summary.corrections.momentumXAdded << '\n';
+	output << "correction_momentum_y_added=" << summary.corrections.momentumYAdded << '\n';
+	output << "correction_energy_added=" << summary.corrections.energyAdded << '\n';
+	output << "correction_energy_removed=" << summary.corrections.energyRemoved << '\n';
+	output << "density_floor_hits=" << summary.corrections.densityFloorHits << '\n';
+	output << "pressure_floor_hits=" << summary.corrections.pressureFloorHits << '\n';
+	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
+	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
+	output << "state_and_flux_scratch_bytes_total=" << stateAndFluxScratchBytesTotal << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell="
+		<< static_cast<double>(stateAndFluxScratchBytesTotal)
+			/ static_cast<double>(summary.benchmarkCase.grid.CellCount()) << '\n';
+	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	return summary.passed;
+}
+
+bool WriteRusanovOpenBoundaryLeakProbe(std::ostream &output)
+{
+	const auto summary = RunRusanovOpenBoundaryLeak();
+	const auto &initial = summary.ledger.initial;
+	const auto &final = summary.ledger.final;
+	const auto expectedFinal = Add(initial, summary.boundaryExchange);
+	const auto stateAndFluxScratchBytesTotal =
+		(3 * summary.benchmarkCase.grid.CellCount() + 1) * sizeof(ConservativeState);
+	output << "schema_version=1\n";
+	output << "case=" << summary.benchmarkCase.id << '\n';
+	output << "candidate=fvm_rusanov\n";
+	output << "candidate_solver_implemented=true\n";
+	output << "atmosphere_solver_selection=unselected\n";
+	output << "physical_scale_selection=unselected\n";
+	output << "result_status=candidate_result_not_selection\n";
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "boundary_mode=sealed_left_open_right_reservoir\n";
+	output << "eos_gamma=" << Gamma << '\n';
+	output << "eos_specific_gas_constant=" << SpecificGasConstant << '\n';
+	output << "initial_left_density=" << LeakInteriorDensity << '\n';
+	output << "initial_left_pressure=" << LeakInteriorPressure << '\n';
+	output << "initial_right_density=" << LeakExteriorDensity << '\n';
+	output << "initial_right_pressure=" << LeakExteriorPressure << '\n';
+	output << "grid_cells_x=" << summary.benchmarkCase.grid.cellsX << '\n';
+	output << "grid_cells_y=" << summary.benchmarkCase.grid.cellsY << '\n';
+	output << "grid_cell_count=" << summary.benchmarkCase.grid.CellCount() << '\n';
+	output << "cell_length=" << summary.benchmarkCase.grid.cellLength << '\n';
+	output << "case_timestep=" << summary.benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << summary.benchmarkCase.stepCount << '\n';
+	output << "simulated_time=" << summary.simulatedTime << '\n';
+	output << "maximum_cfl=" << summary.maximumCfl << '\n';
+	output << "initial_mass=" << initial.density << '\n';
+	output << "final_mass=" << final.density << '\n';
+	output << "mass_drift=" << (final.density - initial.density) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		final.momentumX - initial.momentumX,
+		final.momentumY - initial.momentumY) << '\n';
+	output << "momentum_x_drift=" << (final.momentumX - initial.momentumX) << '\n';
+	output << "momentum_y_drift=" << (final.momentumY - initial.momentumY) << '\n';
+	output << "energy_drift=" << (final.totalEnergyDensity - initial.totalEnergyDensity) << '\n';
+	output << "left_boundary_mass_exchange=" << summary.leftBoundaryExchange.density << '\n';
+	output << "left_boundary_momentum_x_exchange=" << summary.leftBoundaryExchange.momentumX << '\n';
+	output << "left_boundary_momentum_y_exchange=" << summary.leftBoundaryExchange.momentumY << '\n';
+	output << "left_boundary_energy_exchange=" << summary.leftBoundaryExchange.totalEnergyDensity << '\n';
+	output << "right_boundary_mass_exchange=" << summary.rightBoundaryExchange.density << '\n';
+	output << "right_boundary_momentum_x_exchange=" << summary.rightBoundaryExchange.momentumX << '\n';
+	output << "right_boundary_momentum_y_exchange=" << summary.rightBoundaryExchange.momentumY << '\n';
+	output << "right_boundary_energy_exchange=" << summary.rightBoundaryExchange.totalEnergyDensity << '\n';
+	output << "boundary_mass_exchange=" << summary.boundaryExchange.density << '\n';
+	output << "boundary_momentum_x_exchange=" << summary.boundaryExchange.momentumX << '\n';
+	output << "boundary_momentum_y_exchange=" << summary.boundaryExchange.momentumY << '\n';
+	output << "boundary_energy_exchange=" << summary.boundaryExchange.totalEnergyDensity << '\n';
+	output << "mass_balance_error=" << (final.density - expectedFinal.density) << '\n';
+	output << "momentum_x_balance_error=" << (final.momentumX - expectedFinal.momentumX) << '\n';
+	output << "momentum_y_balance_error=" << (final.momentumY - expectedFinal.momentumY) << '\n';
+	output << "energy_balance_error="
+		<< (final.totalEnergyDensity - expectedFinal.totalEnergyDensity) << '\n';
+	output << "boundary_ledger_closes=" << (summary.boundaryLedgerCloses ? "true" : "false") << '\n';
+	output << "mass_decreased=" << (final.density < initial.density ? "true" : "false") << '\n';
+	output << "right_boundary_mass_out=" << -summary.rightBoundaryExchange.density << '\n';
 	output << "minimum_density=" << summary.minimumDensity << '\n';
 	output << "maximum_density=" << summary.maximumDensity << '\n';
 	output << "minimum_pressure=" << summary.minimumPressure << '\n';
