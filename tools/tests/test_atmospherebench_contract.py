@@ -66,6 +66,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("BoundaryMode::Periodic", source)
         self.assertIn("summary.ledger.Closes(1e-12)", source)
         self.assertIn("summary.corrections.IsEmpty()", source)
+        self.assertIn('output << "momentum_drift="', source)
         atmosphere = (BENCH_ROOT / "AtmosphereBench.cpp").read_text(encoding="utf-8")
         self.assertIn('"fvm_hlle", "registered_only", false', atmosphere)
         self.assertIn('"lbm_d2q9", "registered_only", false', atmosphere)

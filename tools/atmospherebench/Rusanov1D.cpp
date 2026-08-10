@@ -162,6 +162,10 @@ bool WriteRusanovUniformProbe(std::ostream &output)
 	output << "initial_mass=" << initial.density << '\n';
 	output << "final_mass=" << final.density << '\n';
 	output << "mass_drift=" << (final.density - initial.density) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		final.momentumX - initial.momentumX,
+		final.momentumY - initial.momentumY
+	) << '\n';
 	output << "momentum_x_drift=" << (final.momentumX - initial.momentumX) << '\n';
 	output << "momentum_y_drift=" << (final.momentumY - initial.momentumY) << '\n';
 	output << "energy_drift=" << (final.totalEnergyDensity - initial.totalEnergyDensity) << '\n';
