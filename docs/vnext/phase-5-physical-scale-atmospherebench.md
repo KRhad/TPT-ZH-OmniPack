@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_SHARED_CONTRACT_VALIDATED_DIRTY_SOURCE
+STATUS=IN_PROGRESS_SHARED_CONTRACT_CLEAN_VALIDATED
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -26,8 +26,8 @@ MESON_STATIC=GREEN_43_43
 STRICT_FP_TARGET=GREEN_GNU_NO_LEGACY_FAST_MATH_MSVC_CONTRACT_NOT_EXECUTED
 CLEAN_ARTIFACT=GREEN_CONTRACT_ONLY_a21eafba3
 CLEAN_SOURCE_PACKAGE=GREEN_1300_FILES_NO_TEST_ASSETS
-SHARED_CONTRACT_IMPLEMENTATION_COMMIT=pending
-SHARED_CONTRACT_VALIDATION=GREEN_TARGETED_26_STATIC_43_PYTHON_411_TOTAL_409_PASS_2_SKIPS_DIRTY_SOURCE
+SHARED_CONTRACT_IMPLEMENTATION_COMMIT=1ba507e89e3d713fe355c03c2fc6e7139aabcb49
+SHARED_CONTRACT_VALIDATION=GREEN_CLEAN_BUILD_80_STATIC_43_TARGETED_26_PYTHON_411_TOTAL_409_PASS_2_SKIPS_CONTRACT_ARTIFACT_AND_SOURCE_PACKAGE
 V1_0_5_GATE=IN_PROGRESS
 ```
 
@@ -134,6 +134,15 @@ without an event count fails the C++ self-test; `numerical_correction_count` is 
 actual recorded count rather than a boolean-like placeholder. The zero-step fixture
 continues to report all correction quantities and counts as zero.
 
+Shared-contract checkpoint `1ba507e89` passed a clean default **80/80** Meson build,
+clean **43/43** Meson static suite and **411 total / 409 PASS / 2 skipped** Python
+discovery. Its ignored runner artifact is
+`artifacts/vnext-atmospherebench/20260810T133938Z-57dca7f9/result.json`; it records
+`source_dirty=false`, `case_time_domain=nondimensional_contract`, zero steps, a
+`4x3=12` metadata grid, `32 bytes/cell`, and zero correction events. The associated
+test-free source package is at `artifacts/vnext-phase5-source-1ba507e89/` with
+SHA-256 `3C6BD0A389258E5EC5DE65FA4491402565DD2FD3734365154F5FBCABB3BDBE8D`.
+
 ## Clean checkpoint evidence
 
 Implementation checkpoint `a21eafba3` was built from a clean worktree. The default
@@ -177,9 +186,9 @@ An independent final review found no remaining P1/P2 issues and approved the
 isolated scaffold checkpoint only. It did not approve solver selection or production
 integration.
 
-The new shared-contract follow-up has not yet received its own clean checkpoint;
-its current dirty-worktree validation is **26/26 targeted**, **411 total / 409 PASS /
-2 skipped** Python tests, and **43/43** Meson static tests.
+The shared-contract follow-up is now clean-validated: **26/26 targeted**,
+**411 total / 409 PASS / 2 skipped** Python tests, **43/43** Meson static tests and
+the default **80/80** build all pass. It remains contract-only, not CFD evidence.
 
 `V1_0_5_GATE=IN_PROGRESS`. The next implementation may add the shared grid/case/
 result contracts and one first-order Rusanov plugin, but must keep Rusanov, HLLE,
