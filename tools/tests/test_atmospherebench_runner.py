@@ -36,6 +36,12 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("git_executable = $gitCommand", RUNNER)
         self.assertIn("git_sha256 = Get-Sha256 -Path $gitCommand", RUNNER)
 
+    def test_runner_hashes_source_state_on_windows_powershell_5_1(self) -> None:
+        self.assertIn("function Get-TextSha256", RUNNER)
+        self.assertIn("SHA256Managed", RUNNER)
+        self.assertIn("ComputeHash($bytes)", RUNNER)
+        self.assertNotIn("SHA256]::HashData", RUNNER)
+
     def test_runner_rechecks_source_after_measurement(self) -> None:
         self.assertIn("$finalSourceState = Get-SourceState", RUNNER)
         self.assertIn("source changed during build or measurement", RUNNER)

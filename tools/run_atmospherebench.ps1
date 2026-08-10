@@ -24,6 +24,17 @@ function Get-Sha256 {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
 }
 
+function Get-TextSha256 {
+    param([Parameter(Mandatory = $true)][string] $Text)
+    $sha256 = New-Object System.Security.Cryptography.SHA256Managed
+    try {
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
+        return (-join ($sha256.ComputeHash($bytes) | ForEach-Object { $_.ToString("X2") }))
+    } finally {
+        $sha256.Dispose()
+    }
+}
+
 function Get-SourceState {
     param(
         [Parameter(Mandatory = $true)][string] $Repository,
@@ -49,9 +60,7 @@ function Get-SourceState {
         Repository = $topLevel
         Commit = $head
         Dirty = $false
-        StateSha256 = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData(
-            [System.Text.Encoding]::UTF8.GetBytes("HEAD=$head`n")
-        ))
+        StateSha256 = Get-TextSha256 -Text "HEAD=$head`n"
     }
 }
 
