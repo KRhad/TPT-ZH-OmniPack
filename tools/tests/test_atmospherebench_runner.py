@@ -63,6 +63,8 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("candidate_implementations = $candidateImplementations", RUNNER)
         self.assertIn("Rusanov probe must not claim solver selection", RUNNER)
         self.assertIn("first-order strict-double 1D periodic uniform probe", RUNNER)
+        self.assertIn("[double]::IsNaN($maximumCfl)", RUNNER)
+        self.assertIn("[double]::IsInfinity($maximumCfl)", RUNNER)
         self.assertIn('candidate=fvm_hlle|status=registered_only|solver_implemented=false', RUNNER)
         self.assertIn('candidate=lbm_d2q9|status=registered_only|solver_implemented=false', RUNNER)
 

@@ -278,7 +278,8 @@ if (-not $RunRusanovUniform) {
         }
     }
     $maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
-    if (-not [double]::IsFinite($maximumCfl) -or $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+    if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
+        $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
         throw "Rusanov probe CFL is outside the strict positivity contract"
     }
     foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
