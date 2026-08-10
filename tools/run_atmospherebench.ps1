@@ -13,6 +13,8 @@ param(
 
     [switch] $RunRusanovSodShockTube,
 
+    [switch] $RunRusanovDensityAdvectionRefinement,
+
     [Parameter(Mandatory = $true)]
     [string] $BuildDirectory,
 
@@ -198,15 +200,18 @@ $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 
 if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection,
 		$RunRusanovContactDiscontinuity, $RunRusanovNearVacuumExpansion,
-		$RunRusanovSodShockTube) |
+		$RunRusanovSodShockTube, $RunRusanovDensityAdvectionRefinement) |
         Where-Object { $_ }).Count -gt 1) {
     throw "Select only one AtmosphereBench run mode"
 }
 $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunRusanovDensityAdvection -or $RunRusanovContactDiscontinuity `
-	-or $RunRusanovNearVacuumExpansion -or $RunRusanovSodShockTube
+	-or $RunRusanovNearVacuumExpansion -or $RunRusanovSodShockTube `
+	-or $RunRusanovDensityAdvectionRefinement
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
-$runMode = if ($RunRusanovSodShockTube) {
+$runMode = if ($RunRusanovDensityAdvectionRefinement) {
+	"rusanov_density_advection_refinement"
+} elseif ($RunRusanovSodShockTube) {
 	"rusanov_sod_shock_tube"
 } elseif ($RunRusanovNearVacuumExpansion) {
 	"rusanov_near_vacuum_expansion"
@@ -221,7 +226,9 @@ $runMode = if ($RunRusanovSodShockTube) {
 } else {
 	"contract_uniform"
 }
-$runArgument = if ($RunRusanovSodShockTube) {
+$runArgument = if ($RunRusanovDensityAdvectionRefinement) {
+	"--run-rusanov-density-advection-refinement"
+} elseif ($RunRusanovSodShockTube) {
 	"--run-rusanov-sod-shock-tube"
 } elseif ($RunRusanovNearVacuumExpansion) {
 	"--run-rusanov-near-vacuum-expansion"
@@ -252,7 +259,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
-    "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_probes|solver_implemented=true",
+    "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -510,7 +517,7 @@ if (-not $isRusanovProbe) {
             throw "Rusanov near-vacuum drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
-} else {
+} elseif ($RunRusanovSodShockTube) {
     $benchmarkKind = "atmospherebench_rusanov_sod_shock_tube_probe"
     $performanceGate = "not_evaluated_candidate_probe"
     $timingScope = "standalone_rusanov_sod_shock_tube_probe"
@@ -574,6 +581,61 @@ if (-not $isRusanovProbe) {
         $boundaryMomentumXExchange -le 0.0) {
         throw "Rusanov Sod wall-pressure impulse was not recorded"
     }
+} else {
+    $benchmarkKind = "atmospherebench_rusanov_density_advection_refinement_probe"
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = "standalone_rusanov_density_advection_refinement_probe"
+    $candidateImplementations = "fvm_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "Rusanov refinement probe must not claim solver selection"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "boundary_mode" = "periodic";
+        "refinement_levels" = "3"; "total_simulated_time" = "0.25";
+        "reference_velocity" = "0.5"; "coarse_cells" = "64";
+        "medium_cells" = "128"; "fine_cells" = "256";
+        "coarse_steps" = "64"; "medium_steps" = "128"; "fine_steps" = "256";
+        "coarse_reference_shift_cells" = "8"; "medium_reference_shift_cells" = "16";
+        "fine_reference_shift_cells" = "32"; "positivity_preserved" = "true";
+        "state_evolved" = "true"; "refinement_passed" = "true";
+        "numerical_correction_count" = "0"; "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "Rusanov refinement contract drifted: $($probeKey.Key)"
+        }
+    }
+    $coarseL1 = [double](Read-KeyValue -Text $text -Key "coarse_density_l1_error")
+    $mediumL1 = [double](Read-KeyValue -Text $text -Key "medium_density_l1_error")
+    $fineL1 = [double](Read-KeyValue -Text $text -Key "fine_density_l1_error")
+    if ($coarseL1 -le $mediumL1 -or $mediumL1 -le $fineL1 -or $fineL1 -le 0.0) {
+        throw "Rusanov refinement L1 error did not decrease monotonically"
+    }
+    foreach ($orderKey in @("coarse_to_medium_l1_order", "medium_to_fine_l1_order")) {
+        $order = [double](Read-KeyValue -Text $text -Key $orderKey)
+        if ([double]::IsNaN($order) -or [double]::IsInfinity($order) -or
+            $order -lt 0.8 -or $order -gt 1.2) {
+            throw "Rusanov refinement observed order is outside the published first-order window: $orderKey"
+        }
+    }
+    foreach ($pressureKey in @("coarse_pressure_linf_error", "medium_pressure_linf_error", "fine_pressure_linf_error")) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $pressureKey)) -gt 1e-10) {
+            throw "Rusanov refinement pressure preservation exceeded tolerance: $pressureKey"
+        }
+    }
+    foreach ($cflKey in @("coarse_maximum_cfl", "medium_maximum_cfl", "fine_maximum_cfl")) {
+        $cfl = [double](Read-KeyValue -Text $text -Key $cflKey)
+        if ([double]::IsNaN($cfl) -or [double]::IsInfinity($cfl) -or $cfl -le 0.0 -or $cfl -gt 1.0) {
+            throw "Rusanov refinement CFL is outside the strict positivity contract: $cflKey"
+        }
+    }
+    foreach ($driftKey in @(
+        "coarse_mass_drift", "medium_mass_drift", "fine_mass_drift",
+        "coarse_energy_drift", "medium_energy_drift", "fine_energy_drift"
+    )) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-9) {
+            throw "Rusanov refinement drift exceeds tolerance: $driftKey"
+        }
+    }
 }
 $finalSourceState = Get-SourceState -Repository $sourceRoot -GitCommand $gitCommand
 if ($finalSourceState.Commit -ne $sourceState.Commit -or $finalSourceState.StateSha256 -ne $sourceState.StateSha256) {
@@ -635,6 +697,19 @@ $initialLeftDensity = $null
 $initialLeftPressure = $null
 $initialRightDensity = $null
 $initialRightPressure = $null
+$refinementLevels = $null
+$totalSimulatedTime = $null
+$coarseCells = $null
+$mediumCells = $null
+$fineCells = $null
+$coarseDensityL1Error = $null
+$mediumDensityL1Error = $null
+$fineDensityL1Error = $null
+$coarseToMediumL1Order = $null
+$mediumToFineL1Order = $null
+$coarseMaximumCfl = $null
+$mediumMaximumCfl = $null
+$fineMaximumCfl = $null
 if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
@@ -706,6 +781,26 @@ if ($isRusanovProbe) {
 		$momentumYBalanceError = [double](Read-KeyValue -Text $text -Key "momentum_y_balance_error")
 		$energyBalanceError = [double](Read-KeyValue -Text $text -Key "energy_balance_error")
 		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+	} elseif ($RunRusanovDensityAdvectionRefinement) {
+		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
+		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "maximum_pressure")
+		$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+		$stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$refinementLevels = [int](Read-KeyValue -Text $text -Key "refinement_levels")
+		$totalSimulatedTime = [double](Read-KeyValue -Text $text -Key "total_simulated_time")
+		$referenceVelocity = [double](Read-KeyValue -Text $text -Key "reference_velocity")
+		$coarseCells = [int](Read-KeyValue -Text $text -Key "coarse_cells")
+		$mediumCells = [int](Read-KeyValue -Text $text -Key "medium_cells")
+		$fineCells = [int](Read-KeyValue -Text $text -Key "fine_cells")
+		$coarseDensityL1Error = [double](Read-KeyValue -Text $text -Key "coarse_density_l1_error")
+		$mediumDensityL1Error = [double](Read-KeyValue -Text $text -Key "medium_density_l1_error")
+		$fineDensityL1Error = [double](Read-KeyValue -Text $text -Key "fine_density_l1_error")
+		$coarseToMediumL1Order = [double](Read-KeyValue -Text $text -Key "coarse_to_medium_l1_order")
+		$mediumToFineL1Order = [double](Read-KeyValue -Text $text -Key "medium_to_fine_l1_order")
+		$coarseMaximumCfl = [double](Read-KeyValue -Text $text -Key "coarse_maximum_cfl")
+		$mediumMaximumCfl = [double](Read-KeyValue -Text $text -Key "medium_maximum_cfl")
+		$fineMaximumCfl = [double](Read-KeyValue -Text $text -Key "fine_maximum_cfl")
     }
 } else {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "state_density")
@@ -715,7 +810,9 @@ $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
 	"No HLLE, LBM, source-term, TPT wall-coupling, or multi-species candidate is implemented in this scaffold."
 )
-if ($RunRusanovSodShockTube) {
+if ($RunRusanovDensityAdvectionRefinement) {
+	$limitations += "Rusanov has one three-level smooth-advection refinement study; it does not establish low-Mach, multidimensional, leak, source-term or production performance behavior."
+} elseif ($RunRusanovSodShockTube) {
 	$limitations += "Rusanov is limited to first-order strict-double 1D uniform, periodic wave/advection/contact/near-vacuum probes and one sealed Sod shock tube; this is not solver selection or production boundary evidence."
 } elseif ($RunRusanovNearVacuumExpansion) {
 	$limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform, pressure-pulse, density-advection, contact and near-vacuum probes; this is not solver selection or production vacuum evidence."
@@ -824,6 +921,19 @@ $result = [ordered]@{
 		momentum_x_balance_error = $momentumXBalanceError
 		momentum_y_balance_error = $momentumYBalanceError
 		energy_balance_error = $energyBalanceError
+		refinement_levels = $refinementLevels
+		total_simulated_time = $totalSimulatedTime
+		coarse_cells = $coarseCells
+		medium_cells = $mediumCells
+		fine_cells = $fineCells
+		coarse_density_l1_error = $coarseDensityL1Error
+		medium_density_l1_error = $mediumDensityL1Error
+		fine_density_l1_error = $fineDensityL1Error
+		coarse_to_medium_l1_order = $coarseToMediumL1Order
+		medium_to_fine_l1_order = $mediumToFineL1Order
+		coarse_maximum_cfl = $coarseMaximumCfl
+		medium_maximum_cfl = $mediumMaximumCfl
+		fine_maximum_cfl = $fineMaximumCfl
         mass_drift = [double](Read-KeyValue -Text $text -Key "mass_drift")
         momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
         momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")

@@ -738,6 +738,14 @@ test(
 	timeout: 60,
 )
 
+test(
+	'atmospherebench-rusanov-density-advection-refinement',
+	atmospherebench,
+	args: [ '--run-rusanov-density-advection-refinement' ],
+	suite: 'static',
+	timeout: 60,
+)
+
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),

@@ -51,6 +51,10 @@ namespace
 	constexpr double SodLeftPressure = 1.0;
 	constexpr double SodRightDensity = 0.125;
 	constexpr double SodRightPressure = 0.1;
+	constexpr double RefinementTotalTime = 0.25;
+	constexpr std::size_t RefinementCoarseCells = 64;
+	constexpr std::size_t RefinementMediumCells = 128;
+	constexpr std::size_t RefinementFineCells = 256;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -374,6 +378,31 @@ namespace
 			&& summary.totalVariationRatio <= 1.0 + 1e-10
 			&& summary.densityBoundsPreserved;
 	}
+
+	RusanovProbeSummary RunDensityAdvectionRefinementCase(std::size_t cellsCount)
+	{
+		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		const double cellLength = 1.0 / static_cast<double>(cellsCount);
+		const std::size_t steps = cellsCount;
+		const double timeStep = RefinementTotalTime / static_cast<double>(steps);
+		std::vector<ConservativeState> initial(cellsCount);
+		for (std::size_t cell = 0; cell < cellsCount; ++cell)
+		{
+			const double x = (static_cast<double>(cell) + 0.5) * cellLength;
+			const double density = 1.0 + DensityAdvectionAmplitude * std::sin(2.0 * Pi * x);
+			initial[cell] = eos.FromPrimitive(density, DensityAdvectionVelocity, 0.0, 1.0);
+		}
+		std::vector<ConservativeState> final;
+		auto summary = RunPeriodicProbe(
+			{"rusanov_density_advection_refinement_1d",
+				{cellsCount, 1, cellLength, BoundaryMode::Periodic},
+				TimeDomain::NondimensionalContract, timeStep, steps},
+			initial, eos, true, false, 1e-9, &final);
+		EvaluateAdvectedDensity(summary, initial, final, eos, DensityAdvectionVelocity,
+			1.0, 1.0, 1.0 - DensityAdvectionAmplitude, 1.0 + DensityAdvectionAmplitude);
+		summary.passed = summary.passed && summary.advectionReferencePassed;
+		return summary;
+	}
 }
 
 RusanovProbeSummary RunRusanovUniform()
@@ -537,6 +566,31 @@ RusanovProbeSummary RunRusanovSodShockTube()
 		&& summary.shockPosition >= 0.8
 		&& summary.shockPosition <= 0.9;
 	summary.passed = summary.passed && summary.shockReferencePassed;
+	return summary;
+}
+
+RusanovRefinementSummary RunRusanovDensityAdvectionRefinement()
+{
+	RusanovRefinementSummary summary{
+		RunDensityAdvectionRefinementCase(RefinementCoarseCells),
+		RunDensityAdvectionRefinementCase(RefinementMediumCells),
+		RunDensityAdvectionRefinementCase(RefinementFineCells),
+	};
+	if (summary.coarse.densityL1Error > 0.0 && summary.medium.densityL1Error > 0.0
+		&& summary.fine.densityL1Error > 0.0)
+	{
+		summary.coarseToMediumL1Order = std::log2(
+			summary.coarse.densityL1Error / summary.medium.densityL1Error);
+		summary.mediumToFineL1Order = std::log2(
+			summary.medium.densityL1Error / summary.fine.densityL1Error);
+	}
+	summary.passed = summary.coarse.passed && summary.medium.passed && summary.fine.passed
+		&& summary.coarse.densityL1Error > summary.medium.densityL1Error
+		&& summary.medium.densityL1Error > summary.fine.densityL1Error
+		&& summary.coarseToMediumL1Order >= 0.8
+		&& summary.mediumToFineL1Order >= 0.8
+		&& summary.coarseToMediumL1Order <= 1.2
+		&& summary.mediumToFineL1Order <= 1.2;
 	return summary;
 }
 
@@ -903,6 +957,98 @@ bool WriteRusanovSodShockTubeProbe(std::ostream &output)
 	output << "state_and_flux_scratch_bytes_per_cell="
 		<< static_cast<double>(stateAndFluxScratchBytesTotal)
 			/ static_cast<double>(summary.benchmarkCase.grid.CellCount()) << '\n';
+	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	return summary.passed;
+}
+
+bool WriteRusanovDensityAdvectionRefinementProbe(std::ostream &output)
+{
+	const auto summary = RunRusanovDensityAdvectionRefinement();
+	output << "schema_version=1\n";
+	output << "case=rusanov_density_advection_refinement_1d\n";
+	output << "candidate=fvm_rusanov\n";
+	output << "candidate_solver_implemented=true\n";
+	output << "atmosphere_solver_selection=unselected\n";
+	output << "physical_scale_selection=unselected\n";
+	output << "result_status=candidate_result_not_selection\n";
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "boundary_mode=periodic\n";
+	output << "grid_cells_x=" << summary.fine.benchmarkCase.grid.cellsX << '\n';
+	output << "grid_cells_y=" << summary.fine.benchmarkCase.grid.cellsY << '\n';
+	output << "grid_cell_count=" << summary.fine.benchmarkCase.grid.CellCount() << '\n';
+	output << "case_timestep=" << summary.fine.benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << summary.fine.benchmarkCase.stepCount << '\n';
+	output << "refinement_levels=3\n";
+	output << "total_simulated_time=" << RefinementTotalTime << '\n';
+	output << "reference_velocity=" << DensityAdvectionVelocity << '\n';
+	output << "coarse_cells=" << summary.coarse.benchmarkCase.grid.cellsX << '\n';
+	output << "medium_cells=" << summary.medium.benchmarkCase.grid.cellsX << '\n';
+	output << "fine_cells=" << summary.fine.benchmarkCase.grid.cellsX << '\n';
+	output << "coarse_steps=" << summary.coarse.benchmarkCase.stepCount << '\n';
+	output << "medium_steps=" << summary.medium.benchmarkCase.stepCount << '\n';
+	output << "fine_steps=" << summary.fine.benchmarkCase.stepCount << '\n';
+	output << "coarse_reference_shift_cells=" << summary.coarse.referenceShiftCells << '\n';
+	output << "medium_reference_shift_cells=" << summary.medium.referenceShiftCells << '\n';
+	output << "fine_reference_shift_cells=" << summary.fine.referenceShiftCells << '\n';
+	output << "coarse_density_l1_error=" << summary.coarse.densityL1Error << '\n';
+	output << "medium_density_l1_error=" << summary.medium.densityL1Error << '\n';
+	output << "fine_density_l1_error=" << summary.fine.densityL1Error << '\n';
+	output << "coarse_density_linf_error=" << summary.coarse.densityLinfError << '\n';
+	output << "medium_density_linf_error=" << summary.medium.densityLinfError << '\n';
+	output << "fine_density_linf_error=" << summary.fine.densityLinfError << '\n';
+	output << "coarse_pressure_linf_error=" << summary.coarse.pressureLinfError << '\n';
+	output << "medium_pressure_linf_error=" << summary.medium.pressureLinfError << '\n';
+	output << "fine_pressure_linf_error=" << summary.fine.pressureLinfError << '\n';
+	output << "minimum_density=" << summary.fine.minimumDensity << '\n';
+	output << "maximum_density=" << summary.fine.maximumDensity << '\n';
+	output << "minimum_pressure=" << summary.fine.minimumPressure << '\n';
+	output << "maximum_pressure=" << summary.fine.finalMaximumPressure << '\n';
+	output << "state_change_l1=" << summary.fine.stateChangeL1 << '\n';
+	output << "state_evolved=" << (summary.fine.stateEvolved ? "true" : "false") << '\n';
+	output << "positivity_preserved=" << (summary.fine.positivityPreserved ? "true" : "false") << '\n';
+	output << "coarse_to_medium_l1_order=" << summary.coarseToMediumL1Order << '\n';
+	output << "medium_to_fine_l1_order=" << summary.mediumToFineL1Order << '\n';
+	output << "coarse_maximum_cfl=" << summary.coarse.maximumCfl << '\n';
+	output << "medium_maximum_cfl=" << summary.medium.maximumCfl << '\n';
+	output << "fine_maximum_cfl=" << summary.fine.maximumCfl << '\n';
+	output << "coarse_mass_drift="
+		<< (summary.coarse.ledger.final.density - summary.coarse.ledger.initial.density) << '\n';
+	output << "medium_mass_drift="
+		<< (summary.medium.ledger.final.density - summary.medium.ledger.initial.density) << '\n';
+	output << "fine_mass_drift="
+		<< (summary.fine.ledger.final.density - summary.fine.ledger.initial.density) << '\n';
+	output << "coarse_energy_drift="
+		<< (summary.coarse.ledger.final.totalEnergyDensity - summary.coarse.ledger.initial.totalEnergyDensity) << '\n';
+	output << "medium_energy_drift="
+		<< (summary.medium.ledger.final.totalEnergyDensity - summary.medium.ledger.initial.totalEnergyDensity) << '\n';
+	output << "fine_energy_drift="
+		<< (summary.fine.ledger.final.totalEnergyDensity - summary.fine.ledger.initial.totalEnergyDensity) << '\n';
+	output << "mass_drift="
+		<< (summary.fine.ledger.final.density - summary.fine.ledger.initial.density) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		summary.fine.ledger.final.momentumX - summary.fine.ledger.initial.momentumX,
+		summary.fine.ledger.final.momentumY - summary.fine.ledger.initial.momentumY) << '\n';
+	output << "momentum_x_drift="
+		<< (summary.fine.ledger.final.momentumX - summary.fine.ledger.initial.momentumX) << '\n';
+	output << "momentum_y_drift="
+		<< (summary.fine.ledger.final.momentumY - summary.fine.ledger.initial.momentumY) << '\n';
+	output << "energy_drift="
+		<< (summary.fine.ledger.final.totalEnergyDensity - summary.fine.ledger.initial.totalEnergyDensity) << '\n';
+	output << "numerical_correction_count="
+		<< (summary.coarse.corrections.eventCount + summary.medium.corrections.eventCount
+			+ summary.fine.corrections.eventCount) << '\n';
+	output << "correction_mass_added=0\n";
+	output << "correction_mass_removed=0\n";
+	output << "correction_momentum_x_added=0\n";
+	output << "correction_momentum_y_added=0\n";
+	output << "correction_energy_added=0\n";
+	output << "correction_energy_removed=0\n";
+	output << "density_floor_hits=0\n";
+	output << "pressure_floor_hits=0\n";
+	output << "correction_event_count=0\n";
+	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
+	output << "refinement_passed=" << (summary.passed ? "true" : "false") << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
 }

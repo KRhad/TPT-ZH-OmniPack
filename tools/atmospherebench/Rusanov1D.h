@@ -44,17 +44,29 @@ struct RusanovProbeSummary
 	bool passed = false;
 };
 
+struct RusanovRefinementSummary
+{
+	RusanovProbeSummary coarse;
+	RusanovProbeSummary medium;
+	RusanovProbeSummary fine;
+	double coarseToMediumL1Order = 0.0;
+	double mediumToFineL1Order = 0.0;
+	bool passed = false;
+};
+
 RusanovProbeSummary RunRusanovUniform();
 RusanovProbeSummary RunRusanovPressurePulse();
 RusanovProbeSummary RunRusanovDensityAdvection();
 RusanovProbeSummary RunRusanovContactDiscontinuity();
 RusanovProbeSummary RunRusanovNearVacuumExpansion();
 RusanovProbeSummary RunRusanovSodShockTube();
+RusanovRefinementSummary RunRusanovDensityAdvectionRefinement();
 bool WriteRusanovUniformProbe(std::ostream &output);
 bool WriteRusanovPressurePulseProbe(std::ostream &output);
 bool WriteRusanovDensityAdvectionProbe(std::ostream &output);
 bool WriteRusanovContactDiscontinuityProbe(std::ostream &output);
 bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output);
 bool WriteRusanovSodShockTubeProbe(std::ostream &output);
+bool WriteRusanovDensityAdvectionRefinementProbe(std::ostream &output);
 
 } // namespace omni::atmospherebench
