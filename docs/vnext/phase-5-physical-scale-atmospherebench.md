@@ -5,13 +5,13 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_COMMIT=pending
-STATUS=IN_PROGRESS_SCAFFOLD_VALIDATED_DIRTY_SOURCE
+IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
+STATUS=IN_PROGRESS_SCAFFOLD_CLEAN_VALIDATED
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
-LOCAL_AHEAD_BEHIND=218_0
+LOCAL_ENTRY_AHEAD_BEHIND=218_0
 PRODUCTION_SIMULATION_CHANGE=false
 SAVE_FORMAT_CHANGE=false
 LUA_CHANGE=false
@@ -23,8 +23,9 @@ CANDIDATE_SOLVERS_IMPLEMENTED=0
 TARGETED_TESTS=GREEN_24_24
 PYTHON_DISCOVERY=GREEN_409_TOTAL_407_PASS_2_SKIPPED
 MESON_STATIC=GREEN_43_43
-STRICT_FP_TARGET=GREEN_NO_LEGACY_FAST_MATH
-CLEAN_ARTIFACT=PENDING_IMPLEMENTATION_CHECKPOINT
+STRICT_FP_TARGET=GREEN_GNU_NO_LEGACY_FAST_MATH_MSVC_CONTRACT_NOT_EXECUTED
+CLEAN_ARTIFACT=GREEN_CONTRACT_ONLY_a21eafba3
+CLEAN_SOURCE_PACKAGE=GREEN_1300_FILES_NO_TEST_ASSETS
 V1_0_5_GATE=IN_PROGRESS
 ```
 
@@ -77,14 +78,17 @@ that registry. No property value or runtime consumer is introduced.
 ## AtmosphereBench scaffold
 
 The standalone C++20 target does not include or link Air, Simulation, Particle,
-GameSave, Lua, SDL, rendering, or any production library. Even in a `legacy_fast`
-build tree, its compile commands use:
+GameSave, Lua, SDL, rendering, or any production library. In the validated GNU
+`legacy_fast` build tree, its compile commands use:
 
 ```text
 -fno-fast-math
 -fno-unsafe-math-optimizations
 -ffp-contract=off
 ```
+
+The MSVC `/fp:strict` target branch is source-contract tested but not executed in
+this checkpoint; it remains `NOT_TESTED` rather than a cross-compiler claim.
 
 It currently provides only the contracts required before a solver plugin:
 
@@ -110,20 +114,48 @@ executes only the standalone contract tool, and writes ignored provenance/result
 artifacts under `artifacts/vnext-atmospherebench/`. It cannot launch the game client
 or claim a performance gate.
 
+## Clean checkpoint evidence
+
+Implementation checkpoint `a21eafba3` was built from a clean worktree. The default
+Meson build completed all **80/80** targets. The runner rebuilt and then resolved
+the unique `atmospherebench@exe` target itself; its local, ignored result is
+`artifacts/vnext-atmospherebench/20260810T125117Z-7e2e68be/result.json` and records:
+
+```text
+source_commit=a21eafba301a6e02a94f81cf6da46961ec72d3cd
+source_dirty=false
+strict_reference_mode=gnu_strict
+result_status=contract_only
+performance_gate=not_evaluated_contract_only
+```
+
+The actual test-free source archive passed at the same source checkpoint. It has
+1,300 source entries plus its manifest, includes every required 1.0.5 member, and
+contains no test asset. Its local ignored SHA-256 is:
+
+```text
+29ADC7015045B38C5DE403B88D2B62322178142995E17133A6DF21B8655D45DE
+```
+
+at `artifacts/vnext-phase5-source-a21eafba3/`. No production source changed, so
+the prior Legacy save/Lua/runtime evidence remains applicable; this scaffold does
+not claim a new GUI or runtime exercise.
+
 ## Validation and current gate
 
 - Targeted PhysicalScale/AtmosphereBench/runner tests: **24/24 PASS**.
 - Full Python discovery: **409 total**, **407 PASS**, **2 declared skips**.
 - Meson static suite: **43/43 PASS**, including `physical-scale-contract` and
   `atmospherebench-contract`.
+- Clean default Meson build: **80/80 PASS**.
 - Standalone compile and self-test: **PASS**.
 - Production-boundary scan: zero consumers in `src/`.
 - Source-package contract: the candidate data, validator, runner and three C++
   files are required and cannot be silently filtered from a clean archive.
 
-These results are currently from a dirty implementation worktree. The next
-checkpoint must commit the scaffold, rerun on clean source, generate the first
-contract-only artifact, and receive an independent diff review.
+An independent final review found no remaining P1/P2 issues and approved the
+isolated scaffold checkpoint only. It did not approve solver selection or production
+integration.
 
 `V1_0_5_GATE=IN_PROGRESS`. The next implementation may add the shared grid/case/
 result contracts and one first-order Rusanov plugin, but must keep Rusanov, HLLE,
