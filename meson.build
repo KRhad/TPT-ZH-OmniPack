@@ -746,6 +746,14 @@ test(
 	timeout: 60,
 )
 
+test(
+	'atmospherebench-rusanov-low-mach-advection',
+	atmospherebench,
+	args: [ '--run-rusanov-low-mach-advection' ],
+	suite: 'static',
+	timeout: 60,
+)
+
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),

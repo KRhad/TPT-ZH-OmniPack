@@ -15,6 +15,8 @@ param(
 
     [switch] $RunRusanovDensityAdvectionRefinement,
 
+    [switch] $RunRusanovLowMachAdvection,
+
     [Parameter(Mandatory = $true)]
     [string] $BuildDirectory,
 
@@ -200,16 +202,19 @@ $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 
 if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection,
 		$RunRusanovContactDiscontinuity, $RunRusanovNearVacuumExpansion,
-		$RunRusanovSodShockTube, $RunRusanovDensityAdvectionRefinement) |
+		$RunRusanovSodShockTube, $RunRusanovDensityAdvectionRefinement,
+		$RunRusanovLowMachAdvection) |
         Where-Object { $_ }).Count -gt 1) {
     throw "Select only one AtmosphereBench run mode"
 }
 $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunRusanovDensityAdvection -or $RunRusanovContactDiscontinuity `
 	-or $RunRusanovNearVacuumExpansion -or $RunRusanovSodShockTube `
-	-or $RunRusanovDensityAdvectionRefinement
+	-or $RunRusanovDensityAdvectionRefinement -or $RunRusanovLowMachAdvection
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
-$runMode = if ($RunRusanovDensityAdvectionRefinement) {
+$runMode = if ($RunRusanovLowMachAdvection) {
+	"rusanov_low_mach_advection"
+} elseif ($RunRusanovDensityAdvectionRefinement) {
 	"rusanov_density_advection_refinement"
 } elseif ($RunRusanovSodShockTube) {
 	"rusanov_sod_shock_tube"
@@ -226,7 +231,9 @@ $runMode = if ($RunRusanovDensityAdvectionRefinement) {
 } else {
 	"contract_uniform"
 }
-$runArgument = if ($RunRusanovDensityAdvectionRefinement) {
+$runArgument = if ($RunRusanovLowMachAdvection) {
+	"--run-rusanov-low-mach-advection"
+} elseif ($RunRusanovDensityAdvectionRefinement) {
 	"--run-rusanov-density-advection-refinement"
 } elseif ($RunRusanovSodShockTube) {
 	"--run-rusanov-sod-shock-tube"
@@ -259,7 +266,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
-    "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_probes|solver_implemented=true",
+    "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -581,7 +588,7 @@ if (-not $isRusanovProbe) {
         $boundaryMomentumXExchange -le 0.0) {
         throw "Rusanov Sod wall-pressure impulse was not recorded"
     }
-} else {
+} elseif ($RunRusanovDensityAdvectionRefinement) {
     $benchmarkKind = "atmospherebench_rusanov_density_advection_refinement_probe"
     $performanceGate = "not_evaluated_candidate_probe"
     $timingScope = "standalone_rusanov_density_advection_refinement_probe"
@@ -634,6 +641,48 @@ if (-not $isRusanovProbe) {
     )) {
         if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-9) {
             throw "Rusanov refinement drift exceeds tolerance: $driftKey"
+        }
+    }
+} else {
+    $benchmarkKind = "atmospherebench_rusanov_low_mach_advection_probe"
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = "standalone_rusanov_low_mach_advection_probe"
+    $candidateImplementations = "fvm_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "Rusanov low-Mach probe must not claim solver selection"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "boundary_mode" = "periodic";
+        "grid_cells_x" = "128"; "grid_cells_y" = "1"; "grid_cell_count" = "128";
+        "reference_shift_distance" = "0.125"; "moderate_velocity" = "0.5";
+        "low_velocity" = "0.05"; "very_low_velocity" = "0.005";
+        "moderate_steps" = "139"; "low_steps" = "1062"; "very_low_steps" = "10300";
+        "positivity_preserved" = "true"; "state_evolved" = "true";
+        "numerical_correction_count" = "0"; "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "Rusanov low-Mach contract drifted: $($probeKey.Key)"
+        }
+    }
+    foreach ($metricKey in @(
+        "moderate_nominal_mach", "low_nominal_mach", "very_low_nominal_mach",
+        "moderate_density_l1_error", "low_density_l1_error", "very_low_density_l1_error",
+        "moderate_total_variation_ratio", "low_total_variation_ratio", "very_low_total_variation_ratio",
+        "low_to_moderate_l1_ratio", "very_low_to_moderate_l1_ratio"
+    )) {
+        $metric = [double](Read-KeyValue -Text $text -Key $metricKey)
+        if ([double]::IsNaN($metric) -or [double]::IsInfinity($metric)) {
+            throw "Rusanov low-Mach metric is non-finite: $metricKey"
+        }
+    }
+    if ([double](Read-KeyValue -Text $text -Key "very_low_density_l1_error") -le
+        [double](Read-KeyValue -Text $text -Key "moderate_density_l1_error")) {
+        throw "Rusanov low-Mach characterization did not expose increasing diffusion"
+    }
+    foreach ($cflKey in @("moderate_maximum_cfl", "low_maximum_cfl", "very_low_maximum_cfl")) {
+        $cfl = [double](Read-KeyValue -Text $text -Key $cflKey)
+        if ([double]::IsNaN($cfl) -or [double]::IsInfinity($cfl) -or $cfl -le 0.0 -or $cfl -gt 1.0) {
+            throw "Rusanov low-Mach CFL is outside the strict positivity contract: $cflKey"
         }
     }
 }
@@ -710,6 +759,18 @@ $mediumToFineL1Order = $null
 $coarseMaximumCfl = $null
 $mediumMaximumCfl = $null
 $fineMaximumCfl = $null
+$moderateNominalMach = $null
+$lowNominalMach = $null
+$veryLowNominalMach = $null
+$moderateDensityL1Error = $null
+$lowDensityL1Error = $null
+$veryLowDensityL1Error = $null
+$moderateTotalVariationRatio = $null
+$lowTotalVariationRatio = $null
+$veryLowTotalVariationRatio = $null
+$lowToModerateL1Ratio = $null
+$veryLowToModerateL1Ratio = $null
+$lowMachSuitabilityPassed = $null
 if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
@@ -801,6 +862,28 @@ if ($isRusanovProbe) {
 		$coarseMaximumCfl = [double](Read-KeyValue -Text $text -Key "coarse_maximum_cfl")
 		$mediumMaximumCfl = [double](Read-KeyValue -Text $text -Key "medium_maximum_cfl")
 		$fineMaximumCfl = [double](Read-KeyValue -Text $text -Key "fine_maximum_cfl")
+	} elseif ($RunRusanovLowMachAdvection) {
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
+		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "maximum_pressure")
+		$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+		$stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+		$moderateNominalMach = [double](Read-KeyValue -Text $text -Key "moderate_nominal_mach")
+		$lowNominalMach = [double](Read-KeyValue -Text $text -Key "low_nominal_mach")
+		$veryLowNominalMach = [double](Read-KeyValue -Text $text -Key "very_low_nominal_mach")
+		$moderateDensityL1Error = [double](Read-KeyValue -Text $text -Key "moderate_density_l1_error")
+		$lowDensityL1Error = [double](Read-KeyValue -Text $text -Key "low_density_l1_error")
+		$veryLowDensityL1Error = [double](Read-KeyValue -Text $text -Key "very_low_density_l1_error")
+		$moderateTotalVariationRatio = [double](Read-KeyValue -Text $text -Key "moderate_total_variation_ratio")
+		$lowTotalVariationRatio = [double](Read-KeyValue -Text $text -Key "low_total_variation_ratio")
+		$veryLowTotalVariationRatio = [double](Read-KeyValue -Text $text -Key "very_low_total_variation_ratio")
+		$lowToModerateL1Ratio = [double](Read-KeyValue -Text $text -Key "low_to_moderate_l1_ratio")
+		$veryLowToModerateL1Ratio = [double](Read-KeyValue -Text $text -Key "very_low_to_moderate_l1_ratio")
+		$lowMachSuitabilityText = Read-KeyValue -Text $text -Key "low_mach_suitability_passed"
+		if ($lowMachSuitabilityText -ne "true" -and $lowMachSuitabilityText -ne "false") {
+			throw "Rusanov low-Mach suitability result is invalid"
+		}
+		$lowMachSuitabilityPassed = $lowMachSuitabilityText -eq "true"
     }
 } else {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "state_density")
@@ -810,7 +893,9 @@ $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
 	"No HLLE, LBM, source-term, TPT wall-coupling, or multi-species candidate is implemented in this scaffold."
 )
-if ($RunRusanovDensityAdvectionRefinement) {
+if ($RunRusanovLowMachAdvection) {
+	$limitations += "Rusanov low-Mach characterization records the measured diffusion and suitability result; it is not an all-speed solver or production performance claim."
+} elseif ($RunRusanovDensityAdvectionRefinement) {
 	$limitations += "Rusanov has one three-level smooth-advection refinement study; it does not establish low-Mach, multidimensional, leak, source-term or production performance behavior."
 } elseif ($RunRusanovSodShockTube) {
 	$limitations += "Rusanov is limited to first-order strict-double 1D uniform, periodic wave/advection/contact/near-vacuum probes and one sealed Sod shock tube; this is not solver selection or production boundary evidence."
@@ -934,6 +1019,18 @@ $result = [ordered]@{
 		coarse_maximum_cfl = $coarseMaximumCfl
 		medium_maximum_cfl = $mediumMaximumCfl
 		fine_maximum_cfl = $fineMaximumCfl
+		moderate_nominal_mach = $moderateNominalMach
+		low_nominal_mach = $lowNominalMach
+		very_low_nominal_mach = $veryLowNominalMach
+		moderate_density_l1_error = $moderateDensityL1Error
+		low_density_l1_error = $lowDensityL1Error
+		very_low_density_l1_error = $veryLowDensityL1Error
+		moderate_total_variation_ratio = $moderateTotalVariationRatio
+		low_total_variation_ratio = $lowTotalVariationRatio
+		very_low_total_variation_ratio = $veryLowTotalVariationRatio
+		low_to_moderate_l1_ratio = $lowToModerateL1Ratio
+		very_low_to_moderate_l1_ratio = $veryLowToModerateL1Ratio
+		low_mach_suitability_passed = $lowMachSuitabilityPassed
         mass_drift = [double](Read-KeyValue -Text $text -Key "mass_drift")
         momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
         momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")

@@ -54,6 +54,20 @@ struct RusanovRefinementSummary
 	bool passed = false;
 };
 
+struct RusanovLowMachSummary
+{
+	RusanovProbeSummary moderateMach;
+	RusanovProbeSummary lowMach;
+	RusanovProbeSummary veryLowMach;
+	double moderateNominalMach = 0.0;
+	double lowNominalMach = 0.0;
+	double veryLowNominalMach = 0.0;
+	double lowToModerateL1Ratio = 0.0;
+	double veryLowToModerateL1Ratio = 0.0;
+	bool suitabilityPassed = false;
+	bool passed = false;
+};
+
 RusanovProbeSummary RunRusanovUniform();
 RusanovProbeSummary RunRusanovPressurePulse();
 RusanovProbeSummary RunRusanovDensityAdvection();
@@ -61,6 +75,7 @@ RusanovProbeSummary RunRusanovContactDiscontinuity();
 RusanovProbeSummary RunRusanovNearVacuumExpansion();
 RusanovProbeSummary RunRusanovSodShockTube();
 RusanovRefinementSummary RunRusanovDensityAdvectionRefinement();
+RusanovLowMachSummary RunRusanovLowMachAdvection();
 bool WriteRusanovUniformProbe(std::ostream &output);
 bool WriteRusanovPressurePulseProbe(std::ostream &output);
 bool WriteRusanovDensityAdvectionProbe(std::ostream &output);
@@ -68,5 +83,6 @@ bool WriteRusanovContactDiscontinuityProbe(std::ostream &output);
 bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output);
 bool WriteRusanovSodShockTubeProbe(std::ostream &output);
 bool WriteRusanovDensityAdvectionRefinementProbe(std::ostream &output);
+bool WriteRusanovLowMachAdvectionProbe(std::ostream &output);
 
 } // namespace omni::atmospherebench
