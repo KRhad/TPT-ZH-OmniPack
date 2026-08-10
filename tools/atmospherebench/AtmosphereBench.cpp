@@ -162,7 +162,7 @@ const std::array<CandidateDescriptor, 4> &Candidates()
 	static const std::array<CandidateDescriptor, 4> candidates{{
 		{CandidateKind::LegacyLike, "legacy_like", "control_only", false},
 		{CandidateKind::RusanovFvm, "fvm_rusanov",
-			"implemented_1d_periodic_uniform_and_pressure_pulse_probes", true},
+			"implemented_1d_periodic_uniform_pressure_pulse_density_advection_probes", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
 	}};
@@ -206,6 +206,7 @@ bool RunSelfTest(std::ostream &output)
 	const auto uniformResult = MakeUniformContractResult();
 	const auto rusanov = RunRusanovUniform();
 	const auto rusanovPressurePulse = RunRusanovPressurePulse();
+	const auto rusanovDensityAdvection = RunRusanovDensityAdvection();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
 	NumericalCorrectionLedger nonEmptyCorrections;
@@ -232,6 +233,7 @@ bool RunSelfTest(std::ostream &output)
 		onlyRusanovImplemented = onlyRusanovImplemented && candidate.solverImplemented == expected;
 	}
 	const bool result = ok && rusanov.passed && rusanovPressurePulse.passed
+		&& rusanovDensityAdvection.passed
 		&& onlyRusanovImplemented;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
 	output << "PHYSICAL_SCALE_SELECTION=UNSELECTED\n";
@@ -240,6 +242,8 @@ bool RunSelfTest(std::ostream &output)
 	output << "RUSANOV_UNIFORM_PROBE=" << (rusanov.passed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_PRESSURE_PULSE_PROBE="
 		<< (rusanovPressurePulse.passed ? "PASS" : "FAIL") << '\n';
+	output << "RUSANOV_DENSITY_ADVECTION_PROBE="
+		<< (rusanovDensityAdvection.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";
 	return result;
 }
