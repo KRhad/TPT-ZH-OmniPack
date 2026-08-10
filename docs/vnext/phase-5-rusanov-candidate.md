@@ -16,14 +16,15 @@ DENSITY_ADVECTION_IMPLEMENTATION_COMMIT=0ee4b756176413c4261f74c3b6a6bbcb4298eae8
 CONTACT_IMPLEMENTATION_COMMIT=68bcc74a5574ee1fc9240576c04a31a8f9335484
 NEAR_VACUUM_IMPLEMENTATION_COMMIT=54b3060ab996b6387e5aaf11283eaea1bb9e8faa
 SOD_IMPLEMENTATION_COMMIT=588d38d32ec4904118e741e5f5f614c69b8de3de
-STATUS=IN_PROGRESS_RUSANOV_SOD_CLEAN_VALIDATED
+REFINEMENT_IMPLEMENTATION_COMMIT=d541c2c2e9809691d625294e918c46009cd4a651
+STATUS=IN_PROGRESS_RUSANOV_REFINEMENT_CLEAN_VALIDATED
 BRANCH=integration/omnicore-vnext
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
 ATMOSPHERE_SOLVER_SELECTED=false
 CANDIDATES_REGISTERED=4
 CANDIDATE_SOLVERS_IMPLEMENTED=1
-RUSANOV_SCOPE=1D_UNIFORM_PRESSURE_PULSE_DENSITY_ADVECTION_CONTACT_NEAR_VACUUM_SOD_DEBUG_PROBES_ONLY
+RUSANOV_SCOPE=1D_UNIFORM_PRESSURE_PULSE_DENSITY_ADVECTION_CONTACT_NEAR_VACUUM_SOD_REFINEMENT_DEBUG_PROBES_ONLY
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
 PRODUCTION_INTEGRATION=false
@@ -72,7 +73,8 @@ These probes are debugging floors. The contact probe exposes expected first-orde
 Rusanov diffusion but does not establish grid convergence. The near-vacuum case
 establishes one positive, conservative synthetic density/pressure-ratio run with no
 floor correction; it is not a production-vacuum model or a parameter sweep. The set
-still does not establish grid convergence, low-Mach, leak, source-term,
+The smooth-advection refinement case establishes first-order convergence over one
+three-level test. The set still does not establish low-Mach, leak, source-term,
 multi-species or production performance behavior.
 
 ## Clean evidence
@@ -108,6 +110,40 @@ numerical_correction_count=0
 state_bytes_per_cell=32
 state_and_flux_scratch_bytes_per_cell=96
 probe_passed=true
+```
+
+## Smooth-advection refinement evidence
+
+The three-level refinement probe was clean-run from `d541c2c2e`. It keeps the
+unit domain, `t=0.25`, `u=0.5`, and nondimensional CFL policy fixed while doubling
+resolution from 64 to 128 to 256 cells. The analytic periodic shifts are exactly
+8, 16 and 32 cells. The observed L1 orders are checked against a published
+first-order window of `0.8..1.2`.
+
+```text
+artifacts/vnext-atmospherebench/20260810T181559Z-940bf354/result.json
+result_sha256=C433628882B6C25999C9B8C5AE17AB4120BCE7EBCF4EC8906CC962D456776306
+benchmark_kind=atmospherebench_rusanov_density_advection_refinement_probe
+performance_gate=not_evaluated_candidate_probe
+```
+
+Measured values:
+
+```text
+cells=64,128,256
+steps=64,128,256
+total_simulated_time=0.25
+reference_shift_cells=8,16,32
+density_l1_error=0.0159718,0.00824503,0.00418803
+density_linf_error=0.0264754,0.0138321,0.00707776
+coarse_to_medium_l1_order=0.95393
+medium_to_fine_l1_order=0.977252
+maximum_cfl=0.48579,0.48583,0.485841
+fine_mass_drift=4.26326e-13
+fine_energy_drift=-4.54747e-13
+pressure_linf_error<=6.66134e-16
+numerical_correction_count=0
+refinement_passed=true
 ```
 
 ## Sod shock-tube evidence
@@ -316,26 +352,26 @@ probe_passed=true
 
 ## Validation
 
-- Full default Meson build: `80/80` targets passed.
-- Meson static suite: `49/49` passed, including all six Rusanov probes.
+- Full default Meson build: `82/82` build steps passed.
+- Meson static suite: `50/50` passed, including all seven Rusanov probes.
 - Python discovery: `414` tests, `412` passed, `2` declared skips.
 - Targeted AtmosphereBench/runner contract tests: `17/17` passed.
 - Windows PowerShell 5.1 runner parse and clean execution: passed.
-- Source package: `artifacts/vnext-phase5-source-588d38d32/`, `1304` zip
+- Source package: `artifacts/vnext-phase5-source-d541c2c2e/`, `1304` zip
   entries; all current Rusanov sources and runner are present; package SHA-256 is
-  `22C4106F9DFBB74AE992A89E6EEBBBCF6217E655E6214548140530856B35A3B7`.
+  `1F52F763F9219485C83DF45DB9B0D4053BDE7000550C65BF348004AA76E158E9`.
 - Production-consumer scan: no `src/` consumer of AtmosphereBench or Rusanov.
 
 ## Gate and next work
 
 This checkpoint is GREEN for the isolated Rusanov debug probe only. It is not a
 GREEN solver-selection gate. `V1_0_5_GATE` remains `IN_PROGRESS` because the
-grid-refinement/low-Mach evidence, leak/source accounting, accepted performance
+low-Mach evidence, leak/source accounting, accepted performance
 budget and physical-time policy are not established.
 
-The next permitted work is an isolated Rusanov grid-refinement/low-Mach study or
-leak probe with explicit boundary accounting. Do not add HLLE/LBM steps, select a
+The next permitted work is an isolated Rusanov low-Mach study or leak probe with
+explicit boundary accounting. Do not add HLLE/LBM steps, select a
 solver, or integrate production Atmosphere as part of this checkpoint.
 
-Rollback commit: `33995c685` restores the uniform, pressure-pulse, smooth
-density-advection, contact-discontinuity and near-vacuum Rusanov checkpoint.
+Rollback commit: `09aba043c` restores the uniform, pressure-pulse, smooth
+density-advection, contact-discontinuity, near-vacuum and Sod Rusanov checkpoint.

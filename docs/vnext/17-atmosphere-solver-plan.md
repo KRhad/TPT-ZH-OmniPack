@@ -10,7 +10,7 @@ it does not replace `Air.cpp` or alter saves/gameplay.
 
 The 1.0.5 scaffold registers the Legacy-like, Rusanov, HLLE and LBM names. The
 current isolated checkpoint implements only first-order strict-double Rusanov 1D
-uniform, periodic pressure-pulse/density-advection/contact/near-vacuum, and sealed Sod debug probes. Legacy-like remains a control
+uniform, periodic pressure-pulse/density-advection/contact/near-vacuum, sealed Sod, and smooth-advection refinement debug probes. Legacy-like remains a control
 registration; HLLE and LBM remain registered-only. These probes are not comparison
 evidence and do not select a solver.
 
