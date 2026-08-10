@@ -690,6 +690,14 @@ test(
 	timeout: 60,
 )
 
+test(
+	'atmospherebench-rusanov-uniform',
+	atmospherebench,
+	args: [ '--run-rusanov-uniform' ],
+	suite: 'static',
+	timeout: 60,
+)
+
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),

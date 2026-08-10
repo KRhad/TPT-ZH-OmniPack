@@ -174,6 +174,15 @@ bool WriteRusanovUniformProbe(std::ostream &output)
 	output << "minimum_energy_density=" << summary.minimumEnergyDensity << '\n';
 	output << "positivity_preserved=" << (summary.positivityPreserved ? "true" : "false") << '\n';
 	output << "numerical_correction_count=" << summary.corrections.eventCount << '\n';
+	output << "correction_mass_added=" << summary.corrections.massAdded << '\n';
+	output << "correction_mass_removed=" << summary.corrections.massRemoved << '\n';
+	output << "correction_momentum_x_added=" << summary.corrections.momentumXAdded << '\n';
+	output << "correction_momentum_y_added=" << summary.corrections.momentumYAdded << '\n';
+	output << "correction_energy_added=" << summary.corrections.energyAdded << '\n';
+	output << "correction_energy_removed=" << summary.corrections.energyRemoved << '\n';
+	output << "density_floor_hits=" << summary.corrections.densityFloorHits << '\n';
+	output << "pressure_floor_hits=" << summary.corrections.pressureFloorHits << '\n';
+	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
 	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
 	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
