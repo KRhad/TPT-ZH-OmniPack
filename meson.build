@@ -714,6 +714,14 @@ test(
 	timeout: 60,
 )
 
+test(
+	'atmospherebench-rusanov-contact-discontinuity',
+	atmospherebench,
+	args: [ '--run-rusanov-contact-discontinuity' ],
+	suite: 'static',
+	timeout: 60,
+)
+
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),

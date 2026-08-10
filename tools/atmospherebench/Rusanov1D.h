@@ -14,6 +14,7 @@ struct RusanovProbeSummary
 	NumericalCorrectionLedger corrections{};
 	double maximumCfl = 0.0;
 	double minimumDensity = 0.0;
+	double maximumDensity = 0.0;
 	double minimumPressure = 0.0;
 	double minimumEnergyDensity = 0.0;
 	double initialMaximumPressure = 0.0;
@@ -29,14 +30,17 @@ struct RusanovProbeSummary
 	bool stateEvolved = false;
 	bool pressurePeakReduced = false;
 	bool advectionReferencePassed = false;
+	bool densityBoundsPreserved = false;
 	bool passed = false;
 };
 
 RusanovProbeSummary RunRusanovUniform();
 RusanovProbeSummary RunRusanovPressurePulse();
 RusanovProbeSummary RunRusanovDensityAdvection();
+RusanovProbeSummary RunRusanovContactDiscontinuity();
 bool WriteRusanovUniformProbe(std::ostream &output);
 bool WriteRusanovPressurePulseProbe(std::ostream &output);
 bool WriteRusanovDensityAdvectionProbe(std::ostream &output);
+bool WriteRusanovContactDiscontinuityProbe(std::ostream &output);
 
 } // namespace omni::atmospherebench

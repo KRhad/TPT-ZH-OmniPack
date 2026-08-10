@@ -7,6 +7,8 @@ param(
 
     [switch] $RunRusanovDensityAdvection,
 
+    [switch] $RunRusanovContactDiscontinuity,
+
     [Parameter(Mandatory = $true)]
     [string] $BuildDirectory,
 
@@ -190,13 +192,17 @@ if (-not $gnuStrict -and -not $msvcStrict) {
 }
 $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 
-if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection) |
+if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection,
+        $RunRusanovContactDiscontinuity) |
         Where-Object { $_ }).Count -gt 1) {
     throw "Select only one AtmosphereBench run mode"
 }
-$isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse -or $RunRusanovDensityAdvection
+$isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
+    -or $RunRusanovDensityAdvection -or $RunRusanovContactDiscontinuity
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
-$runMode = if ($RunRusanovDensityAdvection) {
+$runMode = if ($RunRusanovContactDiscontinuity) {
+    "rusanov_contact_discontinuity"
+} elseif ($RunRusanovDensityAdvection) {
     "rusanov_density_advection"
 } elseif ($RunRusanovPressurePulse) {
     "rusanov_pressure_pulse"
@@ -205,7 +211,9 @@ $runMode = if ($RunRusanovDensityAdvection) {
 } elseif ($RunRusanovPressurePulse) {
     "contract_uniform"
 }
-$runArgument = if ($RunRusanovDensityAdvection) {
+$runArgument = if ($RunRusanovContactDiscontinuity) {
+    "--run-rusanov-contact-discontinuity"
+} elseif ($RunRusanovDensityAdvection) {
     "--run-rusanov-density-advection"
 } elseif ($RunRusanovPressurePulse) {
     "--run-rusanov-pressure-pulse"
@@ -230,7 +238,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
-    "candidate=fvm_rusanov|status=implemented_1d_periodic_uniform_pressure_pulse_density_advection_probes|solver_implemented=true",
+    "candidate=fvm_rusanov|status=implemented_1d_periodic_uniform_pressure_pulse_density_advection_contact_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -349,7 +357,7 @@ if (-not $isRusanovProbe) {
             throw "Rusanov pressure-pulse drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
-} else {
+} elseif ($RunRusanovDensityAdvection) {
     $benchmarkKind = "atmospherebench_rusanov_density_advection_probe"
     $performanceGate = "not_evaluated_candidate_probe"
     $timingScope = "standalone_rusanov_density_advection_probe"
@@ -394,6 +402,41 @@ if (-not $isRusanovProbe) {
             throw "Rusanov density-advection drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
+} else {
+    $benchmarkKind = "atmospherebench_rusanov_contact_discontinuity_probe"
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = "standalone_rusanov_contact_discontinuity_probe"
+    $candidateImplementations = "fvm_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "Rusanov contact probe must not claim solver selection"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "grid_cells_x" = "128";
+        "grid_cells_y" = "1"; "grid_cell_count" = "128"; "case_timestep" = "0.1";
+        "case_step_count" = "20"; "positivity_preserved" = "true";
+        "state_evolved" = "true"; "advection_reference_passed" = "true";
+        "density_bounds_preserved" = "true"; "reference_shift_cells" = "1";
+        "numerical_correction_count" = "0"; "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "Rusanov contact contract drifted: $($probeKey.Key)"
+        }
+    }
+    $maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
+    if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
+        $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+        throw "Rusanov contact CFL is outside the strict positivity contract"
+    }
+    if ([double](Read-KeyValue -Text $text -Key "density_l1_error") -gt 0.02 -or
+        [double](Read-KeyValue -Text $text -Key "density_linf_error") -gt 0.2 -or
+        [double](Read-KeyValue -Text $text -Key "pressure_linf_error") -gt 1e-10) {
+        throw "Rusanov contact reference error exceeds its published first-order tolerance"
+    }
+    foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-10) {
+            throw "Rusanov contact drift exceeds the periodic conservation tolerance: $driftKey"
+        }
+    }
 }
 $finalSourceState = Get-SourceState -Repository $sourceRoot -GitCommand $gitCommand
 if ($finalSourceState.Commit -ne $sourceState.Commit -or $finalSourceState.StateSha256 -ne $sourceState.StateSha256) {
@@ -413,6 +456,7 @@ if (Test-Path -LiteralPath $resultDirectory) {
 New-Item -ItemType Directory -Path $resultDirectory | Out-Null
 
 $stateDensity = $null
+$maximumDensity = $null
 $statePressure = $null
 $stateAndFluxScratchBytesPerCell = $null
 $initialMaximumPressure = $null
@@ -427,6 +471,7 @@ $totalVariationRatio = $null
 $referenceVelocity = $null
 $referenceShiftCells = $null
 $advectionReferencePassed = $null
+$densityBoundsPreserved = $null
 if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
@@ -447,6 +492,18 @@ if ($isRusanovProbe) {
         $referenceVelocity = [double](Read-KeyValue -Text $text -Key "reference_velocity")
         $referenceShiftCells = [int](Read-KeyValue -Text $text -Key "reference_shift_cells")
         $advectionReferencePassed = (Read-KeyValue -Text $text -Key "advection_reference_passed") -eq "true"
+    } elseif ($RunRusanovContactDiscontinuity) {
+        $maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
+        $stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+        $stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+        $densityL1Error = [double](Read-KeyValue -Text $text -Key "density_l1_error")
+        $densityLinfError = [double](Read-KeyValue -Text $text -Key "density_linf_error")
+        $pressureLinfError = [double](Read-KeyValue -Text $text -Key "pressure_linf_error")
+        $totalVariationRatio = [double](Read-KeyValue -Text $text -Key "total_variation_ratio")
+        $referenceVelocity = [double](Read-KeyValue -Text $text -Key "reference_velocity")
+        $referenceShiftCells = [int](Read-KeyValue -Text $text -Key "reference_shift_cells")
+        $advectionReferencePassed = (Read-KeyValue -Text $text -Key "advection_reference_passed") -eq "true"
+        $densityBoundsPreserved = (Read-KeyValue -Text $text -Key "density_bounds_preserved") -eq "true"
     }
 } else {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "state_density")
@@ -456,7 +513,9 @@ $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
     "No HLLE, LBM, source-term, boundary, or multi-species candidate is implemented in this scaffold."
 )
-if ($RunRusanovDensityAdvection) {
+if ($RunRusanovContactDiscontinuity) {
+    $limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform, pressure-pulse, density-advection and contact probes; this is not solver selection or production evidence."
+} elseif ($RunRusanovDensityAdvection) {
     $limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform, pressure-pulse and density-advection probes; this is not solver selection or production evidence."
 } elseif ($RunRusanovPressurePulse) {
     $limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform and pressure-pulse probes; this is not solver selection or production evidence."
@@ -518,6 +577,7 @@ $result = [ordered]@{
         state_bytes_per_cell = [int](Read-KeyValue -Text $text -Key "state_bytes_per_cell")
         state_and_flux_scratch_bytes_per_cell = $stateAndFluxScratchBytesPerCell
         density = $stateDensity
+        maximum_density = $maximumDensity
         pressure = $statePressure
         initial_maximum_pressure = $initialMaximumPressure
         final_maximum_pressure = $finalMaximumPressure
@@ -531,6 +591,7 @@ $result = [ordered]@{
         reference_velocity = $referenceVelocity
         reference_shift_cells = $referenceShiftCells
         advection_reference_passed = $advectionReferencePassed
+        density_bounds_preserved = $densityBoundsPreserved
         mass_drift = [double](Read-KeyValue -Text $text -Key "mass_drift")
         momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
         momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")

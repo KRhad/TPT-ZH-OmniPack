@@ -29,6 +29,12 @@ namespace
 	constexpr double DensityAdvectionVelocity = 0.5;
 	constexpr double DensityAdvectionAmplitude = 0.2;
 	constexpr double Pi = 3.141592653589793238462643383279502884;
+	constexpr std::size_t ContactCells = 128;
+	constexpr std::size_t ContactSteps = 20;
+	constexpr double ContactTimeStep = 0.1;
+	constexpr double ContactVelocity = 0.5;
+	constexpr double ContactLowDensity = 0.8;
+	constexpr double ContactHighDensity = 1.2;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -188,6 +194,7 @@ namespace
 		}
 
 		summary.minimumDensity = std::numeric_limits<double>::infinity();
+		summary.maximumDensity = 0.0;
 		summary.minimumPressure = std::numeric_limits<double>::infinity();
 		summary.minimumEnergyDensity = std::numeric_limits<double>::infinity();
 		summary.finalMaximumPressure = 0.0;
@@ -201,6 +208,7 @@ namespace
 				break;
 			}
 			summary.minimumDensity = std::min(summary.minimumDensity, primitive.density);
+			summary.maximumDensity = std::max(summary.maximumDensity, primitive.density);
 			summary.minimumPressure = std::min(summary.minimumPressure, primitive.pressure);
 			summary.minimumEnergyDensity = std::min(summary.minimumEnergyDensity, cell.totalEnergyDensity);
 			summary.finalMaximumPressure = std::max(summary.finalMaximumPressure, primitive.pressure);
@@ -217,6 +225,60 @@ namespace
 		if (finalCellsOutput)
 			*finalCellsOutput = cells;
 		return summary;
+	}
+
+	void EvaluateAdvectedDensity(
+		RusanovProbeSummary &summary,
+		const std::vector<ConservativeState> &initial,
+		const std::vector<ConservativeState> &final,
+		const IdealGasEOS &eos,
+		double referenceVelocity,
+		double densityL1Tolerance,
+		double densityLinfTolerance,
+		double minimumExpectedDensity,
+		double maximumExpectedDensity)
+	{
+		summary.referenceVelocity = referenceVelocity;
+		const double shiftReal = referenceVelocity * summary.benchmarkCase.timeStep
+			* static_cast<double>(summary.benchmarkCase.stepCount)
+			/ summary.benchmarkCase.grid.cellLength;
+		const auto shiftRounded = static_cast<long long>(std::llround(shiftReal));
+		const bool integralShift = std::abs(shiftReal - static_cast<double>(shiftRounded)) <= 1e-12
+			&& shiftRounded >= 0
+			&& static_cast<unsigned long long>(shiftRounded)
+				< static_cast<unsigned long long>(initial.size());
+		if (!integralShift || final.size() != initial.size() || initial.empty())
+			return;
+
+		summary.referenceShiftCells = static_cast<std::size_t>(shiftRounded);
+		double densityL1 = 0.0;
+		double densityLinf = 0.0;
+		double pressureLinf = 0.0;
+		for (std::size_t cell = 0; cell < final.size(); ++cell)
+		{
+			const auto referenceCell = initial[
+				(cell + initial.size() - summary.referenceShiftCells) % initial.size()];
+			const double densityError = std::abs(final[cell].density - referenceCell.density);
+			densityL1 += densityError;
+			densityLinf = std::max(densityLinf, densityError);
+			const auto primitive = eos.ToPrimitive(final[cell]);
+			if (primitive.valid)
+				pressureLinf = std::max(pressureLinf, std::abs(primitive.pressure - 1.0));
+		}
+		summary.densityL1Error = densityL1 / static_cast<double>(final.size());
+		summary.densityLinfError = densityLinf;
+		summary.pressureLinfError = pressureLinf;
+		const double initialVariation = DensityTotalVariation(initial);
+		const double finalVariation = DensityTotalVariation(final);
+		summary.totalVariationRatio = initialVariation > 0.0 ? finalVariation / initialVariation : 0.0;
+		summary.densityBoundsPreserved = summary.minimumDensity >= minimumExpectedDensity - 1e-12
+			&& summary.maximumDensity <= maximumExpectedDensity + 1e-12;
+		summary.advectionReferencePassed = summary.densityL1Error <= densityL1Tolerance
+			&& summary.densityLinfError <= densityLinfTolerance
+			&& summary.pressureLinfError <= 1e-10
+			&& summary.totalVariationRatio > 0.0
+			&& summary.totalVariationRatio <= 1.0 + 1e-10
+			&& summary.densityBoundsPreserved;
 	}
 }
 
@@ -267,44 +329,31 @@ RusanovProbeSummary RunRusanovDensityAdvection()
 			{DensityAdvectionCells, 1, CellLength, BoundaryMode::Periodic},
 			TimeDomain::NondimensionalContract, DensityAdvectionTimeStep, DensityAdvectionSteps},
 		initial, eos, true, false, 1e-10, &final);
-	summary.referenceVelocity = DensityAdvectionVelocity;
-	const double shiftReal = DensityAdvectionVelocity * DensityAdvectionTimeStep
-		* static_cast<double>(DensityAdvectionSteps) / CellLength;
-	const auto shiftRounded = static_cast<long long>(std::llround(shiftReal));
-	const bool integralShift = std::abs(shiftReal - static_cast<double>(shiftRounded)) <= 1e-12
-		&& shiftRounded >= 0
-		&& static_cast<unsigned long long>(shiftRounded)
-			< static_cast<unsigned long long>(DensityAdvectionCells);
-	if (integralShift && final.size() == initial.size())
+	EvaluateAdvectedDensity(summary, initial, final, eos, DensityAdvectionVelocity,
+		0.01, 0.02, 1.0 - DensityAdvectionAmplitude, 1.0 + DensityAdvectionAmplitude);
+	summary.passed = summary.passed && summary.advectionReferencePassed;
+	return summary;
+}
+
+RusanovProbeSummary RunRusanovContactDiscontinuity()
+{
+	const IdealGasEOS eos(Gamma, SpecificGasConstant);
+	std::vector<ConservativeState> initial(ContactCells);
+	for (std::size_t cell = 0; cell < ContactCells; ++cell)
 	{
-		summary.referenceShiftCells = static_cast<std::size_t>(shiftRounded);
-		double densityL1 = 0.0;
-		double densityLinf = 0.0;
-		double pressureLinf = 0.0;
-		for (std::size_t cell = 0; cell < final.size(); ++cell)
-		{
-			const auto referenceCell = initial[
-				(cell + DensityAdvectionCells - summary.referenceShiftCells) % DensityAdvectionCells];
-			const double densityError = std::abs(final[cell].density - referenceCell.density);
-			densityL1 += densityError;
-			densityLinf = std::max(densityLinf, densityError);
-			const auto primitive = eos.ToPrimitive(final[cell]);
-			if (!primitive.valid)
-				continue;
-			pressureLinf = std::max(pressureLinf, std::abs(primitive.pressure - 1.0));
-		}
-		summary.densityL1Error = densityL1 / static_cast<double>(final.size());
-		summary.densityLinfError = densityLinf;
-		summary.pressureLinfError = pressureLinf;
-		const double initialVariation = DensityTotalVariation(initial);
-		const double finalVariation = DensityTotalVariation(final);
-		summary.totalVariationRatio = initialVariation > 0.0 ? finalVariation / initialVariation : 0.0;
-		summary.advectionReferencePassed = summary.densityL1Error <= 0.01
-			&& summary.densityLinfError <= 0.02
-			&& summary.pressureLinfError <= 1e-10
-			&& summary.totalVariationRatio > 0.0
-			&& summary.totalVariationRatio <= 1.0 + 1e-10;
+		const double density = cell < ContactCells / 2
+			? ContactHighDensity
+			: ContactLowDensity;
+		initial[cell] = eos.FromPrimitive(density, ContactVelocity, 0.0, 1.0);
 	}
+	std::vector<ConservativeState> final;
+	auto summary = RunPeriodicProbe(
+		{"rusanov_contact_discontinuity_1d",
+			{ContactCells, 1, CellLength, BoundaryMode::Periodic},
+			TimeDomain::NondimensionalContract, ContactTimeStep, ContactSteps},
+		initial, eos, true, false, 1e-10, &final);
+	EvaluateAdvectedDensity(summary, initial, final, eos, ContactVelocity,
+		0.02, 0.2, ContactLowDensity, ContactHighDensity);
 	summary.passed = summary.passed && summary.advectionReferencePassed;
 	return summary;
 }
@@ -450,6 +499,68 @@ bool WriteRusanovDensityAdvectionProbe(std::ostream &output)
 	output << "momentum_y_drift=" << (final.momentumY - initial.momentumY) << '\n';
 	output << "energy_drift=" << (final.totalEnergyDensity - initial.totalEnergyDensity) << '\n';
 	output << "minimum_density=" << summary.minimumDensity << '\n';
+	output << "minimum_pressure=" << summary.minimumPressure << '\n';
+	output << "minimum_energy_density=" << summary.minimumEnergyDensity << '\n';
+	output << "state_change_l1=" << summary.stateChangeL1 << '\n';
+	output << "state_evolved=" << (summary.stateEvolved ? "true" : "false") << '\n';
+	output << "positivity_preserved=" << (summary.positivityPreserved ? "true" : "false") << '\n';
+	output << "numerical_correction_count=" << summary.corrections.eventCount << '\n';
+	output << "correction_mass_added=" << summary.corrections.massAdded << '\n';
+	output << "correction_mass_removed=" << summary.corrections.massRemoved << '\n';
+	output << "correction_momentum_x_added=" << summary.corrections.momentumXAdded << '\n';
+	output << "correction_momentum_y_added=" << summary.corrections.momentumYAdded << '\n';
+	output << "correction_energy_added=" << summary.corrections.energyAdded << '\n';
+	output << "correction_energy_removed=" << summary.corrections.energyRemoved << '\n';
+	output << "density_floor_hits=" << summary.corrections.densityFloorHits << '\n';
+	output << "pressure_floor_hits=" << summary.corrections.pressureFloorHits << '\n';
+	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
+	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
+	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	return summary.passed;
+}
+
+bool WriteRusanovContactDiscontinuityProbe(std::ostream &output)
+{
+	const auto summary = RunRusanovContactDiscontinuity();
+	const auto &initial = summary.ledger.initial;
+	const auto &final = summary.ledger.final;
+	output << "schema_version=1\n";
+	output << "case=" << summary.benchmarkCase.id << '\n';
+	output << "candidate=fvm_rusanov\n";
+	output << "candidate_solver_implemented=true\n";
+	output << "atmosphere_solver_selection=unselected\n";
+	output << "physical_scale_selection=unselected\n";
+	output << "result_status=candidate_result_not_selection\n";
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "grid_cells_x=" << summary.benchmarkCase.grid.cellsX << '\n';
+	output << "grid_cells_y=" << summary.benchmarkCase.grid.cellsY << '\n';
+	output << "grid_cell_count=" << summary.benchmarkCase.grid.CellCount() << '\n';
+	output << "case_timestep=" << summary.benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << summary.benchmarkCase.stepCount << '\n';
+	output << "maximum_cfl=" << summary.maximumCfl << '\n';
+	output << "reference_velocity=" << summary.referenceVelocity << '\n';
+	output << "reference_shift_cells=" << summary.referenceShiftCells << '\n';
+	output << "density_l1_error=" << summary.densityL1Error << '\n';
+	output << "density_linf_error=" << summary.densityLinfError << '\n';
+	output << "pressure_linf_error=" << summary.pressureLinfError << '\n';
+	output << "total_variation_ratio=" << summary.totalVariationRatio << '\n';
+	output << "density_bounds_preserved="
+		<< (summary.densityBoundsPreserved ? "true" : "false") << '\n';
+	output << "advection_reference_passed="
+		<< (summary.advectionReferencePassed ? "true" : "false") << '\n';
+	output << "initial_mass=" << initial.density << '\n';
+	output << "final_mass=" << final.density << '\n';
+	output << "mass_drift=" << (final.density - initial.density) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		final.momentumX - initial.momentumX,
+		final.momentumY - initial.momentumY
+	) << '\n';
+	output << "momentum_x_drift=" << (final.momentumX - initial.momentumX) << '\n';
+	output << "momentum_y_drift=" << (final.momentumY - initial.momentumY) << '\n';
+	output << "energy_drift=" << (final.totalEnergyDensity - initial.totalEnergyDensity) << '\n';
+	output << "minimum_density=" << summary.minimumDensity << '\n';
+	output << "maximum_density=" << summary.maximumDensity << '\n';
 	output << "minimum_pressure=" << summary.minimumPressure << '\n';
 	output << "minimum_energy_density=" << summary.minimumEnergyDensity << '\n';
 	output << "state_change_l1=" << summary.stateChangeL1 << '\n';
