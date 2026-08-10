@@ -1,4 +1,5 @@
 #include "AtmosphereBench.h"
+#include "Rusanov1D.h"
 
 #include <iostream>
 #include <string_view>
@@ -18,6 +19,8 @@ int main(int argc, char **argv)
 		WriteUniformScaffold(std::cout);
 		return 0;
 	}
-	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform]\n";
+	if (std::string_view(argv[1]) == "--run-rusanov-uniform")
+		return WriteRusanovUniformProbe(std::cout) ? 0 : 1;
+	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform|--run-rusanov-uniform]\n";
 	return 2;
 }

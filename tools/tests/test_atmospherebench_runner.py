@@ -20,6 +20,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn('"compile" "-C" $resolvedBuildDirectory "atmospherebench"', RUNNER)
         self.assertIn("build directory is configured from a different source root", RUNNER)
         self.assertIn("compile commands are not bound to current source", RUNNER)
+        self.assertIn("tools/atmospherebench/Rusanov1D.cpp", RUNNER)
         self.assertIn("rebuilt_before_measurement = $true", RUNNER)
         self.assertIn("source_root_verified = $true", RUNNER)
 
@@ -42,9 +43,20 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
 
     def test_runner_records_unselected_contract_only_status(self) -> None:
         self.assertIn("not_evaluated_contract_only", RUNNER)
-        self.assertIn("candidate_implementations = \"none\"", RUNNER)
+        self.assertIn("$candidateImplementations = \"none\"", RUNNER)
         self.assertIn("standalone_contract_uniform_no_solver_step", RUNNER)
         self.assertIn("artifacts/vnext-atmospherebench", RUNNER)
+
+    def test_runner_has_an_explicit_rusanov_probe_mode(self) -> None:
+        self.assertIn("[switch] $RunRusanovUniform", RUNNER)
+        self.assertIn("--run-rusanov-uniform", RUNNER)
+        self.assertIn("atmospherebench_rusanov_uniform_probe", RUNNER)
+        self.assertIn("not_evaluated_candidate_probe", RUNNER)
+        self.assertIn("candidate_implementations = $candidateImplementations", RUNNER)
+        self.assertIn("Rusanov probe must not claim solver selection", RUNNER)
+        self.assertIn("first-order strict-double 1D periodic uniform probe", RUNNER)
+        self.assertIn('candidate=fvm_hlle|status=registered_only|solver_implemented=false', RUNNER)
+        self.assertIn('candidate=lbm_d2q9|status=registered_only|solver_implemented=false', RUNNER)
 
     def test_runner_rejects_a_dimensional_or_stepped_scaffold_case(self) -> None:
         self.assertIn("must keep the shared case nondimensional", RUNNER)

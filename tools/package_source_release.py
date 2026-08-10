@@ -31,6 +31,8 @@ ALLOWED_TOOLS = {
     "tools/atmospherebench/AtmosphereBench.cpp",
     "tools/atmospherebench/AtmosphereBench.h",
     "tools/atmospherebench/main.cpp",
+    "tools/atmospherebench/Rusanov1D.cpp",
+    "tools/atmospherebench/Rusanov1D.h",
     "tools/build_release_font.py",
     "tools/element_registry_check.py",
     "tools/generate_content_menu_policy.py",
@@ -77,6 +79,8 @@ REQUIRED_MEMBERS = {
     "tools/atmospherebench/AtmosphereBench.cpp",
     "tools/atmospherebench/AtmosphereBench.h",
     "tools/atmospherebench/main.cpp",
+    "tools/atmospherebench/Rusanov1D.cpp",
+    "tools/atmospherebench/Rusanov1D.h",
 }
 FORBIDDEN_SUFFIXES = (
     ".debug",

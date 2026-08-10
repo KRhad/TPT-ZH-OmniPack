@@ -670,6 +670,7 @@ atmospherebench = executable(
 	'atmospherebench',
 	sources: files(
 		'tools/atmospherebench/AtmosphereBench.cpp',
+		'tools/atmospherebench/Rusanov1D.cpp',
 		'tools/atmospherebench/main.cpp',
 	),
 	cpp_args: atmospherebench_cpp_args,

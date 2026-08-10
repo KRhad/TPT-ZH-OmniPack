@@ -1,4 +1,5 @@
 #include "AtmosphereBench.h"
+#include "Rusanov1D.h"
 
 #include <cmath>
 #include <limits>
@@ -160,7 +161,7 @@ const std::array<CandidateDescriptor, 4> &Candidates()
 {
 	static const std::array<CandidateDescriptor, 4> candidates{{
 		{CandidateKind::LegacyLike, "legacy_like", "control_only", false},
-		{CandidateKind::RusanovFvm, "fvm_rusanov", "registered_only", false},
+		{CandidateKind::RusanovFvm, "fvm_rusanov", "implemented_1d_periodic_uniform_probe", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
 	}};
@@ -202,6 +203,7 @@ bool RunSelfTest(std::ostream &output)
 	const auto primitive = syntheticEos.ToPrimitive(state);
 	const auto &uniformCase = UniformContractCase();
 	const auto uniformResult = MakeUniformContractResult();
+	const auto rusanov = RunRusanovUniform();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
 	NumericalCorrectionLedger nonEmptyCorrections;
@@ -221,14 +223,18 @@ bool RunSelfTest(std::ostream &output)
 		&& uniformResult.IsContractOnly() && !invalidGrid.IsValid()
 		&& !invalidCase.IsValid() && !nonEmptyCorrections.IsEmpty()
 		&& nonEmptyCorrections.IsConsistent() && !uncountedCorrections.IsConsistent();
-	bool anySelected = false;
+	bool onlyRusanovImplemented = true;
 	for (const auto &candidate : candidates)
-		anySelected = anySelected || candidate.solverImplemented;
-	const bool result = ok && !anySelected;
+	{
+		const bool expected = candidate.kind == CandidateKind::RusanovFvm;
+		onlyRusanovImplemented = onlyRusanovImplemented && candidate.solverImplemented == expected;
+	}
+	const bool result = ok && rusanov.passed && onlyRusanovImplemented;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
 	output << "PHYSICAL_SCALE_SELECTION=UNSELECTED\n";
 	output << "ATMOSPHERE_SOLVER_SELECTION=UNSELECTED\n";
 	output << "CANDIDATE_COUNT=" << candidates.size() << '\n';
+	output << "RUSANOV_UNIFORM_PROBE=" << (rusanov.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";
 	return result;
 }

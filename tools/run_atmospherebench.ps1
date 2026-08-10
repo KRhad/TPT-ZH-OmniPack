@@ -1,6 +1,8 @@
 param(
     [string] $Executable,
 
+    [switch] $RunRusanovUniform,
+
     [Parameter(Mandatory = $true)]
     [string] $BuildDirectory,
 
@@ -132,6 +134,7 @@ if ($benchCommands.Count -lt 2) {
 }
 $expectedBenchSources = @(
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/AtmosphereBench.cpp")),
+    [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Rusanov1D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/main.cpp"))
 )
 $actualBenchSources = @($benchCommands | ForEach-Object {
@@ -175,28 +178,30 @@ if (-not $gnuStrict -and -not $msvcStrict) {
 $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
-$output = @(& $resolvedExecutable "--run-uniform" 2>&1)
+$runMode = if ($RunRusanovUniform) { "rusanov_uniform" } else { "contract_uniform" }
+$runArgument = if ($RunRusanovUniform) { "--run-rusanov-uniform" } else { "--run-uniform" }
+$output = @(& $resolvedExecutable $runArgument 2>&1)
 $exitCode = $LASTEXITCODE
 $timer.Stop()
 if ($exitCode -ne 0) {
-    throw "AtmosphereBench uniform contract run failed: exit_code=$exitCode output=$($output -join [Environment]::NewLine)"
+    throw "AtmosphereBench $runMode run failed: exit_code=$exitCode output=$($output -join [Environment]::NewLine)"
 }
 $text = $output -join [Environment]::NewLine
-if ((Read-KeyValue -Text $text -Key "result_status") -ne "contract_only") {
-    throw "AtmosphereBench scaffold must report result_status=contract_only"
+$candidateOutput = @(& $resolvedExecutable "--list-candidates" 2>&1)
+if ($LASTEXITCODE -ne 0) {
+    throw "AtmosphereBench candidate-list run failed: output=$($candidateOutput -join [Environment]::NewLine)"
 }
-if ((Read-KeyValue -Text $text -Key "case_time_domain") -ne "nondimensional_contract") {
-    throw "AtmosphereBench scaffold must keep the shared case nondimensional"
+$candidateText = $candidateOutput -join [Environment]::NewLine
+if ($candidateText -notmatch '(?m)^selection_status=unselected$') {
+    throw "AtmosphereBench candidate list must remain unselected"
 }
-if ((Read-KeyValue -Text $text -Key "case_timestep") -ne "1") {
-    throw "AtmosphereBench scaffold contract timestep drifted"
-}
-if ((Read-KeyValue -Text $text -Key "case_step_count") -ne "0") {
-    throw "AtmosphereBench scaffold must not claim a solver step"
-}
-foreach ($gridKey in @{ "grid_cells_x" = "4"; "grid_cells_y" = "3"; "grid_cell_count" = "12" }.GetEnumerator()) {
-    if ((Read-KeyValue -Text $text -Key $gridKey.Key) -ne $gridKey.Value) {
-        throw "AtmosphereBench shared grid contract drifted: $($gridKey.Key)"
+foreach ($candidateLine in @(
+    "candidate=fvm_rusanov|status=implemented_1d_periodic_uniform_probe|solver_implemented=true",
+    "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
+    "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
+)) {
+    if ($candidateText -notmatch [regex]::Escape($candidateLine)) {
+        throw "AtmosphereBench candidate registration drifted: $candidateLine"
     }
 }
 if ((Read-KeyValue -Text $text -Key "physical_scale_selection") -ne "unselected") {
@@ -205,17 +210,72 @@ if ((Read-KeyValue -Text $text -Key "physical_scale_selection") -ne "unselected"
 if ((Read-KeyValue -Text $text -Key "atmosphere_solver_selection") -ne "unselected") {
     throw "AtmosphereBench selected a solver unexpectedly"
 }
-if ((Read-KeyValue -Text $text -Key "eos_fixture") -ne "synthetic_nondimensional") {
-    throw "AtmosphereBench uniform contract used an unreviewed EOS fixture"
-}
-foreach ($ledgerKey in @(
-    "mass_drift", "momentum_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift",
-    "numerical_correction_count", "correction_mass_added", "correction_mass_removed",
-    "correction_momentum_x_added", "correction_momentum_y_added", "correction_energy_added",
-    "correction_energy_removed", "density_floor_hits", "pressure_floor_hits", "correction_event_count"
-)) {
-    if ((Read-KeyValue -Text $text -Key $ledgerKey) -ne "0") {
-        throw "Uniform contract expected $ledgerKey=0"
+$candidateImplementations = "none"
+$benchmarkKind = "atmospherebench_contract_uniform"
+$performanceGate = "not_evaluated_contract_only"
+$timingScope = "standalone_contract_uniform_no_solver_step"
+$solverResultStatus = Read-KeyValue -Text $text -Key "result_status"
+if (-not $RunRusanovUniform) {
+    if ($solverResultStatus -ne "contract_only") {
+        throw "AtmosphereBench scaffold must report result_status=contract_only"
+    }
+    if ((Read-KeyValue -Text $text -Key "case_time_domain") -ne "nondimensional_contract") {
+        throw "AtmosphereBench scaffold must keep the shared case nondimensional"
+    }
+    if ((Read-KeyValue -Text $text -Key "case_timestep") -ne "1") {
+        throw "AtmosphereBench scaffold contract timestep drifted"
+    }
+    if ((Read-KeyValue -Text $text -Key "case_step_count") -ne "0") {
+        throw "AtmosphereBench scaffold must not claim a solver step"
+    }
+    foreach ($gridKey in @{ "grid_cells_x" = "4"; "grid_cells_y" = "3"; "grid_cell_count" = "12" }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $gridKey.Key) -ne $gridKey.Value) {
+            throw "AtmosphereBench shared grid contract drifted: $($gridKey.Key)"
+        }
+    }
+    if ((Read-KeyValue -Text $text -Key "eos_fixture") -ne "synthetic_nondimensional") {
+        throw "AtmosphereBench uniform contract used an unreviewed EOS fixture"
+    }
+    foreach ($ledgerKey in @(
+        "mass_drift", "momentum_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift",
+        "numerical_correction_count", "correction_mass_added", "correction_mass_removed",
+        "correction_momentum_x_added", "correction_momentum_y_added", "correction_energy_added",
+        "correction_energy_removed", "density_floor_hits", "pressure_floor_hits", "correction_event_count"
+    )) {
+        if ((Read-KeyValue -Text $text -Key $ledgerKey) -ne "0") {
+            throw "Uniform contract expected $ledgerKey=0"
+        }
+    }
+} else {
+    $benchmarkKind = "atmospherebench_rusanov_uniform_probe"
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = "standalone_rusanov_uniform_probe"
+    $candidateImplementations = "fvm_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "Rusanov probe must not claim solver selection"
+    }
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_rusanov" -or
+        (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+        throw "Rusanov probe candidate identity is invalid"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "grid_cells_x" = "64";
+        "grid_cells_y" = "1"; "grid_cell_count" = "64"; "case_timestep" = "0.05";
+        "case_step_count" = "16"; "positivity_preserved" = "true";
+        "numerical_correction_count" = "0"; "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "Rusanov probe contract drifted: $($probeKey.Key)"
+        }
+    }
+    $maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
+    if (-not [double]::IsFinite($maximumCfl) -or $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+        throw "Rusanov probe CFL is outside the strict positivity contract"
+    }
+    foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-12) {
+            throw "Rusanov probe drift exceeds the periodic conservation tolerance: $driftKey"
+        }
     }
 }
 $finalSourceState = Get-SourceState -Repository $sourceRoot -GitCommand $gitCommand
@@ -235,11 +295,32 @@ if (Test-Path -LiteralPath $resultDirectory) {
 }
 New-Item -ItemType Directory -Path $resultDirectory | Out-Null
 
+$stateDensity = $null
+$statePressure = $null
+$stateAndFluxScratchBytesPerCell = $null
+if ($RunRusanovUniform) {
+    $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
+    $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
+    $stateAndFluxScratchBytesPerCell = [int](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
+} else {
+    $stateDensity = [double](Read-KeyValue -Text $text -Key "state_density")
+    $statePressure = [double](Read-KeyValue -Text $text -Key "state_pressure")
+}
+$limitations = @(
+    "No production Air, Simulation, Particle, Save, or Lua code is linked.",
+    "No HLLE, LBM, source-term, boundary, or multi-species candidate is implemented in this scaffold."
+)
+if ($RunRusanovUniform) {
+    $limitations += "Rusanov is limited to a first-order strict-double 1D periodic uniform probe; this is not solver selection or production evidence."
+} else {
+    $limitations += "This result is a contract artifact, not solver-performance or physical-time evidence."
+}
+
 $result = [ordered]@{
     schema_version = 1
-    benchmark_kind = "atmospherebench_contract_uniform"
+    benchmark_kind = $benchmarkKind
     benchmark_execution_status = "PASS"
-    performance_gate = "not_evaluated_contract_only"
+    performance_gate = $performanceGate
     source = [ordered]@{
         commit = $sourceState.Commit
         dirty = $sourceState.Dirty
@@ -273,8 +354,8 @@ $result = [ordered]@{
     }
     solver = [ordered]@{
         selection_status = "unselected"
-        result_status = Read-KeyValue -Text $text -Key "result_status"
-        candidate_implementations = "none"
+        result_status = $solverResultStatus
+        candidate_implementations = $candidateImplementations
     }
     case = [ordered]@{
         id = Read-KeyValue -Text $text -Key "case"
@@ -285,8 +366,9 @@ $result = [ordered]@{
         grid_cells_y = [int](Read-KeyValue -Text $text -Key "grid_cells_y")
         grid_cell_count = [int](Read-KeyValue -Text $text -Key "grid_cell_count")
         state_bytes_per_cell = [int](Read-KeyValue -Text $text -Key "state_bytes_per_cell")
-        density = [double](Read-KeyValue -Text $text -Key "state_density")
-        pressure = [double](Read-KeyValue -Text $text -Key "state_pressure")
+        state_and_flux_scratch_bytes_per_cell = $stateAndFluxScratchBytesPerCell
+        density = $stateDensity
+        pressure = $statePressure
         mass_drift = [double](Read-KeyValue -Text $text -Key "mass_drift")
         momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
         momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")
@@ -307,13 +389,9 @@ $result = [ordered]@{
     }
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
-        timing_scope = "standalone_contract_uniform_no_solver_step"
+        timing_scope = $timingScope
     }
-    limitations = @(
-        "No production Air, Simulation, Particle, Save, or Lua code is linked.",
-        "No FVM, LBM, source-term, boundary, or multi-species candidate is implemented in this scaffold.",
-        "This result is a contract artifact, not solver-performance or physical-time evidence."
-    )
+    limitations = $limitations
 }
 $utf8 = [System.Text.UTF8Encoding]::new($false)
 [System.IO.File]::WriteAllText((Join-Path $resultDirectory "stdout.txt"), $text + [Environment]::NewLine, $utf8)
@@ -324,5 +402,5 @@ Write-Output "source_commit=$($sourceState.Commit)"
 Write-Output "source_dirty=false"
 Write-Output "physical_scale_selection=unselected"
 Write-Output "atmosphere_solver_selection=unselected"
-Write-Output "performance_gate=not_evaluated_contract_only"
+Write-Output "performance_gate=$performanceGate"
 Write-Output "result_json=$(Join-Path $resultDirectory 'result.json')"

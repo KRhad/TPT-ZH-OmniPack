@@ -33,9 +33,10 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             with self.subTest(needle=needle):
                 self.assertNotIn(needle, text)
         includes = re.findall(r'^#include "([^"]+)"', text, flags=re.MULTILINE)
-        self.assertEqual(includes, ["AtmosphereBench.h", "AtmosphereBench.h"])
+        self.assertEqual(includes.count("AtmosphereBench.h"), 2)
+        self.assertEqual(includes.count("Rusanov1D.h"), 3)
 
-    def test_scaffold_has_explicit_strict_fp_target_and_no_solver_selection(self) -> None:
+    def test_bench_has_explicit_strict_fp_target_and_only_rusanov_candidate(self) -> None:
         meson = (ROOT / "meson.build").read_text(encoding="utf-8")
         self.assertIn("atmospherebench", meson)
         self.assertIn("-fno-fast-math", meson)
@@ -48,9 +49,26 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertNotIn("sta_libs['simulation']", target)
         source = (BENCH_ROOT / "AtmosphereBench.cpp").read_text(encoding="utf-8")
         self.assertIn('"registered_only"', source)
+        self.assertIn('"implemented_1d_periodic_uniform_probe"', source)
+        self.assertIn("RUSANOV_UNIFORM_PROBE", source)
         self.assertIn("=UNSELECTED", source)
         self.assertIn("synthetic_nondimensional", source)
         self.assertNotIn("287.05", source)
+
+    def test_rusanov_candidate_is_strict_double_and_keeps_other_candidates_registered_only(self) -> None:
+        header = (BENCH_ROOT / "Rusanov1D.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "Rusanov1D.cpp").read_text(encoding="utf-8")
+        self.assertIn("RusanovProbeSummary", header)
+        self.assertIn("RunRusanovUniform", header)
+        self.assertIn("RusanovFluxX", source)
+        self.assertIn("maximumWaveSpeed", source)
+        self.assertIn("std::vector<ConservativeState>", source)
+        self.assertIn("BoundaryMode::Periodic", source)
+        self.assertIn("summary.ledger.Closes(1e-12)", source)
+        self.assertIn("summary.corrections.IsEmpty()", source)
+        atmosphere = (BENCH_ROOT / "AtmosphereBench.cpp").read_text(encoding="utf-8")
+        self.assertIn('"fvm_hlle", "registered_only", false', atmosphere)
+        self.assertIn('"lbm_d2q9", "registered_only", false', atmosphere)
 
     def test_cpp_scale_fixture_matches_the_unselected_json_candidate(self) -> None:
         candidate = json.loads(
@@ -100,6 +118,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/AtmosphereBench.cpp",
             "tools/atmospherebench/AtmosphereBench.h",
             "tools/atmospherebench/main.cpp",
+            "tools/atmospherebench/Rusanov1D.cpp",
+            "tools/atmospherebench/Rusanov1D.h",
         }
         required = tools | {"resources/omnicore/v1/physical-scale-candidates.json"}
         self.assertTrue(tools.issubset(package_tool.ALLOWED_TOOLS))
