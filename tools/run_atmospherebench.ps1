@@ -82,7 +82,7 @@ $buildSystemFilesPath = Join-Path $resolvedBuildDirectory "meson-info/intro-buil
 if (-not (Test-Path -LiteralPath $buildSystemFilesPath -PathType Leaf)) {
     throw "AtmosphereBench build-system provenance is missing: $buildSystemFilesPath"
 }
-$buildSystemFiles = @(Get-Content -LiteralPath $buildSystemFilesPath -Raw | ConvertFrom-Json)
+$buildSystemFiles = Get-Content -LiteralPath $buildSystemFilesPath -Raw | ConvertFrom-Json
 $expectedRootMeson = [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "meson.build"))
 $configuredForSource = $false
 foreach ($buildSystemFile in $buildSystemFiles) {
@@ -108,7 +108,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 try {
     $targetsText = $targetsOutput -join [Environment]::NewLine
-    $targets = @($targetsText | ConvertFrom-Json)
+    $targets = $targetsText | ConvertFrom-Json
 } catch {
     throw "AtmosphereBench Meson target metadata is invalid JSON: $($_.Exception.Message)"
 }

@@ -41,6 +41,8 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("SHA256Managed", RUNNER)
         self.assertIn("ComputeHash($bytes)", RUNNER)
         self.assertNotIn("SHA256]::HashData", RUNNER)
+        self.assertNotIn("$buildSystemFiles = @(", RUNNER)
+        self.assertNotIn("$targets = @($targetsText", RUNNER)
 
     def test_runner_rechecks_source_after_measurement(self) -> None:
         self.assertIn("$finalSourceState = Get-SourceState", RUNNER)
