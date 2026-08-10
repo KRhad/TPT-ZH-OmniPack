@@ -3,9 +3,9 @@
 ```text
 CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
-PHASE_STATUS=IN_PROGRESS_RUSANOV_CONTACT_CLEAN_VALIDATED
+PHASE_STATUS=IN_PROGRESS_RUSANOV_NEAR_VACUUM_CLEAN_VALIDATED
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=68bcc74a5574ee1fc9240576c04a31a8f9335484
+IMPLEMENTATION_HEAD=54b3060ab996b6387e5aaf11283eaea1bb9e8faa
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -36,9 +36,10 @@ V1_0_5_RUSANOV=GREEN_ISOLATED_STRICT_DOUBLE_UNIFORM_PROBE_BUILD_80_STATIC_44_TAR
 V1_0_5_RUSANOV_PRESSURE_PULSE=GREEN_ISOLATED_STRICT_DOUBLE_NONUNIFORM_128X1_64_STEP_PROBE_BUILD_80_STATIC_45_TARGETED_17_PYTHON_414_TOTAL_412_PASS_2_SKIPS_POSITIVE_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
 V1_0_5_RUSANOV_DENSITY_ADVECTION=GREEN_ISOLATED_STRICT_DOUBLE_128X1_EXACT_ONE_CELL_SHIFT_BUILD_80_STATIC_46_TARGETED_17_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_0_000543106_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
 V1_0_5_RUSANOV_CONTACT=GREEN_ISOLATED_STRICT_DOUBLE_128X1_EXACT_ONE_CELL_SHIFT_BUILD_80_STATIC_47_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_0_00923098_LINF_0_161912_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
+V1_0_5_RUSANOV_NEAR_VACUUM=GREEN_ISOLATED_STRICT_DOUBLE_128X1_DENSITY_1E_MINUS_6_PRESSURE_1E_MINUS_8_BUILD_80_STATIC_48_PYTHON_414_TOTAL_412_PASS_2_SKIPS_MASS_TRANSFER_POSITIVE_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
 KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget
 NEXT_VERSION=1.0.6
-NEXT_PHASE=extend only the strict-double Rusanov candidate with near-vacuum-expansion or Sod-shock evidence; keep HLLE and LBM registered-only
+NEXT_PHASE=extend only the strict-double Rusanov candidate with Sod-shock evidence; keep HLLE and LBM registered-only
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -67,7 +68,7 @@ Version 1.0.5 is now **IN_PROGRESS**. Its entry refresh found the official 100.1
 stable tag and master unchanged at `d768aeb89`, with zero upstream-only commits.
 The PhysicalScale/AtmosphereBench scaffold and shared contracts remain isolated.
 One first-order strict-double Rusanov debug candidate now has 1D periodic uniform,
-pressure-pulse, density-advection and contact-discontinuity probes, while HLLE and LBM remain registration-
+pressure-pulse, density-advection, contact-discontinuity and near-vacuum-expansion probes, while HLLE and LBM remain registration-
 only. All scale, time and solver selections remain unselected, and no production
 source consumes the bench. Details are in the [1.0.5 scaffold report](../vnext/phase-5-physical-scale-atmospherebench.md)
 and the [Rusanov candidate checkpoint](../vnext/phase-5-rusanov-candidate.md).

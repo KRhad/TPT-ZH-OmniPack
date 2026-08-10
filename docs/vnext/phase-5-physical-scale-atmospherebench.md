@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_RUSANOV_CONTACT_CLEAN_VALIDATED
+STATUS=IN_PROGRESS_RUSANOV_NEAR_VACUUM_CLEAN_VALIDATED
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -36,6 +36,8 @@ RUSANOV_DENSITY_ADVECTION_COMMIT=0ee4b756176413c4261f74c3b6a6bbcb4298eae8
 RUSANOV_DENSITY_ADVECTION_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_128X1_EXACT_ONE_CELL_SHIFT_BUILD_80_STATIC_46_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_0_000543106_ZERO_CORRECTIONS
 RUSANOV_CONTACT_COMMIT=68bcc74a5574ee1fc9240576c04a31a8f9335484
 RUSANOV_CONTACT_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_128X1_EXACT_ONE_CELL_SHIFT_BUILD_80_STATIC_47_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_0_00923098_LINF_0_161912_ZERO_CORRECTIONS
+RUSANOV_NEAR_VACUUM_COMMIT=54b3060ab996b6387e5aaf11283eaea1bb9e8faa
+RUSANOV_NEAR_VACUUM_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_128X1_DENSITY_1E_MINUS_6_PRESSURE_1E_MINUS_8_BUILD_80_STATIC_48_PYTHON_414_TOTAL_412_PASS_2_SKIPS_MASS_TRANSFER_POSITIVE_ZERO_CORRECTIONS
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
 V1_0_5_GATE=IN_PROGRESS
@@ -235,8 +237,15 @@ the conservative ledger near machine precision, and records zero corrections. It
 first-order debug bound; this is evidence of Rusanov diffusion, not solver accuracy
 selection.
 
+The near-vacuum expansion probe is clean-validated at `54b3060ab`. A periodic
+`rho=1, p=1` half-domain expands into a `rho=1e-6, p=1e-8` half-domain. The low-
+density region gains mass through generic fluxes, all primitives remain positive,
+the periodic conservative ledger closes near machine precision, and the correction
+ledger stays empty. This is one synthetic robustness point, not a production vacuum
+model, scale choice or solver selection.
+
 `V1_0_5_GATE=IN_PROGRESS`. The next implementation may extend only the Rusanov
-candidate with near-vacuum-expansion or Sod-shock evidence while keeping HLLE and LBM
+candidate with Sod-shock evidence while keeping HLLE and LBM
 registered-only and independently replaceable. PhysicalScale, physical-time policy
 and solver selection remain RED until the mandatory cases, conservation/positivity,
 memory and performance evidence exist. Production Air replacement is still
