@@ -12,14 +12,15 @@ TARGET_VERSION=1.0.5
 BASE_COMMIT=1ba507e89e3d713fe355c03c2fc6e7139aabcb49
 UNIFORM_IMPLEMENTATION_COMMIT=4b0658d8ff7bc56169fd8ed5d649f8c6b4250b44
 PRESSURE_PULSE_IMPLEMENTATION_COMMIT=cded7be672fbb2755174499214bb31622979eac6
-STATUS=IN_PROGRESS_RUSANOV_PRESSURE_PULSE_CLEAN_VALIDATED
+DENSITY_ADVECTION_IMPLEMENTATION_COMMIT=0ee4b756176413c4261f74c3b6a6bbcb4298eae8
+STATUS=IN_PROGRESS_RUSANOV_DENSITY_ADVECTION_CLEAN_VALIDATED
 BRANCH=integration/omnicore-vnext
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
 ATMOSPHERE_SOLVER_SELECTED=false
 CANDIDATES_REGISTERED=4
 CANDIDATE_SOLVERS_IMPLEMENTED=1
-RUSANOV_SCOPE=1D_PERIODIC_UNIFORM_AND_PRESSURE_PULSE_DEBUG_PROBES_ONLY
+RUSANOV_SCOPE=1D_PERIODIC_UNIFORM_PRESSURE_PULSE_DENSITY_ADVECTION_DEBUG_PROBES_ONLY
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
 PRODUCTION_INTEGRATION=false
@@ -41,8 +42,9 @@ reference state is strict `double`; the target is compiled with:
 The probe uses a synthetic nondimensional ideal-gas fixture (`gamma=5/3`,
 `R=1`) and four conservative values per cell: density, x/y momentum and total
 energy density. It runs a `64 x 1` uniform preservation probe (`dt=0.05`,
-`16` steps) and a `128 x 1` pressure-pulse probe (`dt=0.02`, `64` steps), both
-with periodic faces. They record the maximum CFL, primitive positivity,
+`16` steps), a `128 x 1` pressure-pulse probe (`dt=0.02`, `64` steps), and a
+`128 x 1` density-advection probe (`dt=0.1`, `20` steps), all with periodic
+faces. They record the maximum CFL, primitive positivity,
 conservative ledger closure and numerical corrections. The state is intentionally
 not presented as SI air.
 
@@ -55,9 +57,9 @@ result_status=candidate_result_not_selection
 atmosphere_solver_selection=unselected
 ```
 
-The uniform and pressure-pulse probes are debugging floors. They do not establish
-shock, contact accuracy, near-vacuum, low-Mach, leak, source-term, multi-species
-or production performance behavior.
+These probes are debugging floors. They do not establish shock/contact convergence,
+near-vacuum, low-Mach, leak, source-term, multi-species or production performance
+behavior.
 
 ## Clean evidence
 
@@ -102,7 +104,7 @@ benchmark_kind=atmospherebench_contract_uniform
 performance_gate=not_evaluated_contract_only
 ```
 
-The candidate-list check in both runner modes confirms that HLLE and LBM are
+The candidate-list check in all clean runner modes confirms that HLLE and LBM are
 still `registered_only|solver_implemented=false` and that candidate selection
 is `unselected`.
 
@@ -143,16 +145,52 @@ numerical_correction_count=0
 probe_passed=true
 ```
 
+## Density-advection evidence
+
+The density-advection probe was clean-run from `0ee4b7561`. It initializes
+`rho=1+0.2 sin(2 pi x/N)`, `p=1`, and `u=0.5`. Its nondimensional duration is
+chosen so the analytic periodic reference is exactly one cell to the right. The
+runner checks density L1/Linf error, pressure preservation, total-variation ratio,
+conservative drift, positivity, CFL and the correction ledger.
+
+```text
+artifacts/vnext-atmospherebench/20260810T170039Z-0c59a94f/result.json
+result_sha256=2F35D9804AA503737AC4F4A370E2F2CA9A5BD3DA49634C626545C75B555175D4
+benchmark_kind=atmospherebench_rusanov_density_advection_probe
+performance_gate=not_evaluated_candidate_probe
+```
+
+Measured values:
+
+```text
+grid=128x1
+dt=0.1
+steps=20
+maximum_cfl=0.194338
+reference_velocity=0.5
+reference_shift_cells=1
+density_l1_error=0.000543106
+density_linf_error=0.000921691
+pressure_linf_error=4.44089e-16
+total_variation_ratio=0.995707
+advection_reference_passed=true
+mass_drift=9.9476e-14
+momentum_x_drift=3.55271e-14
+energy_drift=-1.7053e-13
+numerical_correction_count=0
+probe_passed=true
+```
+
 ## Validation
 
 - Full default Meson build: `80/80` targets passed.
-- Meson static suite: `45/45` passed, including both Rusanov probes.
+- Meson static suite: `46/46` passed, including all three Rusanov probes.
 - Python discovery: `414` tests, `412` passed, `2` declared skips.
 - Targeted AtmosphereBench/runner contract tests: `17/17` passed.
 - Windows PowerShell 5.1 runner parse and clean execution: passed.
-- Source package: `artifacts/vnext-phase5-source-cded7be67/`, `1304` zip
+- Source package: `artifacts/vnext-phase5-source-0ee4b7561/`, `1304` zip
   entries; Rusanov sources and runner are present; package SHA-256 is
-  `47C66A4E1A3E80201404C475FCB8C871F4989B940D862E5531797C4F0A70809E`.
+  `A4255697997C5BDD6A10EE15EDC3EE2E9F23635CDF6BD6639AD8BE8E8FD83717`.
 - Production-consumer scan: no `src/` consumer of AtmosphereBench or Rusanov.
 
 ## Gate and next work
@@ -162,9 +200,9 @@ GREEN solver-selection gate. `V1_0_5_GATE` remains `IN_PROGRESS` because the
 mandatory non-uniform hydrodynamics cases, near-vacuum behavior, boundary/source
 ledger, memory/performance budget and physical-time policy are not established.
 
-The next permitted work is another isolated Rusanov density-advection or contact
-case with its own deterministic evidence. Do not add HLLE/LBM steps, select a
-solver, or integrate production Atmosphere as part of this checkpoint.
+The next permitted work is an isolated Rusanov contact-discontinuity or near-vacuum
+case with its own deterministic evidence. Do not add HLLE/LBM steps, select a solver,
+or integrate production Atmosphere as part of this checkpoint.
 
-Rollback commit: `f6c418c705796e2783a9db58b34080eb728b1d27` restores the
-uniform-only Rusanov checkpoint.
+Rollback commit: `e7edaefcc752106b199edb5370e44a1567b58cda` restores the
+uniform and pressure-pulse Rusanov checkpoint.

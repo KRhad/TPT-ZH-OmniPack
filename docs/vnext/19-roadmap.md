@@ -6,7 +6,7 @@ Versions **1.0.1**, **1.0.2** and **1.0.4** are GREEN. Version 1.0.3 remains a
 user-accepted YELLOW because the 100/125/150 percent DPI matrix is deferred. The
 current version is **1.0.5 Physical Scale + AtmosphereBench**. Its phase-entry
 refresh found stable/master unchanged at `d768aeb89`; the isolated strict-double
-scaffold, shared contracts and Rusanov uniform/pressure-pulse debug probes are now
+scaffold, shared contracts and Rusanov uniform/pressure-pulse/density-advection debug probes are now
 clean-validated. Production Air replacement remains unauthorized.
 
 The official 100.1 source adaptation, explicit FP modes, fixed-step
@@ -25,7 +25,7 @@ OmniAtmosphere state or solver will be integrated yet.
 | 0 | latest upstream adaptation | 1.0.2 COMPLETE / GREEN: official stable/master unchanged at `d768aeb89`; no adaptation required |
 | 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
 | 2 | physical scale and unit system | 1.0.5 IN_PROGRESS: candidate contract scaffold; selection RED |
-| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Rusanov has strict-double 1D uniform and pressure-pulse probes; HLLE/LBM remain registered-only |
+| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Rusanov has strict-double 1D uniform, pressure-pulse and density-advection probes; HLLE/LBM remain registered-only |
 | 4 | solver selection | BLOCKED |
 | 5 | CPU single-species OmniAtmosphere MVP | BLOCKED |
 | 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
@@ -79,8 +79,8 @@ The next integration commits should be small and independently reversible:
 14. `omnimaterials-data-foundation`: COMPLETE in `9cc2b11c5` plus gate closure
    `13b24f49e`; offline contracts and clean validation are GREEN.
 15. `physical-scale-atmospherebench`: IN PROGRESS in 1.0.5; candidate scale,
-   strict-double target, contract-only fixture and isolated Rusanov uniform and
-   pressure-pulse probes exist. Scale/time/solver selection remains RED.
+   strict-double target, contract-only fixture and isolated Rusanov uniform,
+   pressure-pulse and density-advection probes exist. Scale/time/solver selection remains RED.
 
 The mixed benchmark starts from the same generated Strict/Legacy hash; the later
 capture locates the first difference after update step 1 in both Particle and Air
@@ -135,7 +135,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Add a density-advection or contact Rusanov case while HLLE/LBM remain registered-only. Production OmniAtmosphere remains unauthorized. |
+| Next stage? | Add contact-discontinuity or near-vacuum Rusanov evidence while HLLE/LBM remain registered-only. Production OmniAtmosphere remains unauthorized. |
 
 ## Long-term acceptance
 

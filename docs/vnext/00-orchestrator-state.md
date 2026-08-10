@@ -8,7 +8,7 @@ CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.5
 CURRENT_VERSION_GATE=IN_PROGRESS
 NEXT_VERSION=1.0.6
-NEXT_PHASE=extend only the strict-double Rusanov candidate with a density-advection or contact case; keep HLLE and LBM registered-only
+NEXT_PHASE=extend only the strict-double Rusanov candidate with contact-discontinuity or near-vacuum evidence; keep HLLE and LBM registered-only
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -38,6 +38,7 @@ V1_0_5_IMPLEMENTATION_HEAD=a21eafba301a6e02a94f81cf6da46961ec72d3cd
 V1_0_5_SHARED_CONTRACT_HEAD=1ba507e89e3d713fe355c03c2fc6e7139aabcb49
 V1_0_5_RUSANOV_HEAD=4b0658d8ff7bc56169fd8ed5d649f8c6b4250b44
 V1_0_5_RUSANOV_PRESSURE_PULSE_HEAD=cded7be672fbb2755174499214bb31622979eac6
+V1_0_5_RUSANOV_DENSITY_ADVECTION_HEAD=0ee4b756176413c4261f74c3b6a6bbcb4298eae8
 V1_0_5_ROLLBACK=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_UPSTREAM=GREEN_ENTRY_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
 V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
@@ -47,6 +48,7 @@ V1_0_5_SCAFFOLD=GREEN_CLEAN_BUILD_80_STATIC_43_TARGETED_24_PYTHON_409_TOTAL_407_
 V1_0_5_SHARED_CONTRACT=GREEN_CLEAN_BUILD_80_STATIC_43_TARGETED_26_PYTHON_411_TOTAL_409_PASS_2_SKIPS_CONTRACT_ARTIFACT_AND_SOURCE_PACKAGE
 V1_0_5_RUSANOV=GREEN_ISOLATED_STRICT_DOUBLE_UNIFORM_PROBE_BUILD_80_STATIC_44_TARGETED_17_PYTHON_414_TOTAL_412_PASS_2_SKIPS_ZERO_DRIFT_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
 V1_0_5_RUSANOV_PRESSURE_PULSE=GREEN_ISOLATED_STRICT_DOUBLE_NONUNIFORM_128X1_64_STEP_PROBE_BUILD_80_STATIC_45_TARGETED_17_PYTHON_414_TOTAL_412_PASS_2_SKIPS_POSITIVE_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
+V1_0_5_RUSANOV_DENSITY_ADVECTION=GREEN_ISOLATED_STRICT_DOUBLE_128X1_EXACT_ONE_CELL_SHIFT_BUILD_80_STATIC_46_TARGETED_17_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_0_000543106_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
 BENCHMARK_IMPLEMENTATION_HEAD=c4490463f3819695cab734414f827e0e4e4be118
 CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
@@ -127,8 +129,8 @@ refresh confirms the official 100.1 stable tag and master remain `d768aeb89`; lo
 is 218 ahead and zero behind. The isolated PhysicalScale contract, standalone
 strict-double AtmosphereBench scaffold and shared contracts are clean-validated.
 One first-order Rusanov candidate is now implemented only as isolated 1D periodic
-uniform and pressure-pulse debug probes. Scale, time policy and solver selection
-remain unselected; HLLE and LBM remain registered-only; no production source consumes the bench. See
+uniform, pressure-pulse and density-advection debug probes. Scale, time policy and
+solver selection remain unselected; HLLE and LBM remain registered-only; no production source consumes the bench. See
 `phase-5-physical-scale-atmospherebench.md` and `phase-5-rusanov-candidate.md`.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
@@ -275,9 +277,10 @@ with an explicit maintenance decision.
 ## Next permitted work
 
 The 1.0.5 upstream impact check, isolated scaffold, shared contracts and strict-
-double Rusanov uniform/pressure-pulse debug probes are complete. The current phase
-may add one density-advection or contact Rusanov case at a time. HLLE and LBM steps
-remain out of scope until the Rusanov evidence boundary is explicitly reviewed.
+double Rusanov uniform/pressure-pulse/density-advection debug probes are complete.
+The current phase may add one contact or near-vacuum Rusanov case at a time. HLLE
+and LBM steps remain out of scope until the Rusanov evidence boundary is explicitly
+reviewed.
 
 Production Air replacement, PhysicalScale runtime integration, multi-species runtime,
 chemistry runtime, SDL3 migration and GPU compute remain blocked. Physical
