@@ -35,6 +35,13 @@ namespace
 	constexpr double ContactVelocity = 0.5;
 	constexpr double ContactLowDensity = 0.8;
 	constexpr double ContactHighDensity = 1.2;
+	constexpr std::size_t NearVacuumCells = 128;
+	constexpr std::size_t NearVacuumSteps = 32;
+	constexpr double NearVacuumTimeStep = 0.02;
+	constexpr double NearVacuumHighDensity = 1.0;
+	constexpr double NearVacuumHighPressure = 1.0;
+	constexpr double NearVacuumLowDensity = 1e-6;
+	constexpr double NearVacuumLowPressure = 1e-8;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -358,6 +365,42 @@ RusanovProbeSummary RunRusanovContactDiscontinuity()
 	return summary;
 }
 
+RusanovProbeSummary RunRusanovNearVacuumExpansion()
+{
+	const IdealGasEOS eos(Gamma, SpecificGasConstant);
+	std::vector<ConservativeState> initial(NearVacuumCells);
+	for (std::size_t cell = 0; cell < NearVacuumCells; ++cell)
+	{
+		const bool denseRegion = cell < NearVacuumCells / 2;
+		initial[cell] = eos.FromPrimitive(
+			denseRegion ? NearVacuumHighDensity : NearVacuumLowDensity,
+			0.0,
+			0.0,
+			denseRegion ? NearVacuumHighPressure : NearVacuumLowPressure);
+	}
+	std::vector<ConservativeState> final;
+	auto summary = RunPeriodicProbe(
+		{"rusanov_near_vacuum_expansion_1d",
+			{NearVacuumCells, 1, CellLength, BoundaryMode::Periodic},
+			TimeDomain::NondimensionalContract, NearVacuumTimeStep, NearVacuumSteps},
+		initial, eos, true, false, 1e-10, &final);
+	if (final.size() != initial.size())
+		return summary;
+	for (std::size_t cell = NearVacuumCells / 2; cell < NearVacuumCells; ++cell)
+	{
+		summary.initialLowDensityRegionMass += initial[cell].density;
+		summary.finalLowDensityRegionMass += final[cell].density;
+	}
+	summary.lowDensityRegionMassIncreased =
+		summary.finalLowDensityRegionMass > summary.initialLowDensityRegionMass + 1e-12;
+	summary.passed = summary.passed
+		&& summary.minimumDensity > 0.0
+		&& summary.minimumDensity <= 1e-4
+		&& summary.minimumPressure > 0.0
+		&& summary.lowDensityRegionMassIncreased;
+	return summary;
+}
+
 bool WriteRusanovUniformProbe(std::ostream &output)
 {
 	const auto summary = RunRusanovUniform();
@@ -565,6 +608,64 @@ bool WriteRusanovContactDiscontinuityProbe(std::ostream &output)
 	output << "minimum_energy_density=" << summary.minimumEnergyDensity << '\n';
 	output << "state_change_l1=" << summary.stateChangeL1 << '\n';
 	output << "state_evolved=" << (summary.stateEvolved ? "true" : "false") << '\n';
+	output << "positivity_preserved=" << (summary.positivityPreserved ? "true" : "false") << '\n';
+	output << "numerical_correction_count=" << summary.corrections.eventCount << '\n';
+	output << "correction_mass_added=" << summary.corrections.massAdded << '\n';
+	output << "correction_mass_removed=" << summary.corrections.massRemoved << '\n';
+	output << "correction_momentum_x_added=" << summary.corrections.momentumXAdded << '\n';
+	output << "correction_momentum_y_added=" << summary.corrections.momentumYAdded << '\n';
+	output << "correction_energy_added=" << summary.corrections.energyAdded << '\n';
+	output << "correction_energy_removed=" << summary.corrections.energyRemoved << '\n';
+	output << "density_floor_hits=" << summary.corrections.densityFloorHits << '\n';
+	output << "pressure_floor_hits=" << summary.corrections.pressureFloorHits << '\n';
+	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
+	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
+	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	return summary.passed;
+}
+
+bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output)
+{
+	const auto summary = RunRusanovNearVacuumExpansion();
+	const auto &initial = summary.ledger.initial;
+	const auto &final = summary.ledger.final;
+	output << "schema_version=1\n";
+	output << "case=" << summary.benchmarkCase.id << '\n';
+	output << "candidate=fvm_rusanov\n";
+	output << "candidate_solver_implemented=true\n";
+	output << "atmosphere_solver_selection=unselected\n";
+	output << "physical_scale_selection=unselected\n";
+	output << "result_status=candidate_result_not_selection\n";
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "grid_cells_x=" << summary.benchmarkCase.grid.cellsX << '\n';
+	output << "grid_cells_y=" << summary.benchmarkCase.grid.cellsY << '\n';
+	output << "grid_cell_count=" << summary.benchmarkCase.grid.CellCount() << '\n';
+	output << "case_timestep=" << summary.benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << summary.benchmarkCase.stepCount << '\n';
+	output << "maximum_cfl=" << summary.maximumCfl << '\n';
+	output << "initial_maximum_pressure=" << summary.initialMaximumPressure << '\n';
+	output << "final_maximum_pressure=" << summary.finalMaximumPressure << '\n';
+	output << "state_change_l1=" << summary.stateChangeL1 << '\n';
+	output << "state_evolved=" << (summary.stateEvolved ? "true" : "false") << '\n';
+	output << "initial_low_density_region_mass=" << summary.initialLowDensityRegionMass << '\n';
+	output << "final_low_density_region_mass=" << summary.finalLowDensityRegionMass << '\n';
+	output << "low_density_region_mass_increased="
+		<< (summary.lowDensityRegionMassIncreased ? "true" : "false") << '\n';
+	output << "initial_mass=" << initial.density << '\n';
+	output << "final_mass=" << final.density << '\n';
+	output << "mass_drift=" << (final.density - initial.density) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		final.momentumX - initial.momentumX,
+		final.momentumY - initial.momentumY
+	) << '\n';
+	output << "momentum_x_drift=" << (final.momentumX - initial.momentumX) << '\n';
+	output << "momentum_y_drift=" << (final.momentumY - initial.momentumY) << '\n';
+	output << "energy_drift=" << (final.totalEnergyDensity - initial.totalEnergyDensity) << '\n';
+	output << "minimum_density=" << summary.minimumDensity << '\n';
+	output << "maximum_density=" << summary.maximumDensity << '\n';
+	output << "minimum_pressure=" << summary.minimumPressure << '\n';
+	output << "minimum_energy_density=" << summary.minimumEnergyDensity << '\n';
 	output << "positivity_preserved=" << (summary.positivityPreserved ? "true" : "false") << '\n';
 	output << "numerical_correction_count=" << summary.corrections.eventCount << '\n';
 	output << "correction_mass_added=" << summary.corrections.massAdded << '\n';

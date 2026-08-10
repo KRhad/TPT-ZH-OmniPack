@@ -9,6 +9,8 @@ param(
 
     [switch] $RunRusanovContactDiscontinuity,
 
+    [switch] $RunRusanovNearVacuumExpansion,
+
     [Parameter(Mandatory = $true)]
     [string] $BuildDirectory,
 
@@ -193,14 +195,17 @@ if (-not $gnuStrict -and -not $msvcStrict) {
 $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 
 if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection,
-        $RunRusanovContactDiscontinuity) |
+		$RunRusanovContactDiscontinuity, $RunRusanovNearVacuumExpansion) |
         Where-Object { $_ }).Count -gt 1) {
     throw "Select only one AtmosphereBench run mode"
 }
 $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
-    -or $RunRusanovDensityAdvection -or $RunRusanovContactDiscontinuity
+	-or $RunRusanovDensityAdvection -or $RunRusanovContactDiscontinuity `
+	-or $RunRusanovNearVacuumExpansion
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
-$runMode = if ($RunRusanovContactDiscontinuity) {
+$runMode = if ($RunRusanovNearVacuumExpansion) {
+	"rusanov_near_vacuum_expansion"
+} elseif ($RunRusanovContactDiscontinuity) {
     "rusanov_contact_discontinuity"
 } elseif ($RunRusanovDensityAdvection) {
     "rusanov_density_advection"
@@ -208,10 +213,12 @@ $runMode = if ($RunRusanovContactDiscontinuity) {
     "rusanov_pressure_pulse"
 } elseif ($RunRusanovUniform) {
     "rusanov_uniform"
-} elseif ($RunRusanovPressurePulse) {
-    "contract_uniform"
+} else {
+	"contract_uniform"
 }
-$runArgument = if ($RunRusanovContactDiscontinuity) {
+$runArgument = if ($RunRusanovNearVacuumExpansion) {
+	"--run-rusanov-near-vacuum-expansion"
+} elseif ($RunRusanovContactDiscontinuity) {
     "--run-rusanov-contact-discontinuity"
 } elseif ($RunRusanovDensityAdvection) {
     "--run-rusanov-density-advection"
@@ -238,7 +245,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
-    "candidate=fvm_rusanov|status=implemented_1d_periodic_uniform_pressure_pulse_density_advection_contact_probes|solver_implemented=true",
+    "candidate=fvm_rusanov|status=implemented_1d_periodic_uniform_pressure_pulse_density_advection_contact_near_vacuum_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -402,7 +409,7 @@ if (-not $isRusanovProbe) {
             throw "Rusanov density-advection drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
-} else {
+} elseif ($RunRusanovContactDiscontinuity) {
     $benchmarkKind = "atmospherebench_rusanov_contact_discontinuity_probe"
     $performanceGate = "not_evaluated_candidate_probe"
     $timingScope = "standalone_rusanov_contact_discontinuity_probe"
@@ -435,6 +442,65 @@ if (-not $isRusanovProbe) {
     foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
         if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-10) {
             throw "Rusanov contact drift exceeds the periodic conservation tolerance: $driftKey"
+        }
+    }
+} else {
+    $benchmarkKind = "atmospherebench_rusanov_near_vacuum_expansion_probe"
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = "standalone_rusanov_near_vacuum_expansion_probe"
+    $candidateImplementations = "fvm_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "Rusanov near-vacuum probe must not claim solver selection"
+    }
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_rusanov" -or
+        (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+        throw "Rusanov near-vacuum candidate identity is invalid"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "grid_cells_x" = "128";
+        "grid_cells_y" = "1"; "grid_cell_count" = "128"; "case_timestep" = "0.02";
+        "case_step_count" = "32"; "positivity_preserved" = "true";
+		"state_evolved" = "true"; "low_density_region_mass_increased" = "true";
+		"numerical_correction_count" = "0";
+        "density_floor_hits" = "0"; "pressure_floor_hits" = "0";
+        "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "Rusanov near-vacuum contract drifted: $($probeKey.Key)"
+        }
+    }
+    $maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
+    if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
+        $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+        throw "Rusanov near-vacuum CFL is outside the strict positivity contract"
+    }
+    $minimumDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
+    $minimumPressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
+    if ([double]::IsNaN($minimumDensity) -or [double]::IsInfinity($minimumDensity) -or
+        $minimumDensity -le 0.0 -or $minimumDensity -gt 1e-4) {
+        throw "Rusanov near-vacuum density did not remain positive and near-vacuum"
+    }
+    if ([double]::IsNaN($minimumPressure) -or [double]::IsInfinity($minimumPressure) -or
+        $minimumPressure -le 0.0 -or $minimumPressure -gt 1e-6) {
+        throw "Rusanov near-vacuum pressure did not remain positive and near-vacuum"
+    }
+    $stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+    if ([double]::IsNaN($stateChangeL1) -or [double]::IsInfinity($stateChangeL1) -or
+        $stateChangeL1 -le 1e-12) {
+        throw "Rusanov near-vacuum probe did not produce a measurable expansion"
+    }
+	$initialLowDensityRegionMass = [double](Read-KeyValue -Text $text -Key "initial_low_density_region_mass")
+	$finalLowDensityRegionMass = [double](Read-KeyValue -Text $text -Key "final_low_density_region_mass")
+	if ([double]::IsNaN($initialLowDensityRegionMass) -or
+		[double]::IsInfinity($initialLowDensityRegionMass) -or
+		[double]::IsNaN($finalLowDensityRegionMass) -or
+		[double]::IsInfinity($finalLowDensityRegionMass) -or
+		$finalLowDensityRegionMass -le $initialLowDensityRegionMass) {
+		throw "Rusanov near-vacuum expansion did not transfer mass into the low-density region"
+	}
+    foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-10) {
+            throw "Rusanov near-vacuum drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
 }
@@ -472,6 +538,9 @@ $referenceVelocity = $null
 $referenceShiftCells = $null
 $advectionReferencePassed = $null
 $densityBoundsPreserved = $null
+$initialLowDensityRegionMass = $null
+$finalLowDensityRegionMass = $null
+$lowDensityRegionMassIncreased = $null
 if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
@@ -504,6 +573,15 @@ if ($isRusanovProbe) {
         $referenceShiftCells = [int](Read-KeyValue -Text $text -Key "reference_shift_cells")
         $advectionReferencePassed = (Read-KeyValue -Text $text -Key "advection_reference_passed") -eq "true"
         $densityBoundsPreserved = (Read-KeyValue -Text $text -Key "density_bounds_preserved") -eq "true"
+	} elseif ($RunRusanovNearVacuumExpansion) {
+		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
+		$initialMaximumPressure = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
+		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
+		$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+		$stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+		$initialLowDensityRegionMass = [double](Read-KeyValue -Text $text -Key "initial_low_density_region_mass")
+		$finalLowDensityRegionMass = [double](Read-KeyValue -Text $text -Key "final_low_density_region_mass")
+		$lowDensityRegionMassIncreased = (Read-KeyValue -Text $text -Key "low_density_region_mass_increased") -eq "true"
     }
 } else {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "state_density")
@@ -513,7 +591,9 @@ $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
     "No HLLE, LBM, source-term, boundary, or multi-species candidate is implemented in this scaffold."
 )
-if ($RunRusanovContactDiscontinuity) {
+if ($RunRusanovNearVacuumExpansion) {
+	$limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform, pressure-pulse, density-advection, contact and near-vacuum probes; this is not solver selection or production vacuum evidence."
+} elseif ($RunRusanovContactDiscontinuity) {
     $limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform, pressure-pulse, density-advection and contact probes; this is not solver selection or production evidence."
 } elseif ($RunRusanovDensityAdvection) {
     $limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform, pressure-pulse and density-advection probes; this is not solver selection or production evidence."
@@ -592,6 +672,9 @@ $result = [ordered]@{
         reference_shift_cells = $referenceShiftCells
         advection_reference_passed = $advectionReferencePassed
         density_bounds_preserved = $densityBoundsPreserved
+		initial_low_density_region_mass = $initialLowDensityRegionMass
+		final_low_density_region_mass = $finalLowDensityRegionMass
+		low_density_region_mass_increased = $lowDensityRegionMassIncreased
         mass_drift = [double](Read-KeyValue -Text $text -Key "mass_drift")
         momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
         momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")

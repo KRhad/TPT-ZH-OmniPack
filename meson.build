@@ -722,6 +722,14 @@ test(
 	timeout: 60,
 )
 
+test(
+	'atmospherebench-rusanov-near-vacuum-expansion',
+	atmospherebench,
+	args: [ '--run-rusanov-near-vacuum-expansion' ],
+	suite: 'static',
+	timeout: 60,
+)
+
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),

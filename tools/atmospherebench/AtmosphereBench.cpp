@@ -162,7 +162,7 @@ const std::array<CandidateDescriptor, 4> &Candidates()
 	static const std::array<CandidateDescriptor, 4> candidates{{
 		{CandidateKind::LegacyLike, "legacy_like", "control_only", false},
 		{CandidateKind::RusanovFvm, "fvm_rusanov",
-			"implemented_1d_periodic_uniform_pressure_pulse_density_advection_contact_probes", true},
+			"implemented_1d_periodic_uniform_pressure_pulse_density_advection_contact_near_vacuum_probes", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
 	}};
@@ -208,6 +208,7 @@ bool RunSelfTest(std::ostream &output)
 	const auto rusanovPressurePulse = RunRusanovPressurePulse();
 	const auto rusanovDensityAdvection = RunRusanovDensityAdvection();
 	const auto rusanovContact = RunRusanovContactDiscontinuity();
+	const auto rusanovNearVacuum = RunRusanovNearVacuumExpansion();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
 	NumericalCorrectionLedger nonEmptyCorrections;
@@ -235,6 +236,7 @@ bool RunSelfTest(std::ostream &output)
 	}
 	const bool result = ok && rusanov.passed && rusanovPressurePulse.passed
 		&& rusanovDensityAdvection.passed && rusanovContact.passed
+		&& rusanovNearVacuum.passed
 		&& onlyRusanovImplemented;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
 	output << "PHYSICAL_SCALE_SELECTION=UNSELECTED\n";
@@ -247,6 +249,8 @@ bool RunSelfTest(std::ostream &output)
 		<< (rusanovDensityAdvection.passed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_CONTACT_DISCONTINUITY_PROBE="
 		<< (rusanovContact.passed ? "PASS" : "FAIL") << '\n';
+	output << "RUSANOV_NEAR_VACUUM_EXPANSION_PROBE="
+		<< (rusanovNearVacuum.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";
 	return result;
 }

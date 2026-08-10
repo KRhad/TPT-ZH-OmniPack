@@ -25,12 +25,15 @@ struct RusanovProbeSummary
 	double pressureLinfError = 0.0;
 	double totalVariationRatio = 0.0;
 	double referenceVelocity = 0.0;
+	double initialLowDensityRegionMass = 0.0;
+	double finalLowDensityRegionMass = 0.0;
 	std::size_t referenceShiftCells = 0;
 	bool positivityPreserved = false;
 	bool stateEvolved = false;
 	bool pressurePeakReduced = false;
 	bool advectionReferencePassed = false;
 	bool densityBoundsPreserved = false;
+	bool lowDensityRegionMassIncreased = false;
 	bool passed = false;
 };
 
@@ -38,9 +41,11 @@ RusanovProbeSummary RunRusanovUniform();
 RusanovProbeSummary RunRusanovPressurePulse();
 RusanovProbeSummary RunRusanovDensityAdvection();
 RusanovProbeSummary RunRusanovContactDiscontinuity();
+RusanovProbeSummary RunRusanovNearVacuumExpansion();
 bool WriteRusanovUniformProbe(std::ostream &output);
 bool WriteRusanovPressurePulseProbe(std::ostream &output);
 bool WriteRusanovDensityAdvectionProbe(std::ostream &output);
 bool WriteRusanovContactDiscontinuityProbe(std::ostream &output);
+bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output);
 
 } // namespace omni::atmospherebench

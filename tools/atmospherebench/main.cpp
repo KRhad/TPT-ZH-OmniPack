@@ -27,6 +27,8 @@ int main(int argc, char **argv)
 		return WriteRusanovDensityAdvectionProbe(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-rusanov-contact-discontinuity")
 		return WriteRusanovContactDiscontinuityProbe(std::cout) ? 0 : 1;
-	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform|--run-rusanov-uniform|--run-rusanov-pressure-pulse|--run-rusanov-density-advection|--run-rusanov-contact-discontinuity]\n";
+	if (std::string_view(argv[1]) == "--run-rusanov-near-vacuum-expansion")
+		return WriteRusanovNearVacuumExpansionProbe(std::cout) ? 0 : 1;
+	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform|--run-rusanov-uniform|--run-rusanov-pressure-pulse|--run-rusanov-density-advection|--run-rusanov-contact-discontinuity|--run-rusanov-near-vacuum-expansion]\n";
 	return 2;
 }
