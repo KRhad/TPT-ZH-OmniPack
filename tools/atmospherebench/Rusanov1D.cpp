@@ -1,6 +1,8 @@
 #include "Rusanov1D.h"
 
 #include <algorithm>
+#include <array>
+#include <chrono>
 #include <cmath>
 #include <limits>
 #include <ostream>
@@ -69,6 +71,14 @@ namespace
 	constexpr double LeakInteriorPressure = 1.0;
 	constexpr double LeakExteriorDensity = 0.125;
 	constexpr double LeakExteriorPressure = 0.1;
+	constexpr std::size_t PerformanceSmallCells = 153 * 96;
+	constexpr std::size_t PerformanceMediumCells = 2 * PerformanceSmallCells;
+	constexpr std::size_t PerformanceLargeCells = 4 * PerformanceSmallCells;
+	constexpr std::size_t PerformanceSteps = 64;
+	constexpr std::size_t PerformanceWarmups = 1;
+	constexpr std::size_t PerformanceRepeats = 3;
+	constexpr double PerformanceVelocity = 0.5;
+	constexpr double PerformanceTargetCfl = 0.2;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -480,6 +490,63 @@ namespace
 		summary.passed = summary.passed && summary.advectionReferencePassed;
 		return summary;
 	}
+
+	RusanovProbeSummary RunPerformanceCase(std::size_t cellsCount)
+	{
+		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		const double cellLength = 1.0 / static_cast<double>(cellsCount);
+		const double maximumSoundSpeed = std::sqrt(
+			Gamma / (1.0 - DensityAdvectionAmplitude));
+		const double timeStep = PerformanceTargetCfl * cellLength
+			/ (PerformanceVelocity + maximumSoundSpeed);
+		std::vector<ConservativeState> initial(cellsCount);
+		for (std::size_t cell = 0; cell < cellsCount; ++cell)
+		{
+			const double x = (static_cast<double>(cell) + 0.5) * cellLength;
+			const double density = 1.0 + DensityAdvectionAmplitude * std::sin(2.0 * Pi * x);
+			initial[cell] = eos.FromPrimitive(density, PerformanceVelocity, 0.0, 1.0);
+		}
+		return RunPeriodicProbe(
+			{"rusanov_performance_1d",
+				{cellsCount, 1, cellLength, BoundaryMode::Periodic},
+				TimeDomain::NondimensionalContract, timeStep, PerformanceSteps},
+			std::move(initial), eos, true, false, 1e-7, nullptr);
+	}
+
+	RusanovPerformanceSample MeasurePerformanceCase(std::size_t cellsCount)
+	{
+		for (std::size_t warmup = 0; warmup < PerformanceWarmups; ++warmup)
+		{
+			if (!RunPerformanceCase(cellsCount).passed)
+				return {};
+		}
+		std::array<double, PerformanceRepeats> elapsed{};
+		RusanovProbeSummary finalProbe;
+		for (std::size_t repeat = 0; repeat < PerformanceRepeats; ++repeat)
+		{
+			const auto start = std::chrono::steady_clock::now();
+			auto probe = RunPerformanceCase(cellsCount);
+			const auto stop = std::chrono::steady_clock::now();
+			if (!probe.passed)
+				return {};
+			elapsed[repeat] = std::chrono::duration<double, std::milli>(stop - start).count();
+			finalProbe = std::move(probe);
+		}
+		std::sort(elapsed.begin(), elapsed.end());
+		const double medianMilliseconds = elapsed[elapsed.size() / 2];
+		const double cellUpdates = static_cast<double>(cellsCount)
+			* static_cast<double>(PerformanceSteps);
+		const double throughput = medianMilliseconds > 0.0
+			? cellUpdates * 1000.0 / medianMilliseconds
+			: 0.0;
+		return {
+			std::move(finalProbe),
+			medianMilliseconds,
+			throughput,
+			std::isfinite(medianMilliseconds) && medianMilliseconds > 0.0
+				&& std::isfinite(throughput) && throughput > 0.0,
+		};
+	}
 }
 
 RusanovProbeSummary RunRusanovUniform()
@@ -722,6 +789,19 @@ RusanovLowMachSummary RunRusanovLowMachAdvection()
 		&& summary.veryLowMach.passed
 		&& std::isfinite(summary.lowToModerateL1Ratio)
 		&& std::isfinite(summary.veryLowToModerateL1Ratio);
+	return summary;
+}
+
+RusanovPerformanceSummary RunRusanovPerformance()
+{
+	RusanovPerformanceSummary summary{
+		MeasurePerformanceCase(PerformanceSmallCells),
+		MeasurePerformanceCase(PerformanceMediumCells),
+		MeasurePerformanceCase(PerformanceLargeCells),
+		PerformanceWarmups,
+		PerformanceRepeats,
+	};
+	summary.passed = summary.small.passed && summary.medium.passed && summary.large.passed;
 	return summary;
 }
 
@@ -1345,6 +1425,71 @@ bool WriteRusanovLowMachAdvectionProbe(std::ostream &output)
 	output << "correction_event_count=0\n";
 	output << "low_mach_suitability_passed="
 		<< (summary.suitabilityPassed ? "true" : "false") << '\n';
+	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	return summary.passed;
+}
+
+bool WriteRusanovPerformanceProbe(std::ostream &output)
+{
+	const auto summary = RunRusanovPerformance();
+	const auto &probe = summary.large.probe;
+	const auto &initial = probe.ledger.initial;
+	const auto &final = probe.ledger.final;
+	output << "schema_version=1\n";
+	output << "case=rusanov_performance_1d\n";
+	output << "candidate=fvm_rusanov\n";
+	output << "candidate_solver_implemented=true\n";
+	output << "atmosphere_solver_selection=unselected\n";
+	output << "physical_scale_selection=unselected\n";
+	output << "result_status=candidate_result_not_selection\n";
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "boundary_mode=periodic\n";
+	output << "grid_cells_x=" << probe.benchmarkCase.grid.cellsX << '\n';
+	output << "grid_cells_y=1\n";
+	output << "grid_cell_count=" << probe.benchmarkCase.grid.CellCount() << '\n';
+	output << "case_timestep=" << probe.benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << probe.benchmarkCase.stepCount << '\n';
+	output << "performance_warmup_count=" << summary.warmupCount << '\n';
+	output << "performance_repeat_count=" << summary.repeatCount << '\n';
+	output << "small_cells=" << summary.small.probe.benchmarkCase.grid.cellsX << '\n';
+	output << "medium_cells=" << summary.medium.probe.benchmarkCase.grid.cellsX << '\n';
+	output << "large_cells=" << summary.large.probe.benchmarkCase.grid.cellsX << '\n';
+	output << "performance_steps=" << PerformanceSteps << '\n';
+	output << "small_elapsed_milliseconds=" << summary.small.elapsedMilliseconds << '\n';
+	output << "medium_elapsed_milliseconds=" << summary.medium.elapsedMilliseconds << '\n';
+	output << "large_elapsed_milliseconds=" << summary.large.elapsedMilliseconds << '\n';
+	output << "small_cell_updates_per_second=" << summary.small.cellUpdatesPerSecond << '\n';
+	output << "medium_cell_updates_per_second=" << summary.medium.cellUpdatesPerSecond << '\n';
+	output << "large_cell_updates_per_second=" << summary.large.cellUpdatesPerSecond << '\n';
+	output << "maximum_cfl=" << probe.maximumCfl << '\n';
+	output << "minimum_density=" << probe.minimumDensity << '\n';
+	output << "maximum_density=" << probe.maximumDensity << '\n';
+	output << "minimum_pressure=" << probe.minimumPressure << '\n';
+	output << "maximum_pressure=" << probe.finalMaximumPressure << '\n';
+	output << "minimum_energy_density=" << probe.minimumEnergyDensity << '\n';
+	output << "state_change_l1=" << probe.stateChangeL1 << '\n';
+	output << "state_evolved=" << (probe.stateEvolved ? "true" : "false") << '\n';
+	output << "positivity_preserved=" << (probe.positivityPreserved ? "true" : "false") << '\n';
+	output << "mass_drift=" << (final.density - initial.density) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		final.momentumX - initial.momentumX,
+		final.momentumY - initial.momentumY) << '\n';
+	output << "momentum_x_drift=" << (final.momentumX - initial.momentumX) << '\n';
+	output << "momentum_y_drift=" << (final.momentumY - initial.momentumY) << '\n';
+	output << "energy_drift=" << (final.totalEnergyDensity - initial.totalEnergyDensity) << '\n';
+	output << "numerical_correction_count=0\n";
+	output << "correction_mass_added=0\n";
+	output << "correction_mass_removed=0\n";
+	output << "correction_momentum_x_added=0\n";
+	output << "correction_momentum_y_added=0\n";
+	output << "correction_energy_added=0\n";
+	output << "correction_energy_removed=0\n";
+	output << "density_floor_hits=0\n";
+	output << "pressure_floor_hits=0\n";
+	output << "correction_event_count=0\n";
+	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
+	output << "performance_measurement_passed=" << (summary.passed ? "true" : "false") << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
 }

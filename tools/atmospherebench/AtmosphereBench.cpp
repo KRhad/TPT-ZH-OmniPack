@@ -162,7 +162,7 @@ const std::array<CandidateDescriptor, 4> &Candidates()
 	static const std::array<CandidateDescriptor, 4> candidates{{
 		{CandidateKind::LegacyLike, "legacy_like", "control_only", false},
 		{CandidateKind::RusanovFvm, "fvm_rusanov",
-			"implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_probes", true},
+			"implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
 	}};

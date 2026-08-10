@@ -19,6 +19,8 @@ param(
 
     [switch] $RunRusanovOpenBoundaryLeak,
 
+    [switch] $RunRusanovPerformance,
+
     [Parameter(Mandatory = $true)]
     [string] $BuildDirectory,
 
@@ -205,7 +207,8 @@ $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection,
 		$RunRusanovContactDiscontinuity, $RunRusanovNearVacuumExpansion,
 		$RunRusanovSodShockTube, $RunRusanovDensityAdvectionRefinement,
-		$RunRusanovLowMachAdvection, $RunRusanovOpenBoundaryLeak) |
+		$RunRusanovLowMachAdvection, $RunRusanovOpenBoundaryLeak,
+		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
     throw "Select only one AtmosphereBench run mode"
 }
@@ -213,9 +216,11 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunRusanovDensityAdvection -or $RunRusanovContactDiscontinuity `
 	-or $RunRusanovNearVacuumExpansion -or $RunRusanovSodShockTube `
 	-or $RunRusanovDensityAdvectionRefinement -or $RunRusanovLowMachAdvection `
-	-or $RunRusanovOpenBoundaryLeak
+	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
-$runMode = if ($RunRusanovOpenBoundaryLeak) {
+$runMode = if ($RunRusanovPerformance) {
+	"rusanov_performance"
+} elseif ($RunRusanovOpenBoundaryLeak) {
 	"rusanov_open_boundary_leak"
 } elseif ($RunRusanovLowMachAdvection) {
 	"rusanov_low_mach_advection"
@@ -233,10 +238,12 @@ $runMode = if ($RunRusanovOpenBoundaryLeak) {
     "rusanov_pressure_pulse"
 } elseif ($RunRusanovUniform) {
     "rusanov_uniform"
-} elseif ($RunRusanovLowMachAdvection) {
+} else {
 	"contract_uniform"
 }
-$runArgument = if ($RunRusanovOpenBoundaryLeak) {
+$runArgument = if ($RunRusanovPerformance) {
+	"--run-rusanov-performance"
+} elseif ($RunRusanovOpenBoundaryLeak) {
 	"--run-rusanov-open-boundary-leak"
 } elseif ($RunRusanovLowMachAdvection) {
 	"--run-rusanov-low-mach-advection"
@@ -273,7 +280,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
-    "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_probes|solver_implemented=true",
+    "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -692,7 +699,7 @@ if (-not $isRusanovProbe) {
             throw "Rusanov low-Mach CFL is outside the strict positivity contract: $cflKey"
         }
     }
-} else {
+} elseif ($RunRusanovOpenBoundaryLeak) {
     $benchmarkKind = "atmospherebench_rusanov_open_boundary_leak_probe"
     $performanceGate = "not_evaluated_candidate_probe"
     $timingScope = "standalone_rusanov_open_boundary_leak_probe"
@@ -731,6 +738,42 @@ if (-not $isRusanovProbe) {
     if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
         $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
         throw "Rusanov open-boundary leak CFL is outside the strict positivity contract"
+    }
+} else {
+    $benchmarkKind = "atmospherebench_rusanov_performance_probe"
+    $performanceGate = "recorded_candidate_measurement_no_budget"
+    $timingScope = "standalone_rusanov_performance_probe_wrapper"
+    $candidateImplementations = "fvm_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "Rusanov performance probe must not claim solver selection"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "boundary_mode" = "periodic";
+        "grid_cells_x" = "58752"; "grid_cells_y" = "1"; "grid_cell_count" = "58752";
+        "case_step_count" = "64"; "performance_warmup_count" = "1";
+        "performance_repeat_count" = "3"; "small_cells" = "14688";
+        "medium_cells" = "29376"; "large_cells" = "58752";
+        "performance_steps" = "64"; "positivity_preserved" = "true";
+        "state_evolved" = "true"; "numerical_correction_count" = "0";
+        "performance_measurement_passed" = "true"; "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "Rusanov performance contract drifted: $($probeKey.Key)"
+        }
+    }
+    foreach ($metricKey in @(
+        "small_elapsed_milliseconds", "medium_elapsed_milliseconds", "large_elapsed_milliseconds",
+        "small_cell_updates_per_second", "medium_cell_updates_per_second", "large_cell_updates_per_second"
+    )) {
+        $metric = [double](Read-KeyValue -Text $text -Key $metricKey)
+        if ([double]::IsNaN($metric) -or [double]::IsInfinity($metric) -or $metric -le 0.0) {
+            throw "Rusanov performance metric is invalid: $metricKey"
+        }
+    }
+    foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-7) {
+            throw "Rusanov performance run drift exceeds tolerance: $driftKey"
+        }
     }
 }
 $finalSourceState = Get-SourceState -Repository $sourceRoot -GitCommand $gitCommand
@@ -828,6 +871,18 @@ $veryLowTotalVariationRatio = $null
 $lowToModerateL1Ratio = $null
 $veryLowToModerateL1Ratio = $null
 $lowMachSuitabilityPassed = $null
+$performanceWarmupCount = $null
+$performanceRepeatCount = $null
+$performanceSmallCells = $null
+$performanceMediumCells = $null
+$performanceLargeCells = $null
+$performanceSteps = $null
+$smallElapsedMilliseconds = $null
+$mediumElapsedMilliseconds = $null
+$largeElapsedMilliseconds = $null
+$smallCellUpdatesPerSecond = $null
+$mediumCellUpdatesPerSecond = $null
+$largeCellUpdatesPerSecond = $null
 if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
@@ -975,6 +1030,24 @@ if ($isRusanovProbe) {
 		$momentumYBalanceError = [double](Read-KeyValue -Text $text -Key "momentum_y_balance_error")
 		$energyBalanceError = [double](Read-KeyValue -Text $text -Key "energy_balance_error")
 		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+	} elseif ($RunRusanovPerformance) {
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
+		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "maximum_pressure")
+		$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+		$stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+		$performanceWarmupCount = [int](Read-KeyValue -Text $text -Key "performance_warmup_count")
+		$performanceRepeatCount = [int](Read-KeyValue -Text $text -Key "performance_repeat_count")
+		$performanceSmallCells = [int](Read-KeyValue -Text $text -Key "small_cells")
+		$performanceMediumCells = [int](Read-KeyValue -Text $text -Key "medium_cells")
+		$performanceLargeCells = [int](Read-KeyValue -Text $text -Key "large_cells")
+		$performanceSteps = [int](Read-KeyValue -Text $text -Key "performance_steps")
+		$smallElapsedMilliseconds = [double](Read-KeyValue -Text $text -Key "small_elapsed_milliseconds")
+		$mediumElapsedMilliseconds = [double](Read-KeyValue -Text $text -Key "medium_elapsed_milliseconds")
+		$largeElapsedMilliseconds = [double](Read-KeyValue -Text $text -Key "large_elapsed_milliseconds")
+		$smallCellUpdatesPerSecond = [double](Read-KeyValue -Text $text -Key "small_cell_updates_per_second")
+		$mediumCellUpdatesPerSecond = [double](Read-KeyValue -Text $text -Key "medium_cell_updates_per_second")
+		$largeCellUpdatesPerSecond = [double](Read-KeyValue -Text $text -Key "large_cell_updates_per_second")
 	}
 } else {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "state_density")
@@ -984,7 +1057,9 @@ $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
 	"No HLLE, LBM, source-term, TPT wall-coupling, or multi-species candidate is implemented in this scaffold."
 )
-if ($RunRusanovOpenBoundaryLeak) {
+if ($RunRusanovPerformance) {
+	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
+} elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
 } elseif ($RunRusanovLowMachAdvection) {
 	$limitations += "Rusanov low-Mach characterization records the measured diffusion and suitability result; it is not an all-speed solver or production performance claim."
@@ -1155,6 +1230,18 @@ $result = [ordered]@{
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
         timing_scope = $timingScope
+		warmup_count = $performanceWarmupCount
+		repeat_count = $performanceRepeatCount
+		small_cells = $performanceSmallCells
+		medium_cells = $performanceMediumCells
+		large_cells = $performanceLargeCells
+		steps_per_repeat = $performanceSteps
+		small_elapsed_milliseconds = $smallElapsedMilliseconds
+		medium_elapsed_milliseconds = $mediumElapsedMilliseconds
+		large_elapsed_milliseconds = $largeElapsedMilliseconds
+		small_cell_updates_per_second = $smallCellUpdatesPerSecond
+		medium_cell_updates_per_second = $mediumCellUpdatesPerSecond
+		large_cell_updates_per_second = $largeCellUpdatesPerSecond
     }
     limitations = $limitations
 }
