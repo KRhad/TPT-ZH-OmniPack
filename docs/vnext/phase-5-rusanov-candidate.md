@@ -15,14 +15,15 @@ PRESSURE_PULSE_IMPLEMENTATION_COMMIT=cded7be672fbb2755174499214bb31622979eac6
 DENSITY_ADVECTION_IMPLEMENTATION_COMMIT=0ee4b756176413c4261f74c3b6a6bbcb4298eae8
 CONTACT_IMPLEMENTATION_COMMIT=68bcc74a5574ee1fc9240576c04a31a8f9335484
 NEAR_VACUUM_IMPLEMENTATION_COMMIT=54b3060ab996b6387e5aaf11283eaea1bb9e8faa
-STATUS=IN_PROGRESS_RUSANOV_NEAR_VACUUM_CLEAN_VALIDATED
+SOD_IMPLEMENTATION_COMMIT=588d38d32ec4904118e741e5f5f614c69b8de3de
+STATUS=IN_PROGRESS_RUSANOV_SOD_CLEAN_VALIDATED
 BRANCH=integration/omnicore-vnext
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
 ATMOSPHERE_SOLVER_SELECTED=false
 CANDIDATES_REGISTERED=4
 CANDIDATE_SOLVERS_IMPLEMENTED=1
-RUSANOV_SCOPE=1D_PERIODIC_UNIFORM_PRESSURE_PULSE_DENSITY_ADVECTION_CONTACT_NEAR_VACUUM_DEBUG_PROBES_ONLY
+RUSANOV_SCOPE=1D_UNIFORM_PRESSURE_PULSE_DENSITY_ADVECTION_CONTACT_NEAR_VACUUM_SOD_DEBUG_PROBES_ONLY
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
 PRODUCTION_INTEGRATION=false
@@ -53,6 +54,11 @@ half-domain. They record the maximum CFL, primitive positivity,
 conservative ledger closure and numerical corrections. The state is intentionally
 not presented as SI air.
 
+The sealed Sod case uses 256 cells over a unit interval, `gamma=1.4`, `dt=0.0005`
+and 400 steps (`t=0.2`). It starts from the canonical left state `(rho=1, p=1)`
+and right state `(rho=0.125, p=0.1)`. Sealed-wall pressure impulse is recorded as
+an explicit boundary exchange before evaluating the conservative balance.
+
 The implemented candidate is explicitly not a solver selection:
 
 ```text
@@ -66,7 +72,7 @@ These probes are debugging floors. The contact probe exposes expected first-orde
 Rusanov diffusion but does not establish grid convergence. The near-vacuum case
 establishes one positive, conservative synthetic density/pressure-ratio run with no
 floor correction; it is not a production-vacuum model or a parameter sweep. The set
-still does not establish shock convergence, low-Mach, leak, source-term,
+still does not establish grid convergence, low-Mach, leak, source-term,
 multi-species or production performance behavior.
 
 ## Clean evidence
@@ -101,6 +107,49 @@ energy_drift=0
 numerical_correction_count=0
 state_bytes_per_cell=32
 state_and_flux_scratch_bytes_per_cell=96
+probe_passed=true
+```
+
+## Sod shock-tube evidence
+
+The sealed Sod probe was clean-run from `588d38d32`. It detects the right-moving
+pressure front and verifies a declared first-order `x=0.8..0.9` window at `t=0.2`,
+positive bounded primitives, CFL, and a boundary-adjusted conservation ledger. The
+raw x-momentum change is not hidden: it equals the recorded wall-pressure impulse.
+
+```text
+artifacts/vnext-atmospherebench/20260810T180228Z-6cfef9c1/result.json
+result_sha256=B348F45F7FD1D03CB49062FD7F4D2813EE5561146489DF1309662B4A12DC7AFA
+benchmark_kind=atmospherebench_rusanov_sod_shock_tube_probe
+performance_gate=not_evaluated_candidate_probe
+```
+
+Measured values:
+
+```text
+grid=256x1
+cell_length=0.00390625
+dt=0.0005
+steps=400
+simulated_time=0.2
+maximum_cfl=0.280563
+shock_position=0.855469
+maximum_velocity_x=0.927941
+minimum_density=0.125
+maximum_density=1
+minimum_pressure=0.1
+maximum_pressure=1
+mass_drift=-2.84217e-14
+momentum_x_drift=46.08
+boundary_momentum_x_exchange=46.08
+momentum_x_balance_error=-3.83693e-13
+energy_balance_error=-5.68434e-14
+boundary_ledger_closes=true
+density_floor_hits=0
+pressure_floor_hits=0
+numerical_correction_count=0
+state_and_flux_scratch_bytes_per_cell=96.125
+state_and_flux_scratch_bytes_total=24608
 probe_passed=true
 ```
 
@@ -268,26 +317,25 @@ probe_passed=true
 ## Validation
 
 - Full default Meson build: `80/80` targets passed.
-- Meson static suite: `48/48` passed, including all five Rusanov probes.
+- Meson static suite: `49/49` passed, including all six Rusanov probes.
 - Python discovery: `414` tests, `412` passed, `2` declared skips.
 - Targeted AtmosphereBench/runner contract tests: `17/17` passed.
 - Windows PowerShell 5.1 runner parse and clean execution: passed.
-- Source package: `artifacts/vnext-phase5-source-0ee4b7561/`, `1304` zip
-  entries; the package predates the contact and near-vacuum follow-ups, while its Rusanov sources
-  and runner are present; package SHA-256 is
-  `A4255697997C5BDD6A10EE15EDC3EE2E9F23635CDF6BD6639AD8BE8E8FD83717`.
+- Source package: `artifacts/vnext-phase5-source-588d38d32/`, `1304` zip
+  entries; all current Rusanov sources and runner are present; package SHA-256 is
+  `22C4106F9DFBB74AE992A89E6EEBBBCF6217E655E6214548140530856B35A3B7`.
 - Production-consumer scan: no `src/` consumer of AtmosphereBench or Rusanov.
 
 ## Gate and next work
 
 This checkpoint is GREEN for the isolated Rusanov debug probe only. It is not a
 GREEN solver-selection gate. `V1_0_5_GATE` remains `IN_PROGRESS` because the
-mandatory shock/hydrodynamics cases, boundary/source
-ledger, memory/performance budget and physical-time policy are not established.
+grid-refinement/low-Mach evidence, leak/source accounting, accepted performance
+budget and physical-time policy are not established.
 
-The next permitted work is an isolated Rusanov Sod-shock
-case with its own deterministic evidence. Do not add HLLE/LBM steps, select a solver,
-or integrate production Atmosphere as part of this checkpoint.
+The next permitted work is an isolated Rusanov grid-refinement/low-Mach study or
+leak probe with explicit boundary accounting. Do not add HLLE/LBM steps, select a
+solver, or integrate production Atmosphere as part of this checkpoint.
 
-Rollback commit: `f9a62fb3a` restores the uniform, pressure-pulse, smooth
-density-advection and contact-discontinuity Rusanov checkpoint.
+Rollback commit: `33995c685` restores the uniform, pressure-pulse, smooth
+density-advection, contact-discontinuity and near-vacuum Rusanov checkpoint.
