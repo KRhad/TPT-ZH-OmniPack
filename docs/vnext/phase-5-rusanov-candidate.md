@@ -17,14 +17,16 @@ CONTACT_IMPLEMENTATION_COMMIT=68bcc74a5574ee1fc9240576c04a31a8f9335484
 NEAR_VACUUM_IMPLEMENTATION_COMMIT=54b3060ab996b6387e5aaf11283eaea1bb9e8faa
 SOD_IMPLEMENTATION_COMMIT=588d38d32ec4904118e741e5f5f614c69b8de3de
 REFINEMENT_IMPLEMENTATION_COMMIT=d541c2c2e9809691d625294e918c46009cd4a651
-STATUS=IN_PROGRESS_RUSANOV_REFINEMENT_CLEAN_VALIDATED
+LOW_MACH_IMPLEMENTATION_COMMIT=a948a48db2c7d06b93dd0f26fb67ad7f1423968c
+STATUS=IN_PROGRESS_RUSANOV_LOW_MACH_CHARACTERIZED
 BRANCH=integration/omnicore-vnext
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
 ATMOSPHERE_SOLVER_SELECTED=false
 CANDIDATES_REGISTERED=4
 CANDIDATE_SOLVERS_IMPLEMENTED=1
-RUSANOV_SCOPE=1D_UNIFORM_PRESSURE_PULSE_DENSITY_ADVECTION_CONTACT_NEAR_VACUUM_SOD_REFINEMENT_DEBUG_PROBES_ONLY
+RUSANOV_SCOPE=1D_UNIFORM_PRESSURE_PULSE_DENSITY_ADVECTION_CONTACT_NEAR_VACUUM_SOD_REFINEMENT_LOW_MACH_DEBUG_PROBES_ONLY
+RUSANOV_LOW_MACH_SUITABILITY=false
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
 PRODUCTION_INTEGRATION=false
@@ -73,9 +75,12 @@ These probes are debugging floors. The contact probe exposes expected first-orde
 Rusanov diffusion but does not establish grid convergence. The near-vacuum case
 establishes one positive, conservative synthetic density/pressure-ratio run with no
 floor correction; it is not a production-vacuum model or a parameter sweep. The set
-The smooth-advection refinement case establishes first-order convergence over one
-three-level test. The set still does not establish low-Mach, leak, source-term,
-multi-species or production performance behavior.
+still does not establish a broad vacuum operating envelope. The smooth-advection
+refinement case establishes first-order convergence over one
+three-level test. The low-Mach characterization then demonstrates that the same
+first-order compressible Rusanov method becomes excessively diffusive as nominal
+Mach decreases. The set still does not establish leak, source-term, multi-species
+or production performance behavior.
 
 ## Clean evidence
 
@@ -238,6 +243,42 @@ numerical_correction_count=0
 probe_passed=true
 ```
 
+## Low-Mach characterization
+
+Clean artifact:
+
+```text
+artifacts/vnext-atmospherebench/20260810T182953Z-88fe2d27/result.json
+SHA256=F242646484BE49A791C2AD24B1475A6BA1272B57281C5C151A2FCE71B2E3454C
+source_commit=a948a48db2c7d06b93dd0f26fb67ad7f1423968c
+source_dirty=false
+benchmark_execution_status=PASS
+low_mach_suitability_passed=false
+```
+
+The periodic 128-cell probe transports the same smooth density profile at three
+nominal Mach numbers while preserving the nondimensional pressure and reference
+travel distance. The solver stays positive, closes its conservative ledger near
+machine precision and records no floor/correction events, but its density error and
+loss of total variation increase sharply as acoustic speed dominates advection:
+
+```text
+nominal_mach=0.387298 / 0.0387298 / 0.00387298
+density_l1_error=0.00826755 / 0.0515261 / 0.126479
+total_variation_ratio=0.934805 / 0.595493 / 0.00673822
+low_to_moderate_l1_ratio=6.23233
+very_low_to_moderate_l1_ratio=15.2982
+mass_drift=1.13687e-13
+momentum_x_drift=-1.11022e-16
+energy_drift=-1.13687e-13
+numerical_correction_count=0
+```
+
+This is a valid benchmark execution and a negative suitability result. It is not
+acceptable to relax the published thresholds merely to select the candidate.
+First-order compressible Rusanov remains useful as a strict reference/debug floor,
+but it is not selected as the sole Enhanced-mode low-Mach atmosphere solver.
+
 ## Near-vacuum expansion evidence
 
 The near-vacuum probe was clean-run from `54b3060ab`. The periodic domain contains
@@ -352,8 +393,8 @@ probe_passed=true
 
 ## Validation
 
-- Full default Meson build: `82/82` build steps passed.
-- Meson static suite: `50/50` passed, including all seven Rusanov probes.
+- Full default Meson build: `80/80` build steps passed.
+- Meson static suite: `51/51` passed, including the low-Mach characterization.
 - Python discovery: `414` tests, `412` passed, `2` declared skips.
 - Targeted AtmosphereBench/runner contract tests: `17/17` passed.
 - Windows PowerShell 5.1 runner parse and clean execution: passed.
@@ -364,14 +405,16 @@ probe_passed=true
 
 ## Gate and next work
 
-This checkpoint is GREEN for the isolated Rusanov debug probe only. It is not a
-GREEN solver-selection gate. `V1_0_5_GATE` remains `IN_PROGRESS` because the
-low-Mach evidence, leak/source accounting, accepted performance
-budget and physical-time policy are not established.
+This checkpoint is GREEN for executing and characterizing the isolated Rusanov
+debug candidate. Its measured low-Mach suitability is **false**, so it is not a
+GREEN solver-selection gate. `V1_0_5_GATE` remains `IN_PROGRESS` because an
+acceptable low-Mach path, leak/source accounting, accepted performance budget and
+physical-time policy are not established.
 
-The next permitted work is an isolated Rusanov low-Mach study or leak probe with
-explicit boundary accounting. Do not add HLLE/LBM steps, select a
-solver, or integrate production Atmosphere as part of this checkpoint.
+The next permitted Rusanov work is an isolated leak/open-boundary probe with
+explicit boundary accounting plus honest standalone performance measurement. An
+all-speed/hybrid alternative must later be evaluated before solver selection.
+HLLE and LBM remain registered-only until separately authorized; production
+Atmosphere integration remains forbidden.
 
-Rollback commit: `09aba043c` restores the uniform, pressure-pulse, smooth
-density-advection, contact-discontinuity, near-vacuum and Sod Rusanov checkpoint.
+Rollback commit: `0c7e5494d` restores the pre-low-Mach Rusanov checkpoint.

@@ -6,8 +6,10 @@ Versions **1.0.1**, **1.0.2** and **1.0.4** are GREEN. Version 1.0.3 remains a
 user-accepted YELLOW because the 100/125/150 percent DPI matrix is deferred. The
 current version is **1.0.5 Physical Scale + AtmosphereBench**. Its phase-entry
 refresh found stable/master unchanged at `d768aeb89`; the isolated strict-double
-scaffold, shared contracts and Rusanov uniform/pressure-pulse/density-advection/contact-discontinuity/near-vacuum/Sod/refinement debug probes are now
-clean-validated. Production Air replacement remains unauthorized.
+scaffold, shared contracts and Rusanov uniform/pressure-pulse/density-advection/
+contact-discontinuity/near-vacuum/Sod/refinement/low-Mach debug probes are now
+clean-validated. The low-Mach execution is valid but suitability is false;
+production Air replacement remains unauthorized.
 
 The official 100.1 source adaptation, explicit FP modes, fixed-step
 throughput/process-RAM baseline, C01-C14 deterministic restart suite and scoped
@@ -25,7 +27,7 @@ OmniAtmosphere state or solver will be integrated yet.
 | 0 | latest upstream adaptation | 1.0.2 COMPLETE / GREEN: official stable/master unchanged at `d768aeb89`; no adaptation required |
 | 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
 | 2 | physical scale and unit system | 1.0.5 IN_PROGRESS: candidate contract scaffold; selection RED |
-| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Rusanov has strict-double 1D uniform, pressure-pulse, density-advection, contact-discontinuity, near-vacuum, sealed Sod and smooth-refinement probes; HLLE/LBM remain registered-only |
+| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Rusanov has strict-double 1D uniform, pressure-pulse, density-advection, contact-discontinuity, near-vacuum, sealed Sod, smooth-refinement and low-Mach probes; low-Mach suitability=false; HLLE/LBM remain registered-only |
 | 4 | solver selection | BLOCKED |
 | 5 | CPU single-species OmniAtmosphere MVP | BLOCKED |
 | 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
@@ -135,7 +137,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Add low-Mach or leak Rusanov evidence while HLLE/LBM remain registered-only. Production OmniAtmosphere remains unauthorized. |
+| Next stage? | Add Rusanov leak/open-boundary ledger and real standalone performance evidence, then evaluate a low-Mach-suitable all-speed/hybrid path. HLLE/LBM remain registered-only and production OmniAtmosphere remains unauthorized. |
 
 ## Long-term acceptance
 

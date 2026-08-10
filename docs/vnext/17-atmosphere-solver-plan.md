@@ -109,3 +109,23 @@ GREEN requires:
 
 Until these are true, `ATMOSPHERE_SOLVER_SELECTED=false` and production integration
 is RED.
+
+### Current first-order Rusanov result
+
+The isolated strict-double 1D Rusanov candidate now covers uniform preservation,
+pressure pulse, smooth/contact advection, near-vacuum expansion, sealed Sod,
+refinement and low-Mach characterization. It is positive and conservative for the
+published probes, but the low-Mach test reports:
+
+```text
+nominal_mach=0.387298 / 0.0387298 / 0.00387298
+density_l1_error=0.00826755 / 0.0515261 / 0.126479
+total_variation_ratio=0.934805 / 0.595493 / 0.00673822
+low_mach_suitability_passed=false
+```
+
+Therefore first-order compressible Rusanov is a reference/debug floor, not the
+selected Enhanced-mode solver. The next bounded evidence is leak/open-boundary
+ledger plus standalone performance; solver selection additionally requires an
+all-speed/hybrid or otherwise low-Mach-suitable candidate. HLLE and LBM remain
+registration-only.

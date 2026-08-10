@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_RUSANOV_REFINEMENT_CLEAN_VALIDATED
+STATUS=IN_PROGRESS_RUSANOV_LOW_MACH_CHARACTERIZED
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -42,6 +42,8 @@ RUSANOV_SOD_COMMIT=588d38d32ec4904118e741e5f5f614c69b8de3de
 RUSANOV_SOD_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_256X1_GAMMA_1_4_T_0_2_BUILD_80_STATIC_49_PYTHON_414_TOTAL_412_PASS_2_SKIPS_SHOCK_X_0_855469_BOUNDARY_LEDGER_ZERO_CORRECTIONS
 RUSANOV_REFINEMENT_COMMIT=d541c2c2e9809691d625294e918c46009cd4a651
 RUSANOV_REFINEMENT_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_64_128_256_T_0_25_BUILD_82_STATIC_50_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_ORDER_0_95393_0_977252_ZERO_CORRECTIONS
+RUSANOV_LOW_MACH_COMMIT=a948a48db2c7d06b93dd0f26fb67ad7f1423968c
+RUSANOV_LOW_MACH_VALIDATION=EXECUTION_GREEN_SUITABILITY_FALSE_MACH_0_387298_0_0387298_0_00387298_L1_0_00826755_0_0515261_0_126479_TV_0_934805_0_595493_0_00673822_ZERO_CORRECTIONS
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
 V1_0_5_GATE=IN_PROGRESS
@@ -263,9 +265,18 @@ Over 64/128/256 cells at the same unit-domain `t=0.25`, density L1 error decreas
 close within `1e-9`, and the correction ledger stays empty. This confirms expected
 first-order behavior for one smooth case, not low-Mach or multidimensional fitness.
 
+The low-Mach advection characterization is clean-validated at `a948a48db`.
+At nominal Mach `0.387298 / 0.0387298 / 0.00387298`, density L1 error grows
+`0.00826755 / 0.0515261 / 0.126479` while total-variation ratio falls
+`0.934805 / 0.595493 / 0.00673822`. Conservation remains near machine precision
+and the correction ledger is empty, but `low_mach_suitability_passed=false`.
+This is a valid negative result: first-order compressible Rusanov is retained as
+a strict reference/debug floor and is not selected as the sole Enhanced solver.
+
 `V1_0_5_GATE=IN_PROGRESS`. The next implementation may extend only the Rusanov
-candidate with low-Mach or leak evidence while keeping HLLE and LBM
-registered-only and independently replaceable. PhysicalScale, physical-time policy
-and solver selection remain RED until the mandatory cases, conservation/positivity,
-memory and performance evidence exist. Production Air replacement is still
-forbidden.
+candidate with leak/open-boundary ledger and standalone performance evidence while
+keeping HLLE and LBM registered-only and independently replaceable. An all-speed or
+hybrid alternative is now required for the low-Mach selection question.
+PhysicalScale, physical-time policy and solver selection remain RED until the
+mandatory cases, conservation/positivity, memory and performance evidence exist.
+Production Air replacement is still forbidden.
