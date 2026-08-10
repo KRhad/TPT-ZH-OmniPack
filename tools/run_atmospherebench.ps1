@@ -11,6 +11,8 @@ param(
 
     [switch] $RunRusanovNearVacuumExpansion,
 
+    [switch] $RunRusanovSodShockTube,
+
     [Parameter(Mandatory = $true)]
     [string] $BuildDirectory,
 
@@ -195,15 +197,18 @@ if (-not $gnuStrict -and -not $msvcStrict) {
 $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 
 if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection,
-		$RunRusanovContactDiscontinuity, $RunRusanovNearVacuumExpansion) |
+		$RunRusanovContactDiscontinuity, $RunRusanovNearVacuumExpansion,
+		$RunRusanovSodShockTube) |
         Where-Object { $_ }).Count -gt 1) {
     throw "Select only one AtmosphereBench run mode"
 }
 $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunRusanovDensityAdvection -or $RunRusanovContactDiscontinuity `
-	-or $RunRusanovNearVacuumExpansion
+	-or $RunRusanovNearVacuumExpansion -or $RunRusanovSodShockTube
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
-$runMode = if ($RunRusanovNearVacuumExpansion) {
+$runMode = if ($RunRusanovSodShockTube) {
+	"rusanov_sod_shock_tube"
+} elseif ($RunRusanovNearVacuumExpansion) {
 	"rusanov_near_vacuum_expansion"
 } elseif ($RunRusanovContactDiscontinuity) {
     "rusanov_contact_discontinuity"
@@ -216,7 +221,9 @@ $runMode = if ($RunRusanovNearVacuumExpansion) {
 } else {
 	"contract_uniform"
 }
-$runArgument = if ($RunRusanovNearVacuumExpansion) {
+$runArgument = if ($RunRusanovSodShockTube) {
+	"--run-rusanov-sod-shock-tube"
+} elseif ($RunRusanovNearVacuumExpansion) {
 	"--run-rusanov-near-vacuum-expansion"
 } elseif ($RunRusanovContactDiscontinuity) {
     "--run-rusanov-contact-discontinuity"
@@ -245,7 +252,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
-    "candidate=fvm_rusanov|status=implemented_1d_periodic_uniform_pressure_pulse_density_advection_contact_near_vacuum_probes|solver_implemented=true",
+    "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -444,7 +451,7 @@ if (-not $isRusanovProbe) {
             throw "Rusanov contact drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
-} else {
+} elseif ($RunRusanovNearVacuumExpansion) {
     $benchmarkKind = "atmospherebench_rusanov_near_vacuum_expansion_probe"
     $performanceGate = "not_evaluated_candidate_probe"
     $timingScope = "standalone_rusanov_near_vacuum_expansion_probe"
@@ -503,6 +510,70 @@ if (-not $isRusanovProbe) {
             throw "Rusanov near-vacuum drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
+} else {
+    $benchmarkKind = "atmospherebench_rusanov_sod_shock_tube_probe"
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = "standalone_rusanov_sod_shock_tube_probe"
+    $candidateImplementations = "fvm_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "Rusanov Sod probe must not claim solver selection"
+    }
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_rusanov" -or
+        (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+        throw "Rusanov Sod candidate identity is invalid"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "boundary_mode" = "sealed";
+		"eos_gamma" = "1.4"; "eos_specific_gas_constant" = "1";
+		"initial_left_density" = "1"; "initial_left_pressure" = "1";
+		"initial_right_density" = "0.125"; "initial_right_pressure" = "0.1";
+        "grid_cells_x" = "256"; "grid_cells_y" = "1"; "grid_cell_count" = "256";
+        "cell_length" = "0.00390625"; "case_timestep" = "0.0005";
+        "case_step_count" = "400"; "simulated_time" = "0.2";
+        "positivity_preserved" = "true"; "state_evolved" = "true";
+        "density_bounds_preserved" = "true"; "shock_reference_passed" = "true";
+        "boundary_ledger_closes" = "true"; "numerical_correction_count" = "0";
+        "density_floor_hits" = "0"; "pressure_floor_hits" = "0";
+        "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "Rusanov Sod contract drifted: $($probeKey.Key)"
+        }
+    }
+    $maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
+    if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
+        $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+        throw "Rusanov Sod CFL is outside the strict positivity contract"
+    }
+    $shockPosition = [double](Read-KeyValue -Text $text -Key "shock_position")
+    $maximumVelocityX = [double](Read-KeyValue -Text $text -Key "maximum_velocity_x")
+    if ([double]::IsNaN($shockPosition) -or [double]::IsInfinity($shockPosition) -or
+        $shockPosition -lt 0.8 -or $shockPosition -gt 0.9) {
+        throw "Rusanov Sod shock front is outside the published t=0.2 window"
+    }
+    if ([double]::IsNaN($maximumVelocityX) -or [double]::IsInfinity($maximumVelocityX) -or
+        $maximumVelocityX -lt 0.5 -or $maximumVelocityX -gt 1.2) {
+        throw "Rusanov Sod velocity is outside the published first-order window"
+    }
+    foreach ($balanceKey in @(
+        "mass_balance_error", "momentum_x_balance_error", "momentum_y_balance_error",
+        "energy_balance_error"
+    )) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $balanceKey)) -gt 1e-9) {
+            throw "Rusanov Sod boundary-adjusted ledger exceeds tolerance: $balanceKey"
+        }
+    }
+    foreach ($zeroExchangeKey in @("boundary_mass_exchange", "boundary_momentum_y_exchange", "boundary_energy_exchange")) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $zeroExchangeKey)) -gt 1e-12) {
+            throw "Rusanov Sod sealed boundary exchanged an invalid quantity: $zeroExchangeKey"
+        }
+    }
+    $boundaryMomentumXExchange = [double](Read-KeyValue -Text $text -Key "boundary_momentum_x_exchange")
+    if ([double]::IsNaN($boundaryMomentumXExchange) -or
+        [double]::IsInfinity($boundaryMomentumXExchange) -or
+        $boundaryMomentumXExchange -le 0.0) {
+        throw "Rusanov Sod wall-pressure impulse was not recorded"
+    }
 }
 $finalSourceState = Get-SourceState -Repository $sourceRoot -GitCommand $gitCommand
 if ($finalSourceState.Commit -ne $sourceState.Commit -or $finalSourceState.StateSha256 -ne $sourceState.StateSha256) {
@@ -525,6 +596,7 @@ $stateDensity = $null
 $maximumDensity = $null
 $statePressure = $null
 $stateAndFluxScratchBytesPerCell = $null
+$stateAndFluxScratchBytesTotal = $null
 $initialMaximumPressure = $null
 $finalMaximumPressure = $null
 $stateChangeL1 = $null
@@ -541,10 +613,32 @@ $densityBoundsPreserved = $null
 $initialLowDensityRegionMass = $null
 $finalLowDensityRegionMass = $null
 $lowDensityRegionMassIncreased = $null
+$boundaryMode = $null
+$cellLength = $null
+$simulatedTime = $null
+$shockPosition = $null
+$minimumVelocityX = $null
+$maximumVelocityX = $null
+$shockReferencePassed = $null
+$boundaryLedgerCloses = $null
+$boundaryMassExchange = $null
+$boundaryMomentumXExchange = $null
+$boundaryMomentumYExchange = $null
+$boundaryEnergyExchange = $null
+$massBalanceError = $null
+$momentumXBalanceError = $null
+$momentumYBalanceError = $null
+$energyBalanceError = $null
+$eosGamma = $null
+$eosSpecificGasConstant = $null
+$initialLeftDensity = $null
+$initialLeftPressure = $null
+$initialRightDensity = $null
+$initialRightPressure = $null
 if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
-    $stateAndFluxScratchBytesPerCell = [int](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
+    $stateAndFluxScratchBytesPerCell = [double](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
     if ($RunRusanovPressurePulse) {
         $initialMaximumPressure = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
         $finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
@@ -582,6 +676,34 @@ if ($isRusanovProbe) {
 		$initialLowDensityRegionMass = [double](Read-KeyValue -Text $text -Key "initial_low_density_region_mass")
 		$finalLowDensityRegionMass = [double](Read-KeyValue -Text $text -Key "final_low_density_region_mass")
 		$lowDensityRegionMassIncreased = (Read-KeyValue -Text $text -Key "low_density_region_mass_increased") -eq "true"
+	} elseif ($RunRusanovSodShockTube) {
+		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$eosGamma = [double](Read-KeyValue -Text $text -Key "eos_gamma")
+		$eosSpecificGasConstant = [double](Read-KeyValue -Text $text -Key "eos_specific_gas_constant")
+		$initialLeftDensity = [double](Read-KeyValue -Text $text -Key "initial_left_density")
+		$initialLeftPressure = [double](Read-KeyValue -Text $text -Key "initial_left_pressure")
+		$initialRightDensity = [double](Read-KeyValue -Text $text -Key "initial_right_density")
+		$initialRightPressure = [double](Read-KeyValue -Text $text -Key "initial_right_pressure")
+		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+		$simulatedTime = [double](Read-KeyValue -Text $text -Key "simulated_time")
+		$shockPosition = [double](Read-KeyValue -Text $text -Key "shock_position")
+		$minimumVelocityX = [double](Read-KeyValue -Text $text -Key "minimum_velocity_x")
+		$maximumVelocityX = [double](Read-KeyValue -Text $text -Key "maximum_velocity_x")
+		$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+		$stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+		$densityBoundsPreserved = (Read-KeyValue -Text $text -Key "density_bounds_preserved") -eq "true"
+		$shockReferencePassed = (Read-KeyValue -Text $text -Key "shock_reference_passed") -eq "true"
+		$boundaryLedgerCloses = (Read-KeyValue -Text $text -Key "boundary_ledger_closes") -eq "true"
+		$boundaryMassExchange = [double](Read-KeyValue -Text $text -Key "boundary_mass_exchange")
+		$boundaryMomentumXExchange = [double](Read-KeyValue -Text $text -Key "boundary_momentum_x_exchange")
+		$boundaryMomentumYExchange = [double](Read-KeyValue -Text $text -Key "boundary_momentum_y_exchange")
+		$boundaryEnergyExchange = [double](Read-KeyValue -Text $text -Key "boundary_energy_exchange")
+		$massBalanceError = [double](Read-KeyValue -Text $text -Key "mass_balance_error")
+		$momentumXBalanceError = [double](Read-KeyValue -Text $text -Key "momentum_x_balance_error")
+		$momentumYBalanceError = [double](Read-KeyValue -Text $text -Key "momentum_y_balance_error")
+		$energyBalanceError = [double](Read-KeyValue -Text $text -Key "energy_balance_error")
+		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
     }
 } else {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "state_density")
@@ -591,7 +713,9 @@ $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
     "No HLLE, LBM, source-term, boundary, or multi-species candidate is implemented in this scaffold."
 )
-if ($RunRusanovNearVacuumExpansion) {
+if ($RunRusanovSodShockTube) {
+	$limitations += "Rusanov is limited to first-order strict-double 1D uniform, periodic wave/advection/contact/near-vacuum probes and one sealed Sod shock tube; this is not solver selection or production boundary evidence."
+} elseif ($RunRusanovNearVacuumExpansion) {
 	$limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform, pressure-pulse, density-advection, contact and near-vacuum probes; this is not solver selection or production vacuum evidence."
 } elseif ($RunRusanovContactDiscontinuity) {
     $limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform, pressure-pulse, density-advection and contact probes; this is not solver selection or production evidence."
@@ -654,8 +778,17 @@ $result = [ordered]@{
         grid_cells_x = [int](Read-KeyValue -Text $text -Key "grid_cells_x")
         grid_cells_y = [int](Read-KeyValue -Text $text -Key "grid_cells_y")
         grid_cell_count = [int](Read-KeyValue -Text $text -Key "grid_cell_count")
+		boundary_mode = $boundaryMode
+		eos_gamma = $eosGamma
+		eos_specific_gas_constant = $eosSpecificGasConstant
+		initial_left_density = $initialLeftDensity
+		initial_left_pressure = $initialLeftPressure
+		initial_right_density = $initialRightDensity
+		initial_right_pressure = $initialRightPressure
+		cell_length = $cellLength
         state_bytes_per_cell = [int](Read-KeyValue -Text $text -Key "state_bytes_per_cell")
         state_and_flux_scratch_bytes_per_cell = $stateAndFluxScratchBytesPerCell
+		state_and_flux_scratch_bytes_total = $stateAndFluxScratchBytesTotal
         density = $stateDensity
         maximum_density = $maximumDensity
         pressure = $statePressure
@@ -675,6 +808,20 @@ $result = [ordered]@{
 		initial_low_density_region_mass = $initialLowDensityRegionMass
 		final_low_density_region_mass = $finalLowDensityRegionMass
 		low_density_region_mass_increased = $lowDensityRegionMassIncreased
+		simulated_time = $simulatedTime
+		shock_position = $shockPosition
+		minimum_velocity_x = $minimumVelocityX
+		maximum_velocity_x = $maximumVelocityX
+		shock_reference_passed = $shockReferencePassed
+		boundary_ledger_closes = $boundaryLedgerCloses
+		boundary_mass_exchange = $boundaryMassExchange
+		boundary_momentum_x_exchange = $boundaryMomentumXExchange
+		boundary_momentum_y_exchange = $boundaryMomentumYExchange
+		boundary_energy_exchange = $boundaryEnergyExchange
+		mass_balance_error = $massBalanceError
+		momentum_x_balance_error = $momentumXBalanceError
+		momentum_y_balance_error = $momentumYBalanceError
+		energy_balance_error = $energyBalanceError
         mass_drift = [double](Read-KeyValue -Text $text -Key "mass_drift")
         momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
         momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")

@@ -12,6 +12,7 @@ struct RusanovProbeSummary
 	BenchmarkCase benchmarkCase;
 	ConservationLedger ledger;
 	NumericalCorrectionLedger corrections{};
+	ConservativeState boundaryExchange{};
 	double maximumCfl = 0.0;
 	double minimumDensity = 0.0;
 	double maximumDensity = 0.0;
@@ -27,6 +28,10 @@ struct RusanovProbeSummary
 	double referenceVelocity = 0.0;
 	double initialLowDensityRegionMass = 0.0;
 	double finalLowDensityRegionMass = 0.0;
+	double minimumVelocityX = 0.0;
+	double maximumVelocityX = 0.0;
+	double simulatedTime = 0.0;
+	double shockPosition = 0.0;
 	std::size_t referenceShiftCells = 0;
 	bool positivityPreserved = false;
 	bool stateEvolved = false;
@@ -34,6 +39,8 @@ struct RusanovProbeSummary
 	bool advectionReferencePassed = false;
 	bool densityBoundsPreserved = false;
 	bool lowDensityRegionMassIncreased = false;
+	bool boundaryLedgerCloses = false;
+	bool shockReferencePassed = false;
 	bool passed = false;
 };
 
@@ -42,10 +49,12 @@ RusanovProbeSummary RunRusanovPressurePulse();
 RusanovProbeSummary RunRusanovDensityAdvection();
 RusanovProbeSummary RunRusanovContactDiscontinuity();
 RusanovProbeSummary RunRusanovNearVacuumExpansion();
+RusanovProbeSummary RunRusanovSodShockTube();
 bool WriteRusanovUniformProbe(std::ostream &output);
 bool WriteRusanovPressurePulseProbe(std::ostream &output);
 bool WriteRusanovDensityAdvectionProbe(std::ostream &output);
 bool WriteRusanovContactDiscontinuityProbe(std::ostream &output);
 bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output);
+bool WriteRusanovSodShockTubeProbe(std::ostream &output);
 
 } // namespace omni::atmospherebench

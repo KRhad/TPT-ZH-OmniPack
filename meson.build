@@ -730,6 +730,14 @@ test(
 	timeout: 60,
 )
 
+test(
+	'atmospherebench-rusanov-sod-shock-tube',
+	atmospherebench,
+	args: [ '--run-rusanov-sod-shock-tube' ],
+	suite: 'static',
+	timeout: 60,
+)
+
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),
