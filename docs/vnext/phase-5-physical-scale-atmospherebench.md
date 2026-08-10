@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_SHARED_CONTRACT_CLEAN_VALIDATED
+STATUS=IN_PROGRESS_RUSANOV_PROBE_CLEAN_VALIDATED
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -19,7 +19,7 @@ PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
 ATMOSPHERE_SOLVER_SELECTED=false
 CANDIDATES_REGISTERED=4
-CANDIDATE_SOLVERS_IMPLEMENTED=0
+CANDIDATE_SOLVERS_IMPLEMENTED=1
 TARGETED_TESTS=GREEN_24_24
 PYTHON_DISCOVERY=GREEN_409_TOTAL_407_PASS_2_SKIPPED
 MESON_STATIC=GREEN_43_43
@@ -28,6 +28,10 @@ CLEAN_ARTIFACT=GREEN_CONTRACT_ONLY_a21eafba3
 CLEAN_SOURCE_PACKAGE=GREEN_1300_FILES_NO_TEST_ASSETS
 SHARED_CONTRACT_IMPLEMENTATION_COMMIT=1ba507e89e3d713fe355c03c2fc6e7139aabcb49
 SHARED_CONTRACT_VALIDATION=GREEN_CLEAN_BUILD_80_STATIC_43_TARGETED_26_PYTHON_411_TOTAL_409_PASS_2_SKIPS_CONTRACT_ARTIFACT_AND_SOURCE_PACKAGE
+RUSANOV_IMPLEMENTATION_COMMIT=4b0658d8ff7bc56169fd8ed5d649f8c6b4250b44
+RUSANOV_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_1D_PERIODIC_UNIFORM_PROBE_BUILD_80_STATIC_44_PYTHON_414_TOTAL_412_PASS_2_SKIPS_ZERO_DRIFT_ZERO_CORRECTIONS
+HLLE_STATUS=REGISTERED_ONLY
+LBM_STATUS=REGISTERED_ONLY
 V1_0_5_GATE=IN_PROGRESS
 ```
 
@@ -102,9 +106,12 @@ It currently provides only the contracts required before a solver plugin:
 - deterministic registration of Legacy-like control, Rusanov FVM, HLLE FVM and
   D2Q9 LBM candidates.
 
-All four candidates report `solver_implemented=false`. `--run-uniform` emits
+At the initial scaffold checkpoint, all four candidates reported
+`solver_implemented=false`. `--run-uniform` continues to emit
 `result_status=contract_only`; its zero drift means the unchanged fixture closes,
-not that any CFD scheme passed uniform-state preservation.
+not that any CFD scheme passed uniform-state preservation. The later isolated
+Rusanov checkpoint changes only `fvm_rusanov` to an implemented 1D uniform probe;
+HLLE and LBM remain registered-only.
 
 `tools/run_atmospherebench.ps1` refuses dirty source, verifies that the Meson build
 tree belongs to the current repository, rebuilds the standalone target before
@@ -190,9 +197,19 @@ The shared-contract follow-up is now clean-validated: **26/26 targeted**,
 **411 total / 409 PASS / 2 skipped** Python tests, **43/43** Meson static tests and
 the default **80/80** build all pass. It remains contract-only, not CFD evidence.
 
-`V1_0_5_GATE=IN_PROGRESS`. The next implementation may add the shared grid/case/
-result contracts and one first-order Rusanov plugin, but must keep Rusanov, HLLE,
-HLLC and LBM independently replaceable. PhysicalScale, physical-time policy and
-solver selection remain RED until the mandatory cases, conservation/positivity,
+The isolated strict-double Rusanov follow-up is clean-validated at `4b0658d8f`.
+It runs a first-order 1D periodic uniform probe for 16 nondimensional steps at
+`dt=0.05`. The observed maximum CFL is `0.0645497`; density, pressure and energy
+remain positive; mass, x/y momentum and energy drift are all zero; and no numerical
+correction is recorded. The default build is **80/80**, Meson static is **44/44**,
+and Python discovery is **414 total / 412 PASS / 2 skipped**. This is candidate
+debug evidence, not shock/near-vacuum/performance evidence or solver selection.
+Full details and artifact hashes are in
+[the Rusanov checkpoint](phase-5-rusanov-candidate.md).
+
+`V1_0_5_GATE=IN_PROGRESS`. The next implementation may extend only the Rusanov
+candidate with a non-uniform deterministic case while keeping HLLE and LBM
+registered-only and independently replaceable. PhysicalScale, physical-time policy
+and solver selection remain RED until the mandatory cases, conservation/positivity,
 memory and performance evidence exist. Production Air replacement is still
 forbidden.
