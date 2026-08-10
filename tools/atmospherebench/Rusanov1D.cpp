@@ -42,6 +42,15 @@ namespace
 	constexpr double NearVacuumHighPressure = 1.0;
 	constexpr double NearVacuumLowDensity = 1e-6;
 	constexpr double NearVacuumLowPressure = 1e-8;
+	constexpr double SodGamma = 1.4;
+	constexpr std::size_t SodCells = 256;
+	constexpr std::size_t SodSteps = 400;
+	constexpr double SodCellLength = 1.0 / static_cast<double>(SodCells);
+	constexpr double SodTimeStep = 0.0005;
+	constexpr double SodLeftDensity = 1.0;
+	constexpr double SodLeftPressure = 1.0;
+	constexpr double SodRightDensity = 0.125;
+	constexpr double SodRightPressure = 0.1;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -110,6 +119,25 @@ namespace
 		);
 	}
 
+	ConservativeState SealedWallFluxX(const ConservativeState &state, const IdealGasEOS &eos)
+	{
+		const auto primitive = eos.ToPrimitive(state);
+		if (!primitive.valid)
+			return {};
+		return {0.0, primitive.pressure, 0.0, 0.0};
+	}
+
+	bool StateNear(
+		const ConservativeState &left,
+		const ConservativeState &right,
+		double tolerance)
+	{
+		return std::abs(left.density - right.density) <= tolerance
+			&& std::abs(left.momentumX - right.momentumX) <= tolerance
+			&& std::abs(left.momentumY - right.momentumY) <= tolerance
+			&& std::abs(left.totalEnergyDensity - right.totalEnergyDensity) <= tolerance;
+	}
+
 	double MaximumPressure(const std::vector<ConservativeState> &cells, const IdealGasEOS &eos)
 	{
 		double maximum = 0.0;
@@ -150,7 +178,7 @@ namespace
 		return variation;
 	}
 
-	RusanovProbeSummary RunPeriodicProbe(
+	RusanovProbeSummary RunOneDimensionalProbe(
 		BenchmarkCase benchmarkCase,
 		std::vector<ConservativeState> initialCells,
 		const IdealGasEOS &eos,
@@ -161,11 +189,14 @@ namespace
 	{
 		RusanovProbeSummary summary{benchmarkCase};
 		if (!summary.benchmarkCase.IsValid() || !eos.IsValid()
-			|| initialCells.size() != summary.benchmarkCase.grid.CellCount())
+			|| initialCells.size() != summary.benchmarkCase.grid.CellCount()
+			|| (summary.benchmarkCase.grid.boundaryMode != BoundaryMode::Periodic
+				&& summary.benchmarkCase.grid.boundaryMode != BoundaryMode::Sealed))
 			return summary;
 
 		std::vector<ConservativeState> cells = initialCells;
-		std::vector<ConservativeState> fluxes(cells.size());
+		const bool periodic = summary.benchmarkCase.grid.boundaryMode == BoundaryMode::Periodic;
+		std::vector<ConservativeState> fluxes(cells.size() + (periodic ? 0 : 1));
 		std::vector<ConservativeState> next(cells.size());
 		const double lambda = summary.benchmarkCase.timeStep / summary.benchmarkCase.grid.cellLength;
 		summary.ledger.Begin(TotalState(cells));
@@ -188,14 +219,33 @@ namespace
 			if (!std::isfinite(stepCfl) || stepCfl <= 0.0 || stepCfl > 1.0)
 				return summary;
 
-			for (std::size_t cell = 0; cell < cells.size(); ++cell)
-				fluxes[cell] = RusanovFluxX(cells[cell], cells[(cell + 1) % cells.size()], eos);
-			for (std::size_t cell = 0; cell < cells.size(); ++cell)
+			if (periodic)
 			{
-				const auto leftFace = fluxes[(cell + cells.size() - 1) % cells.size()];
-				next[cell] = Subtract(cells[cell], Scale(lambda, Subtract(fluxes[cell], leftFace)));
-				if (!eos.ToPrimitive(next[cell]).valid)
-					return summary;
+				for (std::size_t cell = 0; cell < cells.size(); ++cell)
+					fluxes[cell] = RusanovFluxX(cells[cell], cells[(cell + 1) % cells.size()], eos);
+				for (std::size_t cell = 0; cell < cells.size(); ++cell)
+				{
+					const auto leftFace = fluxes[(cell + cells.size() - 1) % cells.size()];
+					next[cell] = Subtract(cells[cell], Scale(lambda, Subtract(fluxes[cell], leftFace)));
+					if (!eos.ToPrimitive(next[cell]).valid)
+						return summary;
+				}
+			}
+			else
+			{
+				fluxes.front() = SealedWallFluxX(cells.front(), eos);
+				for (std::size_t face = 1; face < cells.size(); ++face)
+					fluxes[face] = RusanovFluxX(cells[face - 1], cells[face], eos);
+				fluxes.back() = SealedWallFluxX(cells.back(), eos);
+				summary.boundaryExchange = Add(summary.boundaryExchange,
+					Scale(lambda, Subtract(fluxes.front(), fluxes.back())));
+				for (std::size_t cell = 0; cell < cells.size(); ++cell)
+				{
+					next[cell] = Subtract(cells[cell],
+						Scale(lambda, Subtract(fluxes[cell + 1], fluxes[cell])));
+					if (!eos.ToPrimitive(next[cell]).valid)
+						return summary;
+				}
 			}
 			cells.swap(next);
 		}
@@ -204,6 +254,8 @@ namespace
 		summary.maximumDensity = 0.0;
 		summary.minimumPressure = std::numeric_limits<double>::infinity();
 		summary.minimumEnergyDensity = std::numeric_limits<double>::infinity();
+		summary.minimumVelocityX = std::numeric_limits<double>::infinity();
+		summary.maximumVelocityX = -std::numeric_limits<double>::infinity();
 		summary.finalMaximumPressure = 0.0;
 		summary.positivityPreserved = true;
 		for (const auto &cell : cells)
@@ -219,19 +271,54 @@ namespace
 			summary.minimumPressure = std::min(summary.minimumPressure, primitive.pressure);
 			summary.minimumEnergyDensity = std::min(summary.minimumEnergyDensity, cell.totalEnergyDensity);
 			summary.finalMaximumPressure = std::max(summary.finalMaximumPressure, primitive.pressure);
+			summary.minimumVelocityX = std::min(summary.minimumVelocityX, primitive.velocityX);
+			summary.maximumVelocityX = std::max(summary.maximumVelocityX, primitive.velocityX);
 		}
 		summary.stateChangeL1 = StateChangeL1(initialCells, cells);
 		summary.stateEvolved = std::isfinite(summary.stateChangeL1) && summary.stateChangeL1 > 1e-12;
 		summary.pressurePeakReduced = summary.finalMaximumPressure < summary.initialMaximumPressure;
 		summary.ledger.End(TotalState(cells));
+		const auto expectedFinal = Add(summary.ledger.initial, summary.boundaryExchange);
+		summary.boundaryLedgerCloses = periodic
+			? summary.ledger.Closes(conservationTolerance)
+			: StateNear(summary.ledger.final, expectedFinal, conservationTolerance);
 		summary.passed = summary.positivityPreserved
-		&& summary.ledger.Closes(conservationTolerance)
+		&& summary.boundaryLedgerCloses
 		&& summary.corrections.IsEmpty() && summary.maximumCfl <= 1.0
 		&& (!requireEvolution || summary.stateEvolved)
 		&& (!requirePeakReduction || summary.pressurePeakReduced);
 		if (finalCellsOutput)
 			*finalCellsOutput = cells;
 		return summary;
+	}
+
+	RusanovProbeSummary RunPeriodicProbe(
+		BenchmarkCase benchmarkCase,
+		std::vector<ConservativeState> initialCells,
+		const IdealGasEOS &eos,
+		bool requireEvolution,
+		bool requirePeakReduction,
+		double conservationTolerance,
+		std::vector<ConservativeState> *finalCellsOutput)
+	{
+		if (benchmarkCase.grid.boundaryMode != BoundaryMode::Periodic)
+			return {benchmarkCase};
+		return RunOneDimensionalProbe(benchmarkCase, std::move(initialCells), eos,
+			requireEvolution, requirePeakReduction, conservationTolerance, finalCellsOutput);
+	}
+
+	RusanovProbeSummary RunSealedProbe(
+		BenchmarkCase benchmarkCase,
+		std::vector<ConservativeState> initialCells,
+		const IdealGasEOS &eos,
+		bool requireEvolution,
+		double conservationTolerance,
+		std::vector<ConservativeState> *finalCellsOutput)
+	{
+		if (benchmarkCase.grid.boundaryMode != BoundaryMode::Sealed)
+			return {benchmarkCase};
+		return RunOneDimensionalProbe(benchmarkCase, std::move(initialCells), eos,
+			requireEvolution, false, conservationTolerance, finalCellsOutput);
 	}
 
 	void EvaluateAdvectedDensity(
@@ -398,6 +485,58 @@ RusanovProbeSummary RunRusanovNearVacuumExpansion()
 		&& summary.minimumDensity <= 1e-4
 		&& summary.minimumPressure > 0.0
 		&& summary.lowDensityRegionMassIncreased;
+	return summary;
+}
+
+RusanovProbeSummary RunRusanovSodShockTube()
+{
+	const IdealGasEOS eos(SodGamma, SpecificGasConstant);
+	std::vector<ConservativeState> initial(SodCells);
+	for (std::size_t cell = 0; cell < SodCells; ++cell)
+	{
+		const bool leftState = (static_cast<double>(cell) + 0.5) * SodCellLength < 0.5;
+		initial[cell] = eos.FromPrimitive(
+			leftState ? SodLeftDensity : SodRightDensity,
+			0.0,
+			0.0,
+			leftState ? SodLeftPressure : SodRightPressure);
+	}
+	std::vector<ConservativeState> final;
+	auto summary = RunSealedProbe(
+		{"rusanov_sod_shock_tube_1d",
+			{SodCells, 1, SodCellLength, BoundaryMode::Sealed},
+			TimeDomain::NondimensionalContract, SodTimeStep, SodSteps},
+		initial, eos, true, 1e-9, &final);
+	if (final.size() != initial.size())
+		return summary;
+
+	summary.simulatedTime = SodTimeStep * static_cast<double>(SodSteps);
+	double maximumPressureGradient = 0.0;
+	for (std::size_t face = SodCells / 2; face + 1 < SodCells; ++face)
+	{
+		const auto left = eos.ToPrimitive(final[face]);
+		const auto right = eos.ToPrimitive(final[face + 1]);
+		if (!left.valid || !right.valid)
+			return summary;
+		const double gradient = std::abs(right.pressure - left.pressure);
+		if (gradient > maximumPressureGradient)
+		{
+			maximumPressureGradient = gradient;
+			summary.shockPosition = static_cast<double>(face + 1) * SodCellLength;
+		}
+	}
+	summary.densityBoundsPreserved = summary.minimumDensity >= SodRightDensity - 1e-10
+		&& summary.maximumDensity <= SodLeftDensity + 1e-10
+		&& summary.minimumPressure >= SodRightPressure - 1e-10
+		&& summary.finalMaximumPressure <= SodLeftPressure + 1e-10;
+	summary.shockReferencePassed = summary.densityBoundsPreserved
+		&& summary.boundaryLedgerCloses
+		&& summary.minimumVelocityX >= -1e-10
+		&& summary.maximumVelocityX >= 0.5
+		&& summary.maximumVelocityX <= 1.2
+		&& summary.shockPosition >= 0.8
+		&& summary.shockPosition <= 0.9;
+	summary.passed = summary.passed && summary.shockReferencePassed;
 	return summary;
 }
 
@@ -679,6 +818,91 @@ bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output)
 	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
 	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
 	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
+	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	return summary.passed;
+}
+
+bool WriteRusanovSodShockTubeProbe(std::ostream &output)
+{
+	const auto summary = RunRusanovSodShockTube();
+	const auto &initial = summary.ledger.initial;
+	const auto &final = summary.ledger.final;
+	const auto expectedFinal = Add(initial, summary.boundaryExchange);
+	const auto stateAndFluxScratchBytesTotal =
+		(3 * summary.benchmarkCase.grid.CellCount() + 1) * sizeof(ConservativeState);
+	output << "schema_version=1\n";
+	output << "case=" << summary.benchmarkCase.id << '\n';
+	output << "candidate=fvm_rusanov\n";
+	output << "candidate_solver_implemented=true\n";
+	output << "atmosphere_solver_selection=unselected\n";
+	output << "physical_scale_selection=unselected\n";
+	output << "result_status=candidate_result_not_selection\n";
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "boundary_mode=sealed\n";
+	output << "eos_gamma=" << SodGamma << '\n';
+	output << "eos_specific_gas_constant=" << SpecificGasConstant << '\n';
+	output << "initial_left_density=" << SodLeftDensity << '\n';
+	output << "initial_left_pressure=" << SodLeftPressure << '\n';
+	output << "initial_right_density=" << SodRightDensity << '\n';
+	output << "initial_right_pressure=" << SodRightPressure << '\n';
+	output << "grid_cells_x=" << summary.benchmarkCase.grid.cellsX << '\n';
+	output << "grid_cells_y=" << summary.benchmarkCase.grid.cellsY << '\n';
+	output << "grid_cell_count=" << summary.benchmarkCase.grid.CellCount() << '\n';
+	output << "cell_length=" << summary.benchmarkCase.grid.cellLength << '\n';
+	output << "case_timestep=" << summary.benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << summary.benchmarkCase.stepCount << '\n';
+	output << "simulated_time=" << summary.simulatedTime << '\n';
+	output << "maximum_cfl=" << summary.maximumCfl << '\n';
+	output << "shock_position=" << summary.shockPosition << '\n';
+	output << "minimum_velocity_x=" << summary.minimumVelocityX << '\n';
+	output << "maximum_velocity_x=" << summary.maximumVelocityX << '\n';
+	output << "density_bounds_preserved="
+		<< (summary.densityBoundsPreserved ? "true" : "false") << '\n';
+	output << "shock_reference_passed="
+		<< (summary.shockReferencePassed ? "true" : "false") << '\n';
+	output << "initial_mass=" << initial.density << '\n';
+	output << "final_mass=" << final.density << '\n';
+	output << "mass_drift=" << (final.density - initial.density) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		final.momentumX - initial.momentumX,
+		final.momentumY - initial.momentumY
+	) << '\n';
+	output << "momentum_x_drift=" << (final.momentumX - initial.momentumX) << '\n';
+	output << "momentum_y_drift=" << (final.momentumY - initial.momentumY) << '\n';
+	output << "energy_drift=" << (final.totalEnergyDensity - initial.totalEnergyDensity) << '\n';
+	output << "boundary_mass_exchange=" << summary.boundaryExchange.density << '\n';
+	output << "boundary_momentum_x_exchange=" << summary.boundaryExchange.momentumX << '\n';
+	output << "boundary_momentum_y_exchange=" << summary.boundaryExchange.momentumY << '\n';
+	output << "boundary_energy_exchange=" << summary.boundaryExchange.totalEnergyDensity << '\n';
+	output << "mass_balance_error=" << (final.density - expectedFinal.density) << '\n';
+	output << "momentum_x_balance_error=" << (final.momentumX - expectedFinal.momentumX) << '\n';
+	output << "momentum_y_balance_error=" << (final.momentumY - expectedFinal.momentumY) << '\n';
+	output << "energy_balance_error="
+		<< (final.totalEnergyDensity - expectedFinal.totalEnergyDensity) << '\n';
+	output << "boundary_ledger_closes=" << (summary.boundaryLedgerCloses ? "true" : "false") << '\n';
+	output << "minimum_density=" << summary.minimumDensity << '\n';
+	output << "maximum_density=" << summary.maximumDensity << '\n';
+	output << "minimum_pressure=" << summary.minimumPressure << '\n';
+	output << "maximum_pressure=" << summary.finalMaximumPressure << '\n';
+	output << "minimum_energy_density=" << summary.minimumEnergyDensity << '\n';
+	output << "state_change_l1=" << summary.stateChangeL1 << '\n';
+	output << "state_evolved=" << (summary.stateEvolved ? "true" : "false") << '\n';
+	output << "positivity_preserved=" << (summary.positivityPreserved ? "true" : "false") << '\n';
+	output << "numerical_correction_count=" << summary.corrections.eventCount << '\n';
+	output << "correction_mass_added=" << summary.corrections.massAdded << '\n';
+	output << "correction_mass_removed=" << summary.corrections.massRemoved << '\n';
+	output << "correction_momentum_x_added=" << summary.corrections.momentumXAdded << '\n';
+	output << "correction_momentum_y_added=" << summary.corrections.momentumYAdded << '\n';
+	output << "correction_energy_added=" << summary.corrections.energyAdded << '\n';
+	output << "correction_energy_removed=" << summary.corrections.energyRemoved << '\n';
+	output << "density_floor_hits=" << summary.corrections.densityFloorHits << '\n';
+	output << "pressure_floor_hits=" << summary.corrections.pressureFloorHits << '\n';
+	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
+	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
+	output << "state_and_flux_scratch_bytes_total=" << stateAndFluxScratchBytesTotal << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell="
+		<< static_cast<double>(stateAndFluxScratchBytesTotal)
+			/ static_cast<double>(summary.benchmarkCase.grid.CellCount()) << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
 }
