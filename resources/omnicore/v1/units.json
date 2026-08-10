@@ -21,6 +21,16 @@
       "canonical_unit": "metre"
     },
     {
+      "id": "area",
+      "dimension": { "mass": 0, "length": 2, "time": 0, "temperature": 0, "amount": 0 },
+      "canonical_unit": "square_metre"
+    },
+    {
+      "id": "volume",
+      "dimension": { "mass": 0, "length": 3, "time": 0, "temperature": 0, "amount": 0 },
+      "canonical_unit": "cubic_metre"
+    },
+    {
       "id": "time",
       "dimension": { "mass": 0, "length": 0, "time": 1, "temperature": 0, "amount": 0 },
       "canonical_unit": "second"
@@ -49,6 +59,16 @@
       "id": "mass_density",
       "dimension": { "mass": 1, "length": -3, "time": 0, "temperature": 0, "amount": 0 },
       "canonical_unit": "kilogram_per_cubic_metre"
+    },
+    {
+      "id": "momentum_density",
+      "dimension": { "mass": 1, "length": -2, "time": -1, "temperature": 0, "amount": 0 },
+      "canonical_unit": "kilogram_per_square_metre_second"
+    },
+    {
+      "id": "molar_concentration",
+      "dimension": { "mass": 0, "length": -3, "time": 0, "temperature": 0, "amount": 1 },
+      "canonical_unit": "mole_per_cubic_metre"
     },
     {
       "id": "molar_mass",
@@ -116,6 +136,11 @@
       "canonical_unit": "metre_per_second"
     },
     {
+      "id": "acceleration",
+      "dimension": { "mass": 0, "length": 1, "time": -2, "temperature": 0, "amount": 0 },
+      "canonical_unit": "metre_per_second_squared"
+    },
+    {
       "id": "amount_rate_density",
       "dimension": { "mass": 0, "length": -3, "time": -1, "temperature": 0, "amount": 1 },
       "canonical_unit": "mole_per_cubic_metre_second"
@@ -125,12 +150,16 @@
     { "id": "dimensionless", "symbol": "1", "quantity_kind": "dimensionless", "dimension": { "mass": 0, "length": 0, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "kilogram", "symbol": "kg", "quantity_kind": "mass", "dimension": { "mass": 1, "length": 0, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "metre", "symbol": "m", "quantity_kind": "length", "dimension": { "mass": 0, "length": 1, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "square_metre", "symbol": "m^2", "quantity_kind": "area", "dimension": { "mass": 0, "length": 2, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "cubic_metre", "symbol": "m^3", "quantity_kind": "volume", "dimension": { "mass": 0, "length": 3, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "second", "symbol": "s", "quantity_kind": "time", "dimension": { "mass": 0, "length": 0, "time": 1, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "kelvin", "symbol": "K", "quantity_kind": "temperature", "dimension": { "mass": 0, "length": 0, "time": 0, "temperature": 1, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "mole", "symbol": "mol", "quantity_kind": "amount", "dimension": { "mass": 0, "length": 0, "time": 0, "temperature": 0, "amount": 1 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "pascal", "symbol": "Pa", "quantity_kind": "pressure", "dimension": { "mass": 1, "length": -1, "time": -2, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "joule", "symbol": "J", "quantity_kind": "energy", "dimension": { "mass": 1, "length": 2, "time": -2, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "kilogram_per_cubic_metre", "symbol": "kg/m^3", "quantity_kind": "mass_density", "dimension": { "mass": 1, "length": -3, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "kilogram_per_square_metre_second", "symbol": "kg/(m^2*s)", "quantity_kind": "momentum_density", "dimension": { "mass": 1, "length": -2, "time": -1, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "mole_per_cubic_metre", "symbol": "mol/m^3", "quantity_kind": "molar_concentration", "dimension": { "mass": 0, "length": -3, "time": 0, "temperature": 0, "amount": 1 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "kilogram_per_mole", "symbol": "kg/mol", "quantity_kind": "molar_mass", "dimension": { "mass": 1, "length": 0, "time": 0, "temperature": 0, "amount": -1 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "joule_per_kelvin", "symbol": "J/K", "quantity_kind": "heat_capacity", "dimension": { "mass": 1, "length": 2, "time": -2, "temperature": -1, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "joule_per_kilogram_kelvin", "symbol": "J/(kg*K)", "quantity_kind": "specific_heat_capacity", "dimension": { "mass": 0, "length": 2, "time": -2, "temperature": -1, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
@@ -144,6 +173,7 @@
     { "id": "cubic_metre_per_mole_second", "symbol": "m^3/(mol*s)", "quantity_kind": "second_order_rate_coefficient", "dimension": { "mass": 0, "length": 3, "time": -1, "temperature": 0, "amount": -1 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "joule_per_cubic_metre", "symbol": "J/m^3", "quantity_kind": "energy_density", "dimension": { "mass": 1, "length": -1, "time": -2, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "metre_per_second", "symbol": "m/s", "quantity_kind": "velocity", "dimension": { "mass": 0, "length": 1, "time": -1, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "metre_per_second_squared", "symbol": "m/s^2", "quantity_kind": "acceleration", "dimension": { "mass": 0, "length": 1, "time": -2, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
     { "id": "mole_per_cubic_metre_second", "symbol": "mol/(m^3*s)", "quantity_kind": "amount_rate_density", "dimension": { "mass": 0, "length": -3, "time": -1, "temperature": 0, "amount": 1 }, "scale_to_si": "1", "offset_to_si": "0" }
   ]
 }

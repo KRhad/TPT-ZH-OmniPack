@@ -28,6 +28,9 @@ EXCLUDED_PREFIXES = (
     "tools/tests/",
 )
 ALLOWED_TOOLS = {
+    "tools/atmospherebench/AtmosphereBench.cpp",
+    "tools/atmospherebench/AtmosphereBench.h",
+    "tools/atmospherebench/main.cpp",
     "tools/build_release_font.py",
     "tools/element_registry_check.py",
     "tools/generate_content_menu_policy.py",
@@ -36,9 +39,11 @@ ALLOWED_TOOLS = {
     "tools/generate_periodic_table_data.py",
     "tools/omnicore_data_check.py",
     "tools/package_source_release.py",
+    "tools/physical_scale_check.py",
     "tools/prepare_windows_release.py",
     "tools/refresh_official_element_descriptions.py",
     "tools/sync_element_localization.py",
+    "tools/run_atmospherebench.ps1",
 }
 ROOT_REPLACEMENTS = {
     "README.md": "docs/PUBLIC_GITHUB_README.md",
@@ -58,6 +63,7 @@ REQUIRED_MEMBERS = {
     "resources/omnicore/v1/README.md",
     "resources/omnicore/v1/catalog.json",
     "resources/omnicore/v1/legacy-material-map.json",
+    "resources/omnicore/v1/physical-scale-candidates.json",
     "resources/omnicore/v1/schema.json",
     "resources/omnicore/v1/unit-registry.schema.json",
     "resources/omnicore/v1/units.json",
@@ -66,6 +72,11 @@ REQUIRED_MEMBERS = {
     "tools/generate_content_menu_policy.py",
     "tools/generate_periodic_content_links.py",
     "tools/omnicore_data_check.py",
+    "tools/physical_scale_check.py",
+    "tools/run_atmospherebench.ps1",
+    "tools/atmospherebench/AtmosphereBench.cpp",
+    "tools/atmospherebench/AtmosphereBench.h",
+    "tools/atmospherebench/main.cpp",
 }
 FORBIDDEN_SUFFIXES = (
     ".debug",

@@ -2,11 +2,11 @@
 
 ## Current phase decision
 
-Versions **1.0.1** and **1.0.2** are closed. 1.0.1 supplied the final
-`97d2fc2c1` diagnostics build/test/runtime/concurrency gate; 1.0.2 refreshed the
-official website, GitHub release, tag and master and found no upstream delta after
-the local 100.1 merge. The next permitted version is **1.0.3 UI & Material
-Organization**, beginning with a reversible UI/ID/Lua compatibility audit.
+Versions **1.0.1**, **1.0.2** and **1.0.4** are GREEN. Version 1.0.3 remains a
+user-accepted YELLOW because the 100/125/150 percent DPI matrix is deferred. The
+current version is **1.0.5 Physical Scale + AtmosphereBench**. Its phase-entry
+refresh found stable/master unchanged at `d768aeb89`; the first permitted work is
+an isolated strict-double contract scaffold, not production Air replacement.
 
 The official 100.1 source adaptation, explicit FP modes, fixed-step
 throughput/process-RAM baseline, C01-C14 deterministic restart suite and scoped
@@ -23,8 +23,8 @@ OmniAtmosphere state or solver will be integrated yet.
 | -1 | external research and license audit | YELLOW: classifications complete; no new artifact redistribution authorized |
 | 0 | latest upstream adaptation | 1.0.2 COMPLETE / GREEN: official stable/master unchanged at `d768aeb89`; no adaptation required |
 | 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
-| 2 | physical scale and unit system | proposal written / RED |
-| 3 | AtmosphereBench | planned / BLOCKED by Phase 1-2 foundations |
+| 2 | physical scale and unit system | 1.0.5 IN_PROGRESS: candidate contract scaffold; selection RED |
+| 3 | AtmosphereBench | 1.0.5 scaffold: strict target/contract only; zero solvers implemented |
 | 4 | solver selection | BLOCKED |
 | 5 | CPU single-species OmniAtmosphere MVP | BLOCKED |
 | 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
@@ -73,8 +73,13 @@ The next integration commits should be small and independently reversible:
 12. `upstream-impact`: COMPLETE in 1.0.2. Official stable/master remained
    `d768aeb89`; the tag-fetch collision is isolated to unrelated historical
    `v99.5.394`, and no source adaptation was needed.
-13. `ui-material-organization`: NEXT in 1.0.3. Inventory all selector/search/
-   periodic/detail routes and stable IDs before a narrow UI-only implementation.
+13. `ui-material-organization`: COMPLETE in `477372373`; gate remains YELLOW only
+   for deferred 100/125/150 percent DPI evidence.
+14. `omnimaterials-data-foundation`: COMPLETE in `9cc2b11c5` plus gate closure
+   `13b24f49e`; offline contracts and clean validation are GREEN.
+15. `physical-scale-atmospherebench`: IN PROGRESS in 1.0.5; candidate scale,
+   strict-double target and contract-only uniform fixture exist, with scale/time/
+   solver selection still RED.
 
 The mixed benchmark starts from the same generated Strict/Legacy hash; the later
 capture locates the first difference after update step 1 in both Particle and Air
@@ -96,7 +101,7 @@ the Main Orchestrator chooses adaptation timing.
 | Current latest stable? | TPT `100.1 build 400`, tag `v100.1.400`. |
 | Current upstream master? | `d768aeb89acad986bd252d7e904bf44bb374545f`, equal to stable at audit time. |
 | What is local OmniPack based on? | Common base `bff38ce6959...`; pre-vNext fork tip `fb72d5e8f`; stable is now merged into `f1320b48d`. |
-| Distance to stable/master? | Pre-adaptation: 181 local-only / 13 upstream-only. At `b3aa56cf3`: 199 local-only / 0 upstream-only. |
+| Distance to stable/master? | Pre-adaptation: 181 local-only / 13 upstream-only. At the 1.0.5 entry base `13b24f49e`: 218 local-only / 0 upstream-only. |
 | SDL2? | Yes, `2.30.9-tpt-libs`; no SDL3 production code. |
 | Current Air? | Existing coarse pressure/velocity/temperature solver with advection, smoothing, walls, fans, vorticity and convection approximations. |
 | `pv/vx/vy/hv`? | Dimensionless pressure-like field; two velocity-like fields; Kelvin-like ambient temperature, respectively. |
@@ -129,7 +134,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Start 1.0.3 with a UI/material route and compatibility audit. Global physical correction/source-sink, full-state finite/positivity, VRAM and performance-budget work remains tracked but does not authorize OmniAtmosphere. |
+| Next stage? | Clean-checkpoint the isolated 1.0.5 scaffold, then add shared case/result/ledger contracts and one replaceable candidate solver at a time. Production OmniAtmosphere remains unauthorized. |
 
 ## Long-term acceptance
 

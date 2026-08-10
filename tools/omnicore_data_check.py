@@ -77,8 +77,8 @@ AI_PROVENANCE_RE = re.compile(
     r"\blarge language model\b|\bllm\b)"
 )
 NONNEGATIVE_QUANTITIES = {
-    "mass", "length", "time", "temperature", "amount", "pressure",
-    "mass_density", "molar_mass", "heat_capacity", "specific_heat_capacity",
+    "mass", "length", "area", "volume", "time", "temperature", "amount", "pressure",
+    "mass_density", "molar_concentration", "molar_mass", "heat_capacity", "specific_heat_capacity",
     "thermal_conductivity", "dynamic_viscosity", "diffusivity",
     "surface_tension", "first_order_rate_coefficient",
     "second_order_rate_coefficient", "amount_rate_density",
@@ -93,12 +93,16 @@ QUANTITY_SPECS: dict[str, tuple[dict[str, int], str]] = {
     "dimensionless": (_dimension(0, 0, 0, 0, 0), "dimensionless"),
     "mass": (_dimension(1, 0, 0, 0, 0), "kilogram"),
     "length": (_dimension(0, 1, 0, 0, 0), "metre"),
+    "area": (_dimension(0, 2, 0, 0, 0), "square_metre"),
+    "volume": (_dimension(0, 3, 0, 0, 0), "cubic_metre"),
     "time": (_dimension(0, 0, 1, 0, 0), "second"),
     "temperature": (_dimension(0, 0, 0, 1, 0), "kelvin"),
     "amount": (_dimension(0, 0, 0, 0, 1), "mole"),
     "pressure": (_dimension(1, -1, -2, 0, 0), "pascal"),
     "energy": (_dimension(1, 2, -2, 0, 0), "joule"),
     "mass_density": (_dimension(1, -3, 0, 0, 0), "kilogram_per_cubic_metre"),
+    "momentum_density": (_dimension(1, -2, -1, 0, 0), "kilogram_per_square_metre_second"),
+    "molar_concentration": (_dimension(0, -3, 0, 0, 1), "mole_per_cubic_metre"),
     "molar_mass": (_dimension(1, 0, 0, 0, -1), "kilogram_per_mole"),
     "heat_capacity": (_dimension(1, 2, -2, -1, 0), "joule_per_kelvin"),
     "specific_heat_capacity": (
@@ -118,6 +122,7 @@ QUANTITY_SPECS: dict[str, tuple[dict[str, int], str]] = {
     ),
     "energy_density": (_dimension(1, -1, -2, 0, 0), "joule_per_cubic_metre"),
     "velocity": (_dimension(0, 1, -1, 0, 0), "metre_per_second"),
+    "acceleration": (_dimension(0, 1, -2, 0, 0), "metre_per_second_squared"),
     "amount_rate_density": (
         _dimension(0, -3, -1, 0, 1), "mole_per_cubic_metre_second"
     ),
@@ -127,12 +132,16 @@ UNIT_SPECS: dict[str, tuple[str, str]] = {
     "dimensionless": ("1", "dimensionless"),
     "kilogram": ("kg", "mass"),
     "metre": ("m", "length"),
+    "square_metre": ("m^2", "area"),
+    "cubic_metre": ("m^3", "volume"),
     "second": ("s", "time"),
     "kelvin": ("K", "temperature"),
     "mole": ("mol", "amount"),
     "pascal": ("Pa", "pressure"),
     "joule": ("J", "energy"),
     "kilogram_per_cubic_metre": ("kg/m^3", "mass_density"),
+    "kilogram_per_square_metre_second": ("kg/(m^2*s)", "momentum_density"),
+    "mole_per_cubic_metre": ("mol/m^3", "molar_concentration"),
     "kilogram_per_mole": ("kg/mol", "molar_mass"),
     "joule_per_kelvin": ("J/K", "heat_capacity"),
     "joule_per_kilogram_kelvin": ("J/(kg*K)", "specific_heat_capacity"),
@@ -146,6 +155,7 @@ UNIT_SPECS: dict[str, tuple[str, str]] = {
     "cubic_metre_per_mole_second": ("m^3/(mol*s)", "second_order_rate_coefficient"),
     "joule_per_cubic_metre": ("J/m^3", "energy_density"),
     "metre_per_second": ("m/s", "velocity"),
+    "metre_per_second_squared": ("m/s^2", "acceleration"),
     "mole_per_cubic_metre_second": ("mol/(m^3*s)", "amount_rate_density"),
 }
 

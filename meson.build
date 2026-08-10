@@ -653,6 +653,42 @@ if get_option('clang_tidy')
 endif
 
 if get_option('build_tests')
+atmospherebench_cpp_args = []
+if cpp_compiler.get_argument_syntax() == 'msvc'
+	atmospherebench_cpp_args += [ '/fp:strict' ]
+else
+	# This independent numerical reference must not inherit Legacy's fast-math
+	# contract. It intentionally does not use project_cpp_args or project_link_args.
+	atmospherebench_cpp_args += [
+		'-fno-fast-math',
+		'-fno-unsafe-math-optimizations',
+		'-ffp-contract=off',
+	]
+endif
+
+atmospherebench = executable(
+	'atmospherebench',
+	sources: files(
+		'tools/atmospherebench/AtmosphereBench.cpp',
+		'tools/atmospherebench/main.cpp',
+	),
+	cpp_args: atmospherebench_cpp_args,
+	override_options: [
+		'cpp_std=c++20',
+		'cpp_rtti=false',
+		'b_ndebug=false',
+		'b_lto=false',
+	],
+)
+
+test(
+	'atmospherebench-contract',
+	atmospherebench,
+	args: [ '--self-test' ],
+	suite: 'static',
+	timeout: 60,
+)
+
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),
@@ -734,6 +770,19 @@ solid_barrier_probe = executable(
 
 static_test_env = environment()
 static_test_env.set('PYTHONDONTWRITEBYTECODE', '1')
+
+test(
+	'physical-scale-contract',
+	python3_prog,
+	args: [
+		files('tools/physical_scale_check.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
 
 test(
 	'i18n-audit',

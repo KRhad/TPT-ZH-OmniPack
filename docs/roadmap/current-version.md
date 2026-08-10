@@ -1,11 +1,11 @@
 # OmniCore incremental version state
 
 ```text
-CURRENT_VERSION=1.0.4
-CURRENT_PHASE=OmniMaterials Data Foundation
-PHASE_STATUS=GREEN_CLOSED
-BASE_COMMIT=477372373cb1be30c3c04bca4309a7d6fd9fa799
-IMPLEMENTATION_HEAD=9cc2b11c51c2a63bec174486bfb9efada25737d9
+CURRENT_VERSION=1.0.5
+CURRENT_PHASE=Physical Scale + AtmosphereBench
+PHASE_STATUS=IN_PROGRESS_SCAFFOLD
+BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
+IMPLEMENTATION_HEAD=pending
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -25,9 +25,15 @@ V1_0_3_DPI_MATRIX=DPI_DEFERRED
 V1_0_4_GATE=GREEN
 V1_0_4_ROLLBACK=477372373cb1be30c3c04bca4309a7d6fd9fa799
 V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS_PACKAGE_BENCHMARK
+V1_0_5_GATE=IN_PROGRESS
+V1_0_5_UPSTREAM=GREEN_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
+V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
+V1_0_5_TIME_POLICY=UNSELECTED
+V1_0_5_ATMOSPHERE_SOLVER_SELECTED=false
+V1_0_5_SCAFFOLD=GREEN_TARGETED_24_STATIC_43_PYTHON_409_TOTAL_407_PASS_2_SKIPS_DIRTY_SOURCE
 KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget
-NEXT_VERSION=1.0.5
-NEXT_PHASE=refresh upstream, then Physical Scale contract and isolated AtmosphereBench only
+NEXT_VERSION=1.0.6
+NEXT_PHASE=commit and clean-verify scaffold, then add shared cases and first candidate solver only
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -52,8 +58,12 @@ Material/Species/Reaction contracts, canonical units, provenance validation and 
 or simulation behavior changed. Clean build/static/Python/Lua/OPS/package and
 fixed-step evidence are recorded in
 [the 1.0.4 material-data checkpoint](../vnext/phase-4-material-data-foundation.md).
-The next version is 1.0.5, which must begin with another upstream refresh and remain
-limited to PhysicalScale and isolated AtmosphereBench work.
+Version 1.0.5 is now **IN_PROGRESS**. Its entry refresh found the official 100.1
+stable tag and master unchanged at `d768aeb89`, with zero upstream-only commits.
+The new work is an isolated PhysicalScale/AtmosphereBench scaffold only: all scale,
+time and solver selections remain unselected, no numerical solver is implemented,
+and no production source consumes it. Details are in
+[the 1.0.5 scaffold report](../vnext/phase-5-physical-scale-atmospherebench.md).
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the

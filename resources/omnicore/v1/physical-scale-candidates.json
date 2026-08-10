@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "document_type": "omnicore_physical_scale_candidates",
+  "dataset_version": "1.0.5-benchmark-input.1",
+  "selection_status": "unselected",
+  "legacy_geometry": {
+    "cell_pixels": "4",
+    "air_cells_x": "153",
+    "air_cells_y": "96",
+    "particle_pixels_x": "612",
+    "particle_pixels_y": "384",
+    "legacy_tick_is_physical_seconds": false,
+    "presentation_fps_is_physical_dt": false
+  },
+  "geometry_candidates": [
+    {
+      "id": "geometry.pixel_1mm_cell_4mm_depth_4mm",
+      "status": "benchmark_input",
+      "pixel_length": {"value": "0.001", "unit": "metre"},
+      "atmosphere_cell_length": {"value": "0.004", "unit": "metre"},
+      "effective_depth": {"value": "0.004", "unit": "metre"},
+      "derived_metrics": {
+        "particle_parcel_volume": {"value": "0.000000004", "unit": "cubic_metre"},
+        "atmosphere_cell_volume": {"value": "0.000000064", "unit": "cubic_metre"},
+        "world_width": {"value": "0.612", "unit": "metre"},
+        "world_height": {"value": "0.384", "unit": "metre"}
+      },
+      "coordinate_convention": {
+        "origin": "top_left",
+        "positive_x": "right",
+        "positive_y": "down",
+        "cell_sample": "cell_center",
+        "gravity_vector_unit": "metre_per_second_squared",
+        "gravity_source": "explicit_benchmark_input"
+      },
+      "provenance": {
+        "source_title": "TPT-ZH-OmniPack Physical Scale Proposal",
+        "source_version": "vNext-1.0.5",
+        "source_date": "2026-08-10",
+        "source_locator": "docs/vnext/16-physical-scale-proposal.md",
+        "method": "derived_from_legacy_geometry_candidate",
+        "confidence": "benchmark_input",
+        "tuning_status": "unselected"
+      }
+    }
+  ],
+  "time_candidates": [
+    {
+      "id": "time.nominal_60hz_game_tick",
+      "status": "benchmark_input",
+      "legacy_ticks_per_second": "60",
+      "candidate_physical_seconds_per_tick": "0.0166666666666666667",
+      "candidate_physical_seconds_per_tick_unit": "second",
+      "time_policy": "unselected",
+      "presentation_fps_derived": false,
+      "provenance": {
+        "source_title": "TPT-ZH-OmniPack fixed-step benchmark contract",
+        "source_version": "vNext-1.0.5",
+        "source_date": "2026-08-10",
+        "source_locator": "docs/vnext/16-physical-scale-proposal.md",
+        "method": "benchmark_input_not_runtime_fact",
+        "confidence": "benchmark_input",
+        "tuning_status": "unselected"
+      }
+    },
+    {
+      "id": "time.acoustic_scaling",
+      "status": "benchmark_input",
+      "legacy_ticks_per_second": "60",
+      "candidate_physical_seconds_per_tick": null,
+      "candidate_physical_seconds_per_tick_unit": null,
+      "time_policy": "unselected",
+      "presentation_fps_derived": false,
+      "provenance": {
+        "source_title": "TPT-ZH-OmniPack solver-policy candidate",
+        "source_version": "vNext-1.0.5",
+        "source_date": "2026-08-10",
+        "source_locator": "docs/vnext/11-cfd-research.md",
+        "method": "unselected_policy_candidate",
+        "confidence": "benchmark_input",
+        "tuning_status": "unselected"
+      }
+    },
+    {
+      "id": "time.event_local_subcycling",
+      "status": "benchmark_input",
+      "legacy_ticks_per_second": "60",
+      "candidate_physical_seconds_per_tick": null,
+      "candidate_physical_seconds_per_tick_unit": null,
+      "time_policy": "unselected",
+      "presentation_fps_derived": false,
+      "provenance": {
+        "source_title": "TPT-ZH-OmniPack solver-policy candidate",
+        "source_version": "vNext-1.0.5",
+        "source_date": "2026-08-10",
+        "source_locator": "docs/vnext/11-cfd-research.md",
+        "method": "unselected_policy_candidate",
+        "confidence": "benchmark_input",
+        "tuning_status": "unselected"
+      }
+    },
+    {
+      "id": "time.all_speed_or_hybrid",
+      "status": "benchmark_input",
+      "legacy_ticks_per_second": "60",
+      "candidate_physical_seconds_per_tick": null,
+      "candidate_physical_seconds_per_tick_unit": null,
+      "time_policy": "unselected",
+      "presentation_fps_derived": false,
+      "provenance": {
+        "source_title": "TPT-ZH-OmniPack solver-policy candidate",
+        "source_version": "vNext-1.0.5",
+        "source_date": "2026-08-10",
+        "source_locator": "docs/vnext/11-cfd-research.md",
+        "method": "unselected_policy_candidate",
+        "confidence": "benchmark_input",
+        "tuning_status": "unselected"
+      }
+    }
+  ],
+  "prohibitions": [
+    "legacy_tick_is_not_si_seconds",
+    "presentation_fps_is_not_physical_dt",
+    "legacy_pv_is_not_pascal",
+    "legacy_vx_vy_are_not_metres_per_second",
+    "legacy_hv_is_not_authoritative_internal_energy",
+    "candidate_values_are_not_production_defaults"
+  ]
+}

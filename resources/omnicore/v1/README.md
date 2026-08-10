@@ -1,8 +1,9 @@
 # OmniCore data contract v1
 
-This directory is the offline-only 1.0.4 data foundation. Nothing in `src/`
-loads these files, and no simulation, save, Lua, Element, or UI behavior depends on
-them in this version.
+This directory began as the offline-only 1.0.4 data foundation. Version 1.0.5 adds
+one explicitly unselected PhysicalScale benchmark-input document. Nothing in
+`src/` loads these files, and no simulation, save, Lua, Element, or UI behavior
+depends on them.
 
 Files:
 
@@ -20,6 +21,10 @@ Files:
   physical-property claim. Its source hash is the canonical parsed CSV serialized
   as UTF-8/LF after normalizing every field's internal newline to LF, so CRLF
   checkout policy cannot make a clean clone appear stale.
+- `physical-scale-candidates.json` freezes the Legacy geometry fingerprint and
+  carries only benchmark candidates for pixel length, atmosphere-cell length,
+  effective depth and time policies. Its `selection_status`, every time policy and
+  the Atmosphere solver remain `unselected`; none is a production default.
 
 `tools/omnicore_data_check.py` validates all documents with the Python standard
 library. It rejects duplicate JSON keys, NaN/Inf, unknown fields, unsupported
@@ -44,3 +49,14 @@ thresholds, and `pv` values are not imported or relabeled as SI properties.
 `identity_only` has a strict meaning: if it carries a Legacy mapping, the mapping
 relationship must be `identity`. Proxy/tool/visualization relationships are reserved
 for later non-identity records and cannot silently claim physical identity.
+
+`tools/physical_scale_check.py` validates the scale candidate, exact volume/world
+geometry identities, unit roles, Legacy `CELL=4` / `153x96` / `612x384` fingerprint,
+and the prohibition on deriving physical `dt` from presentation FPS. The standalone
+strict-double `tools/atmospherebench/` scaffold uses a synthetic nondimensional EOS
+fixture only; no real gas property is introduced without provenance.
+
+For that contract, 1.0.5 extends the canonical SI registry with area, volume,
+acceleration, momentum-density and molar-concentration dimensions. These are exact
+unit definitions only: they do not add a material property, select a scale or make
+the benchmark fixture dimensional.

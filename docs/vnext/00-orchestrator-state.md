@@ -5,10 +5,10 @@
 ```text
 REPORT_DATE=2026-08-10
 CURRENT_BRANCH=integration/omnicore-vnext
-CURRENT_VERSION=1.0.4
-CURRENT_VERSION_GATE=GREEN
-NEXT_VERSION=1.0.5
-NEXT_PHASE=refresh upstream, then define PhysicalScale and isolated AtmosphereBench candidates only
+CURRENT_VERSION=1.0.5
+CURRENT_VERSION_GATE=IN_PROGRESS
+NEXT_VERSION=1.0.6
+NEXT_PHASE=commit and clean-verify scaffold, then add shared cases and one candidate solver at a time
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -32,6 +32,13 @@ V1_0_4_GATE=GREEN
 V1_0_4_IMPLEMENTATION_HEAD=9cc2b11c51c2a63bec174486bfb9efada25737d9
 V1_0_4_ROLLBACK=477372373cb1be30c3c04bca4309a7d6fd9fa799
 V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS_PACKAGE_BENCHMARK
+V1_0_5_GATE=IN_PROGRESS
+V1_0_5_BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
+V1_0_5_UPSTREAM=GREEN_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
+V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
+V1_0_5_TIME_POLICY=UNSELECTED
+V1_0_5_ATMOSPHERE_SOLVER_SELECTED=false
+V1_0_5_SCAFFOLD=GREEN_TARGETED_24_STATIC_43_PYTHON_409_TOTAL_407_PASS_2_SKIPS_DIRTY_SOURCE
 BENCHMARK_IMPLEMENTATION_HEAD=c4490463f3819695cab734414f827e0e4e4be118
 CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
@@ -106,6 +113,14 @@ validation. Clean build/static/Python/Lua/OPS/source-package/fixed-step checks a
 recorded in `phase-4-material-data-foundation.md`. No production simulation,
 physical behavior, Element ID, Lua identifier, save-format change, or runtime data
 consumer was introduced. Its rollback point is `477372373`.
+
+Version 1.0.5 is **IN_PROGRESS** from base `13b24f49e`. The phase-entry upstream
+refresh confirms the official 100.1 stable tag and master remain `d768aeb89`; local
+is 218 ahead and zero behind. The current dirty-worktree checkpoint adds only an
+offline PhysicalScale candidate contract and a standalone strict-double
+AtmosphereBench scaffold. Scale, time policy and solver selection are all
+unselected, every solver candidate is registered-only, and no production source
+consumes the new files. See `phase-5-physical-scale-atmospherebench.md`.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
@@ -250,13 +265,12 @@ with an explicit maintenance decision.
 
 ## Next permitted work
 
-Version 1.0.4 is closed. Version 1.0.5 may begin only with a fresh upstream
-stable/master impact check, then may:
+The 1.0.5 upstream impact check is complete. The current phase may:
 
-1. define and validate the PhysicalScale/units contract without a runtime solver;
-2. build isolated, deterministic AtmosphereBench candidates and test fixtures;
-3. record conservation, positivity, memory and benchmark criteria needed for solver
-   selection.
+1. commit and clean-verify the isolated scale/bench scaffold;
+2. add a shared grid, case, result and correction-ledger contract;
+3. add and benchmark one replaceable candidate solver at a time, beginning with the
+   simplest conservative debugging floor rather than a production integration.
 
 Production Air replacement, PhysicalScale runtime integration, multi-species runtime,
 chemistry runtime, SDL3 migration and GPU compute remain blocked. Physical

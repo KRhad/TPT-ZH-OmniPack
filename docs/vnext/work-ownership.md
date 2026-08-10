@@ -2,12 +2,15 @@
 
 ## Current status
 
-There are no active write Workers. Version 1.0.4 is closed; its implementation and
-read-only reviews are retained below as evidence. Version 1.0.5 has not assigned a
-write Worker and must first complete a new upstream-impact check.
+The Main Orchestrator owns the isolated 1.0.5 scaffold on the integration branch.
+The phase-entry read-only audits are complete and made no writes. No Worker may
+modify production Simulation, Air, Particle, Save or Lua core.
 
 | Worker | Branch | Worktree | Allowed paths | Forbidden paths | Base commit | Task | Status |
 |---|---|---|---|---|---|---|---|
+| Main-PhysicalScale-AtmosphereBench-1.0.5 | `integration/omnicore-vnext` | main worktree | `resources/omnicore/**`, `tools/atmospherebench/**`, bounded validators/runners/tests, Meson test registration, vNext/roadmap docs | every production runtime source, Save/Lua/UI, solver selection claim, release/push | `13b24f49e` | isolated scale contract and strict-double bench scaffold | ACTIVE, IN_PROGRESS |
+| Worker-Phase5-Scale-Audit | read-only | main worktree | existing geometry/Air/Save/time contracts | every write | `13b24f49e` | identify factual scale and compatibility boundaries | COMPLETE, READ_ONLY |
+| Worker-Phase5-Bench-Audit | read-only | main worktree | existing benchmark/Meson/CFD plan | every write | `13b24f49e` | identify isolated harness and strict-FP boundaries | COMPLETE, READ_ONLY |
 | Main Orchestrator | `integration/omnicore-vnext` | `D:/CodexWork/OmniPack/repos/TPT-ZH-OmniPack` | integration, `resources/omnicore/**`, bounded validation tooling/tests, Meson static-test registration, `docs/vnext/**`, `docs/roadmap/**` | destructive Git operations, push/release, Simulation/Particle/Air/Save/Lua core, runtime physics, SDL3/GPU | `477372373` | 1.0.4 schema, units, provenance, and validation foundation only | COMPLETE, integrated as `9cc2b11c5`; clean gate GREEN |
 | Worker-Materials-Schema-Audit | read-only | main worktree | existing registries, vNext research, proposed schema boundaries | every write | `477372373` | independent schema and compatibility audit | COMPLETE, findings resolved |
 | Worker-Data-Validation-Audit | read-only | main worktree | validation/test conventions and proposed fail-closed checks | every write | `477372373` | independent validator and negative-test audit | COMPLETE, findings resolved |

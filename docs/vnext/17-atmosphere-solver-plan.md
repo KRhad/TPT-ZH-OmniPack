@@ -6,7 +6,11 @@ Select the least complex solver that meets conservation, positivity, TPT boundar
 real-time and backend requirements. AtmosphereBench is an independent CPU tool first;
 it does not replace `Air.cpp` or alter saves/gameplay.
 
-## Implemented comparison order
+## Planned comparison order
+
+The 1.0.5 scaffold registers the Legacy-like, Rusanov, HLLE and LBM names but
+implements none of their numerical steps. Registration is not comparison evidence
+and does not select a solver.
 
 1. Legacy-like baseline using the current field semantics.
 2. First-order strict-double Rusanov FVM.
