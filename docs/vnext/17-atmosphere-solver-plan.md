@@ -9,10 +9,10 @@ it does not replace `Air.cpp` or alter saves/gameplay.
 ## Planned comparison order
 
 The 1.0.5 scaffold registers the Legacy-like, Rusanov, HLLE and LBM names. The
-current isolated checkpoint implements only a first-order strict-double Rusanov
-1D periodic uniform debug probe. Legacy-like remains a control registration; HLLE
-and LBM remain registered-only. This probe is not comparison evidence and does not
-select a solver.
+current isolated checkpoint implements only first-order strict-double Rusanov 1D
+periodic uniform and pressure-pulse debug probes. Legacy-like remains a control
+registration; HLLE and LBM remain registered-only. These probes are not comparison
+evidence and do not select a solver.
 
 1. Legacy-like baseline using the current field semantics.
 2. First-order strict-double Rusanov FVM.
@@ -24,7 +24,7 @@ select a solver.
 The provisional recommendation is HLLE FVM because one conservative state naturally
 carries mass, momentum, total energy and species; it handles compressibility,
 pressure waves and large density changes more directly than LBM. Rusanov is the
-debugging floor; its uniform probe has passed only the isolated contract described
+debugging floor; its current probes have passed only the isolated contracts described
 in `phase-5-rusanov-candidate.md`. HLLC is a later accuracy option, and LBM remains
 valuable for low-Mach/GPU comparison. Results may overturn this recommendation.
 

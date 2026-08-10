@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_RUSANOV_PROBE_CLEAN_VALIDATED
+STATUS=IN_PROGRESS_RUSANOV_PRESSURE_PULSE_CLEAN_VALIDATED
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -30,6 +30,8 @@ SHARED_CONTRACT_IMPLEMENTATION_COMMIT=1ba507e89e3d713fe355c03c2fc6e7139aabcb49
 SHARED_CONTRACT_VALIDATION=GREEN_CLEAN_BUILD_80_STATIC_43_TARGETED_26_PYTHON_411_TOTAL_409_PASS_2_SKIPS_CONTRACT_ARTIFACT_AND_SOURCE_PACKAGE
 RUSANOV_IMPLEMENTATION_COMMIT=4b0658d8ff7bc56169fd8ed5d649f8c6b4250b44
 RUSANOV_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_1D_PERIODIC_UNIFORM_PROBE_BUILD_80_STATIC_44_PYTHON_414_TOTAL_412_PASS_2_SKIPS_ZERO_DRIFT_ZERO_CORRECTIONS
+RUSANOV_PRESSURE_PULSE_COMMIT=cded7be672fbb2755174499214bb31622979eac6
+RUSANOV_PRESSURE_PULSE_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_1D_PERIODIC_128X1_64_STEP_NONUNIFORM_PROBE_BUILD_80_STATIC_45_PYTHON_414_TOTAL_412_PASS_2_SKIPS_POSITIVE_ZERO_CORRECTIONS
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
 V1_0_5_GATE=IN_PROGRESS
@@ -207,8 +209,16 @@ debug evidence, not shock/near-vacuum/performance evidence or solver selection.
 Full details and artifact hashes are in
 [the Rusanov checkpoint](phase-5-rusanov-candidate.md).
 
+The subsequent Rusanov pressure-pulse probe is clean-validated at `cded7be67`.
+It evolves a non-uniform periodic 128x1 Gaussian pressure perturbation for 64
+nondimensional steps. Its pressure maximum falls from `1.1` to `1.09652`,
+state-change L1 is `0.373615`, the maximum CFL is `0.0270897`, all primitive
+states remain positive and no correction event occurs. Mass, x/y momentum and
+energy drift remain within the published `1e-10` periodic tolerance. It is still
+candidate evidence, not a shock/near-vacuum/performance result or solver selection.
+
 `V1_0_5_GATE=IN_PROGRESS`. The next implementation may extend only the Rusanov
-candidate with a non-uniform deterministic case while keeping HLLE and LBM
+candidate with a density-advection or contact case while keeping HLLE and LBM
 registered-only and independently replaceable. PhysicalScale, physical-time policy
 and solver selection remain RED until the mandatory cases, conservation/positivity,
 memory and performance evidence exist. Production Air replacement is still
