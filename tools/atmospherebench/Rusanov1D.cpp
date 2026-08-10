@@ -55,6 +55,12 @@ namespace
 	constexpr std::size_t RefinementCoarseCells = 64;
 	constexpr std::size_t RefinementMediumCells = 128;
 	constexpr std::size_t RefinementFineCells = 256;
+	constexpr std::size_t LowMachCells = 128;
+	constexpr double LowMachShiftDistance = 0.125;
+	constexpr double LowMachTargetCfl = 0.45;
+	constexpr double ModerateMachVelocity = 0.5;
+	constexpr double LowMachVelocity = 0.05;
+	constexpr double VeryLowMachVelocity = 0.005;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -403,6 +409,37 @@ namespace
 		summary.passed = summary.passed && summary.advectionReferencePassed;
 		return summary;
 	}
+
+	RusanovProbeSummary RunLowMachAdvectionCase(double velocity)
+	{
+		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		const double cellLength = 1.0 / static_cast<double>(LowMachCells);
+		const double totalTime = LowMachShiftDistance / velocity;
+		const double maximumSoundSpeed = std::sqrt(
+			Gamma / (1.0 - DensityAdvectionAmplitude));
+		const double maximumTimeStep = LowMachTargetCfl * cellLength
+			/ (velocity + maximumSoundSpeed);
+		const auto steps = static_cast<std::size_t>(std::ceil(totalTime / maximumTimeStep));
+		const double timeStep = totalTime / static_cast<double>(steps);
+		std::vector<ConservativeState> initial(LowMachCells);
+		for (std::size_t cell = 0; cell < LowMachCells; ++cell)
+		{
+			const double x = (static_cast<double>(cell) + 0.5) * cellLength;
+			const double density = 1.0 + DensityAdvectionAmplitude * std::sin(2.0 * Pi * x);
+			initial[cell] = eos.FromPrimitive(density, velocity, 0.0, 1.0);
+		}
+		std::vector<ConservativeState> final;
+		auto summary = RunPeriodicProbe(
+			{"rusanov_low_mach_advection_1d",
+				{LowMachCells, 1, cellLength, BoundaryMode::Periodic},
+				TimeDomain::NondimensionalContract, timeStep, steps},
+			initial, eos, true, false, 1e-8, &final);
+		EvaluateAdvectedDensity(summary, initial, final, eos, velocity,
+			1.0, 1.0, 1.0 - DensityAdvectionAmplitude, 1.0 + DensityAdvectionAmplitude);
+		summary.simulatedTime = totalTime;
+		summary.passed = summary.passed && summary.advectionReferencePassed;
+		return summary;
+	}
 }
 
 RusanovProbeSummary RunRusanovUniform()
@@ -591,6 +628,33 @@ RusanovRefinementSummary RunRusanovDensityAdvectionRefinement()
 		&& summary.mediumToFineL1Order >= 0.8
 		&& summary.coarseToMediumL1Order <= 1.2
 		&& summary.mediumToFineL1Order <= 1.2;
+	return summary;
+}
+
+RusanovLowMachSummary RunRusanovLowMachAdvection()
+{
+	RusanovLowMachSummary summary{
+		RunLowMachAdvectionCase(ModerateMachVelocity),
+		RunLowMachAdvectionCase(LowMachVelocity),
+		RunLowMachAdvectionCase(VeryLowMachVelocity),
+	};
+	const double nominalSoundSpeed = std::sqrt(Gamma);
+	summary.moderateNominalMach = ModerateMachVelocity / nominalSoundSpeed;
+	summary.lowNominalMach = LowMachVelocity / nominalSoundSpeed;
+	summary.veryLowNominalMach = VeryLowMachVelocity / nominalSoundSpeed;
+	if (summary.moderateMach.densityL1Error > 0.0)
+	{
+		summary.lowToModerateL1Ratio =
+			summary.lowMach.densityL1Error / summary.moderateMach.densityL1Error;
+		summary.veryLowToModerateL1Ratio =
+			summary.veryLowMach.densityL1Error / summary.moderateMach.densityL1Error;
+	}
+	summary.suitabilityPassed = summary.veryLowMach.densityL1Error <= 0.05
+		&& summary.veryLowMach.totalVariationRatio >= 0.8;
+	summary.passed = summary.moderateMach.passed && summary.lowMach.passed
+		&& summary.veryLowMach.passed
+		&& std::isfinite(summary.lowToModerateL1Ratio)
+		&& std::isfinite(summary.veryLowToModerateL1Ratio);
 	return summary;
 }
 
@@ -1049,6 +1113,84 @@ bool WriteRusanovDensityAdvectionRefinementProbe(std::ostream &output)
 	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
 	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
 	output << "refinement_passed=" << (summary.passed ? "true" : "false") << '\n';
+	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	return summary.passed;
+}
+
+bool WriteRusanovLowMachAdvectionProbe(std::ostream &output)
+{
+	const auto summary = RunRusanovLowMachAdvection();
+	output << "schema_version=1\n";
+	output << "case=rusanov_low_mach_advection_1d\n";
+	output << "candidate=fvm_rusanov\n";
+	output << "candidate_solver_implemented=true\n";
+	output << "atmosphere_solver_selection=unselected\n";
+	output << "physical_scale_selection=unselected\n";
+	output << "result_status=candidate_result_not_selection\n";
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "boundary_mode=periodic\n";
+	output << "grid_cells_x=" << LowMachCells << '\n';
+	output << "grid_cells_y=1\n";
+	output << "grid_cell_count=" << LowMachCells << '\n';
+	output << "case_timestep=" << summary.veryLowMach.benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << summary.veryLowMach.benchmarkCase.stepCount << '\n';
+	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
+	output << "reference_shift_distance=" << LowMachShiftDistance << '\n';
+	output << "moderate_velocity=" << ModerateMachVelocity << '\n';
+	output << "low_velocity=" << LowMachVelocity << '\n';
+	output << "very_low_velocity=" << VeryLowMachVelocity << '\n';
+	output << "moderate_nominal_mach=" << summary.moderateNominalMach << '\n';
+	output << "low_nominal_mach=" << summary.lowNominalMach << '\n';
+	output << "very_low_nominal_mach=" << summary.veryLowNominalMach << '\n';
+	output << "moderate_steps=" << summary.moderateMach.benchmarkCase.stepCount << '\n';
+	output << "low_steps=" << summary.lowMach.benchmarkCase.stepCount << '\n';
+	output << "very_low_steps=" << summary.veryLowMach.benchmarkCase.stepCount << '\n';
+	output << "moderate_simulated_time=" << summary.moderateMach.simulatedTime << '\n';
+	output << "low_simulated_time=" << summary.lowMach.simulatedTime << '\n';
+	output << "very_low_simulated_time=" << summary.veryLowMach.simulatedTime << '\n';
+	output << "moderate_density_l1_error=" << summary.moderateMach.densityL1Error << '\n';
+	output << "low_density_l1_error=" << summary.lowMach.densityL1Error << '\n';
+	output << "very_low_density_l1_error=" << summary.veryLowMach.densityL1Error << '\n';
+	output << "moderate_total_variation_ratio=" << summary.moderateMach.totalVariationRatio << '\n';
+	output << "low_total_variation_ratio=" << summary.lowMach.totalVariationRatio << '\n';
+	output << "very_low_total_variation_ratio=" << summary.veryLowMach.totalVariationRatio << '\n';
+	output << "low_to_moderate_l1_ratio=" << summary.lowToModerateL1Ratio << '\n';
+	output << "very_low_to_moderate_l1_ratio=" << summary.veryLowToModerateL1Ratio << '\n';
+	output << "moderate_maximum_cfl=" << summary.moderateMach.maximumCfl << '\n';
+	output << "low_maximum_cfl=" << summary.lowMach.maximumCfl << '\n';
+	output << "very_low_maximum_cfl=" << summary.veryLowMach.maximumCfl << '\n';
+	output << "minimum_density=" << summary.veryLowMach.minimumDensity << '\n';
+	output << "maximum_density=" << summary.veryLowMach.maximumDensity << '\n';
+	output << "minimum_pressure=" << summary.veryLowMach.minimumPressure << '\n';
+	output << "maximum_pressure=" << summary.veryLowMach.finalMaximumPressure << '\n';
+	output << "state_change_l1=" << summary.veryLowMach.stateChangeL1 << '\n';
+	output << "state_evolved=" << (summary.veryLowMach.stateEvolved ? "true" : "false") << '\n';
+	output << "positivity_preserved=" << (summary.veryLowMach.positivityPreserved ? "true" : "false") << '\n';
+	output << "mass_drift="
+		<< (summary.veryLowMach.ledger.final.density - summary.veryLowMach.ledger.initial.density) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		summary.veryLowMach.ledger.final.momentumX - summary.veryLowMach.ledger.initial.momentumX,
+		summary.veryLowMach.ledger.final.momentumY - summary.veryLowMach.ledger.initial.momentumY) << '\n';
+	output << "momentum_x_drift="
+		<< (summary.veryLowMach.ledger.final.momentumX - summary.veryLowMach.ledger.initial.momentumX) << '\n';
+	output << "momentum_y_drift="
+		<< (summary.veryLowMach.ledger.final.momentumY - summary.veryLowMach.ledger.initial.momentumY) << '\n';
+	output << "energy_drift="
+		<< (summary.veryLowMach.ledger.final.totalEnergyDensity
+			- summary.veryLowMach.ledger.initial.totalEnergyDensity) << '\n';
+	output << "numerical_correction_count=0\n";
+	output << "correction_mass_added=0\n";
+	output << "correction_mass_removed=0\n";
+	output << "correction_momentum_x_added=0\n";
+	output << "correction_momentum_y_added=0\n";
+	output << "correction_energy_added=0\n";
+	output << "correction_energy_removed=0\n";
+	output << "density_floor_hits=0\n";
+	output << "pressure_floor_hits=0\n";
+	output << "correction_event_count=0\n";
+	output << "low_mach_suitability_passed="
+		<< (summary.suitabilityPassed ? "true" : "false") << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
 }
