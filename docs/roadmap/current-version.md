@@ -3,9 +3,9 @@
 ```text
 CURRENT_VERSION=1.0.4
 CURRENT_PHASE=OmniMaterials Data Foundation
-PHASE_STATUS=IN_PROGRESS
+PHASE_STATUS=GREEN_CLOSED
 BASE_COMMIT=477372373cb1be30c3c04bca4309a7d6fd9fa799
-IMPLEMENTATION_HEAD=pending
+IMPLEMENTATION_HEAD=9cc2b11c51c2a63bec174486bfb9efada25737d9
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -22,10 +22,12 @@ GUI_DPI_100_125_150=NOT_TESTED
 V1_0_3_GATE=YELLOW
 V1_0_3_DISPOSITION=USER_ACCEPTED_YELLOW
 V1_0_3_DPI_MATRIX=DPI_DEFERRED
-V1_0_4_GATE=IN_PROGRESS
+V1_0_4_GATE=GREEN
+V1_0_4_ROLLBACK=477372373cb1be30c3c04bca4309a7d6fd9fa799
+V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS_PACKAGE_BENCHMARK
 KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget
-NEXT_VERSION=1.0.4
-NEXT_PHASE=Material/Species/Reaction schema, canonical units, property provenance, and fail-closed validation only
+NEXT_VERSION=1.0.5
+NEXT_PHASE=refresh upstream, then Physical Scale contract and isolated AtmosphereBench only
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -44,6 +46,16 @@ directed the orchestrator to enter the next version. The exception is recorded a
 `USER_ACCEPTED_YELLOW / DPI_DEFERRED`; it does not convert missing evidence to GREEN.
 Global OmniCore G0 remains RED and continues to forbid OmniAtmosphere implementation.
 
+Version 1.0.4 is **GREEN** at `9cc2b11c5`. It adds only offline versioned
+Material/Species/Reaction contracts, canonical units, provenance validation and a
+488-entry identity map; no runtime source, Element ID, save format, Lua identifier,
+or simulation behavior changed. Clean build/static/Python/Lua/OPS/package and
+fixed-step evidence are recorded in
+[the 1.0.4 material-data checkpoint](../vnext/phase-4-material-data-foundation.md).
+The next version is 1.0.5, which must begin with another upstream refresh and remain
+limited to PhysicalScale and isolated AtmosphereBench work.
+
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the
-current [1.0.3 UI checkpoint](../vnext/phase-3-ui-material-organization.md).
+1.0.3 [UI checkpoint](../vnext/phase-3-ui-material-organization.md), and the
+1.0.4 [material-data checkpoint](../vnext/phase-4-material-data-foundation.md).

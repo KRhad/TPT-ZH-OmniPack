@@ -5,8 +5,9 @@
 ```text
 TARGET_VERSION=1.0.4
 BASE_COMMIT=477372373cb1be30c3c04bca4309a7d6fd9fa799
+IMPLEMENTATION_COMMIT=9cc2b11c51c2a63bec174486bfb9efada25737d9
 BRANCH=integration/omnicore-vnext
-STATUS=VALIDATED_PENDING_CLEAN_CHECKPOINT
+STATUS=GREEN_CLOSED
 SCOPE=Material/Species/Reaction schemas, canonical units, property provenance, fail-closed validation
 PRODUCTION_SIMULATION_CHANGE=false
 ELEMENT_ID_CHANGE=false
@@ -19,15 +20,19 @@ CANONICAL_UNITS=23
 LEGACY_IDENTITY_MAPPINGS=488_487_CANONICAL_1_ALIAS
 LEGACY_MAP_SOURCE_HASH_CONTRACT=canonical_csv_utf8_lf_v1
 LEGACY_MAP_SOURCE_SHA256=E7BCE2976E7F1F6243899049DFBD8DE06CF0CBACB8AD7FAF9168FF888CE93962
-PYTHON_DISCOVERY=GREEN_383_PASS_2_SKIPPED
+PYTHON_DISCOVERY=GREEN_385_PASS_2_SKIPPED
 MESON_STATIC=GREEN_41_41
-BUILD=GREEN_789_789
-LUA_UPSTREAM=GREEN
+BUILD=GREEN_MESON_COMPILE_80_ACTIONS
+JSONSCHEMA=GREEN_DRAFT2020_12_CATALOG_UNITS_LEGACY_MAP
+LUA_UPSTREAM=GREEN_LUA_BOUNDS_11
 LUA_MODULE=GREEN
 OPS_SAVE_LOAD=GREEN_8_SCENARIOS_24_PROCESSES_16_RESTARTS_16_LOADS
-BENCHMARK=RECORDED_DIRTY_SOURCE_NOT_A_PERFORMANCE_GATE
-INDEPENDENT_REVIEW=2_READ_ONLY_REVIEWS_CHANGES_REQUIRED_RESOLVED
-V1_0_4_GATE=READY_FOR_CLEAN_CHECKPOINT
+SOURCE_PACKAGE=GREEN_1294_MEMBERS_7_OMNICORE_REQUIRED_NO_TEST_ASSETS
+BENCHMARK=RECORDED_CLEAN_SOURCE_PERFORMANCE_GATE_NOT_EVALUATED
+EXECUTABLE_SHA256=5EEE4EA5FCBE2CC3B49C9785A25C6FB55E14E1A15799E780E8BC1A45FA7D8694
+INDEPENDENT_REVIEW=3_READ_ONLY_REVIEWS_FINDINGS_RESOLVED_FINAL_GO
+V1_0_4_GATE=GREEN
+ROLLBACK_COMMIT=477372373cb1be30c3c04bca4309a7d6fd9fa799
 ```
 
 ## Entry decision
@@ -85,48 +90,57 @@ strict-width regression test prevents their fields from being silently shifted.
 
 ## Verification
 
-- Targeted OmniCore contract suite: **40/40 PASS**.
-- Full Python discovery: **381 PASS**, with **2 pre-existing declared skips**.
+All results below use the clean implementation commit
+`9cc2b11c51c2a63bec174486bfb9efada25737d9`.
+
+- Targeted OmniCore contract suite: **42/42 PASS**.
+- Full Python discovery: **385 PASS**, with **2 pre-existing declared skips**.
 - JSON Schema Draft 2020-12 meta-validation and validation of catalog, units, and
   Legacy map: **PASS** (independent optional environment check; no dependency added).
-- Clean isolated `debugoptimized`, `static=prebuilt`, `legacy_fast` build:
-  **789/789 PASS**. GCC emitted the pre-existing `PowderToy.cpp`
+- Clean-source `debugoptimized`, `static=prebuilt`, `legacy_fast` Meson compile:
+  **80 actions PASS**. GCC emitted the pre-existing `PowderToy.cpp`
   `maybe-uninitialized` warning; this phase changes no `src/` file.
 - Meson static suite: **41/41 PASS**, including the new
   `omnicore-data-foundation` gate.
 - Runtime: upstream Lua smoke and module Lua smoke both **PASS**; eight OPS
   save/load scenarios pass with 24 fresh processes, 16 restarts, and 16 load
   verifications.
-- Boundary audit: `git diff -- src` is empty and a contract test confirms no
+- Source package: a clean-HEAD archive contains 1,294 members, the validator and
+  all six OmniCore contract files, no test assets, and a valid manifest. Its local
+  SHA-256 is `B91834EE3F6CB61CC76443116786DA3425B49BED817FA60F889D857B1A30B861`.
+  The packager's current `1.0.0` archive stem is a release-tool limitation; this is
+  a contract verification artifact, not a published 1.0.4 release package.
+- Boundary audit: the implementation commit has zero `src/` changes and no
   production source references the foundation files.
 
 The first independent validation audit found line-ending, nested-schema, provenance,
 reaction, refresh-order, package-membership, negative-zero, and canonical-integer
-gaps. A second independent review additionally found field-internal newline
-normalization, complete source-package member enforcement, and identity-only/proxy
-semantic gaps. Every finding is now covered by an adversarial test. The audited
-result is `2_READ_ONLY_REVIEWS_CHANGES_REQUIRED_RESOLVED`; neither review is
-misreported as an unconditional approval.
+gaps. A second review found field-internal newline normalization, complete
+source-package member enforcement, and identity-only/proxy semantic gaps. The final
+read-only review exercised quoted header and data-field newline adversaries, found
+no remaining P1/P2, and recommended the clean-checkpoint verification that is now
+recorded above. Every finding is covered by an adversarial test; the final result is
+`3_READ_ONLY_REVIEWS_FINDINGS_RESOLVED_FINAL_GO`.
 
 ## Benchmark and memory
 
-The existing fixed-step client runner recorded this pre-checkpoint, dirty-source
-execution (the changes are data/tools only):
+The clean-source fixed-step client runner used 30 warmup steps, five 120-step passes
+and `legacy_fast`; both runs report `source_dirty=false` and deterministic final
+state hashes:
 
-| Scene | Steps/s | ms/step | Steps | Final hash |
-|---|---:|---:|---:|---:|
-| empty | 1476.078458 | 0.677471 | 600 | 3182293864 |
-| mixed-medium | 176.608632 | 5.662237 | 600 | 798083730 |
+| Scene | Steps/s | ms/step | Steps | Final hash | Peak working set | Peak private bytes |
+|---|---:|---:|---:|---:|---:|---:|
+| empty | 1638.298679 | 0.610389 | 600 | 3182293864 | 133,464,064 | 133,898,240 |
+| mixed-medium | 183.486654 | 5.449988 | 600 | 798083730 | 155,062,272 | 155,394,048 |
 
-Its executable SHA-256 is
-`A588112D58F5762C77CE88FC2BA117D3E4994C96069090E65B4F1A80A46B48A4`.
+The executable SHA-256 is
+`5EEE4EA5FCBE2CC3B49C9785A25C6FB55E14E1A15799E780E8BC1A45FA7D8694`.
 The runner explicitly reports `performance_gate=not_evaluated`; these observations
-are not a speed claim or a regression attribution, especially because no simulation
-source or runtime path changed. A clean-source repeat is required after the
-checkpoint.
-
-The five JSON files total 121,325 bytes. Runtime RAM/VRAM delta is exactly zero for
-this phase because the catalog has no production consumer. A 20-run in-process
+record the required benchmark provenance but are neither a speed claim nor a
+performance-regression attribution. Per-process VRAM remains `not_tested`, and the
+table is sampled existing Legacy-client memory rather than a before/after memory
+delta. The five JSON contract files total 121,325 bytes and have no production
+consumer or persistent runtime allocation in this phase. A 20-run in-process
 validator measurement averaged 12.563 ms; it is offline tooling, not simulation
 frame cost.
 
@@ -153,6 +167,11 @@ Those remain later-version work.
 - [x] Python discovery and Meson static suite pass.
 - [x] Production-boundary audit confirms no runtime consumer or physics change.
 - [x] Independent review is recorded; its required corrections are covered by tests.
+- [x] Clean-HEAD build, Lua, OPS, source-package manifest, and fixed-step evidence are recorded.
 
-The phase is ready for a clean commit, clean-source rerun, actual source-archive
-manifest verification, and final gate update.
+`V1_0_4_GATE=GREEN`. The implementation checkpoint is `9cc2b11c5`; reverting it
+returns to `477372373` without changing a runtime data consumer, Element ID, Lua
+identifier, save format, or physics model. The next permitted version is 1.0.5:
+first refresh upstream again, then define the physical-scale contract and build only
+isolated AtmosphereBench candidates. It must not begin a production Atmosphere/Air
+replacement.

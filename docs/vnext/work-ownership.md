@@ -2,15 +2,16 @@
 
 ## Current status
 
-There are no active write Workers. The Main Orchestrator owns the isolated 1.0.4
-data-contract implementation. Two Workers are read-only reviewers and may not edit
-the shared checkout.
+There are no active write Workers. Version 1.0.4 is closed; its implementation and
+read-only reviews are retained below as evidence. Version 1.0.5 has not assigned a
+write Worker and must first complete a new upstream-impact check.
 
 | Worker | Branch | Worktree | Allowed paths | Forbidden paths | Base commit | Task | Status |
 |---|---|---|---|---|---|---|---|
-| Main Orchestrator | `integration/omnicore-vnext` | `D:/CodexWork/OmniPack/repos/TPT-ZH-OmniPack` | integration, `resources/omnicore/**`, bounded validation tooling/tests, Meson static-test registration, `docs/vnext/**`, `docs/roadmap/**` | destructive Git operations, push/release, Simulation/Particle/Air/Save/Lua core, runtime physics, SDL3/GPU | `477372373` | 1.0.4 schema, units, provenance, and validation foundation only | ACTIVE, IN_PROGRESS |
-| Worker-Materials-Schema-Audit | read-only | main worktree | existing registries, vNext research, proposed schema boundaries | every write | `477372373` | independent schema and compatibility audit | ACTIVE, READ_ONLY |
-| Worker-Data-Validation-Audit | read-only | main worktree | validation/test conventions and proposed fail-closed checks | every write | `477372373` | independent validator and negative-test audit | ACTIVE, READ_ONLY |
+| Main Orchestrator | `integration/omnicore-vnext` | `D:/CodexWork/OmniPack/repos/TPT-ZH-OmniPack` | integration, `resources/omnicore/**`, bounded validation tooling/tests, Meson static-test registration, `docs/vnext/**`, `docs/roadmap/**` | destructive Git operations, push/release, Simulation/Particle/Air/Save/Lua core, runtime physics, SDL3/GPU | `477372373` | 1.0.4 schema, units, provenance, and validation foundation only | COMPLETE, integrated as `9cc2b11c5`; clean gate GREEN |
+| Worker-Materials-Schema-Audit | read-only | main worktree | existing registries, vNext research, proposed schema boundaries | every write | `477372373` | independent schema and compatibility audit | COMPLETE, findings resolved |
+| Worker-Data-Validation-Audit | read-only | main worktree | validation/test conventions and proposed fail-closed checks | every write | `477372373` | independent validator and negative-test audit | COMPLETE, findings resolved |
+| Worker-Data-Final-Review | read-only | main worktree | final CSV canonicalization, source-package and runtime-boundary checks | every write | `477372373` | final 1.0.4 read-only review | COMPLETE, GO with clean-post-commit verification satisfied |
 | Worker-Upstream | `vnext/upstream-100.1` | `D:/CodexWork/OmniPack/worktrees/upstream-100.1` | upstream adaptation and isolated regression tools | unrelated OmniCore production architecture | `635eb9f92` | adapt TPT 100.1 build 400 | COMPLETE, merged through `729f72cba` |
 | Worker-Elements | `vnext/element-inventory` | `D:/CodexWork/OmniPack/worktrees/element-inventory` | `tools/vnext/element_update_inventory.py`, inventory report/JSON | production simulation | `729f72cba` | static update inventory | COMPLETE, integrated as `f1320b48d` |
 | Worker-LuaSave | read-only | main worktree | read-only Lua, Particle, Save inspection | every write | `729f72cba` | Lua/Save compatibility audit | COMPLETE |

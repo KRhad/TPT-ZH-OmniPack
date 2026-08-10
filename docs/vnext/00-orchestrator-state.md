@@ -6,9 +6,9 @@
 REPORT_DATE=2026-08-10
 CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.4
-CURRENT_VERSION_GATE=IN_PROGRESS
-NEXT_VERSION=1.0.4
-NEXT_PHASE=Material/Species/Reaction schema, canonical units, provenance, and validation only
+CURRENT_VERSION_GATE=GREEN
+NEXT_VERSION=1.0.5
+NEXT_PHASE=refresh upstream, then define PhysicalScale and isolated AtmosphereBench candidates only
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -28,7 +28,10 @@ UI_DPI_100_125_150=NOT_TESTED
 V1_0_3_GATE=YELLOW
 V1_0_3_DISPOSITION=USER_ACCEPTED_YELLOW
 V1_0_3_DPI_MATRIX=DPI_DEFERRED
-V1_0_4_GATE=IN_PROGRESS
+V1_0_4_GATE=GREEN
+V1_0_4_IMPLEMENTATION_HEAD=9cc2b11c51c2a63bec174486bfb9efada25737d9
+V1_0_4_ROLLBACK=477372373cb1be30c3c04bca4309a7d6fd9fa799
+V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS_PACKAGE_BENCHMARK
 BENCHMARK_IMPLEMENTATION_HEAD=c4490463f3819695cab734414f827e0e4e4be118
 CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
@@ -96,10 +99,13 @@ That scoped exception is recorded as `USER_ACCEPTED_YELLOW / DPI_DEFERRED`; it d
 not manufacture the missing evidence or change the 1.0.3 gate to GREEN. Details are in
 [`phase-3-ui-material-organization.md`](phase-3-ui-material-organization.md).
 
-Version 1.0.4 is now **IN_PROGRESS** and is restricted to the OmniMaterials data
-foundation: machine-readable Material/Species/Reaction contracts, canonical units,
-property-level provenance, and fail-closed validation. No production simulation,
-physical behavior, Element ID, Lua identifier, or save-format change is authorized.
+Version 1.0.4 is **GREEN** at `9cc2b11c5`. It adds an offline-only OmniMaterials
+data foundation: machine-readable Material/Species/Reaction contracts, canonical
+units, property-level provenance, a 488-entry Legacy identity map and fail-closed
+validation. Clean build/static/Python/Lua/OPS/source-package/fixed-step checks are
+recorded in `phase-4-material-data-foundation.md`. No production simulation,
+physical behavior, Element ID, Lua identifier, save-format change, or runtime data
+consumer was introduced. Its rollback point is `477372373`.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
@@ -244,14 +250,16 @@ with an explicit maintenance decision.
 
 ## Next permitted work
 
-The user-authorized 1.0.3 YELLOW exception permits only 1.0.4 data-foundation work:
+Version 1.0.4 is closed. Version 1.0.5 may begin only with a fresh upstream
+stable/master impact check, then may:
 
-1. define versioned Material, Species, Reaction, property/provenance and unit contracts;
-2. add deterministic fail-closed validation and adversarial unit tests;
-3. prove that Legacy mappings retain stable IDs and that no runtime physics consumes
-   the new data in this phase.
+1. define and validate the PhysicalScale/units contract without a runtime solver;
+2. build isolated, deterministic AtmosphereBench candidates and test fixtures;
+3. record conservation, positivity, memory and benchmark criteria needed for solver
+   selection.
 
-Production Air replacement, PhysicalScale runtime, multi-species runtime, chemistry
-runtime, SDL3 migration and GPU compute remain blocked. Physical correction/source-
-sink attribution, unsampled full-state finite/positivity, process VRAM and a
-performance budget stay in the risk register; none is silently reclassified as complete.
+Production Air replacement, PhysicalScale runtime integration, multi-species runtime,
+chemistry runtime, SDL3 migration and GPU compute remain blocked. Physical
+correction/source-sink attribution, unsampled full-state finite/positivity, process
+VRAM and a performance budget stay in the risk register; none is silently
+reclassified as complete.
