@@ -18,14 +18,16 @@ NEAR_VACUUM_IMPLEMENTATION_COMMIT=54b3060ab996b6387e5aaf11283eaea1bb9e8faa
 SOD_IMPLEMENTATION_COMMIT=588d38d32ec4904118e741e5f5f614c69b8de3de
 REFINEMENT_IMPLEMENTATION_COMMIT=d541c2c2e9809691d625294e918c46009cd4a651
 LOW_MACH_IMPLEMENTATION_COMMIT=a948a48db2c7d06b93dd0f26fb67ad7f1423968c
-STATUS=IN_PROGRESS_RUSANOV_LOW_MACH_CHARACTERIZED
+OPEN_LEAK_IMPLEMENTATION_COMMIT=ef0ca86c1
+PERFORMANCE_IMPLEMENTATION_COMMIT=ee9290cb7
+STATUS=IN_PROGRESS_RUSANOV_BOUNDARY_PERFORMANCE_CHARACTERIZED
 BRANCH=integration/omnicore-vnext
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
 ATMOSPHERE_SOLVER_SELECTED=false
 CANDIDATES_REGISTERED=4
 CANDIDATE_SOLVERS_IMPLEMENTED=1
-RUSANOV_SCOPE=1D_UNIFORM_PRESSURE_PULSE_DENSITY_ADVECTION_CONTACT_NEAR_VACUUM_SOD_REFINEMENT_LOW_MACH_DEBUG_PROBES_ONLY
+RUSANOV_SCOPE=1D_UNIFORM_PRESSURE_PULSE_DENSITY_ADVECTION_CONTACT_NEAR_VACUUM_SOD_REFINEMENT_LOW_MACH_OPEN_LEAK_PERFORMANCE_DEBUG_PROBES_ONLY
 RUSANOV_LOW_MACH_SUITABILITY=false
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
@@ -279,6 +281,69 @@ acceptable to relax the published thresholds merely to select the candidate.
 First-order compressible Rusanov remains useful as a strict reference/debug floor,
 but it is not selected as the sole Enhanced-mode low-Mach atmosphere solver.
 
+## Open-boundary leak ledger
+
+Clean artifact:
+
+```text
+artifacts/vnext-atmospherebench/20260810T185503Z-6354ae45/result.json
+SHA256=E0455CA1F474A8A1BA1F0BFB1DA31BAF226E58C24C155BE3E310F3E721B2457E
+source_commit=ef0ca86c16f13d48deeb06be4e6fb3a3368fadee
+source_dirty=false
+benchmark_execution_status=PASS
+```
+
+The nondimensional 128-cell case uses a sealed left wall and a fixed low-pressure
+right reservoir. It intentionally records raw domain drift and the separately
+integrated left/right boundary exchanges. The adjusted conservative ledger closes:
+
+```text
+initial_mass=128
+final_mass=121.301
+right_boundary_mass_out=6.69874
+left_boundary_mass_exchange=0
+mass_balance_error=2.84217e-14
+momentum_x_balance_error=-1.77636e-15
+energy_balance_error=-2.84217e-14
+maximum_cfl=0.250374
+minimum_density=0.381382
+minimum_pressure=0.305003
+numerical_correction_count=0
+```
+
+This proves the candidate can make boundary loss explicit instead of disguising it
+as conservation drift. It is not a TPT wall/permeability implementation and does
+not select a physical scale or production boundary condition.
+
+## Standalone strict-double performance record
+
+Clean artifact:
+
+```text
+artifacts/vnext-atmospherebench/20260810T190429Z-b16432bf/result.json
+SHA256=9C6EF0446F17A945D9F1957FA1F29C2F076BE7B3E1B1713C0DB21685B2FF5788
+source_commit=ee9290cb7893e5f4a316db5372f93d403477e1a1
+source_dirty=false
+performance_gate=recorded_candidate_measurement_no_budget
+```
+
+The single-threaded 1D strict-double benchmark includes state allocation, flux
+storage and validation. Each size has one warm-up and three measured repetitions;
+the reported value is the median:
+
+```text
+cells=14688 / 29376 / 58752
+steps_per_repeat=64
+elapsed_ms=30.3009 / 59.9321 / 114.617
+cell_updates_per_second=31.0232M / 31.3699M / 32.8059M
+state_bytes_per_cell=32
+state_and_flux_scratch_bytes_per_cell=96
+```
+
+This is a real recorded measurement for the isolated implementation, not an
+accepted TPT frame budget. It excludes 2D fluxes, source terms, boundary cache,
+species, rendering and production coupling.
+
 ## Near-vacuum expansion evidence
 
 The near-vacuum probe was clean-run from `54b3060ab`. The periodic domain contains
@@ -393,14 +458,17 @@ probe_passed=true
 
 ## Validation
 
-- Full default Meson build: `80/80` build steps passed.
-- Meson static suite: `51/51` passed, including the low-Mach characterization.
-- Python discovery: `414` tests, `412` passed, `2` declared skips.
-- Targeted AtmosphereBench/runner contract tests: `17/17` passed.
+- Full default Meson build: `79/79` build steps passed at the performance
+  checkpoint (`atmospherebench` was already up to date before the full build).
+- Meson static suite: `53/53` passed, including the low-Mach, open-boundary and
+  performance probes.
+- Python discovery: `414` tests, `414` passed, `0` declared skips.
+- Targeted PhysicalScale/AtmosphereBench/runner contract tests: `29/29` passed.
 - Windows PowerShell 5.1 runner parse and clean execution: passed.
-- Source package: `artifacts/vnext-phase5-source-d541c2c2e/`, `1304` zip
-  entries; all current Rusanov sources and runner are present; package SHA-256 is
-  `1F52F763F9219485C83DF45DB9B0D4053BDE7000550C65BF348004AA76E158E9`.
+- Source package: `artifacts/vnext-phase5-source-ee9290cb7/`, `1304` zip
+  entries (`1303` source members plus manifest); all current Rusanov sources and
+  runner are present, no test assets are included, and package SHA-256 is
+  `5130F6B8871F196BB292DF590D74DC552924005EAB206CC16CB810D1AF1E5C9A`.
 - Production-consumer scan: no `src/` consumer of AtmosphereBench or Rusanov.
 
 ## Gate and next work
@@ -408,13 +476,17 @@ probe_passed=true
 This checkpoint is GREEN for executing and characterizing the isolated Rusanov
 debug candidate. Its measured low-Mach suitability is **false**, so it is not a
 GREEN solver-selection gate. `V1_0_5_GATE` remains `IN_PROGRESS` because an
-acceptable low-Mach path, leak/source accounting, accepted performance budget and
-physical-time policy are not established.
+acceptable low-Mach path, accepted performance budget and physical-time policy are
+not established. Leak/source accounting is now explicit for the isolated
+open-boundary case, and standalone performance is recorded without a selected
+budget.
 
-The next permitted Rusanov work is an isolated leak/open-boundary probe with
-explicit boundary accounting plus honest standalone performance measurement. An
-all-speed/hybrid alternative must later be evaluated before solver selection.
+The next permitted work is an isolated all-speed/hybrid low-Mach candidate study,
+with Rusanov retained as the strict reference/debug floor. No solver may be
+selected until the candidate comparison includes acceptable low-Mach, shock,
+near-vacuum, boundary-ledger and measured budget evidence.
 HLLE and LBM remain registered-only until separately authorized; production
 Atmosphere integration remains forbidden.
 
-Rollback commit: `0c7e5494d` restores the pre-low-Mach Rusanov checkpoint.
+Rollback commit: `18ddcec3f` restores the documented pre-leak/performance
+Rusanov checkpoint.

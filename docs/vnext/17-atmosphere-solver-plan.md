@@ -125,7 +125,15 @@ low_mach_suitability_passed=false
 ```
 
 Therefore first-order compressible Rusanov is a reference/debug floor, not the
-selected Enhanced-mode solver. The next bounded evidence is leak/open-boundary
-ledger plus standalone performance; solver selection additionally requires an
-all-speed/hybrid or otherwise low-Mach-suitable candidate. HLLE and LBM remain
-registration-only.
+selected Enhanced-mode solver. The leak/open-boundary ledger is now explicit and
+the standalone performance record is now measured, but neither changes selection:
+
+```text
+open_boundary_mass_out=6.69874
+open_boundary_balance_errors<3e-14
+performance=31.0232M / 31.3699M / 32.8059M cell-updates/s
+performance_gate=recorded_candidate_measurement_no_budget
+```
+
+Solver selection additionally requires an all-speed/hybrid or otherwise
+low-Mach-suitable candidate. HLLE and LBM remain registration-only.

@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_RUSANOV_LOW_MACH_CHARACTERIZED
+STATUS=IN_PROGRESS_RUSANOV_BOUNDARY_PERFORMANCE_CHARACTERIZED
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -44,6 +44,12 @@ RUSANOV_REFINEMENT_COMMIT=d541c2c2e9809691d625294e918c46009cd4a651
 RUSANOV_REFINEMENT_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_64_128_256_T_0_25_BUILD_82_STATIC_50_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_ORDER_0_95393_0_977252_ZERO_CORRECTIONS
 RUSANOV_LOW_MACH_COMMIT=a948a48db2c7d06b93dd0f26fb67ad7f1423968c
 RUSANOV_LOW_MACH_VALIDATION=EXECUTION_GREEN_SUITABILITY_FALSE_MACH_0_387298_0_0387298_0_00387298_L1_0_00826755_0_0515261_0_126479_TV_0_934805_0_595493_0_00673822_ZERO_CORRECTIONS
+RUSANOV_OPEN_LEAK_COMMIT=ef0ca86c1
+RUSANOV_OPEN_LEAK_VALIDATION=GREEN_STRICT_DOUBLE_128X1_SEALED_LEFT_OPEN_RIGHT_MASS_OUT_6_69874_BALANCE_ERRORS_LT_3E_MINUS_14_ZERO_CORRECTIONS
+RUSANOV_PERFORMANCE_COMMIT=ee9290cb7
+RUSANOV_PERFORMANCE_VALIDATION=GREEN_STRICT_DOUBLE_SINGLE_THREAD_MEDIAN_3_REPEATS_31_0232M_31_3699M_32_8059M_CELL_UPDATES_PER_SECOND_NO_BUDGET_SELECTED
+CURRENT_VALIDATION=GREEN_BUILD_79_STATIC_53_TARGETED_29_PYTHON_414_PASS_0_SKIP
+CURRENT_SOURCE_PACKAGE=GREEN_1303_SOURCE_PLUS_MANIFEST_NO_TEST_ASSETS_SHA256_5130F6B8871F196BB292DF590D74DC552924005EAB206CC16CB810D1AF1E5C9A
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
 V1_0_5_GATE=IN_PROGRESS
@@ -273,10 +279,27 @@ and the correction ledger is empty, but `low_mach_suitability_passed=false`.
 This is a valid negative result: first-order compressible Rusanov is retained as
 a strict reference/debug floor and is not selected as the sole Enhanced solver.
 
+The open-boundary leak probe is clean-validated at `ef0ca86c1`. A sealed-left,
+open-right 128-cell domain loses `6.69874` nondimensional mass units to a fixed
+low-pressure reservoir. The left mass exchange is zero, the right outflow equals
+the domain loss, and adjusted mass/momentum/energy balance errors remain below
+`3e-14`; CFL is `0.250374`, positivity holds and the correction ledger is empty.
+
+The standalone performance record is clean-validated at `ee9290cb7`. The
+single-threaded strict-double 1D end-to-end path measures `14,688 / 29,376 /
+58,752` cells for 64 steps, one warm-up and three repetitions. Median throughput
+is `31.0232 / 31.3699 / 32.8059 million cell-updates/s`; state plus flux scratch
+is `96 bytes/cell`. `performance_gate=recorded_candidate_measurement_no_budget`:
+no production frame budget or solver selection is claimed. The current test-free
+source package is `artifacts/vnext-phase5-source-ee9290cb7/`, SHA-256
+`5130F6B8871F196BB292DF590D74DC552924005EAB206CC16CB810D1AF1E5C9A`, with
+`1303` source members plus one manifest and zero test assets.
+
 `V1_0_5_GATE=IN_PROGRESS`. The next implementation may extend only the Rusanov
-candidate with leak/open-boundary ledger and standalone performance evidence while
-keeping HLLE and LBM registered-only and independently replaceable. An all-speed or
-hybrid alternative is now required for the low-Mach selection question.
+comparison with an isolated all-speed/hybrid low-Mach path while keeping Rusanov as
+the strict reference/debug floor and HLLE/LBM registered-only. An acceptable
+low-Mach candidate, physical-time policy and reviewed performance budget are still
+required for solver selection.
 PhysicalScale, physical-time policy and solver selection remain RED until the
 mandatory cases, conservation/positivity, memory and performance evidence exist.
 Production Air replacement is still forbidden.

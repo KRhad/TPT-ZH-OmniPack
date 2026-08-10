@@ -3,9 +3,9 @@
 ```text
 CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
-PHASE_STATUS=IN_PROGRESS_RUSANOV_LOW_MACH_CHARACTERIZED
+PHASE_STATUS=IN_PROGRESS_RUSANOV_BOUNDARY_PERFORMANCE_CHARACTERIZED
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=a948a48db2c7d06b93dd0f26fb67ad7f1423968c
+IMPLEMENTATION_HEAD=ee9290cb7893e5f4a316db5372f93d403477e1a1
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -40,9 +40,11 @@ V1_0_5_RUSANOV_NEAR_VACUUM=GREEN_ISOLATED_STRICT_DOUBLE_128X1_DENSITY_1E_MINUS_6
 V1_0_5_RUSANOV_SOD=GREEN_ISOLATED_STRICT_DOUBLE_256X1_GAMMA_1_4_T_0_2_BUILD_80_STATIC_49_PYTHON_414_TOTAL_412_PASS_2_SKIPS_SHOCK_X_0_855469_BOUNDARY_LEDGER_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
 V1_0_5_RUSANOV_REFINEMENT=GREEN_ISOLATED_STRICT_DOUBLE_64_128_256_T_0_25_BUILD_82_STATIC_50_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_ORDER_0_95393_0_977252_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
 V1_0_5_RUSANOV_LOW_MACH=EXECUTION_GREEN_SUITABILITY_FALSE_MACH_0_387298_0_0387298_0_00387298_L1_0_00826755_0_0515261_0_126479_TV_0_934805_0_595493_0_00673822_ZERO_CORRECTIONS
+V1_0_5_RUSANOV_OPEN_LEAK=GREEN_128X1_SEALED_LEFT_OPEN_RIGHT_MASS_OUT_6_69874_BALANCE_ERRORS_LT_3E_MINUS_14_ZERO_CORRECTIONS
+V1_0_5_RUSANOV_PERFORMANCE=RECORDED_NO_BUDGET_STRICT_DOUBLE_SINGLE_THREAD_31_0232M_31_3699M_32_8059M_CELL_UPDATES_PER_SECOND_96_BYTES_PER_CELL
 KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget
 NEXT_VERSION=1.0.6
-NEXT_PHASE=add isolated Rusanov leak/open-boundary ledger and performance evidence; then evaluate an all-speed/hybrid low-Mach path; keep HLLE and LBM registered-only
+NEXT_PHASE=evaluate an isolated all-speed/hybrid low-Mach candidate against the strict-double Rusanov reference; keep HLLE and LBM registered-only
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -75,7 +77,9 @@ pressure-pulse, density-advection, contact-discontinuity, near-vacuum-expansion,
 sealed Sod, smooth-grid-refinement and low-Mach probes, while HLLE and LBM remain
 registration-only. The low-Mach execution is valid but reports suitability false,
 so pure first-order compressible Rusanov is not selected. All scale, time and solver
-selections remain unselected, and no production
+selections remain unselected. Its open-boundary ledger and three-size standalone
+performance record are now clean-validated, but no physical-time or performance
+budget is selected, and no production
 source consumes the bench. Details are in the [1.0.5 scaffold report](../vnext/phase-5-physical-scale-atmospherebench.md)
 and the [Rusanov candidate checkpoint](../vnext/phase-5-rusanov-candidate.md).
 
