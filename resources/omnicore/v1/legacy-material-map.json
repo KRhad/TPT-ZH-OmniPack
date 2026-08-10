@@ -1,0 +1,3429 @@
+{
+  "schema_version": 1,
+  "document_type": "legacy_material_map",
+  "mapping_id": "omnicore.legacy-material-map.v1",
+  "source_registry": "docs/ELEMENT_REGISTRY.csv",
+  "source_hash_contract": "canonical_csv_utf8_lf_v1",
+  "source_sha256": "E7BCE2976E7F1F6243899049DFBD8DE06CF0CBACB8AD7FAF9168FF888CE93962",
+  "source_semantics": "legacy_gameplay_metadata_not_si",
+  "physical_properties_imported": false,
+  "generation_tool": "tools/omnicore_data_check.py",
+  "mappings": [
+    {
+      "identifier": "DEFAULT_PT_NONE",
+      "stable_id": 0,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_NONE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DUST",
+      "stable_id": 1,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DUST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_WATR",
+      "stable_id": 2,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_WATR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_OIL",
+      "stable_id": 3,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_OIL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FIRE",
+      "stable_id": 4,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FIRE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_STNE",
+      "stable_id": 5,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_STNE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LAVA",
+      "stable_id": 6,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LAVA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GUNP",
+      "stable_id": 7,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GUNP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_NITR",
+      "stable_id": 8,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_NITR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_CLNE",
+      "stable_id": 9,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_CLNE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GAS",
+      "stable_id": 10,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GAS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PLEX",
+      "stable_id": 11,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PLEX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GOO",
+      "stable_id": 12,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GOO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ICEI",
+      "stable_id": 13,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ICEI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_METL",
+      "stable_id": 14,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_METL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SPRK",
+      "stable_id": 15,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SPRK",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SNOW",
+      "stable_id": 16,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SNOW",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_WOOD",
+      "stable_id": 17,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_WOOD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_NEUT",
+      "stable_id": 18,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_NEUT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PLUT",
+      "stable_id": 19,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PLUT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PLNT",
+      "stable_id": 20,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PLNT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ACID",
+      "stable_id": 21,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ACID",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_VOID",
+      "stable_id": 22,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_VOID",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_WTRV",
+      "stable_id": 23,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_WTRV",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_CNCT",
+      "stable_id": 24,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_CNCT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DSTW",
+      "stable_id": 25,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DSTW",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SALT",
+      "stable_id": 26,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SALT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SLTW",
+      "stable_id": 27,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SLTW",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DMND",
+      "stable_id": 28,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DMND",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BMTL",
+      "stable_id": 29,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BMTL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BRMT",
+      "stable_id": 30,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BRMT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PHOT",
+      "stable_id": 31,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PHOT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_URAN",
+      "stable_id": 32,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_URAN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_WAX",
+      "stable_id": 33,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_WAX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_MWAX",
+      "stable_id": 34,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_MWAX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PSCN",
+      "stable_id": 35,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PSCN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_NSCN",
+      "stable_id": 36,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_NSCN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LNTG",
+      "stable_id": 37,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LNTG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_INSL",
+      "stable_id": 38,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_INSL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BHOL",
+      "stable_id": 39,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BHOL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_WHOL",
+      "stable_id": 40,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_WHOL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_RBDM",
+      "stable_id": 41,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_RBDM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LRBD",
+      "stable_id": 42,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LRBD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_NTCT",
+      "stable_id": 43,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_NTCT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SAND",
+      "stable_id": 44,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SAND",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GLAS",
+      "stable_id": 45,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GLAS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PTCT",
+      "stable_id": 46,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PTCT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BGLA",
+      "stable_id": 47,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BGLA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_THDR",
+      "stable_id": 48,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_THDR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PLSM",
+      "stable_id": 49,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PLSM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ETRD",
+      "stable_id": 50,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ETRD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_NICE",
+      "stable_id": 51,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_NICE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_NBLE",
+      "stable_id": 52,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_NBLE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BTRY",
+      "stable_id": 53,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BTRY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LCRY",
+      "stable_id": 54,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LCRY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_STKM",
+      "stable_id": 55,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_STKM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SWCH",
+      "stable_id": 56,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SWCH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SMKE",
+      "stable_id": 57,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SMKE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DESL",
+      "stable_id": 58,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DESL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_COAL",
+      "stable_id": 59,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_COAL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LO2",
+      "stable_id": 60,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LO2",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_O2",
+      "stable_id": 61,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_O2",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_INWR",
+      "stable_id": 62,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_INWR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_YEST",
+      "stable_id": 63,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_YEST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DYST",
+      "stable_id": 64,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DYST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_THRM",
+      "stable_id": 65,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_THRM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GLOW",
+      "stable_id": 66,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GLOW",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BRCK",
+      "stable_id": 67,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BRCK",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_HFLM",
+      "stable_id": 68,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_HFLM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FIRW",
+      "stable_id": 69,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FIRW",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FUSE",
+      "stable_id": 70,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FUSE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FSEP",
+      "stable_id": 71,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FSEP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_AMTR",
+      "stable_id": 72,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_AMTR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BCOL",
+      "stable_id": 73,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BCOL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PCLN",
+      "stable_id": 74,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PCLN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_HSWC",
+      "stable_id": 75,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_HSWC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_IRON",
+      "stable_id": 76,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_IRON",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_MORT",
+      "stable_id": 77,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_MORT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LIFE",
+      "stable_id": 78,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LIFE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DLAY",
+      "stable_id": 79,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DLAY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_CO2",
+      "stable_id": 80,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_CO2",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DRIC",
+      "stable_id": 81,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DRIC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_CBNW",
+      "stable_id": 82,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_CBNW",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_STOR",
+      "stable_id": 83,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_STOR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PVOD",
+      "stable_id": 84,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PVOD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_CONV",
+      "stable_id": 85,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_CONV",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_CAUS",
+      "stable_id": 86,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_CAUS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LIGH",
+      "stable_id": 87,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LIGH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_TESC",
+      "stable_id": 88,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_TESC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DEST",
+      "stable_id": 89,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DEST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SPNG",
+      "stable_id": 90,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SPNG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_RIME",
+      "stable_id": 91,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_RIME",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FOG",
+      "stable_id": 92,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FOG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BCLN",
+      "stable_id": 93,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BCLN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LOVE",
+      "stable_id": 94,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LOVE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DEUT",
+      "stable_id": 95,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DEUT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_WARP",
+      "stable_id": 96,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_WARP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PUMP",
+      "stable_id": 97,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PUMP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FWRK",
+      "stable_id": 98,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FWRK",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PIPE",
+      "stable_id": 99,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PIPE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FRZZ",
+      "stable_id": 100,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FRZZ",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FRZW",
+      "stable_id": 101,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FRZW",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GRAV",
+      "stable_id": 102,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GRAV",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BIZR",
+      "stable_id": 103,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BIZR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BIZRG",
+      "stable_id": 104,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BIZRG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BIZRS",
+      "stable_id": 105,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BIZRS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_INST",
+      "stable_id": 106,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_INST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ISOZ",
+      "stable_id": 107,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ISOZ",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ISZS",
+      "stable_id": 108,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ISZS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PRTI",
+      "stable_id": 109,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PRTI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PRTO",
+      "stable_id": 110,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PRTO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PSTE",
+      "stable_id": 111,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PSTE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PSTS",
+      "stable_id": 112,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PSTS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ANAR",
+      "stable_id": 113,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ANAR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_VINE",
+      "stable_id": 114,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_VINE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_INVIS",
+      "stable_id": 115,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_INVIS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_116",
+      "stable_id": 116,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_116",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SPAWN2",
+      "stable_id": 117,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SPAWN2",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SPAWN",
+      "stable_id": 118,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SPAWN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SHLD1",
+      "stable_id": 119,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SHLD1",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SHLD2",
+      "stable_id": 120,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SHLD2",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SHLD3",
+      "stable_id": 121,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SHLD3",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SHLD4",
+      "stable_id": 122,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SHLD4",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LOLZ",
+      "stable_id": 123,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LOLZ",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_WIFI",
+      "stable_id": 124,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_WIFI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FILT",
+      "stable_id": 125,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FILT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ARAY",
+      "stable_id": 126,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ARAY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BRAY",
+      "stable_id": 127,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BRAY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_STKM2",
+      "stable_id": 128,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_STKM2",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BOMB",
+      "stable_id": 129,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BOMB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_C5",
+      "stable_id": 130,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_C5",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SING",
+      "stable_id": 131,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SING",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_QRTZ",
+      "stable_id": 132,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_QRTZ",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PQRT",
+      "stable_id": 133,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PQRT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_EMP",
+      "stable_id": 134,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_EMP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BREC",
+      "stable_id": 135,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BREC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ELEC",
+      "stable_id": 136,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ELEC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ACEL",
+      "stable_id": 137,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ACEL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DCEL",
+      "stable_id": 138,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DCEL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BANG",
+      "stable_id": 139,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BANG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_IGNT",
+      "stable_id": 140,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_IGNT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BOYL",
+      "stable_id": 141,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BOYL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GEL",
+      "stable_id": 142,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GEL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_TRON",
+      "stable_id": 143,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_TRON",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_TTAN",
+      "stable_id": 144,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_TTAN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_EXOT",
+      "stable_id": 145,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_EXOT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_EMBR",
+      "stable_id": 147,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_EMBR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_H2",
+      "stable_id": 148,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_H2",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SOAP",
+      "stable_id": 149,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SOAP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_NBHL",
+      "stable_id": 150,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_NBHL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_NWHL",
+      "stable_id": 151,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_NWHL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_MERC",
+      "stable_id": 152,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_MERC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PBCN",
+      "stable_id": 153,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PBCN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GPMP",
+      "stable_id": 154,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GPMP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_CLST",
+      "stable_id": 155,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_CLST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_WIRE",
+      "stable_id": 156,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_WIRE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GBMB",
+      "stable_id": 157,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GBMB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FIGH",
+      "stable_id": 158,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FIGH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FRAY",
+      "stable_id": 159,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FRAY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_RPEL",
+      "stable_id": 160,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_RPEL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PPIP",
+      "stable_id": 161,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PPIP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DTEC",
+      "stable_id": 162,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DTEC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DMG",
+      "stable_id": 163,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DMG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_TSNS",
+      "stable_id": 164,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_TSNS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_VIBR",
+      "stable_id": 165,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_VIBR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BVBR",
+      "stable_id": 166,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BVBR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_CRAY",
+      "stable_id": 167,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_CRAY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PSTN",
+      "stable_id": 168,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PSTN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_FRME",
+      "stable_id": 169,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_FRME",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GOLD",
+      "stable_id": 170,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GOLD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_TUNG",
+      "stable_id": 171,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_TUNG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PSNS",
+      "stable_id": 172,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PSNS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PROT",
+      "stable_id": 173,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PROT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_VIRS",
+      "stable_id": 174,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_VIRS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_VRSS",
+      "stable_id": 175,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_VRSS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_VRSG",
+      "stable_id": 176,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_VRSG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_GRVT",
+      "stable_id": 177,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_GRVT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_DRAY",
+      "stable_id": 178,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_DRAY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_CRMC",
+      "stable_id": 179,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_CRMC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_HEAC",
+      "stable_id": 180,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_HEAC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SAWD",
+      "stable_id": 181,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SAWD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_POLO",
+      "stable_id": 182,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_POLO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_RFRG",
+      "stable_id": 183,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_RFRG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_RFGL",
+      "stable_id": 184,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_RFGL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LSNS",
+      "stable_id": 185,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LSNS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LDTC",
+      "stable_id": 186,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LDTC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SLCN",
+      "stable_id": 187,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SLCN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_PTNM",
+      "stable_id": 188,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_PTNM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_VSNS",
+      "stable_id": 189,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_VSNS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_ROCK",
+      "stable_id": 190,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_ROCK",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_LITH",
+      "stable_id": 191,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_LITH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_RSST",
+      "stable_id": 192,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_RSST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_RSSS",
+      "stable_id": 193,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_RSSS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_BASE",
+      "stable_id": 194,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_BASE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "DEFAULT_PT_SEED",
+      "stable_id": 195,
+      "record_status": "canonical",
+      "canonical_identifier": "DEFAULT_PT_SEED",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ALUM",
+      "stable_id": 256,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ALUM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_COPR",
+      "stable_id": 257,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_COPR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_LEAD",
+      "stable_id": 258,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_LEAD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TIN",
+      "stable_id": 259,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TIN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NICL",
+      "stable_id": 260,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NICL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MAGN",
+      "stable_id": 261,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MAGN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CHRM",
+      "stable_id": 262,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CHRM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_COBT",
+      "stable_id": 263,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_COBT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MOLY",
+      "stable_id": 264,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MOLY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ZINC",
+      "stable_id": 265,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ZINC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CHRC",
+      "stable_id": 266,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CHRC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_COKE",
+      "stable_id": 267,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_COKE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_STEL",
+      "stable_id": 268,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_STEL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BRNZ",
+      "stable_id": 269,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BRNZ",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BRAS",
+      "stable_id": 270,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BRAS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SSIL",
+      "stable_id": 271,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SSIL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NCRM",
+      "stable_id": 272,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NCRM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ALMG",
+      "stable_id": 273,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ALMG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TSTL",
+      "stable_id": 274,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TSTL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SLAG",
+      "stable_id": 275,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SLAG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FLUX",
+      "stable_id": 276,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FLUX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CRUC",
+      "stable_id": 277,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CRUC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MSCR",
+      "stable_id": 278,
+      "record_status": "compatibility_alias",
+      "canonical_identifier": "DEFAULT_PT_BRMT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NUTR",
+      "stable_id": 288,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NUTR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ALGA",
+      "stable_id": 289,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ALGA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MYCL",
+      "stable_id": 290,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MYCL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SPOR",
+      "stable_id": 291,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SPOR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PATH",
+      "stable_id": 292,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PATH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_STER",
+      "stable_id": 293,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_STER",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_HUMS",
+      "stable_id": 294,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_HUMS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BIOF",
+      "stable_id": 295,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BIOF",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NFUL",
+      "stable_id": 328,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NFUL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MODR",
+      "stable_id": 329,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MODR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CROD",
+      "stable_id": 330,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CROD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NCLT",
+      "stable_id": 331,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NCLT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NWST",
+      "stable_id": 332,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NWST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NGEN",
+      "stable_id": 333,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NGEN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RSHD",
+      "stable_id": 334,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RSHD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CHLR",
+      "stable_id": 360,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CHLR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AMON",
+      "stable_id": 361,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AMON",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ETHL",
+      "stable_id": 362,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ETHL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_KERO",
+      "stable_id": 363,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_KERO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GASO",
+      "stable_id": 364,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GASO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ACTY",
+      "stable_id": 365,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ACTY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CATA",
+      "stable_id": 366,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CATA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_POLY",
+      "stable_id": 367,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_POLY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PERO",
+      "stable_id": 368,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PERO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FERT",
+      "stable_id": 369,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FERT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_HE",
+      "stable_id": 370,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_HE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BE",
+      "stable_id": 371,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_B",
+      "stable_id": 372,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_B",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_N",
+      "stable_id": 373,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_N",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_F",
+      "stable_id": 374,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_F",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NE",
+      "stable_id": 375,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NA",
+      "stable_id": 376,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_P",
+      "stable_id": 377,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_P",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_S",
+      "stable_id": 378,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_S",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AR",
+      "stable_id": 379,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_K",
+      "stable_id": 380,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_K",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CA",
+      "stable_id": 381,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SC",
+      "stable_id": 382,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_V",
+      "stable_id": 383,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_V",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MN",
+      "stable_id": 384,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GA",
+      "stable_id": 385,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GE",
+      "stable_id": 386,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AS",
+      "stable_id": 387,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SE",
+      "stable_id": 388,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BR",
+      "stable_id": 389,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_KR",
+      "stable_id": 390,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_KR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SR",
+      "stable_id": 391,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_Y",
+      "stable_id": 392,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_Y",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ZR",
+      "stable_id": 393,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ZR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NB",
+      "stable_id": 394,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TC",
+      "stable_id": 395,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RU",
+      "stable_id": 396,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RU",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RH",
+      "stable_id": 397,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PD",
+      "stable_id": 398,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AG",
+      "stable_id": 399,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CD",
+      "stable_id": 400,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_IN",
+      "stable_id": 401,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_IN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SB",
+      "stable_id": 402,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TE",
+      "stable_id": 403,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_I",
+      "stable_id": 404,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_I",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_XE",
+      "stable_id": 405,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_XE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CS",
+      "stable_id": 406,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BA",
+      "stable_id": 407,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_LA",
+      "stable_id": 408,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_LA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CE",
+      "stable_id": 409,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PR",
+      "stable_id": 410,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ND",
+      "stable_id": 411,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ND",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PM",
+      "stable_id": 412,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SM",
+      "stable_id": 413,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_EU",
+      "stable_id": 414,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_EU",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GD",
+      "stable_id": 415,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TB",
+      "stable_id": 416,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_DY",
+      "stable_id": 417,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_DY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_HO",
+      "stable_id": 418,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_HO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ER",
+      "stable_id": 419,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ER",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TM",
+      "stable_id": 420,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_YB",
+      "stable_id": 421,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_YB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_LU",
+      "stable_id": 422,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_LU",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_HF",
+      "stable_id": 423,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_HF",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TA",
+      "stable_id": 424,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RE",
+      "stable_id": 425,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_OS",
+      "stable_id": 426,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_OS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_IR",
+      "stable_id": 427,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_IR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TL",
+      "stable_id": 428,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BI",
+      "stable_id": 429,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AT",
+      "stable_id": 430,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RN",
+      "stable_id": 431,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FR",
+      "stable_id": 432,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RA",
+      "stable_id": 433,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AC",
+      "stable_id": 434,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TH",
+      "stable_id": 435,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PA",
+      "stable_id": 436,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NP",
+      "stable_id": 437,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AM",
+      "stable_id": 438,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CM",
+      "stable_id": 439,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BK",
+      "stable_id": 440,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BK",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CF",
+      "stable_id": 441,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CF",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ES",
+      "stable_id": 442,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ES",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FM",
+      "stable_id": 443,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MD",
+      "stable_id": 444,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NO",
+      "stable_id": 445,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_LR",
+      "stable_id": 446,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_LR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RF",
+      "stable_id": 447,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RF",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_DB",
+      "stable_id": 448,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_DB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SG",
+      "stable_id": 449,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BH",
+      "stable_id": 450,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_HS",
+      "stable_id": 451,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_HS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MT",
+      "stable_id": 452,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_DS",
+      "stable_id": 453,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_DS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RG",
+      "stable_id": 454,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CN",
+      "stable_id": 455,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NH",
+      "stable_id": 456,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FL",
+      "stable_id": 457,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MC",
+      "stable_id": 458,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_LV",
+      "stable_id": 459,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_LV",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TS",
+      "stable_id": 460,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_OG",
+      "stable_id": 461,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_OG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_HCLA",
+      "stable_id": 462,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_HCLA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SULA",
+      "stable_id": 463,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SULA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NITA",
+      "stable_id": 464,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NITA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PHOA",
+      "stable_id": 465,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PHOA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_HYFA",
+      "stable_id": 466,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_HYFA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NAOH",
+      "stable_id": 467,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NAOH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_KOH",
+      "stable_id": 468,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_KOH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CAOH",
+      "stable_id": 469,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CAOH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_KNIT",
+      "stable_id": 470,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_KNIT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CUSF",
+      "stable_id": 471,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CUSF",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CACO",
+      "stable_id": 472,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CACO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NABC",
+      "stable_id": 473,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NABC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_COMO",
+      "stable_id": 474,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_COMO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SODI",
+      "stable_id": 475,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SODI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NODI",
+      "stable_id": 476,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NODI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CAOX",
+      "stable_id": 477,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CAOX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CARA",
+      "stable_id": 478,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CARA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_H2SG",
+      "stable_id": 479,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_H2SG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AMWA",
+      "stable_id": 480,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AMWA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BAOH",
+      "stable_id": 481,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BAOH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_KCL",
+      "stable_id": 482,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_KCL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CACL",
+      "stable_id": 483,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CACL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FECL",
+      "stable_id": 484,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FECL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NASF",
+      "stable_id": 485,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NASF",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AMNT",
+      "stable_id": 486,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AMNT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NACO",
+      "stable_id": 487,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NACO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_KPER",
+      "stable_id": 488,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_KPER",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ALOX",
+      "stable_id": 489,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ALOX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MGOX",
+      "stable_id": 490,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MGOX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FEOX",
+      "stable_id": 491,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FEOX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CUOX",
+      "stable_id": 492,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CUOX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ZNOX",
+      "stable_id": 493,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ZNOX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SUTR",
+      "stable_id": 494,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SUTR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NIMO",
+      "stable_id": 495,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NIMO",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TIOX",
+      "stable_id": 496,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TIOX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_UROX",
+      "stable_id": 497,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_UROX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CAPH",
+      "stable_id": 498,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CAPH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FESF",
+      "stable_id": 499,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FESF",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NASD",
+      "stable_id": 500,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NASD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_HYCN",
+      "stable_id": 501,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_HYCN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CACB",
+      "stable_id": 502,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CACB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SICB",
+      "stable_id": 503,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SICB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BORN",
+      "stable_id": 504,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BORN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SINT",
+      "stable_id": 505,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SINT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NAHY",
+      "stable_id": 506,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NAHY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CAHY",
+      "stable_id": 507,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CAHY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ALCL",
+      "stable_id": 508,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ALCL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MGCL",
+      "stable_id": 509,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MGCL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CUCL",
+      "stable_id": 510,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CUCL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AMCL",
+      "stable_id": 511,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AMCL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SOLD",
+      "stable_id": 512,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SOLD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CSTI",
+      "stable_id": 513,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CSTI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CUNI",
+      "stable_id": 514,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CUNI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TIAL",
+      "stable_id": 515,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TIAL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NSAL",
+      "stable_id": 516,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NSAL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_WALY",
+      "stable_id": 517,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_WALY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ZRAL",
+      "stable_id": 518,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ZRAL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CNST",
+      "stable_id": 519,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CNST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NITI",
+      "stable_id": 520,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NITI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GYPS",
+      "stable_id": 521,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GYPS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BAUX",
+      "stable_id": 522,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BAUX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CUOR",
+      "stable_id": 523,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CUOR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ZNOR",
+      "stable_id": 524,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ZNOR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PBOR",
+      "stable_id": 525,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PBOR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_UORE",
+      "stable_id": 526,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_UORE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FELD",
+      "stable_id": 527,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FELD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CEMT",
+      "stable_id": 528,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CEMT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ALCR",
+      "stable_id": 529,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ALCR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BSGL",
+      "stable_id": 530,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BSGL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_QGLS",
+      "stable_id": 531,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_QGLS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RFBK",
+      "stable_id": 532,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RFBK",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_H2IS",
+      "stable_id": 576,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_H2IS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_H3IS",
+      "stable_id": 577,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_H3IS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_C14I",
+      "stable_id": 578,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_C14I",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CO60",
+      "stable_id": 579,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CO60",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SR90",
+      "stable_id": 580,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SR90",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_I131",
+      "stable_id": 581,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_I131",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CS37",
+      "stable_id": 582,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CS37",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TH32",
+      "stable_id": 583,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TH32",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_U235",
+      "stable_id": 584,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_U235",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_U238",
+      "stable_id": 585,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_U238",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PU39",
+      "stable_id": 586,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PU39",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AM41",
+      "stable_id": 587,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AM41",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CF52",
+      "stable_id": 588,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CF52",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CH4M",
+      "stable_id": 589,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CH4M",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ETHA",
+      "stable_id": 590,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ETHA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PROP",
+      "stable_id": 591,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PROP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BUTA",
+      "stable_id": 592,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BUTA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ETHE",
+      "stable_id": 593,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ETHE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_METH",
+      "stable_id": 594,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_METH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ACET",
+      "stable_id": 595,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ACET",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BENZ",
+      "stable_id": 596,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BENZ",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TOLU",
+      "stable_id": 597,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TOLU",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GLYC",
+      "stable_id": 598,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GLYC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ACTA",
+      "stable_id": 599,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ACTA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_UREA",
+      "stable_id": 600,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_UREA",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FATS",
+      "stable_id": 601,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FATS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GLUC",
+      "stable_id": 602,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GLUC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_STRC",
+      "stable_id": 603,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_STRC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CELU",
+      "stable_id": 604,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CELU",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PRPE",
+      "stable_id": 605,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PRPE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BDIE",
+      "stable_id": 606,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BDIE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_VCHL",
+      "stable_id": 607,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_VCHL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_STYR",
+      "stable_id": 608,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_STYR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TFET",
+      "stable_id": 609,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TFET",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ADIP",
+      "stable_id": 610,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ADIP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_DIAM",
+      "stable_id": 611,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_DIAM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ERES",
+      "stable_id": 612,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ERES",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PPLY",
+      "stable_id": 613,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PPLY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PVCL",
+      "stable_id": 614,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PVCL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PSTY",
+      "stable_id": 615,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PSTY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_NYLN",
+      "stable_id": 616,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_NYLN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RUBR",
+      "stable_id": 617,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RUBR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_EPXY",
+      "stable_id": 618,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_EPXY",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PTFE",
+      "stable_id": 619,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PTFE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BITM",
+      "stable_id": 620,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BITM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_EACT",
+      "stable_id": 621,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_EACT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GAAS",
+      "stable_id": 622,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GAAS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GANI",
+      "stable_id": 623,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GANI",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_FRIT",
+      "stable_id": 624,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_FRIT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PMAG",
+      "stable_id": 625,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PMAG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SMAG",
+      "stable_id": 626,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SMAG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PZCR",
+      "stable_id": 627,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PZCR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TELC",
+      "stable_id": 628,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TELC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SUPC",
+      "stable_id": 629,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SUPC",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GRPH",
+      "stable_id": 630,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GRPH",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CNTB",
+      "stable_id": 631,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CNTB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AERG",
+      "stable_id": 632,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AERG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_CFRP",
+      "stable_id": 633,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_CFRP",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_LCOB",
+      "stable_id": 634,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_LCOB",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_GRAN",
+      "stable_id": 635,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_GRAN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SELE",
+      "stable_id": 636,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SELE",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ITOX",
+      "stable_id": 637,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ITOX",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PCMT",
+      "stable_id": 638,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PCMT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ECHR",
+      "stable_id": 639,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ECHR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PHRS",
+      "stable_id": 640,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PHRS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_DIEL",
+      "stable_id": 641,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_DIEL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SOIL",
+      "stable_id": 670,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SOIL",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_WWTR",
+      "stable_id": 671,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_WWTR",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_PEST",
+      "stable_id": 672,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_PEST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_HMET",
+      "stable_id": 673,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_HMET",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_RCON",
+      "stable_id": 674,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_RCON",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MPLS",
+      "stable_id": 675,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MPLS",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_OWST",
+      "stable_id": 676,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_OWST",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BLOM",
+      "stable_id": 677,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BLOM",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_MOLD",
+      "stable_id": 678,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_MOLD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_BLOD",
+      "stable_id": 679,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_BLOD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_TOXN",
+      "stable_id": 680,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_TOXN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_AMAT",
+      "stable_id": 681,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_AMAT",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SLUD",
+      "stable_id": 682,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SLUD",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_SMOG",
+      "stable_id": 683,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_SMOG",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_ARAN",
+      "stable_id": 684,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_ARAN",
+      "mapping_status": "identity_only"
+    },
+    {
+      "identifier": "OMNI_PT_DETG",
+      "stable_id": 685,
+      "record_status": "canonical",
+      "canonical_identifier": "OMNI_PT_DETG",
+      "mapping_status": "identity_only"
+    }
+  ]
+}

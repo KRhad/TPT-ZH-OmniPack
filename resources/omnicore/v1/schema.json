@@ -1,0 +1,414 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tpt-zh-omnipack.invalid/schema/omnicore-data-v1.json",
+  "title": "OmniCore data contract v1",
+  "oneOf": [
+    { "$ref": "#/$defs/Catalog" },
+    { "$ref": "#/$defs/LegacyMaterialMap" }
+  ],
+  "$defs": {
+    "LocalizedNames": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["en"],
+      "properties": {
+        "en": { "type": "string", "minLength": 1 },
+        "zh_CN": { "type": "string", "minLength": 1 }
+      }
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_title",
+        "source_version",
+        "source_date",
+        "accessed_on",
+        "source_locator",
+        "source_kind",
+        "method",
+        "confidence",
+        "redistribution_status",
+        "license_or_terms",
+        "license_evidence",
+        "license_sha256",
+        "tuning_status"
+      ],
+      "properties": {
+        "source_title": { "type": "string", "minLength": 1 },
+        "source_version": { "type": "string", "minLength": 1 },
+        "source_date": { "type": "string", "format": "date" },
+        "accessed_on": { "type": "string", "format": "date" },
+        "source_locator": { "type": "string", "minLength": 1 },
+        "source_kind": {
+          "enum": [
+            "primary_measurement",
+            "peer_reviewed",
+            "standard",
+            "official_database",
+            "vendor_datasheet",
+            "software_generated",
+            "project_generated",
+            "test_fixture"
+          ]
+        },
+        "method": {
+          "enum": [
+            "measured",
+            "correlation",
+            "derived",
+            "interpolated",
+            "estimated",
+            "game_tuned",
+            "exact_definition",
+            "test_fixture"
+          ]
+        },
+        "confidence": { "enum": ["high", "medium", "low", "test_only"] },
+        "redistribution_status": {
+          "enum": [
+            "redistributable",
+            "redistributable_with_attribution",
+            "public_domain",
+            "project_generated",
+            "reference_only",
+            "permission_required"
+          ]
+        },
+        "license_or_terms": { "type": "string", "minLength": 1 },
+        "license_evidence": { "type": "string", "minLength": 1 },
+        "license_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^[A-F0-9]{64}$" }
+          ]
+        },
+        "tuning_status": {
+          "enum": [
+            "measured",
+            "estimated",
+            "interpolated",
+            "game_tuned",
+            "exact_definition",
+            "test_fixture"
+          ]
+        }
+      }
+    },
+    "Range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum", "maximum", "unit"],
+      "properties": {
+        "minimum": { "type": "string", "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?(0|[1-9][0-9]*))?$" },
+        "maximum": { "type": "string", "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?(0|[1-9][0-9]*))?$" },
+        "unit": { "type": "string", "minLength": 1 }
+      }
+    },
+    "Validity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["temperature", "pressure"],
+      "properties": {
+        "temperature": { "$ref": "#/$defs/Range" },
+        "pressure": { "$ref": "#/$defs/Range" }
+      }
+    },
+    "PropertyDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "property_id",
+        "quantity_kind",
+        "value",
+        "unit",
+        "validity",
+        "provenance"
+      ],
+      "properties": {
+        "property_id": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "quantity_kind": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "value": { "type": "string", "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?(0|[1-9][0-9]*))?$" },
+        "unit": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "validity": { "$ref": "#/$defs/Validity" },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      }
+    },
+    "LegacyMapping": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["element_identifier", "stable_id", "relationship"],
+      "properties": {
+        "element_identifier": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+        "stable_id": { "type": "integer", "minimum": 0 },
+        "relationship": { "enum": ["identity", "proxy", "tool", "visualization"] }
+      }
+    },
+    "CompositionTerm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_kind", "component_id", "basis", "fraction"],
+      "properties": {
+        "component_kind": { "enum": ["material", "species"] },
+        "component_id": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "basis": { "enum": ["mass_fraction", "mole_fraction", "volume_fraction"] },
+        "fraction": { "type": "string", "pattern": "^[1-9][0-9]*(/[1-9][0-9]*)?$" }
+      }
+    },
+    "MaterialDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "names",
+        "status",
+        "behavior_class",
+        "phases",
+        "legacy_mapping",
+        "composition",
+        "properties",
+        "provenance"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^material\\.[a-z][a-z0-9_.-]*$" },
+        "names": { "$ref": "#/$defs/LocalizedNames" },
+        "status": { "$ref": "#/$defs/RecordStatus" },
+        "behavior_class": {
+          "enum": [
+            "GENERIC",
+            "RULE_DRIVEN",
+            "SPECIAL_CPU",
+            "SPECIAL_GPU_CANDIDATE",
+            "LEGACY_ONLY",
+            "UNKNOWN"
+          ]
+        },
+        "phases": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Phase" }
+        },
+        "legacy_mapping": { "$ref": "#/$defs/LegacyMapping" },
+        "composition": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CompositionTerm" }
+        },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PropertyDefinition" }
+        },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      }
+    },
+    "SpeciesDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "names",
+        "status",
+        "chemistry_enabled",
+        "elemental_composition",
+        "charge_number",
+        "phases",
+        "legacy_mapping",
+        "properties",
+        "provenance"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^species\\.[a-z][a-z0-9_.-]*$" },
+        "names": { "$ref": "#/$defs/LocalizedNames" },
+        "status": { "$ref": "#/$defs/RecordStatus" },
+        "chemistry_enabled": { "type": "boolean" },
+        "elemental_composition": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 1 }
+        },
+        "charge_number": { "type": "integer" },
+        "phases": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Phase" }
+        },
+        "legacy_mapping": { "$ref": "#/$defs/LegacyMapping" },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PropertyDefinition" }
+        },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      }
+    },
+    "StoichiometricTerm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["species_id", "coefficient", "phase"],
+      "properties": {
+        "species_id": { "type": "string", "pattern": "^species\\.[a-z][a-z0-9_.-]*$" },
+        "coefficient": { "type": "string", "pattern": "^[1-9][0-9]*(/[1-9][0-9]*)?$" },
+        "phase": { "$ref": "#/$defs/Phase" }
+      }
+    },
+    "ReactionRateModel": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "rationale"],
+          "properties": {
+            "kind": { "const": "unselected" },
+            "rationale": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "overall_order",
+            "pre_exponential_factor",
+            "temperature_exponent",
+            "activation_energy"
+          ],
+          "properties": {
+            "kind": { "const": "arrhenius" },
+            "overall_order": { "enum": [1, 2] },
+            "pre_exponential_factor": { "$ref": "#/$defs/PropertyDefinition" },
+            "temperature_exponent": { "$ref": "#/$defs/PropertyDefinition" },
+            "activation_energy": { "$ref": "#/$defs/PropertyDefinition" }
+          }
+        }
+      ]
+    },
+    "ReactionDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "reactants",
+        "products",
+        "reversible",
+        "rate_model",
+        "energy_change",
+        "provenance"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^reaction\\.[a-z][a-z0-9_.-]*$" },
+        "status": { "$ref": "#/$defs/RecordStatus" },
+        "reactants": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/StoichiometricTerm" }
+        },
+        "products": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/StoichiometricTerm" }
+        },
+        "reversible": { "type": "boolean" },
+        "rate_model": { "$ref": "#/$defs/ReactionRateModel" },
+        "energy_change": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/PropertyDefinition" }
+          ]
+        },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      }
+    },
+    "RecordStatus": {
+      "enum": ["legacy_only", "identity_only", "runtime_candidate", "runtime_approved"]
+    },
+    "Phase": {
+      "enum": ["solid", "liquid", "gas", "plasma", "solution", "aerosol", "unknown"]
+    },
+    "LegacyMapEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identifier",
+        "stable_id",
+        "record_status",
+        "canonical_identifier",
+        "mapping_status"
+      ],
+      "properties": {
+        "identifier": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+        "stable_id": { "type": "integer", "minimum": 0 },
+        "record_status": { "enum": ["canonical", "compatibility_alias"] },
+        "canonical_identifier": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+        "mapping_status": { "const": "identity_only" }
+      }
+    },
+    "LegacyMaterialMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "document_type",
+        "mapping_id",
+        "source_registry",
+        "source_hash_contract",
+        "source_sha256",
+        "source_semantics",
+        "physical_properties_imported",
+        "generation_tool",
+        "mappings"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "document_type": { "const": "legacy_material_map" },
+        "mapping_id": { "const": "omnicore.legacy-material-map.v1" },
+        "source_registry": { "const": "docs/ELEMENT_REGISTRY.csv" },
+        "source_hash_contract": { "const": "canonical_csv_utf8_lf_v1" },
+        "source_sha256": { "type": "string", "pattern": "^[A-F0-9]{64}$" },
+        "source_semantics": { "const": "legacy_gameplay_metadata_not_si" },
+        "physical_properties_imported": { "const": false },
+        "generation_tool": { "const": "tools/omnicore_data_check.py" },
+        "mappings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/LegacyMapEntry" }
+        }
+      }
+    },
+    "Catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "document_type",
+        "catalog_id",
+        "dataset_version",
+        "unit_registry_id",
+        "catalog_status",
+        "runtime_consumption",
+        "materials",
+        "species",
+        "reactions"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "document_type": { "const": "omnicore_catalog" },
+        "catalog_id": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "dataset_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+-[a-z0-9.-]+$" },
+        "unit_registry_id": { "const": "omnicore.units.canonical-si.v1" },
+        "catalog_status": { "enum": ["schema_only", "data_validated", "runtime_candidate"] },
+        "runtime_consumption": { "type": "boolean" },
+        "materials": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MaterialDefinition" }
+        },
+        "species": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SpeciesDefinition" }
+        },
+        "reactions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ReactionDefinition" }
+        }
+      }
+    }
+  }
+}

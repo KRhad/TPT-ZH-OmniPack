@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tpt-zh-omnipack.invalid/schema/omnicore-unit-registry-v1.json",
+  "title": "OmniCore canonical unit registry v1",
+  "$ref": "#/$defs/UnitRegistry",
+  "$defs": {
+    "DimensionVector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mass", "length", "time", "temperature", "amount"],
+      "properties": {
+        "mass": { "type": "integer" },
+        "length": { "type": "integer" },
+        "time": { "type": "integer" },
+        "temperature": { "type": "integer" },
+        "amount": { "type": "integer" }
+      }
+    },
+    "QuantityKind": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "dimension", "canonical_unit"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "dimension": { "$ref": "#/$defs/DimensionVector" },
+        "canonical_unit": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" }
+      }
+    },
+    "UnitDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "symbol",
+        "quantity_kind",
+        "dimension",
+        "scale_to_si",
+        "offset_to_si"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "symbol": { "type": "string", "minLength": 1 },
+        "quantity_kind": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]*$" },
+        "dimension": { "$ref": "#/$defs/DimensionVector" },
+        "scale_to_si": { "type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$" },
+        "offset_to_si": { "type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$" }
+      }
+    },
+    "UnitRegistry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "document_type",
+        "registry_id",
+        "definition_basis",
+        "dimensions",
+        "quantity_kinds",
+        "units"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "document_type": { "const": "omnicore_unit_registry" },
+        "registry_id": { "const": "omnicore.units.canonical-si.v1" },
+        "definition_basis": { "const": "canonical_si_units_only_no_physical_property_data" },
+        "dimensions": {
+          "const": ["mass", "length", "time", "temperature", "amount"]
+        },
+        "quantity_kinds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/QuantityKind" }
+        },
+        "units": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/UnitDefinition" }
+        }
+      }
+    }
+  }
+}

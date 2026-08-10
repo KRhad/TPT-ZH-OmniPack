@@ -23,7 +23,9 @@ GUI_DPI_100_PERCENT=NOT_TESTED
 GUI_DPI_125_PERCENT=NOT_TESTED
 GUI_DPI_150_PERCENT=NOT_TESTED
 V1_0_3_GATE=YELLOW
-NEXT_VERSION=1.0.3
+USER_DECISION=USER_ACCEPTED_YELLOW
+DPI_DISPOSITION=DPI_DEFERRED
+NEXT_VERSION=1.0.4
 ```
 
 ## Goal and scope
@@ -114,7 +116,10 @@ synthetic screenshot must not be reported as that matrix. The 38 localization
 warnings are documented review items, not hidden errors; the only width warning was
 visually sampled at the host DPI but remains subject to the cross-DPI check.
 
-`V1_0_3_GATE=YELLOW`. Do not start 1.0.4 or modify physics, data schemas, SDL,
-or GPU backends. The reversible implementation checkpoint is this report and its
-small UI-route contract; rollback can remove that contract/doc commit without
-affecting saved worlds or simulation semantics.
+`V1_0_3_GATE=YELLOW`. After this limitation was reported, the user explicitly
+directed the orchestrator to enter the next version. That decision is recorded as
+`USER_ACCEPTED_YELLOW / DPI_DEFERRED`: the missing 100/125/150% evidence remains
+missing and the gate is not relabeled GREEN. The exception authorizes only the
+isolated 1.0.4 data-foundation scope; it does not authorize physics, SDL, GPU, save,
+Lua-core, Particle, Simulation, or Air changes. The reversible implementation
+checkpoint is commit `477372373cb1be30c3c04bca4309a7d6fd9fa799`.

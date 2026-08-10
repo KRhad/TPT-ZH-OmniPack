@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "document_type": "omnicore_unit_registry",
+  "registry_id": "omnicore.units.canonical-si.v1",
+  "definition_basis": "canonical_si_units_only_no_physical_property_data",
+  "dimensions": ["mass", "length", "time", "temperature", "amount"],
+  "quantity_kinds": [
+    {
+      "id": "dimensionless",
+      "dimension": { "mass": 0, "length": 0, "time": 0, "temperature": 0, "amount": 0 },
+      "canonical_unit": "dimensionless"
+    },
+    {
+      "id": "mass",
+      "dimension": { "mass": 1, "length": 0, "time": 0, "temperature": 0, "amount": 0 },
+      "canonical_unit": "kilogram"
+    },
+    {
+      "id": "length",
+      "dimension": { "mass": 0, "length": 1, "time": 0, "temperature": 0, "amount": 0 },
+      "canonical_unit": "metre"
+    },
+    {
+      "id": "time",
+      "dimension": { "mass": 0, "length": 0, "time": 1, "temperature": 0, "amount": 0 },
+      "canonical_unit": "second"
+    },
+    {
+      "id": "temperature",
+      "dimension": { "mass": 0, "length": 0, "time": 0, "temperature": 1, "amount": 0 },
+      "canonical_unit": "kelvin"
+    },
+    {
+      "id": "amount",
+      "dimension": { "mass": 0, "length": 0, "time": 0, "temperature": 0, "amount": 1 },
+      "canonical_unit": "mole"
+    },
+    {
+      "id": "pressure",
+      "dimension": { "mass": 1, "length": -1, "time": -2, "temperature": 0, "amount": 0 },
+      "canonical_unit": "pascal"
+    },
+    {
+      "id": "energy",
+      "dimension": { "mass": 1, "length": 2, "time": -2, "temperature": 0, "amount": 0 },
+      "canonical_unit": "joule"
+    },
+    {
+      "id": "mass_density",
+      "dimension": { "mass": 1, "length": -3, "time": 0, "temperature": 0, "amount": 0 },
+      "canonical_unit": "kilogram_per_cubic_metre"
+    },
+    {
+      "id": "molar_mass",
+      "dimension": { "mass": 1, "length": 0, "time": 0, "temperature": 0, "amount": -1 },
+      "canonical_unit": "kilogram_per_mole"
+    },
+    {
+      "id": "heat_capacity",
+      "dimension": { "mass": 1, "length": 2, "time": -2, "temperature": -1, "amount": 0 },
+      "canonical_unit": "joule_per_kelvin"
+    },
+    {
+      "id": "specific_heat_capacity",
+      "dimension": { "mass": 0, "length": 2, "time": -2, "temperature": -1, "amount": 0 },
+      "canonical_unit": "joule_per_kilogram_kelvin"
+    },
+    {
+      "id": "thermal_conductivity",
+      "dimension": { "mass": 1, "length": 1, "time": -3, "temperature": -1, "amount": 0 },
+      "canonical_unit": "watt_per_metre_kelvin"
+    },
+    {
+      "id": "dynamic_viscosity",
+      "dimension": { "mass": 1, "length": -1, "time": -1, "temperature": 0, "amount": 0 },
+      "canonical_unit": "pascal_second"
+    },
+    {
+      "id": "diffusivity",
+      "dimension": { "mass": 0, "length": 2, "time": -1, "temperature": 0, "amount": 0 },
+      "canonical_unit": "square_metre_per_second"
+    },
+    {
+      "id": "specific_energy",
+      "dimension": { "mass": 0, "length": 2, "time": -2, "temperature": 0, "amount": 0 },
+      "canonical_unit": "joule_per_kilogram"
+    },
+    {
+      "id": "molar_energy",
+      "dimension": { "mass": 1, "length": 2, "time": -2, "temperature": 0, "amount": -1 },
+      "canonical_unit": "joule_per_mole"
+    },
+    {
+      "id": "surface_tension",
+      "dimension": { "mass": 1, "length": 0, "time": -2, "temperature": 0, "amount": 0 },
+      "canonical_unit": "newton_per_metre"
+    },
+    {
+      "id": "first_order_rate_coefficient",
+      "dimension": { "mass": 0, "length": 0, "time": -1, "temperature": 0, "amount": 0 },
+      "canonical_unit": "per_second"
+    },
+    {
+      "id": "second_order_rate_coefficient",
+      "dimension": { "mass": 0, "length": 3, "time": -1, "temperature": 0, "amount": -1 },
+      "canonical_unit": "cubic_metre_per_mole_second"
+    },
+    {
+      "id": "energy_density",
+      "dimension": { "mass": 1, "length": -1, "time": -2, "temperature": 0, "amount": 0 },
+      "canonical_unit": "joule_per_cubic_metre"
+    },
+    {
+      "id": "velocity",
+      "dimension": { "mass": 0, "length": 1, "time": -1, "temperature": 0, "amount": 0 },
+      "canonical_unit": "metre_per_second"
+    },
+    {
+      "id": "amount_rate_density",
+      "dimension": { "mass": 0, "length": -3, "time": -1, "temperature": 0, "amount": 1 },
+      "canonical_unit": "mole_per_cubic_metre_second"
+    }
+  ],
+  "units": [
+    { "id": "dimensionless", "symbol": "1", "quantity_kind": "dimensionless", "dimension": { "mass": 0, "length": 0, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "kilogram", "symbol": "kg", "quantity_kind": "mass", "dimension": { "mass": 1, "length": 0, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "metre", "symbol": "m", "quantity_kind": "length", "dimension": { "mass": 0, "length": 1, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "second", "symbol": "s", "quantity_kind": "time", "dimension": { "mass": 0, "length": 0, "time": 1, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "kelvin", "symbol": "K", "quantity_kind": "temperature", "dimension": { "mass": 0, "length": 0, "time": 0, "temperature": 1, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "mole", "symbol": "mol", "quantity_kind": "amount", "dimension": { "mass": 0, "length": 0, "time": 0, "temperature": 0, "amount": 1 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "pascal", "symbol": "Pa", "quantity_kind": "pressure", "dimension": { "mass": 1, "length": -1, "time": -2, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "joule", "symbol": "J", "quantity_kind": "energy", "dimension": { "mass": 1, "length": 2, "time": -2, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "kilogram_per_cubic_metre", "symbol": "kg/m^3", "quantity_kind": "mass_density", "dimension": { "mass": 1, "length": -3, "time": 0, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "kilogram_per_mole", "symbol": "kg/mol", "quantity_kind": "molar_mass", "dimension": { "mass": 1, "length": 0, "time": 0, "temperature": 0, "amount": -1 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "joule_per_kelvin", "symbol": "J/K", "quantity_kind": "heat_capacity", "dimension": { "mass": 1, "length": 2, "time": -2, "temperature": -1, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "joule_per_kilogram_kelvin", "symbol": "J/(kg*K)", "quantity_kind": "specific_heat_capacity", "dimension": { "mass": 0, "length": 2, "time": -2, "temperature": -1, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "watt_per_metre_kelvin", "symbol": "W/(m*K)", "quantity_kind": "thermal_conductivity", "dimension": { "mass": 1, "length": 1, "time": -3, "temperature": -1, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "pascal_second", "symbol": "Pa*s", "quantity_kind": "dynamic_viscosity", "dimension": { "mass": 1, "length": -1, "time": -1, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "square_metre_per_second", "symbol": "m^2/s", "quantity_kind": "diffusivity", "dimension": { "mass": 0, "length": 2, "time": -1, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "joule_per_kilogram", "symbol": "J/kg", "quantity_kind": "specific_energy", "dimension": { "mass": 0, "length": 2, "time": -2, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "joule_per_mole", "symbol": "J/mol", "quantity_kind": "molar_energy", "dimension": { "mass": 1, "length": 2, "time": -2, "temperature": 0, "amount": -1 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "newton_per_metre", "symbol": "N/m", "quantity_kind": "surface_tension", "dimension": { "mass": 1, "length": 0, "time": -2, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "per_second", "symbol": "1/s", "quantity_kind": "first_order_rate_coefficient", "dimension": { "mass": 0, "length": 0, "time": -1, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "cubic_metre_per_mole_second", "symbol": "m^3/(mol*s)", "quantity_kind": "second_order_rate_coefficient", "dimension": { "mass": 0, "length": 3, "time": -1, "temperature": 0, "amount": -1 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "joule_per_cubic_metre", "symbol": "J/m^3", "quantity_kind": "energy_density", "dimension": { "mass": 1, "length": -1, "time": -2, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "metre_per_second", "symbol": "m/s", "quantity_kind": "velocity", "dimension": { "mass": 0, "length": 1, "time": -1, "temperature": 0, "amount": 0 }, "scale_to_si": "1", "offset_to_si": "0" },
+    { "id": "mole_per_cubic_metre_second", "symbol": "mol/(m^3*s)", "quantity_kind": "amount_rate_density", "dimension": { "mass": 0, "length": -3, "time": -1, "temperature": 0, "amount": 1 }, "scale_to_si": "1", "offset_to_si": "0" }
+  ]
+}

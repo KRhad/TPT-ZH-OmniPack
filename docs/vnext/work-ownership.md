@@ -2,12 +2,15 @@
 
 ## Current status
 
-There are no active write Workers. The Main Orchestrator owns integration and all
-files under `docs/vnext/` for the first-round report commit.
+There are no active write Workers. The Main Orchestrator owns the isolated 1.0.4
+data-contract implementation. Two Workers are read-only reviewers and may not edit
+the shared checkout.
 
 | Worker | Branch | Worktree | Allowed paths | Forbidden paths | Base commit | Task | Status |
 |---|---|---|---|---|---|---|---|
-| Main Orchestrator | `integration/omnicore-vnext` | `D:/CodexWork/OmniPack/repos/TPT-ZH-OmniPack` | integration, review, 1.0.3 UI contracts, `docs/vnext/**`, `docs/roadmap/**` | destructive Git operations, push/release, Simulation/Particle/Air/Save/Lua core | `c8a0190c1` | complete only the 1.0.3 UI/material-organization gate | ACTIVE, YELLOW pending real 100/125/150% DPI matrix |
+| Main Orchestrator | `integration/omnicore-vnext` | `D:/CodexWork/OmniPack/repos/TPT-ZH-OmniPack` | integration, `resources/omnicore/**`, bounded validation tooling/tests, Meson static-test registration, `docs/vnext/**`, `docs/roadmap/**` | destructive Git operations, push/release, Simulation/Particle/Air/Save/Lua core, runtime physics, SDL3/GPU | `477372373` | 1.0.4 schema, units, provenance, and validation foundation only | ACTIVE, IN_PROGRESS |
+| Worker-Materials-Schema-Audit | read-only | main worktree | existing registries, vNext research, proposed schema boundaries | every write | `477372373` | independent schema and compatibility audit | ACTIVE, READ_ONLY |
+| Worker-Data-Validation-Audit | read-only | main worktree | validation/test conventions and proposed fail-closed checks | every write | `477372373` | independent validator and negative-test audit | ACTIVE, READ_ONLY |
 | Worker-Upstream | `vnext/upstream-100.1` | `D:/CodexWork/OmniPack/worktrees/upstream-100.1` | upstream adaptation and isolated regression tools | unrelated OmniCore production architecture | `635eb9f92` | adapt TPT 100.1 build 400 | COMPLETE, merged through `729f72cba` |
 | Worker-Elements | `vnext/element-inventory` | `D:/CodexWork/OmniPack/worktrees/element-inventory` | `tools/vnext/element_update_inventory.py`, inventory report/JSON | production simulation | `729f72cba` | static update inventory | COMPLETE, integrated as `f1320b48d` |
 | Worker-LuaSave | read-only | main worktree | read-only Lua, Particle, Save inspection | every write | `729f72cba` | Lua/Save compatibility audit | COMPLETE |

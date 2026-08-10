@@ -1056,6 +1056,19 @@ test(
 )
 
 test(
+	'omnicore-data-foundation',
+	python3_prog,
+	args: [
+		files('tools/omnicore_data_check.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'periodic-content-links',
 	python3_prog,
 	args: [

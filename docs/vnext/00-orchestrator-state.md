@@ -5,10 +5,10 @@
 ```text
 REPORT_DATE=2026-08-10
 CURRENT_BRANCH=integration/omnicore-vnext
-CURRENT_VERSION=1.0.3
-CURRENT_VERSION_GATE=YELLOW
-NEXT_VERSION=1.0.3
-NEXT_PHASE=complete the required 100/125/150 percent UI DPI matrix
+CURRENT_VERSION=1.0.4
+CURRENT_VERSION_GATE=IN_PROGRESS
+NEXT_VERSION=1.0.4
+NEXT_PHASE=Material/Species/Reaction schema, canonical units, provenance, and validation only
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -25,6 +25,10 @@ UI_PERIODIC_RUNTIME=GREEN_118_MAPPINGS
 UI_MATERIAL_RUNTIME=GREEN_IDS_521_532
 UI_ZH_EN_CURRENT_SYSTEM_DPI_200=GREEN
 UI_DPI_100_125_150=NOT_TESTED
+V1_0_3_GATE=YELLOW
+V1_0_3_DISPOSITION=USER_ACCEPTED_YELLOW
+V1_0_3_DPI_MATRIX=DPI_DEFERRED
+V1_0_4_GATE=IN_PROGRESS
 BENCHMARK_IMPLEMENTATION_HEAD=c4490463f3819695cab734414f827e0e4e4be118
 CHARACTERIZATION_IMPLEMENTATION_HEAD=1b8586877e6e7d3703ecd1dbab1eb89b3e4eb7a2
 DIFFERENTIAL_IMPLEMENTATION_HEAD=c6eecaa77cd7d6025ef997c5dd46e53d112c6e08
@@ -86,8 +90,16 @@ passes 40/40 Meson tests, 343 Python tests, periodic/material runtime checks, an
 visible Chinese/English UI paths at the host's 200% system DPI. No production UI
 route, ID, Lua identifier, save format, material behavior, or simulation code was
 changed. The required 100%, 125%, and 150% system-DPI matrix remains untested, so
-the version cannot advance to 1.0.4. Details are in
+the version did not independently satisfy its GREEN gate. After this limitation was
+reported, the user explicitly directed the orchestrator to enter the next version.
+That scoped exception is recorded as `USER_ACCEPTED_YELLOW / DPI_DEFERRED`; it does
+not manufacture the missing evidence or change the 1.0.3 gate to GREEN. Details are in
 [`phase-3-ui-material-organization.md`](phase-3-ui-material-organization.md).
+
+Version 1.0.4 is now **IN_PROGRESS** and is restricted to the OmniMaterials data
+foundation: machine-readable Material/Species/Reaction contracts, canonical units,
+property-level provenance, and fail-closed validation. No production simulation,
+physical behavior, Element ID, Lua identifier, or save-format change is authorized.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
@@ -232,13 +244,14 @@ with an explicit maintenance decision.
 
 ## Next permitted work
 
-The 1.0.2 version gate authorizes only 1.0.3 UI/material-organization audit work:
+The user-authorized 1.0.3 YELLOW exception permits only 1.0.4 data-foundation work:
 
-1. inventory selector, search, periodic-table and material-detail entry points;
-2. map existing stable Element IDs and Lua identifiers to proposed UI routes;
-3. define a narrow, reversible UI implementation plan before changing production UI.
+1. define versioned Material, Species, Reaction, property/provenance and unit contracts;
+2. add deterministic fail-closed validation and adversarial unit tests;
+3. prove that Legacy mappings retain stable IDs and that no runtime physics consumes
+   the new data in this phase.
 
-Production Air replacement, multi-species runtime, SDL3 migration and GPU compute
-remain blocked by global G0. Physical correction/source-sink attribution,
-unsampled full-state finite/positivity, process VRAM and a performance budget stay
-in the risk register; none is silently reclassified as complete.
+Production Air replacement, PhysicalScale runtime, multi-species runtime, chemistry
+runtime, SDL3 migration and GPU compute remain blocked. Physical correction/source-
+sink attribution, unsampled full-state finite/positivity, process VRAM and a
+performance budget stay in the risk register; none is silently reclassified as complete.

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "document_type": "omnicore_catalog",
+  "catalog_id": "omnicore.foundation.v1",
+  "dataset_version": "1.0.4-foundation.1",
+  "unit_registry_id": "omnicore.units.canonical-si.v1",
+  "catalog_status": "schema_only",
+  "runtime_consumption": false,
+  "materials": [],
+  "species": [],
+  "reactions": []
+}
