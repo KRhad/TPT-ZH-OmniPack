@@ -3,6 +3,8 @@ param(
 
     [switch] $RunRusanovUniform,
 
+    [switch] $RunRusanovPressurePulse,
+
     [Parameter(Mandatory = $true)]
     [string] $BuildDirectory,
 
@@ -186,9 +188,25 @@ if (-not $gnuStrict -and -not $msvcStrict) {
 }
 $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 
+if ($RunRusanovUniform -and $RunRusanovPressurePulse) {
+    throw "Select only one AtmosphereBench run mode"
+}
+$isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
-$runMode = if ($RunRusanovUniform) { "rusanov_uniform" } else { "contract_uniform" }
-$runArgument = if ($RunRusanovUniform) { "--run-rusanov-uniform" } else { "--run-uniform" }
+$runMode = if ($RunRusanovPressurePulse) {
+    "rusanov_pressure_pulse"
+} elseif ($RunRusanovUniform) {
+    "rusanov_uniform"
+} else {
+    "contract_uniform"
+}
+$runArgument = if ($RunRusanovPressurePulse) {
+    "--run-rusanov-pressure-pulse"
+} elseif ($RunRusanovUniform) {
+    "--run-rusanov-uniform"
+} else {
+    "--run-uniform"
+}
 $output = @(& $resolvedExecutable $runArgument 2>&1)
 $exitCode = $LASTEXITCODE
 $timer.Stop()
@@ -205,7 +223,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
-    "candidate=fvm_rusanov|status=implemented_1d_periodic_uniform_probe|solver_implemented=true",
+    "candidate=fvm_rusanov|status=implemented_1d_periodic_uniform_and_pressure_pulse_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -224,7 +242,7 @@ $benchmarkKind = "atmospherebench_contract_uniform"
 $performanceGate = "not_evaluated_contract_only"
 $timingScope = "standalone_contract_uniform_no_solver_step"
 $solverResultStatus = Read-KeyValue -Text $text -Key "result_status"
-if (-not $RunRusanovUniform) {
+if (-not $isRusanovProbe) {
     if ($solverResultStatus -ne "contract_only") {
         throw "AtmosphereBench scaffold must report result_status=contract_only"
     }
@@ -255,7 +273,7 @@ if (-not $RunRusanovUniform) {
             throw "Uniform contract expected $ledgerKey=0"
         }
     }
-} else {
+} elseif ($RunRusanovUniform) {
     $benchmarkKind = "atmospherebench_rusanov_uniform_probe"
     $performanceGate = "not_evaluated_candidate_probe"
     $timingScope = "standalone_rusanov_uniform_probe"
@@ -287,6 +305,43 @@ if (-not $RunRusanovUniform) {
             throw "Rusanov probe drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
+} else {
+    $benchmarkKind = "atmospherebench_rusanov_pressure_pulse_probe"
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = "standalone_rusanov_pressure_pulse_probe"
+    $candidateImplementations = "fvm_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "Rusanov pressure-pulse probe must not claim solver selection"
+    }
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_rusanov" -or
+        (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+        throw "Rusanov pressure-pulse candidate identity is invalid"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "grid_cells_x" = "128";
+        "grid_cells_y" = "1"; "grid_cell_count" = "128"; "case_timestep" = "0.02";
+        "case_step_count" = "64"; "positivity_preserved" = "true";
+        "pressure_peak_reduced" = "true"; "state_evolved" = "true";
+        "numerical_correction_count" = "0"; "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "Rusanov pressure-pulse contract drifted: $($probeKey.Key)"
+        }
+    }
+    $maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
+    if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
+        $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+        throw "Rusanov pressure-pulse CFL is outside the strict positivity contract"
+    }
+    $stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+    if ([double]::IsNaN($stateChangeL1) -or [double]::IsInfinity($stateChangeL1) -or $stateChangeL1 -le 1e-12) {
+        throw "Rusanov pressure-pulse did not produce a measurable state evolution"
+    }
+    foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-10) {
+            throw "Rusanov pressure-pulse drift exceeds the periodic conservation tolerance: $driftKey"
+        }
+    }
 }
 $finalSourceState = Get-SourceState -Repository $sourceRoot -GitCommand $gitCommand
 if ($finalSourceState.Commit -ne $sourceState.Commit -or $finalSourceState.StateSha256 -ne $sourceState.StateSha256) {
@@ -308,10 +363,22 @@ New-Item -ItemType Directory -Path $resultDirectory | Out-Null
 $stateDensity = $null
 $statePressure = $null
 $stateAndFluxScratchBytesPerCell = $null
-if ($RunRusanovUniform) {
+$initialMaximumPressure = $null
+$finalMaximumPressure = $null
+$stateChangeL1 = $null
+$stateEvolved = $null
+$pressurePeakReduced = $null
+if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
     $stateAndFluxScratchBytesPerCell = [int](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
+    if ($RunRusanovPressurePulse) {
+        $initialMaximumPressure = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
+        $finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
+        $stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+        $stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+        $pressurePeakReduced = (Read-KeyValue -Text $text -Key "pressure_peak_reduced") -eq "true"
+    }
 } else {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "state_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "state_pressure")
@@ -320,7 +387,9 @@ $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
     "No HLLE, LBM, source-term, boundary, or multi-species candidate is implemented in this scaffold."
 )
-if ($RunRusanovUniform) {
+if ($RunRusanovPressurePulse) {
+    $limitations += "Rusanov is limited to first-order strict-double 1D periodic uniform and pressure-pulse probes; this is not solver selection or production evidence."
+} elseif ($RunRusanovUniform) {
     $limitations += "Rusanov is limited to a first-order strict-double 1D periodic uniform probe; this is not solver selection or production evidence."
 } else {
     $limitations += "This result is a contract artifact, not solver-performance or physical-time evidence."
@@ -379,6 +448,11 @@ $result = [ordered]@{
         state_and_flux_scratch_bytes_per_cell = $stateAndFluxScratchBytesPerCell
         density = $stateDensity
         pressure = $statePressure
+        initial_maximum_pressure = $initialMaximumPressure
+        final_maximum_pressure = $finalMaximumPressure
+        state_change_l1 = $stateChangeL1
+        state_evolved = $stateEvolved
+        pressure_peak_reduced = $pressurePeakReduced
         mass_drift = [double](Read-KeyValue -Text $text -Key "mass_drift")
         momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
         momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")

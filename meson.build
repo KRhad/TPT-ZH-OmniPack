@@ -698,6 +698,14 @@ test(
 	timeout: 60,
 )
 
+test(
+	'atmospherebench-rusanov-pressure-pulse',
+	atmospherebench,
+	args: [ '--run-rusanov-pressure-pulse' ],
+	suite: 'static',
+	timeout: 60,
+)
+
 font_render_probe = executable(
 	'font_render_probe',
 	sources: files('tools/font_render_probe.cpp'),
