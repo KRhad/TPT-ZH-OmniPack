@@ -201,7 +201,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "AtmosphereBench candidate-list run failed: output=$($candidateOutput -join [Environment]::NewLine)"
 }
 $candidateText = $candidateOutput -join [Environment]::NewLine
-if ($candidateText -notmatch '(?m)^selection_status=unselected$') {
+if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected") {
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
