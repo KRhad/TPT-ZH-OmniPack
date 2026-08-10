@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_RUSANOV_DENSITY_ADVECTION_CLEAN_VALIDATED
+STATUS=IN_PROGRESS_RUSANOV_CONTACT_CLEAN_VALIDATED
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -34,6 +34,8 @@ RUSANOV_PRESSURE_PULSE_COMMIT=cded7be672fbb2755174499214bb31622979eac6
 RUSANOV_PRESSURE_PULSE_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_1D_PERIODIC_128X1_64_STEP_NONUNIFORM_PROBE_BUILD_80_STATIC_45_PYTHON_414_TOTAL_412_PASS_2_SKIPS_POSITIVE_ZERO_CORRECTIONS
 RUSANOV_DENSITY_ADVECTION_COMMIT=0ee4b756176413c4261f74c3b6a6bbcb4298eae8
 RUSANOV_DENSITY_ADVECTION_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_128X1_EXACT_ONE_CELL_SHIFT_BUILD_80_STATIC_46_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_0_000543106_ZERO_CORRECTIONS
+RUSANOV_CONTACT_COMMIT=68bcc74a5574ee1fc9240576c04a31a8f9335484
+RUSANOV_CONTACT_VALIDATION=GREEN_ISOLATED_STRICT_DOUBLE_128X1_EXACT_ONE_CELL_SHIFT_BUILD_80_STATIC_47_PYTHON_414_TOTAL_412_PASS_2_SKIPS_L1_0_00923098_LINF_0_161912_ZERO_CORRECTIONS
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
 V1_0_5_GATE=IN_PROGRESS
@@ -129,7 +131,7 @@ or claim a performance gate.
 
 ## Shared experiment contract layer
 
-The current uncommitted follow-up adds the solver-free contracts required before a
+The shared-contract follow-up adds the solver-free contracts required before a
 numerical plugin: `AtmosphereGrid`, `BenchmarkCase`, `BenchmarkResult`, and a
 `NumericalCorrectionLedger`. The only registered case is still `uniform_state` and
 explicitly declares `nondimensional_contract`, a timestep of `1`, and zero solver
@@ -226,8 +228,15 @@ reference shift. The measured density L1/Linf errors are `0.000543106` and
 `0.995707`, all primitives remain positive and no correction occurs. This measures
 first-order transport diffusion but is not a convergence study or solver selection.
 
+The constant-pressure contact-discontinuity probe is clean-validated at
+`68bcc74a5`. It preserves the exact density bounds and pressure to roundoff, closes
+the conservative ledger near machine precision, and records zero corrections. Its
+`0.161912` density Linf error is explicitly accepted only against a declared `0.2`
+first-order debug bound; this is evidence of Rusanov diffusion, not solver accuracy
+selection.
+
 `V1_0_5_GATE=IN_PROGRESS`. The next implementation may extend only the Rusanov
-candidate with contact-discontinuity or near-vacuum evidence while keeping HLLE and LBM
+candidate with near-vacuum-expansion or Sod-shock evidence while keeping HLLE and LBM
 registered-only and independently replaceable. PhysicalScale, physical-time policy
 and solver selection remain RED until the mandatory cases, conservation/positivity,
 memory and performance evidence exist. Production Air replacement is still
