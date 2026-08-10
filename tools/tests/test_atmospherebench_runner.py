@@ -46,6 +46,15 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("standalone_contract_uniform_no_solver_step", RUNNER)
         self.assertIn("artifacts/vnext-atmospherebench", RUNNER)
 
+    def test_runner_rejects_a_dimensional_or_stepped_scaffold_case(self) -> None:
+        self.assertIn("must keep the shared case nondimensional", RUNNER)
+        self.assertIn("must not claim a solver step", RUNNER)
+        self.assertIn("shared grid contract drifted", RUNNER)
+        self.assertIn("state_bytes_per_cell", RUNNER)
+        self.assertIn("numerical_correction_ledger", RUNNER)
+        self.assertIn("correction_energy_removed", RUNNER)
+        self.assertIn("correction_event_count", RUNNER)
+
     def test_runner_has_no_production_client_launch_or_legacy_air_binding(self) -> None:
         forbidden = ("tpt-zh-omnipack", "updateUpTo", "Air.cpp", "Simulation.cpp", "LuaScriptInterface")
         for needle in forbidden:

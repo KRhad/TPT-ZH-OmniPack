@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_SCAFFOLD_CLEAN_VALIDATED
+STATUS=IN_PROGRESS_SHARED_CONTRACT_VALIDATED_DIRTY_SOURCE
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -26,6 +26,8 @@ MESON_STATIC=GREEN_43_43
 STRICT_FP_TARGET=GREEN_GNU_NO_LEGACY_FAST_MATH_MSVC_CONTRACT_NOT_EXECUTED
 CLEAN_ARTIFACT=GREEN_CONTRACT_ONLY_a21eafba3
 CLEAN_SOURCE_PACKAGE=GREEN_1300_FILES_NO_TEST_ASSETS
+SHARED_CONTRACT_IMPLEMENTATION_COMMIT=pending
+SHARED_CONTRACT_VALIDATION=GREEN_TARGETED_26_STATIC_43_PYTHON_411_TOTAL_409_PASS_2_SKIPS_DIRTY_SOURCE
 V1_0_5_GATE=IN_PROGRESS
 ```
 
@@ -114,6 +116,24 @@ executes only the standalone contract tool, and writes ignored provenance/result
 artifacts under `artifacts/vnext-atmospherebench/`. It cannot launch the game client
 or claim a performance gate.
 
+## Shared experiment contract layer
+
+The current uncommitted follow-up adds the solver-free contracts required before a
+numerical plugin: `AtmosphereGrid`, `BenchmarkCase`, `BenchmarkResult`, and a
+`NumericalCorrectionLedger`. The only registered case is still `uniform_state` and
+explicitly declares `nondimensional_contract`, a timestep of `1`, and zero solver
+steps. It reports a `4 x 3` metadata grid and `32 bytes/cell` for its four-double
+conservative state, not an eventual solver's total memory budget.
+
+The runner now rejects a dimensional, stepped, or grid-drifted scaffold case. The
+shared contracts remain isolated from production and do not implement a flux,
+boundary update, source term, CFL calculation, or candidate solver.
+
+Every correction ledger now carries an explicit `eventCount`. A nonempty ledger
+without an event count fails the C++ self-test; `numerical_correction_count` is the
+actual recorded count rather than a boolean-like placeholder. The zero-step fixture
+continues to report all correction quantities and counts as zero.
+
 ## Clean checkpoint evidence
 
 Implementation checkpoint `a21eafba3` was built from a clean worktree. The default
@@ -156,6 +176,10 @@ not claim a new GUI or runtime exercise.
 An independent final review found no remaining P1/P2 issues and approved the
 isolated scaffold checkpoint only. It did not approve solver selection or production
 integration.
+
+The new shared-contract follow-up has not yet received its own clean checkpoint;
+its current dirty-worktree validation is **26/26 targeted**, **411 total / 409 PASS /
+2 skipped** Python tests, and **43/43** Meson static tests.
 
 `V1_0_5_GATE=IN_PROGRESS`. The next implementation may add the shared grid/case/
 result contracts and one first-order Rusanov plugin, but must keep Rusanov, HLLE,

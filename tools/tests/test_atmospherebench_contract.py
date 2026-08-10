@@ -67,6 +67,23 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             self.assertIsNotNone(match, field)
             self.assertEqual(Decimal(match.group(1)), Decimal(value), field)
 
+    def test_shared_contract_types_remain_solver_free_and_nondimensional(self) -> None:
+        header = (BENCH_ROOT / "AtmosphereBench.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "AtmosphereBench.cpp").read_text(encoding="utf-8")
+        for symbol in (
+            "AtmosphereGrid", "BenchmarkCase", "NumericalCorrectionLedger",
+            "BenchmarkResult", "NondimensionalContract",
+        ):
+            with self.subTest(symbol=symbol):
+                self.assertIn(symbol, header)
+        self.assertIn('"case_time_domain=nondimensional_contract', source)
+        self.assertIn('"case_step_count="', source)
+        self.assertIn('"state_bytes_per_cell="', source)
+        self.assertIn("!invalidGrid.IsValid()", source)
+        self.assertIn("!invalidCase.IsValid()", source)
+        self.assertIn("eventCount", header)
+        self.assertIn("!uncountedCorrections.IsConsistent()", source)
+
     def test_scaffold_contract_is_not_a_runtime_consumer(self) -> None:
         production = []
         for path in (ROOT / "src").rglob("*"):

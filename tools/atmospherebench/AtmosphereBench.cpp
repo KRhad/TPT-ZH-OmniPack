@@ -96,11 +96,44 @@ PrimitiveState IdealGasEOS::ToPrimitive(const ConservativeState &state) const
 	return result;
 }
 
+std::size_t AtmosphereGrid::CellCount() const
+{
+	if (cellsY == 0 || cellsX > std::numeric_limits<std::size_t>::max() / cellsY)
+		return 0;
+	return cellsX * cellsY;
+}
+
+bool AtmosphereGrid::IsValid() const
+{
+	return cellsX > 0 && cellsY > 0 && cellLength > 0.0 && Finite(cellLength)
+		&& cellsX <= std::numeric_limits<std::size_t>::max() / cellsY;
+}
+
+bool BenchmarkCase::IsValid() const
+{
+	return !id.empty() && grid.IsValid()
+		&& timeDomain == TimeDomain::NondimensionalContract
+		&& Finite(timeStep) && timeStep > 0.0;
+}
+
+bool NumericalCorrectionLedger::IsEmpty() const
+{
+	return massAdded == 0.0 && massRemoved == 0.0
+		&& momentumXAdded == 0.0 && momentumYAdded == 0.0
+		&& energyAdded == 0.0 && energyRemoved == 0.0
+		&& densityFloorHits == 0 && pressureFloorHits == 0 && eventCount == 0;
+}
+
+bool NumericalCorrectionLedger::IsConsistent() const
+{
+	return IsEmpty() || eventCount > 0;
+}
+
 void ConservationLedger::Begin(const ConservativeState &state)
 {
 	initial = state;
 	final = state;
-	correctionCount = 0;
+	corrections = {};
 }
 
 void ConservationLedger::End(const ConservativeState &state)
@@ -114,7 +147,13 @@ bool ConservationLedger::Closes(double tolerance) const
 		&& Near(initial.momentumX, final.momentumX, tolerance)
 		&& Near(initial.momentumY, final.momentumY, tolerance)
 		&& Near(initial.totalEnergyDensity, final.totalEnergyDensity, tolerance)
-		&& correctionCount == 0;
+		&& corrections.IsEmpty();
+}
+
+bool BenchmarkResult::IsContractOnly() const
+{
+	return resultStatus == "contract_only" && !caseId.empty()
+		&& stateBytesPerCell == sizeof(ConservativeState) && corrections.IsEmpty();
 }
 
 const std::array<CandidateDescriptor, 4> &Candidates()
@@ -128,6 +167,32 @@ const std::array<CandidateDescriptor, 4> &Candidates()
 	return candidates;
 }
 
+const BenchmarkCase &UniformContractCase()
+{
+	static const BenchmarkCase benchmarkCase{
+		"uniform_state",
+		{4, 3, 1.0, BoundaryMode::Periodic},
+		TimeDomain::NondimensionalContract,
+		1.0,
+		0,
+	};
+	return benchmarkCase;
+}
+
+BenchmarkResult MakeUniformContractResult()
+{
+	const IdealGasEOS syntheticEos(5.0 / 3.0, 1.0);
+	const auto initial = syntheticEos.FromPrimitive(1.0, 0.0, 0.0, 1.0);
+	return {
+		UniformContractCase().id,
+		"contract_only",
+		initial,
+		initial,
+		{},
+		sizeof(ConservativeState),
+	};
+}
+
 bool RunSelfTest(std::ostream &output)
 {
 	const PhysicalScale scale;
@@ -135,6 +200,15 @@ bool RunSelfTest(std::ostream &output)
 	const IdealGasEOS syntheticEos(5.0 / 3.0, 1.0);
 	const auto state = syntheticEos.FromPrimitive(2.0, 3.0, -2.0, 4.0);
 	const auto primitive = syntheticEos.ToPrimitive(state);
+	const auto &uniformCase = UniformContractCase();
+	const auto uniformResult = MakeUniformContractResult();
+	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
+	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
+	NumericalCorrectionLedger nonEmptyCorrections;
+	nonEmptyCorrections.energyAdded = 1.0;
+	nonEmptyCorrections.eventCount = 1;
+	NumericalCorrectionLedger uncountedCorrections;
+	uncountedCorrections.energyAdded = 1.0;
 	ConservationLedger ledger;
 	ledger.Begin(state);
 	ledger.End(state);
@@ -142,7 +216,11 @@ bool RunSelfTest(std::ostream &output)
 		&& Near(primitive.pressure, 4.0, 1e-12)
 		&& Near(primitive.velocityX, 3.0, 1e-12)
 		&& Near(primitive.velocityY, -2.0, 1e-12)
-		&& ledger.Closes(1e-12) && candidates.size() == 4;
+		&& ledger.Closes(1e-12) && candidates.size() == 4
+		&& uniformCase.IsValid() && uniformCase.grid.CellCount() == 12
+		&& uniformResult.IsContractOnly() && !invalidGrid.IsValid()
+		&& !invalidCase.IsValid() && !nonEmptyCorrections.IsEmpty()
+		&& nonEmptyCorrections.IsConsistent() && !uncountedCorrections.IsConsistent();
 	bool anySelected = false;
 	for (const auto &candidate : candidates)
 		anySelected = anySelected || candidate.solverImplemented;
@@ -166,19 +244,41 @@ void WriteCandidateList(std::ostream &output)
 void WriteUniformScaffold(std::ostream &output)
 {
 	const IdealGasEOS syntheticEos(5.0 / 3.0, 1.0);
-	const auto initial = syntheticEos.FromPrimitive(1.0, 0.0, 0.0, 1.0);
+	const auto &benchmarkCase = UniformContractCase();
+	const auto result = MakeUniformContractResult();
+	const auto initial = result.initial;
 	output << "schema_version=1\n";
-	output << "case=uniform_state\n";
+	output << "case=" << benchmarkCase.id << '\n';
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "case_timestep=" << benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << benchmarkCase.stepCount << '\n';
+	output << "grid_cells_x=" << benchmarkCase.grid.cellsX << '\n';
+	output << "grid_cells_y=" << benchmarkCase.grid.cellsY << '\n';
+	output << "grid_cell_count=" << benchmarkCase.grid.CellCount() << '\n';
 	output << "physical_scale_selection=unselected\n";
 	output << "atmosphere_solver_selection=unselected\n";
-	output << "result_status=contract_only\n";
+	output << "result_status=" << result.resultStatus << '\n';
 	output << "state_density=" << initial.density << '\n';
 	output << "eos_fixture=synthetic_nondimensional\n";
 	output << "state_pressure=" << syntheticEos.ToPrimitive(initial).pressure << '\n';
-	output << "mass_drift=0\n";
-	output << "momentum_drift=0\n";
-	output << "energy_drift=0\n";
-	output << "numerical_correction_count=0\n";
+	output << "mass_drift=" << (result.final.density - result.initial.density) << '\n';
+	const auto momentumXDrift = result.final.momentumX - result.initial.momentumX;
+	const auto momentumYDrift = result.final.momentumY - result.initial.momentumY;
+	output << "momentum_drift=" << std::hypot(momentumXDrift, momentumYDrift) << '\n';
+	output << "momentum_x_drift=" << momentumXDrift << '\n';
+	output << "momentum_y_drift=" << momentumYDrift << '\n';
+	output << "energy_drift=" << (result.final.totalEnergyDensity - result.initial.totalEnergyDensity) << '\n';
+	output << "numerical_correction_count=" << result.corrections.eventCount << '\n';
+	output << "correction_mass_added=" << result.corrections.massAdded << '\n';
+	output << "correction_mass_removed=" << result.corrections.massRemoved << '\n';
+	output << "correction_momentum_x_added=" << result.corrections.momentumXAdded << '\n';
+	output << "correction_momentum_y_added=" << result.corrections.momentumYAdded << '\n';
+	output << "correction_energy_added=" << result.corrections.energyAdded << '\n';
+	output << "correction_energy_removed=" << result.corrections.energyRemoved << '\n';
+	output << "density_floor_hits=" << result.corrections.densityFloorHits << '\n';
+	output << "pressure_floor_hits=" << result.corrections.pressureFloorHits << '\n';
+	output << "correction_event_count=" << result.corrections.eventCount << '\n';
+	output << "state_bytes_per_cell=" << result.stateBytesPerCell << '\n';
 	for (const auto &candidate : Candidates())
 		output << "candidate=" << candidate.id << "|status=" << candidate.status << '\n';
 }

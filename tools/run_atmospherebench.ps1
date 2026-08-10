@@ -185,6 +185,20 @@ $text = $output -join [Environment]::NewLine
 if ((Read-KeyValue -Text $text -Key "result_status") -ne "contract_only") {
     throw "AtmosphereBench scaffold must report result_status=contract_only"
 }
+if ((Read-KeyValue -Text $text -Key "case_time_domain") -ne "nondimensional_contract") {
+    throw "AtmosphereBench scaffold must keep the shared case nondimensional"
+}
+if ((Read-KeyValue -Text $text -Key "case_timestep") -ne "1") {
+    throw "AtmosphereBench scaffold contract timestep drifted"
+}
+if ((Read-KeyValue -Text $text -Key "case_step_count") -ne "0") {
+    throw "AtmosphereBench scaffold must not claim a solver step"
+}
+foreach ($gridKey in @{ "grid_cells_x" = "4"; "grid_cells_y" = "3"; "grid_cell_count" = "12" }.GetEnumerator()) {
+    if ((Read-KeyValue -Text $text -Key $gridKey.Key) -ne $gridKey.Value) {
+        throw "AtmosphereBench shared grid contract drifted: $($gridKey.Key)"
+    }
+}
 if ((Read-KeyValue -Text $text -Key "physical_scale_selection") -ne "unselected") {
     throw "AtmosphereBench selected PhysicalScale unexpectedly"
 }
@@ -194,7 +208,12 @@ if ((Read-KeyValue -Text $text -Key "atmosphere_solver_selection") -ne "unselect
 if ((Read-KeyValue -Text $text -Key "eos_fixture") -ne "synthetic_nondimensional") {
     throw "AtmosphereBench uniform contract used an unreviewed EOS fixture"
 }
-foreach ($ledgerKey in @("mass_drift", "momentum_drift", "energy_drift", "numerical_correction_count")) {
+foreach ($ledgerKey in @(
+    "mass_drift", "momentum_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift",
+    "numerical_correction_count", "correction_mass_added", "correction_mass_removed",
+    "correction_momentum_x_added", "correction_momentum_y_added", "correction_energy_added",
+    "correction_energy_removed", "density_floor_hits", "pressure_floor_hits", "correction_event_count"
+)) {
     if ((Read-KeyValue -Text $text -Key $ledgerKey) -ne "0") {
         throw "Uniform contract expected $ledgerKey=0"
     }
@@ -259,12 +278,32 @@ $result = [ordered]@{
     }
     case = [ordered]@{
         id = Read-KeyValue -Text $text -Key "case"
+        time_domain = Read-KeyValue -Text $text -Key "case_time_domain"
+        timestep = [double](Read-KeyValue -Text $text -Key "case_timestep")
+        step_count = [int](Read-KeyValue -Text $text -Key "case_step_count")
+        grid_cells_x = [int](Read-KeyValue -Text $text -Key "grid_cells_x")
+        grid_cells_y = [int](Read-KeyValue -Text $text -Key "grid_cells_y")
+        grid_cell_count = [int](Read-KeyValue -Text $text -Key "grid_cell_count")
+        state_bytes_per_cell = [int](Read-KeyValue -Text $text -Key "state_bytes_per_cell")
         density = [double](Read-KeyValue -Text $text -Key "state_density")
         pressure = [double](Read-KeyValue -Text $text -Key "state_pressure")
         mass_drift = [double](Read-KeyValue -Text $text -Key "mass_drift")
         momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
+        momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")
+        momentum_y_drift = [double](Read-KeyValue -Text $text -Key "momentum_y_drift")
         energy_drift = [double](Read-KeyValue -Text $text -Key "energy_drift")
         numerical_correction_count = [int](Read-KeyValue -Text $text -Key "numerical_correction_count")
+    }
+    numerical_correction_ledger = [ordered]@{
+        mass_added = [double](Read-KeyValue -Text $text -Key "correction_mass_added")
+        mass_removed = [double](Read-KeyValue -Text $text -Key "correction_mass_removed")
+        momentum_x_added = [double](Read-KeyValue -Text $text -Key "correction_momentum_x_added")
+        momentum_y_added = [double](Read-KeyValue -Text $text -Key "correction_momentum_y_added")
+        energy_added = [double](Read-KeyValue -Text $text -Key "correction_energy_added")
+        energy_removed = [double](Read-KeyValue -Text $text -Key "correction_energy_removed")
+        density_floor_hits = [int](Read-KeyValue -Text $text -Key "density_floor_hits")
+        pressure_floor_hits = [int](Read-KeyValue -Text $text -Key "pressure_floor_hits")
+        event_count = [int](Read-KeyValue -Text $text -Key "correction_event_count")
     }
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
