@@ -6,9 +6,9 @@
 REPORT_DATE=2026-08-11
 CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.5
-CURRENT_VERSION_GATE=IN_PROGRESS_REFERENCE_BUDGET_GREEN_TIME_POLICY_RED_HYBRID_COMPONENTS_GREEN_COUPLING_RED
+CURRENT_VERSION_GATE=IN_PROGRESS_REFERENCE_BUDGET_GREEN_TIME_POLICY_RED_HYBRID_1D_GREEN_2D_PHYSICAL_BUDGET_RED
 NEXT_VERSION=1.0.6
-NEXT_PHASE=implement a single mixed-region router/cross-route flux/reflux/event-local probe, then finish PhysicalScale and solver gates
+NEXT_PHASE=extend the 1D hybrid proof toward 2D/domain-of-dependence and target-grid budget evidence, then finish PhysicalScale and solver gates
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -35,7 +35,7 @@ V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS
 V1_0_5_GATE=IN_PROGRESS
 V1_0_5_BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_IMPLEMENTATION_HEAD=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-V1_0_5_CURRENT_CHECKPOINT_HEAD=c63f4e652e98d71dded4783ccec79b0e320d2f31
+V1_0_5_CURRENT_CHECKPOINT_HEAD=fd353819287cef3ee05db4f7d2a4309c1ba4924a
 V1_0_5_SHARED_CONTRACT_HEAD=1ba507e89e3d713fe355c03c2fc6e7139aabcb49
 V1_0_5_RUSANOV_HEAD=4b0658d8ff7bc56169fd8ed5d649f8c6b4250b44
 V1_0_5_RUSANOV_PRESSURE_PULSE_HEAD=cded7be672fbb2755174499214bb31622979eac6
@@ -57,13 +57,13 @@ V1_0_5_HLLC_2D_PERFORMANCE_HEAD=12e904f7574b690c600f1bbcb0b74d160badf540
 V1_0_5_LBM_D2Q9_HEAD=5e3c46fae8fc7754240c97931e59f7b2216c5417
 V1_0_5_LEGACY_LIKE_HEAD=696d0c9580f642db70bb419fc73cd9ea19b2afd0
 V1_0_5_ATMOSPHERE_POLICY_BUDGET_HEAD=76300cd98ca2c7405d011ba4401445e3bd9eced8
-V1_0_5_HYBRID_COMPONENT_HEAD=c63f4e652e98d71dded4783ccec79b0e320d2f31
+V1_0_5_HYBRID_COMPONENT_HEAD=fd353819287cef3ee05db4f7d2a4309c1ba4924a
 V1_0_5_ROLLBACK=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_UPSTREAM=GREEN_ENTRY_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
 V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
 V1_0_5_TIME_POLICY=UNSELECTED
 V1_0_5_ATMOSPHERE_SOLVER_SELECTED=false
-V1_0_5_HYBRID_COMPONENTS=GREEN_UNCOUPLED_ONLY_ROUTER_FALSE_REFLUX_NOT_IMPLEMENTED_EVENT_LOCAL_NOT_IMPLEMENTED_BUILD_610_STATIC_71_PYTHON_425_PLUS_2_SKIPS
+V1_0_5_HYBRID_COMPONENTS=GREEN_1D_ROUTER_REFLUX_EVENT_LOCAL_PROMOTION_DEMOTION_THRESHOLD_SCAN_GLOBAL_LEDGER_BUILD_620_STATIC_72_PYTHON_426_PLUS_2_SKIPS_2D_PHYSICAL_BUDGET_OPEN
 V1_0_5_SCAFFOLD=GREEN_CLEAN_BUILD_80_STATIC_43_TARGETED_24_PYTHON_409_TOTAL_407_PASS_2_SKIPS_CONTRACT_ARTIFACT_AND_SOURCE_PACKAGE
 V1_0_5_SHARED_CONTRACT=GREEN_CLEAN_BUILD_80_STATIC_43_TARGETED_26_PYTHON_411_TOTAL_409_PASS_2_SKIPS_CONTRACT_ARTIFACT_AND_SOURCE_PACKAGE
 V1_0_5_RUSANOV=GREEN_ISOLATED_STRICT_DOUBLE_UNIFORM_PROBE_BUILD_80_STATIC_44_TARGETED_17_PYTHON_414_TOTAL_412_PASS_2_SKIPS_ZERO_DRIFT_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
@@ -408,19 +408,20 @@ with an explicit maintenance decision.
 ## Next permitted work
 
 The reviewed uncoupled hybrid component checkpoint is complete at `c63f4e652`.
-Constant-pressure conservative transport passes at three velocities, exposes
-acoustic CFL `1.7274 / 13.274 / 128.74`, and retains identical 36-step density
-results when alternate EOS sound speed changes the diagnostic CFL to `118.029`.
-The whole-case sealed HLLC Sod fixture closes against wall momentum exchange and
-records zero fallback/correction events. The clean evidence is build `610/610`,
-Meson static `71/71`, Python `427 total / 425 PASS / 2 skipped`, and clean runner
-SHA-256 `6088F054F2C11CEE5B75912C9B9BA2F4AAA0F5CABD8970924E811E2A08B33DEA`.
+Follow-up `fd3538192` adds a real 1D mixed-region router: promotion `1696`,
+demotion `1634`, `5432` cross-route face applications, four event-local substeps,
+interface reflux closure, hysteresis/threshold scan and global ledger closure all
+pass with zero fallback/correction events. The probe exposes the worst case of
+all 64 cells promoted at one point, so no performance gain is claimed. Clean
+evidence is build `620/620`, Meson static `72/72`, Python `428 total / 426 PASS /
+2 skipped`, runner result SHA-256
+`861CB26AA846AE07E770880AD95878B4D9DDB7747526CA298D3CA23691CB2D07`.
 
-This is not a router or hybrid solver. The next permitted implementation is one
-isolated mixed-region AtmosphereBench probe with promotion, a cross-route face,
-demotion, equal-and-opposite interface exchange and reflux closure. It must also
-exercise hysteresis/conflict handling, dynamic event-region/halo growth and target-
-grid event-fraction cost. HLLE remains registration-only.
+This is a 1D benchmark router/reflux proof, not a production or selected solver.
+The next permitted implementation is 2D/domain-of-dependence and target-grid
+event-fraction evidence. General low-Mach pressure coupling, physical acoustic
+domain of dependence, near-vacuum/species routing, production integration and
+accepted budget remain unimplemented. HLLE remains registration-only.
 
 Production Air replacement, PhysicalScale runtime integration, multi-species runtime,
 chemistry runtime, SDL3 migration and GPU compute remain blocked. Physical

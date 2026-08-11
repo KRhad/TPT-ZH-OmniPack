@@ -549,30 +549,45 @@ The corresponding clean test-free source package is
 with `1319` source members plus manifest and zero test assets. The manifest binds
 revision `40facfdfa7da907e539b2eb109f78299167c4cd1`.
 
-## Uncoupled hybrid component checkpoint
+## Mixed-region hybrid checkpoint
 
-Checkpoint `c63f4e652` clean-validates two components without claiming a router or
-hybrid solver. The 128-cell constant-pressure transport fixture uses 36 advective
-steps at all three velocities, preserves the same density L1 `0.00135653` and TV
-ratio `0.989347`, and exposes acoustic CFL `1.7274 / 13.274 / 128.74`. Changing
-the EOS changes the very-low diagnostic acoustic CFL to `118.029` while step count
-and density results remain identical. The whole-case sealed HLLC Sod fixture stays
-positive and closes its `46.08` X-momentum change against equal wall exchange.
+The reviewed component implementation is `c63f4e652`; it remains valid as a
+standalone comparison. Follow-up `fd3538192` adds a single-domain 1D mixed-region
+router with Mach/pressure-jump hysteresis, promotion/demotion, cross-route HLLC
+faces, four event-local substeps and conservative bulk reflux. The clean result
+records `1696` promotions, `1634` demotions, `5432` cross-route face applications,
+maximum CFL `0.272276`, and zero HLLC fallback/correction events. Interface and
+global mass/momentum/energy ledgers close to floating-point tolerance, and the
+threshold scan passes.
 
-The runner and registry explicitly mark router, thresholds, cross-route coupling,
-reflux, event-local subcycling, dynamic halo/domain of dependence, near-vacuum
-routing, 2D coupling, species coupling and production integration as unimplemented.
-`hybrid_end_to_end_passed=false` and solver selection remains unselected. Full
-validation is build `610/610`, static `71/71`, Python `427 total / 425 PASS / 2
-skipped`; see [the component report](phase-5-hybrid-components.md).
+This is deliberately bounded evidence, not a selected solver or production
+hybrid implementation. The worst case promotes all `64` cells
+(`maximum_event_fraction=1.0`), so no performance benefit is claimed. Physical
+acoustic domain of dependence is not implemented; the current halo is only a
+benchmark-region diagnostic. General low-Mach pressure coupling, near-vacuum and
+species routing, 2D coupling, target-grid cost, accepted physical time and
+production integration remain open. `hybrid_end_to_end_passed=false`,
+`policy_selection_ready=false` and `ATMOSPHERE_SOLVER_SELECTION=unselected` remain
+the required disposition.
 
-The implementation source package is
-`artifacts/vnext-phase5-source-c63f4e652/`, SHA-256
-`9D3D945EBC7EE0F974D5FE499713B025933AA7B50B5461303A6556C26CB64B72`,
-with `1321` source members plus manifest and zero test assets.
+Clean evidence is bound to:
 
-The Phase 5 reference-machine CPU/memory budget and component sub-gate are GREEN.
-PhysicalScale, physical-time policy, mixed-region router/reflux/event-local
-coupling, remaining mandatory solver and precision matrix, G0 physical-ledger
-semantics and formal solver selection remain open. HLLE remains `registered_only`;
-production Air is unchanged.
+```text
+source_commit=fd353819287cef3ee05db4f7d2a4309c1ba4924a
+source_dirty=false
+runner_artifact=artifacts/vnext-atmospherebench-hybrid-mixed-region/20260811T045949Z-9f874fff/result.json
+result_sha256=861CB26AA846AE07E770880AD95878B4D9DDB7747526CA298D3CA23691CB2D07
+source_package=artifacts/vnext-phase5-source-fd3538192/TPT-ZH-OmniPack-1.0.0-Source.zip
+source_sha256=ED71B5E45DAD84D847B199D7D563ECBB13B5E2FA39698246F73C32CE0B9FDFAF
+source_members=1324
+test_assets=0
+full_build=620/620
+meson_static=72/72
+python_discovery=428_total_426_pass_2_skipped
+```
+
+The Phase 5 reference-machine CPU/memory sub-gate and the 1D mixed-region
+sub-gate are GREEN. PhysicalScale, physical-time policy, 2D/domain-of-dependence,
+near-vacuum/species routing, target-grid budget, remaining precision matrix,
+G0 physical-ledger semantics and formal solver selection remain RED/unselected.
+HLLE and LBM remain registration-only candidates; production Air is unchanged.

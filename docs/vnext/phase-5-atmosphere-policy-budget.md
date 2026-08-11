@@ -12,7 +12,7 @@ REFERENCE_MACHINE_CPU_BUDGET=ACCEPTED_PHASE5_TARGET
 REFERENCE_MACHINE_MEMORY_BUDGET=ACCEPTED_PHASE5_TARGET
 DIRECT_REAL_ACOUSTIC_60HZ_EXPLICIT_HLLC=REJECTED
 UNIFORM_ACOUSTIC_SCALING_DEFAULT=REJECTED
-HYBRID_ALL_SPEED_EVENT_LOCAL_COMPRESSIBLE=REQUIRED_NEXT_CANDIDATE_UNIMPLEMENTED
+HYBRID_ALL_SPEED_EVENT_LOCAL_COMPRESSIBLE=1D_MIXED_REGION_PROBE_GREEN_2D_AND_PHYSICAL_POLICY_OPEN
 PRODUCTION_AIR_CHANGED=false
 ```
 
@@ -76,10 +76,12 @@ sound speed by roughly three orders of magnitude, so uniform acoustic scaling is
 rejected as the default reality mapping. It may still be useful as an explicitly
 game-tuned experimental mode, but it is not selected here.
 
-The next required comparison is an all-speed/hybrid design that separates normal
-low-Mach transport cost from event-local compressible pressure-wave/shock work, or
-another measured method that satisfies the same contracts. That candidate is not
-implemented, so physical time and the solver remain `unselected`.
+The 1D mixed-region probe now supplies a bounded coupling proof: promotion,
+demotion, cross-route HLLC faces, event-local substeps, reflux and global ledger
+closure all pass. Its worst case promotes the full 64-cell benchmark domain, so no
+speedup is claimed. The remaining comparison must cover 2D/domain-of-dependence,
+near-vacuum/species routing, target-grid cost and an accepted physical-time policy.
+Until those are measured, physical time and the solver remain `unselected`.
 
 ## Data provenance
 
@@ -121,11 +123,10 @@ source_package=1319 source members plus manifest, 0 test assets
 - GPU/VRAM/upload/readback remain `not_tested_no_gpu_backend`.
 
 `V1_0_5_GATE=IN_PROGRESS`. The reference-machine CPU and per-cell memory budget
-sub-gate is GREEN. The physical-time policy remains RED/unselected because all
-currently implemented explicit candidates fail the real-acoustic cost requirement,
-and the later `c63f4e652` checkpoint implements only uncoupled bulk/HLLC component
-probes. Router, reflux, event-local subcycling and dynamic acoustic domain remain
-unimplemented. PhysicalScale, mandatory case/precision coverage, G0 ledger
+sub-gate is GREEN, as is the bounded 1D mixed-region sub-gate. The physical-time
+policy remains RED/unselected because the full-domain event fraction is `1.0` and
+2D, physical domain-of-dependence, near-vacuum/species routing and target-grid
+cost are still open. PhysicalScale, mandatory case/precision coverage, G0 ledger
 semantics and solver selection remain open.
 
 Rollback commit: `a3c5ec9b7` removes this policy/budget checkpoint.
