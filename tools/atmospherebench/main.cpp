@@ -1,6 +1,7 @@
 #include "AtmosphereBench.h"
 #include "Hllc2D.h"
 #include "LbmD2Q9.h"
+#include "LegacyLike.h"
 #include "Rusanov1D.h"
 #include "Species2D.h"
 
@@ -66,10 +67,14 @@ int main(int argc, char **argv)
 		return WriteLbmD2Q9UniformProbe(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-lbm-d2q9-shear-wave")
 		return WriteLbmD2Q9ShearWaveProbe(std::cout) ? 0 : 1;
+	if (std::string_view(argv[1]) == "--run-legacy-like-uniform")
+		return WriteLegacyLikeUniformProbe(std::cout) ? 0 : 1;
+	if (std::string_view(argv[1]) == "--run-legacy-like-pressure-pulse")
+		return WriteLegacyLikePressurePulseProbe(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-rusanov-open-boundary-leak")
 		return WriteRusanovOpenBoundaryLeakProbe(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-rusanov-performance")
 		return WriteRusanovPerformanceProbe(std::cout) ? 0 : 1;
-	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform|--run-hllc-2d-uniform|--run-hllc-2d-pressure-pulse|--run-hllc-2d-sealed-heating|--run-hllc-2d-natural-convection|--run-hllc-2d-species-mixing|--run-hllc-2d-performance|--run-lbm-d2q9-uniform|--run-lbm-d2q9-shear-wave|--run-rusanov-uniform|--run-rusanov-pressure-pulse|--run-rusanov-density-advection|--run-rusanov-contact-discontinuity|--run-rusanov-near-vacuum-expansion|--run-rusanov-sod-shock-tube|--run-rusanov-density-advection-refinement|--run-rusanov-low-mach-advection|--run-all-speed-rusanov-low-mach-advection|--run-hllc-rusanov-fallback-low-mach-advection|--run-hllc-rusanov-fallback-near-vacuum-expansion|--run-hllc-rusanov-fallback-sod-shock-tube|--run-hllc-rusanov-fallback-open-boundary-leak|--run-hllc-rusanov-fallback-performance|--run-rusanov-open-boundary-leak|--run-rusanov-performance]\n";
+	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform|--run-hllc-2d-uniform|--run-hllc-2d-pressure-pulse|--run-hllc-2d-sealed-heating|--run-hllc-2d-natural-convection|--run-hllc-2d-species-mixing|--run-hllc-2d-performance|--run-lbm-d2q9-uniform|--run-lbm-d2q9-shear-wave|--run-legacy-like-uniform|--run-legacy-like-pressure-pulse|--run-rusanov-uniform|--run-rusanov-pressure-pulse|--run-rusanov-density-advection|--run-rusanov-contact-discontinuity|--run-rusanov-near-vacuum-expansion|--run-rusanov-sod-shock-tube|--run-rusanov-density-advection-refinement|--run-rusanov-low-mach-advection|--run-all-speed-rusanov-low-mach-advection|--run-hllc-rusanov-fallback-low-mach-advection|--run-hllc-rusanov-fallback-near-vacuum-expansion|--run-hllc-rusanov-fallback-sod-shock-tube|--run-hllc-rusanov-fallback-open-boundary-leak|--run-hllc-rusanov-fallback-performance|--run-rusanov-open-boundary-leak|--run-rusanov-performance]\n";
 	return 2;
 }

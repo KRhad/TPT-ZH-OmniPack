@@ -45,6 +45,10 @@ param(
 
     [switch] $RunLbmD2Q9ShearWave,
 
+    [switch] $RunLegacyLikeUniform,
+
+    [switch] $RunLegacyLikePressurePulse,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -191,6 +195,7 @@ $expectedBenchSources = @(
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/AtmosphereBench.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Hllc2D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/LbmD2Q9.cpp")),
+    [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/LegacyLike.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Rusanov1D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Species2D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/main.cpp"))
@@ -247,6 +252,7 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunHllc2DUniform, $RunHllc2DPressurePulse, $RunHllc2DSealedHeating,
 		$RunHllc2DNaturalConvection, $RunHllc2DSpeciesMixing, $RunHllc2DPerformance,
 		$RunLbmD2Q9Uniform, $RunLbmD2Q9ShearWave,
+		$RunLegacyLikeUniform, $RunLegacyLikePressurePulse,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -265,8 +271,10 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating `
 	-or $RunHllc2DNaturalConvection -or $RunHllc2DSpeciesMixing -or $RunHllc2DPerformance `
 	-or $RunLbmD2Q9Uniform -or $RunLbmD2Q9ShearWave `
+	-or $RunLegacyLikeUniform -or $RunLegacyLikePressurePulse `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $isLbmProbe = $RunLbmD2Q9Uniform -or $RunLbmD2Q9ShearWave
+$isLegacyLikeProbe = $RunLegacyLikeUniform -or $RunLegacyLikePressurePulse
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
 	"rusanov_performance"
@@ -300,6 +308,10 @@ $runMode = if ($RunRusanovPerformance) {
 	"lbm_d2q9_uniform"
 } elseif ($RunLbmD2Q9ShearWave) {
 	"lbm_d2q9_shear_wave"
+} elseif ($RunLegacyLikeUniform) {
+	"legacy_like_uniform"
+} elseif ($RunLegacyLikePressurePulse) {
+	"legacy_like_pressure_pulse"
 } elseif ($RunHllc2DUniform) {
 	"hllc_2d_uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -351,6 +363,10 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-lbm-d2q9-uniform"
 } elseif ($RunLbmD2Q9ShearWave) {
 	"--run-lbm-d2q9-shear-wave"
+} elseif ($RunLegacyLikeUniform) {
+	"--run-legacy-like-uniform"
+} elseif ($RunLegacyLikePressurePulse) {
+	"--run-legacy-like-pressure-pulse"
 } elseif ($RunHllc2DUniform) {
 	"--run-hllc-2d-uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -386,6 +402,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
     throw "AtmosphereBench candidate list must remain unselected"
 }
 foreach ($candidateLine in @(
+    "candidate=legacy_like|status=implemented_dimensionless_uniform_pressure_pulse_control_only|solver_implemented=true",
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
     "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes|solver_implemented=true",
@@ -438,6 +455,85 @@ if (-not $isRusanovProbe) {
             throw "Uniform contract expected $ledgerKey=0"
         }
     }
+} elseif ($isLegacyLikeProbe) {
+	$isPulse = $RunLegacyLikePressurePulse
+	$benchmarkKind = if ($isPulse) {
+		"atmospherebench_legacy_like_pressure_pulse_control"
+	} else {
+		"atmospherebench_legacy_like_uniform_control"
+	}
+	$performanceGate = "not_evaluated_control_probe"
+	$timingScope = if ($isPulse) {
+		"standalone_legacy_like_pressure_pulse_control"
+	} else {
+		"standalone_legacy_like_uniform_control"
+	}
+	$candidateImplementations = "legacy_like"
+	if ($solverResultStatus -ne "control_result_not_solver_selection") {
+		throw "Legacy-like control must not claim solver selection"
+	}
+	if ((Read-KeyValue -Text $text -Key "candidate") -ne "legacy_like" -or
+		(Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+		throw "Legacy-like control identity is invalid"
+	}
+	foreach ($probeKey in @{
+		"case_time_domain" = "nondimensional_contract"; "dimension" = "2";
+		"boundary_mode" = "periodic";
+		"control_model" = "dimensionless_pressure_velocity_stencil";
+		"production_air_equivalence" = "not_claimed";
+		"physical_mass_state" = "not_implemented";
+		"physical_density_state" = "not_implemented";
+		"physical_momentum_state" = "not_implemented";
+		"physical_energy_state" = "not_implemented";
+		"species_state" = "not_implemented";
+		"mass_conservation" = "not_applicable_no_mass_state";
+		"momentum_conservation" = "not_applicable_no_momentum_density_state";
+		"energy_conservation" = "not_applicable_no_energy_state";
+		"grid_cells_x" = "64"; "grid_cells_y" = "48"; "grid_cell_count" = "3072";
+		"cell_length" = "1"; "case_timestep" = "1";
+		"maximum_cfl" = "not_applicable_legacy_dimensionless_stencil";
+		"minimum_density" = "not_applicable_no_density_state";
+		"mass_drift" = "not_applicable_no_mass_state";
+		"momentum_x_drift" = "not_applicable_no_momentum_density_state";
+		"momentum_y_drift" = "not_applicable_no_momentum_density_state";
+		"momentum_drift" = "not_applicable_no_momentum_density_state";
+		"energy_drift" = "not_applicable_no_energy_state";
+		"pressure_sum_preserved" = "true"; "finite_state" = "true";
+		"numerical_correction_count" = "0"; "state_bytes_per_cell" = "32";
+		"state_and_flux_scratch_bytes_per_cell" = "64";
+		"state_and_flux_scratch_bytes_total" = "196608"; "probe_passed" = "true"
+	}.GetEnumerator()) {
+		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+			throw "Legacy-like control contract drifted: $($probeKey.Key)"
+		}
+	}
+	$expectedCase = if ($isPulse) { "legacy_like_pressure_pulse_2d" } else { "legacy_like_uniform_2d" }
+	$expectedSteps = if ($isPulse) { "96" } else { "32" }
+	$expectedEvolved = if ($isPulse) { "true" } else { "false" }
+	$expectedUniform = if ($isPulse) { "false" } else { "true" }
+	$expectedPeakReduced = if ($isPulse) { "true" } else { "false" }
+	foreach ($probeKey in @{
+		"case" = $expectedCase; "case_step_count" = $expectedSteps;
+		"state_evolved" = $expectedEvolved; "uniform_preserved" = $expectedUniform;
+		"pressure_peak_reduced" = $expectedPeakReduced
+	}.GetEnumerator()) {
+		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+			throw "Legacy-like case contract drifted: $($probeKey.Key)"
+		}
+	}
+	if ([Math]::Abs([double](Read-KeyValue -Text $text -Key "pressure_sum_drift")) -gt 1e-10) {
+		throw "Legacy-like pressure-field sum drift exceeds control tolerance"
+	}
+	if ($isPulse) {
+		$initialPeak = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
+		$finalPeak = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
+		$maximumVelocity = [double](Read-KeyValue -Text $text -Key "maximum_absolute_velocity")
+		if ($finalPeak -ge $initialPeak - 1e-6 -or $maximumVelocity -le 1e-6) {
+			throw "Legacy-like pressure pulse did not evolve through the control stencil"
+		}
+	} elseif ([Math]::Abs([double](Read-KeyValue -Text $text -Key "state_change_l1")) -gt 1e-12) {
+		throw "Legacy-like uniform state changed above tolerance"
+	}
 } elseif ($isLbmProbe) {
 	$isShearWave = $RunLbmD2Q9ShearWave
 	$benchmarkKind = if ($isShearWave) {
@@ -1528,11 +1624,47 @@ $lbmEnergyConservation = $null
 $lbmNearVacuumSupport = $null
 $lbmShockSupport = $null
 $lbmSpeciesSupport = $null
+$legacyLike = $null
 if ($isRusanovProbe) {
-    $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
+	$stateDensity = if ($isLegacyLikeProbe) {
+		$null
+	} else {
+		[double](Read-KeyValue -Text $text -Key "minimum_density")
+	}
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
     $stateAndFluxScratchBytesPerCell = [double](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
-	if ($isLbmProbe) {
+	if ($isLegacyLikeProbe) {
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+		$initialMaximumPressure = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
+		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
+		$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+		$stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+		$pressurePeakReduced = (Read-KeyValue -Text $text -Key "pressure_peak_reduced") -eq "true"
+		$legacyLike = [ordered]@{
+			model = Read-KeyValue -Text $text -Key "control_model"
+			probe_kind = Read-KeyValue -Text $text -Key "probe_kind"
+			production_air_equivalence = Read-KeyValue -Text $text -Key "production_air_equivalence"
+			physical_mass_state = Read-KeyValue -Text $text -Key "physical_mass_state"
+			physical_density_state = Read-KeyValue -Text $text -Key "physical_density_state"
+			physical_momentum_state = Read-KeyValue -Text $text -Key "physical_momentum_state"
+			physical_energy_state = Read-KeyValue -Text $text -Key "physical_energy_state"
+			species_state = Read-KeyValue -Text $text -Key "species_state"
+			mass_conservation = Read-KeyValue -Text $text -Key "mass_conservation"
+			momentum_conservation = Read-KeyValue -Text $text -Key "momentum_conservation"
+			energy_conservation = Read-KeyValue -Text $text -Key "energy_conservation"
+			maximum_cfl = Read-KeyValue -Text $text -Key "maximum_cfl"
+			initial_pressure_sum = [double](Read-KeyValue -Text $text -Key "initial_pressure_sum")
+			final_pressure_sum = [double](Read-KeyValue -Text $text -Key "final_pressure_sum")
+			pressure_sum_drift = [double](Read-KeyValue -Text $text -Key "pressure_sum_drift")
+			maximum_absolute_velocity = [double](Read-KeyValue -Text $text -Key "maximum_absolute_velocity")
+			uniform_preserved = (Read-KeyValue -Text $text -Key "uniform_preserved") -eq "true"
+			pressure_peak_reduced = $pressurePeakReduced
+			pressure_sum_preserved = (Read-KeyValue -Text $text -Key "pressure_sum_preserved") -eq "true"
+			finite_state = (Read-KeyValue -Text $text -Key "finite_state") -eq "true"
+		}
+	} elseif ($isLbmProbe) {
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
 		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
 		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
@@ -1952,6 +2084,8 @@ if ($RunRusanovPerformance) {
 	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
+} elseif ($isLegacyLikeProbe) {
+	$limitations += "Legacy-like is a standalone dimensionless pressure/velocity control stencil, not production Legacy Air equivalence; it has no physical mass, density, momentum-density, energy, species, EOS, vacuum or conservation state."
 } elseif ($isLbmProbe) {
 	$limitations += "D2Q9 BGK LBM is implemented only as an isothermal periodic low-Mach comparison; it has no total-energy state and does not support the required near-vacuum, shock, species, reacting-gas or production-boundary contracts."
 } elseif ($RunHllc2DPerformance) {
@@ -2134,11 +2268,11 @@ $result = [ordered]@{
 		low_to_moderate_l1_ratio = $lowToModerateL1Ratio
 		very_low_to_moderate_l1_ratio = $veryLowToModerateL1Ratio
 		low_mach_suitability_passed = $lowMachSuitabilityPassed
-        mass_drift = [double](Read-KeyValue -Text $text -Key "mass_drift")
-        momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
-        momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")
-        momentum_y_drift = [double](Read-KeyValue -Text $text -Key "momentum_y_drift")
-        energy_drift = if ($isLbmProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "energy_drift") }
+		mass_drift = if ($isLegacyLikeProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "mass_drift") }
+		momentum_drift = if ($isLegacyLikeProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "momentum_drift") }
+		momentum_x_drift = if ($isLegacyLikeProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "momentum_x_drift") }
+		momentum_y_drift = if ($isLegacyLikeProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "momentum_y_drift") }
+		energy_drift = if ($isLegacyLikeProbe -or $isLbmProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "energy_drift") }
         numerical_correction_count = [int](Read-KeyValue -Text $text -Key "numerical_correction_count")
     }
     numerical_correction_ledger = [ordered]@{
@@ -2180,6 +2314,7 @@ $result = [ordered]@{
 	species_mixing = $speciesMixing
 	hllc_2d_performance = $hllc2DPerformance
 	lbm_d2q9 = $lbmD2Q9
+	legacy_like = $legacyLike
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
         timing_scope = $timingScope

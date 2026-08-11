@@ -1,6 +1,7 @@
 #include "AtmosphereBench.h"
 #include "Hllc2D.h"
 #include "LbmD2Q9.h"
+#include "LegacyLike.h"
 #include "Rusanov1D.h"
 #include "Species2D.h"
 
@@ -231,7 +232,8 @@ bool BenchmarkResult::IsContractOnly() const
 const std::array<CandidateDescriptor, 6> &Candidates()
 {
 	static const std::array<CandidateDescriptor, 6> candidates{{
-		{CandidateKind::LegacyLike, "legacy_like", "control_only", false},
+		{CandidateKind::LegacyLike, "legacy_like",
+			"implemented_dimensionless_uniform_pressure_pulse_control_only", true},
 		{CandidateKind::RusanovFvm, "fvm_rusanov",
 			"implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes", true},
 		{CandidateKind::AllSpeedRusanovFvm, "fvm_all_speed_rusanov",
@@ -301,6 +303,8 @@ bool RunSelfTest(std::ostream &output)
 	const auto hllc2DSpeciesMixing = RunHllc2DSpeciesMixing();
 	const auto lbmD2Q9Uniform = RunLbmD2Q9Uniform();
 	const auto lbmD2Q9ShearWave = RunLbmD2Q9ShearWave();
+	const auto legacyLikeUniform = RunLegacyLikeUniform();
+	const auto legacyLikePressurePulse = RunLegacyLikePressurePulse();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -354,7 +358,8 @@ bool RunSelfTest(std::ostream &output)
 	bool implementedCandidatesMatch = true;
 	for (const auto &candidate : candidates)
 	{
-		const bool expected = candidate.kind == CandidateKind::RusanovFvm
+		const bool expected = candidate.kind == CandidateKind::LegacyLike
+			|| candidate.kind == CandidateKind::RusanovFvm
 			|| candidate.kind == CandidateKind::AllSpeedRusanovFvm
 			|| candidate.kind == CandidateKind::HllcRusanovFallbackFvm
 			|| candidate.kind == CandidateKind::LbmD2Q9;
@@ -380,6 +385,8 @@ bool RunSelfTest(std::ostream &output)
 		&& hllc2DSpeciesMixing.passed
 		&& lbmD2Q9Uniform.passed
 		&& lbmD2Q9ShearWave.passed
+		&& legacyLikeUniform.passed
+		&& legacyLikePressurePulse.passed
 		&& rusanovOpenLeak.passed
 		&& implementedCandidatesMatch;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
@@ -432,6 +439,10 @@ bool RunSelfTest(std::ostream &output)
 		<< (lbmD2Q9Uniform.passed ? "PASS" : "FAIL") << '\n';
 	output << "LBM_D2Q9_SHEAR_WAVE_PROBE="
 		<< (lbmD2Q9ShearWave.passed ? "PASS" : "FAIL") << '\n';
+	output << "LEGACY_LIKE_UNIFORM_PROBE="
+		<< (legacyLikeUniform.passed ? "PASS" : "FAIL") << '\n';
+	output << "LEGACY_LIKE_PRESSURE_PULSE_PROBE="
+		<< (legacyLikePressurePulse.passed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";

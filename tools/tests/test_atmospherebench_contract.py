@@ -78,6 +78,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-hllc-2d-performance' ]", target)
         self.assertIn("args: [ '--run-lbm-d2q9-uniform' ]", target)
         self.assertIn("args: [ '--run-lbm-d2q9-shear-wave' ]", target)
+        self.assertIn("args: [ '--run-legacy-like-uniform' ]", target)
+        self.assertIn("args: [ '--run-legacy-like-pressure-pulse' ]", target)
         self.assertIn("'atmospherebench-rusanov-open-boundary-leak'", target)
         self.assertIn("args: [ '--run-rusanov-open-boundary-leak' ]", target)
         self.assertIn("'atmospherebench-rusanov-performance'", target)
@@ -101,6 +103,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("HLLC_2D_SPECIES_MIXING_PROBE", source)
         self.assertIn("LBM_D2Q9_UNIFORM_PROBE", source)
         self.assertIn("LBM_D2Q9_SHEAR_WAVE_PROBE", source)
+        self.assertIn("LEGACY_LIKE_UNIFORM_PROBE", source)
+        self.assertIn("LEGACY_LIKE_PRESSURE_PULSE_PROBE", source)
         self.assertIn("=UNSELECTED", source)
         self.assertIn("synthetic_nondimensional", source)
         self.assertNotIn("287.05", source)
@@ -232,6 +236,19 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn('output << "near_vacuum_support=unsupported', source)
         self.assertIn('output << "shock_support=unsupported', source)
 
+    def test_legacy_like_is_actual_control_with_explicit_nonphysical_fields(self) -> None:
+        header = (BENCH_ROOT / "LegacyLike.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "LegacyLike.cpp").read_text(encoding="utf-8")
+        self.assertIn("LegacyLikeProbeSummary", header)
+        self.assertIn("RunLegacyLikeUniform", header)
+        self.assertIn("RunLegacyLikePressurePulse", header)
+        self.assertIn("dimensionless_pressure_velocity_stencil", source)
+        self.assertIn("production_air_equivalence=not_claimed", source)
+        self.assertIn("physical_mass_state=not_implemented", source)
+        self.assertIn("mass_drift=not_applicable_no_mass_state", source)
+        self.assertIn("energy_drift=not_applicable_no_energy_state", source)
+        self.assertIn("summary.corrections.IsEmpty()", source)
+
     def test_scaffold_contract_is_not_a_runtime_consumer(self) -> None:
         production = []
         for path in (ROOT / "src").rglob("*"):
@@ -252,6 +269,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/Rusanov1D.h",
             "tools/atmospherebench/LbmD2Q9.cpp",
             "tools/atmospherebench/LbmD2Q9.h",
+            "tools/atmospherebench/LegacyLike.cpp",
+            "tools/atmospherebench/LegacyLike.h",
             "tools/atmospherebench/Species2D.cpp",
             "tools/atmospherebench/Species2D.h",
         }
