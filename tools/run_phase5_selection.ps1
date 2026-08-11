@@ -39,7 +39,7 @@ function Get-Sha256 {
 
 Push-Location $sourceRoot
 try {
-    $dirty = @(& $GitExecutable status --porcelain=v1)
+    $dirty = @(& $GitExecutable status --porcelain=v1 | Where-Object { $_ })
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to read source state"
     }
