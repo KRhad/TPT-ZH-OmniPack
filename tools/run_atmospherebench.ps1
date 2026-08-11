@@ -416,7 +416,7 @@ foreach ($candidateLine in @(
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
     "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes|solver_implemented=true",
-    "candidate=hybrid_all_speed_event_local|status=implemented_uncoupled_low_mach_transport_and_whole_case_hllc_sod_policy_probe_not_solver|solver_implemented=false",
+    "candidate=hybrid_all_speed_components|status=implemented_uncoupled_low_mach_transport_and_whole_case_hllc_sod_policy_probe_not_solver|solver_implemented=false",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=implemented_isothermal_uniform_shear_wave_only|solver_implemented=true"
 )) {
@@ -470,12 +470,12 @@ if (-not $isRusanovProbe) {
 	$benchmarkKind = "atmospherebench_hybrid_all_speed_policy_probe"
 	$performanceGate = "not_evaluated_uncoupled_policy_probe"
 	$timingScope = "standalone_uncoupled_hybrid_policy_probe"
-	$candidateImplementations = "hybrid_all_speed_event_local"
+	$candidateImplementations = "hybrid_all_speed_components"
 	if ($solverResultStatus -ne "policy_probe_not_solver_selection") {
 		throw "Hybrid policy probe must not claim solver selection"
 	}
 	foreach ($probeKey in @{
-		"candidate" = "hybrid_all_speed_event_local";
+		"candidate" = "hybrid_all_speed_components";
 		"candidate_solver_implemented" = "false";
 		"policy_probe_implemented" = "true";
 		"physical_time_policy" = "unselected";
@@ -483,15 +483,31 @@ if (-not $isRusanovProbe) {
 		"compressible_event_route" = "hllc_rusanov_fallback_whole_case";
 		"cross_route_boundary_coupling" = "not_implemented";
 		"event_local_subcycling" = "not_implemented";
+		"dynamic_event_region_and_acoustic_halo" = "not_implemented";
+		"mixed_region_reflux_conservation" = "not_implemented";
+		"general_low_mach_pressure_coupling" = "not_implemented";
+		"physical_event_local_domain_of_dependence" = "not_implemented";
+		"target_grid_event_fraction_performance" = "not_tested";
+		"hybrid_near_vacuum_routing" = "not_implemented";
+		"two_dimensional_hybrid_coupling" = "not_implemented";
+		"species_eos_and_diffusion" = "not_implemented";
 		"production_boundary_coupling" = "not_implemented";
-		"low_mach_route_count" = "3"; "compressible_route_count" = "1";
-		"low_mach_suitability_passed" = "true";
+		"production_runtime_integration" = "not_implemented";
+		"router_implemented" = "false"; "routing_thresholds" = "not_implemented";
+		"low_mach_fixture_count" = "3"; "compressible_fixture_count" = "1";
+		"constant_pressure_bulk_transport_passed" = "true";
+		"transport_step_count_independent_of_sound_speed" = "true";
+		"low_mach_bulk_solver_suitability" = "not_implemented";
 		"compressible_sod_passed" = "true";
 		"compressible_sod_shock_reference_passed" = "true";
 		"compressible_sod_flux_fallback_count" = "0";
 		"compressible_sod_correction_count" = "0";
+		"compressible_sod_boundary_ledger_closes" = "true";
+		"compressible_sod_positivity_preserved" = "true";
 		"policy_selection_ready" = "false";
-		"candidate_disposition" = "continue_coupling_evaluation";
+		"hybrid_end_to_end_passed" = "false";
+		"component_probe_passed" = "true";
+		"candidate_disposition" = "continue_mixed_region_coupling_evaluation";
 		"benchmark_execution_status" = "PASS";
 		"probe_passed" = "true";
 		"numerical_correction_count" = "0";
@@ -505,7 +521,10 @@ if (-not $isRusanovProbe) {
 	}
 	foreach ($metricKey in @(
 		"moderate_density_l1_error", "low_density_l1_error", "very_low_density_l1_error",
-		"moderate_total_variation_ratio", "low_total_variation_ratio", "very_low_total_variation_ratio")) {
+		"moderate_total_variation_ratio", "low_total_variation_ratio", "very_low_total_variation_ratio",
+		"moderate_acoustic_cfl", "low_acoustic_cfl", "very_low_acoustic_cfl",
+		"alternate_eos_very_low_acoustic_cfl", "compressible_sod_maximum_cfl",
+		"compressible_sod_minimum_density", "compressible_sod_minimum_pressure")) {
 		$metric = [double](Read-KeyValue -Text $text -Key $metricKey)
 		if ([double]::IsNaN($metric) -or [double]::IsInfinity($metric) -or $metric -le 0.0) {
 			throw "Hybrid policy metric is invalid: $metricKey"
@@ -513,11 +532,39 @@ if (-not $isRusanovProbe) {
 	}
 	if ([double](Read-KeyValue -Text $text -Key "very_low_density_l1_error") -gt 0.05 -or
 		[double](Read-KeyValue -Text $text -Key "very_low_total_variation_ratio") -lt 0.8) {
-		throw "Hybrid low-Mach transport exceeded the unchanged suitability threshold"
+		throw "Hybrid constant-pressure transport exceeded the component-probe threshold"
+	}
+	$moderateAcousticCfl = [double](Read-KeyValue -Text $text -Key "moderate_acoustic_cfl")
+	$lowAcousticCfl = [double](Read-KeyValue -Text $text -Key "low_acoustic_cfl")
+	$veryLowAcousticCfl = [double](Read-KeyValue -Text $text -Key "very_low_acoustic_cfl")
+	$alternateEosAcousticCfl = [double](Read-KeyValue -Text $text -Key "alternate_eos_very_low_acoustic_cfl")
+	if ($moderateAcousticCfl -le 1.0 -or $lowAcousticCfl -le $moderateAcousticCfl -or
+		$veryLowAcousticCfl -le $lowAcousticCfl -or
+		[Math]::Abs($alternateEosAcousticCfl - $veryLowAcousticCfl) -le 1e-6) {
+		throw "Hybrid component probe did not expose acoustic-CFL separation"
+	}
+	if ((Read-KeyValue -Text $text -Key "alternate_eos_very_low_steps") -ne
+		(Read-KeyValue -Text $text -Key "very_low_steps") -or
+		[Math]::Abs([double](Read-KeyValue -Text $text -Key "alternate_eos_very_low_density_l1_error") -
+			[double](Read-KeyValue -Text $text -Key "very_low_density_l1_error")) -gt 1e-12 -or
+		[Math]::Abs([double](Read-KeyValue -Text $text -Key "alternate_eos_very_low_total_variation_ratio") -
+			[double](Read-KeyValue -Text $text -Key "very_low_total_variation_ratio")) -gt 1e-12) {
+		throw "Hybrid transport result or step count still depends on EOS sound speed"
 	}
 	foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
 		if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-9) {
 			throw "Hybrid low-Mach transport drift exceeds tolerance: $driftKey"
+		}
+	}
+	foreach ($sodComponent in @("mass", "momentum_x", "momentum_y", "energy")) {
+		$driftKey = "compressible_sod_${sodComponent}_drift"
+		$exchangeKey = "compressible_sod_boundary_${sodComponent}_exchange"
+		$drift = [double](Read-KeyValue -Text $text -Key $driftKey)
+		$exchange = [double](Read-KeyValue -Text $text -Key $exchangeKey)
+		if ([double]::IsNaN($drift) -or [double]::IsInfinity($drift) -or
+			[double]::IsNaN($exchange) -or [double]::IsInfinity($exchange) -or
+			[Math]::Abs($drift - $exchange) -gt 1e-9) {
+			throw "Hybrid compressible Sod ledger does not close with boundary exchange: $sodComponent"
 		}
 	}
 } elseif ($isLegacyLikeProbe) {
@@ -1712,16 +1759,47 @@ if ($isRusanovProbe) {
 		$hybridPolicy = [ordered]@{
 			low_mach_bulk_route = Read-KeyValue -Text $text -Key "low_mach_bulk_route"
 			compressible_event_route = Read-KeyValue -Text $text -Key "compressible_event_route"
+			router_implemented = (Read-KeyValue -Text $text -Key "router_implemented") -eq "true"
+			routing_thresholds = Read-KeyValue -Text $text -Key "routing_thresholds"
 			cross_route_boundary_coupling = Read-KeyValue -Text $text -Key "cross_route_boundary_coupling"
 			event_local_subcycling = Read-KeyValue -Text $text -Key "event_local_subcycling"
+			dynamic_event_region_and_acoustic_halo = Read-KeyValue -Text $text -Key "dynamic_event_region_and_acoustic_halo"
+			mixed_region_reflux_conservation = Read-KeyValue -Text $text -Key "mixed_region_reflux_conservation"
+			general_low_mach_pressure_coupling = Read-KeyValue -Text $text -Key "general_low_mach_pressure_coupling"
+			physical_event_local_domain_of_dependence = Read-KeyValue -Text $text -Key "physical_event_local_domain_of_dependence"
+			target_grid_event_fraction_performance = Read-KeyValue -Text $text -Key "target_grid_event_fraction_performance"
+			hybrid_near_vacuum_routing = Read-KeyValue -Text $text -Key "hybrid_near_vacuum_routing"
+			two_dimensional_hybrid_coupling = Read-KeyValue -Text $text -Key "two_dimensional_hybrid_coupling"
+			species_eos_and_diffusion = Read-KeyValue -Text $text -Key "species_eos_and_diffusion"
 			production_boundary_coupling = Read-KeyValue -Text $text -Key "production_boundary_coupling"
-			low_mach_route_count = [int](Read-KeyValue -Text $text -Key "low_mach_route_count")
-			compressible_route_count = [int](Read-KeyValue -Text $text -Key "compressible_route_count")
-			low_mach_suitability_passed = (Read-KeyValue -Text $text -Key "low_mach_suitability_passed") -eq "true"
+			production_runtime_integration = Read-KeyValue -Text $text -Key "production_runtime_integration"
+			low_mach_fixture_count = [int](Read-KeyValue -Text $text -Key "low_mach_fixture_count")
+			compressible_fixture_count = [int](Read-KeyValue -Text $text -Key "compressible_fixture_count")
+			constant_pressure_bulk_transport_passed = (Read-KeyValue -Text $text -Key "constant_pressure_bulk_transport_passed") -eq "true"
+			transport_step_count_independent_of_sound_speed = (Read-KeyValue -Text $text -Key "transport_step_count_independent_of_sound_speed") -eq "true"
+			low_mach_bulk_solver_suitability = Read-KeyValue -Text $text -Key "low_mach_bulk_solver_suitability"
 			compressible_sod_passed = (Read-KeyValue -Text $text -Key "compressible_sod_passed") -eq "true"
 			compressible_sod_shock_reference_passed = (Read-KeyValue -Text $text -Key "compressible_sod_shock_reference_passed") -eq "true"
 			compressible_sod_flux_fallback_count = [int](Read-KeyValue -Text $text -Key "compressible_sod_flux_fallback_count")
 			compressible_sod_correction_count = [int](Read-KeyValue -Text $text -Key "compressible_sod_correction_count")
+			compressible_sod_boundary_ledger_closes = (Read-KeyValue -Text $text -Key "compressible_sod_boundary_ledger_closes") -eq "true"
+			compressible_sod_positivity_preserved = (Read-KeyValue -Text $text -Key "compressible_sod_positivity_preserved") -eq "true"
+			compressible_sod_maximum_cfl = [double](Read-KeyValue -Text $text -Key "compressible_sod_maximum_cfl")
+			compressible_sod_minimum_density = [double](Read-KeyValue -Text $text -Key "compressible_sod_minimum_density")
+			compressible_sod_minimum_pressure = [double](Read-KeyValue -Text $text -Key "compressible_sod_minimum_pressure")
+			compressible_sod_mass_drift = [double](Read-KeyValue -Text $text -Key "compressible_sod_mass_drift")
+			compressible_sod_momentum_x_drift = [double](Read-KeyValue -Text $text -Key "compressible_sod_momentum_x_drift")
+			compressible_sod_momentum_y_drift = [double](Read-KeyValue -Text $text -Key "compressible_sod_momentum_y_drift")
+			compressible_sod_energy_drift = [double](Read-KeyValue -Text $text -Key "compressible_sod_energy_drift")
+			compressible_sod_boundary_mass_exchange = [double](Read-KeyValue -Text $text -Key "compressible_sod_boundary_mass_exchange")
+			compressible_sod_boundary_momentum_x_exchange = [double](Read-KeyValue -Text $text -Key "compressible_sod_boundary_momentum_x_exchange")
+			compressible_sod_boundary_momentum_y_exchange = [double](Read-KeyValue -Text $text -Key "compressible_sod_boundary_momentum_y_exchange")
+			compressible_sod_boundary_energy_exchange = [double](Read-KeyValue -Text $text -Key "compressible_sod_boundary_energy_exchange")
+			moderate_acoustic_cfl = [double](Read-KeyValue -Text $text -Key "moderate_acoustic_cfl")
+			low_acoustic_cfl = [double](Read-KeyValue -Text $text -Key "low_acoustic_cfl")
+			very_low_acoustic_cfl = [double](Read-KeyValue -Text $text -Key "very_low_acoustic_cfl")
+			alternate_eos_very_low_acoustic_cfl = [double](Read-KeyValue -Text $text -Key "alternate_eos_very_low_acoustic_cfl")
+			alternate_eos_very_low_steps = [int](Read-KeyValue -Text $text -Key "alternate_eos_very_low_steps")
 			moderate_density_l1_error = $moderateDensityL1
 			low_density_l1_error = $lowDensityL1
 			very_low_density_l1_error = $veryLowDensityL1
@@ -1729,6 +1807,8 @@ if ($isRusanovProbe) {
 			low_total_variation_ratio = $lowTv
 			very_low_total_variation_ratio = $veryLowTv
 			policy_selection_ready = (Read-KeyValue -Text $text -Key "policy_selection_ready") -eq "true"
+			hybrid_end_to_end_passed = (Read-KeyValue -Text $text -Key "hybrid_end_to_end_passed") -eq "true"
+			component_probe_passed = (Read-KeyValue -Text $text -Key "component_probe_passed") -eq "true"
 			candidate_disposition = Read-KeyValue -Text $text -Key "candidate_disposition"
 		}
 	} elseif ($isLegacyLikeProbe) {

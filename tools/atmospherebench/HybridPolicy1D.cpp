@@ -61,6 +61,20 @@ namespace
 		return total;
 	}
 
+	void AccumulateCorrections(NumericalCorrectionLedger &total,
+		const NumericalCorrectionLedger &value)
+	{
+		total.massAdded += value.massAdded;
+		total.massRemoved += value.massRemoved;
+		total.momentumXAdded += value.momentumXAdded;
+		total.momentumYAdded += value.momentumYAdded;
+		total.energyAdded += value.energyAdded;
+		total.energyRemoved += value.energyRemoved;
+		total.densityFloorHits += value.densityFloorHits;
+		total.pressureFloorHits += value.pressureFloorHits;
+		total.eventCount += value.eventCount;
+	}
+
 	double DensityVariation(const std::vector<ConservativeState> &cells)
 	{
 		double variation = 0.0;
@@ -69,9 +83,9 @@ namespace
 		return variation;
 	}
 
-	HybridTransportProbeSummary RunTransport(double velocity)
+	HybridTransportProbeSummary RunTransport(double velocity, double gamma = Gamma)
 	{
-		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		const IdealGasEOS eos(gamma, SpecificGasConstant);
 		const double totalTime = ShiftDistance / velocity;
 		const double maximumTimeStep = TargetAdvectiveCfl * CellLength / velocity;
 		const auto steps = static_cast<std::size_t>(std::ceil(totalTime / maximumTimeStep));
@@ -88,12 +102,17 @@ namespace
 			std::llround(ShiftDistance / CellLength));
 
 		std::vector<ConservativeState> initial(Cells);
+		double maximumSignalSpeed = 0.0;
 		for (std::size_t cell = 0; cell < Cells; ++cell)
 		{
 			const double x = (static_cast<double>(cell) + 0.5) * CellLength;
 			const double density = 1.0 + DensityAmplitude * std::sin(2.0 * Pi * x);
 			initial[cell] = eos.FromPrimitive(density, velocity, 0.0, 1.0);
+			const auto primitive = eos.ToPrimitive(initial[cell]);
+			maximumSignalSpeed = std::max(
+				maximumSignalSpeed, std::abs(primitive.velocityX) + primitive.soundSpeed);
 		}
+		summary.maximumAcousticCfl = maximumSignalSpeed * timeStep / CellLength;
 		std::vector<ConservativeState> cells = initial;
 		std::vector<ConservativeState> next(Cells);
 		summary.stateAndScratchBytesTotal = 3 * Cells * sizeof(ConservativeState);
@@ -167,6 +186,7 @@ namespace
 		output << prefix << "_steps=" << summary.benchmarkCase.stepCount << '\n';
 		output << prefix << "_simulated_time=" << summary.simulatedTime << '\n';
 		output << prefix << "_advective_cfl=" << summary.maximumAdvectiveCfl << '\n';
+		output << prefix << "_acoustic_cfl=" << summary.maximumAcousticCfl << '\n';
 		output << prefix << "_density_l1_error=" << summary.densityL1Error << '\n';
 		output << prefix << "_density_linf_error=" << summary.densityLinfError << '\n';
 		output << prefix << "_pressure_linf_error=" << summary.pressureLinfError << '\n';
@@ -188,6 +208,7 @@ HybridPolicyProbeSummary RunHybridAllSpeedPolicyProbe()
 		RunTransport(ModerateVelocity),
 		RunTransport(LowVelocity),
 		RunTransport(VeryLowVelocity),
+		RunTransport(VeryLowVelocity, 1.4),
 		RunHllcRusanovFallbackSodShockTube(),
 	};
 	const double nominalSoundSpeed = std::sqrt(Gamma);
@@ -201,16 +222,33 @@ HybridPolicyProbeSummary RunHybridAllSpeedPolicyProbe()
 		summary.veryLowToModerateL1Ratio =
 			summary.veryLowMach.densityL1Error / summary.moderateMach.densityL1Error;
 	}
-	summary.lowMachRouteCount = 3;
-	summary.compressibleRouteCount = 1;
-	summary.lowMachSuitabilityPassed = summary.veryLowMach.densityL1Error <= 0.05
+	summary.lowMachFixtureCount = 3;
+	summary.compressibleFixtureCount = 1;
+	AccumulateCorrections(summary.corrections, summary.moderateMach.corrections);
+	AccumulateCorrections(summary.corrections, summary.lowMach.corrections);
+	AccumulateCorrections(summary.corrections, summary.veryLowMach.corrections);
+	AccumulateCorrections(summary.corrections, summary.alternateEosVeryLowMach.corrections);
+	AccumulateCorrections(summary.corrections, summary.compressibleSod.corrections);
+	summary.constantPressureTransportPassed = summary.veryLowMach.densityL1Error <= 0.05
 		&& summary.veryLowMach.totalVariationRatio >= 0.8;
+	summary.soundSpeedIndependencePassed =
+		summary.veryLowMach.benchmarkCase.stepCount
+			== summary.alternateEosVeryLowMach.benchmarkCase.stepCount
+		&& std::abs(summary.veryLowMach.densityL1Error
+			- summary.alternateEosVeryLowMach.densityL1Error) <= 1e-12
+		&& std::abs(summary.veryLowMach.totalVariationRatio
+			- summary.alternateEosVeryLowMach.totalVariationRatio) <= 1e-12;
 	summary.crossRouteBoundaryCouplingImplemented = false;
 	summary.eventLocalSubcyclingImplemented = false;
+	summary.routerImplemented = false;
 	summary.policySelectionReady = false;
 	summary.passed = summary.moderateMach.passed && summary.lowMach.passed
 		&& summary.veryLowMach.passed && summary.compressibleSod.passed
-		&& summary.lowMachSuitabilityPassed
+		&& summary.alternateEosVeryLowMach.passed
+		&& summary.constantPressureTransportPassed
+		&& summary.soundSpeedIndependencePassed
+		&& summary.corrections.IsEmpty()
+		&& summary.corrections.IsConsistent()
 		&& std::isfinite(summary.lowToModerateL1Ratio)
 		&& std::isfinite(summary.veryLowToModerateL1Ratio);
 	return summary;
@@ -220,8 +258,8 @@ bool WriteHybridAllSpeedPolicyProbe(std::ostream &output)
 {
 	const auto summary = RunHybridAllSpeedPolicyProbe();
 	output << "schema_version=1\n";
-	output << "case=hybrid_all_speed_policy_router_1d\n";
-	output << "candidate=hybrid_all_speed_event_local\n";
+	output << "case=hybrid_uncoupled_policy_component_probe_1d\n";
+	output << "candidate=hybrid_all_speed_components\n";
 	output << "candidate_solver_implemented=false\n";
 	output << "policy_probe_implemented=true\n";
 	output << "atmosphere_solver_selection=unselected\n";
@@ -242,21 +280,36 @@ bool WriteHybridAllSpeedPolicyProbe(std::ostream &output)
 		<< summary.veryLowMach.stateAndScratchBytesTotal << '\n';
 	output << "low_mach_bulk_route=conservative_constant_pressure_transport\n";
 	output << "compressible_event_route=hllc_rusanov_fallback_whole_case\n";
+	output << "router_implemented=false\n";
+	output << "routing_thresholds=not_implemented\n";
 	output << "cross_route_boundary_coupling=not_implemented\n";
 	output << "event_local_subcycling=not_implemented\n";
+	output << "dynamic_event_region_and_acoustic_halo=not_implemented\n";
+	output << "mixed_region_reflux_conservation=not_implemented\n";
+	output << "general_low_mach_pressure_coupling=not_implemented\n";
+	output << "physical_event_local_domain_of_dependence=not_implemented\n";
+	output << "target_grid_event_fraction_performance=not_tested\n";
+	output << "hybrid_near_vacuum_routing=not_implemented\n";
+	output << "two_dimensional_hybrid_coupling=not_implemented\n";
+	output << "species_eos_and_diffusion=not_implemented\n";
 	output << "production_boundary_coupling=not_implemented\n";
-	output << "low_mach_route_count=" << summary.lowMachRouteCount << '\n';
-	output << "compressible_route_count=" << summary.compressibleRouteCount << '\n';
+	output << "production_runtime_integration=not_implemented\n";
+	output << "low_mach_fixture_count=" << summary.lowMachFixtureCount << '\n';
+	output << "compressible_fixture_count=" << summary.compressibleFixtureCount << '\n';
 	output << "moderate_nominal_mach=" << summary.moderateNominalMach << '\n';
 	output << "low_nominal_mach=" << summary.lowNominalMach << '\n';
 	output << "very_low_nominal_mach=" << summary.veryLowNominalMach << '\n';
 	WriteTransport(output, "moderate", summary.moderateMach);
 	WriteTransport(output, "low", summary.lowMach);
 	WriteTransport(output, "very_low", summary.veryLowMach);
+	WriteTransport(output, "alternate_eos_very_low", summary.alternateEosVeryLowMach);
 	output << "low_to_moderate_l1_ratio=" << summary.lowToModerateL1Ratio << '\n';
 	output << "very_low_to_moderate_l1_ratio=" << summary.veryLowToModerateL1Ratio << '\n';
-	output << "low_mach_suitability_passed="
-		<< (summary.lowMachSuitabilityPassed ? "true" : "false") << '\n';
+	output << "constant_pressure_bulk_transport_passed="
+		<< (summary.constantPressureTransportPassed ? "true" : "false") << '\n';
+	output << "transport_step_count_independent_of_sound_speed="
+		<< (summary.soundSpeedIndependencePassed ? "true" : "false") << '\n';
+	output << "low_mach_bulk_solver_suitability=not_implemented\n";
 	output << "compressible_sod_passed=" << (summary.compressibleSod.passed ? "true" : "false") << '\n';
 	output << "compressible_sod_shock_reference_passed="
 		<< (summary.compressibleSod.shockReferencePassed ? "true" : "false") << '\n';
@@ -264,6 +317,33 @@ bool WriteHybridAllSpeedPolicyProbe(std::ostream &output)
 		<< summary.compressibleSod.fluxFallbackCount << '\n';
 	output << "compressible_sod_correction_count="
 		<< summary.compressibleSod.corrections.eventCount << '\n';
+	output << "compressible_sod_boundary_ledger_closes="
+		<< (summary.compressibleSod.boundaryLedgerCloses ? "true" : "false") << '\n';
+	output << "compressible_sod_positivity_preserved="
+		<< (summary.compressibleSod.positivityPreserved ? "true" : "false") << '\n';
+	output << "compressible_sod_maximum_cfl=" << summary.compressibleSod.maximumCfl << '\n';
+	output << "compressible_sod_minimum_density=" << summary.compressibleSod.minimumDensity << '\n';
+	output << "compressible_sod_minimum_pressure=" << summary.compressibleSod.minimumPressure << '\n';
+	output << "compressible_sod_mass_drift="
+		<< summary.compressibleSod.ledger.final.density
+			- summary.compressibleSod.ledger.initial.density << '\n';
+	output << "compressible_sod_momentum_x_drift="
+		<< summary.compressibleSod.ledger.final.momentumX
+			- summary.compressibleSod.ledger.initial.momentumX << '\n';
+	output << "compressible_sod_momentum_y_drift="
+		<< summary.compressibleSod.ledger.final.momentumY
+			- summary.compressibleSod.ledger.initial.momentumY << '\n';
+	output << "compressible_sod_boundary_mass_exchange="
+		<< summary.compressibleSod.boundaryExchange.density << '\n';
+	output << "compressible_sod_boundary_momentum_x_exchange="
+		<< summary.compressibleSod.boundaryExchange.momentumX << '\n';
+	output << "compressible_sod_boundary_momentum_y_exchange="
+		<< summary.compressibleSod.boundaryExchange.momentumY << '\n';
+	output << "compressible_sod_boundary_energy_exchange="
+		<< summary.compressibleSod.boundaryExchange.totalEnergyDensity << '\n';
+	output << "compressible_sod_energy_drift="
+		<< summary.compressibleSod.ledger.final.totalEnergyDensity
+			- summary.compressibleSod.ledger.initial.totalEnergyDensity << '\n';
 	output << "minimum_density=" << summary.veryLowMach.minimumDensity << '\n';
 	output << "maximum_density=" << summary.veryLowMach.maximumDensity << '\n';
 	output << "minimum_pressure=" << summary.veryLowMach.minimumPressure << '\n';
@@ -283,18 +363,20 @@ bool WriteHybridAllSpeedPolicyProbe(std::ostream &output)
 	output << "energy_drift="
 		<< summary.veryLowMach.ledger.final.totalEnergyDensity
 			- summary.veryLowMach.ledger.initial.totalEnergyDensity << '\n';
-	output << "numerical_correction_count=0\n";
-	output << "correction_mass_added=0\n";
-	output << "correction_mass_removed=0\n";
-	output << "correction_momentum_x_added=0\n";
-	output << "correction_momentum_y_added=0\n";
-	output << "correction_energy_added=0\n";
-	output << "correction_energy_removed=0\n";
-	output << "density_floor_hits=0\n";
-	output << "pressure_floor_hits=0\n";
-	output << "correction_event_count=0\n";
+	output << "numerical_correction_count=" << summary.corrections.eventCount << '\n';
+	output << "correction_mass_added=" << summary.corrections.massAdded << '\n';
+	output << "correction_mass_removed=" << summary.corrections.massRemoved << '\n';
+	output << "correction_momentum_x_added=" << summary.corrections.momentumXAdded << '\n';
+	output << "correction_momentum_y_added=" << summary.corrections.momentumYAdded << '\n';
+	output << "correction_energy_added=" << summary.corrections.energyAdded << '\n';
+	output << "correction_energy_removed=" << summary.corrections.energyRemoved << '\n';
+	output << "density_floor_hits=" << summary.corrections.densityFloorHits << '\n';
+	output << "pressure_floor_hits=" << summary.corrections.pressureFloorHits << '\n';
+	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
 	output << "policy_selection_ready=false\n";
-	output << "candidate_disposition=continue_coupling_evaluation\n";
+	output << "hybrid_end_to_end_passed=false\n";
+	output << "component_probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	output << "candidate_disposition=continue_mixed_region_coupling_evaluation\n";
 	output << "benchmark_execution_status=" << (summary.passed ? "PASS" : "FAIL") << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;

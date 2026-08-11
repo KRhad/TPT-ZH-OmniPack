@@ -85,8 +85,8 @@
     },
     {
       "id": "hybrid_all_speed_event_local_compressible",
-      "status": "required_next_candidate_unimplemented",
-      "reason": "separate_low_mach_transport_from_event_local_pressure_wave_cost"
+      "status": "component_routes_probed_coupling_unimplemented",
+      "reason": "uncoupled_constant_pressure_transport_and_whole_case_hllc_components_passed_but_router_cross_route_reflux_and_event_local_subcycling_are_unimplemented"
     }
   ],
   "prohibitions": [
@@ -94,7 +94,7 @@
     "reference_machine_budget_is_not_cross_hardware_release_requirement",
     "acoustic_reference_is_not_runtime_material_database",
     "rejected_policy_is_not_solver_selection",
-    "hybrid_policy_is_not_implemented",
+    "hybrid_coupling_is_not_implemented",
     "physical_time_policy_remains_unselected"
   ]
 }

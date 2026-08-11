@@ -241,7 +241,7 @@ const std::array<CandidateDescriptor, 7> &Candidates()
 			"implemented_1d_low_mach_probe_rejected", true},
 		{CandidateKind::HllcRusanovFallbackFvm, "fvm_hllc_rusanov_fallback",
 			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes", true},
-		{CandidateKind::HybridAllSpeedPolicy, "hybrid_all_speed_event_local",
+		{CandidateKind::HybridAllSpeedPolicy, "hybrid_all_speed_components",
 			"implemented_uncoupled_low_mach_transport_and_whole_case_hllc_sod_policy_probe_not_solver", false},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9",

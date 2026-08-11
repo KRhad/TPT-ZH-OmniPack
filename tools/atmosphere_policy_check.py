@@ -23,7 +23,7 @@ EXPECTED_PROHIBITIONS = {
     "reference_machine_budget_is_not_cross_hardware_release_requirement",
     "acoustic_reference_is_not_runtime_material_database",
     "rejected_policy_is_not_solver_selection",
-    "hybrid_policy_is_not_implemented",
+    "hybrid_coupling_is_not_implemented",
     "physical_time_policy_remains_unselected",
 }
 
@@ -215,8 +215,8 @@ def audit_document(document: Any) -> tuple[list[str], dict[str, str]]:
         if measured_limit is not None and measured_limit != maximum_signal_speed:
             errors.append("policy_evaluations.acoustic_scaling: signal-speed result drifted")
         hybrid = policies_by_id.get("hybrid_all_speed_event_local_compressible", {})
-        if hybrid.get("status") != "required_next_candidate_unimplemented":
-            errors.append("policy_evaluations.hybrid: must remain unimplemented")
+        if hybrid.get("status") != "component_routes_probed_coupling_unimplemented":
+            errors.append("policy_evaluations.hybrid: component/coupling boundary drifted")
 
     prohibitions = root.get("prohibitions")
     if not isinstance(prohibitions, list) or set(prohibitions) != EXPECTED_PROHIBITIONS or len(prohibitions) != len(EXPECTED_PROHIBITIONS):

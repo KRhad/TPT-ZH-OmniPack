@@ -58,11 +58,11 @@ class AtmospherePolicyContractTests(unittest.TestCase):
         errors, _ = tool.audit_document(document)
         self.assertTrue(any("presentation_fps_derived" in error for error in errors))
 
-    def test_hybrid_policy_remains_unimplemented(self) -> None:
+    def test_hybrid_components_cannot_claim_coupled_policy_completion(self) -> None:
         document = copy.deepcopy(self.document)
         document["policy_evaluations"][2]["status"] = "selected"
         errors, _ = tool.audit_document(document)
-        self.assertTrue(any("must remain unimplemented" in error for error in errors))
+        self.assertTrue(any("component/coupling boundary drifted" in error for error in errors))
 
     def test_acoustic_reference_is_bound_to_public_nasa_record(self) -> None:
         document = copy.deepcopy(self.document)

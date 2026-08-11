@@ -262,8 +262,14 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("hllc_rusanov_fallback_whole_case", source)
         self.assertIn("cross_route_boundary_coupling=not_implemented", source)
         self.assertIn("event_local_subcycling=not_implemented", source)
+        self.assertIn("router_implemented=false", source)
+        self.assertIn("mixed_region_reflux_conservation=not_implemented", source)
+        self.assertIn("general_low_mach_pressure_coupling=not_implemented", source)
+        self.assertIn("transport_step_count_independent_of_sound_speed=", source)
+        self.assertIn("hybrid_end_to_end_passed=false", source)
+        self.assertIn("component_probe_passed=", source)
         self.assertIn("policy_selection_ready=false", source)
-        self.assertIn('"hybrid_all_speed_event_local",', atmosphere)
+        self.assertIn('"hybrid_all_speed_components",', atmosphere)
         self.assertIn('"implemented_uncoupled_low_mach_transport_and_whole_case_hllc_sod_policy_probe_not_solver", false', atmosphere)
 
     def test_scaffold_contract_is_not_a_runtime_consumer(self) -> None:

@@ -29,8 +29,10 @@ Files:
   checkpoint to an accepted Phase 5 reference-machine CPU/memory target and a
   public NASA acoustic reference. It recomputes and rejects direct real-acoustic
   explicit subcycling at the 60-tick candidate, rejects the required uniform
-  sound-speed reduction as a default realism policy, and leaves the hybrid/all-speed
-  policy unimplemented and overall physical-time selection `unselected`.
+  sound-speed reduction as a default realism policy. Its uncoupled constant-pressure
+  transport and whole-case HLLC components have standalone probes, but the router,
+  cross-route flux/reflux coupling and event-local subcycling remain unimplemented;
+  overall solver and physical-time selection therefore remain `unselected`.
 
 `tools/omnicore_data_check.py` validates all documents with the Python standard
 library. It rejects duplicate JSON keys, NaN/Inf, unknown fields, unsupported
