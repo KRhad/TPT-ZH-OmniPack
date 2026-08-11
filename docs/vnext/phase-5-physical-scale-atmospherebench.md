@@ -638,10 +638,14 @@ and zero wall-normal velocity.
 Clean evidence:
 
 ```text
-source_commit=02e255ac652c006ea28d277e863c442785aec7b2
+source_commit=cea6794e9ae060ed489edfd81be188dc17578c8a
 source_dirty=false
-selection_artifact=artifacts/vnext-phase5-selection/20260811T104942Z/result.json
-selection_sha256=B26CB01F43A247DC3FA3AADC46F628CC5F138C6CB2DC71528A0983EF4CA18082
+selection_artifact=artifacts/vnext-phase5-selection/20260811T105741Z/result.json
+selection_sha256=012E47C3513B5FA0E5216F9A8A3D43AE7796142EA09B741DE47439760D9FF44E
+source_package=artifacts/vnext-phase5-source-final/TPT-ZH-OmniPack-1.0.0-Source.zip
+source_package_sha256=15169B668473EE26DF79B27A3284EFF3ECD2C39E2CBCE038FCC40AF132C90DF6
+source_members=1339
+test_assets=0
 ```
 
 This closes the Phase 5 selection sub-gate only. Full-domain compressible timing,
