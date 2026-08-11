@@ -638,12 +638,12 @@ and zero wall-normal velocity.
 Clean evidence:
 
 ```text
-source_commit=cea6794e9ae060ed489edfd81be188dc17578c8a
+source_commit=0ea5adaccb54ea9049c9979213a499e8d60f26d2
 source_dirty=false
-selection_artifact=artifacts/vnext-phase5-selection/20260811T105741Z/result.json
-selection_sha256=012E47C3513B5FA0E5216F9A8A3D43AE7796142EA09B741DE47439760D9FF44E
-source_package=artifacts/vnext-phase5-source-final/TPT-ZH-OmniPack-1.0.0-Source.zip
-source_package_sha256=15169B668473EE26DF79B27A3284EFF3ECD2C39E2CBCE038FCC40AF132C90DF6
+selection_artifact=artifacts/vnext-phase5-selection-final/20260811T110329Z/result.json
+selection_sha256=BC9D2CDED7CBDD9CDEB0F7BD3FE79D3DA5C6E7B25BB11DA57971E0BA170CA70C
+source_package=artifacts/vnext-phase5-source-final-final/TPT-ZH-OmniPack-1.0.0-Source.zip
+source_package_sha256=C33042E29F511D6A19C361B203AA2BC7BEA6BC7D7A62308007DB0F26AC6FDCE2
 source_members=1339
 test_assets=0
 ```
