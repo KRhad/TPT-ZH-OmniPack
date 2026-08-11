@@ -481,14 +481,14 @@ $timingScope = "standalone_contract_uniform_no_solver_step"
 $solverResultStatus = Read-KeyValue -Text $text -Key "result_status"
 if ($isLowMachProjection2DPerformanceProbe) {
 	$benchmarkKind = "atmospherebench_low_mach_projection_2d_target_matrix"
-	$performanceGate = "recorded_target_matrix_no_budget_pass"
-	$timingScope = "standalone_low_mach_conjugate_gradient_target_grid_matrix"
-	$candidateImplementations = "periodic_low_mach_conjugate_gradient_component"
-	if ($solverResultStatus -ne "low_mach_target_matrix_component_probe") {
+	$performanceGate = "geometric_multigrid_reference_grid_within_budget"
+	$timingScope = "standalone_low_mach_cg_multigrid_target_grid_matrix"
+	$candidateImplementations = "periodic_low_mach_cg_multigrid_components"
+	if ($solverResultStatus -ne "low_mach_target_matrix_component_comparison") {
 		throw "Low-Mach target matrix result status drifted"
 	}
 	foreach ($probeKey in @{
-		"candidate" = "periodic_low_mach_conjugate_gradient_component";
+		"candidate" = "periodic_low_mach_cg_multigrid_components";
 		"candidate_solver_implemented" = "false";
 		"atmosphere_solver_selection" = "unselected";
 		"physical_scale_selection" = "unselected";
@@ -498,6 +498,12 @@ if ($isLowMachProjection2DPerformanceProbe) {
 		"atmosphere_grid_within_budget" = "false";
 		"target_matrix_convergence_passed" = "false";
 		"target_matrix_budget_passed" = "false";
+		"multigrid_target_grid_matrix_measured" = "true";
+		"multigrid_target_matrix_convergence_passed" = "true";
+		"multigrid_atmosphere_grid_within_budget" = "true";
+		"multigrid_target_matrix_budget_passed" = "true";
+		"selected_low_mach_component" = "geometric_multigrid_v_cycle";
+		"low_mach_component_selection_ready" = "true";
 		"general_low_mach_pressure_coupling" = "implemented_periodic_projection_component_only";
 		"compressible_event_coupling" = "not_implemented_in_this_component";
 		"production_runtime_integration" = "not_implemented";
@@ -2969,6 +2975,11 @@ $result = [ordered]@{
 			target_grid_matrix_measured = (Read-KeyValue -Text $text -Key "target_grid_matrix_measured") -eq "true"
 			target_matrix_convergence_passed = (Read-KeyValue -Text $text -Key "target_matrix_convergence_passed") -eq "true"
 			target_matrix_budget_passed = (Read-KeyValue -Text $text -Key "target_matrix_budget_passed") -eq "true"
+			multigrid_target_grid_matrix_measured = (Read-KeyValue -Text $text -Key "multigrid_target_grid_matrix_measured") -eq "true"
+			multigrid_target_matrix_convergence_passed = (Read-KeyValue -Text $text -Key "multigrid_target_matrix_convergence_passed") -eq "true"
+			multigrid_target_matrix_budget_passed = (Read-KeyValue -Text $text -Key "multigrid_target_matrix_budget_passed") -eq "true"
+			selected_low_mach_component = Read-KeyValue -Text $text -Key "selected_low_mach_component"
+			low_mach_component_selection_ready = (Read-KeyValue -Text $text -Key "low_mach_component_selection_ready") -eq "true"
 			atmosphere_grid = [ordered]@{
 				iteration_count = [int](Read-KeyValue -Text $text -Key "atmosphere_grid_iteration_count")
 				divergence_reduction_ratio = [double](Read-KeyValue -Text $text -Key "atmosphere_grid_divergence_reduction_ratio")
@@ -2984,6 +2995,25 @@ $result = [ordered]@{
 				iteration_count = [int](Read-KeyValue -Text $text -Key "particle_grid_iteration_count")
 				divergence_reduction_ratio = [double](Read-KeyValue -Text $text -Key "particle_grid_divergence_reduction_ratio")
 				elapsed_milliseconds = [double](Read-KeyValue -Text $text -Key "particle_grid_elapsed_milliseconds")
+			}
+			multigrid_atmosphere_grid = [ordered]@{
+				v_cycle_count = [int](Read-KeyValue -Text $text -Key "multigrid_atmosphere_grid_v_cycle_count")
+				divergence_reduction_ratio = [double](Read-KeyValue -Text $text -Key "multigrid_atmosphere_grid_divergence_reduction_ratio")
+				elapsed_milliseconds = [double](Read-KeyValue -Text $text -Key "multigrid_atmosphere_grid_elapsed_milliseconds")
+				working_bytes_per_cell = [double](Read-KeyValue -Text $text -Key "multigrid_atmosphere_grid_working_bytes_per_cell")
+				within_reference_budget = (Read-KeyValue -Text $text -Key "multigrid_atmosphere_grid_within_reference_budget") -eq "true"
+			}
+			multigrid_doubled_grid = [ordered]@{
+				v_cycle_count = [int](Read-KeyValue -Text $text -Key "multigrid_doubled_grid_v_cycle_count")
+				divergence_reduction_ratio = [double](Read-KeyValue -Text $text -Key "multigrid_doubled_grid_divergence_reduction_ratio")
+				elapsed_milliseconds = [double](Read-KeyValue -Text $text -Key "multigrid_doubled_grid_elapsed_milliseconds")
+				working_bytes_per_cell = [double](Read-KeyValue -Text $text -Key "multigrid_doubled_grid_working_bytes_per_cell")
+			}
+			multigrid_particle_grid = [ordered]@{
+				v_cycle_count = [int](Read-KeyValue -Text $text -Key "multigrid_particle_grid_v_cycle_count")
+				divergence_reduction_ratio = [double](Read-KeyValue -Text $text -Key "multigrid_particle_grid_divergence_reduction_ratio")
+				elapsed_milliseconds = [double](Read-KeyValue -Text $text -Key "multigrid_particle_grid_elapsed_milliseconds")
+				working_bytes_per_cell = [double](Read-KeyValue -Text $text -Key "multigrid_particle_grid_working_bytes_per_cell")
 			}
 			candidate_disposition = Read-KeyValue -Text $text -Key "candidate_disposition"
 		}
