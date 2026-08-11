@@ -671,6 +671,7 @@ atmospherebench = executable(
 	sources: files(
 		'tools/atmospherebench/AtmosphereBench.cpp',
 		'tools/atmospherebench/Hllc2D.cpp',
+		'tools/atmospherebench/HybridMixedRegion1D.cpp',
 		'tools/atmospherebench/HybridPolicy1D.cpp',
 		'tools/atmospherebench/LbmD2Q9.cpp',
 		'tools/atmospherebench/LegacyLike.cpp',
@@ -891,6 +892,14 @@ test(
 	'atmospherebench-hybrid-all-speed-policy',
 	atmospherebench,
 	args: [ '--run-hybrid-all-speed-policy' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'atmospherebench-hybrid-mixed-region',
+	atmospherebench,
+	args: [ '--run-hybrid-mixed-region' ],
 	suite: 'static',
 	timeout: 60,
 )

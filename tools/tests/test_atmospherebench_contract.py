@@ -34,7 +34,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
                 self.assertNotIn(needle, text)
         includes = re.findall(r'^#include "([^"]+)"', text, flags=re.MULTILINE)
         self.assertEqual(includes.count("AtmosphereBench.h"), 2)
-        self.assertEqual(includes.count("Rusanov1D.h"), 5)
+        self.assertEqual(includes.count("Rusanov1D.h"), 6)
 
     def test_bench_has_explicit_strict_fp_target_and_isolated_rusanov_candidates(self) -> None:
         meson = (ROOT / "meson.build").read_text(encoding="utf-8")
@@ -53,6 +53,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-rusanov-pressure-pulse' ]", target)
         self.assertIn("'atmospherebench-rusanov-density-advection'", target)
         self.assertIn("args: [ '--run-rusanov-density-advection' ]", target)
+        self.assertIn("'atmospherebench-hybrid-mixed-region'", target)
+        self.assertIn("args: [ '--run-hybrid-mixed-region' ]", target)
         self.assertIn("'atmospherebench-rusanov-contact-discontinuity'", target)
         self.assertIn("args: [ '--run-rusanov-contact-discontinuity' ]", target)
         self.assertIn("'atmospherebench-rusanov-near-vacuum-expansion'", target)
@@ -272,6 +274,24 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn('"hybrid_all_speed_components",', atmosphere)
         self.assertIn('"implemented_uncoupled_low_mach_transport_and_whole_case_hllc_sod_policy_probe_not_solver", false', atmosphere)
 
+    def test_hybrid_mixed_region_probe_has_real_router_reflux_and_explicit_limits(self) -> None:
+        header = (BENCH_ROOT / "HybridMixedRegion1D.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "HybridMixedRegion1D.cpp").read_text(encoding="utf-8")
+        main = (BENCH_ROOT / "main.cpp").read_text(encoding="utf-8")
+        self.assertIn("HybridMixedRegionProbeSummary", header)
+        self.assertIn("RunHybridMixedRegionProbe", header)
+        self.assertIn("router_implemented=true", source)
+        self.assertIn("cross_route_boundary_coupling=implemented_1d_probe", source)
+        self.assertIn("event_local_subcycling=implemented_1d_probe", source)
+        self.assertIn("mixed_region_reflux_conservation=implemented_1d_probe", source)
+        self.assertIn("interfaceEventExchange", source)
+        self.assertIn("interfaceBulkExchange", source)
+        self.assertIn("threshold_scan_passed=", source)
+        self.assertIn("two_dimensional_hybrid_coupling=not_implemented", source)
+        self.assertIn("physical_event_local_domain_of_dependence=not_implemented", source)
+        self.assertIn("hybrid_end_to_end_passed=false", source)
+        self.assertIn("--run-hybrid-mixed-region", main)
+
     def test_scaffold_contract_is_not_a_runtime_consumer(self) -> None:
         production = []
         for path in (ROOT / "src").rglob("*"):
@@ -297,6 +317,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/LegacyLike.h",
             "tools/atmospherebench/HybridPolicy1D.cpp",
             "tools/atmospherebench/HybridPolicy1D.h",
+            "tools/atmospherebench/HybridMixedRegion1D.cpp",
+            "tools/atmospherebench/HybridMixedRegion1D.h",
             "tools/atmospherebench/Species2D.cpp",
             "tools/atmospherebench/Species2D.h",
         }

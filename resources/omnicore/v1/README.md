@@ -30,9 +30,12 @@ Files:
   public NASA acoustic reference. It recomputes and rejects direct real-acoustic
   explicit subcycling at the 60-tick candidate, rejects the required uniform
   sound-speed reduction as a default realism policy. Its uncoupled constant-pressure
-  transport and whole-case HLLC components have standalone probes, but the router,
-  cross-route flux/reflux coupling and event-local subcycling remain unimplemented;
-  overall solver and physical-time selection therefore remain `unselected`.
+  transport and whole-case HLLC components have standalone probes, and a separate
+  one-dimensional mixed-region probe now exercises router promotion/demotion,
+  cross-route flux/reflux coupling and event-local subcycling. General low-Mach
+  pressure coupling, physical domain of dependence, 2D coupling and target-grid
+  budget remain unimplemented, so solver and physical-time selection stay
+  `unselected`.
 
 `tools/omnicore_data_check.py` validates all documents with the Python standard
 library. It rejects duplicate JSON keys, NaN/Inf, unknown fields, unsupported

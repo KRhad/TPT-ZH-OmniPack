@@ -62,7 +62,7 @@ class AtmospherePolicyContractTests(unittest.TestCase):
         document = copy.deepcopy(self.document)
         document["policy_evaluations"][2]["status"] = "selected"
         errors, _ = tool.audit_document(document)
-        self.assertTrue(any("component/coupling boundary drifted" in error for error in errors))
+        self.assertTrue(any("1d/physical-policy boundary drifted" in error for error in errors))
 
     def test_acoustic_reference_is_bound_to_public_nasa_record(self) -> None:
         document = copy.deepcopy(self.document)

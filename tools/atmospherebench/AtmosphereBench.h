@@ -167,7 +167,7 @@ struct CandidateDescriptor
 	bool solverImplemented;
 };
 
-const std::array<CandidateDescriptor, 7> &Candidates();
+const std::array<CandidateDescriptor, 8> &Candidates();
 const BenchmarkCase &UniformContractCase();
 BenchmarkResult MakeUniformContractResult();
 
