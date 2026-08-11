@@ -2,6 +2,7 @@
 #include "Particle.h"
 #include "Sign.h"
 #include "Stickman.h"
+#include "SimulationSettings.h"
 #include "common/tpt-rand.h"
 #include <vector>
 #include <array>
@@ -15,6 +16,18 @@ public:
 	std::vector<float> AirVelocityX;
 	std::vector<float> AirVelocityY;
 	std::vector<float> AmbientHeat;
+
+	// OmniCore authoritative state is kept separate from the Legacy display
+	// projection.  Undo/redo must snapshot both or an Enhanced restore would
+	// silently keep the newer gas/species state behind older pv/vx/vy/hv data.
+	std::vector<double> OmniAtmosphereSpeciesMassDensity;
+	std::vector<double> OmniAtmosphereMomentumX;
+	std::vector<double> OmniAtmosphereMomentumY;
+	std::vector<double> OmniAtmosphereTotalEnergy;
+	std::vector<double> OmniAtmosphereCondensedWaterDensity;
+	std::vector<double> OmniWaterParcelMassKg;
+	int OmniSimulationMode = OMNI_CLASSIC;
+	uint8_t OmniAtmospherePersistenceStatus = 0;
 
 	std::vector<Particle> Particles;
 

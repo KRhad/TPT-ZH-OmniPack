@@ -2,6 +2,8 @@
 #include "Sample.h"
 #include "Snapshot.h"
 #include "Air.h"
+#include "OmniAtmosphere.h"
+#include "OmniPhysicalScale.h"
 #include "gravity/Gravity.h"
 #include "common/tpt-rand.h"
 #include "client/GameSave.h"
@@ -18,6 +20,35 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
 	snap->AirVelocityX   .insert   (snap->AirVelocityX   .begin(), &vx  [0][0]      , &vx  [0][0] + NCELL);
 	snap->AirVelocityY   .insert   (snap->AirVelocityY   .begin(), &vy  [0][0]      , &vy  [0][0] + NCELL);
 	snap->AmbientHeat    .insert   (snap->AmbientHeat    .begin(), &hv  [0][0]      , &hv  [0][0] + NCELL);
+	if (omniAtmosphere)
+	{
+		const auto cellCount = omniAtmosphere->CellCount();
+		const auto speciesCount = omniAtmosphere->SpeciesCount();
+		snap->OmniAtmosphereSpeciesMassDensity.reserve(cellCount * speciesCount);
+		snap->OmniAtmosphereMomentumX.reserve(cellCount);
+		snap->OmniAtmosphereMomentumY.reserve(cellCount);
+		snap->OmniAtmosphereTotalEnergy.reserve(cellCount);
+		snap->OmniAtmosphereCondensedWaterDensity.reserve(cellCount);
+		for (size_t cell = 0; cell < cellCount; ++cell)
+		{
+			const auto x = cell % omniAtmosphere->Width();
+			const auto y = cell / omniAtmosphere->Width();
+			for (size_t species = 0; species < speciesCount; ++species)
+				snap->OmniAtmosphereSpeciesMassDensity.push_back(
+					omniAtmosphere->SpeciesMassDensity(x, y, species));
+			const auto &state = omniAtmosphere->State(x, y);
+			snap->OmniAtmosphereMomentumX.push_back(state.momentumX);
+			snap->OmniAtmosphereMomentumY.push_back(state.momentumY);
+			snap->OmniAtmosphereTotalEnergy.push_back(state.totalEnergy);
+			snap->OmniAtmosphereCondensedWaterDensity.push_back(
+				omniAtmosphere->Primitive(x, y).condensedWaterDensity);
+		}
+	}
+	snap->OmniWaterParcelMassKg.insert(
+		snap->OmniWaterParcelMassKg.begin(), omniWaterParcelMassKg.begin(),
+		omniWaterParcelMassKg.begin() + parts.active);
+	snap->OmniSimulationMode = omniSimulationMode;
+	snap->OmniAtmospherePersistenceStatus = static_cast<uint8_t>(omniAtmospherePersistenceStatus);
 	snap->BlockMap       .insert   (snap->BlockMap       .begin(), &bmap[0][0]      , &bmap[0][0] + NCELL);
 	snap->ElecMap        .insert   (snap->ElecMap        .begin(), &emap[0][0]      , &emap[0][0] + NCELL);
 	snap->BlockAir       .insert   (snap->BlockAir       .begin(), &air->bmap_blockair[0][0] , &air->bmap_blockair[0][0]  + NCELL);
@@ -53,6 +84,61 @@ void Simulation::Restore(const Snapshot &snap)
 	std::copy(snap.AirVelocityX   .begin(), snap.AirVelocityX   .end(), &vx[0][0]        );
 	std::copy(snap.AirVelocityY   .begin(), snap.AirVelocityY   .end(), &vy[0][0]        );
 	std::copy(snap.AmbientHeat    .begin(), snap.AmbientHeat    .end(), &hv[0][0]        );
+	std::fill(omniWaterParcelMassKg.begin(), omniWaterParcelMassKg.end(), 0.0);
+	std::copy_n(
+		snap.OmniWaterParcelMassKg.begin(),
+		std::min(snap.OmniWaterParcelMassKg.size(), omniWaterParcelMassKg.size()),
+		omniWaterParcelMassKg.begin());
+	omniWaterTransferRequests.clear();
+	omniWaterCouplingMetrics = {};
+	omniSimulationMode = snap.OmniSimulationMode >= OMNI_CLASSIC &&
+		snap.OmniSimulationMode < NUM_OMNI_SIMULATION_MODES
+		? snap.OmniSimulationMode
+		: OMNI_CLASSIC;
+	const auto persistence = static_cast<OmniAtmospherePersistenceStatus>(
+		snap.OmniAtmospherePersistenceStatus);
+	omniAtmospherePersistenceStatus = persistence >= OmniAtmospherePersistenceStatus::ClassicNotApplicable &&
+		persistence <= OmniAtmospherePersistenceStatus::RegionStateOmitted
+		? persistence
+		: (omniSimulationMode == OMNI_CLASSIC
+			? OmniAtmospherePersistenceStatus::ClassicNotApplicable
+			: OmniAtmospherePersistenceStatus::FreshPreset);
+	if (omniAtmosphere)
+	{
+		const auto cellCount = omniAtmosphere->CellCount();
+		const auto speciesCount = omniAtmosphere->SpeciesCount();
+		bool valid = snap.OmniAtmosphereSpeciesMassDensity.size() == cellCount * speciesCount &&
+			snap.OmniAtmosphereMomentumX.size() == cellCount &&
+			snap.OmniAtmosphereMomentumY.size() == cellCount &&
+			snap.OmniAtmosphereTotalEnergy.size() == cellCount &&
+			snap.OmniAtmosphereCondensedWaterDensity.size() == cellCount;
+		std::vector<double> speciesMassDensity(speciesCount, 0.0);
+		for (size_t cell = 0; valid && cell < cellCount; ++cell)
+		{
+			for (size_t species = 0; species < speciesCount; ++species)
+				speciesMassDensity[species] =
+					snap.OmniAtmosphereSpeciesMassDensity[cell * speciesCount + species];
+			valid = omniAtmosphere->RestoreSerializedCell(
+				cell % omniAtmosphere->Width(), cell / omniAtmosphere->Width(),
+				speciesMassDensity,
+				snap.OmniAtmosphereMomentumX[cell],
+				snap.OmniAtmosphereMomentumY[cell],
+				snap.OmniAtmosphereTotalEnergy[cell],
+				snap.OmniAtmosphereCondensedWaterDensity[cell]);
+		}
+		if (valid)
+		{
+			omniAtmosphere->FinalizeStateRestore();
+		}
+		else
+		{
+			omniSimulationMode = OMNI_CLASSIC;
+			omniAtmospherePersistenceStatus = OmniAtmospherePersistenceStatus::ClassicNotApplicable;
+			omniAtmosphere->ResetUniform(
+				OmniPhysicalScale::ReferenceDensityKgM3,
+				air ? air->ambientAirTemp : OmniPhysicalScale::ReferenceTemperatureK);
+		}
+	}
 	std::copy(snap.BlockMap       .begin(), snap.BlockMap       .end(), &bmap[0][0]      );
 	std::copy(snap.ElecMap        .begin(), snap.ElecMap        .end(), &emap[0][0]      );
 	std::copy(snap.BlockAir       .begin(), snap.BlockAir       .end(), &air->bmap_blockair[0][0] );
@@ -79,6 +165,18 @@ void Simulation::Restore(const Snapshot &snap)
 	signs = snap.signs;
 	frameCount = snap.FrameCount;
 	rng.state(snap.RngState);
+	if (IsOmniAtmosphereActive())
+	{
+		std::copy(&pv[0][0], &pv[0][0] + NCELL, &omniLegacyPressureShadow[0][0]);
+		std::copy(&vx[0][0], &vx[0][0] + NCELL, &omniLegacyVelocityXShadow[0][0]);
+		std::copy(&vy[0][0], &vy[0][0] + NCELL, &omniLegacyVelocityYShadow[0][0]);
+		std::copy(&hv[0][0], &hv[0][0] + NCELL, &omniLegacyTemperatureShadow[0][0]);
+		omniLegacyProjectionShadowValid = true;
+	}
+	else
+	{
+		omniLegacyProjectionShadowValid = false;
+	}
 	parts.active = NPART;
 	RecalcFreeParticles(false);
 }

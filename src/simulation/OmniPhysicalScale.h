@@ -9,6 +9,9 @@ inline constexpr int CellPixels = 4;
 inline constexpr double PixelLengthM = 1.0e-3;
 inline constexpr double CellLengthM = 4.0e-3;
 inline constexpr double EffectiveDepthM = 4.0e-3;
+inline constexpr double ParticleParcelVolumeM3 = PixelLengthM * PixelLengthM * EffectiveDepthM;
+inline constexpr double LiquidWaterDensityKgM3 = 1000.0;
+inline constexpr double DefaultWaterParcelMassKg = ParticleParcelVolumeM3 * LiquidWaterDensityKgM3;
 inline constexpr double TimestepS = 1.0 / 60.0;
 inline constexpr double ReferenceDensityKgM3 = 1.225;
 inline constexpr double ReferenceTemperatureK = 293.15;
@@ -19,5 +22,8 @@ inline constexpr double LegacyPressureScalePa = 1000.0;
 }
 
 static_assert(OmniPhysicalScale::CellLengthM == OmniPhysicalScale::PixelLengthM * OmniPhysicalScale::CellPixels);
+static_assert(OmniPhysicalScale::ParticleParcelVolumeM3 == 4.0e-9);
+static_assert(OmniPhysicalScale::DefaultWaterParcelMassKg > 3.999e-6 &&
+	OmniPhysicalScale::DefaultWaterParcelMassKg < 4.001e-6);
 static_assert(OmniPhysicalScale::CellLengthM > 0.0 && OmniPhysicalScale::EffectiveDepthM > 0.0);
 static_assert(OmniPhysicalScale::TimestepS > 0.0);

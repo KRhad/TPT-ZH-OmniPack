@@ -19,10 +19,42 @@ local function test()
 
     local initial = sim.omniAtmosphere()
     assert(initial.active and initial.available, "Enhanced atmosphere is not active")
-    assert(initial.state_serialized == false, "1.0.6 falsely claims atmosphere state serialization")
+    assert(initial.state_version == 2, "Enhanced atmosphere state version is not v2")
+    assert(initial.state_serialization_supported == true,
+        "Enhanced atmosphere does not advertise state serialization support")
+    assert(initial.state_serialized == false and initial.serialization_status == "fresh_preset",
+        "fresh Enhanced atmosphere has an invalid persistence status")
+    assert(initial.migration_degraded == false, "fresh Enhanced atmosphere is marked degraded")
     assert(initial.width == sim.XCELLS and initial.height == sim.YCELLS,
         "Enhanced atmosphere dimensions do not match Legacy cells")
     assert(initial.mass_kg > 0 and initial.energy_j > 0, "Enhanced atmosphere has no initial state")
+    local expectedSpecies = { "N2", "O2", "Ar", "CO2", "H2O" }
+    assert(type(initial.species_registry) == "table" and #initial.species_registry == #expectedSpecies,
+        "Enhanced atmosphere species registry has the wrong size")
+    local speciesMassSum = 0.0
+    for index, species in ipairs(expectedSpecies) do
+        assert(initial.species_registry[index] == species, "Enhanced atmosphere species registry order changed")
+        assert(finite(initial.species_mass_kg[species]) and initial.species_mass_kg[species] >= 0,
+            "Enhanced atmosphere species mass is invalid")
+        speciesMassSum = speciesMassSum + initial.species_mass_kg[species]
+    end
+    assert(math.abs(speciesMassSum - initial.mass_kg) < 1.0e-10,
+        "Enhanced atmosphere species masses do not sum to total gas mass")
+
+    local selected = sim.omniAtmosphere(10, 10).selected_cell
+    assert(selected.x == 10 and selected.y == 10 and finite(selected.density_kg_m3) and
+        finite(selected.pressure_pa) and finite(selected.temperature_k) and
+        finite(selected.relative_humidity), "selected-cell atmosphere diagnostics are invalid")
+    local massFractionSum = 0.0
+    local partialPressureSum = 0.0
+    for _, species in ipairs(expectedSpecies) do
+        massFractionSum = massFractionSum + selected.mass_fraction[species]
+        partialPressureSum = partialPressureSum + selected.partial_pressure_pa[species]
+    end
+    assert(math.abs(massFractionSum - 1.0) < 1.0e-12,
+        "selected-cell species mass fractions do not sum to one")
+    assert(math.abs(partialPressureSum - selected.pressure_pa) < 1.0e-8,
+        "selected-cell partial pressures do not sum to mixture pressure")
 
     -- Activating Enhanced synchronizes the already-selected Legacy edge mode
     -- into the new atmosphere.  A real topology change is intentionally routed
@@ -79,6 +111,16 @@ local function test()
     local benchmarkMsPerTick = (socket.getTime() - benchmarkStart) * 1000.0 / benchmarkTicks
     assert(finite(benchmarkMsPerTick) and benchmarkMsPerTick > 0.0,
         "Enhanced runtime benchmark did not produce a finite duration")
+    local benchmarkState = sim.omniAtmosphere()
+
+    sim.omniProfilerEnabled(true)
+    sim.resetOmniProfiler()
+    local profileTicks = 16
+    for _ = 1, profileTicks do
+        sim.updateUpTo()
+    end
+    local profile = sim.omniProfiler()
+    sim.omniProfilerEnabled(false)
 
     local pressureBeforeSource = sim.pressure(10, 10)
     sim.pressure(10, 10, pressureBeforeSource + 5.0)
@@ -102,10 +144,11 @@ local function test()
     local classic = sim.omniAtmosphere()
     assert(not classic.active and classic.mode == sim.OMNI_CLASSIC,
         "Classic opt-out did not restore Legacy mode")
-    return after, event, persistedEvent, benchmarkMsPerTick
+    return after, event, persistedEvent, benchmarkMsPerTick, benchmarkState, profile, profileTicks
 end
 
-local ok, result, event, persistedEvent, benchmarkMsPerTick = xpcall(test, debug.traceback)
+local ok, result, event, persistedEvent, benchmarkMsPerTick, benchmarkState, profile, profileTicks =
+    xpcall(test, debug.traceback)
 local report = assert(io.open(RESULT, "w"))
 if ok then
     report:write("OMNI_ATMOSPHERE_MODE=", result.mode, "\n")
@@ -118,6 +161,13 @@ if ok then
     report:write("OMNI_ATMOSPHERE_EVENT_PERSISTED_ACOUSTIC=", tostring(persistedEvent.acoustic_route), "\n")
     report:write("OMNI_ATMOSPHERE_EVENT_SECOND_ADVANCED_S=", persistedEvent.advanced_timestep_s, "\n")
     report:write("OMNI_ATMOSPHERE_RUNTIME_MS_PER_TICK=", benchmarkMsPerTick, "\n")
+    report:write("OMNI_ATMOSPHERE_BENCHMARK_ACOUSTIC_ROUTE=", tostring(benchmarkState.acoustic_route), "\n")
+    report:write("OMNI_ATMOSPHERE_BENCHMARK_SUBSTEPS=", benchmarkState.substeps, "\n")
+    for _, name in ipairs({ "frame", "simulation", "particle_update", "air", "ambient_heat", "gravity_dispatch_wait", "lua" }) do
+        local metric = assert(profile.subsystems[name], "missing profiler subsystem " .. name)
+        report:write("OMNI_ATMOSPHERE_PROFILE_", name:upper(), "_MS_PER_TICK=",
+            metric.total_nanoseconds / 1000000.0 / profileTicks, "\n")
+    end
     report:write("OMNI_ATMOSPHERE_STATUS=PASS\n")
 else
     report:write("OMNI_ATMOSPHERE_ERROR=", tostring(result):gsub("[\r\n]+", " | "), "\n")
