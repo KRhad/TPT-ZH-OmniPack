@@ -763,6 +763,46 @@ test(
 )
 
 test(
+	'atmospherebench-hllc-rusanov-fallback-low-mach-advection',
+	atmospherebench,
+	args: [ '--run-hllc-rusanov-fallback-low-mach-advection' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'atmospherebench-hllc-rusanov-fallback-near-vacuum-expansion',
+	atmospherebench,
+	args: [ '--run-hllc-rusanov-fallback-near-vacuum-expansion' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'atmospherebench-hllc-rusanov-fallback-sod-shock-tube',
+	atmospherebench,
+	args: [ '--run-hllc-rusanov-fallback-sod-shock-tube' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'atmospherebench-hllc-rusanov-fallback-open-boundary-leak',
+	atmospherebench,
+	args: [ '--run-hllc-rusanov-fallback-open-boundary-leak' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'atmospherebench-hllc-rusanov-fallback-performance',
+	atmospherebench,
+	args: [ '--run-hllc-rusanov-fallback-performance' ],
+	suite: 'static',
+	timeout: 120,
+)
+
+test(
 	'atmospherebench-rusanov-open-boundary-leak',
 	atmospherebench,
 	args: [ '--run-rusanov-open-boundary-leak' ],

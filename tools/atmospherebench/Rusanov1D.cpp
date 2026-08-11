@@ -84,6 +84,7 @@ namespace
 	{
 		Rusanov,
 		AllSpeedRusanov,
+		HllcRusanovFallback,
 	};
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
@@ -179,15 +180,112 @@ namespace
 		);
 	}
 
+	bool HllcFluxX(
+		const ConservativeState &left,
+		const ConservativeState &right,
+		const IdealGasEOS &eos,
+		ConservativeState &flux)
+	{
+		const auto leftPrimitive = eos.ToPrimitive(left);
+		const auto rightPrimitive = eos.ToPrimitive(right);
+		if (!leftPrimitive.valid || !rightPrimitive.valid)
+			return false;
+		const double leftWaveSpeed = std::min(
+			leftPrimitive.velocityX - leftPrimitive.soundSpeed,
+			rightPrimitive.velocityX - rightPrimitive.soundSpeed);
+		const double rightWaveSpeed = std::max(
+			leftPrimitive.velocityX + leftPrimitive.soundSpeed,
+			rightPrimitive.velocityX + rightPrimitive.soundSpeed);
+		const double contactDenominator =
+			leftPrimitive.density * (leftWaveSpeed - leftPrimitive.velocityX)
+			- rightPrimitive.density * (rightWaveSpeed - rightPrimitive.velocityX);
+		if (!std::isfinite(contactDenominator) || std::abs(contactDenominator) <= 1e-14)
+			return false;
+		const double contactWaveSpeed = (
+			rightPrimitive.pressure - leftPrimitive.pressure
+			+ leftPrimitive.density * leftPrimitive.velocityX
+				* (leftWaveSpeed - leftPrimitive.velocityX)
+			- rightPrimitive.density * rightPrimitive.velocityX
+				* (rightWaveSpeed - rightPrimitive.velocityX)) / contactDenominator;
+		if (!std::isfinite(contactWaveSpeed)
+			|| contactWaveSpeed <= leftWaveSpeed || contactWaveSpeed >= rightWaveSpeed)
+			return false;
+
+		auto starState = [contactWaveSpeed](
+			const ConservativeState &state,
+			const PrimitiveState &primitive,
+			double waveSpeed,
+			ConservativeState &star)
+		{
+			const double waveDenominator = waveSpeed - contactWaveSpeed;
+			const double stateDenominator = waveSpeed - primitive.velocityX;
+			if (!std::isfinite(waveDenominator) || !std::isfinite(stateDenominator)
+				|| std::abs(waveDenominator) <= 1e-14 || std::abs(stateDenominator) <= 1e-14)
+				return false;
+			const double starDensity = primitive.density * stateDenominator / waveDenominator;
+			const double specificTotalEnergy = state.totalEnergyDensity / primitive.density;
+			const double starSpecificEnergy = specificTotalEnergy
+				+ (contactWaveSpeed - primitive.velocityX)
+					* (contactWaveSpeed + primitive.pressure
+						/ (primitive.density * stateDenominator));
+			star = {
+				starDensity,
+				starDensity * contactWaveSpeed,
+				starDensity * primitive.velocityY,
+				starDensity * starSpecificEnergy,
+			};
+			return std::isfinite(star.density) && std::isfinite(star.momentumX)
+				&& std::isfinite(star.momentumY) && std::isfinite(star.totalEnergyDensity)
+				&& star.density > 0.0 && star.totalEnergyDensity > 0.0;
+		};
+
+		const auto leftFlux = FluxX(left, leftPrimitive);
+		const auto rightFlux = FluxX(right, rightPrimitive);
+		if (0.0 <= leftWaveSpeed)
+		{
+			flux = leftFlux;
+			return true;
+		}
+		if (rightWaveSpeed <= 0.0)
+		{
+			flux = rightFlux;
+			return true;
+		}
+		if (0.0 <= contactWaveSpeed)
+		{
+			ConservativeState leftStar;
+			if (!starState(left, leftPrimitive, leftWaveSpeed, leftStar)
+				|| !eos.ToPrimitive(leftStar).valid)
+				return false;
+			flux = Add(leftFlux, Scale(leftWaveSpeed, Subtract(leftStar, left)));
+			return true;
+		}
+		ConservativeState rightStar;
+		if (!starState(right, rightPrimitive, rightWaveSpeed, rightStar)
+			|| !eos.ToPrimitive(rightStar).valid)
+			return false;
+		flux = Add(rightFlux, Scale(rightWaveSpeed, Subtract(rightStar, right)));
+		return true;
+	}
+
 	ConservativeState NumericalFluxX(
 		const ConservativeState &left,
 		const ConservativeState &right,
 		const IdealGasEOS &eos,
-		FluxDissipationModel model)
+		FluxDissipationModel model,
+		std::size_t *fallbackCount)
 	{
-		return model == FluxDissipationModel::AllSpeedRusanov
-			? AllSpeedRusanovFluxX(left, right, eos)
-			: RusanovFluxX(left, right, eos);
+		if (model == FluxDissipationModel::AllSpeedRusanov)
+			return AllSpeedRusanovFluxX(left, right, eos);
+		if (model == FluxDissipationModel::HllcRusanovFallback)
+		{
+			ConservativeState flux;
+			if (HllcFluxX(left, right, eos, flux))
+				return flux;
+			if (fallbackCount)
+				++*fallbackCount;
+		}
+		return RusanovFluxX(left, right, eos);
 	}
 
 	ConservativeState SealedWallFluxX(const ConservativeState &state, const IdealGasEOS &eos)
@@ -301,7 +399,8 @@ namespace
 			{
 				for (std::size_t cell = 0; cell < cells.size(); ++cell)
 					fluxes[cell] = NumericalFluxX(
-						cells[cell], cells[(cell + 1) % cells.size()], eos, fluxModel);
+						cells[cell], cells[(cell + 1) % cells.size()], eos, fluxModel,
+						&summary.fluxFallbackCount);
 				for (std::size_t cell = 0; cell < cells.size(); ++cell)
 				{
 					const auto leftFace = fluxes[(cell + cells.size() - 1) % cells.size()];
@@ -313,12 +412,15 @@ namespace
 			else
 			{
 				fluxes.front() = open && leftBoundaryState
-					? NumericalFluxX(*leftBoundaryState, cells.front(), eos, fluxModel)
+					? NumericalFluxX(*leftBoundaryState, cells.front(), eos, fluxModel,
+						&summary.fluxFallbackCount)
 					: SealedWallFluxX(cells.front(), eos);
 				for (std::size_t face = 1; face < cells.size(); ++face)
-					fluxes[face] = NumericalFluxX(cells[face - 1], cells[face], eos, fluxModel);
+					fluxes[face] = NumericalFluxX(cells[face - 1], cells[face], eos, fluxModel,
+						&summary.fluxFallbackCount);
 				fluxes.back() = open
-					? NumericalFluxX(cells.back(), *rightBoundaryState, eos, fluxModel)
+					? NumericalFluxX(cells.back(), *rightBoundaryState, eos, fluxModel,
+						&summary.fluxFallbackCount)
 					: SealedWallFluxX(cells.back(), eos);
 				const auto leftExchange = Scale(lambda, fluxes.front());
 				const auto rightExchange = Scale(-lambda, fluxes.back());
@@ -541,7 +643,10 @@ namespace
 		return summary;
 	}
 
-	RusanovProbeSummary RunPerformanceCase(std::size_t cellsCount)
+	RusanovProbeSummary RunPerformanceCase(
+		std::size_t cellsCount,
+		FluxDissipationModel fluxModel,
+		std::string_view caseId)
 	{
 		const IdealGasEOS eos(Gamma, SpecificGasConstant);
 		const double cellLength = 1.0 / static_cast<double>(cellsCount);
@@ -557,17 +662,20 @@ namespace
 			initial[cell] = eos.FromPrimitive(density, PerformanceVelocity, 0.0, 1.0);
 		}
 		return RunPeriodicProbe(
-			{"rusanov_performance_1d",
+			{caseId,
 				{cellsCount, 1, cellLength, BoundaryMode::Periodic},
 				TimeDomain::NondimensionalContract, timeStep, PerformanceSteps},
-			std::move(initial), eos, true, false, 1e-7, nullptr);
+			std::move(initial), eos, true, false, 1e-7, nullptr, fluxModel);
 	}
 
-	RusanovPerformanceSample MeasurePerformanceCase(std::size_t cellsCount)
+	RusanovPerformanceSample MeasurePerformanceCase(
+		std::size_t cellsCount,
+		FluxDissipationModel fluxModel,
+		std::string_view caseId)
 	{
 		for (std::size_t warmup = 0; warmup < PerformanceWarmups; ++warmup)
 		{
-			if (!RunPerformanceCase(cellsCount).passed)
+			if (!RunPerformanceCase(cellsCount, fluxModel, caseId).passed)
 				return {};
 		}
 		std::array<double, PerformanceRepeats> elapsed{};
@@ -575,7 +683,7 @@ namespace
 		for (std::size_t repeat = 0; repeat < PerformanceRepeats; ++repeat)
 		{
 			const auto start = std::chrono::steady_clock::now();
-			auto probe = RunPerformanceCase(cellsCount);
+			auto probe = RunPerformanceCase(cellsCount, fluxModel, caseId);
 			const auto stop = std::chrono::steady_clock::now();
 			if (!probe.passed)
 				return {};
@@ -675,7 +783,11 @@ RusanovProbeSummary RunRusanovContactDiscontinuity()
 	return summary;
 }
 
-RusanovProbeSummary RunRusanovNearVacuumExpansion()
+namespace
+{
+RusanovProbeSummary RunNearVacuumExpansionCase(
+	FluxDissipationModel fluxModel,
+	std::string_view caseId)
 {
 	const IdealGasEOS eos(Gamma, SpecificGasConstant);
 	std::vector<ConservativeState> initial(NearVacuumCells);
@@ -690,10 +802,10 @@ RusanovProbeSummary RunRusanovNearVacuumExpansion()
 	}
 	std::vector<ConservativeState> final;
 	auto summary = RunPeriodicProbe(
-		{"rusanov_near_vacuum_expansion_1d",
+		{caseId,
 			{NearVacuumCells, 1, CellLength, BoundaryMode::Periodic},
 			TimeDomain::NondimensionalContract, NearVacuumTimeStep, NearVacuumSteps},
-		initial, eos, true, false, 1e-10, &final);
+		initial, eos, true, false, 1e-10, &final, fluxModel);
 	if (final.size() != initial.size())
 		return summary;
 	for (std::size_t cell = NearVacuumCells / 2; cell < NearVacuumCells; ++cell)
@@ -710,8 +822,26 @@ RusanovProbeSummary RunRusanovNearVacuumExpansion()
 		&& summary.lowDensityRegionMassIncreased;
 	return summary;
 }
+} // namespace
 
-RusanovProbeSummary RunRusanovSodShockTube()
+RusanovProbeSummary RunRusanovNearVacuumExpansion()
+{
+	return RunNearVacuumExpansionCase(
+		FluxDissipationModel::Rusanov, "rusanov_near_vacuum_expansion_1d");
+}
+
+RusanovProbeSummary RunHllcRusanovFallbackNearVacuumExpansion()
+{
+	return RunNearVacuumExpansionCase(
+		FluxDissipationModel::HllcRusanovFallback,
+		"hllc_rusanov_fallback_near_vacuum_expansion_1d");
+}
+
+namespace
+{
+RusanovProbeSummary RunSodShockTubeCase(
+	FluxDissipationModel fluxModel,
+	std::string_view caseId)
 {
 	const IdealGasEOS eos(SodGamma, SpecificGasConstant);
 	std::vector<ConservativeState> initial(SodCells);
@@ -726,10 +856,10 @@ RusanovProbeSummary RunRusanovSodShockTube()
 	}
 	std::vector<ConservativeState> final;
 	auto summary = RunSealedProbe(
-		{"rusanov_sod_shock_tube_1d",
+		{caseId,
 			{SodCells, 1, SodCellLength, BoundaryMode::Sealed},
 			TimeDomain::NondimensionalContract, SodTimeStep, SodSteps},
-		initial, eos, true, 1e-9, &final);
+		initial, eos, true, 1e-9, &final, fluxModel);
 	if (final.size() != initial.size())
 		return summary;
 
@@ -762,8 +892,26 @@ RusanovProbeSummary RunRusanovSodShockTube()
 	summary.passed = summary.passed && summary.shockReferencePassed;
 	return summary;
 }
+} // namespace
 
-RusanovProbeSummary RunRusanovOpenBoundaryLeak()
+RusanovProbeSummary RunRusanovSodShockTube()
+{
+	return RunSodShockTubeCase(
+		FluxDissipationModel::Rusanov, "rusanov_sod_shock_tube_1d");
+}
+
+RusanovProbeSummary RunHllcRusanovFallbackSodShockTube()
+{
+	return RunSodShockTubeCase(
+		FluxDissipationModel::HllcRusanovFallback,
+		"hllc_rusanov_fallback_sod_shock_tube_1d");
+}
+
+namespace
+{
+RusanovProbeSummary RunOpenBoundaryLeakCase(
+	FluxDissipationModel fluxModel,
+	std::string_view caseId)
 {
 	const IdealGasEOS eos(Gamma, SpecificGasConstant);
 	const auto initialState = eos.FromPrimitive(
@@ -772,11 +920,11 @@ RusanovProbeSummary RunRusanovOpenBoundaryLeak()
 		LeakExteriorDensity, 0.0, 0.0, LeakExteriorPressure);
 	std::vector<ConservativeState> final;
 	auto summary = RunOpenProbe(
-		{"rusanov_open_boundary_leak_1d",
+		{caseId,
 			{LeakCells, 1, LeakCellLength, BoundaryMode::Open},
 			TimeDomain::NondimensionalContract, LeakTimeStep, LeakSteps},
 		std::vector<ConservativeState>(LeakCells, initialState),
-		exteriorState, eos, true, 1e-9, &final);
+		exteriorState, eos, true, 1e-9, &final, fluxModel);
 	if (final.size() != LeakCells)
 		return summary;
 	summary.simulatedTime = LeakTimeStep * static_cast<double>(LeakSteps);
@@ -788,6 +936,20 @@ RusanovProbeSummary RunRusanovOpenBoundaryLeak()
 		&& std::abs(summary.leftBoundaryExchange.density) <= 1e-12
 		&& std::abs(massChange - summary.boundaryExchange.density) <= 1e-9;
 	return summary;
+}
+} // namespace
+
+RusanovProbeSummary RunRusanovOpenBoundaryLeak()
+{
+	return RunOpenBoundaryLeakCase(
+		FluxDissipationModel::Rusanov, "rusanov_open_boundary_leak_1d");
+}
+
+RusanovProbeSummary RunHllcRusanovFallbackOpenBoundaryLeak()
+{
+	return RunOpenBoundaryLeakCase(
+		FluxDissipationModel::HllcRusanovFallback,
+		"hllc_rusanov_fallback_open_boundary_leak_1d");
 }
 
 RusanovRefinementSummary RunRusanovDensityAdvectionRefinement()
@@ -879,12 +1041,55 @@ RusanovLowMachSummary RunAllSpeedRusanovLowMachAdvection()
 	return summary;
 }
 
+RusanovLowMachSummary RunHllcRusanovFallbackLowMachAdvection()
+{
+	RusanovLowMachSummary summary{
+		RunLowMachAdvectionCase(ModerateMachVelocity, FluxDissipationModel::HllcRusanovFallback),
+		RunLowMachAdvectionCase(LowMachVelocity, FluxDissipationModel::HllcRusanovFallback),
+		RunLowMachAdvectionCase(VeryLowMachVelocity, FluxDissipationModel::HllcRusanovFallback),
+	};
+	const double nominalSoundSpeed = std::sqrt(Gamma);
+	summary.moderateNominalMach = ModerateMachVelocity / nominalSoundSpeed;
+	summary.lowNominalMach = LowMachVelocity / nominalSoundSpeed;
+	summary.veryLowNominalMach = VeryLowMachVelocity / nominalSoundSpeed;
+	if (summary.moderateMach.densityL1Error > 0.0)
+	{
+		summary.lowToModerateL1Ratio =
+			summary.lowMach.densityL1Error / summary.moderateMach.densityL1Error;
+		summary.veryLowToModerateL1Ratio =
+			summary.veryLowMach.densityL1Error / summary.moderateMach.densityL1Error;
+	}
+	summary.suitabilityPassed = summary.veryLowMach.densityL1Error <= 0.05
+		&& summary.veryLowMach.totalVariationRatio >= 0.8;
+	summary.passed = summary.moderateMach.passed && summary.lowMach.passed
+		&& summary.veryLowMach.passed
+		&& std::isfinite(summary.lowToModerateL1Ratio)
+		&& std::isfinite(summary.veryLowToModerateL1Ratio);
+	return summary;
+}
+
 RusanovPerformanceSummary RunRusanovPerformance()
 {
 	RusanovPerformanceSummary summary{
-		MeasurePerformanceCase(PerformanceSmallCells),
-		MeasurePerformanceCase(PerformanceMediumCells),
-		MeasurePerformanceCase(PerformanceLargeCells),
+		MeasurePerformanceCase(PerformanceSmallCells, FluxDissipationModel::Rusanov, "rusanov_performance_1d"),
+		MeasurePerformanceCase(PerformanceMediumCells, FluxDissipationModel::Rusanov, "rusanov_performance_1d"),
+		MeasurePerformanceCase(PerformanceLargeCells, FluxDissipationModel::Rusanov, "rusanov_performance_1d"),
+		PerformanceWarmups,
+		PerformanceRepeats,
+	};
+	summary.passed = summary.small.passed && summary.medium.passed && summary.large.passed;
+	return summary;
+}
+
+RusanovPerformanceSummary RunHllcRusanovFallbackPerformance()
+{
+	RusanovPerformanceSummary summary{
+		MeasurePerformanceCase(PerformanceSmallCells, FluxDissipationModel::HllcRusanovFallback,
+			"hllc_rusanov_fallback_performance_1d"),
+		MeasurePerformanceCase(PerformanceMediumCells, FluxDissipationModel::HllcRusanovFallback,
+			"hllc_rusanov_fallback_performance_1d"),
+		MeasurePerformanceCase(PerformanceLargeCells, FluxDissipationModel::HllcRusanovFallback,
+			"hllc_rusanov_fallback_performance_1d"),
 		PerformanceWarmups,
 		PerformanceRepeats,
 	};
@@ -1116,14 +1321,18 @@ bool WriteRusanovContactDiscontinuityProbe(std::ostream &output)
 	return summary.passed;
 }
 
-bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output)
+namespace
 {
-	const auto summary = RunRusanovNearVacuumExpansion();
+bool WriteNearVacuumExpansionProbe(
+	std::ostream &output,
+	const RusanovProbeSummary &summary,
+	const char *candidateId)
+{
 	const auto &initial = summary.ledger.initial;
 	const auto &final = summary.ledger.final;
 	output << "schema_version=1\n";
 	output << "case=" << summary.benchmarkCase.id << '\n';
-	output << "candidate=fvm_rusanov\n";
+	output << "candidate=" << candidateId << '\n';
 	output << "candidate_solver_implemented=true\n";
 	output << "atmosphere_solver_selection=unselected\n";
 	output << "physical_scale_selection=unselected\n";
@@ -1168,15 +1377,33 @@ bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output)
 	output << "density_floor_hits=" << summary.corrections.densityFloorHits << '\n';
 	output << "pressure_floor_hits=" << summary.corrections.pressureFloorHits << '\n';
 	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
+	output << "flux_fallback_count=" << summary.fluxFallbackCount << '\n';
 	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
 	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
 }
+} // namespace
 
-bool WriteRusanovSodShockTubeProbe(std::ostream &output)
+bool WriteRusanovNearVacuumExpansionProbe(std::ostream &output)
 {
-	const auto summary = RunRusanovSodShockTube();
+	return WriteNearVacuumExpansionProbe(
+		output, RunRusanovNearVacuumExpansion(), "fvm_rusanov");
+}
+
+bool WriteHllcRusanovFallbackNearVacuumExpansionProbe(std::ostream &output)
+{
+	return WriteNearVacuumExpansionProbe(
+		output, RunHllcRusanovFallbackNearVacuumExpansion(), "fvm_hllc_rusanov_fallback");
+}
+
+namespace
+{
+bool WriteSodShockTubeProbe(
+	std::ostream &output,
+	const RusanovProbeSummary &summary,
+	const char *candidateId)
+{
 	const auto &initial = summary.ledger.initial;
 	const auto &final = summary.ledger.final;
 	const auto expectedFinal = Add(initial, summary.boundaryExchange);
@@ -1184,7 +1411,7 @@ bool WriteRusanovSodShockTubeProbe(std::ostream &output)
 		(3 * summary.benchmarkCase.grid.CellCount() + 1) * sizeof(ConservativeState);
 	output << "schema_version=1\n";
 	output << "case=" << summary.benchmarkCase.id << '\n';
-	output << "candidate=fvm_rusanov\n";
+	output << "candidate=" << candidateId << '\n';
 	output << "candidate_solver_implemented=true\n";
 	output << "atmosphere_solver_selection=unselected\n";
 	output << "physical_scale_selection=unselected\n";
@@ -1250,6 +1477,7 @@ bool WriteRusanovSodShockTubeProbe(std::ostream &output)
 	output << "density_floor_hits=" << summary.corrections.densityFloorHits << '\n';
 	output << "pressure_floor_hits=" << summary.corrections.pressureFloorHits << '\n';
 	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
+	output << "flux_fallback_count=" << summary.fluxFallbackCount << '\n';
 	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
 	output << "state_and_flux_scratch_bytes_total=" << stateAndFluxScratchBytesTotal << '\n';
 	output << "state_and_flux_scratch_bytes_per_cell="
@@ -1258,10 +1486,26 @@ bool WriteRusanovSodShockTubeProbe(std::ostream &output)
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
 }
+} // namespace
 
-bool WriteRusanovOpenBoundaryLeakProbe(std::ostream &output)
+bool WriteRusanovSodShockTubeProbe(std::ostream &output)
 {
-	const auto summary = RunRusanovOpenBoundaryLeak();
+	return WriteSodShockTubeProbe(output, RunRusanovSodShockTube(), "fvm_rusanov");
+}
+
+bool WriteHllcRusanovFallbackSodShockTubeProbe(std::ostream &output)
+{
+	return WriteSodShockTubeProbe(
+		output, RunHllcRusanovFallbackSodShockTube(), "fvm_hllc_rusanov_fallback");
+}
+
+namespace
+{
+bool WriteOpenBoundaryLeakProbe(
+	std::ostream &output,
+	const RusanovProbeSummary &summary,
+	const char *candidateId)
+{
 	const auto &initial = summary.ledger.initial;
 	const auto &final = summary.ledger.final;
 	const auto expectedFinal = Add(initial, summary.boundaryExchange);
@@ -1269,7 +1513,7 @@ bool WriteRusanovOpenBoundaryLeakProbe(std::ostream &output)
 		(3 * summary.benchmarkCase.grid.CellCount() + 1) * sizeof(ConservativeState);
 	output << "schema_version=1\n";
 	output << "case=" << summary.benchmarkCase.id << '\n';
-	output << "candidate=fvm_rusanov\n";
+	output << "candidate=" << candidateId << '\n';
 	output << "candidate_solver_implemented=true\n";
 	output << "atmosphere_solver_selection=unselected\n";
 	output << "physical_scale_selection=unselected\n";
@@ -1337,6 +1581,7 @@ bool WriteRusanovOpenBoundaryLeakProbe(std::ostream &output)
 	output << "density_floor_hits=" << summary.corrections.densityFloorHits << '\n';
 	output << "pressure_floor_hits=" << summary.corrections.pressureFloorHits << '\n';
 	output << "correction_event_count=" << summary.corrections.eventCount << '\n';
+	output << "flux_fallback_count=" << summary.fluxFallbackCount << '\n';
 	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
 	output << "state_and_flux_scratch_bytes_total=" << stateAndFluxScratchBytesTotal << '\n';
 	output << "state_and_flux_scratch_bytes_per_cell="
@@ -1344,6 +1589,19 @@ bool WriteRusanovOpenBoundaryLeakProbe(std::ostream &output)
 			/ static_cast<double>(summary.benchmarkCase.grid.CellCount()) << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
+}
+} // namespace
+
+bool WriteRusanovOpenBoundaryLeakProbe(std::ostream &output)
+{
+	return WriteOpenBoundaryLeakProbe(
+		output, RunRusanovOpenBoundaryLeak(), "fvm_rusanov");
+}
+
+bool WriteHllcRusanovFallbackOpenBoundaryLeakProbe(std::ostream &output)
+{
+	return WriteOpenBoundaryLeakProbe(
+		output, RunHllcRusanovFallbackOpenBoundaryLeak(), "fvm_hllc_rusanov_fallback");
 }
 
 bool WriteRusanovDensityAdvectionRefinementProbe(std::ostream &output)
@@ -1521,6 +1779,9 @@ bool WriteLowMachAdvectionProbe(
 	output << "density_floor_hits=0\n";
 	output << "pressure_floor_hits=0\n";
 	output << "correction_event_count=0\n";
+	output << "moderate_flux_fallback_count=" << summary.moderateMach.fluxFallbackCount << '\n';
+	output << "low_flux_fallback_count=" << summary.lowMach.fluxFallbackCount << '\n';
+	output << "very_low_flux_fallback_count=" << summary.veryLowMach.fluxFallbackCount << '\n';
 	output << "low_mach_suitability_passed="
 		<< (summary.suitabilityPassed ? "true" : "false") << '\n';
 	output << "candidate_disposition="
@@ -1543,15 +1804,26 @@ bool WriteAllSpeedRusanovLowMachAdvectionProbe(std::ostream &output)
 		"all_speed_rusanov_low_mach_advection_1d", "fvm_all_speed_rusanov");
 }
 
-bool WriteRusanovPerformanceProbe(std::ostream &output)
+bool WriteHllcRusanovFallbackLowMachAdvectionProbe(std::ostream &output)
 {
-	const auto summary = RunRusanovPerformance();
+	return WriteLowMachAdvectionProbe(output, RunHllcRusanovFallbackLowMachAdvection(),
+		"hllc_rusanov_fallback_low_mach_advection_1d", "fvm_hllc_rusanov_fallback");
+}
+
+namespace
+{
+bool WritePerformanceProbe(
+	std::ostream &output,
+	const RusanovPerformanceSummary &summary,
+	const char *caseId,
+	const char *candidateId)
+{
 	const auto &probe = summary.large.probe;
 	const auto &initial = probe.ledger.initial;
 	const auto &final = probe.ledger.final;
 	output << "schema_version=1\n";
-	output << "case=rusanov_performance_1d\n";
-	output << "candidate=fvm_rusanov\n";
+	output << "case=" << caseId << '\n';
+	output << "candidate=" << candidateId << '\n';
 	output << "candidate_solver_implemented=true\n";
 	output << "atmosphere_solver_selection=unselected\n";
 	output << "physical_scale_selection=unselected\n";
@@ -1601,11 +1873,27 @@ bool WriteRusanovPerformanceProbe(std::ostream &output)
 	output << "density_floor_hits=0\n";
 	output << "pressure_floor_hits=0\n";
 	output << "correction_event_count=0\n";
+	output << "small_flux_fallback_count=" << summary.small.probe.fluxFallbackCount << '\n';
+	output << "medium_flux_fallback_count=" << summary.medium.probe.fluxFallbackCount << '\n';
+	output << "large_flux_fallback_count=" << summary.large.probe.fluxFallbackCount << '\n';
 	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
 	output << "state_and_flux_scratch_bytes_per_cell=" << (3 * sizeof(ConservativeState)) << '\n';
 	output << "performance_measurement_passed=" << (summary.passed ? "true" : "false") << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
+}
+} // namespace
+
+bool WriteRusanovPerformanceProbe(std::ostream &output)
+{
+	return WritePerformanceProbe(
+		output, RunRusanovPerformance(), "rusanov_performance_1d", "fvm_rusanov");
+}
+
+bool WriteHllcRusanovFallbackPerformanceProbe(std::ostream &output)
+{
+	return WritePerformanceProbe(output, RunHllcRusanovFallbackPerformance(),
+		"hllc_rusanov_fallback_performance_1d", "fvm_hllc_rusanov_fallback");
 }
 
 } // namespace omni::atmospherebench

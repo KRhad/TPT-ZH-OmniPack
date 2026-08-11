@@ -19,6 +19,16 @@ param(
 
     [switch] $RunAllSpeedRusanovLowMachAdvection,
 
+    [switch] $RunHllcRusanovFallbackLowMachAdvection,
+
+    [switch] $RunHllcRusanovFallbackNearVacuumExpansion,
+
+    [switch] $RunHllcRusanovFallbackSodShockTube,
+
+    [switch] $RunHllcRusanovFallbackOpenBoundaryLeak,
+
+    [switch] $RunHllcRusanovFallbackPerformance,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -210,6 +220,11 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunRusanovContactDiscontinuity, $RunRusanovNearVacuumExpansion,
 		$RunRusanovSodShockTube, $RunRusanovDensityAdvectionRefinement,
 		$RunRusanovLowMachAdvection, $RunAllSpeedRusanovLowMachAdvection,
+		$RunHllcRusanovFallbackLowMachAdvection,
+		$RunHllcRusanovFallbackNearVacuumExpansion,
+		$RunHllcRusanovFallbackSodShockTube,
+		$RunHllcRusanovFallbackOpenBoundaryLeak,
+		$RunHllcRusanovFallbackPerformance,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -220,6 +235,11 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunRusanovNearVacuumExpansion -or $RunRusanovSodShockTube `
 	-or $RunRusanovDensityAdvectionRefinement -or $RunRusanovLowMachAdvection `
 	-or $RunAllSpeedRusanovLowMachAdvection `
+	-or $RunHllcRusanovFallbackLowMachAdvection `
+	-or $RunHllcRusanovFallbackNearVacuumExpansion `
+	-or $RunHllcRusanovFallbackSodShockTube `
+	-or $RunHllcRusanovFallbackOpenBoundaryLeak `
+	-or $RunHllcRusanovFallbackPerformance `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
@@ -230,6 +250,16 @@ $runMode = if ($RunRusanovPerformance) {
 	"rusanov_low_mach_advection"
 } elseif ($RunAllSpeedRusanovLowMachAdvection) {
 	"all_speed_rusanov_low_mach_advection"
+} elseif ($RunHllcRusanovFallbackLowMachAdvection) {
+	"hllc_rusanov_fallback_low_mach_advection"
+} elseif ($RunHllcRusanovFallbackNearVacuumExpansion) {
+	"hllc_rusanov_fallback_near_vacuum_expansion"
+} elseif ($RunHllcRusanovFallbackSodShockTube) {
+	"hllc_rusanov_fallback_sod_shock_tube"
+} elseif ($RunHllcRusanovFallbackOpenBoundaryLeak) {
+	"hllc_rusanov_fallback_open_boundary_leak"
+} elseif ($RunHllcRusanovFallbackPerformance) {
+	"hllc_rusanov_fallback_performance"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	"rusanov_density_advection_refinement"
 } elseif ($RunRusanovSodShockTube) {
@@ -255,6 +285,16 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-rusanov-low-mach-advection"
 } elseif ($RunAllSpeedRusanovLowMachAdvection) {
 	"--run-all-speed-rusanov-low-mach-advection"
+} elseif ($RunHllcRusanovFallbackLowMachAdvection) {
+	"--run-hllc-rusanov-fallback-low-mach-advection"
+} elseif ($RunHllcRusanovFallbackNearVacuumExpansion) {
+	"--run-hllc-rusanov-fallback-near-vacuum-expansion"
+} elseif ($RunHllcRusanovFallbackSodShockTube) {
+	"--run-hllc-rusanov-fallback-sod-shock-tube"
+} elseif ($RunHllcRusanovFallbackOpenBoundaryLeak) {
+	"--run-hllc-rusanov-fallback-open-boundary-leak"
+} elseif ($RunHllcRusanovFallbackPerformance) {
+	"--run-hllc-rusanov-fallback-performance"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	"--run-rusanov-density-advection-refinement"
 } elseif ($RunRusanovSodShockTube) {
@@ -290,6 +330,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
 foreach ($candidateLine in @(
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
+    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -488,15 +529,17 @@ if (-not $isRusanovProbe) {
             throw "Rusanov contact drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
-} elseif ($RunRusanovNearVacuumExpansion) {
-    $benchmarkKind = "atmospherebench_rusanov_near_vacuum_expansion_probe"
+} elseif ($RunRusanovNearVacuumExpansion -or $RunHllcRusanovFallbackNearVacuumExpansion) {
+    $isHllcProbe = $RunHllcRusanovFallbackNearVacuumExpansion
+    $expectedCandidate = if ($isHllcProbe) { "fvm_hllc_rusanov_fallback" } else { "fvm_rusanov" }
+    $benchmarkKind = if ($isHllcProbe) { "atmospherebench_hllc_rusanov_fallback_near_vacuum_expansion_probe" } else { "atmospherebench_rusanov_near_vacuum_expansion_probe" }
     $performanceGate = "not_evaluated_candidate_probe"
-    $timingScope = "standalone_rusanov_near_vacuum_expansion_probe"
-    $candidateImplementations = "fvm_rusanov"
+    $timingScope = if ($isHllcProbe) { "standalone_hllc_rusanov_fallback_near_vacuum_expansion_probe" } else { "standalone_rusanov_near_vacuum_expansion_probe" }
+    $candidateImplementations = $expectedCandidate
     if ($solverResultStatus -ne "candidate_result_not_selection") {
         throw "Rusanov near-vacuum probe must not claim solver selection"
     }
-    if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_rusanov" -or
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne $expectedCandidate -or
         (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
         throw "Rusanov near-vacuum candidate identity is invalid"
     }
@@ -547,15 +590,20 @@ if (-not $isRusanovProbe) {
             throw "Rusanov near-vacuum drift exceeds the periodic conservation tolerance: $driftKey"
         }
     }
-} elseif ($RunRusanovSodShockTube) {
-    $benchmarkKind = "atmospherebench_rusanov_sod_shock_tube_probe"
+    if ($isHllcProbe -and (Read-KeyValue -Text $text -Key "flux_fallback_count") -ne "0") {
+        throw "HLLC near-vacuum probe unexpectedly used the Rusanov fallback"
+    }
+} elseif ($RunRusanovSodShockTube -or $RunHllcRusanovFallbackSodShockTube) {
+    $isHllcProbe = $RunHllcRusanovFallbackSodShockTube
+    $expectedCandidate = if ($isHllcProbe) { "fvm_hllc_rusanov_fallback" } else { "fvm_rusanov" }
+    $benchmarkKind = if ($isHllcProbe) { "atmospherebench_hllc_rusanov_fallback_sod_shock_tube_probe" } else { "atmospherebench_rusanov_sod_shock_tube_probe" }
     $performanceGate = "not_evaluated_candidate_probe"
-    $timingScope = "standalone_rusanov_sod_shock_tube_probe"
-    $candidateImplementations = "fvm_rusanov"
+    $timingScope = if ($isHllcProbe) { "standalone_hllc_rusanov_fallback_sod_shock_tube_probe" } else { "standalone_rusanov_sod_shock_tube_probe" }
+    $candidateImplementations = $expectedCandidate
     if ($solverResultStatus -ne "candidate_result_not_selection") {
         throw "Rusanov Sod probe must not claim solver selection"
     }
-    if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_rusanov" -or
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne $expectedCandidate -or
         (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
         throw "Rusanov Sod candidate identity is invalid"
     }
@@ -610,6 +658,9 @@ if (-not $isRusanovProbe) {
         [double]::IsInfinity($boundaryMomentumXExchange) -or
         $boundaryMomentumXExchange -le 0.0) {
         throw "Rusanov Sod wall-pressure impulse was not recorded"
+    }
+    if ($isHllcProbe -and (Read-KeyValue -Text $text -Key "flux_fallback_count") -ne "0") {
+        throw "HLLC Sod probe unexpectedly used the Rusanov fallback"
     }
 } elseif ($RunRusanovDensityAdvectionRefinement) {
     $benchmarkKind = "atmospherebench_rusanov_density_advection_refinement_probe"
@@ -666,13 +717,19 @@ if (-not $isRusanovProbe) {
             throw "Rusanov refinement drift exceeds tolerance: $driftKey"
         }
     }
-} elseif ($RunRusanovLowMachAdvection) {
-    $benchmarkKind = "atmospherebench_rusanov_low_mach_advection_probe"
+} elseif ($RunRusanovLowMachAdvection -or $RunHllcRusanovFallbackLowMachAdvection) {
+    $isHllcProbe = $RunHllcRusanovFallbackLowMachAdvection
+    $expectedCandidate = if ($isHllcProbe) { "fvm_hllc_rusanov_fallback" } else { "fvm_rusanov" }
+    $benchmarkKind = if ($isHllcProbe) { "atmospherebench_hllc_rusanov_fallback_low_mach_advection_probe" } else { "atmospherebench_rusanov_low_mach_advection_probe" }
     $performanceGate = "not_evaluated_candidate_probe"
-    $timingScope = "standalone_rusanov_low_mach_advection_probe"
-    $candidateImplementations = "fvm_rusanov"
+    $timingScope = if ($isHllcProbe) { "standalone_hllc_rusanov_fallback_low_mach_advection_probe" } else { "standalone_rusanov_low_mach_advection_probe" }
+    $candidateImplementations = $expectedCandidate
     if ($solverResultStatus -ne "candidate_result_not_selection") {
         throw "Rusanov low-Mach probe must not claim solver selection"
+    }
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne $expectedCandidate -or
+        (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+        throw "Low-Mach probe candidate identity is invalid"
     }
     foreach ($probeKey in @{
         "case_time_domain" = "nondimensional_contract"; "boundary_mode" = "periodic";
@@ -706,6 +763,16 @@ if (-not $isRusanovProbe) {
         $cfl = [double](Read-KeyValue -Text $text -Key $cflKey)
         if ([double]::IsNaN($cfl) -or [double]::IsInfinity($cfl) -or $cfl -le 0.0 -or $cfl -gt 1.0) {
             throw "Rusanov low-Mach CFL is outside the strict positivity contract: $cflKey"
+        }
+    }
+    if ($isHllcProbe) {
+        if ((Read-KeyValue -Text $text -Key "low_mach_suitability_passed") -ne "true") {
+            throw "HLLC low-Mach suitability gate did not pass"
+        }
+        foreach ($fallbackKey in @("moderate_flux_fallback_count", "low_flux_fallback_count", "very_low_flux_fallback_count")) {
+            if ((Read-KeyValue -Text $text -Key $fallbackKey) -ne "0") {
+                throw "HLLC low-Mach probe unexpectedly used the Rusanov fallback: $fallbackKey"
+            }
         }
     }
 } elseif ($RunAllSpeedRusanovLowMachAdvection) {
@@ -754,13 +821,19 @@ if (-not $isRusanovProbe) {
             throw "All-speed Rusanov low-Mach CFL is outside the strict positivity contract: $cflKey"
         }
     }
-} elseif ($RunRusanovOpenBoundaryLeak) {
-    $benchmarkKind = "atmospherebench_rusanov_open_boundary_leak_probe"
+} elseif ($RunRusanovOpenBoundaryLeak -or $RunHllcRusanovFallbackOpenBoundaryLeak) {
+    $isHllcProbe = $RunHllcRusanovFallbackOpenBoundaryLeak
+    $expectedCandidate = if ($isHllcProbe) { "fvm_hllc_rusanov_fallback" } else { "fvm_rusanov" }
+    $benchmarkKind = if ($isHllcProbe) { "atmospherebench_hllc_rusanov_fallback_open_boundary_leak_probe" } else { "atmospherebench_rusanov_open_boundary_leak_probe" }
     $performanceGate = "not_evaluated_candidate_probe"
-    $timingScope = "standalone_rusanov_open_boundary_leak_probe"
-    $candidateImplementations = "fvm_rusanov"
+    $timingScope = if ($isHllcProbe) { "standalone_hllc_rusanov_fallback_open_boundary_leak_probe" } else { "standalone_rusanov_open_boundary_leak_probe" }
+    $candidateImplementations = $expectedCandidate
     if ($solverResultStatus -ne "candidate_result_not_selection") {
         throw "Rusanov open-boundary leak probe must not claim solver selection"
+    }
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne $expectedCandidate -or
+        (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+        throw "Open-boundary leak candidate identity is invalid"
     }
     foreach ($probeKey in @{
         "case_time_domain" = "nondimensional_contract";
@@ -794,13 +867,22 @@ if (-not $isRusanovProbe) {
         $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
         throw "Rusanov open-boundary leak CFL is outside the strict positivity contract"
     }
+    if ($isHllcProbe -and (Read-KeyValue -Text $text -Key "flux_fallback_count") -ne "0") {
+        throw "HLLC open-boundary leak unexpectedly used the Rusanov fallback"
+    }
 } else {
-    $benchmarkKind = "atmospherebench_rusanov_performance_probe"
+    $isHllcProbe = $RunHllcRusanovFallbackPerformance
+    $expectedCandidate = if ($isHllcProbe) { "fvm_hllc_rusanov_fallback" } else { "fvm_rusanov" }
+    $benchmarkKind = if ($isHllcProbe) { "atmospherebench_hllc_rusanov_fallback_performance_probe" } else { "atmospherebench_rusanov_performance_probe" }
     $performanceGate = "recorded_candidate_measurement_no_budget"
-    $timingScope = "standalone_rusanov_performance_probe_wrapper"
-    $candidateImplementations = "fvm_rusanov"
+    $timingScope = if ($isHllcProbe) { "standalone_hllc_rusanov_fallback_performance_probe_wrapper" } else { "standalone_rusanov_performance_probe_wrapper" }
+    $candidateImplementations = $expectedCandidate
     if ($solverResultStatus -ne "candidate_result_not_selection") {
         throw "Rusanov performance probe must not claim solver selection"
+    }
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne $expectedCandidate -or
+        (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+        throw "Performance probe candidate identity is invalid"
     }
     foreach ($probeKey in @{
         "case_time_domain" = "nondimensional_contract"; "boundary_mode" = "periodic";
@@ -828,6 +910,13 @@ if (-not $isRusanovProbe) {
     foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
         if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-7) {
             throw "Rusanov performance run drift exceeds tolerance: $driftKey"
+        }
+    }
+    if ($isHllcProbe) {
+        foreach ($fallbackKey in @("small_flux_fallback_count", "medium_flux_fallback_count", "large_flux_fallback_count")) {
+            if ((Read-KeyValue -Text $text -Key $fallbackKey) -ne "0") {
+                throw "HLLC performance probe unexpectedly used the Rusanov fallback: $fallbackKey"
+            }
         }
     }
 }
@@ -970,7 +1059,7 @@ if ($isRusanovProbe) {
         $referenceShiftCells = [int](Read-KeyValue -Text $text -Key "reference_shift_cells")
         $advectionReferencePassed = (Read-KeyValue -Text $text -Key "advection_reference_passed") -eq "true"
         $densityBoundsPreserved = (Read-KeyValue -Text $text -Key "density_bounds_preserved") -eq "true"
-	} elseif ($RunRusanovNearVacuumExpansion) {
+	} elseif ($RunRusanovNearVacuumExpansion -or $RunHllcRusanovFallbackNearVacuumExpansion) {
 		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
 		$initialMaximumPressure = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
 		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
@@ -979,7 +1068,7 @@ if ($isRusanovProbe) {
 		$initialLowDensityRegionMass = [double](Read-KeyValue -Text $text -Key "initial_low_density_region_mass")
 		$finalLowDensityRegionMass = [double](Read-KeyValue -Text $text -Key "final_low_density_region_mass")
 		$lowDensityRegionMassIncreased = (Read-KeyValue -Text $text -Key "low_density_region_mass_increased") -eq "true"
-	} elseif ($RunRusanovSodShockTube) {
+	} elseif ($RunRusanovSodShockTube -or $RunHllcRusanovFallbackSodShockTube) {
 		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
 		$eosGamma = [double](Read-KeyValue -Text $text -Key "eos_gamma")
@@ -1029,7 +1118,8 @@ if ($isRusanovProbe) {
 		$coarseMaximumCfl = [double](Read-KeyValue -Text $text -Key "coarse_maximum_cfl")
 		$mediumMaximumCfl = [double](Read-KeyValue -Text $text -Key "medium_maximum_cfl")
 		$fineMaximumCfl = [double](Read-KeyValue -Text $text -Key "fine_maximum_cfl")
-	} elseif ($RunRusanovLowMachAdvection -or $RunAllSpeedRusanovLowMachAdvection) {
+	} elseif ($RunRusanovLowMachAdvection -or $RunAllSpeedRusanovLowMachAdvection `
+		-or $RunHllcRusanovFallbackLowMachAdvection) {
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
 		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
 		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "maximum_pressure")
@@ -1051,7 +1141,7 @@ if ($isRusanovProbe) {
 			throw "Rusanov low-Mach suitability result is invalid"
 		}
 		$lowMachSuitabilityPassed = $lowMachSuitabilityText -eq "true"
-	} elseif ($RunRusanovOpenBoundaryLeak) {
+	} elseif ($RunRusanovOpenBoundaryLeak -or $RunHllcRusanovFallbackOpenBoundaryLeak) {
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
 		$eosGamma = [double](Read-KeyValue -Text $text -Key "eos_gamma")
 		$eosSpecificGasConstant = [double](Read-KeyValue -Text $text -Key "eos_specific_gas_constant")
@@ -1085,7 +1175,7 @@ if ($isRusanovProbe) {
 		$momentumYBalanceError = [double](Read-KeyValue -Text $text -Key "momentum_y_balance_error")
 		$energyBalanceError = [double](Read-KeyValue -Text $text -Key "energy_balance_error")
 		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
-	} elseif ($RunRusanovPerformance) {
+	} elseif ($RunRusanovPerformance -or $RunHllcRusanovFallbackPerformance) {
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
 		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
 		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "maximum_pressure")
@@ -1116,10 +1206,20 @@ if ($RunRusanovPerformance) {
 	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
+} elseif ($RunHllcRusanovFallbackPerformance) {
+	$limitations += "HLLC with conservative Rusanov fallback performance is a single-threaded strict-double 1D candidate measurement; no production budget or solver selection is implied."
+} elseif ($RunHllcRusanovFallbackOpenBoundaryLeak) {
+	$limitations += "HLLC with conservative Rusanov fallback has one fixed-reservoir open-boundary ledger result; it is not a production TPT boundary model or solver selection."
 } elseif ($RunRusanovLowMachAdvection) {
 	$limitations += "Rusanov low-Mach characterization records the measured diffusion and suitability result; it is not an all-speed solver or production performance claim."
 } elseif ($RunAllSpeedRusanovLowMachAdvection) {
 	$limitations += "All-speed Rusanov is a standalone strict-double 1D low-Mach candidate; this measured version is rejected by the defined low-Mach suitability threshold and is not a production solver or performance claim."
+} elseif ($RunHllcRusanovFallbackLowMachAdvection) {
+	$limitations += "HLLC with conservative Rusanov fallback is an isolated strict-double 1D low-Mach candidate result; it is not solver selection or production performance evidence."
+} elseif ($RunHllcRusanovFallbackSodShockTube) {
+	$limitations += "HLLC with conservative Rusanov fallback has one sealed 1D Sod result; it is not multidimensional, production-boundary or solver-selection evidence."
+} elseif ($RunHllcRusanovFallbackNearVacuumExpansion) {
+	$limitations += "HLLC with conservative Rusanov fallback has one periodic 1D near-vacuum result; it does not authorize physical floors, production vacuum or solver selection."
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	$limitations += "Rusanov has one three-level smooth-advection refinement study; it does not establish low-Mach, multidimensional, leak, source-term or production performance behavior."
 } elseif ($RunRusanovSodShockTube) {

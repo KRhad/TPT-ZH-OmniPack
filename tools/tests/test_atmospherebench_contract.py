@@ -65,6 +65,11 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-rusanov-low-mach-advection' ]", target)
         self.assertIn("'atmospherebench-all-speed-rusanov-low-mach-advection'", target)
         self.assertIn("args: [ '--run-all-speed-rusanov-low-mach-advection' ]", target)
+        self.assertIn("args: [ '--run-hllc-rusanov-fallback-low-mach-advection' ]", target)
+        self.assertIn("args: [ '--run-hllc-rusanov-fallback-near-vacuum-expansion' ]", target)
+        self.assertIn("args: [ '--run-hllc-rusanov-fallback-sod-shock-tube' ]", target)
+        self.assertIn("args: [ '--run-hllc-rusanov-fallback-open-boundary-leak' ]", target)
+        self.assertIn("args: [ '--run-hllc-rusanov-fallback-performance' ]", target)
         self.assertIn("'atmospherebench-rusanov-open-boundary-leak'", target)
         self.assertIn("args: [ '--run-rusanov-open-boundary-leak' ]", target)
         self.assertIn("'atmospherebench-rusanov-performance'", target)
@@ -73,6 +78,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn('"registered_only"', source)
         self.assertIn('"implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes"', source)
         self.assertIn('"implemented_1d_low_mach_probe_rejected"', source)
+        self.assertIn('"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_probes"', source)
         self.assertIn("RUSANOV_UNIFORM_PROBE", source)
         self.assertIn("RUSANOV_PRESSURE_PULSE_PROBE", source)
         self.assertIn("RUSANOV_DENSITY_ADVECTION_PROBE", source)
@@ -98,6 +104,9 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("RunRusanovSodShockTube", header)
         self.assertIn("RunRusanovOpenBoundaryLeak", header)
         self.assertIn("RunAllSpeedRusanovLowMachAdvection", header)
+        self.assertIn("RunHllcRusanovFallbackLowMachAdvection", header)
+        self.assertIn("RunHllcRusanovFallbackNearVacuumExpansion", header)
+        self.assertIn("RunHllcRusanovFallbackSodShockTube", header)
         self.assertIn("RusanovFluxX", source)
         self.assertIn("RunPeriodicProbe", source)
         self.assertIn("maximumWaveSpeed", source)
@@ -129,6 +138,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn('"fvm_hlle", "registered_only", false', atmosphere)
         self.assertIn('"lbm_d2q9", "registered_only", false', atmosphere)
         self.assertIn('"fvm_all_speed_rusanov",', atmosphere)
+        self.assertIn('"fvm_hllc_rusanov_fallback",', atmosphere)
 
     def test_cpp_scale_fixture_matches_the_unselected_json_candidate(self) -> None:
         candidate = json.loads(
