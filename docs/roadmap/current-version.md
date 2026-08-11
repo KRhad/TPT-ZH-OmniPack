@@ -190,11 +190,11 @@ are `null`, not fake zero. Clean result SHA-256 values are
 and `D1FE38268F52B15AB6BFA7D135B77122A79D48C1227A1E1F5909AEBB4AD0DFBA`.
 See the [Legacy-like checkpoint](../vnext/phase-5-legacy-like-control.md).
 
-The clean source package for the current D2Q9 comparison checkpoint is
-`artifacts/vnext-phase5-source-c8ae4ea8a/`, SHA-256
-`3F1DB05D65D61701B726DE12BD959E43739291F3026D7BAC251E8DDF7B025876`,
-with `1313` source members plus manifest and zero test assets. The manifest binds
-revision `c8ae4ea8a7989965972825b26382b4ed485f5030`.
+The clean source package for the current Legacy-like comparison checkpoint is
+`artifacts/vnext-phase5-source-950ba3974/`, SHA-256
+`3DF031CEFC765DAEF8DE63D6FB749307CE7283C9C89F003BA63EE6CEDB2F2D77`,
+with `1316` source members plus manifest and zero test assets. The manifest binds
+revision `950ba397417605782622b057ee82b3d1511000ee`.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the

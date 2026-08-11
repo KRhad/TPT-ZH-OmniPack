@@ -80,6 +80,13 @@ The clean JSON records `mass_drift`, `momentum_drift`, both momentum components
 and `energy_drift` as `null`. It does not convert those strings to a number and
 does not publish fake zero conservation.
 
+The clean test-free source package is
+`artifacts/vnext-phase5-source-950ba3974/`, SHA-256
+`3DF031CEFC765DAEF8DE63D6FB749307CE7283C9C89F003BA63EE6CEDB2F2D77`.
+It contains `1316` source members plus one manifest, includes both Legacy-like
+sources and this report, contains zero test assets, and binds revision
+`950ba397417605782622b057ee82b3d1511000ee`.
+
 ## Memory, validation and compatibility
 
 ```text
@@ -92,6 +99,7 @@ targeted_atmospherebench_contracts=21/21 PASS
 direct_probes=2/2 PASS
 atmospherebench_self_test=PASS
 clean_runners=2/2 PASS
+source_package=1316 source members plus manifest, 0 test assets
 source_dirty=false
 strict_reference_flags_verified=true
 ```

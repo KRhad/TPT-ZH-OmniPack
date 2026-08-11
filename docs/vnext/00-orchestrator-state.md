@@ -245,10 +245,10 @@ are `505F69D6D87724CC1B8E4410CA13BE91AF9464E22B12BBE338C601DB74CF04AD`
 and `D1FE38268F52B15AB6BFA7D135B77122A79D48C1227A1E1F5909AEBB4AD0DFBA`.
 
 Current AtmosphereBench checkpoint source package:
-`artifacts/vnext-phase5-source-c8ae4ea8a/`, SHA-256
-`3F1DB05D65D61701B726DE12BD959E43739291F3026D7BAC251E8DDF7B025876`,
-`1313` source members plus manifest and zero test assets. The manifest binds
-revision `c8ae4ea8a7989965972825b26382b4ed485f5030`.
+`artifacts/vnext-phase5-source-950ba3974/`, SHA-256
+`3DF031CEFC765DAEF8DE63D6FB749307CE7283C9C89F003BA63EE6CEDB2F2D77`,
+`1316` source members plus manifest and zero test assets. The manifest binds
+revision `950ba397417605782622b057ee82b3d1511000ee`.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
