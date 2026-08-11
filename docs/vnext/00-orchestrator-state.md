@@ -220,10 +220,10 @@ claim. The clean result SHA-256 is
 `2792A219A32A3F7C81EC93ABF9301B5D3D2EE48A6BC74D27A40CBB8DE7D1BF87`.
 
 Current HLLC two-dimensional checkpoint source package:
-`artifacts/vnext-phase5-source-03a83b865/`, SHA-256
-`299EA74E8D98727CA945AACC2B894794A666351EFF9614E5937B006A7C4CE9BE`,
-`1309` source members plus manifest and zero test assets. The manifest binds
-revision `03a83b865072ba20efe0072419cc428dd73f9a7e`.
+`artifacts/vnext-phase5-source-ef423c4f5/`, SHA-256
+`FDF8404AAFF38E23C1DBE5BCAF96EB750825CB95B899FE3B1BCE8C2DF2A267A5`,
+`1310` source members plus manifest and zero test assets. The manifest binds
+revision `ef423c4f5a44a428e5f015855a087ace63c7ce96`.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical

@@ -90,6 +90,13 @@ The local clean result is under
 `artifacts/vnext-atmospherebench-hllc-2d-performance/` and binds the full commit
 `12e904f7574b690c600f1bbcb0b74d160badf540`.
 
+The clean test-free source package is
+`artifacts/vnext-phase5-source-ef423c4f5/`, SHA-256
+`FDF8404AAFF38E23C1DBE5BCAF96EB750825CB95B899FE3B1BCE8C2DF2A267A5`.
+It contains `1310` source members plus one manifest, contains zero test assets,
+includes this report and all AtmosphereBench sources, and binds revision
+`ef423c4f5a44a428e5f015855a087ace63c7ce96`.
+
 ## Compatibility, limitations and gate
 
 - No production Air, Simulation, Particle, Save, Lua, renderer or SDL file changed.

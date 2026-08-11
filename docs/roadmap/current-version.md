@@ -164,11 +164,11 @@ fraction is recorded only as context; `performance_budget_status=unselected`.
 The clean result SHA-256 is
 `2792A219A32A3F7C81EC93ABF9301B5D3D2EE48A6BC74D27A40CBB8DE7D1BF87`.
 
-The clean source package for the current species-mixing checkpoint is
-`artifacts/vnext-phase5-source-03a83b865/`, SHA-256
-`299EA74E8D98727CA945AACC2B894794A666351EFF9614E5937B006A7C4CE9BE`,
-with `1309` source members plus manifest and zero test assets. The manifest binds
-revision `03a83b865072ba20efe0072419cc428dd73f9a7e`.
+The clean source package for the current 2D performance checkpoint is
+`artifacts/vnext-phase5-source-ef423c4f5/`, SHA-256
+`FDF8404AAFF38E23C1DBE5BCAF96EB750825CB95B899FE3B1BCE8C2DF2A267A5`,
+with `1310` source members plus manifest and zero test assets. The manifest binds
+revision `ef423c4f5a44a428e5f015855a087ace63c7ce96`.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the
