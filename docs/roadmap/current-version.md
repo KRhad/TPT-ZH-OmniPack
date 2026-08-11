@@ -177,11 +177,11 @@ SHA-256 values are
 `D601D2DDA76BECB73C37CE5CB309F6460A10B2516D50C135C8D7B39C26FA4333`
 and `26180CBA90702B0458D30FA05C1867CEEAFA743D7CCF50BE7F393C29E7C12AE6`.
 
-The clean source package for the current 2D performance checkpoint is
-`artifacts/vnext-phase5-source-ef423c4f5/`, SHA-256
-`FDF8404AAFF38E23C1DBE5BCAF96EB750825CB95B899FE3B1BCE8C2DF2A267A5`,
-with `1310` source members plus manifest and zero test assets. The manifest binds
-revision `ef423c4f5a44a428e5f015855a087ace63c7ce96`.
+The clean source package for the current D2Q9 comparison checkpoint is
+`artifacts/vnext-phase5-source-c8ae4ea8a/`, SHA-256
+`3F1DB05D65D61701B726DE12BD959E43739291F3026D7BAC251E8DDF7B025876`,
+with `1313` source members plus manifest and zero test assets. The manifest binds
+revision `c8ae4ea8a7989965972825b26382b4ed485f5030`.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the

@@ -72,6 +72,13 @@ numerical_correction_count=0
 Clean result SHA-256:
 `26180CBA90702B0458D30FA05C1867CEEAFA743D7CCF50BE7F393C29E7C12AE6`.
 
+The clean test-free source package is
+`artifacts/vnext-phase5-source-c8ae4ea8a/`, SHA-256
+`3F1DB05D65D61701B726DE12BD959E43739291F3026D7BAC251E8DDF7B025876`.
+It contains `1313` source members plus one manifest, includes both D2Q9 sources
+and this report, contains zero test assets, and binds revision
+`c8ae4ea8a7989965972825b26382b4ed485f5030`.
+
 ## Unsupported mandatory physics
 
 The runner and JSON record these as explicit strings, not numeric zero:
