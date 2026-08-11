@@ -261,13 +261,35 @@ Species-EOS coupling and physical diffusion are explicitly `not_implemented`;
 this is not a production multi-species atmosphere or solver selection. The
 standalone report is [phase-5-species-mixing.md](phase-5-species-mixing.md).
 
+### Target-size two-dimensional performance
+
+Checkpoint `12e904f75` measures one warm-up plus three repetitions of 32 periodic
+steps; each sample includes allocation, initial-state generation, solver work and
+validation. Median strict-double single-thread time is:
+
+```text
+153x96=1.69129 ms/step, 8.68448M cell-updates/s
+306x192=6.56627 ms/step, 8.94755M cell-updates/s
+612x384=31.2385 ms/step, 7.52304M cell-updates/s
+state_and_flux_scratch=160 bytes/cell
+fallback_count=0 / 0 / 0
+numerical_correction_count=0
+performance_budget_status=unselected
+```
+
+The 60 Hz frame fractions are `0.101478 / 0.393976 / 1.87431`, used only as a
+reference denominator. They do not select an atmosphere budget or physical-time
+substep policy. The clean result SHA-256 is
+`2792A219A32A3F7C81EC93ABF9301B5D3D2EE48A6BC74D27A40CBB8DE7D1BF87`.
+See [phase-5-hllc-2d-performance.md](phase-5-hllc-2d-performance.md).
+
 ## Validation
 
 ```text
 full_build=75/75 build steps PASS
-python_discovery=413 PASS, 2 skipped, 415 total
-meson_static=64/64 PASS
-targeted_atmospherebench_contracts=18/18 PASS
+python_discovery=414 PASS, 2 skipped, 416 total
+meson_static=65/65 PASS
+targeted_atmospherebench_contracts=19/19 PASS
 hllc_targeted_meson=6/6 PASS
 hllc_2d_targeted_meson=4/4 PASS
 hllc_fallback_contract=PASS, expected fallback count 1
@@ -305,8 +327,9 @@ assets, and binds revision `03a83b865072ba20efe0072419cc428dd73f9a7e`.
 HLLC with Rusanov fallback is the current front-runner for continued PoC work,
 not the selected production solver. `V1_0_5_GATE=IN_PROGRESS` because the phase
 still lacks a selected PhysicalScale/physical-time policy, accepted performance
-budget and two-dimensional performance. Sealed heating, gravity accounting,
-natural convection and passive species conservation now pass, but broader
+budget and actual Legacy-like/LBM comparison. Sealed heating, gravity accounting,
+natural convection, passive species conservation and target-size 2D throughput
+now have evidence, but broader
 multidimensional and
 long-running adversarial coverage remains required before production use.
 

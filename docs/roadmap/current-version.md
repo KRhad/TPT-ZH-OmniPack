@@ -3,9 +3,9 @@
 ```text
 CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
-PHASE_STATUS=IN_PROGRESS_HLLC_2D_SPECIES_MIXING
+PHASE_STATUS=IN_PROGRESS_HLLC_2D_PERFORMANCE
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=55088a8523421b8ef5c1c0b6be3170fdf505ac34
+IMPLEMENTATION_HEAD=12e904f7574b690c600f1bbcb0b74d160badf540
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -51,9 +51,10 @@ V1_0_5_HLLC_2D_PERIODIC=GREEN_UNIFORM_AND_PRESSURE_PULSE_32X24_ZERO_FALLBACK_ZER
 V1_0_5_HLLC_2D_SEALED_HEATING=GREEN_SOURCE_LEDGER_CLOSE_PRESSURE_TEMPERATURE_INCREASE_ENERGY_BALANCE_3_21876E_MINUS_11_ZERO_FALLBACK_ZERO_CORRECTIONS_162_333_BYTES_PER_CELL_COMMIT_be0ff2f37
 V1_0_5_HLLC_2D_NATURAL_CONVECTION=GREEN_CONTROL_SUBTRACTED_THERMAL_RISE_0_225497_UPDRAFT_0_0257047_RETURN_MINUS_0_000157248_SOURCE_BOUNDARY_LEDGER_LT_8E_MINUS_12_ZERO_FALLBACK_ZERO_CORRECTIONS_COMMIT_83c5a0cd2
 V1_0_5_HLLC_2D_SPECIES_MIXING=GREEN_PASSIVE_BINARY_32X24_320_STEPS_SPECIES_A_B_ZERO_DRIFT_FRACTION_BOUNDS_0_1_TV_48_TO_47_9173_768_MIXED_CELLS_ZERO_FALLBACK_ZERO_CORRECTIONS_40_STATE_200_WORKING_BYTES_PER_CELL_COMMIT_55088a852
-KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget; selected PhysicalScale and physical-time policy; multidimensional performance evidence
+V1_0_5_HLLC_2D_PERFORMANCE=RECORDED_NO_BUDGET_STRICT_DOUBLE_SINGLE_THREAD_153X96_1_69129MS_306X192_6_56627MS_612X384_31_2385MS_160_WORKING_BYTES_PER_CELL_COMMIT_12e904f75
+KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted CPU and memory budget; selected PhysicalScale and physical-time policy; actual Legacy-like and LBM comparison; remaining mandatory solver matrix
 NEXT_VERSION=1.0.6
-NEXT_PHASE=add two-dimensional HLLC performance and explicit memory/frame-budget checkpoint only inside AtmosphereBench; keep HLLE and LBM registered-only
+NEXT_PHASE=define and validate Phase 5 CPU/memory budget plus physical-scale/time policy, then execute actual Legacy-like and LBM comparison before solver selection
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -152,6 +153,16 @@ mixed region, and composition total variation decreases measurably from `48` to
 `200 bytes/cell`. Species-EOS coupling and physical diffusion remain
 `not_implemented`. The clean result SHA-256 is
 `F5B7C1FBB60CD2E7672AA5A50FC46A8600C3D8B43E7BE074234BDADC9D8982A4`.
+
+The strict-double single-threaded 2D performance checkpoint is clean-validated at
+`12e904f75`. Median end-to-end time per step is `1.69129 ms` for the current
+`153x96` Air grid, `6.56627 ms` for `306x192`, and `31.2385 ms` for the
+`612x384` particle grid. Throughput is `8.68448M / 8.94755M / 7.52304M`
+cell-updates/s; the current periodic working allocation is `160 bytes/cell`.
+All samples preserve positivity and use zero fallback/corrections. The 60 Hz frame
+fraction is recorded only as context; `performance_budget_status=unselected`.
+The clean result SHA-256 is
+`2792A219A32A3F7C81EC93ABF9301B5D3D2EE48A6BC74D27A40CBB8DE7D1BF87`.
 
 The clean source package for the current species-mixing checkpoint is
 `artifacts/vnext-phase5-source-03a83b865/`, SHA-256

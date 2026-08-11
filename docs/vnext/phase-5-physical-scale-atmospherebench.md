@@ -5,8 +5,8 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_COMMIT=55088a8523421b8ef5c1c0b6be3170fdf505ac34
-STATUS=IN_PROGRESS_HLLC_2D_SPECIES_MIXING
+IMPLEMENTATION_COMMIT=12e904f7574b690c600f1bbcb0b74d160badf540
+STATUS=IN_PROGRESS_HLLC_2D_PERFORMANCE
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -50,7 +50,9 @@ RUSANOV_PERFORMANCE_COMMIT=ee9290cb7
 RUSANOV_PERFORMANCE_VALIDATION=GREEN_STRICT_DOUBLE_SINGLE_THREAD_MEDIAN_3_REPEATS_31_0232M_31_3699M_32_8059M_CELL_UPDATES_PER_SECOND_NO_BUDGET_SELECTED
 HLLC_2D_SPECIES_MIXING_COMMIT=55088a8523421b8ef5c1c0b6be3170fdf505ac34
 HLLC_2D_SPECIES_MIXING_VALIDATION=GREEN_32X24_320_STEPS_SPECIES_A_B_ZERO_DRIFT_TV_48_TO_47_9173_768_MIXED_CELLS_ZERO_FALLBACK_ZERO_CORRECTIONS_40_STATE_200_WORKING_BYTES_PER_CELL
-CURRENT_VALIDATION=GREEN_BUILD_75_STEPS_STATIC_64_TARGETED_18_PYTHON_415_TOTAL_413_PASS_2_SKIP_SPECIES_CLEAN_RUNNER_PASS
+HLLC_2D_PERFORMANCE_COMMIT=12e904f7574b690c600f1bbcb0b74d160badf540
+HLLC_2D_PERFORMANCE_VALIDATION=RECORDED_NO_BUDGET_153X96_1_69129MS_306X192_6_56627MS_612X384_31_2385MS_160_WORKING_BYTES_PER_CELL_ZERO_FALLBACK_ZERO_CORRECTIONS
+CURRENT_VALIDATION=GREEN_BUILD_75_STEPS_STATIC_65_TARGETED_19_PYTHON_416_TOTAL_414_PASS_2_SKIP_PERFORMANCE_CLEAN_RUNNER_PASS
 CURRENT_SOURCE_PACKAGE=GREEN_1309_SOURCE_PLUS_MANIFEST_NO_TEST_ASSETS_REVISION_03a83b865_SHA256_299EA74E8D98727CA945AACC2B894794A666351EFF9614E5937B006A7C4CE9BE
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
@@ -433,7 +435,31 @@ with `1309` source members plus manifest and zero test assets. The manifest bind
 revision `03a83b865072ba20efe0072419cc428dd73f9a7e`.
 
 Gas-mixing/species-conservation evidence is therefore no longer a Phase 5 gap.
-`V1_0_5_GATE` remains `IN_PROGRESS` for two-dimensional performance and an
-accepted memory/frame budget, selected PhysicalScale, physical-time policy and
-final solver selection. Production Air remains unchanged and unauthorized for
-replacement.
+At the species checkpoint, `V1_0_5_GATE` remained `IN_PROGRESS` for
+two-dimensional performance and an accepted memory/frame budget, selected
+PhysicalScale, physical-time policy and final solver selection. Production Air
+remained unchanged and unauthorized for replacement.
+
+## Target-size HLLC 2D performance checkpoint
+
+Checkpoint `12e904f75` records strict-double, single-threaded, end-to-end periodic
+performance over 32 steps after one warm-up, using the median of three runs:
+
+```text
+153x96=1.69129 ms/step, 8.68448M cell-updates/s
+306x192=6.56627 ms/step, 8.94755M cell-updates/s
+612x384=31.2385 ms/step, 7.52304M cell-updates/s
+working_memory=160 bytes/cell
+fallback_count=0 / 0 / 0
+correction_count=0
+```
+
+The `153x96` case matches the current Legacy Air grid, while `612x384` matches
+the particle grid. A 16.667 ms frame is recorded only as context; the candidate
+budget and physical-time policy remain `unselected`. The clean result SHA-256 is
+`2792A219A32A3F7C81EC93ABF9301B5D3D2EE48A6BC74D27A40CBB8DE7D1BF87`.
+See [the performance checkpoint](phase-5-hllc-2d-performance.md).
+
+Two-dimensional performance is now measured, but the Phase 5 Gate remains open
+for an accepted CPU/memory budget, PhysicalScale/time policy, actual Legacy-like
+and LBM comparison, remaining mandatory cases and final solver selection.

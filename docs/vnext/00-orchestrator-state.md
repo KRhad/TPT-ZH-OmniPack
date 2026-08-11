@@ -210,6 +210,15 @@ coupling and physical diffusion are explicitly `not_implemented`; this does not
 select the solver or authorize production integration. The clean result SHA-256
 is `F5B7C1FBB60CD2E7672AA5A50FC46A8600C3D8B43E7BE074234BDADC9D8982A4`.
 
+Two-dimensional strict-double performance is clean-validated at `12e904f75`.
+Median end-to-end time per nondimensional periodic step is `1.69129 ms` at the
+current `153x96` Air grid, `6.56627 ms` at `306x192`, and `31.2385 ms` at
+`612x384`; throughput is `8.68448M / 8.94755M / 7.52304M` cell-updates/s.
+Working allocation is `160 bytes/cell`, and all three sizes use zero fallback and
+correction events. This is a measurement, not a selected budget or physical-time
+claim. The clean result SHA-256 is
+`2792A219A32A3F7C81EC93ABF9301B5D3D2EE48A6BC74D27A40CBB8DE7D1BF87`.
+
 Current HLLC two-dimensional checkpoint source package:
 `artifacts/vnext-phase5-source-03a83b865/`, SHA-256
 `299EA74E8D98727CA945AACC2B894794A666351EFF9614E5937B006A7C4CE9BE`,
