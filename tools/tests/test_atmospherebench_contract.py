@@ -321,6 +321,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("hybrid_near_vacuum_routing=implemented_fixture_only", source)
         self.assertIn("species_cross_route_transport=implemented_passive_interface_fixture_only", source)
         self.assertIn("passive_species_cross_route_ledger_passed=", source)
+        self.assertIn("near_vacuum_evolution_passed=", source)
+        self.assertIn("passive_species_evolution_passed=", source)
         self.assertIn("7 * sizeof(ConservativeState)", source)
         self.assertIn("--run-hybrid-mixed-region-2d", main)
 

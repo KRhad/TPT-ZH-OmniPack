@@ -614,12 +614,13 @@ unselected and 1.0.6 remains blocked.
 
 ## Vacuum/species routing and precision matrix
 
-Checkpoint `55731d49b` adds two bounded fixtures. A cell at density `1e-6` and
-pressure `1e-8` is forced onto the compressible route and expands its route halo;
-a passive binary species interface uses the HLLC mass flux and records exact
-equal-and-opposite A/B exchange (`-0.16/+0.16`, `-0.04/+0.04`). This is routing
-and interface-ledger evidence only: species EOS coupling and diffusion remain
-unimplemented.
+Checkpoint `55731d49b` adds bounded vacuum/species evidence. A cell at density
+`1e-6` and pressure `1e-8` is forced onto the compressible route and then evolved
+through 16 periodic HLLC updates while remaining finite and positive. A passive
+binary species interface uses the HLLC mass flux and records exact
+equal-and-opposite A/B exchange (`-0.16/+0.16`, `-0.04/+0.04`); a 32-step passive
+species advection case preserves both totals, bounds and a nonzero mixed-cell
+count. Species EOS coupling and physical diffusion remain unimplemented.
 
 Independent review corrected the hybrid peak-state accounting from five to seven
 state-sized buffers (`224 bytes/cell`): cells, work, next, Flux-X, Flux-Y,

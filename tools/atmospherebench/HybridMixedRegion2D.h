@@ -73,6 +73,8 @@ struct HybridMixedRegion2DProbeSummary
 	bool targetGridMatrixMeasured = false;
 	bool nearVacuumRoutingPassed = false;
 	bool passiveSpeciesCrossRouteLedgerPassed = false;
+	bool nearVacuumEvolutionPassed = false;
+	bool passiveSpeciesEvolutionPassed = false;
 	bool passed = false;
 };
 

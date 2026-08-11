@@ -523,7 +523,9 @@ if (-not $isRusanovProbe) {
 		"hysteresis_conflict_passed" = "true";
 		"threshold_scan_passed" = "true";
 		"near_vacuum_routing_passed" = "true";
+		"near_vacuum_evolution_passed" = "true";
 		"passive_species_cross_route_ledger_passed" = "true";
+		"passive_species_evolution_passed" = "true";
 		"dynamic_event_region_implemented" = "true";
 		"event_local_subcycling_implemented" = "true";
 		"finite_state" = "true"; "positivity_preserved" = "true";
@@ -2016,7 +2018,9 @@ if ($isRusanovProbe) {
 			hysteresis_conflict_passed = (Read-KeyValue -Text $text -Key "hysteresis_conflict_passed") -eq "true"
 			threshold_scan_passed = (Read-KeyValue -Text $text -Key "threshold_scan_passed") -eq "true"
 			near_vacuum_routing_passed = (Read-KeyValue -Text $text -Key "near_vacuum_routing_passed") -eq "true"
+			near_vacuum_evolution_passed = (Read-KeyValue -Text $text -Key "near_vacuum_evolution_passed") -eq "true"
 			passive_species_cross_route_ledger_passed = (Read-KeyValue -Text $text -Key "passive_species_cross_route_ledger_passed") -eq "true"
+			passive_species_evolution_passed = (Read-KeyValue -Text $text -Key "passive_species_evolution_passed") -eq "true"
 			finite_state = (Read-KeyValue -Text $text -Key "finite_state") -eq "true"
 			positivity_preserved = (Read-KeyValue -Text $text -Key "positivity_preserved") -eq "true"
 			global_ledger_closes = (Read-KeyValue -Text $text -Key "global_ledger_closes") -eq "true"

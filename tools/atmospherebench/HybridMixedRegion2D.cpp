@@ -286,6 +286,74 @@ namespace
 		return routes[center] && std::count(routes.begin(), routes.end(), true) >= 5;
 	}
 
+	bool RunNearVacuumEvolutionFixture()
+	{
+		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		std::vector<ConservativeState> cells(CellsX * CellsY,
+			eos.FromPrimitive(1.0, 0.0, 0.0, 1.0));
+		// Keep the low-density pocket finite but evolve it through repeated routing.
+		for (std::size_t y = CellsY / 2 - 1; y <= CellsY / 2; ++y)
+			for (std::size_t x = CellsX / 2 - 1; x <= CellsX / 2; ++x)
+				cells[Index(x, y, CellsX)] = eos.FromPrimitive(1e-6, 0.0, 0.0, 1e-8);
+		std::vector<bool> routes(cells.size(), false);
+		std::size_t promotions = 0;
+		std::size_t routedSteps = 0;
+		double minimumDensity = std::numeric_limits<double>::infinity();
+		const auto initial = cells;
+		for (std::size_t step = 0; step < 16; ++step)
+		{
+			std::size_t halo = 0;
+			double cfl = 0.0;
+			const auto nextRoutes = Route(cells, CellsX, CellsY, routes, eos, 1.0,
+				step == 0, halo, cfl);
+			promotions += static_cast<std::size_t>(std::count(nextRoutes.begin(), nextRoutes.end(), true));
+			if (std::count(nextRoutes.begin(), nextRoutes.end(), true) > 0)
+				++routedSteps;
+			routes = nextRoutes;
+			for (const auto &cell : cells)
+			{
+				const auto primitive = eos.ToPrimitive(cell);
+				if (!primitive.valid)
+					return false;
+				minimumDensity = std::min(minimumDensity, static_cast<double>(primitive.density));
+			}
+			std::vector<ConservativeState> fluxX(cells.size());
+			std::vector<ConservativeState> fluxY(cells.size());
+			for (std::size_t y = 0; y < CellsY; ++y)
+				for (std::size_t x = 0; x < CellsX; ++x)
+				{
+					const auto index = Index(x, y, CellsX);
+					const auto right = Index((x + 1) % CellsX, y, CellsX);
+					const auto top = Index(x, (y + 1) % CellsY, CellsX);
+					const auto xFlux = HllcFluxX(cells[index], cells[right], eos);
+					const auto yFlux = HllcFluxY(cells[index], cells[top], eos);
+					if (!xFlux.valid || !yFlux.valid)
+						return false;
+					fluxX[index] = xFlux.flux;
+					fluxY[index] = yFlux.flux;
+				}
+			std::vector<ConservativeState> next = cells;
+			for (std::size_t y = 0; y < CellsY; ++y)
+				for (std::size_t x = 0; x < CellsX; ++x)
+				{
+					const auto index = Index(x, y, CellsX);
+					const auto left = Index((x + CellsX - 1) % CellsX, y, CellsX);
+					const auto bottom = Index(x, (y + CellsY - 1) % CellsY, CellsX);
+					const auto delta = Add(Subtract(fluxX[index], fluxX[left]),
+						Subtract(fluxY[index], fluxY[bottom]));
+					next[index] = Subtract(cells[index], Scale(0.002, delta));
+					if (!eos.ToPrimitive(next[index]).valid)
+						return false;
+				}
+			cells.swap(next);
+		}
+		double stateChange = 0.0;
+		for (std::size_t index = 0; index < cells.size(); ++index)
+			stateChange += std::abs(cells[index].density - initial[index].density)
+				+ std::abs(cells[index].totalEnergyDensity - initial[index].totalEnergyDensity);
+		return promotions > 0 && routedSteps == 16 && minimumDensity > 0.0 && stateChange > 0.0;
+	}
+
 	bool RunPassiveSpeciesCrossRouteFixture(double &eventA, double &bulkA,
 		double &eventB, double &bulkB)
 	{
@@ -306,6 +374,61 @@ namespace
 		return std::abs(eventA + bulkA) <= 1e-12
 			&& std::abs(eventB + bulkB) <= 1e-12
 			&& std::abs(speciesFluxA + speciesFluxB - flux.flux.density) <= 1e-12;
+	}
+
+	bool RunPassiveSpeciesEvolutionFixture()
+	{
+		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		std::vector<double> speciesA(CellsX * CellsY, 0.5);
+		std::vector<double> speciesB(CellsX * CellsY, 0.5);
+		for (std::size_t y = 0; y < CellsY; ++y)
+			for (std::size_t x = 0; x < CellsX / 2; ++x)
+			{
+				speciesA[Index(x, y, CellsX)] = 0.9;
+				speciesB[Index(x, y, CellsX)] = 0.1;
+			}
+		const auto state = eos.FromPrimitive(1.0, 0.2, 0.0, 1.0);
+		const double cfl = 0.2;
+		for (std::size_t step = 0; step < 32; ++step)
+		{
+			std::vector<double> nextA = speciesA;
+			std::vector<double> nextB = speciesB;
+			for (std::size_t y = 0; y < CellsY; ++y)
+				for (std::size_t x = 0; x < CellsX; ++x)
+				{
+					const auto index = Index(x, y, CellsX);
+					const auto right = Index((x + 1) % CellsX, y, CellsX);
+					const double transported = cfl * (speciesA[index] - speciesA[right]);
+					nextA[right] += transported;
+					nextA[index] -= transported;
+					const double transportedB = cfl * (speciesB[index] - speciesB[right]);
+					nextB[right] += transportedB;
+					nextB[index] -= transportedB;
+				}
+			speciesA.swap(nextA);
+			speciesB.swap(nextB);
+		}
+		double minA = 1.0, maxA = 0.0, minB = 1.0, maxB = 0.0;
+		std::size_t mixedCells = 0;
+		double totalA = 0.0, totalB = 0.0;
+		for (std::size_t index = 0; index < speciesA.size(); ++index)
+		{
+			minA = std::min(minA, speciesA[index]);
+			maxA = std::max(maxA, speciesA[index]);
+			minB = std::min(minB, speciesB[index]);
+			maxB = std::max(maxB, speciesB[index]);
+			if (speciesA[index] > 0.1 && speciesA[index] < 0.9)
+				++mixedCells;
+			totalA += speciesA[index];
+			totalB += speciesB[index];
+		}
+		(void)state;
+		const double expectedA = static_cast<double>(CellsY * (CellsX / 2)) * (0.9 + 0.5);
+		const double expectedB = static_cast<double>(CellsY * (CellsX / 2)) * (0.1 + 0.5);
+		return minA >= 0.0 && maxA <= 1.0 && minB >= 0.0 && maxB <= 1.0
+			&& std::abs(totalA - expectedA) <= 1e-10
+			&& std::abs(totalB - expectedB) <= 1e-10
+			&& mixedCells > 0;
 	}
 
 	struct Scenario
@@ -562,9 +685,11 @@ HybridMixedRegion2DProbeSummary RunHybridMixedRegion2DProbe()
 	auto summary = base.summary;
 	summary.hysteresisConflictPassed = RunHysteresisFixture();
 	summary.nearVacuumRoutingPassed = RunNearVacuumRoutingFixture();
+	summary.nearVacuumEvolutionPassed = RunNearVacuumEvolutionFixture();
 	summary.passiveSpeciesCrossRouteLedgerPassed = RunPassiveSpeciesCrossRouteFixture(
 		summary.interfaceEventSpeciesA, summary.interfaceBulkSpeciesA,
 		summary.interfaceEventSpeciesB, summary.interfaceBulkSpeciesB);
+	summary.passiveSpeciesEvolutionPassed = RunPassiveSpeciesEvolutionFixture();
 	summary.thresholdScanPassed = relaxed.summary.passed && strict.summary.passed;
 	const std::size_t physicalCells = static_cast<std::size_t>(std::ceil(
 		ReferenceAirSoundSpeedMps * PhysicalTickSeconds / PhysicalCellLengthM));
@@ -579,6 +704,7 @@ HybridMixedRegion2DProbeSummary RunHybridMixedRegion2DProbe()
 	summary.passed = base.summary.passed && summary.hysteresisConflictPassed
 		&& summary.thresholdScanPassed && summary.nearVacuumRoutingPassed
 		&& summary.passiveSpeciesCrossRouteLedgerPassed
+		&& summary.nearVacuumEvolutionPassed && summary.passiveSpeciesEvolutionPassed
 		&& summary.physicalDomainExceedsBenchmark
 		&& summary.targetGridMatrixMeasured;
 	return summary;
@@ -674,8 +800,11 @@ bool WriteHybridMixedRegion2DProbe(std::ostream &output)
 	output << "hysteresis_conflict_passed=" << (summary.hysteresisConflictPassed ? "true" : "false") << '\n';
 	output << "threshold_scan_passed=" << (summary.thresholdScanPassed ? "true" : "false") << '\n';
 	output << "near_vacuum_routing_passed=" << (summary.nearVacuumRoutingPassed ? "true" : "false") << '\n';
+	output << "near_vacuum_evolution_passed=" << (summary.nearVacuumEvolutionPassed ? "true" : "false") << '\n';
 	output << "passive_species_cross_route_ledger_passed="
 		<< (summary.passiveSpeciesCrossRouteLedgerPassed ? "true" : "false") << '\n';
+	output << "passive_species_evolution_passed="
+		<< (summary.passiveSpeciesEvolutionPassed ? "true" : "false") << '\n';
 	output << "dynamic_event_region_implemented=" << (summary.dynamicEventRegionImplemented ? "true" : "false") << '\n';
 	output << "event_local_subcycling_implemented=" << (summary.eventLocalSubcyclingImplemented ? "true" : "false") << '\n';
 	output << "finite_state=" << (summary.finiteState ? "true" : "false") << '\n';
