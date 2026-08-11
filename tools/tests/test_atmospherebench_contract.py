@@ -34,7 +34,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
                 self.assertNotIn(needle, text)
         includes = re.findall(r'^#include "([^"]+)"', text, flags=re.MULTILINE)
         self.assertEqual(includes.count("AtmosphereBench.h"), 2)
-        self.assertEqual(includes.count("Rusanov1D.h"), 6)
+        self.assertEqual(includes.count("Rusanov1D.h"), 7)
 
     def test_bench_has_explicit_strict_fp_target_and_isolated_rusanov_candidates(self) -> None:
         meson = (ROOT / "meson.build").read_text(encoding="utf-8")
@@ -55,6 +55,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-rusanov-density-advection' ]", target)
         self.assertIn("'atmospherebench-hybrid-mixed-region'", target)
         self.assertIn("args: [ '--run-hybrid-mixed-region' ]", target)
+        self.assertIn("'atmospherebench-hybrid-mixed-region-2d'", target)
+        self.assertIn("args: [ '--run-hybrid-mixed-region-2d' ]", target)
         self.assertIn("'atmospherebench-rusanov-contact-discontinuity'", target)
         self.assertIn("args: [ '--run-rusanov-contact-discontinuity' ]", target)
         self.assertIn("'atmospherebench-rusanov-near-vacuum-expansion'", target)
@@ -301,6 +303,19 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
                     production.append(str(path.relative_to(ROOT)))
         self.assertEqual(production, [])
 
+    def test_hybrid_mixed_region_2d_probe_has_bounded_domain_evidence(self) -> None:
+        header = (BENCH_ROOT / "HybridMixedRegion2D.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "HybridMixedRegion2D.cpp").read_text(encoding="utf-8")
+        main = (BENCH_ROOT / "main.cpp").read_text(encoding="utf-8")
+        self.assertIn("HybridMixedRegion2DProbeSummary", header)
+        self.assertIn("RunHybridMixedRegion2DProbe", header)
+        self.assertIn("cross_route_boundary_coupling=implemented_2d_probe", source)
+        self.assertIn("mixed_region_reflux_conservation=implemented_2d_probe", source)
+        self.assertIn("physical_acoustic_domain_cells=", source)
+        self.assertIn("target_grid_event_fraction_performance=route_scan_only_not_solver_throughput", source)
+        self.assertIn("physical_event_local_domain_of_dependence=not_implemented", source)
+        self.assertIn("--run-hybrid-mixed-region-2d", main)
+
     def test_source_package_keeps_physical_scale_and_bench_tools(self) -> None:
         tools = {
             "tools/physical_scale_check.py",
@@ -319,6 +334,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/HybridPolicy1D.h",
             "tools/atmospherebench/HybridMixedRegion1D.cpp",
             "tools/atmospherebench/HybridMixedRegion1D.h",
+            "tools/atmospherebench/HybridMixedRegion2D.cpp",
+            "tools/atmospherebench/HybridMixedRegion2D.h",
             "tools/atmospherebench/Species2D.cpp",
             "tools/atmospherebench/Species2D.h",
         }

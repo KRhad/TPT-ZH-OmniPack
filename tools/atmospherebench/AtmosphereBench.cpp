@@ -1,6 +1,7 @@
 #include "AtmosphereBench.h"
 #include "Hllc2D.h"
 #include "HybridMixedRegion1D.h"
+#include "HybridMixedRegion2D.h"
 #include "HybridPolicy1D.h"
 #include "LbmD2Q9.h"
 #include "LegacyLike.h"
@@ -313,6 +314,7 @@ bool RunSelfTest(std::ostream &output)
 	const auto legacyLikePressurePulse = RunLegacyLikePressurePulse();
 	const auto hybridPolicy = RunHybridAllSpeedPolicyProbe();
 	const auto hybridMixedRegion = RunHybridMixedRegionProbe();
+	const auto hybridMixedRegion2D = RunHybridMixedRegion2DProbe();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -397,6 +399,7 @@ bool RunSelfTest(std::ostream &output)
 		&& legacyLikePressurePulse.passed
 		&& hybridPolicy.passed && !hybridPolicy.policySelectionReady
 		&& hybridMixedRegion.passed
+		&& hybridMixedRegion2D.passed
 		&& rusanovOpenLeak.passed
 		&& implementedCandidatesMatch;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
@@ -459,6 +462,8 @@ bool RunSelfTest(std::ostream &output)
 		<< (hybridPolicy.policySelectionReady ? "TRUE" : "FALSE") << '\n';
 	output << "HYBRID_MIXED_REGION_ROUTER_REFLUX_PROBE="
 		<< (hybridMixedRegion.passed ? "PASS" : "FAIL") << '\n';
+	output << "HYBRID_MIXED_REGION_2D_ROUTER_REFLUX_PROBE="
+		<< (hybridMixedRegion2D.passed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";
