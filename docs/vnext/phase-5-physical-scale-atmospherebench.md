@@ -365,6 +365,10 @@ multidimensional validation, sealed heating, natural convection, gas mixing and
 an accepted CPU/memory budget. Details are in
 [the HLLC checkpoint](phase-5-hllc-candidate.md).
 
+The defensive fallback is independently covered at `78bad784d`: one valid but
+extreme interface triggers exactly one fallback and the returned flux matches the
+strict Rusanov reference.
+
 HLLC checkpoint source package:
 `artifacts/vnext-phase5-source-b74216c31/`, SHA-256
 `BE7D74127B8572597919438F227ED2D2E931A983F9D45650776979EAC53C977D`,

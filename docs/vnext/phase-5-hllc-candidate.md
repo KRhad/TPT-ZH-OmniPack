@@ -3,7 +3,7 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=52e94c5aa
-IMPLEMENTATION_COMMIT=3eb235b8c27174f8e5ee8c31c33ceb167ffe545b
+IMPLEMENTATION_COMMIT=78bad784d9cf075400b1a68429f065bbdd9784d8
 STATUS=GREEN_ISOLATED_CANDIDATE_FRONT_RUNNER_NOT_SELECTED
 ATMOSPHERE_SOLVER_SELECTION=UNSELECTED
 PHYSICAL_SCALE_SELECTION=UNSELECTED
@@ -22,8 +22,9 @@ HLL approximation; the original method is described by Toro, Spruce and Speares,
 
 The implementation validates primitive and star states and falls back to the
 existing conservative Rusanov flux when HLLC cannot construct a valid interface
-state. Every fallback is counted. The five published runs used zero fallbacks; the
-fallback branch remains a defensive path rather than a claimed near-vacuum repair.
+state. Every fallback is counted. The five published runs used zero fallbacks; a
+separate strong rarefied/high-speed interface contract records exactly one
+fallback and verifies that the returned flux matches the strict Rusanov path.
 No third-party source code or data was copied.
 
 The candidate remains isolated to `tools/atmospherebench`. It does not modify or
@@ -112,6 +113,7 @@ python_discovery=414/414 PASS, 2 declared skips
 meson_static=59/59 PASS
 targeted_contracts=17/17 PASS
 hllc_targeted_meson=6/6 PASS
+hllc_fallback_contract=PASS, expected fallback count 1
 clean_runner=5/5 PASS
 production_source_files_changed=0
 ```
@@ -138,7 +140,7 @@ HLLC with Rusanov fallback is the current front-runner for continued PoC work,
 not the selected production solver. `V1_0_5_GATE=IN_PROGRESS` because the phase
 still lacks a selected PhysicalScale/physical-time policy, accepted performance
 budget, multidimensional validation, sealed heating, natural convection and gas
-mixing. The fallback path also needs an explicit adversarial trigger test before
-it can be relied upon as a robustness claim.
+mixing. The fallback contract is verified, but broader multidimensional and
+long-running adversarial coverage remains required before production use.
 
 Rollback commit: `52e94c5aa` restores the pre-HLLC checkpoint.

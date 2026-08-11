@@ -165,6 +165,9 @@ zero numerical corrections. It remains unselected: multidimensional, sealed
 heating, convection, gas mixing, PhysicalScale/physical-time and accepted budget
 gates are not complete. See `phase-5-hllc-candidate.md`.
 
+The defensive fallback is independently covered at `78bad784d`: one adversarial
+valid interface triggers exactly one fallback and matches the strict Rusanov flux.
+
 HLLC checkpoint source package:
 `artifacts/vnext-phase5-source-b74216c31/`, SHA-256
 `BE7D74127B8572597919438F227ED2D2E931A983F9D45650776979EAC53C977D`,
