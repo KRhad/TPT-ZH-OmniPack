@@ -107,6 +107,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("RunHllcRusanovFallbackLowMachAdvection", header)
         self.assertIn("RunHllcRusanovFallbackNearVacuumExpansion", header)
         self.assertIn("RunHllcRusanovFallbackSodShockTube", header)
+        self.assertIn("RunHllcRusanovFallbackContract", header)
         self.assertIn("RusanovFluxX", source)
         self.assertIn("RunPeriodicProbe", source)
         self.assertIn("maximumWaveSpeed", source)

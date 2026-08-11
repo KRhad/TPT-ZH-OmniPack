@@ -105,6 +105,7 @@ RusanovLowMachSummary RunAllSpeedRusanovLowMachAdvection();
 RusanovLowMachSummary RunHllcRusanovFallbackLowMachAdvection();
 RusanovPerformanceSummary RunRusanovPerformance();
 RusanovPerformanceSummary RunHllcRusanovFallbackPerformance();
+bool RunHllcRusanovFallbackContract();
 bool WriteRusanovUniformProbe(std::ostream &output);
 bool WriteRusanovPressurePulseProbe(std::ostream &output);
 bool WriteRusanovDensityAdvectionProbe(std::ostream &output);

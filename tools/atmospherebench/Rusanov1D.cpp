@@ -1097,6 +1097,18 @@ RusanovPerformanceSummary RunHllcRusanovFallbackPerformance()
 	return summary;
 }
 
+bool RunHllcRusanovFallbackContract()
+{
+	const IdealGasEOS eos(Gamma, SpecificGasConstant);
+	const auto left = eos.FromPrimitive(1e-7, 400.0, 0.0, 0.2);
+	const auto right = eos.FromPrimitive(100.0, -700.0, 0.0, 1e-12);
+	std::size_t fallbackCount = 0;
+	const auto flux = NumericalFluxX(
+		left, right, eos, FluxDissipationModel::HllcRusanovFallback, &fallbackCount);
+	const auto referenceFlux = RusanovFluxX(left, right, eos);
+	return fallbackCount == 1 && StateNear(flux, referenceFlux, 1e-12);
+}
+
 bool WriteRusanovUniformProbe(std::ostream &output)
 {
 	const auto summary = RunRusanovUniform();

@@ -221,6 +221,7 @@ bool RunSelfTest(std::ostream &output)
 	const auto hllcRusanovFallbackNearVacuum = RunHllcRusanovFallbackNearVacuumExpansion();
 	const auto hllcRusanovFallbackSod = RunHllcRusanovFallbackSodShockTube();
 	const auto hllcRusanovFallbackOpenLeak = RunHllcRusanovFallbackOpenBoundaryLeak();
+	const bool hllcFallbackContract = RunHllcRusanovFallbackContract();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -260,6 +261,7 @@ bool RunSelfTest(std::ostream &output)
 		&& hllcRusanovFallbackNearVacuum.passed
 		&& hllcRusanovFallbackSod.passed
 		&& hllcRusanovFallbackOpenLeak.passed
+		&& hllcFallbackContract
 		&& rusanovOpenLeak.passed
 		&& onlyRusanovImplemented;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
@@ -297,6 +299,8 @@ bool RunSelfTest(std::ostream &output)
 		<< (hllcRusanovFallbackSod.passed ? "PASS" : "FAIL") << '\n';
 	output << "HLLC_RUSANOV_FALLBACK_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (hllcRusanovFallbackOpenLeak.passed ? "PASS" : "FAIL") << '\n';
+	output << "HLLC_RUSANOV_FALLBACK_CONTRACT="
+		<< (hllcFallbackContract ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";
