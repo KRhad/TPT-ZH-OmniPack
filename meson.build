@@ -670,6 +670,7 @@ atmospherebench = executable(
 	'atmospherebench',
 	sources: files(
 		'tools/atmospherebench/AtmosphereBench.cpp',
+		'tools/atmospherebench/Hllc2D.cpp',
 		'tools/atmospherebench/Rusanov1D.cpp',
 		'tools/atmospherebench/main.cpp',
 	),
@@ -800,6 +801,22 @@ test(
 	args: [ '--run-hllc-rusanov-fallback-performance' ],
 	suite: 'static',
 	timeout: 120,
+)
+
+test(
+	'atmospherebench-hllc-2d-uniform',
+	atmospherebench,
+	args: [ '--run-hllc-2d-uniform' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'atmospherebench-hllc-2d-pressure-pulse',
+	atmospherebench,
+	args: [ '--run-hllc-2d-pressure-pulse' ],
+	suite: 'static',
+	timeout: 60,
 )
 
 test(

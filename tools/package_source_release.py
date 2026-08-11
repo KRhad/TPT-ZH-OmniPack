@@ -30,6 +30,8 @@ EXCLUDED_PREFIXES = (
 ALLOWED_TOOLS = {
     "tools/atmospherebench/AtmosphereBench.cpp",
     "tools/atmospherebench/AtmosphereBench.h",
+	"tools/atmospherebench/Hllc2D.cpp",
+	"tools/atmospherebench/Hllc2D.h",
     "tools/atmospherebench/main.cpp",
     "tools/atmospherebench/Rusanov1D.cpp",
     "tools/atmospherebench/Rusanov1D.h",
@@ -78,6 +80,8 @@ REQUIRED_MEMBERS = {
     "tools/run_atmospherebench.ps1",
     "tools/atmospherebench/AtmosphereBench.cpp",
     "tools/atmospherebench/AtmosphereBench.h",
+	"tools/atmospherebench/Hllc2D.cpp",
+	"tools/atmospherebench/Hllc2D.h",
     "tools/atmospherebench/main.cpp",
     "tools/atmospherebench/Rusanov1D.cpp",
     "tools/atmospherebench/Rusanov1D.h",

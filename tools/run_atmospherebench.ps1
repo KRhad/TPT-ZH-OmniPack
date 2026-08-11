@@ -29,6 +29,10 @@ param(
 
     [switch] $RunHllcRusanovFallbackPerformance,
 
+    [switch] $RunHllc2DUniform,
+
+    [switch] $RunHllc2DPressurePulse,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -173,6 +177,7 @@ if ($benchCommands.Count -lt 2) {
 }
 $expectedBenchSources = @(
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/AtmosphereBench.cpp")),
+    [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Hllc2D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Rusanov1D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/main.cpp"))
 )
@@ -225,6 +230,7 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunHllcRusanovFallbackSodShockTube,
 		$RunHllcRusanovFallbackOpenBoundaryLeak,
 		$RunHllcRusanovFallbackPerformance,
+		$RunHllc2DUniform, $RunHllc2DPressurePulse,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -240,6 +246,7 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunHllcRusanovFallbackSodShockTube `
 	-or $RunHllcRusanovFallbackOpenBoundaryLeak `
 	-or $RunHllcRusanovFallbackPerformance `
+	-or $RunHllc2DUniform -or $RunHllc2DPressurePulse `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
@@ -260,6 +267,10 @@ $runMode = if ($RunRusanovPerformance) {
 	"hllc_rusanov_fallback_open_boundary_leak"
 } elseif ($RunHllcRusanovFallbackPerformance) {
 	"hllc_rusanov_fallback_performance"
+} elseif ($RunHllc2DPressurePulse) {
+	"hllc_2d_pressure_pulse"
+} elseif ($RunHllc2DUniform) {
+	"hllc_2d_uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	"rusanov_density_advection_refinement"
 } elseif ($RunRusanovSodShockTube) {
@@ -295,6 +306,10 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-hllc-rusanov-fallback-open-boundary-leak"
 } elseif ($RunHllcRusanovFallbackPerformance) {
 	"--run-hllc-rusanov-fallback-performance"
+} elseif ($RunHllc2DPressurePulse) {
+	"--run-hllc-2d-pressure-pulse"
+} elseif ($RunHllc2DUniform) {
+	"--run-hllc-2d-uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	"--run-rusanov-density-advection-refinement"
 } elseif ($RunRusanovSodShockTube) {
@@ -330,7 +345,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
 foreach ($candidateLine in @(
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
-    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_probes|solver_implemented=true",
+    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -378,6 +393,61 @@ if (-not $isRusanovProbe) {
     )) {
         if ((Read-KeyValue -Text $text -Key $ledgerKey) -ne "0") {
             throw "Uniform contract expected $ledgerKey=0"
+        }
+    }
+} elseif ($RunHllc2DUniform -or $RunHllc2DPressurePulse) {
+    $isPulse = $RunHllc2DPressurePulse
+    $benchmarkKind = if ($isPulse) { "atmospherebench_hllc_2d_pressure_pulse_probe" } else { "atmospherebench_hllc_2d_uniform_probe" }
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = if ($isPulse) { "standalone_hllc_2d_pressure_pulse_probe" } else { "standalone_hllc_2d_uniform_probe" }
+    $candidateImplementations = "fvm_hllc_rusanov_fallback"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "HLLC 2D probe must not claim solver selection"
+    }
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_hllc_rusanov_fallback" -or
+        (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+        throw "HLLC 2D probe candidate identity is invalid"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "dimension" = "2";
+        "boundary_mode" = "periodic"; "grid_cells_x" = "32";
+        "grid_cells_y" = "24"; "grid_cell_count" = "768";
+        "cell_length" = "1"; "positivity_preserved" = "true";
+        "flux_fallback_count" = "0"; "numerical_correction_count" = "0";
+        "probe_passed" = "true"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "HLLC 2D contract drifted: $($probeKey.Key)"
+        }
+    }
+    if ($isPulse) {
+        foreach ($probeKey in @{
+            "case_timestep" = "0.01"; "case_step_count" = "40";
+            "state_evolved" = "true"; "pressure_peak_reduced" = "true"
+        }.GetEnumerator()) {
+            if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+                throw "HLLC 2D pressure-pulse contract drifted: $($probeKey.Key)"
+            }
+        }
+    } else {
+        foreach ($probeKey in @{
+            "case_timestep" = "0.02"; "case_step_count" = "8";
+            "state_evolved" = "false"; "pressure_peak_reduced" = "false";
+            "state_change_l1" = "0"
+        }.GetEnumerator()) {
+            if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+                throw "HLLC 2D uniform contract drifted: $($probeKey.Key)"
+            }
+        }
+    }
+    $maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
+    if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
+        $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+        throw "HLLC 2D CFL is outside the strict positivity contract"
+    }
+    foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
+        if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-9) {
+            throw "HLLC 2D conservation drift exceeds tolerance: $driftKey"
         }
     }
 } elseif ($RunRusanovUniform) {
@@ -1031,7 +1101,15 @@ if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
     $stateAndFluxScratchBytesPerCell = [double](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
-    if ($RunRusanovPressurePulse) {
+    if ($RunHllc2DUniform -or $RunHllc2DPressurePulse) {
+        $boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+        $cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+        $initialMaximumPressure = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
+        $finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
+        $stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+        $stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+        $pressurePeakReduced = (Read-KeyValue -Text $text -Key "pressure_peak_reduced") -eq "true"
+    } elseif ($RunRusanovPressurePulse) {
         $initialMaximumPressure = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
         $finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
         $stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
@@ -1206,6 +1284,10 @@ if ($RunRusanovPerformance) {
 	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
+} elseif ($RunHllc2DPressurePulse) {
+	$limitations += "HLLC has one periodic strict-double 2D pressure-pulse result; it is not a TPT wall, source-term, physical-time or solver-selection result."
+} elseif ($RunHllc2DUniform) {
+	$limitations += "HLLC has one periodic strict-double 2D uniform-preservation result; it is not a production or solver-selection result."
 } elseif ($RunHllcRusanovFallbackPerformance) {
 	$limitations += "HLLC with conservative Rusanov fallback performance is a single-threaded strict-double 1D candidate measurement; no production budget or solver selection is implied."
 } elseif ($RunHllcRusanovFallbackOpenBoundaryLeak) {

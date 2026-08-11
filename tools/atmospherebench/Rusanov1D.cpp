@@ -279,11 +279,10 @@ namespace
 			return AllSpeedRusanovFluxX(left, right, eos);
 		if (model == FluxDissipationModel::HllcRusanovFallback)
 		{
-			ConservativeState flux;
-			if (HllcFluxX(left, right, eos, flux))
-				return flux;
-			if (fallbackCount)
+			const auto result = ComputeHllcRusanovFallbackFluxX(left, right, eos);
+			if (result.usedFallback && fallbackCount)
 				++*fallbackCount;
+			return result.flux;
 		}
 		return RusanovFluxX(left, right, eos);
 	}
@@ -1097,11 +1096,30 @@ RusanovPerformanceSummary RunHllcRusanovFallbackPerformance()
 	return summary;
 }
 
+NumericalFluxResult ComputeHllcRusanovFallbackFluxX(
+	const ConservativeState &left,
+	const ConservativeState &right,
+	const IdealGasEOS &eos)
+{
+	NumericalFluxResult result;
+	if (!eos.ToPrimitive(left).valid || !eos.ToPrimitive(right).valid)
+		return result;
+	if (HllcFluxX(left, right, eos, result.flux))
+	{
+		result.valid = true;
+		return result;
+	}
+	result.flux = RusanovFluxX(left, right, eos);
+	result.valid = true;
+	result.usedFallback = true;
+	return result;
+}
+
 bool RunHllcRusanovFallbackContract()
 {
 	const IdealGasEOS eos(Gamma, SpecificGasConstant);
-	const auto left = eos.FromPrimitive(1e-7, 400.0, 0.0, 0.2);
-	const auto right = eos.FromPrimitive(100.0, -700.0, 0.0, 1e-12);
+	const auto left = eos.FromPrimitive(1.0, 0.0, 0.0, 1e-32);
+	const auto right = eos.FromPrimitive(1.0, 0.0, 0.0, 1e-32);
 	std::size_t fallbackCount = 0;
 	const auto flux = NumericalFluxX(
 		left, right, eos, FluxDissipationModel::HllcRusanovFallback, &fallbackCount);

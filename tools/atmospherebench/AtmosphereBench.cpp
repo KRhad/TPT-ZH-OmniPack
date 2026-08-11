@@ -1,4 +1,5 @@
 #include "AtmosphereBench.h"
+#include "Hllc2D.h"
 #include "Rusanov1D.h"
 
 #include <cmath>
@@ -166,7 +167,7 @@ const std::array<CandidateDescriptor, 6> &Candidates()
 		{CandidateKind::AllSpeedRusanovFvm, "fvm_all_speed_rusanov",
 			"implemented_1d_low_mach_probe_rejected", true},
 		{CandidateKind::HllcRusanovFallbackFvm, "fvm_hllc_rusanov_fallback",
-			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_probes", true},
+			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_probes", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
 	}};
@@ -222,6 +223,8 @@ bool RunSelfTest(std::ostream &output)
 	const auto hllcRusanovFallbackSod = RunHllcRusanovFallbackSodShockTube();
 	const auto hllcRusanovFallbackOpenLeak = RunHllcRusanovFallbackOpenBoundaryLeak();
 	const bool hllcFallbackContract = RunHllcRusanovFallbackContract();
+	const auto hllc2DUniform = RunHllc2DUniform();
+	const auto hllc2DPressurePulse = RunHllc2DPressurePulse();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -262,6 +265,8 @@ bool RunSelfTest(std::ostream &output)
 		&& hllcRusanovFallbackSod.passed
 		&& hllcRusanovFallbackOpenLeak.passed
 		&& hllcFallbackContract
+		&& hllc2DUniform.passed
+		&& hllc2DPressurePulse.passed
 		&& rusanovOpenLeak.passed
 		&& onlyRusanovImplemented;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
@@ -301,6 +306,9 @@ bool RunSelfTest(std::ostream &output)
 		<< (hllcRusanovFallbackOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "HLLC_RUSANOV_FALLBACK_CONTRACT="
 		<< (hllcFallbackContract ? "PASS" : "FAIL") << '\n';
+	output << "HLLC_2D_UNIFORM_PROBE=" << (hllc2DUniform.passed ? "PASS" : "FAIL") << '\n';
+	output << "HLLC_2D_PRESSURE_PULSE_PROBE="
+		<< (hllc2DPressurePulse.passed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";

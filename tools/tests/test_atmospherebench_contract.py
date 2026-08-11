@@ -34,7 +34,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
                 self.assertNotIn(needle, text)
         includes = re.findall(r'^#include "([^"]+)"', text, flags=re.MULTILINE)
         self.assertEqual(includes.count("AtmosphereBench.h"), 2)
-        self.assertEqual(includes.count("Rusanov1D.h"), 3)
+        self.assertEqual(includes.count("Rusanov1D.h"), 4)
 
     def test_bench_has_explicit_strict_fp_target_and_isolated_rusanov_candidates(self) -> None:
         meson = (ROOT / "meson.build").read_text(encoding="utf-8")
@@ -70,6 +70,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-hllc-rusanov-fallback-sod-shock-tube' ]", target)
         self.assertIn("args: [ '--run-hllc-rusanov-fallback-open-boundary-leak' ]", target)
         self.assertIn("args: [ '--run-hllc-rusanov-fallback-performance' ]", target)
+        self.assertIn("args: [ '--run-hllc-2d-uniform' ]", target)
+        self.assertIn("args: [ '--run-hllc-2d-pressure-pulse' ]", target)
         self.assertIn("'atmospherebench-rusanov-open-boundary-leak'", target)
         self.assertIn("args: [ '--run-rusanov-open-boundary-leak' ]", target)
         self.assertIn("'atmospherebench-rusanov-performance'", target)
@@ -78,7 +80,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn('"registered_only"', source)
         self.assertIn('"implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes"', source)
         self.assertIn('"implemented_1d_low_mach_probe_rejected"', source)
-        self.assertIn('"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_probes"', source)
+        self.assertIn('"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_probes"', source)
         self.assertIn("RUSANOV_UNIFORM_PROBE", source)
         self.assertIn("RUSANOV_PRESSURE_PULSE_PROBE", source)
         self.assertIn("RUSANOV_DENSITY_ADVECTION_PROBE", source)

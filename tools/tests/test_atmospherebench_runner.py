@@ -84,6 +84,10 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("--run-hllc-rusanov-fallback-open-boundary-leak", RUNNER)
         self.assertIn("[switch] $RunHllcRusanovFallbackPerformance", RUNNER)
         self.assertIn("--run-hllc-rusanov-fallback-performance", RUNNER)
+        self.assertIn("[switch] $RunHllc2DUniform", RUNNER)
+        self.assertIn("--run-hllc-2d-uniform", RUNNER)
+        self.assertIn("[switch] $RunHllc2DPressurePulse", RUNNER)
+        self.assertIn("--run-hllc-2d-pressure-pulse", RUNNER)
         self.assertIn("[switch] $RunRusanovOpenBoundaryLeak", RUNNER)
         self.assertIn("--run-rusanov-open-boundary-leak", RUNNER)
         self.assertIn("[switch] $RunRusanovPerformance", RUNNER)
@@ -133,7 +137,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn('candidate=fvm_hlle|status=registered_only|solver_implemented=false', RUNNER)
         self.assertIn('candidate=lbm_d2q9|status=registered_only|solver_implemented=false', RUNNER)
         self.assertIn('candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true', RUNNER)
-        self.assertIn('candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_probes|solver_implemented=true', RUNNER)
+        self.assertIn('candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_probes|solver_implemented=true', RUNNER)
 
     def test_runner_rejects_a_dimensional_or_stepped_scaffold_case(self) -> None:
         self.assertIn("must keep the shared case nondimensional", RUNNER)
