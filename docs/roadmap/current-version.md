@@ -3,9 +3,9 @@
 ```text
 CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
-PHASE_STATUS=IN_PROGRESS_RUSANOV_BOUNDARY_PERFORMANCE_CHARACTERIZED
+PHASE_STATUS=IN_PROGRESS_HLLC_2D_PERIODIC_CHECKPOINT
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=78bad784d9cf075400b1a68429f065bbdd9784d8
+IMPLEMENTATION_HEAD=d38120177ff22984fd69539d6fc2ff37a8063fa2
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -47,9 +47,10 @@ V1_0_5_ALL_SPEED_RUSANOV_COMMIT=fae9a0847608333c05a9d5e15b0c812b22407d3d
 V1_0_5_HLLC_RUSANOV_FALLBACK=FRONT_RUNNER_NOT_SELECTED_LOW_MACH_NEAR_VACUUM_SOD_OPEN_LEAK_PERFORMANCE_GREEN_ZERO_FALLBACK_ZERO_CORRECTIONS
 V1_0_5_HLLC_RUSANOV_FALLBACK_COMMIT=3eb235b8c27174f8e5ee8c31c33ceb167ffe545b
 V1_0_5_HLLC_FALLBACK_CONTRACT=GREEN_ADVERSARIAL_INTERFACE_EXPECTED_COUNT_1_COMMIT_78bad784d
-KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget; selected PhysicalScale and physical-time policy; multidimensional sealed-heating convection and gas-mixing evidence
+V1_0_5_HLLC_2D_PERIODIC=GREEN_UNIFORM_AND_PRESSURE_PULSE_32X24_ZERO_FALLBACK_ZERO_CORRECTIONS_160_BYTES_PER_CELL_COMMIT_d38120177
+KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget; selected PhysicalScale and physical-time policy; remaining multidimensional sealed-heating convection and gas-mixing evidence
 NEXT_VERSION=1.0.6
-NEXT_PHASE=extend HLLC front-runner only inside AtmosphereBench with remaining 1.0.5 multidimensional and physical-time gates; keep HLLE and LBM registered-only
+NEXT_PHASE=add sealed-heating and explicit source-ledger checkpoint only inside AtmosphereBench; keep HLLE and LBM registered-only
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -111,8 +112,16 @@ convection, gas-mixing, physical-time and accepted budget evidence remain absent
 See the [HLLC candidate checkpoint](../vnext/phase-5-hllc-candidate.md).
 
 The defensive fallback path is independently exercised at `78bad784d`: a valid
-but extreme rarefied/high-speed interface invalidates the HLLC star state,
+ultra-low-pressure/acoustic interface invalidates the HLLC star state,
 increments the fallback count exactly once and returns the strict Rusanov flux.
+
+The first periodic two-dimensional checkpoint is clean-validated at `d38120177`.
+The `32x24` uniform case has zero state change and zero mass, momentum and energy
+drift. The `32x24` pressure pulse remains positive, evolves nontrivially and closes
+mass/energy within `6.9e-13`; both cases record zero fallback and correction events.
+The explicit initial/current/next plus Flux-X/Flux-Y allocation is
+`160 bytes/cell`. This is not sealed-boundary, source-term, physical-time or
+solver-selection evidence.
 
 The clean source package for this checkpoint is
 `artifacts/vnext-phase5-source-5ee23cd3d/`, SHA-256

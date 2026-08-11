@@ -3,7 +3,7 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=52e94c5aa
-IMPLEMENTATION_COMMIT=78bad784d9cf075400b1a68429f065bbdd9784d8
+IMPLEMENTATION_COMMIT=d38120177ff22984fd69539d6fc2ff37a8063fa2
 STATUS=GREEN_ISOLATED_CANDIDATE_FRONT_RUNNER_NOT_SELECTED
 ATMOSPHERE_SOLVER_SELECTION=UNSELECTED
 PHYSICAL_SCALE_SELECTION=UNSELECTED
@@ -22,8 +22,9 @@ HLL approximation; the original method is described by Toro, Spruce and Speares,
 
 The implementation validates primitive and star states and falls back to the
 existing conservative Rusanov flux when HLLC cannot construct a valid interface
-state. Every fallback is counted. The five published runs used zero fallbacks; a
-separate strong rarefied/high-speed interface contract records exactly one
+state. Every fallback is counted. The five published 1D runs and both published
+2D runs used zero fallbacks; a separate ultra-low-pressure/acoustic interface
+contract records exactly one
 fallback and verifies that the returned flux matches the strict Rusanov path.
 No third-party source code or data was copied.
 
@@ -105,16 +106,51 @@ HLLC is measurably slower than the current Rusanov reference (`31.0M-32.8M`
 cell-updates/s), but no production frame budget or CPU crossover has been
 accepted, so this is not a performance PASS/FAIL decision.
 
+### Periodic two-dimensional probes
+
+Checkpoint `d38120177` extends the same flux into X and Y directions. The Y flux
+uses an explicit momentum-component rotation, and the update is dimensionally
+split over periodic faces. It is still first-order strict-double candidate code,
+not a production boundary or source-term implementation.
+
+```text
+uniform_grid=32x24
+uniform_maximum_cfl=0.0546398
+uniform_mass_momentum_energy_drift=0 / 0 / 0
+uniform_state_change_l1=0
+
+pressure_pulse_grid=32x24
+pressure_pulse_maximum_cfl=0.0270629
+minimum_density=0.997462
+minimum_pressure=1
+pressure_peak=1.09845 -> 1.09381
+mass_drift=-3.41061e-13
+energy_drift=6.82121e-13
+state_change_l1=2.27797
+
+fallback_count=0 / 0
+numerical_correction_count=0 / 0
+state_and_flux_scratch=160 bytes/cell
+```
+
+The two clean runner results are bound to `d38120177`, report
+`source_dirty=false` and `strict_reference_flags_verified=true`, and retain
+`physical_scale_selection=unselected` and
+`atmosphere_solver_selection=unselected`. Their local result SHA-256 values are
+`67A9C60521996ACBFD1529008AD4EF7EB201A08560FFCFEA387064359275A496` and
+`8DC3B28D950831B77780C0694D4A72F4EBCF78B0817503B7BA022DB33E687A89`.
+
 ## Validation
 
 ```text
 full_build=75/75 PASS
-python_discovery=414/414 PASS, 2 declared skips
-meson_static=59/59 PASS
-targeted_contracts=17/17 PASS
+python_discovery=414/414 PASS, 0 skipped
+meson_static=61/61 PASS
+targeted_contracts=29/29 PASS
 hllc_targeted_meson=6/6 PASS
+hllc_2d_targeted_meson=3/3 PASS
 hllc_fallback_contract=PASS, expected fallback count 1
-clean_runner=5/5 PASS
+clean_runner=7/7 PASS
 production_source_files_changed=0
 ```
 
@@ -130,7 +166,9 @@ HLLC report and AtmosphereBench sources/runner, and contains zero test assets.
 ## Compatibility and memory
 
 - Particle layout, Element IDs, Lua identifiers and save format are unchanged.
-- State remains `32 bytes/cell`; current state plus flux scratch is `96 bytes/cell`.
+- State remains `32 bytes/cell`. The 1D probe uses `96 bytes/cell`; the 2D
+  checkpoint's actual initial/current/next plus X/Y face-flux storage is
+  `160 bytes/cell`.
 - No GPU backend, upload, readback, VRAM or synchronization measurement exists.
 - CPU Reference remains authoritative.
 
@@ -139,8 +177,9 @@ HLLC report and AtmosphereBench sources/runner, and contains zero test assets.
 HLLC with Rusanov fallback is the current front-runner for continued PoC work,
 not the selected production solver. `V1_0_5_GATE=IN_PROGRESS` because the phase
 still lacks a selected PhysicalScale/physical-time policy, accepted performance
-budget, multidimensional validation, sealed heating, natural convection and gas
-mixing. The fallback contract is verified, but broader multidimensional and
+budget, the remaining multidimensional mandatory cases, sealed heating, natural
+convection and gas mixing. The fallback contract is verified, but broader
+multidimensional and
 long-running adversarial coverage remains required before production use.
 
 Rollback commit: `52e94c5aa` restores the pre-HLLC checkpoint.

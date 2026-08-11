@@ -8,7 +8,7 @@ CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.5
 CURRENT_VERSION_GATE=IN_PROGRESS_HLLC_FRONT_RUNNER_NOT_SELECTED
 NEXT_VERSION=1.0.6
-NEXT_PHASE=extend HLLC front-runner inside AtmosphereBench with remaining multidimensional physical-time and budget gates; keep HLLE and LBM registered-only
+NEXT_PHASE=add sealed-heating and explicit source-ledger checkpoint inside AtmosphereBench; keep HLLE and LBM registered-only
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -46,6 +46,9 @@ V1_0_5_RUSANOV_REFINEMENT_HEAD=d541c2c2e9809691d625294e918c46009cd4a651
 V1_0_5_RUSANOV_LOW_MACH_HEAD=a948a48db2c7d06b93dd0f26fb67ad7f1423968c
 V1_0_5_RUSANOV_OPEN_LEAK_HEAD=ef0ca86c16f13d48deeb06be4e6fb3a3368fadee
 V1_0_5_RUSANOV_PERFORMANCE_HEAD=ee9290cb7893e5f4a316db5372f93d403477e1a1
+V1_0_5_HLLC_RUSANOV_FALLBACK_HEAD=3eb235b8c27174f8e5ee8c31c33ceb167ffe545b
+V1_0_5_HLLC_FALLBACK_CONTRACT_HEAD=78bad784d9cf075400b1a68429f065bbdd9784d8
+V1_0_5_HLLC_2D_PERIODIC_HEAD=d38120177ff22984fd69539d6fc2ff37a8063fa2
 V1_0_5_ROLLBACK=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_UPSTREAM=GREEN_ENTRY_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
 V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
@@ -165,8 +168,17 @@ zero numerical corrections. It remains unselected: multidimensional, sealed
 heating, convection, gas mixing, PhysicalScale/physical-time and accepted budget
 gates are not complete. See `phase-5-hllc-candidate.md`.
 
-The defensive fallback is independently covered at `78bad784d`: one adversarial
-valid interface triggers exactly one fallback and matches the strict Rusanov flux.
+The defensive fallback is independently covered at `78bad784d`: one valid
+ultra-low-pressure/acoustic interface triggers exactly one fallback and matches
+the strict Rusanov flux.
+
+The first periodic two-dimensional HLLC checkpoint is clean-validated at
+`d38120177`. Its `32x24` uniform case preserves the state exactly. Its `32x24`
+pressure pulse remains positive, evolves nontrivially and closes mass/energy within
+`6.9e-13`. Both cases record zero fallback and numerical-correction events, and
+the explicit 2D state/flux layout is `160 bytes/cell`. This is only periodic 2D
+candidate evidence; sealed heating, general source accounting, natural convection,
+gas mixing, physical-time and budget selection remain open.
 
 HLLC checkpoint source package:
 `artifacts/vnext-phase5-source-5ee23cd3d/`, SHA-256

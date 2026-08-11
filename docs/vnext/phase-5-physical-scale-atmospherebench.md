@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_RUSANOV_BOUNDARY_PERFORMANCE_CHARACTERIZED
+STATUS=IN_PROGRESS_HLLC_2D_PERIODIC_CHECKPOINT
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -48,7 +48,7 @@ RUSANOV_OPEN_LEAK_COMMIT=ef0ca86c1
 RUSANOV_OPEN_LEAK_VALIDATION=GREEN_STRICT_DOUBLE_128X1_SEALED_LEFT_OPEN_RIGHT_MASS_OUT_6_69874_BALANCE_ERRORS_LT_3E_MINUS_14_ZERO_CORRECTIONS
 RUSANOV_PERFORMANCE_COMMIT=ee9290cb7
 RUSANOV_PERFORMANCE_VALIDATION=GREEN_STRICT_DOUBLE_SINGLE_THREAD_MEDIAN_3_REPEATS_31_0232M_31_3699M_32_8059M_CELL_UPDATES_PER_SECOND_NO_BUDGET_SELECTED
-CURRENT_VALIDATION=GREEN_BUILD_79_STATIC_53_TARGETED_29_PYTHON_414_PASS_0_SKIP
+CURRENT_VALIDATION=GREEN_BUILD_75_STATIC_61_TARGETED_29_PYTHON_414_PASS_0_SKIP_HLLC_2D_TARGETED_3
 CURRENT_SOURCE_PACKAGE=GREEN_1303_SOURCE_PLUS_MANIFEST_NO_TEST_ASSETS_SHA256_5130F6B8871F196BB292DF590D74DC552924005EAB206CC16CB810D1AF1E5C9A
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
@@ -365,9 +365,20 @@ multidimensional validation, sealed heating, natural convection, gas mixing and
 an accepted CPU/memory budget. Details are in
 [the HLLC checkpoint](phase-5-hllc-candidate.md).
 
-The defensive fallback is independently covered at `78bad784d`: one valid but
-extreme interface triggers exactly one fallback and the returned flux matches the
-strict Rusanov reference.
+The defensive fallback is independently covered at `78bad784d`: one valid
+ultra-low-pressure/acoustic interface triggers exactly one fallback and the
+returned flux matches the strict Rusanov reference.
+
+The first multidimensional checkpoint is clean-validated at `d38120177`. A
+`32x24` periodic uniform state remains unchanged with zero conservative drift,
+fallback or correction. A `32x24` periodic pressure pulse evolves with positive
+density and pressure, reduces its pressure peak from `1.09845` to `1.09381`, and
+closes mass and energy to `6.9e-13`. X/Y flux storage is explicit; the measured
+layout contract is `160 bytes/cell` for initial, current, next, Flux-X and Flux-Y
+arrays. Both clean runners bind to the clean source commit and verified
+strict-double flags. This closes only the first periodic 2D checkpoint; sealed
+heating, physical source accounting, natural convection, gas mixing, physical-time
+selection and an accepted budget remain open.
 
 HLLC checkpoint source package:
 `artifacts/vnext-phase5-source-5ee23cd3d/`, SHA-256
