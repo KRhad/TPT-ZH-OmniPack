@@ -3,9 +3,9 @@
 ```text
 CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
-PHASE_STATUS=IN_PROGRESS_D2Q9_LBM_COMPARISON
+PHASE_STATUS=IN_PROGRESS_LEGACY_LIKE_CONTROL_COMPLETE
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=5e3c46fae8fc7754240c97931e59f7b2216c5417
+IMPLEMENTATION_HEAD=696d0c9580f642db70bb419fc73cd9ea19b2afd0
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -53,9 +53,10 @@ V1_0_5_HLLC_2D_NATURAL_CONVECTION=GREEN_CONTROL_SUBTRACTED_THERMAL_RISE_0_225497
 V1_0_5_HLLC_2D_SPECIES_MIXING=GREEN_PASSIVE_BINARY_32X24_320_STEPS_SPECIES_A_B_ZERO_DRIFT_FRACTION_BOUNDS_0_1_TV_48_TO_47_9173_768_MIXED_CELLS_ZERO_FALLBACK_ZERO_CORRECTIONS_40_STATE_200_WORKING_BYTES_PER_CELL_COMMIT_55088a852
 V1_0_5_HLLC_2D_PERFORMANCE=RECORDED_NO_BUDGET_STRICT_DOUBLE_SINGLE_THREAD_153X96_1_69129MS_306X192_6_56627MS_612X384_31_2385MS_160_WORKING_BYTES_PER_CELL_COMMIT_12e904f75
 V1_0_5_LBM_D2Q9=GREEN_ISOTHERMAL_ONLY_UNIFORM_AND_SHEAR_WAVE_RELATIVE_ERROR_0_000577441_ZERO_CORRECTIONS_72_STATE_144_WORKING_BYTES_PER_CELL_ENERGY_NA_NEAR_VACUUM_UNSUPPORTED_SHOCK_UNSUPPORTED_COMMIT_5e3c46fae
-KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted CPU and memory budget; selected PhysicalScale and physical-time policy; actual Legacy-like control; remaining mandatory solver matrix
+V1_0_5_LEGACY_LIKE=GREEN_CONTROL_ONLY_UNIFORM_ZERO_CHANGE_PRESSURE_PULSE_PEAK_0_99005_TO_0_236479_PRESSURE_SUM_DRIFT_8_52651E_MINUS_13_ZERO_CORRECTIONS_32_STATE_64_WORKING_BYTES_PER_CELL_PHYSICAL_DRIFTS_NULL_COMMIT_696d0c958
+KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation semantics; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted CPU and memory budget; selected PhysicalScale and physical-time policy; remaining mandatory solver and precision matrix
 NEXT_VERSION=1.0.6
-NEXT_PHASE=implement actual Legacy-like control with non-applicable physical ledgers stated explicitly, then define budget and physical-scale/time policy before solver selection
+NEXT_PHASE=define and validate CPU/memory budget and physical-scale/time policy, then complete the mandatory solver and precision matrix before selection
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -176,6 +177,18 @@ species transport; `energy_drift` is JSON `null`, not fake zero. Clean result
 SHA-256 values are
 `D601D2DDA76BECB73C37CE5CB309F6460A10B2516D50C135C8D7B39C26FA4333`
 and `26180CBA90702B0458D30FA05C1867CEEAFA743D7CCF50BE7F393C29E7C12AE6`.
+
+The Legacy-like comparison is clean-validated at `696d0c958`. Its standalone
+strict-double `64x48` dimensionless control preserves a uniform state exactly and
+evolves a two-dimensional pressure pulse from peak `0.99005` to `0.236479` while
+preserving the pressure-field sum within `8.52651e-13`; it records zero numerical
+corrections and uses `32/64 bytes/cell` for state/current-plus-next. This is not
+production Legacy Air equivalence and has no physical mass, density, momentum-
+density, energy or species state. The corresponding JSON physical drift fields
+are `null`, not fake zero. Clean result SHA-256 values are
+`505F69D6D87724CC1B8E4410CA13BE91AF9464E22B12BBE338C601DB74CF04AD`
+and `D1FE38268F52B15AB6BFA7D135B77122A79D48C1227A1E1F5909AEBB4AD0DFBA`.
+See the [Legacy-like checkpoint](../vnext/phase-5-legacy-like-control.md).
 
 The clean source package for the current D2Q9 comparison checkpoint is
 `artifacts/vnext-phase5-source-c8ae4ea8a/`, SHA-256
