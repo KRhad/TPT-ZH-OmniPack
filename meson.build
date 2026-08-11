@@ -973,6 +973,7 @@ test(
 	args: [ '--run-low-mach-projection-2d-performance' ],
 	suite: 'static',
 	timeout: 120,
+	is_parallel: false,
 )
 
 test(
@@ -981,6 +982,7 @@ test(
 	args: [ '--run-phase5-selection' ],
 	suite: 'static',
 	timeout: 60,
+	is_parallel: false,
 )
 
 test(
