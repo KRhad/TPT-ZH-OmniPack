@@ -3,8 +3,8 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=52e94c5aa
-IMPLEMENTATION_COMMIT=d38120177ff22984fd69539d6fc2ff37a8063fa2
-STATUS=GREEN_ISOLATED_CANDIDATE_FRONT_RUNNER_NOT_SELECTED
+IMPLEMENTATION_COMMIT=be0ff2f37108acc88f4fa26f7b05c17b139af570
+STATUS=GREEN_ISOLATED_CANDIDATE_SEALED_HEATING_SOURCE_LEDGER_NOT_SELECTED
 ATMOSPHERE_SOLVER_SELECTION=UNSELECTED
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
@@ -31,6 +31,12 @@ No third-party source code or data was copied.
 The candidate remains isolated to `tools/atmospherebench`. It does not modify or
 link production Air, Simulation, Particle, Save, Lua, renderer, SDL or element
 code. HLLE and LBM remain `registered_only`.
+
+The shared bench contract now also has a `ConservativeSourceLedger`, separate
+from `NumericalCorrectionLedger`. It records applied mass, momentum and energy
+source deltas and rejects non-finite or uncounted state. A result with intentional
+heating closes against the source ledger; it is not mislabeled as numerical drift
+or correction.
 
 ## Numerical results
 
@@ -140,17 +146,56 @@ The two clean runner results are bound to `d38120177`, report
 `67A9C60521996ACBFD1529008AD4EF7EB201A08560FFCFEA387064359275A496` and
 `8DC3B28D950831B77780C0694D4A72F4EBCF78B0817503B7BA022DB33E687A89`.
 
+### Sealed heating and applied-source ledger
+
+Checkpoint `be0ff2f37` adds reusable reflective face fluxes and a uniform
+volumetric energy-source application to the isolated 2D solver. The source is
+applied through the general conservative source ledger for every affected cell;
+the probe does not special-case its expected final state inside the solver step.
+
+```text
+grid=32x24
+boundary_mode=sealed
+timestep=0.01
+steps=40
+maximum_cfl=0.0266667
+minimum_density=1
+minimum_pressure=1.00167
+mean_pressure=1 -> 1.06667
+mean_temperature=1 -> 1.06667
+mass_drift=0
+momentum_x_drift=0
+momentum_y_drift=0
+energy_drift=76.8
+source_energy_net=76.8
+source_energy_balance_error=3.21876e-11
+source_event_count=30720
+source_ledger_closes=true
+fallback_count=0
+numerical_correction_count=0
+state_and_flux_scratch=162.333 bytes/cell / 124672 bytes total
+```
+
+The clean result is bound to `be0ff2f37`, `source_dirty=false` and verified
+strict-double flags. Its local result SHA-256 is
+`43382E81EC4F81683FC900DC9723EAD9BE2B6D454597E5AD543442AA87B57400`.
+The periodic uniform and pulse runners were rerun on the same commit and also
+passed; their local result SHA-256 values are
+`3AD9EFCD61A25B2BE751C0FD5ACCD105CF9BB98335422B3284670D36B27DDC06`
+and `3800A97790D8EBD250517AFF6EDA22EC48F50765114EF9568569757CF7CF0DA4`.
+
 ## Validation
 
 ```text
-full_build=75/75 PASS
+full_build=77/77 PASS
 python_discovery=414/414 PASS, 0 skipped
-meson_static=61/61 PASS
+meson_static=62/62 PASS
 targeted_contracts=29/29 PASS
 hllc_targeted_meson=6/6 PASS
-hllc_2d_targeted_meson=3/3 PASS
+hllc_2d_targeted_meson=4/4 PASS
 hllc_fallback_contract=PASS, expected fallback count 1
-clean_runner=7/7 PASS
+clean_runner=8/8 PASS across the HLLC checkpoint chain
+hllc_2d_clean_runner_at_be0ff2f37=3/3 PASS
 production_source_files_changed=0
 ```
 
@@ -168,7 +213,8 @@ HLLC report and AtmosphereBench sources/runner, and contains zero test assets.
 - Particle layout, Element IDs, Lua identifiers and save format are unchanged.
 - State remains `32 bytes/cell`. The 1D probe uses `96 bytes/cell`; the 2D
   checkpoint's actual initial/current/next plus X/Y face-flux storage is
-  `160 bytes/cell`.
+  `160 bytes/cell` for periodic faces and `162.333 bytes/cell` for the sealed
+  face arrays (`124672` bytes total on `32x24`).
 - No GPU backend, upload, readback, VRAM or synchronization measurement exists.
 - CPU Reference remains authoritative.
 
@@ -177,8 +223,8 @@ HLLC report and AtmosphereBench sources/runner, and contains zero test assets.
 HLLC with Rusanov fallback is the current front-runner for continued PoC work,
 not the selected production solver. `V1_0_5_GATE=IN_PROGRESS` because the phase
 still lacks a selected PhysicalScale/physical-time policy, accepted performance
-budget, the remaining multidimensional mandatory cases, sealed heating, natural
-convection and gas mixing. The fallback contract is verified, but broader
+budget, two-dimensional performance, natural convection and gas mixing. Sealed
+heating and its applied-source ledger now pass, but broader
 multidimensional and
 long-running adversarial coverage remains required before production use.
 

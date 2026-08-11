@@ -8,7 +8,7 @@ CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.5
 CURRENT_VERSION_GATE=IN_PROGRESS_HLLC_FRONT_RUNNER_NOT_SELECTED
 NEXT_VERSION=1.0.6
-NEXT_PHASE=add sealed-heating and explicit source-ledger checkpoint inside AtmosphereBench; keep HLLE and LBM registered-only
+NEXT_PHASE=add gravity-source ledger and natural-convection checkpoint inside AtmosphereBench; keep HLLE and LBM registered-only
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -49,6 +49,7 @@ V1_0_5_RUSANOV_PERFORMANCE_HEAD=ee9290cb7893e5f4a316db5372f93d403477e1a1
 V1_0_5_HLLC_RUSANOV_FALLBACK_HEAD=3eb235b8c27174f8e5ee8c31c33ceb167ffe545b
 V1_0_5_HLLC_FALLBACK_CONTRACT_HEAD=78bad784d9cf075400b1a68429f065bbdd9784d8
 V1_0_5_HLLC_2D_PERIODIC_HEAD=d38120177ff22984fd69539d6fc2ff37a8063fa2
+V1_0_5_HLLC_2D_SEALED_HEATING_HEAD=be0ff2f37108acc88f4fa26f7b05c17b139af570
 V1_0_5_ROLLBACK=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_UPSTREAM=GREEN_ENTRY_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
 V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
@@ -164,9 +165,9 @@ with zero test assets.
 HLLC with explicit Rusanov fallback is clean-validated at `3eb235b8c` and is the
 current isolated front-runner. It passes the unchanged Low-Mach threshold and the
 current near-vacuum, sealed Sod and open-leak contracts with zero fallbacks and
-zero numerical corrections. It remains unselected: multidimensional, sealed
-heating, convection, gas mixing, PhysicalScale/physical-time and accepted budget
-gates are not complete. See `phase-5-hllc-candidate.md`.
+zero numerical corrections. It remains unselected: natural convection, gas
+mixing, two-dimensional performance, PhysicalScale/physical-time and accepted
+budget gates are not complete. See `phase-5-hllc-candidate.md`.
 
 The defensive fallback is independently covered at `78bad784d`: one valid
 ultra-low-pressure/acoustic interface triggers exactly one fallback and matches
@@ -179,6 +180,15 @@ pressure pulse remains positive, evolves nontrivially and closes mass/energy wit
 the explicit 2D state/flux layout is `160 bytes/cell`. This is only periodic 2D
 candidate evidence; sealed heating, general source accounting, natural convection,
 gas mixing, physical-time and budget selection remain open.
+
+The next isolated checkpoint is clean-validated at `be0ff2f37`. A general
+`ConservativeSourceLedger` records applied source deltas separately from numerical
+corrections, while sealed face fluxes keep mass and energy inside the box. Uniform
+nondimensional heating raises mean pressure/temperature from `1` to `1.06667`;
+the `76.8` energy increase reconciles within `3.21876e-11`, all `30720` source
+events are counted, and fallback/correction counts remain zero. Uniform, pulse and
+sealed-heating clean runners all pass on that commit. PhysicalScale, physical time,
+solver selection and production integration remain unselected/blocked.
 
 Current HLLC two-dimensional checkpoint source package:
 `artifacts/vnext-phase5-source-7ab3434f6/`, SHA-256

@@ -3,9 +3,9 @@
 ```text
 CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
-PHASE_STATUS=IN_PROGRESS_HLLC_2D_PERIODIC_CHECKPOINT
+PHASE_STATUS=IN_PROGRESS_HLLC_2D_SEALED_HEATING_SOURCE_LEDGER
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=d38120177ff22984fd69539d6fc2ff37a8063fa2
+IMPLEMENTATION_HEAD=be0ff2f37108acc88f4fa26f7b05c17b139af570
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -48,9 +48,10 @@ V1_0_5_HLLC_RUSANOV_FALLBACK=FRONT_RUNNER_NOT_SELECTED_LOW_MACH_NEAR_VACUUM_SOD_
 V1_0_5_HLLC_RUSANOV_FALLBACK_COMMIT=3eb235b8c27174f8e5ee8c31c33ceb167ffe545b
 V1_0_5_HLLC_FALLBACK_CONTRACT=GREEN_ADVERSARIAL_INTERFACE_EXPECTED_COUNT_1_COMMIT_78bad784d
 V1_0_5_HLLC_2D_PERIODIC=GREEN_UNIFORM_AND_PRESSURE_PULSE_32X24_ZERO_FALLBACK_ZERO_CORRECTIONS_160_BYTES_PER_CELL_COMMIT_d38120177
-KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget; selected PhysicalScale and physical-time policy; remaining multidimensional sealed-heating convection and gas-mixing evidence
+V1_0_5_HLLC_2D_SEALED_HEATING=GREEN_SOURCE_LEDGER_CLOSE_PRESSURE_TEMPERATURE_INCREASE_ENERGY_BALANCE_3_21876E_MINUS_11_ZERO_FALLBACK_ZERO_CORRECTIONS_162_333_BYTES_PER_CELL_COMMIT_be0ff2f37
+KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget; selected PhysicalScale and physical-time policy; multidimensional natural-convection gas-mixing and performance evidence
 NEXT_VERSION=1.0.6
-NEXT_PHASE=add sealed-heating and explicit source-ledger checkpoint only inside AtmosphereBench; keep HLLE and LBM registered-only
+NEXT_PHASE=add gravity-source ledger and natural-convection checkpoint only inside AtmosphereBench; keep HLLE and LBM registered-only
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -107,8 +108,9 @@ HLLC with explicit Rusanov fallback is now the isolated front-runner at
 `3eb235b8c`. It passes the unchanged Low-Mach gate, near-vacuum expansion, sealed
 Sod and open-leak ledger with zero fallbacks and zero numerical corrections. Its
 clean strict-double throughput is `18.8104M / 18.4543M / 18.6026M`
-cell-updates/s. It is not selected because multidimensional, sealed-heating,
-convection, gas-mixing, physical-time and accepted budget evidence remain absent.
+cell-updates/s. It is not selected because natural-convection, gas-mixing,
+two-dimensional performance, physical-time and accepted budget evidence remain
+absent.
 See the [HLLC candidate checkpoint](../vnext/phase-5-hllc-candidate.md).
 
 The defensive fallback path is independently exercised at `78bad784d`: a valid
@@ -122,6 +124,14 @@ mass/energy within `6.9e-13`; both cases record zero fallback and correction eve
 The explicit initial/current/next plus Flux-X/Flux-Y allocation is
 `160 bytes/cell`. This is not sealed-boundary, source-term, physical-time or
 solver-selection evidence.
+
+The sealed-heating checkpoint is clean-validated at `be0ff2f37`. It adds a
+general conservative applied-source ledger and sealed face fluxes only to the
+standalone bench. Nondimensional pressure and temperature rise from `1` to
+`1.06667`; mass/momentum remain unchanged, and the `76.8` energy increase closes
+against the source ledger within `3.21876e-11`. All `30720` source applications
+are counted, with zero fallback and numerical-correction events. This does not
+select PhysicalScale, physical time or the solver.
 
 The clean source package for the periodic two-dimensional checkpoint is
 `artifacts/vnext-phase5-source-7ab3434f6/`, SHA-256

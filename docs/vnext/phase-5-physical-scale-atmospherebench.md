@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_HLLC_2D_PERIODIC_CHECKPOINT
+STATUS=IN_PROGRESS_HLLC_2D_SEALED_HEATING_SOURCE_LEDGER
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -48,7 +48,7 @@ RUSANOV_OPEN_LEAK_COMMIT=ef0ca86c1
 RUSANOV_OPEN_LEAK_VALIDATION=GREEN_STRICT_DOUBLE_128X1_SEALED_LEFT_OPEN_RIGHT_MASS_OUT_6_69874_BALANCE_ERRORS_LT_3E_MINUS_14_ZERO_CORRECTIONS
 RUSANOV_PERFORMANCE_COMMIT=ee9290cb7
 RUSANOV_PERFORMANCE_VALIDATION=GREEN_STRICT_DOUBLE_SINGLE_THREAD_MEDIAN_3_REPEATS_31_0232M_31_3699M_32_8059M_CELL_UPDATES_PER_SECOND_NO_BUDGET_SELECTED
-CURRENT_VALIDATION=GREEN_BUILD_75_STATIC_61_TARGETED_29_PYTHON_414_PASS_0_SKIP_HLLC_2D_TARGETED_3
+CURRENT_VALIDATION=GREEN_BUILD_77_STATIC_62_TARGETED_29_PYTHON_414_PASS_0_SKIP_HLLC_2D_TARGETED_4_CLEAN_3
 CURRENT_SOURCE_PACKAGE=GREEN_1306_SOURCE_PLUS_MANIFEST_NO_TEST_ASSETS_REVISION_7ab3434f6_SHA256_8FEC630C880EE10434C8CFE51E97E14B927EEF1207D09B02DDC19CE9C7AA1B8B
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
@@ -361,8 +361,8 @@ atmosphere_solver_selection=unselected
 
 This makes HLLC/Rusanov-fallback the current front-runner, not the selected
 solver. Remaining RED items are selected PhysicalScale and physical-time policy,
-multidimensional validation, sealed heating, natural convection, gas mixing and
-an accepted CPU/memory budget. Details are in
+remaining multidimensional validation, natural convection, gas mixing and an
+accepted CPU/memory budget. Details are in
 [the HLLC checkpoint](phase-5-hllc-candidate.md).
 
 The defensive fallback is independently covered at `78bad784d`: one valid
@@ -379,6 +379,17 @@ arrays. Both clean runners bind to the clean source commit and verified
 strict-double flags. This closes only the first periodic 2D checkpoint; sealed
 heating, physical source accounting, natural convection, gas mixing, physical-time
 selection and an accepted budget remain open.
+
+The sealed-heating/source-ledger checkpoint is clean-validated at `be0ff2f37`.
+It adds a general conservative applied-source ledger and reusable sealed face
+fluxes to the standalone 2D candidate. Uniform heating raises nondimensional mean
+pressure and temperature from `1` to `1.06667`; mass and momentum drift remain
+zero, while the `76.8` energy increase reconciles to the recorded source within
+`3.21876e-11`. The source ledger closes, all `30720` source applications are
+counted, and fallback/correction counts remain zero. The sealed face-array layout
+is `162.333 bytes/cell` (`124672` bytes total for `32x24`). All three 2D clean
+runners pass on the same commit. This is still not physical-time, material-data,
+production TPT wall, performance or solver-selection evidence.
 
 Current HLLC two-dimensional checkpoint source package:
 `artifacts/vnext-phase5-source-7ab3434f6/`, SHA-256
