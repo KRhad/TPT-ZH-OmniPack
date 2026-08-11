@@ -356,8 +356,30 @@ void OmniAtmosphere::AdvanceOnce(double dt, bool acoustic)
 			{
 				if (config.boundary == OmniAtmosphereBoundary::Periodic)
 				{
-					if (!blocked[Index(width - 1, y)] && !blocked[Index(0, y)])
+					const bool leftBlocked = blocked[Index(width - 1, y)] != 0;
+					const bool rightBlocked = blocked[Index(0, y)] != 0;
+					if (!leftBlocked && !rightBlocked)
+					{
 						flux = RusanovFlux(state[Index(width - 1, y)], state[Index(0, y)], true, acoustic);
+					}
+					else if (leftBlocked != rightBlocked)
+					{
+						// A periodic seam is still a physical face when one side is a
+						// blocked cell. Mirror the fluid state exactly as for an internal
+						// wall; a zero flux would create a one-sided pressure impulse.
+						if (leftBlocked)
+						{
+							flux = RusanovFlux(reflect(state[Index(0, y)], true), state[Index(0, y)], true, acoustic);
+							if (faceX == 0)
+								RecordBoundaryFlux(flux, true, false, dt);
+						}
+						else
+						{
+							flux = RusanovFlux(state[Index(width - 1, y)], reflect(state[Index(width - 1, y)], true), true, acoustic);
+							if (faceX == 0)
+								RecordBoundaryFlux(flux, true, true, dt);
+						}
+					}
 				}
 				else if (config.boundary == OmniAtmosphereBoundary::Open)
 				{
@@ -412,8 +434,27 @@ void OmniAtmosphere::AdvanceOnce(double dt, bool acoustic)
 			{
 				if (config.boundary == OmniAtmosphereBoundary::Periodic)
 				{
-					if (!blocked[Index(x, height - 1)] && !blocked[Index(x, 0)])
+					const bool topBlocked = blocked[Index(x, height - 1)] != 0;
+					const bool bottomBlocked = blocked[Index(x, 0)] != 0;
+					if (!topBlocked && !bottomBlocked)
+					{
 						flux = RusanovFlux(state[Index(x, height - 1)], state[Index(x, 0)], false, acoustic);
+					}
+					else if (topBlocked != bottomBlocked)
+					{
+						if (topBlocked)
+						{
+							flux = RusanovFlux(reflect(state[Index(x, 0)], false), state[Index(x, 0)], false, acoustic);
+							if (faceY == 0)
+								RecordBoundaryFlux(flux, false, false, dt);
+						}
+						else
+						{
+							flux = RusanovFlux(state[Index(x, height - 1)], reflect(state[Index(x, height - 1)], false), false, acoustic);
+							if (faceY == 0)
+								RecordBoundaryFlux(flux, false, true, dt);
+						}
+					}
 				}
 				else if (config.boundary == OmniAtmosphereBoundary::Open)
 				{

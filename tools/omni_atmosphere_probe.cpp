@@ -258,6 +258,24 @@ int main()
 		return Fail("wall-normal cavity flow left the acoustic route before reflection resolved");
 	}
 
+	auto periodicSeamConfig = Config(3, 1, OmniAtmosphereBoundary::Periodic);
+	periodicSeamConfig.execution = OmniAtmosphereExecution::ReferenceCompressible;
+	OmniAtmosphere periodicSeam(periodicSeamConfig);
+	periodicSeam.ResetUniform(
+		periodicSeam.Config().referenceDensity,
+		periodicSeam.Config().referenceTemperature);
+	periodicSeam.SetBlocked(0, 0, true);
+	periodicSeam.StepReference(1.0 / 60.0);
+	if (std::abs(periodicSeam.State(1, 0).momentumX) > 1.0e-12 ||
+		std::abs(periodicSeam.State(2, 0).momentumX) > 1.0e-12 ||
+		std::abs(periodicSeam.Ledger().momentumXResidual()) > 1.0e-12 ||
+		std::abs(periodicSeam.Ledger().momentumYResidual()) > 1.0e-12 ||
+		std::abs(periodicSeam.Ledger().massResidualKg()) > 1.0e-14 ||
+		std::abs(periodicSeam.Ledger().energyResidualJ()) > 1.0e-10)
+	{
+		return Fail("periodic blocked seam created a phantom impulse or ledger drift");
+	}
+
 	std::cout << "omni_atmosphere_cpu_mvp_pass=true\n";
 	std::cout << "authoritative_fields=rho,rho_u,rho_v,rho_E\n";
 	std::cout << "eos=single_species_ideal_gas\n";
@@ -286,5 +304,6 @@ int main()
 	std::cout << "boundary_change_acoustic_route=" << (boundaryChange.Ledger().acousticRoute ? "true" : "false") << '\n';
 	std::cout << "inserted_wall_acoustic_route=" << (insertedWall.Ledger().acousticRoute ? "true" : "false") << '\n';
 	std::cout << "cavity_second_acoustic_route=" << (cavity.Ledger().acousticRoute ? "true" : "false") << '\n';
+	std::cout << "periodic_blocked_seam_momentum_x_residual=" << periodicSeam.Ledger().momentumXResidual() << '\n';
 	return 0;
 }
