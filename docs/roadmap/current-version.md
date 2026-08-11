@@ -3,9 +3,9 @@
 ```text
 CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
-PHASE_STATUS=IN_PROGRESS_HLLC_2D_PERFORMANCE
+PHASE_STATUS=IN_PROGRESS_D2Q9_LBM_COMPARISON
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=12e904f7574b690c600f1bbcb0b74d160badf540
+IMPLEMENTATION_HEAD=5e3c46fae8fc7754240c97931e59f7b2216c5417
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -52,9 +52,10 @@ V1_0_5_HLLC_2D_SEALED_HEATING=GREEN_SOURCE_LEDGER_CLOSE_PRESSURE_TEMPERATURE_INC
 V1_0_5_HLLC_2D_NATURAL_CONVECTION=GREEN_CONTROL_SUBTRACTED_THERMAL_RISE_0_225497_UPDRAFT_0_0257047_RETURN_MINUS_0_000157248_SOURCE_BOUNDARY_LEDGER_LT_8E_MINUS_12_ZERO_FALLBACK_ZERO_CORRECTIONS_COMMIT_83c5a0cd2
 V1_0_5_HLLC_2D_SPECIES_MIXING=GREEN_PASSIVE_BINARY_32X24_320_STEPS_SPECIES_A_B_ZERO_DRIFT_FRACTION_BOUNDS_0_1_TV_48_TO_47_9173_768_MIXED_CELLS_ZERO_FALLBACK_ZERO_CORRECTIONS_40_STATE_200_WORKING_BYTES_PER_CELL_COMMIT_55088a852
 V1_0_5_HLLC_2D_PERFORMANCE=RECORDED_NO_BUDGET_STRICT_DOUBLE_SINGLE_THREAD_153X96_1_69129MS_306X192_6_56627MS_612X384_31_2385MS_160_WORKING_BYTES_PER_CELL_COMMIT_12e904f75
-KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted CPU and memory budget; selected PhysicalScale and physical-time policy; actual Legacy-like and LBM comparison; remaining mandatory solver matrix
+V1_0_5_LBM_D2Q9=GREEN_ISOTHERMAL_ONLY_UNIFORM_AND_SHEAR_WAVE_RELATIVE_ERROR_0_000577441_ZERO_CORRECTIONS_72_STATE_144_WORKING_BYTES_PER_CELL_ENERGY_NA_NEAR_VACUUM_UNSUPPORTED_SHOCK_UNSUPPORTED_COMMIT_5e3c46fae
+KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted CPU and memory budget; selected PhysicalScale and physical-time policy; actual Legacy-like control; remaining mandatory solver matrix
 NEXT_VERSION=1.0.6
-NEXT_PHASE=define and validate Phase 5 CPU/memory budget plus physical-scale/time policy, then execute actual Legacy-like and LBM comparison before solver selection
+NEXT_PHASE=implement actual Legacy-like control with non-applicable physical ledgers stated explicitly, then define budget and physical-scale/time policy before solver selection
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -84,8 +85,9 @@ stable tag and master unchanged at `d768aeb89`, with zero upstream-only commits.
 The PhysicalScale/AtmosphereBench scaffold and shared contracts remain isolated.
 One first-order strict-double Rusanov debug candidate now has 1D periodic uniform,
 pressure-pulse, density-advection, contact-discontinuity, near-vacuum-expansion,
-sealed Sod, smooth-grid-refinement and low-Mach probes, while HLLE and LBM remain
-registration-only. The low-Mach execution is valid but reports suitability false,
+sealed Sod, smooth-grid-refinement and low-Mach probes. HLLE remains registration-
+only; D2Q9 LBM now has limited isothermal uniform/shear comparison results. The
+Rusanov low-Mach execution is valid but reports suitability false,
 so pure first-order compressible Rusanov is not selected. All scale, time and solver
 selections remain unselected. Its open-boundary ledger and three-size standalone
 performance record are now clean-validated, but no physical-time or performance
@@ -163,6 +165,17 @@ All samples preserve positivity and use zero fallback/corrections. The 60 Hz fra
 fraction is recorded only as context; `performance_budget_status=unselected`.
 The clean result SHA-256 is
 `2792A219A32A3F7C81EC93ABF9301B5D3D2EE48A6BC74D27A40CBB8DE7D1BF87`.
+
+The D2Q9 BGK LBM comparison is clean-validated at `5e3c46fae`. Its `64x48`
+uniform state is preserved to `4.26326e-14` population L1, and a `64x64`
+low-Mach shear wave decays with `0.000577441` relative error against the lattice-
+viscosity reference. Both runs conserve mass/momentum, retain positive populations
+and use zero corrections. State/working memory is `72/144 bytes/cell`. The result
+also explicitly records no energy state, no near-vacuum or shock support and no
+species transport; `energy_drift` is JSON `null`, not fake zero. Clean result
+SHA-256 values are
+`D601D2DDA76BECB73C37CE5CB309F6460A10B2516D50C135C8D7B39C26FA4333`
+and `26180CBA90702B0458D30FA05C1867CEEAFA743D7CCF50BE7F393C29E7C12AE6`.
 
 The clean source package for the current 2D performance checkpoint is
 `artifacts/vnext-phase5-source-ef423c4f5/`, SHA-256

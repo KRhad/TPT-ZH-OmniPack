@@ -8,11 +8,14 @@ it does not replace `Air.cpp` or alter saves/gameplay.
 
 ## Planned comparison order
 
-The 1.0.5 scaffold registers the Legacy-like, Rusanov, HLLE and LBM names. The
-current isolated checkpoint implements only first-order strict-double Rusanov 1D
-uniform, periodic pressure-pulse/density-advection/contact/near-vacuum, sealed Sod, and smooth-advection refinement debug probes. Legacy-like remains a control
-registration; HLLE and LBM remain registered-only. These probes are not comparison
-evidence and do not select a solver.
+The 1.0.5 scaffold registers Legacy-like, Rusanov-family FVM, HLLE, HLLC and LBM
+names. Current isolated execution covers the strict-double Rusanov debug floor,
+the rejected all-speed Rusanov experiment, HLLC/Rusanov-fallback across the
+current 1D/2D physics and performance matrix, and isothermal D2Q9 uniform/shear
+probes. Legacy-like remains a control registration and HLLE remains registered-
+only. D2Q9 is now actual comparison evidence, but its missing energy,
+near-vacuum and shock support makes it ineligible as the unified solver. No
+candidate is selected.
 
 1. Legacy-like baseline using the current field semantics.
 2. First-order strict-double Rusanov FVM.
@@ -21,12 +24,12 @@ evidence and do not select a solver.
 5. A low-Mach LBM candidate.
 6. Hybrid/all-speed candidate only if the above expose a measured need.
 
-The provisional recommendation is HLLE FVM because one conservative state naturally
-carries mass, momentum, total energy and species; it handles compressibility,
-pressure waves and large density changes more directly than LBM. Rusanov is the
-debugging floor; its current probes have passed only the isolated contracts described
-in `phase-5-rusanov-candidate.md`. HLLC is a later accuracy option, and LBM remains
-valuable for low-Mach/GPU comparison. Results may overturn this recommendation.
+The original provisional recommendation was HLLE FVM because one conservative
+state naturally carries mass, momentum, total energy and species. Measurements
+have since made HLLC with explicit Rusanov fallback the current front-runner;
+HLLE remains unimplemented, and D2Q9 is now limited comparison evidence rather
+than a registration placeholder. Rusanov remains the debugging floor. None of
+these observations is final solver selection.
 
 ## Tool architecture
 
@@ -136,7 +139,9 @@ performance_gate=recorded_candidate_measurement_no_budget
 ```
 
 Solver selection additionally requires an all-speed/hybrid or otherwise
-low-Mach-suitable candidate. HLLE and LBM remain registration-only.
+low-Mach-suitable path. HLLC currently passes the low-Mach fixture; D2Q9 also has
+a strong isothermal shear result but cannot meet the total-energy, vacuum and
+shock requirements. HLLE remains registration-only.
 
 The first all-speed Rusanov experiment is now measured, not merely registered.
 It is a valid negative comparison: the local-Mach/pressure-jump dissipation
@@ -152,5 +157,7 @@ PoC comparison. At nominal Mach `0.00387298` it records L1 `0.0024269` and TV
 ratio `0.980949`; it also passes the current 1D near-vacuum, sealed Sod and open
 leak contracts with zero fallbacks/corrections. Strict-double throughput is
 approximately `18.5M` cell-updates/s, slower than the Rusanov debug floor. These
-results justify continued evaluation, not selection: multidimensional and
-physical-time cases plus a reviewed performance budget remain mandatory.
+results justify continued evaluation, not selection. Periodic 2D, sealed heating,
+natural convection, passive species mixing and target-size performance now also
+have evidence. Physical-time policy, an accepted budget, actual Legacy-like
+control and the remaining mandatory cases remain open.

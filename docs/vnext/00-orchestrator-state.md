@@ -6,9 +6,9 @@
 REPORT_DATE=2026-08-11
 CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.5
-CURRENT_VERSION_GATE=IN_PROGRESS_HLLC_FRONT_RUNNER_NOT_SELECTED
+CURRENT_VERSION_GATE=IN_PROGRESS_LBM_COMPARED_HLLC_FRONT_RUNNER_NOT_SELECTED
 NEXT_VERSION=1.0.6
-NEXT_PHASE=add passive conserved-species gas-mixing checkpoint inside AtmosphereBench; keep HLLE and LBM registered-only
+NEXT_PHASE=implement actual Legacy-like control, then define CPU/memory and physical-time gates before solver selection
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -35,7 +35,7 @@ V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS
 V1_0_5_GATE=IN_PROGRESS
 V1_0_5_BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_IMPLEMENTATION_HEAD=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-V1_0_5_CURRENT_CHECKPOINT_HEAD=83c5a0cd2ba01b623a1d500e1cecb13f5931a60d
+V1_0_5_CURRENT_CHECKPOINT_HEAD=5e3c46fae8fc7754240c97931e59f7b2216c5417
 V1_0_5_SHARED_CONTRACT_HEAD=1ba507e89e3d713fe355c03c2fc6e7139aabcb49
 V1_0_5_RUSANOV_HEAD=4b0658d8ff7bc56169fd8ed5d649f8c6b4250b44
 V1_0_5_RUSANOV_PRESSURE_PULSE_HEAD=cded7be672fbb2755174499214bb31622979eac6
@@ -52,6 +52,9 @@ V1_0_5_HLLC_FALLBACK_CONTRACT_HEAD=78bad784d9cf075400b1a68429f065bbdd9784d8
 V1_0_5_HLLC_2D_PERIODIC_HEAD=d38120177ff22984fd69539d6fc2ff37a8063fa2
 V1_0_5_HLLC_2D_SEALED_HEATING_HEAD=be0ff2f37108acc88f4fa26f7b05c17b139af570
 V1_0_5_HLLC_2D_NATURAL_CONVECTION_HEAD=83c5a0cd2ba01b623a1d500e1cecb13f5931a60d
+V1_0_5_HLLC_2D_SPECIES_MIXING_HEAD=55088a8523421b8ef5c1c0b6be3170fdf505ac34
+V1_0_5_HLLC_2D_PERFORMANCE_HEAD=12e904f7574b690c600f1bbcb0b74d160badf540
+V1_0_5_LBM_D2Q9_HEAD=5e3c46fae8fc7754240c97931e59f7b2216c5417
 V1_0_5_ROLLBACK=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_UPSTREAM=GREEN_ENTRY_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
 V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
@@ -150,7 +153,8 @@ is 218 ahead and zero behind. The isolated PhysicalScale contract, standalone
 strict-double AtmosphereBench scaffold and shared contracts are clean-validated.
 One first-order Rusanov candidate is now implemented only as isolated 1D periodic
 uniform, pressure-pulse, density-advection, contact-discontinuity, near-vacuum-expansion, sealed Sod and smooth-grid-refinement debug probes. Scale, time policy and
-solver selection remain unselected; HLLE and LBM remain registered-only; no production source consumes the bench. See
+solver selection remain unselected; at that original scaffold checkpoint HLLE and
+LBM were registration-only and no production source consumed the bench. See
 `phase-5-physical-scale-atmospherebench.md` and `phase-5-rusanov-candidate.md`.
 
 The all-speed Rusanov follow-up is now recorded at `fae9a0847`. Its execution is
@@ -218,6 +222,16 @@ Working allocation is `160 bytes/cell`, and all three sizes use zero fallback an
 correction events. This is a measurement, not a selected budget or physical-time
 claim. The clean result SHA-256 is
 `2792A219A32A3F7C81EC93ABF9301B5D3D2EE48A6BC74D27A40CBB8DE7D1BF87`.
+
+D2Q9 BGK LBM is now an actual strict-double comparison at `5e3c46fae`, not a
+registration placeholder. Uniform flow is preserved and the low-Mach shear-wave
+amplitude relative error is `0.000577441`; both mass/momentum ledgers close with
+positive populations and zero corrections. However, the model has no energy
+state and explicitly marks near-vacuum, shocks and species unsupported. It is
+therefore limited comparison evidence, not the selected unified solver. Clean
+result SHA-256 values are
+`D601D2DDA76BECB73C37CE5CB309F6460A10B2516D50C135C8D7B39C26FA4333`
+and `26180CBA90702B0458D30FA05C1867CEEAFA743D7CCF50BE7F393C29E7C12AE6`.
 
 Current HLLC two-dimensional checkpoint source package:
 `artifacts/vnext-phase5-source-ef423c4f5/`, SHA-256

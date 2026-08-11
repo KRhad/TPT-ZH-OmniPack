@@ -32,7 +32,7 @@ OmniAtmosphere state or solver will be integrated yet.
 | 0 | latest upstream adaptation | 1.0.2 COMPLETE / GREEN: official stable/master unchanged at `d768aeb89`; no adaptation required |
 | 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
 | 2 | physical scale and unit system | 1.0.5 IN_PROGRESS: candidate contract scaffold; selection RED |
-| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Rusanov is the debug floor, all-speed Rusanov is rejected, and HLLC/Rusanov-fallback is the unselected front-runner after current 1D probes, periodic 2D, sealed-heating/source-ledger, control-subtracted natural convection, passive conserved-species mixing and target-size 2D throughput measurements; accepted CPU/memory budget, actual Legacy-like/LBM comparison and physical-time policy remain open |
+| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Rusanov is the debug floor, all-speed Rusanov is rejected, HLLC/Rusanov-fallback is the unselected front-runner after the current physics/performance matrix, and isothermal D2Q9 now has actual uniform/shear results but is rejected as a unified solver for missing energy, near-vacuum and shock support; accepted CPU/memory budget, actual Legacy-like control and physical-time policy remain open |
 | 4 | solver selection | BLOCKED |
 | 5 | CPU single-species OmniAtmosphere MVP | BLOCKED |
 | 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
@@ -142,7 +142,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Define and validate Phase 5 CPU/memory and physical-time gates, then execute actual Legacy-like/LBM comparison and finish the mandatory solver matrix before selection; production OmniAtmosphere remains unauthorized. |
+| Next stage? | Execute an actual Legacy-like control with physical mass/energy metrics marked not applicable, then define Phase 5 CPU/memory and physical-time gates and finish the mandatory solver matrix before selection; production OmniAtmosphere remains unauthorized. |
 
 ## Long-term acceptance
 

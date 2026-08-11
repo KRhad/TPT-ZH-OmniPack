@@ -3,8 +3,8 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=52e94c5aa
-IMPLEMENTATION_COMMIT=55088a8523421b8ef5c1c0b6be3170fdf505ac34
-STATUS=GREEN_ISOLATED_CANDIDATE_PASSIVE_SPECIES_NOT_SELECTED
+IMPLEMENTATION_COMMIT=12e904f7574b690c600f1bbcb0b74d160badf540
+STATUS=GREEN_ISOLATED_CANDIDATE_2D_PERFORMANCE_NOT_SELECTED
 ATMOSPHERE_SOLVER_SELECTION=UNSELECTED
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
@@ -30,7 +30,8 @@ No third-party source code or data was copied.
 
 The candidate remains isolated to `tools/atmospherebench`. It does not modify or
 link production Air, Simulation, Particle, Save, Lua, renderer, SDL or element
-code. HLLE and LBM remain `registered_only`.
+code. HLLE remains `registered_only`; D2Q9 was later implemented as a limited
+isothermal comparison and did not replace this front-runner.
 
 The shared bench contract now also has a `ConservativeSourceLedger`, separate
 from `NumericalCorrectionLedger`. It records applied mass, momentum and energy
@@ -287,9 +288,9 @@ See [phase-5-hllc-2d-performance.md](phase-5-hllc-2d-performance.md).
 
 ```text
 full_build=75/75 build steps PASS
-python_discovery=414 PASS, 2 skipped, 416 total
-meson_static=65/65 PASS
-targeted_atmospherebench_contracts=19/19 PASS
+python_discovery=415 PASS, 2 skipped, 417 total
+meson_static=67/67 PASS
+targeted_atmospherebench_contracts=20/20 PASS
 hllc_targeted_meson=6/6 PASS
 hllc_2d_targeted_meson=4/4 PASS
 hllc_fallback_contract=PASS, expected fallback count 1
@@ -327,9 +328,10 @@ test assets, and binds revision `ef423c4f5a44a428e5f015855a087ace63c7ce96`.
 HLLC with Rusanov fallback is the current front-runner for continued PoC work,
 not the selected production solver. `V1_0_5_GATE=IN_PROGRESS` because the phase
 still lacks a selected PhysicalScale/physical-time policy, accepted performance
-budget and actual Legacy-like/LBM comparison. Sealed heating, gravity accounting,
-natural convection, passive species conservation and target-size 2D throughput
-now have evidence, but broader
+budget and actual Legacy-like control. D2Q9 now has real low-Mach comparison
+evidence but is ineligible as a unified solver because energy, near-vacuum and
+shock support are absent. Sealed heating, gravity accounting, natural convection,
+passive species conservation and target-size 2D throughput now have evidence, but broader
 multidimensional and
 long-running adversarial coverage remains required before production use.
 

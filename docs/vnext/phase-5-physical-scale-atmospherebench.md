@@ -5,8 +5,8 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_COMMIT=12e904f7574b690c600f1bbcb0b74d160badf540
-STATUS=IN_PROGRESS_HLLC_2D_PERFORMANCE
+IMPLEMENTATION_COMMIT=5e3c46fae8fc7754240c97931e59f7b2216c5417
+STATUS=IN_PROGRESS_D2Q9_LBM_COMPARISON
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -19,7 +19,7 @@ PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
 ATMOSPHERE_SOLVER_SELECTED=false
 CANDIDATES_REGISTERED=6
-CANDIDATE_SOLVERS_IMPLEMENTED=3
+CANDIDATE_SOLVERS_IMPLEMENTED=4
 TARGETED_TESTS=GREEN_24_24
 PYTHON_DISCOVERY=GREEN_409_TOTAL_407_PASS_2_SKIPPED
 MESON_STATIC=GREEN_43_43
@@ -52,10 +52,12 @@ HLLC_2D_SPECIES_MIXING_COMMIT=55088a8523421b8ef5c1c0b6be3170fdf505ac34
 HLLC_2D_SPECIES_MIXING_VALIDATION=GREEN_32X24_320_STEPS_SPECIES_A_B_ZERO_DRIFT_TV_48_TO_47_9173_768_MIXED_CELLS_ZERO_FALLBACK_ZERO_CORRECTIONS_40_STATE_200_WORKING_BYTES_PER_CELL
 HLLC_2D_PERFORMANCE_COMMIT=12e904f7574b690c600f1bbcb0b74d160badf540
 HLLC_2D_PERFORMANCE_VALIDATION=RECORDED_NO_BUDGET_153X96_1_69129MS_306X192_6_56627MS_612X384_31_2385MS_160_WORKING_BYTES_PER_CELL_ZERO_FALLBACK_ZERO_CORRECTIONS
-CURRENT_VALIDATION=GREEN_BUILD_75_STEPS_STATIC_65_TARGETED_19_PYTHON_416_TOTAL_414_PASS_2_SKIP_PERFORMANCE_CLEAN_RUNNER_PASS
+LBM_D2Q9_COMMIT=5e3c46fae8fc7754240c97931e59f7b2216c5417
+LBM_D2Q9_VALIDATION=GREEN_ISOTHERMAL_UNIFORM_SHEAR_WAVE_ERROR_0_000577441_ZERO_CORRECTIONS_ENERGY_NA_NEAR_VACUUM_UNSUPPORTED_SHOCK_UNSUPPORTED
+CURRENT_VALIDATION=GREEN_BUILD_75_STEPS_STATIC_67_TARGETED_20_PYTHON_417_TOTAL_415_PASS_2_SKIP_LBM_CLEAN_RUNNERS_2
 CURRENT_SOURCE_PACKAGE=GREEN_1310_SOURCE_PLUS_MANIFEST_NO_TEST_ASSETS_REVISION_ef423c4f5_SHA256_FDF8404AAFF38E23C1DBE5BCAF96EB750825CB95B899FE3B1BCE8C2DF2A267A5
 HLLE_STATUS=REGISTERED_ONLY
-LBM_STATUS=REGISTERED_ONLY
+LBM_STATUS=IMPLEMENTED_ISOTHERMAL_LIMITED_NOT_SELECTED
 V1_0_5_GATE=IN_PROGRESS
 ```
 
@@ -135,7 +137,7 @@ At the initial scaffold checkpoint, all four candidates reported
 `result_status=contract_only`; its zero drift means the unchanged fixture closes,
 not that any CFD scheme passed uniform-state preservation. The later isolated
 Rusanov checkpoint changes only `fvm_rusanov` to an implemented 1D uniform probe;
-HLLE and LBM remain registered-only.
+at that historical checkpoint HLLE and LBM remained registered-only.
 
 `tools/run_atmospherebench.ps1` refuses dirty source, verifies that the Meson build
 tree belongs to the current repository, rebuilds the standalone target before
@@ -305,8 +307,8 @@ is negative. It preserves positivity and conservation with zero corrections, yet
 the unchanged very-low-Mach density L1 is `0.10116` and total-variation ratio is
 `1.46479`; it is explicitly recorded as
 `candidate_disposition=reject_low_mach_suitability`. This result does not select a
-solver and does not authorize production Atmosphere integration. HLLE and LBM
-remain registered-only. An acceptable low-Mach candidate, physical-time policy
+solver and does not authorize production Atmosphere integration. At that
+checkpoint HLLE and LBM remained registered-only. An acceptable low-Mach candidate, physical-time policy
 and reviewed performance budget are still required for solver selection.
 PhysicalScale, physical-time policy and solver selection remain RED until the
 mandatory cases, conservation/positivity, memory and performance evidence exist.
@@ -466,6 +468,28 @@ The corresponding clean test-free source package is
 with `1310` source members plus manifest and zero test assets. The manifest binds
 revision `ef423c4f5a44a428e5f015855a087ace63c7ce96`.
 
-Two-dimensional performance is now measured, but the Phase 5 Gate remains open
-for an accepted CPU/memory budget, PhysicalScale/time policy, actual Legacy-like
-and LBM comparison, remaining mandatory cases and final solver selection.
+At the performance checkpoint, the Phase 5 Gate remained open for an accepted
+CPU/memory budget, PhysicalScale/time policy, actual Legacy-like/LBM comparison,
+remaining mandatory cases and final solver selection.
+
+## Isothermal D2Q9 LBM comparison
+
+Checkpoint `5e3c46fae` turns D2Q9 from a registration placeholder into an actual
+strict-double BGK collide-and-stream candidate. The periodic `64x48` uniform case
+preserves population state to `4.26326e-14` L1. A `64x64` low-Mach shear wave
+decays with `0.000577441` amplitude relative error against the configured lattice-
+viscosity reference. Both runs conserve mass/momentum, retain positive populations
+and record zero numerical corrections.
+
+This comparison also supplies a decisive limitation: the implemented D2Q9 model
+has no energy state and explicitly marks energy drift not applicable, near-vacuum
+unsupported, shocks unsupported and species unimplemented. Its state/working
+memory is `72/144 bytes/cell`. It is therefore not selected as the unified
+OmniAtmosphere solver despite its low-Mach result. Clean result SHA-256 values are
+`D601D2DDA76BECB73C37CE5CB309F6460A10B2516D50C135C8D7B39C26FA4333`
+and `26180CBA90702B0458D30FA05C1867CEEAFA743D7CCF50BE7F393C29E7C12AE6`.
+See [the D2Q9 checkpoint](phase-5-lbm-d2q9.md).
+
+Actual Legacy-like control, accepted CPU/memory and physical-time policy, the
+remaining mandatory matrix and formal solver selection remain open. HLLE remains
+`registered_only`; production Air is unchanged.
