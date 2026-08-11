@@ -5,7 +5,7 @@ CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
 PHASE_STATUS=IN_PROGRESS_REFERENCE_BUDGET_GREEN_TIME_POLICY_RED
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=76300cd98ca2c7405d011ba4401445e3bd9eced8
+IMPLEMENTATION_HEAD=c63f4e652e98d71dded4783ccec79b0e320d2f31
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -28,9 +28,9 @@ V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS
 V1_0_5_GATE=IN_PROGRESS
 V1_0_5_UPSTREAM=GREEN_ENTRY_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
 V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
-V1_0_5_TIME_POLICY=UNSELECTED_DIRECT_REAL_ACOUSTIC_REJECTED_UNIFORM_SCALING_REJECTED_HYBRID_REQUIRED_UNIMPLEMENTED
+V1_0_5_TIME_POLICY=UNSELECTED_DIRECT_REAL_ACOUSTIC_REJECTED_UNIFORM_SCALING_REJECTED_HYBRID_COMPONENTS_PROBED_COUPLING_UNIMPLEMENTED
 V1_0_5_ATMOSPHERE_SOLVER_SELECTED=false
-V1_0_5_SCAFFOLD=GREEN_CLEAN_BUILD_80_STATIC_43_TARGETED_24_PYTHON_409_TOTAL_407_PASS_2_SKIPS_CONTRACT_ARTIFACT_AND_SOURCE_PACKAGE
+V1_0_5_SCAFFOLD=GREEN_CLEAN_BUILD_610_STATIC_71_TARGETED_30_PYTHON_427_TOTAL_425_PASS_2_SKIPS_CONTRACT_ARTIFACT_AND_SOURCE_PACKAGE
 V1_0_5_SHARED_CONTRACT=GREEN_CLEAN_BUILD_80_STATIC_43_TARGETED_26_PYTHON_411_TOTAL_409_PASS_2_SKIPS_CONTRACT_ARTIFACT_AND_SOURCE_PACKAGE
 V1_0_5_RUSANOV=GREEN_ISOLATED_STRICT_DOUBLE_UNIFORM_PROBE_BUILD_80_STATIC_44_TARGETED_17_PYTHON_414_TOTAL_412_PASS_2_SKIPS_ZERO_DRIFT_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
 V1_0_5_RUSANOV_PRESSURE_PULSE=GREEN_ISOLATED_STRICT_DOUBLE_NONUNIFORM_128X1_64_STEP_PROBE_BUILD_80_STATIC_45_TARGETED_17_PYTHON_414_TOTAL_412_PASS_2_SKIPS_POSITIVE_ZERO_CORRECTIONS_HLLE_LBM_REGISTERED_ONLY
@@ -56,7 +56,8 @@ V1_0_5_LBM_D2Q9=GREEN_ISOTHERMAL_ONLY_UNIFORM_AND_SHEAR_WAVE_RELATIVE_ERROR_0_00
 V1_0_5_LEGACY_LIKE=GREEN_CONTROL_ONLY_UNIFORM_ZERO_CHANGE_PRESSURE_PULSE_PEAK_0_99005_TO_0_236479_PRESSURE_SUM_DRIFT_8_52651E_MINUS_13_ZERO_CORRECTIONS_32_STATE_64_WORKING_BYTES_PER_CELL_PHYSICAL_DRIFTS_NULL_COMMIT_696d0c958
 V1_0_5_REFERENCE_BUDGET=GREEN_4_1666667MS_PER_TICK_64_AUTHORITATIVE_256_WORKING_BYTES_PER_CELL_HLLC_1_69129MS_32_160_BYTES_MAX_2_SUBSTEPS_COMMIT_76300cd98
 V1_0_5_ACOUSTIC_POLICY=DIRECT_344MPS_60HZ_7167_SUBSTEPS_12121_47543MS_REJECTED_BUDGET_LIMIT_0_096MPS_UNIFORM_SCALING_REJECTED_DEFAULT_REALISM
-KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation semantics; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; selected PhysicalScale and physical-time policy; hybrid/all-speed candidate; remaining mandatory solver and precision matrix
+V1_0_5_HYBRID_COMPONENTS=GREEN_UNCOUPLED_FIXTURES_ONLY_ROUTER_FALSE_REFLUX_NOT_IMPLEMENTED_EVENT_LOCAL_NOT_IMPLEMENTED_CFL_1_7274_13_274_128_74_ALT_EOS_118_029_BUILD_610_STATIC_71_PYTHON_425_PLUS_2_SKIPS_COMMIT_c63f4e652
+KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation semantics; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; selected PhysicalScale and physical-time policy; mixed-region hybrid router/reflux/event-local coupling; remaining mandatory solver and precision matrix
 NEXT_VERSION=1.0.6
 NEXT_PHASE=implement and compare an isolated hybrid/all-speed low-Mach plus event-local compressible policy candidate, then complete PhysicalScale and solver selection gates
 ```
@@ -201,15 +202,26 @@ However, the public 344 m/s air acoustic reference at the 4 mm cell and 60-tick
 candidate requires 7167 explicit substeps, estimated at `12121.47543 ms/tick`.
 Direct real-acoustic explicit HLLC is rejected; limiting it to two substeps would
 cap signals near `0.096 m/s`, so uniform sound-speed reduction is also rejected as
-the default realism policy. A hybrid/all-speed plus event-local compressible
-candidate is now required but unimplemented. Physical time and solver selection
-remain unselected. See the [policy checkpoint](../vnext/phase-5-atmosphere-policy-budget.md).
+the default realism policy. The uncoupled hybrid component checkpoint now proves
+advective-CFL constant-pressure transport and the whole-case HLLC Sod component,
+but no router, cross-route face/reflux coupling, event-local subcycling or dynamic
+acoustic halo exists. Physical time and solver selection remain unselected. See
+the [policy checkpoint](../vnext/phase-5-atmosphere-policy-budget.md) and the
+[hybrid component checkpoint](../vnext/phase-5-hybrid-components.md).
 
 The clean source package for the current policy checkpoint is
 `artifacts/vnext-phase5-source-40facfdfa/`, SHA-256
 `293105F3E87D964608CE8D0ACF9D1EBD16417FF4C89623D3400941E9C753706D`,
 with `1319` source members plus manifest and zero test assets. The manifest binds
 revision `40facfdfa7da907e539b2eb109f78299167c4cd1`.
+
+The reviewed component implementation is `c63f4e652`. Its clean runner artifact
+binds `source_dirty=false`, passes the component probe, records acoustic CFL
+`1.7274 / 13.274 / 128.74`, proves alternate-EOS step-count independence and
+retains `hybrid_end_to_end_passed=false`. Full validation is build `610/610`,
+Meson static `71/71` and Python `427 total / 425 PASS / 2 skipped`. The clean
+test-free source package has `1321` source members plus manifest, zero test assets
+and SHA-256 `9D3D945EBC7EE0F974D5FE499713B025933AA7B50B5461303A6556C26CB64B72`.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the

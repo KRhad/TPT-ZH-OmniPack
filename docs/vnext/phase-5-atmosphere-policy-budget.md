@@ -116,14 +116,16 @@ source_package=1319 source members plus manifest, 0 test assets
 - No production Air, Simulation, Particle, Save, Lua, renderer or SDL file changed.
 - Element IDs, Particle layout, Lua identifiers and save format are unchanged.
 - The validator rejects a changed substep result, a false budget pass, memory
-  overflow, FPS-derived physical time, or a hybrid policy claiming implementation.
+  overflow, FPS-derived physical time, or uncoupled hybrid components claiming
+  coupled policy completion.
 - GPU/VRAM/upload/readback remain `not_tested_no_gpu_backend`.
 
 `V1_0_5_GATE=IN_PROGRESS`. The reference-machine CPU and per-cell memory budget
 sub-gate is GREEN. The physical-time policy remains RED/unselected because all
 currently implemented explicit candidates fail the real-acoustic cost requirement,
-and the required hybrid/all-speed alternative has not been implemented. PhysicalScale,
-mandatory case/precision coverage, G0 ledger semantics and solver selection remain
-open.
+and the later `c63f4e652` checkpoint implements only uncoupled bulk/HLLC component
+probes. Router, reflux, event-local subcycling and dynamic acoustic domain remain
+unimplemented. PhysicalScale, mandatory case/precision coverage, G0 ledger
+semantics and solver selection remain open.
 
 Rollback commit: `a3c5ec9b7` removes this policy/budget checkpoint.

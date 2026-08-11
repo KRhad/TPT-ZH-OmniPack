@@ -540,7 +540,7 @@ and a public NASA 344 m/s air sound-speed reference. It recomputes 7167 required
 explicit substeps and `12121.47543 ms/tick`, rejecting direct real-acoustic explicit
 HLLC. Two affordable substeps would cap signals around `0.096 m/s`, so uniform
 acoustic scaling is rejected as the default realism policy. A hybrid/all-speed
-low-Mach plus event-local compressible candidate is required but unimplemented.
+low-Mach plus event-local compressible policy is therefore required.
 See [the policy/budget checkpoint](phase-5-atmosphere-policy-budget.md).
 
 The corresponding clean test-free source package is
@@ -549,7 +549,30 @@ The corresponding clean test-free source package is
 with `1319` source members plus manifest and zero test assets. The manifest binds
 revision `40facfdfa7da907e539b2eb109f78299167c4cd1`.
 
-The Phase 5 reference-machine CPU/memory budget is accepted. PhysicalScale,
-physical-time policy, the hybrid/all-speed candidate, remaining mandatory solver
-and precision matrix, G0 physical-ledger semantics and formal solver selection
-remain open. HLLE remains `registered_only`; production Air is unchanged.
+## Uncoupled hybrid component checkpoint
+
+Checkpoint `c63f4e652` clean-validates two components without claiming a router or
+hybrid solver. The 128-cell constant-pressure transport fixture uses 36 advective
+steps at all three velocities, preserves the same density L1 `0.00135653` and TV
+ratio `0.989347`, and exposes acoustic CFL `1.7274 / 13.274 / 128.74`. Changing
+the EOS changes the very-low diagnostic acoustic CFL to `118.029` while step count
+and density results remain identical. The whole-case sealed HLLC Sod fixture stays
+positive and closes its `46.08` X-momentum change against equal wall exchange.
+
+The runner and registry explicitly mark router, thresholds, cross-route coupling,
+reflux, event-local subcycling, dynamic halo/domain of dependence, near-vacuum
+routing, 2D coupling, species coupling and production integration as unimplemented.
+`hybrid_end_to_end_passed=false` and solver selection remains unselected. Full
+validation is build `610/610`, static `71/71`, Python `427 total / 425 PASS / 2
+skipped`; see [the component report](phase-5-hybrid-components.md).
+
+The implementation source package is
+`artifacts/vnext-phase5-source-c63f4e652/`, SHA-256
+`9D3D945EBC7EE0F974D5FE499713B025933AA7B50B5461303A6556C26CB64B72`,
+with `1321` source members plus manifest and zero test assets.
+
+The Phase 5 reference-machine CPU/memory budget and component sub-gate are GREEN.
+PhysicalScale, physical-time policy, mixed-region router/reflux/event-local
+coupling, remaining mandatory solver and precision matrix, G0 physical-ledger
+semantics and formal solver selection remain open. HLLE remains `registered_only`;
+production Air is unchanged.
