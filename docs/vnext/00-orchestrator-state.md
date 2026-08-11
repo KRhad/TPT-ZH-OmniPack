@@ -257,10 +257,10 @@ work is required next but remains unimplemented, so physical time and solver
 selection stay RED/unselected.
 
 Current AtmosphereBench checkpoint source package:
-`artifacts/vnext-phase5-source-950ba3974/`, SHA-256
-`3DF031CEFC765DAEF8DE63D6FB749307CE7283C9C89F003BA63EE6CEDB2F2D77`,
-`1316` source members plus manifest and zero test assets. The manifest binds
-revision `950ba397417605782622b057ee82b3d1511000ee`.
+`artifacts/vnext-phase5-source-40facfdfa/`, SHA-256
+`293105F3E87D964608CE8D0ACF9D1EBD16417FF4C89623D3400941E9C753706D`,
+`1319` source members plus manifest and zero test assets. The manifest binds
+revision `40facfdfa7da907e539b2eb109f78299167c4cd1`.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical

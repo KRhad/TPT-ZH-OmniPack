@@ -205,11 +205,11 @@ the default realism policy. A hybrid/all-speed plus event-local compressible
 candidate is now required but unimplemented. Physical time and solver selection
 remain unselected. See the [policy checkpoint](../vnext/phase-5-atmosphere-policy-budget.md).
 
-The clean source package for the current Legacy-like comparison checkpoint is
-`artifacts/vnext-phase5-source-950ba3974/`, SHA-256
-`3DF031CEFC765DAEF8DE63D6FB749307CE7283C9C89F003BA63EE6CEDB2F2D77`,
-with `1316` source members plus manifest and zero test assets. The manifest binds
-revision `950ba397417605782622b057ee82b3d1511000ee`.
+The clean source package for the current policy checkpoint is
+`artifacts/vnext-phase5-source-40facfdfa/`, SHA-256
+`293105F3E87D964608CE8D0ACF9D1EBD16417FF4C89623D3400941E9C753706D`,
+with `1319` source members plus manifest and zero test assets. The manifest binds
+revision `40facfdfa7da907e539b2eb109f78299167c4cd1`.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the

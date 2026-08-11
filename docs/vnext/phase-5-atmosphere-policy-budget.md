@@ -90,6 +90,13 @@ explains its temperature dependence. NTRS marks the document public and a US
 Government work with public use permitted. The project stores only this approximate
 reference value and provenance; it is not a runtime material database.
 
+The clean test-free source package is
+`artifacts/vnext-phase5-source-40facfdfa/`, SHA-256
+`293105F3E87D964608CE8D0ACF9D1EBD16417FF4C89623D3400941E9C753706D`.
+It contains `1319` source members plus one manifest, includes the policy data,
+validator and this report, contains zero test assets, and binds revision
+`40facfdfa7da907e539b2eb109f78299167c4cd1`.
+
 ## Validation and compatibility
 
 ```text
@@ -103,6 +110,7 @@ meson_static=70/70 PASS
 python_discovery=424 PASS, 2 skipped, 426 total
 targeted_policy_package_license=21/21 PASS
 third_party_license_audit=PASS
+source_package=1319 source members plus manifest, 0 test assets
 ```
 
 - No production Air, Simulation, Particle, Save, Lua, renderer or SDL file changed.
