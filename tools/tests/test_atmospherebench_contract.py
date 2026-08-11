@@ -33,7 +33,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             with self.subTest(needle=needle):
                 self.assertNotIn(needle, text)
         includes = re.findall(r'^#include "([^"]+)"', text, flags=re.MULTILINE)
-        self.assertEqual(includes.count("AtmosphereBench.h"), 2)
+        self.assertEqual(includes.count("AtmosphereBench.h"), 3)
         self.assertEqual(includes.count("Rusanov1D.h"), 7)
 
     def test_bench_has_explicit_strict_fp_target_and_isolated_rusanov_candidates(self) -> None:
@@ -159,6 +159,25 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("MaximumIterations = 500", source)
         self.assertIn("--run-low-mach-projection-2d-performance", main)
         self.assertIn("atmospherebench-low-mach-projection-2d-performance", meson)
+
+    def test_phase5_selection_contract_is_explicit_and_not_production(self) -> None:
+        header = (BENCH_ROOT / "Phase5Selection.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "Phase5Selection.cpp").read_text(encoding="utf-8")
+        main = (BENCH_ROOT / "main.cpp").read_text(encoding="utf-8")
+        meson = (ROOT / "meson.build").read_text(encoding="utf-8")
+        runner = (ROOT / "tools" / "run_phase5_selection.ps1").read_text(encoding="utf-8")
+        self.assertIn("Phase5SelectionSummary", header)
+        self.assertIn("selected_tpt_mm_scale_v1", source)
+        self.assertIn("selected_all_speed_split_v1", source)
+        self.assertIn("selected_hybrid_fvm_projection_hllc_rusanov_v1", source)
+        self.assertIn("physicalAcousticDomainCells == 1434", source)
+        self.assertIn("uniform_acoustic_scaling_used=", source)
+        self.assertIn("production_solver_implemented=", source)
+        self.assertIn("production_runtime_integration=deferred_to_1.0.6", source)
+        self.assertIn("--run-phase5-selection", main)
+        self.assertIn("atmospherebench-phase5-selection", meson)
+        self.assertIn("V1_0_5_SELECTION_CONTRACT_GREEN", runner)
+        self.assertIn("requires a clean source worktree", runner)
 
     def test_fvm_candidates_are_strict_double_and_hlle_remains_registered_only(self) -> None:
         header = (BENCH_ROOT / "Rusanov1D.h").read_text(encoding="utf-8")

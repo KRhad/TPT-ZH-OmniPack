@@ -678,6 +678,7 @@ atmospherebench = executable(
 		'tools/atmospherebench/LegacyLike.cpp',
 		'tools/atmospherebench/LowMachProjection2D.cpp',
 		'tools/atmospherebench/LowMachProjection2DPerformance.cpp',
+		'tools/atmospherebench/Phase5Selection.cpp',
 		'tools/atmospherebench/Rusanov1D.cpp',
 		'tools/atmospherebench/Species2D.cpp',
 		'tools/atmospherebench/main.cpp',
@@ -963,6 +964,14 @@ test(
 	args: [ '--run-low-mach-projection-2d-performance' ],
 	suite: 'static',
 	timeout: 120,
+)
+
+test(
+	'atmospherebench-phase5-selection',
+	atmospherebench,
+	args: [ '--run-phase5-selection' ],
+	suite: 'static',
+	timeout: 60,
 )
 
 test(
