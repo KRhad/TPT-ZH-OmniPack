@@ -131,6 +131,43 @@ bool NumericalCorrectionLedger::IsConsistent() const
 	return IsEmpty() || eventCount > 0;
 }
 
+bool ConservativeSourceLedger::RecordAppliedSource(const ConservativeState &delta)
+{
+	if (!Finite(delta.density) || !Finite(delta.momentumX) || !Finite(delta.momentumY)
+		|| !Finite(delta.totalEnergyDensity))
+		return false;
+	if (delta.density == 0.0 && delta.momentumX == 0.0 && delta.momentumY == 0.0
+		&& delta.totalEnergyDensity == 0.0)
+		return true;
+	const ConservativeState next{
+		net.density + delta.density,
+		net.momentumX + delta.momentumX,
+		net.momentumY + delta.momentumY,
+		net.totalEnergyDensity + delta.totalEnergyDensity,
+	};
+	if (!Finite(next.density) || !Finite(next.momentumX) || !Finite(next.momentumY)
+		|| !Finite(next.totalEnergyDensity))
+		return false;
+	if (eventCount == std::numeric_limits<std::size_t>::max())
+		return false;
+	net = next;
+	++eventCount;
+	return true;
+}
+
+bool ConservativeSourceLedger::IsEmpty() const
+{
+	return net.density == 0.0 && net.momentumX == 0.0 && net.momentumY == 0.0
+		&& net.totalEnergyDensity == 0.0 && eventCount == 0;
+}
+
+bool ConservativeSourceLedger::IsConsistent() const
+{
+	const bool finite = Finite(net.density) && Finite(net.momentumX)
+		&& Finite(net.momentumY) && Finite(net.totalEnergyDensity);
+	return finite && (eventCount > 0 || IsEmpty());
+}
+
 void ConservationLedger::Begin(const ConservativeState &state)
 {
 	initial = state;
@@ -152,6 +189,19 @@ bool ConservationLedger::Closes(double tolerance) const
 		&& corrections.IsEmpty();
 }
 
+bool ConservationLedger::ClosesWithSources(
+	const ConservativeSourceLedger &sources,
+	double tolerance) const
+{
+	return sources.IsConsistent()
+		&& Near(initial.density + sources.net.density, final.density, tolerance)
+		&& Near(initial.momentumX + sources.net.momentumX, final.momentumX, tolerance)
+		&& Near(initial.momentumY + sources.net.momentumY, final.momentumY, tolerance)
+		&& Near(initial.totalEnergyDensity + sources.net.totalEnergyDensity,
+			final.totalEnergyDensity, tolerance)
+		&& corrections.IsEmpty();
+}
+
 bool BenchmarkResult::IsContractOnly() const
 {
 	return resultStatus == "contract_only" && !caseId.empty()
@@ -167,7 +217,7 @@ const std::array<CandidateDescriptor, 6> &Candidates()
 		{CandidateKind::AllSpeedRusanovFvm, "fvm_all_speed_rusanov",
 			"implemented_1d_low_mach_probe_rejected", true},
 		{CandidateKind::HllcRusanovFallbackFvm, "fvm_hllc_rusanov_fallback",
-			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_probes", true},
+			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_probes", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
 	}};
@@ -225,6 +275,7 @@ bool RunSelfTest(std::ostream &output)
 	const bool hllcFallbackContract = RunHllcRusanovFallbackContract();
 	const auto hllc2DUniform = RunHllc2DUniform();
 	const auto hllc2DPressurePulse = RunHllc2DPressurePulse();
+	const auto hllc2DSealedHeating = RunHllc2DSealedHeating();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -233,9 +284,23 @@ bool RunSelfTest(std::ostream &output)
 	nonEmptyCorrections.eventCount = 1;
 	NumericalCorrectionLedger uncountedCorrections;
 	uncountedCorrections.energyAdded = 1.0;
+	ConservativeSourceLedger sourceLedger;
+	const ConservativeState energySource{0.0, 0.0, 0.0, 2.0};
+	const bool sourceRecorded = sourceLedger.RecordAppliedSource(energySource);
+	ConservativeSourceLedger uncountedSource;
+	uncountedSource.net.totalEnergyDensity = 1.0;
+	ConservativeSourceLedger invalidSource;
+	ConservativeState nonfiniteSource{};
+	nonfiniteSource.totalEnergyDensity = std::numeric_limits<double>::quiet_NaN();
+	const bool nonfiniteSourceRejected = !invalidSource.RecordAppliedSource(nonfiniteSource);
 	ConservationLedger ledger;
 	ledger.Begin(state);
 	ledger.End(state);
+	ConservationLedger sourcedLedger;
+	sourcedLedger.Begin(state);
+	auto sourcedFinal = state;
+	sourcedFinal.totalEnergyDensity += energySource.totalEnergyDensity;
+	sourcedLedger.End(sourcedFinal);
 	const bool ok = scale.IsValid() && syntheticEos.IsValid() && primitive.valid
 		&& Near(primitive.pressure, 4.0, 1e-12)
 		&& Near(primitive.velocityX, 3.0, 1e-12)
@@ -244,7 +309,11 @@ bool RunSelfTest(std::ostream &output)
 		&& uniformCase.IsValid() && uniformCase.grid.CellCount() == 12
 		&& uniformResult.IsContractOnly() && !invalidGrid.IsValid()
 		&& !invalidCase.IsValid() && !nonEmptyCorrections.IsEmpty()
-		&& nonEmptyCorrections.IsConsistent() && !uncountedCorrections.IsConsistent();
+		&& nonEmptyCorrections.IsConsistent() && !uncountedCorrections.IsConsistent()
+		&& sourceRecorded && sourceLedger.IsConsistent() && !sourceLedger.IsEmpty()
+		&& sourcedLedger.ClosesWithSources(sourceLedger, 1e-12)
+		&& !uncountedSource.IsConsistent() && nonfiniteSourceRejected
+		&& invalidSource.IsEmpty();
 	bool onlyRusanovImplemented = true;
 	for (const auto &candidate : candidates)
 	{
@@ -267,6 +336,7 @@ bool RunSelfTest(std::ostream &output)
 		&& hllcFallbackContract
 		&& hllc2DUniform.passed
 		&& hllc2DPressurePulse.passed
+		&& hllc2DSealedHeating.passed
 		&& rusanovOpenLeak.passed
 		&& onlyRusanovImplemented;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
@@ -309,6 +379,8 @@ bool RunSelfTest(std::ostream &output)
 	output << "HLLC_2D_UNIFORM_PROBE=" << (hllc2DUniform.passed ? "PASS" : "FAIL") << '\n';
 	output << "HLLC_2D_PRESSURE_PULSE_PROBE="
 		<< (hllc2DPressurePulse.passed ? "PASS" : "FAIL") << '\n';
+	output << "HLLC_2D_SEALED_HEATING_PROBE="
+		<< (hllc2DSealedHeating.passed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";

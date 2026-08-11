@@ -72,6 +72,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-hllc-rusanov-fallback-performance' ]", target)
         self.assertIn("args: [ '--run-hllc-2d-uniform' ]", target)
         self.assertIn("args: [ '--run-hllc-2d-pressure-pulse' ]", target)
+        self.assertIn("args: [ '--run-hllc-2d-sealed-heating' ]", target)
         self.assertIn("'atmospherebench-rusanov-open-boundary-leak'", target)
         self.assertIn("args: [ '--run-rusanov-open-boundary-leak' ]", target)
         self.assertIn("'atmospherebench-rusanov-performance'", target)
@@ -80,7 +81,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn('"registered_only"', source)
         self.assertIn('"implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes"', source)
         self.assertIn('"implemented_1d_low_mach_probe_rejected"', source)
-        self.assertIn('"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_probes"', source)
+        self.assertIn('"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_probes"', source)
         self.assertIn("RUSANOV_UNIFORM_PROBE", source)
         self.assertIn("RUSANOV_PRESSURE_PULSE_PROBE", source)
         self.assertIn("RUSANOV_DENSITY_ADVECTION_PROBE", source)
@@ -90,6 +91,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("RUSANOV_DENSITY_ADVECTION_REFINEMENT_PROBE", source)
         self.assertIn("RUSANOV_LOW_MACH_ADVECTION_PROBE", source)
         self.assertIn("RUSANOV_OPEN_BOUNDARY_LEAK_PROBE", source)
+        self.assertIn("HLLC_2D_SEALED_HEATING_PROBE", source)
         self.assertIn("=UNSELECTED", source)
         self.assertIn("synthetic_nondimensional", source)
         self.assertNotIn("287.05", source)
@@ -163,6 +165,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         source = (BENCH_ROOT / "AtmosphereBench.cpp").read_text(encoding="utf-8")
         for symbol in (
             "AtmosphereGrid", "BenchmarkCase", "NumericalCorrectionLedger",
+            "ConservativeSourceLedger",
             "BenchmarkResult", "NondimensionalContract",
         ):
             with self.subTest(symbol=symbol):
@@ -174,6 +177,9 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("!invalidCase.IsValid()", source)
         self.assertIn("eventCount", header)
         self.assertIn("!uncountedCorrections.IsConsistent()", source)
+        self.assertIn("ClosesWithSources", source)
+        self.assertIn("!uncountedSource.IsConsistent()", source)
+        self.assertIn("nonfiniteSourceRejected", source)
 
     def test_scaffold_contract_is_not_a_runtime_consumer(self) -> None:
         production = []

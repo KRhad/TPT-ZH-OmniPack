@@ -33,6 +33,8 @@ param(
 
     [switch] $RunHllc2DPressurePulse,
 
+    [switch] $RunHllc2DSealedHeating,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -230,7 +232,7 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunHllcRusanovFallbackSodShockTube,
 		$RunHllcRusanovFallbackOpenBoundaryLeak,
 		$RunHllcRusanovFallbackPerformance,
-		$RunHllc2DUniform, $RunHllc2DPressurePulse,
+		$RunHllc2DUniform, $RunHllc2DPressurePulse, $RunHllc2DSealedHeating,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -246,7 +248,7 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunHllcRusanovFallbackSodShockTube `
 	-or $RunHllcRusanovFallbackOpenBoundaryLeak `
 	-or $RunHllcRusanovFallbackPerformance `
-	-or $RunHllc2DUniform -or $RunHllc2DPressurePulse `
+	-or $RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
@@ -269,6 +271,8 @@ $runMode = if ($RunRusanovPerformance) {
 	"hllc_rusanov_fallback_performance"
 } elseif ($RunHllc2DPressurePulse) {
 	"hllc_2d_pressure_pulse"
+} elseif ($RunHllc2DSealedHeating) {
+	"hllc_2d_sealed_heating"
 } elseif ($RunHllc2DUniform) {
 	"hllc_2d_uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -308,6 +312,8 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-hllc-rusanov-fallback-performance"
 } elseif ($RunHllc2DPressurePulse) {
 	"--run-hllc-2d-pressure-pulse"
+} elseif ($RunHllc2DSealedHeating) {
+	"--run-hllc-2d-sealed-heating"
 } elseif ($RunHllc2DUniform) {
 	"--run-hllc-2d-uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -345,7 +351,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
 foreach ($candidateLine in @(
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
-    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_probes|solver_implemented=true",
+    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -395,11 +401,12 @@ if (-not $isRusanovProbe) {
             throw "Uniform contract expected $ledgerKey=0"
         }
     }
-} elseif ($RunHllc2DUniform -or $RunHllc2DPressurePulse) {
+} elseif ($RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating) {
     $isPulse = $RunHllc2DPressurePulse
-    $benchmarkKind = if ($isPulse) { "atmospherebench_hllc_2d_pressure_pulse_probe" } else { "atmospherebench_hllc_2d_uniform_probe" }
+	$isHeating = $RunHllc2DSealedHeating
+    $benchmarkKind = if ($isHeating) { "atmospherebench_hllc_2d_sealed_heating_probe" } elseif ($isPulse) { "atmospherebench_hllc_2d_pressure_pulse_probe" } else { "atmospherebench_hllc_2d_uniform_probe" }
     $performanceGate = "not_evaluated_candidate_probe"
-    $timingScope = if ($isPulse) { "standalone_hllc_2d_pressure_pulse_probe" } else { "standalone_hllc_2d_uniform_probe" }
+	$timingScope = if ($isHeating) { "standalone_hllc_2d_sealed_heating_probe" } elseif ($isPulse) { "standalone_hllc_2d_pressure_pulse_probe" } else { "standalone_hllc_2d_uniform_probe" }
     $candidateImplementations = "fvm_hllc_rusanov_fallback"
     if ($solverResultStatus -ne "candidate_result_not_selection") {
         throw "HLLC 2D probe must not claim solver selection"
@@ -410,7 +417,7 @@ if (-not $isRusanovProbe) {
     }
     foreach ($probeKey in @{
         "case_time_domain" = "nondimensional_contract"; "dimension" = "2";
-        "boundary_mode" = "periodic"; "grid_cells_x" = "32";
+        "grid_cells_x" = "32";
         "grid_cells_y" = "24"; "grid_cell_count" = "768";
         "cell_length" = "1"; "positivity_preserved" = "true";
         "flux_fallback_count" = "0"; "numerical_correction_count" = "0";
@@ -420,7 +427,45 @@ if (-not $isRusanovProbe) {
             throw "HLLC 2D contract drifted: $($probeKey.Key)"
         }
     }
-    if ($isPulse) {
+	$expectedBoundaryMode = if ($isHeating) { "sealed" } else { "periodic" }
+	if ((Read-KeyValue -Text $text -Key "boundary_mode") -ne $expectedBoundaryMode) {
+		throw "HLLC 2D boundary contract drifted"
+	}
+    if ($isHeating) {
+		foreach ($probeKey in @{
+			"case_timestep" = "0.01"; "case_step_count" = "40";
+			"state_evolved" = "true"; "pressure_peak_reduced" = "false";
+			"pressure_increased" = "true"; "temperature_increased" = "true";
+			"source_ledger_closes" = "true"; "source_event_count" = "30720";
+			"source_mass_net" = "0"; "source_momentum_x_net" = "0";
+			"source_momentum_y_net" = "0"; "state_and_flux_scratch_bytes_total" = "124672"
+		}.GetEnumerator()) {
+			if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+				throw "HLLC 2D sealed-heating contract drifted: $($probeKey.Key)"
+			}
+		}
+		$sourceEnergy = [double](Read-KeyValue -Text $text -Key "source_energy_net")
+		$energyDrift = [double](Read-KeyValue -Text $text -Key "energy_drift")
+		if ([double]::IsNaN($sourceEnergy) -or [double]::IsInfinity($sourceEnergy) -or
+			$sourceEnergy -le 0.0 -or [Math]::Abs($energyDrift - $sourceEnergy) -gt 1e-9) {
+			throw "HLLC 2D sealed-heating energy source did not reconcile"
+		}
+		foreach ($balanceKey in @(
+			"source_mass_balance_error", "source_momentum_x_balance_error",
+			"source_momentum_y_balance_error", "source_energy_balance_error")) {
+			if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $balanceKey)) -gt 1e-9) {
+				throw "HLLC 2D sealed-heating source balance exceeds tolerance: $balanceKey"
+			}
+		}
+		foreach ($thermoKey in @("final_mean_pressure", "final_mean_temperature")) {
+			$expectedKey = $thermoKey -replace '^final_', 'expected_final_'
+			$actualThermo = [double](Read-KeyValue -Text $text -Key $thermoKey)
+			$expectedThermo = [double](Read-KeyValue -Text $text -Key $expectedKey)
+			if ([Math]::Abs($actualThermo - $expectedThermo) -gt 1e-12) {
+				throw "HLLC 2D sealed-heating thermodynamic response drifted: $thermoKey"
+			}
+		}
+    } elseif ($isPulse) {
         foreach ($probeKey in @{
             "case_timestep" = "0.01"; "case_step_count" = "40";
             "state_evolved" = "true"; "pressure_peak_reduced" = "true"
@@ -445,7 +490,12 @@ if (-not $isRusanovProbe) {
         $maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
         throw "HLLC 2D CFL is outside the strict positivity contract"
     }
-    foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
+	$driftKeys = if ($isHeating) {
+		@("mass_drift", "momentum_x_drift", "momentum_y_drift")
+	} else {
+		@("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")
+	}
+    foreach ($driftKey in $driftKeys) {
         if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-9) {
             throw "HLLC 2D conservation drift exceeds tolerance: $driftKey"
         }
@@ -1017,6 +1067,24 @@ $finalMaximumPressure = $null
 $stateChangeL1 = $null
 $stateEvolved = $null
 $pressurePeakReduced = $null
+$pressureIncreased = $null
+$temperatureIncreased = $null
+$initialMeanPressure = $null
+$finalMeanPressure = $null
+$initialMeanTemperature = $null
+$finalMeanTemperature = $null
+$expectedFinalMeanPressure = $null
+$expectedFinalMeanTemperature = $null
+$sourceLedgerCloses = $null
+$sourceMassNet = $null
+$sourceMomentumXNet = $null
+$sourceMomentumYNet = $null
+$sourceEnergyNet = $null
+$sourceEventCount = $null
+$sourceMassBalanceError = $null
+$sourceMomentumXBalanceError = $null
+$sourceMomentumYBalanceError = $null
+$sourceEnergyBalanceError = $null
 $densityL1Error = $null
 $densityLinfError = $null
 $pressureLinfError = $null
@@ -1101,14 +1169,35 @@ if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
     $stateAndFluxScratchBytesPerCell = [double](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
-    if ($RunHllc2DUniform -or $RunHllc2DPressurePulse) {
+    if ($RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating) {
         $boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
         $cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
         $initialMaximumPressure = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
         $finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
+		$initialMeanPressure = [double](Read-KeyValue -Text $text -Key "initial_mean_pressure")
+		$finalMeanPressure = [double](Read-KeyValue -Text $text -Key "final_mean_pressure")
+		$initialMeanTemperature = [double](Read-KeyValue -Text $text -Key "initial_mean_temperature")
+		$finalMeanTemperature = [double](Read-KeyValue -Text $text -Key "final_mean_temperature")
         $stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
         $stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
         $pressurePeakReduced = (Read-KeyValue -Text $text -Key "pressure_peak_reduced") -eq "true"
+		$pressureIncreased = (Read-KeyValue -Text $text -Key "pressure_increased") -eq "true"
+		$temperatureIncreased = (Read-KeyValue -Text $text -Key "temperature_increased") -eq "true"
+		$sourceLedgerCloses = (Read-KeyValue -Text $text -Key "source_ledger_closes") -eq "true"
+		$sourceMassNet = [double](Read-KeyValue -Text $text -Key "source_mass_net")
+		$sourceMomentumXNet = [double](Read-KeyValue -Text $text -Key "source_momentum_x_net")
+		$sourceMomentumYNet = [double](Read-KeyValue -Text $text -Key "source_momentum_y_net")
+		$sourceEnergyNet = [double](Read-KeyValue -Text $text -Key "source_energy_net")
+		$sourceEventCount = [int](Read-KeyValue -Text $text -Key "source_event_count")
+		$sourceMassBalanceError = [double](Read-KeyValue -Text $text -Key "source_mass_balance_error")
+		$sourceMomentumXBalanceError = [double](Read-KeyValue -Text $text -Key "source_momentum_x_balance_error")
+		$sourceMomentumYBalanceError = [double](Read-KeyValue -Text $text -Key "source_momentum_y_balance_error")
+		$sourceEnergyBalanceError = [double](Read-KeyValue -Text $text -Key "source_energy_balance_error")
+		if ($RunHllc2DSealedHeating) {
+			$expectedFinalMeanPressure = [double](Read-KeyValue -Text $text -Key "expected_final_mean_pressure")
+			$expectedFinalMeanTemperature = [double](Read-KeyValue -Text $text -Key "expected_final_mean_temperature")
+		}
     } elseif ($RunRusanovPressurePulse) {
         $initialMaximumPressure = [double](Read-KeyValue -Text $text -Key "initial_maximum_pressure")
         $finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "final_maximum_pressure")
@@ -1278,12 +1367,14 @@ if ($isRusanovProbe) {
 }
 $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
-	"No HLLE, LBM, source-term, TPT wall-coupling, or multi-species candidate is implemented in this scaffold."
+	"No HLLE, LBM, gravity, production TPT wall-coupling, or multi-species candidate is implemented in this scaffold."
 )
 if ($RunRusanovPerformance) {
 	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
+} elseif ($RunHllc2DSealedHeating) {
+	$limitations += "HLLC has one nondimensional strict-double 2D sealed uniform-heating result with an explicit applied-source ledger; it is not physical-time, material-property, TPT wall, performance or solver-selection evidence."
 } elseif ($RunHllc2DPressurePulse) {
 	$limitations += "HLLC has one periodic strict-double 2D pressure-pulse result; it is not a TPT wall, source-term, physical-time or solver-selection result."
 } elseif ($RunHllc2DUniform) {
@@ -1385,9 +1476,17 @@ $result = [ordered]@{
         pressure = $statePressure
         initial_maximum_pressure = $initialMaximumPressure
         final_maximum_pressure = $finalMaximumPressure
+		initial_mean_pressure = $initialMeanPressure
+		final_mean_pressure = $finalMeanPressure
+		initial_mean_temperature = $initialMeanTemperature
+		final_mean_temperature = $finalMeanTemperature
+		expected_final_mean_pressure = $expectedFinalMeanPressure
+		expected_final_mean_temperature = $expectedFinalMeanTemperature
         state_change_l1 = $stateChangeL1
         state_evolved = $stateEvolved
         pressure_peak_reduced = $pressurePeakReduced
+		pressure_increased = $pressureIncreased
+		temperature_increased = $temperatureIncreased
         density_l1_error = $densityL1Error
         density_linf_error = $densityLinfError
         pressure_linf_error = $pressureLinfError
@@ -1466,6 +1565,18 @@ $result = [ordered]@{
         pressure_floor_hits = [int](Read-KeyValue -Text $text -Key "pressure_floor_hits")
         event_count = [int](Read-KeyValue -Text $text -Key "correction_event_count")
     }
+	conservative_source_ledger = [ordered]@{
+		closes = $sourceLedgerCloses
+		mass_net = $sourceMassNet
+		momentum_x_net = $sourceMomentumXNet
+		momentum_y_net = $sourceMomentumYNet
+		energy_net = $sourceEnergyNet
+		event_count = $sourceEventCount
+		mass_balance_error = $sourceMassBalanceError
+		momentum_x_balance_error = $sourceMomentumXBalanceError
+		momentum_y_balance_error = $sourceMomentumYBalanceError
+		energy_balance_error = $sourceEnergyBalanceError
+	}
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
         timing_scope = $timingScope

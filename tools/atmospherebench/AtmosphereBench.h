@@ -96,6 +96,16 @@ struct NumericalCorrectionLedger
 	bool IsConsistent() const;
 };
 
+struct ConservativeSourceLedger
+{
+	ConservativeState net{};
+	std::size_t eventCount = 0;
+
+	bool RecordAppliedSource(const ConservativeState &delta);
+	bool IsEmpty() const;
+	bool IsConsistent() const;
+};
+
 class IdealGasEOS
 {
 public:
@@ -119,6 +129,7 @@ struct ConservationLedger
 	void Begin(const ConservativeState &state);
 	void End(const ConservativeState &state);
 	bool Closes(double tolerance) const;
+	bool ClosesWithSources(const ConservativeSourceLedger &sources, double tolerance) const;
 };
 
 struct BenchmarkResult

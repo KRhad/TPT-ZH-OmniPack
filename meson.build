@@ -820,6 +820,14 @@ test(
 )
 
 test(
+	'atmospherebench-hllc-2d-sealed-heating',
+	atmospherebench,
+	args: [ '--run-hllc-2d-sealed-heating' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'atmospherebench-rusanov-open-boundary-leak',
 	atmospherebench,
 	args: [ '--run-rusanov-open-boundary-leak' ],
