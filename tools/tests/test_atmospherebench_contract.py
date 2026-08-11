@@ -140,6 +140,19 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("RunLowMachProjection2D", atmosphere)
         self.assertIn("LOW_MACH_PROJECTION_2D_PROBE", atmosphere)
 
+    def test_low_mach_projection_target_matrix_is_strict_and_fail_closed(self) -> None:
+        header = (BENCH_ROOT / "LowMachProjection2DPerformance.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "LowMachProjection2DPerformance.cpp").read_text(encoding="utf-8")
+        main = (BENCH_ROOT / "main.cpp").read_text(encoding="utf-8")
+        meson = (ROOT / "meson.build").read_text(encoding="utf-8")
+        self.assertIn("LowMachProjection2DPerformanceSummary", header)
+        self.assertIn("RunSample<153, 96>", source)
+        self.assertIn("RunSample<306, 192>", source)
+        self.assertIn("RunSample<612, 384>", source)
+        self.assertIn("MaximumIterations = 500", source)
+        self.assertIn("--run-low-mach-projection-2d-performance", main)
+        self.assertIn("atmospherebench-low-mach-projection-2d-performance", meson)
+
     def test_fvm_candidates_are_strict_double_and_hlle_remains_registered_only(self) -> None:
         header = (BENCH_ROOT / "Rusanov1D.h").read_text(encoding="utf-8")
         source = (BENCH_ROOT / "Rusanov1D.cpp").read_text(encoding="utf-8")
@@ -362,6 +375,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/LegacyLike.h",
             "tools/atmospherebench/LowMachProjection2D.cpp",
             "tools/atmospherebench/LowMachProjection2D.h",
+            "tools/atmospherebench/LowMachProjection2DPerformance.cpp",
+            "tools/atmospherebench/LowMachProjection2DPerformance.h",
             "tools/atmospherebench/PrecisionMatrix.cpp",
             "tools/atmospherebench/HybridPolicy1D.cpp",
             "tools/atmospherebench/HybridPolicy1D.h",

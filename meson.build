@@ -677,6 +677,7 @@ atmospherebench = executable(
 		'tools/atmospherebench/LbmD2Q9.cpp',
 		'tools/atmospherebench/LegacyLike.cpp',
 		'tools/atmospherebench/LowMachProjection2D.cpp',
+		'tools/atmospherebench/LowMachProjection2DPerformance.cpp',
 		'tools/atmospherebench/Rusanov1D.cpp',
 		'tools/atmospherebench/Species2D.cpp',
 		'tools/atmospherebench/main.cpp',
@@ -954,6 +955,14 @@ test(
 	args: [ '--run-low-mach-projection-2d' ],
 	suite: 'static',
 	timeout: 60,
+)
+
+test(
+	'atmospherebench-low-mach-projection-2d-performance',
+	atmospherebench,
+	args: [ '--run-low-mach-projection-2d-performance' ],
+	suite: 'static',
+	timeout: 120,
 )
 
 test(
