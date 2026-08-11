@@ -17,6 +17,8 @@ param(
 
     [switch] $RunRusanovLowMachAdvection,
 
+    [switch] $RunAllSpeedRusanovLowMachAdvection,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -207,7 +209,8 @@ $strictReferenceMode = if ($gnuStrict) { "gnu_strict" } else { "msvc_strict" }
 if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection,
 		$RunRusanovContactDiscontinuity, $RunRusanovNearVacuumExpansion,
 		$RunRusanovSodShockTube, $RunRusanovDensityAdvectionRefinement,
-		$RunRusanovLowMachAdvection, $RunRusanovOpenBoundaryLeak,
+		$RunRusanovLowMachAdvection, $RunAllSpeedRusanovLowMachAdvection,
+		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
     throw "Select only one AtmosphereBench run mode"
@@ -216,6 +219,7 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunRusanovDensityAdvection -or $RunRusanovContactDiscontinuity `
 	-or $RunRusanovNearVacuumExpansion -or $RunRusanovSodShockTube `
 	-or $RunRusanovDensityAdvectionRefinement -or $RunRusanovLowMachAdvection `
+	-or $RunAllSpeedRusanovLowMachAdvection `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
@@ -224,6 +228,8 @@ $runMode = if ($RunRusanovPerformance) {
 	"rusanov_open_boundary_leak"
 } elseif ($RunRusanovLowMachAdvection) {
 	"rusanov_low_mach_advection"
+} elseif ($RunAllSpeedRusanovLowMachAdvection) {
+	"all_speed_rusanov_low_mach_advection"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	"rusanov_density_advection_refinement"
 } elseif ($RunRusanovSodShockTube) {
@@ -247,6 +253,8 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-rusanov-open-boundary-leak"
 } elseif ($RunRusanovLowMachAdvection) {
 	"--run-rusanov-low-mach-advection"
+} elseif ($RunAllSpeedRusanovLowMachAdvection) {
+	"--run-all-speed-rusanov-low-mach-advection"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	"--run-rusanov-density-advection-refinement"
 } elseif ($RunRusanovSodShockTube) {
@@ -281,6 +289,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
 }
 foreach ($candidateLine in @(
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
+    "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -699,6 +708,52 @@ if (-not $isRusanovProbe) {
             throw "Rusanov low-Mach CFL is outside the strict positivity contract: $cflKey"
         }
     }
+} elseif ($RunAllSpeedRusanovLowMachAdvection) {
+    $benchmarkKind = "atmospherebench_all_speed_rusanov_low_mach_advection_probe"
+    $performanceGate = "not_evaluated_candidate_probe"
+    $timingScope = "standalone_all_speed_rusanov_low_mach_advection_probe"
+    $candidateImplementations = "fvm_all_speed_rusanov"
+    if ($solverResultStatus -ne "candidate_result_not_selection") {
+        throw "All-speed Rusanov low-Mach probe must not claim solver selection"
+    }
+    if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_all_speed_rusanov" -or
+        (Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+        throw "All-speed Rusanov probe candidate identity is invalid"
+    }
+    foreach ($probeKey in @{
+        "case_time_domain" = "nondimensional_contract"; "boundary_mode" = "periodic";
+        "grid_cells_x" = "128"; "grid_cells_y" = "1"; "grid_cell_count" = "128";
+        "reference_shift_distance" = "0.125"; "moderate_velocity" = "0.5";
+        "low_velocity" = "0.05"; "very_low_velocity" = "0.005";
+        "positivity_preserved" = "true"; "state_evolved" = "true";
+        "numerical_correction_count" = "0"; "probe_passed" = "true";
+        "benchmark_execution_status" = "PASS"; "candidate_disposition" = "reject_low_mach_suitability";
+        "low_mach_suitability_passed" = "false"
+    }.GetEnumerator()) {
+        if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+            throw "All-speed Rusanov low-Mach contract drifted: $($probeKey.Key)"
+        }
+    }
+    foreach ($metricKey in @(
+        "moderate_nominal_mach", "low_nominal_mach", "very_low_nominal_mach",
+        "moderate_density_l1_error", "low_density_l1_error", "very_low_density_l1_error",
+        "moderate_total_variation_ratio", "low_total_variation_ratio", "very_low_total_variation_ratio",
+        "low_to_moderate_l1_ratio", "very_low_to_moderate_l1_ratio"
+    )) {
+        $metric = [double](Read-KeyValue -Text $text -Key $metricKey)
+        if ([double]::IsNaN($metric) -or [double]::IsInfinity($metric)) {
+            throw "All-speed Rusanov low-Mach metric is non-finite: $metricKey"
+        }
+    }
+    if ([double](Read-KeyValue -Text $text -Key "very_low_density_l1_error") -le 0.05) {
+        throw "All-speed Rusanov low-Mach negative result unexpectedly meets the L1 threshold"
+    }
+    foreach ($cflKey in @("moderate_maximum_cfl", "low_maximum_cfl", "very_low_maximum_cfl")) {
+        $cfl = [double](Read-KeyValue -Text $text -Key $cflKey)
+        if ([double]::IsNaN($cfl) -or [double]::IsInfinity($cfl) -or $cfl -le 0.0 -or $cfl -gt 1.0) {
+            throw "All-speed Rusanov low-Mach CFL is outside the strict positivity contract: $cflKey"
+        }
+    }
 } elseif ($RunRusanovOpenBoundaryLeak) {
     $benchmarkKind = "atmospherebench_rusanov_open_boundary_leak_probe"
     $performanceGate = "not_evaluated_candidate_probe"
@@ -974,7 +1029,7 @@ if ($isRusanovProbe) {
 		$coarseMaximumCfl = [double](Read-KeyValue -Text $text -Key "coarse_maximum_cfl")
 		$mediumMaximumCfl = [double](Read-KeyValue -Text $text -Key "medium_maximum_cfl")
 		$fineMaximumCfl = [double](Read-KeyValue -Text $text -Key "fine_maximum_cfl")
-	} elseif ($RunRusanovLowMachAdvection) {
+	} elseif ($RunRusanovLowMachAdvection -or $RunAllSpeedRusanovLowMachAdvection) {
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
 		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
 		$finalMaximumPressure = [double](Read-KeyValue -Text $text -Key "maximum_pressure")
@@ -1063,6 +1118,8 @@ if ($RunRusanovPerformance) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
 } elseif ($RunRusanovLowMachAdvection) {
 	$limitations += "Rusanov low-Mach characterization records the measured diffusion and suitability result; it is not an all-speed solver or production performance claim."
+} elseif ($RunAllSpeedRusanovLowMachAdvection) {
+	$limitations += "All-speed Rusanov is a standalone strict-double 1D low-Mach candidate; this measured version is rejected by the defined low-Mach suitability threshold and is not a production solver or performance claim."
 } elseif ($RunRusanovDensityAdvectionRefinement) {
 	$limitations += "Rusanov has one three-level smooth-advection refinement study; it does not establish low-Mach, multidimensional, leak, source-term or production performance behavior."
 } elseif ($RunRusanovSodShockTube) {

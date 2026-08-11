@@ -755,6 +755,14 @@ test(
 )
 
 test(
+	'atmospherebench-all-speed-rusanov-low-mach-advection',
+	atmospherebench,
+	args: [ '--run-all-speed-rusanov-low-mach-advection' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
 	'atmospherebench-rusanov-open-boundary-leak',
 	atmospherebench,
 	args: [ '--run-rusanov-open-boundary-leak' ],

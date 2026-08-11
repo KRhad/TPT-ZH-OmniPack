@@ -72,6 +72,8 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("--run-rusanov-density-advection-refinement", RUNNER)
         self.assertIn("[switch] $RunRusanovLowMachAdvection", RUNNER)
         self.assertIn("--run-rusanov-low-mach-advection", RUNNER)
+        self.assertIn("[switch] $RunAllSpeedRusanovLowMachAdvection", RUNNER)
+        self.assertIn("--run-all-speed-rusanov-low-mach-advection", RUNNER)
         self.assertIn("[switch] $RunRusanovOpenBoundaryLeak", RUNNER)
         self.assertIn("--run-rusanov-open-boundary-leak", RUNNER)
         self.assertIn("[switch] $RunRusanovPerformance", RUNNER)
@@ -120,6 +122,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("[double]::IsInfinity($maximumCfl)", RUNNER)
         self.assertIn('candidate=fvm_hlle|status=registered_only|solver_implemented=false', RUNNER)
         self.assertIn('candidate=lbm_d2q9|status=registered_only|solver_implemented=false', RUNNER)
+        self.assertIn('candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true', RUNNER)
 
     def test_runner_rejects_a_dimensional_or_stepped_scaffold_case(self) -> None:
         self.assertIn("must keep the shared case nondimensional", RUNNER)

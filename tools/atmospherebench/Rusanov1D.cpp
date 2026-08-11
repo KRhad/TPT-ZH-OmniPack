@@ -80,6 +80,12 @@ namespace
 	constexpr double PerformanceVelocity = 0.5;
 	constexpr double PerformanceTargetCfl = 0.2;
 
+	enum class FluxDissipationModel
+	{
+		Rusanov,
+		AllSpeedRusanov,
+	};
+
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
 		return {
@@ -145,6 +151,43 @@ namespace
 			Scale(0.5, Add(FluxX(left, leftPrimitive), FluxX(right, rightPrimitive))),
 			Scale(0.5 * maximumWaveSpeed, Subtract(right, left))
 		);
+	}
+
+	ConservativeState AllSpeedRusanovFluxX(
+		const ConservativeState &left,
+		const ConservativeState &right,
+		const IdealGasEOS &eos)
+	{
+		const auto leftPrimitive = eos.ToPrimitive(left);
+		const auto rightPrimitive = eos.ToPrimitive(right);
+		if (!leftPrimitive.valid || !rightPrimitive.valid)
+			return {};
+		const double localVelocity = std::max(
+			std::abs(leftPrimitive.velocityX), std::abs(rightPrimitive.velocityX));
+		const double soundSpeed = std::max(leftPrimitive.soundSpeed, rightPrimitive.soundSpeed);
+		const double localMach = localVelocity / soundSpeed;
+		const double minimumPressure = std::max(
+			std::min(leftPrimitive.pressure, rightPrimitive.pressure), 1e-12);
+		const double pressureJump = std::abs(rightPrimitive.pressure - leftPrimitive.pressure)
+			/ minimumPressure;
+		const double shockSensor = std::clamp(pressureJump / 0.1, 0.0, 1.0);
+		const double acousticScale = std::max(0.01, std::max(localMach, shockSensor));
+		const double maximumWaveSpeed = localVelocity + acousticScale * soundSpeed;
+		return Subtract(
+			Scale(0.5, Add(FluxX(left, leftPrimitive), FluxX(right, rightPrimitive))),
+			Scale(0.5 * maximumWaveSpeed, Subtract(right, left))
+		);
+	}
+
+	ConservativeState NumericalFluxX(
+		const ConservativeState &left,
+		const ConservativeState &right,
+		const IdealGasEOS &eos,
+		FluxDissipationModel model)
+	{
+		return model == FluxDissipationModel::AllSpeedRusanov
+			? AllSpeedRusanovFluxX(left, right, eos)
+			: RusanovFluxX(left, right, eos);
 	}
 
 	ConservativeState SealedWallFluxX(const ConservativeState &state, const IdealGasEOS &eos)
@@ -215,7 +258,8 @@ namespace
 		double conservationTolerance,
 		const ConservativeState *leftBoundaryState,
 		const ConservativeState *rightBoundaryState,
-		std::vector<ConservativeState> *finalCellsOutput)
+		std::vector<ConservativeState> *finalCellsOutput,
+		FluxDissipationModel fluxModel = FluxDissipationModel::Rusanov)
 	{
 		RusanovProbeSummary summary{benchmarkCase};
 		if (!summary.benchmarkCase.IsValid() || !eos.IsValid()
@@ -256,7 +300,8 @@ namespace
 			if (periodic)
 			{
 				for (std::size_t cell = 0; cell < cells.size(); ++cell)
-					fluxes[cell] = RusanovFluxX(cells[cell], cells[(cell + 1) % cells.size()], eos);
+					fluxes[cell] = NumericalFluxX(
+						cells[cell], cells[(cell + 1) % cells.size()], eos, fluxModel);
 				for (std::size_t cell = 0; cell < cells.size(); ++cell)
 				{
 					const auto leftFace = fluxes[(cell + cells.size() - 1) % cells.size()];
@@ -268,12 +313,12 @@ namespace
 			else
 			{
 				fluxes.front() = open && leftBoundaryState
-					? RusanovFluxX(*leftBoundaryState, cells.front(), eos)
+					? NumericalFluxX(*leftBoundaryState, cells.front(), eos, fluxModel)
 					: SealedWallFluxX(cells.front(), eos);
 				for (std::size_t face = 1; face < cells.size(); ++face)
-					fluxes[face] = RusanovFluxX(cells[face - 1], cells[face], eos);
+					fluxes[face] = NumericalFluxX(cells[face - 1], cells[face], eos, fluxModel);
 				fluxes.back() = open
-					? RusanovFluxX(cells.back(), *rightBoundaryState, eos)
+					? NumericalFluxX(cells.back(), *rightBoundaryState, eos, fluxModel)
 					: SealedWallFluxX(cells.back(), eos);
 				const auto leftExchange = Scale(lambda, fluxes.front());
 				const auto rightExchange = Scale(-lambda, fluxes.back());
@@ -341,13 +386,14 @@ namespace
 		bool requireEvolution,
 		bool requirePeakReduction,
 		double conservationTolerance,
-		std::vector<ConservativeState> *finalCellsOutput)
+		std::vector<ConservativeState> *finalCellsOutput,
+		FluxDissipationModel fluxModel = FluxDissipationModel::Rusanov)
 	{
 		if (benchmarkCase.grid.boundaryMode != BoundaryMode::Periodic)
 			return {benchmarkCase};
 		return RunOneDimensionalProbe(benchmarkCase, std::move(initialCells), eos,
 			requireEvolution, requirePeakReduction, conservationTolerance,
-			nullptr, nullptr, finalCellsOutput);
+			nullptr, nullptr, finalCellsOutput, fluxModel);
 	}
 
 	RusanovProbeSummary RunSealedProbe(
@@ -356,13 +402,14 @@ namespace
 		const IdealGasEOS &eos,
 		bool requireEvolution,
 		double conservationTolerance,
-		std::vector<ConservativeState> *finalCellsOutput)
+		std::vector<ConservativeState> *finalCellsOutput,
+		FluxDissipationModel fluxModel = FluxDissipationModel::Rusanov)
 	{
 		if (benchmarkCase.grid.boundaryMode != BoundaryMode::Sealed)
 			return {benchmarkCase};
 		return RunOneDimensionalProbe(benchmarkCase, std::move(initialCells), eos,
 			requireEvolution, false, conservationTolerance,
-			nullptr, nullptr, finalCellsOutput);
+			nullptr, nullptr, finalCellsOutput, fluxModel);
 	}
 
 	RusanovProbeSummary RunOpenProbe(
@@ -372,13 +419,14 @@ namespace
 		const IdealGasEOS &eos,
 		bool requireEvolution,
 		double conservationTolerance,
-		std::vector<ConservativeState> *finalCellsOutput)
+		std::vector<ConservativeState> *finalCellsOutput,
+		FluxDissipationModel fluxModel = FluxDissipationModel::Rusanov)
 	{
 		if (benchmarkCase.grid.boundaryMode != BoundaryMode::Open)
 			return {benchmarkCase};
 		return RunOneDimensionalProbe(benchmarkCase, std::move(initialCells), eos,
 			requireEvolution, false, conservationTolerance,
-			nullptr, &rightBoundaryState, finalCellsOutput);
+			nullptr, &rightBoundaryState, finalCellsOutput, fluxModel);
 	}
 
 	void EvaluateAdvectedDensity(
@@ -460,7 +508,9 @@ namespace
 		return summary;
 	}
 
-	RusanovProbeSummary RunLowMachAdvectionCase(double velocity)
+	RusanovProbeSummary RunLowMachAdvectionCase(
+		double velocity,
+		FluxDissipationModel fluxModel = FluxDissipationModel::Rusanov)
 	{
 		const IdealGasEOS eos(Gamma, SpecificGasConstant);
 		const double cellLength = 1.0 / static_cast<double>(LowMachCells);
@@ -483,7 +533,7 @@ namespace
 			{"rusanov_low_mach_advection_1d",
 				{LowMachCells, 1, cellLength, BoundaryMode::Periodic},
 				TimeDomain::NondimensionalContract, timeStep, steps},
-			initial, eos, true, false, 1e-8, &final);
+			initial, eos, true, false, 1e-8, &final, fluxModel);
 		EvaluateAdvectedDensity(summary, initial, final, eos, velocity,
 			1.0, 1.0, 1.0 - DensityAdvectionAmplitude, 1.0 + DensityAdvectionAmplitude);
 		summary.simulatedTime = totalTime;
@@ -787,6 +837,43 @@ RusanovLowMachSummary RunRusanovLowMachAdvection()
 		&& summary.veryLowMach.totalVariationRatio >= 0.8;
 	summary.passed = summary.moderateMach.passed && summary.lowMach.passed
 		&& summary.veryLowMach.passed
+		&& std::isfinite(summary.lowToModerateL1Ratio)
+		&& std::isfinite(summary.veryLowToModerateL1Ratio);
+	return summary;
+}
+
+RusanovLowMachSummary RunAllSpeedRusanovLowMachAdvection()
+{
+	RusanovLowMachSummary summary{
+		RunLowMachAdvectionCase(ModerateMachVelocity, FluxDissipationModel::AllSpeedRusanov),
+		RunLowMachAdvectionCase(LowMachVelocity, FluxDissipationModel::AllSpeedRusanov),
+		RunLowMachAdvectionCase(VeryLowMachVelocity, FluxDissipationModel::AllSpeedRusanov),
+	};
+	const double nominalSoundSpeed = std::sqrt(Gamma);
+	summary.moderateNominalMach = ModerateMachVelocity / nominalSoundSpeed;
+	summary.lowNominalMach = LowMachVelocity / nominalSoundSpeed;
+	summary.veryLowNominalMach = VeryLowMachVelocity / nominalSoundSpeed;
+	if (summary.moderateMach.densityL1Error > 0.0)
+	{
+		summary.lowToModerateL1Ratio =
+			summary.lowMach.densityL1Error / summary.moderateMach.densityL1Error;
+		summary.veryLowToModerateL1Ratio =
+			summary.veryLowMach.densityL1Error / summary.moderateMach.densityL1Error;
+	}
+	summary.suitabilityPassed = summary.veryLowMach.densityL1Error <= 0.05
+		&& summary.veryLowMach.totalVariationRatio >= 0.8;
+	const auto executionPassed = [](const RusanovProbeSummary &probe)
+	{
+		return probe.positivityPreserved && probe.boundaryLedgerCloses
+			&& probe.corrections.IsEmpty() && probe.maximumCfl <= 1.0
+			&& probe.stateEvolved && std::isfinite(probe.densityL1Error)
+			&& std::isfinite(probe.densityLinfError)
+			&& std::isfinite(probe.pressureLinfError)
+			&& std::isfinite(probe.totalVariationRatio);
+	};
+	summary.passed = executionPassed(summary.moderateMach)
+		&& executionPassed(summary.lowMach)
+		&& executionPassed(summary.veryLowMach)
 		&& std::isfinite(summary.lowToModerateL1Ratio)
 		&& std::isfinite(summary.veryLowToModerateL1Ratio);
 	return summary;
@@ -1351,12 +1438,17 @@ bool WriteRusanovDensityAdvectionRefinementProbe(std::ostream &output)
 	return summary.passed;
 }
 
-bool WriteRusanovLowMachAdvectionProbe(std::ostream &output)
+namespace
 {
-	const auto summary = RunRusanovLowMachAdvection();
+bool WriteLowMachAdvectionProbe(
+	std::ostream &output,
+	const RusanovLowMachSummary &summary,
+	const char *caseId,
+	const char *candidateId)
+{
 	output << "schema_version=1\n";
-	output << "case=rusanov_low_mach_advection_1d\n";
-	output << "candidate=fvm_rusanov\n";
+	output << "case=" << caseId << '\n';
+	output << "candidate=" << candidateId << '\n';
 	output << "candidate_solver_implemented=true\n";
 	output << "atmosphere_solver_selection=unselected\n";
 	output << "physical_scale_selection=unselected\n";
@@ -1389,6 +1481,12 @@ bool WriteRusanovLowMachAdvectionProbe(std::ostream &output)
 	output << "moderate_total_variation_ratio=" << summary.moderateMach.totalVariationRatio << '\n';
 	output << "low_total_variation_ratio=" << summary.lowMach.totalVariationRatio << '\n';
 	output << "very_low_total_variation_ratio=" << summary.veryLowMach.totalVariationRatio << '\n';
+	output << "moderate_advection_reference_passed="
+		<< (summary.moderateMach.advectionReferencePassed ? "true" : "false") << '\n';
+	output << "low_advection_reference_passed="
+		<< (summary.lowMach.advectionReferencePassed ? "true" : "false") << '\n';
+	output << "very_low_advection_reference_passed="
+		<< (summary.veryLowMach.advectionReferencePassed ? "true" : "false") << '\n';
 	output << "low_to_moderate_l1_ratio=" << summary.lowToModerateL1Ratio << '\n';
 	output << "very_low_to_moderate_l1_ratio=" << summary.veryLowToModerateL1Ratio << '\n';
 	output << "moderate_maximum_cfl=" << summary.moderateMach.maximumCfl << '\n';
@@ -1425,8 +1523,24 @@ bool WriteRusanovLowMachAdvectionProbe(std::ostream &output)
 	output << "correction_event_count=0\n";
 	output << "low_mach_suitability_passed="
 		<< (summary.suitabilityPassed ? "true" : "false") << '\n';
+	output << "candidate_disposition="
+		<< (summary.suitabilityPassed ? "continue_evaluation" : "reject_low_mach_suitability") << '\n';
+	output << "benchmark_execution_status=" << (summary.passed ? "PASS" : "FAIL") << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
+}
+} // namespace
+
+bool WriteRusanovLowMachAdvectionProbe(std::ostream &output)
+{
+	return WriteLowMachAdvectionProbe(output, RunRusanovLowMachAdvection(),
+		"rusanov_low_mach_advection_1d", "fvm_rusanov");
+}
+
+bool WriteAllSpeedRusanovLowMachAdvectionProbe(std::ostream &output)
+{
+	return WriteLowMachAdvectionProbe(output, RunAllSpeedRusanovLowMachAdvection(),
+		"all_speed_rusanov_low_mach_advection_1d", "fvm_all_speed_rusanov");
 }
 
 bool WriteRusanovPerformanceProbe(std::ostream &output)

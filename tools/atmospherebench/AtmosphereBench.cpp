@@ -157,12 +157,14 @@ bool BenchmarkResult::IsContractOnly() const
 		&& stateBytesPerCell == sizeof(ConservativeState) && corrections.IsEmpty();
 }
 
-const std::array<CandidateDescriptor, 4> &Candidates()
+const std::array<CandidateDescriptor, 5> &Candidates()
 {
-	static const std::array<CandidateDescriptor, 4> candidates{{
+	static const std::array<CandidateDescriptor, 5> candidates{{
 		{CandidateKind::LegacyLike, "legacy_like", "control_only", false},
 		{CandidateKind::RusanovFvm, "fvm_rusanov",
 			"implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes", true},
+		{CandidateKind::AllSpeedRusanovFvm, "fvm_all_speed_rusanov",
+			"implemented_1d_low_mach_probe_rejected", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
 	}};
@@ -212,6 +214,7 @@ bool RunSelfTest(std::ostream &output)
 	const auto rusanovSod = RunRusanovSodShockTube();
 	const auto rusanovRefinement = RunRusanovDensityAdvectionRefinement();
 	const auto rusanovLowMach = RunRusanovLowMachAdvection();
+	const auto allSpeedRusanovLowMach = RunAllSpeedRusanovLowMachAdvection();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -227,7 +230,7 @@ bool RunSelfTest(std::ostream &output)
 		&& Near(primitive.pressure, 4.0, 1e-12)
 		&& Near(primitive.velocityX, 3.0, 1e-12)
 		&& Near(primitive.velocityY, -2.0, 1e-12)
-		&& ledger.Closes(1e-12) && candidates.size() == 4
+		&& ledger.Closes(1e-12) && candidates.size() == 5
 		&& uniformCase.IsValid() && uniformCase.grid.CellCount() == 12
 		&& uniformResult.IsContractOnly() && !invalidGrid.IsValid()
 		&& !invalidCase.IsValid() && !nonEmptyCorrections.IsEmpty()
@@ -235,7 +238,8 @@ bool RunSelfTest(std::ostream &output)
 	bool onlyRusanovImplemented = true;
 	for (const auto &candidate : candidates)
 	{
-		const bool expected = candidate.kind == CandidateKind::RusanovFvm;
+		const bool expected = candidate.kind == CandidateKind::RusanovFvm
+			|| candidate.kind == CandidateKind::AllSpeedRusanovFvm;
 		onlyRusanovImplemented = onlyRusanovImplemented && candidate.solverImplemented == expected;
 	}
 	const bool result = ok && rusanov.passed && rusanovPressurePulse.passed
@@ -244,6 +248,7 @@ bool RunSelfTest(std::ostream &output)
 		&& rusanovSod.passed
 		&& rusanovRefinement.passed
 		&& rusanovLowMach.passed
+		&& allSpeedRusanovLowMach.passed
 		&& rusanovOpenLeak.passed
 		&& onlyRusanovImplemented;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
@@ -267,6 +272,10 @@ bool RunSelfTest(std::ostream &output)
 		<< (rusanovLowMach.passed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_LOW_MACH_SUITABILITY="
 		<< (rusanovLowMach.suitabilityPassed ? "PASS" : "FAIL") << '\n';
+	output << "ALL_SPEED_RUSANOV_LOW_MACH_ADVECTION_PROBE="
+		<< (allSpeedRusanovLowMach.passed ? "PASS" : "FAIL") << '\n';
+	output << "ALL_SPEED_RUSANOV_LOW_MACH_SUITABILITY="
+		<< (allSpeedRusanovLowMach.suitabilityPassed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";

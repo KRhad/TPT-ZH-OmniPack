@@ -97,6 +97,7 @@ RusanovProbeSummary RunRusanovSodShockTube();
 RusanovProbeSummary RunRusanovOpenBoundaryLeak();
 RusanovRefinementSummary RunRusanovDensityAdvectionRefinement();
 RusanovLowMachSummary RunRusanovLowMachAdvection();
+RusanovLowMachSummary RunAllSpeedRusanovLowMachAdvection();
 RusanovPerformanceSummary RunRusanovPerformance();
 bool WriteRusanovUniformProbe(std::ostream &output);
 bool WriteRusanovPressurePulseProbe(std::ostream &output);
@@ -107,6 +108,7 @@ bool WriteRusanovSodShockTubeProbe(std::ostream &output);
 bool WriteRusanovOpenBoundaryLeakProbe(std::ostream &output);
 bool WriteRusanovDensityAdvectionRefinementProbe(std::ostream &output);
 bool WriteRusanovLowMachAdvectionProbe(std::ostream &output);
+bool WriteAllSpeedRusanovLowMachAdvectionProbe(std::ostream &output);
 bool WriteRusanovPerformanceProbe(std::ostream &output);
 
 } // namespace omni::atmospherebench

@@ -137,6 +137,7 @@ enum class CandidateKind
 {
 	LegacyLike,
 	RusanovFvm,
+	AllSpeedRusanovFvm,
 	HlleFvm,
 	LbmD2Q9,
 };
@@ -149,7 +150,7 @@ struct CandidateDescriptor
 	bool solverImplemented;
 };
 
-const std::array<CandidateDescriptor, 4> &Candidates();
+const std::array<CandidateDescriptor, 5> &Candidates();
 const BenchmarkCase &UniformContractCase();
 BenchmarkResult MakeUniformContractResult();
 
