@@ -2,9 +2,10 @@
 
 ## Status
 
-This is a benchmark input, not an accepted contract. It makes every conversion
-explicit so AtmosphereBench can reject or revise it. Production physical algorithms
-remain blocked until Phase 2 selects a time/scale policy.
+The 1.0.5 selection contract accepts the geometry as `selected_tpt_mm_scale_v1`.
+This is an explicit Enhanced/Scientific reference contract, not a claim that
+Legacy `pv` is SI pressure. Production physical algorithms remain isolated until
+1.0.6 runtime integration.
 
 ## Geometry candidate
 
@@ -69,13 +70,13 @@ Phase 2/3 must choose and publish exactly one default policy after comparison:
 - all-speed/preconditioned or hybrid algorithm;
 - another measured policy that preserves the intended phenomena.
 
-Until then:
+The 1.0.5 decision is:
 
 ```text
 SIMULATION_TICK_FIXED=true
 PRESENTATION_INDEPENDENT=true
-DEFAULT_PHYSICAL_TIME_MAPPING=UNSELECTED
-PHYSICAL_SCALE_GATE=RED
+DEFAULT_PHYSICAL_TIME_MAPPING=SELECTED_ALL_SPEED_SPLIT_V1
+PHYSICAL_SCALE_GATE=GREEN_REFERENCE_CONTRACT_YELLOW_RUNTIME_NOT_IMPLEMENTED
 ```
 
 ## Atmosphere presets
@@ -111,7 +112,8 @@ Benchmark these layouts:
 
 The leading design is a per-world active registry with a small fixed/dense common set
 and sparse trace chunks. It preserves GPU-coherent common channels without allocating
-hundreds of species in every cell. Selection remains benchmark-gated.
+hundreds of species in every cell. Runtime species implementation remains a 1.0.6+
+scope; Phase 5 only records the storage decision basis.
 
 ## Legacy projection
 

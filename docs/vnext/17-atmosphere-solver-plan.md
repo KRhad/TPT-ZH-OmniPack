@@ -28,8 +28,11 @@ The original provisional recommendation was HLLE FVM because one conservative
 state naturally carries mass, momentum, total energy and species. Measurements
 have since made HLLC with explicit Rusanov fallback the current front-runner;
 HLLE remains unimplemented, and D2Q9 is now limited comparison evidence rather
-than a registration placeholder. Rusanov remains the debugging floor. None of
-these observations is final solver selection.
+than a registration placeholder. Rusanov remains the debugging floor. The 1.0.5
+selection contract chooses the architecture for the 1.0.6 CPU MVP: HLLC with
+explicit Rusanov fallback for compressible/event regions coupled to a geometric-
+multigrid low-Mach projection component. This is an architecture selection, not
+production implementation.
 
 ## Tool architecture
 
@@ -110,8 +113,12 @@ GREEN requires:
 - a documented physical-time policy;
 - no dependency on test names or special-case expected outcomes.
 
-Until these are true, `ATMOSPHERE_SOLVER_SELECTED=false` and production integration
-is RED.
+The benchmark selection contract requires clean source/build provenance and evidence
+from the target-grid projection matrix, mixed-region routing, the variable-density
+projection/HLLC coupling fixture, HLLC physics cases, species transport, Legacy-like
+control and LBM comparison. It records the full-domain compressible budget as YELLOW
+and keeps `candidate_solver_implemented=false`, `production_solver_implemented=false`
+until 1.0.6 implements the runtime adapter.
 
 ### Current first-order Rusanov result
 

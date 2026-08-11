@@ -612,6 +612,42 @@ Clean result SHA-256 is
 benchmark; overall `hybrid_end_to_end_passed=false`, solver selection is
 unselected and 1.0.6 remains blocked.
 
+## 1.0.5 selection checkpoint
+
+After the geometric-multigrid comparison and the coupled variable-density
+projection/HLLC fixture, the Phase 5 selection contract records:
+
+```text
+physical_scale_selection=selected_tpt_mm_scale_v1
+physical_time_policy=selected_all_speed_split_v1
+atmosphere_solver_selection=selected_hybrid_fvm_projection_hllc_rusanov_v1
+selected_low_mach_component=geometric_multigrid_v_cycle
+selected_compressible_flux=hllc_with_rusanov_fallback
+candidate_solver_implemented=false
+production_solver_implemented=false
+production_runtime_integration=deferred_to_1.0.6
+```
+
+The GMG target matrix uses one warmup and five repeats: the 153x96 clean median is
+`3.6188 ms` with divergence ratio `0.00961128`; 306x192 and 612x384 converge but
+exceed the single normal-atmosphere budget. The coupled 32x24 fixture uses variable
+density, 16 cross-route faces and a sealed-wall projection: divergence ratio
+`0.0083031`, mass/momentum/energy drift below `5e-13`, positive density/pressure
+and zero wall-normal velocity.
+
+Clean evidence:
+
+```text
+source_commit=02e255ac652c006ea28d277e863c442785aec7b2
+source_dirty=false
+selection_artifact=artifacts/vnext-phase5-selection/20260811T104942Z/result.json
+selection_sha256=B26CB01F43A247DC3FA3AADC46F628CC5F138C6CB2DC71528A0983EF4CA18082
+```
+
+This closes the Phase 5 selection sub-gate only. Full-domain compressible timing,
+production boundaries/runtime, complete physical correction ledger, precision
+tolerance policy and species EOS/diffusion remain YELLOW/RED follow-up work.
+
 ## Vacuum/species routing and precision matrix
 
 Checkpoint `55731d49b` adds bounded vacuum/species evidence. A cell at density
