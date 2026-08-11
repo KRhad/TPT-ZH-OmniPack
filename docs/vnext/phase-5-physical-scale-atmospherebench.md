@@ -564,8 +564,8 @@ This is deliberately bounded evidence, not a selected solver or production
 hybrid implementation. The worst case promotes all `64` cells
 (`maximum_event_fraction=1.0`), so no performance benefit is claimed. Physical
 acoustic domain of dependence is not implemented; the current halo is only a
-benchmark-region diagnostic. General low-Mach pressure coupling, near-vacuum and
-species routing, 2D coupling, target-grid cost, accepted physical time and
+benchmark-region diagnostic. General low-Mach pressure coupling, evolving
+near-vacuum/species transport, accepted physical time and
 production integration remain open. `hybrid_end_to_end_passed=false`,
 `policy_selection_ready=false` and `ATMOSPHERE_SOLVER_SELECTION=unselected` remain
 the required disposition.
@@ -588,7 +588,7 @@ python_discovery=428_total_426_pass_2_skipped
 
 The Phase 5 reference-machine CPU/memory sub-gate and the 1D mixed-region
 sub-gate are GREEN. PhysicalScale, physical-time policy, 2D/domain-of-dependence,
-near-vacuum/species routing, target-grid budget, remaining precision matrix,
+evolving near-vacuum/species transport, target-grid budget, remaining precision matrix,
 G0 physical-ledger semantics and formal solver selection remain RED/unselected.
 HLLE and LBM remain registration-only candidates; production Air is unchanged.
 
@@ -620,6 +620,11 @@ a passive binary species interface uses the HLLC mass flux and records exact
 equal-and-opposite A/B exchange (`-0.16/+0.16`, `-0.04/+0.04`). This is routing
 and interface-ledger evidence only: species EOS coupling and diffusion remain
 unimplemented.
+
+Independent review corrected the hybrid peak-state accounting from five to seven
+state-sized buffers (`224 bytes/cell`): cells, work, next, Flux-X, Flux-Y,
+interface-X and interface-Y. Route-vector and allocator overhead remain outside
+this count, so it is still not a process peak-RAM measurement.
 
 Checkpoint `686ac8a94` builds the same first-order Rusanov template as three
 independent executables: strict-double, strict-float and `-ffast-math` fast-float.

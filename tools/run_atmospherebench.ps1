@@ -499,7 +499,7 @@ if (-not $isRusanovProbe) {
 		"boundary_mode" = "periodic";
 		"grid_cells_x" = "32"; "grid_cells_y" = "24"; "grid_cell_count" = "768";
 		"case_step_count" = "192"; "event_substeps_per_macro" = "4";
-		"state_bytes_per_cell" = "32"; "state_and_flux_scratch_bytes_per_cell" = "160";
+		"state_bytes_per_cell" = "32"; "state_and_flux_scratch_bytes_per_cell" = "224";
 		"router_implemented" = "true_2d_benchmark_only";
 		"cross_route_boundary_coupling" = "implemented_2d_probe";
 		"event_local_subcycling" = "implemented_2d_probe";
@@ -2593,7 +2593,7 @@ if ($RunRusanovPerformance) {
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
 } elseif ($isHybridMixedRegion2DProbe) {
-	$limitations += "The 2D hybrid result is a periodic benchmark-only router/reflux proof. Its physical 344 m/s one-tick domain of dependence exceeds even the 612x384 matrix grid; the 153x96, 306x192 and 612x384 timings are short-run end-to-end measurements, not an accepted tick budget. Physical-time policy, low-Mach pressure coupling, near-vacuum/species routing and production integration remain unimplemented."
+	$limitations += "The 2D hybrid result is a periodic benchmark-only router/reflux proof. Its physical 344 m/s one-tick domain of dependence exceeds even the 612x384 matrix grid; the three-grid timings are short-run end-to-end measurements, not an accepted tick budget. Near-vacuum and passive species interface fixtures pass, but evolving vacuum/species transport, species EOS/diffusion, physical-time policy, low-Mach pressure coupling and production integration remain unimplemented."
 } elseif ($isHybridPolicyProbe) {
 	$limitations += "Hybrid policy evidence combines a conservative constant-pressure low-Mach transport fixture with a separate whole-case HLLC Sod fixture; cross-route boundary coupling, event-local subcycling and production boundaries are not implemented, so this is not solver or physical-time selection."
 } elseif ($isLegacyLikeProbe) {

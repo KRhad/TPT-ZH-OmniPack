@@ -538,7 +538,8 @@ namespace
 		sample.maximumEventFraction = summary.maximumEventFraction;
 		sample.elapsedMilliseconds = std::chrono::duration<double, std::milli>(end - start).count();
 		sample.millisecondsPerMacroStep = sample.elapsedMilliseconds / static_cast<double>(macroSteps);
-		sample.workingBytesTotal = 5 * sizeof(ConservativeState) * sample.cellCount;
+		// Peak inside the substep loop: cells, work, next, flux X/Y and interface X/Y.
+		sample.workingBytesTotal = 7 * sizeof(ConservativeState) * sample.cellCount;
 		sample.promotionObserved = summary.promotionPassed;
 		sample.crossRouteFaceObserved = summary.crossRouteFacePassed;
 		sample.refluxConservationPassed = summary.refluxConservationPassed;
@@ -608,9 +609,9 @@ bool WriteHybridMixedRegion2DProbe(std::ostream &output)
 	output << "cell_length=" << CellLength << '\n';
 	output << "event_substeps_per_macro=" << EventSubsteps << '\n';
 	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
-	output << "state_and_flux_scratch_bytes_per_cell=" << (5 * sizeof(ConservativeState)) << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell=" << (7 * sizeof(ConservativeState)) << '\n';
 	output << "state_and_flux_scratch_bytes_total="
-		<< (5 * sizeof(ConservativeState) * CellsX * CellsY) << '\n';
+		<< (7 * sizeof(ConservativeState) * CellsX * CellsY) << '\n';
 	output << "route_policy=mach_on_0.30_mach_off_0.20_pressure_jump_on_0.08_pressure_jump_off_0.03_near_vacuum_density_1e-5_pressure_1e-7_compressible_wins\n";
 	output << "router_implemented=true_2d_benchmark_only\n";
 	output << "cross_route_boundary_coupling=implemented_2d_probe\n";

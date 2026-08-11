@@ -94,8 +94,8 @@ The next integration commits should be small and independently reversible:
    strict-double Rusanov/HLLC/LBM/Legacy-like comparisons, accepted reference
    budget and bounded 1D/2D mixed-region router/reflux proofs exist. The three-grid
    short-run matrix is recorded and rejects the current policy budget. The next
-   bounded task is near-vacuum/species routing plus precision evidence. Scale,
-   time and solver selection remain RED.
+   bounded routing fixtures and the first precision matrix now exist. Evolving
+   vacuum/species transport, accepted scale/time and solver selection remain RED.
 
 The mixed benchmark starts from the same generated Strict/Legacy hash; the later
 capture locates the first difference after update step 1 in both Particle and Air

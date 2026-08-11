@@ -11,7 +11,7 @@ production solver:
 - the existing whole-case HLLC/Rusanov-fallback Sod fixture.
 
 It does **not** implement physical 2D domain coupling, accepted physical-time
-policy, near-vacuum/species routing or production integration. Therefore:
+policy, evolving near-vacuum/species transport or production integration. Therefore:
 
 ```text
 candidate=hybrid_all_speed_event_local_1d_probe
@@ -186,13 +186,15 @@ domain per `1/60 s` tick at `344 m/s` and `4 mm/cell`, exceeding even the larges
 
 | Grid | Event fraction | ms / macro step | Working bytes | 4.16667 ms budget |
 |---|---:|---:|---:|---|
-| 153x96 | 0.00599129 | 5.56335 | 2,350,080 | FAIL |
-| 306x192 | 0.00149782 | 26.5715 | 9,400,320 | FAIL |
-| 612x384 | 0.000374455 | 106.711 | 37,601,280 | FAIL |
+| 153x96 | 0.00599129 | 5.56335 | 3,290,112 | FAIL |
+| 306x192 | 0.00149782 | 26.5715 | 13,160,448 | FAIL |
+| 612x384 | 0.000374455 | 106.711 | 52,641,792 | FAIL |
 
-These are reference-machine short-run measurements, not release guarantees. They
-show that a small event fraction alone does not make this implementation fit the
-budget because the current benchmark still scans and allocates the full grid.
+These are reference-machine short-run measurements, not release guarantees. Peak
+state accounting is `224 bytes/cell`: cells, work, next, flux X/Y and interface
+X/Y, excluding route-vector and allocator overhead. The results show that a small
+event fraction alone does not make this implementation fit the budget because the
+current benchmark still scans and allocates the full grid.
 `physical_event_local_domain_of_dependence=not_implemented`,
 `hybrid_end_to_end_passed=false`, `policy_selection_ready=false` and
 `V1_0_6=BLOCKED_BY_GATE` remain required.
