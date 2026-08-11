@@ -5,8 +5,8 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_HLLC_2D_NATURAL_CONVECTION
+IMPLEMENTATION_COMMIT=55088a8523421b8ef5c1c0b6be3170fdf505ac34
+STATUS=IN_PROGRESS_HLLC_2D_SPECIES_MIXING
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -18,8 +18,8 @@ LUA_CHANGE=false
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
 ATMOSPHERE_SOLVER_SELECTED=false
-CANDIDATES_REGISTERED=4
-CANDIDATE_SOLVERS_IMPLEMENTED=1
+CANDIDATES_REGISTERED=6
+CANDIDATE_SOLVERS_IMPLEMENTED=3
 TARGETED_TESTS=GREEN_24_24
 PYTHON_DISCOVERY=GREEN_409_TOTAL_407_PASS_2_SKIPPED
 MESON_STATIC=GREEN_43_43
@@ -48,7 +48,9 @@ RUSANOV_OPEN_LEAK_COMMIT=ef0ca86c1
 RUSANOV_OPEN_LEAK_VALIDATION=GREEN_STRICT_DOUBLE_128X1_SEALED_LEFT_OPEN_RIGHT_MASS_OUT_6_69874_BALANCE_ERRORS_LT_3E_MINUS_14_ZERO_CORRECTIONS
 RUSANOV_PERFORMANCE_COMMIT=ee9290cb7
 RUSANOV_PERFORMANCE_VALIDATION=GREEN_STRICT_DOUBLE_SINGLE_THREAD_MEDIAN_3_REPEATS_31_0232M_31_3699M_32_8059M_CELL_UPDATES_PER_SECOND_NO_BUDGET_SELECTED
-CURRENT_VALIDATION=GREEN_BUILD_77_STATIC_63_TARGETED_29_PYTHON_414_PASS_0_SKIP_HLLC_2D_TARGETED_5_NATURAL_HEATING_CLEAN_2
+HLLC_2D_SPECIES_MIXING_COMMIT=55088a8523421b8ef5c1c0b6be3170fdf505ac34
+HLLC_2D_SPECIES_MIXING_VALIDATION=GREEN_32X24_320_STEPS_SPECIES_A_B_ZERO_DRIFT_TV_48_TO_47_9173_768_MIXED_CELLS_ZERO_FALLBACK_ZERO_CORRECTIONS_40_STATE_200_WORKING_BYTES_PER_CELL
+CURRENT_VALIDATION=GREEN_BUILD_75_STEPS_STATIC_64_TARGETED_18_PYTHON_415_TOTAL_413_PASS_2_SKIP_SPECIES_CLEAN_RUNNER_PASS
 CURRENT_SOURCE_PACKAGE=GREEN_1306_SOURCE_PLUS_MANIFEST_NO_TEST_ASSETS_REVISION_20309c670_SHA256_043746D179C1D2A0691FCA3C4A9AA728263E9B9C901301890928F992E9173529
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
@@ -406,3 +408,26 @@ Current HLLC two-dimensional checkpoint source package:
 `043746D179C1D2A0691FCA3C4A9AA728263E9B9C901301890928F992E9173529`,
 `1306` source members plus manifest, zero test assets. Its manifest binds revision
 `20309c6703f210600a7f605e54790ab922ecc9c1`.
+
+## Passive conserved-species gas-mixing checkpoint
+
+Checkpoint `55088a852` extends only the standalone HLLC 2D bench with one passive
+species-A partial density. Species B is the complement against total gas density;
+both species ledgers close with zero published drift over 320 nondimensional
+periodic steps. Fractions remain in `[0,1]`, all 768 cells form a mixed region,
+and total variation decreases from `48` to `47.9173`. Gas mass, momentum and
+energy drift are zero; fallback and correction counts are also zero.
+
+The authoritative fixture state is `40 bytes/cell`, and its explicit
+initial/current/next plus X/Y flux working allocation is `200 bytes/cell`.
+Species-EOS coupling and physical diffusion remain `not_implemented`, so this is
+not yet a multi-species atmosphere. The clean result SHA-256 is
+`F5B7C1FBB60CD2E7672AA5A50FC46A8600C3D8B43E7BE074234BDADC9D8982A4`.
+The full scope, validation and rollback record are in
+[the species-mixing checkpoint](phase-5-species-mixing.md).
+
+Gas-mixing/species-conservation evidence is therefore no longer a Phase 5 gap.
+`V1_0_5_GATE` remains `IN_PROGRESS` for two-dimensional performance and an
+accepted memory/frame budget, selected PhysicalScale, physical-time policy and
+final solver selection. Production Air remains unchanged and unauthorized for
+replacement.

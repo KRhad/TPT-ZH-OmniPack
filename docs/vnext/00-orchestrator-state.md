@@ -167,9 +167,10 @@ with zero test assets.
 HLLC with explicit Rusanov fallback is clean-validated at `3eb235b8c` and is the
 current isolated front-runner. It passes the unchanged Low-Mach threshold and the
 current near-vacuum, sealed Sod and open-leak contracts with zero fallbacks and
-zero numerical corrections. It remains unselected: gas mixing/species
-conservation, two-dimensional performance, PhysicalScale/physical-time and accepted
-budget gates are not complete. See `phase-5-hllc-candidate.md`.
+zero numerical corrections. Passive binary species mixing is now also clean-
+validated, but it remains unselected: two-dimensional performance,
+PhysicalScale/physical-time and accepted budget gates are not complete. See
+`phase-5-hllc-candidate.md` and `phase-5-species-mixing.md`.
 
 The defensive fallback is independently covered at `78bad784d`: one valid
 ultra-low-pressure/acoustic interface triggers exactly one fallback and matches
@@ -199,6 +200,15 @@ signals `0.0257047 / -0.000157248`; control and heated ledgers close within
 `8e-12`, with zero fallback/correction events. The isothermal control still has
 first-order hydrostatic residual, so this is not a well-balanced proof. Scale,
 physical time and solver selection remain unselected.
+
+Passive conserved-species mixing is clean-validated at `55088a852`. The periodic
+`32x24`, 320-step fixture closes gas mass/momentum/energy and species A/B mass
+with zero published drift. Fractions stay in `[0,1]`, total variation decreases
+from `48` to `47.9173`, and all 768 cells become mixed. Fallback and correction
+counts remain zero. State/working memory is `40/200 bytes/cell`. Species-EOS
+coupling and physical diffusion are explicitly `not_implemented`; this does not
+select the solver or authorize production integration. The clean result SHA-256
+is `F5B7C1FBB60CD2E7672AA5A50FC46A8600C3D8B43E7BE074234BDADC9D8982A4`.
 
 Current HLLC two-dimensional checkpoint source package:
 `artifacts/vnext-phase5-source-20309c670/`, SHA-256

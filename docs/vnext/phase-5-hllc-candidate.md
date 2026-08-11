@@ -3,8 +3,8 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=52e94c5aa
-IMPLEMENTATION_COMMIT=83c5a0cd2ba01b623a1d500e1cecb13f5931a60d
-STATUS=GREEN_ISOLATED_CANDIDATE_NATURAL_CONVECTION_NOT_SELECTED
+IMPLEMENTATION_COMMIT=55088a8523421b8ef5c1c0b6be3170fdf505ac34
+STATUS=GREEN_ISOLATED_CANDIDATE_PASSIVE_SPECIES_NOT_SELECTED
 ATMOSPHERE_SOLVER_SELECTION=UNSELECTED
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
@@ -231,17 +231,47 @@ This is a nondimensional candidate signal. The control is not a proof of a
 well-balanced hydrostatic method, and no physical time, real gravity scale,
 material property or production TPT wall behavior is claimed.
 
+### Passive conserved-species mixing
+
+Checkpoint `55088a852` adds one passive species partial-density channel to the
+periodic 2D candidate. Species flux is gas mass flux times the upwind mass
+fraction; species B is derived as the complement of total gas density. No clamp,
+floor or physical-diffusion term is used.
+
+```text
+grid=32x24
+timestep=0.1
+steps=320
+maximum_cfl=0.288199
+species_a_mass=384 -> 384
+species_b_mass=384 -> 384
+species_fraction_bounds=0..1
+composition_total_variation=48 -> 47.9173
+mixed_cells=0 -> 768
+gas_mass_momentum_energy_drift=0 / 0 / 0 / 0
+fallback_count=0
+numerical_correction_count=0
+state=40 bytes/cell
+state_and_flux_scratch=200 bytes/cell / 153600 bytes total
+```
+
+The clean result is bound to `55088a852`, reports `source_dirty=false`, and has
+SHA-256 `F5B7C1FBB60CD2E7672AA5A50FC46A8600C3D8B43E7BE074234BDADC9D8982A4`.
+Species-EOS coupling and physical diffusion are explicitly `not_implemented`;
+this is not a production multi-species atmosphere or solver selection. The
+standalone report is [phase-5-species-mixing.md](phase-5-species-mixing.md).
+
 ## Validation
 
 ```text
-full_build=77/77 PASS
-python_discovery=414/414 PASS, 0 skipped
-meson_static=63/63 PASS
-targeted_contracts=29/29 PASS
+full_build=75/75 build steps PASS
+python_discovery=413 PASS, 2 skipped, 415 total
+meson_static=64/64 PASS
+targeted_atmospherebench_contracts=18/18 PASS
 hllc_targeted_meson=6/6 PASS
 hllc_2d_targeted_meson=4/4 PASS
 hllc_fallback_contract=PASS, expected fallback count 1
-clean_runner=8/8 PASS across the HLLC checkpoint chain
+latest_species_clean_runner=PASS
 hllc_2d_clean_runner_at_be0ff2f37=3/3 PASS
 hllc_unique_clean_modes=9/9 PASS
 hllc_natural_plus_heating_clean_at_83c5a0cd2=2/2 PASS
@@ -261,10 +291,12 @@ binds revision `20309c6703f210600a7f605e54790ab922ecc9c1`.
 ## Compatibility and memory
 
 - Particle layout, Element IDs, Lua identifiers and save format are unchanged.
-- State remains `32 bytes/cell`. The 1D probe uses `96 bytes/cell`; the 2D
+- Base gas state remains `32 bytes/cell`. The 1D probe uses `96 bytes/cell`; the 2D
   checkpoint's actual initial/current/next plus X/Y face-flux storage is
   `160 bytes/cell` for periodic faces and `162.333 bytes/cell` for the sealed
-  face arrays (`124672` bytes total on `32x24`).
+  face arrays (`124672` bytes total on `32x24`). The passive binary fixture adds
+  one authoritative double and its matching working arrays: `40 bytes/cell`
+  authoritative and `200 bytes/cell` with its current scratch layout.
 - No GPU backend, upload, readback, VRAM or synchronization measurement exists.
 - CPU Reference remains authoritative.
 
@@ -273,8 +305,8 @@ binds revision `20309c6703f210600a7f605e54790ab922ecc9c1`.
 HLLC with Rusanov fallback is the current front-runner for continued PoC work,
 not the selected production solver. `V1_0_5_GATE=IN_PROGRESS` because the phase
 still lacks a selected PhysicalScale/physical-time policy, accepted performance
-budget, two-dimensional performance and gas mixing/species conservation. Sealed
-heating, gravity accounting and natural convection now pass, but broader
+budget and two-dimensional performance. Sealed heating, gravity accounting,
+natural convection and passive species conservation now pass, but broader
 multidimensional and
 long-running adversarial coverage remains required before production use.
 

@@ -3,9 +3,9 @@
 ```text
 CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
-PHASE_STATUS=IN_PROGRESS_HLLC_2D_NATURAL_CONVECTION
+PHASE_STATUS=IN_PROGRESS_HLLC_2D_SPECIES_MIXING
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=83c5a0cd2ba01b623a1d500e1cecb13f5931a60d
+IMPLEMENTATION_HEAD=55088a8523421b8ef5c1c0b6be3170fdf505ac34
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -50,9 +50,10 @@ V1_0_5_HLLC_FALLBACK_CONTRACT=GREEN_ADVERSARIAL_INTERFACE_EXPECTED_COUNT_1_COMMI
 V1_0_5_HLLC_2D_PERIODIC=GREEN_UNIFORM_AND_PRESSURE_PULSE_32X24_ZERO_FALLBACK_ZERO_CORRECTIONS_160_BYTES_PER_CELL_COMMIT_d38120177
 V1_0_5_HLLC_2D_SEALED_HEATING=GREEN_SOURCE_LEDGER_CLOSE_PRESSURE_TEMPERATURE_INCREASE_ENERGY_BALANCE_3_21876E_MINUS_11_ZERO_FALLBACK_ZERO_CORRECTIONS_162_333_BYTES_PER_CELL_COMMIT_be0ff2f37
 V1_0_5_HLLC_2D_NATURAL_CONVECTION=GREEN_CONTROL_SUBTRACTED_THERMAL_RISE_0_225497_UPDRAFT_0_0257047_RETURN_MINUS_0_000157248_SOURCE_BOUNDARY_LEDGER_LT_8E_MINUS_12_ZERO_FALLBACK_ZERO_CORRECTIONS_COMMIT_83c5a0cd2
-KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget; selected PhysicalScale and physical-time policy; gas-mixing species-conservation and multidimensional performance evidence
+V1_0_5_HLLC_2D_SPECIES_MIXING=GREEN_PASSIVE_BINARY_32X24_320_STEPS_SPECIES_A_B_ZERO_DRIFT_FRACTION_BOUNDS_0_1_TV_48_TO_47_9173_768_MIXED_CELLS_ZERO_FALLBACK_ZERO_CORRECTIONS_40_STATE_200_WORKING_BYTES_PER_CELL_COMMIT_55088a852
+KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget; selected PhysicalScale and physical-time policy; multidimensional performance evidence
 NEXT_VERSION=1.0.6
-NEXT_PHASE=add passive conserved-species gas-mixing checkpoint only inside AtmosphereBench; keep HLLE and LBM registered-only
+NEXT_PHASE=add two-dimensional HLLC performance and explicit memory/frame-budget checkpoint only inside AtmosphereBench; keep HLLE and LBM registered-only
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -109,9 +110,9 @@ HLLC with explicit Rusanov fallback is now the isolated front-runner at
 `3eb235b8c`. It passes the unchanged Low-Mach gate, near-vacuum expansion, sealed
 Sod and open-leak ledger with zero fallbacks and zero numerical corrections. Its
 clean strict-double throughput is `18.8104M / 18.4543M / 18.6026M`
-cell-updates/s. It remains unselected after later 2D validation because gas mixing,
-two-dimensional performance, physical-time and accepted budget evidence are still
-absent.
+cell-updates/s. Passive binary gas mixing now also closes both species ledgers in
+2D, but the candidate remains unselected because two-dimensional performance,
+physical-time and accepted budget evidence are still absent.
 See the [HLLC candidate checkpoint](../vnext/phase-5-hllc-candidate.md).
 
 The defensive fallback path is independently exercised at `78bad784d`: a valid
@@ -140,6 +141,17 @@ validated at `83c5a0cd2`. A control-subtracted bottom thermal anomaly rises
 `0.0257047 / -0.000157248`. Control and heated runs remain positive, stay below
 CFL `0.032`, record zero fallback/corrections and close source plus wall exchange
 within `8e-12`. It is not a well-balanced, physical-time or production-wall claim.
+
+The passive conserved-species checkpoint is clean-validated at `55088a852`.
+Uniform gas advects a binary left/right composition for 320 nondimensional steps
+on a periodic `32x24` grid. Gas mass, momentum and energy plus species A/B mass
+all report zero drift; fractions remain within `[0,1]`, all 768 cells enter the
+mixed region, and composition total variation decreases measurably from `48` to
+`47.9173`. Fallback and correction counts remain zero. Authoritative state is
+`40 bytes/cell`; the explicit current/next/initial plus X/Y flux working set is
+`200 bytes/cell`. Species-EOS coupling and physical diffusion remain
+`not_implemented`. The clean result SHA-256 is
+`F5B7C1FBB60CD2E7672AA5A50FC46A8600C3D8B43E7BE074234BDADC9D8982A4`.
 
 The clean source package for the natural-convection checkpoint is
 `artifacts/vnext-phase5-source-20309c670/`, SHA-256
