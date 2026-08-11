@@ -169,8 +169,8 @@ The defensive fallback is independently covered at `78bad784d`: one adversarial
 valid interface triggers exactly one fallback and matches the strict Rusanov flux.
 
 HLLC checkpoint source package:
-`artifacts/vnext-phase5-source-b74216c31/`, SHA-256
-`BE7D74127B8572597919438F227ED2D2E931A983F9D45650776979EAC53C977D`,
+`artifacts/vnext-phase5-source-5ee23cd3d/`, SHA-256
+`23309AEC8E0B5F1406BA68A87E0F522C05DD0EFD37C2CF0FF74B57854A31065F`,
 zero test assets.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its

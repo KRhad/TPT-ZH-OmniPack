@@ -115,8 +115,8 @@ but extreme rarefied/high-speed interface invalidates the HLLC star state,
 increments the fallback count exactly once and returns the strict Rusanov flux.
 
 The clean source package for this checkpoint is
-`artifacts/vnext-phase5-source-b74216c31/`, SHA-256
-`BE7D74127B8572597919438F227ED2D2E931A983F9D45650776979EAC53C977D`,
+`artifacts/vnext-phase5-source-5ee23cd3d/`, SHA-256
+`23309AEC8E0B5F1406BA68A87E0F522C05DD0EFD37C2CF0FF74B57854A31065F`,
 with `1304` source members plus manifest and zero test assets.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
