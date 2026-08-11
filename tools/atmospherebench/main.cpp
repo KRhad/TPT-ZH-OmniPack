@@ -3,6 +3,7 @@
 #include "HybridMixedRegion1D.h"
 #include "HybridMixedRegion2D.h"
 #include "HybridPolicy1D.h"
+#include "HybridProjectionCoupling2D.h"
 #include "LbmD2Q9.h"
 #include "LegacyLike.h"
 #include "LowMachProjection2D.h"
@@ -83,6 +84,8 @@ int main(int argc, char **argv)
 		return WriteHybridMixedRegionProbe(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-hybrid-mixed-region-2d")
 		return WriteHybridMixedRegion2DProbe(std::cout) ? 0 : 1;
+	if (std::string_view(argv[1]) == "--run-hybrid-projection-coupling-2d")
+		return WriteHybridProjectionCoupling2D(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-low-mach-projection-2d")
 		return WriteLowMachProjection2D(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-low-mach-projection-2d-performance")
@@ -93,6 +96,6 @@ int main(int argc, char **argv)
 		return WriteRusanovOpenBoundaryLeakProbe(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-rusanov-performance")
 		return WriteRusanovPerformanceProbe(std::cout) ? 0 : 1;
-	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform|--run-phase5-selection|--run-hllc-2d-uniform|--run-hllc-2d-pressure-pulse|--run-hllc-2d-sealed-heating|--run-hllc-2d-natural-convection|--run-hllc-2d-species-mixing|--run-hllc-2d-performance|--run-lbm-d2q9-uniform|--run-lbm-d2q9-shear-wave|--run-legacy-like-uniform|--run-legacy-like-pressure-pulse|--run-hybrid-all-speed-policy|--run-hybrid-mixed-region|--run-hybrid-mixed-region-2d|--run-low-mach-projection-2d|--run-low-mach-projection-2d-performance|--run-rusanov-uniform|--run-rusanov-pressure-pulse|--run-rusanov-density-advection|--run-rusanov-contact-discontinuity|--run-rusanov-near-vacuum-expansion|--run-rusanov-sod-shock-tube|--run-rusanov-density-advection-refinement|--run-rusanov-low-mach-advection|--run-all-speed-rusanov-low-mach-advection|--run-hllc-rusanov-fallback-low-mach-advection|--run-hllc-rusanov-fallback-near-vacuum-expansion|--run-hllc-rusanov-fallback-sod-shock-tube|--run-hllc-rusanov-fallback-open-boundary-leak|--run-hllc-rusanov-fallback-performance|--run-rusanov-open-boundary-leak|--run-rusanov-performance]\n";
+	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform|--run-phase5-selection|--run-hllc-2d-uniform|--run-hllc-2d-pressure-pulse|--run-hllc-2d-sealed-heating|--run-hllc-2d-natural-convection|--run-hllc-2d-species-mixing|--run-hllc-2d-performance|--run-lbm-d2q9-uniform|--run-lbm-d2q9-shear-wave|--run-legacy-like-uniform|--run-legacy-like-pressure-pulse|--run-hybrid-all-speed-policy|--run-hybrid-mixed-region|--run-hybrid-mixed-region-2d|--run-hybrid-projection-coupling-2d|--run-low-mach-projection-2d|--run-low-mach-projection-2d-performance|--run-rusanov-uniform|--run-rusanov-pressure-pulse|--run-rusanov-density-advection|--run-rusanov-contact-discontinuity|--run-rusanov-near-vacuum-expansion|--run-rusanov-sod-shock-tube|--run-rusanov-density-advection-refinement|--run-rusanov-low-mach-advection|--run-all-speed-rusanov-low-mach-advection|--run-hllc-rusanov-fallback-low-mach-advection|--run-hllc-rusanov-fallback-near-vacuum-expansion|--run-hllc-rusanov-fallback-sod-shock-tube|--run-hllc-rusanov-fallback-open-boundary-leak|--run-hllc-rusanov-fallback-performance|--run-rusanov-open-boundary-leak|--run-rusanov-performance]\n";
 	return 2;
 }

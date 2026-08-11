@@ -674,6 +674,7 @@ atmospherebench = executable(
 		'tools/atmospherebench/HybridMixedRegion1D.cpp',
 		'tools/atmospherebench/HybridMixedRegion2D.cpp',
 		'tools/atmospherebench/HybridPolicy1D.cpp',
+		'tools/atmospherebench/HybridProjectionCoupling2D.cpp',
 		'tools/atmospherebench/LbmD2Q9.cpp',
 		'tools/atmospherebench/LegacyLike.cpp',
 		'tools/atmospherebench/LowMachProjection2D.cpp',
@@ -948,6 +949,14 @@ test(
 	args: [ '--run-hybrid-mixed-region-2d' ],
 	suite: 'static',
 	timeout: 120,
+)
+
+test(
+	'atmospherebench-hybrid-projection-coupling-2d',
+	atmospherebench,
+	args: [ '--run-hybrid-projection-coupling-2d' ],
+	suite: 'static',
+	timeout: 60,
 )
 
 test(

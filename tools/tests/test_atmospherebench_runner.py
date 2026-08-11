@@ -128,6 +128,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("target_matrix_convergence_passed", RUNNER)
         self.assertIn("multigrid_target_matrix_convergence_passed", RUNNER)
         self.assertIn("multigrid_target_matrix_budget_passed", RUNNER)
+        self.assertIn("multigrid_reference_grid_budget_passed", RUNNER)
         self.assertIn("selected_low_mach_component", RUNNER)
         self.assertIn("atmospherebench_hybrid_mixed_region_2d_probe", RUNNER)
         self.assertIn("physical_acoustic_domain_cells", RUNNER)

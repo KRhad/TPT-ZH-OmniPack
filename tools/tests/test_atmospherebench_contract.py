@@ -34,7 +34,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
                 self.assertNotIn(needle, text)
         includes = re.findall(r'^#include "([^"]+)"', text, flags=re.MULTILINE)
         self.assertEqual(includes.count("AtmosphereBench.h"), 3)
-        self.assertEqual(includes.count("Rusanov1D.h"), 7)
+        self.assertEqual(includes.count("Rusanov1D.h"), 9)
 
     def test_bench_has_explicit_strict_fp_target_and_isolated_rusanov_candidates(self) -> None:
         meson = (ROOT / "meson.build").read_text(encoding="utf-8")
@@ -170,6 +170,11 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("selected_tpt_mm_scale_v1", source)
         self.assertIn("selected_all_speed_split_v1", source)
         self.assertIn("selected_hybrid_fvm_projection_hllc_rusanov_v1", source)
+        self.assertIn("RunLowMachProjection2DPerformance", source)
+        self.assertIn("RunHybridMixedRegion2DProbe", source)
+        self.assertIn("RunHybridProjectionCoupling2D", source)
+        self.assertIn("RunHllcRusanovFallbackLowMachAdvection", source)
+        self.assertIn("RunHllc2DSpeciesMixing", source)
         self.assertIn("physicalAcousticDomainCells == 1434", source)
         self.assertIn("uniform_acoustic_scaling_used=", source)
         self.assertIn("production_solver_implemented=", source)
@@ -178,6 +183,21 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("atmospherebench-phase5-selection", meson)
         self.assertIn("V1_0_5_SELECTION_CONTRACT_GREEN", runner)
         self.assertIn("requires a clean source worktree", runner)
+
+    def test_hybrid_projection_coupling_fixture_is_conservative_and_bounded(self) -> None:
+        header = (BENCH_ROOT / "HybridProjectionCoupling2D.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "HybridProjectionCoupling2D.cpp").read_text(encoding="utf-8")
+        main = (BENCH_ROOT / "main.cpp").read_text(encoding="utf-8")
+        meson = (ROOT / "meson.build").read_text(encoding="utf-8")
+        self.assertIn("HybridProjectionCoupling2DSummary", header)
+        self.assertIn("ApplyVariableOperator", source)
+        self.assertIn("ComputeHllcRusanovFallbackFluxX", source)
+        self.assertIn("cross_route_face_count=", source)
+        self.assertIn("conservation_passed=", source)
+        self.assertIn("wall_projection_passed=", source)
+        self.assertIn("production_solver_implemented=false", source)
+        self.assertIn("--run-hybrid-projection-coupling-2d", main)
+        self.assertIn("atmospherebench-hybrid-projection-coupling-2d", meson)
 
     def test_fvm_candidates_are_strict_double_and_hlle_remains_registered_only(self) -> None:
         header = (BENCH_ROOT / "Rusanov1D.h").read_text(encoding="utf-8")

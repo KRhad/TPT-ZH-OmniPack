@@ -520,6 +520,10 @@ bool WriteLowMachProjection2DPerformance(std::ostream &output)
 	output << "multigrid_atmosphere_grid_within_budget="
 		<< (summary.multigridAtmosphereGridWithinBudget ? "true" : "false") << '\n';
 	output << "multigrid_target_matrix_budget_passed="
+		<< (summary.multigridAtmosphereGrid.withinReferenceBudget
+			&& summary.multigridDoubledGrid.withinReferenceBudget
+			&& summary.multigridParticleGrid.withinReferenceBudget ? "true" : "false") << '\n';
+	output << "multigrid_reference_grid_budget_passed="
 		<< (summary.multigridAtmosphereGridWithinBudget ? "true" : "false") << '\n';
 	output << "selected_low_mach_component=geometric_multigrid_v_cycle\n";
 	output << "low_mach_component_selection_ready="

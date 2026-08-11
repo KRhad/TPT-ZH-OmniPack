@@ -501,7 +501,8 @@ if ($isLowMachProjection2DPerformanceProbe) {
 		"multigrid_target_grid_matrix_measured" = "true";
 		"multigrid_target_matrix_convergence_passed" = "true";
 		"multigrid_atmosphere_grid_within_budget" = "true";
-		"multigrid_target_matrix_budget_passed" = "true";
+		"multigrid_target_matrix_budget_passed" = "false";
+		"multigrid_reference_grid_budget_passed" = "true";
 		"selected_low_mach_component" = "geometric_multigrid_v_cycle";
 		"low_mach_component_selection_ready" = "true";
 		"general_low_mach_pressure_coupling" = "implemented_periodic_projection_component_only";
@@ -2978,6 +2979,7 @@ $result = [ordered]@{
 			multigrid_target_grid_matrix_measured = (Read-KeyValue -Text $text -Key "multigrid_target_grid_matrix_measured") -eq "true"
 			multigrid_target_matrix_convergence_passed = (Read-KeyValue -Text $text -Key "multigrid_target_matrix_convergence_passed") -eq "true"
 			multigrid_target_matrix_budget_passed = (Read-KeyValue -Text $text -Key "multigrid_target_matrix_budget_passed") -eq "true"
+			multigrid_reference_grid_budget_passed = (Read-KeyValue -Text $text -Key "multigrid_reference_grid_budget_passed") -eq "true"
 			selected_low_mach_component = Read-KeyValue -Text $text -Key "selected_low_mach_component"
 			low_mach_component_selection_ready = (Read-KeyValue -Text $text -Key "low_mach_component_selection_ready") -eq "true"
 			atmosphere_grid = [ordered]@{
