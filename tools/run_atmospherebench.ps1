@@ -135,7 +135,13 @@ function Read-KeyValue {
 }
 
 $gitCommands = @(Get-Command -Name $GitExecutable -CommandType Application -ErrorAction Stop)
-$gitCommand = [string]$gitCommands[0].Source
+$gitCommandInfo = $gitCommands | Where-Object {
+    $_.Source -notmatch '(?i)[\\/]msys\d*[\\/]'
+} | Select-Object -First 1
+if (-not $gitCommandInfo) {
+    $gitCommandInfo = $gitCommands[0]
+}
+$gitCommand = [string]$gitCommandInfo.Source
 $sourceState = Get-SourceState -Repository $sourceRoot -GitCommand $gitCommand
 $buildSystemFilesPath = Join-Path $resolvedBuildDirectory "meson-info/intro-buildsystem_files.json"
 if (-not (Test-Path -LiteralPath $buildSystemFilesPath -PathType Leaf)) {
