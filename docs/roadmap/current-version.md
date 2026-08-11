@@ -153,11 +153,11 @@ mixed region, and composition total variation decreases measurably from `48` to
 `not_implemented`. The clean result SHA-256 is
 `F5B7C1FBB60CD2E7672AA5A50FC46A8600C3D8B43E7BE074234BDADC9D8982A4`.
 
-The clean source package for the natural-convection checkpoint is
-`artifacts/vnext-phase5-source-20309c670/`, SHA-256
-`043746D179C1D2A0691FCA3C4A9AA728263E9B9C901301890928F992E9173529`,
-with `1306` source members plus manifest and zero test assets. The manifest binds
-revision `20309c6703f210600a7f605e54790ab922ecc9c1`.
+The clean source package for the current species-mixing checkpoint is
+`artifacts/vnext-phase5-source-03a83b865/`, SHA-256
+`299EA74E8D98727CA945AACC2B894794A666351EFF9614E5937B006A7C4CE9BE`,
+with `1309` source members plus manifest and zero test assets. The manifest binds
+revision `03a83b865072ba20efe0072419cc428dd73f9a7e`.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the

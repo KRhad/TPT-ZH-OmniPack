@@ -82,6 +82,13 @@ Meson target, verifies strict floating-point flags and current source paths,
 requires a clean worktree, validates conservation/bounds/mixing fail-closed, and
 records the explicit `physical_diffusion=not_implemented` limitation.
 
+The clean test-free source package is
+`artifacts/vnext-phase5-source-03a83b865/`, SHA-256
+`299EA74E8D98727CA945AACC2B894794A666351EFF9614E5937B006A7C4CE9BE`.
+It contains `1309` source members plus one manifest, includes both Species2D
+sources and this report, contains zero test assets, and binds revision
+`03a83b865072ba20efe0072419cc428dd73f9a7e`.
+
 ## Memory and performance scope
 
 ```text
