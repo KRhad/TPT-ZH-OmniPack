@@ -535,6 +535,16 @@ omni_atmosphere_reference = declare_dependency(
 		override_options: target_options + [ 'b_lto=false' ],
 	),
 )
+omni_reaction_reference = declare_dependency(
+	include_directories: project_inc,
+	link_with: static_library(
+		'omni-reaction-reference',
+		sources: files('src/simulation/OmniReactionRuntime.cpp'),
+		include_directories: project_inc,
+		cpp_args: strict_numerical_cpp_args,
+		override_options: target_options + [ 'b_lto=false' ],
+	),
+)
 foreach sta_info : [
 	[ 'common', common_files, [
 		host_platform == 'android' ? sdl2_dep : [],
@@ -548,6 +558,7 @@ foreach sta_info : [
 	[ 'simulation', simulation_files, [
 		json_dep,
 		omni_atmosphere_reference,
+		omni_reaction_reference,
 	] ],
 ]
 	sta_name = sta_info[0]
@@ -773,6 +784,20 @@ omni_multispecies_probe = executable(
 	],
 )
 
+omni_reaction_runtime_probe = executable(
+	'omni_reaction_runtime_probe',
+	sources: files('tools/omni_reaction_runtime_probe.cpp'),
+	include_directories: project_inc,
+	dependencies: omni_reaction_reference,
+	cpp_args: atmospherebench_cpp_args,
+	override_options: [
+		'cpp_std=c++20',
+		'cpp_rtti=false',
+		'b_ndebug=false',
+		'b_lto=false',
+	],
+)
+
 test(
 	'atmospherebench-contract',
 	atmospherebench,
@@ -807,6 +832,21 @@ test(
 	omni_multispecies_probe,
 	suite: 'static',
 	timeout: 120,
+)
+
+test(
+	'omni-reaction-runtime',
+	omni_reaction_runtime_probe,
+	suite: 'static',
+	timeout: 120,
+)
+
+test(
+	'omni-reaction-runtime-contract',
+	python3_prog,
+	args: [ files('tools/omni_reaction_runtime_contract_check.py'), '--source-root', meson.project_source_root() ],
+	suite: 'static',
+	timeout: 60,
 )
 
 test(

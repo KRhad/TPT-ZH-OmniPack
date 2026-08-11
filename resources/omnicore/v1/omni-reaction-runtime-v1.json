@@ -1,0 +1,78 @@
+{
+  "runtime_version": "1.0.8",
+  "runtime_contract": "compiled_transaction_plan_v1",
+  "runtime_consumption": "compiled_contract_only",
+  "authoritative_species_order": [
+    "species.carbon",
+    "species.oxygen",
+    "species.carbon-dioxide"
+  ],
+  "species": [
+    {
+      "id": "species.carbon",
+      "phase": "solid",
+      "molar_mass_kg_mol": 0.0120107,
+      "elemental_composition": { "C": 1 },
+      "charge_number": 0
+    },
+    {
+      "id": "species.oxygen",
+      "phase": "gas",
+      "molar_mass_kg_mol": 0.0319988,
+      "elemental_composition": { "O": 2 },
+      "charge_number": 0,
+      "atmosphere_channel": "O2"
+    },
+    {
+      "id": "species.carbon-dioxide",
+      "phase": "gas",
+      "molar_mass_kg_mol": 0.0440095,
+      "elemental_composition": { "C": 1, "O": 2 },
+      "charge_number": 0,
+      "atmosphere_channel": "CO2"
+    }
+  ],
+  "reactions": [
+    {
+      "id": "reaction.carbon-oxidation",
+      "equation": "C(s) + O2(g) -> CO2(g)",
+      "reactants": [
+        { "species_id": "species.carbon", "coefficient": 1 },
+        { "species_id": "species.oxygen", "coefficient": 1 }
+      ],
+      "products": [
+        { "species_id": "species.carbon-dioxide", "coefficient": 1 }
+      ],
+      "enthalpy_change_j_mol": -393500.0,
+      "thermochemistry": {
+        "source_title": "OpenStax Chemistry 2e, section 5.3, Table 5.2",
+        "source_locator": "https://openstax.org/books/chemistry-2e/pages/5-3-enthalpy",
+        "source_value": "-393.5 kJ/mol at 25 C and 1 atm",
+        "method": "reference",
+        "redistribution_status": "reference_only",
+        "license_or_terms": "OpenStax Chemistry 2e is published under CC BY 4.0; this project records only a normalized numerical reference and attribution."
+      },
+      "kinetics": {
+        "kind": "arrhenius_pseudo_first_order_surface_limited",
+        "pre_exponential_per_s": 200000.0,
+        "temperature_exponent": 0.0,
+        "activation_energy_j_mol": 80000.0,
+        "reference_temperature_k": 1000.0,
+        "method": "game_tuned",
+        "not_a_measured_graphite_kinetic_parameter_set": true
+      }
+    }
+  ],
+  "integration_boundary": {
+    "particle_or_element_mutation": "not_owned_by_runtime",
+    "atmosphere_mutation": "not_owned_by_runtime",
+    "required_commit": [
+      "subtract_condensed_carbon_mass",
+      "subtract_atmosphere_o2_mass",
+      "add_atmosphere_co2_mass",
+      "add_thermal_energy",
+      "record_atom_mass_energy_ledger"
+    ],
+    "commit_semantics": "single_transaction_or_rollback"
+  }
+}
