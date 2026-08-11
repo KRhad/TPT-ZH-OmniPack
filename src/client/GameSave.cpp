@@ -661,6 +661,9 @@ void GameSave::readOPS(const std::vector<char> &data)
 	copyIfBool(b, "legacyEnable", legacyEnable);
 	copyIfBool(b, "gravityEnable", gravityEnable);
 	copyIfBool(b, "aheat_enable", aheatEnable);
+	copyIfInt32(b, "omniSimulationMode", omniSimulationMode);
+	if (omniSimulationMode < OMNI_CLASSIC || omniSimulationMode >= NUM_OMNI_SIMULATION_MODES)
+		omniSimulationMode = OMNI_CLASSIC;
 	copyIfBool(b, "waterEEnabled", waterEEnabled);
 	copyIfBool(b, "paused", paused);
 	copyIfInt32(b, "gravityMode", gravityMode);
@@ -2568,6 +2571,8 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	b["legacyEnable"] = legacyEnable;
 	b["gravityEnable"] = gravityEnable;
 	b["aheat_enable"] = aheatEnable;
+	if (omniSimulationMode != OMNI_CLASSIC)
+		b["omniSimulationMode"] = omniSimulationMode;
 	b["paused"] = paused;
 	b["gravityMode"] = gravityMode;
 	b["airMode"] = airMode;

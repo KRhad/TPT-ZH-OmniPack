@@ -251,6 +251,7 @@ int main()
 		particle.y = 2.0f;
 	}
 	source.authors["type"] = "save";
+	source.omniSimulationMode = OMNI_ENHANCED;
 	source.authors["id"] = 123;
 	source.authors["username"] = "upstream-regression";
 	for (int index = 0; index < 64; ++index)
@@ -277,7 +278,8 @@ int main()
 	}
 
 	GameSave loaded(serialised);
-	if (loaded.pmapbits != PMAPBITS || loaded.particlesCount != static_cast<int>(fixtures.size()))
+	if (loaded.pmapbits != PMAPBITS || loaded.particlesCount != static_cast<int>(fixtures.size()) ||
+		loaded.omniSimulationMode != OMNI_ENHANCED)
 	{
 		return Fail("OPS metadata or particle count changed after high-ID load");
 	}
@@ -367,6 +369,6 @@ int main()
 		<< " particles=" << fixtures.size()
 		<< " direct_types=4 ctype_carriers=4 tmp_carriers=1 tmp2_carriers=1"
 		<< " invalid_pmapbits_rejected=2 missing_identifier_detected=1"
-		<< " wider_source_slot_remapped=1 complex_authors_roundtrip=1" << std::endl;
+		<< " wider_source_slot_remapped=1 complex_authors_roundtrip=1 omni_mode_roundtrip=1" << std::endl;
 	return 0;
 }

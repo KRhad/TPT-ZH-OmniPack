@@ -1,5 +1,6 @@
 #include "Simulation.h"
 #include "Air.h"
+#include "OmniAtmosphere.h"
 #include "ElementClasses.h"
 #include "TransitionConstants.h"
 #include "gravity/Gravity.h"
@@ -29,6 +30,88 @@ namespace
 	bool IsRefractingGlass(int type)
 	{
 		return IsGlassMaterialType(type);
+	}
+
+	bool OmniAtmosphereWallBlocked(const Simulation &sim, int x, int y)
+	{
+		const int wall = sim.bmap[y][x];
+		return wall == WL_WALL || wall == WL_WALLELEC || wall == WL_BLOCKAIR ||
+			(wall == WL_EWALL && !sim.emap[y][x]);
+	}
+
+	void SyncOmniAtmosphereBoundary(Simulation &sim)
+	{
+		if (!sim.omniAtmosphere)
+			return;
+		sim.omniAtmosphere->SetReferenceState(
+			OmniPhysicalScale::ReferenceDensityKgM3,
+			sim.air ? sim.air->ambientAirTemp : OmniPhysicalScale::ReferenceTemperatureK);
+		for (int y = 0; y < YCELLS; ++y)
+		{
+			for (int x = 0; x < XCELLS; ++x)
+				sim.omniAtmosphere->SetBlocked(x, y, OmniAtmosphereWallBlocked(sim, x, y));
+		}
+		switch (sim.edgeMode)
+		{
+		case EDGE_LOOP:
+			sim.omniAtmosphere->SetBoundaryMode(OmniAtmosphereBoundary::Periodic);
+			break;
+		case EDGE_SOLID:
+			sim.omniAtmosphere->SetBoundaryMode(OmniAtmosphereBoundary::Sealed);
+			break;
+		default:
+			sim.omniAtmosphere->SetBoundaryMode(OmniAtmosphereBoundary::Open);
+			break;
+		}
+	}
+
+	void ExportOmniAtmosphereToLegacyFields(Simulation &sim)
+	{
+		if (!sim.omniAtmosphere)
+			return;
+		for (int y = 0; y < YCELLS; ++y)
+		{
+			for (int x = 0; x < XCELLS; ++x)
+			{
+				sim.pv[y][x] = sim.omniAtmosphere->LegacyPressure(x, y);
+				sim.vx[y][x] = sim.omniAtmosphere->LegacyVelocityX(x, y);
+				sim.vy[y][x] = sim.omniAtmosphere->LegacyVelocityY(x, y);
+				sim.hv[y][x] = sim.omniAtmosphere->LegacyTemperature(x, y);
+			}
+		}
+	}
+
+	void ImportLegacyAtmosphereSources(Simulation &sim)
+	{
+		if (!sim.omniAtmosphere)
+			return;
+		const auto &config = sim.omniAtmosphere->Config();
+		for (int y = 0; y < YCELLS; ++y)
+		{
+			for (int x = 0; x < XCELLS; ++x)
+			{
+				if (sim.omniAtmosphere->IsBlocked(x, y))
+					continue;
+				const double velocityX = std::isfinite(sim.vx[y][x]) ? sim.vx[y][x] : 0.0;
+				const double velocityY = std::isfinite(sim.vy[y][x]) ? sim.vy[y][x] : 0.0;
+				const double legacyPressure = std::isfinite(sim.pv[y][x]) ? sim.pv[y][x] : 0.0;
+				const double pressure = std::max(
+					config.referencePressure + legacyPressure * config.legacyPressureScalePa,
+					config.pressureFloor);
+				const double legacyTemperature = std::isfinite(sim.hv[y][x])
+					? sim.hv[y][x]
+					: config.referenceTemperature;
+				const double temperature = std::clamp(legacyTemperature, 1.0, double(MAX_TEMP));
+				const double density = pressure / (config.gasConstant * temperature);
+				const double kinetic = 0.5 * density * (velocityX * velocityX + velocityY * velocityY);
+				sim.omniAtmosphere->ImportLegacyProjection(x, y, {
+					density,
+					density * velocityX,
+					density * velocityY,
+					pressure / (config.gamma - 1.0) + kinetic,
+				});
+			}
+		}
 	}
 
 	struct SimulationImpl : public Simulation
@@ -506,6 +589,7 @@ void Simulation::SaveSimOptions(GameSave &gameSave)
 	gameSave.waterEEnabled = water_equal_test;
 	gameSave.gravityEnable = bool(grav);
 	gameSave.aheatEnable = aheat_enable;
+	gameSave.omniSimulationMode = omniSimulationMode;
 }
 
 bool Simulation::FloodFillPmapCheck(int x, int y, int type) const
@@ -806,6 +890,32 @@ void Simulation::SetEdgeMode(int newEdgeMode)
 	default:
 		SetEdgeMode(EDGE_VOID);
 	}
+	if (IsOmniAtmosphereActive() && omniAtmosphere)
+	{
+		SyncOmniAtmosphereBoundary(*this);
+		ExportOmniAtmosphereToLegacyFields(*this);
+	}
+}
+
+void Simulation::SetOmniSimulationMode(int newMode)
+{
+	if (newMode < OMNI_CLASSIC || newMode >= NUM_OMNI_SIMULATION_MODES)
+		newMode = OMNI_CLASSIC;
+	if (omniSimulationMode == newMode)
+		return;
+	omniSimulationMode = newMode;
+	if (!omniAtmosphere)
+		return;
+	if (newMode == OMNI_CLASSIC)
+	{
+		air->Clear();
+		air->ClearAirH();
+		return;
+	}
+	omniAtmosphere->ResetUniform(OmniPhysicalScale::ReferenceDensityKgM3, air->ambientAirTemp);
+	omniAtmosphere->SetExecutionMode(OmniAtmosphereExecution::RuntimeLowMach);
+	SyncOmniAtmosphereBoundary(*this);
+	ExportOmniAtmosphereToLegacyFields(*this);
 }
 
 // Now simply creates a 0 pixel radius line without all the complicated flags / other checks
@@ -1080,6 +1190,11 @@ void Simulation::clear_sim(void)
 	{
 		air->Clear();
 		air->ClearAirH();
+	}
+	if (omniAtmosphere)
+	{
+		omniAtmosphere->ResetUniform(OmniPhysicalScale::ReferenceDensityKgM3, air ? air->ambientAirTemp : OmniPhysicalScale::ReferenceTemperatureK);
+		omniAtmosphere->SetExecutionMode(OmniAtmosphereExecution::RuntimeLowMach);
 	}
 	SetEdgeMode(edgeMode);
 }
@@ -4073,16 +4188,28 @@ void Simulation::BeforeSim(bool willUpdate)
 	BeginOmniLifecycleLedgerTick();
 	if (willUpdate)
 	{
+		if (IsOmniAtmosphereActive())
 		{
-			FrameTime::Span span(frameTime, "Air::update_air");
+			FrameTime::Span span(frameTime, "OmniAtmosphere::Step");
 			FrameTime::SubsystemSpan profilerSpan(frameTime, FrameTime::Subsystem::Air);
-			air->update_air();
+			SyncOmniAtmosphereBoundary(*this);
+			ImportLegacyAtmosphereSources(*this);
+			omniAtmosphere->Step();
+			ExportOmniAtmosphereToLegacyFields(*this);
 		}
-
-		if(aheat_enable)
+		else
 		{
-			FrameTime::SubsystemSpan profilerSpan(frameTime, FrameTime::Subsystem::AmbientHeat);
-			air->update_airh();
+			{
+				FrameTime::Span span(frameTime, "Air::update_air");
+				FrameTime::SubsystemSpan profilerSpan(frameTime, FrameTime::Subsystem::Air);
+				air->update_air();
+			}
+
+			if(aheat_enable)
+			{
+				FrameTime::SubsystemSpan profilerSpan(frameTime, FrameTime::Subsystem::AmbientHeat);
+				air->update_airh();
+			}
 		}
 
 		{
@@ -4273,6 +4400,11 @@ void Simulation::BeforeSim(bool willUpdate)
 
 void Simulation::AfterSim()
 {
+	if (IsOmniAtmosphereActive())
+	{
+		ImportLegacyAtmosphereSources(*this);
+		ExportOmniAtmosphereToLegacyFields(*this);
+	}
 	debug_mostRecentlyUpdated = -1;
 	bool repairElementCounts = elementRecountAfterSim;
 	if (!repairElementCounts)
@@ -4328,6 +4460,10 @@ Simulation::Simulation()
 
 	//Create and attach air simulation
 	air = std::make_unique<Air>(*this);
+	omniAtmosphere = std::make_unique<OmniAtmosphere>(OmniAtmosphereConfig{
+		.width = XCELLS,
+		.height = YCELLS,
+	});
 
 	player.comm = 0;
 	player2.comm = 0;

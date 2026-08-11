@@ -35,6 +35,7 @@ struct vector2d;
 class Simulation;
 class Renderer;
 class Air;
+class OmniAtmosphere;
 class GameSave;
 
 class Parts
@@ -121,6 +122,8 @@ class Simulation : public RenderableSimulation
 public:
 	GravityPtr grav;
 	std::unique_ptr<Air> air;
+	std::unique_ptr<OmniAtmosphere> omniAtmosphere;
+	int omniSimulationMode = OMNI_CLASSIC;
 
 	RNG rng;
 
@@ -319,6 +322,9 @@ public:
 
 	void SetEdgeMode(int newEdgeMode);
 	void SetDecoSpace(int newDecoSpace);
+	void SetOmniSimulationMode(int newMode);
+	int GetOmniSimulationMode() const { return omniSimulationMode; }
+	bool IsOmniAtmosphereActive() const { return omniSimulationMode != OMNI_CLASSIC; }
 
 	//Drawing Deco
 	void ApplyDecoration(int x, int y, int colR, int colG, int colB, int colA, int mode);

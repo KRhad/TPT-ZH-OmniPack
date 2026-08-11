@@ -1,11 +1,11 @@
 # OmniCore incremental version state
 
 ```text
-CURRENT_VERSION=1.0.5
-CURRENT_PHASE=Physical Scale + AtmosphereBench final validation
-PHASE_STATUS=GREEN_MILESTONE_RECORDED
-BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=0ea5adaccb54ea9049c9979213a499e8d60f26d2
+CURRENT_VERSION=1.0.6
+CURRENT_PHASE=CPU OmniAtmosphere MVP milestone commit
+PHASE_STATUS=VALIDATED_READY_TO_COMMIT
+BASE_COMMIT=193dc2ca812da4aafff9e7261fd52af7aef0d0b1
+IMPLEMENTATION_HEAD=WORKTREE_UNCOMMITTED
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -26,6 +26,15 @@ V1_0_4_GATE=GREEN
 V1_0_4_ROLLBACK=477372373cb1be30c3c04bca4309a7d6fd9fa799
 V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS_PACKAGE_BENCHMARK
 V1_0_5_GATE=GREEN
+V1_0_6_GATE=GREEN_PENDING_MILESTONE_COMMIT
+V1_0_6_CLASSIC_DEFAULT=true
+V1_0_6_CPU_REFERENCE=IMPLEMENTED_SINGLE_SPECIES_IDEAL_GAS_RUSANOV
+V1_0_6_RUNTIME=ENHANCED_OPT_IN_CLASSIC_UNCHANGED
+V1_0_6_SAVE=OPTIONAL_MODE_METADATA_STATE_SERIALIZED_FALSE
+V1_0_6_PROBE=GREEN_STRICT_DOUBLE_UNIFORM_HEATING_PRESSURE_PULSE_NEAR_VACUUM_CORRECTION_LEAK_WALL_MOMENTUM_BLOCKED_EDGE_CAVITY_EVENT_PERSISTENCE
+V1_0_6_STRICT_FP=GREEN_ONE_PRODUCTION_OBJECT_FNO_FAST_FNO_UNSAFE_FP_CONTRACT_OFF
+V1_0_6_FINAL_VALIDATION=GREEN_BUILD_814_MESON_82_PYTHON_435_TOTAL_433_PASS_2_SKIPS_LUA_ATMOSPHERE_PROFILER_RENDERING_UPSTREAM_OPS_SAVE
+V1_0_6_BENCHMARK=RECORDED_CLASSIC_174_254352_STEPS_PER_SECOND_5_738737590MS_PER_STEP_ENHANCED_2_182111144MS_PER_TICK_PERFORMANCE_GATE_NOT_EVALUATED
 V1_0_5_UPSTREAM=GREEN_ENTRY_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
 V1_0_5_PHYSICAL_SCALE_SELECTION=SELECTED_TPT_MM_SCALE_V1_PIXEL_0_001M_CELL_0_004M_DEPTH_0_004M
 V1_0_5_TIME_POLICY=SELECTED_ALL_SPEED_SPLIT_V1_FIXED_1_60S_NO_UNIFORM_ACOUSTIC_SCALING_CORRECTNESS_FIRST_TICK_SLOWDOWN
@@ -66,8 +75,8 @@ V1_0_5_SELECTION_ARTIFACT=GREEN_COMMIT_0ea5adacc_SHA256_BC9D2CDED7CBDD9CDEB0F7BD
 V1_0_5_FINAL_VALIDATION=GREEN_BUILD_648_STATIC_80_PYTHON_435_TOTAL_433_PASS_2_SKIPS_LUA_UPSTREAM_PASS_OPS_8_SCENARIOS_24_PROCESSES_16_RESTARTS_FIXED_STEP_HASHES_STABLE
 V1_0_5_SOURCE_PACKAGE=GREEN_SOURCE_COMMIT_0ea5adacc_SHA256_C33042E29F511D6A19C361B203AA2BC7BEA6BC7D7A62308007DB0F26AC6FDCE2_MEMBERS_1339_TEST_ASSETS_0
 KNOWN_BLOCKERS=none_for_1.0.5_milestone; carry full-domain compressible performance, production runtime integration, complete physical ledgers, precision tolerance policy, species EOS/diffusion, process VRAM and deferred UI DPI matrix into later versions
-NEXT_VERSION=1.0.6
-NEXT_PHASE=record 1.0.5 milestone and enter 1.0.6 CPU OmniAtmosphere implementation
+NEXT_VERSION=1.0.7
+NEXT_PHASE=after 1.0.6 milestone commit begin Multi-Species Atmosphere and OmniThermal
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -84,7 +93,10 @@ required 100%, 125%, and 150% operating-system DPI checks have not been run, so 
 version gate remains YELLOW. After that limitation was reported, the user explicitly
 directed the orchestrator to enter the next version. The exception is recorded as
 `USER_ACCEPTED_YELLOW / DPI_DEFERRED`; it does not convert missing evidence to GREEN.
-Global OmniCore G0 remains RED and continues to forbid OmniAtmosphere implementation.
+At the historical 1.0.3 checkpoint, global OmniCore G0 was RED and forbade
+OmniAtmosphere implementation. 1.0.6 closes the applicable boundary by giving
+Enhanced its own authoritative state and ledger while Legacy fields remain
+explicitly nonphysical.
 
 Version 1.0.4 is **GREEN** at `9cc2b11c5`. It adds only offline versioned
 Material/Species/Reaction contracts, canonical units, provenance validation and a
@@ -92,7 +104,8 @@ Material/Species/Reaction contracts, canonical units, provenance validation and 
 or simulation behavior changed. Clean build/static/Python/Lua/OPS/package and
 fixed-step evidence are recorded in
 [the 1.0.4 material-data checkpoint](../vnext/phase-4-material-data-foundation.md).
-Version 1.0.5 is now **IN_PROGRESS**. Its entry refresh found the official 100.1
+The following Phase 5 paragraphs preserve historical checkpoint evidence. At the
+original scaffold, version 1.0.5 was **IN_PROGRESS**. Its entry refresh found the official 100.1
 stable tag and master unchanged at `d768aeb89`, with zero upstream-only commits.
 The PhysicalScale/AtmosphereBench scaffold and shared contracts remain isolated.
 One first-order strict-double Rusanov debug candidate now has 1D periodic uniform,

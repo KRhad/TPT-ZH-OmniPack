@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "document_type": "omnicore_atmosphere_runtime_contract",
+  "selection_status": "selected_for_1.0.6_cpu_mvp",
+  "runtime_state_version": 1,
+  "mode_policy": {
+    "classic_default": true,
+    "enhanced_opt_in": true,
+    "scientific_experimental": true
+  },
+  "physical_scale": {
+    "pixel_length_m": "0.001",
+    "cell_length_m": "0.004",
+    "effective_depth_m": "0.004",
+    "timestep_s": "0.0166666666666666667"
+  },
+  "authoritative_state": [
+    "rho",
+    "rho_u",
+    "rho_v",
+    "rho_E"
+  ],
+  "thermodynamics": {
+    "eos": "single_species_ideal_gas",
+    "gamma": "1.4",
+    "gas_constant_j_kg_k": "287.05",
+    "reference_density_kg_m3": "1.225",
+    "reference_temperature_k": "293.15"
+  },
+  "numerics": {
+    "reference_flux": "first_order_rusanov",
+    "reference_precision": "strict_double",
+    "boundaries": ["sealed_reflecting", "open_ambient", "periodic"],
+    "positivity_ledger": true,
+    "source_boundary_ledger": true
+  },
+  "compatibility": {
+    "classic_air_replaced": false,
+    "legacy_fields_authoritative": false,
+    "save_mode_metadata": true,
+    "save_atmosphere_state": false,
+    "lua_existing_api_removed": false
+  }
+}

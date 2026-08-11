@@ -13,6 +13,7 @@
 #include "gui/game/OmniContent.h"
 #include "gui/game/tool/Tool.h"
 #include "simulation/Air.h"
+#include "simulation/OmniAtmosphere.h"
 #include "simulation/ElementCommon.h"
 #include "simulation/GOLString.h"
 #include "simulation/gravity/Gravity.h"
@@ -394,14 +395,14 @@ static int omniProfiler(lua_State *L)
 	setBoolean("enabled", metrics.enabled);
 	lua_pushstring(L, "steady_clock_monotonic");
 	lua_setfield(L, -2, "clock");
-	lua_pushstring(L, "legacy_cpu_serial");
+	lua_pushstring(L, lsi->sim->IsOmniAtmosphereActive() ? "omni_cpu_reference" : "legacy_cpu_serial");
 	lua_setfield(L, -2, "backend");
 	lua_pushstring(L, "GameModel_update_boundary");
 	lua_setfield(L, -2, "simulation_scope");
 	setInteger("live_particle_records", lsi->sim->NUM_PARTS);
 	setInteger("particle_storage_active_slots", lsi->sim->parts.active);
 	setInteger("atmosphere_cells", XCELLS * YCELLS);
-	setBoolean("authoritative_atmosphere_state", false);
+	setBoolean("authoritative_atmosphere_state", lsi->sim->IsOmniAtmosphereActive());
 	setBoolean("threaded_rendering_observed", metrics.threadedRenderingObserved);
 	lua_pushstring(L, "not_implemented");
 	lua_setfield(L, -2, "active_chunks_status");
@@ -1678,6 +1679,76 @@ static int airMode(lua_State *L)
 	return 0;
 }
 
+static int omniSimulationMode(lua_State *L)
+{
+	auto *lsi = GetLSI();
+	if (lua_gettop(L) == 0)
+	{
+		lua_pushinteger(L, lsi->sim->GetOmniSimulationMode());
+		return 1;
+	}
+	lsi->AssertInterfaceEvent();
+	const int mode = luaL_checkint(L, 1);
+	if (mode < OMNI_CLASSIC || mode >= NUM_OMNI_SIMULATION_MODES)
+		return luaL_error(L, "invalid Omni simulation mode");
+	lsi->sim->SetOmniSimulationMode(mode);
+	return 0;
+}
+
+static int omniAtmosphere(lua_State *L)
+{
+	auto *sim = GetLSI()->sim;
+	auto *atmosphere = sim->omniAtmosphere.get();
+	lua_newtable(L);
+	auto setBoolean = [L](char const *name, bool value) {
+		lua_pushboolean(L, value);
+		lua_setfield(L, -2, name);
+	};
+	auto setInteger = [L](char const *name, lua_Integer value) {
+		lua_pushinteger(L, value);
+		lua_setfield(L, -2, name);
+	};
+	auto setNumber = [L](char const *name, lua_Number value) {
+		lua_pushnumber(L, value);
+		lua_setfield(L, -2, name);
+	};
+	setInteger("state_version", 1);
+	setInteger("mode", sim->GetOmniSimulationMode());
+	setBoolean("active", sim->IsOmniAtmosphereActive());
+	setBoolean("state_serialized", false);
+	if (!atmosphere)
+	{
+		setBoolean("available", false);
+		return 1;
+	}
+	setBoolean("available", true);
+	setInteger("width", atmosphere->Width());
+	setInteger("height", atmosphere->Height());
+	setNumber("mass_kg", atmosphere->TotalMassKg());
+	setNumber("energy_j", atmosphere->TotalEnergyJ());
+	setNumber("minimum_density_kg_m3", atmosphere->MinimumDensity());
+	setNumber("minimum_pressure_pa", atmosphere->MinimumPressure());
+	const auto &ledger = atmosphere->Ledger();
+	setInteger("substeps", ledger.substeps);
+	setNumber("requested_timestep_s", ledger.requestedTimestepS);
+	setNumber("advanced_timestep_s", ledger.advancedTimestepS);
+	setBoolean("timestep_limited", ledger.timestepLimited);
+	setBoolean("acoustic_route", ledger.acousticRoute);
+	setInteger("density_floor_hits", ledger.densityFloorHits);
+	setInteger("pressure_floor_hits", ledger.pressureFloorHits);
+	setInteger("energy_floor_hits", ledger.energyFloorHits);
+	setInteger("non_finite_cells", ledger.nonFiniteCells);
+	setNumber("mass_residual_kg", ledger.massResidualKg());
+	setNumber("momentum_x_residual", ledger.momentumXResidual());
+	setNumber("momentum_y_residual", ledger.momentumYResidual());
+	setNumber("energy_residual_j", ledger.energyResidualJ());
+	setNumber("numerical_mass_correction_kg", ledger.numericalMassCorrectionKg);
+	setNumber("numerical_momentum_x_correction", ledger.numericalMomentumXCorrection);
+	setNumber("numerical_momentum_y_correction", ledger.numericalMomentumYCorrection);
+	setNumber("numerical_energy_correction_j", ledger.numericalEnergyCorrectionJ);
+	return 1;
+}
+
 static int waterEqualization(lua_State *L)
 {
 	auto *lsi = GetLSI();
@@ -2512,6 +2583,8 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(gravityMode),
 		LFUNC(customGravity),
 		LFUNC(airMode),
+		LFUNC(omniSimulationMode),
+		LFUNC(omniAtmosphere),
 		LFUNC(waterEqualization),
 		LFUNC(ambientAirTemp),
 		LFUNC(edgePressure),
@@ -2634,6 +2707,11 @@ void LuaSimulation::Open(lua_State *L)
 	LCONST(AIR_OFF);
 	LCONST(AIR_NOUPDATE);
 	LCONST(NUM_AIRMODES);
+
+	LCONST(OMNI_CLASSIC);
+	LCONST(OMNI_ENHANCED);
+	LCONST(OMNI_SCIENTIFIC);
+	LCONST(NUM_OMNI_SIMULATION_MODES);
 
 	LCONST(AIRC_NONE);
 	LCONST(AIRC_LEGACY);

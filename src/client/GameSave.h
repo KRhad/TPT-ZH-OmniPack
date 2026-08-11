@@ -104,6 +104,7 @@ public:
 	bool legacyEnable = false;
 	bool gravityEnable = false;
 	bool aheatEnable = false;
+	int omniSimulationMode = OMNI_CLASSIC;
 	bool paused = false;
 	int gravityMode = 0;
 	float customGravityX = 0.0f;

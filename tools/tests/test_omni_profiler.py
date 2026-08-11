@@ -107,7 +107,7 @@ class OmniProfilerContractTest(unittest.TestCase):
             '"not_tested"',
         ):
             self.assertIn(status, self.lua_simulation)
-        self.assertIn('setBoolean("authoritative_atmosphere_state", false)', self.lua_simulation)
+        self.assertIn('setBoolean("authoritative_atmosphere_state", lsi->sim->IsOmniAtmosphereActive())', self.lua_simulation)
 
     def test_runtime_fixture_uses_public_api_and_checks_reset(self) -> None:
         self.assertIn("sim.omniProfilerEnabled", self.runtime_lua)

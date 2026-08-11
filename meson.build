@@ -265,6 +265,17 @@ json_dep = dependency('jsoncpp', static: is_static)
 fp_mode = get_option('fp_mode')
 message('Floating-point mode: ' + fp_mode)
 
+strict_numerical_cpp_args = []
+if cpp_compiler.get_argument_syntax() == 'msvc'
+	strict_numerical_cpp_args += [ '/fp:strict' ]
+else
+	strict_numerical_cpp_args += [
+		'-fno-fast-math',
+		'-fno-unsafe-math-optimizations',
+		'-ffp-contract=off',
+	]
+endif
+
 if not is_debug
 	args_ccomp_opt = []
 	if cpp_compiler.get_argument_syntax() == 'msvc'
@@ -514,6 +525,16 @@ endif
 clang_tidy_sources = []
 
 sta_libs = {}
+omni_atmosphere_reference = declare_dependency(
+	include_directories: project_inc,
+	link_with: static_library(
+		'omni-atmosphere-reference',
+		sources: files('src/simulation/OmniAtmosphere.cpp'),
+		include_directories: project_inc,
+		cpp_args: strict_numerical_cpp_args,
+		override_options: target_options + [ 'b_lto=false' ],
+	),
+)
 foreach sta_info : [
 	[ 'common', common_files, [
 		host_platform == 'android' ? sdl2_dep : [],
@@ -526,6 +547,7 @@ foreach sta_info : [
 	] ],
 	[ 'simulation', simulation_files, [
 		json_dep,
+		omni_atmosphere_reference,
 	] ],
 ]
 	sta_name = sta_info[0]
@@ -653,18 +675,7 @@ if get_option('clang_tidy')
 endif
 
 if get_option('build_tests')
-atmospherebench_cpp_args = []
-if cpp_compiler.get_argument_syntax() == 'msvc'
-	atmospherebench_cpp_args += [ '/fp:strict' ]
-else
-	# This independent numerical reference must not inherit Legacy's fast-math
-	# contract. It intentionally does not use project_cpp_args or project_link_args.
-	atmospherebench_cpp_args += [
-		'-fno-fast-math',
-		'-fno-unsafe-math-optimizations',
-		'-ffp-contract=off',
-	]
-endif
+atmospherebench_cpp_args = strict_numerical_cpp_args
 
 atmospherebench = executable(
 	'atmospherebench',
@@ -720,6 +731,20 @@ atmosphere_precision_float_fast = executable(
 	override_options: [ 'cpp_std=c++20', 'b_ndebug=false', 'b_lto=false' ],
 )
 
+omni_atmosphere_probe = executable(
+	'omni_atmosphere_probe',
+	sources: files('tools/omni_atmosphere_probe.cpp'),
+	include_directories: project_inc,
+	dependencies: omni_atmosphere_reference,
+	cpp_args: atmospherebench_cpp_args,
+	override_options: [
+		'cpp_std=c++20',
+		'cpp_rtti=false',
+		'b_ndebug=false',
+		'b_lto=false',
+	],
+)
+
 test(
 	'atmospherebench-contract',
 	atmospherebench,
@@ -734,6 +759,13 @@ test('atmosphere-precision-float-strict', atmosphere_precision_float_strict,
 	suite: 'static')
 test('atmosphere-precision-float-fast', atmosphere_precision_float_fast,
 	suite: 'static')
+
+test(
+	'omni-atmosphere-cpu-mvp',
+	omni_atmosphere_probe,
+	suite: 'static',
+	timeout: 120,
+)
 
 test(
 	'atmospherebench-rusanov-uniform',
@@ -1088,6 +1120,19 @@ test(
 	python3_prog,
 	args: [
 		files('tools/physical_scale_check.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'omni-atmosphere-runtime-contract',
+	python3_prog,
+	args: [
+		files('tools/omni_atmosphere_contract_check.py'),
 		'--source-root', meson.project_source_root(),
 		'--quiet',
 	],
