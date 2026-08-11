@@ -314,6 +314,9 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("physical_acoustic_domain_cells=", source)
         self.assertIn("target_grid_event_fraction_performance=matrix_measured_end_to_end_short_run", source)
         self.assertIn("physical_event_local_domain_of_dependence=not_implemented", source)
+        self.assertIn("hybrid_near_vacuum_routing=implemented_fixture_only", source)
+        self.assertIn("species_cross_route_transport=implemented_passive_interface_fixture_only", source)
+        self.assertIn("passive_species_cross_route_ledger_passed=", source)
         self.assertIn("--run-hybrid-mixed-region-2d", main)
 
     def test_source_package_keeps_physical_scale_and_bench_tools(self) -> None:

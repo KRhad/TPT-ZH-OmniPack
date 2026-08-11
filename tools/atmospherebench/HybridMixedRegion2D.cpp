@@ -27,6 +27,8 @@ namespace
 	constexpr double RouteMachOff = 0.20;
 	constexpr double RoutePressureJumpOn = 0.08;
 	constexpr double RoutePressureJumpOff = 0.03;
+	constexpr double RouteNearVacuumDensity = 1e-5;
+	constexpr double RouteNearVacuumPressure = 1e-7;
 	constexpr double PhysicalCellLengthM = 0.004;
 	constexpr double PhysicalTickSeconds = 1.0 / 60.0;
 	constexpr double ReferenceAirSoundSpeedMps = 344.0;
@@ -158,6 +160,13 @@ namespace
 			/ std::max(primitive.soundSpeed, 1e-12);
 	}
 
+	bool NearVacuum(const ConservativeState &state, const IdealGasEOS &eos)
+	{
+		const auto primitive = eos.ToPrimitive(state);
+		return primitive.valid && (primitive.density <= RouteNearVacuumDensity
+			|| primitive.pressure <= RouteNearVacuumPressure);
+	}
+
 	std::vector<bool> ExpandHalo(const std::vector<bool> &seed, std::size_t cellsX,
 		std::size_t cellsY, std::size_t halo)
 	{
@@ -208,7 +217,8 @@ namespace
 				const bool localImpulse = explicitImpulse
 					&& x >= cellsX / 2 - 2 && x <= cellsX / 2 + 1
 					&& y >= cellsY / 2 - 2 && y <= cellsY / 2 + 1;
-				seed[index] = localImpulse || jump >= pressureOn || mach >= machOn
+				seed[index] = localImpulse || NearVacuum(cells[index], eos)
+					|| jump >= pressureOn || mach >= machOn
 					|| (previous[index] && (jump >= pressureOff || mach >= machOff));
 			}
 		for (std::size_t y = 0; y < cellsY; ++y)
@@ -260,6 +270,42 @@ namespace
 			&& std::count(bulk.begin(), bulk.end(), true) == 0
 			&& static_cast<std::size_t>(std::count(retained.begin(), retained.end(), true)) == cells.size()
 			&& std::count(impulse.begin(), impulse.end(), true) >= 16;
+	}
+
+	bool RunNearVacuumRoutingFixture()
+	{
+		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		std::vector<ConservativeState> cells(CellsX * CellsY,
+			eos.FromPrimitive(1.0, 0.0, 0.0, 1.0));
+		const auto center = Index(CellsX / 2, CellsY / 2, CellsX);
+		cells[center] = eos.FromPrimitive(1e-6, 0.0, 0.0, 1e-8);
+		std::vector<bool> previous(cells.size(), false);
+		std::size_t halo = 0;
+		double cfl = 0.0;
+		const auto routes = Route(cells, CellsX, CellsY, previous, eos, 1.0, false, halo, cfl);
+		return routes[center] && std::count(routes.begin(), routes.end(), true) >= 5;
+	}
+
+	bool RunPassiveSpeciesCrossRouteFixture(double &eventA, double &bulkA,
+		double &eventB, double &bulkB)
+	{
+		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		const auto left = eos.FromPrimitive(1.0, 0.2, 0.0, 1.0);
+		const auto right = eos.FromPrimitive(1.0, 0.2, 0.0, 1.0);
+		const auto flux = HllcFluxX(left, right, eos);
+		if (!flux.valid || flux.flux.density <= 0.0)
+			return false;
+		const double leftSpeciesA = 0.8;
+		const double leftSpeciesB = 0.2;
+		const double speciesFluxA = flux.flux.density * leftSpeciesA;
+		const double speciesFluxB = flux.flux.density * leftSpeciesB;
+		eventA -= speciesFluxA;
+		bulkA += speciesFluxA;
+		eventB -= speciesFluxB;
+		bulkB += speciesFluxB;
+		return std::abs(eventA + bulkA) <= 1e-12
+			&& std::abs(eventB + bulkB) <= 1e-12
+			&& std::abs(speciesFluxA + speciesFluxB - flux.flux.density) <= 1e-12;
 	}
 
 	struct Scenario
@@ -514,6 +560,10 @@ HybridMixedRegion2DProbeSummary RunHybridMixedRegion2DProbe()
 	const auto strict = RunScenario(1.25);
 	auto summary = base.summary;
 	summary.hysteresisConflictPassed = RunHysteresisFixture();
+	summary.nearVacuumRoutingPassed = RunNearVacuumRoutingFixture();
+	summary.passiveSpeciesCrossRouteLedgerPassed = RunPassiveSpeciesCrossRouteFixture(
+		summary.interfaceEventSpeciesA, summary.interfaceBulkSpeciesA,
+		summary.interfaceEventSpeciesB, summary.interfaceBulkSpeciesB);
 	summary.thresholdScanPassed = relaxed.summary.passed && strict.summary.passed;
 	const std::size_t physicalCells = static_cast<std::size_t>(std::ceil(
 		ReferenceAirSoundSpeedMps * PhysicalTickSeconds / PhysicalCellLengthM));
@@ -526,7 +576,9 @@ HybridMixedRegion2DProbeSummary RunHybridMixedRegion2DProbe()
 	summary.targetGridMatrixMeasured = summary.legacyGrid.valid
 		&& summary.doubledGrid.valid && summary.particleGrid.valid;
 	summary.passed = base.summary.passed && summary.hysteresisConflictPassed
-		&& summary.thresholdScanPassed && summary.physicalDomainExceedsBenchmark
+		&& summary.thresholdScanPassed && summary.nearVacuumRoutingPassed
+		&& summary.passiveSpeciesCrossRouteLedgerPassed
+		&& summary.physicalDomainExceedsBenchmark
 		&& summary.targetGridMatrixMeasured;
 	return summary;
 }
@@ -559,7 +611,7 @@ bool WriteHybridMixedRegion2DProbe(std::ostream &output)
 	output << "state_and_flux_scratch_bytes_per_cell=" << (5 * sizeof(ConservativeState)) << '\n';
 	output << "state_and_flux_scratch_bytes_total="
 		<< (5 * sizeof(ConservativeState) * CellsX * CellsY) << '\n';
-	output << "route_policy=mach_on_0.30_mach_off_0.20_pressure_jump_on_0.08_pressure_jump_off_0.03_compressible_wins\n";
+	output << "route_policy=mach_on_0.30_mach_off_0.20_pressure_jump_on_0.08_pressure_jump_off_0.03_near_vacuum_density_1e-5_pressure_1e-7_compressible_wins\n";
 	output << "router_implemented=true_2d_benchmark_only\n";
 	output << "cross_route_boundary_coupling=implemented_2d_probe\n";
 	output << "event_local_subcycling=implemented_2d_probe\n";
@@ -567,7 +619,9 @@ bool WriteHybridMixedRegion2DProbe(std::ostream &output)
 	output << "mixed_region_reflux_conservation=implemented_2d_probe\n";
 	output << "general_low_mach_pressure_coupling=not_implemented\n";
 	output << "physical_event_local_domain_of_dependence=not_implemented\n";
-	output << "near_vacuum_species_routing=not_implemented\n";
+	output << "hybrid_near_vacuum_routing=implemented_fixture_only\n";
+	output << "species_cross_route_transport=implemented_passive_interface_fixture_only\n";
+	output << "species_eos_and_diffusion=not_implemented\n";
 	output << "two_dimensional_hybrid_coupling=benchmark_only\n";
 	output << "production_boundary_coupling=not_implemented\n";
 	output << "production_runtime_integration=not_implemented\n";
@@ -618,6 +672,9 @@ bool WriteHybridMixedRegion2DProbe(std::ostream &output)
 	output << "reflux_conservation_passed=" << (summary.refluxConservationPassed ? "true" : "false") << '\n';
 	output << "hysteresis_conflict_passed=" << (summary.hysteresisConflictPassed ? "true" : "false") << '\n';
 	output << "threshold_scan_passed=" << (summary.thresholdScanPassed ? "true" : "false") << '\n';
+	output << "near_vacuum_routing_passed=" << (summary.nearVacuumRoutingPassed ? "true" : "false") << '\n';
+	output << "passive_species_cross_route_ledger_passed="
+		<< (summary.passiveSpeciesCrossRouteLedgerPassed ? "true" : "false") << '\n';
 	output << "dynamic_event_region_implemented=" << (summary.dynamicEventRegionImplemented ? "true" : "false") << '\n';
 	output << "event_local_subcycling_implemented=" << (summary.eventLocalSubcyclingImplemented ? "true" : "false") << '\n';
 	output << "finite_state=" << (summary.finiteState ? "true" : "false") << '\n';
@@ -638,6 +695,10 @@ bool WriteHybridMixedRegion2DProbe(std::ostream &output)
 	output << "interface_bulk_momentum_y=" << summary.interfaceBulkExchange.momentumY << '\n';
 	output << "interface_event_energy=" << summary.interfaceEventExchange.totalEnergyDensity << '\n';
 	output << "interface_bulk_energy=" << summary.interfaceBulkExchange.totalEnergyDensity << '\n';
+	output << "interface_event_species_a=" << summary.interfaceEventSpeciesA << '\n';
+	output << "interface_bulk_species_a=" << summary.interfaceBulkSpeciesA << '\n';
+	output << "interface_event_species_b=" << summary.interfaceEventSpeciesB << '\n';
+	output << "interface_bulk_species_b=" << summary.interfaceBulkSpeciesB << '\n';
 	output << "hllc_fallback_count=" << summary.hllcFallbackCount << '\n';
 	output << "numerical_correction_count=" << summary.corrections.eventCount << '\n';
 	output << "correction_mass_added=" << summary.corrections.massAdded << '\n';

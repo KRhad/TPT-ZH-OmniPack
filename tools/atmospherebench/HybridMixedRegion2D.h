@@ -50,6 +50,10 @@ struct HybridMixedRegion2DProbeSummary
 	double initialPressureJump = 0.0;
 	double finalPressureJump = 0.0;
 	double physicalAcousticDomainCells = 0.0;
+	double interfaceEventSpeciesA = 0.0;
+	double interfaceBulkSpeciesA = 0.0;
+	double interfaceEventSpeciesB = 0.0;
+	double interfaceBulkSpeciesB = 0.0;
 	HybridMixedRegion2DGridSample legacyGrid;
 	HybridMixedRegion2DGridSample doubledGrid;
 	HybridMixedRegion2DGridSample particleGrid;
@@ -67,6 +71,8 @@ struct HybridMixedRegion2DProbeSummary
 	bool globalLedgerCloses = false;
 	bool physicalDomainExceedsBenchmark = false;
 	bool targetGridMatrixMeasured = false;
+	bool nearVacuumRoutingPassed = false;
+	bool passiveSpeciesCrossRouteLedgerPassed = false;
 	bool passed = false;
 };
 

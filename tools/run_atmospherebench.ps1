@@ -507,7 +507,9 @@ if (-not $isRusanovProbe) {
 		"mixed_region_reflux_conservation" = "implemented_2d_probe";
 		"general_low_mach_pressure_coupling" = "not_implemented";
 		"physical_event_local_domain_of_dependence" = "not_implemented";
-		"near_vacuum_species_routing" = "not_implemented";
+		"hybrid_near_vacuum_routing" = "implemented_fixture_only";
+		"species_cross_route_transport" = "implemented_passive_interface_fixture_only";
+		"species_eos_and_diffusion" = "not_implemented";
 		"two_dimensional_hybrid_coupling" = "benchmark_only";
 		"production_boundary_coupling" = "not_implemented";
 		"production_runtime_integration" = "not_implemented";
@@ -520,6 +522,8 @@ if (-not $isRusanovProbe) {
 		"reflux_conservation_passed" = "true";
 		"hysteresis_conflict_passed" = "true";
 		"threshold_scan_passed" = "true";
+		"near_vacuum_routing_passed" = "true";
+		"passive_species_cross_route_ledger_passed" = "true";
 		"dynamic_event_region_implemented" = "true";
 		"event_local_subcycling_implemented" = "true";
 		"finite_state" = "true"; "positivity_preserved" = "true";
@@ -574,6 +578,13 @@ if (-not $isRusanovProbe) {
 		$bulkExchange = [double](Read-KeyValue -Text $text -Key "interface_bulk_$component")
 		if ([Math]::Abs($eventExchange + $bulkExchange) -gt 1e-8) {
 			throw "Hybrid mixed-region 2D interface exchange does not cancel: $component"
+		}
+	}
+	foreach ($species in @("species_a", "species_b")) {
+		$eventExchange = [double](Read-KeyValue -Text $text -Key "interface_event_$species")
+		$bulkExchange = [double](Read-KeyValue -Text $text -Key "interface_bulk_$species")
+		if ([Math]::Abs($eventExchange + $bulkExchange) -gt 1e-12) {
+			throw "Hybrid mixed-region 2D species interface exchange does not cancel: $species"
 		}
 	}
 } elseif ($isHybridMixedRegionProbe) {
@@ -1958,7 +1969,9 @@ if ($isRusanovProbe) {
 			mixed_region_reflux_conservation = Read-KeyValue -Text $text -Key "mixed_region_reflux_conservation"
 			general_low_mach_pressure_coupling = Read-KeyValue -Text $text -Key "general_low_mach_pressure_coupling"
 			physical_event_local_domain_of_dependence = Read-KeyValue -Text $text -Key "physical_event_local_domain_of_dependence"
-			near_vacuum_species_routing = Read-KeyValue -Text $text -Key "near_vacuum_species_routing"
+			hybrid_near_vacuum_routing = Read-KeyValue -Text $text -Key "hybrid_near_vacuum_routing"
+			species_cross_route_transport = Read-KeyValue -Text $text -Key "species_cross_route_transport"
+			species_eos_and_diffusion = Read-KeyValue -Text $text -Key "species_eos_and_diffusion"
 			two_dimensional_hybrid_coupling = Read-KeyValue -Text $text -Key "two_dimensional_hybrid_coupling"
 			production_boundary_coupling = Read-KeyValue -Text $text -Key "production_boundary_coupling"
 			production_runtime_integration = Read-KeyValue -Text $text -Key "production_runtime_integration"
@@ -2002,6 +2015,8 @@ if ($isRusanovProbe) {
 			reflux_conservation_passed = (Read-KeyValue -Text $text -Key "reflux_conservation_passed") -eq "true"
 			hysteresis_conflict_passed = (Read-KeyValue -Text $text -Key "hysteresis_conflict_passed") -eq "true"
 			threshold_scan_passed = (Read-KeyValue -Text $text -Key "threshold_scan_passed") -eq "true"
+			near_vacuum_routing_passed = (Read-KeyValue -Text $text -Key "near_vacuum_routing_passed") -eq "true"
+			passive_species_cross_route_ledger_passed = (Read-KeyValue -Text $text -Key "passive_species_cross_route_ledger_passed") -eq "true"
 			finite_state = (Read-KeyValue -Text $text -Key "finite_state") -eq "true"
 			positivity_preserved = (Read-KeyValue -Text $text -Key "positivity_preserved") -eq "true"
 			global_ledger_closes = (Read-KeyValue -Text $text -Key "global_ledger_closes") -eq "true"
