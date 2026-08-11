@@ -193,7 +193,7 @@ if (-not (Test-Path -LiteralPath $compileCommandsPath -PathType Leaf)) {
 $compileCommands = Get-Content -LiteralPath $compileCommandsPath -Raw | ConvertFrom-Json
 $benchCommands = @($compileCommands | Where-Object {
     ($_.file -replace '\\', '/') -match 'tools/atmospherebench/' -and
-    ($_.file -replace '\\', '/') -notmatch 'PrecisionMatrix\\.cpp$'
+    ($_.file -replace '\\', '/') -notmatch 'PrecisionMatrix\.cpp$'
 })
 if ($benchCommands.Count -lt 2) {
     throw "AtmosphereBench compile commands are missing"

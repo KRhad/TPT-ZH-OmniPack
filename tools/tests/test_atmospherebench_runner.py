@@ -24,7 +24,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("tools/atmospherebench/Species2D.cpp", RUNNER)
         self.assertIn("tools/atmospherebench/LbmD2Q9.cpp", RUNNER)
         self.assertIn("tools/atmospherebench/HybridMixedRegion2D.cpp", RUNNER)
-        self.assertIn("PrecisionMatrix\\\\.cpp$", RUNNER)
+        self.assertIn("PrecisionMatrix\\.cpp$", RUNNER)
         self.assertIn("rebuilt_before_measurement = $true", RUNNER)
         self.assertIn("source_root_verified = $true", RUNNER)
 
