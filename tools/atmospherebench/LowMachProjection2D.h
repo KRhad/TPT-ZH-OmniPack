@@ -26,6 +26,15 @@ struct LowMachProjection2DSummary
 	bool finiteState = false;
 	bool divergenceReduced = false;
 	bool soundSpeedIndependent = false;
+	bool jacobiPassed = false;
+	std::size_t conjugateGradientIterationCount = 0;
+	double conjugateGradientFinalDivergenceL2 = 0.0;
+	double conjugateGradientDivergenceReductionRatio = 0.0;
+	double conjugateGradientElapsedMilliseconds = 0.0;
+	double conjugateGradientMillisecondsPerIteration = 0.0;
+	bool conjugateGradientFiniteState = false;
+	bool conjugateGradientWithinReferenceBudget = false;
+	bool conjugateGradientPassed = false;
 	bool passed = false;
 };
 

@@ -494,6 +494,10 @@ if ($isLowMachProjection2DProbe) {
 		"sound_speed_dependency" = "false";
 		"finite_state" = "true";
 		"divergence_reduced" = "true";
+		"jacobi_probe_passed" = "true";
+		"conjugate_gradient_finite_state" = "true";
+		"conjugate_gradient_within_reference_budget" = "true";
+		"conjugate_gradient_probe_passed" = "true";
 		"projection_probe_passed" = "true"
 	}.GetEnumerator()) {
 		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
@@ -2898,6 +2902,13 @@ $result = [ordered]@{
 			divergence_reduction_ratio = [double](Read-KeyValue -Text $text -Key "divergence_reduction_ratio")
 			initial_divergence_l2 = [double](Read-KeyValue -Text $text -Key "initial_divergence_l2")
 			final_divergence_l2 = [double](Read-KeyValue -Text $text -Key "final_divergence_l2")
+			jacobi_elapsed_milliseconds = [double](Read-KeyValue -Text $text -Key "elapsed_milliseconds")
+			jacobi_probe_passed = (Read-KeyValue -Text $text -Key "jacobi_probe_passed") -eq "true"
+			conjugate_gradient_iteration_count = [int](Read-KeyValue -Text $text -Key "conjugate_gradient_iteration_count")
+			conjugate_gradient_divergence_reduction_ratio = [double](Read-KeyValue -Text $text -Key "conjugate_gradient_divergence_reduction_ratio")
+			conjugate_gradient_elapsed_milliseconds = [double](Read-KeyValue -Text $text -Key "conjugate_gradient_elapsed_milliseconds")
+			conjugate_gradient_within_reference_budget = (Read-KeyValue -Text $text -Key "conjugate_gradient_within_reference_budget") -eq "true"
+			conjugate_gradient_probe_passed = (Read-KeyValue -Text $text -Key "conjugate_gradient_probe_passed") -eq "true"
 			finite_state = (Read-KeyValue -Text $text -Key "finite_state") -eq "true"
 			divergence_reduced = (Read-KeyValue -Text $text -Key "divergence_reduced") -eq "true"
 			sound_speed_dependency = Read-KeyValue -Text $text -Key "sound_speed_dependency"
