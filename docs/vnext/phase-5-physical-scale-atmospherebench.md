@@ -611,3 +611,26 @@ Clean result SHA-256 is
 `hybrid_mixed_region_2d_end_to_end_passed=true` applies only to this bounded
 benchmark; overall `hybrid_end_to_end_passed=false`, solver selection is
 unselected and 1.0.6 remains blocked.
+
+## Vacuum/species routing and precision matrix
+
+Checkpoint `55731d49b` adds two bounded fixtures. A cell at density `1e-6` and
+pressure `1e-8` is forced onto the compressible route and expands its route halo;
+a passive binary species interface uses the HLLC mass flux and records exact
+equal-and-opposite A/B exchange (`-0.16/+0.16`, `-0.04/+0.04`). This is routing
+and interface-ledger evidence only: species EOS coupling and diffusion remain
+unimplemented.
+
+Checkpoint `686ac8a94` builds the same first-order Rusanov template as three
+independent executables: strict-double, strict-float and `-ffast-math` fast-float.
+Uniform, pressure pulse, near-vacuum and periodic Sod stay finite/positive in all
+three. Maximum weighted-state signature delta versus strict-double is
+`1.703850491e-6` for strict-float and `1.738869287e-6` for fast-float. Float
+conservation drift is materially larger than double: strict-float near-vacuum
+mass drift `2.28881836e-5`, fast-float `-6.10351562e-5`, and strict-float Sod
+energy drift `1.83105469e-4`. Therefore `fast_math_safety_selected=false`.
+
+Precision result SHA-256:
+`18937520D40262DB12B761CC5965B53522D5C076DDDB8E2D68A7A142C6392BA2`.
+This closes the first precision-comparison sub-gate, not the accepted tolerance,
+long-run or solver-selection gate.
