@@ -146,3 +146,11 @@ scaling preserves the conservative ledger but produces
 The comparison remains open; no candidate is selected until an acceptable path is
 benchmarked across the required cases and a physical-time/performance policy is
 documented.
+
+HLLC with explicit Rusanov fallback is now the front-runner for the remaining
+PoC comparison. At nominal Mach `0.00387298` it records L1 `0.0024269` and TV
+ratio `0.980949`; it also passes the current 1D near-vacuum, sealed Sod and open
+leak contracts with zero fallbacks/corrections. Strict-double throughput is
+approximately `18.5M` cell-updates/s, slower than the Rusanov debug floor. These
+results justify continued evaluation, not selection: multidimensional and
+physical-time cases plus a reviewed performance budget remain mandatory.

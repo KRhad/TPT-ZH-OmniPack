@@ -12,6 +12,8 @@ clean-validated. The low-Mach execution is valid but suitability is false;
 open-boundary ledger and three-size standalone performance are also recorded;
 the all-speed Rusanov follow-up is clean-executed but rejected by the unchanged
 Low-Mach threshold (`L1=0.10116`, TV ratio `1.46479`);
+HLLC with Rusanov fallback is now the unselected front-runner after passing the
+current 1D Low-Mach, near-vacuum, Sod and leak gates;
 production Air replacement remains unauthorized.
 
 The official 100.1 source adaptation, explicit FP modes, fixed-step
@@ -30,7 +32,7 @@ OmniAtmosphere state or solver will be integrated yet.
 | 0 | latest upstream adaptation | 1.0.2 COMPLETE / GREEN: official stable/master unchanged at `d768aeb89`; no adaptation required |
 | 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
 | 2 | physical scale and unit system | 1.0.5 IN_PROGRESS: candidate contract scaffold; selection RED |
-| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Rusanov has strict-double 1D uniform, pressure-pulse, density-advection, contact-discontinuity, near-vacuum, sealed Sod, smooth-refinement, low-Mach, open-leak and performance probes; the all-speed Rusanov low-Mach candidate is implemented but rejected; no budget selected; HLLE/LBM remain registered-only |
+| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Rusanov is the debug floor, all-speed Rusanov is rejected, and HLLC/Rusanov-fallback is the unselected front-runner after passing current 1D low-Mach/vacuum/shock/leak probes; no budget or physical-time policy selected; HLLE/LBM remain registered-only |
 | 4 | solver selection | BLOCKED |
 | 5 | CPU single-species OmniAtmosphere MVP | BLOCKED |
 | 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
@@ -140,7 +142,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Review the rejected all-speed Rusanov result and continue an isolated low-Mach-suitable solver comparison; keep HLLE/LBM registered-only and production OmniAtmosphere unauthorized. |
+| Next stage? | Continue HLLC/Rusanov-fallback only inside AtmosphereBench with multidimensional, sealed-heating, convection, gas-mixing, physical-time and budget gates; keep HLLE/LBM registered-only and production OmniAtmosphere unauthorized. |
 
 ## Long-term acceptance
 

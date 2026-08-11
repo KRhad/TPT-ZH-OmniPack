@@ -10,6 +10,7 @@ Checked 2026-08-09. `Selected use` is the sole classification for each row.
 | SDL_shadercross | `e55cf5e31ced6f3d1be5cc6d0c50e99384f9f4ba` | future offline shader pipeline | zlib | yes | yes | yes, retain notice/disclaimer and audit transitive tools | shader compiler inputs/outputs remain project-owned; transitive dependencies separate | yes | no | `ADAPT` |
 | Athena++ | `ed4d1e3e3a3beb53ab9757dcc4b964dfbbad621a` | FVM/Riemann/test architecture study | BSD-3-Clause | legally yes with conditions | yes | yes, with notice/non-endorsement | example/reference data require separate review | yes | yes by design choice | `REFERENCE_ONLY` |
 | hydro-cl-lua | `80b4119547556284debc0b8c2b5d0f53efa47acd` | solver comparison and GPU/OpenCL experimentation patterns | MIT | legally yes with notice | yes | yes, retain notice | examples require source review | yes | yes by design choice | `REFERENCE_ONLY` |
+| Toro, Spruce and Speares HLLC paper | Shock Waves 4, 1994, DOI `10.1007/BF01414629` | contact-restoring Riemann-solver algorithm reference | publisher copyright; bibliographic reference only | no source code reused | N/A | paper not redistributed | N/A | N/A | yes | `REFERENCE_ONLY` |
 | Cantera | `v3.2.0`, `4a8358eb8` | offline kinetics/thermodynamics validation and reduction | BSD-style 3-clause license | yes | yes | yes, retain conditions | mechanisms/thermo inputs are separately licensed | yes | no | `DIRECT_REUSE` |
 | CoolProp | `v8.0.0` | offline property/reference calculations | MIT | yes | yes | yes, retain notice | underlying correlations/sources retain attribution/provenance | yes | no | `DIRECT_REUSE` |
 | NIST Chemistry WebBook | SRD 69, data updated 2025, accessed 2026-08-09 | validation of thermochemistry and properties | NIST Standard Reference Data copyright; all rights reserved notice | not a code dependency | not assumed | bulk redistribution not authorized by default; specific permission/license required | SRD 69 | N/A | yes | `REFERENCE_ONLY` |
@@ -24,6 +25,7 @@ Checked 2026-08-09. `Selected use` is the sole classification for each row.
 - SDL_shadercross: <https://github.com/libsdl-org/SDL_shadercross/tree/e55cf5e31ced6f3d1be5cc6d0c50e99384f9f4ba>
 - Athena++: <https://github.com/PrincetonUniversity/athena/tree/ed4d1e3e3a3beb53ab9757dcc4b964dfbbad621a>
 - hydro-cl-lua: <https://github.com/thenumbernine/hydro-cl-lua/tree/80b4119547556284debc0b8c2b5d0f53efa47acd>
+- HLLC original paper: <https://doi.org/10.1007/BF01414629>
 - Cantera 3.2.0: <https://github.com/Cantera/cantera/tree/v3.2.0>
 - CoolProp 8.0.0: <https://github.com/CoolProp/CoolProp/tree/v8.0.0>
 - NIST WebBook: <https://webbook.nist.gov/>

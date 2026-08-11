@@ -6,9 +6,9 @@
 REPORT_DATE=2026-08-11
 CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.5
-CURRENT_VERSION_GATE=IN_PROGRESS_ALL_SPEED_NEGATIVE_RECORDED
+CURRENT_VERSION_GATE=IN_PROGRESS_HLLC_FRONT_RUNNER_NOT_SELECTED
 NEXT_VERSION=1.0.6
-NEXT_PHASE=continue isolated solver comparison after all-speed Rusanov rejection; keep HLLE and LBM registered-only
+NEXT_PHASE=extend HLLC front-runner inside AtmosphereBench with remaining multidimensional physical-time and budget gates; keep HLLE and LBM registered-only
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -157,6 +157,13 @@ The clean source package for this checkpoint is
 `artifacts/vnext-phase5-source-9b7e7d095/`, SHA-256
 `553FA58C897715099B47B8B1E500F0FAE51336CFEC99DA2A1787754CC5E44387`,
 with zero test assets.
+
+HLLC with explicit Rusanov fallback is clean-validated at `3eb235b8c` and is the
+current isolated front-runner. It passes the unchanged Low-Mach threshold and the
+current near-vacuum, sealed Sod and open-leak contracts with zero fallbacks and
+zero numerical corrections. It remains unselected: multidimensional, sealed
+heating, convection, gas mixing, PhysicalScale/physical-time and accepted budget
+gates are not complete. See `phase-5-hllc-candidate.md`.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical

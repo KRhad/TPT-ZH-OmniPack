@@ -338,3 +338,29 @@ The clean source package for the documented checkpoint is
 The archive has `1304` entries (`1303` source members plus the source manifest),
 contains all required AtmosphereBench sources and runner, and includes zero test
 assets.
+
+## HLLC with Rusanov fallback front-runner
+
+The next isolated candidate is clean-validated at `3eb235b8c`. It restores the
+contact wave and uses Rusanov only when HLLC cannot construct valid interface
+states. Current Low-Mach, near-vacuum, sealed Sod, open-leak and performance runs
+record zero fallbacks and zero numerical corrections.
+
+```text
+very_low_mach_l1=0.0024269
+very_low_mach_tv_ratio=0.980949
+low_mach_suitability_passed=true
+near_vacuum_min_density=1e-6
+near_vacuum_min_pressure=1e-8
+sod_shock_position=0.855469
+open_boundary_mass_out=6.2341
+throughput=18.8104M / 18.4543M / 18.6026M cell-updates/s
+performance_gate=recorded_candidate_measurement_no_budget
+atmosphere_solver_selection=unselected
+```
+
+This makes HLLC/Rusanov-fallback the current front-runner, not the selected
+solver. Remaining RED items are selected PhysicalScale and physical-time policy,
+multidimensional validation, sealed heating, natural convection, gas mixing and
+an accepted CPU/memory budget. Details are in
+[the HLLC checkpoint](phase-5-hllc-candidate.md).
