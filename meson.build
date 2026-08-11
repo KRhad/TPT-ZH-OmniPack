@@ -529,7 +529,7 @@ omni_atmosphere_reference = declare_dependency(
 	include_directories: project_inc,
 	link_with: static_library(
 		'omni-atmosphere-reference',
-		sources: files('src/simulation/OmniAtmosphere.cpp'),
+		sources: files('src/simulation/OmniAtmosphere.cpp', 'src/simulation/OmniThermal.cpp'),
 		include_directories: project_inc,
 		cpp_args: strict_numerical_cpp_args,
 		override_options: target_options + [ 'b_lto=false' ],
@@ -745,6 +745,34 @@ omni_atmosphere_probe = executable(
 	],
 )
 
+omni_thermal_probe = executable(
+	'omni_thermal_probe',
+	sources: files('tools/omni_thermal_probe.cpp'),
+	include_directories: project_inc,
+	dependencies: omni_atmosphere_reference,
+	cpp_args: atmospherebench_cpp_args,
+	override_options: [
+		'cpp_std=c++20',
+		'cpp_rtti=false',
+		'b_ndebug=false',
+		'b_lto=false',
+	],
+)
+
+omni_multispecies_probe = executable(
+	'omni_multispecies_probe',
+	sources: files('tools/omni_multispecies_probe.cpp'),
+	include_directories: project_inc,
+	dependencies: omni_atmosphere_reference,
+	cpp_args: atmospherebench_cpp_args,
+	override_options: [
+		'cpp_std=c++20',
+		'cpp_rtti=false',
+		'b_ndebug=false',
+		'b_lto=false',
+	],
+)
+
 test(
 	'atmospherebench-contract',
 	atmospherebench,
@@ -763,6 +791,20 @@ test('atmosphere-precision-float-fast', atmosphere_precision_float_fast,
 test(
 	'omni-atmosphere-cpu-mvp',
 	omni_atmosphere_probe,
+	suite: 'static',
+	timeout: 120,
+)
+
+test(
+	'omni-thermal-reference',
+	omni_thermal_probe,
+	suite: 'static',
+	timeout: 120,
+)
+
+test(
+	'omni-atmosphere-multispecies',
+	omni_multispecies_probe,
 	suite: 'static',
 	timeout: 120,
 )
@@ -1128,11 +1170,63 @@ test(
 	timeout: 60,
 )
 
+omni_save_roundtrip_probe = executable(
+	'omni_save_roundtrip_probe',
+	sources: [
+		files('tools/omni_save_roundtrip_probe.cpp'),
+		files('src/simulation/Editing.cpp', 'src/simulation/Snapshot.cpp', 'src/simulation/SnapshotDelta.cpp'),
+		files('src/client/GameSave.cpp'),
+		files('src/client/User.cpp'),
+		files('src/graphics/Renderer.cpp'),
+		files('src/prefs/Prefs.cpp'),
+		files('src/simulation/gravity/Fft.cpp'),
+		vcs_tag_header,
+	],
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ threads_dep, fftw_dep, sta_libs['common'], sta_libs['gui'], sta_libs['simulation'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
+omni_water_coupling_probe = executable(
+	'omni_water_coupling_probe',
+	sources: [
+		files('tools/omni_water_coupling_probe.cpp'),
+		files('src/client/GameSave.cpp'),
+		files('src/client/User.cpp'),
+		files('src/graphics/Renderer.cpp'),
+		files('src/prefs/Prefs.cpp'),
+		files('src/simulation/gravity/Fft.cpp'),
+		vcs_tag_header,
+	],
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ threads_dep, fftw_dep, sta_libs['common'], sta_libs['simulation'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
 test(
 	'omni-atmosphere-runtime-contract',
 	python3_prog,
 	args: [
 		files('tools/omni_atmosphere_contract_check.py'),
+		'--source-root', meson.project_source_root(),
+		'--quiet',
+	],
+	env: static_test_env,
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'omni-multispecies-thermal-contract',
+	python3_prog,
+	args: [
+		files('tools/omni_multispecies_thermal_contract_check.py'),
 		'--source-root', meson.project_source_root(),
 		'--quiet',
 	],
@@ -1509,6 +1603,23 @@ test(
 	],
 	suite: 'static',
 	timeout: 60,
+)
+
+test(
+	'omni-save-roundtrip-probe',
+	omni_save_roundtrip_probe,
+	suite: 'static',
+	timeout: 120,
+)
+
+test(
+	'omni-water-coupling-probe',
+	omni_water_coupling_probe,
+	suite: 'static',
+	# The probe deliberately executes 1,000 full real-client water/atmosphere
+	# ticks.  The reference Windows machine currently needs about 161 seconds;
+	# keep the test exhaustive and give it a bounded, evidence-based timeout.
+	timeout: 240,
 )
 
 test(

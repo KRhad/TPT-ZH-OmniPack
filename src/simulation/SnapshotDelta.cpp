@@ -207,6 +207,19 @@ std::unique_ptr<SnapshotDelta> SnapshotDelta::FromSnapshots(const Snapshot &oldS
 	FillHunkVector(oldSnap.AirVelocityX   , newSnap.AirVelocityX   , delta.AirVelocityX   );
 	FillHunkVector(oldSnap.AirVelocityY   , newSnap.AirVelocityY   , delta.AirVelocityY   );
 	FillHunkVector(oldSnap.AmbientHeat    , newSnap.AmbientHeat    , delta.AmbientHeat    );
+	FillHunkVector(oldSnap.OmniAtmosphereSpeciesMassDensity,
+		newSnap.OmniAtmosphereSpeciesMassDensity, delta.OmniAtmosphereSpeciesMassDensity);
+	FillHunkVector(oldSnap.OmniAtmosphereMomentumX,
+		newSnap.OmniAtmosphereMomentumX, delta.OmniAtmosphereMomentumX);
+	FillHunkVector(oldSnap.OmniAtmosphereMomentumY,
+		newSnap.OmniAtmosphereMomentumY, delta.OmniAtmosphereMomentumY);
+	FillHunkVector(oldSnap.OmniAtmosphereTotalEnergy,
+		newSnap.OmniAtmosphereTotalEnergy, delta.OmniAtmosphereTotalEnergy);
+	FillHunkVector(oldSnap.OmniAtmosphereCondensedWaterDensity,
+		newSnap.OmniAtmosphereCondensedWaterDensity, delta.OmniAtmosphereCondensedWaterDensity);
+	FillSingleDiff(oldSnap.OmniSimulationMode, newSnap.OmniSimulationMode, delta.OmniSimulationMode);
+	FillSingleDiff(oldSnap.OmniAtmospherePersistenceStatus,
+		newSnap.OmniAtmospherePersistenceStatus, delta.OmniAtmospherePersistenceStatus);
 	FillHunkVector(oldSnap.GravMass       , newSnap.GravMass       , delta.GravMass       );
 	FillHunkVector(oldSnap.GravMask       , newSnap.GravMask       , delta.GravMask       );
 	FillHunkVector(oldSnap.GravForceX     , newSnap.GravForceX     , delta.GravForceX     );
@@ -233,6 +246,20 @@ std::unique_ptr<SnapshotDelta> SnapshotDelta::FromSnapshots(const Snapshot &oldS
 	delta.extraPartsNew.resize(newSnap.Particles.size() - commonSize);
 	std::copy(newSnap.Particles.begin() + commonSize, newSnap.Particles.end(), delta.extraPartsNew.begin());
 
+	auto commonWaterSize = std::min(
+		oldSnap.OmniWaterParcelMassKg.size(), newSnap.OmniWaterParcelMassKg.size());
+	FillHunkVectorPtr(
+		oldSnap.OmniWaterParcelMassKg.data(), newSnap.OmniWaterParcelMassKg.data(),
+		delta.commonOmniWaterParcelMassKg, commonWaterSize);
+	delta.extraOmniWaterParcelMassKgOld.resize(
+		oldSnap.OmniWaterParcelMassKg.size() - commonWaterSize);
+	std::copy(oldSnap.OmniWaterParcelMassKg.begin() + commonWaterSize,
+		oldSnap.OmniWaterParcelMassKg.end(), delta.extraOmniWaterParcelMassKgOld.begin());
+	delta.extraOmniWaterParcelMassKgNew.resize(
+		newSnap.OmniWaterParcelMassKg.size() - commonWaterSize);
+	std::copy(newSnap.OmniWaterParcelMassKg.begin() + commonWaterSize,
+		newSnap.OmniWaterParcelMassKg.end(), delta.extraOmniWaterParcelMassKgNew.begin());
+
 	return ptr;
 }
 
@@ -244,6 +271,13 @@ std::unique_ptr<Snapshot> SnapshotDelta::Forward(const Snapshot &oldSnap)
 	ApplyHunkVector<false>(AirVelocityX   , newSnap.AirVelocityX   );
 	ApplyHunkVector<false>(AirVelocityY   , newSnap.AirVelocityY   );
 	ApplyHunkVector<false>(AmbientHeat    , newSnap.AmbientHeat    );
+	ApplyHunkVector<false>(OmniAtmosphereSpeciesMassDensity, newSnap.OmniAtmosphereSpeciesMassDensity);
+	ApplyHunkVector<false>(OmniAtmosphereMomentumX, newSnap.OmniAtmosphereMomentumX);
+	ApplyHunkVector<false>(OmniAtmosphereMomentumY, newSnap.OmniAtmosphereMomentumY);
+	ApplyHunkVector<false>(OmniAtmosphereTotalEnergy, newSnap.OmniAtmosphereTotalEnergy);
+	ApplyHunkVector<false>(OmniAtmosphereCondensedWaterDensity, newSnap.OmniAtmosphereCondensedWaterDensity);
+	ApplySingleDiff<false>(OmniSimulationMode, newSnap.OmniSimulationMode);
+	ApplySingleDiff<false>(OmniAtmospherePersistenceStatus, newSnap.OmniAtmospherePersistenceStatus);
 	ApplyHunkVector<false>(GravMass       , newSnap.GravMass       );
 	ApplyHunkVector<false>(GravMask       , newSnap.GravMask       );
 	ApplyHunkVector<false>(GravForceX     , newSnap.GravForceX     );
@@ -267,6 +301,11 @@ std::unique_ptr<Snapshot> SnapshotDelta::Forward(const Snapshot &oldSnap)
 	auto commonSize = oldSnap.Particles.size() - extraPartsOld.size();
 	newSnap.Particles.resize(commonSize + extraPartsNew.size());
 	std::copy(extraPartsNew.begin(), extraPartsNew.end(), newSnap.Particles.begin() + commonSize);
+	auto commonWaterSize = oldSnap.OmniWaterParcelMassKg.size() - extraOmniWaterParcelMassKgOld.size();
+	ApplyHunkVectorPtr<false>(commonOmniWaterParcelMassKg, newSnap.OmniWaterParcelMassKg.data());
+	newSnap.OmniWaterParcelMassKg.resize(commonWaterSize + extraOmniWaterParcelMassKgNew.size());
+	std::copy(extraOmniWaterParcelMassKgNew.begin(), extraOmniWaterParcelMassKgNew.end(),
+		newSnap.OmniWaterParcelMassKg.begin() + commonWaterSize);
 
 	return ptr;
 }
@@ -279,6 +318,13 @@ std::unique_ptr<Snapshot> SnapshotDelta::Restore(const Snapshot &newSnap)
 	ApplyHunkVector<true>(AirVelocityX   , oldSnap.AirVelocityX   );
 	ApplyHunkVector<true>(AirVelocityY   , oldSnap.AirVelocityY   );
 	ApplyHunkVector<true>(AmbientHeat    , oldSnap.AmbientHeat    );
+	ApplyHunkVector<true>(OmniAtmosphereSpeciesMassDensity, oldSnap.OmniAtmosphereSpeciesMassDensity);
+	ApplyHunkVector<true>(OmniAtmosphereMomentumX, oldSnap.OmniAtmosphereMomentumX);
+	ApplyHunkVector<true>(OmniAtmosphereMomentumY, oldSnap.OmniAtmosphereMomentumY);
+	ApplyHunkVector<true>(OmniAtmosphereTotalEnergy, oldSnap.OmniAtmosphereTotalEnergy);
+	ApplyHunkVector<true>(OmniAtmosphereCondensedWaterDensity, oldSnap.OmniAtmosphereCondensedWaterDensity);
+	ApplySingleDiff<true>(OmniSimulationMode, oldSnap.OmniSimulationMode);
+	ApplySingleDiff<true>(OmniAtmospherePersistenceStatus, oldSnap.OmniAtmospherePersistenceStatus);
 	ApplyHunkVector<true>(GravMass       , oldSnap.GravMass       );
 	ApplyHunkVector<true>(GravMask       , oldSnap.GravMask       );
 	ApplyHunkVector<true>(GravForceX     , oldSnap.GravForceX     );
@@ -302,6 +348,11 @@ std::unique_ptr<Snapshot> SnapshotDelta::Restore(const Snapshot &newSnap)
 	auto commonSize = newSnap.Particles.size() - extraPartsNew.size();
 	oldSnap.Particles.resize(commonSize + extraPartsOld.size());
 	std::copy(extraPartsOld.begin(), extraPartsOld.end(), oldSnap.Particles.begin() + commonSize);
+	auto commonWaterSize = newSnap.OmniWaterParcelMassKg.size() - extraOmniWaterParcelMassKgNew.size();
+	ApplyHunkVectorPtr<true>(commonOmniWaterParcelMassKg, oldSnap.OmniWaterParcelMassKg.data());
+	oldSnap.OmniWaterParcelMassKg.resize(commonWaterSize + extraOmniWaterParcelMassKgOld.size());
+	std::copy(extraOmniWaterParcelMassKgOld.begin(), extraOmniWaterParcelMassKgOld.end(),
+		oldSnap.OmniWaterParcelMassKg.begin() + commonWaterSize);
 
 	return ptr;
 }

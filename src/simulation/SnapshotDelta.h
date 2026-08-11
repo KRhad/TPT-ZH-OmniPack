@@ -45,6 +45,15 @@ struct SnapshotDelta
 	HunkVector<float> AirVelocityX;
 	HunkVector<float> AirVelocityY;
 	HunkVector<float> AmbientHeat;
+	HunkVector<double> OmniAtmosphereSpeciesMassDensity;
+	HunkVector<double> OmniAtmosphereMomentumX;
+	HunkVector<double> OmniAtmosphereMomentumY;
+	HunkVector<double> OmniAtmosphereTotalEnergy;
+	HunkVector<double> OmniAtmosphereCondensedWaterDensity;
+	HunkVector<double> commonOmniWaterParcelMassKg;
+	std::vector<double> extraOmniWaterParcelMassKgOld, extraOmniWaterParcelMassKgNew;
+	SingleDiff<int> OmniSimulationMode;
+	SingleDiff<uint8_t> OmniAtmospherePersistenceStatus;
 
 	HunkVector<uint32_t> commonParticles;
 	std::vector<Particle> extraPartsOld, extraPartsNew;

@@ -21,6 +21,19 @@ uint32_t Snapshot::Hash() const
 	takeVector(AirVelocityX);
 	takeVector(AirVelocityY);
 	takeVector(AmbientHeat);
+	// Preserve the historical Classic hash contract. Enhanced/Scientific hashes
+	// additionally bind the authoritative atmosphere and water ownership state.
+	if (OmniSimulationMode != OMNI_CLASSIC)
+	{
+		takeThing(OmniSimulationMode);
+		takeThing(OmniAtmospherePersistenceStatus);
+		takeVector(OmniAtmosphereSpeciesMassDensity);
+		takeVector(OmniAtmosphereMomentumX);
+		takeVector(OmniAtmosphereMomentumY);
+		takeVector(OmniAtmosphereTotalEnergy);
+		takeVector(OmniAtmosphereCondensedWaterDensity);
+		takeVector(OmniWaterParcelMassKg);
+	}
 	takeVector(Particles);
 	takeVector(GravMass);
 	takeVector(GravMask);

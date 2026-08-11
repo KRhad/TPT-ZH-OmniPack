@@ -277,8 +277,8 @@ int main()
 	}
 
 	std::cout << "omni_atmosphere_cpu_mvp_pass=true\n";
-	std::cout << "authoritative_fields=rho,rho_u,rho_v,rho_E\n";
-	std::cout << "eos=single_species_ideal_gas\n";
+	std::cout << "authoritative_gas_fields=rho_N2,rho_O2,rho_Ar,rho_CO2,rho_H2O,rho_u,rho_v,rho_E\n";
+	std::cout << "eos=ideal_gas_mixture\n";
 	std::cout << "uniform_mass_residual_kg=" << uniform.Ledger().massResidualKg() << '\n';
 	std::cout << "uniform_energy_residual_j=" << uniform.Ledger().energyResidualJ() << '\n';
 	std::cout << "heated_centre_pressure_pa=" << centrePressureAfterSource << '\n';
@@ -290,8 +290,14 @@ int main()
 	std::cout << "leak_mass_before_kg=" << leakMassBefore << '\n';
 	std::cout << "leak_mass_after_kg=" << leakMassAfter << '\n';
 	std::cout << "runtime_grid_cells=" << runtime.CellCount() << '\n';
-	std::cout << "authoritative_bytes_per_cell=" << sizeof(OmniAtmosphereConservative) << '\n';
-	std::cout << "persistent_state_bytes_per_cell=" << (sizeof(OmniAtmosphereConservative) * 2 + sizeof(uint8_t)) << '\n';
+	std::cout << "authoritative_gas_bytes_per_cell="
+		<< (OMNI_COMMON_SPECIES_COUNT + 3) * sizeof(double) << '\n';
+	std::cout << "derived_density_cache_bytes_per_cell=" << sizeof(double) << '\n';
+	std::cout << "condensed_water_sidecar_bytes_per_cell=" << sizeof(double) << '\n';
+	std::cout << "working_state_bytes_per_cell="
+		<< (sizeof(OmniAtmosphereConservative) * 2 +
+			OMNI_COMMON_SPECIES_COUNT * sizeof(double) * 2 +
+			sizeof(double) * 2 + sizeof(uint8_t)) << '\n';
 	std::cout << "runtime_quiet_substeps=" << runtime.Ledger().substeps << '\n';
 	std::cout << "runtime_quiet_ms_per_tick=" << runtimeMillisecondsPerTick << '\n';
 	std::cout << "limited_requested_timestep_s=" << limited.Ledger().requestedTimestepS << '\n';

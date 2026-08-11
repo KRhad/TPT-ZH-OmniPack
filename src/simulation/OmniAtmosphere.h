@@ -8,8 +8,8 @@
 
 // OmniAtmosphere is deliberately independent from Legacy Air. It owns an
 // authoritative conservative state and exposes derived primitive quantities.
-// The first runtime generation is single-species ideal-gas Euler physics; the
-// species channels and particle coupling are intentionally reserved for 1.0.7+.
+// The 1.0.7 runtime generation uses common multi-species ideal-gas channels;
+// Legacy Air remains the Classic-mode authority.
 
 enum class OmniAtmosphereBoundary : uint8_t
 {
@@ -23,6 +23,35 @@ enum class OmniAtmosphereExecution : uint8_t
 	RuntimeLowMach,
 	ReferenceCompressible,
 };
+
+enum class OmniAtmosphereSpeciesPhase : uint8_t
+{
+	Gas,
+	LiquidAerosol,
+};
+
+struct OmniAtmosphereSpeciesDefinition
+{
+	const char *id = "";
+	double molarMassKgPerMol = 0.0;
+	double specificHeatCpJKgK = 0.0;
+	double thermalConductivityWMK = 0.0;
+	double diffusionCoefficientM2S = 0.0;
+	OmniAtmosphereSpeciesPhase phase = OmniAtmosphereSpeciesPhase::Gas;
+};
+
+enum OmniCommonAtmosphereSpecies : std::size_t
+{
+	OMNI_SPECIES_N2,
+	OMNI_SPECIES_O2,
+	OMNI_SPECIES_AR,
+	OMNI_SPECIES_CO2,
+	OMNI_SPECIES_H2O,
+	OMNI_COMMON_SPECIES_COUNT,
+};
+
+std::vector<OmniAtmosphereSpeciesDefinition> OmniDefaultAtmosphereSpecies();
+std::vector<double> OmniEarthLikeAtmosphereMassFractions();
 
 struct OmniAtmosphereScale
 {
@@ -57,6 +86,12 @@ struct OmniAtmosphereConfig
 	double densityFloor = 1.0e-9;
 	double pressureFloor = 1.0e-3;
 	double internalEnergyFloor = 1.0e-3;
+	std::vector<OmniAtmosphereSpeciesDefinition> species = OmniDefaultAtmosphereSpecies();
+	std::vector<double> referenceMassFractions = OmniEarthLikeAtmosphereMassFractions();
+	bool speciesDiffusion = true;
+	bool thermalConduction = true;
+	bool waterPhaseEquilibrium = true;
+	double gravityY = 0.0;
 	std::size_t maximumRuntimeSubsteps = 4;
 	std::size_t maximumReferenceSubsteps = 100000;
 	OmniAtmosphereBoundary boundary = OmniAtmosphereBoundary::Sealed;
@@ -79,6 +114,12 @@ struct OmniAtmospherePrimitive
 	double pressure = 0.0;
 	double temperature = 0.0;
 	double soundSpeed = 0.0;
+	double mixtureGasConstant = 0.0;
+	double mixtureGamma = 0.0;
+	double saturationPressurePa = 0.0;
+	double waterPartialPressurePa = 0.0;
+	double relativeHumidity = 0.0;
+	double condensedWaterDensity = 0.0;
 	bool finite = false;
 };
 
@@ -106,6 +147,17 @@ struct OmniAtmosphereLedger
 	double numericalMomentumXCorrection = 0.0;
 	double numericalMomentumYCorrection = 0.0;
 	double numericalEnergyCorrectionJ = 0.0;
+	std::vector<double> initialSpeciesMassKg;
+	std::vector<double> finalSpeciesMassKg;
+	std::vector<double> sourceSpeciesMassKg;
+	std::vector<double> boundarySpeciesInKg;
+	std::vector<double> boundarySpeciesOutKg;
+	std::vector<double> numericalSpeciesCorrectionKg;
+	double initialCondensedWaterMassKg = 0.0;
+	double finalCondensedWaterMassKg = 0.0;
+	double phaseTransferWaterMassKg = 0.0;
+	double phaseTransferLatentEnergyJ = 0.0;
+	double thermalConductionEnergyResidualJ = 0.0;
 	uint64_t densityFloorHits = 0;
 	uint64_t pressureFloorHits = 0;
 	uint64_t energyFloorHits = 0;
@@ -135,6 +187,14 @@ struct OmniAtmosphereLedger
 	{
 		return finalMomentumY - initialMomentumY - sourceMomentumY + boundaryMomentumYOut - numericalMomentumYCorrection;
 	}
+
+	double speciesMassResidualKg(std::size_t index) const
+	{
+		if (index >= initialSpeciesMassKg.size() || index >= finalSpeciesMassKg.size())
+			return 0.0;
+		return finalSpeciesMassKg[index] - initialSpeciesMassKg[index] - sourceSpeciesMassKg[index] -
+			boundarySpeciesInKg[index] + boundarySpeciesOutKg[index] - numericalSpeciesCorrectionKg[index];
+	}
 };
 
 class OmniAtmosphere
@@ -146,6 +206,8 @@ public:
 	std::size_t Width() const { return config.width; }
 	std::size_t Height() const { return config.height; }
 	std::size_t CellCount() const { return state.size(); }
+	std::size_t SpeciesCount() const { return config.species.size(); }
+	const OmniAtmosphereSpeciesDefinition &SpeciesDefinition(std::size_t index) const;
 
 	void ResetUniform(double density, double temperature, double velocityX = 0.0, double velocityY = 0.0);
 	void ResetVacuum(double density = 1.0e-8, double temperature = 293.15);
@@ -157,6 +219,16 @@ public:
 
 	void AddEnergyDensity(std::size_t x, std::size_t y, double joulesPerM3);
 	void AddMassDensity(std::size_t x, std::size_t y, double kilogramsPerM3);
+	void AddSpeciesMassDensity(std::size_t x, std::size_t y, std::size_t species, double kilogramsPerM3);
+	void SetSpeciesMassFractions(std::size_t x, std::size_t y, const std::vector<double> &massFractions);
+	void SetCondensedWaterDensity(std::size_t x, std::size_t y, double kilogramsPerM3);
+	bool RestoreSerializedCell(std::size_t x, std::size_t y, const std::vector<double> &speciesMassDensity,
+		double momentumX, double momentumY, double totalEnergy, double condensedWaterMassDensity);
+	// Completes a whole-grid undo/save restore after RestoreSerializedCell calls.
+	// The restored values become the new authoritative baseline rather than an
+	// unexplained numerical/source correction on the next ledgered step.
+	void FinalizeStateRestore();
+	void SetGravityY(double metresPerSecondSquared);
 	void SetCell(std::size_t x, std::size_t y, OmniAtmosphereConservative value);
 	void ImportLegacyProjection(std::size_t x, std::size_t y, OmniAtmosphereConservative value);
 
@@ -170,6 +242,11 @@ public:
 
 	const OmniAtmosphereConservative &State(std::size_t x, std::size_t y) const;
 	OmniAtmospherePrimitive Primitive(std::size_t x, std::size_t y) const;
+	double SpeciesMassDensity(std::size_t x, std::size_t y, std::size_t species) const;
+	double SpeciesMassFraction(std::size_t x, std::size_t y, std::size_t species) const;
+	double SpeciesPartialPressurePa(std::size_t x, std::size_t y, std::size_t species) const;
+	double TotalSpeciesMassKg(std::size_t species) const;
+	double TotalCondensedWaterMassKg() const;
 	const OmniAtmosphereLedger &Ledger() const { return ledger; }
 
 	double TotalMassKg() const;
@@ -198,22 +275,42 @@ private:
 	OmniAtmosphereConfig config;
 	std::vector<OmniAtmosphereConservative> state;
 	std::vector<OmniAtmosphereConservative> next;
+	std::vector<double> speciesState;
+	std::vector<double> speciesNext;
+	std::vector<double> condensedWaterDensity;
+	std::vector<double> condensedWaterNext;
 	std::vector<uint8_t> blocked;
 	OmniAtmosphereLedger ledger{};
 	bool pendingEvent = false;
 	bool compressibleActive = false;
+	bool transportActive = false;
+	bool phaseActive = false;
 	double pendingSourceMassKg = 0.0;
 	double pendingSourceMomentumX = 0.0;
 	double pendingSourceMomentumY = 0.0;
 	double pendingSourceEnergyJ = 0.0;
+	std::vector<double> pendingSourceSpeciesMassKg;
 
 	std::size_t Index(std::size_t x, std::size_t y) const { return y * config.width + x; }
+	std::size_t SpeciesIndex(std::size_t cell, std::size_t species) const { return cell * config.species.size() + species; }
 	OmniAtmosphereConservative AmbientState() const;
+	std::vector<double> AmbientSpeciesState() const;
 	OmniAtmospherePrimitive Derive(const OmniAtmosphereConservative &value) const;
+	OmniAtmospherePrimitive Derive(std::size_t cell, const OmniAtmosphereConservative &value) const;
 	Flux PhysicalFlux(const OmniAtmosphereConservative &value, bool xDirection) const;
+	Flux PhysicalFlux(std::size_t cell, const OmniAtmosphereConservative &value, bool xDirection) const;
 	Flux RusanovFlux(const OmniAtmosphereConservative &left, const OmniAtmosphereConservative &right, bool xDirection, bool acoustic) const;
+	Flux RusanovFlux(std::size_t leftCell, std::size_t rightCell, const OmniAtmosphereConservative &left, const OmniAtmosphereConservative &right, bool xDirection, bool acoustic) const;
 	void AdvanceOnce(double dt, bool acoustic);
+	void DiffuseSpeciesAndHeat(double dt);
+	void ApplyGravity(double dt);
+	void EquilibrateWaterPhase();
 	void ApplyFloors(OmniAtmosphereConservative &value, bool recordCorrection = true);
+	void NormalizeSpecies(std::size_t cell, double targetDensity, bool recordCorrection = true);
+	double SpeciesFlux(std::size_t species, std::size_t leftCell, std::size_t rightCell,
+		const OmniAtmosphereConservative &left, const OmniAtmosphereConservative &right,
+		bool xDirection, bool acoustic) const;
+	void RecordBoundarySpeciesFlux(const std::vector<double> &flux, bool positiveOutward, double dt);
 	void BeginLedger();
 	void FinishLedger();
 	void RecordBoundaryFlux(const Flux &flux, bool xDirection, bool positiveOutward, double dt);

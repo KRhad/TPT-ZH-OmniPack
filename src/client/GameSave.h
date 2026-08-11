@@ -99,6 +99,27 @@ public:
 	PlaneAdapter<std::vector<float>> gravForceX;
 	PlaneAdapter<std::vector<float>> gravForceY;
 
+	// Versioned OmniAtmosphere payload. This is independent of the Legacy
+	// pressure/velocity/ambient-heat planes and is only applied when the caller
+	// requests pressure/field state during load or region paste.
+	static constexpr int OmniAtmosphereStateVersion = 2;
+	bool hasOmniAtmosphereState = false;
+	int omniAtmosphereStateVersion = 0;
+	std::vector<ByteString> omniAtmosphereSpecies;
+	std::vector<double> omniAtmosphereSpeciesMassDensity;
+	std::vector<double> omniAtmosphereMomentumX;
+	std::vector<double> omniAtmosphereMomentumY;
+	std::vector<double> omniAtmosphereTotalEnergy;
+	std::vector<double> omniAtmosphereCondensedWaterDensity;
+	std::vector<unsigned char> omniAtmosphereCellValid;
+
+	// Enhanced water particles keep physical parcel mass outside the stable
+	// Particle ABI. The vector is aligned with the saved particle order.
+	static constexpr int OmniWaterParcelStateVersion = 1;
+	bool hasOmniWaterParcelState = false;
+	int omniWaterParcelStateVersion = 0;
+	std::vector<double> omniWaterParcelMassKg;
+
 	//Simulation Options
 	bool waterEEnabled = false;
 	bool legacyEnable = false;

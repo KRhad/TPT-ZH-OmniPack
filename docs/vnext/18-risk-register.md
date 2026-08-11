@@ -2,6 +2,19 @@
 
 ## Active risks
 
+## 1.0.7 closure
+
+```text
+V1_0_7_CLOSED_CHEMISTRY_GATE=not_applicable_deferred_to_1.0.8
+V1_0_7_CLOSED_THERMAL_OWNERSHIP=GREEN_STRICT_DOUBLE_WATER_TRANSACTION
+V1_0_7_CLOSED_SAVE_STATE=GREEN_OPS_V2_WATER_SIDECAR_V1
+V1_0_7_CLOSED_UNDO_STATE=GREEN_SNAPSHOT_AND_DELTA_AUTHORITATIVE_RESTORE
+V1_0_7_CLOSED_PERFORMANCE=GREEN_MEDIAN_4.000402987MS_PER_TICK
+V1_0_7_REMAINING_FOG_DROPLETS=YELLOW_CONDENSED_CELL_SIDECAR_NOT_VISIBLE_PARTICLES
+V1_0_7_REMAINING_TRACE_SPECIES=YELLOW_FIXED_COMMON_CHANNELS_ONLY
+V1_0_7_REMAINING_SCIENTIFIC_MODE=YELLOW_SAME_RUNTIME_EQUATIONS_AS_ENHANCED
+```
+
 | ID | Severity | Area | Evidence / failure mode | Required mitigation | Gate |
 |---|---|---|---|---|---|
 | C-01 | CRITICAL | correctness/performance | direct real-acoustic mapping remains rejected at 7167 substeps/12121.47543 ms per 60 Hz tick; isolated 64x48 Jacobi projection reduces divergence to ratio 4.98891e-5 but costs 11.7071 ms for 4000 iterations and is not a coupled solver; bounded 1D/2D ledgers, evolving near-vacuum and passive species probes pass, but 32x24 reaches event fraction 0.927083, physical acoustic domain is 1434 cells, and the three-grid matrix exceeds 4.16667 ms budget | choose a physical scale/time and general low-Mach pressure policy that meets domain/budget constraints; replace or reject the component-only projection and keep solver selection RED | GREEN bounded routing/evolution and component projection evidence, RED physical policy |

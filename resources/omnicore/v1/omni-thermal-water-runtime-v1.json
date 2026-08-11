@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "document_type": "omni_thermal_water_runtime",
+  "runtime_version": "1.0.7",
+  "constants": {
+    "triple_point_temperature_k": 273.16,
+    "ice_cp_j_kg_k": 2108.0,
+    "liquid_cp_j_kg_k": 4181.3,
+    "vapor_cp_j_kg_k": 1864.0,
+    "latent_heat_fusion_j_kg": 333550.0,
+    "latent_heat_vaporization_j_kg": 2500800.0,
+    "fusion_mushy_interval_k": [272.65, 273.65]
+  },
+  "saturation_models": [
+    {
+      "temperature_range_k": [273.16, 647.096],
+      "model": "IAPWS_IF97_region_4",
+      "source": "IAPWS R7-97(2012), revised release 2018",
+      "redistribution": "formula implemented; no source database bundled"
+    },
+    {
+      "temperature_range_k": [180.0, 273.16],
+      "model": "Murphy_Koop_2005_over_ice",
+      "source": "Murphy and Koop, QJRMS 131, 1539-1565 (2005)",
+      "redistribution": "published correlation implemented; no article content bundled"
+    }
+  ],
+  "property_model": {
+    "kind": "constant_cp_piecewise_enthalpy",
+    "confidence": "bounded_runtime_reference",
+    "game_tuned": false,
+    "known_limit": "vaporization latent heat is constant in 1.0.7"
+  },
+  "particle_water_ownership": {
+    "managed_element_ids": ["WATR", "ICEI", "WTRV"],
+    "particle_abi_changed": false,
+    "sidecar_bytes_per_particle": 8,
+    "particle_parcel_volume_m3": 4.0e-9,
+    "default_water_parcel_mass_kg": 4.0e-6,
+    "wtrv_role": "rate_limited_injection_parcel",
+    "maximum_transfer_policy": "one_reference_atmosphere_cell_mass_per_tick",
+    "save_payload": "omniWaterParcels/stateVersion=1"
+  }
+}

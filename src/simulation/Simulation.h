@@ -120,10 +120,21 @@ struct RenderableSimulation
 class Simulation : public RenderableSimulation
 {
 public:
+	enum class OmniAtmospherePersistenceStatus : uint8_t
+	{
+		ClassicNotApplicable,
+		FreshPreset,
+		LoadedV2,
+		MigratedLegacyProjection,
+		RegionStateOmitted,
+	};
+
 	GravityPtr grav;
 	std::unique_ptr<Air> air;
 	std::unique_ptr<OmniAtmosphere> omniAtmosphere;
 	int omniSimulationMode = OMNI_CLASSIC;
+	OmniAtmospherePersistenceStatus omniAtmospherePersistenceStatus =
+		OmniAtmospherePersistenceStatus::ClassicNotApplicable;
 
 	RNG rng;
 
@@ -149,6 +160,11 @@ public:
 
 	float fvx[YCELLS][XCELLS];
 	float fvy[YCELLS][XCELLS];
+	float omniLegacyPressureShadow[YCELLS][XCELLS]{};
+	float omniLegacyVelocityXShadow[YCELLS][XCELLS]{};
+	float omniLegacyVelocityYShadow[YCELLS][XCELLS]{};
+	float omniLegacyTemperatureShadow[YCELLS][XCELLS]{};
+	bool omniLegacyProjectionShadowValid = false;
 	int Element_LOLZ_lolz[XRES/9][YRES/9];
 	int Element_LOVE_love[XRES/9][YRES/9];
 	int Element_PSTN_tempParts[std::max(XRES, YRES)];
@@ -252,6 +268,23 @@ public:
 		std::array<OmniCorrectionEvent, OmniCorrectionLedgerEventCapacity> events;
 	};
 
+	struct OmniWaterCouplingMetrics
+	{
+		bool activeTick = false;
+		double initialWaterMassKg = 0.0;
+		double finalWaterMassKg = 0.0;
+		double transferredToAtmosphereKg = 0.0;
+		double sensibleEnergyToParticlesJ = 0.0;
+		double particleEnergyRemovedJ = 0.0;
+		double atmosphereEnergyAddedJ = 0.0;
+		double waterMassResidualKg = 0.0;
+		double coupledEnergyResidualJ = 0.0;
+		uint64_t requests = 0;
+		uint64_t vaporParcelsInjected = 0;
+		uint64_t evaporationTransfers = 0;
+		uint64_t phaseTypeChanges = 0;
+	};
+
 	// initialized very late >_>
 	int NUM_PARTS;
 	int sandcolour;
@@ -319,12 +352,16 @@ public:
 	void SetOmniCorrectionLedgerEnabled(bool enabled);
 	void ResetOmniCorrectionLedger();
 	OmniCorrectionLedgerMetrics GetOmniCorrectionLedgerMetrics() const;
+	OmniWaterCouplingMetrics GetOmniWaterCouplingMetrics() const { return omniWaterCouplingMetrics; }
+	double GetOmniWaterParcelMassKg(int particleId) const;
+	double TotalOmniParticleWaterMassKg() const;
 
 	void SetEdgeMode(int newEdgeMode);
 	void SetDecoSpace(int newDecoSpace);
 	void SetOmniSimulationMode(int newMode);
 	int GetOmniSimulationMode() const { return omniSimulationMode; }
 	bool IsOmniAtmosphereActive() const { return omniSimulationMode != OMNI_CLASSIC; }
+	const char *GetOmniAtmospherePersistenceStatus() const;
 
 	//Drawing Deco
 	void ApplyDecoration(int x, int y, int colR, int colG, int colB, int colA, int mode);
@@ -372,6 +409,30 @@ public:
 	static std::unique_ptr<Simulation> Factory();
 
 protected:
+	struct OmniWaterTransferRequest
+	{
+		int particleId = -1;
+		int cellX = 0;
+		int cellY = 0;
+		double sensibleEnergyToParticleJ = 0.0;
+		double requestedEvaporationMassKg = 0.0;
+		bool injectVaporParcel = false;
+	};
+
+	std::array<double, NPART> omniWaterParcelMassKg{};
+	std::vector<OmniWaterTransferRequest> omniWaterTransferRequests;
+	OmniWaterCouplingMetrics omniWaterCouplingMetrics{};
+
+	bool QueueOmniWaterParticleCoupling(int particleId, int x, int y);
+	void BeginOmniWaterCouplingTick();
+	void CommitOmniWaterCouplingTick();
+	void FinishOmniWaterCouplingTick();
+	void TransferOmniWaterParticleToAtmosphere(int particleId, int cellX, int cellY,
+		double requestedMassKg = -1.0);
+	void InitializeOmniWaterParcelMass(int particleId, int type);
+	void ClearOmniWaterParcelMass(int particleId);
+	double TotalOmniWaterCoupledEnergyJ() const;
+
 	enum class OmniLifecycleMutationKind : uint8_t
 	{
 		Create,

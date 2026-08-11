@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "document_type": "omni_atmosphere_species_runtime",
+  "runtime_version": "1.0.7",
+  "authoritative_channels": ["N2", "O2", "Ar", "CO2", "H2O"],
+  "universal_gas_constant_j_mol_k": 8.31446261815324,
+  "reference_mole_fractions": {
+    "N2": 0.78084,
+    "O2": 0.20946,
+    "Ar": 0.00934,
+    "CO2": 0.00042,
+    "H2O": 0.0
+  },
+  "reference_mass_fractions": {
+    "N2": 0.755107198945,
+    "O2": 0.231374517735,
+    "Ar": 0.012880201368,
+    "CO2": 0.000638081951,
+    "H2O": 0.0
+  },
+  "species": [
+    {"id": "N2", "molar_mass_kg_mol": 0.0280134, "cp_j_kg_k": 1040.0, "thermal_conductivity_w_m_k": 0.0258, "diffusion_m2_s": 0.0000200},
+    {"id": "O2", "molar_mass_kg_mol": 0.0319988, "cp_j_kg_k": 918.0, "thermal_conductivity_w_m_k": 0.0263, "diffusion_m2_s": 0.0000200},
+    {"id": "Ar", "molar_mass_kg_mol": 0.0399480, "cp_j_kg_k": 520.3, "thermal_conductivity_w_m_k": 0.0177, "diffusion_m2_s": 0.0000180},
+    {"id": "CO2", "molar_mass_kg_mol": 0.0440095, "cp_j_kg_k": 844.0, "thermal_conductivity_w_m_k": 0.0166, "diffusion_m2_s": 0.0000160},
+    {"id": "H2O", "molar_mass_kg_mol": 0.01801528, "cp_j_kg_k": 1850.0, "thermal_conductivity_w_m_k": 0.0190, "diffusion_m2_s": 0.0000260}
+  ],
+  "property_model": {
+    "kind": "constant_reference_300_k",
+    "temperature_validity_k": [250.0, 400.0],
+    "pressure_validity_pa": [100.0, 500000.0],
+    "confidence": "runtime_approximation",
+    "game_tuned": false
+  },
+  "provenance": [
+    {
+      "source": "NIST Chemistry WebBook species pages",
+      "source_date": "accessed 2026-08-12",
+      "use": "molar-mass identity and offline validation only",
+      "redistribution": "no raw NIST dataset bundled"
+    },
+    {
+      "source": "NASA/TP-2002-211556 thermodynamic polynomial reference",
+      "source_date": "2002",
+      "use": "rounded 300 K ideal-gas heat-capacity reference values",
+      "redistribution": "derived runtime constants; no source table bundled"
+    },
+    {
+      "source": "Phase 5 TPT physical-scale and realtime diffusion policy",
+      "source_date": "2026-08-11",
+      "use": "mixture-averaged realtime transport coefficients",
+      "redistribution": "project-owned approximation"
+    }
+  ]
+}

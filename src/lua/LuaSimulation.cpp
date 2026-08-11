@@ -1712,10 +1712,20 @@ static int omniAtmosphere(lua_State *L)
 		lua_pushnumber(L, value);
 		lua_setfield(L, -2, name);
 	};
-	setInteger("state_version", 1);
+	auto setString = [L](char const *name, char const *value) {
+		lua_pushstring(L, value);
+		lua_setfield(L, -2, name);
+	};
+	setInteger("state_version", 2);
 	setInteger("mode", sim->GetOmniSimulationMode());
 	setBoolean("active", sim->IsOmniAtmosphereActive());
-	setBoolean("state_serialized", false);
+	const auto persistenceStatus = sim->omniAtmospherePersistenceStatus;
+	setBoolean("state_serialized", persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::LoadedV2);
+	setBoolean("state_serialization_supported", true);
+	setBoolean("migration_degraded",
+		persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::MigratedLegacyProjection ||
+		persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::RegionStateOmitted);
+	setString("serialization_status", sim->GetOmniAtmospherePersistenceStatus());
 	if (!atmosphere)
 	{
 		setBoolean("available", false);
@@ -1725,6 +1735,7 @@ static int omniAtmosphere(lua_State *L)
 	setInteger("width", atmosphere->Width());
 	setInteger("height", atmosphere->Height());
 	setNumber("mass_kg", atmosphere->TotalMassKg());
+	setNumber("condensed_water_mass_kg", atmosphere->TotalCondensedWaterMassKg());
 	setNumber("energy_j", atmosphere->TotalEnergyJ());
 	setNumber("minimum_density_kg_m3", atmosphere->MinimumDensity());
 	setNumber("minimum_pressure_pa", atmosphere->MinimumPressure());
@@ -1746,6 +1757,70 @@ static int omniAtmosphere(lua_State *L)
 	setNumber("numerical_momentum_x_correction", ledger.numericalMomentumXCorrection);
 	setNumber("numerical_momentum_y_correction", ledger.numericalMomentumYCorrection);
 	setNumber("numerical_energy_correction_j", ledger.numericalEnergyCorrectionJ);
+	lua_newtable(L);
+	for (size_t species = 0; species < atmosphere->SpeciesCount(); ++species)
+	{
+		lua_pushstring(L, atmosphere->SpeciesDefinition(species).id);
+		lua_rawseti(L, -2, static_cast<lua_Integer>(species + 1));
+	}
+	lua_setfield(L, -2, "species_registry");
+	lua_newtable(L);
+	for (size_t species = 0; species < atmosphere->SpeciesCount(); ++species)
+	{
+		lua_pushnumber(L, atmosphere->TotalSpeciesMassKg(species));
+		lua_setfield(L, -2, atmosphere->SpeciesDefinition(species).id);
+	}
+	lua_setfield(L, -2, "species_mass_kg");
+	lua_newtable(L);
+	for (size_t species = 0; species < atmosphere->SpeciesCount(); ++species)
+	{
+		lua_pushnumber(L, ledger.speciesMassResidualKg(species));
+		lua_setfield(L, -2, atmosphere->SpeciesDefinition(species).id);
+	}
+	lua_setfield(L, -2, "species_mass_residual_kg");
+	// Simulation functions are exposed through the sim table, so a normal
+	// sim.omniAtmosphere() call receives that table as its first Lua argument.
+	// Preserve the existing no-argument contract while also accepting optional
+	// cell coordinates after the implicit table value.
+	const int coordinateArgument = lua_istable(L, 1) ? 2 : 1;
+	const int selectedX = luaL_optint(L, coordinateArgument, 0);
+	const int selectedY = luaL_optint(L, coordinateArgument + 1, 0);
+	if (selectedX < 0 || selectedY < 0 || selectedX >= static_cast<int>(atmosphere->Width()) ||
+		selectedY >= static_cast<int>(atmosphere->Height()))
+	{
+		return luaL_error(L, "OmniAtmosphere cell is out of range");
+	}
+	const auto primitive = atmosphere->Primitive(selectedX, selectedY);
+	lua_newtable(L);
+	lua_pushinteger(L, selectedX);
+	lua_setfield(L, -2, "x");
+	lua_pushinteger(L, selectedY);
+	lua_setfield(L, -2, "y");
+	lua_pushnumber(L, primitive.density);
+	lua_setfield(L, -2, "density_kg_m3");
+	lua_pushnumber(L, primitive.pressure);
+	lua_setfield(L, -2, "pressure_pa");
+	lua_pushnumber(L, primitive.temperature);
+	lua_setfield(L, -2, "temperature_k");
+	lua_pushnumber(L, primitive.relativeHumidity);
+	lua_setfield(L, -2, "relative_humidity");
+	lua_pushnumber(L, primitive.condensedWaterDensity);
+	lua_setfield(L, -2, "condensed_water_density_kg_m3");
+	lua_newtable(L);
+	for (size_t species = 0; species < atmosphere->SpeciesCount(); ++species)
+	{
+		lua_pushnumber(L, atmosphere->SpeciesMassFraction(selectedX, selectedY, species));
+		lua_setfield(L, -2, atmosphere->SpeciesDefinition(species).id);
+	}
+	lua_setfield(L, -2, "mass_fraction");
+	lua_newtable(L);
+	for (size_t species = 0; species < atmosphere->SpeciesCount(); ++species)
+	{
+		lua_pushnumber(L, atmosphere->SpeciesPartialPressurePa(selectedX, selectedY, species));
+		lua_setfield(L, -2, atmosphere->SpeciesDefinition(species).id);
+	}
+	lua_setfield(L, -2, "partial_pressure_pa");
+	lua_setfield(L, -2, "selected_cell");
 	return 1;
 }
 
