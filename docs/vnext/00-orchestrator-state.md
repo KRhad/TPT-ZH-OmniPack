@@ -180,10 +180,11 @@ the explicit 2D state/flux layout is `160 bytes/cell`. This is only periodic 2D
 candidate evidence; sealed heating, general source accounting, natural convection,
 gas mixing, physical-time and budget selection remain open.
 
-HLLC checkpoint source package:
-`artifacts/vnext-phase5-source-5ee23cd3d/`, SHA-256
-`23309AEC8E0B5F1406BA68A87E0F522C05DD0EFD37C2CF0FF74B57854A31065F`,
-zero test assets.
+Current HLLC two-dimensional checkpoint source package:
+`artifacts/vnext-phase5-source-7ab3434f6/`, SHA-256
+`8FEC630C880EE10434C8CFE51E97E14B927EEF1207D09B02DDC19CE9C7AA1B8B`,
+`1306` source members plus manifest and zero test assets. The manifest binds
+revision `7ab3434f6d064042d2cf898c4a1cbd8b95e9dcad`.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical

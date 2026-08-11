@@ -158,9 +158,9 @@ The clean runner verifies the current commit, freshly rebuilt Meson target,
 source root, strict GNU floating-point flags, candidate identity, finite metrics,
 ledger closure and zero correction/fallback counts.
 
-Clean source package: `artifacts/vnext-phase5-source-5ee23cd3d/`, SHA-256
-`23309AEC8E0B5F1406BA68A87E0F522C05DD0EFD37C2CF0FF74B57854A31065F`.
-It has `1305` entries (`1304` source members plus source manifest), includes the
+Clean source package: `artifacts/vnext-phase5-source-7ab3434f6/`, SHA-256
+`8FEC630C880EE10434C8CFE51E97E14B927EEF1207D09B02DDC19CE9C7AA1B8B`.
+It has `1307` entries (`1306` source members plus source manifest), includes the
 HLLC report and AtmosphereBench sources/runner, and contains zero test assets.
 
 ## Compatibility and memory
