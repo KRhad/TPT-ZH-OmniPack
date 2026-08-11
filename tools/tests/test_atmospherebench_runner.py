@@ -120,6 +120,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("projection_probe_passed", RUNNER)
         self.assertIn("conjugate_gradient_within_reference_budget", RUNNER)
         self.assertIn("conjugate_gradient_divergence_reduction_ratio", RUNNER)
+        self.assertIn("recorded_cg_component_within_budget_coupling_unimplemented", RUNNER)
         self.assertIn("atmospherebench_hybrid_mixed_region_2d_probe", RUNNER)
         self.assertIn("physical_acoustic_domain_cells", RUNNER)
         self.assertIn("matrix_measured_end_to_end_short_run", RUNNER)

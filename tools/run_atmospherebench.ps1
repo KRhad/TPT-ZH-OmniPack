@@ -472,7 +472,7 @@ $timingScope = "standalone_contract_uniform_no_solver_step"
 $solverResultStatus = Read-KeyValue -Text $text -Key "result_status"
 if ($isLowMachProjection2DProbe) {
 	$benchmarkKind = "atmospherebench_low_mach_projection_2d_probe"
-	$performanceGate = "recorded_component_probe_no_budget_pass"
+	$performanceGate = "recorded_cg_component_within_budget_coupling_unimplemented"
 	$timingScope = "standalone_low_mach_periodic_pressure_projection_component"
 	$candidateImplementations = "periodic_low_mach_projection_component"
 	if ($solverResultStatus -ne "low_mach_component_probe") {
