@@ -8,6 +8,25 @@
 namespace omni::atmospherebench
 {
 
+struct HybridMixedRegion2DGridSample
+{
+	std::size_t cellsX = 0;
+	std::size_t cellsY = 0;
+	std::size_t cellCount = 0;
+	std::size_t macroSteps = 0;
+	std::size_t maximumEventCells = 0;
+	double maximumEventFraction = 0.0;
+	double elapsedMilliseconds = 0.0;
+	double millisecondsPerMacroStep = 0.0;
+	std::size_t workingBytesTotal = 0;
+	bool promotionObserved = false;
+	bool crossRouteFaceObserved = false;
+	bool refluxConservationPassed = false;
+	bool globalLedgerCloses = false;
+	bool positivityPreserved = false;
+	bool valid = false;
+};
+
 struct HybridMixedRegion2DProbeSummary
 {
 	BenchmarkCase benchmarkCase;
@@ -31,9 +50,9 @@ struct HybridMixedRegion2DProbeSummary
 	double initialPressureJump = 0.0;
 	double finalPressureJump = 0.0;
 	double physicalAcousticDomainCells = 0.0;
-	double targetGridEventFraction = 0.0;
-	double targetGridRouteScanMilliseconds = 0.0;
-	std::size_t targetGridCells = 0;
+	HybridMixedRegion2DGridSample legacyGrid;
+	HybridMixedRegion2DGridSample doubledGrid;
+	HybridMixedRegion2DGridSample particleGrid;
 	bool promotionPassed = false;
 	bool demotionPassed = false;
 	bool crossRouteFacePassed = false;
@@ -47,7 +66,7 @@ struct HybridMixedRegion2DProbeSummary
 	bool finiteState = false;
 	bool globalLedgerCloses = false;
 	bool physicalDomainExceedsBenchmark = false;
-	bool targetGridBudgetMeasured = false;
+	bool targetGridMatrixMeasured = false;
 	bool passed = false;
 };
 

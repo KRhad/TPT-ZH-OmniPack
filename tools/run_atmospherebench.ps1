@@ -483,7 +483,7 @@ if (-not $isRusanovProbe) {
     }
 } elseif ($isHybridMixedRegion2DProbe) {
 	$benchmarkKind = "atmospherebench_hybrid_mixed_region_2d_probe"
-	$performanceGate = "recorded_route_scan_only_not_solver_throughput"
+	$performanceGate = "recorded_2d_short_run_matrix_no_budget_pass"
 	$timingScope = "standalone_hybrid_mixed_region_2d_router_reflux_probe"
 	$candidateImplementations = "hybrid_all_speed_mixed_region_2d_probe"
 	if ($solverResultStatus -ne "hybrid_2d_probe_not_solver_selection") {
@@ -511,8 +511,9 @@ if (-not $isRusanovProbe) {
 		"two_dimensional_hybrid_coupling" = "benchmark_only";
 		"production_boundary_coupling" = "not_implemented";
 		"production_runtime_integration" = "not_implemented";
-		"target_grid_event_fraction_performance" = "route_scan_only_not_solver_throughput";
+		"target_grid_event_fraction_performance" = "matrix_measured_end_to_end_short_run";
 		"physical_domain_exceeds_benchmark" = "true";
+		"target_grid_matrix_measured" = "true";
 		"promotion_passed" = "true"; "demotion_passed" = "true";
 		"cross_route_face_passed" = "true";
 		"interface_ledger_closes" = "true";
@@ -534,19 +535,34 @@ if (-not $isRusanovProbe) {
 			throw "Hybrid mixed-region 2D contract drifted: $($probeKey.Key)"
 		}
 	}
-	foreach ($positiveCount in @("promotion_count", "demotion_count", "cross_route_face_count", "maximum_event_cells", "maximum_halo_cells", "maximum_event_substeps_used", "target_grid_cells")) {
+	foreach ($positiveCount in @("promotion_count", "demotion_count", "cross_route_face_count", "maximum_event_cells", "maximum_halo_cells", "maximum_event_substeps_used", "legacy_grid_cell_count", "doubled_grid_cell_count", "particle_grid_cell_count")) {
 		if ([int64](Read-KeyValue -Text $text -Key $positiveCount) -le 0) {
 			throw "Hybrid mixed-region 2D count must be positive: $positiveCount"
 		}
 	}
 	$physicalDomainCells = [double](Read-KeyValue -Text $text -Key "physical_acoustic_domain_cells")
 	$eventFraction = [double](Read-KeyValue -Text $text -Key "maximum_event_fraction")
-	$targetEventFraction = [double](Read-KeyValue -Text $text -Key "target_grid_event_fraction_max")
-	$routeScanMilliseconds = [double](Read-KeyValue -Text $text -Key "target_grid_route_scan_milliseconds")
-	if ($physicalDomainCells -le 153 -or $eventFraction -le 0 -or $eventFraction -gt 1 `
-		-or $targetEventFraction -le 0 -or $targetEventFraction -gt 1 `
-		-or $routeScanMilliseconds -lt 0) {
+	$legacyEventFraction = [double](Read-KeyValue -Text $text -Key "legacy_grid_maximum_event_fraction")
+	$doubledEventFraction = [double](Read-KeyValue -Text $text -Key "doubled_grid_maximum_event_fraction")
+	$particleEventFraction = [double](Read-KeyValue -Text $text -Key "particle_grid_maximum_event_fraction")
+	$legacyMilliseconds = [double](Read-KeyValue -Text $text -Key "legacy_grid_elapsed_milliseconds")
+	$doubledMilliseconds = [double](Read-KeyValue -Text $text -Key "doubled_grid_elapsed_milliseconds")
+	$particleMilliseconds = [double](Read-KeyValue -Text $text -Key "particle_grid_elapsed_milliseconds")
+	$referenceAtmosphereBudget = [double](Read-KeyValue -Text $text -Key "reference_atmosphere_budget_milliseconds")
+	if ($physicalDomainCells -le 612 -or $eventFraction -le 0 -or $eventFraction -gt 1 `
+		-or $legacyEventFraction -le 0 -or $legacyEventFraction -gt 1 `
+		-or $doubledEventFraction -le 0 -or $doubledEventFraction -gt 1 `
+		-or $particleEventFraction -le 0 -or $particleEventFraction -gt 1 `
+		-or $legacyMilliseconds -lt 0 -or $doubledMilliseconds -lt 0 -or $particleMilliseconds -lt 0) {
 		throw "Hybrid mixed-region 2D physical-domain or target-grid metric is invalid"
+	}
+	foreach ($grid in @("legacy_grid", "doubled_grid", "particle_grid")) {
+		$milliseconds = [double](Read-KeyValue -Text $text -Key "${grid}_milliseconds_per_macro_step")
+		$reported = Read-KeyValue -Text $text -Key "${grid}_within_reference_budget"
+		$expected = if ($milliseconds -le $referenceAtmosphereBudget) { "true" } else { "false" }
+		if ($reported -ne $expected) {
+			throw "Hybrid mixed-region 2D budget result is inconsistent: $grid"
+		}
 	}
 	foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
 		if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-8) {
@@ -1956,9 +1972,29 @@ if ($isRusanovProbe) {
 			maximum_cfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
 			physical_acoustic_domain_cells = [double](Read-KeyValue -Text $text -Key "physical_acoustic_domain_cells")
 			physical_domain_exceeds_benchmark = (Read-KeyValue -Text $text -Key "physical_domain_exceeds_benchmark") -eq "true"
-			target_grid_cells = [int](Read-KeyValue -Text $text -Key "target_grid_cells")
-			target_grid_event_fraction_max = [double](Read-KeyValue -Text $text -Key "target_grid_event_fraction_max")
-			target_grid_route_scan_milliseconds = [double](Read-KeyValue -Text $text -Key "target_grid_route_scan_milliseconds")
+			reference_atmosphere_budget_milliseconds = [double](Read-KeyValue -Text $text -Key "reference_atmosphere_budget_milliseconds")
+			target_grid_event_fraction_performance = Read-KeyValue -Text $text -Key "target_grid_event_fraction_performance"
+			legacy_grid = [ordered]@{
+				cell_count = [int](Read-KeyValue -Text $text -Key "legacy_grid_cell_count")
+				maximum_event_fraction = [double](Read-KeyValue -Text $text -Key "legacy_grid_maximum_event_fraction")
+				elapsed_milliseconds = [double](Read-KeyValue -Text $text -Key "legacy_grid_elapsed_milliseconds")
+				milliseconds_per_macro_step = [double](Read-KeyValue -Text $text -Key "legacy_grid_milliseconds_per_macro_step")
+				working_bytes_total = [int64](Read-KeyValue -Text $text -Key "legacy_grid_working_bytes_total")
+			}
+			doubled_grid = [ordered]@{
+				cell_count = [int](Read-KeyValue -Text $text -Key "doubled_grid_cell_count")
+				maximum_event_fraction = [double](Read-KeyValue -Text $text -Key "doubled_grid_maximum_event_fraction")
+				elapsed_milliseconds = [double](Read-KeyValue -Text $text -Key "doubled_grid_elapsed_milliseconds")
+				milliseconds_per_macro_step = [double](Read-KeyValue -Text $text -Key "doubled_grid_milliseconds_per_macro_step")
+				working_bytes_total = [int64](Read-KeyValue -Text $text -Key "doubled_grid_working_bytes_total")
+			}
+			particle_grid = [ordered]@{
+				cell_count = [int](Read-KeyValue -Text $text -Key "particle_grid_cell_count")
+				maximum_event_fraction = [double](Read-KeyValue -Text $text -Key "particle_grid_maximum_event_fraction")
+				elapsed_milliseconds = [double](Read-KeyValue -Text $text -Key "particle_grid_elapsed_milliseconds")
+				milliseconds_per_macro_step = [double](Read-KeyValue -Text $text -Key "particle_grid_milliseconds_per_macro_step")
+				working_bytes_total = [int64](Read-KeyValue -Text $text -Key "particle_grid_working_bytes_total")
+			}
 			promotion_passed = (Read-KeyValue -Text $text -Key "promotion_passed") -eq "true"
 			demotion_passed = (Read-KeyValue -Text $text -Key "demotion_passed") -eq "true"
 			cross_route_face_passed = (Read-KeyValue -Text $text -Key "cross_route_face_passed") -eq "true"
@@ -2542,7 +2578,7 @@ if ($RunRusanovPerformance) {
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
 } elseif ($isHybridMixedRegion2DProbe) {
-	$limitations += "The 2D hybrid result is a periodic benchmark-only router/reflux proof. Its physical 344 m/s one-tick domain of dependence exceeds the TPT atmosphere grid, and the target-grid metric is route-scan timing only; physical-time policy, low-Mach pressure coupling, near-vacuum/species routing and production integration remain unimplemented."
+	$limitations += "The 2D hybrid result is a periodic benchmark-only router/reflux proof. Its physical 344 m/s one-tick domain of dependence exceeds even the 612x384 matrix grid; the 153x96, 306x192 and 612x384 timings are short-run end-to-end measurements, not an accepted tick budget. Physical-time policy, low-Mach pressure coupling, near-vacuum/species routing and production integration remain unimplemented."
 } elseif ($isHybridPolicyProbe) {
 	$limitations += "Hybrid policy evidence combines a conservative constant-pressure low-Mach transport fixture with a separate whole-case HLLC Sod fixture; cross-route boundary coupling, event-local subcycling and production boundaries are not implemented, so this is not solver or physical-time selection."
 } elseif ($isLegacyLikeProbe) {

@@ -110,7 +110,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("--run-hybrid-mixed-region-2d", RUNNER)
         self.assertIn("atmospherebench_hybrid_mixed_region_2d_probe", RUNNER)
         self.assertIn("physical_acoustic_domain_cells", RUNNER)
-        self.assertIn("route_scan_only_not_solver_throughput", RUNNER)
+        self.assertIn("matrix_measured_end_to_end_short_run", RUNNER)
         self.assertIn("atmospherebench_rusanov_uniform_probe", RUNNER)
         self.assertIn("atmospherebench_rusanov_pressure_pulse_probe", RUNNER)
         self.assertIn("atmospherebench_rusanov_density_advection_probe", RUNNER)

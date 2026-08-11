@@ -33,6 +33,7 @@ namespace
 	constexpr std::size_t TargetGridX = 153;
 	constexpr std::size_t TargetGridY = 96;
 	constexpr std::size_t TargetGridScanSteps = 8;
+	constexpr double ReferenceAtmosphereBudgetMilliseconds = 1000.0 / 60.0 / 4.0;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -475,11 +476,39 @@ namespace
 	return result;
 	}
 
+	HybridMixedRegion2DGridSample MeasureGrid(std::size_t cellsX, std::size_t cellsY,
+		std::size_t macroSteps)
+	{
+		const auto start = std::chrono::steady_clock::now();
+		const auto scenario = RunScenario(1.0, cellsX, cellsY, macroSteps);
+		const auto end = std::chrono::steady_clock::now();
+		const auto &summary = scenario.summary;
+		HybridMixedRegion2DGridSample sample;
+		sample.cellsX = cellsX;
+		sample.cellsY = cellsY;
+		sample.cellCount = cellsX * cellsY;
+		sample.macroSteps = macroSteps;
+		sample.maximumEventCells = summary.maximumEventCells;
+		sample.maximumEventFraction = summary.maximumEventFraction;
+		sample.elapsedMilliseconds = std::chrono::duration<double, std::milli>(end - start).count();
+		sample.millisecondsPerMacroStep = sample.elapsedMilliseconds / static_cast<double>(macroSteps);
+		sample.workingBytesTotal = 5 * sizeof(ConservativeState) * sample.cellCount;
+		sample.promotionObserved = summary.promotionPassed;
+		sample.crossRouteFaceObserved = summary.crossRouteFacePassed;
+		sample.refluxConservationPassed = summary.refluxConservationPassed;
+		sample.globalLedgerCloses = summary.globalLedgerCloses;
+		sample.positivityPreserved = summary.positivityPreserved;
+		sample.valid = std::isfinite(sample.elapsedMilliseconds)
+		&& sample.elapsedMilliseconds >= 0.0 && sample.promotionObserved
+		&& sample.crossRouteFaceObserved && sample.refluxConservationPassed
+		&& sample.globalLedgerCloses && sample.positivityPreserved;
+		return sample;
+	}
+
 } // namespace
 
 HybridMixedRegion2DProbeSummary RunHybridMixedRegion2DProbe()
 {
-	const auto start = std::chrono::steady_clock::now();
 	const auto base = RunScenario(1.0);
 	const auto relaxed = RunScenario(0.75);
 	const auto strict = RunScenario(1.25);
@@ -489,20 +518,16 @@ HybridMixedRegion2DProbeSummary RunHybridMixedRegion2DProbe()
 	const std::size_t physicalCells = static_cast<std::size_t>(std::ceil(
 		ReferenceAirSoundSpeedMps * PhysicalTickSeconds / PhysicalCellLengthM));
 	summary.physicalAcousticDomainCells = static_cast<double>(physicalCells);
-	summary.physicalDomainExceedsBenchmark = physicalCells > std::max(CellsX, CellsY);
-	const auto targetStart = std::chrono::steady_clock::now();
-	const auto target = RunScenario(1.0, TargetGridX, TargetGridY, TargetGridScanSteps);
-	const auto targetEnd = std::chrono::steady_clock::now();
-	summary.targetGridCells = TargetGridX * TargetGridY;
-	summary.targetGridEventFraction = target.summary.maximumEventFraction;
-	summary.targetGridRouteScanMilliseconds = std::chrono::duration<double, std::milli>(
-		targetEnd - targetStart).count();
-	summary.targetGridBudgetMeasured = std::isfinite(summary.targetGridRouteScanMilliseconds)
-		&& summary.targetGridRouteScanMilliseconds >= 0.0;
+	summary.legacyGrid = MeasureGrid(TargetGridX, TargetGridY, TargetGridScanSteps);
+	summary.doubledGrid = MeasureGrid(TargetGridX * 2, TargetGridY * 2, TargetGridScanSteps);
+	summary.particleGrid = MeasureGrid(TargetGridX * 4, TargetGridY * 4, TargetGridScanSteps);
+	summary.physicalDomainExceedsBenchmark = physicalCells > std::max(
+		summary.particleGrid.cellsX, summary.particleGrid.cellsY);
+	summary.targetGridMatrixMeasured = summary.legacyGrid.valid
+		&& summary.doubledGrid.valid && summary.particleGrid.valid;
 	summary.passed = base.summary.passed && summary.hysteresisConflictPassed
 		&& summary.thresholdScanPassed && summary.physicalDomainExceedsBenchmark
-		&& summary.targetGridBudgetMeasured;
-	(void)start;
+		&& summary.targetGridMatrixMeasured;
 	return summary;
 }
 
@@ -558,10 +583,34 @@ bool WriteHybridMixedRegion2DProbe(std::ostream &output)
 	output << "minimum_pressure=" << summary.minimumPressure << '\n';
 	output << "physical_acoustic_domain_cells=" << summary.physicalAcousticDomainCells << '\n';
 	output << "physical_domain_exceeds_benchmark=" << (summary.physicalDomainExceedsBenchmark ? "true" : "false") << '\n';
-	output << "target_grid_cells=" << summary.targetGridCells << '\n';
-	output << "target_grid_event_fraction_max=" << summary.targetGridEventFraction << '\n';
-	output << "target_grid_route_scan_milliseconds=" << summary.targetGridRouteScanMilliseconds << '\n';
-	output << "target_grid_event_fraction_performance=route_scan_only_not_solver_throughput\n";
+	for (const auto &sample : {summary.legacyGrid, summary.doubledGrid, summary.particleGrid})
+	{
+		const char *prefix = sample.cellsX == TargetGridX ? "legacy_grid" :
+			sample.cellsX == TargetGridX * 2 ? "doubled_grid" : "particle_grid";
+		output << prefix << "_cells_x=" << sample.cellsX << '\n';
+		output << prefix << "_cells_y=" << sample.cellsY << '\n';
+		output << prefix << "_cell_count=" << sample.cellCount << '\n';
+		output << prefix << "_macro_steps=" << sample.macroSteps << '\n';
+		output << prefix << "_maximum_event_cells=" << sample.maximumEventCells << '\n';
+		output << prefix << "_maximum_event_fraction=" << sample.maximumEventFraction << '\n';
+		output << prefix << "_elapsed_milliseconds=" << sample.elapsedMilliseconds << '\n';
+		output << prefix << "_milliseconds_per_macro_step=" << sample.millisecondsPerMacroStep << '\n';
+		output << prefix << "_working_bytes_total=" << sample.workingBytesTotal << '\n';
+		output << prefix << "_valid=" << (sample.valid ? "true" : "false") << '\n';
+	}
+	output << "target_grid_event_fraction_performance=matrix_measured_end_to_end_short_run\n";
+	output << "target_grid_matrix_measured=true\n";
+	output << "reference_atmosphere_budget_milliseconds="
+		<< ReferenceAtmosphereBudgetMilliseconds << '\n';
+	output << "legacy_grid_within_reference_budget="
+		<< (summary.legacyGrid.millisecondsPerMacroStep <= ReferenceAtmosphereBudgetMilliseconds
+			? "true" : "false") << '\n';
+	output << "doubled_grid_within_reference_budget="
+		<< (summary.doubledGrid.millisecondsPerMacroStep <= ReferenceAtmosphereBudgetMilliseconds
+			? "true" : "false") << '\n';
+	output << "particle_grid_within_reference_budget="
+		<< (summary.particleGrid.millisecondsPerMacroStep <= ReferenceAtmosphereBudgetMilliseconds
+			? "true" : "false") << '\n';
 	output << "promotion_passed=" << (summary.promotionPassed ? "true" : "false") << '\n';
 	output << "demotion_passed=" << (summary.demotionPassed ? "true" : "false") << '\n';
 	output << "cross_route_face_passed=" << (summary.crossRouteFacePassed ? "true" : "false") << '\n';

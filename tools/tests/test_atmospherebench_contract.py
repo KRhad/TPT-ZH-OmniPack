@@ -312,7 +312,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("cross_route_boundary_coupling=implemented_2d_probe", source)
         self.assertIn("mixed_region_reflux_conservation=implemented_2d_probe", source)
         self.assertIn("physical_acoustic_domain_cells=", source)
-        self.assertIn("target_grid_event_fraction_performance=route_scan_only_not_solver_throughput", source)
+        self.assertIn("target_grid_event_fraction_performance=matrix_measured_end_to_end_short_run", source)
         self.assertIn("physical_event_local_domain_of_dependence=not_implemented", source)
         self.assertIn("--run-hybrid-mixed-region-2d", main)
 
