@@ -5,6 +5,7 @@
 #include "HybridPolicy1D.h"
 #include "LbmD2Q9.h"
 #include "LegacyLike.h"
+#include "LowMachProjection2D.h"
 #include "Rusanov1D.h"
 #include "Species2D.h"
 
@@ -315,6 +316,7 @@ bool RunSelfTest(std::ostream &output)
 	const auto hybridPolicy = RunHybridAllSpeedPolicyProbe();
 	const auto hybridMixedRegion = RunHybridMixedRegionProbe();
 	const auto hybridMixedRegion2D = RunHybridMixedRegion2DProbe();
+	const auto lowMachProjection2D = RunLowMachProjection2D();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -400,6 +402,7 @@ bool RunSelfTest(std::ostream &output)
 		&& hybridPolicy.passed && !hybridPolicy.policySelectionReady
 		&& hybridMixedRegion.passed
 		&& hybridMixedRegion2D.passed
+		&& lowMachProjection2D.passed
 		&& rusanovOpenLeak.passed
 		&& implementedCandidatesMatch;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
@@ -464,6 +467,12 @@ bool RunSelfTest(std::ostream &output)
 		<< (hybridMixedRegion.passed ? "PASS" : "FAIL") << '\n';
 	output << "HYBRID_MIXED_REGION_2D_ROUTER_REFLUX_PROBE="
 		<< (hybridMixedRegion2D.passed ? "PASS" : "FAIL") << '\n';
+	output << "LOW_MACH_PROJECTION_2D_PROBE="
+		<< (lowMachProjection2D.passed ? "PASS" : "FAIL") << '\n';
+	output << "LOW_MACH_PROJECTION_2D_DIVERGENCE_REDUCTION_RATIO="
+		<< lowMachProjection2D.divergenceReductionRatio << '\n';
+	output << "LOW_MACH_PROJECTION_2D_GENERAL_COUPLING=IMPLEMENTED_COMPONENT_ONLY\n";
+	output << "LOW_MACH_PROJECTION_2D_PRODUCTION_INTEGRATION=NOT_IMPLEMENTED\n";
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";

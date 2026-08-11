@@ -55,6 +55,8 @@ param(
 
     [switch] $RunHybridMixedRegion2D,
 
+    [switch] $RunLowMachProjection2D,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -204,6 +206,7 @@ $expectedBenchSources = @(
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/HybridPolicy1D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/HybridMixedRegion1D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/HybridMixedRegion2D.cpp")),
+    [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/LowMachProjection2D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/LbmD2Q9.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/LegacyLike.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Rusanov1D.cpp")),
@@ -264,6 +267,7 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunLbmD2Q9Uniform, $RunLbmD2Q9ShearWave,
 		$RunLegacyLikeUniform, $RunLegacyLikePressurePulse,
 		$RunHybridAllSpeedPolicy, $RunHybridMixedRegion, $RunHybridMixedRegion2D,
+		$RunLowMachProjection2D,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -284,12 +288,14 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunLbmD2Q9Uniform -or $RunLbmD2Q9ShearWave `
 	-or $RunLegacyLikeUniform -or $RunLegacyLikePressurePulse `
 	-or $RunHybridAllSpeedPolicy -or $RunHybridMixedRegion -or $RunHybridMixedRegion2D `
+	-or $RunLowMachProjection2D `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $isLbmProbe = $RunLbmD2Q9Uniform -or $RunLbmD2Q9ShearWave
 $isLegacyLikeProbe = $RunLegacyLikeUniform -or $RunLegacyLikePressurePulse
 $isHybridPolicyProbe = $RunHybridAllSpeedPolicy
 $isHybridMixedRegionProbe = $RunHybridMixedRegion
 $isHybridMixedRegion2DProbe = $RunHybridMixedRegion2D
+$isLowMachProjection2DProbe = $RunLowMachProjection2D
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
 	"rusanov_performance"
@@ -333,6 +339,8 @@ $runMode = if ($RunRusanovPerformance) {
 	"hybrid_mixed_region"
 } elseif ($RunHybridMixedRegion2D) {
 	"hybrid_mixed_region_2d"
+} elseif ($RunLowMachProjection2D) {
+	"low_mach_projection_2d"
 } elseif ($RunHllc2DUniform) {
 	"hllc_2d_uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -394,6 +402,8 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-hybrid-mixed-region"
 } elseif ($RunHybridMixedRegion2D) {
 	"--run-hybrid-mixed-region-2d"
+} elseif ($RunLowMachProjection2D) {
+	"--run-low-mach-projection-2d"
 } elseif ($RunHllc2DUniform) {
 	"--run-hllc-2d-uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -453,7 +463,37 @@ $benchmarkKind = "atmospherebench_contract_uniform"
 $performanceGate = "not_evaluated_contract_only"
 $timingScope = "standalone_contract_uniform_no_solver_step"
 $solverResultStatus = Read-KeyValue -Text $text -Key "result_status"
-if (-not $isRusanovProbe) {
+if ($isLowMachProjection2DProbe) {
+	$benchmarkKind = "atmospherebench_low_mach_projection_2d_probe"
+	$performanceGate = "recorded_component_probe_no_budget_pass"
+	$timingScope = "standalone_low_mach_periodic_pressure_projection_component"
+	$candidateImplementations = "periodic_low_mach_projection_component"
+	if ($solverResultStatus -ne "low_mach_component_probe") {
+		throw "Low-Mach projection probe result status drifted"
+	}
+	foreach ($probeKey in @{
+		"candidate" = "periodic_low_mach_projection_component";
+		"candidate_solver_implemented" = "false";
+		"atmosphere_solver_selection" = "unselected";
+		"physical_time_policy" = "unselected";
+		"case_time_domain" = "nondimensional_contract";
+		"boundary_mode" = "periodic";
+		"grid_cells_x" = "64"; "grid_cells_y" = "48"; "grid_cell_count" = "3072";
+		"case_step_count" = "1";
+		"general_low_mach_pressure_coupling" = "implemented_periodic_projection_component_only";
+		"compressible_event_coupling" = "not_implemented_in_this_component";
+		"near_vacuum_support" = "not_applicable_bulk_component_routes_vacuum_to_compressible";
+		"production_runtime_integration" = "not_implemented";
+		"sound_speed_dependency" = "false";
+		"finite_state" = "true";
+		"divergence_reduced" = "true";
+		"projection_probe_passed" = "true"
+	}.GetEnumerator()) {
+		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+			throw "Low-Mach projection contract drifted: $($probeKey.Key)"
+		}
+	}
+} elseif (-not $isRusanovProbe) {
     if ($solverResultStatus -ne "contract_only") {
         throw "AtmosphereBench scaffold must report result_status=contract_only"
     }
@@ -1953,7 +1993,14 @@ $lbmSpeciesSupport = $null
 $legacyLike = $null
 $hybridPolicy = $null
 $hybridMixedRegion = $null
-if ($isRusanovProbe) {
+if ($isLowMachProjection2DProbe) {
+	$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+	$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+	$stateAndFluxScratchBytesPerCell = [double](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
+	$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+	$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "divergence_reduction_ratio")
+	$stateEvolved = $true
+} elseif ($isRusanovProbe) {
 	$stateDensity = if ($isLegacyLikeProbe) {
 		$null
 	} else {
@@ -2601,6 +2648,8 @@ if ($RunRusanovPerformance) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
 } elseif ($isHybridMixedRegion2DProbe) {
 	$limitations += "The 2D hybrid result is a periodic benchmark-only router/reflux proof. Its physical 344 m/s one-tick domain of dependence exceeds even the 612x384 matrix grid; the three-grid timings are short-run end-to-end measurements, not an accepted tick budget. Near-vacuum and passive species interface fixtures pass, but evolving vacuum/species transport, species EOS/diffusion, physical-time policy, low-Mach pressure coupling and production integration remain unimplemented."
+} elseif ($isLowMachProjection2DProbe) {
+	$limitations += "This is an isolated periodic Jacobi pressure-projection bulk component. It does not implement compressible event coupling, near-vacuum routing, production boundaries, TPT integration, physical-time selection or solver selection."
 } elseif ($isHybridPolicyProbe) {
 	$limitations += "Hybrid policy evidence combines a conservative constant-pressure low-Mach transport fixture with a separate whole-case HLLC Sod fixture; cross-route boundary coupling, event-local subcycling and production boundaries are not implemented, so this is not solver or physical-time selection."
 } elseif ($isLegacyLikeProbe) {
@@ -2787,11 +2836,11 @@ $result = [ordered]@{
 		low_to_moderate_l1_ratio = $lowToModerateL1Ratio
 		very_low_to_moderate_l1_ratio = $veryLowToModerateL1Ratio
 		low_mach_suitability_passed = $lowMachSuitabilityPassed
-		mass_drift = if ($isLegacyLikeProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "mass_drift") }
-		momentum_drift = if ($isLegacyLikeProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "momentum_drift") }
-		momentum_x_drift = if ($isLegacyLikeProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "momentum_x_drift") }
-		momentum_y_drift = if ($isLegacyLikeProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "momentum_y_drift") }
-		energy_drift = if ($isLegacyLikeProbe -or $isLbmProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "energy_drift") }
+		mass_drift = if ($isLegacyLikeProbe) { $null } elseif ($isLowMachProjection2DProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "mass_drift") }
+		momentum_drift = if ($isLegacyLikeProbe -or $isLowMachProjection2DProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "momentum_drift") }
+		momentum_x_drift = if ($isLegacyLikeProbe -or $isLowMachProjection2DProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "momentum_x_drift") }
+		momentum_y_drift = if ($isLegacyLikeProbe -or $isLowMachProjection2DProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "momentum_y_drift") }
+		energy_drift = if ($isLegacyLikeProbe -or $isLbmProbe -or $isLowMachProjection2DProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "energy_drift") }
         numerical_correction_count = [int](Read-KeyValue -Text $text -Key "numerical_correction_count")
     }
     numerical_correction_ledger = [ordered]@{
@@ -2836,7 +2885,20 @@ $result = [ordered]@{
 	legacy_like = $legacyLike
 	hybrid_policy = $hybridPolicy
 	hybrid_mixed_region = $hybridMixedRegion
-    measurement = [ordered]@{
+	low_mach_projection_2d = if ($isLowMachProjection2DProbe) {
+		[ordered]@{
+			candidate = Read-KeyValue -Text $text -Key "candidate"
+			divergence_reduction_ratio = [double](Read-KeyValue -Text $text -Key "divergence_reduction_ratio")
+			initial_divergence_l2 = [double](Read-KeyValue -Text $text -Key "initial_divergence_l2")
+			final_divergence_l2 = [double](Read-KeyValue -Text $text -Key "final_divergence_l2")
+			finite_state = (Read-KeyValue -Text $text -Key "finite_state") -eq "true"
+			divergence_reduced = (Read-KeyValue -Text $text -Key "divergence_reduced") -eq "true"
+			sound_speed_dependency = Read-KeyValue -Text $text -Key "sound_speed_dependency"
+			production_runtime_integration = Read-KeyValue -Text $text -Key "production_runtime_integration"
+			projection_probe_passed = (Read-KeyValue -Text $text -Key "projection_probe_passed") -eq "true"
+		}
+	} else { $null }
+	measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
         timing_scope = $timingScope
 		warmup_count = $performanceWarmupCount

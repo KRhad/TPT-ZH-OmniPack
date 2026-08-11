@@ -61,6 +61,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-hybrid-mixed-region' ]", target)
         self.assertIn("'atmospherebench-hybrid-mixed-region-2d'", target)
         self.assertIn("args: [ '--run-hybrid-mixed-region-2d' ]", target)
+        self.assertIn("'atmospherebench-low-mach-projection-2d'", target)
+        self.assertIn("args: [ '--run-low-mach-projection-2d' ]", target)
         self.assertIn("'atmospherebench-rusanov-contact-discontinuity'", target)
         self.assertIn("args: [ '--run-rusanov-contact-discontinuity' ]", target)
         self.assertIn("'atmospherebench-rusanov-near-vacuum-expansion'", target)
@@ -119,6 +121,21 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("=UNSELECTED", source)
         self.assertIn("synthetic_nondimensional", source)
         self.assertNotIn("287.05", source)
+
+    def test_low_mach_projection_is_an_isolated_component_probe(self) -> None:
+        header = (BENCH_ROOT / "LowMachProjection2D.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "LowMachProjection2D.cpp").read_text(encoding="utf-8")
+        main = (BENCH_ROOT / "main.cpp").read_text(encoding="utf-8")
+        atmosphere = (BENCH_ROOT / "AtmosphereBench.cpp").read_text(encoding="utf-8")
+        self.assertIn("LowMachProjection2DSummary", header)
+        self.assertIn("RunLowMachProjection2D", header)
+        self.assertIn("DivergenceL2", source)
+        self.assertIn("soundSpeedIndependent = true", source)
+        self.assertIn("candidate_solver_implemented=false", source)
+        self.assertIn("production_runtime_integration=not_implemented", source)
+        self.assertIn("--run-low-mach-projection-2d", main)
+        self.assertIn("RunLowMachProjection2D", atmosphere)
+        self.assertIn("LOW_MACH_PROJECTION_2D_PROBE", atmosphere)
 
     def test_fvm_candidates_are_strict_double_and_hlle_remains_registered_only(self) -> None:
         header = (BENCH_ROOT / "Rusanov1D.h").read_text(encoding="utf-8")
@@ -340,6 +357,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/LbmD2Q9.h",
             "tools/atmospherebench/LegacyLike.cpp",
             "tools/atmospherebench/LegacyLike.h",
+            "tools/atmospherebench/LowMachProjection2D.cpp",
+            "tools/atmospherebench/LowMachProjection2D.h",
             "tools/atmospherebench/PrecisionMatrix.cpp",
             "tools/atmospherebench/HybridPolicy1D.cpp",
             "tools/atmospherebench/HybridPolicy1D.h",
@@ -347,6 +366,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/HybridMixedRegion1D.h",
             "tools/atmospherebench/HybridMixedRegion2D.cpp",
             "tools/atmospherebench/HybridMixedRegion2D.h",
+            "tools/atmospherebench/LowMachProjection2D.cpp",
+            "tools/atmospherebench/LowMachProjection2D.h",
             "tools/atmospherebench/Species2D.cpp",
             "tools/atmospherebench/Species2D.h",
             "tools/run_atmosphere_precision_matrix.py",
