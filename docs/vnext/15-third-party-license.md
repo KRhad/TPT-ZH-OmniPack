@@ -15,6 +15,7 @@ selected roles are:
 | TPT benchmark | `REFERENCE_ONLY` |
 | TPT/GPU falling-sand parallelization experiments | `REFERENCE_ONLY` |
 | NIST Chemistry WebBook SRD 69 | `REFERENCE_ONLY` |
+| NASA NTRS document 19720017735 | `REFERENCE_ONLY` for one public acoustic feasibility value |
 
 No external solver, shader or dataset source has been copied into production. An
 otherwise permissive code license does not authorize redistribution of third-party

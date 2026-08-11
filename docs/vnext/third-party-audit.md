@@ -1,6 +1,6 @@
 # Third-party code and data audit
 
-Checked 2026-08-09. `Selected use` is the sole classification for each row.
+Checked 2026-08-09 and updated 2026-08-11. `Selected use` is the sole classification for each row.
 
 | Name | Version/commit | Purpose | License | Code reuse allowed? | Modification allowed? | Redistribution allowed? | Data license | GPL compatibility | Reference only? | Selected use |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -14,6 +14,7 @@ Checked 2026-08-09. `Selected use` is the sole classification for each row.
 | Cantera | `v3.2.0`, `4a8358eb8` | offline kinetics/thermodynamics validation and reduction | BSD-style 3-clause license | yes | yes | yes, retain conditions | mechanisms/thermo inputs are separately licensed | yes | no | `DIRECT_REUSE` |
 | CoolProp | `v8.0.0` | offline property/reference calculations | MIT | yes | yes | yes, retain notice | underlying correlations/sources retain attribution/provenance | yes | no | `DIRECT_REUSE` |
 | NIST Chemistry WebBook | SRD 69, data updated 2025, accessed 2026-08-09 | validation of thermochemistry and properties | NIST Standard Reference Data copyright; all rights reserved notice | not a code dependency | not assumed | bulk redistribution not authorized by default; specific permission/license required | SRD 69 | N/A | yes | `REFERENCE_ONLY` |
+| NASA NTRS atmospheric sound reference | document `19720017735`, published 1969, accessed 2026-08-11 | one approximate air sound-speed value for Phase 5 CFL feasibility | US Government work; NTRS marks public use permitted | no code reused | N/A | public use permitted | public technical publication | N/A | yes | `REFERENCE_ONLY` |
 | The Parallel Toy / historical parallel TPT experiments | forum/source snapshots not pinned for reuse | CPU parallelization hazards and timing ideas | derived-project/license evidence not fully pinned in this audit | not approved | not approved | not approved | N/A | not yet determined per snapshot | yes | `REFERENCE_ONLY` |
 | GPU falling-sand experiments | research category; no selected repository/commit | proposal/arbitration/ping-pong algorithm ideas | varies; no approved candidate | not approved | not approved | not approved | N/A | not determined | yes | `REFERENCE_ONLY` |
 
@@ -30,6 +31,7 @@ Checked 2026-08-09. `Selected use` is the sole classification for each row.
 - CoolProp 8.0.0: <https://github.com/CoolProp/CoolProp/tree/v8.0.0>
 - NIST WebBook: <https://webbook.nist.gov/>
 - NIST SRD terms: <https://www.nist.gov/open/copyright-fair-use-and-licensing-statements-srd-data-software-and-technical-series-publications>
+- NASA NTRS atmospheric sound reference: <https://ntrs.nasa.gov/citations/19720017735>
 - Parallel Toy discussion: <https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=27760>
 
 ## Rules derived from the audit

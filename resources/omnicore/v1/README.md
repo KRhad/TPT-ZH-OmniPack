@@ -1,7 +1,7 @@
 # OmniCore data contract v1
 
 This directory began as the offline-only 1.0.4 data foundation. Version 1.0.5 adds
-one explicitly unselected PhysicalScale benchmark-input document. Nothing in
+explicitly unselected PhysicalScale and Atmosphere policy benchmark-input documents. Nothing in
 `src/` loads these files, and no simulation, save, Lua, Element, or UI behavior
 depends on them.
 
@@ -25,6 +25,12 @@ Files:
   carries only benchmark candidates for pixel length, atmosphere-cell length,
   effective depth and time policies. Its `selection_status`, every time policy and
   the Atmosphere solver remain `unselected`; none is a production default.
+- `atmosphere-policy-candidates.json` binds the measured strict-double HLLC
+  checkpoint to an accepted Phase 5 reference-machine CPU/memory target and a
+  public NASA acoustic reference. It recomputes and rejects direct real-acoustic
+  explicit subcycling at the 60-tick candidate, rejects the required uniform
+  sound-speed reduction as a default realism policy, and leaves the hybrid/all-speed
+  policy unimplemented and overall physical-time selection `unselected`.
 
 `tools/omnicore_data_check.py` validates all documents with the Python standard
 library. It rejects duplicate JSON keys, NaN/Inf, unknown fields, unsupported
@@ -55,6 +61,11 @@ geometry identities, unit roles, Legacy `CELL=4` / `153x96` / `612x384` fingerpr
 and the prohibition on deriving physical `dt` from presentation FPS. The standalone
 strict-double `tools/atmospherebench/` scaffold uses a synthetic nondimensional EOS
 fixture only; no real gas property is introduced without provenance.
+
+`tools/atmosphere_policy_check.py` recomputes the acoustic-CFL substep count,
+reference-machine time budget, memory bounds and maximum budget-compatible signal
+speed. It fails closed if a rejected policy claims selection or if measured state
+or working memory exceeds the declared Phase 5 budget.
 
 For that contract, 1.0.5 extends the canonical SI registry with area, volume,
 acceleration, momentum-density and molar-concentration dimensions. These are exact

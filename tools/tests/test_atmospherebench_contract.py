@@ -261,6 +261,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
     def test_source_package_keeps_physical_scale_and_bench_tools(self) -> None:
         tools = {
             "tools/physical_scale_check.py",
+            "tools/atmosphere_policy_check.py",
             "tools/run_atmospherebench.ps1",
             "tools/atmospherebench/AtmosphereBench.cpp",
             "tools/atmospherebench/AtmosphereBench.h",
@@ -274,7 +275,10 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/Species2D.cpp",
             "tools/atmospherebench/Species2D.h",
         }
-        required = tools | {"resources/omnicore/v1/physical-scale-candidates.json"}
+        required = tools | {
+            "resources/omnicore/v1/physical-scale-candidates.json",
+            "resources/omnicore/v1/atmosphere-policy-candidates.json",
+        }
         self.assertTrue(tools.issubset(package_tool.ALLOWED_TOOLS))
         self.assertTrue(required.issubset(package_tool.REQUIRED_MEMBERS))
         for member in required:
