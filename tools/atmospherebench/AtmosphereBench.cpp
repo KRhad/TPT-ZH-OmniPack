@@ -236,7 +236,7 @@ const std::array<CandidateDescriptor, 6> &Candidates()
 		{CandidateKind::AllSpeedRusanovFvm, "fvm_all_speed_rusanov",
 			"implemented_1d_low_mach_probe_rejected", true},
 		{CandidateKind::HllcRusanovFallbackFvm, "fvm_hllc_rusanov_fallback",
-			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_probes", true},
+			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
 	}};

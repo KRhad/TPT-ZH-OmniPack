@@ -62,13 +62,36 @@ struct Hllc2DNaturalConvectionSummary
 	bool passed = false;
 };
 
+struct Hllc2DPerformanceSample
+{
+	Hllc2DProbeSummary probe;
+	double elapsedMilliseconds = 0.0;
+	double millisecondsPerStep = 0.0;
+	double cellUpdatesPerSecond = 0.0;
+	bool valid = false;
+};
+
+struct Hllc2DPerformanceSummary
+{
+	Hllc2DPerformanceSample legacyGrid;
+	Hllc2DPerformanceSample doubledGrid;
+	Hllc2DPerformanceSample particleGrid;
+	std::size_t warmupCount = 0;
+	std::size_t repeatCount = 0;
+	std::size_t stepCount = 0;
+	double referenceFrameBudgetMilliseconds = 0.0;
+	bool passed = false;
+};
+
 Hllc2DProbeSummary RunHllc2DUniform();
 Hllc2DProbeSummary RunHllc2DPressurePulse();
 Hllc2DProbeSummary RunHllc2DSealedHeating();
 Hllc2DNaturalConvectionSummary RunHllc2DNaturalConvection();
+Hllc2DPerformanceSummary RunHllc2DPerformance();
 bool WriteHllc2DUniformProbe(std::ostream &output);
 bool WriteHllc2DPressurePulseProbe(std::ostream &output);
 bool WriteHllc2DSealedHeatingProbe(std::ostream &output);
 bool WriteHllc2DNaturalConvectionProbe(std::ostream &output);
+bool WriteHllc2DPerformanceProbe(std::ostream &output);
 
 } // namespace omni::atmospherebench

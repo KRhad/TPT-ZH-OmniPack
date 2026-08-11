@@ -75,6 +75,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-hllc-2d-sealed-heating' ]", target)
         self.assertIn("args: [ '--run-hllc-2d-natural-convection' ]", target)
         self.assertIn("args: [ '--run-hllc-2d-species-mixing' ]", target)
+        self.assertIn("args: [ '--run-hllc-2d-performance' ]", target)
         self.assertIn("'atmospherebench-rusanov-open-boundary-leak'", target)
         self.assertIn("args: [ '--run-rusanov-open-boundary-leak' ]", target)
         self.assertIn("'atmospherebench-rusanov-performance'", target)
@@ -83,7 +84,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn('"registered_only"', source)
         self.assertIn('"implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes"', source)
         self.assertIn('"implemented_1d_low_mach_probe_rejected"', source)
-        self.assertIn('"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_probes"', source)
+        self.assertIn('"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes"', source)
         self.assertIn("RUSANOV_UNIFORM_PROBE", source)
         self.assertIn("RUSANOV_PRESSURE_PULSE_PROBE", source)
         self.assertIn("RUSANOV_DENSITY_ADVECTION_PROBE", source)
@@ -198,6 +199,19 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("CompositionVariationDecreaseTolerance", source)
         self.assertIn('output << "species_eos_coupling=not_implemented', source)
         self.assertIn('output << "physical_diffusion=not_implemented', source)
+
+    def test_hllc_2d_performance_uses_target_grids_and_steady_clock(self) -> None:
+        header = (BENCH_ROOT / "Hllc2D.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "Hllc2D.cpp").read_text(encoding="utf-8")
+        self.assertIn("Hllc2DPerformanceSummary", header)
+        self.assertIn("RunHllc2DPerformance", header)
+        self.assertIn("PerformanceLegacyCellsX = 153", source)
+        self.assertIn("PerformanceLegacyCellsY = 96", source)
+        self.assertIn("PerformanceParticleCellsX = 612", source)
+        self.assertIn("PerformanceParticleCellsY = 384", source)
+        self.assertIn("std::chrono::steady_clock::now", source)
+        self.assertIn("millisecondsPerStep", source)
+        self.assertIn('output << "performance_budget_status=unselected', source)
 
     def test_scaffold_contract_is_not_a_runtime_consumer(self) -> None:
         production = []

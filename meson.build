@@ -845,6 +845,14 @@ test(
 )
 
 test(
+	'atmospherebench-hllc-2d-performance',
+	atmospherebench,
+	args: [ '--run-hllc-2d-performance' ],
+	suite: 'static',
+	timeout: 120,
+)
+
+test(
 	'atmospherebench-rusanov-open-boundary-leak',
 	atmospherebench,
 	args: [ '--run-rusanov-open-boundary-leak' ],

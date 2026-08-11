@@ -2,6 +2,8 @@
 #include "Rusanov1D.h"
 
 #include <algorithm>
+#include <array>
+#include <chrono>
 #include <cmath>
 #include <functional>
 #include <limits>
@@ -36,6 +38,21 @@ namespace
 	constexpr double ConvectionHotCenterY = 3.5;
 	constexpr double ConvectionHotWidthX = 4.0;
 	constexpr double ConvectionHotWidthY = 2.0;
+	constexpr std::size_t PerformanceLegacyCellsX = 153;
+	constexpr std::size_t PerformanceLegacyCellsY = 96;
+	constexpr std::size_t PerformanceDoubledCellsX = 306;
+	constexpr std::size_t PerformanceDoubledCellsY = 192;
+	constexpr std::size_t PerformanceParticleCellsX = 612;
+	constexpr std::size_t PerformanceParticleCellsY = 384;
+	constexpr std::size_t PerformanceSteps = 32;
+	constexpr std::size_t PerformanceWarmups = 1;
+	constexpr std::size_t PerformanceRepeats = 3;
+	constexpr double PerformanceVelocityX = 0.2;
+	constexpr double PerformanceVelocityY = 0.1;
+	constexpr double PerformanceDensityAmplitude = 0.05;
+	constexpr double PerformanceTargetCfl = 0.2;
+	constexpr double ReferenceFrameBudgetMilliseconds = 1000.0 / 60.0;
+	constexpr double Pi = 3.141592653589793238462643383279502884;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -803,6 +820,76 @@ namespace
 		output << prefix << "_numerical_correction_count=" << summary.corrections.eventCount << '\n';
 		output << prefix << "_probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	}
+
+	Hllc2DProbeSummary RunPerformanceCase(
+		std::size_t cellsX,
+		std::size_t cellsY,
+		std::string_view caseId)
+	{
+		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		const double maximumSoundSpeed = std::sqrt(
+			Gamma / (1.0 - PerformanceDensityAmplitude));
+		const double timeStep = PerformanceTargetCfl
+			/ (std::abs(PerformanceVelocityX) + std::abs(PerformanceVelocityY)
+				+ 2.0 * maximumSoundSpeed);
+		std::vector<ConservativeState> initial(cellsX * cellsY);
+		for (std::size_t y = 0; y < cellsY; ++y)
+		{
+			for (std::size_t x = 0; x < cellsX; ++x)
+			{
+				const double phaseX = 2.0 * Pi
+					* (static_cast<double>(x) + 0.5) / static_cast<double>(cellsX);
+				const double phaseY = 2.0 * Pi
+					* (static_cast<double>(y) + 0.5) / static_cast<double>(cellsY);
+				const double density = 1.0 + PerformanceDensityAmplitude
+					* std::sin(phaseX) * std::cos(phaseY);
+				initial[y * cellsX + x] = eos.FromPrimitive(
+					density, PerformanceVelocityX, PerformanceVelocityY, 1.0);
+			}
+		}
+		return RunPeriodicProbe(
+			{caseId, {cellsX, cellsY, 1.0, BoundaryMode::Periodic},
+				TimeDomain::NondimensionalContract, timeStep, PerformanceSteps},
+			std::move(initial), eos, true, false, 1e-7);
+	}
+
+	Hllc2DPerformanceSample MeasurePerformanceCase(
+		std::size_t cellsX,
+		std::size_t cellsY,
+		std::string_view caseId)
+	{
+		for (std::size_t warmup = 0; warmup < PerformanceWarmups; ++warmup)
+		{
+			if (!RunPerformanceCase(cellsX, cellsY, caseId).passed)
+				return {};
+		}
+		std::array<double, PerformanceRepeats> elapsed{};
+		Hllc2DProbeSummary finalProbe;
+		for (std::size_t repeat = 0; repeat < PerformanceRepeats; ++repeat)
+		{
+			const auto start = std::chrono::steady_clock::now();
+			auto probe = RunPerformanceCase(cellsX, cellsY, caseId);
+			const auto stop = std::chrono::steady_clock::now();
+			if (!probe.passed || probe.fluxFallbackCount != 0)
+				return {};
+			elapsed[repeat] = std::chrono::duration<double, std::milli>(stop - start).count();
+			finalProbe = std::move(probe);
+		}
+		std::sort(elapsed.begin(), elapsed.end());
+		const double medianMilliseconds = elapsed[elapsed.size() / 2];
+		const double millisecondsPerStep = medianMilliseconds
+			/ static_cast<double>(PerformanceSteps);
+		const double cellUpdates = static_cast<double>(cellsX * cellsY)
+			* static_cast<double>(PerformanceSteps);
+		const double throughput = medianMilliseconds > 0.0
+			? cellUpdates * 1000.0 / medianMilliseconds
+			: 0.0;
+		const bool valid = std::isfinite(medianMilliseconds) && medianMilliseconds > 0.0
+			&& std::isfinite(millisecondsPerStep) && millisecondsPerStep > 0.0
+			&& std::isfinite(throughput) && throughput > 0.0;
+		return {std::move(finalProbe), medianMilliseconds,
+			millisecondsPerStep, throughput, valid};
+	}
 } // namespace
 
 Hllc2DProbeSummary RunHllc2DUniform()
@@ -852,6 +939,25 @@ Hllc2DProbeSummary RunHllc2DSealedHeating()
 Hllc2DNaturalConvectionSummary RunHllc2DNaturalConvection()
 {
 	return RunNaturalConvectionProbe();
+}
+
+Hllc2DPerformanceSummary RunHllc2DPerformance()
+{
+	Hllc2DPerformanceSummary summary{
+		MeasurePerformanceCase(PerformanceLegacyCellsX, PerformanceLegacyCellsY,
+			"hllc_performance_2d"),
+		MeasurePerformanceCase(PerformanceDoubledCellsX, PerformanceDoubledCellsY,
+			"hllc_performance_2d"),
+		MeasurePerformanceCase(PerformanceParticleCellsX, PerformanceParticleCellsY,
+			"hllc_performance_2d"),
+		PerformanceWarmups,
+		PerformanceRepeats,
+		PerformanceSteps,
+		ReferenceFrameBudgetMilliseconds,
+	};
+	summary.passed = summary.legacyGrid.valid && summary.doubledGrid.valid
+		&& summary.particleGrid.valid;
+	return summary;
 }
 
 bool WriteHllc2DUniformProbe(std::ostream &output)
@@ -954,6 +1060,120 @@ bool WriteHllc2DNaturalConvectionProbe(std::ostream &output)
 		<< summary.heated.stateAndFluxScratchBytesPerCell << '\n';
 	output << "state_and_flux_scratch_bytes_total="
 		<< summary.heated.stateAndFluxScratchBytesTotal << '\n';
+	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	return summary.passed;
+}
+
+bool WriteHllc2DPerformanceProbe(std::ostream &output)
+{
+	const auto summary = RunHllc2DPerformance();
+	const auto &probe = summary.particleGrid.probe;
+	const auto &initial = probe.ledger.initial;
+	const auto &final = probe.ledger.final;
+	output << "schema_version=1\n";
+	output << "case=hllc_performance_2d\n";
+	output << "candidate=fvm_hllc_rusanov_fallback\n";
+	output << "candidate_solver_implemented=true\n";
+	output << "atmosphere_solver_selection=unselected\n";
+	output << "physical_scale_selection=unselected\n";
+	output << "physical_time_policy=unselected\n";
+	output << "performance_budget_status=unselected\n";
+	output << "result_status=candidate_result_not_selection\n";
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "dimension=2\n";
+	output << "boundary_mode=periodic\n";
+	output << "grid_cells_x=" << probe.benchmarkCase.grid.cellsX << '\n';
+	output << "grid_cells_y=" << probe.benchmarkCase.grid.cellsY << '\n';
+	output << "grid_cell_count=" << probe.benchmarkCase.grid.CellCount() << '\n';
+	output << "cell_length=" << probe.benchmarkCase.grid.cellLength << '\n';
+	output << "case_timestep=" << probe.benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << probe.benchmarkCase.stepCount << '\n';
+	output << "performance_warmup_count=" << summary.warmupCount << '\n';
+	output << "performance_repeat_count=" << summary.repeatCount << '\n';
+	output << "performance_steps=" << summary.stepCount << '\n';
+	output << "legacy_grid_cells_x="
+		<< summary.legacyGrid.probe.benchmarkCase.grid.cellsX << '\n';
+	output << "legacy_grid_cells_y="
+		<< summary.legacyGrid.probe.benchmarkCase.grid.cellsY << '\n';
+	output << "legacy_grid_cell_count="
+		<< summary.legacyGrid.probe.benchmarkCase.grid.CellCount() << '\n';
+	output << "doubled_grid_cells_x="
+		<< summary.doubledGrid.probe.benchmarkCase.grid.cellsX << '\n';
+	output << "doubled_grid_cells_y="
+		<< summary.doubledGrid.probe.benchmarkCase.grid.cellsY << '\n';
+	output << "doubled_grid_cell_count="
+		<< summary.doubledGrid.probe.benchmarkCase.grid.CellCount() << '\n';
+	output << "particle_grid_cells_x="
+		<< summary.particleGrid.probe.benchmarkCase.grid.cellsX << '\n';
+	output << "particle_grid_cells_y="
+		<< summary.particleGrid.probe.benchmarkCase.grid.cellsY << '\n';
+	output << "particle_grid_cell_count="
+		<< summary.particleGrid.probe.benchmarkCase.grid.CellCount() << '\n';
+	output << "legacy_grid_elapsed_milliseconds="
+		<< summary.legacyGrid.elapsedMilliseconds << '\n';
+	output << "doubled_grid_elapsed_milliseconds="
+		<< summary.doubledGrid.elapsedMilliseconds << '\n';
+	output << "particle_grid_elapsed_milliseconds="
+		<< summary.particleGrid.elapsedMilliseconds << '\n';
+	output << "legacy_grid_milliseconds_per_step="
+		<< summary.legacyGrid.millisecondsPerStep << '\n';
+	output << "doubled_grid_milliseconds_per_step="
+		<< summary.doubledGrid.millisecondsPerStep << '\n';
+	output << "particle_grid_milliseconds_per_step="
+		<< summary.particleGrid.millisecondsPerStep << '\n';
+	output << "legacy_grid_cell_updates_per_second="
+		<< summary.legacyGrid.cellUpdatesPerSecond << '\n';
+	output << "doubled_grid_cell_updates_per_second="
+		<< summary.doubledGrid.cellUpdatesPerSecond << '\n';
+	output << "particle_grid_cell_updates_per_second="
+		<< summary.particleGrid.cellUpdatesPerSecond << '\n';
+	output << "reference_frame_budget_milliseconds="
+		<< summary.referenceFrameBudgetMilliseconds << '\n';
+	output << "legacy_grid_fraction_of_reference_frame="
+		<< summary.legacyGrid.millisecondsPerStep
+			/ summary.referenceFrameBudgetMilliseconds << '\n';
+	output << "doubled_grid_fraction_of_reference_frame="
+		<< summary.doubledGrid.millisecondsPerStep
+			/ summary.referenceFrameBudgetMilliseconds << '\n';
+	output << "particle_grid_fraction_of_reference_frame="
+		<< summary.particleGrid.millisecondsPerStep
+			/ summary.referenceFrameBudgetMilliseconds << '\n';
+	output << "maximum_cfl=" << probe.maximumCfl << '\n';
+	output << "minimum_density=" << probe.minimumDensity << '\n';
+	output << "minimum_pressure=" << probe.minimumPressure << '\n';
+	output << "mass_drift=" << (final.density - initial.density) << '\n';
+	output << "momentum_x_drift=" << (final.momentumX - initial.momentumX) << '\n';
+	output << "momentum_y_drift=" << (final.momentumY - initial.momentumY) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		final.momentumX - initial.momentumX,
+		final.momentumY - initial.momentumY) << '\n';
+	output << "energy_drift=" << (final.totalEnergyDensity - initial.totalEnergyDensity) << '\n';
+	output << "state_change_l1=" << probe.stateChangeL1 << '\n';
+	output << "state_evolved=" << (probe.stateEvolved ? "true" : "false") << '\n';
+	output << "positivity_preserved="
+		<< (probe.positivityPreserved ? "true" : "false") << '\n';
+	output << "legacy_grid_flux_fallback_count="
+		<< summary.legacyGrid.probe.fluxFallbackCount << '\n';
+	output << "doubled_grid_flux_fallback_count="
+		<< summary.doubledGrid.probe.fluxFallbackCount << '\n';
+	output << "particle_grid_flux_fallback_count="
+		<< summary.particleGrid.probe.fluxFallbackCount << '\n';
+	output << "numerical_correction_count=" << probe.corrections.eventCount << '\n';
+	output << "correction_mass_added=" << probe.corrections.massAdded << '\n';
+	output << "correction_mass_removed=" << probe.corrections.massRemoved << '\n';
+	output << "correction_momentum_x_added=" << probe.corrections.momentumXAdded << '\n';
+	output << "correction_momentum_y_added=" << probe.corrections.momentumYAdded << '\n';
+	output << "correction_energy_added=" << probe.corrections.energyAdded << '\n';
+	output << "correction_energy_removed=" << probe.corrections.energyRemoved << '\n';
+	output << "density_floor_hits=" << probe.corrections.densityFloorHits << '\n';
+	output << "pressure_floor_hits=" << probe.corrections.pressureFloorHits << '\n';
+	output << "correction_event_count=" << probe.corrections.eventCount << '\n';
+	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell="
+		<< probe.stateAndFluxScratchBytesPerCell << '\n';
+	output << "state_and_flux_scratch_bytes_total="
+		<< probe.stateAndFluxScratchBytesTotal << '\n';
+	output << "performance_measurement_passed=" << (summary.passed ? "true" : "false") << '\n';
 	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	return summary.passed;
 }

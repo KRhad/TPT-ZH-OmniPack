@@ -39,6 +39,8 @@ param(
 
     [switch] $RunHllc2DSpeciesMixing,
 
+    [switch] $RunHllc2DPerformance,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -238,7 +240,7 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunHllcRusanovFallbackOpenBoundaryLeak,
 		$RunHllcRusanovFallbackPerformance,
 		$RunHllc2DUniform, $RunHllc2DPressurePulse, $RunHllc2DSealedHeating,
-		$RunHllc2DNaturalConvection, $RunHllc2DSpeciesMixing,
+		$RunHllc2DNaturalConvection, $RunHllc2DSpeciesMixing, $RunHllc2DPerformance,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -255,7 +257,7 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunHllcRusanovFallbackOpenBoundaryLeak `
 	-or $RunHllcRusanovFallbackPerformance `
 	-or $RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating `
-	-or $RunHllc2DNaturalConvection -or $RunHllc2DSpeciesMixing `
+	-or $RunHllc2DNaturalConvection -or $RunHllc2DSpeciesMixing -or $RunHllc2DPerformance `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
@@ -284,6 +286,8 @@ $runMode = if ($RunRusanovPerformance) {
 	"hllc_2d_natural_convection"
 } elseif ($RunHllc2DSpeciesMixing) {
 	"hllc_2d_species_mixing"
+} elseif ($RunHllc2DPerformance) {
+	"hllc_2d_performance"
 } elseif ($RunHllc2DUniform) {
 	"hllc_2d_uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -329,6 +333,8 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-hllc-2d-natural-convection"
 } elseif ($RunHllc2DSpeciesMixing) {
 	"--run-hllc-2d-species-mixing"
+} elseif ($RunHllc2DPerformance) {
+	"--run-hllc-2d-performance"
 } elseif ($RunHllc2DUniform) {
 	"--run-hllc-2d-uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -366,7 +372,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
 foreach ($candidateLine in @(
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
-    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_probes|solver_implemented=true",
+    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -470,6 +476,66 @@ if (-not $isRusanovProbe) {
 		"species_a_mass_drift", "species_b_mass_drift")) {
 		if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-10) {
 			throw "HLLC 2D species-mixing conservation drift exceeds tolerance: $driftKey"
+		}
+	}
+} elseif ($RunHllc2DPerformance) {
+	$benchmarkKind = "atmospherebench_hllc_2d_performance_probe"
+	$performanceGate = "recorded_candidate_measurement_no_budget"
+	$timingScope = "standalone_hllc_2d_periodic_end_to_end_probe_wrapper"
+	$candidateImplementations = "fvm_hllc_rusanov_fallback"
+	if ($solverResultStatus -ne "candidate_result_not_selection") {
+		throw "HLLC 2D performance probe must not claim solver selection"
+	}
+	if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_hllc_rusanov_fallback" -or
+		(Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+		throw "HLLC 2D performance candidate identity is invalid"
+	}
+	foreach ($probeKey in @{
+		"case_time_domain" = "nondimensional_contract"; "dimension" = "2";
+		"boundary_mode" = "periodic"; "physical_time_policy" = "unselected";
+		"performance_budget_status" = "unselected"; "grid_cells_x" = "612";
+		"grid_cells_y" = "384"; "grid_cell_count" = "235008";
+		"cell_length" = "1"; "case_step_count" = "32";
+		"performance_warmup_count" = "1"; "performance_repeat_count" = "3";
+		"performance_steps" = "32"; "legacy_grid_cells_x" = "153";
+		"legacy_grid_cells_y" = "96"; "legacy_grid_cell_count" = "14688";
+		"doubled_grid_cells_x" = "306"; "doubled_grid_cells_y" = "192";
+		"doubled_grid_cell_count" = "58752"; "particle_grid_cells_x" = "612";
+		"particle_grid_cells_y" = "384"; "particle_grid_cell_count" = "235008";
+		"state_evolved" = "true"; "positivity_preserved" = "true";
+		"legacy_grid_flux_fallback_count" = "0";
+		"doubled_grid_flux_fallback_count" = "0";
+		"particle_grid_flux_fallback_count" = "0";
+		"numerical_correction_count" = "0"; "state_bytes_per_cell" = "32";
+		"state_and_flux_scratch_bytes_per_cell" = "160";
+		"state_and_flux_scratch_bytes_total" = "37601280";
+		"performance_measurement_passed" = "true"; "probe_passed" = "true"
+	}.GetEnumerator()) {
+		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+			throw "HLLC 2D performance contract drifted: $($probeKey.Key)"
+		}
+	}
+	foreach ($metricKey in @(
+		"case_timestep", "legacy_grid_elapsed_milliseconds",
+		"doubled_grid_elapsed_milliseconds", "particle_grid_elapsed_milliseconds",
+		"legacy_grid_milliseconds_per_step", "doubled_grid_milliseconds_per_step",
+		"particle_grid_milliseconds_per_step", "legacy_grid_cell_updates_per_second",
+		"doubled_grid_cell_updates_per_second", "particle_grid_cell_updates_per_second",
+		"reference_frame_budget_milliseconds", "legacy_grid_fraction_of_reference_frame",
+		"doubled_grid_fraction_of_reference_frame", "particle_grid_fraction_of_reference_frame")) {
+		$value = [double](Read-KeyValue -Text $text -Key $metricKey)
+		if ([double]::IsNaN($value) -or [double]::IsInfinity($value) -or $value -le 0.0) {
+			throw "HLLC 2D performance metric is invalid: $metricKey"
+		}
+	}
+	$maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
+	if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
+		$maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+		throw "HLLC 2D performance CFL is outside the strict positivity contract"
+	}
+	foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
+		if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-7) {
+			throw "HLLC 2D performance conservation drift exceeds tolerance: $driftKey"
 		}
 	}
 } elseif ($RunHllc2DNaturalConvection) {
@@ -1330,6 +1396,31 @@ $largeElapsedMilliseconds = $null
 $smallCellUpdatesPerSecond = $null
 $mediumCellUpdatesPerSecond = $null
 $largeCellUpdatesPerSecond = $null
+$hllc2DPerformance = $null
+$physicalTimePolicy = $null
+$performanceBudgetStatus = $null
+$referenceFrameBudgetMilliseconds = $null
+$legacyGridCellsX = $null
+$legacyGridCellsY = $null
+$legacyGridCellCount = $null
+$doubledGridCellsX = $null
+$doubledGridCellsY = $null
+$doubledGridCellCount = $null
+$particleGridCellsX = $null
+$particleGridCellsY = $null
+$particleGridCellCount = $null
+$legacyGridElapsedMilliseconds = $null
+$doubledGridElapsedMilliseconds = $null
+$particleGridElapsedMilliseconds = $null
+$legacyGridMillisecondsPerStep = $null
+$doubledGridMillisecondsPerStep = $null
+$particleGridMillisecondsPerStep = $null
+$legacyGridCellUpdatesPerSecond = $null
+$doubledGridCellUpdatesPerSecond = $null
+$particleGridCellUpdatesPerSecond = $null
+$legacyGridFractionOfReferenceFrame = $null
+$doubledGridFractionOfReferenceFrame = $null
+$particleGridFractionOfReferenceFrame = $null
 if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
@@ -1381,6 +1472,71 @@ if ($isRusanovProbe) {
 			species_bounds_preserved = $speciesBoundsPreserved
 			composition_evolved = $compositionEvolved
 			mixed_region_formed = $mixedRegionFormed
+		}
+	} elseif ($RunHllc2DPerformance) {
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+		$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+		$stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+		$physicalTimePolicy = Read-KeyValue -Text $text -Key "physical_time_policy"
+		$performanceBudgetStatus = Read-KeyValue -Text $text -Key "performance_budget_status"
+		$performanceWarmupCount = [int](Read-KeyValue -Text $text -Key "performance_warmup_count")
+		$performanceRepeatCount = [int](Read-KeyValue -Text $text -Key "performance_repeat_count")
+		$performanceSteps = [int](Read-KeyValue -Text $text -Key "performance_steps")
+		$referenceFrameBudgetMilliseconds = [double](Read-KeyValue -Text $text -Key "reference_frame_budget_milliseconds")
+		$legacyGridCellsX = [int](Read-KeyValue -Text $text -Key "legacy_grid_cells_x")
+		$legacyGridCellsY = [int](Read-KeyValue -Text $text -Key "legacy_grid_cells_y")
+		$legacyGridCellCount = [int](Read-KeyValue -Text $text -Key "legacy_grid_cell_count")
+		$doubledGridCellsX = [int](Read-KeyValue -Text $text -Key "doubled_grid_cells_x")
+		$doubledGridCellsY = [int](Read-KeyValue -Text $text -Key "doubled_grid_cells_y")
+		$doubledGridCellCount = [int](Read-KeyValue -Text $text -Key "doubled_grid_cell_count")
+		$particleGridCellsX = [int](Read-KeyValue -Text $text -Key "particle_grid_cells_x")
+		$particleGridCellsY = [int](Read-KeyValue -Text $text -Key "particle_grid_cells_y")
+		$particleGridCellCount = [int](Read-KeyValue -Text $text -Key "particle_grid_cell_count")
+		$legacyGridElapsedMilliseconds = [double](Read-KeyValue -Text $text -Key "legacy_grid_elapsed_milliseconds")
+		$doubledGridElapsedMilliseconds = [double](Read-KeyValue -Text $text -Key "doubled_grid_elapsed_milliseconds")
+		$particleGridElapsedMilliseconds = [double](Read-KeyValue -Text $text -Key "particle_grid_elapsed_milliseconds")
+		$legacyGridMillisecondsPerStep = [double](Read-KeyValue -Text $text -Key "legacy_grid_milliseconds_per_step")
+		$doubledGridMillisecondsPerStep = [double](Read-KeyValue -Text $text -Key "doubled_grid_milliseconds_per_step")
+		$particleGridMillisecondsPerStep = [double](Read-KeyValue -Text $text -Key "particle_grid_milliseconds_per_step")
+		$legacyGridCellUpdatesPerSecond = [double](Read-KeyValue -Text $text -Key "legacy_grid_cell_updates_per_second")
+		$doubledGridCellUpdatesPerSecond = [double](Read-KeyValue -Text $text -Key "doubled_grid_cell_updates_per_second")
+		$particleGridCellUpdatesPerSecond = [double](Read-KeyValue -Text $text -Key "particle_grid_cell_updates_per_second")
+		$legacyGridFractionOfReferenceFrame = [double](Read-KeyValue -Text $text -Key "legacy_grid_fraction_of_reference_frame")
+		$doubledGridFractionOfReferenceFrame = [double](Read-KeyValue -Text $text -Key "doubled_grid_fraction_of_reference_frame")
+		$particleGridFractionOfReferenceFrame = [double](Read-KeyValue -Text $text -Key "particle_grid_fraction_of_reference_frame")
+		$hllc2DPerformance = [ordered]@{
+			physical_time_policy = $physicalTimePolicy
+			budget_status = $performanceBudgetStatus
+			reference_frame_budget_milliseconds = $referenceFrameBudgetMilliseconds
+			legacy_grid = [ordered]@{
+				cells_x = $legacyGridCellsX
+				cells_y = $legacyGridCellsY
+				cell_count = $legacyGridCellCount
+				elapsed_milliseconds = $legacyGridElapsedMilliseconds
+				milliseconds_per_step = $legacyGridMillisecondsPerStep
+				cell_updates_per_second = $legacyGridCellUpdatesPerSecond
+				fraction_of_reference_frame = $legacyGridFractionOfReferenceFrame
+			}
+			doubled_grid = [ordered]@{
+				cells_x = $doubledGridCellsX
+				cells_y = $doubledGridCellsY
+				cell_count = $doubledGridCellCount
+				elapsed_milliseconds = $doubledGridElapsedMilliseconds
+				milliseconds_per_step = $doubledGridMillisecondsPerStep
+				cell_updates_per_second = $doubledGridCellUpdatesPerSecond
+				fraction_of_reference_frame = $doubledGridFractionOfReferenceFrame
+			}
+			particle_grid = [ordered]@{
+				cells_x = $particleGridCellsX
+				cells_y = $particleGridCellsY
+				cell_count = $particleGridCellCount
+				elapsed_milliseconds = $particleGridElapsedMilliseconds
+				milliseconds_per_step = $particleGridMillisecondsPerStep
+				cell_updates_per_second = $particleGridCellUpdatesPerSecond
+				fraction_of_reference_frame = $particleGridFractionOfReferenceFrame
+			}
 		}
 	} elseif ($RunHllc2DNaturalConvection) {
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
@@ -1652,6 +1808,8 @@ if ($RunRusanovPerformance) {
 	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
+} elseif ($RunHllc2DPerformance) {
+	$limitations += "HLLC 2D performance is a single-threaded strict-double periodic end-to-end candidate measurement; physical time and the atmosphere frame budget remain unselected, and no production, species, sealed/open-boundary or GPU performance is implied."
 } elseif ($RunHllc2DNaturalConvection) {
 	$limitations += "HLLC has one nondimensional strict-double 2D gravity/control natural-convection probe with explicit source and wall-exchange ledgers; it is not a well-balanced proof, physical-time, material-property, production TPT wall, performance or solver-selection result."
 } elseif ($RunHllc2DSpeciesMixing) {
@@ -1874,6 +2032,7 @@ $result = [ordered]@{
 	}
 	natural_convection = $naturalConvection
 	species_mixing = $speciesMixing
+	hllc_2d_performance = $hllc2DPerformance
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
         timing_scope = $timingScope

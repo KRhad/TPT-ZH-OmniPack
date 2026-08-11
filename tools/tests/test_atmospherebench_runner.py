@@ -95,6 +95,8 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("--run-hllc-2d-natural-convection", RUNNER)
         self.assertIn("[switch] $RunHllc2DSpeciesMixing", RUNNER)
         self.assertIn("--run-hllc-2d-species-mixing", RUNNER)
+        self.assertIn("[switch] $RunHllc2DPerformance", RUNNER)
+        self.assertIn("--run-hllc-2d-performance", RUNNER)
         self.assertIn("[switch] $RunRusanovOpenBoundaryLeak", RUNNER)
         self.assertIn("--run-rusanov-open-boundary-leak", RUNNER)
         self.assertIn("[switch] $RunRusanovPerformance", RUNNER)
@@ -134,6 +136,9 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("species_bounds_preserved", RUNNER)
         self.assertIn("physical_diffusion", RUNNER)
         self.assertIn("species_mixing = $speciesMixing", RUNNER)
+        self.assertIn("HLLC 2D performance metric is invalid", RUNNER)
+        self.assertIn("performance_budget_status", RUNNER)
+        self.assertIn("hllc_2d_performance = $hllc2DPerformance", RUNNER)
         self.assertIn("source_and_boundary_ledger_closes", RUNNER)
         self.assertIn("boundary_exchange_ledger", RUNNER)
         self.assertIn('"eos_gamma" = "1.4"', RUNNER)
@@ -155,7 +160,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn('candidate=fvm_hlle|status=registered_only|solver_implemented=false', RUNNER)
         self.assertIn('candidate=lbm_d2q9|status=registered_only|solver_implemented=false', RUNNER)
         self.assertIn('candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true', RUNNER)
-        self.assertIn('candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_probes|solver_implemented=true', RUNNER)
+        self.assertIn('candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes|solver_implemented=true', RUNNER)
 
     def test_runner_rejects_a_dimensional_or_stepped_scaffold_case(self) -> None:
         self.assertIn("must keep the shared case nondimensional", RUNNER)
