@@ -34,7 +34,7 @@ OmniAtmosphere state or solver will be integrated yet.
 | 0 | latest upstream adaptation | 1.0.2 COMPLETE / GREEN: official stable/master unchanged at `d768aeb89`; no adaptation required |
 | 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
 | 2 | physical scale and unit system | 1.0.5 IN_PROGRESS: candidate contract scaffold; selection RED |
-| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Legacy-like, Rusanov/HLLC and isothermal D2Q9 now have actual executable comparisons; Legacy-like has no physical conserved state, D2Q9 is rejected as a unified solver for missing energy/near-vacuum/shock support, and HLLC/Rusanov-fallback remains the unselected front-runner; accepted CPU/memory budget, physical-time policy and mandatory solver/precision matrix remain open |
+| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Legacy-like, Rusanov/HLLC and isothermal D2Q9 have actual comparisons; the Phase 5 reference-machine budget is accepted at 4.1667 ms/tick and 64/256 authoritative/working bytes per cell, but direct real-acoustic explicit HLLC needs 7167 substeps and is rejected, uniform acoustic scaling to 0.096 m/s is rejected as the default, and a hybrid/all-speed policy remains required but unimplemented |
 | 4 | solver selection | BLOCKED |
 | 5 | CPU single-species OmniAtmosphere MVP | BLOCKED |
 | 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
@@ -144,7 +144,7 @@ the Main Orchestrator chooses adaptation timing.
 | Largest correctness risks? | acoustic CFL/time mapping, fast-math, hidden floor/clamp drift, missing energy/atom/charge contracts. |
 | Largest compatibility risks? | Legacy Lua Air semantics, OPS schema, Particle AoS/indices, update order and Classic FIRE/vacuum behavior. |
 | Largest performance risks? | species/flux memory, excessive substeps, renderer copies, CPU/GPU synchronization and special-element conflicts. |
-| Next stage? | Define and validate Phase 5 CPU/memory and physical-time gates, then finish the mandatory solver/precision matrix before selection; production OmniAtmosphere remains unauthorized. |
+| Next stage? | Implement and compare an isolated hybrid/all-speed low-Mach plus event-local compressible policy candidate, then finish the PhysicalScale and mandatory solver/precision gates; production OmniAtmosphere remains unauthorized. |
 
 ## Long-term acceptance
 

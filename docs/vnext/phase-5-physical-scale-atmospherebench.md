@@ -5,8 +5,8 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_COMMIT=696d0c9580f642db70bb419fc73cd9ea19b2afd0
-STATUS=IN_PROGRESS_LEGACY_LIKE_CONTROL_COMPLETE
+IMPLEMENTATION_COMMIT=76300cd98ca2c7405d011ba4401445e3bd9eced8
+STATUS=IN_PROGRESS_REFERENCE_BUDGET_GREEN_TIME_POLICY_RED
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -56,8 +56,11 @@ LBM_D2Q9_COMMIT=5e3c46fae8fc7754240c97931e59f7b2216c5417
 LBM_D2Q9_VALIDATION=GREEN_ISOTHERMAL_UNIFORM_SHEAR_WAVE_ERROR_0_000577441_ZERO_CORRECTIONS_ENERGY_NA_NEAR_VACUUM_UNSUPPORTED_SHOCK_UNSUPPORTED
 LEGACY_LIKE_COMMIT=696d0c9580f642db70bb419fc73cd9ea19b2afd0
 LEGACY_LIKE_VALIDATION=GREEN_CONTROL_ONLY_UNIFORM_ZERO_CHANGE_PRESSURE_PULSE_PEAK_0_99005_TO_0_236479_PRESSURE_SUM_DRIFT_8_52651E_MINUS_13_ZERO_CORRECTIONS_PHYSICAL_DRIFTS_NULL
-CURRENT_VALIDATION=GREEN_BUILD_75_STEPS_STATIC_69_TARGETED_21_PYTHON_418_TOTAL_416_PASS_2_SKIP_LEGACY_LIKE_CLEAN_RUNNERS_2
-CURRENT_SOURCE_PACKAGE=GREEN_1316_SOURCE_PLUS_MANIFEST_NO_TEST_ASSETS_REVISION_950ba3974_SHA256_3DF031CEFC765DAEF8DE63D6FB749307CE7283C9C89F003BA63EE6CEDB2F2D77
+ATMOSPHERE_POLICY_BUDGET_COMMIT=76300cd98ca2c7405d011ba4401445e3bd9eced8
+ATMOSPHERE_REFERENCE_BUDGET=GREEN_4_1666667MS_PER_TICK_64_AUTHORITATIVE_256_WORKING_BYTES_PER_CELL_HLLC_FITS_ONE_STEP_MAX_TWO
+ATMOSPHERE_TIME_POLICY=RED_UNSELECTED_DIRECT_REAL_ACOUSTIC_7167_SUBSTEPS_REJECTED_UNIFORM_SCALING_0_096MPS_REJECTED_HYBRID_REQUIRED_UNIMPLEMENTED
+CURRENT_VALIDATION=GREEN_BUILD_STATIC_70_TARGETED_21_PYTHON_426_TOTAL_424_PASS_2_SKIP_POLICY_RECOMPUTATION_AND_LICENSE_AUDIT
+CURRENT_SOURCE_PACKAGE=PENDING_POST_POLICY_REPORT_COMMIT_REBIND
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=IMPLEMENTED_ISOTHERMAL_LIMITED_NOT_SELECTED
 LEGACY_LIKE_STATUS=IMPLEMENTED_CONTROL_ONLY_NOT_SELECTED
@@ -523,6 +526,24 @@ The corresponding clean test-free source package is
 with `1316` source members plus manifest and zero test assets. The manifest binds
 revision `950ba397417605782622b057ee82b3d1511000ee`.
 
-Accepted CPU/memory and physical-time policy, the remaining mandatory solver and
-precision matrix, G0 physical-ledger semantics and formal solver selection remain
-open. HLLE remains `registered_only`; production Air is unchanged.
+## Reference-machine budget and time-policy rejection
+
+Checkpoint `76300cd98` accepts the Phase 5 reference-machine target of one quarter
+of a 16.667 ms reference tick (`4.1666667 ms/tick`), `64` authoritative bytes/cell
+and `256` working bytes/cell. This is not a cross-hardware release requirement and
+does not derive simulation dt from presentation FPS. The current strict-double
+single-thread HLLC result fits at `1.69129 ms/substep` and `32/160 bytes/cell`,
+leaving room for at most two whole measured substeps.
+
+The policy validator then binds the 4 mm cell, CFL `0.2`, the 1/60-second candidate
+and a public NASA 344 m/s air sound-speed reference. It recomputes 7167 required
+explicit substeps and `12121.47543 ms/tick`, rejecting direct real-acoustic explicit
+HLLC. Two affordable substeps would cap signals around `0.096 m/s`, so uniform
+acoustic scaling is rejected as the default realism policy. A hybrid/all-speed
+low-Mach plus event-local compressible candidate is required but unimplemented.
+See [the policy/budget checkpoint](phase-5-atmosphere-policy-budget.md).
+
+The Phase 5 reference-machine CPU/memory budget is accepted. PhysicalScale,
+physical-time policy, the hybrid/all-speed candidate, remaining mandatory solver
+and precision matrix, G0 physical-ledger semantics and formal solver selection
+remain open. HLLE remains `registered_only`; production Air is unchanged.

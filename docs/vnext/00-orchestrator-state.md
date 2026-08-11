@@ -6,9 +6,9 @@
 REPORT_DATE=2026-08-11
 CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.5
-CURRENT_VERSION_GATE=IN_PROGRESS_LEGACY_LIKE_LBM_FVM_COMPARED_HLLC_FRONT_RUNNER_NOT_SELECTED
+CURRENT_VERSION_GATE=IN_PROGRESS_REFERENCE_BUDGET_GREEN_TIME_POLICY_RED_HYBRID_REQUIRED
 NEXT_VERSION=1.0.6
-NEXT_PHASE=define CPU/memory and physical-time gates, then finish the mandatory solver and precision matrix before selection
+NEXT_PHASE=implement and compare isolated hybrid/all-speed low-Mach plus event-local compressible policy, then finish PhysicalScale and solver gates
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -35,7 +35,7 @@ V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS
 V1_0_5_GATE=IN_PROGRESS
 V1_0_5_BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_IMPLEMENTATION_HEAD=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-V1_0_5_CURRENT_CHECKPOINT_HEAD=696d0c9580f642db70bb419fc73cd9ea19b2afd0
+V1_0_5_CURRENT_CHECKPOINT_HEAD=76300cd98ca2c7405d011ba4401445e3bd9eced8
 V1_0_5_SHARED_CONTRACT_HEAD=1ba507e89e3d713fe355c03c2fc6e7139aabcb49
 V1_0_5_RUSANOV_HEAD=4b0658d8ff7bc56169fd8ed5d649f8c6b4250b44
 V1_0_5_RUSANOV_PRESSURE_PULSE_HEAD=cded7be672fbb2755174499214bb31622979eac6
@@ -56,6 +56,7 @@ V1_0_5_HLLC_2D_SPECIES_MIXING_HEAD=55088a8523421b8ef5c1c0b6be3170fdf505ac34
 V1_0_5_HLLC_2D_PERFORMANCE_HEAD=12e904f7574b690c600f1bbcb0b74d160badf540
 V1_0_5_LBM_D2Q9_HEAD=5e3c46fae8fc7754240c97931e59f7b2216c5417
 V1_0_5_LEGACY_LIKE_HEAD=696d0c9580f642db70bb419fc73cd9ea19b2afd0
+V1_0_5_ATMOSPHERE_POLICY_BUDGET_HEAD=76300cd98ca2c7405d011ba4401445e3bd9eced8
 V1_0_5_ROLLBACK=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_UPSTREAM=GREEN_ENTRY_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
 V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
@@ -243,6 +244,17 @@ mass, density, momentum-density, energy or species state. Accordingly its JSON
 mass/momentum/energy drift fields are `null`, not zero. Clean result SHA-256 values
 are `505F69D6D87724CC1B8E4410CA13BE91AF9464E22B12BBE338C601DB74CF04AD`
 and `D1FE38268F52B15AB6BFA7D135B77122A79D48C1227A1E1F5909AEBB4AD0DFBA`.
+
+The reference-machine budget/time-policy contract is integrated at `76300cd98`.
+It accepts a Phase 5 target of `4.1666667 ms/tick`, `64` authoritative bytes/cell
+and `256` working bytes/cell. The measured `153x96` HLLC step fits at `1.69129 ms`
+and `32/160 bytes/cell`, so the CPU budget holds at most two such substeps. At the
+4 mm scale and 60-tick candidate, the public 344 m/s acoustic reference requires
+7167 explicit substeps and about `12121.47543 ms/tick`; that policy is rejected.
+The budget-limited `0.096 m/s` uniform acoustic scaling is also rejected as the
+default reality mapping. Hybrid/all-speed low-Mach plus event-local compressible
+work is required next but remains unimplemented, so physical time and solver
+selection stay RED/unselected.
 
 Current AtmosphereBench checkpoint source package:
 `artifacts/vnext-phase5-source-950ba3974/`, SHA-256
