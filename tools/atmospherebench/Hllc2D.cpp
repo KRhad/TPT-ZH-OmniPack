@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <limits>
 #include <ostream>
 #include <utility>
@@ -27,6 +28,14 @@ namespace
 	constexpr double HeatingTimeStep = 0.01;
 	constexpr std::size_t HeatingSteps = 40;
 	constexpr double HeatingEnergyRateDensity = 0.25;
+	constexpr double ConvectionTimeStep = 0.01;
+	constexpr std::size_t ConvectionSteps = 400;
+	constexpr double ConvectionGravityY = -0.04;
+	constexpr double ConvectionHotAmplitude = 0.5;
+	constexpr double ConvectionHotCenterX = 0.5 * static_cast<double>(CellsX);
+	constexpr double ConvectionHotCenterY = 3.5;
+	constexpr double ConvectionHotWidthX = 4.0;
+	constexpr double ConvectionHotWidthY = 2.0;
 
 	ConservativeState Add(const ConservativeState &left, const ConservativeState &right)
 	{
@@ -253,27 +262,37 @@ namespace
 		summary.ledger.End(TotalState(cells));
 		summary.sourceLedgerCloses = summary.ledger.ClosesWithSources(
 			summary.sources, conservationTolerance);
+		summary.sourceAndBoundaryLedgerCloses = summary.ledger.ClosesWithSourcesAndBoundary(
+			summary.sources, summary.boundary, conservationTolerance);
 		summary.passed = summary.positivityPreserved
-			&& summary.sourceLedgerCloses
+			&& summary.sourceLedgerCloses && summary.sourceAndBoundaryLedgerCloses
 			&& summary.corrections.IsEmpty() && summary.maximumCfl <= 1.0
 			&& (!requireEvolution || summary.stateEvolved)
 			&& (!requirePeakReduction || summary.pressurePeakReduced);
 		return summary;
 	}
 
-	Hllc2DProbeSummary RunSealedHeatingProbe(
-		const BenchmarkCase &benchmarkCase,
+	using CellSource = std::function<bool(
+		const ConservativeState &,
+		std::size_t,
+		std::size_t,
+		std::size_t,
+		double,
+		ConservativeState &)>;
+
+	bool EvolveSealedProbe(
+		Hllc2DProbeSummary &summary,
 		std::vector<ConservativeState> initial,
 		const IdealGasEOS &eos,
-		double energyRateDensity,
-		double conservationTolerance)
+		const CellSource &source,
+		double conservationTolerance,
+		std::vector<ConservativeState> &finalCells)
 	{
-		Hllc2DProbeSummary summary{benchmarkCase};
+		const auto &benchmarkCase = summary.benchmarkCase;
 		if (!benchmarkCase.IsValid() || benchmarkCase.grid.boundaryMode != BoundaryMode::Sealed
 			|| benchmarkCase.grid.cellsX < 2 || benchmarkCase.grid.cellsY < 2
-			|| initial.size() != benchmarkCase.grid.CellCount() || !eos.IsValid()
-			|| !std::isfinite(energyRateDensity) || energyRateDensity <= 0.0)
-			return summary;
+			|| initial.size() != benchmarkCase.grid.CellCount() || !eos.IsValid() || !source)
+			return false;
 		const std::size_t cellsX = benchmarkCase.grid.cellsX;
 		const std::size_t cellsY = benchmarkCase.grid.cellsY;
 		std::vector<ConservativeState> cells = initial;
@@ -293,50 +312,62 @@ namespace
 		summary.minimumDensity = std::numeric_limits<double>::infinity();
 		summary.minimumPressure = std::numeric_limits<double>::infinity();
 		const double lambda = benchmarkCase.timeStep / benchmarkCase.grid.cellLength;
-		const ConservativeState sourceDelta{
-			0.0, 0.0, 0.0, energyRateDensity * benchmarkCase.timeStep};
 		for (std::size_t step = 0; step < benchmarkCase.stepCount; ++step)
 		{
 			for (std::size_t y = 0; y < cellsY; ++y)
 			{
-				auto leftWall = SealedWallFluxX(cells[y * cellsX], eos);
+				const auto leftWall = SealedWallFluxX(cells[y * cellsX], eos);
 				if (!leftWall.valid)
-					return summary;
+					return false;
 				fluxX[y * (cellsX + 1)] = leftWall.flux;
 				for (std::size_t faceX = 1; faceX < cellsX; ++faceX)
 				{
 					const auto result = ComputeHllcRusanovFallbackFluxX(
 						cells[y * cellsX + faceX - 1], cells[y * cellsX + faceX], eos);
 					if (!result.valid)
-						return summary;
+						return false;
 					fluxX[y * (cellsX + 1) + faceX] = result.flux;
 					summary.fluxFallbackCount += static_cast<std::size_t>(result.usedFallback);
 				}
-				auto rightWall = SealedWallFluxX(cells[y * cellsX + cellsX - 1], eos);
+				const auto rightWall = SealedWallFluxX(cells[y * cellsX + cellsX - 1], eos);
 				if (!rightWall.valid)
-					return summary;
+					return false;
 				fluxX[y * (cellsX + 1) + cellsX] = rightWall.flux;
 			}
 			for (std::size_t x = 0; x < cellsX; ++x)
 			{
-				auto bottomWall = SealedWallFluxY(cells[x], eos);
+				const auto bottomWall = SealedWallFluxY(cells[x], eos);
 				if (!bottomWall.valid)
-					return summary;
+					return false;
 				fluxY[x] = bottomWall.flux;
 				for (std::size_t faceY = 1; faceY < cellsY; ++faceY)
 				{
 					const auto result = FluxY(
 						cells[(faceY - 1) * cellsX + x], cells[faceY * cellsX + x], eos);
 					if (!result.valid)
-						return summary;
+						return false;
 					fluxY[faceY * cellsX + x] = result.flux;
 					summary.fluxFallbackCount += static_cast<std::size_t>(result.usedFallback);
 				}
-				auto topWall = SealedWallFluxY(cells[(cellsY - 1) * cellsX + x], eos);
+				const auto topWall = SealedWallFluxY(cells[(cellsY - 1) * cellsX + x], eos);
 				if (!topWall.valid)
-					return summary;
+					return false;
 				fluxY[cellsY * cellsX + x] = topWall.flux;
 			}
+			ConservativeState boundaryDelta;
+			for (std::size_t y = 0; y < cellsY; ++y)
+			{
+				boundaryDelta = Add(boundaryDelta, Scale(lambda,
+					Subtract(fluxX[y * (cellsX + 1)],
+						fluxX[y * (cellsX + 1) + cellsX])));
+			}
+			for (std::size_t x = 0; x < cellsX; ++x)
+			{
+				boundaryDelta = Add(boundaryDelta, Scale(lambda,
+					Subtract(fluxY[x], fluxY[cellsY * cellsX + x])));
+			}
+			if (!summary.boundary.RecordAppliedSource(boundaryDelta))
+				return false;
 			for (std::size_t y = 0; y < cellsY; ++y)
 			{
 				for (std::size_t x = 0; x < cellsX; ++x)
@@ -346,13 +377,15 @@ namespace
 						Subtract(fluxX[y * (cellsX + 1) + x + 1],
 							fluxX[y * (cellsX + 1) + x]),
 						Subtract(fluxY[(y + 1) * cellsX + x], fluxY[y * cellsX + x]));
-					next[index] = Add(Subtract(cells[index], Scale(lambda, fluxDifference)),
-						sourceDelta);
-					if (!summary.sources.RecordAppliedSource(sourceDelta))
-						return summary;
+					next[index] = Subtract(cells[index], Scale(lambda, fluxDifference));
+					ConservativeState sourceDelta;
+					if (!source(next[index], x, y, step, benchmarkCase.timeStep, sourceDelta)
+						|| !summary.sources.RecordAppliedSource(sourceDelta))
+						return false;
+					next[index] = Add(next[index], sourceDelta);
 					const auto primitive = eos.ToPrimitive(next[index]);
 					if (!primitive.valid)
-						return summary;
+						return false;
 					summary.minimumDensity = std::min(summary.minimumDensity, primitive.density);
 					summary.minimumPressure = std::min(summary.minimumPressure, primitive.pressure);
 					summary.maximumCfl = std::max(summary.maximumCfl, lambda
@@ -366,28 +399,262 @@ namespace
 		const auto finalMeans = MeanPressureTemperature(cells, eos);
 		summary.finalMeanPressure = finalMeans.first;
 		summary.finalMeanTemperature = finalMeans.second;
-		const double energyPerCell = energyRateDensity * benchmarkCase.timeStep
-			* static_cast<double>(benchmarkCase.stepCount);
-		summary.expectedFinalMeanPressure = summary.initialMeanPressure
-			+ (Gamma - 1.0) * energyPerCell;
-		summary.expectedFinalMeanTemperature = summary.expectedFinalMeanPressure;
 		summary.stateChangeL1 = StateChangeL1(initial, cells);
-		summary.stateEvolved = std::isfinite(summary.stateChangeL1) && summary.stateChangeL1 > 1e-12;
-		summary.pressurePeakReduced = summary.finalMaximumPressure < summary.initialMaximumPressure;
+		summary.stateEvolved = std::isfinite(summary.stateChangeL1)
+			&& summary.stateChangeL1 > 1e-12;
+		summary.pressurePeakReduced = summary.finalMaximumPressure
+			< summary.initialMaximumPressure;
 		summary.pressureIncreased = summary.finalMeanPressure > summary.initialMeanPressure;
-		summary.temperatureIncreased = summary.finalMeanTemperature > summary.initialMeanTemperature;
+		summary.temperatureIncreased = summary.finalMeanTemperature
+			> summary.initialMeanTemperature;
 		summary.positivityPreserved = std::isfinite(summary.minimumDensity)
 			&& std::isfinite(summary.minimumPressure)
 			&& summary.minimumDensity > 0.0 && summary.minimumPressure > 0.0;
 		summary.ledger.End(TotalState(cells));
 		summary.sourceLedgerCloses = summary.ledger.ClosesWithSources(
 			summary.sources, conservationTolerance);
+		summary.sourceAndBoundaryLedgerCloses = summary.ledger.ClosesWithSourcesAndBoundary(
+			summary.sources, summary.boundary, conservationTolerance);
+		finalCells = std::move(cells);
+		return true;
+	}
+
+	Hllc2DProbeSummary RunSealedHeatingProbe(
+		const BenchmarkCase &benchmarkCase,
+		std::vector<ConservativeState> initial,
+		const IdealGasEOS &eos,
+		double energyRateDensity,
+		double conservationTolerance)
+	{
+		Hllc2DProbeSummary summary{benchmarkCase};
+		if (!std::isfinite(energyRateDensity) || energyRateDensity <= 0.0)
+			return summary;
+		std::vector<ConservativeState> finalCells;
+		const CellSource heatSource = [energyRateDensity](
+			const ConservativeState &,
+			std::size_t,
+			std::size_t,
+			std::size_t,
+			double timeStep,
+			ConservativeState &delta) {
+			delta = {0.0, 0.0, 0.0, energyRateDensity * timeStep};
+			return true;
+		};
+		if (!EvolveSealedProbe(summary, std::move(initial), eos, heatSource,
+			conservationTolerance, finalCells))
+			return summary;
+		const double energyPerCell = energyRateDensity * benchmarkCase.timeStep
+			* static_cast<double>(benchmarkCase.stepCount);
+		summary.expectedFinalMeanPressure = summary.initialMeanPressure
+			+ (Gamma - 1.0) * energyPerCell;
+		summary.expectedFinalMeanTemperature = summary.expectedFinalMeanPressure;
 		summary.passed = summary.positivityPreserved && summary.sourceLedgerCloses
+			&& summary.sourceAndBoundaryLedgerCloses
 			&& summary.corrections.IsEmpty() && summary.maximumCfl <= 1.0
 			&& summary.stateEvolved && summary.pressureIncreased && summary.temperatureIncreased
 			&& std::abs(summary.finalMeanPressure - summary.expectedFinalMeanPressure) <= 1e-12
 			&& std::abs(summary.finalMeanTemperature - summary.expectedFinalMeanTemperature) <= 1e-12;
 		return summary;
+	}
+
+	struct ThermalDiagnostics
+	{
+		double centerY = std::numeric_limits<double>::quiet_NaN();
+		double weightedVelocityY = std::numeric_limits<double>::quiet_NaN();
+		double maximumUpwardVelocity = -std::numeric_limits<double>::infinity();
+		double minimumDownwardVelocity = std::numeric_limits<double>::infinity();
+		double maximumAbsoluteVelocity = 0.0;
+	};
+
+	ThermalDiagnostics MeasureConvection(
+		const std::vector<ConservativeState> &cells,
+		std::size_t cellsX,
+		std::size_t cellsY,
+		const IdealGasEOS &eos)
+	{
+		ThermalDiagnostics result;
+		double thermalWeight = 0.0;
+		double weightedY = 0.0;
+		double weightedVelocityY = 0.0;
+		for (std::size_t y = 0; y < cellsY; ++y)
+		{
+			for (std::size_t x = 0; x < cellsX; ++x)
+			{
+				const auto primitive = eos.ToPrimitive(cells[y * cellsX + x]);
+				if (!primitive.valid)
+					return {};
+				result.maximumUpwardVelocity = std::max(
+					result.maximumUpwardVelocity, primitive.velocityY);
+				result.minimumDownwardVelocity = std::min(
+					result.minimumDownwardVelocity, primitive.velocityY);
+				result.maximumAbsoluteVelocity = std::max(result.maximumAbsoluteVelocity,
+					std::hypot(primitive.velocityX, primitive.velocityY));
+				const double weight = std::max(0.0, primitive.temperature - 1.0);
+				thermalWeight += weight;
+				weightedY += weight * (static_cast<double>(y) + 0.5);
+				weightedVelocityY += weight * primitive.velocityY;
+			}
+		}
+		if (thermalWeight > 0.0)
+		{
+			result.centerY = weightedY / thermalWeight;
+			result.weightedVelocityY = weightedVelocityY / thermalWeight;
+		}
+		return result;
+	}
+
+	ThermalDiagnostics MeasureDifferentialConvection(
+		const std::vector<ConservativeState> &heated,
+		const std::vector<ConservativeState> &control,
+		std::size_t cellsX,
+		std::size_t cellsY,
+		const IdealGasEOS &eos)
+	{
+		if (heated.size() != control.size() || heated.size() != cellsX * cellsY)
+			return {};
+		ThermalDiagnostics result;
+		double thermalWeight = 0.0;
+		double weightedY = 0.0;
+		double weightedVelocityY = 0.0;
+		for (std::size_t y = 0; y < cellsY; ++y)
+		{
+			for (std::size_t x = 0; x < cellsX; ++x)
+			{
+				const std::size_t index = y * cellsX + x;
+				const auto heatedPrimitive = eos.ToPrimitive(heated[index]);
+				const auto controlPrimitive = eos.ToPrimitive(control[index]);
+				if (!heatedPrimitive.valid || !controlPrimitive.valid)
+					return {};
+				const double velocityDifferenceX = heatedPrimitive.velocityX
+					- controlPrimitive.velocityX;
+				const double velocityDifferenceY = heatedPrimitive.velocityY
+					- controlPrimitive.velocityY;
+				result.maximumUpwardVelocity = std::max(
+					result.maximumUpwardVelocity, velocityDifferenceY);
+				result.minimumDownwardVelocity = std::min(
+					result.minimumDownwardVelocity, velocityDifferenceY);
+				result.maximumAbsoluteVelocity = std::max(result.maximumAbsoluteVelocity,
+					std::hypot(velocityDifferenceX, velocityDifferenceY));
+				const double weight = std::max(0.0,
+					heatedPrimitive.temperature - controlPrimitive.temperature);
+				thermalWeight += weight;
+				weightedY += weight * (static_cast<double>(y) + 0.5);
+				weightedVelocityY += weight * velocityDifferenceY;
+			}
+		}
+		if (thermalWeight > 0.0)
+		{
+			result.centerY = weightedY / thermalWeight;
+			result.weightedVelocityY = weightedVelocityY / thermalWeight;
+		}
+		return result;
+	}
+
+	std::vector<ConservativeState> MakeHydrostaticConvectionState(
+		const IdealGasEOS &eos,
+		double gravityY,
+		double hotAmplitude)
+	{
+		std::vector<ConservativeState> cells(CellsX * CellsY);
+		for (std::size_t y = 0; y < CellsY; ++y)
+		{
+			for (std::size_t x = 0; x < CellsX; ++x)
+			{
+				const double xCenter = static_cast<double>(x) + 0.5;
+				const double yCenter = static_cast<double>(y) + 0.5;
+				const double dx = (xCenter - ConvectionHotCenterX) / ConvectionHotWidthX;
+				const double dy = (yCenter - ConvectionHotCenterY) / ConvectionHotWidthY;
+				const double temperature = 1.0 + hotAmplitude
+					* std::exp(-0.5 * (dx * dx + dy * dy));
+				const double pressure = std::exp(gravityY * yCenter);
+				const double density = pressure / temperature;
+				cells[y * CellsX + x] = eos.FromPrimitive(
+					density, 0.0, 0.0, pressure);
+			}
+		}
+		return cells;
+	}
+
+	Hllc2DNaturalConvectionSummary RunNaturalConvectionProbe()
+	{
+		const BenchmarkCase benchmarkCase{
+			"hllc_natural_convection_2d",
+			{CellsX, CellsY, CellLength, BoundaryMode::Sealed},
+			TimeDomain::NondimensionalContract,
+			ConvectionTimeStep,
+			ConvectionSteps,
+		};
+		Hllc2DNaturalConvectionSummary result{
+			benchmarkCase,
+			Hllc2DProbeSummary{benchmarkCase},
+			Hllc2DProbeSummary{benchmarkCase},
+		};
+		result.gravityY = ConvectionGravityY;
+		result.hotTemperatureAmplitude = ConvectionHotAmplitude;
+		const IdealGasEOS eos(Gamma, SpecificGasConstant);
+		auto controlInitial = MakeHydrostaticConvectionState(eos, ConvectionGravityY, 0.0);
+		auto heatedInitial = MakeHydrostaticConvectionState(
+			eos, ConvectionGravityY, ConvectionHotAmplitude);
+		const auto initialThermal = MeasureDifferentialConvection(
+			heatedInitial, controlInitial, CellsX, CellsY, eos);
+		result.initialThermalCenterY = initialThermal.centerY;
+		const CellSource gravitySource = [](const ConservativeState &state,
+			std::size_t,
+			std::size_t,
+			std::size_t,
+			double timeStep,
+			ConservativeState &delta) {
+			if (!std::isfinite(state.density) || !std::isfinite(state.momentumY)
+				|| state.density <= 0.0)
+				return false;
+			const double momentumDelta = state.density * ConvectionGravityY * timeStep;
+			const double velocityY = state.momentumY / state.density;
+			const double energyDelta = velocityY * momentumDelta
+				+ 0.5 * momentumDelta * momentumDelta / state.density;
+			delta = {0.0, 0.0, momentumDelta, energyDelta};
+			return std::isfinite(energyDelta);
+		};
+		std::vector<ConservativeState> controlFinal;
+		std::vector<ConservativeState> heatedFinal;
+		const bool controlExecuted = EvolveSealedProbe(result.control,
+			std::move(controlInitial), eos, gravitySource, 1e-8, controlFinal);
+		const bool heatedExecuted = EvolveSealedProbe(result.heated,
+			std::move(heatedInitial), eos, gravitySource, 1e-8, heatedFinal);
+		if (!controlExecuted || !heatedExecuted)
+			return result;
+		const auto controlMetrics = MeasureConvection(controlFinal, CellsX, CellsY, eos);
+		const auto heatedMetrics = MeasureConvection(heatedFinal, CellsX, CellsY, eos);
+		const auto differentialMetrics = MeasureDifferentialConvection(
+			heatedFinal, controlFinal, CellsX, CellsY, eos);
+		result.finalThermalCenterY = differentialMetrics.centerY;
+		result.thermalCenterRise = result.finalThermalCenterY - result.initialThermalCenterY;
+		result.thermalWeightedVelocityY = differentialMetrics.weightedVelocityY;
+		result.controlMaximumAbsoluteVelocity = controlMetrics.maximumAbsoluteVelocity;
+		result.heatedMaximumUpwardVelocity = heatedMetrics.maximumUpwardVelocity;
+		result.heatedMinimumDownwardVelocity = heatedMetrics.minimumDownwardVelocity;
+		result.heatedMaximumAbsoluteVelocity = heatedMetrics.maximumAbsoluteVelocity;
+		result.maximumUpwardVelocityDifference = differentialMetrics.maximumUpwardVelocity;
+		result.minimumDownwardVelocityDifference = differentialMetrics.minimumDownwardVelocity;
+		result.maximumAbsoluteVelocityDifference = differentialMetrics.maximumAbsoluteVelocity;
+		result.control.passed = result.control.positivityPreserved
+			&& result.control.sourceAndBoundaryLedgerCloses
+			&& result.control.corrections.IsEmpty() && result.control.maximumCfl <= 1.0;
+		result.heated.passed = result.heated.positivityPreserved
+			&& result.heated.sourceAndBoundaryLedgerCloses
+			&& result.heated.corrections.IsEmpty() && result.heated.maximumCfl <= 1.0
+			&& result.heated.stateEvolved;
+		result.circulationObserved = std::isfinite(result.thermalCenterRise)
+			&& std::isfinite(result.thermalWeightedVelocityY)
+			&& result.thermalCenterRise >= 0.05
+			&& result.thermalWeightedVelocityY > 0.0
+			&& result.maximumUpwardVelocityDifference > 1e-4
+			&& result.minimumDownwardVelocityDifference < -1e-4
+			&& result.maximumAbsoluteVelocityDifference > 1e-4;
+		result.passed = result.control.passed && result.heated.passed
+			&& result.circulationObserved
+			&& result.control.fluxFallbackCount == 0
+			&& result.heated.fluxFallbackCount == 0;
+		return result;
 	}
 
 	bool WriteProbe(std::ostream &output, const Hllc2DProbeSummary &summary)
@@ -436,6 +703,11 @@ namespace
 		output << "source_momentum_y_net=" << summary.sources.net.momentumY << '\n';
 		output << "source_energy_net=" << summary.sources.net.totalEnergyDensity << '\n';
 		output << "source_event_count=" << summary.sources.eventCount << '\n';
+		output << "boundary_mass_net=" << summary.boundary.net.density << '\n';
+		output << "boundary_momentum_x_net=" << summary.boundary.net.momentumX << '\n';
+		output << "boundary_momentum_y_net=" << summary.boundary.net.momentumY << '\n';
+		output << "boundary_energy_net=" << summary.boundary.net.totalEnergyDensity << '\n';
+		output << "boundary_event_count=" << summary.boundary.eventCount << '\n';
 		output << "source_mass_balance_error="
 			<< (final.density - initial.density - summary.sources.net.density) << '\n';
 		output << "source_momentum_x_balance_error="
@@ -446,6 +718,21 @@ namespace
 			<< (final.totalEnergyDensity - initial.totalEnergyDensity
 				- summary.sources.net.totalEnergyDensity) << '\n';
 		output << "source_ledger_closes=" << (summary.sourceLedgerCloses ? "true" : "false") << '\n';
+		output << "source_and_boundary_ledger_closes="
+			<< (summary.sourceAndBoundaryLedgerCloses ? "true" : "false") << '\n';
+		output << "combined_mass_balance_error="
+			<< (final.density - initial.density - summary.sources.net.density
+				- summary.boundary.net.density) << '\n';
+		output << "combined_momentum_x_balance_error="
+			<< (final.momentumX - initial.momentumX - summary.sources.net.momentumX
+				- summary.boundary.net.momentumX) << '\n';
+		output << "combined_momentum_y_balance_error="
+			<< (final.momentumY - initial.momentumY - summary.sources.net.momentumY
+				- summary.boundary.net.momentumY) << '\n';
+		output << "combined_energy_balance_error="
+			<< (final.totalEnergyDensity - initial.totalEnergyDensity
+				- summary.sources.net.totalEnergyDensity
+				- summary.boundary.net.totalEnergyDensity) << '\n';
 		output << "state_change_l1=" << summary.stateChangeL1 << '\n';
 		output << "state_evolved=" << (summary.stateEvolved ? "true" : "false") << '\n';
 		output << "pressure_peak_reduced=" << (summary.pressurePeakReduced ? "true" : "false") << '\n';
@@ -470,6 +757,51 @@ namespace
 			<< summary.stateAndFluxScratchBytesTotal << '\n';
 		output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 		return summary.passed;
+	}
+
+	void WriteConvectionSubresult(
+		std::ostream &output,
+		std::string_view prefix,
+		const Hllc2DProbeSummary &summary)
+	{
+		const auto &initial = summary.ledger.initial;
+		const auto &final = summary.ledger.final;
+		output << prefix << "_minimum_density=" << summary.minimumDensity << '\n';
+		output << prefix << "_minimum_pressure=" << summary.minimumPressure << '\n';
+		output << prefix << "_maximum_cfl=" << summary.maximumCfl << '\n';
+		output << prefix << "_state_evolved=" << (summary.stateEvolved ? "true" : "false") << '\n';
+		output << prefix << "_positivity_preserved="
+			<< (summary.positivityPreserved ? "true" : "false") << '\n';
+		output << prefix << "_source_ledger_closes="
+			<< (summary.sourceLedgerCloses ? "true" : "false") << '\n';
+		output << prefix << "_source_and_boundary_ledger_closes="
+			<< (summary.sourceAndBoundaryLedgerCloses ? "true" : "false") << '\n';
+		output << prefix << "_source_mass_net=" << summary.sources.net.density << '\n';
+		output << prefix << "_source_momentum_x_net=" << summary.sources.net.momentumX << '\n';
+		output << prefix << "_source_momentum_y_net=" << summary.sources.net.momentumY << '\n';
+		output << prefix << "_source_energy_net=" << summary.sources.net.totalEnergyDensity << '\n';
+		output << prefix << "_source_event_count=" << summary.sources.eventCount << '\n';
+		output << prefix << "_boundary_mass_net=" << summary.boundary.net.density << '\n';
+		output << prefix << "_boundary_momentum_x_net=" << summary.boundary.net.momentumX << '\n';
+		output << prefix << "_boundary_momentum_y_net=" << summary.boundary.net.momentumY << '\n';
+		output << prefix << "_boundary_energy_net=" << summary.boundary.net.totalEnergyDensity << '\n';
+		output << prefix << "_boundary_event_count=" << summary.boundary.eventCount << '\n';
+		output << prefix << "_combined_mass_balance_error="
+			<< (final.density - initial.density - summary.sources.net.density
+				- summary.boundary.net.density) << '\n';
+		output << prefix << "_combined_momentum_x_balance_error="
+			<< (final.momentumX - initial.momentumX - summary.sources.net.momentumX
+				- summary.boundary.net.momentumX) << '\n';
+		output << prefix << "_combined_momentum_y_balance_error="
+			<< (final.momentumY - initial.momentumY - summary.sources.net.momentumY
+				- summary.boundary.net.momentumY) << '\n';
+		output << prefix << "_combined_energy_balance_error="
+			<< (final.totalEnergyDensity - initial.totalEnergyDensity
+				- summary.sources.net.totalEnergyDensity
+				- summary.boundary.net.totalEnergyDensity) << '\n';
+		output << prefix << "_flux_fallback_count=" << summary.fluxFallbackCount << '\n';
+		output << prefix << "_numerical_correction_count=" << summary.corrections.eventCount << '\n';
+		output << prefix << "_probe_passed=" << (summary.passed ? "true" : "false") << '\n';
 	}
 } // namespace
 
@@ -517,6 +849,11 @@ Hllc2DProbeSummary RunHllc2DSealedHeating()
 		HeatingEnergyRateDensity, 1e-9);
 }
 
+Hllc2DNaturalConvectionSummary RunHllc2DNaturalConvection()
+{
+	return RunNaturalConvectionProbe();
+}
+
 bool WriteHllc2DUniformProbe(std::ostream &output)
 {
 	return WriteProbe(output, RunHllc2DUniform());
@@ -530,6 +867,95 @@ bool WriteHllc2DPressurePulseProbe(std::ostream &output)
 bool WriteHllc2DSealedHeatingProbe(std::ostream &output)
 {
 	return WriteProbe(output, RunHllc2DSealedHeating());
+}
+
+bool WriteHllc2DNaturalConvectionProbe(std::ostream &output)
+{
+	const auto summary = RunHllc2DNaturalConvection();
+	output << "schema_version=1\n";
+	output << "case=" << summary.benchmarkCase.id << '\n';
+	output << "candidate=fvm_hllc_rusanov_fallback\n";
+	output << "candidate_solver_implemented=true\n";
+	output << "atmosphere_solver_selection=unselected\n";
+	output << "physical_scale_selection=unselected\n";
+	output << "result_status=candidate_result_not_selection\n";
+	output << "case_time_domain=nondimensional_contract\n";
+	output << "dimension=2\n";
+	output << "boundary_mode=sealed\n";
+	output << "grid_cells_x=" << summary.benchmarkCase.grid.cellsX << '\n';
+	output << "grid_cells_y=" << summary.benchmarkCase.grid.cellsY << '\n';
+	output << "grid_cell_count=" << summary.benchmarkCase.grid.CellCount() << '\n';
+	output << "cell_length=" << summary.benchmarkCase.grid.cellLength << '\n';
+	output << "case_timestep=" << summary.benchmarkCase.timeStep << '\n';
+	output << "case_step_count=" << summary.benchmarkCase.stepCount << '\n';
+	output << "gravity_y=" << summary.gravityY << '\n';
+	output << "hot_temperature_amplitude=" << summary.hotTemperatureAmplitude << '\n';
+	output << "initial_thermal_center_y=" << summary.initialThermalCenterY << '\n';
+	output << "final_thermal_center_y=" << summary.finalThermalCenterY << '\n';
+	output << "thermal_center_rise=" << summary.thermalCenterRise << '\n';
+	output << "thermal_weighted_velocity_y=" << summary.thermalWeightedVelocityY << '\n';
+	output << "control_maximum_absolute_velocity="
+		<< summary.controlMaximumAbsoluteVelocity << '\n';
+	output << "heated_maximum_upward_velocity="
+		<< summary.heatedMaximumUpwardVelocity << '\n';
+	output << "heated_minimum_downward_velocity="
+		<< summary.heatedMinimumDownwardVelocity << '\n';
+	output << "heated_maximum_absolute_velocity="
+		<< summary.heatedMaximumAbsoluteVelocity << '\n';
+	output << "maximum_upward_velocity_difference="
+		<< summary.maximumUpwardVelocityDifference << '\n';
+	output << "minimum_downward_velocity_difference="
+		<< summary.minimumDownwardVelocityDifference << '\n';
+	output << "maximum_absolute_velocity_difference="
+		<< summary.maximumAbsoluteVelocityDifference << '\n';
+	output << "circulation_observed=" << (summary.circulationObserved ? "true" : "false") << '\n';
+	const auto &heatedInitial = summary.heated.ledger.initial;
+	const auto &heatedFinal = summary.heated.ledger.final;
+	output << "minimum_density=" << summary.heated.minimumDensity << '\n';
+	output << "minimum_pressure=" << summary.heated.minimumPressure << '\n';
+	output << "mass_drift=" << (heatedFinal.density - heatedInitial.density) << '\n';
+	output << "momentum_x_drift="
+		<< (heatedFinal.momentumX - heatedInitial.momentumX) << '\n';
+	output << "momentum_y_drift="
+		<< (heatedFinal.momentumY - heatedInitial.momentumY) << '\n';
+	output << "momentum_drift=" << std::hypot(
+		heatedFinal.momentumX - heatedInitial.momentumX,
+		heatedFinal.momentumY - heatedInitial.momentumY) << '\n';
+	output << "energy_drift="
+		<< (heatedFinal.totalEnergyDensity - heatedInitial.totalEnergyDensity) << '\n';
+	output << "numerical_correction_count="
+		<< (summary.control.corrections.eventCount + summary.heated.corrections.eventCount) << '\n';
+	output << "correction_mass_added="
+		<< (summary.control.corrections.massAdded + summary.heated.corrections.massAdded) << '\n';
+	output << "correction_mass_removed="
+		<< (summary.control.corrections.massRemoved + summary.heated.corrections.massRemoved) << '\n';
+	output << "correction_momentum_x_added="
+		<< (summary.control.corrections.momentumXAdded
+			+ summary.heated.corrections.momentumXAdded) << '\n';
+	output << "correction_momentum_y_added="
+		<< (summary.control.corrections.momentumYAdded
+			+ summary.heated.corrections.momentumYAdded) << '\n';
+	output << "correction_energy_added="
+		<< (summary.control.corrections.energyAdded + summary.heated.corrections.energyAdded) << '\n';
+	output << "correction_energy_removed="
+		<< (summary.control.corrections.energyRemoved + summary.heated.corrections.energyRemoved) << '\n';
+	output << "density_floor_hits="
+		<< (summary.control.corrections.densityFloorHits
+			+ summary.heated.corrections.densityFloorHits) << '\n';
+	output << "pressure_floor_hits="
+		<< (summary.control.corrections.pressureFloorHits
+			+ summary.heated.corrections.pressureFloorHits) << '\n';
+	output << "correction_event_count="
+		<< (summary.control.corrections.eventCount + summary.heated.corrections.eventCount) << '\n';
+	WriteConvectionSubresult(output, "control", summary.control);
+	WriteConvectionSubresult(output, "heated", summary.heated);
+	output << "state_bytes_per_cell=" << sizeof(ConservativeState) << '\n';
+	output << "state_and_flux_scratch_bytes_per_cell="
+		<< summary.heated.stateAndFluxScratchBytesPerCell << '\n';
+	output << "state_and_flux_scratch_bytes_total="
+		<< summary.heated.stateAndFluxScratchBytesTotal << '\n';
+	output << "probe_passed=" << (summary.passed ? "true" : "false") << '\n';
+	return summary.passed;
 }
 
 } // namespace omni::atmospherebench

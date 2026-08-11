@@ -130,6 +130,10 @@ struct ConservationLedger
 	void End(const ConservativeState &state);
 	bool Closes(double tolerance) const;
 	bool ClosesWithSources(const ConservativeSourceLedger &sources, double tolerance) const;
+	bool ClosesWithSourcesAndBoundary(
+		const ConservativeSourceLedger &sources,
+		const ConservativeSourceLedger &boundary,
+		double tolerance) const;
 };
 
 struct BenchmarkResult

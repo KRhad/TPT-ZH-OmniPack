@@ -35,6 +35,8 @@ param(
 
     [switch] $RunHllc2DSealedHeating,
 
+    [switch] $RunHllc2DNaturalConvection,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -233,6 +235,7 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunHllcRusanovFallbackOpenBoundaryLeak,
 		$RunHllcRusanovFallbackPerformance,
 		$RunHllc2DUniform, $RunHllc2DPressurePulse, $RunHllc2DSealedHeating,
+		$RunHllc2DNaturalConvection,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -249,6 +252,7 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunHllcRusanovFallbackOpenBoundaryLeak `
 	-or $RunHllcRusanovFallbackPerformance `
 	-or $RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating `
+	-or $RunHllc2DNaturalConvection `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
@@ -273,6 +277,8 @@ $runMode = if ($RunRusanovPerformance) {
 	"hllc_2d_pressure_pulse"
 } elseif ($RunHllc2DSealedHeating) {
 	"hllc_2d_sealed_heating"
+} elseif ($RunHllc2DNaturalConvection) {
+	"hllc_2d_natural_convection"
 } elseif ($RunHllc2DUniform) {
 	"hllc_2d_uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -314,6 +320,8 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-hllc-2d-pressure-pulse"
 } elseif ($RunHllc2DSealedHeating) {
 	"--run-hllc-2d-sealed-heating"
+} elseif ($RunHllc2DNaturalConvection) {
+	"--run-hllc-2d-natural-convection"
 } elseif ($RunHllc2DUniform) {
 	"--run-hllc-2d-uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -351,7 +359,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
 foreach ($candidateLine in @(
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
-    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_probes|solver_implemented=true",
+    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -401,6 +409,67 @@ if (-not $isRusanovProbe) {
             throw "Uniform contract expected $ledgerKey=0"
         }
     }
+} elseif ($RunHllc2DNaturalConvection) {
+	$benchmarkKind = "atmospherebench_hllc_2d_natural_convection_probe"
+	$performanceGate = "not_evaluated_candidate_probe"
+	$timingScope = "standalone_hllc_2d_natural_convection_probe"
+	$candidateImplementations = "fvm_hllc_rusanov_fallback"
+	if ($solverResultStatus -ne "candidate_result_not_selection") {
+		throw "HLLC 2D natural-convection probe must not claim solver selection"
+	}
+	if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_hllc_rusanov_fallback" -or
+		(Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+		throw "HLLC 2D natural-convection candidate identity is invalid"
+	}
+	foreach ($probeKey in @{
+		"case_time_domain" = "nondimensional_contract"; "dimension" = "2";
+		"boundary_mode" = "sealed"; "grid_cells_x" = "32"; "grid_cells_y" = "24";
+		"grid_cell_count" = "768"; "cell_length" = "1"; "case_timestep" = "0.01";
+		"case_step_count" = "400"; "gravity_y" = "-0.04";
+		"hot_temperature_amplitude" = "0.5"; "circulation_observed" = "true";
+		"control_positivity_preserved" = "true"; "heated_positivity_preserved" = "true";
+		"control_source_ledger_closes" = "false"; "heated_source_ledger_closes" = "false";
+		"control_source_and_boundary_ledger_closes" = "true";
+		"heated_source_and_boundary_ledger_closes" = "true";
+		"control_source_event_count" = "307200"; "heated_source_event_count" = "307200";
+		"control_boundary_event_count" = "400"; "heated_boundary_event_count" = "400";
+		"control_flux_fallback_count" = "0"; "heated_flux_fallback_count" = "0";
+		"control_numerical_correction_count" = "0";
+		"heated_numerical_correction_count" = "0";
+		"control_probe_passed" = "true"; "heated_probe_passed" = "true";
+		"state_and_flux_scratch_bytes_total" = "124672"; "probe_passed" = "true"
+	}.GetEnumerator()) {
+		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+			throw "HLLC 2D natural-convection contract drifted: $($probeKey.Key)"
+		}
+	}
+	foreach ($prefix in @("control", "heated")) {
+		foreach ($positiveKey in @("minimum_density", "minimum_pressure", "maximum_cfl")) {
+			$value = [double](Read-KeyValue -Text $text -Key "${prefix}_${positiveKey}")
+			if ([double]::IsNaN($value) -or [double]::IsInfinity($value) -or
+				$value -le 0.0 -or ($positiveKey -eq "maximum_cfl" -and $value -gt 1.0)) {
+				throw "HLLC 2D natural-convection metric is invalid: ${prefix}_${positiveKey}"
+			}
+		}
+		foreach ($balanceKey in @(
+			"combined_mass_balance_error", "combined_momentum_x_balance_error",
+			"combined_momentum_y_balance_error", "combined_energy_balance_error")) {
+			if ([Math]::Abs([double](Read-KeyValue -Text $text -Key "${prefix}_${balanceKey}")) -gt 1e-8) {
+				throw "HLLC 2D natural-convection ledger exceeds tolerance: ${prefix}_${balanceKey}"
+			}
+		}
+	}
+	$thermalCenterRise = [double](Read-KeyValue -Text $text -Key "thermal_center_rise")
+	$thermalWeightedVelocityY = [double](Read-KeyValue -Text $text -Key "thermal_weighted_velocity_y")
+	$maximumUpwardVelocityDifference = [double](Read-KeyValue -Text $text -Key "maximum_upward_velocity_difference")
+	$minimumDownwardVelocityDifference = [double](Read-KeyValue -Text $text -Key "minimum_downward_velocity_difference")
+	$maximumAbsoluteVelocityDifference = [double](Read-KeyValue -Text $text -Key "maximum_absolute_velocity_difference")
+	if ($thermalCenterRise -lt 0.05 -or $thermalWeightedVelocityY -le 0.0 -or
+		$maximumUpwardVelocityDifference -le 1e-4 -or
+		$minimumDownwardVelocityDifference -ge -1e-4 -or
+		$maximumAbsoluteVelocityDifference -le 1e-4) {
+		throw "HLLC 2D natural-convection circulation signal is below its published threshold"
+	}
 } elseif ($RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating) {
     $isPulse = $RunHllc2DPressurePulse
 	$isHeating = $RunHllc2DSealedHeating
@@ -1076,6 +1145,7 @@ $finalMeanTemperature = $null
 $expectedFinalMeanPressure = $null
 $expectedFinalMeanTemperature = $null
 $sourceLedgerCloses = $null
+$sourceAndBoundaryLedgerCloses = $null
 $sourceMassNet = $null
 $sourceMomentumXNet = $null
 $sourceMomentumYNet = $null
@@ -1085,6 +1155,16 @@ $sourceMassBalanceError = $null
 $sourceMomentumXBalanceError = $null
 $sourceMomentumYBalanceError = $null
 $sourceEnergyBalanceError = $null
+$boundaryMassNet = $null
+$boundaryMomentumXNet = $null
+$boundaryMomentumYNet = $null
+$boundaryEnergyNet = $null
+$boundaryEventCount = $null
+$combinedMassBalanceError = $null
+$combinedMomentumXBalanceError = $null
+$combinedMomentumYBalanceError = $null
+$combinedEnergyBalanceError = $null
+$naturalConvection = $null
 $densityL1Error = $null
 $densityLinfError = $null
 $pressureLinfError = $null
@@ -1169,7 +1249,63 @@ if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
     $stateAndFluxScratchBytesPerCell = [double](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
-    if ($RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating) {
+	if ($RunHllc2DNaturalConvection) {
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+		$sourceLedgerCloses = (Read-KeyValue -Text $text -Key "heated_source_ledger_closes") -eq "true"
+		$sourceAndBoundaryLedgerCloses = (Read-KeyValue -Text $text -Key "heated_source_and_boundary_ledger_closes") -eq "true"
+		$sourceMassNet = [double](Read-KeyValue -Text $text -Key "heated_source_mass_net")
+		$sourceMomentumXNet = [double](Read-KeyValue -Text $text -Key "heated_source_momentum_x_net")
+		$sourceMomentumYNet = [double](Read-KeyValue -Text $text -Key "heated_source_momentum_y_net")
+		$sourceEnergyNet = [double](Read-KeyValue -Text $text -Key "heated_source_energy_net")
+		$sourceEventCount = [int](Read-KeyValue -Text $text -Key "heated_source_event_count")
+		$boundaryMassNet = [double](Read-KeyValue -Text $text -Key "heated_boundary_mass_net")
+		$boundaryMomentumXNet = [double](Read-KeyValue -Text $text -Key "heated_boundary_momentum_x_net")
+		$boundaryMomentumYNet = [double](Read-KeyValue -Text $text -Key "heated_boundary_momentum_y_net")
+		$boundaryEnergyNet = [double](Read-KeyValue -Text $text -Key "heated_boundary_energy_net")
+		$boundaryEventCount = [int](Read-KeyValue -Text $text -Key "heated_boundary_event_count")
+		$combinedMassBalanceError = [double](Read-KeyValue -Text $text -Key "heated_combined_mass_balance_error")
+		$combinedMomentumXBalanceError = [double](Read-KeyValue -Text $text -Key "heated_combined_momentum_x_balance_error")
+		$combinedMomentumYBalanceError = [double](Read-KeyValue -Text $text -Key "heated_combined_momentum_y_balance_error")
+		$combinedEnergyBalanceError = [double](Read-KeyValue -Text $text -Key "heated_combined_energy_balance_error")
+		$naturalConvection = [ordered]@{
+			gravity_y = [double](Read-KeyValue -Text $text -Key "gravity_y")
+			hot_temperature_amplitude = [double](Read-KeyValue -Text $text -Key "hot_temperature_amplitude")
+			initial_thermal_center_y = [double](Read-KeyValue -Text $text -Key "initial_thermal_center_y")
+			final_thermal_center_y = [double](Read-KeyValue -Text $text -Key "final_thermal_center_y")
+			thermal_center_rise = [double](Read-KeyValue -Text $text -Key "thermal_center_rise")
+			thermal_weighted_velocity_y = [double](Read-KeyValue -Text $text -Key "thermal_weighted_velocity_y")
+			control_maximum_absolute_velocity = [double](Read-KeyValue -Text $text -Key "control_maximum_absolute_velocity")
+			heated_maximum_upward_velocity = [double](Read-KeyValue -Text $text -Key "heated_maximum_upward_velocity")
+			heated_minimum_downward_velocity = [double](Read-KeyValue -Text $text -Key "heated_minimum_downward_velocity")
+			heated_maximum_absolute_velocity = [double](Read-KeyValue -Text $text -Key "heated_maximum_absolute_velocity")
+			maximum_upward_velocity_difference = [double](Read-KeyValue -Text $text -Key "maximum_upward_velocity_difference")
+			minimum_downward_velocity_difference = [double](Read-KeyValue -Text $text -Key "minimum_downward_velocity_difference")
+			maximum_absolute_velocity_difference = [double](Read-KeyValue -Text $text -Key "maximum_absolute_velocity_difference")
+			circulation_observed = (Read-KeyValue -Text $text -Key "circulation_observed") -eq "true"
+			control = [ordered]@{
+				minimum_density = [double](Read-KeyValue -Text $text -Key "control_minimum_density")
+				minimum_pressure = [double](Read-KeyValue -Text $text -Key "control_minimum_pressure")
+				maximum_cfl = [double](Read-KeyValue -Text $text -Key "control_maximum_cfl")
+				source_and_boundary_ledger_closes = (Read-KeyValue -Text $text -Key "control_source_and_boundary_ledger_closes") -eq "true"
+				source_momentum_y_net = [double](Read-KeyValue -Text $text -Key "control_source_momentum_y_net")
+				source_energy_net = [double](Read-KeyValue -Text $text -Key "control_source_energy_net")
+				boundary_momentum_y_net = [double](Read-KeyValue -Text $text -Key "control_boundary_momentum_y_net")
+				combined_momentum_y_balance_error = [double](Read-KeyValue -Text $text -Key "control_combined_momentum_y_balance_error")
+			}
+			heated = [ordered]@{
+				minimum_density = [double](Read-KeyValue -Text $text -Key "heated_minimum_density")
+				minimum_pressure = [double](Read-KeyValue -Text $text -Key "heated_minimum_pressure")
+				maximum_cfl = [double](Read-KeyValue -Text $text -Key "heated_maximum_cfl")
+				source_and_boundary_ledger_closes = $sourceAndBoundaryLedgerCloses
+				source_momentum_y_net = $sourceMomentumYNet
+				source_energy_net = $sourceEnergyNet
+				boundary_momentum_y_net = $boundaryMomentumYNet
+				combined_momentum_y_balance_error = $combinedMomentumYBalanceError
+			}
+		}
+    } elseif ($RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating) {
         $boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
         $cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
 		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
@@ -1185,6 +1321,7 @@ if ($isRusanovProbe) {
 		$pressureIncreased = (Read-KeyValue -Text $text -Key "pressure_increased") -eq "true"
 		$temperatureIncreased = (Read-KeyValue -Text $text -Key "temperature_increased") -eq "true"
 		$sourceLedgerCloses = (Read-KeyValue -Text $text -Key "source_ledger_closes") -eq "true"
+		$sourceAndBoundaryLedgerCloses = (Read-KeyValue -Text $text -Key "source_and_boundary_ledger_closes") -eq "true"
 		$sourceMassNet = [double](Read-KeyValue -Text $text -Key "source_mass_net")
 		$sourceMomentumXNet = [double](Read-KeyValue -Text $text -Key "source_momentum_x_net")
 		$sourceMomentumYNet = [double](Read-KeyValue -Text $text -Key "source_momentum_y_net")
@@ -1194,6 +1331,15 @@ if ($isRusanovProbe) {
 		$sourceMomentumXBalanceError = [double](Read-KeyValue -Text $text -Key "source_momentum_x_balance_error")
 		$sourceMomentumYBalanceError = [double](Read-KeyValue -Text $text -Key "source_momentum_y_balance_error")
 		$sourceEnergyBalanceError = [double](Read-KeyValue -Text $text -Key "source_energy_balance_error")
+		$boundaryMassNet = [double](Read-KeyValue -Text $text -Key "boundary_mass_net")
+		$boundaryMomentumXNet = [double](Read-KeyValue -Text $text -Key "boundary_momentum_x_net")
+		$boundaryMomentumYNet = [double](Read-KeyValue -Text $text -Key "boundary_momentum_y_net")
+		$boundaryEnergyNet = [double](Read-KeyValue -Text $text -Key "boundary_energy_net")
+		$boundaryEventCount = [int](Read-KeyValue -Text $text -Key "boundary_event_count")
+		$combinedMassBalanceError = [double](Read-KeyValue -Text $text -Key "combined_mass_balance_error")
+		$combinedMomentumXBalanceError = [double](Read-KeyValue -Text $text -Key "combined_momentum_x_balance_error")
+		$combinedMomentumYBalanceError = [double](Read-KeyValue -Text $text -Key "combined_momentum_y_balance_error")
+		$combinedEnergyBalanceError = [double](Read-KeyValue -Text $text -Key "combined_energy_balance_error")
 		if ($RunHllc2DSealedHeating) {
 			$expectedFinalMeanPressure = [double](Read-KeyValue -Text $text -Key "expected_final_mean_pressure")
 			$expectedFinalMeanTemperature = [double](Read-KeyValue -Text $text -Key "expected_final_mean_temperature")
@@ -1367,12 +1513,14 @@ if ($isRusanovProbe) {
 }
 $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
-	"No HLLE, LBM, gravity, production TPT wall-coupling, or multi-species candidate is implemented in this scaffold."
+	"No HLLE, LBM, production TPT wall-coupling, or multi-species candidate is implemented in this scaffold."
 )
 if ($RunRusanovPerformance) {
 	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
+} elseif ($RunHllc2DNaturalConvection) {
+	$limitations += "HLLC has one nondimensional strict-double 2D gravity/control natural-convection probe with explicit source and wall-exchange ledgers; it is not a well-balanced proof, physical-time, material-property, production TPT wall, performance or solver-selection result."
 } elseif ($RunHllc2DSealedHeating) {
 	$limitations += "HLLC has one nondimensional strict-double 2D sealed uniform-heating result with an explicit applied-source ledger; it is not physical-time, material-property, TPT wall, performance or solver-selection evidence."
 } elseif ($RunHllc2DPressurePulse) {
@@ -1567,6 +1715,7 @@ $result = [ordered]@{
     }
 	conservative_source_ledger = [ordered]@{
 		closes = $sourceLedgerCloses
+		closes_with_boundary = $sourceAndBoundaryLedgerCloses
 		mass_net = $sourceMassNet
 		momentum_x_net = $sourceMomentumXNet
 		momentum_y_net = $sourceMomentumYNet
@@ -1577,6 +1726,18 @@ $result = [ordered]@{
 		momentum_y_balance_error = $sourceMomentumYBalanceError
 		energy_balance_error = $sourceEnergyBalanceError
 	}
+	boundary_exchange_ledger = [ordered]@{
+		mass_net = $boundaryMassNet
+		momentum_x_net = $boundaryMomentumXNet
+		momentum_y_net = $boundaryMomentumYNet
+		energy_net = $boundaryEnergyNet
+		event_count = $boundaryEventCount
+		combined_mass_balance_error = $combinedMassBalanceError
+		combined_momentum_x_balance_error = $combinedMomentumXBalanceError
+		combined_momentum_y_balance_error = $combinedMomentumYBalanceError
+		combined_energy_balance_error = $combinedEnergyBalanceError
+	}
+	natural_convection = $naturalConvection
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
         timing_scope = $timingScope
