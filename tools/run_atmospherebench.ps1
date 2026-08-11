@@ -134,7 +134,8 @@ function Read-KeyValue {
     return $match.Groups[1].Value
 }
 
-$gitCommand = (Get-Command -Name $GitExecutable -CommandType Application -ErrorAction Stop).Source
+$gitCommands = @(Get-Command -Name $GitExecutable -CommandType Application -ErrorAction Stop)
+$gitCommand = [string]$gitCommands[0].Source
 $sourceState = Get-SourceState -Repository $sourceRoot -GitCommand $gitCommand
 $buildSystemFilesPath = Join-Path $resolvedBuildDirectory "meson-info/intro-buildsystem_files.json"
 if (-not (Test-Path -LiteralPath $buildSystemFilesPath -PathType Leaf)) {

@@ -37,6 +37,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
 
     def test_runner_records_its_explicit_git_provenance(self) -> None:
         self.assertIn("[string] $GitExecutable = \"git\"", RUNNER)
+        self.assertIn("$gitCommands[0].Source", RUNNER)
         self.assertIn("git_executable = $gitCommand", RUNNER)
         self.assertIn("git_sha256 = Get-Sha256 -Path $gitCommand", RUNNER)
 
