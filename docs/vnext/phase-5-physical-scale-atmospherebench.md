@@ -331,3 +331,10 @@ atmosphere_solver_selection=unselected
 The lower-Mach cases show non-monotone variation and unacceptable error. The
 candidate is retained as negative evidence and a debug comparison, not as the
 Enhanced solver.
+
+The clean source package for the documented checkpoint is
+`artifacts/vnext-phase5-source-9b7e7d095/`, SHA-256
+`553FA58C897715099B47B8B1E500F0FAE51336CFEC99DA2A1787754CC5E44387`.
+The archive has `1304` entries (`1303` source members plus the source manifest),
+contains all required AtmosphereBench sources and runner, and includes zero test
+assets.

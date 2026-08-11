@@ -153,6 +153,11 @@ is false (`very_low_density_l1_error=0.10116`, TV ratio `1.46479`). This is a
 negative result; solver selection remains unselected and no production
 Atmosphere implementation is authorized.
 
+The clean source package for this checkpoint is
+`artifacts/vnext-phase5-source-9b7e7d095/`, SHA-256
+`553FA58C897715099B47B8B1E500F0FAE51336CFEC99DA2A1787754CC5E44387`,
+with zero test assets.
+
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical
 ledger feasibility audit, record-only runtime lifecycle observer, audited-Air-cap

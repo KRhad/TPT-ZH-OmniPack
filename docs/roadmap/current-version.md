@@ -93,6 +93,12 @@ total-variation ratio is `1.46479`. The clean runner bound the result to the
 current commit and Meson target; no Sod/near-vacuum extension was claimed after
 this mandatory Low-Mach gate failed.
 
+The corresponding clean source checkpoint is
+`artifacts/vnext-phase5-source-9b7e7d095/`, SHA-256
+`553FA58C897715099B47B8B1E500F0FAE51336CFEC99DA2A1787754CC5E44387`.
+It contains `1303` source members plus `SOURCE-MANIFEST.txt`, includes the
+AtmosphereBench sources/runner, and contains zero test assets.
+
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the
 1.0.3 [UI checkpoint](../vnext/phase-3-ui-material-organization.md), and the

@@ -512,5 +512,9 @@ Since the mandatory Low-Mach gate failed, no Sod, near-vacuum, boundary or
 performance claims are attached to this candidate. HLLE and LBM remain
 `registered_only`.
 
+Clean source package: `artifacts/vnext-phase5-source-9b7e7d095/`, SHA-256
+`553FA58C897715099B47B8B1E500F0FAE51336CFEC99DA2A1787754CC5E44387`,
+`1303` source members plus manifest, zero test assets.
+
 Rollback commit: `18ddcec3f` restores the documented pre-leak/performance
 Rusanov checkpoint.
