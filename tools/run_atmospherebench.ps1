@@ -49,6 +49,8 @@ param(
 
     [switch] $RunLegacyLikePressurePulse,
 
+    [switch] $RunHybridAllSpeedPolicy,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -194,6 +196,7 @@ if ($benchCommands.Count -lt 2) {
 $expectedBenchSources = @(
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/AtmosphereBench.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Hllc2D.cpp")),
+    [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/HybridPolicy1D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/LbmD2Q9.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/LegacyLike.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Rusanov1D.cpp")),
@@ -253,6 +256,7 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunHllc2DNaturalConvection, $RunHllc2DSpeciesMixing, $RunHllc2DPerformance,
 		$RunLbmD2Q9Uniform, $RunLbmD2Q9ShearWave,
 		$RunLegacyLikeUniform, $RunLegacyLikePressurePulse,
+		$RunHybridAllSpeedPolicy,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -272,9 +276,11 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunHllc2DNaturalConvection -or $RunHllc2DSpeciesMixing -or $RunHllc2DPerformance `
 	-or $RunLbmD2Q9Uniform -or $RunLbmD2Q9ShearWave `
 	-or $RunLegacyLikeUniform -or $RunLegacyLikePressurePulse `
+	-or $RunHybridAllSpeedPolicy `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $isLbmProbe = $RunLbmD2Q9Uniform -or $RunLbmD2Q9ShearWave
 $isLegacyLikeProbe = $RunLegacyLikeUniform -or $RunLegacyLikePressurePulse
+$isHybridPolicyProbe = $RunHybridAllSpeedPolicy
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
 	"rusanov_performance"
@@ -312,6 +318,8 @@ $runMode = if ($RunRusanovPerformance) {
 	"legacy_like_uniform"
 } elseif ($RunLegacyLikePressurePulse) {
 	"legacy_like_pressure_pulse"
+} elseif ($RunHybridAllSpeedPolicy) {
+	"hybrid_all_speed_policy"
 } elseif ($RunHllc2DUniform) {
 	"hllc_2d_uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -367,6 +375,8 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-legacy-like-uniform"
 } elseif ($RunLegacyLikePressurePulse) {
 	"--run-legacy-like-pressure-pulse"
+} elseif ($RunHybridAllSpeedPolicy) {
+	"--run-hybrid-all-speed-policy"
 } elseif ($RunHllc2DUniform) {
 	"--run-hllc-2d-uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -406,6 +416,7 @@ foreach ($candidateLine in @(
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
     "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes|solver_implemented=true",
+    "candidate=hybrid_all_speed_event_local|status=implemented_uncoupled_low_mach_transport_and_whole_case_hllc_sod_policy_probe_not_solver|solver_implemented=false",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=implemented_isothermal_uniform_shear_wave_only|solver_implemented=true"
 )) {
@@ -455,6 +466,60 @@ if (-not $isRusanovProbe) {
             throw "Uniform contract expected $ledgerKey=0"
         }
     }
+} elseif ($isHybridPolicyProbe) {
+	$benchmarkKind = "atmospherebench_hybrid_all_speed_policy_probe"
+	$performanceGate = "not_evaluated_uncoupled_policy_probe"
+	$timingScope = "standalone_uncoupled_hybrid_policy_probe"
+	$candidateImplementations = "hybrid_all_speed_event_local"
+	if ($solverResultStatus -ne "policy_probe_not_solver_selection") {
+		throw "Hybrid policy probe must not claim solver selection"
+	}
+	foreach ($probeKey in @{
+		"candidate" = "hybrid_all_speed_event_local";
+		"candidate_solver_implemented" = "false";
+		"policy_probe_implemented" = "true";
+		"physical_time_policy" = "unselected";
+		"low_mach_bulk_route" = "conservative_constant_pressure_transport";
+		"compressible_event_route" = "hllc_rusanov_fallback_whole_case";
+		"cross_route_boundary_coupling" = "not_implemented";
+		"event_local_subcycling" = "not_implemented";
+		"production_boundary_coupling" = "not_implemented";
+		"low_mach_route_count" = "3"; "compressible_route_count" = "1";
+		"low_mach_suitability_passed" = "true";
+		"compressible_sod_passed" = "true";
+		"compressible_sod_shock_reference_passed" = "true";
+		"compressible_sod_flux_fallback_count" = "0";
+		"compressible_sod_correction_count" = "0";
+		"policy_selection_ready" = "false";
+		"candidate_disposition" = "continue_coupling_evaluation";
+		"benchmark_execution_status" = "PASS";
+		"probe_passed" = "true";
+		"numerical_correction_count" = "0";
+		"state_bytes_per_cell" = "32";
+		"state_and_flux_scratch_bytes_per_cell" = "96";
+		"state_and_flux_scratch_bytes_total" = "12288"
+	}.GetEnumerator()) {
+		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+			throw "Hybrid policy contract drifted: $($probeKey.Key)"
+		}
+	}
+	foreach ($metricKey in @(
+		"moderate_density_l1_error", "low_density_l1_error", "very_low_density_l1_error",
+		"moderate_total_variation_ratio", "low_total_variation_ratio", "very_low_total_variation_ratio")) {
+		$metric = [double](Read-KeyValue -Text $text -Key $metricKey)
+		if ([double]::IsNaN($metric) -or [double]::IsInfinity($metric) -or $metric -le 0.0) {
+			throw "Hybrid policy metric is invalid: $metricKey"
+		}
+	}
+	if ([double](Read-KeyValue -Text $text -Key "very_low_density_l1_error") -gt 0.05 -or
+		[double](Read-KeyValue -Text $text -Key "very_low_total_variation_ratio") -lt 0.8) {
+		throw "Hybrid low-Mach transport exceeded the unchanged suitability threshold"
+	}
+	foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift")) {
+		if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-9) {
+			throw "Hybrid low-Mach transport drift exceeds tolerance: $driftKey"
+		}
+	}
 } elseif ($isLegacyLikeProbe) {
 	$isPulse = $RunLegacyLikePressurePulse
 	$benchmarkKind = if ($isPulse) {
@@ -1625,6 +1690,7 @@ $lbmNearVacuumSupport = $null
 $lbmShockSupport = $null
 $lbmSpeciesSupport = $null
 $legacyLike = $null
+$hybridPolicy = $null
 if ($isRusanovProbe) {
 	$stateDensity = if ($isLegacyLikeProbe) {
 		$null
@@ -1633,7 +1699,39 @@ if ($isRusanovProbe) {
 	}
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
     $stateAndFluxScratchBytesPerCell = [double](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
-	if ($isLegacyLikeProbe) {
+	if ($isHybridPolicyProbe) {
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+		$moderateDensityL1 = [double](Read-KeyValue -Text $text -Key "moderate_density_l1_error")
+		$lowDensityL1 = [double](Read-KeyValue -Text $text -Key "low_density_l1_error")
+		$veryLowDensityL1 = [double](Read-KeyValue -Text $text -Key "very_low_density_l1_error")
+		$moderateTv = [double](Read-KeyValue -Text $text -Key "moderate_total_variation_ratio")
+		$lowTv = [double](Read-KeyValue -Text $text -Key "low_total_variation_ratio")
+		$veryLowTv = [double](Read-KeyValue -Text $text -Key "very_low_total_variation_ratio")
+		$hybridPolicy = [ordered]@{
+			low_mach_bulk_route = Read-KeyValue -Text $text -Key "low_mach_bulk_route"
+			compressible_event_route = Read-KeyValue -Text $text -Key "compressible_event_route"
+			cross_route_boundary_coupling = Read-KeyValue -Text $text -Key "cross_route_boundary_coupling"
+			event_local_subcycling = Read-KeyValue -Text $text -Key "event_local_subcycling"
+			production_boundary_coupling = Read-KeyValue -Text $text -Key "production_boundary_coupling"
+			low_mach_route_count = [int](Read-KeyValue -Text $text -Key "low_mach_route_count")
+			compressible_route_count = [int](Read-KeyValue -Text $text -Key "compressible_route_count")
+			low_mach_suitability_passed = (Read-KeyValue -Text $text -Key "low_mach_suitability_passed") -eq "true"
+			compressible_sod_passed = (Read-KeyValue -Text $text -Key "compressible_sod_passed") -eq "true"
+			compressible_sod_shock_reference_passed = (Read-KeyValue -Text $text -Key "compressible_sod_shock_reference_passed") -eq "true"
+			compressible_sod_flux_fallback_count = [int](Read-KeyValue -Text $text -Key "compressible_sod_flux_fallback_count")
+			compressible_sod_correction_count = [int](Read-KeyValue -Text $text -Key "compressible_sod_correction_count")
+			moderate_density_l1_error = $moderateDensityL1
+			low_density_l1_error = $lowDensityL1
+			very_low_density_l1_error = $veryLowDensityL1
+			moderate_total_variation_ratio = $moderateTv
+			low_total_variation_ratio = $lowTv
+			very_low_total_variation_ratio = $veryLowTv
+			policy_selection_ready = (Read-KeyValue -Text $text -Key "policy_selection_ready") -eq "true"
+			candidate_disposition = Read-KeyValue -Text $text -Key "candidate_disposition"
+		}
+	} elseif ($isLegacyLikeProbe) {
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
 		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
 		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
@@ -2084,6 +2182,8 @@ if ($RunRusanovPerformance) {
 	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
+} elseif ($isHybridPolicyProbe) {
+	$limitations += "Hybrid policy evidence combines a conservative constant-pressure low-Mach transport fixture with a separate whole-case HLLC Sod fixture; cross-route boundary coupling, event-local subcycling and production boundaries are not implemented, so this is not solver or physical-time selection."
 } elseif ($isLegacyLikeProbe) {
 	$limitations += "Legacy-like is a standalone dimensionless pressure/velocity control stencil, not production Legacy Air equivalence; it has no physical mass, density, momentum-density, energy, species, EOS, vacuum or conservation state."
 } elseif ($isLbmProbe) {
@@ -2315,6 +2415,7 @@ $result = [ordered]@{
 	hllc_2d_performance = $hllc2DPerformance
 	lbm_d2q9 = $lbmD2Q9
 	legacy_like = $legacyLike
+	hybrid_policy = $hybridPolicy
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
         timing_scope = $timingScope

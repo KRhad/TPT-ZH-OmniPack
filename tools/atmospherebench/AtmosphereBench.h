@@ -154,6 +154,7 @@ enum class CandidateKind
 	RusanovFvm,
 	AllSpeedRusanovFvm,
 	HllcRusanovFallbackFvm,
+	HybridAllSpeedPolicy,
 	HlleFvm,
 	LbmD2Q9,
 };
@@ -166,7 +167,7 @@ struct CandidateDescriptor
 	bool solverImplemented;
 };
 
-const std::array<CandidateDescriptor, 6> &Candidates();
+const std::array<CandidateDescriptor, 7> &Candidates();
 const BenchmarkCase &UniformContractCase();
 BenchmarkResult MakeUniformContractResult();
 

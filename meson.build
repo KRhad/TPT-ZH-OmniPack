@@ -671,6 +671,7 @@ atmospherebench = executable(
 	sources: files(
 		'tools/atmospherebench/AtmosphereBench.cpp',
 		'tools/atmospherebench/Hllc2D.cpp',
+		'tools/atmospherebench/HybridPolicy1D.cpp',
 		'tools/atmospherebench/LbmD2Q9.cpp',
 		'tools/atmospherebench/LegacyLike.cpp',
 		'tools/atmospherebench/Rusanov1D.cpp',
@@ -882,6 +883,14 @@ test(
 	'atmospherebench-legacy-like-pressure-pulse',
 	atmospherebench,
 	args: [ '--run-legacy-like-pressure-pulse' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'atmospherebench-hybrid-all-speed-policy',
+	atmospherebench,
+	args: [ '--run-hybrid-all-speed-policy' ],
 	suite: 'static',
 	timeout: 60,
 )

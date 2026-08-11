@@ -1,5 +1,6 @@
 #include "AtmosphereBench.h"
 #include "Hllc2D.h"
+#include "HybridPolicy1D.h"
 #include "LbmD2Q9.h"
 #include "LegacyLike.h"
 #include "Rusanov1D.h"
@@ -229,9 +230,9 @@ bool BenchmarkResult::IsContractOnly() const
 		&& stateBytesPerCell == sizeof(ConservativeState) && corrections.IsEmpty();
 }
 
-const std::array<CandidateDescriptor, 6> &Candidates()
+const std::array<CandidateDescriptor, 7> &Candidates()
 {
-	static const std::array<CandidateDescriptor, 6> candidates{{
+	static const std::array<CandidateDescriptor, 7> candidates{{
 		{CandidateKind::LegacyLike, "legacy_like",
 			"implemented_dimensionless_uniform_pressure_pulse_control_only", true},
 		{CandidateKind::RusanovFvm, "fvm_rusanov",
@@ -240,6 +241,8 @@ const std::array<CandidateDescriptor, 6> &Candidates()
 			"implemented_1d_low_mach_probe_rejected", true},
 		{CandidateKind::HllcRusanovFallbackFvm, "fvm_hllc_rusanov_fallback",
 			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes", true},
+		{CandidateKind::HybridAllSpeedPolicy, "hybrid_all_speed_event_local",
+			"implemented_uncoupled_low_mach_transport_and_whole_case_hllc_sod_policy_probe_not_solver", false},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9",
 			"implemented_isothermal_uniform_shear_wave_only", true},
@@ -305,6 +308,7 @@ bool RunSelfTest(std::ostream &output)
 	const auto lbmD2Q9ShearWave = RunLbmD2Q9ShearWave();
 	const auto legacyLikeUniform = RunLegacyLikeUniform();
 	const auto legacyLikePressurePulse = RunLegacyLikePressurePulse();
+	const auto hybridPolicy = RunHybridAllSpeedPolicyProbe();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -343,7 +347,7 @@ bool RunSelfTest(std::ostream &output)
 		&& Near(primitive.pressure, 4.0, 1e-12)
 		&& Near(primitive.velocityX, 3.0, 1e-12)
 		&& Near(primitive.velocityY, -2.0, 1e-12)
-		&& ledger.Closes(1e-12) && candidates.size() == 6
+		&& ledger.Closes(1e-12) && candidates.size() == 7
 		&& uniformCase.IsValid() && uniformCase.grid.CellCount() == 12
 		&& uniformResult.IsContractOnly() && !invalidGrid.IsValid()
 		&& !invalidCase.IsValid() && !nonEmptyCorrections.IsEmpty()
@@ -387,6 +391,7 @@ bool RunSelfTest(std::ostream &output)
 		&& lbmD2Q9ShearWave.passed
 		&& legacyLikeUniform.passed
 		&& legacyLikePressurePulse.passed
+		&& hybridPolicy.passed && !hybridPolicy.policySelectionReady
 		&& rusanovOpenLeak.passed
 		&& implementedCandidatesMatch;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
@@ -443,6 +448,10 @@ bool RunSelfTest(std::ostream &output)
 		<< (legacyLikeUniform.passed ? "PASS" : "FAIL") << '\n';
 	output << "LEGACY_LIKE_PRESSURE_PULSE_PROBE="
 		<< (legacyLikePressurePulse.passed ? "PASS" : "FAIL") << '\n';
+	output << "HYBRID_ALL_SPEED_POLICY_PROBE="
+		<< (hybridPolicy.passed ? "PASS" : "FAIL") << '\n';
+	output << "HYBRID_ALL_SPEED_POLICY_SELECTION_READY="
+		<< (hybridPolicy.policySelectionReady ? "TRUE" : "FALSE") << '\n';
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";

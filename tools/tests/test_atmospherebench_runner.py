@@ -152,6 +152,9 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn("legacy_like = $legacyLike", RUNNER)
         self.assertIn("if ($isLegacyLikeProbe) { $null }", RUNNER)
         self.assertIn("not production Legacy Air equivalence", RUNNER)
+        self.assertIn("Hybrid policy probe must not claim solver selection", RUNNER)
+        self.assertIn("cross-route boundary coupling", RUNNER)
+        self.assertIn("hybrid_policy = $hybridPolicy", RUNNER)
         self.assertIn("source_and_boundary_ledger_closes", RUNNER)
         self.assertIn("boundary_exchange_ledger", RUNNER)
         self.assertIn('"eos_gamma" = "1.4"', RUNNER)
@@ -173,6 +176,7 @@ class AtmosphereBenchRunnerContractTests(unittest.TestCase):
         self.assertIn('candidate=fvm_hlle|status=registered_only|solver_implemented=false', RUNNER)
         self.assertIn('candidate=lbm_d2q9|status=implemented_isothermal_uniform_shear_wave_only|solver_implemented=true', RUNNER)
         self.assertIn('candidate=legacy_like|status=implemented_dimensionless_uniform_pressure_pulse_control_only|solver_implemented=true', RUNNER)
+        self.assertIn('candidate=hybrid_all_speed_event_local|status=implemented_uncoupled_low_mach_transport_and_whole_case_hllc_sod_policy_probe_not_solver|solver_implemented=false', RUNNER)
         self.assertIn('candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true', RUNNER)
         self.assertIn('candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes|solver_implemented=true', RUNNER)
 
