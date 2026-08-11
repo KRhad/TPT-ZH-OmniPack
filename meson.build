@@ -689,6 +689,33 @@ atmospherebench = executable(
 	],
 )
 
+atmosphere_precision_double_strict = executable(
+	'atmosphere_precision_double_strict',
+	sources: files('tools/atmospherebench/PrecisionMatrix.cpp'),
+	cpp_args: atmospherebench_cpp_args + [ '-DOMNI_PRECISION_DOUBLE_STRICT=1' ],
+	override_options: [ 'cpp_std=c++20', 'b_ndebug=false', 'b_lto=false' ],
+)
+
+atmosphere_precision_float_strict = executable(
+	'atmosphere_precision_float_strict',
+	sources: files('tools/atmospherebench/PrecisionMatrix.cpp'),
+	cpp_args: atmospherebench_cpp_args + [ '-DOMNI_PRECISION_FLOAT_STRICT=1' ],
+	override_options: [ 'cpp_std=c++20', 'b_ndebug=false', 'b_lto=false' ],
+)
+
+atmosphere_precision_float_fast_args = [ '-DOMNI_PRECISION_FLOAT_FAST=1' ]
+if cpp_compiler.get_argument_syntax() == 'msvc'
+	atmosphere_precision_float_fast_args += [ '/fp:fast' ]
+else
+	atmosphere_precision_float_fast_args += [ '-ffast-math' ]
+endif
+atmosphere_precision_float_fast = executable(
+	'atmosphere_precision_float_fast',
+	sources: files('tools/atmospherebench/PrecisionMatrix.cpp'),
+	cpp_args: atmosphere_precision_float_fast_args,
+	override_options: [ 'cpp_std=c++20', 'b_ndebug=false', 'b_lto=false' ],
+)
+
 test(
 	'atmospherebench-contract',
 	atmospherebench,
@@ -696,6 +723,13 @@ test(
 	suite: 'static',
 	timeout: 60,
 )
+
+test('atmosphere-precision-double-strict', atmosphere_precision_double_strict,
+	suite: 'static')
+test('atmosphere-precision-float-strict', atmosphere_precision_float_strict,
+	suite: 'static')
+test('atmosphere-precision-float-fast', atmosphere_precision_float_fast,
+	suite: 'static')
 
 test(
 	'atmospherebench-rusanov-uniform',

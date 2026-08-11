@@ -51,6 +51,10 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-rusanov-uniform' ]", target)
         self.assertIn("'atmospherebench-rusanov-pressure-pulse'", target)
         self.assertIn("args: [ '--run-rusanov-pressure-pulse' ]", target)
+        self.assertIn("atmosphere_precision_double_strict", target)
+        self.assertIn("atmosphere_precision_float_strict", target)
+        self.assertIn("atmosphere_precision_float_fast", target)
+        self.assertIn("-ffast-math", target)
         self.assertIn("'atmospherebench-rusanov-density-advection'", target)
         self.assertIn("args: [ '--run-rusanov-density-advection' ]", target)
         self.assertIn("'atmospherebench-hybrid-mixed-region'", target)
@@ -333,6 +337,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/LbmD2Q9.h",
             "tools/atmospherebench/LegacyLike.cpp",
             "tools/atmospherebench/LegacyLike.h",
+            "tools/atmospherebench/PrecisionMatrix.cpp",
             "tools/atmospherebench/HybridPolicy1D.cpp",
             "tools/atmospherebench/HybridPolicy1D.h",
             "tools/atmospherebench/HybridMixedRegion1D.cpp",
@@ -341,6 +346,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/HybridMixedRegion2D.h",
             "tools/atmospherebench/Species2D.cpp",
             "tools/atmospherebench/Species2D.h",
+            "tools/run_atmosphere_precision_matrix.py",
         }
         required = tools | {
             "resources/omnicore/v1/physical-scale-candidates.json",

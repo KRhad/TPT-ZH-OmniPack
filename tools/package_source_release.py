@@ -42,6 +42,7 @@ ALLOWED_TOOLS = {
 	"tools/atmospherebench/LbmD2Q9.h",
 	"tools/atmospherebench/LegacyLike.cpp",
 	"tools/atmospherebench/LegacyLike.h",
+	"tools/atmospherebench/PrecisionMatrix.cpp",
 	"tools/atmospherebench/Species2D.cpp",
 	"tools/atmospherebench/Species2D.h",
     "tools/atmospherebench/main.cpp",
@@ -60,7 +61,8 @@ ALLOWED_TOOLS = {
     "tools/prepare_windows_release.py",
     "tools/refresh_official_element_descriptions.py",
     "tools/sync_element_localization.py",
-    "tools/run_atmospherebench.ps1",
+	"tools/run_atmospherebench.ps1",
+	"tools/run_atmosphere_precision_matrix.py",
 }
 ROOT_REPLACEMENTS = {
     "README.md": "docs/PUBLIC_GITHUB_README.md",
@@ -107,11 +109,13 @@ REQUIRED_MEMBERS = {
 	"tools/atmospherebench/LbmD2Q9.h",
 	"tools/atmospherebench/LegacyLike.cpp",
 	"tools/atmospherebench/LegacyLike.h",
+	"tools/atmospherebench/PrecisionMatrix.cpp",
 	"tools/atmospherebench/Species2D.cpp",
 	"tools/atmospherebench/Species2D.h",
     "tools/atmospherebench/main.cpp",
     "tools/atmospherebench/Rusanov1D.cpp",
-    "tools/atmospherebench/Rusanov1D.h",
+	"tools/atmospherebench/Rusanov1D.h",
+	"tools/run_atmosphere_precision_matrix.py",
 }
 FORBIDDEN_SUFFIXES = (
     ".debug",
