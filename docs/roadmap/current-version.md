@@ -141,11 +141,11 @@ validated at `83c5a0cd2`. A control-subtracted bottom thermal anomaly rises
 CFL `0.032`, record zero fallback/corrections and close source plus wall exchange
 within `8e-12`. It is not a well-balanced, physical-time or production-wall claim.
 
-The clean source package for the sealed-heating/source-ledger checkpoint is
-`artifacts/vnext-phase5-source-27ec4f161/`, SHA-256
-`793AB92E6975E28B4FCDB4E8A7FF6E6364F3ED53C40DCB6E7BA799918172F5C0`,
+The clean source package for the natural-convection checkpoint is
+`artifacts/vnext-phase5-source-20309c670/`, SHA-256
+`043746D179C1D2A0691FCA3C4A9AA728263E9B9C901301890928F992E9173529`,
 with `1306` source members plus manifest and zero test assets. The manifest binds
-revision `27ec4f16123860c3079619892b16861604776d92`.
+revision `20309c6703f210600a7f605e54790ab922ecc9c1`.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the
