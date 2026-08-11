@@ -5,7 +5,7 @@ CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
 PHASE_STATUS=IN_PROGRESS_REFERENCE_BUDGET_GREEN_TIME_POLICY_RED
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=c13660b8a1f60411f2d01bae84554a9053904766
+IMPLEMENTATION_HEAD=f337a079f9801c1cf2c0c140ef7771235a909d99
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -56,11 +56,13 @@ V1_0_5_LBM_D2Q9=GREEN_ISOTHERMAL_ONLY_UNIFORM_AND_SHEAR_WAVE_RELATIVE_ERROR_0_00
 V1_0_5_LEGACY_LIKE=GREEN_CONTROL_ONLY_UNIFORM_ZERO_CHANGE_PRESSURE_PULSE_PEAK_0_99005_TO_0_236479_PRESSURE_SUM_DRIFT_8_52651E_MINUS_13_ZERO_CORRECTIONS_32_STATE_64_WORKING_BYTES_PER_CELL_PHYSICAL_DRIFTS_NULL_COMMIT_696d0c958
 V1_0_5_REFERENCE_BUDGET=GREEN_4_1666667MS_PER_TICK_64_AUTHORITATIVE_256_WORKING_BYTES_PER_CELL_HLLC_1_69129MS_32_160_BYTES_MAX_2_SUBSTEPS_COMMIT_76300cd98
 V1_0_5_ACOUSTIC_POLICY=DIRECT_344MPS_60HZ_7167_SUBSTEPS_12121_47543MS_REJECTED_BUDGET_LIMIT_0_096MPS_UNIFORM_SCALING_REJECTED_DEFAULT_REALISM
-V1_0_5_HYBRID_COMPONENTS=GREEN_1D_2D_MIXED_LEDGER_NEAR_VACUUM_EVOLUTION_PASSIVE_SPECIES_EVOLUTION;PHYSICAL_DOMAIN_1434_CELLS;TARGET_MATRIX_OVER_BUDGET;PEAK_STATE_224_BYTES_PER_CELL;SOLVER_SELECTION_OPEN_COMMIT_c13660b8a
+V1_0_5_HYBRID_COMPONENTS=GREEN_1D_2D_MIXED_LEDGER_NEAR_VACUUM_EVOLUTION_PASSIVE_SPECIES_EVOLUTION;PHYSICAL_DOMAIN_1434_CELLS;TARGET_MATRIX_OVER_BUDGET;PEAK_STATE_224_BYTES_PER_CELL;SOLVER_SELECTION_OPEN_COMMIT_27f7847a
+V1_0_5_LOW_MACH_PROJECTION_2D=GREEN_ISOLATED_PERIODIC_JACOBI_COMPONENT_64X48_4000_ITERATIONS_DIVERGENCE_RATIO_4_98891E_MINUS_5_11_7071MS;PRODUCTION_NOT_IMPLEMENTED;SOLVER_UNSELECTED_COMMIT_c5641fe1
+V1_0_5_CLEAN_RUNNER=f337a079f;RESULT_SHA256_C1C15D54456D5D5FFCB37551DD27AF321F925AFE68FDF3864699C89663544887;SOURCE_PACKAGE_SHA256_BFEC6F8D81A5044D95065CA140BEBA1C2315CE671127235AFE16B55000679889;SOURCE_MEMBERS_1331;TEST_ASSETS_0
 V1_0_5_PRECISION_MATRIX=RECORDED_STRICT_DOUBLE_STRICT_FLOAT_FAST_FLOAT_POSITIVE;MAX_SIGNATURE_DELTA_1_70385E_MINUS_6_1_73887E_MINUS_6;FLOAT_DRIFT_NONZERO;FAST_MATH_SAFETY_SELECTED_FALSE_COMMIT_686ac8a94
 KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation semantics; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; selected PhysicalScale and physical-time policy; mixed-region hybrid router/reflux/event-local coupling; remaining mandatory solver and precision matrix
 NEXT_VERSION=1.0.6
-NEXT_PHASE=resolve physical scale/time and general low-Mach pressure policy, then finish solver selection gate
+NEXT_PHASE=resolve physical scale/time and general low-Mach pressure policy, then finish solver selection gate; low-mach projection component is evidence only
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -231,6 +233,15 @@ SHA-256 `CE15A5764DDC9A2E9949ED854A357F2E423FA35F37BAF1C244ED8EF1ED069C1B`.
 Full validation at the prior clean build is `638/638`, Meson static `73/73` and
 Python `429 total / 427 PASS / 2 skipped`. The current clean test-free source
 package is pending regeneration after this checkpoint.
+
+The isolated low-Mach pressure projection checkpoint is now recorded at
+`f337a079f`. A strict-double 64x48 periodic Jacobi component reduces divergence
+from `0.00722534` to `3.60466e-7` (`4.98891e-5` ratio) after 4000 iterations, but
+the component alone costs `11.7071 ms`, exceeds the `4.16667 ms` atmosphere
+budget, and has no physical-state conservation, compressible-event, production
+boundary or runtime integration. It therefore closes only a component sub-gate;
+physical scale/time and solver selection remain RED. See the
+[low-Mach projection checkpoint](../vnext/phase-5-low-mach-projection.md).
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the

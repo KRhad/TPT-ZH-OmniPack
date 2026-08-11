@@ -17,7 +17,8 @@ current 1D Low-Mach, near-vacuum, Sod and leak gates;
 Legacy-like now has executable uniform and pressure-pulse control results with
 all non-existent physical drift metrics recorded as not applicable / JSON null;
 the hybrid checkpoints now include bounded 1D and 2D mixed-region router/reflux
-proofs; physical acoustic domain is 1434 cells and the three-grid short-run matrix
+proofs plus an isolated 64x48 periodic Jacobi low-Mach pressure-projection
+component; physical acoustic domain is 1434 cells and the three-grid short-run matrix
 misses the 4.16667 ms reference budget, so physical-time selection remains RED;
 production Air replacement remains unauthorized.
 
@@ -37,7 +38,7 @@ OmniAtmosphere state or solver will be integrated yet.
 | 0 | latest upstream adaptation | 1.0.2 COMPLETE / GREEN: official stable/master unchanged at `d768aeb89`; no adaptation required |
 | 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
 | 2 | physical scale and unit system | 1.0.5 IN_PROGRESS: candidate contract scaffold; selection RED |
-| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Legacy-like, Rusanov/HLLC and isothermal D2Q9 have actual comparisons; direct real-acoustic explicit HLLC needs 7167 substeps and uniform 0.096 m/s scaling is rejected. Bounded 1D/2D mixed-region router/reflux probes pass ledgers, but 32x24 reaches event fraction 0.927083, physical acoustic domain is 1434 cells and 153x96/306x192/612x384 cost 5.56335/26.5715/106.711 ms versus 4.16667 ms budget. Near-vacuum/species routing, precision and physical-time selection remain RED |
+| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Legacy-like, Rusanov/HLLC and isothermal D2Q9 have actual comparisons; isolated 64x48 periodic Jacobi low-Mach projection reduces divergence by `4.98891e-5` but costs `11.7071 ms` for 4000 iterations and is component-only. Direct real-acoustic explicit HLLC needs 7167 substeps and uniform 0.096 m/s scaling is rejected. Bounded 1D/2D mixed-region router/reflux probes pass ledgers, but 32x24 reaches event fraction 0.927083, physical acoustic domain is 1434 cells and 153x96/306x192/612x384 cost 5.56335/26.5715/106.711 ms versus 4.16667 ms budget. Species EOS/diffusion, production coupling, precision policy and physical-time/solver selection remain RED |
 | 4 | solver selection | BLOCKED |
 | 5 | CPU single-species OmniAtmosphere MVP | BLOCKED |
 | 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
