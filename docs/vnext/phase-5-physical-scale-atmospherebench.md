@@ -640,3 +640,8 @@ Precision result SHA-256:
 `18937520D40262DB12B761CC5965B53522D5C076DDDB8E2D68A7A142C6392BA2`.
 This closes the first precision-comparison sub-gate, not the accepted tolerance,
 long-run or solver-selection gate.
+
+The post-review clean hybrid runner at `c13660b8a` also validates the corrected
+`224 bytes/cell` peak accounting and the 16-step near-vacuum plus 32-step passive
+species evolution fixtures. Artifact SHA-256:
+`D8D1E694BD0F998858DF186DC32923CCBF5D83838F0F837584194954823CDB11`.
