@@ -5,7 +5,7 @@ CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
 PHASE_STATUS=IN_PROGRESS_REFERENCE_BUDGET_GREEN_TIME_POLICY_RED
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=fd353819287cef3ee05db4f7d2a4309c1ba4924a
+IMPLEMENTATION_HEAD=ab273322d25bb3f76917ae9c0f024319c31fab3f
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -56,10 +56,10 @@ V1_0_5_LBM_D2Q9=GREEN_ISOTHERMAL_ONLY_UNIFORM_AND_SHEAR_WAVE_RELATIVE_ERROR_0_00
 V1_0_5_LEGACY_LIKE=GREEN_CONTROL_ONLY_UNIFORM_ZERO_CHANGE_PRESSURE_PULSE_PEAK_0_99005_TO_0_236479_PRESSURE_SUM_DRIFT_8_52651E_MINUS_13_ZERO_CORRECTIONS_32_STATE_64_WORKING_BYTES_PER_CELL_PHYSICAL_DRIFTS_NULL_COMMIT_696d0c958
 V1_0_5_REFERENCE_BUDGET=GREEN_4_1666667MS_PER_TICK_64_AUTHORITATIVE_256_WORKING_BYTES_PER_CELL_HLLC_1_69129MS_32_160_BYTES_MAX_2_SUBSTEPS_COMMIT_76300cd98
 V1_0_5_ACOUSTIC_POLICY=DIRECT_344MPS_60HZ_7167_SUBSTEPS_12121_47543MS_REJECTED_BUDGET_LIMIT_0_096MPS_UNIFORM_SCALING_REJECTED_DEFAULT_REALISM
-V1_0_5_HYBRID_COMPONENTS=GREEN_UNCOUPLED_AND_1D_MIXED_ROUTER_REFLUX_EVENT_LOCAL_CFL_MAX_0_272276_PROMOTIONS_1696_DEMOTIONS_1634_GLOBAL_LEDGER_GREEN_2D_PHYSICAL_BUDGET_OPEN_COMMIT_fd3538192
+V1_0_5_HYBRID_COMPONENTS=GREEN_1D_AND_2D_MIXED_ROUTER_REFLUX_EVENT_LOCAL_GLOBAL_LEDGER;2D_MAX_EVENT_FRACTION_0_927083_PHYSICAL_DOMAIN_1434_CELLS;TARGET_MATRIX_153X96_5_56335MS_306X192_26_5715MS_612X384_106_711MS_BUDGET_4_16667_REJECTED;SOLVER_SELECTION_OPEN_COMMIT_ab273322d
 KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation semantics; complete production source-sink/correction accounting; unsampled full-state positivity; process VRAM; selected PhysicalScale and physical-time policy; mixed-region hybrid router/reflux/event-local coupling; remaining mandatory solver and precision matrix
 NEXT_VERSION=1.0.6
-NEXT_PHASE=implement and compare an isolated hybrid/all-speed low-Mach plus event-local compressible policy candidate, then complete PhysicalScale and solver selection gates
+NEXT_PHASE=complete mandatory near-vacuum/species routing and strict-double/float/fast precision matrix, then finish PhysicalScale and solver selection gates
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -215,21 +215,21 @@ The clean source package for the current policy checkpoint is
 with `1319` source members plus manifest and zero test assets. The manifest binds
 revision `40facfdfa7da907e539b2eb109f78299167c4cd1`.
 
-The reviewed component implementation is `c63f4e652`; its component artifact
-remains valid as a standalone comparison. The follow-up `fd3538192` adds a
-single-domain 1D mixed-region router with promotion/demotion, cross-route HLLC
-faces, four event-local substeps and bulk reflux. Promotion `1696`, demotion
-`1634`, interface ledger and global ledger all pass; threshold scan passes, with
-zero fallback/correction events. The worst case promotes all 64 cells at some
-point (`maximum_event_fraction=1.0`), so no performance benefit is claimed.
-Overall `hybrid_end_to_end_passed=false` remains reserved for the unimplemented
-2D/physical policy. Full validation is build `620/620`, Meson static `72/72` and
-Python `428 total / 426 PASS / 2 skipped`. The current clean runner artifact is
-`artifacts/vnext-atmospherebench-hybrid-mixed-region/20260811T045949Z-9f874fff/result.json`,
-SHA-256 `861CB26AA846AE07E770880AD95878B4D9DDB7747526CA298D3CA23691CB2D07`.
-The clean test-free source package has `1324` source members plus manifest, zero
-test assets and SHA-256
-`ED71B5E45DAD84D847B199D7D563ECBB13B5E2FA39698246F73C32CE0B9FDFAF`.
+The reviewed 1D implementation is `fd3538192`; it remains a bounded coupling
+proof. Follow-up `ab273322d` adds a 2D X/Y mixed-region probe and a short-run
+`153x96 / 306x192 / 612x384` matrix. The 32x24 case reaches
+`maximum_event_fraction=0.927083`, while the matrix reaches
+`0.00599129 / 0.00149782 / 0.000374455`; all three matrix costs
+`5.56335 / 26.5715 / 106.711 ms per macro step` exceed the `4.16667 ms` reference
+budget. Physical acoustic domain is `1434` cells at the candidate scale, greater
+than the largest `612`-cell dimension. Interface/global ledgers, positivity,
+threshold scan and cross-route reflux pass, but `hybrid_end_to_end_passed=false`
+and solver selection remain unselected. Clean runner result:
+`artifacts/vnext-atmospherebench-hybrid-mixed-region-2d-matrix/20260811T061625Z-aaab4d37/result.json`,
+SHA-256 `CE15A5764DDC9A2E9949ED854A357F2E423FA35F37BAF1C244ED8EF1ED069C1B`.
+Full validation at the prior clean build is `638/638`, Meson static `73/73` and
+Python `429 total / 427 PASS / 2 skipped`. The current clean test-free source
+package is pending regeneration after this checkpoint.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the

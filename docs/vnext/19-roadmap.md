@@ -16,10 +16,9 @@ HLLC with Rusanov fallback is now the unselected front-runner after passing the
 current 1D Low-Mach, near-vacuum, Sod and leak gates;
 Legacy-like now has executable uniform and pressure-pulse control results with
 all non-existent physical drift metrics recorded as not applicable / JSON null;
-the uncoupled hybrid component checkpoint now has a follow-up 1D mixed-region
-router/reflux/event-local proof with promotion, demotion, hysteresis and global
-ledger closure; 2D, physical domain-of-dependence and target-grid cost remain
-explicitly open;
+the hybrid checkpoints now include bounded 1D and 2D mixed-region router/reflux
+proofs; physical acoustic domain is 1434 cells and the three-grid short-run matrix
+misses the 4.16667 ms reference budget, so physical-time selection remains RED;
 production Air replacement remains unauthorized.
 
 The official 100.1 source adaptation, explicit FP modes, fixed-step
@@ -38,7 +37,7 @@ OmniAtmosphere state or solver will be integrated yet.
 | 0 | latest upstream adaptation | 1.0.2 COMPLETE / GREEN: official stable/master unchanged at `d768aeb89`; no adaptation required |
 | 1 | Legacy characterization, regression, profiler, benchmark | 1.0.1 COMPLETE / GREEN version gate; global physical-ledger G0 remains RED |
 | 2 | physical scale and unit system | 1.0.5 IN_PROGRESS: candidate contract scaffold; selection RED |
-| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Legacy-like, Rusanov/HLLC and isothermal D2Q9 have actual comparisons; the Phase 5 reference-machine budget is accepted at 4.1667 ms/tick and 64/256 authoritative/working bytes per cell, but direct real-acoustic explicit HLLC needs 7167 substeps and is rejected, uniform acoustic scaling to 0.096 m/s is rejected as the default. A 1D mixed-region router/reflux/event-local probe passes, but its full-domain event worst case, 2D/domain-of-dependence, near-vacuum/species routing and target-grid budget remain RED |
+| 3 | AtmosphereBench | 1.0.5 IN_PROGRESS: Legacy-like, Rusanov/HLLC and isothermal D2Q9 have actual comparisons; direct real-acoustic explicit HLLC needs 7167 substeps and uniform 0.096 m/s scaling is rejected. Bounded 1D/2D mixed-region router/reflux probes pass ledgers, but 32x24 reaches event fraction 0.927083, physical acoustic domain is 1434 cells and 153x96/306x192/612x384 cost 5.56335/26.5715/106.711 ms versus 4.16667 ms budget. Near-vacuum/species routing, precision and physical-time selection remain RED |
 | 4 | solver selection | BLOCKED |
 | 5 | CPU single-species OmniAtmosphere MVP | BLOCKED |
 | 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
@@ -93,8 +92,9 @@ The next integration commits should be small and independently reversible:
    `13b24f49e`; offline contracts and clean validation are GREEN.
 15. `physical-scale-atmospherebench`: IN PROGRESS in 1.0.5; candidate scale,
    strict-double Rusanov/HLLC/LBM/Legacy-like comparisons, accepted reference
-   budget and a 1D mixed-region router/reflux/event-local proof exist. The next
-   bounded task is 2D/domain-of-dependence and target-grid budget evidence. Scale,
+   budget and bounded 1D/2D mixed-region router/reflux proofs exist. The three-grid
+   short-run matrix is recorded and rejects the current policy budget. The next
+   bounded task is near-vacuum/species routing plus precision evidence. Scale,
    time and solver selection remain RED.
 
 The mixed benchmark starts from the same generated Strict/Legacy hash; the later

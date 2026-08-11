@@ -591,3 +591,23 @@ sub-gate are GREEN. PhysicalScale, physical-time policy, 2D/domain-of-dependence
 near-vacuum/species routing, target-grid budget, remaining precision matrix,
 G0 physical-ledger semantics and formal solver selection remain RED/unselected.
 HLLE and LBM remain registration-only candidates; production Air is unchanged.
+
+## 2D hybrid and target-grid budget rejection
+
+Checkpoint `ab273322d` adds a periodic 2D mixed-region router/reflux probe and a
+short-run matrix for `153x96`, `306x192` and `612x384`. The bounded 32x24 fixture
+passes promotion/demotion, X/Y cross-route exchange, reflux, threshold scan,
+positivity and global conservation, but reaches maximum event fraction `0.927083`.
+
+At the candidate 4 mm atmosphere-cell scale, `344 m/s` over one `1/60 s` tick is
+`1434` cells. This exceeds the largest matrix dimension and keeps physical domain
+of dependence unimplemented. The matrix costs are `5.56335`, `26.5715` and
+`106.711 ms/macro step`, all above the `4.16667 ms` reference budget, despite
+small initial event fractions. Therefore the current hybrid implementation is a
+useful correctness probe but a rejected physical-time/default-performance policy.
+
+Clean result SHA-256 is
+`CE15A5764DDC9A2E9949ED854A357F2E423FA35F37BAF1C244ED8EF1ED069C1B`.
+`hybrid_mixed_region_2d_end_to_end_passed=true` applies only to this bounded
+benchmark; overall `hybrid_end_to_end_passed=false`, solver selection is
+unselected and 1.0.6 remains blocked.

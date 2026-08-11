@@ -172,3 +172,39 @@ interface and global ledgers, exercise promotion/demotion across both axes, and
 keep near-vacuum/species/physical-time boundaries explicit. Until that evidence,
 plus the remaining PhysicalScale and precision gates, passes, solver selection and
 1.0.6 remain blocked.
+
+## 2D and target-grid matrix follow-up
+
+Checkpoint `ab273322d` extends the bounded proof to X/Y routing and reflux. The
+`32x24` case records `764` promotions, `52` demotions, `63552` cross-route face
+applications, maximum event fraction `0.927083`, maximum CFL `0.00366532`, zero
+fallback/correction events and global/interface ledger closure within `3e-12`.
+
+The candidate physical mapping requires `1434` atmosphere cells of acoustic
+domain per `1/60 s` tick at `344 m/s` and `4 mm/cell`, exceeding even the largest
+`612`-cell matrix dimension. Short-run end-to-end matrix results are:
+
+| Grid | Event fraction | ms / macro step | Working bytes | 4.16667 ms budget |
+|---|---:|---:|---:|---|
+| 153x96 | 0.00599129 | 5.56335 | 2,350,080 | FAIL |
+| 306x192 | 0.00149782 | 26.5715 | 9,400,320 | FAIL |
+| 612x384 | 0.000374455 | 106.711 | 37,601,280 | FAIL |
+
+These are reference-machine short-run measurements, not release guarantees. They
+show that a small event fraction alone does not make this implementation fit the
+budget because the current benchmark still scans and allocates the full grid.
+`physical_event_local_domain_of_dependence=not_implemented`,
+`hybrid_end_to_end_passed=false`, `policy_selection_ready=false` and
+`V1_0_6=BLOCKED_BY_GATE` remain required.
+
+Clean runner evidence:
+
+```text
+artifact=artifacts/vnext-atmospherebench-hybrid-mixed-region-2d-matrix/20260811T061625Z-aaab4d37/result.json
+source_commit=ab273322d25bb3f76917ae9c0f024319c31fab3f
+source_dirty=false
+sha256=CE15A5764DDC9A2E9949ED854A357F2E423FA35F37BAF1C244ED8EF1ED069C1B
+```
+
+Validation: full build PASS (`638` compile actions), Meson static `73/73`, Python
+discovery `429 total / 427 PASS / 2 skipped`, PowerShell parse and diff check PASS.
