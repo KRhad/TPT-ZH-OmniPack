@@ -109,6 +109,11 @@ cell-updates/s. It is not selected because multidimensional, sealed-heating,
 convection, gas-mixing, physical-time and accepted budget evidence remain absent.
 See the [HLLC candidate checkpoint](../vnext/phase-5-hllc-candidate.md).
 
+The clean source package for this checkpoint is
+`artifacts/vnext-phase5-source-b74216c31/`, SHA-256
+`BE7D74127B8572597919438F227ED2D2E931A983F9D45650776979EAC53C977D`,
+with `1304` source members plus manifest and zero test assets.
+
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the
 1.0.3 [UI checkpoint](../vnext/phase-3-ui-material-organization.md), and the
