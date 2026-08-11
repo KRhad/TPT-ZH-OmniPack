@@ -39,14 +39,14 @@ function Get-Sha256 {
 
 Push-Location $sourceRoot
 try {
-	$dirtyText = ((@(& $GitExecutable -C $sourceRoot status --porcelain=v1 2>&1)) -join "`n").Trim()
+	$dirtyText = ((@(& $GitExecutable -c core.autocrlf=true -C $sourceRoot status --porcelain=v1 2>&1)) -join "`n").Trim()
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to read source state"
     }
 	if ($dirtyText.Length -ne 0) {
         throw "Phase 5 selection evidence requires a clean source worktree"
     }
-    $sourceCommit = (& $GitExecutable rev-parse HEAD).Trim()
+	$sourceCommit = (& $GitExecutable -c core.autocrlf=true -C $sourceRoot rev-parse HEAD).Trim()
     if ($LASTEXITCODE -ne 0 -or -not $sourceCommit) {
         throw "Unable to resolve source commit"
     }
