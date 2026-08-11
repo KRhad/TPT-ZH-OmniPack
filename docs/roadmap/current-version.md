@@ -5,7 +5,7 @@ CURRENT_VERSION=1.0.5
 CURRENT_PHASE=Physical Scale + AtmosphereBench
 PHASE_STATUS=IN_PROGRESS_RUSANOV_BOUNDARY_PERFORMANCE_CHARACTERIZED
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
-IMPLEMENTATION_HEAD=ee9290cb7893e5f4a316db5372f93d403477e1a1
+IMPLEMENTATION_HEAD=fae9a0847608333c05a9d5e15b0c812b22407d3d
 BRANCH=integration/omnicore-vnext
 UPSTREAM_STABLE=v100.1.400 / d768aeb89acad986bd252d7e904bf44bb374545f
 UPSTREAM_MASTER=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -42,9 +42,11 @@ V1_0_5_RUSANOV_REFINEMENT=GREEN_ISOLATED_STRICT_DOUBLE_64_128_256_T_0_25_BUILD_8
 V1_0_5_RUSANOV_LOW_MACH=EXECUTION_GREEN_SUITABILITY_FALSE_MACH_0_387298_0_0387298_0_00387298_L1_0_00826755_0_0515261_0_126479_TV_0_934805_0_595493_0_00673822_ZERO_CORRECTIONS
 V1_0_5_RUSANOV_OPEN_LEAK=GREEN_128X1_SEALED_LEFT_OPEN_RIGHT_MASS_OUT_6_69874_BALANCE_ERRORS_LT_3E_MINUS_14_ZERO_CORRECTIONS
 V1_0_5_RUSANOV_PERFORMANCE=RECORDED_NO_BUDGET_STRICT_DOUBLE_SINGLE_THREAD_31_0232M_31_3699M_32_8059M_CELL_UPDATES_PER_SECOND_96_BYTES_PER_CELL
-KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget
+V1_0_5_ALL_SPEED_RUSANOV=EXECUTION_GREEN_SUITABILITY_FALSE_MACH_0_387298_0_0387298_0_00387298_L1_0_00454342_0_0136636_0_10116_TV_0_964322_1_82225_1_46479_ZERO_CORRECTIONS
+V1_0_5_ALL_SPEED_RUSANOV_COMMIT=fae9a0847608333c05a9d5e15b0c812b22407d3d
+KNOWN_BLOCKERS=required 100/125/150 percent UI DPI matrix; G0 physical conservation; complete source-sink/correction accounting; unsampled full-state positivity; process VRAM; accepted performance budget; acceptable low-Mach solver candidate
 NEXT_VERSION=1.0.6
-NEXT_PHASE=evaluate an isolated all-speed/hybrid low-Mach candidate against the strict-double Rusanov reference; keep HLLE and LBM registered-only
+NEXT_PHASE=review all-speed negative result and continue isolated solver comparison; keep HLLE and LBM registered-only
 ```
 
 The 1.0.2 refresh remains GREEN: official download, GitHub release, tag and master
@@ -82,6 +84,14 @@ performance record are now clean-validated, but no physical-time or performance
 budget is selected, and no production
 source consumes the bench. Details are in the [1.0.5 scaffold report](../vnext/phase-5-physical-scale-atmospherebench.md)
 and the [Rusanov candidate checkpoint](../vnext/phase-5-rusanov-candidate.md).
+
+The isolated all-speed Rusanov candidate is recorded at `fae9a0847`. Its
+strict-double low-Mach probe executes with positivity, conservation and zero
+numerical corrections, but it is rejected by the unchanged suitability gate:
+very-low-Mach density L1 is `0.10116` (required `<= 0.05`) and the measured
+total-variation ratio is `1.46479`. The clean runner bound the result to the
+current commit and Meson target; no Sod/near-vacuum extension was claimed after
+this mandatory Low-Mach gate failed.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the

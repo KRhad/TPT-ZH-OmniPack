@@ -6,9 +6,9 @@
 REPORT_DATE=2026-08-11
 CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.5
-CURRENT_VERSION_GATE=IN_PROGRESS
+CURRENT_VERSION_GATE=IN_PROGRESS_ALL_SPEED_NEGATIVE_RECORDED
 NEXT_VERSION=1.0.6
-NEXT_PHASE=evaluate an isolated all-speed/hybrid low-Mach candidate against the strict-double Rusanov reference; keep HLLE and LBM registered-only
+NEXT_PHASE=continue isolated solver comparison after all-speed Rusanov rejection; keep HLLE and LBM registered-only
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -146,6 +146,12 @@ One first-order Rusanov candidate is now implemented only as isolated 1D periodi
 uniform, pressure-pulse, density-advection, contact-discontinuity, near-vacuum-expansion, sealed Sod and smooth-grid-refinement debug probes. Scale, time policy and
 solver selection remain unselected; HLLE and LBM remain registered-only; no production source consumes the bench. See
 `phase-5-physical-scale-atmospherebench.md` and `phase-5-rusanov-candidate.md`.
+
+The all-speed Rusanov follow-up is now recorded at `fae9a0847`. Its execution is
+green as an isolated strict-double probe, but the fixed Low-Mach suitability gate
+is false (`very_low_density_l1_error=0.10116`, TV ratio `1.46479`). This is a
+negative result; solver selection remains unselected and no production
+Atmosphere implementation is authorized.
 
 The Legacy ledger exports finite/range observations and diagnostic proxies. Its
 all-tick post-update exported-float sub-gate is GREEN; the source-bound physical

@@ -488,5 +488,29 @@ near-vacuum, boundary-ledger and measured budget evidence.
 HLLE and LBM remain registered-only until separately authorized; production
 Atmosphere integration remains forbidden.
 
+## All-speed Rusanov follow-up (negative result)
+
+Commit `fae9a0847` adds a fifth, independently registered
+`fvm_all_speed_rusanov` candidate. It shares the conservative state and runner
+but injects a generic local-Mach/pressure-jump dissipation scale. The candidate
+is not selected and does not touch production simulation code.
+
+The clean runner result is bound to the current source commit and rebuilt Meson
+target. The execution passed with zero numerical corrections, but the suitability
+gate failed at very low Mach:
+
+```text
+benchmark_execution_status=PASS
+very_low_density_l1_error=0.10116
+very_low_total_variation_ratio=1.46479
+low_mach_suitability_passed=false
+candidate_disposition=reject_low_mach_suitability
+atmosphere_solver_selection=unselected
+```
+
+Since the mandatory Low-Mach gate failed, no Sod, near-vacuum, boundary or
+performance claims are attached to this candidate. HLLE and LBM remain
+`registered_only`.
+
 Rollback commit: `18ddcec3f` restores the documented pre-leak/performance
 Rusanov checkpoint.

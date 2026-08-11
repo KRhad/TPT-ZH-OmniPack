@@ -295,11 +295,39 @@ source package is `artifacts/vnext-phase5-source-ee9290cb7/`, SHA-256
 `5130F6B8871F196BB292DF590D74DC552924005EAB206CC16CB810D1AF1E5C9A`, with
 `1303` source members plus one manifest and zero test assets.
 
-`V1_0_5_GATE=IN_PROGRESS`. The next implementation may extend only the Rusanov
-comparison with an isolated all-speed/hybrid low-Mach path while keeping Rusanov as
-the strict reference/debug floor and HLLE/LBM registered-only. An acceptable
-low-Mach candidate, physical-time policy and reviewed performance budget are still
-required for solver selection.
+`V1_0_5_GATE=IN_PROGRESS`. The isolated all-speed Rusanov follow-up is now
+implemented and clean-validated at `fae9a0847`, but its low-Mach suitability gate
+is negative. It preserves positivity and conservation with zero corrections, yet
+the unchanged very-low-Mach density L1 is `0.10116` and total-variation ratio is
+`1.46479`; it is explicitly recorded as
+`candidate_disposition=reject_low_mach_suitability`. This result does not select a
+solver and does not authorize production Atmosphere integration. HLLE and LBM
+remain registered-only. An acceptable low-Mach candidate, physical-time policy
+and reviewed performance budget are still required for solver selection.
 PhysicalScale, physical-time policy and solver selection remain RED until the
 mandatory cases, conservation/positivity, memory and performance evidence exist.
 Production Air replacement is still forbidden.
+
+## All-speed Rusanov negative checkpoint
+
+The fifth registered candidate uses a generic local-Mach and pressure-jump sensor
+to scale Rusanov dissipation; it is not keyed to the experiment name. The probe is
+strict-double and remains isolated to `tools/atmospherebench`.
+
+```text
+commit=fae9a0847608333c05a9d5e15b0c812b22407d3d
+benchmark_execution_status=PASS
+nominal_mach=0.387298 / 0.0387298 / 0.00387298
+density_l1_error=0.00454342 / 0.0136636 / 0.10116
+total_variation_ratio=0.964322 / 1.82225 / 1.46479
+mass_drift=2.84217e-14
+energy_drift=1.42109e-13
+numerical_correction_count=0
+low_mach_suitability_passed=false
+candidate_disposition=reject_low_mach_suitability
+atmosphere_solver_selection=unselected
+```
+
+The lower-Mach cases show non-monotone variation and unacceptable error. The
+candidate is retained as negative evidence and a debug comparison, not as the
+Enhanced solver.

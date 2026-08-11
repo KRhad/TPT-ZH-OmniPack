@@ -137,3 +137,12 @@ performance_gate=recorded_candidate_measurement_no_budget
 
 Solver selection additionally requires an all-speed/hybrid or otherwise
 low-Mach-suitable candidate. HLLE and LBM remain registration-only.
+
+The first all-speed Rusanov experiment is now measured, not merely registered.
+It is a valid negative comparison: the local-Mach/pressure-jump dissipation
+scaling preserves the conservative ledger but produces
+`very_low_density_l1_error=0.10116` and
+`very_low_total_variation_ratio=1.46479`, so it fails the fixed Low-Mach gate.
+The comparison remains open; no candidate is selected until an acceptable path is
+benchmarked across the required cases and a physical-time/performance policy is
+documented.
