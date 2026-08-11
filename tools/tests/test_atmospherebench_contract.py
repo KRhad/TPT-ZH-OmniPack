@@ -34,7 +34,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
                 self.assertNotIn(needle, text)
         includes = re.findall(r'^#include "([^"]+)"', text, flags=re.MULTILINE)
         self.assertEqual(includes.count("AtmosphereBench.h"), 2)
-        self.assertEqual(includes.count("Rusanov1D.h"), 4)
+        self.assertEqual(includes.count("Rusanov1D.h"), 5)
 
     def test_bench_has_explicit_strict_fp_target_and_isolated_rusanov_candidates(self) -> None:
         meson = (ROOT / "meson.build").read_text(encoding="utf-8")
@@ -74,6 +74,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-hllc-2d-pressure-pulse' ]", target)
         self.assertIn("args: [ '--run-hllc-2d-sealed-heating' ]", target)
         self.assertIn("args: [ '--run-hllc-2d-natural-convection' ]", target)
+        self.assertIn("args: [ '--run-hllc-2d-species-mixing' ]", target)
         self.assertIn("'atmospherebench-rusanov-open-boundary-leak'", target)
         self.assertIn("args: [ '--run-rusanov-open-boundary-leak' ]", target)
         self.assertIn("'atmospherebench-rusanov-performance'", target)
@@ -82,7 +83,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn('"registered_only"', source)
         self.assertIn('"implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes"', source)
         self.assertIn('"implemented_1d_low_mach_probe_rejected"', source)
-        self.assertIn('"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_probes"', source)
+        self.assertIn('"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_probes"', source)
         self.assertIn("RUSANOV_UNIFORM_PROBE", source)
         self.assertIn("RUSANOV_PRESSURE_PULSE_PROBE", source)
         self.assertIn("RUSANOV_DENSITY_ADVECTION_PROBE", source)
@@ -94,6 +95,7 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("RUSANOV_OPEN_BOUNDARY_LEAK_PROBE", source)
         self.assertIn("HLLC_2D_SEALED_HEATING_PROBE", source)
         self.assertIn("HLLC_2D_NATURAL_CONVECTION_PROBE", source)
+        self.assertIn("HLLC_2D_SPECIES_MIXING_PROBE", source)
         self.assertIn("=UNSELECTED", source)
         self.assertIn("synthetic_nondimensional", source)
         self.assertNotIn("287.05", source)
@@ -184,6 +186,19 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("!uncountedSource.IsConsistent()", source)
         self.assertIn("nonfiniteSourceRejected", source)
 
+    def test_species_fixture_is_passive_conserved_and_fail_closed(self) -> None:
+        header = (BENCH_ROOT / "Species2D.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "Species2D.cpp").read_text(encoding="utf-8")
+        self.assertIn("Hllc2DSpeciesMixingSummary", header)
+        self.assertIn("RunHllc2DSpeciesMixing", header)
+        self.assertIn("UpwindSpeciesFlux", source)
+        self.assertIn("speciesA[index] - lambda", source)
+        self.assertIn("summary.speciesLedgerCloses", source)
+        self.assertIn("summary.speciesBoundsPreserved", source)
+        self.assertIn("CompositionVariationDecreaseTolerance", source)
+        self.assertIn('output << "species_eos_coupling=not_implemented', source)
+        self.assertIn('output << "physical_diffusion=not_implemented', source)
+
     def test_scaffold_contract_is_not_a_runtime_consumer(self) -> None:
         production = []
         for path in (ROOT / "src").rglob("*"):
@@ -202,6 +217,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/main.cpp",
             "tools/atmospherebench/Rusanov1D.cpp",
             "tools/atmospherebench/Rusanov1D.h",
+            "tools/atmospherebench/Species2D.cpp",
+            "tools/atmospherebench/Species2D.h",
         }
         required = tools | {"resources/omnicore/v1/physical-scale-candidates.json"}
         self.assertTrue(tools.issubset(package_tool.ALLOWED_TOOLS))

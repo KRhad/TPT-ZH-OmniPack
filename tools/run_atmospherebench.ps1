@@ -37,6 +37,8 @@ param(
 
     [switch] $RunHllc2DNaturalConvection,
 
+    [switch] $RunHllc2DSpeciesMixing,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -183,6 +185,7 @@ $expectedBenchSources = @(
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/AtmosphereBench.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Hllc2D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Rusanov1D.cpp")),
+    [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Species2D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/main.cpp"))
 )
 $actualBenchSources = @($benchCommands | ForEach-Object {
@@ -235,7 +238,7 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunHllcRusanovFallbackOpenBoundaryLeak,
 		$RunHllcRusanovFallbackPerformance,
 		$RunHllc2DUniform, $RunHllc2DPressurePulse, $RunHllc2DSealedHeating,
-		$RunHllc2DNaturalConvection,
+		$RunHllc2DNaturalConvection, $RunHllc2DSpeciesMixing,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -252,7 +255,7 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunHllcRusanovFallbackOpenBoundaryLeak `
 	-or $RunHllcRusanovFallbackPerformance `
 	-or $RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating `
-	-or $RunHllc2DNaturalConvection `
+	-or $RunHllc2DNaturalConvection -or $RunHllc2DSpeciesMixing `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
@@ -279,6 +282,8 @@ $runMode = if ($RunRusanovPerformance) {
 	"hllc_2d_sealed_heating"
 } elseif ($RunHllc2DNaturalConvection) {
 	"hllc_2d_natural_convection"
+} elseif ($RunHllc2DSpeciesMixing) {
+	"hllc_2d_species_mixing"
 } elseif ($RunHllc2DUniform) {
 	"hllc_2d_uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -322,6 +327,8 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-hllc-2d-sealed-heating"
 } elseif ($RunHllc2DNaturalConvection) {
 	"--run-hllc-2d-natural-convection"
+} elseif ($RunHllc2DSpeciesMixing) {
+	"--run-hllc-2d-species-mixing"
 } elseif ($RunHllc2DUniform) {
 	"--run-hllc-2d-uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -359,7 +366,7 @@ if ((Read-KeyValue -Text $candidateText -Key "selection_status") -ne "unselected
 foreach ($candidateLine in @(
     "candidate=fvm_rusanov|status=implemented_1d_uniform_pressure_pulse_density_advection_contact_near_vacuum_sod_refinement_low_mach_open_leak_performance_probes|solver_implemented=true",
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
-    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_probes|solver_implemented=true",
+    "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
     "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
 )) {
@@ -409,6 +416,62 @@ if (-not $isRusanovProbe) {
             throw "Uniform contract expected $ledgerKey=0"
         }
     }
+} elseif ($RunHllc2DSpeciesMixing) {
+	$benchmarkKind = "atmospherebench_hllc_2d_species_mixing_probe"
+	$performanceGate = "not_evaluated_candidate_probe"
+	$timingScope = "standalone_hllc_2d_species_mixing_probe"
+	$candidateImplementations = "fvm_hllc_rusanov_fallback"
+	if ($solverResultStatus -ne "candidate_result_not_selection") {
+		throw "HLLC 2D species-mixing probe must not claim solver selection"
+	}
+	if ((Read-KeyValue -Text $text -Key "candidate") -ne "fvm_hllc_rusanov_fallback" -or
+		(Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+		throw "HLLC 2D species-mixing candidate identity is invalid"
+	}
+	foreach ($probeKey in @{
+		"case_time_domain" = "nondimensional_contract"; "dimension" = "2";
+		"boundary_mode" = "periodic"; "species_model" = "passive_conserved_binary_fixture";
+		"species_eos_coupling" = "not_implemented"; "physical_diffusion" = "not_implemented";
+		"grid_cells_x" = "32"; "grid_cells_y" = "24"; "grid_cell_count" = "768";
+		"cell_length" = "1"; "case_timestep" = "0.1"; "case_step_count" = "320";
+		"initial_species_a_mass" = "384"; "final_species_a_mass" = "384";
+		"initial_species_b_mass" = "384"; "final_species_b_mass" = "384";
+		"initial_mixed_cell_count" = "0"; "final_mixed_cell_count" = "768";
+		"gas_ledger_closes" = "true"; "species_ledger_closes" = "true";
+		"species_bounds_preserved" = "true"; "composition_evolved" = "true";
+		"mixed_region_formed" = "true"; "flux_fallback_count" = "0";
+		"numerical_correction_count" = "0"; "state_bytes_per_cell" = "40";
+		"state_and_flux_scratch_bytes_per_cell" = "200";
+		"state_and_flux_scratch_bytes_total" = "153600"; "probe_passed" = "true"
+	}.GetEnumerator()) {
+		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+			throw "HLLC 2D species-mixing contract drifted: $($probeKey.Key)"
+		}
+	}
+	$maximumCfl = [double](Read-KeyValue -Text $text -Key "maximum_cfl")
+	if ([double]::IsNaN($maximumCfl) -or [double]::IsInfinity($maximumCfl) -or
+		$maximumCfl -le 0.0 -or $maximumCfl -gt 1.0) {
+		throw "HLLC 2D species-mixing CFL is outside the strict positivity contract"
+	}
+	$minimumSpeciesFraction = [double](Read-KeyValue -Text $text -Key "minimum_species_a_fraction")
+	$maximumSpeciesFraction = [double](Read-KeyValue -Text $text -Key "maximum_species_a_fraction")
+	if ($minimumSpeciesFraction -lt -1e-12 -or $maximumSpeciesFraction -gt 1.0 + 1e-12) {
+		throw "HLLC 2D species-mixing fraction bounds were violated"
+	}
+	$initialCompositionVariation = [double](Read-KeyValue -Text $text -Key "initial_composition_total_variation")
+	$finalCompositionVariation = [double](Read-KeyValue -Text $text -Key "final_composition_total_variation")
+	$compositionStateChange = [double](Read-KeyValue -Text $text -Key "composition_state_change_l1")
+	if ($finalCompositionVariation -gt $initialCompositionVariation - 1e-6 -or
+		$compositionStateChange -le 1e-6) {
+		throw "HLLC 2D species-mixing composition did not evolve with a measurable TV decrease"
+	}
+	foreach ($driftKey in @(
+		"mass_drift", "momentum_x_drift", "momentum_y_drift", "energy_drift",
+		"species_a_mass_drift", "species_b_mass_drift")) {
+		if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-10) {
+			throw "HLLC 2D species-mixing conservation drift exceeds tolerance: $driftKey"
+		}
+	}
 } elseif ($RunHllc2DNaturalConvection) {
 	$benchmarkKind = "atmospherebench_hllc_2d_natural_convection_probe"
 	$performanceGate = "not_evaluated_candidate_probe"
@@ -1165,6 +1228,28 @@ $combinedMomentumXBalanceError = $null
 $combinedMomentumYBalanceError = $null
 $combinedEnergyBalanceError = $null
 $naturalConvection = $null
+$speciesMixing = $null
+$speciesModel = $null
+$speciesEosCoupling = $null
+$physicalDiffusion = $null
+$initialSpeciesAMass = $null
+$finalSpeciesAMass = $null
+$initialSpeciesBMass = $null
+$finalSpeciesBMass = $null
+$speciesAMassDrift = $null
+$speciesBMassDrift = $null
+$minimumSpeciesAFraction = $null
+$maximumSpeciesAFraction = $null
+$initialCompositionTotalVariation = $null
+$finalCompositionTotalVariation = $null
+$compositionStateChangeL1 = $null
+$initialMixedCellCount = $null
+$finalMixedCellCount = $null
+$gasLedgerCloses = $null
+$speciesLedgerCloses = $null
+$speciesBoundsPreserved = $null
+$compositionEvolved = $null
+$mixedRegionFormed = $null
 $densityL1Error = $null
 $densityLinfError = $null
 $pressureLinfError = $null
@@ -1249,7 +1334,55 @@ if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
     $stateAndFluxScratchBytesPerCell = [double](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
-	if ($RunHllc2DNaturalConvection) {
+	if ($RunHllc2DSpeciesMixing) {
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+		$speciesModel = Read-KeyValue -Text $text -Key "species_model"
+		$speciesEosCoupling = Read-KeyValue -Text $text -Key "species_eos_coupling"
+		$physicalDiffusion = Read-KeyValue -Text $text -Key "physical_diffusion"
+		$initialSpeciesAMass = [double](Read-KeyValue -Text $text -Key "initial_species_a_mass")
+		$finalSpeciesAMass = [double](Read-KeyValue -Text $text -Key "final_species_a_mass")
+		$initialSpeciesBMass = [double](Read-KeyValue -Text $text -Key "initial_species_b_mass")
+		$finalSpeciesBMass = [double](Read-KeyValue -Text $text -Key "final_species_b_mass")
+		$speciesAMassDrift = [double](Read-KeyValue -Text $text -Key "species_a_mass_drift")
+		$speciesBMassDrift = [double](Read-KeyValue -Text $text -Key "species_b_mass_drift")
+		$minimumSpeciesAFraction = [double](Read-KeyValue -Text $text -Key "minimum_species_a_fraction")
+		$maximumSpeciesAFraction = [double](Read-KeyValue -Text $text -Key "maximum_species_a_fraction")
+		$initialCompositionTotalVariation = [double](Read-KeyValue -Text $text -Key "initial_composition_total_variation")
+		$finalCompositionTotalVariation = [double](Read-KeyValue -Text $text -Key "final_composition_total_variation")
+		$compositionStateChangeL1 = [double](Read-KeyValue -Text $text -Key "composition_state_change_l1")
+		$initialMixedCellCount = [int](Read-KeyValue -Text $text -Key "initial_mixed_cell_count")
+		$finalMixedCellCount = [int](Read-KeyValue -Text $text -Key "final_mixed_cell_count")
+		$gasLedgerCloses = (Read-KeyValue -Text $text -Key "gas_ledger_closes") -eq "true"
+		$speciesLedgerCloses = (Read-KeyValue -Text $text -Key "species_ledger_closes") -eq "true"
+		$speciesBoundsPreserved = (Read-KeyValue -Text $text -Key "species_bounds_preserved") -eq "true"
+		$compositionEvolved = (Read-KeyValue -Text $text -Key "composition_evolved") -eq "true"
+		$mixedRegionFormed = (Read-KeyValue -Text $text -Key "mixed_region_formed") -eq "true"
+		$speciesMixing = [ordered]@{
+			model = $speciesModel
+			eos_coupling = $speciesEosCoupling
+			physical_diffusion = $physicalDiffusion
+			initial_species_a_mass = $initialSpeciesAMass
+			final_species_a_mass = $finalSpeciesAMass
+			species_a_mass_drift = $speciesAMassDrift
+			initial_species_b_mass = $initialSpeciesBMass
+			final_species_b_mass = $finalSpeciesBMass
+			species_b_mass_drift = $speciesBMassDrift
+			minimum_species_a_fraction = $minimumSpeciesAFraction
+			maximum_species_a_fraction = $maximumSpeciesAFraction
+			initial_composition_total_variation = $initialCompositionTotalVariation
+			final_composition_total_variation = $finalCompositionTotalVariation
+			composition_state_change_l1 = $compositionStateChangeL1
+			initial_mixed_cell_count = $initialMixedCellCount
+			final_mixed_cell_count = $finalMixedCellCount
+			gas_ledger_closes = $gasLedgerCloses
+			species_ledger_closes = $speciesLedgerCloses
+			species_bounds_preserved = $speciesBoundsPreserved
+			composition_evolved = $compositionEvolved
+			mixed_region_formed = $mixedRegionFormed
+		}
+	} elseif ($RunHllc2DNaturalConvection) {
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
 		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
 		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
@@ -1513,7 +1646,7 @@ if ($isRusanovProbe) {
 }
 $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
-	"No HLLE, LBM, production TPT wall-coupling, or multi-species candidate is implemented in this scaffold."
+	"No HLLE, LBM, production TPT wall-coupling, species-EOS coupling, or physical species diffusion is implemented in this scaffold."
 )
 if ($RunRusanovPerformance) {
 	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
@@ -1521,6 +1654,8 @@ if ($RunRusanovPerformance) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
 } elseif ($RunHllc2DNaturalConvection) {
 	$limitations += "HLLC has one nondimensional strict-double 2D gravity/control natural-convection probe with explicit source and wall-exchange ledgers; it is not a well-balanced proof, physical-time, material-property, production TPT wall, performance or solver-selection result."
+} elseif ($RunHllc2DSpeciesMixing) {
+	$limitations += "HLLC has one periodic strict-double 2D passive binary conserved-species fixture; species do not affect the EOS, no physical diffusion is implemented, and this is not a production multi-species or solver-selection result."
 } elseif ($RunHllc2DSealedHeating) {
 	$limitations += "HLLC has one nondimensional strict-double 2D sealed uniform-heating result with an explicit applied-source ledger; it is not physical-time, material-property, TPT wall, performance or solver-selection evidence."
 } elseif ($RunHllc2DPressurePulse) {
@@ -1738,6 +1873,7 @@ $result = [ordered]@{
 		combined_energy_balance_error = $combinedEnergyBalanceError
 	}
 	natural_convection = $naturalConvection
+	species_mixing = $speciesMixing
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
         timing_scope = $timingScope

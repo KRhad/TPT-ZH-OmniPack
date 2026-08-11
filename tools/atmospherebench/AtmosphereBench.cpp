@@ -1,6 +1,7 @@
 #include "AtmosphereBench.h"
 #include "Hllc2D.h"
 #include "Rusanov1D.h"
+#include "Species2D.h"
 
 #include <cmath>
 #include <limits>
@@ -235,7 +236,7 @@ const std::array<CandidateDescriptor, 6> &Candidates()
 		{CandidateKind::AllSpeedRusanovFvm, "fvm_all_speed_rusanov",
 			"implemented_1d_low_mach_probe_rejected", true},
 		{CandidateKind::HllcRusanovFallbackFvm, "fvm_hllc_rusanov_fallback",
-			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_probes", true},
+			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_probes", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
 		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
 	}};
@@ -295,6 +296,7 @@ bool RunSelfTest(std::ostream &output)
 	const auto hllc2DPressurePulse = RunHllc2DPressurePulse();
 	const auto hllc2DSealedHeating = RunHllc2DSealedHeating();
 	const auto hllc2DNaturalConvection = RunHllc2DNaturalConvection();
+	const auto hllc2DSpeciesMixing = RunHllc2DSpeciesMixing();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -369,6 +371,7 @@ bool RunSelfTest(std::ostream &output)
 		&& hllc2DPressurePulse.passed
 		&& hllc2DSealedHeating.passed
 		&& hllc2DNaturalConvection.passed
+		&& hllc2DSpeciesMixing.passed
 		&& rusanovOpenLeak.passed
 		&& onlyRusanovImplemented;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
@@ -415,6 +418,8 @@ bool RunSelfTest(std::ostream &output)
 		<< (hllc2DSealedHeating.passed ? "PASS" : "FAIL") << '\n';
 	output << "HLLC_2D_NATURAL_CONVECTION_PROBE="
 		<< (hllc2DNaturalConvection.passed ? "PASS" : "FAIL") << '\n';
+	output << "HLLC_2D_SPECIES_MIXING_PROBE="
+		<< (hllc2DSpeciesMixing.passed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";

@@ -672,6 +672,7 @@ atmospherebench = executable(
 		'tools/atmospherebench/AtmosphereBench.cpp',
 		'tools/atmospherebench/Hllc2D.cpp',
 		'tools/atmospherebench/Rusanov1D.cpp',
+		'tools/atmospherebench/Species2D.cpp',
 		'tools/atmospherebench/main.cpp',
 	),
 	cpp_args: atmospherebench_cpp_args,
@@ -831,6 +832,14 @@ test(
 	'atmospherebench-hllc-2d-natural-convection',
 	atmospherebench,
 	args: [ '--run-hllc-2d-natural-convection' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'atmospherebench-hllc-2d-species-mixing',
+	atmospherebench,
+	args: [ '--run-hllc-2d-species-mixing' ],
 	suite: 'static',
 	timeout: 60,
 )

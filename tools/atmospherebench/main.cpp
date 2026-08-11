@@ -1,6 +1,7 @@
 #include "AtmosphereBench.h"
 #include "Hllc2D.h"
 #include "Rusanov1D.h"
+#include "Species2D.h"
 
 #include <iostream>
 #include <string_view>
@@ -56,10 +57,12 @@ int main(int argc, char **argv)
 		return WriteHllc2DSealedHeatingProbe(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-hllc-2d-natural-convection")
 		return WriteHllc2DNaturalConvectionProbe(std::cout) ? 0 : 1;
+	if (std::string_view(argv[1]) == "--run-hllc-2d-species-mixing")
+		return WriteHllc2DSpeciesMixingProbe(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-rusanov-open-boundary-leak")
 		return WriteRusanovOpenBoundaryLeakProbe(std::cout) ? 0 : 1;
 	if (std::string_view(argv[1]) == "--run-rusanov-performance")
 		return WriteRusanovPerformanceProbe(std::cout) ? 0 : 1;
-	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform|--run-hllc-2d-uniform|--run-hllc-2d-pressure-pulse|--run-hllc-2d-sealed-heating|--run-hllc-2d-natural-convection|--run-rusanov-uniform|--run-rusanov-pressure-pulse|--run-rusanov-density-advection|--run-rusanov-contact-discontinuity|--run-rusanov-near-vacuum-expansion|--run-rusanov-sod-shock-tube|--run-rusanov-density-advection-refinement|--run-rusanov-low-mach-advection|--run-all-speed-rusanov-low-mach-advection|--run-hllc-rusanov-fallback-low-mach-advection|--run-hllc-rusanov-fallback-near-vacuum-expansion|--run-hllc-rusanov-fallback-sod-shock-tube|--run-hllc-rusanov-fallback-open-boundary-leak|--run-hllc-rusanov-fallback-performance|--run-rusanov-open-boundary-leak|--run-rusanov-performance]\n";
+	std::cerr << "usage: atmospherebench [--self-test|--list-candidates|--run-uniform|--run-hllc-2d-uniform|--run-hllc-2d-pressure-pulse|--run-hllc-2d-sealed-heating|--run-hllc-2d-natural-convection|--run-hllc-2d-species-mixing|--run-rusanov-uniform|--run-rusanov-pressure-pulse|--run-rusanov-density-advection|--run-rusanov-contact-discontinuity|--run-rusanov-near-vacuum-expansion|--run-rusanov-sod-shock-tube|--run-rusanov-density-advection-refinement|--run-rusanov-low-mach-advection|--run-all-speed-rusanov-low-mach-advection|--run-hllc-rusanov-fallback-low-mach-advection|--run-hllc-rusanov-fallback-near-vacuum-expansion|--run-hllc-rusanov-fallback-sod-shock-tube|--run-hllc-rusanov-fallback-open-boundary-leak|--run-hllc-rusanov-fallback-performance|--run-rusanov-open-boundary-leak|--run-rusanov-performance]\n";
 	return 2;
 }
