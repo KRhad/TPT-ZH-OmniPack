@@ -6,7 +6,7 @@
 TARGET_VERSION=1.0.5
 BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 IMPLEMENTATION_COMMIT=a21eafba301a6e02a94f81cf6da46961ec72d3cd
-STATUS=IN_PROGRESS_HLLC_2D_SEALED_HEATING_SOURCE_LEDGER
+STATUS=IN_PROGRESS_HLLC_2D_NATURAL_CONVECTION
 UPSTREAM_WEBSITE=GREEN_STABLE_100.1
 UPSTREAM_STABLE_TAG=v100.1.400
 UPSTREAM_STABLE_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
@@ -48,7 +48,7 @@ RUSANOV_OPEN_LEAK_COMMIT=ef0ca86c1
 RUSANOV_OPEN_LEAK_VALIDATION=GREEN_STRICT_DOUBLE_128X1_SEALED_LEFT_OPEN_RIGHT_MASS_OUT_6_69874_BALANCE_ERRORS_LT_3E_MINUS_14_ZERO_CORRECTIONS
 RUSANOV_PERFORMANCE_COMMIT=ee9290cb7
 RUSANOV_PERFORMANCE_VALIDATION=GREEN_STRICT_DOUBLE_SINGLE_THREAD_MEDIAN_3_REPEATS_31_0232M_31_3699M_32_8059M_CELL_UPDATES_PER_SECOND_NO_BUDGET_SELECTED
-CURRENT_VALIDATION=GREEN_BUILD_77_STATIC_62_TARGETED_29_PYTHON_414_PASS_0_SKIP_HLLC_2D_TARGETED_4_CLEAN_3
+CURRENT_VALIDATION=GREEN_BUILD_77_STATIC_63_TARGETED_29_PYTHON_414_PASS_0_SKIP_HLLC_2D_TARGETED_5_NATURAL_HEATING_CLEAN_2
 CURRENT_SOURCE_PACKAGE=GREEN_1306_SOURCE_PLUS_MANIFEST_NO_TEST_ASSETS_REVISION_27ec4f161_SHA256_793AB92E6975E28B4FCDB4E8A7FF6E6364F3ED53C40DCB6E7BA799918172F5C0
 HLLE_STATUS=REGISTERED_ONLY
 LBM_STATUS=REGISTERED_ONLY
@@ -359,10 +359,10 @@ performance_gate=recorded_candidate_measurement_no_budget
 atmosphere_solver_selection=unselected
 ```
 
-This makes HLLC/Rusanov-fallback the current front-runner, not the selected
-solver. Remaining RED items are selected PhysicalScale and physical-time policy,
-remaining multidimensional validation, natural convection, gas mixing and an
-accepted CPU/memory budget. Details are in
+This made HLLC/Rusanov-fallback the front-runner at the 1D checkpoint, not the
+selected solver. At that checkpoint, RED items included PhysicalScale,
+physical-time, multidimensional validation, convection, gas mixing and an accepted
+CPU/memory budget. Details are in
 [the HLLC checkpoint](phase-5-hllc-candidate.md).
 
 The defensive fallback is independently covered at `78bad784d`: one valid
@@ -376,9 +376,9 @@ density and pressure, reduces its pressure peak from `1.09845` to `1.09381`, and
 closes mass and energy to `6.9e-13`. X/Y flux storage is explicit; the measured
 layout contract is `160 bytes/cell` for initial, current, next, Flux-X and Flux-Y
 arrays. Both clean runners bind to the clean source commit and verified
-strict-double flags. This closes only the first periodic 2D checkpoint; sealed
-heating, physical source accounting, natural convection, gas mixing, physical-time
-selection and an accepted budget remain open.
+strict-double flags. At this checkpoint, sealed heating, physical source
+accounting, convection, gas mixing, physical-time selection and an accepted budget
+were still open.
 
 The sealed-heating/source-ledger checkpoint is clean-validated at `be0ff2f37`.
 It adds a general conservative applied-source ledger and reusable sealed face
@@ -390,6 +390,16 @@ counted, and fallback/correction counts remain zero. The sealed face-array layou
 is `162.333 bytes/cell` (`124672` bytes total for `32x24`). All three 2D clean
 runners pass on the same commit. This is still not physical-time, material-data,
 production TPT wall, performance or solver-selection evidence.
+
+The gravity/source/boundary-ledger natural-convection checkpoint is clean-
+validated at `83c5a0cd2`. An isothermal hydrostatic control is compared with a
+localized bottom perturbation reaching nondimensional temperature `1.5`.
+Control-subtracted thermal centre rises `0.225497` cell and the differential flow
+contains a `0.0257047` updraft plus `-0.000157248` return flow. Both control and
+heated runs remain positive, below CFL `0.032`, use zero fallback/corrections and
+close combined gravity-source plus sealed-wall exchange within `8e-12`.
+Source-only closure is deliberately false because wall pressure exchanges real
+momentum. This is not a well-balanced hydrostatic proof or a physical-time claim.
 
 Current HLLC two-dimensional checkpoint source package:
 `artifacts/vnext-phase5-source-27ec4f161/`, SHA-256

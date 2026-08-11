@@ -3,8 +3,8 @@
 ```text
 TARGET_VERSION=1.0.5
 BASE_COMMIT=52e94c5aa
-IMPLEMENTATION_COMMIT=be0ff2f37108acc88f4fa26f7b05c17b139af570
-STATUS=GREEN_ISOLATED_CANDIDATE_SEALED_HEATING_SOURCE_LEDGER_NOT_SELECTED
+IMPLEMENTATION_COMMIT=83c5a0cd2ba01b623a1d500e1cecb13f5931a60d
+STATUS=GREEN_ISOLATED_CANDIDATE_NATURAL_CONVECTION_NOT_SELECTED
 ATMOSPHERE_SOLVER_SELECTION=UNSELECTED
 PHYSICAL_SCALE_SELECTION=UNSELECTED
 PHYSICAL_TIME_POLICY=UNSELECTED
@@ -184,18 +184,67 @@ passed; their local result SHA-256 values are
 `3AD9EFCD61A25B2BE751C0FD5ACCD105CF9BB98335422B3284670D36B27DDC06`
 and `3800A97790D8EBD250517AFF6EDA22EC48F50765114EF9568569757CF7CF0DA4`.
 
+### Gravity source, sealed-wall ledger and natural convection
+
+Checkpoint `83c5a0cd2` extends the generic sealed-grid step with a gravity source.
+Momentum receives `rho*g*dt`; total energy receives the exact kinetic change of
+that impulse, so the source step does not silently create internal energy. Sealed-
+wall pressure impulses are recorded in a separate boundary ledger.
+
+The experiment compares an isothermal hydrostatic control with the same state plus
+a localized nondimensional bottom temperature perturbation (`1 -> 1.5`). The
+differential diagnostic subtracts control temperature and velocity, preventing
+the control's first-order hydrostatic imbalance from being mislabeled as buoyancy.
+
+```text
+grid=32x24
+boundary_mode=sealed
+timestep=0.01
+steps=400
+gravity_y=-0.04
+hot_temperature_amplitude=0.5
+thermal_center_y=3.67552 -> 3.90102
+thermal_center_rise=0.225497
+thermal_weighted_velocity_y=0.0153885
+maximum_upward_velocity_difference=0.0257047
+minimum_downward_velocity_difference=-0.000157248
+maximum_absolute_velocity_difference=0.0257065
+circulation_observed=true
+control_combined_max_balance_error=7.87281e-12
+heated_combined_max_balance_error=1.90289e-12
+control_source_and_boundary_ledger_closes=true
+heated_source_and_boundary_ledger_closes=true
+control_fallback/correction=0/0
+heated_fallback/correction=0/0
+maximum_cfl_control/heated=0.0261907/0.0317075
+state_and_flux_scratch=162.333 bytes/cell / 124672 bytes total
+```
+
+The source-only ledger reports `false` for both runs because wall pressure applies
+real momentum exchange; source plus boundary reports `true`. This is intentional
+accounting, not a hidden correction. The clean natural-convection result SHA-256
+is `965ED55823BB2706A233A5DFBE4E16D4CC8964CC63DA1D3993A5DB14FA6F39C0`.
+The sealed-heating regression on the same commit also passes, SHA-256
+`7850D3A93DA081C289CBE687C9ABCE5E8AACC21382F7ED1178417CE7C33958CB`.
+
+This is a nondimensional candidate signal. The control is not a proof of a
+well-balanced hydrostatic method, and no physical time, real gravity scale,
+material property or production TPT wall behavior is claimed.
+
 ## Validation
 
 ```text
 full_build=77/77 PASS
 python_discovery=414/414 PASS, 0 skipped
-meson_static=62/62 PASS
+meson_static=63/63 PASS
 targeted_contracts=29/29 PASS
 hllc_targeted_meson=6/6 PASS
 hllc_2d_targeted_meson=4/4 PASS
 hllc_fallback_contract=PASS, expected fallback count 1
 clean_runner=8/8 PASS across the HLLC checkpoint chain
 hllc_2d_clean_runner_at_be0ff2f37=3/3 PASS
+hllc_unique_clean_modes=9/9 PASS
+hllc_natural_plus_heating_clean_at_83c5a0cd2=2/2 PASS
 production_source_files_changed=0
 ```
 
@@ -224,8 +273,8 @@ binds revision `27ec4f16123860c3079619892b16861604776d92`.
 HLLC with Rusanov fallback is the current front-runner for continued PoC work,
 not the selected production solver. `V1_0_5_GATE=IN_PROGRESS` because the phase
 still lacks a selected PhysicalScale/physical-time policy, accepted performance
-budget, two-dimensional performance, natural convection and gas mixing. Sealed
-heating and its applied-source ledger now pass, but broader
+budget, two-dimensional performance and gas mixing/species conservation. Sealed
+heating, gravity accounting and natural convection now pass, but broader
 multidimensional and
 long-running adversarial coverage remains required before production use.
 

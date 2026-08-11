@@ -8,7 +8,7 @@ CURRENT_BRANCH=integration/omnicore-vnext
 CURRENT_VERSION=1.0.5
 CURRENT_VERSION_GATE=IN_PROGRESS_HLLC_FRONT_RUNNER_NOT_SELECTED
 NEXT_VERSION=1.0.6
-NEXT_PHASE=add gravity-source ledger and natural-convection checkpoint inside AtmosphereBench; keep HLLE and LBM registered-only
+NEXT_PHASE=add passive conserved-species gas-mixing checkpoint inside AtmosphereBench; keep HLLE and LBM registered-only
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -35,6 +35,7 @@ V1_0_4_CLEAN_VALIDATION=GREEN_BUILD_80_STATIC_41_PYTHON_385_PLUS_2_SKIPS_LUA_OPS
 V1_0_5_GATE=IN_PROGRESS
 V1_0_5_BASE_COMMIT=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_IMPLEMENTATION_HEAD=a21eafba301a6e02a94f81cf6da46961ec72d3cd
+V1_0_5_CURRENT_CHECKPOINT_HEAD=83c5a0cd2ba01b623a1d500e1cecb13f5931a60d
 V1_0_5_SHARED_CONTRACT_HEAD=1ba507e89e3d713fe355c03c2fc6e7139aabcb49
 V1_0_5_RUSANOV_HEAD=4b0658d8ff7bc56169fd8ed5d649f8c6b4250b44
 V1_0_5_RUSANOV_PRESSURE_PULSE_HEAD=cded7be672fbb2755174499214bb31622979eac6
@@ -50,6 +51,7 @@ V1_0_5_HLLC_RUSANOV_FALLBACK_HEAD=3eb235b8c27174f8e5ee8c31c33ceb167ffe545b
 V1_0_5_HLLC_FALLBACK_CONTRACT_HEAD=78bad784d9cf075400b1a68429f065bbdd9784d8
 V1_0_5_HLLC_2D_PERIODIC_HEAD=d38120177ff22984fd69539d6fc2ff37a8063fa2
 V1_0_5_HLLC_2D_SEALED_HEATING_HEAD=be0ff2f37108acc88f4fa26f7b05c17b139af570
+V1_0_5_HLLC_2D_NATURAL_CONVECTION_HEAD=83c5a0cd2ba01b623a1d500e1cecb13f5931a60d
 V1_0_5_ROLLBACK=13b24f49e18c22c794fae457eba9c8069fd13e6b
 V1_0_5_UPSTREAM=GREEN_ENTRY_STABLE_MASTER_d768aeb89_LOCAL_AHEAD_218_BEHIND_0
 V1_0_5_PHYSICAL_SCALE_SELECTION=UNSELECTED
@@ -165,8 +167,8 @@ with zero test assets.
 HLLC with explicit Rusanov fallback is clean-validated at `3eb235b8c` and is the
 current isolated front-runner. It passes the unchanged Low-Mach threshold and the
 current near-vacuum, sealed Sod and open-leak contracts with zero fallbacks and
-zero numerical corrections. It remains unselected: natural convection, gas
-mixing, two-dimensional performance, PhysicalScale/physical-time and accepted
+zero numerical corrections. It remains unselected: gas mixing/species
+conservation, two-dimensional performance, PhysicalScale/physical-time and accepted
 budget gates are not complete. See `phase-5-hllc-candidate.md`.
 
 The defensive fallback is independently covered at `78bad784d`: one valid
@@ -178,8 +180,8 @@ The first periodic two-dimensional HLLC checkpoint is clean-validated at
 pressure pulse remains positive, evolves nontrivially and closes mass/energy within
 `6.9e-13`. Both cases record zero fallback and numerical-correction events, and
 the explicit 2D state/flux layout is `160 bytes/cell`. This is only periodic 2D
-candidate evidence; sealed heating, general source accounting, natural convection,
-gas mixing, physical-time and budget selection remain open.
+candidate evidence; sealed heating, general source accounting, convection,
+gas mixing, physical-time and budget selection were still open at that checkpoint.
 
 The next isolated checkpoint is clean-validated at `be0ff2f37`. A general
 `ConservativeSourceLedger` records applied source deltas separately from numerical
@@ -189,6 +191,14 @@ the `76.8` energy increase reconciles within `3.21876e-11`, all `30720` source
 events are counted, and fallback/correction counts remain zero. Uniform, pulse and
 sealed-heating clean runners all pass on that commit. PhysicalScale, physical time,
 solver selection and production integration remain unselected/blocked.
+
+Natural convection is clean-validated at `83c5a0cd2`. Gravity impulse energy is
+accounted explicitly and sealed-wall pressure exchange has its own ledger. The
+control-subtracted thermal anomaly rises `0.225497` cell with updraft/return-flow
+signals `0.0257047 / -0.000157248`; control and heated ledgers close within
+`8e-12`, with zero fallback/correction events. The isothermal control still has
+first-order hydrostatic residual, so this is not a well-balanced proof. Scale,
+physical time and solver selection remain unselected.
 
 Current HLLC two-dimensional checkpoint source package:
 `artifacts/vnext-phase5-source-27ec4f161/`, SHA-256
