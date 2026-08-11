@@ -38,6 +38,8 @@ ALLOWED_TOOLS = {
 	"tools/atmospherebench/HybridMixedRegion2D.h",
 	"tools/atmospherebench/HybridPolicy1D.cpp",
 	"tools/atmospherebench/HybridPolicy1D.h",
+	"tools/atmospherebench/HybridProjectionCoupling2D.cpp",
+	"tools/atmospherebench/HybridProjectionCoupling2D.h",
 	"tools/atmospherebench/LbmD2Q9.cpp",
 	"tools/atmospherebench/LbmD2Q9.h",
 	"tools/atmospherebench/LegacyLike.cpp",
@@ -47,6 +49,8 @@ ALLOWED_TOOLS = {
 	"tools/atmospherebench/LowMachProjection2DPerformance.cpp",
 	"tools/atmospherebench/LowMachProjection2DPerformance.h",
 	"tools/atmospherebench/PrecisionMatrix.cpp",
+	"tools/atmospherebench/Phase5Selection.cpp",
+	"tools/atmospherebench/Phase5Selection.h",
 	"tools/atmospherebench/Species2D.cpp",
 	"tools/atmospherebench/Species2D.h",
     "tools/atmospherebench/main.cpp",
@@ -67,6 +71,7 @@ ALLOWED_TOOLS = {
     "tools/sync_element_localization.py",
 	"tools/run_atmospherebench.ps1",
 	"tools/run_atmosphere_precision_matrix.py",
+	"tools/run_phase5_selection.ps1",
 }
 ROOT_REPLACEMENTS = {
     "README.md": "docs/PUBLIC_GITHUB_README.md",
@@ -117,6 +122,10 @@ REQUIRED_MEMBERS = {
 	"tools/atmospherebench/LowMachProjection2D.h",
 	"tools/atmospherebench/LowMachProjection2DPerformance.cpp",
 	"tools/atmospherebench/LowMachProjection2DPerformance.h",
+	"tools/atmospherebench/HybridProjectionCoupling2D.cpp",
+	"tools/atmospherebench/HybridProjectionCoupling2D.h",
+	"tools/atmospherebench/Phase5Selection.cpp",
+	"tools/atmospherebench/Phase5Selection.h",
 	"tools/atmospherebench/PrecisionMatrix.cpp",
 	"tools/atmospherebench/Species2D.cpp",
 	"tools/atmospherebench/Species2D.h",
@@ -124,6 +133,7 @@ REQUIRED_MEMBERS = {
     "tools/atmospherebench/Rusanov1D.cpp",
 	"tools/atmospherebench/Rusanov1D.h",
 	"tools/run_atmosphere_precision_matrix.py",
+	"tools/run_phase5_selection.ps1",
 }
 FORBIDDEN_SUFFIXES = (
     ".debug",

@@ -426,6 +426,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/PrecisionMatrix.cpp",
             "tools/atmospherebench/HybridPolicy1D.cpp",
             "tools/atmospherebench/HybridPolicy1D.h",
+            "tools/atmospherebench/HybridProjectionCoupling2D.cpp",
+            "tools/atmospherebench/HybridProjectionCoupling2D.h",
             "tools/atmospherebench/HybridMixedRegion1D.cpp",
             "tools/atmospherebench/HybridMixedRegion1D.h",
             "tools/atmospherebench/HybridMixedRegion2D.cpp",
@@ -434,7 +436,10 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/LowMachProjection2D.h",
             "tools/atmospherebench/Species2D.cpp",
             "tools/atmospherebench/Species2D.h",
+            "tools/atmospherebench/Phase5Selection.cpp",
+            "tools/atmospherebench/Phase5Selection.h",
             "tools/run_atmosphere_precision_matrix.py",
+            "tools/run_phase5_selection.ps1",
         }
         required = tools | {
             "resources/omnicore/v1/physical-scale-candidates.json",
