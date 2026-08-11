@@ -76,6 +76,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("args: [ '--run-hllc-2d-natural-convection' ]", target)
         self.assertIn("args: [ '--run-hllc-2d-species-mixing' ]", target)
         self.assertIn("args: [ '--run-hllc-2d-performance' ]", target)
+        self.assertIn("args: [ '--run-lbm-d2q9-uniform' ]", target)
+        self.assertIn("args: [ '--run-lbm-d2q9-shear-wave' ]", target)
         self.assertIn("'atmospherebench-rusanov-open-boundary-leak'", target)
         self.assertIn("args: [ '--run-rusanov-open-boundary-leak' ]", target)
         self.assertIn("'atmospherebench-rusanov-performance'", target)
@@ -97,11 +99,13 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("HLLC_2D_SEALED_HEATING_PROBE", source)
         self.assertIn("HLLC_2D_NATURAL_CONVECTION_PROBE", source)
         self.assertIn("HLLC_2D_SPECIES_MIXING_PROBE", source)
+        self.assertIn("LBM_D2Q9_UNIFORM_PROBE", source)
+        self.assertIn("LBM_D2Q9_SHEAR_WAVE_PROBE", source)
         self.assertIn("=UNSELECTED", source)
         self.assertIn("synthetic_nondimensional", source)
         self.assertNotIn("287.05", source)
 
-    def test_rusanov_candidate_is_strict_double_and_keeps_other_candidates_registered_only(self) -> None:
+    def test_fvm_candidates_are_strict_double_and_hlle_remains_registered_only(self) -> None:
         header = (BENCH_ROOT / "Rusanov1D.h").read_text(encoding="utf-8")
         source = (BENCH_ROOT / "Rusanov1D.cpp").read_text(encoding="utf-8")
         self.assertIn("RusanovProbeSummary", header)
@@ -146,7 +150,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn('output << "correction_event_count="', source)
         atmosphere = (BENCH_ROOT / "AtmosphereBench.cpp").read_text(encoding="utf-8")
         self.assertIn('"fvm_hlle", "registered_only", false', atmosphere)
-        self.assertIn('"lbm_d2q9", "registered_only", false', atmosphere)
+        self.assertIn('"lbm_d2q9",', atmosphere)
+        self.assertIn('"implemented_isothermal_uniform_shear_wave_only", true', atmosphere)
         self.assertIn('"fvm_all_speed_rusanov",', atmosphere)
         self.assertIn('"fvm_hllc_rusanov_fallback",', atmosphere)
 
@@ -213,6 +218,20 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
         self.assertIn("millisecondsPerStep", source)
         self.assertIn('output << "performance_budget_status=unselected', source)
 
+    def test_lbm_d2q9_is_actual_isothermal_candidate_with_explicit_limits(self) -> None:
+        header = (BENCH_ROOT / "LbmD2Q9.h").read_text(encoding="utf-8")
+        source = (BENCH_ROOT / "LbmD2Q9.cpp").read_text(encoding="utf-8")
+        self.assertIn("LbmD2Q9ProbeSummary", header)
+        self.assertIn("RunLbmD2Q9Uniform", header)
+        self.assertIn("RunLbmD2Q9ShearWave", header)
+        self.assertIn("Directions = 9", source)
+        self.assertIn("Equilibrium", source)
+        self.assertIn("RelaxationTime = 0.8", source)
+        self.assertIn("shearAmplitudeRelativeError <= 0.02", source)
+        self.assertIn('output << "energy_conservation=not_applicable_no_energy_state', source)
+        self.assertIn('output << "near_vacuum_support=unsupported', source)
+        self.assertIn('output << "shock_support=unsupported', source)
+
     def test_scaffold_contract_is_not_a_runtime_consumer(self) -> None:
         production = []
         for path in (ROOT / "src").rglob("*"):
@@ -231,6 +250,8 @@ class AtmosphereBenchSourceContractTests(unittest.TestCase):
             "tools/atmospherebench/main.cpp",
             "tools/atmospherebench/Rusanov1D.cpp",
             "tools/atmospherebench/Rusanov1D.h",
+            "tools/atmospherebench/LbmD2Q9.cpp",
+            "tools/atmospherebench/LbmD2Q9.h",
             "tools/atmospherebench/Species2D.cpp",
             "tools/atmospherebench/Species2D.h",
         }

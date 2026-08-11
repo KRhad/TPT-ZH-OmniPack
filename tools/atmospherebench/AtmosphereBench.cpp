@@ -1,5 +1,6 @@
 #include "AtmosphereBench.h"
 #include "Hllc2D.h"
+#include "LbmD2Q9.h"
 #include "Rusanov1D.h"
 #include "Species2D.h"
 
@@ -238,7 +239,8 @@ const std::array<CandidateDescriptor, 6> &Candidates()
 		{CandidateKind::HllcRusanovFallbackFvm, "fvm_hllc_rusanov_fallback",
 			"implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes", true},
 		{CandidateKind::HlleFvm, "fvm_hlle", "registered_only", false},
-		{CandidateKind::LbmD2Q9, "lbm_d2q9", "registered_only", false},
+		{CandidateKind::LbmD2Q9, "lbm_d2q9",
+			"implemented_isothermal_uniform_shear_wave_only", true},
 	}};
 	return candidates;
 }
@@ -297,6 +299,8 @@ bool RunSelfTest(std::ostream &output)
 	const auto hllc2DSealedHeating = RunHllc2DSealedHeating();
 	const auto hllc2DNaturalConvection = RunHllc2DNaturalConvection();
 	const auto hllc2DSpeciesMixing = RunHllc2DSpeciesMixing();
+	const auto lbmD2Q9Uniform = RunLbmD2Q9Uniform();
+	const auto lbmD2Q9ShearWave = RunLbmD2Q9ShearWave();
 	const auto rusanovOpenLeak = RunRusanovOpenBoundaryLeak();
 	const AtmosphereGrid invalidGrid{0, 1, 1.0, BoundaryMode::Periodic};
 	const BenchmarkCase invalidCase{"", invalidGrid, TimeDomain::NondimensionalContract, 0.0, 0};
@@ -347,13 +351,15 @@ bool RunSelfTest(std::ostream &output)
 			sourceLedger, boundaryLedger, 1e-12)
 		&& !uncountedSource.IsConsistent() && nonfiniteSourceRejected
 		&& invalidSource.IsEmpty();
-	bool onlyRusanovImplemented = true;
+	bool implementedCandidatesMatch = true;
 	for (const auto &candidate : candidates)
 	{
 		const bool expected = candidate.kind == CandidateKind::RusanovFvm
 			|| candidate.kind == CandidateKind::AllSpeedRusanovFvm
-			|| candidate.kind == CandidateKind::HllcRusanovFallbackFvm;
-		onlyRusanovImplemented = onlyRusanovImplemented && candidate.solverImplemented == expected;
+			|| candidate.kind == CandidateKind::HllcRusanovFallbackFvm
+			|| candidate.kind == CandidateKind::LbmD2Q9;
+		implementedCandidatesMatch = implementedCandidatesMatch
+			&& candidate.solverImplemented == expected;
 	}
 	const bool result = ok && rusanov.passed && rusanovPressurePulse.passed
 		&& rusanovDensityAdvection.passed && rusanovContact.passed
@@ -372,8 +378,10 @@ bool RunSelfTest(std::ostream &output)
 		&& hllc2DSealedHeating.passed
 		&& hllc2DNaturalConvection.passed
 		&& hllc2DSpeciesMixing.passed
+		&& lbmD2Q9Uniform.passed
+		&& lbmD2Q9ShearWave.passed
 		&& rusanovOpenLeak.passed
-		&& onlyRusanovImplemented;
+		&& implementedCandidatesMatch;
 	output << "ATMOSPHEREBENCH_SELF_TEST=" << (result ? "PASS" : "FAIL") << '\n';
 	output << "PHYSICAL_SCALE_SELECTION=UNSELECTED\n";
 	output << "ATMOSPHERE_SOLVER_SELECTION=UNSELECTED\n";
@@ -420,6 +428,10 @@ bool RunSelfTest(std::ostream &output)
 		<< (hllc2DNaturalConvection.passed ? "PASS" : "FAIL") << '\n';
 	output << "HLLC_2D_SPECIES_MIXING_PROBE="
 		<< (hllc2DSpeciesMixing.passed ? "PASS" : "FAIL") << '\n';
+	output << "LBM_D2Q9_UNIFORM_PROBE="
+		<< (lbmD2Q9Uniform.passed ? "PASS" : "FAIL") << '\n';
+	output << "LBM_D2Q9_SHEAR_WAVE_PROBE="
+		<< (lbmD2Q9ShearWave.passed ? "PASS" : "FAIL") << '\n';
 	output << "RUSANOV_OPEN_BOUNDARY_LEAK_PROBE="
 		<< (rusanovOpenLeak.passed ? "PASS" : "FAIL") << '\n';
 	output << "STRICT_REFERENCE_CONTRACT=PASS\n";

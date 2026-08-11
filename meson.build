@@ -671,6 +671,7 @@ atmospherebench = executable(
 	sources: files(
 		'tools/atmospherebench/AtmosphereBench.cpp',
 		'tools/atmospherebench/Hllc2D.cpp',
+		'tools/atmospherebench/LbmD2Q9.cpp',
 		'tools/atmospherebench/Rusanov1D.cpp',
 		'tools/atmospherebench/Species2D.cpp',
 		'tools/atmospherebench/main.cpp',
@@ -850,6 +851,22 @@ test(
 	args: [ '--run-hllc-2d-performance' ],
 	suite: 'static',
 	timeout: 120,
+)
+
+test(
+	'atmospherebench-lbm-d2q9-uniform',
+	atmospherebench,
+	args: [ '--run-lbm-d2q9-uniform' ],
+	suite: 'static',
+	timeout: 60,
+)
+
+test(
+	'atmospherebench-lbm-d2q9-shear-wave',
+	atmospherebench,
+	args: [ '--run-lbm-d2q9-shear-wave' ],
+	suite: 'static',
+	timeout: 60,
 )
 
 test(

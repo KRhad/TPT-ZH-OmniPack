@@ -41,6 +41,10 @@ param(
 
     [switch] $RunHllc2DPerformance,
 
+    [switch] $RunLbmD2Q9Uniform,
+
+    [switch] $RunLbmD2Q9ShearWave,
+
     [switch] $RunRusanovOpenBoundaryLeak,
 
     [switch] $RunRusanovPerformance,
@@ -186,6 +190,7 @@ if ($benchCommands.Count -lt 2) {
 $expectedBenchSources = @(
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/AtmosphereBench.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Hllc2D.cpp")),
+    [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/LbmD2Q9.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Rusanov1D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/Species2D.cpp")),
     [System.IO.Path]::GetFullPath((Join-Path $sourceState.Repository "tools/atmospherebench/main.cpp"))
@@ -241,6 +246,7 @@ if ((@($RunRusanovUniform, $RunRusanovPressurePulse, $RunRusanovDensityAdvection
 		$RunHllcRusanovFallbackPerformance,
 		$RunHllc2DUniform, $RunHllc2DPressurePulse, $RunHllc2DSealedHeating,
 		$RunHllc2DNaturalConvection, $RunHllc2DSpeciesMixing, $RunHllc2DPerformance,
+		$RunLbmD2Q9Uniform, $RunLbmD2Q9ShearWave,
 		$RunRusanovOpenBoundaryLeak,
 		$RunRusanovPerformance) |
         Where-Object { $_ }).Count -gt 1) {
@@ -258,7 +264,9 @@ $isRusanovProbe = $RunRusanovUniform -or $RunRusanovPressurePulse `
 	-or $RunHllcRusanovFallbackPerformance `
 	-or $RunHllc2DUniform -or $RunHllc2DPressurePulse -or $RunHllc2DSealedHeating `
 	-or $RunHllc2DNaturalConvection -or $RunHllc2DSpeciesMixing -or $RunHllc2DPerformance `
+	-or $RunLbmD2Q9Uniform -or $RunLbmD2Q9ShearWave `
 	-or $RunRusanovOpenBoundaryLeak -or $RunRusanovPerformance
+$isLbmProbe = $RunLbmD2Q9Uniform -or $RunLbmD2Q9ShearWave
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $runMode = if ($RunRusanovPerformance) {
 	"rusanov_performance"
@@ -288,6 +296,10 @@ $runMode = if ($RunRusanovPerformance) {
 	"hllc_2d_species_mixing"
 } elseif ($RunHllc2DPerformance) {
 	"hllc_2d_performance"
+} elseif ($RunLbmD2Q9Uniform) {
+	"lbm_d2q9_uniform"
+} elseif ($RunLbmD2Q9ShearWave) {
+	"lbm_d2q9_shear_wave"
 } elseif ($RunHllc2DUniform) {
 	"hllc_2d_uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -335,6 +347,10 @@ $runArgument = if ($RunRusanovPerformance) {
 	"--run-hllc-2d-species-mixing"
 } elseif ($RunHllc2DPerformance) {
 	"--run-hllc-2d-performance"
+} elseif ($RunLbmD2Q9Uniform) {
+	"--run-lbm-d2q9-uniform"
+} elseif ($RunLbmD2Q9ShearWave) {
+	"--run-lbm-d2q9-shear-wave"
 } elseif ($RunHllc2DUniform) {
 	"--run-hllc-2d-uniform"
 } elseif ($RunRusanovDensityAdvectionRefinement) {
@@ -374,7 +390,7 @@ foreach ($candidateLine in @(
     "candidate=fvm_all_speed_rusanov|status=implemented_1d_low_mach_probe_rejected|solver_implemented=true",
     "candidate=fvm_hllc_rusanov_fallback|status=implemented_1d_low_mach_near_vacuum_sod_open_leak_performance_and_2d_uniform_pressure_pulse_sealed_heating_natural_convection_species_mixing_performance_probes|solver_implemented=true",
     "candidate=fvm_hlle|status=registered_only|solver_implemented=false",
-    "candidate=lbm_d2q9|status=registered_only|solver_implemented=false"
+    "candidate=lbm_d2q9|status=implemented_isothermal_uniform_shear_wave_only|solver_implemented=true"
 )) {
     if ($candidateText -notmatch [regex]::Escape($candidateLine)) {
         throw "AtmosphereBench candidate registration drifted: $candidateLine"
@@ -422,6 +438,91 @@ if (-not $isRusanovProbe) {
             throw "Uniform contract expected $ledgerKey=0"
         }
     }
+} elseif ($isLbmProbe) {
+	$isShearWave = $RunLbmD2Q9ShearWave
+	$benchmarkKind = if ($isShearWave) {
+		"atmospherebench_lbm_d2q9_shear_wave_probe"
+	} else {
+		"atmospherebench_lbm_d2q9_uniform_probe"
+	}
+	$performanceGate = "not_evaluated_candidate_probe"
+	$timingScope = if ($isShearWave) {
+		"standalone_lbm_d2q9_shear_wave_probe"
+	} else {
+		"standalone_lbm_d2q9_uniform_probe"
+	}
+	$candidateImplementations = "lbm_d2q9"
+	if ($solverResultStatus -ne "candidate_result_not_selection") {
+		throw "LBM D2Q9 probe must not claim solver selection"
+	}
+	if ((Read-KeyValue -Text $text -Key "candidate") -ne "lbm_d2q9" -or
+		(Read-KeyValue -Text $text -Key "candidate_solver_implemented") -ne "true") {
+		throw "LBM D2Q9 candidate identity is invalid"
+	}
+	foreach ($probeKey in @{
+		"case_time_domain" = "nondimensional_contract"; "dimension" = "2";
+		"boundary_mode" = "periodic"; "lbm_model" = "d2q9_bgk_isothermal";
+		"energy_state" = "not_implemented";
+		"energy_conservation" = "not_applicable_no_energy_state";
+		"near_vacuum_support" = "unsupported_low_mach_positive_population_contract";
+		"shock_support" = "unsupported_isothermal_low_mach_model";
+		"species_support" = "not_implemented"; "cell_length" = "1";
+		"case_timestep" = "1"; "relaxation_time" = "0.8";
+		"kinematic_viscosity" = "0.1";
+		"maximum_cfl" = "not_applicable_lattice_streaming";
+		"energy_drift" = "not_applicable_no_energy_state";
+		"mass_conserved" = "true"; "momentum_conserved" = "true";
+		"positivity_preserved" = "true"; "numerical_correction_count" = "0";
+		"state_bytes_per_cell" = "72"; "state_and_flux_scratch_bytes_per_cell" = "144";
+		"probe_passed" = "true"
+	}.GetEnumerator()) {
+		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+			throw "LBM D2Q9 contract drifted: $($probeKey.Key)"
+		}
+	}
+	$expectedCase = if ($isShearWave) { "lbm_d2q9_shear_wave_2d" } else { "lbm_d2q9_uniform_2d" }
+	$expectedCellsX = "64"
+	$expectedCellsY = if ($isShearWave) { "64" } else { "48" }
+	$expectedCellCount = if ($isShearWave) { "4096" } else { "3072" }
+	$expectedSteps = if ($isShearWave) { "128" } else { "64" }
+	$expectedScratchTotal = if ($isShearWave) { "589824" } else { "442368" }
+	$expectedEvolved = if ($isShearWave) { "true" } else { "false" }
+	$expectedUniform = if ($isShearWave) { "false" } else { "true" }
+	$expectedShear = if ($isShearWave) { "true" } else { "false" }
+	foreach ($probeKey in @{
+		"case" = $expectedCase; "grid_cells_x" = $expectedCellsX;
+		"grid_cells_y" = $expectedCellsY; "grid_cell_count" = $expectedCellCount;
+		"case_step_count" = $expectedSteps; "state_evolved" = $expectedEvolved;
+		"uniform_preserved" = $expectedUniform; "shear_reference_passed" = $expectedShear;
+		"state_and_flux_scratch_bytes_total" = $expectedScratchTotal
+	}.GetEnumerator()) {
+		if ((Read-KeyValue -Text $text -Key $probeKey.Key) -ne $probeKey.Value) {
+			throw "LBM D2Q9 case contract drifted: $($probeKey.Key)"
+		}
+	}
+	foreach ($metricKey in @("minimum_density", "minimum_pressure", "minimum_population", "maximum_mach")) {
+		$value = [double](Read-KeyValue -Text $text -Key $metricKey)
+		if ([double]::IsNaN($value) -or [double]::IsInfinity($value) -or $value -le 0.0) {
+			throw "LBM D2Q9 positive metric is invalid: $metricKey"
+		}
+	}
+	if ([double](Read-KeyValue -Text $text -Key "maximum_mach") -gt 0.1) {
+		throw "LBM D2Q9 probe exceeded its published low-Mach domain"
+	}
+	foreach ($driftKey in @("mass_drift", "momentum_x_drift", "momentum_y_drift")) {
+		if ([Math]::Abs([double](Read-KeyValue -Text $text -Key $driftKey)) -gt 1e-8) {
+			throw "LBM D2Q9 conservation drift exceeds tolerance: $driftKey"
+		}
+	}
+	if ($isShearWave) {
+		$relativeError = [double](Read-KeyValue -Text $text -Key "shear_amplitude_relative_error")
+		if ([double]::IsNaN($relativeError) -or [double]::IsInfinity($relativeError) -or
+			$relativeError -lt 0.0 -or $relativeError -gt 0.02) {
+			throw "LBM D2Q9 shear-wave decay error exceeds tolerance"
+		}
+	} elseif ([Math]::Abs([double](Read-KeyValue -Text $text -Key "state_change_l1")) -gt 1e-10) {
+		throw "LBM D2Q9 uniform state changed above tolerance"
+	}
 } elseif ($RunHllc2DSpeciesMixing) {
 	$benchmarkKind = "atmospherebench_hllc_2d_species_mixing_probe"
 	$performanceGate = "not_evaluated_candidate_probe"
@@ -1421,11 +1522,54 @@ $particleGridCellUpdatesPerSecond = $null
 $legacyGridFractionOfReferenceFrame = $null
 $doubledGridFractionOfReferenceFrame = $null
 $particleGridFractionOfReferenceFrame = $null
+$lbmD2Q9 = $null
+$lbmEnergyState = $null
+$lbmEnergyConservation = $null
+$lbmNearVacuumSupport = $null
+$lbmShockSupport = $null
+$lbmSpeciesSupport = $null
 if ($isRusanovProbe) {
     $stateDensity = [double](Read-KeyValue -Text $text -Key "minimum_density")
     $statePressure = [double](Read-KeyValue -Text $text -Key "minimum_pressure")
     $stateAndFluxScratchBytesPerCell = [double](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_per_cell")
-	if ($RunHllc2DSpeciesMixing) {
+	if ($isLbmProbe) {
+		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
+		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
+		$maximumDensity = [double](Read-KeyValue -Text $text -Key "maximum_density")
+		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
+		$stateChangeL1 = [double](Read-KeyValue -Text $text -Key "state_change_l1")
+		$stateEvolved = (Read-KeyValue -Text $text -Key "state_evolved") -eq "true"
+		$lbmEnergyState = Read-KeyValue -Text $text -Key "energy_state"
+		$lbmEnergyConservation = Read-KeyValue -Text $text -Key "energy_conservation"
+		$lbmNearVacuumSupport = Read-KeyValue -Text $text -Key "near_vacuum_support"
+		$lbmShockSupport = Read-KeyValue -Text $text -Key "shock_support"
+		$lbmSpeciesSupport = Read-KeyValue -Text $text -Key "species_support"
+		$lbmD2Q9 = [ordered]@{
+			model = Read-KeyValue -Text $text -Key "lbm_model"
+			probe_kind = Read-KeyValue -Text $text -Key "probe_kind"
+			relaxation_time = [double](Read-KeyValue -Text $text -Key "relaxation_time")
+			kinematic_viscosity = [double](Read-KeyValue -Text $text -Key "kinematic_viscosity")
+			maximum_cfl = Read-KeyValue -Text $text -Key "maximum_cfl"
+			maximum_mach = [double](Read-KeyValue -Text $text -Key "maximum_mach")
+			minimum_population = [double](Read-KeyValue -Text $text -Key "minimum_population")
+			energy_state = $lbmEnergyState
+			energy_conservation = $lbmEnergyConservation
+			near_vacuum_support = $lbmNearVacuumSupport
+			shock_support = $lbmShockSupport
+			species_support = $lbmSpeciesSupport
+			initial_mass = [double](Read-KeyValue -Text $text -Key "initial_mass")
+			final_mass = [double](Read-KeyValue -Text $text -Key "final_mass")
+			mass_conserved = (Read-KeyValue -Text $text -Key "mass_conserved") -eq "true"
+			momentum_conserved = (Read-KeyValue -Text $text -Key "momentum_conserved") -eq "true"
+			positivity_preserved = (Read-KeyValue -Text $text -Key "positivity_preserved") -eq "true"
+			uniform_preserved = (Read-KeyValue -Text $text -Key "uniform_preserved") -eq "true"
+			initial_shear_amplitude = [double](Read-KeyValue -Text $text -Key "initial_shear_amplitude")
+			final_shear_amplitude = [double](Read-KeyValue -Text $text -Key "final_shear_amplitude")
+			expected_shear_amplitude = [double](Read-KeyValue -Text $text -Key "expected_shear_amplitude")
+			shear_amplitude_relative_error = [double](Read-KeyValue -Text $text -Key "shear_amplitude_relative_error")
+			shear_reference_passed = (Read-KeyValue -Text $text -Key "shear_reference_passed") -eq "true"
+		}
+	} elseif ($RunHllc2DSpeciesMixing) {
 		$boundaryMode = Read-KeyValue -Text $text -Key "boundary_mode"
 		$cellLength = [double](Read-KeyValue -Text $text -Key "cell_length")
 		$stateAndFluxScratchBytesTotal = [int64](Read-KeyValue -Text $text -Key "state_and_flux_scratch_bytes_total")
@@ -1802,12 +1946,14 @@ if ($isRusanovProbe) {
 }
 $limitations = @(
     "No production Air, Simulation, Particle, Save, or Lua code is linked.",
-	"No HLLE, LBM, production TPT wall-coupling, species-EOS coupling, or physical species diffusion is implemented in this scaffold."
+	"No HLLE, thermal/compressible LBM, production TPT wall-coupling, species-EOS coupling, or physical species diffusion is implemented in this scaffold."
 )
 if ($RunRusanovPerformance) {
 	$limitations += "Rusanov performance is a single-threaded strict-double 1D end-to-end candidate measurement with allocation and validation included; no production budget or solver selection is implied."
 } elseif ($RunRusanovOpenBoundaryLeak) {
 	$limitations += "Rusanov open-boundary leak uses a fixed nondimensional low-pressure reservoir and sealed left wall; it is boundary-ledger evidence, not a production TPT boundary model or performance claim."
+} elseif ($isLbmProbe) {
+	$limitations += "D2Q9 BGK LBM is implemented only as an isothermal periodic low-Mach comparison; it has no total-energy state and does not support the required near-vacuum, shock, species, reacting-gas or production-boundary contracts."
 } elseif ($RunHllc2DPerformance) {
 	$limitations += "HLLC 2D performance is a single-threaded strict-double periodic end-to-end candidate measurement; physical time and the atmosphere frame budget remain unselected, and no production, species, sealed/open-boundary or GPU performance is implied."
 } elseif ($RunHllc2DNaturalConvection) {
@@ -1992,7 +2138,7 @@ $result = [ordered]@{
         momentum_drift = [double](Read-KeyValue -Text $text -Key "momentum_drift")
         momentum_x_drift = [double](Read-KeyValue -Text $text -Key "momentum_x_drift")
         momentum_y_drift = [double](Read-KeyValue -Text $text -Key "momentum_y_drift")
-        energy_drift = [double](Read-KeyValue -Text $text -Key "energy_drift")
+        energy_drift = if ($isLbmProbe) { $null } else { [double](Read-KeyValue -Text $text -Key "energy_drift") }
         numerical_correction_count = [int](Read-KeyValue -Text $text -Key "numerical_correction_count")
     }
     numerical_correction_ledger = [ordered]@{
@@ -2033,6 +2179,7 @@ $result = [ordered]@{
 	natural_convection = $naturalConvection
 	species_mixing = $speciesMixing
 	hllc_2d_performance = $hllc2DPerformance
+	lbm_d2q9 = $lbmD2Q9
     measurement = [ordered]@{
         elapsed_milliseconds = [Math]::Round($timer.Elapsed.TotalMilliseconds, 6)
         timing_scope = $timingScope
