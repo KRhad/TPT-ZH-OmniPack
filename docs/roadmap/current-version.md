@@ -133,11 +133,11 @@ against the source ledger within `3.21876e-11`. All `30720` source applications
 are counted, with zero fallback and numerical-correction events. This does not
 select PhysicalScale, physical time or the solver.
 
-The clean source package for the periodic two-dimensional checkpoint is
-`artifacts/vnext-phase5-source-7ab3434f6/`, SHA-256
-`8FEC630C880EE10434C8CFE51E97E14B927EEF1207D09B02DDC19CE9C7AA1B8B`,
+The clean source package for the sealed-heating/source-ledger checkpoint is
+`artifacts/vnext-phase5-source-27ec4f161/`, SHA-256
+`793AB92E6975E28B4FCDB4E8A7FF6E6364F3ED53C40DCB6E7BA799918172F5C0`,
 with `1306` source members plus manifest and zero test assets. The manifest binds
-revision `7ab3434f6d064042d2cf898c4a1cbd8b95e9dcad`.
+revision `27ec4f16123860c3079619892b16861604776d92`.
 
 Milestone reports: [1.0.1 profiler foundation](../vnext/phase-1-profiler-export.md),
 [1.0.2 upstream refresh](../vnext/phase-2-upstream-compatibility.md), and the
