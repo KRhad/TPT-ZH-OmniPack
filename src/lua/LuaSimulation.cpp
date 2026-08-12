@@ -14,6 +14,7 @@
 #include "gui/game/tool/Tool.h"
 #include "simulation/Air.h"
 #include "simulation/OmniAtmosphere.h"
+#include "simulation/OmniAlloyComposition.h"
 #include "simulation/ElementCommon.h"
 #include "simulation/GOLString.h"
 #include "simulation/gravity/Gravity.h"
@@ -1916,6 +1917,36 @@ static int omniSolution(lua_State *L)
 	return 1;
 }
 
+static int omniAlloyComposition(lua_State *L)
+{
+	const int type = luaL_checkinteger(L, 1);
+	const auto *definition = OmniAlloyCompositionForType(type);
+	if (!definition)
+	{
+		lua_pushnil(L);
+		return 1;
+	}
+	lua_newtable(L);
+	lua_pushinteger(L, definition->alloyType);
+	lua_setfield(L, -2, "element_type");
+	lua_pushstring(L, definition->modelId);
+	lua_setfield(L, -2, "model");
+	lua_pushstring(L, definition->status);
+	lua_setfield(L, -2, "status");
+	lua_pushstring(L, "game_recipe_particle_count");
+	lua_setfield(L, -2, "fraction_basis");
+	lua_newtable(L);
+	for (size_t index = 0; index < definition->constituentCount; ++index)
+	{
+		const auto &constituent = definition->constituents[index];
+		lua_pushinteger(L, constituent.elementType);
+		lua_pushnumber(L, constituent.recipeFraction);
+		lua_settable(L, -3);
+	}
+	lua_setfield(L, -2, "composition");
+	return 1;
+}
+
 static int waterEqualization(lua_State *L)
 {
 	auto *lsi = GetLSI();
@@ -2754,6 +2785,7 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(omniAtmosphere),
 		LFUNC(omniChemistry),
 		LFUNC(omniSolution),
+		LFUNC(omniAlloyComposition),
 		LFUNC(waterEqualization),
 		LFUNC(ambientAirTemp),
 		LFUNC(edgePressure),

@@ -1257,6 +1257,14 @@ test(
 	timeout: 60,
 )
 
+test(
+	'omni-alloy-composition-contract',
+	python3_prog,
+	args: [ files('tools/omni_alloy_composition_check.py') ],
+	suite: 'static',
+	timeout: 60,
+)
+
 omni_combustion_probe = executable(
 	'omni_combustion_probe',
 	sources: [

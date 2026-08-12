@@ -1,0 +1,22 @@
+{
+  "schema": "omnicore.fixed-alloy-composition",
+  "version": 1,
+  "fraction_basis": "game_recipe_particle_count",
+  "status": "game_recipe_fraction_not_industrial_grade_claim",
+  "persistence": "stable_element_id",
+  "alloys": [
+    { "element": "TIAL", "model": "recipe.tial.4ti_1al_1v", "composition": { "TTAN": 0.6666666666666666, "ALUM": 0.1666666666666667, "V": 0.1666666666666667 } },
+    { "element": "NSAL", "model": "recipe.nsal.4ni_1cr_1co", "composition": { "NICL": 0.6666666666666666, "CHRM": 0.1666666666666667, "COBT": 0.1666666666666667 } },
+    { "element": "WALY", "model": "recipe.waly.4w_1ni_1fe", "composition": { "TUNG": 0.6666666666666666, "NICL": 0.1666666666666667, "IRON": 0.1666666666666667 } },
+    { "element": "ZRAL", "model": "recipe.zral.4zr_1sn", "composition": { "ZR": 0.8, "TIN": 0.2 } },
+    { "element": "NITI", "model": "recipe.niti.1ni_1ti", "composition": { "NICL": 0.5, "TTAN": 0.5 } }
+  ],
+  "provenance": {
+    "source": "src/simulation/OmniMetallurgy.cpp AlloyRecipes",
+    "method": "normalized_existing_recipe_counts",
+    "confidence": "exact_for_game_recipe",
+    "real_world_mapping": "not_claimed",
+    "redistribution": "project_owned_gameplay_data"
+  }
+}
+
