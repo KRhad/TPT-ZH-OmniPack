@@ -16,7 +16,7 @@
 #include "simulation/ElementDefs.h"
 #include "simulation/PeriodicContentLinks.h"
 
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 #include <algorithm>
 #include <set>
 #include <string>

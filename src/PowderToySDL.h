@@ -4,7 +4,7 @@
 #include "gui/WindowFrameOps.h"
 #include "FpsLimit.h"
 #include <cstdint>
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 #include <variant>
 #include <optional>
 

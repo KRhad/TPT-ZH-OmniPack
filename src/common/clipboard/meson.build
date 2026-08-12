@@ -3,7 +3,7 @@ if platform_clipboard
 	if host_platform == 'windows'
 		powder_files += files('Windows.cpp')
 		clipboard_impl_factories += [
-			[ 'SDL_SYSWM_WINDOWS', 'WindowsClipboardFactory' ],
+			[ 'PlatformSubsystem::Windows', 'WindowsClipboardFactory' ],
 		]
 	elif host_platform == 'darwin'
 		if get_option('build_powder')
@@ -16,7 +16,7 @@ if platform_clipboard
 			'Cocoa.mm',
 		])
 		clipboard_impl_factories += [
-			[ 'SDL_SYSWM_COCOA', 'CocoaClipboardFactory' ],
+			[ 'PlatformSubsystem::Cocoa', 'CocoaClipboardFactory' ],
 		]
 	elif host_platform == 'android'
 		# TODO
@@ -27,8 +27,8 @@ if platform_clipboard
 			'External.cpp',
 		])
 		clipboard_impl_factories += [
-			[ 'SDL_SYSWM_X11', 'ExternalClipboardFactory' ],
-			[ 'SDL_SYSWM_WAYLAND', 'ExternalClipboardFactory' ],
+			[ 'PlatformSubsystem::X11', 'ExternalClipboardFactory' ],
+			[ 'PlatformSubsystem::Wayland', 'ExternalClipboardFactory' ],
 		]
 	endif
 	powder_files += files('Dynamic.cpp')

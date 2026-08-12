@@ -8,7 +8,7 @@
 
 #include "Config.h"
 #include "SimulationConfig.h"
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 using namespace ui;
 

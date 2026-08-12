@@ -3,8 +3,10 @@
 #include "client/GameSave.h"
 #include "common/platform/Platform.h"
 #include "PowderToySDL.h"
-#include <SDL.h>
-#include <SDL_syswm.h>
+#include "common/platform/SDLCompat.h"
+#if !TPT_SDL3
+# include <SDL_syswm.h>
+#endif
 #include <iostream>
 #include <windows.h>
 
@@ -82,6 +84,7 @@ namespace Clipboard
 			std::cerr << "transferred save data" << std::endl;
 		}
 
+#if !TPT_SDL3
 		static int TransferWatchWrapper(void *userdata, SDL_Event *event)
 		{
 			return reinterpret_cast<WindowsClipboardImpl *>(userdata)->TransferWatch(event);
@@ -127,14 +130,20 @@ namespace Clipboard
 			}
 			return 0;
 		}
+#endif
 
 	public:
 		WindowsClipboardImpl()
 		{
+#if TPT_SDL3
+			auto properties = SDL_GetWindowProperties(sdl_window);
+			ourHwnd = static_cast<HWND>(SDL_GetPointerProperty(properties, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr));
+#else
 			SDL_SysWMinfo info;
 			SDL_VERSION(&info.version);
 			SDL_GetWindowWMInfo(sdl_window, &info);
 			ourHwnd = info.info.win.window;
+#endif
 			saveClipboardFormat = ::RegisterClipboardFormatW(Platform::WinWiden(clipboardFormatName).c_str());
 			if (!saveClipboardFormat)
 			{
@@ -142,14 +151,18 @@ namespace Clipboard
 				return;
 			}
 			std::cerr << "save clipboard format registered" << std::endl;
+#if !TPT_SDL3
 			SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
 			SDL_AddEventWatch(&WindowsClipboardImpl::TransferWatchWrapper, this);
+#endif
 		}
 
 		~WindowsClipboardImpl()
 		{
+#if !TPT_SDL3
 			SDL_DelEventWatch(&WindowsClipboardImpl::TransferWatchWrapper, this);
 			SDL_EventState(SDL_SYSWMEVENT, SDL_DISABLE);
+#endif
 		}
 
 		void SetClipboardData() final override
@@ -170,7 +183,11 @@ namespace Clipboard
 				std::cerr << "cannot announce save on clipboard: EmptyClipboard failed: " << ::GetLastError() << std::endl;
 				return;
 			}
+#if TPT_SDL3
+			Transfer();
+#else
 			::SetClipboardData(saveClipboardFormat, nullptr);
+#endif
 			std::cerr << "announced save on clipboard" << std::endl;
 		}
 

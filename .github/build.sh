@@ -3,6 +3,9 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+SDL3_RELEASE=release-3.4.14
+SDL3_COMMIT=147a8ee32dbf9ac02f3794964490687b6bbda1bc5
+
 if [[ -z ${BSH_BUILD_PLATFORM-} ]]; then >&2 echo "BSH_BUILD_PLATFORM not set"; exit 1; fi
 if [[ -z      ${BSH_HOST_ARCH-} ]]; then >&2 echo      "BSH_HOST_ARCH not set"; exit 1; fi
 if [[ -z  ${BSH_HOST_PLATFORM-} ]]; then >&2 echo  "BSH_HOST_PLATFORM not set"; exit 1; fi
@@ -97,10 +100,16 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 				variant=i686
 			fi
 			pacman -S --noconfirm --needed mingw-w64-"$variant"-{gcc,meson}
+			if [[ $BSH_HOST_ARCH == x86_64 ]]; then
+				pacman -S --noconfirm --needed mingw-w64-"$variant"-sdl3
+			fi
 			if [[ $BSH_STATIC_DYNAMIC == static ]]; then
 				pacman -S --noconfirm --needed p7zip jq cmake patch
 			else
-				pacman -S --noconfirm --needed jq mingw-w64-"$variant"-{pkgconf,bzip2,luajit,jsoncpp,curl,SDL2,libpng,fftw}
+				pacman -S --noconfirm --needed jq mingw-w64-"$variant"-{pkgconf,bzip2,luajit,jsoncpp,curl,libpng,fftw}
+				if [[ $BSH_HOST_ARCH != x86_64 ]]; then
+					pacman -S --noconfirm --needed mingw-w64-"$variant"-SDL2
+				fi
 			fi
 			export PKG_CONFIG=$(which pkg-config.exe)
 			if [[ $BSH_LINT == yes ]]; then
@@ -110,10 +119,34 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 		;;
 	linux)
 		sudo apt update
+		sudo apt install cmake git ninja-build \
+			libasound2-dev libdbus-1-dev libdrm-dev libegl1-mesa-dev \
+			libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev \
+			libpulse-dev libudev-dev libwayland-dev libx11-dev libxcursor-dev \
+			libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev \
+			libxss-dev libxtst-dev
+		sdl3_source=${RUNNER_TEMP:-/tmp}/SDL3-$SDL3_COMMIT
+		sdl3_build=${RUNNER_TEMP:-/tmp}/SDL3-build-$SDL3_COMMIT
+		git clone --filter=blob:none --no-checkout https://github.com/libsdl-org/SDL.git "$sdl3_source"
+		git -C "$sdl3_source" fetch --depth 1 origin tag "$SDL3_RELEASE"
+		git -C "$sdl3_source" checkout --detach FETCH_HEAD
+		if [[ $(git -C "$sdl3_source" rev-parse HEAD) != "$SDL3_COMMIT" ]]; then
+			>&2 echo "SDL3 release commit mismatch"
+			exit 1
+		fi
+		cmake -S "$sdl3_source" -B "$sdl3_build" -G Ninja \
+			-DCMAKE_BUILD_TYPE=Release \
+			-DSDL_SHARED=ON \
+			-DSDL_STATIC=ON \
+			-DSDL_TESTS=OFF \
+			-DSDL_EXAMPLES=OFF \
+			-DSDL_INSTALL_DOCS=OFF
+		cmake --build "$sdl3_build" --parallel
+		sudo cmake --install "$sdl3_build"
 		if [[ $BSH_STATIC_DYNAMIC == static ]]; then
 			sudo apt install libc6-dev
 		else
-			sudo apt install libluajit-5.1-dev libcurl4-openssl-dev libfftw3-dev libsdl2-dev libbz2-dev libjsoncpp-dev libpng-dev
+			sudo apt install libluajit-5.1-dev libcurl4-openssl-dev libfftw3-dev libbz2-dev libjsoncpp-dev libpng-dev
 		fi
 		if [[ $PACKAGE_MODE == appimage ]]; then
 			sudo apt install libfuse2
@@ -123,9 +156,9 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 		fi
 		;;
 	darwin)
-		brew install binutils # pkg-config
+		brew install binutils sdl3 # pkg-config
 		if [[ $BSH_STATIC_DYNAMIC != static ]]; then
-			brew install luajit fftw sdl2 bzip2 jsoncpp # curl
+			brew install luajit fftw bzip2 jsoncpp # curl
 		fi
 		if [[ $BSH_LINT == yes ]]; then
 			# gg brew :(
@@ -248,6 +281,9 @@ meson_configure+=$'\t'-Dstrip=false
 meson_configure+=$'\t'-Db_staticpic=false
 meson_configure+=$'\t'-Dmod_id=$MOD_ID
 meson_configure+=$'\t'-Dpackage_mode=$PACKAGE_MODE
+if [[ $BSH_HOST_PLATFORM == android || $BSH_HOST_PLATFORM == emscripten || $BSH_HOST_LIBC == msvc || $BSH_HOST_ARCH != x86_64 ]]; then
+	meson_configure+=$'\t'-Dsdl_backend=sdl2
+fi
 case $BSH_HOST_ARCH-$BSH_HOST_PLATFORM-$BSH_HOST_LIBC-$BSH_DEBUG_RELEASE in
 x86_64-linux-gnu-debug) ;&
 x86_64-windows-mingw-debug) ;&

@@ -1,6 +1,6 @@
 #pragma once
 #include "LuaCompat.h"
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 static void initLuaSDLKeys(lua_State *L)
 {

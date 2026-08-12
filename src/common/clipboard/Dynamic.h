@@ -9,6 +9,15 @@ class GameSave;
 
 namespace Clipboard
 {
+	enum class PlatformSubsystem
+	{
+		Unknown,
+		Windows,
+		Cocoa,
+		X11,
+		Wayland,
+	};
+
 	class ClipboardImpl
 	{
 	public:
@@ -44,5 +53,5 @@ namespace Clipboard
 
 	void SerializeClipboard(std::vector<char> &saveData);
 
-	extern int currentSubsystem;
+	extern PlatformSubsystem currentSubsystem;
 }

@@ -5,7 +5,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 #include "common/Localization.h"
 #include "gui/interface/Textbox.h"

@@ -223,13 +223,32 @@ endif
 
 project_link_args = []
 project_cpp_args = []
+sdl_backend_requested = get_option('sdl_backend')
+sdl_backend = sdl_backend_requested
+if sdl_backend == 'auto'
+	if host_platform in [ 'android', 'emscripten' ] or (host_platform == 'windows' and (host_libc == 'msvc' or host_arch != 'x86_64'))
+		sdl_backend = 'sdl2'
+	else
+		sdl_backend = 'sdl3'
+	endif
+endif
+use_sdl3 = sdl_backend == 'sdl3'
+message('SDL platform backend: ' + sdl_backend + ' (requested: ' + sdl_backend_requested + ')')
+if use_sdl3
+	project_cpp_args += [ cpp_compiler.get_argument_syntax() == 'msvc' ? '/DTPT_SDL3=1' : '-DTPT_SDL3=1' ]
+else
+	project_cpp_args += [ cpp_compiler.get_argument_syntax() == 'msvc' ? '/DTPT_SDL3=0' : '-DTPT_SDL3=0' ]
+endif
 
 fftw_dep = dependency('fftw3f', static: is_static)
 threads_dep = dependency('threads')
 if host_platform == 'emscripten'
+	if use_sdl3
+		error('the Emscripten SDL3 path is not part of the 1.0.10 desktop migration')
+	endif
 	app_exe_jssafe = app_exe.underscorify()
 	png_dep = []
-	sdl2_dep = []
+	sdl_dep = []
 	bzip2_dep = []
 	project_link_args += [
 		'--no-heap-copy',
@@ -257,7 +276,13 @@ if host_platform == 'emscripten'
 	project_cpp_args += emcc_args
 else
 	png_dep = dependency('libpng16', static: is_static)
-	sdl2_dep = dependency('sdl2', static: is_static)
+	sdl_dep = dependency(use_sdl3 ? 'sdl3' : 'sdl2', static: is_static)
+	# MSYS2 SDL3 3.4.14 declares iconv in Libs.private. Meson does not
+	# propagate that private dependency when a static SDL3 archive is selected,
+	# so retain the SDL3 package's link contract explicitly for MinGW builds.
+	if use_sdl3 and is_static and host_platform == 'windows' and host_libc in [ 'mingw', 'mingwclang' ]
+		sdl_dep = declare_dependency(dependencies: [ sdl_dep, cpp_compiler.find_library('iconv', required: true) ])
+	endif
 	bzip2_dep = dependency('bzip2', static: is_static)
 endif
 json_dep = dependency('jsoncpp', static: is_static)
@@ -547,13 +572,13 @@ omni_reaction_reference = declare_dependency(
 )
 foreach sta_info : [
 	[ 'common', common_files, [
-		host_platform == 'android' ? sdl2_dep : [],
+		host_platform == 'android' ? sdl_dep : [],
 		png_dep,
 		bzip2_dep,
 		json_dep,
 	] ],
 	[ 'gui', gui_files, [
-		sdl2_dep,
+		sdl_dep,
 	] ],
 	[ 'simulation', simulation_files, [
 		json_dep,
@@ -686,6 +711,12 @@ if get_option('clang_tidy')
 endif
 
 if get_option('build_tests')
+	test(
+		'sdl3-migration-contract',
+		python3_prog,
+		args: [ files('tools/sdl3_migration_contract_check.py') ],
+		suite: 'static',
+	)
 atmospherebench_cpp_args = strict_numerical_cpp_args
 
 atmospherebench = executable(

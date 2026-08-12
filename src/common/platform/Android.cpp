@@ -3,7 +3,7 @@
 #include "common/Defer.h"
 #include "Config.h"
 #include <ctime>
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 #include <jni.h>
 #include <android/log.h>
 

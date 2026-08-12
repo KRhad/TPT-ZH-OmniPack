@@ -6,7 +6,7 @@
 #include "common/Localization.h"
 #include "graphics/Graphics.h"
 #include "graphics/FontReader.h"
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 using namespace ui;
 

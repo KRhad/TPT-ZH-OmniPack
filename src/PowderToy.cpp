@@ -30,7 +30,11 @@
 #include <climits>
 #include <iostream>
 #include <csignal>
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
+#if TPT_SDL3
+# define SDL_MAIN_HANDLED
+# include <SDL3/SDL_main.h>
+#endif
 #include <exception>
 #include <cstdlib>
 
@@ -52,12 +56,21 @@ void LoadWindowPosition()
 	if (borderTop == 0)
 		borderTop = 5;
 
-	int numDisplays = SDL_GetNumVideoDisplays();
 	SDL_Rect displayBounds;
 	bool ok = false;
+#if TPT_SDL3
+	int numDisplays = 0;
+	auto *displays = SDL_GetDisplays(&numDisplays);
+#else
+	int numDisplays = SDL_GetNumVideoDisplays();
+#endif
 	for (int i = 0; i < numDisplays; i++)
 	{
+#if TPT_SDL3
+		SDL_GetDisplayBounds(displays[i], &displayBounds);
+#else
 		SDL_GetDisplayBounds(i, &displayBounds);
+#endif
 		if (savedWindowX + borderTop > displayBounds.x && savedWindowY + borderLeft > displayBounds.y &&
 				savedWindowX + borderTop < displayBounds.x + displayBounds.w &&
 				savedWindowY + borderLeft < displayBounds.y + displayBounds.h)
@@ -66,6 +79,9 @@ void LoadWindowPosition()
 			break;
 		}
 	}
+#if TPT_SDL3
+	SDL_free(displays);
+#endif
 	if (ok)
 		SDL_SetWindowPosition(sdl_window, savedWindowX + borderLeft, savedWindowY + borderTop);
 }
@@ -266,7 +282,11 @@ int Main(int argc, char *argv[])
 
 
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=3796
+#if TPT_SDL3
+	if (!SDL_Init(0))
+#else
 	if (SDL_Init(0) < 0)
+#endif
 	{
 		fprintf(stderr, "Initializing SDL: %s\n", SDL_GetError());
 		return 1;

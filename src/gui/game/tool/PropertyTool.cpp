@@ -13,7 +13,7 @@
 #include "simulation/SimulationData.h"
 #include "graphics/Graphics.h"
 #include "Format.h"
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 class PropertyWindow: public ui::Window
 {

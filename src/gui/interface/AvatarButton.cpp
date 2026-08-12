@@ -6,7 +6,7 @@
 #include "ContextMenu.h"
 #include "Config.h"
 #include <iostream>
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 namespace ui {
 

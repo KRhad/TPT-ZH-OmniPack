@@ -72,7 +72,7 @@
 #include "gui/tags/TagsView.h"
 
 #include "Config.h"
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 #include <iostream>
 
 GameController::GameController():

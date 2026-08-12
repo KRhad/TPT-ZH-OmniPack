@@ -10,7 +10,7 @@
 #include "client/SaveFile.h"
 #include "graphics/Graphics.h"
 #include "SimulationConfig.h"
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 LocalBrowserView::LocalBrowserView():
 	ui::Window(ui::Point(0, 0), ui::Point(WINDOWW, WINDOWH)),

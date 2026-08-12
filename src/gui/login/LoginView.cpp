@@ -11,7 +11,7 @@
 #include "gui/Style.h"
 #include "client/Client.h"
 #include "Misc.h"
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 constexpr auto defaultSize = ui::Point(200, 87);
 

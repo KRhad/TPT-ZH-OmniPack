@@ -1,4 +1,4 @@
 #pragma once
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 void WindowIcon(SDL_Window *window);

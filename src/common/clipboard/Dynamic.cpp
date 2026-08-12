@@ -4,8 +4,12 @@
 #include "prefs/GlobalPrefs.h"
 #include "PowderToySDL.h"
 #include "ClipboardImpls.h"
-#include <SDL_syswm.h>
+#include "common/platform/SDLCompat.h"
+#if !TPT_SDL3
+# include <SDL_syswm.h>
+#endif
 #include <iostream>
+#include <cstring>
 
 namespace Clipboard
 {
@@ -15,13 +19,13 @@ namespace Clipboard
 
 	struct ClipboardImplEntry
 	{
-		SDL_SYSWM_TYPE subsystem;
+		PlatformSubsystem subsystem;
 		std::unique_ptr<ClipboardImpl> (*factory)();
 	} clipboardImpls[] = {
 #define CLIPBOARD_IMPLS_DEFINE(subsystem, factory) { subsystem, factory },
 		CLIPBOARD_IMPLS(CLIPBOARD_IMPLS_DEFINE)
 #undef CLIPBOARD_IMPLS_DEFINE
-		{ SDL_SYSWM_UNKNOWN, nullptr },
+		{ PlatformSubsystem::Unknown, nullptr },
 	};
 
 	std::unique_ptr<GameSave> clipboardData;
@@ -109,16 +113,38 @@ namespace Clipboard
 		RecreateWindow();
 	}
 
-	int currentSubsystem;
+	PlatformSubsystem currentSubsystem;
 
 	void RecreateWindow()
 	{
 		// old window is gone (or doesn't exist), associate clipboard data with the new one
+		clipboard.reset();
+		currentSubsystem = PlatformSubsystem::Unknown;
+#if TPT_SDL3
+		if (auto *driver = SDL_GetCurrentVideoDriver())
+		{
+			if (!std::strcmp(driver, "windows"))
+				currentSubsystem = PlatformSubsystem::Windows;
+			else if (!std::strcmp(driver, "cocoa"))
+				currentSubsystem = PlatformSubsystem::Cocoa;
+			else if (!std::strcmp(driver, "x11"))
+				currentSubsystem = PlatformSubsystem::X11;
+			else if (!std::strcmp(driver, "wayland"))
+				currentSubsystem = PlatformSubsystem::Wayland;
+		}
+#else
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 		SDL_GetWindowWMInfo(sdl_window, &info);
-		clipboard.reset();
-		currentSubsystem = info.subsystem;
+		switch (info.subsystem)
+		{
+		case SDL_SYSWM_WINDOWS: currentSubsystem = PlatformSubsystem::Windows; break;
+		case SDL_SYSWM_COCOA: currentSubsystem = PlatformSubsystem::Cocoa; break;
+		case SDL_SYSWM_X11: currentSubsystem = PlatformSubsystem::X11; break;
+		case SDL_SYSWM_WAYLAND: currentSubsystem = PlatformSubsystem::Wayland; break;
+		default: break;
+		}
+#endif
 		if (enabled)
 		{
 			for (auto *impl = clipboardImpls; impl->factory; ++impl)

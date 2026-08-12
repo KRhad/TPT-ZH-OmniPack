@@ -12,6 +12,13 @@ option(
 	description: 'Link-time optimization, mostly a wrapper around the b_lto built-in option'
 )
 option(
+	'sdl_backend',
+	type: 'combo',
+	choices: [ 'auto', 'sdl2', 'sdl3' ],
+	value: 'auto',
+	description: 'SDL platform backend; auto selects SDL3 on supported desktop targets and preserves SDL2 fallbacks'
+)
+option(
 	'fp_mode',
 	type: 'combo',
 	choices: [ 'legacy_fast', 'strict' ],

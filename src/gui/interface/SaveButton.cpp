@@ -14,7 +14,7 @@
 #include "graphics/VideoBuffer.h"
 
 #include "SimulationConfig.h"
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 namespace ui {
 

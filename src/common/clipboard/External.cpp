@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <signal.h>
 #include <map>
-#include <SDL_syswm.h>
 
 namespace Clipboard
 {
@@ -27,14 +26,14 @@ namespace Clipboard
 			"xclip -out -selection clipboard -target TARGETS",
 			"xclip -out -selection clipboard -target %s",
 			"Requires the xclip utility to be installed",
-			SDL_SYSWM_X11,
+			int(PlatformSubsystem::X11),
 		} },
 		{ "wl-clipboard", {
 			"wl-copy --type %s",
 			"wl-paste --list-types",
 			"wl-paste --type %s",
 			"Requires the wl-clipboard utility to be installed",
-			SDL_SYSWM_WAYLAND,
+			int(PlatformSubsystem::Wayland),
 		} },
 	};
 
@@ -80,14 +79,14 @@ namespace Clipboard
 			name.reset();
 			for (auto &[ presetName, preset ] : builtInPresets)
 			{
-				if (preset.defaultForSubsystem && *preset.defaultForSubsystem == currentSubsystem)
+				if (preset.defaultForSubsystem && *preset.defaultForSubsystem == int(currentSubsystem))
 				{
 					name = presetName;
 				}
 			}
 			if (!name)
 			{
-				std::cerr << "no built-in external clipboard command preset for SDL window subsystem " << currentSubsystem << std::endl;
+				std::cerr << "no built-in external clipboard command preset for SDL window subsystem " << int(currentSubsystem) << std::endl;
 				return std::nullopt;
 			}
 		}

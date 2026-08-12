@@ -15,7 +15,7 @@
 #include "simulation/PeriodicContentLinks.h"
 #include "simulation/PeriodicTableData.h"
 
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 #include <algorithm>
 #include <map>
 #include <string>

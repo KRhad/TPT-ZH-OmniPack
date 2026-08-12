@@ -28,7 +28,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cmath>
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 class DirectionSelector : public ui::Window
 {

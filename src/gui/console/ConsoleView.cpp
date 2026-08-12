@@ -8,7 +8,7 @@
 #include "gui/interface/Engine.h"
 #include "SimulationConfig.h"
 #include <deque>
-#include <SDL.h>
+#include "common/platform/SDLCompat.h"
 
 ConsoleView::ConsoleView():
 	ui::Window(ui::Point(0, 0), ui::Point(WINDOWW, 150)),
