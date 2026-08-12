@@ -1,10 +1,11 @@
 {
   "schema": "omnicore.solution-runtime",
-  "version": 1,
+  "version": 2,
   "model": "aqueous_nacl_mass_fraction_v1",
   "authoritative_state": [
     "solvent_mass_kg",
-    "solute_mass_kg"
+    "primary_solute_mass_kg",
+    "neutral_nacl_mass_kg"
   ],
   "derived_state": [
     "solute_mass_fraction",
@@ -33,6 +34,17 @@
     "dissolution_limit": "one_120th_default_solid_parcel_per_transaction",
     "crystallisation_limit": "one_120th_default_solid_parcel_per_tick",
     "status": "game_tuned_explicit"
+  },
+  "acid_base_v1": {
+    "acid_mapping": "ACID_to_HCl_aq",
+    "base_mapping": "BASE_to_NaOH_aq",
+    "initial_reactive_solute_mass_fraction": 0.1,
+    "reaction": "HCl_aq+NaOH_aq->NaCl_aq+H2O_l",
+    "neutralisation_energy_j_per_mol": 57900.0,
+    "energy_source": "Chemistry LibreTexts enthalpy of neutralization, strong acid and base range 57-58 kJ/mol; example 57.9 kJ/mol",
+    "energy_source_url": "https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Supplemental_Modules_(Physical_and_Theoretical_Chemistry)/Thermodynamics/Energies_and_Potentials/Enthalpy/Enthalpy_Change_of_Neutralization",
+    "kinetics": "rate_limited_game_scaled",
+    "ph_status": "derived_classification_only_not_full_activity_model"
   },
   "classic_mode": "legacy_behavior_unchanged"
 }

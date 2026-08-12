@@ -65,7 +65,8 @@ static int update(UPDATE_FUNC_ARGS)
 				if (!r)
 					continue;
 				int rt = TYP(r);
-				if (rt != PT_ACID && rt != PT_CAUS)
+				if (rt != PT_ACID && rt != PT_CAUS &&
+					!(sim->IsOmniAtmosphereActive() && rt == PT_BASE))
 				{
 					if (rt == PT_PLEX || rt == PT_NITR || rt == PT_GUNP || rt == PT_RBDM || rt == PT_LRBD)
 					{

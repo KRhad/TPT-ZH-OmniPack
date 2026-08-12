@@ -61,6 +61,8 @@ struct SnapshotDelta
 	std::vector<double> extraOmniSolutionSolventMassKgOld, extraOmniSolutionSolventMassKgNew;
 	HunkVector<double> commonOmniSolutionSoluteMassKg;
 	std::vector<double> extraOmniSolutionSoluteMassKgOld, extraOmniSolutionSoluteMassKgNew;
+	HunkVector<double> commonOmniSolutionNeutralSaltMassKg;
+	std::vector<double> extraOmniSolutionNeutralSaltMassKgOld, extraOmniSolutionNeutralSaltMassKgNew;
 	SingleDiff<int> OmniSimulationMode;
 	SingleDiff<uint8_t> OmniAtmospherePersistenceStatus;
 

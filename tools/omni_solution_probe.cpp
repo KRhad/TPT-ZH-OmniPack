@@ -21,6 +21,9 @@ public:
 	using Simulation::BeginOmniSolutionTick;
 	using Simulation::FinishOmniSolutionTick;
 	using Simulation::SetOmniSolutionMassesKg;
+	using Simulation::SetOmniSolutionNeutralSaltMassKg;
+	using Simulation::TotalOmniSolutionSoluteMassKg;
+	using Simulation::TotalOmniSolutionSolventMassKg;
 	void UpdateParticles(int, int) override {}
 };
 
@@ -133,6 +136,69 @@ int main()
 		return Fail("supersaturation did not produce rate-limited conservative crystals");
 	}
 
+	auto neutralisation = EnhancedSimulation();
+	const int acid = neutralisation->create_part(-1, 360, 180, PT_ACID);
+	const int base = neutralisation->create_part(-1, 361, 180, PT_BASE);
+	if (acid < 0 || base < 0)
+		return Fail("could not create neutralisation fixture");
+	const double acidBeforeKg = neutralisation->GetOmniSolutionSoluteMassKg(acid);
+	const double baseBeforeKg = neutralisation->GetOmniSolutionSoluteMassKg(base);
+	const double neutralisationMassBefore =
+		neutralisation->GetOmniSolutionSolventMassKg(acid) + acidBeforeKg +
+		neutralisation->GetOmniSolutionSolventMassKg(base) + baseBeforeKg;
+	const double temperatureBefore = neutralisation->parts[acid].temp;
+	AdvanceOneTick(*neutralisation);
+	const auto neutralMetrics = neutralisation->GetOmniSolutionMetrics();
+	const double neutralisationMassAfter =
+		neutralisation->GetOmniSolutionSolventMassKg(acid) +
+		neutralisation->GetOmniSolutionSoluteMassKg(acid) +
+		neutralisation->GetOmniSolutionNeutralSaltMassKg(acid) +
+		neutralisation->GetOmniSolutionSolventMassKg(base) +
+		neutralisation->GetOmniSolutionSoluteMassKg(base) +
+		neutralisation->GetOmniSolutionNeutralSaltMassKg(base);
+	if (neutralMetrics.neutralisationTransactions != 1 ||
+		!(neutralMetrics.neutralisedAcidMassKg > 0.0) ||
+		!(neutralMetrics.neutralisedBaseMassKg > 0.0) ||
+		!(neutralMetrics.neutralSaltProducedKg > 0.0) ||
+		!(neutralMetrics.neutralisationWaterProducedKg > 0.0) ||
+		!(neutralMetrics.neutralisationEnergyReleasedJ > 0.0) ||
+		!(neutralisation->parts[acid].temp > temperatureBefore) ||
+		std::abs(neutralisationMassAfter - neutralisationMassBefore) > 1.0e-12 ||
+		std::abs(neutralMetrics.totalSolutionMassResidualKg) > 1.0e-12)
+		return Fail("rate-limited acid/base neutralisation did not conserve total mass and release heat");
+
+	auto unequal = std::make_unique<ProbeSimulation>();
+	unequal->gravityMode = GRAV_OFF;
+	unequal->SetEdgeMode(EDGE_SOLID);
+	unequal->SetOmniSimulationMode(OMNI_ENHANCED);
+	const int limitingAcid = unequal->create_part(-1, 380, 180, PT_ACID);
+	const int excessBase = unequal->create_part(-1, 381, 180, PT_BASE);
+	if (limitingAcid < 0 || excessBase < 0)
+		return Fail("could not create unequal neutralisation fixture");
+	const double limitingAcidKg =
+		OmniSolution::MaximumNeutralisationMolesPerTransaction *
+		OmniSolution::HydrogenChlorideMolarMassKgPerMol * 0.5;
+	const double excessBaseBeforeKg = unequal->GetOmniSolutionSoluteMassKg(excessBase);
+	unequal->SetOmniSolutionMassesKg(limitingAcid,
+		unequal->GetOmniSolutionSolventMassKg(limitingAcid), limitingAcidKg, false);
+	const double unequalMassBefore = unequal->TotalOmniSolutionSolventMassKg() +
+		unequal->TotalOmniSolutionSoluteMassKg();
+	unequal->BeginOmniSolutionTick();
+	unequal->UpdateOmniSolutionParticle(limitingAcid, 380, 180);
+	unequal->FinishOmniSolutionTick();
+	const auto unequalMetrics = unequal->GetOmniSolutionMetrics();
+	const double unequalMassAfter = unequal->TotalOmniSolutionSolventMassKg() +
+		unequal->TotalOmniSolutionSoluteMassKg();
+	if (unequalMetrics.neutralisationTransactions != 1 ||
+		unequal->parts[limitingAcid].type != PT_SLTW ||
+		unequal->parts[excessBase].type != PT_BASE ||
+		unequal->GetOmniSolutionSoluteMassKg(limitingAcid) != 0.0 ||
+		!(unequal->GetOmniSolutionSoluteMassKg(excessBase) > 0.0) ||
+		!(unequal->GetOmniSolutionSoluteMassKg(excessBase) < excessBaseBeforeKg) ||
+		std::abs(unequalMassAfter - unequalMassBefore) > 1.0e-12 ||
+		std::abs(unequalMetrics.totalSolutionMassResidualKg) > 1.0e-12)
+		return Fail("unequal neutralisation did not retain excess base conservatively");
+
 	auto save = evaporation->Save(true, RES.OriginRect());
 	if (!save || !save->hasOmniSolutionState ||
 		save->omniSolutionStateVersion != GameSave::OmniSolutionStateVersion)
@@ -145,6 +211,36 @@ int main()
 		parsed.omniSolutionSolventMassKg.size() != static_cast<size_t>(parsed.particlesCount) ||
 		parsed.omniSolutionSoluteMassKg.size() != static_cast<size_t>(parsed.particlesCount))
 		return Fail("solution OPS parsing failed");
+	if (parsed.omniSolutionNeutralSaltMassKg.size() != static_cast<size_t>(parsed.particlesCount))
+		return Fail("solution OPS v2 omitted neutral salt state");
+	auto neutralSave = neutralisation->Save(true, RES.OriginRect());
+	if (!neutralSave || !neutralSave->hasOmniSolutionState)
+		return Fail("neutralisation save omitted solution state");
+	GameSave parsedNeutral(neutralSave->Serialise().second);
+	double parsedNeutralSaltKg = 0.0;
+	for (double massKg : parsedNeutral.omniSolutionNeutralSaltMassKg)
+		parsedNeutralSaltKg += massKg;
+	if (std::abs(parsedNeutralSaltKg - neutralMetrics.neutralSaltProducedKg) > 1.0e-12)
+		return Fail("solution OPS v2 did not preserve neutral salt mass");
+	auto restoredNeutral = Simulation::Factory();
+	restoredNeutral->SetOmniSimulationMode(parsedNeutral.omniSimulationMode);
+	restoredNeutral->Load(&parsedNeutral, true, { 0, 0 });
+	double restoredNeutralSaltKg = 0.0;
+	for (int index = 0; index < restoredNeutral->parts.active; ++index)
+		restoredNeutralSaltKg += restoredNeutral->GetOmniSolutionNeutralSaltMassKg(index);
+	if (std::abs(restoredNeutralSaltKg - neutralMetrics.neutralSaltProducedKg) > 1.0e-12)
+		return Fail("neutral salt mass did not survive OPS load");
+	GameSave legacy = parsed;
+	legacy.omniSolutionStateVersion = GameSave::OmniSolutionLegacyStateVersion;
+	legacy.omniSolutionNeutralSaltMassKg.assign(legacy.particlesCount, 0.0);
+	const auto legacyBytes = legacy.Serialise().second;
+	if (legacyBytes.empty())
+		return Fail("solution OPS v1 compatibility fixture could not be serialized");
+	GameSave parsedLegacy(legacyBytes);
+	if (!parsedLegacy.hasOmniSolutionState ||
+		parsedLegacy.omniSolutionStateVersion != GameSave::OmniSolutionLegacyStateVersion ||
+		parsedLegacy.omniSolutionNeutralSaltMassKg.size() != static_cast<size_t>(parsedLegacy.particlesCount))
+		return Fail("solution OPS v1 did not migrate to zero neutral salt state");
 	GameSave transformed = parsed;
 	transformed.Transform(Mat2<int>{ 1, 0, 0, 1 }, { 0, 0 });
 	if (!transformed.hasOmniSolutionState ||
@@ -162,6 +258,17 @@ int main()
 		}
 	if (!corrupted || malformed.Serialise().first)
 		return Fail("non-finite solution payload was not rejected");
+	GameSave negativeNeutralSalt = parsedNeutral;
+	corrupted = false;
+	for (double &massKg : negativeNeutralSalt.omniSolutionNeutralSaltMassKg)
+		if (massKg > 0.0)
+		{
+			massKg = -massKg;
+			corrupted = true;
+			break;
+		}
+	if (!corrupted || negativeNeutralSalt.Serialise().first)
+		return Fail("negative neutral salt payload was not rejected");
 	auto restored = Simulation::Factory();
 	restored->SetOmniSimulationMode(parsed.omniSimulationMode);
 	restored->Load(&parsed, true, { 0, 0 });
@@ -177,22 +284,31 @@ int main()
 		std::abs(restored->GetOmniSolutionSoluteMassKg(restoredSolution) - evaporationSoluteAfter) > 1.0e-15)
 		return Fail("solution masses did not survive OPS round trip");
 
-	auto before = evaporation->CreateSnapshot();
-	evaporation->parts[hotSolution].temp = 300.0f;
-	auto after = evaporation->CreateSnapshot();
+	auto before = neutralisation->CreateSnapshot();
+	const double snapshotNeutralSaltBefore =
+		neutralisation->GetOmniSolutionNeutralSaltMassKg(acid);
+	auto after = neutralisation->CreateSnapshot();
+	if (acid >= static_cast<int>(after->OmniSolutionNeutralSaltMassKg.size()))
+		return Fail("solution snapshot omitted neutral salt channel");
+	after->OmniSolutionNeutralSaltMassKg[acid] = snapshotNeutralSaltBefore +
+		OmniSolution::MaximumCrystallisationMassPerTickKg;
 	auto delta = SnapshotDelta::FromSnapshots(*before, *after);
 	auto deltaForward = delta->Forward(*before);
 	auto deltaRestore = delta->Restore(*after);
 	if (deltaForward->OmniSolutionSolventMassKg != after->OmniSolutionSolventMassKg ||
 		deltaForward->OmniSolutionSoluteMassKg != after->OmniSolutionSoluteMassKg ||
+		deltaForward->OmniSolutionNeutralSaltMassKg != after->OmniSolutionNeutralSaltMassKg ||
 		deltaRestore->OmniSolutionSolventMassKg != before->OmniSolutionSolventMassKg ||
-		deltaRestore->OmniSolutionSoluteMassKg != before->OmniSolutionSoluteMassKg)
+		deltaRestore->OmniSolutionSoluteMassKg != before->OmniSolutionSoluteMassKg ||
+		deltaRestore->OmniSolutionNeutralSaltMassKg != before->OmniSolutionNeutralSaltMassKg)
 		return Fail("solution sidecars did not survive SnapshotDelta forward/restore");
-	evaporation->Restore(*before);
-	if (std::abs(evaporation->GetOmniSolutionSolventMassKg(hotSolution) - evaporationSolventAfter) > 1.0e-15)
+	neutralisation->Restore(*before);
+	if (std::abs(neutralisation->GetOmniSolutionNeutralSaltMassKg(acid) -
+		snapshotNeutralSaltBefore) > 1.0e-15)
 		return Fail("solution masses did not survive Snapshot restore");
-	evaporation->Restore(*after);
-	if (std::abs(evaporation->GetOmniSolutionSoluteMassKg(hotSolution) - evaporationSoluteAfter) > 1.0e-15)
+	neutralisation->Restore(*after);
+	if (std::abs(neutralisation->GetOmniSolutionNeutralSaltMassKg(acid) -
+		snapshotNeutralSaltBefore - OmniSolution::MaximumCrystallisationMassPerTickKg) > 1.0e-15)
 		return Fail("solution masses did not survive Snapshot forward restore");
 
 	auto classic = Simulation::Factory();
@@ -213,6 +329,14 @@ int main()
 	std::cout << "concentration_after=" << concentrationAfter << '\n';
 	std::cout << "crystallised_mass_kg=" << crystalMassKg << '\n';
 	std::cout << "solute_mass_residual_kg=" << crystalMetrics.soluteMassResidualKg << '\n';
+	std::cout << "neutralisation_transactions=" << neutralMetrics.neutralisationTransactions << '\n';
+	std::cout << "neutralised_acid_mass_kg=" << neutralMetrics.neutralisedAcidMassKg << '\n';
+	std::cout << "neutralised_base_mass_kg=" << neutralMetrics.neutralisedBaseMassKg << '\n';
+	std::cout << "neutral_salt_produced_kg=" << neutralMetrics.neutralSaltProducedKg << '\n';
+	std::cout << "neutralisation_water_produced_kg=" << neutralMetrics.neutralisationWaterProducedKg << '\n';
+	std::cout << "neutralisation_energy_released_j=" << neutralMetrics.neutralisationEnergyReleasedJ << '\n';
+	std::cout << "total_solution_mass_residual_kg=" << neutralMetrics.totalSolutionMassResidualKg << '\n';
+	std::cout << "unequal_excess_base_retained=true\n";
 	std::cout << "classic_solution_active=false\n";
 	return 0;
 }

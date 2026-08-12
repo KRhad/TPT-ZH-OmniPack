@@ -30,6 +30,7 @@ public:
 	std::vector<double> OmniCarbonParcelMassKg;
 	std::vector<double> OmniSolutionSolventMassKg;
 	std::vector<double> OmniSolutionSoluteMassKg;
+	std::vector<double> OmniSolutionNeutralSaltMassKg;
 	int OmniSimulationMode = OMNI_CLASSIC;
 	uint8_t OmniAtmospherePersistenceStatus = 0;
 

@@ -58,7 +58,7 @@ namespace
 
 	bool IsOmniManagedSolutionType(int type)
 	{
-		return type == PT_SALT || type == PT_SLTW;
+		return type == PT_SALT || type == PT_SLTW || type == PT_ACID || type == PT_BASE;
 	}
 
 	constexpr double CarbonMolarMassKgPerMol = 0.0120107;
@@ -369,23 +369,33 @@ void Simulation::Load(const GameSave *save, bool includePressure, Vec2<int> bloc
 		}
 		if (save->hasOmniSolutionState)
 		{
-			if (save->omniSolutionStateVersion != GameSave::OmniSolutionStateVersion ||
+			const bool currentSolutionState =
+				save->omniSolutionStateVersion == GameSave::OmniSolutionStateVersion;
+			if ((!currentSolutionState && save->omniSolutionStateVersion !=
+					GameSave::OmniSolutionLegacyStateVersion) ||
 				save->omniSolutionSolventMassKg.size() != static_cast<size_t>(save->particlesCount) ||
-				save->omniSolutionSoluteMassKg.size() != static_cast<size_t>(save->particlesCount))
+				save->omniSolutionSoluteMassKg.size() != static_cast<size_t>(save->particlesCount) ||
+				save->omniSolutionNeutralSaltMassKg.size() != static_cast<size_t>(save->particlesCount))
 				throw std::runtime_error("malformed Omni solution save payload");
 			omniSolutionSolventMassKg[i] = save->omniSolutionSolventMassKg[n];
 			omniSolutionSoluteMassKg[i] = save->omniSolutionSoluteMassKg[n];
+			omniSolutionNeutralSaltMassKg[i] = save->omniSolutionNeutralSaltMassKg[n];
 			if (!IsFiniteDoubleBits(omniSolutionSolventMassKg[i]) ||
 				!IsFiniteDoubleBits(omniSolutionSoluteMassKg[i]) ||
+				!IsFiniteDoubleBits(omniSolutionNeutralSaltMassKg[i]) ||
 				omniSolutionSolventMassKg[i] < 0.0 || omniSolutionSoluteMassKg[i] < 0.0 ||
-				((omniSolutionSolventMassKg[i] > 0.0 || omniSolutionSoluteMassKg[i] > 0.0) &&
-					tempPart.type != PT_SALT && tempPart.type != PT_SLTW))
+				omniSolutionNeutralSaltMassKg[i] < 0.0 ||
+				((omniSolutionSolventMassKg[i] > 0.0 || omniSolutionSoluteMassKg[i] > 0.0 ||
+					omniSolutionNeutralSaltMassKg[i] > 0.0) &&
+					tempPart.type != PT_SALT && tempPart.type != PT_SLTW &&
+					tempPart.type != PT_ACID && tempPart.type != PT_BASE))
 				throw std::runtime_error("invalid Omni solution save payload");
 		}
 		else
 		{
 			omniSolutionSolventMassKg[i] = 0.0;
 			omniSolutionSoluteMassKg[i] = 0.0;
+			omniSolutionNeutralSaltMassKg[i] = 0.0;
 			InitializeOmniSolutionState(i, tempPart.type, false);
 		}
 
@@ -659,6 +669,7 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
 	{
 		newSave->omniSolutionSolventMassKg.reserve(NUM_PARTS);
 		newSave->omniSolutionSoluteMassKg.reserve(NUM_PARTS);
+		newSave->omniSolutionNeutralSaltMassKg.reserve(NUM_PARTS);
 	}
 
 	int storedParts = 0;
@@ -696,6 +707,8 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
 				{
 					newSave->omniSolutionSolventMassKg.push_back(omniSolutionSolventMassKg[i]);
 					newSave->omniSolutionSoluteMassKg.push_back(omniSolutionSoluteMassKg[i]);
+					newSave->omniSolutionNeutralSaltMassKg.push_back(
+						omniSolutionNeutralSaltMassKg[i]);
 				}
 				storedParts++;
 				elementCount[tempPart.type]++;
@@ -1174,6 +1187,7 @@ void Simulation::SetOmniSimulationMode(int newMode)
 	{
 		std::fill(omniSolutionSolventMassKg.begin(), omniSolutionSolventMassKg.end(), 0.0);
 		std::fill(omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.end(), 0.0);
+		std::fill(omniSolutionNeutralSaltMassKg.begin(), omniSolutionNeutralSaltMassKg.end(), 0.0);
 		omniSolutionMetrics = {};
 	}
 	else
@@ -1457,6 +1471,7 @@ void Simulation::clear_sim(void)
 	std::fill(omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.end(), 0.0);
 	std::fill(omniSolutionSolventMassKg.begin(), omniSolutionSolventMassKg.end(), 0.0);
 	std::fill(omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.end(), 0.0);
+	std::fill(omniSolutionNeutralSaltMassKg.begin(), omniSolutionNeutralSaltMassKg.end(), 0.0);
 	omniWaterTransferRequests.clear();
 	omniWaterCouplingMetrics = {};
 	omniChemistryMetrics = {};
@@ -2322,6 +2337,7 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	double previousOmniWaterSpecificEnthalpyJPerKg = 0.0;
 	double previousOmniSolutionSolventMassKg = 0.0;
 	double previousOmniSolutionSoluteMassKg = 0.0;
+	double previousOmniSolutionNeutralSaltMassKg = 0.0;
 
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
@@ -2433,6 +2449,7 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 		{
 			previousOmniSolutionSolventMassKg = omniSolutionSolventMassKg[p];
 			previousOmniSolutionSoluteMassKg = omniSolutionSoluteMassKg[p];
+			previousOmniSolutionNeutralSaltMassKg = omniSolutionNeutralSaltMassKg[p];
 			if (!IsOmniManagedSolutionType(t))
 				ClearOmniSolutionState(p, !omniSolutionInternalMutation);
 		}
@@ -2468,10 +2485,12 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 		InitializeOmniCarbonParcelMass(i, t);
 	}
 	if (IsOmniManagedSolutionType(oldType) && IsOmniManagedSolutionType(t) &&
-		(previousOmniSolutionSolventMassKg > 0.0 || previousOmniSolutionSoluteMassKg > 0.0))
+		(previousOmniSolutionSolventMassKg > 0.0 || previousOmniSolutionSoluteMassKg > 0.0 ||
+			previousOmniSolutionNeutralSaltMassKg > 0.0))
 	{
 		omniSolutionSolventMassKg[i] = previousOmniSolutionSolventMassKg;
 		omniSolutionSoluteMassKg[i] = previousOmniSolutionSoluteMassKg;
+		omniSolutionNeutralSaltMassKg[i] = previousOmniSolutionNeutralSaltMassKg;
 	}
 	else
 	{
@@ -2945,7 +2964,7 @@ void SimulationImpl::UpdateParticles(int start, int end)
 		// Call the element update even when solution composition was handled.
 		// WATR/DSTW/SLTW guard only their salt-specific Legacy branches, while
 		// extinguishing, erosion, plant and special-element gameplay remains.
-		if (elements[t].Update)
+		if (!(omniSolutionHandled && (t == PT_ACID || t == PT_BASE)) && elements[t].Update)
 		{
 			if ((*(elements[t].Update))(this, i, x, y, neighbourhood.surround_space, neighbourhood.nt, parts, pmap))
 				continue;
@@ -4802,6 +4821,15 @@ double Simulation::GetOmniSolutionSoluteMassKg(int particleId) const
 		omniSolutionSoluteMassKg[particleId] > 0.0 ? omniSolutionSoluteMassKg[particleId] : 0.0;
 }
 
+double Simulation::GetOmniSolutionNeutralSaltMassKg(int particleId) const
+{
+	if (particleId < 0 || particleId >= NPART || !IsOmniManagedSolutionType(parts[particleId].type))
+		return 0.0;
+	return IsFiniteDoubleBits(omniSolutionNeutralSaltMassKg[particleId]) &&
+		omniSolutionNeutralSaltMassKg[particleId] > 0.0
+		? omniSolutionNeutralSaltMassKg[particleId] : 0.0;
+}
+
 double Simulation::TotalOmniSolutionSolventMassKg() const
 {
 	double total = omniAtmosphere ?
@@ -4824,7 +4852,8 @@ double Simulation::TotalOmniSolutionSoluteMassKg() const
 	double total = 0.0;
 	for (int particleId = 0; particleId < parts.active; ++particleId)
 		if (parts[particleId].type && IsOmniManagedSolutionType(parts[particleId].type))
-			total += GetOmniSolutionSoluteMassKg(particleId);
+			total += GetOmniSolutionSoluteMassKg(particleId) +
+				GetOmniSolutionNeutralSaltMassKg(particleId);
 	return total;
 }
 
@@ -4837,26 +4866,37 @@ void Simulation::InitializeOmniSolutionState(int particleId, int type, bool dire
 		{
 			omniSolutionSolventMassKg[particleId] = 0.0;
 			omniSolutionSoluteMassKg[particleId] = 0.0;
+			omniSolutionNeutralSaltMassKg[particleId] = 0.0;
 		}
 		return;
 	}
-	if (omniSolutionSolventMassKg[particleId] > 0.0 || omniSolutionSoluteMassKg[particleId] > 0.0)
+	if (omniSolutionSolventMassKg[particleId] > 0.0 || omniSolutionSoluteMassKg[particleId] > 0.0 ||
+		omniSolutionNeutralSaltMassKg[particleId] > 0.0)
 		return;
 	if (type == PT_SALT)
 	{
 		omniSolutionSolventMassKg[particleId] = 0.0;
 		omniSolutionSoluteMassKg[particleId] = OmniSolution::DefaultSolidSoluteMassKg;
+		omniSolutionNeutralSaltMassKg[particleId] = 0.0;
 	}
-	else
+	else if (type == PT_SLTW)
 	{
 		omniSolutionSolventMassKg[particleId] = OmniSolution::DefaultSolutionSolventMassKg;
 		omniSolutionSoluteMassKg[particleId] = OmniSolution::MaximumDissolvedSoluteKg(
 			omniSolutionSolventMassKg[particleId], parts[particleId].temp);
+		omniSolutionNeutralSaltMassKg[particleId] = 0.0;
+	}
+	else
+	{
+		omniSolutionSolventMassKg[particleId] = OmniSolution::DefaultSolutionSolventMassKg;
+		omniSolutionSoluteMassKg[particleId] = OmniSolution::DefaultReactiveSoluteMassKg;
+		omniSolutionNeutralSaltMassKg[particleId] = 0.0;
 	}
 	if (directCreate && omniSolutionMetrics.activeTick)
 	{
 		omniSolutionMetrics.externalSolventSourceKg += omniSolutionSolventMassKg[particleId];
-		omniSolutionMetrics.externalSoluteSourceKg += omniSolutionSoluteMassKg[particleId];
+		omniSolutionMetrics.externalSoluteSourceKg += omniSolutionSoluteMassKg[particleId] +
+			omniSolutionNeutralSaltMassKg[particleId];
 	}
 }
 
@@ -4866,13 +4906,32 @@ void Simulation::ClearOmniSolutionState(int particleId, bool recordExternalSink)
 		return;
 	const double solvent = GetOmniSolutionSolventMassKg(particleId);
 	const double solute = GetOmniSolutionSoluteMassKg(particleId);
+	const double neutralSalt = GetOmniSolutionNeutralSaltMassKg(particleId);
 	if (recordExternalSink && omniSolutionMetrics.activeTick)
 	{
 		omniSolutionMetrics.externalSolventSinkKg += solvent;
-		omniSolutionMetrics.externalSoluteSinkKg += solute;
+		omniSolutionMetrics.externalSoluteSinkKg += solute + neutralSalt;
 	}
 	omniSolutionSolventMassKg[particleId] = 0.0;
 	omniSolutionSoluteMassKg[particleId] = 0.0;
+	omniSolutionNeutralSaltMassKg[particleId] = 0.0;
+}
+
+void Simulation::SetOmniSolutionNeutralSaltMassKg(int particleId, double massKg,
+	bool recordLedgerAdjustment)
+{
+	if (particleId < 0 || particleId >= NPART || !IsOmniManagedSolutionType(parts[particleId].type) ||
+		!IsFiniteDoubleBits(massKg) || massKg < 0.0)
+		return;
+	const double oldMassKg = GetOmniSolutionNeutralSaltMassKg(particleId);
+	omniSolutionNeutralSaltMassKg[particleId] = massKg;
+	if (recordLedgerAdjustment && omniSolutionMetrics.activeTick)
+	{
+		if (massKg > oldMassKg)
+			omniSolutionMetrics.externalSoluteSourceKg += massKg - oldMassKg;
+		else
+			omniSolutionMetrics.externalSoluteSinkKg += oldMassKg - massKg;
+	}
 }
 
 void Simulation::SetOmniSolutionMassesKg(int particleId, double solventMassKg, double soluteMassKg,
@@ -4917,10 +4976,14 @@ void Simulation::FinishOmniSolutionTick()
 	omniSolutionMetrics.finalSoluteMassKg = TotalOmniSolutionSoluteMassKg();
 	omniSolutionMetrics.solventMassResidualKg = omniSolutionMetrics.finalSolventMassKg -
 		omniSolutionMetrics.initialSolventMassKg + omniSolutionMetrics.externalSolventSinkKg -
-		omniSolutionMetrics.externalSolventSourceKg;
+		omniSolutionMetrics.externalSolventSourceKg -
+		omniSolutionMetrics.neutralisationWaterProducedKg;
 	omniSolutionMetrics.soluteMassResidualKg = omniSolutionMetrics.finalSoluteMassKg -
 		omniSolutionMetrics.initialSoluteMassKg + omniSolutionMetrics.externalSoluteSinkKg -
-		omniSolutionMetrics.externalSoluteSourceKg;
+		omniSolutionMetrics.externalSoluteSourceKg +
+		omniSolutionMetrics.neutralisationWaterProducedKg;
+	omniSolutionMetrics.totalSolutionMassResidualKg =
+		omniSolutionMetrics.solventMassResidualKg + omniSolutionMetrics.soluteMassResidualKg;
 	omniSolutionMetrics.activeTick = false;
 }
 
@@ -4959,7 +5022,9 @@ bool Simulation::UpdateOmniSolutionParticle(int particleId, int x, int y)
 			(water >= 0 ? GetOmniWaterParcelMassKg(target) : OmniPhysicalScale::DefaultWaterParcelMassKg) :
 			GetOmniSolutionSolventMassKg(target);
 		const double dissolved = GetOmniSolutionSoluteMassKg(target);
-		const double capacity = std::max(OmniSolution::MaximumDissolvedSoluteKg(solvent, parts[target].temp) - dissolved, 0.0);
+		const double neutralSalt = GetOmniSolutionNeutralSaltMassKg(target);
+		const double capacity = std::max(OmniSolution::MaximumDissolvedSoluteKg(
+			solvent, parts[target].temp) - dissolved - neutralSalt, 0.0);
 		const double transfer = std::min({ available, capacity, OmniSolution::MaximumDissolutionMassPerTransactionKg });
 		if (!(transfer > 0.0))
 		{
@@ -4995,10 +5060,85 @@ bool Simulation::UpdateOmniSolutionParticle(int particleId, int x, int y)
 		}
 		return true;
 	}
+	if (type == PT_ACID)
+	{
+		const int base = neighbour(PT_BASE, particleId);
+		if (base < 0)
+			return false;
+		const double acidKg = GetOmniSolutionSoluteMassKg(particleId);
+		const double baseKg = GetOmniSolutionSoluteMassKg(base);
+		const double moles = std::min({
+			acidKg / OmniSolution::HydrogenChlorideMolarMassKgPerMol,
+			baseKg / OmniSolution::SodiumHydroxideMolarMassKgPerMol,
+			OmniSolution::MaximumNeutralisationMolesPerTransaction });
+		if (!(moles > 0.0))
+			return true;
+		const double acidNeutralSaltBefore = GetOmniSolutionNeutralSaltMassKg(particleId);
+		const double baseNeutralSaltBefore = GetOmniSolutionNeutralSaltMassKg(base);
+		const double acidConsumedKg = moles * OmniSolution::HydrogenChlorideMolarMassKgPerMol;
+		const double baseConsumedKg = moles * OmniSolution::SodiumHydroxideMolarMassKgPerMol;
+		const double saltProducedKg = moles * OmniSolution::SodiumChlorideMolarMassKgPerMol;
+		const double waterProducedKg = moles * OmniSolution::WaterMolarMassKgPerMol;
+		const double energyJ = moles * OmniSolution::StrongAcidBaseNeutralisationEnergyJPerMol;
+		const double acidSolvent = GetOmniSolutionSolventMassKg(particleId);
+		const double baseSolvent = GetOmniSolutionSolventMassKg(base);
+		SetOmniSolutionMassesKg(particleId, acidSolvent + waterProducedKg * 0.5,
+			std::max(acidKg - acidConsumedKg, 0.0), false);
+		SetOmniSolutionMassesKg(base, baseSolvent + waterProducedKg * 0.5,
+			std::max(baseKg - baseConsumedKg, 0.0), false);
+		SetOmniSolutionNeutralSaltMassKg(particleId,
+			acidNeutralSaltBefore + saltProducedKg * 0.5, false);
+		SetOmniSolutionNeutralSaltMassKg(base,
+			baseNeutralSaltBefore + saltProducedKg * 0.5, false);
+		const double totalAqueousMassKg =
+			GetOmniSolutionSolventMassKg(particleId) + GetOmniSolutionSolventMassKg(base) +
+			GetOmniSolutionSoluteMassKg(particleId) + GetOmniSolutionSoluteMassKg(base) +
+			GetOmniSolutionNeutralSaltMassKg(particleId) + GetOmniSolutionNeutralSaltMassKg(base);
+		if (totalAqueousMassKg > 0.0 && energyJ > 0.0)
+		{
+			const double deltaK = energyJ / (totalAqueousMassKg * 4184.0);
+			parts[particleId].temp = static_cast<float>(std::clamp(
+				double(parts[particleId].temp) + deltaK, double(MIN_TEMP), double(MAX_TEMP)));
+			parts[base].temp = static_cast<float>(std::clamp(
+				double(parts[base].temp) + deltaK, double(MIN_TEMP), double(MAX_TEMP)));
+		}
+		if (omniSolutionMetrics.activeTick)
+		{
+			omniSolutionMetrics.neutralisedAcidMassKg += acidConsumedKg;
+			omniSolutionMetrics.neutralisedBaseMassKg += baseConsumedKg;
+			omniSolutionMetrics.neutralSaltProducedKg += saltProducedKg;
+			omniSolutionMetrics.neutralisationWaterProducedKg += waterProducedKg;
+			omniSolutionMetrics.neutralisationEnergyReleasedJ += energyJ;
+			omniSolutionMetrics.neutralisationTransactions++;
+		}
+		if (GetOmniSolutionSoluteMassKg(particleId) <= 1.0e-15)
+		{
+			omniSolutionInternalMutation = true;
+			part_change_type(particleId, x, y, PT_SLTW);
+			omniSolutionInternalMutation = false;
+			SetOmniSolutionMassesKg(particleId, acidSolvent + waterProducedKg * 0.5, 0.0, false);
+			SetOmniSolutionNeutralSaltMassKg(
+				particleId, acidNeutralSaltBefore + saltProducedKg * 0.5, false);
+		}
+		if (GetOmniSolutionSoluteMassKg(base) <= 1.0e-15)
+		{
+			const int bx = int(parts[base].x + 0.5f), by = int(parts[base].y + 0.5f);
+			const double baseNeutralSaltKg = GetOmniSolutionNeutralSaltMassKg(base);
+			omniSolutionInternalMutation = true;
+			part_change_type(base, bx, by, PT_SLTW);
+			omniSolutionInternalMutation = false;
+			SetOmniSolutionMassesKg(base, baseSolvent + waterProducedKg * 0.5, 0.0, false);
+			SetOmniSolutionNeutralSaltMassKg(base, baseNeutralSaltKg, false);
+		}
+		return true;
+	}
+	if (type == PT_BASE)
+		return false;
 	if (type == PT_SLTW)
 	{
 		double solvent = GetOmniSolutionSolventMassKg(particleId);
 		double solute = GetOmniSolutionSoluteMassKg(particleId);
+		double neutralSalt = GetOmniSolutionNeutralSaltMassKg(particleId);
 		if (omniAtmosphere && solvent > 0.0)
 		{
 			const int cellX = x / CELL, cellY = y / CELL;
@@ -5032,9 +5172,10 @@ bool Simulation::UpdateOmniSolutionParticle(int particleId, int x, int y)
 			}
 		}
 		const double capacity = OmniSolution::MaximumDissolvedSoluteKg(solvent, temperatureK);
-		if (solute > capacity + 1.0e-18)
+		if (solute + neutralSalt > capacity + 1.0e-18)
 		{
-			const double transfer = std::min(solute - capacity, OmniSolution::MaximumCrystallisationMassPerTickKg);
+			const double transfer = std::min(solute + neutralSalt - capacity,
+				OmniSolution::MaximumCrystallisationMassPerTickKg);
 			int emptyX = -1, emptyY = -1;
 			for (int rx = -1; rx <= 1 && emptyX < 0; ++rx)
 				for (int ry = -1; ry <= 1; ++ry)
@@ -5057,7 +5198,11 @@ bool Simulation::UpdateOmniSolutionParticle(int particleId, int x, int y)
 				if (salt >= 0)
 				{
 					SetOmniSolutionMassesKg(salt, 0.0, transfer, false);
-					SetOmniSolutionMassesKg(particleId, solvent, solute - transfer, false);
+					const double fromNeutral = std::min(neutralSalt, transfer);
+					neutralSalt -= fromNeutral;
+					solute -= transfer - fromNeutral;
+					SetOmniSolutionMassesKg(particleId, solvent, solute, false);
+					SetOmniSolutionNeutralSaltMassKg(particleId, neutralSalt, false);
 					if (omniSolutionMetrics.activeTick)
 					{
 						omniSolutionMetrics.crystallisedMassKg += transfer;
@@ -5068,12 +5213,13 @@ bool Simulation::UpdateOmniSolutionParticle(int particleId, int x, int y)
 			else if (omniSolutionMetrics.activeTick)
 				omniSolutionMetrics.rateLimitedTransactions++;
 		}
-		if (solvent <= 1.0e-15 && solute > 0.0 && parts[particleId].type == PT_SLTW)
+		if (solvent <= 1.0e-15 && solute + neutralSalt > 0.0 && parts[particleId].type == PT_SLTW)
 		{
 			omniSolutionInternalMutation = true;
 			part_change_type(particleId, x, y, PT_SALT);
 			omniSolutionInternalMutation = false;
-			SetOmniSolutionMassesKg(particleId, 0.0, solute, false);
+			SetOmniSolutionMassesKg(particleId, 0.0, solute + neutralSalt, false);
+			SetOmniSolutionNeutralSaltMassKg(particleId, 0.0, false);
 		}
 		return true;
 	}

@@ -343,6 +343,11 @@ public:
 		double finalSoluteMassKg = 0.0;
 		double dissolvedMassKg = 0.0;
 		double crystallisedMassKg = 0.0;
+		double neutralisedAcidMassKg = 0.0;
+		double neutralisedBaseMassKg = 0.0;
+		double neutralSaltProducedKg = 0.0;
+		double neutralisationWaterProducedKg = 0.0;
+		double neutralisationEnergyReleasedJ = 0.0;
 		double transferredSolventFromWaterKg = 0.0;
 		double transferredSolventToAtmosphereKg = 0.0;
 		double externalSolventSourceKg = 0.0;
@@ -351,8 +356,10 @@ public:
 		double externalSoluteSinkKg = 0.0;
 		double solventMassResidualKg = 0.0;
 		double soluteMassResidualKg = 0.0;
+		double totalSolutionMassResidualKg = 0.0;
 		uint64_t dissolutionTransactions = 0;
 		uint64_t crystallisationTransactions = 0;
+		uint64_t neutralisationTransactions = 0;
 		uint64_t saturationLimitedTransactions = 0;
 		uint64_t rateLimitedTransactions = 0;
 	};
@@ -440,6 +447,7 @@ public:
 	bool UpdateOmniSolutionParticle(int particleId, int x, int y);
 	double GetOmniSolutionSolventMassKg(int particleId) const;
 	double GetOmniSolutionSoluteMassKg(int particleId) const;
+	double GetOmniSolutionNeutralSaltMassKg(int particleId) const;
 
 	void SetEdgeMode(int newEdgeMode);
 	void SetDecoSpace(int newDecoSpace);
@@ -512,6 +520,7 @@ protected:
 	std::array<double, NPART> omniCarbonParcelMassKg{};
 	std::array<double, NPART> omniSolutionSolventMassKg{};
 	std::array<double, NPART> omniSolutionSoluteMassKg{};
+	std::array<double, NPART> omniSolutionNeutralSaltMassKg{};
 	std::vector<OmniWaterTransferRequest> omniWaterTransferRequests;
 	OmniWaterCouplingMetrics omniWaterCouplingMetrics{};
 	OmniChemistryMetrics omniChemistryMetrics{};
@@ -537,6 +546,8 @@ protected:
 	void InitializeOmniSolutionState(int particleId, int type, bool directCreate);
 	void ClearOmniSolutionState(int particleId, bool recordExternalSink = true);
 	void SetOmniSolutionMassesKg(int particleId, double solventMassKg, double soluteMassKg,
+		bool recordLedgerAdjustment = true);
+	void SetOmniSolutionNeutralSaltMassKg(int particleId, double massKg,
 		bool recordLedgerAdjustment = true);
 	double TotalOmniSolutionSolventMassKg() const;
 	double TotalOmniSolutionSoluteMassKg() const;

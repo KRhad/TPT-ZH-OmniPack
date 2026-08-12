@@ -335,6 +335,7 @@ void GameSave::setSize(Vec2<int> newBlockSize)
 	omniSolutionStateVersion = 0;
 	omniSolutionSolventMassKg.clear();
 	omniSolutionSoluteMassKg.clear();
+	omniSolutionNeutralSaltMassKg.clear();
 }
 
 std::pair<bool, std::vector<char>> GameSave::Serialise() const
@@ -370,9 +371,11 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 		throw BuildException("invalid Omni carbon parcel state before transform");
 	}
 	if (hasOmniSolutionState &&
-		(omniSolutionStateVersion != OmniSolutionStateVersion ||
+		((omniSolutionStateVersion != OmniSolutionStateVersion &&
+			omniSolutionStateVersion != OmniSolutionLegacyStateVersion) ||
 			omniSolutionSolventMassKg.size() != static_cast<size_t>(particlesCount) ||
-			omniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount)))
+			omniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount) ||
+			omniSolutionNeutralSaltMassKg.size() != static_cast<size_t>(particlesCount)))
 		throw BuildException("invalid Omni solution state before transform");
 	// undo translation by rotation
 	auto br  = transform * (blockSize * CELL - Vec2{ 1, 1 });
@@ -463,6 +466,7 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 			{
 				omniSolutionSolventMassKg[i] = 0.0;
 				omniSolutionSoluteMassKg[i] = 0.0;
+				omniSolutionNeutralSaltMassKg[i] = 0.0;
 			}
 			continue;
 		}
@@ -629,6 +633,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 	std::vector<double> parsedOmniCarbonParcelMassKg;
 	std::vector<double> parsedOmniSolutionSolventMassKg;
 	std::vector<double> parsedOmniSolutionSoluteMassKg;
+	std::vector<double> parsedOmniSolutionNeutralSaltMassKg;
 	unsigned partsCount = 0;
 	unsigned int savedVersion = inputData[4];
 	version = { savedVersion, 0 };
@@ -927,22 +932,33 @@ void GameSave::readOPS(const std::vector<char> &data)
 	{
 		int stateVersion = 0;
 		if (!copyIfInt32(*solutionNode, "stateVersion", stateVersion) ||
-			stateVersion != OmniSolutionStateVersion)
+			(stateVersion != OmniSolutionStateVersion &&
+				stateVersion != OmniSolutionLegacyStateVersion))
 			throw ParseException(ParseException::WrongVersion, "Unsupported Omni solution state version");
-		std::span<const unsigned char> solventData, soluteData;
+		std::span<const unsigned char> solventData, soluteData, neutralSaltData;
 		if (!getAddressIfUser(*solutionNode, "solventMassKg", solventData) ||
 			!getAddressIfUser(*solutionNode, "soluteMassKg", soluteData) ||
 			solventData.size() % sizeof(double) != 0 ||
 			soluteData.size() != solventData.size())
 			throw ParseException(ParseException::Corrupt, "Invalid Omni solution mass data");
+		if (stateVersion == OmniSolutionStateVersion &&
+			(!getAddressIfUser(*solutionNode, "neutralSaltMassKg", neutralSaltData) ||
+				neutralSaltData.size() != solventData.size()))
+			throw ParseException(ParseException::Corrupt, "Invalid Omni neutral salt mass data");
 		parsedOmniSolutionSolventMassKg.resize(solventData.size() / sizeof(double));
 		parsedOmniSolutionSoluteMassKg.resize(soluteData.size() / sizeof(double));
-		size_t solventOffset = 0, soluteOffset = 0;
+		parsedOmniSolutionNeutralSaltMassKg.assign(parsedOmniSolutionSolventMassKg.size(), 0.0);
+		size_t solventOffset = 0, soluteOffset = 0, neutralSaltOffset = 0;
 		for (size_t index = 0; index < parsedOmniSolutionSolventMassKg.size(); ++index)
 		{
 			if (!ReadDoubleLittleEndian(solventData, solventOffset, parsedOmniSolutionSolventMassKg[index]) ||
 				!ReadDoubleLittleEndian(soluteData, soluteOffset, parsedOmniSolutionSoluteMassKg[index]) ||
-				parsedOmniSolutionSolventMassKg[index] < 0.0 || parsedOmniSolutionSoluteMassKg[index] < 0.0)
+				(stateVersion == OmniSolutionStateVersion &&
+					!ReadDoubleLittleEndian(neutralSaltData, neutralSaltOffset,
+						parsedOmniSolutionNeutralSaltMassKg[index])) ||
+				parsedOmniSolutionSolventMassKg[index] < 0.0 ||
+				parsedOmniSolutionSoluteMassKg[index] < 0.0 ||
+				parsedOmniSolutionNeutralSaltMassKg[index] < 0.0)
 				throw ParseException(ParseException::Corrupt, "Invalid Omni solution mass");
 		}
 		omniSolutionStateVersion = stateVersion;
@@ -1644,17 +1660,21 @@ void GameSave::readOPS(const std::vector<char> &data)
 	if (omniSolutionStateVersion)
 	{
 		if (parsedOmniSolutionSolventMassKg.size() != static_cast<size_t>(particlesCount) ||
-			parsedOmniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount))
+			parsedOmniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount) ||
+			parsedOmniSolutionNeutralSaltMassKg.size() != static_cast<size_t>(particlesCount))
 			throw ParseException(ParseException::Corrupt, "Omni solution count does not match particles");
 		for (int index = 0; index < particlesCount; ++index)
 		{
 			const auto type = particles[index].type;
-			if ((parsedOmniSolutionSolventMassKg[index] > 0.0 || parsedOmniSolutionSoluteMassKg[index] > 0.0) &&
-				type != PT_SALT && type != PT_SLTW)
+			if ((parsedOmniSolutionSolventMassKg[index] > 0.0 ||
+				parsedOmniSolutionSoluteMassKg[index] > 0.0 ||
+				parsedOmniSolutionNeutralSaltMassKg[index] > 0.0) &&
+				type != PT_SALT && type != PT_SLTW && type != PT_ACID && type != PT_BASE)
 				throw ParseException(ParseException::Corrupt, "Omni solution mass belongs to a non-solution particle");
 		}
 		omniSolutionSolventMassKg = std::move(parsedOmniSolutionSolventMassKg);
 		omniSolutionSoluteMassKg = std::move(parsedOmniSolutionSoluteMassKg);
+		omniSolutionNeutralSaltMassKg = std::move(parsedOmniSolutionNeutralSaltMassKg);
 		hasOmniSolutionState = true;
 	}
 
@@ -2524,6 +2544,7 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	std::vector<double> serialisedOmniCarbonParcelMassKg;
 	std::vector<double> serialisedOmniSolutionSolventMassKg;
 	std::vector<double> serialisedOmniSolutionSoluteMassKg;
+	std::vector<double> serialisedOmniSolutionNeutralSaltMassKg;
 	if (hasOmniWaterParcelState)
 	{
 		const bool currentWaterState = omniWaterParcelStateVersion == OmniWaterParcelStateVersion;
@@ -2552,12 +2573,15 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	}
 	if (hasOmniSolutionState)
 	{
-		if (omniSolutionStateVersion != OmniSolutionStateVersion ||
+		if ((omniSolutionStateVersion != OmniSolutionStateVersion &&
+				omniSolutionStateVersion != OmniSolutionLegacyStateVersion) ||
 			omniSolutionSolventMassKg.size() != static_cast<size_t>(particlesCount) ||
-			omniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount))
+			omniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount) ||
+			omniSolutionNeutralSaltMassKg.size() != static_cast<size_t>(particlesCount))
 			throw BuildException("invalid Omni solution state payload");
 		serialisedOmniSolutionSolventMassKg.reserve(omniSolutionSolventMassKg.size());
 		serialisedOmniSolutionSoluteMassKg.reserve(omniSolutionSoluteMassKg.size());
+		serialisedOmniSolutionNeutralSaltMassKg.reserve(omniSolutionNeutralSaltMassKg.size());
 	}
 	std::fill(partsSaveIndex.data(), partsSaveIndex.data() + NPART, 0);
 	auto &sd = SimulationData::CRef();
@@ -2612,13 +2636,17 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 			{
 				const double solventMassKg = omniSolutionSolventMassKg[i];
 				const double soluteMassKg = omniSolutionSoluteMassKg[i];
+				const double neutralSaltMassKg = omniSolutionNeutralSaltMassKg[i];
 				if (!std::isfinite(solventMassKg) || !std::isfinite(soluteMassKg) ||
-					solventMassKg < 0.0 || soluteMassKg < 0.0 ||
-					((solventMassKg > 0.0 || soluteMassKg > 0.0) &&
-						particles[i].type != PT_SALT && particles[i].type != PT_SLTW))
+					!std::isfinite(neutralSaltMassKg) || solventMassKg < 0.0 || soluteMassKg < 0.0 ||
+					neutralSaltMassKg < 0.0 ||
+					((solventMassKg > 0.0 || soluteMassKg > 0.0 || neutralSaltMassKg > 0.0) &&
+						particles[i].type != PT_SALT && particles[i].type != PT_SLTW &&
+						particles[i].type != PT_ACID && particles[i].type != PT_BASE))
 					throw BuildException("invalid Omni solution mass");
 				serialisedOmniSolutionSolventMassKg.push_back(solventMassKg);
 				serialisedOmniSolutionSoluteMassKg.push_back(soluteMassKg);
+				serialisedOmniSolutionNeutralSaltMassKg.push_back(neutralSaltMassKg);
 			}
 
 			auto part = particles[i];
@@ -3088,18 +3116,25 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	}
 	if (hasOmniSolutionState)
 	{
-		std::vector<unsigned char> solventData, soluteData;
+		std::vector<unsigned char> solventData, soluteData, neutralSaltData;
 		solventData.reserve(serialisedOmniSolutionSolventMassKg.size() * sizeof(double));
 		soluteData.reserve(serialisedOmniSolutionSoluteMassKg.size() * sizeof(double));
+		neutralSaltData.reserve(serialisedOmniSolutionNeutralSaltMassKg.size() * sizeof(double));
 		for (double massKg : serialisedOmniSolutionSolventMassKg)
 			AppendDoubleLittleEndian(solventData, massKg);
 		for (double massKg : serialisedOmniSolutionSoluteMassKg)
 			AppendDoubleLittleEndian(soluteData, massKg);
+		for (double massKg : serialisedOmniSolutionNeutralSaltMassKg)
+			AppendDoubleLittleEndian(neutralSaltData, massKg);
 		auto &solutionNode = (b["omniSolutionParcels"] = Bson::Type::objectValue);
 		solutionNode["stateVersion"] = omniSolutionStateVersion;
-		solutionNode["layout"] = ByteString("particle_order_f64_le_solvent_mass_kg_solute_mass_kg_v1");
+		solutionNode["layout"] = ByteString(omniSolutionStateVersion == OmniSolutionStateVersion
+			? "particle_order_f64_le_solvent_primary_solute_neutral_salt_mass_kg_v2"
+			: "particle_order_f64_le_solvent_mass_kg_solute_mass_kg_v1");
 		solutionNode["solventMassKg"] = std::move(solventData);
 		solutionNode["soluteMassKg"] = std::move(soluteData);
+		if (omniSolutionStateVersion == OmniSolutionStateVersion)
+			solutionNode["neutralSaltMassKg"] = std::move(neutralSaltData);
 	}
 	b["paused"] = paused;
 	b["gravityMode"] = gravityMode;

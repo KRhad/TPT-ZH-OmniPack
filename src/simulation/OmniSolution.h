@@ -48,5 +48,20 @@ inline constexpr double MaximumDissolutionMassPerTransactionKg =
 	DefaultSolidSoluteMassKg / 120.0;
 inline constexpr double MaximumCrystallisationMassPerTickKg =
 	DefaultSolidSoluteMassKg / 120.0;
-}
 
+inline constexpr double HydrogenChlorideMolarMassKgPerMol = 0.03646094;
+inline constexpr double SodiumHydroxideMolarMassKgPerMol = 0.03999711;
+inline constexpr double WaterMolarMassKgPerMol = 0.01801528;
+inline constexpr double SodiumChlorideMolarMassKgPerMol = 0.05844277;
+static_assert(HydrogenChlorideMolarMassKgPerMol + SodiumHydroxideMolarMassKgPerMol ==
+	WaterMolarMassKgPerMol + SodiumChlorideMolarMassKgPerMol);
+
+// ACID and BASE are deliberately narrow v1 mappings to aqueous HCl and NaOH.
+// Ten mass percent is a game policy, not a claim about arbitrary old saves.
+inline constexpr double DefaultReactiveSoluteMassFraction = 0.10;
+inline constexpr double DefaultReactiveSoluteMassKg = DefaultSolutionSolventMassKg *
+	DefaultReactiveSoluteMassFraction / (1.0 - DefaultReactiveSoluteMassFraction);
+inline constexpr double MaximumNeutralisationMolesPerTransaction =
+	(DefaultReactiveSoluteMassKg / HydrogenChlorideMolarMassKgPerMol) / 120.0;
+inline constexpr double StrongAcidBaseNeutralisationEnergyJPerMol = 57900.0;
+}

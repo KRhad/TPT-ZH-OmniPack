@@ -1894,9 +1894,10 @@ static int omniSolution(lua_State *L)
 	};
 	setBoolean("active", sim->IsOmniAtmosphereActive());
 	setBoolean("active_tick", metrics.activeTick);
-	setInteger("runtime_version", 1);
+	setInteger("runtime_version", 2);
 	setInteger("dissolution_transactions", metrics.dissolutionTransactions);
 	setInteger("crystallisation_transactions", metrics.crystallisationTransactions);
+	setInteger("neutralisation_transactions", metrics.neutralisationTransactions);
 	setInteger("saturation_limited_transactions", metrics.saturationLimitedTransactions);
 	setInteger("rate_limited_transactions", metrics.rateLimitedTransactions);
 	setNumber("initial_solvent_mass_kg", metrics.initialSolventMassKg);
@@ -1905,6 +1906,11 @@ static int omniSolution(lua_State *L)
 	setNumber("final_solute_mass_kg", metrics.finalSoluteMassKg);
 	setNumber("dissolved_mass_kg", metrics.dissolvedMassKg);
 	setNumber("crystallised_mass_kg", metrics.crystallisedMassKg);
+	setNumber("neutralised_acid_mass_kg", metrics.neutralisedAcidMassKg);
+	setNumber("neutralised_base_mass_kg", metrics.neutralisedBaseMassKg);
+	setNumber("neutral_salt_produced_kg", metrics.neutralSaltProducedKg);
+	setNumber("neutralisation_water_produced_kg", metrics.neutralisationWaterProducedKg);
+	setNumber("neutralisation_energy_released_j", metrics.neutralisationEnergyReleasedJ);
 	setNumber("transferred_solvent_to_atmosphere_kg", metrics.transferredSolventToAtmosphereKg);
 	setNumber("external_solvent_source_kg", metrics.externalSolventSourceKg);
 	setNumber("external_solvent_sink_kg", metrics.externalSolventSinkKg);
@@ -1912,7 +1918,8 @@ static int omniSolution(lua_State *L)
 	setNumber("external_solute_sink_kg", metrics.externalSoluteSinkKg);
 	setNumber("solvent_mass_residual_kg", metrics.solventMassResidualKg);
 	setNumber("solute_mass_residual_kg", metrics.soluteMassResidualKg);
-	lua_pushstring(L, "aqueous_nacl_mass_fraction_v1");
+	setNumber("total_solution_mass_residual_kg", metrics.totalSolutionMassResidualKg);
+	lua_pushstring(L, "aqueous_nacl_hcl_naoh_mass_v2");
 	lua_setfield(L, -2, "runtime_model");
 	return 1;
 }

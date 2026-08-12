@@ -112,6 +112,8 @@ static int update(UPDATE_FUNC_ARGS)
 				if (!r)
 					continue;
 				int rt = TYP(r);
+				if (sim->IsOmniAtmosphereActive() && rt == PT_ACID)
+					continue;
 
 				//Don't react with some elements
 				if (rt != PT_BASE && rt != PT_SALT && rt != PT_SLTW && rt != PT_BOYL && rt != PT_MERC &&

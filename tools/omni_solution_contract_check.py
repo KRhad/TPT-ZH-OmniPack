@@ -8,8 +8,12 @@ def main() -> int:
     contract_path = root / "resources/omnicore/v1/omni-solution-nacl-runtime-v1.json"
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
     assert contract["schema"] == "omnicore.solution-runtime"
-    assert contract["version"] == 1
-    assert contract["authoritative_state"] == ["solvent_mass_kg", "solute_mass_kg"]
+    assert contract["version"] == 2
+    assert contract["authoritative_state"] == [
+        "solvent_mass_kg",
+        "primary_solute_mass_kg",
+        "neutral_nacl_mass_kg",
+    ]
     assert contract["classic_mode"] == "legacy_behavior_unchanged"
     assert contract["saturation"]["source_url"].startswith("https://www.usgs.gov/")
     assert contract["parcel_policy"]["status"] == "game_tuned_explicit"
@@ -22,12 +26,16 @@ def main() -> int:
 
     source = (root / "src/simulation/OmniSolution.h").read_text(encoding="utf-8")
     simulation = (root / "src/simulation/Simulation.cpp").read_text(encoding="utf-8")
+    game_save = (root / "src/client/GameSave.cpp").read_text(encoding="utf-8")
     lua = (root / "src/lua/LuaSimulation.cpp").read_text(encoding="utf-8")
     for needle in (
         "SodiumChlorideSaturationMassFraction",
         "MaximumDissolvedSoluteKg",
         "MaximumDissolutionMassPerTransactionKg",
         "MaximumCrystallisationMassPerTickKg",
+        "HydrogenChlorideMolarMassKgPerMol",
+        "SodiumHydroxideMolarMassKgPerMol",
+        "StrongAcidBaseNeutralisationEnergyJPerMol",
     ):
         assert needle in source
     for needle in (
@@ -35,8 +43,10 @@ def main() -> int:
         "FinishOmniSolutionTick();",
         "UpdateOmniSolutionParticle",
         "omniSolutionInternalMutation",
+        "neutralisationTransactions",
     ):
         assert needle in simulation
+    assert "parsedOmniSolutionNeutralSaltMassKg[index] < 0.0" in game_save
     assert "static int omniSolution(lua_State *L)" in lua
     assert "LFUNC(omniSolution)" in lua
     print("omni_solution_contract_pass=true")
@@ -45,4 +55,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

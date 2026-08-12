@@ -305,6 +305,16 @@ std::unique_ptr<SnapshotDelta> SnapshotDelta::FromSnapshots(const Snapshot &oldS
 		oldSnap.OmniSolutionSoluteMassKg.end());
 	delta.extraOmniSolutionSoluteMassKgNew.assign(newSnap.OmniSolutionSoluteMassKg.begin() + commonSolutionSoluteSize,
 		newSnap.OmniSolutionSoluteMassKg.end());
+	const auto commonSolutionNeutralSaltSize = std::min(oldSnap.OmniSolutionNeutralSaltMassKg.size(),
+		newSnap.OmniSolutionNeutralSaltMassKg.size());
+	FillHunkVectorPtr(oldSnap.OmniSolutionNeutralSaltMassKg.data(), newSnap.OmniSolutionNeutralSaltMassKg.data(),
+		delta.commonOmniSolutionNeutralSaltMassKg, commonSolutionNeutralSaltSize);
+	delta.extraOmniSolutionNeutralSaltMassKgOld.assign(
+		oldSnap.OmniSolutionNeutralSaltMassKg.begin() + commonSolutionNeutralSaltSize,
+		oldSnap.OmniSolutionNeutralSaltMassKg.end());
+	delta.extraOmniSolutionNeutralSaltMassKgNew.assign(
+		newSnap.OmniSolutionNeutralSaltMassKg.begin() + commonSolutionNeutralSaltSize,
+		newSnap.OmniSolutionNeutralSaltMassKg.end());
 
 	return ptr;
 }
@@ -381,6 +391,14 @@ std::unique_ptr<Snapshot> SnapshotDelta::Forward(const Snapshot &oldSnap)
 	newSnap.OmniSolutionSoluteMassKg.resize(commonSolutionSoluteSize + extraOmniSolutionSoluteMassKgNew.size());
 	std::copy(extraOmniSolutionSoluteMassKgNew.begin(), extraOmniSolutionSoluteMassKgNew.end(),
 		newSnap.OmniSolutionSoluteMassKg.begin() + commonSolutionSoluteSize);
+	const auto commonSolutionNeutralSaltSize = oldSnap.OmniSolutionNeutralSaltMassKg.size() -
+		extraOmniSolutionNeutralSaltMassKgOld.size();
+	ApplyHunkVectorPtr<false>(commonOmniSolutionNeutralSaltMassKg,
+		newSnap.OmniSolutionNeutralSaltMassKg.data());
+	newSnap.OmniSolutionNeutralSaltMassKg.resize(
+		commonSolutionNeutralSaltSize + extraOmniSolutionNeutralSaltMassKgNew.size());
+	std::copy(extraOmniSolutionNeutralSaltMassKgNew.begin(), extraOmniSolutionNeutralSaltMassKgNew.end(),
+		newSnap.OmniSolutionNeutralSaltMassKg.begin() + commonSolutionNeutralSaltSize);
 
 	return ptr;
 }
@@ -457,6 +475,14 @@ std::unique_ptr<Snapshot> SnapshotDelta::Restore(const Snapshot &newSnap)
 	oldSnap.OmniSolutionSoluteMassKg.resize(commonSolutionSoluteSize + extraOmniSolutionSoluteMassKgOld.size());
 	std::copy(extraOmniSolutionSoluteMassKgOld.begin(), extraOmniSolutionSoluteMassKgOld.end(),
 		oldSnap.OmniSolutionSoluteMassKg.begin() + commonSolutionSoluteSize);
+	const auto commonSolutionNeutralSaltSize = newSnap.OmniSolutionNeutralSaltMassKg.size() -
+		extraOmniSolutionNeutralSaltMassKgNew.size();
+	ApplyHunkVectorPtr<true>(commonOmniSolutionNeutralSaltMassKg,
+		oldSnap.OmniSolutionNeutralSaltMassKg.data());
+	oldSnap.OmniSolutionNeutralSaltMassKg.resize(
+		commonSolutionNeutralSaltSize + extraOmniSolutionNeutralSaltMassKgOld.size());
+	std::copy(extraOmniSolutionNeutralSaltMassKgOld.begin(), extraOmniSolutionNeutralSaltMassKgOld.end(),
+		oldSnap.OmniSolutionNeutralSaltMassKg.begin() + commonSolutionNeutralSaltSize);
 
 	return ptr;
 }

@@ -59,6 +59,8 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
 			omniSolutionSolventMassKg.begin(), omniSolutionSolventMassKg.begin() + parts.active);
 		snap->OmniSolutionSoluteMassKg.insert(snap->OmniSolutionSoluteMassKg.begin(),
 			omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.begin() + parts.active);
+		snap->OmniSolutionNeutralSaltMassKg.insert(snap->OmniSolutionNeutralSaltMassKg.begin(),
+			omniSolutionNeutralSaltMassKg.begin(), omniSolutionNeutralSaltMassKg.begin() + parts.active);
 	}
 	snap->OmniSimulationMode = omniSimulationMode;
 	snap->OmniAtmospherePersistenceStatus = static_cast<uint8_t>(omniAtmospherePersistenceStatus);
@@ -103,6 +105,7 @@ void Simulation::Restore(const Snapshot &snap)
 	std::fill(omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.end(), 0.0);
 	std::fill(omniSolutionSolventMassKg.begin(), omniSolutionSolventMassKg.end(), 0.0);
 	std::fill(omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.end(), 0.0);
+	std::fill(omniSolutionNeutralSaltMassKg.begin(), omniSolutionNeutralSaltMassKg.end(), 0.0);
 	std::copy_n(
 		snap.OmniWaterParcelMassKg.begin(),
 		std::min(snap.OmniWaterParcelMassKg.size(), omniWaterParcelMassKg.size()),
@@ -121,6 +124,9 @@ void Simulation::Restore(const Snapshot &snap)
 	std::copy_n(snap.OmniSolutionSoluteMassKg.begin(),
 		std::min(snap.OmniSolutionSoluteMassKg.size(), omniSolutionSoluteMassKg.size()),
 		omniSolutionSoluteMassKg.begin());
+	std::copy_n(snap.OmniSolutionNeutralSaltMassKg.begin(),
+		std::min(snap.OmniSolutionNeutralSaltMassKg.size(), omniSolutionNeutralSaltMassKg.size()),
+		omniSolutionNeutralSaltMassKg.begin());
 	omniWaterTransferRequests.clear();
 	omniWaterCouplingMetrics = {};
 	omniSimulationMode = snap.OmniSimulationMode >= OMNI_CLASSIC &&
