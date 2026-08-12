@@ -308,6 +308,92 @@ void OmniAtmosphere::AddSpeciesMassDensity(
 	phaseActive = phaseActive || species == OMNI_SPECIES_H2O;
 }
 
+bool OmniAtmosphere::ApplyReactionSpeciesTransfer(
+	std::size_t x,
+	std::size_t y,
+	const std::vector<double> &speciesMassDeltaKg,
+	double chemicalEnergyJ,
+	double parcelVelocityX,
+	double parcelVelocityY,
+	OmniAtmosphereReactionTransfer *result)
+{
+	OmniAtmosphereReactionTransfer transfer{};
+	if (x >= config.width || y >= config.height || speciesMassDeltaKg.size() != config.species.size() ||
+		!Finite(chemicalEnergyJ) || !Finite(parcelVelocityX) || !Finite(parcelVelocityY))
+		return false;
+	for (const auto mass : speciesMassDeltaKg)
+		if (!Finite(mass))
+			return false;
+	const auto cell = Index(x, y);
+	if (blocked[cell])
+		return false;
+	const auto primitive = Derive(cell, state[cell]);
+	if (!primitive.finite)
+		return false;
+	const double volume = config.scale.cellVolumeM3();
+	if (!(volume > 0.0))
+		return false;
+	double totalMassDelta = 0.0;
+	double sensibleEnergy = 0.0;
+	for (std::size_t species = 0; species < config.species.size(); ++species)
+	{
+		const double deltaDensity = speciesMassDeltaKg[species] / volume;
+		const double nextDensity = speciesState[SpeciesIndex(cell, species)] + deltaDensity;
+		if (!Finite(nextDensity) || nextDensity < 0.0)
+			return false;
+		totalMassDelta += speciesMassDeltaKg[species];
+		sensibleEnergy += speciesMassDeltaKg[species] *
+			(SpeciesCv(config.species[species]) * primitive.temperature +
+				(species == OMNI_SPECIES_H2O ? OmniThermal::LatentHeatVaporizationJPerKg : 0.0));
+	}
+	const double nextDensity = state[cell].density + totalMassDelta / volume;
+	if (!Finite(nextDensity) || nextDensity < config.densityFloor)
+		return false;
+	const double sourceMomentumX = totalMassDelta * parcelVelocityX;
+	const double sourceMomentumY = totalMassDelta * parcelVelocityY;
+	const double sourceKineticEnergy = 0.5 * totalMassDelta *
+		(Square(parcelVelocityX) + Square(parcelVelocityY));
+	const double totalEnergyDelta = sensibleEnergy + sourceKineticEnergy + chemicalEnergyJ;
+	const double nextMomentumX = state[cell].momentumX + sourceMomentumX / volume;
+	const double nextMomentumY = state[cell].momentumY + sourceMomentumY / volume;
+	const double nextTotalEnergy = state[cell].totalEnergy + totalEnergyDelta / volume;
+	const double nextKineticEnergy = 0.5 *
+		(Square(nextMomentumX) + Square(nextMomentumY)) / nextDensity;
+	const double requiredInternalEnergy = std::max(
+		config.internalEnergyFloor, config.pressureFloor / (config.gamma - 1.0));
+	if (!Finite(sourceMomentumX) || !Finite(sourceMomentumY) || !Finite(totalEnergyDelta) ||
+		!Finite(nextMomentumX) || !Finite(nextMomentumY) || !Finite(nextTotalEnergy) ||
+		!Finite(nextKineticEnergy) || nextTotalEnergy - nextKineticEnergy < requiredInternalEnergy)
+		return false;
+	for (std::size_t species = 0; species < config.species.size(); ++species)
+	{
+		const double deltaDensity = speciesMassDeltaKg[species] / volume;
+		speciesState[SpeciesIndex(cell, species)] += deltaDensity;
+		pendingSourceSpeciesMassKg[species] += speciesMassDeltaKg[species];
+	}
+	state[cell].density = nextDensity;
+	state[cell].momentumX = nextMomentumX;
+	state[cell].momentumY = nextMomentumY;
+	state[cell].totalEnergy = nextTotalEnergy;
+	pendingSourceMassKg += totalMassDelta;
+	pendingSourceMomentumX += sourceMomentumX;
+	pendingSourceMomentumY += sourceMomentumY;
+	pendingSourceEnergyJ += totalEnergyDelta;
+	pendingEvent = true;
+	transportActive = true;
+	transfer.committed = true;
+	transfer.gasMassDeltaKg = totalMassDelta;
+	transfer.sourceMomentumX = sourceMomentumX;
+	transfer.sourceMomentumY = sourceMomentumY;
+	transfer.sensibleEnergyDeltaJ = sensibleEnergy;
+	transfer.sourceKineticEnergyJ = sourceKineticEnergy;
+	transfer.chemicalEnergyJ = chemicalEnergyJ;
+	transfer.totalEnergyDeltaJ = totalEnergyDelta;
+	if (result)
+		*result = transfer;
+	return true;
+}
+
 void OmniAtmosphere::SetSpeciesMassFractions(
 	std::size_t x,
 	std::size_t y,

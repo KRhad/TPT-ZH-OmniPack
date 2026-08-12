@@ -145,19 +145,23 @@ def check(root: Path) -> list[str]:
     else:
         if ownership.get("managed_element_ids") != ["WATR", "ICEI", "WTRV"]:
             errors.append("managed water element family drifted")
+        if ownership.get("deferred_composition_types") != [
+            "DSTW", "SLTW", "CBNW", "SNOW", "FOG", "RIME"
+        ]:
+            errors.append("deferred water-composition family drifted")
         if ownership.get("particle_abi_changed") is not False:
             errors.append("water ownership must preserve the Particle ABI")
-        if ownership.get("sidecar_bytes_per_particle") != 8:
-            errors.append("water sidecar must remain 8 bytes per particle")
+        if ownership.get("sidecar_bytes_per_particle") != 16:
+            errors.append("water mass/enthalpy sidecars must remain 16 bytes per particle")
         if not close(float(ownership.get("particle_parcel_volume_m3", math.nan)), 4.0e-9):
             errors.append("water particle parcel volume drifted")
         if not close(float(ownership.get("default_water_parcel_mass_kg", math.nan)), 4.0e-6):
             errors.append("default water parcel mass drifted")
     required_contract_symbols = {
         "OmniPhysicalScale.h": (scale_h, ("ParticleParcelVolumeM3", "DefaultWaterParcelMassKg")),
-        "GameSave.h": (save_h, ("OmniWaterParcelStateVersion = 1", "omniWaterParcelMassKg")),
-        "GameSave.cpp": (save_cpp, ("omniWaterParcels", "particle_order_f64_le_mass_kg_v1")),
-        "Simulation.h": (simulation_h, ("std::array<double, NPART> omniWaterParcelMassKg",)),
+        "GameSave.h": (save_h, ("OmniWaterParcelStateVersion = 2", "omniWaterParcelMassKg", "omniWaterParcelSpecificEnthalpyJPerKg")),
+        "GameSave.cpp": (save_cpp, ("omniWaterParcels", "particle_order_f64_le_mass_kg_specific_enthalpy_j_per_kg_v2")),
+        "Simulation.h": (simulation_h, ("std::array<double, NPART> omniWaterParcelMassKg", "std::array<double, NPART> omniWaterParcelSpecificEnthalpyJPerKg")),
     }
     for filename, (body, symbols) in required_contract_symbols.items():
         for symbol in symbols:

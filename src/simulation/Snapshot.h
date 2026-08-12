@@ -26,6 +26,8 @@ public:
 	std::vector<double> OmniAtmosphereTotalEnergy;
 	std::vector<double> OmniAtmosphereCondensedWaterDensity;
 	std::vector<double> OmniWaterParcelMassKg;
+	std::vector<double> OmniWaterParcelSpecificEnthalpyJPerKg;
+	std::vector<double> OmniCarbonParcelMassKg;
 	int OmniSimulationMode = OMNI_CLASSIC;
 	uint8_t OmniAtmospherePersistenceStatus = 0;
 

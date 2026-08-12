@@ -1,9 +1,12 @@
 # OmniCore data contract v1
 
 This directory began as the offline-only 1.0.4 data foundation. Version 1.0.5 adds
-explicitly unselected PhysicalScale and Atmosphere policy benchmark-input documents. Nothing in
-`src/` loads these files, and no simulation, save, Lua, Element, or UI behavior
-depends on them.
+explicitly unselected PhysicalScale and Atmosphere policy benchmark-input documents.
+Version 1.0.8 promotes exactly one reviewed reaction definition to a
+`runtime_candidate`: `C(s) + O2(g) -> CO2(g)`. The strict-double runtime has a
+matching compiled contract, while this JSON remains the audited source of
+identity, stoichiometry, provenance and unit semantics. It is not a general
+runtime JSON loader and adding a record here alone cannot alter gameplay.
 
 Files:
 
@@ -14,8 +17,11 @@ Files:
 - `units.json` contains a deliberately small canonical-SI vocabulary. It defines
   unit dimensions only; it does not select pixel length, effective depth, particle
   mass, simulation timestep, or any other 1.0.5 PhysicalScale value.
-- `catalog.json` is intentionally empty. It proves the document contract without
-  bundling guessed physical properties, kinetics, or restricted reference data.
+- `catalog.json` contains only the first compact combustion candidate: carbon,
+  oxygen, carbon dioxide and one carbon-oxidation reaction. Atom and charge
+  balance are checked exactly before data is accepted. The reaction enthalpy is
+  attributed to OpenStax Chemistry under CC BY 4.0; the Arrhenius parameters are
+  explicitly `game_tuned`, not presented as measured graphite kinetics.
 - `legacy-material-map.json` is generated from `docs/ELEMENT_REGISTRY.csv`. Its
   records are identity-only compatibility mappings and explicitly carry no SI
   physical-property claim. Its source hash is the canonical parsed CSV serialized

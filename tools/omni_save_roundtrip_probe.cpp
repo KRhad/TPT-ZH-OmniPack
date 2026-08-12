@@ -8,6 +8,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string_view>
 #include <vector>
@@ -92,7 +93,7 @@ void AdvanceOneTick(Simulation &simulation)
 }
 }
 
-int main()
+int Run()
 {
 	SimulationData simulationData;
 	auto source = Simulation::Factory();
@@ -157,12 +158,20 @@ int main()
 	const int undoWater = undoSource->create_part(-1, 50, 50, PT_WATR);
 	if (undoWater < 0)
 		return Fail("could not create the undo water fixture");
+	const int undoCarbon = undoSource->create_part(-1, 54, 50, PT_COAL);
+	if (undoCarbon < 0)
+		return Fail("could not create the undo carbon fixture");
+	undoSource->parts[undoWater].temp = 360.0f;
 	const double undoWaterMass = undoSource->GetOmniWaterParcelMassKg(undoWater);
+	const double undoWaterEnthalpy =
+		undoSource->GetOmniWaterParcelSpecificEnthalpyJPerKg(undoWater);
+	const double undoCarbonMass = undoSource->GetOmniCarbonParcelMassKg(undoCarbon);
 	const auto oldSnapshot = undoSource->CreateSnapshot();
 	undoSource->omniAtmosphere->AddSpeciesMassDensity(5, 7, OMNI_SPECIES_H2O, 0.125);
 	undoSource->omniAtmosphere->AddEnergyDensity(5, 7, 10000.0);
 	undoSource->parts[undoWater].temp = 450.0f;
 	undoSource->kill_part(undoWater);
+	undoSource->kill_part(undoCarbon);
 	const auto newSnapshot = undoSource->CreateSnapshot();
 	const auto delta = SnapshotDelta::FromSnapshots(*oldSnapshot, *newSnapshot);
 	const auto forwardedSnapshot = delta->Forward(*oldSnapshot);
@@ -175,9 +184,12 @@ int main()
 	undoSource->Restore(*oldSnapshot);
 	if (undoSource->GetOmniSimulationMode() != OMNI_ENHANCED ||
 		undoSource->parts[undoWater].type != PT_WATR ||
-		undoSource->GetOmniWaterParcelMassKg(undoWater) != undoWaterMass)
+		undoSource->GetOmniWaterParcelMassKg(undoWater) != undoWaterMass ||
+		undoSource->GetOmniWaterParcelSpecificEnthalpyJPerKg(undoWater) != undoWaterEnthalpy ||
+		undoSource->parts[undoCarbon].type != PT_COAL ||
+		undoSource->GetOmniCarbonParcelMassKg(undoCarbon) != undoCarbonMass)
 	{
-		return Fail("undo restore did not recover Enhanced water ownership state");
+		return Fail("undo restore did not recover Enhanced water/carbon ownership state");
 	}
 	const std::size_t undoCell = 7 * undoSource->omniAtmosphere->Width() + 5;
 	for (std::size_t species = 0; species < undoSource->omniAtmosphere->SpeciesCount(); ++species)
@@ -252,12 +264,22 @@ int main()
 	const auto oldSpecies = transformed.omniAtmosphereSpeciesMassDensity;
 	const auto oldMomentumX = transformed.omniAtmosphereMomentumX;
 	const auto oldMomentumY = transformed.omniAtmosphereMomentumY;
+	transformed.particlesCount = 1;
+	transformed.particles[0].type = PT_WATR;
+	transformed.particles[0].x = 1.0f;
+	transformed.particles[0].y = 1.0f;
+	transformed.hasOmniWaterParcelState = true;
+	transformed.omniWaterParcelStateVersion = GameSave::OmniWaterParcelStateVersion;
+	transformed.omniWaterParcelMassKg = { 2.5e-6 };
+	transformed.omniWaterParcelSpecificEnthalpyJPerKg = { 765432.125 };
 	transformed.Transform(Mat2<int>::CCW, { 0, 0 });
 	const std::size_t rotatedCell = 3;
 	if (transformed.blockSize != Vec2<int>{ 3, 2 } ||
 		transformed.omniAtmosphereSpeciesMassDensity[rotatedCell * OMNI_COMMON_SPECIES_COUNT] != oldSpecies[0] ||
 		transformed.omniAtmosphereMomentumX[rotatedCell] != oldMomentumY[0] ||
-		transformed.omniAtmosphereMomentumY[rotatedCell] != -oldMomentumX[0])
+		transformed.omniAtmosphereMomentumY[rotatedCell] != -oldMomentumX[0] ||
+		transformed.omniWaterParcelMassKg != std::vector<double>{ 2.5e-6 } ||
+		transformed.omniWaterParcelSpecificEnthalpyJPerKg != std::vector<double>{ 765432.125 })
 	{
 		return Fail("region transform did not rotate atmosphere state and momentum");
 	}
@@ -300,20 +322,52 @@ int main()
 
 	GameSave corrupt = *save;
 	corrupt.omniAtmosphereSpeciesMassDensity[0] = -1.0;
-	auto corruptOps = corrupt.Serialise().second;
-	if (corruptOps.empty())
-		return Fail("could not construct the corrupted OPS fixture");
-	bool rejectedCorrupt = false;
-	try
+	if (corrupt.Serialise().first || !corrupt.Serialise().second.empty())
+		return Fail("invalid atmosphere state was not rejected before OPS serialization");
+	GameSave nonfinite = *save;
+	nonfinite.omniAtmosphereMomentumX[0] = std::numeric_limits<double>::quiet_NaN();
+	if (nonfinite.Serialise().first || !nonfinite.Serialise().second.empty())
+		return Fail("non-finite atmosphere state was not rejected before OPS serialization");
+	auto invalidWaterSave = undoSource->Save(true, RES.OriginRect());
+	if (!invalidWaterSave || invalidWaterSave->omniWaterParcelMassKg.empty())
+		return Fail("could not construct a water OPS write-rejection fixture");
+	GameSave invalidWater = *invalidWaterSave;
+	invalidWater.omniWaterParcelSpecificEnthalpyJPerKg.assign(
+		invalidWater.omniWaterParcelMassKg.size(), std::numeric_limits<double>::quiet_NaN());
+	if (invalidWater.Serialise().first || !invalidWater.Serialise().second.empty())
+		return Fail("non-finite water enthalpy was not rejected before OPS serialization");
+	if (!invalidWaterSave->hasOmniCarbonParcelState || invalidWaterSave->omniCarbonParcelMassKg.empty())
+		return Fail("could not construct a carbon OPS write-rejection fixture");
+	GameSave invalidCarbon = *invalidWaterSave;
+	invalidCarbon.omniCarbonParcelMassKg[undoCarbon] =
+		std::numeric_limits<double>::quiet_NaN();
+	if (invalidCarbon.Serialise().first || !invalidCarbon.Serialise().second.empty())
+		return Fail("non-finite carbon mass was not rejected before OPS serialization");
+
+	const auto carbonSerialised = invalidWaterSave->Serialise();
+	if (carbonSerialised.second.empty())
+		return Fail("serialising the carbon parcel payload failed");
+	GameSave carbonParsed(carbonSerialised.second);
+	if (!carbonParsed.hasOmniCarbonParcelState ||
+		carbonParsed.omniCarbonParcelStateVersion != GameSave::OmniCarbonParcelStateVersion ||
+		carbonParsed.omniCarbonParcelMassKg != invalidWaterSave->omniCarbonParcelMassKg)
 	{
-		GameSave rejected(corruptOps);
+		return Fail("OPS parse did not preserve the exact carbon parcel payload");
 	}
-	catch (const ParseException &)
+	auto carbonLoaded = Simulation::Factory();
+	carbonLoaded->SetOmniSimulationMode(OMNI_ENHANCED);
+	carbonLoaded->Load(&carbonParsed, true, { 0, 0 });
+	int loadedCarbon = -1;
+	for (int i = 0; i < carbonLoaded->parts.active; ++i)
 	{
-		rejectedCorrupt = true;
+		if (carbonLoaded->parts[i].type == PT_COAL)
+		{
+			loadedCarbon = i;
+			break;
+		}
 	}
-	if (!rejectedCorrupt)
-		return Fail("corrupted serialized species density was not rejected");
+	if (loadedCarbon < 0 || carbonLoaded->GetOmniCarbonParcelMassKg(loadedCarbon) != undoCarbonMass)
+		return Fail("Simulation load did not restore carbon parcel ownership");
 
 	std::cout << "omni_save_roundtrip_probe_pass=true\n";
 	std::cout << "ops_state_version=" << GameSave::OmniAtmosphereStateVersion << '\n';
@@ -322,13 +376,29 @@ int main()
 	std::cout << "deterministic_continuation=true\n";
 	std::cout << "snapshot_undo_roundtrip=true\n";
 	std::cout << "snapshot_delta_roundtrip=true\n";
+	std::cout << "water_snapshot_enthalpy_roundtrip=true\n";
 	std::cout << "classic_snapshot_hash_compatible=true\n";
 	std::cout << "classic_payload_omitted=true\n";
 	std::cout << "region_state_omitted=true\n";
 	std::cout << "legacy_projection_migration=true\n";
 	std::cout << "transform_momentum=true\n";
+	std::cout << "transform_water_enthalpy_alignment=true\n";
 	std::cout << "unknown_species_rejected=true\n";
 	std::cout << "malformed_payload_rejected=true\n";
-	std::cout << "corrupt_ops_rejected=true\n";
+	std::cout << "invalid_ops_write_rejected=true\n";
+	std::cout << "carbon_sidecar_roundtrip=true\n";
 	return 0;
+}
+
+int main()
+{
+	try
+	{
+		return Run();
+	}
+	catch (const std::exception &error)
+	{
+		std::cerr << "omni-save-roundtrip-probe: EXCEPTION " << error.what() << std::endl;
+		return 1;
+	}
 }

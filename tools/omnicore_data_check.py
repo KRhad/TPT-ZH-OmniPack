@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Fail-closed validation for the offline OmniCore data contract v1.
 
-This tool has no production runtime consumer. It validates the 1.0.4 schema,
-canonical SI unit vocabulary, identity-only Legacy mapping and any future catalog
-records before later phases are allowed to generate runtime data.
+The 1.0.4 foundation catalog was offline-only. The 1.0.8 catalog adds one
+reviewed compact runtime-candidate reaction. The checker keeps both versions
+valid so historic foundation fixtures remain reproducible while rejecting an
+ambiguous transition between offline and runtime data.
 """
 
 from __future__ import annotations
@@ -24,7 +25,8 @@ from typing import Any, Iterable, Sequence
 
 
 SCHEMA_VERSION = 1
-DATASET_VERSION = "1.0.4-foundation.1"
+FOUNDATION_DATASET_VERSION = "1.0.4-foundation.1"
+RUNTIME_CHEMISTRY_DATASET_VERSION = "1.0.8-chemistry.1"
 UNIT_REGISTRY_ID = "omnicore.units.canonical-si.v1"
 DATA_SCHEMA_SEMANTIC_SHA256 = "F41112F283DC4491527F27D7FB54AC650F2ED85D62FCBF2FCD11057097BE6F7A"
 UNIT_SCHEMA_SEMANTIC_SHA256 = "7D2EA6179C59AFF675D72EB4DC5992D7A9FAA2DB0028D5E9DBCAE654CD68C504"
@@ -1280,14 +1282,26 @@ def validate_catalog(document: Any, root: Path, errors: list[str]) -> dict[str, 
     catalog_id = _string(obj.get("catalog_id"), "catalog.catalog_id", errors, pattern=ID_RE)
     if catalog_id is None:
         catalog_id = "invalid"
-    if obj.get("dataset_version") != DATASET_VERSION:
-        errors.append(f"catalog.dataset_version: expected {DATASET_VERSION}")
+    dataset_version = obj.get("dataset_version")
+    if dataset_version not in {FOUNDATION_DATASET_VERSION, RUNTIME_CHEMISTRY_DATASET_VERSION}:
+        errors.append(
+            "catalog.dataset_version: expected one of "
+            f"{FOUNDATION_DATASET_VERSION}, {RUNTIME_CHEMISTRY_DATASET_VERSION}"
+        )
     if obj.get("unit_registry_id") != UNIT_REGISTRY_ID:
         errors.append(f"catalog.unit_registry_id: expected {UNIT_REGISTRY_ID}")
-    if obj.get("catalog_status") != "schema_only":
-        errors.append("catalog.catalog_status: 1.0.4 permits schema_only only")
-    if obj.get("runtime_consumption") is not False:
-        errors.append("catalog.runtime_consumption: 1.0.4 requires false")
+    is_foundation = dataset_version == FOUNDATION_DATASET_VERSION
+    is_runtime_chemistry = dataset_version == RUNTIME_CHEMISTRY_DATASET_VERSION
+    if is_foundation:
+        if obj.get("catalog_status") != "schema_only":
+            errors.append("catalog.catalog_status: 1.0.4 requires schema_only")
+        if obj.get("runtime_consumption") is not False:
+            errors.append("catalog.runtime_consumption: 1.0.4 requires false")
+    elif is_runtime_chemistry:
+        if obj.get("catalog_status") != "runtime_candidate":
+            errors.append("catalog.catalog_status: 1.0.8 requires runtime_candidate")
+        if obj.get("runtime_consumption") is not True:
+            errors.append("catalog.runtime_consumption: 1.0.8 requires true")
 
     materials_input = _list(obj.get("materials"), "catalog.materials", errors) or []
     species_input = _list(obj.get("species"), "catalog.species", errors) or []
@@ -1355,18 +1369,25 @@ def validate_catalog(document: Any, root: Path, errors: list[str]) -> dict[str, 
                 errors.append(f"catalog.reactions[{index}].id: duplicate ID {record_id}")
             reaction_ids.add(folded)
 
-    for collection_name, records in (
-        ("materials", materials_input), ("species", species_input),
-        ("reactions", reactions_input),
-    ):
-        for index, record in enumerate(records):
-            if isinstance(record, dict) and record.get("status") not in {
-                "identity_only", "legacy_only"
-            }:
-                errors.append(
-                    f"catalog.{collection_name}[{index}]: schema_only catalog cannot contain "
-                    f"{record.get('status')!r} record"
-                )
+    if is_foundation:
+        for collection_name, records in (
+            ("materials", materials_input), ("species", species_input),
+            ("reactions", reactions_input),
+        ):
+            for index, record in enumerate(records):
+                if isinstance(record, dict) and record.get("status") not in {
+                    "identity_only", "legacy_only"
+                }:
+                    errors.append(
+                        f"catalog.{collection_name}[{index}]: schema_only catalog cannot contain "
+                        f"{record.get('status')!r} record"
+                    )
+    if is_runtime_chemistry:
+        if not species_input or not reactions_input:
+            errors.append("catalog: 1.0.8 runtime candidate requires species and reactions")
+        if not any(isinstance(record, dict) and record.get("status") == "runtime_candidate"
+                   for record in reactions_input):
+            errors.append("catalog: 1.0.8 requires at least one runtime_candidate reaction")
     return {
         "materials": len(materials_input),
         "species": len(species_input),
@@ -1502,11 +1523,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"OmniCore data validation failed with {len(errors)} error(s).")
         return 1
     if not args.quiet:
+        catalog = load_json_strict(root / DATA_ROOT / "catalog.json")
         print(
             "OmniCore data validation passed: "
             f"materials={stats['materials']}, species={stats['species']}, "
             f"reactions={stats['reactions']}, "
-            f"legacy_mappings={stats['legacy_mappings']}, runtime_consumption=false"
+            f"legacy_mappings={stats['legacy_mappings']}, "
+            f"runtime_consumption={str(catalog.get('runtime_consumption')).lower()}"
         )
     return 0
 

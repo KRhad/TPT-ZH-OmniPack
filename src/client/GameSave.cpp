@@ -2,6 +2,7 @@
 #include "bzip2/bz2wrap.h"
 #include "Format.h"
 #include "simulation/Simulation.h"
+#include "simulation/OmniThermal.h"
 #include "simulation/ElementClasses.h"
 #include "simulation/elements/PIPE.h"
 #include "common/Bson.h"
@@ -31,6 +32,15 @@ constexpr size_t OmniAtmosphereExtraFieldCount = 4;
 
 static_assert(std::numeric_limits<double>::is_iec559 && sizeof(double) == sizeof(uint64_t));
 
+bool IsFiniteDoubleBits(double value)
+{
+	// Do not use std::isfinite here: GameSave.cpp may be built by the Legacy
+	// fast-math target, where the compiler is allowed to assume NaN/Inf do not
+	// exist. OPS validation must remain fail-closed under every build mode.
+	return (std::bit_cast<uint64_t>(value) & UINT64_C(0x7FF0000000000000)) !=
+		UINT64_C(0x7FF0000000000000);
+}
+
 void AppendDoubleLittleEndian(std::vector<unsigned char> &target, double value)
 {
 	const auto bits = std::bit_cast<uint64_t>(value);
@@ -46,7 +56,7 @@ bool ReadDoubleLittleEndian(std::span<const unsigned char> source, size_t &offse
 	for (unsigned shift = 0; shift < 64; shift += 8)
 		bits |= uint64_t(source[offset++]) << shift;
 	value = std::bit_cast<double>(bits);
-	return std::isfinite(value);
+	return IsFiniteDoubleBits(value);
 }
 
 static_assert(PMAPBITS >= MinimumOpsPmapBits && PMAPBITS <= MaximumOpsPmapBits);
@@ -317,6 +327,10 @@ void GameSave::setSize(Vec2<int> newBlockSize)
 	hasOmniWaterParcelState = false;
 	omniWaterParcelStateVersion = 0;
 	omniWaterParcelMassKg.clear();
+	omniWaterParcelSpecificEnthalpyJPerKg.clear();
+	hasOmniCarbonParcelState = false;
+	omniCarbonParcelStateVersion = 0;
+	omniCarbonParcelMassKg.clear();
 }
 
 std::pair<bool, std::vector<char>> GameSave::Serialise() const
@@ -338,8 +352,19 @@ std::pair<bool, std::vector<char>> GameSave::Serialise() const
 
 void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 {
-	if (hasOmniWaterParcelState && omniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount))
+	if (hasOmniWaterParcelState &&
+		((omniWaterParcelStateVersion != OmniWaterParcelStateVersion &&
+			omniWaterParcelStateVersion != OmniWaterParcelLegacyStateVersion) ||
+		omniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount) ||
+		(omniWaterParcelStateVersion == OmniWaterParcelStateVersion &&
+			omniWaterParcelSpecificEnthalpyJPerKg.size() != static_cast<size_t>(particlesCount))))
 		throw BuildException("invalid Omni water parcel state before transform");
+	if (hasOmniCarbonParcelState &&
+		(omniCarbonParcelStateVersion != OmniCarbonParcelStateVersion ||
+			omniCarbonParcelMassKg.size() != static_cast<size_t>(particlesCount)))
+	{
+		throw BuildException("invalid Omni carbon parcel state before transform");
+	}
 	// undo translation by rotation
 	auto br  = transform * (blockSize * CELL - Vec2{ 1, 1 });
 	auto bbr = transform * (blockSize        - Vec2{ 1, 1 });
@@ -418,7 +443,13 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 		{
 			particles[i].type = PT_NONE;
 			if (hasOmniWaterParcelState && i < static_cast<int>(omniWaterParcelMassKg.size()))
+			{
 				omniWaterParcelMassKg[i] = 0.0;
+				if (i < static_cast<int>(omniWaterParcelSpecificEnthalpyJPerKg.size()))
+					omniWaterParcelSpecificEnthalpyJPerKg[i] = 0.0;
+			}
+			if (hasOmniCarbonParcelState && i < static_cast<int>(omniCarbonParcelMassKg.size()))
+				omniCarbonParcelMassKg[i] = 0.0;
 			continue;
 		}
 		particles[i].x = newPos.X;
@@ -581,6 +612,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 	std::span<const unsigned char> blockAirData;
 	std::span<const unsigned char> gravityData;
 	std::vector<double> parsedOmniWaterParcelMassKg;
+	std::vector<double> parsedOmniCarbonParcelMassKg;
 	unsigned partsCount = 0;
 	unsigned int savedVersion = inputData[4];
 	version = { savedVersion, 0 };
@@ -823,21 +855,57 @@ void GameSave::readOPS(const std::vector<char> &data)
 	{
 		int stateVersion = 0;
 		if (!copyIfInt32(*waterNode, "stateVersion", stateVersion) ||
-			stateVersion != OmniWaterParcelStateVersion)
+			(stateVersion != OmniWaterParcelLegacyStateVersion &&
+				stateVersion != OmniWaterParcelStateVersion))
 		{
 			throw ParseException(ParseException::WrongVersion, "Unsupported Omni water parcel state version");
 		}
 		std::span<const unsigned char> massData;
-		if (!getAddressIfUser(*waterNode, "massKg", massData) || massData.size() % sizeof(double) != 0)
+		const size_t doublesPerParticle = stateVersion == OmniWaterParcelStateVersion ? 2 : 1;
+		if (!getAddressIfUser(*waterNode, "massKg", massData) ||
+			massData.size() % (doublesPerParticle * sizeof(double)) != 0)
 			throw ParseException(ParseException::Corrupt, "Invalid Omni water parcel mass data");
-		parsedOmniWaterParcelMassKg.resize(massData.size() / sizeof(double));
+		parsedOmniWaterParcelMassKg.resize(massData.size() / (doublesPerParticle * sizeof(double)));
+		if (stateVersion == OmniWaterParcelStateVersion)
+			omniWaterParcelSpecificEnthalpyJPerKg.resize(parsedOmniWaterParcelMassKg.size());
 		size_t offset = 0;
-		for (auto &massKg : parsedOmniWaterParcelMassKg)
+		for (size_t index = 0; index < parsedOmniWaterParcelMassKg.size(); ++index)
 		{
+			auto &massKg = parsedOmniWaterParcelMassKg[index];
 			if (!ReadDoubleLittleEndian(massData, offset, massKg) || massKg < 0.0)
 				throw ParseException(ParseException::Corrupt, "Invalid Omni water parcel mass");
+			if (stateVersion == OmniWaterParcelStateVersion &&
+				(!ReadDoubleLittleEndian(massData, offset,
+					omniWaterParcelSpecificEnthalpyJPerKg[index]) ||
+					omniWaterParcelSpecificEnthalpyJPerKg[index] < 0.0))
+			{
+				throw ParseException(ParseException::Corrupt, "Invalid Omni water parcel enthalpy");
+			}
 		}
 		omniWaterParcelStateVersion = stateVersion;
+	}
+	if (auto *carbonNode = getIfType(b, "omniCarbonParcels", Bson::Type::objectValue))
+	{
+		int stateVersion = 0;
+		if (!copyIfInt32(*carbonNode, "stateVersion", stateVersion) ||
+			stateVersion != OmniCarbonParcelStateVersion)
+		{
+			throw ParseException(ParseException::WrongVersion, "Unsupported Omni carbon parcel state version");
+		}
+		std::span<const unsigned char> massData;
+		if (!getAddressIfUser(*carbonNode, "massKg", massData) ||
+			massData.size() % sizeof(double) != 0)
+		{
+			throw ParseException(ParseException::Corrupt, "Invalid Omni carbon parcel mass data");
+		}
+		parsedOmniCarbonParcelMassKg.resize(massData.size() / sizeof(double));
+		size_t offset = 0;
+		for (auto &massKg : parsedOmniCarbonParcelMassKg)
+		{
+			if (!ReadDoubleLittleEndian(massData, offset, massKg) || massKg < 0.0)
+				throw ParseException(ParseException::Corrupt, "Invalid Omni carbon parcel mass");
+		}
+		omniCarbonParcelStateVersion = stateVersion;
 	}
 	copyIfBool(b, "waterEEnabled", waterEEnabled);
 	copyIfBool(b, "paused", paused);
@@ -1494,7 +1562,9 @@ void GameSave::readOPS(const std::vector<char> &data)
 	}
 	if (omniWaterParcelStateVersion)
 	{
-		if (parsedOmniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount))
+		if (parsedOmniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount) ||
+			(omniWaterParcelStateVersion == OmniWaterParcelStateVersion &&
+				omniWaterParcelSpecificEnthalpyJPerKg.size() != static_cast<size_t>(particlesCount)))
 			throw ParseException(ParseException::Corrupt, "Omni water parcel count does not match particles");
 		for (int index = 0; index < particlesCount; ++index)
 		{
@@ -1506,7 +1576,30 @@ void GameSave::readOPS(const std::vector<char> &data)
 			}
 		}
 		omniWaterParcelMassKg = std::move(parsedOmniWaterParcelMassKg);
+		if (omniWaterParcelStateVersion != OmniWaterParcelStateVersion)
+		{
+			omniWaterParcelSpecificEnthalpyJPerKg.resize(omniWaterParcelMassKg.size());
+			for (size_t index = 0; index < omniWaterParcelSpecificEnthalpyJPerKg.size(); ++index)
+				omniWaterParcelSpecificEnthalpyJPerKg[index] =
+					OmniThermal::WaterSpecificEnthalpyJPerKg(particles[index].temp);
+		}
 		hasOmniWaterParcelState = true;
+	}
+	if (omniCarbonParcelStateVersion)
+	{
+		if (parsedOmniCarbonParcelMassKg.size() != static_cast<size_t>(particlesCount))
+			throw ParseException(ParseException::Corrupt, "Omni carbon parcel count does not match particles");
+		for (int index = 0; index < particlesCount; ++index)
+		{
+			const auto type = particles[index].type;
+			if (parsedOmniCarbonParcelMassKg[index] > 0.0 && type != PT_COAL && type != PT_BCOL)
+			{
+				throw ParseException(ParseException::Corrupt,
+					"Omni carbon parcel mass belongs to a non-carbon particle");
+			}
+		}
+		omniCarbonParcelMassKg = std::move(parsedOmniCarbonParcelMassKg);
+		hasOmniCarbonParcelState = true;
 	}
 
 	if (soapLinkData.data())
@@ -2371,14 +2464,33 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	std::vector<unsigned> partsSaveIndex(NPART);
 	unsigned int partsCount = 0;
 	std::vector<double> serialisedOmniWaterParcelMassKg;
+	std::vector<double> serialisedOmniWaterParcelSpecificEnthalpyJPerKg;
+	std::vector<double> serialisedOmniCarbonParcelMassKg;
 	if (hasOmniWaterParcelState)
 	{
-		if (omniWaterParcelStateVersion != OmniWaterParcelStateVersion ||
-			omniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount))
+		const bool currentWaterState = omniWaterParcelStateVersion == OmniWaterParcelStateVersion;
+		if ((!currentWaterState && omniWaterParcelStateVersion != OmniWaterParcelLegacyStateVersion) ||
+			omniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount) ||
+			(currentWaterState &&
+				omniWaterParcelSpecificEnthalpyJPerKg.size() != static_cast<size_t>(particlesCount)))
 		{
 			throw BuildException("invalid Omni water parcel state payload");
 		}
 		serialisedOmniWaterParcelMassKg.reserve(omniWaterParcelMassKg.size());
+		if (currentWaterState)
+		{
+			serialisedOmniWaterParcelSpecificEnthalpyJPerKg.reserve(
+				omniWaterParcelSpecificEnthalpyJPerKg.size());
+		}
+	}
+	if (hasOmniCarbonParcelState)
+	{
+		if (omniCarbonParcelStateVersion != OmniCarbonParcelStateVersion ||
+			omniCarbonParcelMassKg.size() != static_cast<size_t>(particlesCount))
+		{
+			throw BuildException("invalid Omni carbon parcel state payload");
+		}
+		serialisedOmniCarbonParcelMassKg.reserve(omniCarbonParcelMassKg.size());
 	}
 	std::fill(partsSaveIndex.data(), partsSaveIndex.data() + NPART, 0);
 	auto &sd = SimulationData::CRef();
@@ -2403,9 +2515,31 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 			if (hasOmniWaterParcelState)
 			{
 				const double massKg = omniWaterParcelMassKg[i];
-				if (!std::isfinite(massKg) || massKg < 0.0)
+				const bool currentWaterState =
+					omniWaterParcelStateVersion == OmniWaterParcelStateVersion;
+				const double enthalpyJPerKg = currentWaterState
+					? omniWaterParcelSpecificEnthalpyJPerKg[i] : 0.0;
+				if (!IsFiniteDoubleBits(massKg) || massKg < 0.0 ||
+					(currentWaterState &&
+						(!IsFiniteDoubleBits(enthalpyJPerKg) || enthalpyJPerKg < 0.0)) ||
+					(massKg > 0.0 && particles[i].type != PT_WATR && particles[i].type != PT_ICEI &&
+						particles[i].type != PT_WTRV))
+				{
 					throw BuildException("invalid Omni water parcel mass");
+				}
 				serialisedOmniWaterParcelMassKg.push_back(massKg);
+				if (currentWaterState)
+					serialisedOmniWaterParcelSpecificEnthalpyJPerKg.push_back(enthalpyJPerKg);
+			}
+			if (hasOmniCarbonParcelState)
+			{
+				const double massKg = omniCarbonParcelMassKg[i];
+				if (!IsFiniteDoubleBits(massKg) || massKg < 0.0 ||
+					(massKg > 0.0 && particles[i].type != PT_COAL && particles[i].type != PT_BCOL))
+				{
+					throw BuildException("invalid Omni carbon parcel mass");
+				}
+				serialisedOmniCarbonParcelMassKg.push_back(massKg);
 			}
 
 			auto part = particles[i];
@@ -2803,8 +2937,29 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 		stateData.reserve(cellCount * (omniAtmosphereSpecies.size() + OmniAtmosphereExtraFieldCount) * sizeof(double));
 		for (size_t cell = 0; cell < cellCount; ++cell)
 		{
+			if (omniAtmosphereCellValid[cell] > 1)
+				throw BuildException("invalid OmniAtmosphere validity mask");
+			double gasDensity = 0.0;
 			for (size_t species = 0; species < omniAtmosphereSpecies.size(); ++species)
-				AppendDoubleLittleEndian(stateData, omniAtmosphereSpeciesMassDensity[cell * omniAtmosphereSpecies.size() + species]);
+			{
+				const double density = omniAtmosphereSpeciesMassDensity[
+					cell * omniAtmosphereSpecies.size() + species];
+				if (!IsFiniteDoubleBits(density) || density < 0.0)
+					throw BuildException("invalid OmniAtmosphere species density");
+				gasDensity += density;
+				AppendDoubleLittleEndian(stateData, density);
+			}
+			if (!IsFiniteDoubleBits(omniAtmosphereMomentumX[cell]) ||
+				!IsFiniteDoubleBits(omniAtmosphereMomentumY[cell]) ||
+				!IsFiniteDoubleBits(omniAtmosphereTotalEnergy[cell]) ||
+				omniAtmosphereTotalEnergy[cell] < 0.0 ||
+				!IsFiniteDoubleBits(omniAtmosphereCondensedWaterDensity[cell]) ||
+				omniAtmosphereCondensedWaterDensity[cell] < 0.0 ||
+				(omniAtmosphereCellValid[cell] && (!(gasDensity > 0.0) ||
+					!(omniAtmosphereTotalEnergy[cell] > 0.0))))
+			{
+				throw BuildException("invalid OmniAtmosphere conservative state");
+			}
 			AppendDoubleLittleEndian(stateData, omniAtmosphereMomentumX[cell]);
 			AppendDoubleLittleEndian(stateData, omniAtmosphereMomentumY[cell]);
 			AppendDoubleLittleEndian(stateData, omniAtmosphereTotalEnergy[cell]);
@@ -2822,13 +2977,35 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	if (hasOmniWaterParcelState)
 	{
 		std::vector<unsigned char> massData;
-		massData.reserve(serialisedOmniWaterParcelMassKg.size() * sizeof(double));
-		for (double massKg : serialisedOmniWaterParcelMassKg)
-			AppendDoubleLittleEndian(massData, massKg);
+		const bool currentWaterState = omniWaterParcelStateVersion == OmniWaterParcelStateVersion;
+		massData.reserve(serialisedOmniWaterParcelMassKg.size() *
+			(currentWaterState ? 2 : 1) * sizeof(double));
+		for (size_t index = 0; index < serialisedOmniWaterParcelMassKg.size(); ++index)
+		{
+			AppendDoubleLittleEndian(massData, serialisedOmniWaterParcelMassKg[index]);
+			if (currentWaterState)
+			{
+				AppendDoubleLittleEndian(
+					massData, serialisedOmniWaterParcelSpecificEnthalpyJPerKg[index]);
+			}
+		}
 		auto &waterNode = (b["omniWaterParcels"] = Bson::Type::objectValue);
 		waterNode["stateVersion"] = omniWaterParcelStateVersion;
-		waterNode["layout"] = ByteString("particle_order_f64_le_mass_kg_v1");
+		waterNode["layout"] = ByteString(currentWaterState
+			? "particle_order_f64_le_mass_kg_specific_enthalpy_j_per_kg_v2"
+			: "particle_order_f64_le_mass_kg_v1");
 		waterNode["massKg"] = std::move(massData);
+	}
+	if (hasOmniCarbonParcelState)
+	{
+		std::vector<unsigned char> massData;
+		massData.reserve(serialisedOmniCarbonParcelMassKg.size() * sizeof(double));
+		for (double massKg : serialisedOmniCarbonParcelMassKg)
+			AppendDoubleLittleEndian(massData, massKg);
+		auto &carbonNode = (b["omniCarbonParcels"] = Bson::Type::objectValue);
+		carbonNode["stateVersion"] = omniCarbonParcelStateVersion;
+		carbonNode["layout"] = ByteString("particle_order_f64_le_mass_kg_v1");
+		carbonNode["massKg"] = std::move(massData);
 	}
 	b["paused"] = paused;
 	b["gravityMode"] = gravityMode;

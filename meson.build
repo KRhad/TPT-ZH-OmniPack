@@ -1249,6 +1249,25 @@ omni_water_coupling_probe = executable(
 	override_options: target_options,
 )
 
+omni_combustion_probe = executable(
+	'omni_combustion_probe',
+	sources: [
+		files('tools/omni_combustion_probe.cpp'),
+		files('src/client/GameSave.cpp'),
+		files('src/client/User.cpp'),
+		files('src/graphics/Renderer.cpp'),
+		files('src/prefs/Prefs.cpp'),
+		files('src/simulation/gravity/Fft.cpp'),
+		vcs_tag_header,
+	],
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ threads_dep, fftw_dep, sta_libs['common'], sta_libs['simulation'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
 test(
 	'omni-atmosphere-runtime-contract',
 	python3_prog,
@@ -1660,6 +1679,17 @@ test(
 	# ticks.  The reference Windows machine currently needs about 161 seconds;
 	# keep the test exhaustive and give it a bounded, evidence-based timeout.
 	timeout: 240,
+	# This is a wall-clock performance-sensitive 1,000-step reference run. Do
+	# not let unrelated compile/test workers consume its CPU budget and turn a
+	# 154-second isolated PASS into a scheduler-dependent timeout.
+	is_parallel: false,
+)
+
+test(
+	'omni-combustion-probe',
+	omni_combustion_probe,
+	suite: 'static',
+	timeout: 120,
 )
 
 test(

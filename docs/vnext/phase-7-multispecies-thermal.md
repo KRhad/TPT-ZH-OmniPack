@@ -5,11 +5,11 @@
 ```text
 TARGET_VERSION=1.0.7
 BASE_COMMIT=3527beb7c4c153f44bede1779a9b311705a778d1
-STATUS=GREEN_READY_FOR_MILESTONE_COMMIT
+STATUS=GREEN_POST_MILESTONE_CORRECTION_VALIDATED_WITH_1_0_8
 CLASSIC_DEFAULT=true
 PARTICLE_ABI_CHANGED=false
 ATMOSPHERE_STATE_VERSION=2
-WATER_PARCEL_STATE_VERSION=1
+WATER_PARCEL_STATE_VERSION=2
 CHEMISTRY_DEFERRED_TO=1.0.8
 SDL3_GPU_CUDA_DEFERRED=true
 ```
@@ -51,11 +51,11 @@ back as a fresh source when no Legacy writer changed it.
 - pressure-dependent evaporation/boiling requests;
 - strict-double water transfer, remaining-state and energy-residual helpers.
 
-Particle ABI remains unchanged. Enhanced owns one separate `double` water mass
-sidecar per particle (`8 bytes/particle`). Managed particle types are bounded to
-`WATR`, `ICEI` and `WTRV`:
+Particle ABI remains unchanged. Enhanced owns separate strict-double water mass
+and specific-enthalpy sidecars (`16 bytes/particle`) only for the pure-water
+family: `WATR`, `ICEI` and `WTRV`.
 
-- `WATR` and `ICEI` own condensed parcel mass;
+- `WATR` and `ICEI` own condensed pure-water parcel mass;
 - `WTRV` is a rate-limited injection/visual parcel;
 - atmosphere H2O owns gas mass;
 - atmosphere condensed-water density owns unresolved cell-scale condensate.
@@ -63,9 +63,12 @@ sidecar per particle (`8 bytes/particle`). Managed particle types are bounded to
 The default full parcel is `4e-6 kg`. A single transfer is capped at the
 reference gas mass of one atmosphere cell (`7.84e-8 kg` on the selected scale),
 preventing one particle from injecting roughly fifty cell masses in one tick.
-Legacy ambient-heat and threshold phase paths are bypassed only for managed
-water in Enhanced/Scientific, preventing double energy application. Classic
-continues through the upstream path.
+Legacy ambient-heat and threshold phase paths are bypassed only for that narrow
+pure-water family in Enhanced/Scientific, preventing double energy application.
+`DSTW`, `SLTW`, `CBNW`, `SNOW`, `FOG` and `RIME` intentionally retain upstream
+behavior: their solution/aerosol composition cannot be represented as pure water
+without silently changing gameplay. Their ownership migration is deferred to the
+1.0.9 mixture/solution scope. Classic continues through the upstream path.
 
 Visible fog droplet nucleation remains deferred: cell condensate is conserved
 and serialized, but is not yet converted into `FOG` particles.
@@ -82,7 +85,9 @@ condensed water density
 cell validity mask
 ```
 
-OPS `omniWaterParcels/stateVersion=1` stores particle-order f64 parcel masses.
+OPS `omniWaterParcels/stateVersion=2` stores particle-order f64 parcel masses and
+specific enthalpies; version 1 mass-only saves remain readable and derive their
+initial enthalpy from the saved temperature.
 Classic saves omit both payloads. `includePressure=false` omits regional
 atmosphere state. Unknown species, malformed sizes, negative/non-finite state
 and corrupt OPS are rejected. Region transforms rotate momentum and keep water
@@ -90,7 +95,7 @@ sidecars aligned with particle order. Payload-free 1.0.6 Enhanced saves report
 `migrated_1_0_6_legacy_projection` rather than claiming exact continuation.
 
 Snapshot and SnapshotDelta now include authoritative atmosphere, species,
-energy, condensed water and particle water mass. Undo/redo therefore restores
+energy, condensed water and particle water mass/enthalpy. Undo/redo therefore restores
 the real Enhanced state instead of only its Legacy display projection. Classic
 snapshot hashes intentionally exclude hidden Omni state and retain the previous
 hash contract.
@@ -102,13 +107,33 @@ authoritative_gas_bytes_per_cell=64
 derived_density_cache_bytes_per_cell=8
 condensed_water_sidecar_bytes_per_cell=8
 working_state_bytes_per_cell=161
-water_sidecar_bytes_per_particle=8
+water_sidecar_bytes_per_particle=16
 ```
 
 The fixed common-channel design is versioned but not treated as the final trace
 species architecture. Sparse/per-world trace storage remains a later benchmark.
 
-## Numerical evidence
+## Post-milestone correction evidence
+
+The historical `dev-1.0.7` tag remains unchanged. The 1.0.8 integration branch
+adds OPS v2 enthalpy state, removes implicit kill/type-change evaporation, and
+records non-water conversions/deletion/wall/off-screen removal as external
+sources or sinks. The corrected real-client probes on the current tree pass:
+
+```text
+new_clean_build=564/564_PASS
+targeted_static=4/4_PASS
+save_snapshot_roundtrip=0.70s_PASS
+water_1000_step_probe=153.74s_PASS_timeout_240s
+combustion_probe=0.47s_PASS
+water_lifecycle_type_change_replacement_delete=true
+true_coupled_energy_before_after_residual=PASS
+```
+
+The full 1.0.8 suite remains the authoritative final gate; the figures below
+are retained only as historical 1.0.7 evidence.
+
+## Historical numerical evidence
 
 ```text
 thermal_probe=PASS
@@ -127,7 +152,7 @@ snapshot_delta_roundtrip=true
 classic_snapshot_hash_compatible=true
 ```
 
-## Validation
+## Historical validation
 
 ```text
 legacy_fast_full_build=PASS

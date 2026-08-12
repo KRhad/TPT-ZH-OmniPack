@@ -5,15 +5,15 @@
 ```text
 REPORT_DATE=2026-08-12
 CURRENT_BRANCH=integration/omnicore-vnext
-CURRENT_VERSION=1.0.7
+CURRENT_VERSION=1.0.8
 CURRENT_VERSION_GATE=GREEN_READY_FOR_MILESTONE_COMMIT
-NEXT_VERSION=1.0.8
-NEXT_PHASE=1.0.8 OmniChem and combustion foundation after 1.0.7 milestone commit
+NEXT_VERSION=1.0.9
+NEXT_PHASE=1.0.9 mixtures solutions and material reality after 1.0.8 milestone commit
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
-PROFILER_OVERHEAD_MEASURED=GREEN
-INDEPENDENT_PROFILER_REVIEW=not_available
+PROFILER_OVERHEAD_MEASURED=GREEN_PHASE8_OFF_114_319792_ON_90_627650_STEPS_PER_SECOND
+INDEPENDENT_PROFILER_REVIEW=GREEN_PHASE7_BLOCKERS_REPAIRED_PHASE8_REVIEW_PENDING_FINAL_DIFF
 UPSTREAM_REFRESH_DATE=2026-08-10
 UPSTREAM_REFRESH=GREEN_NO_NEW_DELTA
 UPSTREAM_TAG_FETCH=YELLOW_LOCAL_V99_5_394_COLLISION_NOT_OVERWRITTEN
@@ -476,8 +476,12 @@ exceeds the largest matrix dimension. General low-Mach pressure coupling,
 near-vacuum/species routing, accepted physical time and production integration
 remain unimplemented. HLLE remains registration-only.
 
-Production Air replacement, PhysicalScale runtime integration, multi-species runtime,
-chemistry runtime, SDL3 migration and GPU compute remain blocked. Physical
+Production Air replacement beyond the bounded Enhanced runtime, general-purpose
+chemistry mechanisms, mixtures/solutions, SDL3 migration and GPU compute remain
+deferred to their versioned phases. The 1.0.8 strict-double carbon-oxidation
+runtime, O2/CO2/energy transaction, carbon sidecar, OPS/Snapshot/Lua integration,
+both FP-mode builds, 90/90 static tests and 436/436 Python discovery are GREEN.
+Physical
 correction/source-sink attribution, unsampled full-state finite/positivity, process
 VRAM and a performance budget stay in the risk register; none is silently
 reclassified as complete.

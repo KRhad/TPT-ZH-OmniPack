@@ -79,6 +79,7 @@ class TestReleaseAuditTests(unittest.TestCase):
             "FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt",
             "FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt",
             "FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt",
+            "OPENSTAX_CHEMISTRY_CC-BY-4.0.txt",
         ):
             (third_party / name).write_text("OFL\n", encoding="utf-8")
         library_licenses = source / package_test_release.PREBUILT_LICENSE_ROOT

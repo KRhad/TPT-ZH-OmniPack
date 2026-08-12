@@ -34,11 +34,14 @@
   "particle_water_ownership": {
     "managed_element_ids": ["WATR", "ICEI", "WTRV"],
     "particle_abi_changed": false,
-    "sidecar_bytes_per_particle": 8,
+    "sidecar_bytes_per_particle": 16,
     "particle_parcel_volume_m3": 4.0e-9,
     "default_water_parcel_mass_kg": 4.0e-6,
     "wtrv_role": "rate_limited_injection_parcel",
     "maximum_transfer_policy": "one_reference_atmosphere_cell_mass_per_tick",
-    "save_payload": "omniWaterParcels/stateVersion=1"
+    "save_payload": "omniWaterParcels/stateVersion=2 (mass + specific enthalpy); v1 readable",
+    "legacy_lifecycle_policy": "non-water type replacement, deletion, wall destruction and off-screen removal are explicit external sources or sinks; only thermal coupling transfers parcel mass to atmospheric H2O",
+    "deferred_composition_types": ["DSTW", "SLTW", "CBNW", "SNOW", "FOG", "RIME"],
+    "deferred_composition_reason": "retain upstream phase and material semantics until solution and aerosol ownership exists"
   }
 }

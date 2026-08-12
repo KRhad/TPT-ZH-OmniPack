@@ -340,9 +340,9 @@ static bool omniProfilerSubsystemInstrumented(FrameTime::Subsystem subsystem)
 	case FrameTime::Subsystem::Lua:
 	case FrameTime::Subsystem::RenderSnapshotCopy:
 	case FrameTime::Subsystem::Rendering:
+	case FrameTime::Subsystem::Chemistry:
 		return true;
 	case FrameTime::Subsystem::Thermal:
-	case FrameTime::Subsystem::Chemistry:
 	case FrameTime::Subsystem::Gpu:
 	case FrameTime::Subsystem::GpuSynchronization:
 	case FrameTime::Subsystem::Count:
@@ -358,7 +358,7 @@ static char const *omniProfilerSubsystemStatus(FrameTime::Subsystem subsystem)
 	case FrameTime::Subsystem::Thermal:
 		return "not_instrumented_legacy_per_particle";
 	case FrameTime::Subsystem::Chemistry:
-		return "not_instrumented_legacy_per_element";
+		return "instrumented_omni_reaction_runtime";
 	case FrameTime::Subsystem::Gpu:
 		return "not_tested_no_gpu_backend";
 	case FrameTime::Subsystem::GpuSynchronization:
@@ -1824,6 +1824,56 @@ static int omniAtmosphere(lua_State *L)
 	return 1;
 }
 
+static int omniChemistry(lua_State *L)
+{
+	auto *sim = GetLSI()->sim;
+	const auto metrics = sim->GetOmniChemistryMetrics();
+	lua_newtable(L);
+	auto setBoolean = [L](char const *name, bool value) {
+		lua_pushboolean(L, value);
+		lua_setfield(L, -2, name);
+	};
+	auto setInteger = [L](char const *name, lua_Integer value) {
+		lua_pushinteger(L, value);
+		lua_setfield(L, -2, name);
+	};
+	auto setNumber = [L](char const *name, lua_Number value) {
+		lua_pushnumber(L, value);
+		lua_setfield(L, -2, name);
+	};
+	setBoolean("active", sim->IsOmniAtmosphereActive());
+	setBoolean("active_tick", metrics.activeTick);
+	setInteger("runtime_version", 1);
+	setInteger("candidate_particles", metrics.candidateParticles);
+	setInteger("committed_transactions", metrics.committedTransactions);
+	setInteger("oxygen_limited_transactions", metrics.oxygenLimitedTransactions);
+	setInteger("carbon_limited_transactions", metrics.carbonLimitedTransactions);
+	setInteger("rejected_transactions", metrics.rejectedTransactions);
+	setNumber("initial_carbon_mass_kg", metrics.initialCarbonMassKg);
+	setNumber("final_carbon_mass_kg", metrics.finalCarbonMassKg);
+	setNumber("initial_oxygen_mass_kg", metrics.initialOxygenMassKg);
+	setNumber("final_oxygen_mass_kg", metrics.finalOxygenMassKg);
+	setNumber("initial_carbon_dioxide_mass_kg", metrics.initialCarbonDioxideMassKg);
+	setNumber("final_carbon_dioxide_mass_kg", metrics.finalCarbonDioxideMassKg);
+	setNumber("carbon_consumed_kg", metrics.carbonConsumedKg);
+	setNumber("oxygen_consumed_kg", metrics.oxygenConsumedKg);
+	setNumber("carbon_dioxide_produced_kg", metrics.carbonDioxideProducedKg);
+	setNumber("chemical_energy_released_j", metrics.chemicalEnergyReleasedJ);
+	setNumber("transaction_energy_delta_j", metrics.transactionEnergyDeltaJ);
+	setNumber("mass_residual_kg", metrics.massResidualKg);
+	setNumber("total_mass_balance_residual_kg", metrics.totalMassBalanceResidualKg);
+	setNumber("carbon_atom_residual_mol", metrics.carbonAtomResidualMol);
+	setNumber("total_carbon_atom_balance_residual_mol", metrics.totalCarbonAtomBalanceResidualMol);
+	setNumber("oxygen_atom_residual_mol", metrics.oxygenAtomResidualMol);
+	setNumber("energy_residual_j", metrics.energyResidualJ);
+	setNumber("external_carbon_mass_sink_kg", metrics.externalCarbonMassSinkKg);
+	lua_pushstring(L, "reaction.carbon-oxidation");
+	lua_setfield(L, -2, "runtime_reaction");
+	lua_pushstring(L, "game_tuned_arrhenius_reference_enthalpy");
+	lua_setfield(L, -2, "kinetics_status");
+	return 1;
+}
+
 static int waterEqualization(lua_State *L)
 {
 	auto *lsi = GetLSI();
@@ -2660,6 +2710,7 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(airMode),
 		LFUNC(omniSimulationMode),
 		LFUNC(omniAtmosphere),
+		LFUNC(omniChemistry),
 		LFUNC(waterEqualization),
 		LFUNC(ambientAirTemp),
 		LFUNC(edgePressure),

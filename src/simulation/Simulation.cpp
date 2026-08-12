@@ -2,6 +2,7 @@
 #include "Air.h"
 #include "OmniAtmosphere.h"
 #include "OmniThermal.h"
+#include "OmniReactionRuntime.h"
 #include "ElementClasses.h"
 #include "TransitionConstants.h"
 #include "gravity/Gravity.h"
@@ -22,15 +23,46 @@
 #include "elements/FILT.h"
 #include "elements/PRTI.h"
 #include "elements/PLNT.h"
+#include <bit>
 #include <iostream>
 #include <numbers>
 #include <set>
 
 namespace
 {
+	bool IsFiniteDoubleBits(double value)
+	{
+		return (std::bit_cast<uint64_t>(value) & UINT64_C(0x7FF0000000000000)) !=
+			UINT64_C(0x7FF0000000000000);
+	}
+
+	bool IsFiniteFloatBits(float value)
+	{
+		return (std::bit_cast<uint32_t>(value) & UINT32_C(0x7F800000)) !=
+			UINT32_C(0x7F800000);
+	}
+
 	bool IsOmniManagedWaterType(int type)
 	{
+		// Only pure-water parcels whose complete phase/coupling path is owned by
+		// 1.0.7 belong here. Solutions, aerosols and Legacy water variants retain
+		// their upstream semantics until composition ownership exists in 1.0.9.
 		return type == PT_WATR || type == PT_ICEI || type == PT_WTRV;
+	}
+
+	bool IsOmniManagedCarbonType(int type)
+	{
+		return type == PT_COAL || type == PT_BCOL;
+	}
+
+	constexpr double CarbonMolarMassKgPerMol = 0.0120107;
+	constexpr double OxygenMolarMassKgPerMol = 0.0319988;
+	constexpr double CarbonDioxideMolarMassKgPerMol = CarbonMolarMassKgPerMol + OxygenMolarMassKgPerMol;
+
+	const OmniReactionRuntime &CarbonOxidationRuntime()
+	{
+		static const OmniReactionRuntime runtime = OmniReactionRuntime::CarbonOxidationV1();
+		return runtime;
 	}
 
 	bool IsRefractingGlass(int type)
@@ -120,13 +152,13 @@ namespace
 				{
 					continue;
 				}
-				const double velocityX = std::isfinite(sim.vx[y][x]) ? sim.vx[y][x] : 0.0;
-				const double velocityY = std::isfinite(sim.vy[y][x]) ? sim.vy[y][x] : 0.0;
-				const double legacyPressure = std::isfinite(sim.pv[y][x]) ? sim.pv[y][x] : 0.0;
+				const double velocityX = IsFiniteFloatBits(sim.vx[y][x]) ? sim.vx[y][x] : 0.0;
+				const double velocityY = IsFiniteFloatBits(sim.vy[y][x]) ? sim.vy[y][x] : 0.0;
+				const double legacyPressure = IsFiniteFloatBits(sim.pv[y][x]) ? sim.pv[y][x] : 0.0;
 				const double pressure = std::max(
 					config.referencePressure + legacyPressure * config.legacyPressureScalePa,
 					config.pressureFloor);
-				const double legacyTemperature = std::isfinite(sim.hv[y][x])
+				const double legacyTemperature = IsFiniteFloatBits(sim.hv[y][x])
 					? sim.hv[y][x]
 					: config.referenceTemperature;
 				const double temperature = std::clamp(legacyTemperature, 1.0, double(MAX_TEMP));
@@ -288,16 +320,46 @@ void Simulation::Load(const GameSave *save, bool includePressure, Vec2<int> bloc
 		parts[i] = tempPart;
 		if (save->hasOmniWaterParcelState)
 		{
-			if (save->omniWaterParcelStateVersion != GameSave::OmniWaterParcelStateVersion ||
-				save->omniWaterParcelMassKg.size() != static_cast<size_t>(save->particlesCount))
+			const bool currentWaterState =
+				save->omniWaterParcelStateVersion == GameSave::OmniWaterParcelStateVersion;
+			if ((!currentWaterState && save->omniWaterParcelStateVersion !=
+					GameSave::OmniWaterParcelLegacyStateVersion) ||
+				save->omniWaterParcelMassKg.size() != static_cast<size_t>(save->particlesCount) ||
+				(currentWaterState && save->omniWaterParcelSpecificEnthalpyJPerKg.size() !=
+					static_cast<size_t>(save->particlesCount)))
 			{
 				throw std::runtime_error("malformed Omni water parcel save payload");
 			}
 			omniWaterParcelMassKg[i] = save->omniWaterParcelMassKg[n];
+			omniWaterParcelSpecificEnthalpyJPerKg[i] = currentWaterState
+				? save->omniWaterParcelSpecificEnthalpyJPerKg[n]
+				: OmniThermal::WaterSpecificEnthalpyJPerKg(tempPart.temp);
+			if (!IsFiniteDoubleBits(omniWaterParcelMassKg[i]) || omniWaterParcelMassKg[i] < 0.0 ||
+				!IsFiniteDoubleBits(omniWaterParcelSpecificEnthalpyJPerKg[i]) ||
+				omniWaterParcelSpecificEnthalpyJPerKg[i] < 0.0)
+			{
+				throw std::runtime_error("invalid Omni water parcel save payload");
+			}
 		}
 		else
 		{
 			InitializeOmniWaterParcelMass(i, tempPart.type);
+		}
+		if (save->hasOmniCarbonParcelState)
+		{
+			if (save->omniCarbonParcelStateVersion != GameSave::OmniCarbonParcelStateVersion ||
+				save->omniCarbonParcelMassKg.size() != static_cast<size_t>(save->particlesCount))
+				throw std::runtime_error("malformed Omni carbon parcel save payload");
+			omniCarbonParcelMassKg[i] = save->omniCarbonParcelMassKg[n];
+			if (!IsFiniteDoubleBits(omniCarbonParcelMassKg[i]) || omniCarbonParcelMassKg[i] < 0.0 ||
+				(omniCarbonParcelMassKg[i] > 0.0 && !IsOmniManagedCarbonType(tempPart.type)))
+			{
+				throw std::runtime_error("invalid Omni carbon parcel save payload");
+			}
+		}
+		else
+		{
+			InitializeOmniCarbonParcelMass(i, tempPart.type);
 		}
 
 
@@ -554,7 +616,15 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
 		? GameSave::OmniWaterParcelStateVersion
 		: 0;
 	if (newSave->hasOmniWaterParcelState)
+	{
 		newSave->omniWaterParcelMassKg.reserve(NUM_PARTS);
+		newSave->omniWaterParcelSpecificEnthalpyJPerKg.reserve(NUM_PARTS);
+	}
+	newSave->hasOmniCarbonParcelState = IsOmniAtmosphereActive();
+	newSave->omniCarbonParcelStateVersion = newSave->hasOmniCarbonParcelState
+		? GameSave::OmniCarbonParcelStateVersion : 0;
+	if (newSave->hasOmniCarbonParcelState)
+		newSave->omniCarbonParcelMassKg.reserve(NUM_PARTS);
 
 	int storedParts = 0;
 	int elementCount[PT_NUM];
@@ -580,7 +650,13 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
 				particleMap.insert(std::pair<unsigned int, unsigned int>(i, storedParts));
 				*newSave << tempPart;
 				if (newSave->hasOmniWaterParcelState)
+				{
 					newSave->omniWaterParcelMassKg.push_back(omniWaterParcelMassKg[i]);
+					newSave->omniWaterParcelSpecificEnthalpyJPerKg.push_back(
+						omniWaterParcelSpecificEnthalpyJPerKg[i]);
+				}
+				if (newSave->hasOmniCarbonParcelState)
+					newSave->omniCarbonParcelMassKg.push_back(omniCarbonParcelMassKg[i]);
 				storedParts++;
 				elementCount[tempPart.type]++;
 
@@ -1324,8 +1400,12 @@ void Simulation::clear_sim(void)
 	memset(emap, 0, sizeof(emap));
 	parts.Reset();
 	std::fill(omniWaterParcelMassKg.begin(), omniWaterParcelMassKg.end(), 0.0);
+	std::fill(omniWaterParcelSpecificEnthalpyJPerKg.begin(),
+		omniWaterParcelSpecificEnthalpyJPerKg.end(), 0.0);
+	std::fill(omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.end(), 0.0);
 	omniWaterTransferRequests.clear();
 	omniWaterCouplingMetrics = {};
+	omniChemistryMetrics = {};
 	NUM_PARTS = 0;
 	memset(pmap, 0, sizeof(pmap));
 	memset(fvx, 0, sizeof(fvx));
@@ -2085,13 +2165,8 @@ void Simulation::kill_part(int i)//kills particle number i
 
 	elementCount[t]--;
 	RecordOmniLifecycleMutation(t, PT_NONE, OmniLifecycleMutationKind::Kill);
-	if (omniWaterCouplingMetrics.activeTick && IsOmniManagedWaterType(t) &&
-		omniWaterParcelMassKg[i] > 0.0 && omniAtmosphere)
-	{
-		TransferOmniWaterParticleToAtmosphere(i, std::clamp(x / CELL, 0, XCELLS - 1),
-			std::clamp(y / CELL, 0, YCELLS - 1));
-	}
 	ClearOmniWaterParcelMass(i);
+	ClearOmniCarbonParcelMass(i);
 
 	parts.Free(i);
 	NUM_PARTS -= 1;
@@ -2142,10 +2217,19 @@ bool Simulation::part_change_type(int i, int x, int y, int t)
 	}
 	else if (IsOmniManagedWaterType(oldType))
 	{
-		if (omniWaterCouplingMetrics.activeTick && omniWaterParcelMassKg[i] > 0.0 && omniAtmosphere)
-			TransferOmniWaterParticleToAtmosphere(i, std::clamp(x / CELL, 0, XCELLS - 1),
-				std::clamp(y / CELL, 0, YCELLS - 1));
+		// A Legacy mutation is not evidence of evaporation.  Keep the event in
+		// the conservation ledger as an explicit external sink; only the
+		// thermal coupling path is allowed to create atmospheric H2O mass.
 		ClearOmniWaterParcelMass(i);
+	}
+	if (IsOmniManagedCarbonType(t))
+	{
+		if (!IsOmniManagedCarbonType(oldType))
+			InitializeOmniCarbonParcelMass(i, t);
+	}
+	else if (IsOmniManagedCarbonType(oldType))
+	{
+		ClearOmniCarbonParcelMass(i);
 	}
 	RecordOmniLifecycleMutation(oldType, t, OmniLifecycleMutationKind::TypeChange);
 	if (elements[t].Properties & TYPE_ENERGY)
@@ -2168,6 +2252,9 @@ bool Simulation::part_change_type(int i, int x, int y, int t)
 int Simulation::create_part(int p, int x, int y, int t, int v)
 {
 	int i, oldType = PT_NONE;
+	double previousOmniCarbonMassKg = 0.0;
+	double previousOmniWaterMassKg = 0.0;
+	double previousOmniWaterSpecificEnthalpyJPerKg = 0.0;
 
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
@@ -2257,6 +2344,24 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 		}
 
 		oldType = parts[p].type;
+		if (IsOmniManagedWaterType(oldType) && omniWaterParcelMassKg[p] > 0.0)
+		{
+			previousOmniWaterMassKg = omniWaterParcelMassKg[p];
+			previousOmniWaterSpecificEnthalpyJPerKg =
+				omniWaterParcelSpecificEnthalpyJPerKg[p];
+			if (!IsOmniManagedWaterType(t))
+			{
+				// Replacement is an external lifecycle operation, not a phase
+				// transition.  Its mass/energy is accounted by Clear below.
+				ClearOmniWaterParcelMass(p);
+			}
+		}
+		if (IsOmniManagedCarbonType(oldType) && omniCarbonParcelMassKg[p] > 0.0)
+		{
+			previousOmniCarbonMassKg = omniCarbonParcelMassKg[p];
+			if (!IsOmniManagedCarbonType(t))
+				ClearOmniCarbonParcelMass(p);
+		}
 
 		if (elements[oldType].ChangeType)
 			(*(elements[oldType].ChangeType))(this, p, oldX, oldY, oldType, t);
@@ -2268,7 +2373,26 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 
 	parts[i] = elements[t].DefaultProperties;
 	parts[i].type = t;
-	InitializeOmniWaterParcelMass(i, t);
+	if (IsOmniManagedWaterType(oldType) && IsOmniManagedWaterType(t) &&
+		previousOmniWaterMassKg > 0.0)
+	{
+		omniWaterParcelMassKg[i] = previousOmniWaterMassKg;
+		omniWaterParcelSpecificEnthalpyJPerKg[i] =
+			previousOmniWaterSpecificEnthalpyJPerKg;
+	}
+	else
+	{
+		InitializeOmniWaterParcelMass(i, t);
+	}
+	if (IsOmniManagedCarbonType(oldType) && IsOmniManagedCarbonType(t) &&
+		previousOmniCarbonMassKg > 0.0)
+	{
+		omniCarbonParcelMassKg[i] = previousOmniCarbonMassKg;
+	}
+	else
+	{
+		InitializeOmniCarbonParcelMass(i, t);
+	}
 	if (oldType == PT_NONE)
 		RecordOmniLifecycleMutation(PT_NONE, t, OmniLifecycleMutationKind::Create);
 	else
@@ -2679,7 +2803,6 @@ void SimulationImpl::UpdateParticles(int start, int end)
 			vx[y/CELL][x/CELL] = vx[y/CELL][x/CELL]*elements[t].AirLoss + elements[t].AirDrag*parts[i].vx;
 			vy[y/CELL][x/CELL] = vy[y/CELL][x/CELL]*elements[t].AirLoss + elements[t].AirDrag*parts[i].vy;
 		}
-
 		if (elements[t].HotAir && !(IsOmniAtmosphereActive() && IsOmniManagedWaterType(t)))
 		{
 			if (t==PT_GAS||t==PT_NBLE)
@@ -4214,19 +4337,67 @@ double Simulation::GetOmniWaterParcelMassKg(int particleId) const
 	return omniWaterParcelMassKg[particleId];
 }
 
+double Simulation::GetOmniWaterParcelSpecificEnthalpyJPerKg(int particleId) const
+{
+	return OmniWaterParcelSpecificEnthalpy(particleId);
+}
+
 void Simulation::InitializeOmniWaterParcelMass(int particleId, int type)
 {
 	if (particleId < 0 || particleId >= NPART)
 		return;
-	omniWaterParcelMassKg[particleId] = IsOmniAtmosphereActive() && IsOmniManagedWaterType(type)
-		? OmniPhysicalScale::DefaultWaterParcelMassKg
-		: 0.0;
+	if (IsOmniAtmosphereActive() && IsOmniManagedWaterType(type))
+	{
+		const bool wasUnowned = !(omniWaterParcelMassKg[particleId] > 0.0);
+		omniWaterParcelMassKg[particleId] = OmniPhysicalScale::DefaultWaterParcelMassKg;
+		omniWaterParcelSpecificEnthalpyJPerKg[particleId] =
+			OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
+		if (wasUnowned && omniWaterCouplingMetrics.activeTick)
+		{
+			omniWaterCouplingMetrics.externalWaterMassSourceKg += omniWaterParcelMassKg[particleId];
+			omniWaterCouplingMetrics.externalWaterEnergySourceJ +=
+				omniWaterParcelMassKg[particleId] * omniWaterParcelSpecificEnthalpyJPerKg[particleId];
+		}
+	}
+	else
+	{
+		omniWaterParcelMassKg[particleId] = 0.0;
+		omniWaterParcelSpecificEnthalpyJPerKg[particleId] = 0.0;
+	}
 }
 
-void Simulation::ClearOmniWaterParcelMass(int particleId)
+void Simulation::ClearOmniWaterParcelMass(int particleId, bool recordExternalSink)
 {
 	if (particleId >= 0 && particleId < NPART)
+	{
+		const double massKg = IsFiniteDoubleBits(omniWaterParcelMassKg[particleId]) &&
+			omniWaterParcelMassKg[particleId] > 0.0 ? omniWaterParcelMassKg[particleId] : 0.0;
+		const double specificEnthalpy = IsFiniteDoubleBits(omniWaterParcelSpecificEnthalpyJPerKg[particleId]) &&
+			omniWaterParcelSpecificEnthalpyJPerKg[particleId] >= 0.0
+			? omniWaterParcelSpecificEnthalpyJPerKg[particleId]
+			: (IsOmniManagedWaterType(parts[particleId].type)
+				? OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp) : 0.0);
+		if (recordExternalSink && omniWaterCouplingMetrics.activeTick && massKg > 0.0)
+		{
+			omniWaterCouplingMetrics.externalWaterMassSinkKg += massKg;
+			omniWaterCouplingMetrics.externalWaterEnergySinkJ += massKg * specificEnthalpy;
+		}
 		omniWaterParcelMassKg[particleId] = 0.0;
+		omniWaterParcelSpecificEnthalpyJPerKg[particleId] = 0.0;
+	}
+}
+
+double Simulation::OmniWaterParcelSpecificEnthalpy(int particleId) const
+{
+	if (particleId < 0 || particleId >= NPART ||
+		!IsOmniManagedWaterType(parts[particleId].type))
+	{
+		return 0.0;
+	}
+	const double value = omniWaterParcelSpecificEnthalpyJPerKg[particleId];
+	return IsFiniteDoubleBits(value) && value >= 0.0
+		? value
+		: OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
 }
 
 double Simulation::TotalOmniParticleWaterMassKg() const
@@ -4248,8 +4419,9 @@ double Simulation::TotalOmniWaterCoupledEnergyJ() const
 		if (!parts[particleId].type || !IsOmniManagedWaterType(parts[particleId].type))
 			continue;
 		const double massKg = omniWaterParcelMassKg[particleId];
-		if (massKg > 0.0 && std::isfinite(parts[particleId].temp))
-			total += massKg * OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
+		const double specificEnthalpy = OmniWaterParcelSpecificEnthalpy(particleId);
+		if (massKg > 0.0 && IsFiniteDoubleBits(specificEnthalpy))
+			total += massKg * specificEnthalpy;
 	}
 	return total;
 }
@@ -4264,6 +4436,7 @@ void Simulation::BeginOmniWaterCouplingTick()
 	omniWaterCouplingMetrics.initialWaterMassKg = TotalOmniParticleWaterMassKg() +
 		omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_H2O) +
 		omniAtmosphere->TotalCondensedWaterMassKg();
+	omniWaterCouplingMetrics.initialCoupledEnergyJ = TotalOmniWaterCoupledEnergyJ();
 }
 
 bool Simulation::QueueOmniWaterParticleCoupling(int particleId, int x, int y)
@@ -4274,7 +4447,23 @@ bool Simulation::QueueOmniWaterParticleCoupling(int particleId, int x, int y)
 		return false;
 	}
 	if (!(omniWaterParcelMassKg[particleId] > 0.0))
+	{
 		omniWaterParcelMassKg[particleId] = OmniPhysicalScale::DefaultWaterParcelMassKg;
+		omniWaterParcelSpecificEnthalpyJPerKg[particleId] =
+			OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
+	}
+	const auto authoritativeState = OmniThermal::WaterFromSpecificEnthalpy(
+		omniWaterParcelSpecificEnthalpyJPerKg[particleId]);
+	if (IsFiniteFloatBits(parts[particleId].temp) &&
+		IsFiniteDoubleBits(authoritativeState.temperatureK) &&
+		std::abs(double(parts[particleId].temp) - authoritativeState.temperatureK) > 1.0e-3)
+	{
+		// Lua, property tools and tests write the public temperature field. Import
+		// that explicit source once at the fixed-step coupling boundary; later
+		// latent-heat evolution remains authoritative in the enthalpy sidecar.
+		omniWaterParcelSpecificEnthalpyJPerKg[particleId] =
+			OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
+	}
 	const int cellX = x / CELL;
 	const int cellY = y / CELL;
 	const auto primitive = omniAtmosphere->Primitive(cellX, cellY);
@@ -4285,9 +4474,9 @@ bool Simulation::QueueOmniWaterParticleCoupling(int particleId, int x, int y)
 	request.cellX = cellX;
 	request.cellY = cellY;
 	const double massKg = omniWaterParcelMassKg[particleId];
-	const double particleEnthalpy = OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
+	const double particleEnthalpy = OmniWaterParcelSpecificEnthalpy(particleId);
 	const double airEquivalentEnthalpy = OmniThermal::WaterSpecificEnthalpyJPerKg(primitive.temperature);
-	if (std::isfinite(particleEnthalpy) && std::isfinite(airEquivalentEnthalpy))
+	if (IsFiniteDoubleBits(particleEnthalpy) && IsFiniteDoubleBits(airEquivalentEnthalpy))
 	{
 		// Relax five percent toward local thermal equilibrium per fixed tick. The
 		// equal-and-opposite atmosphere update is deferred until all proposals are known.
@@ -4325,8 +4514,7 @@ void Simulation::TransferOmniWaterParticleToAtmosphere(
 	if (!(massKg > 0.0))
 		return;
 	const double cellVolumeM3 = omniAtmosphere->Config().scale.cellVolumeM3();
-	const double particleEnergyJ = massKg *
-		OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
+	const double particleEnergyJ = massKg * OmniWaterParcelSpecificEnthalpy(particleId);
 	const double atmosphereBeforeJ = omniAtmosphere->TotalEnergyJ();
 	omniAtmosphere->AddSpeciesMassDensity(cellX, cellY, OMNI_SPECIES_H2O, massKg / cellVolumeM3);
 	const double automaticEnergyJ = omniAtmosphere->TotalEnergyJ() - atmosphereBeforeJ;
@@ -4358,17 +4546,20 @@ void Simulation::CommitOmniWaterCouplingTick()
 		if (!(massKg > 0.0))
 			continue;
 
-		const double beforeEnthalpy = OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
-		if (std::isfinite(beforeEnthalpy) && std::isfinite(request.sensibleEnergyToParticleJ))
+		const double beforeEnthalpy = OmniWaterParcelSpecificEnthalpy(particleId);
+		if (IsFiniteDoubleBits(beforeEnthalpy) && IsFiniteDoubleBits(request.sensibleEnergyToParticleJ))
 		{
 			const auto next = OmniThermal::WaterFromSpecificEnthalpy(
 				beforeEnthalpy + request.sensibleEnergyToParticleJ / massKg);
 			const double nextTemperature = std::clamp(next.temperatureK, double(MIN_TEMP), double(MAX_TEMP));
-			const double afterEnthalpy = OmniThermal::WaterSpecificEnthalpyJPerKg(nextTemperature);
+			const double afterEnthalpy = nextTemperature == next.temperatureK
+				? next.specificEnthalpyJPerKg
+				: OmniThermal::WaterSpecificEnthalpyJPerKg(nextTemperature);
 			const double actualEnergyToParticle = massKg * (afterEnthalpy - beforeEnthalpy);
-			if (std::isfinite(actualEnergyToParticle))
+			if (IsFiniteDoubleBits(actualEnergyToParticle))
 			{
 				parts[particleId].temp = static_cast<float>(nextTemperature);
+				omniWaterParcelSpecificEnthalpyJPerKg[particleId] = afterEnthalpy;
 				omniAtmosphere->AddEnergyDensity(
 					request.cellX, request.cellY, -actualEnergyToParticle / cellVolumeM3);
 				omniWaterCouplingMetrics.sensibleEnergyToParticlesJ += actualEnergyToParticle;
@@ -4395,8 +4586,7 @@ void Simulation::CommitOmniWaterCouplingTick()
 			const auto &waterSpecies = omniAtmosphere->SpeciesDefinition(OMNI_SPECIES_H2O);
 			const double vaporSpecificEnergy = OmniThermal::WaterVaporSpecificEnergyJPerKg(
 				primitive.temperature, waterSpecies.specificHeatCpJKgK, waterSpecies.molarMassKgPerMol);
-			const double liquidSpecificEnergy =
-				OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
+			const double liquidSpecificEnergy = OmniWaterParcelSpecificEnthalpy(particleId);
 			const double minimumSpecificEnergy = OmniThermal::WaterSpecificEnthalpyJPerKg(
 				std::max(double(MIN_TEMP), 1.0));
 			const double referenceCellGasMassKg = omniAtmosphere->Config().referenceDensity * cellVolumeM3;
@@ -4417,6 +4607,8 @@ void Simulation::CommitOmniWaterCouplingTick()
 						atmosphereEnergyAddedJ, minimumSpecificEnergy);
 					parts[particleId].temp = static_cast<float>(std::clamp(
 						remaining.temperatureK, double(MIN_TEMP), double(MAX_TEMP)));
+					omniWaterParcelSpecificEnthalpyJPerKg[particleId] =
+						remaining.specificEnthalpyJPerKg;
 					omniWaterParcelMassKg[particleId] = remainingMassKg;
 				}
 				else
@@ -4434,7 +4626,7 @@ void Simulation::CommitOmniWaterCouplingTick()
 		if (!parts[particleId].type)
 			continue;
 		const auto thermalState = OmniThermal::WaterFromSpecificEnthalpy(
-			OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp));
+			OmniWaterParcelSpecificEnthalpy(particleId));
 		if (parts[particleId].type == PT_WATR && thermalState.phase == OmniThermalWaterPhase::Ice)
 		{
 			if (!part_change_type(particleId, int(parts[particleId].x + 0.5f),
@@ -4464,13 +4656,170 @@ void Simulation::FinishOmniWaterCouplingTick()
 	omniWaterCouplingMetrics.finalWaterMassKg = TotalOmniParticleWaterMassKg() +
 		omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_H2O) +
 		omniAtmosphere->TotalCondensedWaterMassKg();
-	omniWaterCouplingMetrics.waterMassResidualKg =
-		omniWaterCouplingMetrics.finalWaterMassKg - omniWaterCouplingMetrics.initialWaterMassKg;
-	omniWaterCouplingMetrics.coupledEnergyResidualJ = OmniThermal::CoupledEnergyResidualJ(
-		omniWaterCouplingMetrics.sensibleEnergyToParticlesJ,
-		omniWaterCouplingMetrics.particleEnergyRemovedJ,
-		omniWaterCouplingMetrics.atmosphereEnergyAddedJ);
+	omniWaterCouplingMetrics.finalCoupledEnergyJ = TotalOmniWaterCoupledEnergyJ();
+	omniWaterCouplingMetrics.waterMassResidualKg = omniWaterCouplingMetrics.finalWaterMassKg -
+		omniWaterCouplingMetrics.initialWaterMassKg +
+		omniWaterCouplingMetrics.externalWaterMassSinkKg -
+		omniWaterCouplingMetrics.externalWaterMassSourceKg;
+	omniWaterCouplingMetrics.coupledEnergyResidualJ = omniWaterCouplingMetrics.finalCoupledEnergyJ -
+		omniWaterCouplingMetrics.initialCoupledEnergyJ +
+		omniWaterCouplingMetrics.externalWaterEnergySinkJ -
+		omniWaterCouplingMetrics.externalWaterEnergySourceJ;
 	omniWaterCouplingMetrics.activeTick = false;
+}
+
+double Simulation::GetOmniCarbonParcelMassKg(int particleId) const
+{
+	if (particleId < 0 || particleId >= NPART || !IsOmniManagedCarbonType(parts[particleId].type) ||
+		!(omniCarbonParcelMassKg[particleId] > 0.0))
+	{
+		return 0.0;
+	}
+	return omniCarbonParcelMassKg[particleId];
+}
+
+void Simulation::InitializeOmniCarbonParcelMass(int particleId, int type)
+{
+	if (particleId < 0 || particleId >= NPART || !IsOmniAtmosphereActive() ||
+		!IsOmniManagedCarbonType(type) || omniCarbonParcelMassKg[particleId] > 0.0)
+	{
+		return;
+	}
+	omniCarbonParcelMassKg[particleId] = OmniPhysicalScale::DefaultCarbonParcelMassKg;
+}
+
+void Simulation::ClearOmniCarbonParcelMass(int particleId, bool recordExternalSink)
+{
+	if (particleId < 0 || particleId >= NPART)
+		return;
+	const double massKg = IsFiniteDoubleBits(omniCarbonParcelMassKg[particleId]) &&
+		omniCarbonParcelMassKg[particleId] > 0.0 ? omniCarbonParcelMassKg[particleId] : 0.0;
+	if (recordExternalSink && omniChemistryMetrics.activeTick && massKg > 0.0)
+		omniChemistryMetrics.externalCarbonMassSinkKg += massKg;
+	omniCarbonParcelMassKg[particleId] = 0.0;
+}
+
+double Simulation::TotalOmniParticleCarbonMassKg() const
+{
+	double total = 0.0;
+	for (int particleId = 0; particleId < parts.active; ++particleId)
+		total += GetOmniCarbonParcelMassKg(particleId);
+	return total;
+}
+
+void Simulation::BeginOmniChemistryTick()
+{
+	omniChemistryMetrics = {};
+	if (!IsOmniAtmosphereActive() || !omniAtmosphere)
+		return;
+	omniChemistryMetrics.activeTick = true;
+	omniChemistryMetrics.initialCarbonMassKg = TotalOmniParticleCarbonMassKg();
+	omniChemistryMetrics.initialOxygenMassKg = omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_O2);
+	omniChemistryMetrics.initialCarbonDioxideMassKg = omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_CO2);
+}
+
+bool Simulation::UpdateOmniCarbonCombustion(int particleId, int x, int y)
+{
+	FrameTime::SubsystemSpan profilerSpan(frameTime, FrameTime::Subsystem::Chemistry);
+	if (!IsOmniAtmosphereActive() || !omniAtmosphere || particleId < 0 || particleId >= NPART ||
+		!IsOmniManagedCarbonType(parts[particleId].type) || x < 0 || y < 0 || x >= XRES || y >= YRES)
+	{
+		return false;
+	}
+	InitializeOmniCarbonParcelMass(particleId, parts[particleId].type);
+	omniChemistryMetrics.candidateParticles++;
+	const int cellX = x / CELL;
+	const int cellY = y / CELL;
+	const auto primitive = omniAtmosphere->Primitive(cellX, cellY);
+	const double carbonMassKg = GetOmniCarbonParcelMassKg(particleId);
+	if (!primitive.finite || !(carbonMassKg > 0.0) ||
+		!IsFiniteFloatBits(parts[particleId].temp) || parts[particleId].temp < 450.0f)
+	{
+		return false;
+	}
+	const double oxygenMassKg = omniAtmosphere->SpeciesMassDensity(cellX, cellY, OMNI_SPECIES_O2) *
+		omniAtmosphere->Config().scale.cellVolumeM3();
+	const auto plan = CarbonOxidationRuntime().PlanCarbonOxidation({
+		carbonMassKg, oxygenMassKg, parts[particleId].temp,
+		OmniPhysicalScale::TimestepS, 1.0,
+	});
+	if (!plan.valid)
+	{
+		omniChemistryMetrics.rejectedTransactions++;
+		return false;
+	}
+	if (!(plan.carbonConsumedKg > 0.0))
+		return false;
+	const double actualCarbonKg = std::min(plan.carbonConsumedKg, carbonMassKg);
+	if (!(actualCarbonKg > 0.0))
+		return false;
+	const double scale = actualCarbonKg / plan.carbonConsumedKg;
+	const double actualOxygenKg = plan.oxygenConsumedKg * scale;
+	const double actualCarbonDioxideKg = plan.carbonDioxideProducedKg * scale;
+	const double actualHeatJ = plan.heatReleasedJ * scale;
+	const double parcelVelocityX = double(parts[particleId].vx) *
+		OmniPhysicalScale::PixelLengthM / OmniPhysicalScale::TimestepS;
+	const double parcelVelocityY = double(parts[particleId].vy) *
+		OmniPhysicalScale::PixelLengthM / OmniPhysicalScale::TimestepS;
+	std::vector<double> delta(omniAtmosphere->SpeciesCount(), 0.0);
+	delta[OMNI_SPECIES_O2] = -actualOxygenKg;
+	delta[OMNI_SPECIES_CO2] = actualCarbonDioxideKg;
+	OmniAtmosphereReactionTransfer transfer{};
+	if (!omniAtmosphere->ApplyReactionSpeciesTransfer(cellX, cellY, delta, actualHeatJ,
+		parcelVelocityX, parcelVelocityY, &transfer))
+	{
+		omniChemistryMetrics.rejectedTransactions++;
+		return false;
+	}
+	omniCarbonParcelMassKg[particleId] = std::max(carbonMassKg - actualCarbonKg, 0.0);
+	omniChemistryMetrics.carbonConsumedKg += actualCarbonKg;
+	omniChemistryMetrics.oxygenConsumedKg += actualOxygenKg;
+	omniChemistryMetrics.carbonDioxideProducedKg += actualCarbonDioxideKg;
+	omniChemistryMetrics.chemicalEnergyReleasedJ += actualHeatJ;
+	omniChemistryMetrics.transactionEnergyDeltaJ += transfer.totalEnergyDeltaJ;
+	omniChemistryMetrics.energyResidualJ += transfer.totalEnergyDeltaJ -
+		(transfer.sensibleEnergyDeltaJ + transfer.sourceKineticEnergyJ + actualHeatJ);
+	omniChemistryMetrics.committedTransactions++;
+	omniChemistryMetrics.oxygenLimitedTransactions += plan.limitedByOxygen;
+	omniChemistryMetrics.carbonLimitedTransactions += plan.limitedByCarbon;
+	if (omniCarbonParcelMassKg[particleId] <= 1.0e-15)
+	{
+		// Zero first, so kill_part records no unaccounted external carbon sink.
+		omniCarbonParcelMassKg[particleId] = 0.0;
+		kill_part(particleId);
+		return true;
+	}
+	return false;
+}
+
+void Simulation::FinishOmniChemistryTick()
+{
+	if (!omniChemistryMetrics.activeTick || !omniAtmosphere)
+		return;
+	omniChemistryMetrics.finalCarbonMassKg = TotalOmniParticleCarbonMassKg();
+	omniChemistryMetrics.finalOxygenMassKg = omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_O2);
+	omniChemistryMetrics.finalCarbonDioxideMassKg = omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_CO2);
+	const double initialTotal = omniChemistryMetrics.initialCarbonMassKg +
+		omniChemistryMetrics.initialOxygenMassKg + omniChemistryMetrics.initialCarbonDioxideMassKg;
+	const double finalTotal = omniChemistryMetrics.finalCarbonMassKg +
+		omniChemistryMetrics.finalOxygenMassKg + omniChemistryMetrics.finalCarbonDioxideMassKg;
+	omniChemistryMetrics.massResidualKg = finalTotal - initialTotal;
+	omniChemistryMetrics.totalMassBalanceResidualKg = omniChemistryMetrics.massResidualKg +
+		omniChemistryMetrics.externalCarbonMassSinkKg;
+	omniChemistryMetrics.carbonAtomResidualMol =
+		(omniChemistryMetrics.finalCarbonMassKg / CarbonMolarMassKgPerMol +
+			omniChemistryMetrics.finalCarbonDioxideMassKg / CarbonDioxideMolarMassKgPerMol) -
+		(omniChemistryMetrics.initialCarbonMassKg / CarbonMolarMassKgPerMol +
+			omniChemistryMetrics.initialCarbonDioxideMassKg / CarbonDioxideMolarMassKgPerMol);
+	omniChemistryMetrics.totalCarbonAtomBalanceResidualMol =
+		omniChemistryMetrics.carbonAtomResidualMol +
+		omniChemistryMetrics.externalCarbonMassSinkKg / CarbonMolarMassKgPerMol;
+	omniChemistryMetrics.oxygenAtomResidualMol =
+		2.0 * (omniChemistryMetrics.finalOxygenMassKg / OxygenMolarMassKgPerMol +
+			omniChemistryMetrics.finalCarbonDioxideMassKg / CarbonDioxideMolarMassKgPerMol) -
+		2.0 * (omniChemistryMetrics.initialOxygenMassKg / OxygenMolarMassKgPerMol +
+			omniChemistryMetrics.initialCarbonDioxideMassKg / CarbonDioxideMolarMassKgPerMol);
+	omniChemistryMetrics.activeTick = false;
 }
 
 void Simulation::RecordOmniCorrection(
@@ -4671,6 +5020,7 @@ void Simulation::BeforeSim(bool willUpdate)
 			ImportLegacyAtmosphereSources(*this);
 			BeginOmniWaterCouplingTick();
 			omniAtmosphere->Step();
+			BeginOmniChemistryTick();
 			ExportOmniAtmosphereToLegacyFields(*this);
 		}
 		else
@@ -4896,11 +5246,13 @@ void Simulation::AfterSim()
 				omniWaterCouplingMetrics.initialWaterMassKg = TotalOmniParticleWaterMassKg() +
 					omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_H2O) +
 					omniAtmosphere->TotalCondensedWaterMassKg();
+				omniWaterCouplingMetrics.initialCoupledEnergyJ = TotalOmniWaterCoupledEnergyJ();
 			}
 			CommitOmniWaterCouplingTick();
 			ExportOmniAtmosphereToLegacyFields(*this);
 		}
 		FinishOmniWaterCouplingTick();
+		FinishOmniChemistryTick();
 	}
 	debug_mostRecentlyUpdated = -1;
 	bool repairElementCounts = elementRecountAfterSim;

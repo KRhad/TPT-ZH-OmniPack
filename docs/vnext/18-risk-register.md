@@ -2,6 +2,27 @@
 
 ## Active risks
 
+## 1.0.8 closure
+
+```text
+V1_0_8_OMNICHEM=GREEN_ONE_REDUCED_CARBON_OXIDATION_RUNTIME
+V1_0_8_COMBUSTION=GREEN_ENHANCED_O2_CO2_ENERGY_ATOMIC_LEDGER
+V1_0_8_CARBON_OWNERSHIP=GREEN_DEDICATED_DOUBLE_SIDECAR
+V1_0_8_PERSISTENCE=GREEN_OPS_CARBON_V1_SNAPSHOT_UNDO_REDO
+V1_0_8_FP_MATRIX=GREEN_STRICT_AND_LEGACY_FAST_SPECIALIZED_PROBES
+V1_0_8_VALIDATION=GREEN_BUILD_90_STATIC_436_PYTHON_LUA_SAVE_UPSTREAM
+V1_0_8_PERFORMANCE=RECORDED_STRICT_MIXED_MEDIUM_OFF_114_319792_ON_90_627650_STEPS_PER_SECOND
+V1_0_8_PERFORMANCE_OVERHEAD=RECORDED_PROFILER_SLOWDOWN_20_724445_PERCENT_NOT_A_RELEASE_GATE
+V1_0_8_NEXT=1.0.9_MIXTURES_SOLUTIONS_MATERIAL_REALITY
+```
+
+The 1.0.8 chemistry scope is intentionally bounded: one versioned,
+strict-double carbon-oxidation transaction (`C(s) + O2(g) -> CO2(g)`) is
+integrated in Enhanced/Scientific mode. Classic keeps its legacy COAL path.
+Kinetics are explicitly game-tuned and the OpenStax enthalpy value is recorded
+with CC BY 4.0 attribution. No generic mechanism or third-party runtime is
+embedded in the simulation loop.
+
 ## 1.0.7 closure
 
 ```text
@@ -23,8 +44,8 @@ V1_0_7_REMAINING_SCIENTIFIC_MODE=YELLOW_SAME_RUNTIME_EQUATIONS_AS_ENHANCED
 | C-08 | HIGH | lifecycle accounting | record observer covers central APIs plus three audited direct paths, but not physical units, all raw writes, correction branches or full state | retain reconciliation failure as evidence, expand only with explicit branch hooks and never promote record deltas to physical conservation | YELLOW foundation, RED physical |
 | C-04 | HIGH | correctness | Legacy particle updates directly write Air and depend on iteration/same-frame state | C01-C14, inventory, same-source FP field capture and OPS load-boundary field attribution exist; add Classic/Omni compatibility adapter | YELLOW foundation, RED replacement |
 | C-05 | HIGH | correctness | scale/time/effective depth are not yet accepted | Phase 2 contract and dimensional checks | RED |
-| C-06 | HIGH | chemistry | current reactions lack generic atom/charge validation and kinetics | versioned species/reaction loader with rejection tests | RED |
-| C-07 | HIGH | thermal | phase changes lack latent heat and unified energy | enthalpy model and closed energy experiments | RED |
+| C-06 | HIGH | chemistry | 1.0.8 validates atom/charge/molar mass and finite-rate kinetics for one compiled carbon-oxidation subset, but no generic data loader or broader mechanism exists | retain the validated subset; add versioned loader and rejection tests only in later chemistry scope | GREEN bounded subset, RED general runtime |
+| C-07 | HIGH | thermal | 1.0.7 water enthalpy/latent-heat coupling closes the bounded water transaction, but other materials still use Legacy thresholds | extend unified energy state material-by-material without changing Classic | GREEN water subset, RED general thermal replacement |
 | L-01 | CRITICAL | Lua compatibility | scripts directly use Legacy `pv/vx/vy/hv` semantics | preserve Classic fields and versioned Enhanced APIs/projection | RED for replacement |
 | L-02 | CRITICAL | save compatibility | no versioned conservative atmosphere schema or unknown-species fallback | independent OPS object/chunk plus old/new/corrupt fixture matrix | RED |
 | L-03 | HIGH | Particle ABI | AoS pointers, `offsetof` and FIELD indices are widely depended upon | ParticleAccessor/View first; defer SoA | RED for layout rewrite |
@@ -89,7 +110,7 @@ PHYSICAL_SCALE=RED
 ATMOSPHERE_IMPLEMENTATION=RED
 SDL3=RED
 GPU=RED
-OMNICHEM=RED
+OMNICHEM=GREEN_BOUNDED_CARBON_OXIDATION_SUBSET_RED_GENERAL_MECHANISM
 MATERIAL_DATA_IMPORT=RED
 G0_UPSTREAM_BASELINE=RED
 ```

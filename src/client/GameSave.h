@@ -115,10 +115,17 @@ public:
 
 	// Enhanced water particles keep physical parcel mass outside the stable
 	// Particle ABI. The vector is aligned with the saved particle order.
-	static constexpr int OmniWaterParcelStateVersion = 1;
+	static constexpr int OmniWaterParcelStateVersion = 2;
+	static constexpr int OmniWaterParcelLegacyStateVersion = 1;
 	bool hasOmniWaterParcelState = false;
 	int omniWaterParcelStateVersion = 0;
 	std::vector<double> omniWaterParcelMassKg;
+	std::vector<double> omniWaterParcelSpecificEnthalpyJPerKg;
+
+	static constexpr int OmniCarbonParcelStateVersion = 1;
+	bool hasOmniCarbonParcelState = false;
+	int omniCarbonParcelStateVersion = 0;
+	std::vector<double> omniCarbonParcelMassKg;
 
 	//Simulation Options
 	bool waterEEnabled = false;

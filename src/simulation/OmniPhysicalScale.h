@@ -12,6 +12,10 @@ inline constexpr double EffectiveDepthM = 4.0e-3;
 inline constexpr double ParticleParcelVolumeM3 = PixelLengthM * PixelLengthM * EffectiveDepthM;
 inline constexpr double LiquidWaterDensityKgM3 = 1000.0;
 inline constexpr double DefaultWaterParcelMassKg = ParticleParcelVolumeM3 * LiquidWaterDensityKgM3;
+// The first combustion reaction uses the water-parcel mass as a bounded game
+// parcel policy. It is intentionally not a claim that Legacy COAL is pure
+// graphite or that it has a measured bulk density.
+inline constexpr double DefaultCarbonParcelMassKg = DefaultWaterParcelMassKg;
 inline constexpr double TimestepS = 1.0 / 60.0;
 inline constexpr double ReferenceDensityKgM3 = 1.225;
 inline constexpr double ReferenceTemperatureK = 293.15;
@@ -25,5 +29,6 @@ static_assert(OmniPhysicalScale::CellLengthM == OmniPhysicalScale::PixelLengthM 
 static_assert(OmniPhysicalScale::ParticleParcelVolumeM3 == 4.0e-9);
 static_assert(OmniPhysicalScale::DefaultWaterParcelMassKg > 3.999e-6 &&
 	OmniPhysicalScale::DefaultWaterParcelMassKg < 4.001e-6);
+static_assert(OmniPhysicalScale::DefaultCarbonParcelMassKg == OmniPhysicalScale::DefaultWaterParcelMassKg);
 static_assert(OmniPhysicalScale::CellLengthM > 0.0 && OmniPhysicalScale::EffectiveDepthM > 0.0);
 static_assert(OmniPhysicalScale::TimestepS > 0.0);

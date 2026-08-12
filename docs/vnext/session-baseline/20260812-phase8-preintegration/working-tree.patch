@@ -1,0 +1,2552 @@
+diff --git a/docs/THIRD_PARTY_LICENSE_MANIFEST.csv b/docs/THIRD_PARTY_LICENSE_MANIFEST.csv
+index 6d4e899f2..8344a17d6 100644
+--- a/docs/THIRD_PARTY_LICENSE_MANIFEST.csv
++++ b/docs/THIRD_PARTY_LICENSE_MANIFEST.csv
+@@ -23,3 +23,4 @@ lib-mbedtls,static_library,,https://github.com/Mbed-TLS/mbedtls,3.6.4,TLS suppor
+ lib-nghttp2,static_library,,https://github.com/nghttp2/nghttp2,1.66.0,HTTP/2 support used by static libcurl,MIT,subprojects/tpt-libs-prebuilt-x86_64-windows-mingw-static-release-v20251019131007/licenses/nghttp2.LICENSE,6B94F3ABC1AABD0C72A7C7D92A77F79DDA7C8A0CB3DF839A97890B4116A2DE2A,true,true,LICENSES/LIBRARIES/nghttp2.LICENSE.txt,verified
+ lib-sdl2,static_library,,https://libsdl.org/,2.30.9,window input audio and platform layer,Zlib,subprojects/tpt-libs-prebuilt-x86_64-windows-mingw-static-release-v20251019131007/licenses/sdl2.LICENSE,9B9E1764F06701BCF7CE21E942C682D5921BA0900C6FCA760321B1C8837A9662,true,true,LICENSES/LIBRARIES/sdl2.LICENSE.txt,verified
+ lib-zlib,static_library,,https://zlib.net/,1.3.1,compression dependency used by libpng and libcurl,Zlib,subprojects/tpt-libs-prebuilt-x86_64-windows-mingw-static-release-v20251019131007/licenses/zlib.LICENSE,0F854F426019C475697E17F1B0FA638270F6E700BC756D9BFE50D17268BD3281,true,true,LICENSES/LIBRARIES/zlib.LICENSE.txt,verified
++data-openstax-chemistry,scientific_data,,https://openstax.org/books/chemistry/pages/5-3-enthalpy,web-edition-accessed-2026-08-12,carbon oxidation equation and attributed standard molar enthalpy value,CC-BY-4.0,resources/third_party/OPENSTAX_CHEMISTRY_CC-BY-4.0.txt,94C3A04C7B17D0672424D3EADEB8859310867FB944CAB845F5D11608D6532FA6,true,true,LICENSES/OPENSTAX-CHEMISTRY-CC-BY-4.0.txt,verified
+diff --git a/docs/vnext/15-third-party-license.md b/docs/vnext/15-third-party-license.md
+index 31d7b95e9..70f7bcb35 100644
+--- a/docs/vnext/15-third-party-license.md
++++ b/docs/vnext/15-third-party-license.md
+@@ -16,7 +16,10 @@ selected roles are:
+ | TPT/GPU falling-sand parallelization experiments | `REFERENCE_ONLY` |
+ | NIST Chemistry WebBook SRD 69 | `REFERENCE_ONLY` |
+ | NASA NTRS document 19720017735 | `REFERENCE_ONLY` for one public acoustic feasibility value |
++| OpenStax Chemistry | `ADAPT` for the attributed 1.0.8 carbon-combustion identity and enthalpy value |
+ 
+-No external solver, shader or dataset source has been copied into production. An
++No external solver, shader or database dump has been copied into production. The
++1.0.8 runtime includes one attributed OpenStax CC BY 4.0 thermochemical value and
++ships its attribution notice. An
+ otherwise permissive code license does not authorize redistribution of third-party
+ mechanisms or scientific data shipped alongside a tool.
+diff --git a/docs/vnext/phase-7-multispecies-thermal.md b/docs/vnext/phase-7-multispecies-thermal.md
+index 0210dbf89..7edb71c7a 100644
+--- a/docs/vnext/phase-7-multispecies-thermal.md
++++ b/docs/vnext/phase-7-multispecies-thermal.md
+@@ -5,11 +5,11 @@
+ ```text
+ TARGET_VERSION=1.0.7
+ BASE_COMMIT=3527beb7c4c153f44bede1779a9b311705a778d1
+-STATUS=GREEN_READY_FOR_MILESTONE_COMMIT
++STATUS=GREEN_AFTER_POST_MILESTONE_CORRECTION
+ CLASSIC_DEFAULT=true
+ PARTICLE_ABI_CHANGED=false
+ ATMOSPHERE_STATE_VERSION=2
+-WATER_PARCEL_STATE_VERSION=1
++WATER_PARCEL_STATE_VERSION=2
+ CHEMISTRY_DEFERRED_TO=1.0.8
+ SDL3_GPU_CUDA_DEFERRED=true
+ ```
+@@ -51,9 +51,9 @@ back as a fresh source when no Legacy writer changed it.
+ - pressure-dependent evaporation/boiling requests;
+ - strict-double water transfer, remaining-state and energy-residual helpers.
+ 
+-Particle ABI remains unchanged. Enhanced owns one separate `double` water mass
+-sidecar per particle (`8 bytes/particle`). Managed particle types are bounded to
+-`WATR`, `ICEI` and `WTRV`:
++Particle ABI remains unchanged. Enhanced owns separate strict-double water mass
++and specific-enthalpy sidecars (`16 bytes/particle`). Managed particle types are
++`WATR`, `ICEI`, `WTRV`, `DSTW`, `SLTW`, `CBNW` and `SNOW`.
+ 
+ - `WATR` and `ICEI` own condensed parcel mass;
+ - `WTRV` is a rate-limited injection/visual parcel;
+@@ -82,7 +82,9 @@ condensed water density
+ cell validity mask
+ ```
+ 
+-OPS `omniWaterParcels/stateVersion=1` stores particle-order f64 parcel masses.
++OPS `omniWaterParcels/stateVersion=2` stores particle-order f64 parcel masses and
++specific enthalpies; version 1 mass-only saves remain readable and derive their
++initial enthalpy from the saved temperature.
+ Classic saves omit both payloads. `includePressure=false` omits regional
+ atmosphere state. Unknown species, malformed sizes, negative/non-finite state
+ and corrupt OPS are rejected. Region transforms rotate momentum and keep water
+@@ -102,7 +104,7 @@ authoritative_gas_bytes_per_cell=64
+ derived_density_cache_bytes_per_cell=8
+ condensed_water_sidecar_bytes_per_cell=8
+ working_state_bytes_per_cell=161
+-water_sidecar_bytes_per_particle=8
++water_sidecar_bytes_per_particle=16
+ ```
+ 
+ The fixed common-channel design is versioned but not treated as the final trace
+diff --git a/docs/vnext/third-party-audit.md b/docs/vnext/third-party-audit.md
+index a45fec133..bcab78a48 100644
+--- a/docs/vnext/third-party-audit.md
++++ b/docs/vnext/third-party-audit.md
+@@ -1,6 +1,6 @@
+ # Third-party code and data audit
+ 
+-Checked 2026-08-09 and updated 2026-08-11. `Selected use` is the sole classification for each row.
++Checked 2026-08-09 and updated 2026-08-12. `Selected use` is the sole classification for each row.
+ 
+ | Name | Version/commit | Purpose | License | Code reuse allowed? | Modification allowed? | Redistribution allowed? | Data license | GPL compatibility | Reference only? | Selected use |
+ |---|---|---|---|---|---|---|---|---|---|---|
+@@ -15,6 +15,7 @@ Checked 2026-08-09 and updated 2026-08-11. `Selected use` is the sole classifica
+ | CoolProp | `v8.0.0` | offline property/reference calculations | MIT | yes | yes | yes, retain notice | underlying correlations/sources retain attribution/provenance | yes | no | `DIRECT_REUSE` |
+ | NIST Chemistry WebBook | SRD 69, data updated 2025, accessed 2026-08-09 | validation of thermochemistry and properties | NIST Standard Reference Data copyright; all rights reserved notice | not a code dependency | not assumed | bulk redistribution not authorized by default; specific permission/license required | SRD 69 | N/A | yes | `REFERENCE_ONLY` |
+ | NASA NTRS atmospheric sound reference | document `19720017735`, published 1969, accessed 2026-08-11 | one approximate air sound-speed value for Phase 5 CFL feasibility | US Government work; NTRS marks public use permitted | no code reused | N/A | public use permitted | public technical publication | N/A | yes | `REFERENCE_ONLY` |
++| OpenStax Chemistry | web edition, section 5.3, accessed 2026-08-12 | carbon-combustion identity and standard molar enthalpy | CC BY 4.0 | no code reused | N/A | yes with attribution | CC BY 4.0 textbook data | yes as attributed data | no | `ADAPT` |
+ | The Parallel Toy / historical parallel TPT experiments | forum/source snapshots not pinned for reuse | CPU parallelization hazards and timing ideas | derived-project/license evidence not fully pinned in this audit | not approved | not approved | not approved | N/A | not yet determined per snapshot | yes | `REFERENCE_ONLY` |
+ | GPU falling-sand experiments | research category; no selected repository/commit | proposal/arbitration/ping-pong algorithm ideas | varies; no approved candidate | not approved | not approved | not approved | N/A | not determined | yes | `REFERENCE_ONLY` |
+ 
+@@ -32,6 +33,8 @@ Checked 2026-08-09 and updated 2026-08-11. `Selected use` is the sole classifica
+ - NIST WebBook: <https://webbook.nist.gov/>
+ - NIST SRD terms: <https://www.nist.gov/open/copyright-fair-use-and-licensing-statements-srd-data-software-and-technical-series-publications>
+ - NASA NTRS atmospheric sound reference: <https://ntrs.nasa.gov/citations/19720017735>
++- OpenStax Chemistry enthalpy source: <https://openstax.org/books/chemistry/pages/5-3-enthalpy>
++- OpenStax Chemistry CC BY 4.0 statement: <https://openstax.org/books/chemistry/pages/preface>
+ - Parallel Toy discussion: <https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=27760>
+ 
+ ## Rules derived from the audit
+diff --git a/meson.build b/meson.build
+index 4ad8607b3..9676fb928 100644
+--- a/meson.build
++++ b/meson.build
+@@ -564,13 +564,21 @@ foreach sta_info : [
+ 	sta_name = sta_info[0]
+ 	sta_srcs = sta_info[1]
+ 	sta_deps = sta_info[2]
++	sta_cpp_args = project_cpp_args
++	if sta_name == 'simulation'
++		# Enhanced atmosphere/thermal/chemistry transactions live in the
++		# Simulation translation unit. Keep that boundary strict-double even in
++		# the legacy-fast configuration; Common/GUI remain eligible for the
++		# existing fast-math policy.
++		sta_cpp_args += strict_numerical_cpp_args
++	endif
+ 	sta_libs += { sta_name: declare_dependency(
+ 		include_directories: project_inc,
+ 		link_with: static_library(
+ 			sta_name,
+ 			sources: sta_srcs,
+ 			include_directories: project_inc,
+-			cpp_args: project_cpp_args,
++			cpp_args: sta_cpp_args,
+ 			override_options: target_options,
+ 			pic: host_platform == 'android',
+ 			dependencies: sta_deps,
+@@ -1249,6 +1257,25 @@ omni_water_coupling_probe = executable(
+ 	override_options: target_options,
+ )
+ 
++omni_combustion_probe = executable(
++	'omni_combustion_probe',
++	sources: [
++		files('tools/omni_combustion_probe.cpp'),
++		files('src/client/GameSave.cpp'),
++		files('src/client/User.cpp'),
++		files('src/graphics/Renderer.cpp'),
++		files('src/prefs/Prefs.cpp'),
++		files('src/simulation/gravity/Fft.cpp'),
++		vcs_tag_header,
++	],
++	include_directories: project_inc,
++	cpp_args: project_cpp_args,
++	link_args: project_link_args,
++	dependencies: project_deps + [ threads_dep, fftw_dep, sta_libs['common'], sta_libs['simulation'] ],
++	link_depends: copied_dlls,
++	override_options: target_options,
++)
++
+ test(
+ 	'omni-atmosphere-runtime-contract',
+ 	python3_prog,
+@@ -1662,6 +1689,13 @@ test(
+ 	timeout: 240,
+ )
+ 
++test(
++	'omni-combustion-probe',
++	omni_combustion_probe,
++	suite: 'static',
++	timeout: 120,
++)
++
+ test(
+ 	'third-party-license-audit',
+ 	python3_prog,
+diff --git a/resources/omnicore/v1/README.md b/resources/omnicore/v1/README.md
+index aae72bd68..f9bf90e78 100644
+--- a/resources/omnicore/v1/README.md
++++ b/resources/omnicore/v1/README.md
+@@ -1,9 +1,12 @@
+ # OmniCore data contract v1
+ 
+ This directory began as the offline-only 1.0.4 data foundation. Version 1.0.5 adds
+-explicitly unselected PhysicalScale and Atmosphere policy benchmark-input documents. Nothing in
+-`src/` loads these files, and no simulation, save, Lua, Element, or UI behavior
+-depends on them.
++explicitly unselected PhysicalScale and Atmosphere policy benchmark-input documents.
++Version 1.0.8 promotes exactly one reviewed reaction definition to a
++`runtime_candidate`: `C(s) + O2(g) -> CO2(g)`. The strict-double runtime has a
++matching compiled contract, while this JSON remains the audited source of
++identity, stoichiometry, provenance and unit semantics. It is not a general
++runtime JSON loader and adding a record here alone cannot alter gameplay.
+ 
+ Files:
+ 
+@@ -14,8 +17,11 @@ Files:
+ - `units.json` contains a deliberately small canonical-SI vocabulary. It defines
+   unit dimensions only; it does not select pixel length, effective depth, particle
+   mass, simulation timestep, or any other 1.0.5 PhysicalScale value.
+-- `catalog.json` is intentionally empty. It proves the document contract without
+-  bundling guessed physical properties, kinetics, or restricted reference data.
++- `catalog.json` contains only the first compact combustion candidate: carbon,
++  oxygen, carbon dioxide and one carbon-oxidation reaction. Atom and charge
++  balance are checked exactly before data is accepted. The reaction enthalpy is
++  attributed to OpenStax Chemistry under CC BY 4.0; the Arrhenius parameters are
++  explicitly `game_tuned`, not presented as measured graphite kinetics.
+ - `legacy-material-map.json` is generated from `docs/ELEMENT_REGISTRY.csv`. Its
+   records are identity-only compatibility mappings and explicitly carry no SI
+   physical-property claim. Its source hash is the canonical parsed CSV serialized
+diff --git a/resources/omnicore/v1/catalog.json b/resources/omnicore/v1/catalog.json
+index 8274462da..a204647d4 100644
+--- a/resources/omnicore/v1/catalog.json
++++ b/resources/omnicore/v1/catalog.json
+@@ -1,12 +1,260 @@
+ {
+   "schema_version": 1,
+   "document_type": "omnicore_catalog",
+-  "catalog_id": "omnicore.foundation.v1",
+-  "dataset_version": "1.0.4-foundation.1",
++  "catalog_id": "omnicore.runtime.chemistry.v1",
++  "dataset_version": "1.0.8-chemistry.1",
+   "unit_registry_id": "omnicore.units.canonical-si.v1",
+-  "catalog_status": "schema_only",
+-  "runtime_consumption": false,
+-  "materials": [],
+-  "species": [],
+-  "reactions": []
++  "catalog_status": "runtime_candidate",
++  "runtime_consumption": true,
++  "materials": [
++    {
++      "id": "material.carbon-coal-parcel",
++      "names": { "en": "Carbon-bearing coal parcel", "zh_CN": "含碳煤粒子包" },
++      "status": "runtime_candidate",
++      "behavior_class": "RULE_DRIVEN",
++      "phases": ["solid"],
++      "legacy_mapping": {
++        "element_identifier": "DEFAULT_PT_COAL",
++        "stable_id": 59,
++        "relationship": "proxy"
++      },
++      "composition": [
++        {
++          "component_kind": "species",
++          "component_id": "species.carbon",
++          "basis": "mass_fraction",
++          "fraction": "1"
++        }
++      ],
++      "properties": [],
++      "provenance": {
++        "source_title": "OmniCore 1.0.8 condensed-carbon ownership policy",
++        "source_version": "v1",
++        "source_date": "2026-08-12",
++        "accessed_on": "2026-08-12",
++        "source_locator": "project://docs/vnext/phase-8-omnichem-combustion",
++        "source_kind": "project_generated",
++        "method": "game_tuned",
++        "confidence": "medium",
++        "redistribution_status": "project_generated",
++        "license_or_terms": "TPT-ZH-OmniPack project data",
++        "license_evidence": "project://repository-license",
++        "license_sha256": null,
++        "tuning_status": "game_tuned"
++      }
++    }
++  ],
++  "species": [
++    {
++      "id": "species.carbon",
++      "names": { "en": "Carbon", "zh_CN": "碳" },
++      "status": "runtime_candidate",
++      "chemistry_enabled": true,
++      "elemental_composition": { "C": 1 },
++      "charge_number": 0,
++      "phases": ["solid"],
++      "legacy_mapping": null,
++      "properties": [],
++      "provenance": {
++        "source_title": "OpenStax Chemistry, thermochemical equation definitions",
++        "source_version": "web edition accessed 2026-08-12",
++        "source_date": "2026-08-12",
++        "accessed_on": "2026-08-12",
++        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
++        "source_kind": "peer_reviewed",
++        "method": "exact_definition",
++        "confidence": "high",
++        "redistribution_status": "redistributable_with_attribution",
++        "license_or_terms": "Creative Commons Attribution 4.0 International",
++        "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
++        "license_sha256": null,
++        "tuning_status": "exact_definition"
++      }
++    },
++    {
++      "id": "species.oxygen",
++      "names": { "en": "Oxygen", "zh_CN": "氧气" },
++      "status": "runtime_candidate",
++      "chemistry_enabled": true,
++      "elemental_composition": { "O": 2 },
++      "charge_number": 0,
++      "phases": ["gas"],
++      "legacy_mapping": null,
++      "properties": [],
++      "provenance": {
++        "source_title": "OpenStax Chemistry, thermochemical equation definitions",
++        "source_version": "web edition accessed 2026-08-12",
++        "source_date": "2026-08-12",
++        "accessed_on": "2026-08-12",
++        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
++        "source_kind": "peer_reviewed",
++        "method": "exact_definition",
++        "confidence": "high",
++        "redistribution_status": "redistributable_with_attribution",
++        "license_or_terms": "Creative Commons Attribution 4.0 International",
++        "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
++        "license_sha256": null,
++        "tuning_status": "exact_definition"
++      }
++    },
++    {
++      "id": "species.carbon-dioxide",
++      "names": { "en": "Carbon dioxide", "zh_CN": "二氧化碳" },
++      "status": "runtime_candidate",
++      "chemistry_enabled": true,
++      "elemental_composition": { "C": 1, "O": 2 },
++      "charge_number": 0,
++      "phases": ["gas"],
++      "legacy_mapping": null,
++      "properties": [],
++      "provenance": {
++        "source_title": "OpenStax Chemistry, thermochemical equation definitions",
++        "source_version": "web edition accessed 2026-08-12",
++        "source_date": "2026-08-12",
++        "accessed_on": "2026-08-12",
++        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
++        "source_kind": "peer_reviewed",
++        "method": "exact_definition",
++        "confidence": "high",
++        "redistribution_status": "redistributable_with_attribution",
++        "license_or_terms": "Creative Commons Attribution 4.0 International",
++        "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
++        "license_sha256": null,
++        "tuning_status": "exact_definition"
++      }
++    }
++  ],
++  "reactions": [
++    {
++      "id": "reaction.carbon-oxidation",
++      "status": "runtime_candidate",
++      "reactants": [
++        { "species_id": "species.carbon", "coefficient": "1", "phase": "solid" },
++        { "species_id": "species.oxygen", "coefficient": "1", "phase": "gas" }
++      ],
++      "products": [
++        { "species_id": "species.carbon-dioxide", "coefficient": "1", "phase": "gas" }
++      ],
++      "reversible": false,
++      "rate_model": {
++        "kind": "arrhenius",
++        "overall_order": 1,
++        "pre_exponential_factor": {
++          "property_id": "carbon_oxidation_pre_exponential",
++          "quantity_kind": "first_order_rate_coefficient",
++          "value": "200000",
++          "unit": "per_second",
++          "validity": {
++            "temperature": { "minimum": "1", "maximum": "100000", "unit": "kelvin" },
++            "pressure": { "minimum": "0", "maximum": "1000000000", "unit": "pascal" }
++          },
++          "provenance": {
++            "source_title": "OmniCore 1.0.8 heterogeneous-rate gameplay calibration",
++            "source_version": "v1",
++            "source_date": "2026-08-12",
++            "accessed_on": "2026-08-12",
++            "source_locator": "project://docs/vnext/phase-8-omnichem-combustion",
++            "source_kind": "project_generated",
++            "method": "game_tuned",
++            "confidence": "low",
++            "redistribution_status": "project_generated",
++            "license_or_terms": "TPT-ZH-OmniPack project data",
++            "license_evidence": "project://repository-license",
++            "license_sha256": null,
++            "tuning_status": "game_tuned"
++          }
++        },
++        "temperature_exponent": {
++          "property_id": "carbon_oxidation_temperature_exponent",
++          "quantity_kind": "dimensionless",
++          "value": "0",
++          "unit": "dimensionless",
++          "validity": {
++            "temperature": { "minimum": "1", "maximum": "100000", "unit": "kelvin" },
++            "pressure": { "minimum": "0", "maximum": "1000000000", "unit": "pascal" }
++          },
++          "provenance": {
++            "source_title": "OmniCore 1.0.8 heterogeneous-rate gameplay calibration",
++            "source_version": "v1",
++            "source_date": "2026-08-12",
++            "accessed_on": "2026-08-12",
++            "source_locator": "project://docs/vnext/phase-8-omnichem-combustion",
++            "source_kind": "project_generated",
++            "method": "game_tuned",
++            "confidence": "low",
++            "redistribution_status": "project_generated",
++            "license_or_terms": "TPT-ZH-OmniPack project data",
++            "license_evidence": "project://repository-license",
++            "license_sha256": null,
++            "tuning_status": "game_tuned"
++          }
++        },
++        "activation_energy": {
++          "property_id": "carbon_oxidation_activation_energy",
++          "quantity_kind": "molar_energy",
++          "value": "80000",
++          "unit": "joule_per_mole",
++          "validity": {
++            "temperature": { "minimum": "1", "maximum": "100000", "unit": "kelvin" },
++            "pressure": { "minimum": "0", "maximum": "1000000000", "unit": "pascal" }
++          },
++          "provenance": {
++            "source_title": "OmniCore 1.0.8 heterogeneous-rate gameplay calibration",
++            "source_version": "v1",
++            "source_date": "2026-08-12",
++            "accessed_on": "2026-08-12",
++            "source_locator": "project://docs/vnext/phase-8-omnichem-combustion",
++            "source_kind": "project_generated",
++            "method": "game_tuned",
++            "confidence": "low",
++            "redistribution_status": "project_generated",
++            "license_or_terms": "TPT-ZH-OmniPack project data",
++            "license_evidence": "project://repository-license",
++            "license_sha256": null,
++            "tuning_status": "game_tuned"
++          }
++        }
++      },
++      "energy_change": {
++        "property_id": "standard_enthalpy_carbon_oxidation",
++        "quantity_kind": "molar_energy",
++        "value": "-393500",
++        "unit": "joule_per_mole",
++        "validity": {
++          "temperature": { "minimum": "298.15", "maximum": "298.15", "unit": "kelvin" },
++          "pressure": { "minimum": "101325", "maximum": "101325", "unit": "pascal" }
++        },
++        "provenance": {
++          "source_title": "OpenStax Chemistry, Standard Molar Enthalpies of Combustion",
++          "source_version": "web edition accessed 2026-08-12",
++          "source_date": "2026-08-12",
++          "accessed_on": "2026-08-12",
++          "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
++          "source_kind": "peer_reviewed",
++          "method": "measured",
++          "confidence": "high",
++          "redistribution_status": "redistributable_with_attribution",
++          "license_or_terms": "Creative Commons Attribution 4.0 International",
++          "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
++          "license_sha256": null,
++          "tuning_status": "measured"
++        }
++      },
++      "provenance": {
++        "source_title": "OpenStax Chemistry, carbon combustion equation",
++        "source_version": "web edition accessed 2026-08-12",
++        "source_date": "2026-08-12",
++        "accessed_on": "2026-08-12",
++        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
++        "source_kind": "peer_reviewed",
++        "method": "derived",
++        "confidence": "high",
++        "redistribution_status": "redistributable_with_attribution",
++        "license_or_terms": "Creative Commons Attribution 4.0 International",
++        "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
++        "license_sha256": null,
++        "tuning_status": "measured"
++      }
++    }
++  ]
+ }
+diff --git a/resources/omnicore/v1/omni-reaction-runtime-v1.json b/resources/omnicore/v1/omni-reaction-runtime-v1.json
+index 2f3cee3b4..45dd25d96 100644
+--- a/resources/omnicore/v1/omni-reaction-runtime-v1.json
++++ b/resources/omnicore/v1/omni-reaction-runtime-v1.json
+@@ -45,12 +45,12 @@
+       ],
+       "enthalpy_change_j_mol": -393500.0,
+       "thermochemistry": {
+-        "source_title": "OpenStax Chemistry 2e, section 5.3, Table 5.2",
+-        "source_locator": "https://openstax.org/books/chemistry-2e/pages/5-3-enthalpy",
++        "source_title": "OpenStax Chemistry, section 5.3, Table 5.2",
++        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
+         "source_value": "-393.5 kJ/mol at 25 C and 1 atm",
+-        "method": "reference",
+-        "redistribution_status": "reference_only",
+-        "license_or_terms": "OpenStax Chemistry 2e is published under CC BY 4.0; this project records only a normalized numerical reference and attribution."
++        "method": "attributed_reference",
++        "redistribution_status": "redistributable_with_attribution",
++        "license_or_terms": "OpenStax Chemistry is published under CC BY 4.0; this project records only a normalized numerical reference and attribution."
+       },
+       "kinetics": {
+         "kind": "arrhenius_pseudo_first_order_surface_limited",
+diff --git a/resources/omnicore/v1/omni-thermal-water-runtime-v1.json b/resources/omnicore/v1/omni-thermal-water-runtime-v1.json
+index d3b30e26a..ad9147f5e 100644
+--- a/resources/omnicore/v1/omni-thermal-water-runtime-v1.json
++++ b/resources/omnicore/v1/omni-thermal-water-runtime-v1.json
+@@ -32,13 +32,13 @@
+     "known_limit": "vaporization latent heat is constant in 1.0.7"
+   },
+   "particle_water_ownership": {
+-    "managed_element_ids": ["WATR", "ICEI", "WTRV"],
++    "managed_element_ids": ["WATR", "ICEI", "WTRV", "DSTW", "SLTW", "CBNW", "SNOW"],
+     "particle_abi_changed": false,
+-    "sidecar_bytes_per_particle": 8,
++    "sidecar_bytes_per_particle": 16,
+     "particle_parcel_volume_m3": 4.0e-9,
+     "default_water_parcel_mass_kg": 4.0e-6,
+     "wtrv_role": "rate_limited_injection_parcel",
+     "maximum_transfer_policy": "one_reference_atmosphere_cell_mass_per_tick",
+-    "save_payload": "omniWaterParcels/stateVersion=1"
++    "save_payload": "omniWaterParcels/stateVersion=2 (mass + specific enthalpy); v1 readable"
+   }
+ }
+diff --git a/src/client/GameSave.cpp b/src/client/GameSave.cpp
+index 3aec6af2d..e32bcd281 100644
+--- a/src/client/GameSave.cpp
++++ b/src/client/GameSave.cpp
+@@ -2,6 +2,7 @@
+ #include "bzip2/bz2wrap.h"
+ #include "Format.h"
+ #include "simulation/Simulation.h"
++#include "simulation/OmniThermal.h"
+ #include "simulation/ElementClasses.h"
+ #include "simulation/elements/PIPE.h"
+ #include "common/Bson.h"
+@@ -31,6 +32,15 @@ constexpr size_t OmniAtmosphereExtraFieldCount = 4;
+ 
+ static_assert(std::numeric_limits<double>::is_iec559 && sizeof(double) == sizeof(uint64_t));
+ 
++bool IsFiniteDoubleBits(double value)
++{
++	// Do not use std::isfinite here: GameSave.cpp may be built by the Legacy
++	// fast-math target, where the compiler is allowed to assume NaN/Inf do not
++	// exist. OPS validation must remain fail-closed under every build mode.
++	return (std::bit_cast<uint64_t>(value) & UINT64_C(0x7FF0000000000000)) !=
++		UINT64_C(0x7FF0000000000000);
++}
++
+ void AppendDoubleLittleEndian(std::vector<unsigned char> &target, double value)
+ {
+ 	const auto bits = std::bit_cast<uint64_t>(value);
+@@ -46,7 +56,7 @@ bool ReadDoubleLittleEndian(std::span<const unsigned char> source, size_t &offse
+ 	for (unsigned shift = 0; shift < 64; shift += 8)
+ 		bits |= uint64_t(source[offset++]) << shift;
+ 	value = std::bit_cast<double>(bits);
+-	return std::isfinite(value);
++	return IsFiniteDoubleBits(value);
+ }
+ 
+ static_assert(PMAPBITS >= MinimumOpsPmapBits && PMAPBITS <= MaximumOpsPmapBits);
+@@ -317,6 +327,10 @@ void GameSave::setSize(Vec2<int> newBlockSize)
+ 	hasOmniWaterParcelState = false;
+ 	omniWaterParcelStateVersion = 0;
+ 	omniWaterParcelMassKg.clear();
++	omniWaterParcelSpecificEnthalpyJPerKg.clear();
++	hasOmniCarbonParcelState = false;
++	omniCarbonParcelStateVersion = 0;
++	omniCarbonParcelMassKg.clear();
+ }
+ 
+ std::pair<bool, std::vector<char>> GameSave::Serialise() const
+@@ -338,8 +352,16 @@ std::pair<bool, std::vector<char>> GameSave::Serialise() const
+ 
+ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
+ {
+-	if (hasOmniWaterParcelState && omniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount))
++	if (hasOmniWaterParcelState && (omniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount) ||
++		(omniWaterParcelStateVersion == OmniWaterParcelStateVersion &&
++			omniWaterParcelSpecificEnthalpyJPerKg.size() != static_cast<size_t>(particlesCount))))
+ 		throw BuildException("invalid Omni water parcel state before transform");
++	if (hasOmniCarbonParcelState &&
++		(omniCarbonParcelStateVersion != OmniCarbonParcelStateVersion ||
++			omniCarbonParcelMassKg.size() != static_cast<size_t>(particlesCount)))
++	{
++		throw BuildException("invalid Omni carbon parcel state before transform");
++	}
+ 	// undo translation by rotation
+ 	auto br  = transform * (blockSize * CELL - Vec2{ 1, 1 });
+ 	auto bbr = transform * (blockSize        - Vec2{ 1, 1 });
+@@ -418,7 +440,13 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
+ 		{
+ 			particles[i].type = PT_NONE;
+ 			if (hasOmniWaterParcelState && i < static_cast<int>(omniWaterParcelMassKg.size()))
++			{
+ 				omniWaterParcelMassKg[i] = 0.0;
++				if (i < static_cast<int>(omniWaterParcelSpecificEnthalpyJPerKg.size()))
++					omniWaterParcelSpecificEnthalpyJPerKg[i] = 0.0;
++			}
++			if (hasOmniCarbonParcelState && i < static_cast<int>(omniCarbonParcelMassKg.size()))
++				omniCarbonParcelMassKg[i] = 0.0;
+ 			continue;
+ 		}
+ 		particles[i].x = newPos.X;
+@@ -581,6 +609,7 @@ void GameSave::readOPS(const std::vector<char> &data)
+ 	std::span<const unsigned char> blockAirData;
+ 	std::span<const unsigned char> gravityData;
+ 	std::vector<double> parsedOmniWaterParcelMassKg;
++	std::vector<double> parsedOmniCarbonParcelMassKg;
+ 	unsigned partsCount = 0;
+ 	unsigned int savedVersion = inputData[4];
+ 	version = { savedVersion, 0 };
+@@ -823,22 +852,58 @@ void GameSave::readOPS(const std::vector<char> &data)
+ 	{
+ 		int stateVersion = 0;
+ 		if (!copyIfInt32(*waterNode, "stateVersion", stateVersion) ||
+-			stateVersion != OmniWaterParcelStateVersion)
++			(stateVersion != OmniWaterParcelLegacyStateVersion &&
++				stateVersion != OmniWaterParcelStateVersion))
+ 		{
+ 			throw ParseException(ParseException::WrongVersion, "Unsupported Omni water parcel state version");
+ 		}
+ 		std::span<const unsigned char> massData;
+-		if (!getAddressIfUser(*waterNode, "massKg", massData) || massData.size() % sizeof(double) != 0)
++		const size_t doublesPerParticle = stateVersion == OmniWaterParcelStateVersion ? 2 : 1;
++		if (!getAddressIfUser(*waterNode, "massKg", massData) ||
++			massData.size() % (doublesPerParticle * sizeof(double)) != 0)
+ 			throw ParseException(ParseException::Corrupt, "Invalid Omni water parcel mass data");
+-		parsedOmniWaterParcelMassKg.resize(massData.size() / sizeof(double));
++		parsedOmniWaterParcelMassKg.resize(massData.size() / (doublesPerParticle * sizeof(double)));
++		if (stateVersion == OmniWaterParcelStateVersion)
++			omniWaterParcelSpecificEnthalpyJPerKg.resize(parsedOmniWaterParcelMassKg.size());
+ 		size_t offset = 0;
+-		for (auto &massKg : parsedOmniWaterParcelMassKg)
++		for (size_t index = 0; index < parsedOmniWaterParcelMassKg.size(); ++index)
+ 		{
++			auto &massKg = parsedOmniWaterParcelMassKg[index];
+ 			if (!ReadDoubleLittleEndian(massData, offset, massKg) || massKg < 0.0)
+ 				throw ParseException(ParseException::Corrupt, "Invalid Omni water parcel mass");
++			if (stateVersion == OmniWaterParcelStateVersion &&
++				(!ReadDoubleLittleEndian(massData, offset,
++					omniWaterParcelSpecificEnthalpyJPerKg[index]) ||
++					omniWaterParcelSpecificEnthalpyJPerKg[index] < 0.0))
++			{
++				throw ParseException(ParseException::Corrupt, "Invalid Omni water parcel enthalpy");
++			}
+ 		}
+ 		omniWaterParcelStateVersion = stateVersion;
+ 	}
++	if (auto *carbonNode = getIfType(b, "omniCarbonParcels", Bson::Type::objectValue))
++	{
++		int stateVersion = 0;
++		if (!copyIfInt32(*carbonNode, "stateVersion", stateVersion) ||
++			stateVersion != OmniCarbonParcelStateVersion)
++		{
++			throw ParseException(ParseException::WrongVersion, "Unsupported Omni carbon parcel state version");
++		}
++		std::span<const unsigned char> massData;
++		if (!getAddressIfUser(*carbonNode, "massKg", massData) ||
++			massData.size() % sizeof(double) != 0)
++		{
++			throw ParseException(ParseException::Corrupt, "Invalid Omni carbon parcel mass data");
++		}
++		parsedOmniCarbonParcelMassKg.resize(massData.size() / sizeof(double));
++		size_t offset = 0;
++		for (auto &massKg : parsedOmniCarbonParcelMassKg)
++		{
++			if (!ReadDoubleLittleEndian(massData, offset, massKg) || massKg < 0.0)
++				throw ParseException(ParseException::Corrupt, "Invalid Omni carbon parcel mass");
++		}
++		omniCarbonParcelStateVersion = stateVersion;
++	}
+ 	copyIfBool(b, "waterEEnabled", waterEEnabled);
+ 	copyIfBool(b, "paused", paused);
+ 	copyIfInt32(b, "gravityMode", gravityMode);
+@@ -1494,20 +1559,46 @@ void GameSave::readOPS(const std::vector<char> &data)
+ 	}
+ 	if (omniWaterParcelStateVersion)
+ 	{
+-		if (parsedOmniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount))
++		if (parsedOmniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount) ||
++			(omniWaterParcelStateVersion == OmniWaterParcelStateVersion &&
++				omniWaterParcelSpecificEnthalpyJPerKg.size() != static_cast<size_t>(particlesCount)))
+ 			throw ParseException(ParseException::Corrupt, "Omni water parcel count does not match particles");
+ 		for (int index = 0; index < particlesCount; ++index)
+ 		{
+ 			const auto type = particles[index].type;
+ 			if (parsedOmniWaterParcelMassKg[index] > 0.0 &&
+-				type != PT_WATR && type != PT_ICEI && type != PT_WTRV)
++				type != PT_WATR && type != PT_ICEI && type != PT_WTRV &&
++				type != PT_DSTW && type != PT_SLTW && type != PT_CBNW && type != PT_SNOW)
+ 			{
+ 				throw ParseException(ParseException::Corrupt, "Omni water parcel mass belongs to a non-water particle");
+ 			}
+ 		}
+ 		omniWaterParcelMassKg = std::move(parsedOmniWaterParcelMassKg);
++		if (omniWaterParcelStateVersion != OmniWaterParcelStateVersion)
++		{
++			omniWaterParcelSpecificEnthalpyJPerKg.resize(omniWaterParcelMassKg.size());
++			for (size_t index = 0; index < omniWaterParcelSpecificEnthalpyJPerKg.size(); ++index)
++				omniWaterParcelSpecificEnthalpyJPerKg[index] =
++					OmniThermal::WaterSpecificEnthalpyJPerKg(particles[index].temp);
++		}
+ 		hasOmniWaterParcelState = true;
+ 	}
++	if (omniCarbonParcelStateVersion)
++	{
++		if (parsedOmniCarbonParcelMassKg.size() != static_cast<size_t>(particlesCount))
++			throw ParseException(ParseException::Corrupt, "Omni carbon parcel count does not match particles");
++		for (int index = 0; index < particlesCount; ++index)
++		{
++			const auto type = particles[index].type;
++			if (parsedOmniCarbonParcelMassKg[index] > 0.0 && type != PT_COAL && type != PT_BCOL)
++			{
++				throw ParseException(ParseException::Corrupt,
++					"Omni carbon parcel mass belongs to a non-carbon particle");
++			}
++		}
++		omniCarbonParcelMassKg = std::move(parsedOmniCarbonParcelMassKg);
++		hasOmniCarbonParcelState = true;
++	}
+ 
+ 	if (soapLinkData.data())
+ 	{
+@@ -2371,14 +2462,28 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
+ 	std::vector<unsigned> partsSaveIndex(NPART);
+ 	unsigned int partsCount = 0;
+ 	std::vector<double> serialisedOmniWaterParcelMassKg;
++	std::vector<double> serialisedOmniWaterParcelSpecificEnthalpyJPerKg;
++	std::vector<double> serialisedOmniCarbonParcelMassKg;
+ 	if (hasOmniWaterParcelState)
+ 	{
+ 		if (omniWaterParcelStateVersion != OmniWaterParcelStateVersion ||
+-			omniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount))
++			omniWaterParcelMassKg.size() != static_cast<size_t>(particlesCount) ||
++			omniWaterParcelSpecificEnthalpyJPerKg.size() != static_cast<size_t>(particlesCount))
+ 		{
+ 			throw BuildException("invalid Omni water parcel state payload");
+ 		}
+ 		serialisedOmniWaterParcelMassKg.reserve(omniWaterParcelMassKg.size());
++		serialisedOmniWaterParcelSpecificEnthalpyJPerKg.reserve(
++			omniWaterParcelSpecificEnthalpyJPerKg.size());
++	}
++	if (hasOmniCarbonParcelState)
++	{
++		if (omniCarbonParcelStateVersion != OmniCarbonParcelStateVersion ||
++			omniCarbonParcelMassKg.size() != static_cast<size_t>(particlesCount))
++		{
++			throw BuildException("invalid Omni carbon parcel state payload");
++		}
++		serialisedOmniCarbonParcelMassKg.reserve(omniCarbonParcelMassKg.size());
+ 	}
+ 	std::fill(partsSaveIndex.data(), partsSaveIndex.data() + NPART, 0);
+ 	auto &sd = SimulationData::CRef();
+@@ -2403,9 +2508,28 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
+ 			if (hasOmniWaterParcelState)
+ 			{
+ 				const double massKg = omniWaterParcelMassKg[i];
+-				if (!std::isfinite(massKg) || massKg < 0.0)
++				const double enthalpyJPerKg = omniWaterParcelSpecificEnthalpyJPerKg[i];
++				if (!IsFiniteDoubleBits(massKg) || massKg < 0.0 ||
++					!IsFiniteDoubleBits(enthalpyJPerKg) || enthalpyJPerKg < 0.0 ||
++					(massKg > 0.0 && particles[i].type != PT_WATR && particles[i].type != PT_ICEI &&
++						particles[i].type != PT_WTRV && particles[i].type != PT_DSTW &&
++						particles[i].type != PT_SLTW && particles[i].type != PT_CBNW &&
++						particles[i].type != PT_SNOW))
++				{
+ 					throw BuildException("invalid Omni water parcel mass");
++				}
+ 				serialisedOmniWaterParcelMassKg.push_back(massKg);
++				serialisedOmniWaterParcelSpecificEnthalpyJPerKg.push_back(enthalpyJPerKg);
++			}
++			if (hasOmniCarbonParcelState)
++			{
++				const double massKg = omniCarbonParcelMassKg[i];
++				if (!IsFiniteDoubleBits(massKg) || massKg < 0.0 ||
++					(massKg > 0.0 && particles[i].type != PT_COAL && particles[i].type != PT_BCOL))
++				{
++					throw BuildException("invalid Omni carbon parcel mass");
++				}
++				serialisedOmniCarbonParcelMassKg.push_back(massKg);
+ 			}
+ 
+ 			auto part = particles[i];
+@@ -2803,8 +2927,29 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
+ 		stateData.reserve(cellCount * (omniAtmosphereSpecies.size() + OmniAtmosphereExtraFieldCount) * sizeof(double));
+ 		for (size_t cell = 0; cell < cellCount; ++cell)
+ 		{
++			if (omniAtmosphereCellValid[cell] > 1)
++				throw BuildException("invalid OmniAtmosphere validity mask");
++			double gasDensity = 0.0;
+ 			for (size_t species = 0; species < omniAtmosphereSpecies.size(); ++species)
+-				AppendDoubleLittleEndian(stateData, omniAtmosphereSpeciesMassDensity[cell * omniAtmosphereSpecies.size() + species]);
++			{
++				const double density = omniAtmosphereSpeciesMassDensity[
++					cell * omniAtmosphereSpecies.size() + species];
++				if (!IsFiniteDoubleBits(density) || density < 0.0)
++					throw BuildException("invalid OmniAtmosphere species density");
++				gasDensity += density;
++				AppendDoubleLittleEndian(stateData, density);
++			}
++			if (!IsFiniteDoubleBits(omniAtmosphereMomentumX[cell]) ||
++				!IsFiniteDoubleBits(omniAtmosphereMomentumY[cell]) ||
++				!IsFiniteDoubleBits(omniAtmosphereTotalEnergy[cell]) ||
++				omniAtmosphereTotalEnergy[cell] < 0.0 ||
++				!IsFiniteDoubleBits(omniAtmosphereCondensedWaterDensity[cell]) ||
++				omniAtmosphereCondensedWaterDensity[cell] < 0.0 ||
++				(omniAtmosphereCellValid[cell] && (!(gasDensity > 0.0) ||
++					!(omniAtmosphereTotalEnergy[cell] > 0.0))))
++			{
++				throw BuildException("invalid OmniAtmosphere conservative state");
++			}
+ 			AppendDoubleLittleEndian(stateData, omniAtmosphereMomentumX[cell]);
+ 			AppendDoubleLittleEndian(stateData, omniAtmosphereMomentumY[cell]);
+ 			AppendDoubleLittleEndian(stateData, omniAtmosphereTotalEnergy[cell]);
+@@ -2822,14 +2967,28 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
+ 	if (hasOmniWaterParcelState)
+ 	{
+ 		std::vector<unsigned char> massData;
+-		massData.reserve(serialisedOmniWaterParcelMassKg.size() * sizeof(double));
+-		for (double massKg : serialisedOmniWaterParcelMassKg)
+-			AppendDoubleLittleEndian(massData, massKg);
++		massData.reserve(serialisedOmniWaterParcelMassKg.size() * 2 * sizeof(double));
++		for (size_t index = 0; index < serialisedOmniWaterParcelMassKg.size(); ++index)
++		{
++			AppendDoubleLittleEndian(massData, serialisedOmniWaterParcelMassKg[index]);
++			AppendDoubleLittleEndian(massData, serialisedOmniWaterParcelSpecificEnthalpyJPerKg[index]);
++		}
+ 		auto &waterNode = (b["omniWaterParcels"] = Bson::Type::objectValue);
+ 		waterNode["stateVersion"] = omniWaterParcelStateVersion;
+-		waterNode["layout"] = ByteString("particle_order_f64_le_mass_kg_v1");
++		waterNode["layout"] = ByteString("particle_order_f64_le_mass_kg_specific_enthalpy_j_per_kg_v2");
+ 		waterNode["massKg"] = std::move(massData);
+ 	}
++	if (hasOmniCarbonParcelState)
++	{
++		std::vector<unsigned char> massData;
++		massData.reserve(serialisedOmniCarbonParcelMassKg.size() * sizeof(double));
++		for (double massKg : serialisedOmniCarbonParcelMassKg)
++			AppendDoubleLittleEndian(massData, massKg);
++		auto &carbonNode = (b["omniCarbonParcels"] = Bson::Type::objectValue);
++		carbonNode["stateVersion"] = omniCarbonParcelStateVersion;
++		carbonNode["layout"] = ByteString("particle_order_f64_le_mass_kg_v1");
++		carbonNode["massKg"] = std::move(massData);
++	}
+ 	b["paused"] = paused;
+ 	b["gravityMode"] = gravityMode;
+ 	b["airMode"] = airMode;
+diff --git a/src/client/GameSave.h b/src/client/GameSave.h
+index b4d312a46..8c37fd4a2 100644
+--- a/src/client/GameSave.h
++++ b/src/client/GameSave.h
+@@ -115,10 +115,17 @@ public:
+ 
+ 	// Enhanced water particles keep physical parcel mass outside the stable
+ 	// Particle ABI. The vector is aligned with the saved particle order.
+-	static constexpr int OmniWaterParcelStateVersion = 1;
++	static constexpr int OmniWaterParcelStateVersion = 2;
++	static constexpr int OmniWaterParcelLegacyStateVersion = 1;
+ 	bool hasOmniWaterParcelState = false;
+ 	int omniWaterParcelStateVersion = 0;
+ 	std::vector<double> omniWaterParcelMassKg;
++	std::vector<double> omniWaterParcelSpecificEnthalpyJPerKg;
++
++	static constexpr int OmniCarbonParcelStateVersion = 1;
++	bool hasOmniCarbonParcelState = false;
++	int omniCarbonParcelStateVersion = 0;
++	std::vector<double> omniCarbonParcelMassKg;
+ 
+ 	//Simulation Options
+ 	bool waterEEnabled = false;
+diff --git a/src/lua/LuaSimulation.cpp b/src/lua/LuaSimulation.cpp
+index 9d9b06b07..46d8f214c 100644
+--- a/src/lua/LuaSimulation.cpp
++++ b/src/lua/LuaSimulation.cpp
+@@ -340,9 +340,9 @@ static bool omniProfilerSubsystemInstrumented(FrameTime::Subsystem subsystem)
+ 	case FrameTime::Subsystem::Lua:
+ 	case FrameTime::Subsystem::RenderSnapshotCopy:
+ 	case FrameTime::Subsystem::Rendering:
++	case FrameTime::Subsystem::Chemistry:
+ 		return true;
+ 	case FrameTime::Subsystem::Thermal:
+-	case FrameTime::Subsystem::Chemistry:
+ 	case FrameTime::Subsystem::Gpu:
+ 	case FrameTime::Subsystem::GpuSynchronization:
+ 	case FrameTime::Subsystem::Count:
+@@ -358,7 +358,7 @@ static char const *omniProfilerSubsystemStatus(FrameTime::Subsystem subsystem)
+ 	case FrameTime::Subsystem::Thermal:
+ 		return "not_instrumented_legacy_per_particle";
+ 	case FrameTime::Subsystem::Chemistry:
+-		return "not_instrumented_legacy_per_element";
++		return "instrumented_omni_reaction_runtime";
+ 	case FrameTime::Subsystem::Gpu:
+ 		return "not_tested_no_gpu_backend";
+ 	case FrameTime::Subsystem::GpuSynchronization:
+@@ -1824,6 +1824,54 @@ static int omniAtmosphere(lua_State *L)
+ 	return 1;
+ }
+ 
++static int omniChemistry(lua_State *L)
++{
++	auto *sim = GetLSI()->sim;
++	const auto metrics = sim->GetOmniChemistryMetrics();
++	lua_newtable(L);
++	auto setBoolean = [L](char const *name, bool value) {
++		lua_pushboolean(L, value);
++		lua_setfield(L, -2, name);
++	};
++	auto setInteger = [L](char const *name, lua_Integer value) {
++		lua_pushinteger(L, value);
++		lua_setfield(L, -2, name);
++	};
++	auto setNumber = [L](char const *name, lua_Number value) {
++		lua_pushnumber(L, value);
++		lua_setfield(L, -2, name);
++	};
++	setBoolean("active", sim->IsOmniAtmosphereActive());
++	setBoolean("active_tick", metrics.activeTick);
++	setInteger("runtime_version", 1);
++	setInteger("candidate_particles", metrics.candidateParticles);
++	setInteger("committed_transactions", metrics.committedTransactions);
++	setInteger("oxygen_limited_transactions", metrics.oxygenLimitedTransactions);
++	setInteger("carbon_limited_transactions", metrics.carbonLimitedTransactions);
++	setInteger("rejected_transactions", metrics.rejectedTransactions);
++	setNumber("initial_carbon_mass_kg", metrics.initialCarbonMassKg);
++	setNumber("final_carbon_mass_kg", metrics.finalCarbonMassKg);
++	setNumber("initial_oxygen_mass_kg", metrics.initialOxygenMassKg);
++	setNumber("final_oxygen_mass_kg", metrics.finalOxygenMassKg);
++	setNumber("initial_carbon_dioxide_mass_kg", metrics.initialCarbonDioxideMassKg);
++	setNumber("final_carbon_dioxide_mass_kg", metrics.finalCarbonDioxideMassKg);
++	setNumber("carbon_consumed_kg", metrics.carbonConsumedKg);
++	setNumber("oxygen_consumed_kg", metrics.oxygenConsumedKg);
++	setNumber("carbon_dioxide_produced_kg", metrics.carbonDioxideProducedKg);
++	setNumber("chemical_energy_released_j", metrics.chemicalEnergyReleasedJ);
++	setNumber("transaction_energy_delta_j", metrics.transactionEnergyDeltaJ);
++	setNumber("mass_residual_kg", metrics.massResidualKg);
++	setNumber("carbon_atom_residual_mol", metrics.carbonAtomResidualMol);
++	setNumber("oxygen_atom_residual_mol", metrics.oxygenAtomResidualMol);
++	setNumber("energy_residual_j", metrics.energyResidualJ);
++	setNumber("external_carbon_mass_sink_kg", metrics.externalCarbonMassSinkKg);
++	lua_pushstring(L, "reaction.carbon-oxidation");
++	lua_setfield(L, -2, "runtime_reaction");
++	lua_pushstring(L, "game_tuned_arrhenius_reference_enthalpy");
++	lua_setfield(L, -2, "kinetics_status");
++	return 1;
++}
++
+ static int waterEqualization(lua_State *L)
+ {
+ 	auto *lsi = GetLSI();
+@@ -2660,6 +2708,7 @@ void LuaSimulation::Open(lua_State *L)
+ 		LFUNC(airMode),
+ 		LFUNC(omniSimulationMode),
+ 		LFUNC(omniAtmosphere),
++		LFUNC(omniChemistry),
+ 		LFUNC(waterEqualization),
+ 		LFUNC(ambientAirTemp),
+ 		LFUNC(edgePressure),
+diff --git a/src/simulation/Editing.cpp b/src/simulation/Editing.cpp
+index 2a78dc402..ab8bede12 100644
+--- a/src/simulation/Editing.cpp
++++ b/src/simulation/Editing.cpp
+@@ -20,7 +20,7 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
+ 	snap->AirVelocityX   .insert   (snap->AirVelocityX   .begin(), &vx  [0][0]      , &vx  [0][0] + NCELL);
+ 	snap->AirVelocityY   .insert   (snap->AirVelocityY   .begin(), &vy  [0][0]      , &vy  [0][0] + NCELL);
+ 	snap->AmbientHeat    .insert   (snap->AmbientHeat    .begin(), &hv  [0][0]      , &hv  [0][0] + NCELL);
+-	if (omniAtmosphere)
++	if (IsOmniAtmosphereActive() && omniAtmosphere)
+ 	{
+ 		const auto cellCount = omniAtmosphere->CellCount();
+ 		const auto speciesCount = omniAtmosphere->SpeciesCount();
+@@ -44,9 +44,18 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
+ 				omniAtmosphere->Primitive(x, y).condensedWaterDensity);
+ 		}
+ 	}
+-	snap->OmniWaterParcelMassKg.insert(
+-		snap->OmniWaterParcelMassKg.begin(), omniWaterParcelMassKg.begin(),
+-		omniWaterParcelMassKg.begin() + parts.active);
++	if (IsOmniAtmosphereActive())
++	{
++		snap->OmniWaterParcelMassKg.insert(
++			snap->OmniWaterParcelMassKg.begin(), omniWaterParcelMassKg.begin(),
++			omniWaterParcelMassKg.begin() + parts.active);
++		snap->OmniWaterParcelSpecificEnthalpyJPerKg.insert(
++			snap->OmniWaterParcelSpecificEnthalpyJPerKg.begin(),
++			omniWaterParcelSpecificEnthalpyJPerKg.begin(),
++			omniWaterParcelSpecificEnthalpyJPerKg.begin() + parts.active);
++		snap->OmniCarbonParcelMassKg.insert(snap->OmniCarbonParcelMassKg.begin(),
++			omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.begin() + parts.active);
++	}
+ 	snap->OmniSimulationMode = omniSimulationMode;
+ 	snap->OmniAtmospherePersistenceStatus = static_cast<uint8_t>(omniAtmospherePersistenceStatus);
+ 	snap->BlockMap       .insert   (snap->BlockMap       .begin(), &bmap[0][0]      , &bmap[0][0] + NCELL);
+@@ -85,10 +94,21 @@ void Simulation::Restore(const Snapshot &snap)
+ 	std::copy(snap.AirVelocityY   .begin(), snap.AirVelocityY   .end(), &vy[0][0]        );
+ 	std::copy(snap.AmbientHeat    .begin(), snap.AmbientHeat    .end(), &hv[0][0]        );
+ 	std::fill(omniWaterParcelMassKg.begin(), omniWaterParcelMassKg.end(), 0.0);
++	std::fill(omniWaterParcelSpecificEnthalpyJPerKg.begin(),
++		omniWaterParcelSpecificEnthalpyJPerKg.end(), 0.0);
++	std::fill(omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.end(), 0.0);
+ 	std::copy_n(
+ 		snap.OmniWaterParcelMassKg.begin(),
+ 		std::min(snap.OmniWaterParcelMassKg.size(), omniWaterParcelMassKg.size()),
+ 		omniWaterParcelMassKg.begin());
++	std::copy_n(
++		snap.OmniWaterParcelSpecificEnthalpyJPerKg.begin(),
++		std::min(snap.OmniWaterParcelSpecificEnthalpyJPerKg.size(),
++			omniWaterParcelSpecificEnthalpyJPerKg.size()),
++		omniWaterParcelSpecificEnthalpyJPerKg.begin());
++	std::copy_n(snap.OmniCarbonParcelMassKg.begin(),
++		std::min(snap.OmniCarbonParcelMassKg.size(), omniCarbonParcelMassKg.size()),
++		omniCarbonParcelMassKg.begin());
+ 	omniWaterTransferRequests.clear();
+ 	omniWaterCouplingMetrics = {};
+ 	omniSimulationMode = snap.OmniSimulationMode >= OMNI_CLASSIC &&
+diff --git a/src/simulation/OmniAtmosphere.cpp b/src/simulation/OmniAtmosphere.cpp
+index efbf6230f..e033d3c7b 100644
+--- a/src/simulation/OmniAtmosphere.cpp
++++ b/src/simulation/OmniAtmosphere.cpp
+@@ -308,6 +308,83 @@ void OmniAtmosphere::AddSpeciesMassDensity(
+ 	phaseActive = phaseActive || species == OMNI_SPECIES_H2O;
+ }
+ 
++bool OmniAtmosphere::ApplyReactionSpeciesTransfer(
++	std::size_t x,
++	std::size_t y,
++	const std::vector<double> &speciesMassDeltaKg,
++	double chemicalEnergyJ,
++	double parcelVelocityX,
++	double parcelVelocityY,
++	OmniAtmosphereReactionTransfer *result)
++{
++	OmniAtmosphereReactionTransfer transfer{};
++	if (x >= config.width || y >= config.height || speciesMassDeltaKg.size() != config.species.size() ||
++		!Finite(chemicalEnergyJ) || !Finite(parcelVelocityX) || !Finite(parcelVelocityY))
++		return false;
++	for (const auto mass : speciesMassDeltaKg)
++		if (!Finite(mass))
++			return false;
++	const auto cell = Index(x, y);
++	if (blocked[cell])
++		return false;
++	const auto primitive = Derive(cell, state[cell]);
++	if (!primitive.finite)
++		return false;
++	const double volume = config.scale.cellVolumeM3();
++	if (!(volume > 0.0))
++		return false;
++	double totalMassDelta = 0.0;
++	double sensibleEnergy = 0.0;
++	for (std::size_t species = 0; species < config.species.size(); ++species)
++	{
++		const double deltaDensity = speciesMassDeltaKg[species] / volume;
++		const double nextDensity = speciesState[SpeciesIndex(cell, species)] + deltaDensity;
++		if (!Finite(nextDensity) || nextDensity < 0.0)
++			return false;
++		totalMassDelta += speciesMassDeltaKg[species];
++		sensibleEnergy += speciesMassDeltaKg[species] *
++			(SpeciesCv(config.species[species]) * primitive.temperature +
++				(species == OMNI_SPECIES_H2O ? OmniThermal::LatentHeatVaporizationJPerKg : 0.0));
++	}
++	const double nextDensity = state[cell].density + totalMassDelta / volume;
++	if (!Finite(nextDensity) || nextDensity < config.densityFloor)
++		return false;
++	const double sourceMomentumX = totalMassDelta * parcelVelocityX;
++	const double sourceMomentumY = totalMassDelta * parcelVelocityY;
++	const double sourceKineticEnergy = 0.5 * totalMassDelta *
++		(Square(parcelVelocityX) + Square(parcelVelocityY));
++	const double totalEnergyDelta = sensibleEnergy + sourceKineticEnergy + chemicalEnergyJ;
++	if (!Finite(sourceMomentumX) || !Finite(sourceMomentumY) || !Finite(totalEnergyDelta))
++		return false;
++	for (std::size_t species = 0; species < config.species.size(); ++species)
++	{
++		const double deltaDensity = speciesMassDeltaKg[species] / volume;
++		speciesState[SpeciesIndex(cell, species)] += deltaDensity;
++		pendingSourceSpeciesMassKg[species] += speciesMassDeltaKg[species];
++	}
++	state[cell].density = nextDensity;
++	state[cell].momentumX += sourceMomentumX / volume;
++	state[cell].momentumY += sourceMomentumY / volume;
++	state[cell].totalEnergy += totalEnergyDelta / volume;
++	pendingSourceMassKg += totalMassDelta;
++	pendingSourceMomentumX += sourceMomentumX;
++	pendingSourceMomentumY += sourceMomentumY;
++	pendingSourceEnergyJ += totalEnergyDelta;
++	pendingEvent = true;
++	transportActive = true;
++	transfer.committed = true;
++	transfer.gasMassDeltaKg = totalMassDelta;
++	transfer.sourceMomentumX = sourceMomentumX;
++	transfer.sourceMomentumY = sourceMomentumY;
++	transfer.sensibleEnergyDeltaJ = sensibleEnergy;
++	transfer.sourceKineticEnergyJ = sourceKineticEnergy;
++	transfer.chemicalEnergyJ = chemicalEnergyJ;
++	transfer.totalEnergyDeltaJ = totalEnergyDelta;
++	if (result)
++		*result = transfer;
++	return true;
++}
++
+ void OmniAtmosphere::SetSpeciesMassFractions(
+ 	std::size_t x,
+ 	std::size_t y,
+diff --git a/src/simulation/OmniAtmosphere.h b/src/simulation/OmniAtmosphere.h
+index 73c822597..cbe0b8b84 100644
+--- a/src/simulation/OmniAtmosphere.h
++++ b/src/simulation/OmniAtmosphere.h
+@@ -123,6 +123,24 @@ struct OmniAtmospherePrimitive
+ 	bool finite = false;
+ };
+ 
++// A caller-owned condensed parcel may react with atmosphere species. This
++// explicit transaction is the only 1.0.8 path that may change multiple gas
++// channels and chemical energy in one commit. Species deltas are kilograms,
++// not densities; positive values enter the atmosphere and negative values are
++// consumed from it. The parcel's physical velocity carries its mass, momentum
++// and kinetic energy into the gas.
++struct OmniAtmosphereReactionTransfer
++{
++	bool committed = false;
++	double gasMassDeltaKg = 0.0;
++	double sourceMomentumX = 0.0;
++	double sourceMomentumY = 0.0;
++	double sensibleEnergyDeltaJ = 0.0;
++	double sourceKineticEnergyJ = 0.0;
++	double chemicalEnergyJ = 0.0;
++	double totalEnergyDeltaJ = 0.0;
++};
++
+ struct OmniAtmosphereLedger
+ {
+ 	double initialMassKg = 0.0;
+@@ -220,6 +238,10 @@ public:
+ 	void AddEnergyDensity(std::size_t x, std::size_t y, double joulesPerM3);
+ 	void AddMassDensity(std::size_t x, std::size_t y, double kilogramsPerM3);
+ 	void AddSpeciesMassDensity(std::size_t x, std::size_t y, std::size_t species, double kilogramsPerM3);
++	bool ApplyReactionSpeciesTransfer(std::size_t x, std::size_t y,
++		const std::vector<double> &speciesMassDeltaKg, double chemicalEnergyJ,
++		double parcelVelocityX, double parcelVelocityY,
++		OmniAtmosphereReactionTransfer *result = nullptr);
+ 	void SetSpeciesMassFractions(std::size_t x, std::size_t y, const std::vector<double> &massFractions);
+ 	void SetCondensedWaterDensity(std::size_t x, std::size_t y, double kilogramsPerM3);
+ 	bool RestoreSerializedCell(std::size_t x, std::size_t y, const std::vector<double> &speciesMassDensity,
+diff --git a/src/simulation/OmniPhysicalScale.h b/src/simulation/OmniPhysicalScale.h
+index e0c1bbe5b..7f380bbf6 100644
+--- a/src/simulation/OmniPhysicalScale.h
++++ b/src/simulation/OmniPhysicalScale.h
+@@ -12,6 +12,10 @@ inline constexpr double EffectiveDepthM = 4.0e-3;
+ inline constexpr double ParticleParcelVolumeM3 = PixelLengthM * PixelLengthM * EffectiveDepthM;
+ inline constexpr double LiquidWaterDensityKgM3 = 1000.0;
+ inline constexpr double DefaultWaterParcelMassKg = ParticleParcelVolumeM3 * LiquidWaterDensityKgM3;
++// The first combustion reaction uses the water-parcel mass as a bounded game
++// parcel policy. It is intentionally not a claim that Legacy COAL is pure
++// graphite or that it has a measured bulk density.
++inline constexpr double DefaultCarbonParcelMassKg = DefaultWaterParcelMassKg;
+ inline constexpr double TimestepS = 1.0 / 60.0;
+ inline constexpr double ReferenceDensityKgM3 = 1.225;
+ inline constexpr double ReferenceTemperatureK = 293.15;
+@@ -25,5 +29,6 @@ static_assert(OmniPhysicalScale::CellLengthM == OmniPhysicalScale::PixelLengthM
+ static_assert(OmniPhysicalScale::ParticleParcelVolumeM3 == 4.0e-9);
+ static_assert(OmniPhysicalScale::DefaultWaterParcelMassKg > 3.999e-6 &&
+ 	OmniPhysicalScale::DefaultWaterParcelMassKg < 4.001e-6);
++static_assert(OmniPhysicalScale::DefaultCarbonParcelMassKg == OmniPhysicalScale::DefaultWaterParcelMassKg);
+ static_assert(OmniPhysicalScale::CellLengthM > 0.0 && OmniPhysicalScale::EffectiveDepthM > 0.0);
+ static_assert(OmniPhysicalScale::TimestepS > 0.0);
+diff --git a/src/simulation/OmniThermal.cpp b/src/simulation/OmniThermal.cpp
+index 6950522ea..add0ba51d 100644
+--- a/src/simulation/OmniThermal.cpp
++++ b/src/simulation/OmniThermal.cpp
+@@ -21,6 +21,17 @@ double LiquidEnthalpyAtFusionUpper()
+ 		OmniThermal::LiquidSpecificHeatJKgK * (FusionUpperK - FusionLowerK) +
+ 		OmniThermal::LatentHeatFusionJPerKg;
+ }
++
++double LiquidEnthalpyAtBoiling()
++{
++	return LiquidEnthalpyAtFusionUpper() +
++		OmniThermal::LiquidSpecificHeatJKgK * (373.15 - FusionUpperK);
++}
++
++double VaporEnthalpyAtBoiling()
++{
++	return LiquidEnthalpyAtBoiling() + OmniThermal::LatentHeatVaporizationJPerKg;
++}
+ }
+ 
+ double OmniThermal::SaturationPressurePa(double temperatureK)
+@@ -98,8 +109,7 @@ double OmniThermal::WaterSpecificEnthalpyJPerKg(double temperatureK)
+ 	}
+ 	if (temperatureK < 373.15)
+ 		return LiquidEnthalpyAtFusionUpper() + LiquidSpecificHeatJKgK * (temperatureK - FusionUpperK);
+-	return LiquidEnthalpyAtFusionUpper() + LiquidSpecificHeatJKgK * (373.15 - FusionUpperK) +
+-		LatentHeatVaporizationJPerKg + VaporSpecificHeatJKgK * (temperatureK - 373.15);
++	return VaporEnthalpyAtBoiling() + VaporSpecificHeatJKgK * (temperatureK - 373.15);
+ }
+ 
+ OmniThermalState OmniThermal::WaterFromSpecificEnthalpy(double specificEnthalpyJPerKg)
+@@ -124,16 +134,26 @@ OmniThermalState OmniThermal::WaterFromSpecificEnthalpy(double specificEnthalpyJ
+ 		result.liquidFraction = fraction;
+ 		result.phase = OmniThermalWaterPhase::Mushy;
+ 	}
+-	else if (specificEnthalpyJPerKg < WaterSpecificEnthalpyJPerKg(373.15))
++	else if (specificEnthalpyJPerKg <= LiquidEnthalpyAtBoiling())
+ 	{
+ 		result.temperatureK = FusionUpperK + (specificEnthalpyJPerKg - fusionUpperH) / LiquidSpecificHeatJKgK;
+ 		result.liquidFraction = 1.0;
+ 		result.phase = OmniThermalWaterPhase::Liquid;
+ 	}
++	else if (specificEnthalpyJPerKg <= VaporEnthalpyAtBoiling())
++	{
++		const double fraction = std::clamp((specificEnthalpyJPerKg - LiquidEnthalpyAtBoiling()) /
++			LatentHeatVaporizationJPerKg, 0.0, 1.0);
++		result.temperatureK = 373.15;
++		result.liquidFraction = 1.0 - fraction;
++		result.vaporFraction = fraction;
++		result.phase = OmniThermalWaterPhase::Boiling;
++	}
+ 	else
+ 	{
+-		const double vaporStart = WaterSpecificEnthalpyJPerKg(373.15);
+-		result.temperatureK = 373.15 + (specificEnthalpyJPerKg - vaporStart) / VaporSpecificHeatJKgK;
++		result.temperatureK = 373.15 +
++			(specificEnthalpyJPerKg - VaporEnthalpyAtBoiling()) / VaporSpecificHeatJKgK;
++		result.vaporFraction = 1.0;
+ 		result.phase = OmniThermalWaterPhase::Vapor;
+ 	}
+ 	result.specificEnthalpyJPerKg = specificEnthalpyJPerKg;
+diff --git a/src/simulation/OmniThermal.h b/src/simulation/OmniThermal.h
+index 5f2f12b48..40ba9eaf2 100644
+--- a/src/simulation/OmniThermal.h
++++ b/src/simulation/OmniThermal.h
+@@ -7,6 +7,7 @@ enum class OmniThermalWaterPhase : uint8_t
+ 	Ice,
+ 	Mushy,
+ 	Liquid,
++	Boiling,
+ 	Vapor,
+ };
+ 
+@@ -16,6 +17,7 @@ struct OmniThermalState
+ 	double specificEnthalpyJPerKg = 0.0;
+ 	double solidFraction = 0.0;
+ 	double liquidFraction = 0.0;
++	double vaporFraction = 0.0;
+ 	OmniThermalWaterPhase phase = OmniThermalWaterPhase::Ice;
+ };
+ 
+diff --git a/src/simulation/Simulation.cpp b/src/simulation/Simulation.cpp
+index 38367d36a..715c1d64b 100644
+--- a/src/simulation/Simulation.cpp
++++ b/src/simulation/Simulation.cpp
+@@ -2,6 +2,7 @@
+ #include "Air.h"
+ #include "OmniAtmosphere.h"
+ #include "OmniThermal.h"
++#include "OmniReactionRuntime.h"
+ #include "ElementClasses.h"
+ #include "TransitionConstants.h"
+ #include "gravity/Gravity.h"
+@@ -30,7 +31,23 @@ namespace
+ {
+ 	bool IsOmniManagedWaterType(int type)
+ 	{
+-		return type == PT_WATR || type == PT_ICEI || type == PT_WTRV;
++		return type == PT_WATR || type == PT_ICEI || type == PT_WTRV ||
++			type == PT_DSTW || type == PT_SLTW || type == PT_CBNW || type == PT_SNOW;
++	}
++
++	bool IsOmniManagedCarbonType(int type)
++	{
++		return type == PT_COAL || type == PT_BCOL;
++	}
++
++	constexpr double CarbonMolarMassKgPerMol = 0.0120107;
++	constexpr double OxygenMolarMassKgPerMol = 0.0319988;
++	constexpr double CarbonDioxideMolarMassKgPerMol = CarbonMolarMassKgPerMol + OxygenMolarMassKgPerMol;
++
++	const OmniReactionRuntime &CarbonOxidationRuntime()
++	{
++		static const OmniReactionRuntime runtime = OmniReactionRuntime::CarbonOxidationV1();
++		return runtime;
+ 	}
+ 
+ 	bool IsRefractingGlass(int type)
+@@ -288,17 +305,47 @@ void Simulation::Load(const GameSave *save, bool includePressure, Vec2<int> bloc
+ 		parts[i] = tempPart;
+ 		if (save->hasOmniWaterParcelState)
+ 		{
+-			if (save->omniWaterParcelStateVersion != GameSave::OmniWaterParcelStateVersion ||
+-				save->omniWaterParcelMassKg.size() != static_cast<size_t>(save->particlesCount))
++			const bool currentWaterState =
++				save->omniWaterParcelStateVersion == GameSave::OmniWaterParcelStateVersion;
++			if ((!currentWaterState && save->omniWaterParcelStateVersion !=
++					GameSave::OmniWaterParcelLegacyStateVersion) ||
++				save->omniWaterParcelMassKg.size() != static_cast<size_t>(save->particlesCount) ||
++				(currentWaterState && save->omniWaterParcelSpecificEnthalpyJPerKg.size() !=
++					static_cast<size_t>(save->particlesCount)))
+ 			{
+ 				throw std::runtime_error("malformed Omni water parcel save payload");
+ 			}
+ 			omniWaterParcelMassKg[i] = save->omniWaterParcelMassKg[n];
++			omniWaterParcelSpecificEnthalpyJPerKg[i] = currentWaterState
++				? save->omniWaterParcelSpecificEnthalpyJPerKg[n]
++				: OmniThermal::WaterSpecificEnthalpyJPerKg(tempPart.temp);
++			if (!std::isfinite(omniWaterParcelMassKg[i]) || omniWaterParcelMassKg[i] < 0.0 ||
++				!std::isfinite(omniWaterParcelSpecificEnthalpyJPerKg[i]) ||
++				omniWaterParcelSpecificEnthalpyJPerKg[i] < 0.0)
++			{
++				throw std::runtime_error("invalid Omni water parcel save payload");
++			}
+ 		}
+ 		else
+ 		{
+ 			InitializeOmniWaterParcelMass(i, tempPart.type);
+ 		}
++		if (save->hasOmniCarbonParcelState)
++		{
++			if (save->omniCarbonParcelStateVersion != GameSave::OmniCarbonParcelStateVersion ||
++				save->omniCarbonParcelMassKg.size() != static_cast<size_t>(save->particlesCount))
++				throw std::runtime_error("malformed Omni carbon parcel save payload");
++			omniCarbonParcelMassKg[i] = save->omniCarbonParcelMassKg[n];
++			if (!std::isfinite(omniCarbonParcelMassKg[i]) || omniCarbonParcelMassKg[i] < 0.0 ||
++				(omniCarbonParcelMassKg[i] > 0.0 && !IsOmniManagedCarbonType(tempPart.type)))
++			{
++				throw std::runtime_error("invalid Omni carbon parcel save payload");
++			}
++		}
++		else
++		{
++			InitializeOmniCarbonParcelMass(i, tempPart.type);
++		}
+ 
+ 
+ 		switch (parts[i].type)
+@@ -554,7 +601,15 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
+ 		? GameSave::OmniWaterParcelStateVersion
+ 		: 0;
+ 	if (newSave->hasOmniWaterParcelState)
++	{
+ 		newSave->omniWaterParcelMassKg.reserve(NUM_PARTS);
++		newSave->omniWaterParcelSpecificEnthalpyJPerKg.reserve(NUM_PARTS);
++	}
++	newSave->hasOmniCarbonParcelState = IsOmniAtmosphereActive();
++	newSave->omniCarbonParcelStateVersion = newSave->hasOmniCarbonParcelState
++		? GameSave::OmniCarbonParcelStateVersion : 0;
++	if (newSave->hasOmniCarbonParcelState)
++		newSave->omniCarbonParcelMassKg.reserve(NUM_PARTS);
+ 
+ 	int storedParts = 0;
+ 	int elementCount[PT_NUM];
+@@ -580,7 +635,13 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
+ 				particleMap.insert(std::pair<unsigned int, unsigned int>(i, storedParts));
+ 				*newSave << tempPart;
+ 				if (newSave->hasOmniWaterParcelState)
++				{
+ 					newSave->omniWaterParcelMassKg.push_back(omniWaterParcelMassKg[i]);
++					newSave->omniWaterParcelSpecificEnthalpyJPerKg.push_back(
++						omniWaterParcelSpecificEnthalpyJPerKg[i]);
++				}
++				if (newSave->hasOmniCarbonParcelState)
++					newSave->omniCarbonParcelMassKg.push_back(omniCarbonParcelMassKg[i]);
+ 				storedParts++;
+ 				elementCount[tempPart.type]++;
+ 
+@@ -1324,8 +1385,12 @@ void Simulation::clear_sim(void)
+ 	memset(emap, 0, sizeof(emap));
+ 	parts.Reset();
+ 	std::fill(omniWaterParcelMassKg.begin(), omniWaterParcelMassKg.end(), 0.0);
++	std::fill(omniWaterParcelSpecificEnthalpyJPerKg.begin(),
++		omniWaterParcelSpecificEnthalpyJPerKg.end(), 0.0);
++	std::fill(omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.end(), 0.0);
+ 	omniWaterTransferRequests.clear();
+ 	omniWaterCouplingMetrics = {};
++	omniChemistryMetrics = {};
+ 	NUM_PARTS = 0;
+ 	memset(pmap, 0, sizeof(pmap));
+ 	memset(fvx, 0, sizeof(fvx));
+@@ -2092,6 +2157,7 @@ void Simulation::kill_part(int i)//kills particle number i
+ 			std::clamp(y / CELL, 0, YCELLS - 1));
+ 	}
+ 	ClearOmniWaterParcelMass(i);
++	ClearOmniCarbonParcelMass(i);
+ 
+ 	parts.Free(i);
+ 	NUM_PARTS -= 1;
+@@ -2147,6 +2213,15 @@ bool Simulation::part_change_type(int i, int x, int y, int t)
+ 				std::clamp(y / CELL, 0, YCELLS - 1));
+ 		ClearOmniWaterParcelMass(i);
+ 	}
++	if (IsOmniManagedCarbonType(t))
++	{
++		if (!IsOmniManagedCarbonType(oldType))
++			InitializeOmniCarbonParcelMass(i, t);
++	}
++	else if (IsOmniManagedCarbonType(oldType))
++	{
++		ClearOmniCarbonParcelMass(i);
++	}
+ 	RecordOmniLifecycleMutation(oldType, t, OmniLifecycleMutationKind::TypeChange);
+ 	if (elements[t].Properties & TYPE_ENERGY)
+ 	{
+@@ -2168,6 +2243,9 @@ bool Simulation::part_change_type(int i, int x, int y, int t)
+ int Simulation::create_part(int p, int x, int y, int t, int v)
+ {
+ 	int i, oldType = PT_NONE;
++	double previousOmniCarbonMassKg = 0.0;
++	double previousOmniWaterMassKg = 0.0;
++	double previousOmniWaterSpecificEnthalpyJPerKg = 0.0;
+ 
+ 	auto &sd = SimulationData::CRef();
+ 	auto &elements = sd.elements;
+@@ -2257,6 +2335,26 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
+ 		}
+ 
+ 		oldType = parts[p].type;
++		if (IsOmniManagedWaterType(oldType) && omniWaterParcelMassKg[p] > 0.0)
++		{
++			previousOmniWaterMassKg = omniWaterParcelMassKg[p];
++			previousOmniWaterSpecificEnthalpyJPerKg =
++				omniWaterParcelSpecificEnthalpyJPerKg[p];
++			if (!IsOmniManagedWaterType(t))
++			{
++				if (omniWaterCouplingMetrics.activeTick && omniAtmosphere)
++					TransferOmniWaterParticleToAtmosphere(p,
++						std::clamp(oldX / CELL, 0, XCELLS - 1),
++						std::clamp(oldY / CELL, 0, YCELLS - 1));
++				ClearOmniWaterParcelMass(p);
++			}
++		}
++		if (IsOmniManagedCarbonType(oldType) && omniCarbonParcelMassKg[p] > 0.0)
++		{
++			previousOmniCarbonMassKg = omniCarbonParcelMassKg[p];
++			if (!IsOmniManagedCarbonType(t))
++				ClearOmniCarbonParcelMass(p);
++		}
+ 
+ 		if (elements[oldType].ChangeType)
+ 			(*(elements[oldType].ChangeType))(this, p, oldX, oldY, oldType, t);
+@@ -2268,7 +2366,26 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
+ 
+ 	parts[i] = elements[t].DefaultProperties;
+ 	parts[i].type = t;
+-	InitializeOmniWaterParcelMass(i, t);
++	if (IsOmniManagedWaterType(oldType) && IsOmniManagedWaterType(t) &&
++		previousOmniWaterMassKg > 0.0)
++	{
++		omniWaterParcelMassKg[i] = previousOmniWaterMassKg;
++		omniWaterParcelSpecificEnthalpyJPerKg[i] =
++			previousOmniWaterSpecificEnthalpyJPerKg;
++	}
++	else
++	{
++		InitializeOmniWaterParcelMass(i, t);
++	}
++	if (IsOmniManagedCarbonType(oldType) && IsOmniManagedCarbonType(t) &&
++		previousOmniCarbonMassKg > 0.0)
++	{
++		omniCarbonParcelMassKg[i] = previousOmniCarbonMassKg;
++	}
++	else
++	{
++		InitializeOmniCarbonParcelMass(i, t);
++	}
+ 	if (oldType == PT_NONE)
+ 		RecordOmniLifecycleMutation(PT_NONE, t, OmniLifecycleMutationKind::Create);
+ 	else
+@@ -2679,7 +2796,6 @@ void SimulationImpl::UpdateParticles(int start, int end)
+ 			vx[y/CELL][x/CELL] = vx[y/CELL][x/CELL]*elements[t].AirLoss + elements[t].AirDrag*parts[i].vx;
+ 			vy[y/CELL][x/CELL] = vy[y/CELL][x/CELL]*elements[t].AirLoss + elements[t].AirDrag*parts[i].vy;
+ 		}
+-
+ 		if (elements[t].HotAir && !(IsOmniAtmosphereActive() && IsOmniManagedWaterType(t)))
+ 		{
+ 			if (t==PT_GAS||t==PT_NBLE)
+@@ -4218,15 +4334,39 @@ void Simulation::InitializeOmniWaterParcelMass(int particleId, int type)
+ {
+ 	if (particleId < 0 || particleId >= NPART)
+ 		return;
+-	omniWaterParcelMassKg[particleId] = IsOmniAtmosphereActive() && IsOmniManagedWaterType(type)
+-		? OmniPhysicalScale::DefaultWaterParcelMassKg
+-		: 0.0;
++	if (IsOmniAtmosphereActive() && IsOmniManagedWaterType(type))
++	{
++		omniWaterParcelMassKg[particleId] = OmniPhysicalScale::DefaultWaterParcelMassKg;
++		omniWaterParcelSpecificEnthalpyJPerKg[particleId] =
++			OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
++	}
++	else
++	{
++		omniWaterParcelMassKg[particleId] = 0.0;
++		omniWaterParcelSpecificEnthalpyJPerKg[particleId] = 0.0;
++	}
+ }
+ 
+ void Simulation::ClearOmniWaterParcelMass(int particleId)
+ {
+ 	if (particleId >= 0 && particleId < NPART)
++	{
+ 		omniWaterParcelMassKg[particleId] = 0.0;
++		omniWaterParcelSpecificEnthalpyJPerKg[particleId] = 0.0;
++	}
++}
++
++double Simulation::OmniWaterParcelSpecificEnthalpy(int particleId) const
++{
++	if (particleId < 0 || particleId >= NPART ||
++		!IsOmniManagedWaterType(parts[particleId].type))
++	{
++		return 0.0;
++	}
++	const double value = omniWaterParcelSpecificEnthalpyJPerKg[particleId];
++	return std::isfinite(value) && value >= 0.0
++		? value
++		: OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
+ }
+ 
+ double Simulation::TotalOmniParticleWaterMassKg() const
+@@ -4248,8 +4388,9 @@ double Simulation::TotalOmniWaterCoupledEnergyJ() const
+ 		if (!parts[particleId].type || !IsOmniManagedWaterType(parts[particleId].type))
+ 			continue;
+ 		const double massKg = omniWaterParcelMassKg[particleId];
+-		if (massKg > 0.0 && std::isfinite(parts[particleId].temp))
+-			total += massKg * OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
++		const double specificEnthalpy = OmniWaterParcelSpecificEnthalpy(particleId);
++		if (massKg > 0.0 && std::isfinite(specificEnthalpy))
++			total += massKg * specificEnthalpy;
+ 	}
+ 	return total;
+ }
+@@ -4274,7 +4415,23 @@ bool Simulation::QueueOmniWaterParticleCoupling(int particleId, int x, int y)
+ 		return false;
+ 	}
+ 	if (!(omniWaterParcelMassKg[particleId] > 0.0))
++	{
+ 		omniWaterParcelMassKg[particleId] = OmniPhysicalScale::DefaultWaterParcelMassKg;
++		omniWaterParcelSpecificEnthalpyJPerKg[particleId] =
++			OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
++	}
++	const auto authoritativeState = OmniThermal::WaterFromSpecificEnthalpy(
++		omniWaterParcelSpecificEnthalpyJPerKg[particleId]);
++	if (std::isfinite(parts[particleId].temp) &&
++		std::isfinite(authoritativeState.temperatureK) &&
++		std::abs(double(parts[particleId].temp) - authoritativeState.temperatureK) > 1.0e-3)
++	{
++		// Lua, property tools and tests write the public temperature field. Import
++		// that explicit source once at the fixed-step coupling boundary; later
++		// latent-heat evolution remains authoritative in the enthalpy sidecar.
++		omniWaterParcelSpecificEnthalpyJPerKg[particleId] =
++			OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
++	}
+ 	const int cellX = x / CELL;
+ 	const int cellY = y / CELL;
+ 	const auto primitive = omniAtmosphere->Primitive(cellX, cellY);
+@@ -4285,7 +4442,7 @@ bool Simulation::QueueOmniWaterParticleCoupling(int particleId, int x, int y)
+ 	request.cellX = cellX;
+ 	request.cellY = cellY;
+ 	const double massKg = omniWaterParcelMassKg[particleId];
+-	const double particleEnthalpy = OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
++	const double particleEnthalpy = OmniWaterParcelSpecificEnthalpy(particleId);
+ 	const double airEquivalentEnthalpy = OmniThermal::WaterSpecificEnthalpyJPerKg(primitive.temperature);
+ 	if (std::isfinite(particleEnthalpy) && std::isfinite(airEquivalentEnthalpy))
+ 	{
+@@ -4325,8 +4482,7 @@ void Simulation::TransferOmniWaterParticleToAtmosphere(
+ 	if (!(massKg > 0.0))
+ 		return;
+ 	const double cellVolumeM3 = omniAtmosphere->Config().scale.cellVolumeM3();
+-	const double particleEnergyJ = massKg *
+-		OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
++	const double particleEnergyJ = massKg * OmniWaterParcelSpecificEnthalpy(particleId);
+ 	const double atmosphereBeforeJ = omniAtmosphere->TotalEnergyJ();
+ 	omniAtmosphere->AddSpeciesMassDensity(cellX, cellY, OMNI_SPECIES_H2O, massKg / cellVolumeM3);
+ 	const double automaticEnergyJ = omniAtmosphere->TotalEnergyJ() - atmosphereBeforeJ;
+@@ -4358,17 +4514,20 @@ void Simulation::CommitOmniWaterCouplingTick()
+ 		if (!(massKg > 0.0))
+ 			continue;
+ 
+-		const double beforeEnthalpy = OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
++		const double beforeEnthalpy = OmniWaterParcelSpecificEnthalpy(particleId);
+ 		if (std::isfinite(beforeEnthalpy) && std::isfinite(request.sensibleEnergyToParticleJ))
+ 		{
+ 			const auto next = OmniThermal::WaterFromSpecificEnthalpy(
+ 				beforeEnthalpy + request.sensibleEnergyToParticleJ / massKg);
+ 			const double nextTemperature = std::clamp(next.temperatureK, double(MIN_TEMP), double(MAX_TEMP));
+-			const double afterEnthalpy = OmniThermal::WaterSpecificEnthalpyJPerKg(nextTemperature);
++			const double afterEnthalpy = nextTemperature == next.temperatureK
++				? next.specificEnthalpyJPerKg
++				: OmniThermal::WaterSpecificEnthalpyJPerKg(nextTemperature);
+ 			const double actualEnergyToParticle = massKg * (afterEnthalpy - beforeEnthalpy);
+ 			if (std::isfinite(actualEnergyToParticle))
+ 			{
+ 				parts[particleId].temp = static_cast<float>(nextTemperature);
++				omniWaterParcelSpecificEnthalpyJPerKg[particleId] = afterEnthalpy;
+ 				omniAtmosphere->AddEnergyDensity(
+ 					request.cellX, request.cellY, -actualEnergyToParticle / cellVolumeM3);
+ 				omniWaterCouplingMetrics.sensibleEnergyToParticlesJ += actualEnergyToParticle;
+@@ -4395,8 +4554,7 @@ void Simulation::CommitOmniWaterCouplingTick()
+ 			const auto &waterSpecies = omniAtmosphere->SpeciesDefinition(OMNI_SPECIES_H2O);
+ 			const double vaporSpecificEnergy = OmniThermal::WaterVaporSpecificEnergyJPerKg(
+ 				primitive.temperature, waterSpecies.specificHeatCpJKgK, waterSpecies.molarMassKgPerMol);
+-			const double liquidSpecificEnergy =
+-				OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
++			const double liquidSpecificEnergy = OmniWaterParcelSpecificEnthalpy(particleId);
+ 			const double minimumSpecificEnergy = OmniThermal::WaterSpecificEnthalpyJPerKg(
+ 				std::max(double(MIN_TEMP), 1.0));
+ 			const double referenceCellGasMassKg = omniAtmosphere->Config().referenceDensity * cellVolumeM3;
+@@ -4417,6 +4575,8 @@ void Simulation::CommitOmniWaterCouplingTick()
+ 						atmosphereEnergyAddedJ, minimumSpecificEnergy);
+ 					parts[particleId].temp = static_cast<float>(std::clamp(
+ 						remaining.temperatureK, double(MIN_TEMP), double(MAX_TEMP)));
++					omniWaterParcelSpecificEnthalpyJPerKg[particleId] =
++						remaining.specificEnthalpyJPerKg;
+ 					omniWaterParcelMassKg[particleId] = remainingMassKg;
+ 				}
+ 				else
+@@ -4434,7 +4594,7 @@ void Simulation::CommitOmniWaterCouplingTick()
+ 		if (!parts[particleId].type)
+ 			continue;
+ 		const auto thermalState = OmniThermal::WaterFromSpecificEnthalpy(
+-			OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp));
++			OmniWaterParcelSpecificEnthalpy(particleId));
+ 		if (parts[particleId].type == PT_WATR && thermalState.phase == OmniThermalWaterPhase::Ice)
+ 		{
+ 			if (!part_change_type(particleId, int(parts[particleId].x + 0.5f),
+@@ -4473,6 +4633,157 @@ void Simulation::FinishOmniWaterCouplingTick()
+ 	omniWaterCouplingMetrics.activeTick = false;
+ }
+ 
++double Simulation::GetOmniCarbonParcelMassKg(int particleId) const
++{
++	if (particleId < 0 || particleId >= NPART || !IsOmniManagedCarbonType(parts[particleId].type) ||
++		!(omniCarbonParcelMassKg[particleId] > 0.0))
++	{
++		return 0.0;
++	}
++	return omniCarbonParcelMassKg[particleId];
++}
++
++void Simulation::InitializeOmniCarbonParcelMass(int particleId, int type)
++{
++	if (particleId < 0 || particleId >= NPART || !IsOmniAtmosphereActive() ||
++		!IsOmniManagedCarbonType(type) || omniCarbonParcelMassKg[particleId] > 0.0)
++	{
++		return;
++	}
++	omniCarbonParcelMassKg[particleId] = OmniPhysicalScale::DefaultCarbonParcelMassKg;
++}
++
++void Simulation::ClearOmniCarbonParcelMass(int particleId, bool recordExternalSink)
++{
++	if (particleId < 0 || particleId >= NPART)
++		return;
++	const double massKg = std::isfinite(omniCarbonParcelMassKg[particleId]) &&
++		omniCarbonParcelMassKg[particleId] > 0.0 ? omniCarbonParcelMassKg[particleId] : 0.0;
++	if (recordExternalSink && omniChemistryMetrics.activeTick && massKg > 0.0)
++		omniChemistryMetrics.externalCarbonMassSinkKg += massKg;
++	omniCarbonParcelMassKg[particleId] = 0.0;
++}
++
++double Simulation::TotalOmniParticleCarbonMassKg() const
++{
++	double total = 0.0;
++	for (int particleId = 0; particleId < parts.active; ++particleId)
++		total += GetOmniCarbonParcelMassKg(particleId);
++	return total;
++}
++
++void Simulation::BeginOmniChemistryTick()
++{
++	omniChemistryMetrics = {};
++	if (!IsOmniAtmosphereActive() || !omniAtmosphere)
++		return;
++	omniChemistryMetrics.activeTick = true;
++	omniChemistryMetrics.initialCarbonMassKg = TotalOmniParticleCarbonMassKg();
++	omniChemistryMetrics.initialOxygenMassKg = omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_O2);
++	omniChemistryMetrics.initialCarbonDioxideMassKg = omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_CO2);
++}
++
++bool Simulation::UpdateOmniCarbonCombustion(int particleId, int x, int y)
++{
++	FrameTime::SubsystemSpan profilerSpan(frameTime, FrameTime::Subsystem::Chemistry);
++	if (!IsOmniAtmosphereActive() || !omniAtmosphere || particleId < 0 || particleId >= NPART ||
++		!IsOmniManagedCarbonType(parts[particleId].type) || x < 0 || y < 0 || x >= XRES || y >= YRES)
++	{
++		return false;
++	}
++	InitializeOmniCarbonParcelMass(particleId, parts[particleId].type);
++	omniChemistryMetrics.candidateParticles++;
++	const int cellX = x / CELL;
++	const int cellY = y / CELL;
++	const auto primitive = omniAtmosphere->Primitive(cellX, cellY);
++	const double carbonMassKg = GetOmniCarbonParcelMassKg(particleId);
++	if (!primitive.finite || !(carbonMassKg > 0.0) ||
++		!std::isfinite(parts[particleId].temp) || parts[particleId].temp < 450.0f)
++	{
++		return false;
++	}
++	const double oxygenMassKg = omniAtmosphere->SpeciesMassDensity(cellX, cellY, OMNI_SPECIES_O2) *
++		omniAtmosphere->Config().scale.cellVolumeM3();
++	const auto plan = CarbonOxidationRuntime().PlanCarbonOxidation({
++		carbonMassKg, oxygenMassKg, parts[particleId].temp,
++		OmniPhysicalScale::TimestepS, 1.0,
++	});
++	if (!plan.valid)
++	{
++		omniChemistryMetrics.rejectedTransactions++;
++		return false;
++	}
++	if (!(plan.carbonConsumedKg > 0.0))
++		return false;
++	const double actualCarbonKg = std::min(plan.carbonConsumedKg, carbonMassKg);
++	if (!(actualCarbonKg > 0.0))
++		return false;
++	const double scale = actualCarbonKg / plan.carbonConsumedKg;
++	const double actualOxygenKg = plan.oxygenConsumedKg * scale;
++	const double actualCarbonDioxideKg = plan.carbonDioxideProducedKg * scale;
++	const double actualHeatJ = plan.heatReleasedJ * scale;
++	const double parcelVelocityX = double(parts[particleId].vx) *
++		OmniPhysicalScale::PixelLengthM / OmniPhysicalScale::TimestepS;
++	const double parcelVelocityY = double(parts[particleId].vy) *
++		OmniPhysicalScale::PixelLengthM / OmniPhysicalScale::TimestepS;
++	std::vector<double> delta(omniAtmosphere->SpeciesCount(), 0.0);
++	delta[OMNI_SPECIES_O2] = -actualOxygenKg;
++	delta[OMNI_SPECIES_CO2] = actualCarbonDioxideKg;
++	OmniAtmosphereReactionTransfer transfer{};
++	if (!omniAtmosphere->ApplyReactionSpeciesTransfer(cellX, cellY, delta, actualHeatJ,
++		parcelVelocityX, parcelVelocityY, &transfer))
++	{
++		omniChemistryMetrics.rejectedTransactions++;
++		return false;
++	}
++	omniCarbonParcelMassKg[particleId] = std::max(carbonMassKg - actualCarbonKg, 0.0);
++	omniChemistryMetrics.carbonConsumedKg += actualCarbonKg;
++	omniChemistryMetrics.oxygenConsumedKg += actualOxygenKg;
++	omniChemistryMetrics.carbonDioxideProducedKg += actualCarbonDioxideKg;
++	omniChemistryMetrics.chemicalEnergyReleasedJ += actualHeatJ;
++	omniChemistryMetrics.transactionEnergyDeltaJ += transfer.totalEnergyDeltaJ;
++	omniChemistryMetrics.energyResidualJ += transfer.totalEnergyDeltaJ -
++		(transfer.sensibleEnergyDeltaJ + transfer.sourceKineticEnergyJ + actualHeatJ);
++	omniChemistryMetrics.committedTransactions++;
++	omniChemistryMetrics.oxygenLimitedTransactions += plan.limitedByOxygen;
++	omniChemistryMetrics.carbonLimitedTransactions += plan.limitedByCarbon;
++	if (omniCarbonParcelMassKg[particleId] <= 1.0e-15)
++	{
++		// Zero first, so kill_part records no unaccounted external carbon sink.
++		omniCarbonParcelMassKg[particleId] = 0.0;
++		kill_part(particleId);
++		return true;
++	}
++	return false;
++}
++
++void Simulation::FinishOmniChemistryTick()
++{
++	if (!omniChemistryMetrics.activeTick || !omniAtmosphere)
++		return;
++	omniChemistryMetrics.finalCarbonMassKg = TotalOmniParticleCarbonMassKg();
++	omniChemistryMetrics.finalOxygenMassKg = omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_O2);
++	omniChemistryMetrics.finalCarbonDioxideMassKg = omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_CO2);
++	const double initialTotal = omniChemistryMetrics.initialCarbonMassKg +
++		omniChemistryMetrics.initialOxygenMassKg + omniChemistryMetrics.initialCarbonDioxideMassKg;
++	const double finalTotal = omniChemistryMetrics.finalCarbonMassKg +
++		omniChemistryMetrics.finalOxygenMassKg + omniChemistryMetrics.finalCarbonDioxideMassKg;
++	omniChemistryMetrics.massResidualKg = finalTotal - initialTotal +
++		omniChemistryMetrics.externalCarbonMassSinkKg;
++	omniChemistryMetrics.carbonAtomResidualMol =
++		(omniChemistryMetrics.finalCarbonMassKg / CarbonMolarMassKgPerMol +
++			omniChemistryMetrics.finalCarbonDioxideMassKg / CarbonDioxideMolarMassKgPerMol) -
++		(omniChemistryMetrics.initialCarbonMassKg / CarbonMolarMassKgPerMol +
++			omniChemistryMetrics.initialCarbonDioxideMassKg / CarbonDioxideMolarMassKgPerMol -
++			omniChemistryMetrics.externalCarbonMassSinkKg / CarbonMolarMassKgPerMol);
++	omniChemistryMetrics.oxygenAtomResidualMol =
++		2.0 * (omniChemistryMetrics.finalOxygenMassKg / OxygenMolarMassKgPerMol +
++			omniChemistryMetrics.finalCarbonDioxideMassKg / CarbonDioxideMolarMassKgPerMol) -
++		2.0 * (omniChemistryMetrics.initialOxygenMassKg / OxygenMolarMassKgPerMol +
++			omniChemistryMetrics.initialCarbonDioxideMassKg / CarbonDioxideMolarMassKgPerMol);
++	omniChemistryMetrics.activeTick = false;
++}
++
+ void Simulation::RecordOmniCorrection(
+ 	OmniCorrectionKind kind,
+ 	int cellX,
+@@ -4671,6 +4982,7 @@ void Simulation::BeforeSim(bool willUpdate)
+ 			ImportLegacyAtmosphereSources(*this);
+ 			BeginOmniWaterCouplingTick();
+ 			omniAtmosphere->Step();
++			BeginOmniChemistryTick();
+ 			ExportOmniAtmosphereToLegacyFields(*this);
+ 		}
+ 		else
+@@ -4901,6 +5213,7 @@ void Simulation::AfterSim()
+ 			ExportOmniAtmosphereToLegacyFields(*this);
+ 		}
+ 		FinishOmniWaterCouplingTick();
++		FinishOmniChemistryTick();
+ 	}
+ 	debug_mostRecentlyUpdated = -1;
+ 	bool repairElementCounts = elementRecountAfterSim;
+diff --git a/src/simulation/Simulation.h b/src/simulation/Simulation.h
+index fad8a9f17..426e6d005 100644
+--- a/src/simulation/Simulation.h
++++ b/src/simulation/Simulation.h
+@@ -285,6 +285,35 @@ public:
+ 		uint64_t phaseTypeChanges = 0;
+ 	};
+ 
++	// Enhanced-mode carbon combustion ledger. Authoritative carbon mass lives
++	// in a dedicated sidecar; Particle ABI and existing tmp4 semantics remain
++	// untouched.
++	struct OmniChemistryMetrics
++	{
++		bool activeTick = false;
++		double initialCarbonMassKg = 0.0;
++		double finalCarbonMassKg = 0.0;
++		double initialOxygenMassKg = 0.0;
++		double finalOxygenMassKg = 0.0;
++		double initialCarbonDioxideMassKg = 0.0;
++		double finalCarbonDioxideMassKg = 0.0;
++		double carbonConsumedKg = 0.0;
++		double oxygenConsumedKg = 0.0;
++		double carbonDioxideProducedKg = 0.0;
++		double chemicalEnergyReleasedJ = 0.0;
++		double transactionEnergyDeltaJ = 0.0;
++		double massResidualKg = 0.0;
++		double carbonAtomResidualMol = 0.0;
++		double oxygenAtomResidualMol = 0.0;
++		double energyResidualJ = 0.0;
++		double externalCarbonMassSinkKg = 0.0;
++		uint64_t candidateParticles = 0;
++		uint64_t committedTransactions = 0;
++		uint64_t oxygenLimitedTransactions = 0;
++		uint64_t carbonLimitedTransactions = 0;
++		uint64_t rejectedTransactions = 0;
++	};
++
+ 	// initialized very late >_>
+ 	int NUM_PARTS;
+ 	int sandcolour;
+@@ -353,8 +382,14 @@ public:
+ 	void ResetOmniCorrectionLedger();
+ 	OmniCorrectionLedgerMetrics GetOmniCorrectionLedgerMetrics() const;
+ 	OmniWaterCouplingMetrics GetOmniWaterCouplingMetrics() const { return omniWaterCouplingMetrics; }
++	OmniChemistryMetrics GetOmniChemistryMetrics() const { return omniChemistryMetrics; }
+ 	double GetOmniWaterParcelMassKg(int particleId) const;
+ 	double TotalOmniParticleWaterMassKg() const;
++	double GetOmniCarbonParcelMassKg(int particleId) const;
++	double TotalOmniParticleCarbonMassKg() const;
++	// Called by COAL/BCOL only in Enhanced/Scientific. Classic never enters
++	// this route and retains upstream combustion semantics.
++	bool UpdateOmniCarbonCombustion(int particleId, int x, int y);
+ 
+ 	void SetEdgeMode(int newEdgeMode);
+ 	void SetDecoSpace(int newDecoSpace);
+@@ -420,8 +455,14 @@ protected:
+ 	};
+ 
+ 	std::array<double, NPART> omniWaterParcelMassKg{};
++	// The particle temperature is a renderer/Legacy projection. This sidecar is
++	// authoritative for water parcels so energy inside a latent-heat plateau is
++	// not discarded between fixed simulation ticks.
++	std::array<double, NPART> omniWaterParcelSpecificEnthalpyJPerKg{};
++	std::array<double, NPART> omniCarbonParcelMassKg{};
+ 	std::vector<OmniWaterTransferRequest> omniWaterTransferRequests;
+ 	OmniWaterCouplingMetrics omniWaterCouplingMetrics{};
++	OmniChemistryMetrics omniChemistryMetrics{};
+ 
+ 	bool QueueOmniWaterParticleCoupling(int particleId, int x, int y);
+ 	void BeginOmniWaterCouplingTick();
+@@ -431,7 +472,12 @@ protected:
+ 		double requestedMassKg = -1.0);
+ 	void InitializeOmniWaterParcelMass(int particleId, int type);
+ 	void ClearOmniWaterParcelMass(int particleId);
++	double OmniWaterParcelSpecificEnthalpy(int particleId) const;
+ 	double TotalOmniWaterCoupledEnergyJ() const;
++	void InitializeOmniCarbonParcelMass(int particleId, int type);
++	void ClearOmniCarbonParcelMass(int particleId, bool recordExternalSink = true);
++	void BeginOmniChemistryTick();
++	void FinishOmniChemistryTick();
+ 
+ 	enum class OmniLifecycleMutationKind : uint8_t
+ 	{
+diff --git a/src/simulation/Snapshot.cpp b/src/simulation/Snapshot.cpp
+index 238b94087..454ad6e25 100644
+--- a/src/simulation/Snapshot.cpp
++++ b/src/simulation/Snapshot.cpp
+@@ -33,6 +33,8 @@ uint32_t Snapshot::Hash() const
+ 		takeVector(OmniAtmosphereTotalEnergy);
+ 		takeVector(OmniAtmosphereCondensedWaterDensity);
+ 		takeVector(OmniWaterParcelMassKg);
++		takeVector(OmniWaterParcelSpecificEnthalpyJPerKg);
++		takeVector(OmniCarbonParcelMassKg);
+ 	}
+ 	takeVector(Particles);
+ 	takeVector(GravMass);
+diff --git a/src/simulation/Snapshot.h b/src/simulation/Snapshot.h
+index f435e9dd6..48c950717 100644
+--- a/src/simulation/Snapshot.h
++++ b/src/simulation/Snapshot.h
+@@ -26,6 +26,8 @@ public:
+ 	std::vector<double> OmniAtmosphereTotalEnergy;
+ 	std::vector<double> OmniAtmosphereCondensedWaterDensity;
+ 	std::vector<double> OmniWaterParcelMassKg;
++	std::vector<double> OmniWaterParcelSpecificEnthalpyJPerKg;
++	std::vector<double> OmniCarbonParcelMassKg;
+ 	int OmniSimulationMode = OMNI_CLASSIC;
+ 	uint8_t OmniAtmospherePersistenceStatus = 0;
+ 
+diff --git a/src/simulation/SnapshotDelta.cpp b/src/simulation/SnapshotDelta.cpp
+index 61b472046..3723273c2 100644
+--- a/src/simulation/SnapshotDelta.cpp
++++ b/src/simulation/SnapshotDelta.cpp
+@@ -259,6 +259,36 @@ std::unique_ptr<SnapshotDelta> SnapshotDelta::FromSnapshots(const Snapshot &oldS
+ 		newSnap.OmniWaterParcelMassKg.size() - commonWaterSize);
+ 	std::copy(newSnap.OmniWaterParcelMassKg.begin() + commonWaterSize,
+ 		newSnap.OmniWaterParcelMassKg.end(), delta.extraOmniWaterParcelMassKgNew.begin());
++	const auto commonWaterEnthalpySize = std::min(
++		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size(),
++		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size());
++	FillHunkVectorPtr(
++		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.data(),
++		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.data(),
++		delta.commonOmniWaterParcelSpecificEnthalpyJPerKg, commonWaterEnthalpySize);
++	delta.extraOmniWaterParcelSpecificEnthalpyJPerKgOld.resize(
++		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size() - commonWaterEnthalpySize);
++	std::copy(oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.begin() + commonWaterEnthalpySize,
++		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.end(),
++		delta.extraOmniWaterParcelSpecificEnthalpyJPerKgOld.begin());
++	delta.extraOmniWaterParcelSpecificEnthalpyJPerKgNew.resize(
++		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size() - commonWaterEnthalpySize);
++	std::copy(newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.begin() + commonWaterEnthalpySize,
++		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.end(),
++		delta.extraOmniWaterParcelSpecificEnthalpyJPerKgNew.begin());
++	const auto commonCarbonSize = std::min(oldSnap.OmniCarbonParcelMassKg.size(),
++		newSnap.OmniCarbonParcelMassKg.size());
++	FillHunkVectorPtr(oldSnap.OmniCarbonParcelMassKg.data(),
++		newSnap.OmniCarbonParcelMassKg.data(), delta.commonOmniCarbonParcelMassKg,
++		commonCarbonSize);
++	delta.extraOmniCarbonParcelMassKgOld.resize(
++		oldSnap.OmniCarbonParcelMassKg.size() - commonCarbonSize);
++	std::copy(oldSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize,
++		oldSnap.OmniCarbonParcelMassKg.end(), delta.extraOmniCarbonParcelMassKgOld.begin());
++	delta.extraOmniCarbonParcelMassKgNew.resize(
++		newSnap.OmniCarbonParcelMassKg.size() - commonCarbonSize);
++	std::copy(newSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize,
++		newSnap.OmniCarbonParcelMassKg.end(), delta.extraOmniCarbonParcelMassKgNew.begin());
+ 
+ 	return ptr;
+ }
+@@ -306,6 +336,23 @@ std::unique_ptr<Snapshot> SnapshotDelta::Forward(const Snapshot &oldSnap)
+ 	newSnap.OmniWaterParcelMassKg.resize(commonWaterSize + extraOmniWaterParcelMassKgNew.size());
+ 	std::copy(extraOmniWaterParcelMassKgNew.begin(), extraOmniWaterParcelMassKgNew.end(),
+ 		newSnap.OmniWaterParcelMassKg.begin() + commonWaterSize);
++	auto commonWaterEnthalpySize = oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size() -
++		extraOmniWaterParcelSpecificEnthalpyJPerKgOld.size();
++	ApplyHunkVectorPtr<false>(commonOmniWaterParcelSpecificEnthalpyJPerKg,
++		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.data());
++	newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.resize(
++		commonWaterEnthalpySize + extraOmniWaterParcelSpecificEnthalpyJPerKgNew.size());
++	std::copy(extraOmniWaterParcelSpecificEnthalpyJPerKgNew.begin(),
++		extraOmniWaterParcelSpecificEnthalpyJPerKgNew.end(),
++		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.begin() + commonWaterEnthalpySize);
++	auto commonCarbonSize = oldSnap.OmniCarbonParcelMassKg.size() -
++		extraOmniCarbonParcelMassKgOld.size();
++	ApplyHunkVectorPtr<false>(commonOmniCarbonParcelMassKg,
++		newSnap.OmniCarbonParcelMassKg.data());
++	newSnap.OmniCarbonParcelMassKg.resize(commonCarbonSize +
++		extraOmniCarbonParcelMassKgNew.size());
++	std::copy(extraOmniCarbonParcelMassKgNew.begin(), extraOmniCarbonParcelMassKgNew.end(),
++		newSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize);
+ 
+ 	return ptr;
+ }
+@@ -353,6 +400,23 @@ std::unique_ptr<Snapshot> SnapshotDelta::Restore(const Snapshot &newSnap)
+ 	oldSnap.OmniWaterParcelMassKg.resize(commonWaterSize + extraOmniWaterParcelMassKgOld.size());
+ 	std::copy(extraOmniWaterParcelMassKgOld.begin(), extraOmniWaterParcelMassKgOld.end(),
+ 		oldSnap.OmniWaterParcelMassKg.begin() + commonWaterSize);
++	auto commonWaterEnthalpySize = newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size() -
++		extraOmniWaterParcelSpecificEnthalpyJPerKgNew.size();
++	ApplyHunkVectorPtr<true>(commonOmniWaterParcelSpecificEnthalpyJPerKg,
++		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.data());
++	oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.resize(
++		commonWaterEnthalpySize + extraOmniWaterParcelSpecificEnthalpyJPerKgOld.size());
++	std::copy(extraOmniWaterParcelSpecificEnthalpyJPerKgOld.begin(),
++		extraOmniWaterParcelSpecificEnthalpyJPerKgOld.end(),
++		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.begin() + commonWaterEnthalpySize);
++	auto commonCarbonSize = newSnap.OmniCarbonParcelMassKg.size() -
++		extraOmniCarbonParcelMassKgNew.size();
++	ApplyHunkVectorPtr<true>(commonOmniCarbonParcelMassKg,
++		oldSnap.OmniCarbonParcelMassKg.data());
++	oldSnap.OmniCarbonParcelMassKg.resize(commonCarbonSize +
++		extraOmniCarbonParcelMassKgOld.size());
++	std::copy(extraOmniCarbonParcelMassKgOld.begin(), extraOmniCarbonParcelMassKgOld.end(),
++		oldSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize);
+ 
+ 	return ptr;
+ }
+diff --git a/src/simulation/SnapshotDelta.h b/src/simulation/SnapshotDelta.h
+index 04bc2fd33..f3b25adb5 100644
+--- a/src/simulation/SnapshotDelta.h
++++ b/src/simulation/SnapshotDelta.h
+@@ -52,6 +52,11 @@ struct SnapshotDelta
+ 	HunkVector<double> OmniAtmosphereCondensedWaterDensity;
+ 	HunkVector<double> commonOmniWaterParcelMassKg;
+ 	std::vector<double> extraOmniWaterParcelMassKgOld, extraOmniWaterParcelMassKgNew;
++	HunkVector<double> commonOmniWaterParcelSpecificEnthalpyJPerKg;
++	std::vector<double> extraOmniWaterParcelSpecificEnthalpyJPerKgOld,
++		extraOmniWaterParcelSpecificEnthalpyJPerKgNew;
++	HunkVector<double> commonOmniCarbonParcelMassKg;
++	std::vector<double> extraOmniCarbonParcelMassKgOld, extraOmniCarbonParcelMassKgNew;
+ 	SingleDiff<int> OmniSimulationMode;
+ 	SingleDiff<uint8_t> OmniAtmospherePersistenceStatus;
+ 
+diff --git a/src/simulation/elements/COAL.cpp b/src/simulation/elements/COAL.cpp
+index f19703ecd..55d41c274 100644
+--- a/src/simulation/elements/COAL.cpp
++++ b/src/simulation/elements/COAL.cpp
+@@ -53,6 +53,14 @@ void Element::Element_COAL()
+ 
+ int Element_COAL_update(UPDATE_FUNC_ARGS)
+ {
++	if (sim->IsOmniAtmosphereActive())
++	{
++		const bool consumed = sim->UpdateOmniCarbonCombustion(i, x, y);
++		if (!consumed && parts[i].type && parts[i].temp > parts[i].tmp2)
++			parts[i].tmp2 = int(parts[i].temp);
++		return consumed ? 1 : 0;
++	}
++
+ 	if (OmniMetallurgyCoalUpdate(UPDATE_FUNC_SUBCALL_ARGS))
+ 		return 1;
+ 
+diff --git a/tools/omni_multispecies_thermal_contract_check.py b/tools/omni_multispecies_thermal_contract_check.py
+index cf30d20ef..ae5e95121 100644
+--- a/tools/omni_multispecies_thermal_contract_check.py
++++ b/tools/omni_multispecies_thermal_contract_check.py
+@@ -143,21 +143,21 @@ def check(root: Path) -> list[str]:
+     if not isinstance(ownership, dict):
+         errors.append("thermal particle_water_ownership object is required")
+     else:
+-        if ownership.get("managed_element_ids") != ["WATR", "ICEI", "WTRV"]:
++        if ownership.get("managed_element_ids") != ["WATR", "ICEI", "WTRV", "DSTW", "SLTW", "CBNW", "SNOW"]:
+             errors.append("managed water element family drifted")
+         if ownership.get("particle_abi_changed") is not False:
+             errors.append("water ownership must preserve the Particle ABI")
+-        if ownership.get("sidecar_bytes_per_particle") != 8:
+-            errors.append("water sidecar must remain 8 bytes per particle")
++        if ownership.get("sidecar_bytes_per_particle") != 16:
++            errors.append("water mass/enthalpy sidecars must remain 16 bytes per particle")
+         if not close(float(ownership.get("particle_parcel_volume_m3", math.nan)), 4.0e-9):
+             errors.append("water particle parcel volume drifted")
+         if not close(float(ownership.get("default_water_parcel_mass_kg", math.nan)), 4.0e-6):
+             errors.append("default water parcel mass drifted")
+     required_contract_symbols = {
+         "OmniPhysicalScale.h": (scale_h, ("ParticleParcelVolumeM3", "DefaultWaterParcelMassKg")),
+-        "GameSave.h": (save_h, ("OmniWaterParcelStateVersion = 1", "omniWaterParcelMassKg")),
+-        "GameSave.cpp": (save_cpp, ("omniWaterParcels", "particle_order_f64_le_mass_kg_v1")),
+-        "Simulation.h": (simulation_h, ("std::array<double, NPART> omniWaterParcelMassKg",)),
++        "GameSave.h": (save_h, ("OmniWaterParcelStateVersion = 2", "omniWaterParcelMassKg", "omniWaterParcelSpecificEnthalpyJPerKg")),
++        "GameSave.cpp": (save_cpp, ("omniWaterParcels", "particle_order_f64_le_mass_kg_specific_enthalpy_j_per_kg_v2")),
++        "Simulation.h": (simulation_h, ("std::array<double, NPART> omniWaterParcelMassKg", "std::array<double, NPART> omniWaterParcelSpecificEnthalpyJPerKg")),
+     }
+     for filename, (body, symbols) in required_contract_symbols.items():
+         for symbol in symbols:
+diff --git a/tools/omni_reaction_runtime_contract_check.py b/tools/omni_reaction_runtime_contract_check.py
+index 07e4312d5..35b888b3f 100644
+--- a/tools/omni_reaction_runtime_contract_check.py
++++ b/tools/omni_reaction_runtime_contract_check.py
+@@ -15,6 +15,7 @@ def check(root: Path) -> list[str]:
+     errors: list[str] = []
+     try:
+         data = json.loads((root / "resources/omnicore/v1/omni-reaction-runtime-v1.json").read_text(encoding="utf-8"))
++        catalog = json.loads((root / "resources/omnicore/v1/catalog.json").read_text(encoding="utf-8"))
+     except (OSError, json.JSONDecodeError) as exc:
+         return [f"runtime data: {exc}"]
+ 
+@@ -37,6 +38,10 @@ def check(root: Path) -> list[str]:
+         "source_title", "source_locator", "source_value", "method", "redistribution_status", "license_or_terms"
+     )):
+         errors.append("thermochemistry provenance is incomplete")
++    if "chemistry-2e" in str(thermochemistry.get("source_locator", "")) or thermochemistry.get(
++        "redistribution_status"
++    ) != "redistributable_with_attribution":
++        errors.append("runtime thermochemistry must use the audited CC BY OpenStax edition")
+     kinetics = reaction.get("kinetics", {}) if isinstance(reaction, dict) else {}
+     if not isinstance(kinetics, dict) or kinetics.get("method") != "game_tuned" or not kinetics.get(
+         "not_a_measured_graphite_kinetic_parameter_set"
+@@ -55,8 +60,24 @@ def check(root: Path) -> list[str]:
+     ) != "single_transaction_or_rollback":
+         errors.append("integration ownership/transaction contract drifted")
+ 
++    if catalog.get("dataset_version") != "1.0.8-chemistry.1" or catalog.get(
++        "runtime_consumption"
++    ) is not True:
++        errors.append("audited runtime catalog is not active for 1.0.8")
++    catalog_reactions = catalog.get("reactions", [])
++    if not isinstance(catalog_reactions, list) or not catalog_reactions or catalog_reactions[0].get(
++        "id"
++    ) != "reaction.carbon-oxidation":
++        errors.append("audited catalog/runtime reaction identity drifted")
++
+     header = (root / "src/simulation/OmniReactionRuntime.h").read_text(encoding="utf-8")
+     runtime = (root / "src/simulation/OmniReactionRuntime.cpp").read_text(encoding="utf-8")
++    atmosphere_header = (root / "src/simulation/OmniAtmosphere.h").read_text(encoding="utf-8")
++    atmosphere_source = (root / "src/simulation/OmniAtmosphere.cpp").read_text(encoding="utf-8")
++    simulation_header = (root / "src/simulation/Simulation.h").read_text(encoding="utf-8")
++    simulation_source = (root / "src/simulation/Simulation.cpp").read_text(encoding="utf-8")
++    coal_source = (root / "src/simulation/elements/COAL.cpp").read_text(encoding="utf-8")
++    lua_source = (root / "src/lua/LuaSimulation.cpp").read_text(encoding="utf-8")
+     meson = (root / "meson.build").read_text(encoding="utf-8")
+     for token in ("PlanCarbonOxidation", "OmniCarbonOxidationPlan", "massResidualKg", "energyResidualJ"):
+         if token not in header:
+@@ -71,6 +92,21 @@ def check(root: Path) -> list[str]:
+         errors.append("reaction reference target must use strict numerical args")
+     if "'omni-reaction-runtime'" not in meson:
+         errors.append("reaction probe must be registered")
++    for token in ("OmniAtmosphereReactionTransfer", "ApplyReactionSpeciesTransfer"):
++        if token not in atmosphere_header or token not in atmosphere_source:
++            errors.append(f"atomic atmosphere transaction is missing {token}")
++    if "OmniChemistryMetrics" not in simulation_header:
++        errors.append("Simulation combustion integration is missing OmniChemistryMetrics")
++    for token in ("UpdateOmniCarbonCombustion", "TotalOmniParticleCarbonMassKg"):
++        if token not in simulation_header or token not in simulation_source:
++            errors.append(f"Simulation combustion integration is missing {token}")
++    if "IsOmniAtmosphereActive" not in coal_source or "UpdateOmniCarbonCombustion" not in coal_source:
++        errors.append("COAL does not isolate Enhanced combustion from Classic")
++    if "omniChemistry" not in lua_source or "instrumented_omni_reaction_runtime" not in lua_source:
++        errors.append("Lua chemistry diagnostics/profiler integration is missing")
++    notice = root / "resources/third_party/OPENSTAX_CHEMISTRY_CC-BY-4.0.txt"
++    if not notice.is_file() or "Creative Commons Attribution 4.0" not in notice.read_text(encoding="utf-8"):
++        errors.append("OpenStax CC BY attribution notice is missing")
+     return errors
+ 
+ 
+diff --git a/tools/omni_save_roundtrip_probe.cpp b/tools/omni_save_roundtrip_probe.cpp
+index a7fa87cb8..c5d1d49ed 100644
+--- a/tools/omni_save_roundtrip_probe.cpp
++++ b/tools/omni_save_roundtrip_probe.cpp
+@@ -8,6 +8,7 @@
+ 
+ #include <cmath>
+ #include <iostream>
++#include <limits>
+ #include <stdexcept>
+ #include <string_view>
+ #include <vector>
+@@ -157,12 +158,17 @@ int main()
+ 	const int undoWater = undoSource->create_part(-1, 50, 50, PT_WATR);
+ 	if (undoWater < 0)
+ 		return Fail("could not create the undo water fixture");
++	const int undoCarbon = undoSource->create_part(-1, 54, 50, PT_COAL);
++	if (undoCarbon < 0)
++		return Fail("could not create the undo carbon fixture");
+ 	const double undoWaterMass = undoSource->GetOmniWaterParcelMassKg(undoWater);
++	const double undoCarbonMass = undoSource->GetOmniCarbonParcelMassKg(undoCarbon);
+ 	const auto oldSnapshot = undoSource->CreateSnapshot();
+ 	undoSource->omniAtmosphere->AddSpeciesMassDensity(5, 7, OMNI_SPECIES_H2O, 0.125);
+ 	undoSource->omniAtmosphere->AddEnergyDensity(5, 7, 10000.0);
+ 	undoSource->parts[undoWater].temp = 450.0f;
+ 	undoSource->kill_part(undoWater);
++	undoSource->kill_part(undoCarbon);
+ 	const auto newSnapshot = undoSource->CreateSnapshot();
+ 	const auto delta = SnapshotDelta::FromSnapshots(*oldSnapshot, *newSnapshot);
+ 	const auto forwardedSnapshot = delta->Forward(*oldSnapshot);
+@@ -175,9 +181,11 @@ int main()
+ 	undoSource->Restore(*oldSnapshot);
+ 	if (undoSource->GetOmniSimulationMode() != OMNI_ENHANCED ||
+ 		undoSource->parts[undoWater].type != PT_WATR ||
+-		undoSource->GetOmniWaterParcelMassKg(undoWater) != undoWaterMass)
++		undoSource->GetOmniWaterParcelMassKg(undoWater) != undoWaterMass ||
++		undoSource->parts[undoCarbon].type != PT_COAL ||
++		undoSource->GetOmniCarbonParcelMassKg(undoCarbon) != undoCarbonMass)
+ 	{
+-		return Fail("undo restore did not recover Enhanced water ownership state");
++		return Fail("undo restore did not recover Enhanced water/carbon ownership state");
+ 	}
+ 	const std::size_t undoCell = 7 * undoSource->omniAtmosphere->Width() + 5;
+ 	for (std::size_t species = 0; species < undoSource->omniAtmosphere->SpeciesCount(); ++species)
+@@ -300,20 +308,52 @@ int main()
+ 
+ 	GameSave corrupt = *save;
+ 	corrupt.omniAtmosphereSpeciesMassDensity[0] = -1.0;
+-	auto corruptOps = corrupt.Serialise().second;
+-	if (corruptOps.empty())
+-		return Fail("could not construct the corrupted OPS fixture");
+-	bool rejectedCorrupt = false;
+-	try
++	if (corrupt.Serialise().first || !corrupt.Serialise().second.empty())
++		return Fail("invalid atmosphere state was not rejected before OPS serialization");
++	GameSave nonfinite = *save;
++	nonfinite.omniAtmosphereMomentumX[0] = std::numeric_limits<double>::quiet_NaN();
++	if (nonfinite.Serialise().first || !nonfinite.Serialise().second.empty())
++		return Fail("non-finite atmosphere state was not rejected before OPS serialization");
++	auto invalidWaterSave = undoSource->Save(true, RES.OriginRect());
++	if (!invalidWaterSave || invalidWaterSave->omniWaterParcelMassKg.empty())
++		return Fail("could not construct a water OPS write-rejection fixture");
++	GameSave invalidWater = *invalidWaterSave;
++	invalidWater.omniWaterParcelSpecificEnthalpyJPerKg.assign(
++		invalidWater.omniWaterParcelMassKg.size(), std::numeric_limits<double>::quiet_NaN());
++	if (invalidWater.Serialise().first || !invalidWater.Serialise().second.empty())
++		return Fail("non-finite water enthalpy was not rejected before OPS serialization");
++	if (!invalidWaterSave->hasOmniCarbonParcelState || invalidWaterSave->omniCarbonParcelMassKg.empty())
++		return Fail("could not construct a carbon OPS write-rejection fixture");
++	GameSave invalidCarbon = *invalidWaterSave;
++	invalidCarbon.omniCarbonParcelMassKg[undoCarbon] =
++		std::numeric_limits<double>::quiet_NaN();
++	if (invalidCarbon.Serialise().first || !invalidCarbon.Serialise().second.empty())
++		return Fail("non-finite carbon mass was not rejected before OPS serialization");
++
++	const auto carbonSerialised = invalidWaterSave->Serialise();
++	if (carbonSerialised.second.empty())
++		return Fail("serialising the carbon parcel payload failed");
++	GameSave carbonParsed(carbonSerialised.second);
++	if (!carbonParsed.hasOmniCarbonParcelState ||
++		carbonParsed.omniCarbonParcelStateVersion != GameSave::OmniCarbonParcelStateVersion ||
++		carbonParsed.omniCarbonParcelMassKg != invalidWaterSave->omniCarbonParcelMassKg)
+ 	{
+-		GameSave rejected(corruptOps);
++		return Fail("OPS parse did not preserve the exact carbon parcel payload");
+ 	}
+-	catch (const ParseException &)
++	auto carbonLoaded = Simulation::Factory();
++	carbonLoaded->SetOmniSimulationMode(OMNI_ENHANCED);
++	carbonLoaded->Load(&carbonParsed, true, { 0, 0 });
++	int loadedCarbon = -1;
++	for (int i = 0; i < carbonLoaded->parts.active; ++i)
+ 	{
+-		rejectedCorrupt = true;
++		if (carbonLoaded->parts[i].type == PT_COAL)
++		{
++			loadedCarbon = i;
++			break;
++		}
+ 	}
+-	if (!rejectedCorrupt)
+-		return Fail("corrupted serialized species density was not rejected");
++	if (loadedCarbon < 0 || carbonLoaded->GetOmniCarbonParcelMassKg(loadedCarbon) != undoCarbonMass)
++		return Fail("Simulation load did not restore carbon parcel ownership");
+ 
+ 	std::cout << "omni_save_roundtrip_probe_pass=true\n";
+ 	std::cout << "ops_state_version=" << GameSave::OmniAtmosphereStateVersion << '\n';
+@@ -329,6 +369,7 @@ int main()
+ 	std::cout << "transform_momentum=true\n";
+ 	std::cout << "unknown_species_rejected=true\n";
+ 	std::cout << "malformed_payload_rejected=true\n";
+-	std::cout << "corrupt_ops_rejected=true\n";
++	std::cout << "invalid_ops_write_rejected=true\n";
++	std::cout << "carbon_sidecar_roundtrip=true\n";
+ 	return 0;
+ }
+diff --git a/tools/omni_thermal_probe.cpp b/tools/omni_thermal_probe.cpp
+index 2bd8adcc2..c514f01b3 100644
+--- a/tools/omni_thermal_probe.cpp
++++ b/tools/omni_thermal_probe.cpp
+@@ -45,6 +45,17 @@ int main()
+ 		!(halfMelt.solidFraction > 0.0 && halfMelt.solidFraction < 1.0) ||
+ 		!Close(halfMelt.solidFraction + halfMelt.liquidFraction, 1.0, 0.0, 1.0e-12))
+ 		return Fail("water mushy phase fractions are invalid");
++	const double saturatedLiquid = OmniThermal::WaterSpecificEnthalpyJPerKg(373.15) -
++		OmniThermal::LatentHeatVaporizationJPerKg;
++	const double boilingGapEnthalpy = saturatedLiquid + 1000.0;
++	const auto boilingGap = OmniThermal::WaterFromSpecificEnthalpy(boilingGapEnthalpy);
++	if (boilingGap.phase != OmniThermalWaterPhase::Boiling ||
++		!Close(boilingGap.temperatureK, 373.15, 0.0, 1.0e-12) ||
++		!Close(boilingGap.liquidFraction + boilingGap.vaporFraction, 1.0, 0.0, 1.0e-12) ||
++		!Close(boilingGap.specificEnthalpyJPerKg, boilingGapEnthalpy, 0.0, 1.0e-9))
++	{
++		return Fail("water latent-vaporization enthalpy interval is not invertible");
++	}
+ 
+ 	const auto exchange = OmniThermal::ExchangeWaterParcel(4.0e-6, 260.0, 280.0);
+ 	if (!(exchange.energyJ > 0.0) || exchange.residualJ != 0.0)
+@@ -86,6 +97,7 @@ int main()
+ 	std::cout << "triple_point_pressure_pa=" << triplePressure << '\n';
+ 	std::cout << "normal_boiling_temperature_k=" << normalBoiling << '\n';
+ 	std::cout << "half_melt_solid_fraction=" << halfMelt.solidFraction << '\n';
++	std::cout << "boiling_gap_vapor_fraction=" << boilingGap.vaporFraction << '\n';
+ 	std::cout << "parcel_exchange_energy_j=" << exchange.energyJ << '\n';
+ 	std::cout << "strict_water_transfer_mass_kg=" << transferMass << '\n';
+ 	return 0;
+diff --git a/tools/omni_water_coupling_probe.cpp b/tools/omni_water_coupling_probe.cpp
+index dd0897c0d..7936594bf 100644
+--- a/tools/omni_water_coupling_probe.cpp
++++ b/tools/omni_water_coupling_probe.cpp
+@@ -248,7 +248,7 @@ int main()
+ 	std::cout << "high_pressure_evaporation_kg=" << highPressureEvaporationKg << '\n';
+ 	std::cout << "water_mass_residual_kg=" << evaporationMetrics.waterMassResidualKg << '\n';
+ 	std::cout << "coupled_energy_residual_j=" << evaporationMetrics.coupledEnergyResidualJ << '\n';
+-	std::cout << "water_sidecar_bytes_per_particle=" << sizeof(double) << '\n';
++	std::cout << "water_sidecar_bytes_per_particle=" << 2 * sizeof(double) << '\n';
+ 	std::cout << "water_sidecar_ops_roundtrip=true\n";
+ 	std::cout << "long_run_steps=1000\n";
+ 	std::cout << "long_run_water_drift_kg=" << driftFinalWaterKg - driftInitialWaterKg << '\n';
+diff --git a/tools/omnicore_data_check.py b/tools/omnicore_data_check.py
+index 83412e737..8e6767394 100644
+--- a/tools/omnicore_data_check.py
++++ b/tools/omnicore_data_check.py
+@@ -1,9 +1,10 @@
+ #!/usr/bin/env python3
+ """Fail-closed validation for the offline OmniCore data contract v1.
+ 
+-This tool has no production runtime consumer. It validates the 1.0.4 schema,
+-canonical SI unit vocabulary, identity-only Legacy mapping and any future catalog
+-records before later phases are allowed to generate runtime data.
++The 1.0.4 foundation catalog was offline-only. The 1.0.8 catalog adds one
++reviewed compact runtime-candidate reaction. The checker keeps both versions
++valid so historic foundation fixtures remain reproducible while rejecting an
++ambiguous transition between offline and runtime data.
+ """
+ 
+ from __future__ import annotations
+@@ -24,7 +25,8 @@ from typing import Any, Iterable, Sequence
+ 
+ 
+ SCHEMA_VERSION = 1
+-DATASET_VERSION = "1.0.4-foundation.1"
++FOUNDATION_DATASET_VERSION = "1.0.4-foundation.1"
++RUNTIME_CHEMISTRY_DATASET_VERSION = "1.0.8-chemistry.1"
+ UNIT_REGISTRY_ID = "omnicore.units.canonical-si.v1"
+ DATA_SCHEMA_SEMANTIC_SHA256 = "F41112F283DC4491527F27D7FB54AC650F2ED85D62FCBF2FCD11057097BE6F7A"
+ UNIT_SCHEMA_SEMANTIC_SHA256 = "7D2EA6179C59AFF675D72EB4DC5992D7A9FAA2DB0028D5E9DBCAE654CD68C504"
+@@ -1280,14 +1282,26 @@ def validate_catalog(document: Any, root: Path, errors: list[str]) -> dict[str,
+     catalog_id = _string(obj.get("catalog_id"), "catalog.catalog_id", errors, pattern=ID_RE)
+     if catalog_id is None:
+         catalog_id = "invalid"
+-    if obj.get("dataset_version") != DATASET_VERSION:
+-        errors.append(f"catalog.dataset_version: expected {DATASET_VERSION}")
++    dataset_version = obj.get("dataset_version")
++    if dataset_version not in {FOUNDATION_DATASET_VERSION, RUNTIME_CHEMISTRY_DATASET_VERSION}:
++        errors.append(
++            "catalog.dataset_version: expected one of "
++            f"{FOUNDATION_DATASET_VERSION}, {RUNTIME_CHEMISTRY_DATASET_VERSION}"
++        )
+     if obj.get("unit_registry_id") != UNIT_REGISTRY_ID:
+         errors.append(f"catalog.unit_registry_id: expected {UNIT_REGISTRY_ID}")
+-    if obj.get("catalog_status") != "schema_only":
+-        errors.append("catalog.catalog_status: 1.0.4 permits schema_only only")
+-    if obj.get("runtime_consumption") is not False:
+-        errors.append("catalog.runtime_consumption: 1.0.4 requires false")
++    is_foundation = dataset_version == FOUNDATION_DATASET_VERSION
++    is_runtime_chemistry = dataset_version == RUNTIME_CHEMISTRY_DATASET_VERSION
++    if is_foundation:
++        if obj.get("catalog_status") != "schema_only":
++            errors.append("catalog.catalog_status: 1.0.4 requires schema_only")
++        if obj.get("runtime_consumption") is not False:
++            errors.append("catalog.runtime_consumption: 1.0.4 requires false")
++    elif is_runtime_chemistry:
++        if obj.get("catalog_status") != "runtime_candidate":
++            errors.append("catalog.catalog_status: 1.0.8 requires runtime_candidate")
++        if obj.get("runtime_consumption") is not True:
++            errors.append("catalog.runtime_consumption: 1.0.8 requires true")
+ 
+     materials_input = _list(obj.get("materials"), "catalog.materials", errors) or []
+     species_input = _list(obj.get("species"), "catalog.species", errors) or []
+@@ -1355,18 +1369,25 @@ def validate_catalog(document: Any, root: Path, errors: list[str]) -> dict[str,
+                 errors.append(f"catalog.reactions[{index}].id: duplicate ID {record_id}")
+             reaction_ids.add(folded)
+ 
+-    for collection_name, records in (
+-        ("materials", materials_input), ("species", species_input),
+-        ("reactions", reactions_input),
+-    ):
+-        for index, record in enumerate(records):
+-            if isinstance(record, dict) and record.get("status") not in {
+-                "identity_only", "legacy_only"
+-            }:
+-                errors.append(
+-                    f"catalog.{collection_name}[{index}]: schema_only catalog cannot contain "
+-                    f"{record.get('status')!r} record"
+-                )
++    if is_foundation:
++        for collection_name, records in (
++            ("materials", materials_input), ("species", species_input),
++            ("reactions", reactions_input),
++        ):
++            for index, record in enumerate(records):
++                if isinstance(record, dict) and record.get("status") not in {
++                    "identity_only", "legacy_only"
++                }:
++                    errors.append(
++                        f"catalog.{collection_name}[{index}]: schema_only catalog cannot contain "
++                        f"{record.get('status')!r} record"
++                    )
++    if is_runtime_chemistry:
++        if not species_input or not reactions_input:
++            errors.append("catalog: 1.0.8 runtime candidate requires species and reactions")
++        if not any(isinstance(record, dict) and record.get("status") == "runtime_candidate"
++                   for record in reactions_input):
++            errors.append("catalog: 1.0.8 requires at least one runtime_candidate reaction")
+     return {
+         "materials": len(materials_input),
+         "species": len(species_input),
+@@ -1502,11 +1523,13 @@ def main(argv: Sequence[str] | None = None) -> int:
+         print(f"OmniCore data validation failed with {len(errors)} error(s).")
+         return 1
+     if not args.quiet:
++        catalog = load_json_strict(root / DATA_ROOT / "catalog.json")
+         print(
+             "OmniCore data validation passed: "
+             f"materials={stats['materials']}, species={stats['species']}, "
+             f"reactions={stats['reactions']}, "
+-            f"legacy_mappings={stats['legacy_mappings']}, runtime_consumption=false"
++            f"legacy_mappings={stats['legacy_mappings']}, "
++            f"runtime_consumption={str(catalog.get('runtime_consumption')).lower()}"
+         )
+     return 0
+ 
+diff --git a/tools/package_source_release.py b/tools/package_source_release.py
+index a4749dfd7..7aa2c412e 100644
+--- a/tools/package_source_release.py
++++ b/tools/package_source_release.py
+@@ -64,6 +64,7 @@ ALLOWED_TOOLS = {
+     "tools/generate_periodic_content_links.py",
+     "tools/generate_periodic_table_data.py",
+     "tools/omnicore_data_check.py",
++	"tools/omni_reaction_runtime_contract_check.py",
+     "tools/package_source_release.py",
+     "tools/physical_scale_check.py",
+     "tools/prepare_windows_release.py",
+@@ -91,6 +92,7 @@ REQUIRED_MEMBERS = {
+     "resources/omnicore/v1/README.md",
+     "resources/omnicore/v1/catalog.json",
+     "resources/omnicore/v1/legacy-material-map.json",
++	"resources/omnicore/v1/omni-reaction-runtime-v1.json",
+ 	"resources/omnicore/v1/atmosphere-policy-candidates.json",
+     "resources/omnicore/v1/physical-scale-candidates.json",
+     "resources/omnicore/v1/schema.json",
+@@ -101,6 +103,7 @@ REQUIRED_MEMBERS = {
+     "tools/generate_content_menu_policy.py",
+     "tools/generate_periodic_content_links.py",
+     "tools/omnicore_data_check.py",
++	"tools/omni_reaction_runtime_contract_check.py",
+ 	"tools/atmosphere_policy_check.py",
+     "tools/physical_scale_check.py",
+     "tools/run_atmospherebench.ps1",
+diff --git a/tools/package_test_release.py b/tools/package_test_release.py
+index 501698058..578ca29f4 100644
+--- a/tools/package_test_release.py
++++ b/tools/package_test_release.py
+@@ -70,6 +70,7 @@ DOCUMENTS = (
+     ("resources/third_party/FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt"),
+     ("resources/third_party/FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt"),
+     ("resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt"),
++    ("resources/third_party/OPENSTAX_CHEMISTRY_CC-BY-4.0.txt", "LICENSES/OPENSTAX-CHEMISTRY-CC-BY-4.0.txt"),
+     *LIBRARY_LICENSE_DOCUMENTS,
+ )
+ FINAL_DOCUMENTS = (
+@@ -86,6 +87,7 @@ FINAL_DOCUMENTS = (
+     ("resources/third_party/FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt"),
+     ("resources/third_party/FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt"),
+     ("resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt"),
++    ("resources/third_party/OPENSTAX_CHEMISTRY_CC-BY-4.0.txt", "LICENSES/OPENSTAX-CHEMISTRY-CC-BY-4.0.txt"),
+     *LIBRARY_LICENSE_DOCUMENTS,
+ )
+ DEV_DOCUMENTS = (
+diff --git a/tools/runtime/omni_profiler.lua b/tools/runtime/omni_profiler.lua
+index b8ceb835f..3873ec1cd 100644
+--- a/tools/runtime/omni_profiler.lua
++++ b/tools/runtime/omni_profiler.lua
+@@ -107,7 +107,7 @@ local function test_runtime_metrics()
+     event.unregister(event.BEFORESIM, callback)
+     event.unregister(event.AFTERSIM, callback)
+ 
+-    for _, name in ipairs({ "thermal", "chemistry", "gpu", "gpu_synchronization" }) do
++    for _, name in ipairs({ "thermal", "gpu", "gpu_synchronization" }) do
+         local metric = assert(metrics.subsystems[name], "missing non-instrumented metric: " .. name)
+         assert(not metric.instrumented, name .. " unexpectedly claims instrumentation")
+         assert(metric.calls == 0 and metric.total_nanoseconds == 0,
+@@ -115,8 +115,11 @@ local function test_runtime_metrics()
+     end
+     assert(metrics.subsystems.thermal.status == "not_instrumented_legacy_per_particle",
+         "thermal scope status changed unexpectedly")
+-    assert(metrics.subsystems.chemistry.status == "not_instrumented_legacy_per_element",
++    local chemistry = assert(metrics.subsystems.chemistry, "missing chemistry metric")
++    assert(chemistry.instrumented and chemistry.status == "instrumented_omni_reaction_runtime",
+         "chemistry scope status changed unexpectedly")
++    assert(chemistry.calls == 0 and chemistry.total_nanoseconds == 0,
++        "Classic fixture unexpectedly entered OmniReactionRuntime")
+     assert(metrics.subsystems.gpu.status == "not_tested_no_gpu_backend",
+         "GPU scope status changed unexpectedly")
+     assert(metrics.subsystems.gpu_synchronization.status == "not_tested_no_gpu_backend",
+diff --git a/tools/test_release_audit.py b/tools/test_release_audit.py
+index 2a6e992e8..334413161 100644
+--- a/tools/test_release_audit.py
++++ b/tools/test_release_audit.py
+@@ -34,6 +34,7 @@ NORMAL_DOCUMENTS = {
+     "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt",
+     "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt",
+     "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt",
++    "LICENSES/OPENSTAX-CHEMISTRY-CC-BY-4.0.txt",
+     *{
+         f"LICENSES/LIBRARIES/{name}.LICENSE.txt"
+         for name in (
+diff --git a/tools/tests/test_omni_profiler.py b/tools/tests/test_omni_profiler.py
+index 13e11cd90..42be15785 100644
+--- a/tools/tests/test_omni_profiler.py
++++ b/tools/tests/test_omni_profiler.py
+@@ -102,7 +102,7 @@ class OmniProfilerContractTest(unittest.TestCase):
+             self.assertIn(api, self.lua_simulation)
+         for status in (
+             '"not_instrumented_legacy_per_particle"',
+-            '"not_instrumented_legacy_per_element"',
++            '"instrumented_omni_reaction_runtime"',
+             '"not_tested_no_gpu_backend"',
+             '"not_tested"',
+         ):
+diff --git a/tools/tests/test_omnicore_data_check.py b/tools/tests/test_omnicore_data_check.py
+index 7390c21a2..c3896a916 100644
+--- a/tools/tests/test_omnicore_data_check.py
++++ b/tools/tests/test_omnicore_data_check.py
+@@ -51,7 +51,7 @@ def base_catalog() -> dict[str, object]:
+         "schema_version": 1,
+         "document_type": "omnicore_catalog",
+         "catalog_id": "test.fixture",
+-        "dataset_version": "1.0.4-foundation.1",
++        "dataset_version": tool.FOUNDATION_DATASET_VERSION,
+         "unit_registry_id": "omnicore.units.canonical-si.v1",
+         "catalog_status": "schema_only",
+         "runtime_consumption": False,
+@@ -169,9 +169,9 @@ class OmniCoreDataCheckTests(unittest.TestCase):
+         errors, stats = tool.audit(ROOT)
+         self.assertEqual(errors, [])
+         self.assertEqual(stats, {
+-            "materials": 0,
+-            "species": 0,
+-            "reactions": 0,
++            "materials": 1,
++            "species": 3,
++            "reactions": 1,
+             "legacy_mappings": 488,
+         })
+ 
+diff --git a/tools/tests/test_test_release_audit.py b/tools/tests/test_test_release_audit.py
+index 4f3cffad5..9a2d4b18c 100644
+--- a/tools/tests/test_test_release_audit.py
++++ b/tools/tests/test_test_release_audit.py
+@@ -79,6 +79,7 @@ class TestReleaseAuditTests(unittest.TestCase):
+             "FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt",
+             "FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt",
+             "FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt",
++            "OPENSTAX_CHEMISTRY_CC-BY-4.0.txt",
+         ):
+             (third_party / name).write_text("OFL\n", encoding="utf-8")
+         library_licenses = source / package_test_release.PREBUILT_LICENSE_ROOT
+diff --git a/tools/tests/test_third_party_license_audit.py b/tools/tests/test_third_party_license_audit.py
+index 8b1d20367..f0e64a746 100644
+--- a/tools/tests/test_third_party_license_audit.py
++++ b/tools/tests/test_third_party_license_audit.py
+@@ -29,7 +29,7 @@ class ThirdPartyLicenseAuditTests(unittest.TestCase):
+         errors, report = audit.audit(ROOT)
+         self.assertEqual(errors, [])
+         self.assertTrue(report["third_party_license_audit"])
+-        self.assertEqual(report["manifest_components"], 24)
++        self.assertEqual(report["manifest_components"], 25)
+         self.assertEqual(report["implemented_external_elements"], 22)
+ 
+     def test_manifest_hash_drift_fails_closed(self) -> None:

@@ -45,6 +45,17 @@ int main()
 		!(halfMelt.solidFraction > 0.0 && halfMelt.solidFraction < 1.0) ||
 		!Close(halfMelt.solidFraction + halfMelt.liquidFraction, 1.0, 0.0, 1.0e-12))
 		return Fail("water mushy phase fractions are invalid");
+	const double saturatedLiquid = OmniThermal::WaterSpecificEnthalpyJPerKg(373.15) -
+		OmniThermal::LatentHeatVaporizationJPerKg;
+	const double boilingGapEnthalpy = saturatedLiquid + 1000.0;
+	const auto boilingGap = OmniThermal::WaterFromSpecificEnthalpy(boilingGapEnthalpy);
+	if (boilingGap.phase != OmniThermalWaterPhase::Boiling ||
+		!Close(boilingGap.temperatureK, 373.15, 0.0, 1.0e-12) ||
+		!Close(boilingGap.liquidFraction + boilingGap.vaporFraction, 1.0, 0.0, 1.0e-12) ||
+		!Close(boilingGap.specificEnthalpyJPerKg, boilingGapEnthalpy, 0.0, 1.0e-9))
+	{
+		return Fail("water latent-vaporization enthalpy interval is not invertible");
+	}
 
 	const auto exchange = OmniThermal::ExchangeWaterParcel(4.0e-6, 260.0, 280.0);
 	if (!(exchange.energyJ > 0.0) || exchange.residualJ != 0.0)
@@ -86,6 +97,7 @@ int main()
 	std::cout << "triple_point_pressure_pa=" << triplePressure << '\n';
 	std::cout << "normal_boiling_temperature_k=" << normalBoiling << '\n';
 	std::cout << "half_melt_solid_fraction=" << halfMelt.solidFraction << '\n';
+	std::cout << "boiling_gap_vapor_fraction=" << boilingGap.vaporFraction << '\n';
 	std::cout << "parcel_exchange_energy_j=" << exchange.energyJ << '\n';
 	std::cout << "strict_water_transfer_mass_kg=" << transferMass << '\n';
 	return 0;

@@ -1,12 +1,260 @@
 {
   "schema_version": 1,
   "document_type": "omnicore_catalog",
-  "catalog_id": "omnicore.foundation.v1",
-  "dataset_version": "1.0.4-foundation.1",
+  "catalog_id": "omnicore.runtime.chemistry.v1",
+  "dataset_version": "1.0.8-chemistry.1",
   "unit_registry_id": "omnicore.units.canonical-si.v1",
-  "catalog_status": "schema_only",
-  "runtime_consumption": false,
-  "materials": [],
-  "species": [],
-  "reactions": []
+  "catalog_status": "runtime_candidate",
+  "runtime_consumption": true,
+  "materials": [
+    {
+      "id": "material.carbon-coal-parcel",
+      "names": { "en": "Carbon-bearing coal parcel", "zh_CN": "含碳煤粒子包" },
+      "status": "runtime_candidate",
+      "behavior_class": "RULE_DRIVEN",
+      "phases": ["solid"],
+      "legacy_mapping": {
+        "element_identifier": "DEFAULT_PT_COAL",
+        "stable_id": 59,
+        "relationship": "proxy"
+      },
+      "composition": [
+        {
+          "component_kind": "species",
+          "component_id": "species.carbon",
+          "basis": "mass_fraction",
+          "fraction": "1"
+        }
+      ],
+      "properties": [],
+      "provenance": {
+        "source_title": "OmniCore 1.0.8 condensed-carbon ownership policy",
+        "source_version": "v1",
+        "source_date": "2026-08-12",
+        "accessed_on": "2026-08-12",
+        "source_locator": "project://docs/vnext/phase-8-omnichem-combustion",
+        "source_kind": "project_generated",
+        "method": "game_tuned",
+        "confidence": "medium",
+        "redistribution_status": "project_generated",
+        "license_or_terms": "TPT-ZH-OmniPack project data",
+        "license_evidence": "project://repository-license",
+        "license_sha256": null,
+        "tuning_status": "game_tuned"
+      }
+    }
+  ],
+  "species": [
+    {
+      "id": "species.carbon",
+      "names": { "en": "Carbon", "zh_CN": "碳" },
+      "status": "runtime_candidate",
+      "chemistry_enabled": true,
+      "elemental_composition": { "C": 1 },
+      "charge_number": 0,
+      "phases": ["solid"],
+      "legacy_mapping": null,
+      "properties": [],
+      "provenance": {
+        "source_title": "OpenStax Chemistry, thermochemical equation definitions",
+        "source_version": "web edition accessed 2026-08-12",
+        "source_date": "2026-08-12",
+        "accessed_on": "2026-08-12",
+        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
+        "source_kind": "peer_reviewed",
+        "method": "exact_definition",
+        "confidence": "high",
+        "redistribution_status": "redistributable_with_attribution",
+        "license_or_terms": "Creative Commons Attribution 4.0 International",
+        "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
+        "license_sha256": null,
+        "tuning_status": "exact_definition"
+      }
+    },
+    {
+      "id": "species.oxygen",
+      "names": { "en": "Oxygen", "zh_CN": "氧气" },
+      "status": "runtime_candidate",
+      "chemistry_enabled": true,
+      "elemental_composition": { "O": 2 },
+      "charge_number": 0,
+      "phases": ["gas"],
+      "legacy_mapping": null,
+      "properties": [],
+      "provenance": {
+        "source_title": "OpenStax Chemistry, thermochemical equation definitions",
+        "source_version": "web edition accessed 2026-08-12",
+        "source_date": "2026-08-12",
+        "accessed_on": "2026-08-12",
+        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
+        "source_kind": "peer_reviewed",
+        "method": "exact_definition",
+        "confidence": "high",
+        "redistribution_status": "redistributable_with_attribution",
+        "license_or_terms": "Creative Commons Attribution 4.0 International",
+        "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
+        "license_sha256": null,
+        "tuning_status": "exact_definition"
+      }
+    },
+    {
+      "id": "species.carbon-dioxide",
+      "names": { "en": "Carbon dioxide", "zh_CN": "二氧化碳" },
+      "status": "runtime_candidate",
+      "chemistry_enabled": true,
+      "elemental_composition": { "C": 1, "O": 2 },
+      "charge_number": 0,
+      "phases": ["gas"],
+      "legacy_mapping": null,
+      "properties": [],
+      "provenance": {
+        "source_title": "OpenStax Chemistry, thermochemical equation definitions",
+        "source_version": "web edition accessed 2026-08-12",
+        "source_date": "2026-08-12",
+        "accessed_on": "2026-08-12",
+        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
+        "source_kind": "peer_reviewed",
+        "method": "exact_definition",
+        "confidence": "high",
+        "redistribution_status": "redistributable_with_attribution",
+        "license_or_terms": "Creative Commons Attribution 4.0 International",
+        "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
+        "license_sha256": null,
+        "tuning_status": "exact_definition"
+      }
+    }
+  ],
+  "reactions": [
+    {
+      "id": "reaction.carbon-oxidation",
+      "status": "runtime_candidate",
+      "reactants": [
+        { "species_id": "species.carbon", "coefficient": "1", "phase": "solid" },
+        { "species_id": "species.oxygen", "coefficient": "1", "phase": "gas" }
+      ],
+      "products": [
+        { "species_id": "species.carbon-dioxide", "coefficient": "1", "phase": "gas" }
+      ],
+      "reversible": false,
+      "rate_model": {
+        "kind": "arrhenius",
+        "overall_order": 1,
+        "pre_exponential_factor": {
+          "property_id": "carbon_oxidation_pre_exponential",
+          "quantity_kind": "first_order_rate_coefficient",
+          "value": "200000",
+          "unit": "per_second",
+          "validity": {
+            "temperature": { "minimum": "1", "maximum": "100000", "unit": "kelvin" },
+            "pressure": { "minimum": "0", "maximum": "1000000000", "unit": "pascal" }
+          },
+          "provenance": {
+            "source_title": "OmniCore 1.0.8 heterogeneous-rate gameplay calibration",
+            "source_version": "v1",
+            "source_date": "2026-08-12",
+            "accessed_on": "2026-08-12",
+            "source_locator": "project://docs/vnext/phase-8-omnichem-combustion",
+            "source_kind": "project_generated",
+            "method": "game_tuned",
+            "confidence": "low",
+            "redistribution_status": "project_generated",
+            "license_or_terms": "TPT-ZH-OmniPack project data",
+            "license_evidence": "project://repository-license",
+            "license_sha256": null,
+            "tuning_status": "game_tuned"
+          }
+        },
+        "temperature_exponent": {
+          "property_id": "carbon_oxidation_temperature_exponent",
+          "quantity_kind": "dimensionless",
+          "value": "0",
+          "unit": "dimensionless",
+          "validity": {
+            "temperature": { "minimum": "1", "maximum": "100000", "unit": "kelvin" },
+            "pressure": { "minimum": "0", "maximum": "1000000000", "unit": "pascal" }
+          },
+          "provenance": {
+            "source_title": "OmniCore 1.0.8 heterogeneous-rate gameplay calibration",
+            "source_version": "v1",
+            "source_date": "2026-08-12",
+            "accessed_on": "2026-08-12",
+            "source_locator": "project://docs/vnext/phase-8-omnichem-combustion",
+            "source_kind": "project_generated",
+            "method": "game_tuned",
+            "confidence": "low",
+            "redistribution_status": "project_generated",
+            "license_or_terms": "TPT-ZH-OmniPack project data",
+            "license_evidence": "project://repository-license",
+            "license_sha256": null,
+            "tuning_status": "game_tuned"
+          }
+        },
+        "activation_energy": {
+          "property_id": "carbon_oxidation_activation_energy",
+          "quantity_kind": "molar_energy",
+          "value": "80000",
+          "unit": "joule_per_mole",
+          "validity": {
+            "temperature": { "minimum": "1", "maximum": "100000", "unit": "kelvin" },
+            "pressure": { "minimum": "0", "maximum": "1000000000", "unit": "pascal" }
+          },
+          "provenance": {
+            "source_title": "OmniCore 1.0.8 heterogeneous-rate gameplay calibration",
+            "source_version": "v1",
+            "source_date": "2026-08-12",
+            "accessed_on": "2026-08-12",
+            "source_locator": "project://docs/vnext/phase-8-omnichem-combustion",
+            "source_kind": "project_generated",
+            "method": "game_tuned",
+            "confidence": "low",
+            "redistribution_status": "project_generated",
+            "license_or_terms": "TPT-ZH-OmniPack project data",
+            "license_evidence": "project://repository-license",
+            "license_sha256": null,
+            "tuning_status": "game_tuned"
+          }
+        }
+      },
+      "energy_change": {
+        "property_id": "standard_enthalpy_carbon_oxidation",
+        "quantity_kind": "molar_energy",
+        "value": "-393500",
+        "unit": "joule_per_mole",
+        "validity": {
+          "temperature": { "minimum": "298.15", "maximum": "298.15", "unit": "kelvin" },
+          "pressure": { "minimum": "101325", "maximum": "101325", "unit": "pascal" }
+        },
+        "provenance": {
+          "source_title": "OpenStax Chemistry, Standard Molar Enthalpies of Combustion",
+          "source_version": "web edition accessed 2026-08-12",
+          "source_date": "2026-08-12",
+          "accessed_on": "2026-08-12",
+          "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
+          "source_kind": "peer_reviewed",
+          "method": "measured",
+          "confidence": "high",
+          "redistribution_status": "redistributable_with_attribution",
+          "license_or_terms": "Creative Commons Attribution 4.0 International",
+          "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
+          "license_sha256": null,
+          "tuning_status": "measured"
+        }
+      },
+      "provenance": {
+        "source_title": "OpenStax Chemistry, carbon combustion equation",
+        "source_version": "web edition accessed 2026-08-12",
+        "source_date": "2026-08-12",
+        "accessed_on": "2026-08-12",
+        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
+        "source_kind": "peer_reviewed",
+        "method": "derived",
+        "confidence": "high",
+        "redistribution_status": "redistributable_with_attribution",
+        "license_or_terms": "Creative Commons Attribution 4.0 International",
+        "license_evidence": "https://openstax.org/books/chemistry/pages/preface",
+        "license_sha256": null,
+        "tuning_status": "measured"
+      }
+    }
+  ]
 }

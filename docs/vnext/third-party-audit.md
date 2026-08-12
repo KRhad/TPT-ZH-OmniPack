@@ -1,6 +1,6 @@
 # Third-party code and data audit
 
-Checked 2026-08-09 and updated 2026-08-11. `Selected use` is the sole classification for each row.
+Checked 2026-08-09 and updated 2026-08-12. `Selected use` is the sole classification for each row.
 
 | Name | Version/commit | Purpose | License | Code reuse allowed? | Modification allowed? | Redistribution allowed? | Data license | GPL compatibility | Reference only? | Selected use |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -15,6 +15,7 @@ Checked 2026-08-09 and updated 2026-08-11. `Selected use` is the sole classifica
 | CoolProp | `v8.0.0` | offline property/reference calculations | MIT | yes | yes | yes, retain notice | underlying correlations/sources retain attribution/provenance | yes | no | `DIRECT_REUSE` |
 | NIST Chemistry WebBook | SRD 69, data updated 2025, accessed 2026-08-09 | validation of thermochemistry and properties | NIST Standard Reference Data copyright; all rights reserved notice | not a code dependency | not assumed | bulk redistribution not authorized by default; specific permission/license required | SRD 69 | N/A | yes | `REFERENCE_ONLY` |
 | NASA NTRS atmospheric sound reference | document `19720017735`, published 1969, accessed 2026-08-11 | one approximate air sound-speed value for Phase 5 CFL feasibility | US Government work; NTRS marks public use permitted | no code reused | N/A | public use permitted | public technical publication | N/A | yes | `REFERENCE_ONLY` |
+| OpenStax Chemistry | web edition, section 5.3, accessed 2026-08-12 | carbon-combustion identity and standard molar enthalpy | CC BY 4.0 | no code reused | N/A | yes with attribution | CC BY 4.0 textbook data | yes as attributed data | no | `ADAPT` |
 | The Parallel Toy / historical parallel TPT experiments | forum/source snapshots not pinned for reuse | CPU parallelization hazards and timing ideas | derived-project/license evidence not fully pinned in this audit | not approved | not approved | not approved | N/A | not yet determined per snapshot | yes | `REFERENCE_ONLY` |
 | GPU falling-sand experiments | research category; no selected repository/commit | proposal/arbitration/ping-pong algorithm ideas | varies; no approved candidate | not approved | not approved | not approved | N/A | not determined | yes | `REFERENCE_ONLY` |
 
@@ -32,6 +33,8 @@ Checked 2026-08-09 and updated 2026-08-11. `Selected use` is the sole classifica
 - NIST WebBook: <https://webbook.nist.gov/>
 - NIST SRD terms: <https://www.nist.gov/open/copyright-fair-use-and-licensing-statements-srd-data-software-and-technical-series-publications>
 - NASA NTRS atmospheric sound reference: <https://ntrs.nasa.gov/citations/19720017735>
+- OpenStax Chemistry enthalpy source: <https://openstax.org/books/chemistry/pages/5-3-enthalpy>
+- OpenStax Chemistry CC BY 4.0 statement: <https://openstax.org/books/chemistry/pages/preface>
 - Parallel Toy discussion: <https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=27760>
 
 ## Rules derived from the audit

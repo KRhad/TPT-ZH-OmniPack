@@ -102,7 +102,7 @@ class OmniProfilerContractTest(unittest.TestCase):
             self.assertIn(api, self.lua_simulation)
         for status in (
             '"not_instrumented_legacy_per_particle"',
-            '"not_instrumented_legacy_per_element"',
+            '"instrumented_omni_reaction_runtime"',
             '"not_tested_no_gpu_backend"',
             '"not_tested"',
         ):

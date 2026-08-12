@@ -123,6 +123,24 @@ struct OmniAtmospherePrimitive
 	bool finite = false;
 };
 
+// A caller-owned condensed parcel may react with atmosphere species. This
+// explicit transaction is the only 1.0.8 path that may change multiple gas
+// channels and chemical energy in one commit. Species deltas are kilograms,
+// not densities; positive values enter the atmosphere and negative values are
+// consumed from it. The parcel's physical velocity carries its mass, momentum
+// and kinetic energy into the gas.
+struct OmniAtmosphereReactionTransfer
+{
+	bool committed = false;
+	double gasMassDeltaKg = 0.0;
+	double sourceMomentumX = 0.0;
+	double sourceMomentumY = 0.0;
+	double sensibleEnergyDeltaJ = 0.0;
+	double sourceKineticEnergyJ = 0.0;
+	double chemicalEnergyJ = 0.0;
+	double totalEnergyDeltaJ = 0.0;
+};
+
 struct OmniAtmosphereLedger
 {
 	double initialMassKg = 0.0;
@@ -220,6 +238,10 @@ public:
 	void AddEnergyDensity(std::size_t x, std::size_t y, double joulesPerM3);
 	void AddMassDensity(std::size_t x, std::size_t y, double kilogramsPerM3);
 	void AddSpeciesMassDensity(std::size_t x, std::size_t y, std::size_t species, double kilogramsPerM3);
+	bool ApplyReactionSpeciesTransfer(std::size_t x, std::size_t y,
+		const std::vector<double> &speciesMassDeltaKg, double chemicalEnergyJ,
+		double parcelVelocityX, double parcelVelocityY,
+		OmniAtmosphereReactionTransfer *result = nullptr);
 	void SetSpeciesMassFractions(std::size_t x, std::size_t y, const std::vector<double> &massFractions);
 	void SetCondensedWaterDensity(std::size_t x, std::size_t y, double kilogramsPerM3);
 	bool RestoreSerializedCell(std::size_t x, std::size_t y, const std::vector<double> &speciesMassDensity,

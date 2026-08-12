@@ -107,7 +107,7 @@ local function test_runtime_metrics()
     event.unregister(event.BEFORESIM, callback)
     event.unregister(event.AFTERSIM, callback)
 
-    for _, name in ipairs({ "thermal", "chemistry", "gpu", "gpu_synchronization" }) do
+    for _, name in ipairs({ "thermal", "gpu", "gpu_synchronization" }) do
         local metric = assert(metrics.subsystems[name], "missing non-instrumented metric: " .. name)
         assert(not metric.instrumented, name .. " unexpectedly claims instrumentation")
         assert(metric.calls == 0 and metric.total_nanoseconds == 0,
@@ -115,8 +115,11 @@ local function test_runtime_metrics()
     end
     assert(metrics.subsystems.thermal.status == "not_instrumented_legacy_per_particle",
         "thermal scope status changed unexpectedly")
-    assert(metrics.subsystems.chemistry.status == "not_instrumented_legacy_per_element",
+    local chemistry = assert(metrics.subsystems.chemistry, "missing chemistry metric")
+    assert(chemistry.instrumented and chemistry.status == "instrumented_omni_reaction_runtime",
         "chemistry scope status changed unexpectedly")
+    assert(chemistry.calls == 0 and chemistry.total_nanoseconds == 0,
+        "Classic fixture unexpectedly entered OmniReactionRuntime")
     assert(metrics.subsystems.gpu.status == "not_tested_no_gpu_backend",
         "GPU scope status changed unexpectedly")
     assert(metrics.subsystems.gpu_synchronization.status == "not_tested_no_gpu_backend",

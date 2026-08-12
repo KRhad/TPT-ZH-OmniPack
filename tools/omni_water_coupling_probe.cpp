@@ -105,6 +105,8 @@ int main()
 	AdvanceOneTick(*evaporation);
 	const auto evaporationMetrics = evaporation->GetOmniWaterCouplingMetrics();
 	const double waterMassAfter = evaporation->GetOmniWaterParcelMassKg(water);
+	const double waterEnthalpyAfter =
+		evaporation->GetOmniWaterParcelSpecificEnthalpyJPerKg(water);
 	if (!(waterMassAfter < waterMassBefore) ||
 		!(evaporation->omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_H2O) > gasWaterBefore) ||
 		evaporationMetrics.evaporationTransfers != 1 ||
@@ -160,7 +162,10 @@ int main()
 		return Fail("Enhanced water parcel OPS serialization failed");
 	GameSave parsed(serialised);
 	if (!parsed.hasOmniWaterParcelState ||
-		parsed.omniWaterParcelMassKg.size() != static_cast<size_t>(parsed.particlesCount))
+		parsed.omniWaterParcelStateVersion != GameSave::OmniWaterParcelStateVersion ||
+		parsed.omniWaterParcelMassKg.size() != static_cast<size_t>(parsed.particlesCount) ||
+		parsed.omniWaterParcelSpecificEnthalpyJPerKg.size() !=
+			static_cast<size_t>(parsed.particlesCount))
 	{
 		return Fail("Enhanced water parcel OPS parsing failed");
 	}
@@ -177,7 +182,9 @@ int main()
 		}
 	}
 	if (restoredWater < 0 ||
-		std::abs(restored->GetOmniWaterParcelMassKg(restoredWater) - waterMassAfter) > 1.0e-15)
+		std::abs(restored->GetOmniWaterParcelMassKg(restoredWater) - waterMassAfter) > 1.0e-15 ||
+		std::abs(restored->GetOmniWaterParcelSpecificEnthalpyJPerKg(restoredWater) -
+			waterEnthalpyAfter) > 1.0e-9)
 	{
 		std::cerr << "sidecar_debug expected=" << waterMassAfter
 			<< " restored=" << (restoredWater < 0 ? -1.0 : restored->GetOmniWaterParcelMassKg(restoredWater))
@@ -185,7 +192,34 @@ int main()
 			<< " particles=" << parsed.particlesCount
 			<< " parsed_type=" << (parsed.particlesCount > 0 ? parsed.particles[0].type : -1)
 			<< " restored_active=" << restored->parts.active << '\n';
-		return Fail("water particle mass sidecar did not survive OPS round trip");
+		return Fail("water particle mass/enthalpy sidecars did not survive OPS v2 round trip");
+	}
+
+	// Version 1 remains readable. Its mass-only payload derives the missing
+	// enthalpy from the saved public temperature during parse/load.
+	GameSave legacyWater = *save;
+	legacyWater.omniWaterParcelStateVersion = GameSave::OmniWaterParcelLegacyStateVersion;
+	legacyWater.omniWaterParcelSpecificEnthalpyJPerKg.clear();
+	const auto legacySerialised = legacyWater.Serialise().second;
+	if (legacySerialised.empty())
+		return Fail("water parcel OPS v1 compatibility fixture could not be serialized");
+	GameSave parsedLegacyWater(legacySerialised);
+	if (!parsedLegacyWater.hasOmniWaterParcelState ||
+		parsedLegacyWater.omniWaterParcelStateVersion != GameSave::OmniWaterParcelLegacyStateVersion ||
+		parsedLegacyWater.omniWaterParcelSpecificEnthalpyJPerKg.size() !=
+			static_cast<size_t>(parsedLegacyWater.particlesCount))
+	{
+		return Fail("water parcel OPS v1 did not migrate to an enthalpy-bearing in-memory state");
+	}
+	for (int index = 0; index < parsedLegacyWater.particlesCount; ++index)
+	{
+		const double expected = OmniThermal::WaterSpecificEnthalpyJPerKg(
+			parsedLegacyWater.particles[index].temp);
+		if (std::abs(parsedLegacyWater.omniWaterParcelSpecificEnthalpyJPerKg[index] - expected) >
+			1.0e-9)
+		{
+			return Fail("water parcel OPS v1 migration did not derive enthalpy from temperature");
+		}
 	}
 
 	auto drift = EnhancedSimulation();
@@ -248,8 +282,10 @@ int main()
 	std::cout << "high_pressure_evaporation_kg=" << highPressureEvaporationKg << '\n';
 	std::cout << "water_mass_residual_kg=" << evaporationMetrics.waterMassResidualKg << '\n';
 	std::cout << "coupled_energy_residual_j=" << evaporationMetrics.coupledEnergyResidualJ << '\n';
-	std::cout << "water_sidecar_bytes_per_particle=" << sizeof(double) << '\n';
+	std::cout << "water_sidecar_bytes_per_particle=" << 2 * sizeof(double) << '\n';
 	std::cout << "water_sidecar_ops_roundtrip=true\n";
+	std::cout << "water_sidecar_v1_migration=true\n";
+	std::cout << "water_lifecycle_type_change_replacement_delete=true\n";
 	std::cout << "long_run_steps=1000\n";
 	std::cout << "long_run_water_drift_kg=" << driftFinalWaterKg - driftInitialWaterKg << '\n';
 	std::cout << "long_run_max_energy_residual_j=" << maximumStepEnergyResidualJ << '\n';

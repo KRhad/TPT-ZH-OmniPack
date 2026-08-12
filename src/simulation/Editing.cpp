@@ -20,7 +20,7 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
 	snap->AirVelocityX   .insert   (snap->AirVelocityX   .begin(), &vx  [0][0]      , &vx  [0][0] + NCELL);
 	snap->AirVelocityY   .insert   (snap->AirVelocityY   .begin(), &vy  [0][0]      , &vy  [0][0] + NCELL);
 	snap->AmbientHeat    .insert   (snap->AmbientHeat    .begin(), &hv  [0][0]      , &hv  [0][0] + NCELL);
-	if (omniAtmosphere)
+	if (IsOmniAtmosphereActive() && omniAtmosphere)
 	{
 		const auto cellCount = omniAtmosphere->CellCount();
 		const auto speciesCount = omniAtmosphere->SpeciesCount();
@@ -44,9 +44,18 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
 				omniAtmosphere->Primitive(x, y).condensedWaterDensity);
 		}
 	}
-	snap->OmniWaterParcelMassKg.insert(
-		snap->OmniWaterParcelMassKg.begin(), omniWaterParcelMassKg.begin(),
-		omniWaterParcelMassKg.begin() + parts.active);
+	if (IsOmniAtmosphereActive())
+	{
+		snap->OmniWaterParcelMassKg.insert(
+			snap->OmniWaterParcelMassKg.begin(), omniWaterParcelMassKg.begin(),
+			omniWaterParcelMassKg.begin() + parts.active);
+		snap->OmniWaterParcelSpecificEnthalpyJPerKg.insert(
+			snap->OmniWaterParcelSpecificEnthalpyJPerKg.begin(),
+			omniWaterParcelSpecificEnthalpyJPerKg.begin(),
+			omniWaterParcelSpecificEnthalpyJPerKg.begin() + parts.active);
+		snap->OmniCarbonParcelMassKg.insert(snap->OmniCarbonParcelMassKg.begin(),
+			omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.begin() + parts.active);
+	}
 	snap->OmniSimulationMode = omniSimulationMode;
 	snap->OmniAtmospherePersistenceStatus = static_cast<uint8_t>(omniAtmospherePersistenceStatus);
 	snap->BlockMap       .insert   (snap->BlockMap       .begin(), &bmap[0][0]      , &bmap[0][0] + NCELL);
@@ -85,10 +94,21 @@ void Simulation::Restore(const Snapshot &snap)
 	std::copy(snap.AirVelocityY   .begin(), snap.AirVelocityY   .end(), &vy[0][0]        );
 	std::copy(snap.AmbientHeat    .begin(), snap.AmbientHeat    .end(), &hv[0][0]        );
 	std::fill(omniWaterParcelMassKg.begin(), omniWaterParcelMassKg.end(), 0.0);
+	std::fill(omniWaterParcelSpecificEnthalpyJPerKg.begin(),
+		omniWaterParcelSpecificEnthalpyJPerKg.end(), 0.0);
+	std::fill(omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.end(), 0.0);
 	std::copy_n(
 		snap.OmniWaterParcelMassKg.begin(),
 		std::min(snap.OmniWaterParcelMassKg.size(), omniWaterParcelMassKg.size()),
 		omniWaterParcelMassKg.begin());
+	std::copy_n(
+		snap.OmniWaterParcelSpecificEnthalpyJPerKg.begin(),
+		std::min(snap.OmniWaterParcelSpecificEnthalpyJPerKg.size(),
+			omniWaterParcelSpecificEnthalpyJPerKg.size()),
+		omniWaterParcelSpecificEnthalpyJPerKg.begin());
+	std::copy_n(snap.OmniCarbonParcelMassKg.begin(),
+		std::min(snap.OmniCarbonParcelMassKg.size(), omniCarbonParcelMassKg.size()),
+		omniCarbonParcelMassKg.begin());
 	omniWaterTransferRequests.clear();
 	omniWaterCouplingMetrics = {};
 	omniSimulationMode = snap.OmniSimulationMode >= OMNI_CLASSIC &&

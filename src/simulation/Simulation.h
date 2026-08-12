@@ -273,16 +273,62 @@ public:
 		bool activeTick = false;
 		double initialWaterMassKg = 0.0;
 		double finalWaterMassKg = 0.0;
+		// This is a deliberately narrow transaction total: atmosphere energy plus
+		// the enthalpy owned by condensed/water-vapour parcels.  It makes a
+		// transfer verifiable without pretending that unrelated Legacy field
+		// writers are physical sources.
+		double initialCoupledEnergyJ = 0.0;
+		double finalCoupledEnergyJ = 0.0;
 		double transferredToAtmosphereKg = 0.0;
 		double sensibleEnergyToParticlesJ = 0.0;
 		double particleEnergyRemovedJ = 0.0;
 		double atmosphereEnergyAddedJ = 0.0;
+		// Legacy tools, walls, off-screen culling and non-water type changes are
+		// explicit external lifecycle events, never implicit evaporation.
+		double externalWaterMassSourceKg = 0.0;
+		double externalWaterMassSinkKg = 0.0;
+		double externalWaterEnergySourceJ = 0.0;
+		double externalWaterEnergySinkJ = 0.0;
 		double waterMassResidualKg = 0.0;
 		double coupledEnergyResidualJ = 0.0;
 		uint64_t requests = 0;
 		uint64_t vaporParcelsInjected = 0;
 		uint64_t evaporationTransfers = 0;
 		uint64_t phaseTypeChanges = 0;
+	};
+
+	// Enhanced-mode carbon combustion ledger. Authoritative carbon mass lives
+	// in a dedicated sidecar; Particle ABI and existing tmp4 semantics remain
+	// untouched.
+	struct OmniChemistryMetrics
+	{
+		bool activeTick = false;
+		double initialCarbonMassKg = 0.0;
+		double finalCarbonMassKg = 0.0;
+		double initialOxygenMassKg = 0.0;
+		double finalOxygenMassKg = 0.0;
+		double initialCarbonDioxideMassKg = 0.0;
+		double finalCarbonDioxideMassKg = 0.0;
+		double carbonConsumedKg = 0.0;
+		double oxygenConsumedKg = 0.0;
+		double carbonDioxideProducedKg = 0.0;
+		double chemicalEnergyReleasedJ = 0.0;
+		double transactionEnergyDeltaJ = 0.0;
+		double massResidualKg = 0.0;
+		double carbonAtomResidualMol = 0.0;
+		double oxygenAtomResidualMol = 0.0;
+		double energyResidualJ = 0.0;
+		// Legacy type changes/deletions are external ownership events, not
+		// carbon-oxidation products. Keep their mass separate from the closed
+		// reaction conservation residual.
+		double externalCarbonMassSinkKg = 0.0;
+		double totalMassBalanceResidualKg = 0.0;
+		double totalCarbonAtomBalanceResidualMol = 0.0;
+		uint64_t candidateParticles = 0;
+		uint64_t committedTransactions = 0;
+		uint64_t oxygenLimitedTransactions = 0;
+		uint64_t carbonLimitedTransactions = 0;
+		uint64_t rejectedTransactions = 0;
 	};
 
 	// initialized very late >_>
@@ -353,8 +399,15 @@ public:
 	void ResetOmniCorrectionLedger();
 	OmniCorrectionLedgerMetrics GetOmniCorrectionLedgerMetrics() const;
 	OmniWaterCouplingMetrics GetOmniWaterCouplingMetrics() const { return omniWaterCouplingMetrics; }
+	OmniChemistryMetrics GetOmniChemistryMetrics() const { return omniChemistryMetrics; }
 	double GetOmniWaterParcelMassKg(int particleId) const;
+	double GetOmniWaterParcelSpecificEnthalpyJPerKg(int particleId) const;
 	double TotalOmniParticleWaterMassKg() const;
+	double GetOmniCarbonParcelMassKg(int particleId) const;
+	double TotalOmniParticleCarbonMassKg() const;
+	// Called by COAL/BCOL only in Enhanced/Scientific. Classic never enters
+	// this route and retains upstream combustion semantics.
+	bool UpdateOmniCarbonCombustion(int particleId, int x, int y);
 
 	void SetEdgeMode(int newEdgeMode);
 	void SetDecoSpace(int newDecoSpace);
@@ -420,8 +473,14 @@ protected:
 	};
 
 	std::array<double, NPART> omniWaterParcelMassKg{};
+	// The particle temperature is a renderer/Legacy projection. This sidecar is
+	// authoritative for water parcels so energy inside a latent-heat plateau is
+	// not discarded between fixed simulation ticks.
+	std::array<double, NPART> omniWaterParcelSpecificEnthalpyJPerKg{};
+	std::array<double, NPART> omniCarbonParcelMassKg{};
 	std::vector<OmniWaterTransferRequest> omniWaterTransferRequests;
 	OmniWaterCouplingMetrics omniWaterCouplingMetrics{};
+	OmniChemistryMetrics omniChemistryMetrics{};
 
 	bool QueueOmniWaterParticleCoupling(int particleId, int x, int y);
 	void BeginOmniWaterCouplingTick();
@@ -430,8 +489,13 @@ protected:
 	void TransferOmniWaterParticleToAtmosphere(int particleId, int cellX, int cellY,
 		double requestedMassKg = -1.0);
 	void InitializeOmniWaterParcelMass(int particleId, int type);
-	void ClearOmniWaterParcelMass(int particleId);
+	void ClearOmniWaterParcelMass(int particleId, bool recordExternalSink = true);
+	double OmniWaterParcelSpecificEnthalpy(int particleId) const;
 	double TotalOmniWaterCoupledEnergyJ() const;
+	void InitializeOmniCarbonParcelMass(int particleId, int type);
+	void ClearOmniCarbonParcelMass(int particleId, bool recordExternalSink = true);
+	void BeginOmniChemistryTick();
+	void FinishOmniChemistryTick();
 
 	enum class OmniLifecycleMutationKind : uint8_t
 	{

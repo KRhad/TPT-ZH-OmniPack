@@ -21,6 +21,17 @@ double LiquidEnthalpyAtFusionUpper()
 		OmniThermal::LiquidSpecificHeatJKgK * (FusionUpperK - FusionLowerK) +
 		OmniThermal::LatentHeatFusionJPerKg;
 }
+
+double LiquidEnthalpyAtBoiling()
+{
+	return LiquidEnthalpyAtFusionUpper() +
+		OmniThermal::LiquidSpecificHeatJKgK * (373.15 - FusionUpperK);
+}
+
+double VaporEnthalpyAtBoiling()
+{
+	return LiquidEnthalpyAtBoiling() + OmniThermal::LatentHeatVaporizationJPerKg;
+}
 }
 
 double OmniThermal::SaturationPressurePa(double temperatureK)
@@ -98,8 +109,7 @@ double OmniThermal::WaterSpecificEnthalpyJPerKg(double temperatureK)
 	}
 	if (temperatureK < 373.15)
 		return LiquidEnthalpyAtFusionUpper() + LiquidSpecificHeatJKgK * (temperatureK - FusionUpperK);
-	return LiquidEnthalpyAtFusionUpper() + LiquidSpecificHeatJKgK * (373.15 - FusionUpperK) +
-		LatentHeatVaporizationJPerKg + VaporSpecificHeatJKgK * (temperatureK - 373.15);
+	return VaporEnthalpyAtBoiling() + VaporSpecificHeatJKgK * (temperatureK - 373.15);
 }
 
 OmniThermalState OmniThermal::WaterFromSpecificEnthalpy(double specificEnthalpyJPerKg)
@@ -124,16 +134,26 @@ OmniThermalState OmniThermal::WaterFromSpecificEnthalpy(double specificEnthalpyJ
 		result.liquidFraction = fraction;
 		result.phase = OmniThermalWaterPhase::Mushy;
 	}
-	else if (specificEnthalpyJPerKg < WaterSpecificEnthalpyJPerKg(373.15))
+	else if (specificEnthalpyJPerKg <= LiquidEnthalpyAtBoiling())
 	{
 		result.temperatureK = FusionUpperK + (specificEnthalpyJPerKg - fusionUpperH) / LiquidSpecificHeatJKgK;
 		result.liquidFraction = 1.0;
 		result.phase = OmniThermalWaterPhase::Liquid;
 	}
+	else if (specificEnthalpyJPerKg <= VaporEnthalpyAtBoiling())
+	{
+		const double fraction = std::clamp((specificEnthalpyJPerKg - LiquidEnthalpyAtBoiling()) /
+			LatentHeatVaporizationJPerKg, 0.0, 1.0);
+		result.temperatureK = 373.15;
+		result.liquidFraction = 1.0 - fraction;
+		result.vaporFraction = fraction;
+		result.phase = OmniThermalWaterPhase::Boiling;
+	}
 	else
 	{
-		const double vaporStart = WaterSpecificEnthalpyJPerKg(373.15);
-		result.temperatureK = 373.15 + (specificEnthalpyJPerKg - vaporStart) / VaporSpecificHeatJKgK;
+		result.temperatureK = 373.15 +
+			(specificEnthalpyJPerKg - VaporEnthalpyAtBoiling()) / VaporSpecificHeatJKgK;
+		result.vaporFraction = 1.0;
 		result.phase = OmniThermalWaterPhase::Vapor;
 	}
 	result.specificEnthalpyJPerKg = specificEnthalpyJPerKg;

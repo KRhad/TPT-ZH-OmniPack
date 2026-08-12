@@ -55,6 +55,13 @@ int Element_COAL_update(UPDATE_FUNC_ARGS)
 {
 	if (OmniMetallurgyCoalUpdate(UPDATE_FUNC_SUBCALL_ARGS))
 		return 1;
+	if (sim->IsOmniAtmosphereActive())
+	{
+		const bool consumed = sim->UpdateOmniCarbonCombustion(i, x, y);
+		if (!consumed && parts[i].type && parts[i].temp > parts[i].tmp2)
+			parts[i].tmp2 = int(parts[i].temp);
+		return consumed ? 1 : 0;
+	}
 
 	if (parts[i].life<=0) {
 		sim->create_part(i, x, y, PT_FIRE);

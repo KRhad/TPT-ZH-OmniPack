@@ -29,7 +29,7 @@ class ThirdPartyLicenseAuditTests(unittest.TestCase):
         errors, report = audit.audit(ROOT)
         self.assertEqual(errors, [])
         self.assertTrue(report["third_party_license_audit"])
-        self.assertEqual(report["manifest_components"], 24)
+        self.assertEqual(report["manifest_components"], 25)
         self.assertEqual(report["implemented_external_elements"], 22)
 
     def test_manifest_hash_drift_fails_closed(self) -> None:

@@ -51,7 +51,7 @@ def base_catalog() -> dict[str, object]:
         "schema_version": 1,
         "document_type": "omnicore_catalog",
         "catalog_id": "test.fixture",
-        "dataset_version": "1.0.4-foundation.1",
+        "dataset_version": tool.FOUNDATION_DATASET_VERSION,
         "unit_registry_id": "omnicore.units.canonical-si.v1",
         "catalog_status": "schema_only",
         "runtime_consumption": False,
@@ -169,9 +169,9 @@ class OmniCoreDataCheckTests(unittest.TestCase):
         errors, stats = tool.audit(ROOT)
         self.assertEqual(errors, [])
         self.assertEqual(stats, {
-            "materials": 0,
-            "species": 0,
-            "reactions": 0,
+            "materials": 1,
+            "species": 3,
+            "reactions": 1,
             "legacy_mappings": 488,
         })
 

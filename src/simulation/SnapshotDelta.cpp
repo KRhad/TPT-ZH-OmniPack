@@ -259,6 +259,36 @@ std::unique_ptr<SnapshotDelta> SnapshotDelta::FromSnapshots(const Snapshot &oldS
 		newSnap.OmniWaterParcelMassKg.size() - commonWaterSize);
 	std::copy(newSnap.OmniWaterParcelMassKg.begin() + commonWaterSize,
 		newSnap.OmniWaterParcelMassKg.end(), delta.extraOmniWaterParcelMassKgNew.begin());
+	const auto commonWaterEnthalpySize = std::min(
+		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size(),
+		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size());
+	FillHunkVectorPtr(
+		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.data(),
+		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.data(),
+		delta.commonOmniWaterParcelSpecificEnthalpyJPerKg, commonWaterEnthalpySize);
+	delta.extraOmniWaterParcelSpecificEnthalpyJPerKgOld.resize(
+		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size() - commonWaterEnthalpySize);
+	std::copy(oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.begin() + commonWaterEnthalpySize,
+		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.end(),
+		delta.extraOmniWaterParcelSpecificEnthalpyJPerKgOld.begin());
+	delta.extraOmniWaterParcelSpecificEnthalpyJPerKgNew.resize(
+		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size() - commonWaterEnthalpySize);
+	std::copy(newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.begin() + commonWaterEnthalpySize,
+		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.end(),
+		delta.extraOmniWaterParcelSpecificEnthalpyJPerKgNew.begin());
+	const auto commonCarbonSize = std::min(oldSnap.OmniCarbonParcelMassKg.size(),
+		newSnap.OmniCarbonParcelMassKg.size());
+	FillHunkVectorPtr(oldSnap.OmniCarbonParcelMassKg.data(),
+		newSnap.OmniCarbonParcelMassKg.data(), delta.commonOmniCarbonParcelMassKg,
+		commonCarbonSize);
+	delta.extraOmniCarbonParcelMassKgOld.resize(
+		oldSnap.OmniCarbonParcelMassKg.size() - commonCarbonSize);
+	std::copy(oldSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize,
+		oldSnap.OmniCarbonParcelMassKg.end(), delta.extraOmniCarbonParcelMassKgOld.begin());
+	delta.extraOmniCarbonParcelMassKgNew.resize(
+		newSnap.OmniCarbonParcelMassKg.size() - commonCarbonSize);
+	std::copy(newSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize,
+		newSnap.OmniCarbonParcelMassKg.end(), delta.extraOmniCarbonParcelMassKgNew.begin());
 
 	return ptr;
 }
@@ -306,6 +336,23 @@ std::unique_ptr<Snapshot> SnapshotDelta::Forward(const Snapshot &oldSnap)
 	newSnap.OmniWaterParcelMassKg.resize(commonWaterSize + extraOmniWaterParcelMassKgNew.size());
 	std::copy(extraOmniWaterParcelMassKgNew.begin(), extraOmniWaterParcelMassKgNew.end(),
 		newSnap.OmniWaterParcelMassKg.begin() + commonWaterSize);
+	auto commonWaterEnthalpySize = oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size() -
+		extraOmniWaterParcelSpecificEnthalpyJPerKgOld.size();
+	ApplyHunkVectorPtr<false>(commonOmniWaterParcelSpecificEnthalpyJPerKg,
+		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.data());
+	newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.resize(
+		commonWaterEnthalpySize + extraOmniWaterParcelSpecificEnthalpyJPerKgNew.size());
+	std::copy(extraOmniWaterParcelSpecificEnthalpyJPerKgNew.begin(),
+		extraOmniWaterParcelSpecificEnthalpyJPerKgNew.end(),
+		newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.begin() + commonWaterEnthalpySize);
+	auto commonCarbonSize = oldSnap.OmniCarbonParcelMassKg.size() -
+		extraOmniCarbonParcelMassKgOld.size();
+	ApplyHunkVectorPtr<false>(commonOmniCarbonParcelMassKg,
+		newSnap.OmniCarbonParcelMassKg.data());
+	newSnap.OmniCarbonParcelMassKg.resize(commonCarbonSize +
+		extraOmniCarbonParcelMassKgNew.size());
+	std::copy(extraOmniCarbonParcelMassKgNew.begin(), extraOmniCarbonParcelMassKgNew.end(),
+		newSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize);
 
 	return ptr;
 }
@@ -353,6 +400,23 @@ std::unique_ptr<Snapshot> SnapshotDelta::Restore(const Snapshot &newSnap)
 	oldSnap.OmniWaterParcelMassKg.resize(commonWaterSize + extraOmniWaterParcelMassKgOld.size());
 	std::copy(extraOmniWaterParcelMassKgOld.begin(), extraOmniWaterParcelMassKgOld.end(),
 		oldSnap.OmniWaterParcelMassKg.begin() + commonWaterSize);
+	auto commonWaterEnthalpySize = newSnap.OmniWaterParcelSpecificEnthalpyJPerKg.size() -
+		extraOmniWaterParcelSpecificEnthalpyJPerKgNew.size();
+	ApplyHunkVectorPtr<true>(commonOmniWaterParcelSpecificEnthalpyJPerKg,
+		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.data());
+	oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.resize(
+		commonWaterEnthalpySize + extraOmniWaterParcelSpecificEnthalpyJPerKgOld.size());
+	std::copy(extraOmniWaterParcelSpecificEnthalpyJPerKgOld.begin(),
+		extraOmniWaterParcelSpecificEnthalpyJPerKgOld.end(),
+		oldSnap.OmniWaterParcelSpecificEnthalpyJPerKg.begin() + commonWaterEnthalpySize);
+	auto commonCarbonSize = newSnap.OmniCarbonParcelMassKg.size() -
+		extraOmniCarbonParcelMassKgNew.size();
+	ApplyHunkVectorPtr<true>(commonOmniCarbonParcelMassKg,
+		oldSnap.OmniCarbonParcelMassKg.data());
+	oldSnap.OmniCarbonParcelMassKg.resize(commonCarbonSize +
+		extraOmniCarbonParcelMassKgOld.size());
+	std::copy(extraOmniCarbonParcelMassKgOld.begin(), extraOmniCarbonParcelMassKgOld.end(),
+		oldSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize);
 
 	return ptr;
 }

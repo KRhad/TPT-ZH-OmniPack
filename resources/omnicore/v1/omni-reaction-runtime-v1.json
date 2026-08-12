@@ -1,7 +1,7 @@
 {
   "runtime_version": "1.0.8",
   "runtime_contract": "compiled_transaction_plan_v1",
-  "runtime_consumption": "compiled_contract_only",
+  "runtime_consumption": "compiled_and_simulation_integrated",
   "authoritative_species_order": [
     "species.carbon",
     "species.oxygen",
@@ -45,12 +45,12 @@
       ],
       "enthalpy_change_j_mol": -393500.0,
       "thermochemistry": {
-        "source_title": "OpenStax Chemistry 2e, section 5.3, Table 5.2",
-        "source_locator": "https://openstax.org/books/chemistry-2e/pages/5-3-enthalpy",
+        "source_title": "OpenStax Chemistry, section 5.3, Table 5.2",
+        "source_locator": "https://openstax.org/books/chemistry/pages/5-3-enthalpy",
         "source_value": "-393.5 kJ/mol at 25 C and 1 atm",
-        "method": "reference",
-        "redistribution_status": "reference_only",
-        "license_or_terms": "OpenStax Chemistry 2e is published under CC BY 4.0; this project records only a normalized numerical reference and attribution."
+        "method": "attributed_reference",
+        "redistribution_status": "redistributable_with_attribution",
+        "license_or_terms": "OpenStax Chemistry is published under CC BY 4.0; this project records only a normalized numerical reference and attribution."
       },
       "kinetics": {
         "kind": "arrhenius_pseudo_first_order_surface_limited",
@@ -64,8 +64,8 @@
     }
   ],
   "integration_boundary": {
-    "particle_or_element_mutation": "not_owned_by_runtime",
-    "atmosphere_mutation": "not_owned_by_runtime",
+    "particle_or_element_mutation": "committed_by_simulation_carbon_sidecar_owner",
+    "atmosphere_mutation": "committed_by_omni_atmosphere_atomic_transfer",
     "required_commit": [
       "subtract_condensed_carbon_mass",
       "subtract_atmosphere_o2_mass",

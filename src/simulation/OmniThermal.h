@@ -7,6 +7,7 @@ enum class OmniThermalWaterPhase : uint8_t
 	Ice,
 	Mushy,
 	Liquid,
+	Boiling,
 	Vapor,
 };
 
@@ -16,6 +17,7 @@ struct OmniThermalState
 	double specificEnthalpyJPerKg = 0.0;
 	double solidFraction = 0.0;
 	double liquidFraction = 0.0;
+	double vaporFraction = 0.0;
 	OmniThermalWaterPhase phase = OmniThermalWaterPhase::Ice;
 };
 
