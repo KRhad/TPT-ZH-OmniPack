@@ -38,6 +38,8 @@ uint32_t Snapshot::Hash() const
 		takeVector(OmniSolutionSolventMassKg);
 		takeVector(OmniSolutionSoluteMassKg);
 		takeVector(OmniSolutionNeutralSaltMassKg);
+		takeVector(OmniCorrosionProgress);
+		takeVector(OmniCorrosionPassivation);
 	}
 	takeVector(Particles);
 	takeVector(GravMass);

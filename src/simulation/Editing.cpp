@@ -61,6 +61,10 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
 			omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.begin() + parts.active);
 		snap->OmniSolutionNeutralSaltMassKg.insert(snap->OmniSolutionNeutralSaltMassKg.begin(),
 			omniSolutionNeutralSaltMassKg.begin(), omniSolutionNeutralSaltMassKg.begin() + parts.active);
+		snap->OmniCorrosionProgress.insert(snap->OmniCorrosionProgress.begin(),
+			omniCorrosionProgress.begin(), omniCorrosionProgress.begin() + parts.active);
+		snap->OmniCorrosionPassivation.insert(snap->OmniCorrosionPassivation.begin(),
+			omniCorrosionPassivation.begin(), omniCorrosionPassivation.begin() + parts.active);
 	}
 	snap->OmniSimulationMode = omniSimulationMode;
 	snap->OmniAtmospherePersistenceStatus = static_cast<uint8_t>(omniAtmospherePersistenceStatus);
@@ -106,6 +110,8 @@ void Simulation::Restore(const Snapshot &snap)
 	std::fill(omniSolutionSolventMassKg.begin(), omniSolutionSolventMassKg.end(), 0.0);
 	std::fill(omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.end(), 0.0);
 	std::fill(omniSolutionNeutralSaltMassKg.begin(), omniSolutionNeutralSaltMassKg.end(), 0.0);
+	std::fill(omniCorrosionProgress.begin(), omniCorrosionProgress.end(), 0.0);
+	std::fill(omniCorrosionPassivation.begin(), omniCorrosionPassivation.end(), 0.0);
 	std::copy_n(
 		snap.OmniWaterParcelMassKg.begin(),
 		std::min(snap.OmniWaterParcelMassKg.size(), omniWaterParcelMassKg.size()),
@@ -127,6 +133,12 @@ void Simulation::Restore(const Snapshot &snap)
 	std::copy_n(snap.OmniSolutionNeutralSaltMassKg.begin(),
 		std::min(snap.OmniSolutionNeutralSaltMassKg.size(), omniSolutionNeutralSaltMassKg.size()),
 		omniSolutionNeutralSaltMassKg.begin());
+	std::copy_n(snap.OmniCorrosionProgress.begin(),
+		std::min(snap.OmniCorrosionProgress.size(), omniCorrosionProgress.size()),
+		omniCorrosionProgress.begin());
+	std::copy_n(snap.OmniCorrosionPassivation.begin(),
+		std::min(snap.OmniCorrosionPassivation.size(), omniCorrosionPassivation.size()),
+		omniCorrosionPassivation.begin());
 	omniWaterTransferRequests.clear();
 	omniWaterCouplingMetrics = {};
 	omniSimulationMode = snap.OmniSimulationMode >= OMNI_CLASSIC &&

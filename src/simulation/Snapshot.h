@@ -31,6 +31,8 @@ public:
 	std::vector<double> OmniSolutionSolventMassKg;
 	std::vector<double> OmniSolutionSoluteMassKg;
 	std::vector<double> OmniSolutionNeutralSaltMassKg;
+	std::vector<double> OmniCorrosionProgress;
+	std::vector<double> OmniCorrosionPassivation;
 	int OmniSimulationMode = OMNI_CLASSIC;
 	uint8_t OmniAtmospherePersistenceStatus = 0;
 

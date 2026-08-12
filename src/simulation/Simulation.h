@@ -364,6 +364,20 @@ public:
 		uint64_t rateLimitedTransactions = 0;
 	};
 
+	struct OmniCorrosionMetrics
+	{
+		bool activeTick = false;
+		double progressAdded = 0.0;
+		double maximumProgress = 0.0;
+		double maximumPassivation = 0.0;
+		uint64_t candidateParticles = 0;
+		uint64_t wetParticles = 0;
+		uint64_t chlorideAcceleratedParticles = 0;
+		uint64_t atmosphereOxidizedParticles = 0;
+		uint64_t protectedParticles = 0;
+		uint64_t convertedParticles = 0;
+	};
+
 	// initialized very late >_>
 	int NUM_PARTS;
 	int sandcolour;
@@ -434,6 +448,7 @@ public:
 	OmniWaterCouplingMetrics GetOmniWaterCouplingMetrics() const { return omniWaterCouplingMetrics; }
 	OmniChemistryMetrics GetOmniChemistryMetrics() const { return omniChemistryMetrics; }
 	OmniSolutionMetrics GetOmniSolutionMetrics() const { return omniSolutionMetrics; }
+	OmniCorrosionMetrics GetOmniCorrosionMetrics() const { return omniCorrosionMetrics; }
 	double GetOmniWaterParcelMassKg(int particleId) const;
 	double GetOmniWaterParcelSpecificEnthalpyJPerKg(int particleId) const;
 	double TotalOmniParticleWaterMassKg() const;
@@ -448,6 +463,11 @@ public:
 	double GetOmniSolutionSolventMassKg(int particleId) const;
 	double GetOmniSolutionSoluteMassKg(int particleId) const;
 	double GetOmniSolutionNeutralSaltMassKg(int particleId) const;
+	double GetOmniCorrosionProgress(int particleId) const;
+	double GetOmniCorrosionPassivation(int particleId) const;
+	// Enhanced/Scientific IRON only. Classic returns false and executes the
+	// official random-contact corrosion update unchanged.
+	bool UpdateOmniIronCorrosion(int particleId, int x, int y);
 
 	void SetEdgeMode(int newEdgeMode);
 	void SetDecoSpace(int newDecoSpace);
@@ -521,10 +541,13 @@ protected:
 	std::array<double, NPART> omniSolutionSolventMassKg{};
 	std::array<double, NPART> omniSolutionSoluteMassKg{};
 	std::array<double, NPART> omniSolutionNeutralSaltMassKg{};
+	std::array<double, NPART> omniCorrosionProgress{};
+	std::array<double, NPART> omniCorrosionPassivation{};
 	std::vector<OmniWaterTransferRequest> omniWaterTransferRequests;
 	OmniWaterCouplingMetrics omniWaterCouplingMetrics{};
 	OmniChemistryMetrics omniChemistryMetrics{};
 	OmniSolutionMetrics omniSolutionMetrics{};
+	OmniCorrosionMetrics omniCorrosionMetrics{};
 	bool omniSolutionInternalMutation = false;
 
 	bool QueueOmniWaterParticleCoupling(int particleId, int x, int y);
@@ -551,6 +574,8 @@ protected:
 		bool recordLedgerAdjustment = true);
 	double TotalOmniSolutionSolventMassKg() const;
 	double TotalOmniSolutionSoluteMassKg() const;
+	void ClearOmniCorrosionState(int particleId);
+	void SetOmniCorrosionState(int particleId, double progress, double passivation);
 
 	enum class OmniLifecycleMutationKind : uint8_t
 	{

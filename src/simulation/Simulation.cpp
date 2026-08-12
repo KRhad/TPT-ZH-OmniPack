@@ -4,6 +4,7 @@
 #include "OmniThermal.h"
 #include "OmniReactionRuntime.h"
 #include "OmniSolution.h"
+#include "OmniCorrosion.h"
 #include "ElementClasses.h"
 #include "TransitionConstants.h"
 #include "gravity/Gravity.h"
@@ -59,6 +60,11 @@ namespace
 	bool IsOmniManagedSolutionType(int type)
 	{
 		return type == PT_SALT || type == PT_SLTW || type == PT_ACID || type == PT_BASE;
+	}
+
+	bool IsOmniManagedCorrosionType(int type)
+	{
+		return type == PT_IRON;
 	}
 
 	constexpr double CarbonMolarMassKgPerMol = 0.0120107;
@@ -398,6 +404,24 @@ void Simulation::Load(const GameSave *save, bool includePressure, Vec2<int> bloc
 			omniSolutionNeutralSaltMassKg[i] = 0.0;
 			InitializeOmniSolutionState(i, tempPart.type, false);
 		}
+		if (save->hasOmniCorrosionState)
+		{
+			if (save->omniCorrosionStateVersion != GameSave::OmniCorrosionStateVersion ||
+				save->omniCorrosionProgress.size() != static_cast<size_t>(save->particlesCount) ||
+				save->omniCorrosionPassivation.size() != static_cast<size_t>(save->particlesCount))
+				throw std::runtime_error("malformed Omni corrosion save payload");
+			omniCorrosionProgress[i] = save->omniCorrosionProgress[n];
+			omniCorrosionPassivation[i] = save->omniCorrosionPassivation[n];
+			if (!IsFiniteDoubleBits(omniCorrosionProgress[i]) ||
+				!IsFiniteDoubleBits(omniCorrosionPassivation[i]) ||
+				omniCorrosionProgress[i] < 0.0 || omniCorrosionProgress[i] > 1.0 ||
+				omniCorrosionPassivation[i] < 0.0 || omniCorrosionPassivation[i] > 1.0 ||
+				((omniCorrosionProgress[i] > 0.0 || omniCorrosionPassivation[i] > 0.0) &&
+					tempPart.type != PT_IRON))
+				throw std::runtime_error("invalid Omni corrosion save payload");
+		}
+		else
+			ClearOmniCorrosionState(i);
 
 
 		switch (parts[i].type)
@@ -671,6 +695,14 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
 		newSave->omniSolutionSoluteMassKg.reserve(NUM_PARTS);
 		newSave->omniSolutionNeutralSaltMassKg.reserve(NUM_PARTS);
 	}
+	newSave->hasOmniCorrosionState = IsOmniAtmosphereActive();
+	newSave->omniCorrosionStateVersion = newSave->hasOmniCorrosionState
+		? GameSave::OmniCorrosionStateVersion : 0;
+	if (newSave->hasOmniCorrosionState)
+	{
+		newSave->omniCorrosionProgress.reserve(NUM_PARTS);
+		newSave->omniCorrosionPassivation.reserve(NUM_PARTS);
+	}
 
 	int storedParts = 0;
 	int elementCount[PT_NUM];
@@ -709,6 +741,11 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
 					newSave->omniSolutionSoluteMassKg.push_back(omniSolutionSoluteMassKg[i]);
 					newSave->omniSolutionNeutralSaltMassKg.push_back(
 						omniSolutionNeutralSaltMassKg[i]);
+				}
+				if (newSave->hasOmniCorrosionState)
+				{
+					newSave->omniCorrosionProgress.push_back(omniCorrosionProgress[i]);
+					newSave->omniCorrosionPassivation.push_back(omniCorrosionPassivation[i]);
 				}
 				storedParts++;
 				elementCount[tempPart.type]++;
@@ -1189,6 +1226,9 @@ void Simulation::SetOmniSimulationMode(int newMode)
 		std::fill(omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.end(), 0.0);
 		std::fill(omniSolutionNeutralSaltMassKg.begin(), omniSolutionNeutralSaltMassKg.end(), 0.0);
 		omniSolutionMetrics = {};
+		std::fill(omniCorrosionProgress.begin(), omniCorrosionProgress.end(), 0.0);
+		std::fill(omniCorrosionPassivation.begin(), omniCorrosionPassivation.end(), 0.0);
+		omniCorrosionMetrics = {};
 	}
 	else
 	{
@@ -2238,6 +2278,7 @@ void Simulation::kill_part(int i)//kills particle number i
 	ClearOmniWaterParcelMass(i);
 	ClearOmniCarbonParcelMass(i);
 	ClearOmniSolutionState(i, !omniSolutionInternalMutation);
+	ClearOmniCorrosionState(i);
 
 	parts.Free(i);
 	NUM_PARTS -= 1;
@@ -2311,6 +2352,8 @@ bool Simulation::part_change_type(int i, int x, int y, int t)
 	{
 		ClearOmniSolutionState(i, !omniSolutionInternalMutation);
 	}
+	if (!IsOmniManagedCorrosionType(t) || !IsOmniManagedCorrosionType(oldType))
+		ClearOmniCorrosionState(i);
 	RecordOmniLifecycleMutation(oldType, t, OmniLifecycleMutationKind::TypeChange);
 	if (elements[t].Properties & TYPE_ENERGY)
 	{
@@ -2338,6 +2381,8 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	double previousOmniSolutionSolventMassKg = 0.0;
 	double previousOmniSolutionSoluteMassKg = 0.0;
 	double previousOmniSolutionNeutralSaltMassKg = 0.0;
+	double previousOmniCorrosionProgress = 0.0;
+	double previousOmniCorrosionPassivation = 0.0;
 
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
@@ -2453,6 +2498,13 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 			if (!IsOmniManagedSolutionType(t))
 				ClearOmniSolutionState(p, !omniSolutionInternalMutation);
 		}
+		if (IsOmniManagedCorrosionType(oldType))
+		{
+			previousOmniCorrosionProgress = omniCorrosionProgress[p];
+			previousOmniCorrosionPassivation = omniCorrosionPassivation[p];
+			if (!IsOmniManagedCorrosionType(t))
+				ClearOmniCorrosionState(p);
+		}
 
 		if (elements[oldType].ChangeType)
 			(*(elements[oldType].ChangeType))(this, p, oldX, oldY, oldType, t);
@@ -2496,6 +2548,15 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	{
 		InitializeOmniSolutionState(i, t,
 			!IsOmniManagedSolutionType(oldType) && !omniSolutionInternalMutation);
+	}
+	if (IsOmniManagedCorrosionType(oldType) && IsOmniManagedCorrosionType(t))
+	{
+		omniCorrosionProgress[i] = previousOmniCorrosionProgress;
+		omniCorrosionPassivation[i] = previousOmniCorrosionPassivation;
+	}
+	else
+	{
+		ClearOmniCorrosionState(i);
 	}
 	if (oldType == PT_NONE)
 		RecordOmniLifecycleMutation(PT_NONE, t, OmniLifecycleMutationKind::Create);
@@ -5226,6 +5287,146 @@ bool Simulation::UpdateOmniSolutionParticle(int particleId, int x, int y)
 	return false;
 }
 
+double Simulation::GetOmniCorrosionProgress(int particleId) const
+{
+	if (particleId < 0 || particleId >= NPART || parts[particleId].type != PT_IRON)
+		return 0.0;
+	return IsFiniteDoubleBits(omniCorrosionProgress[particleId])
+		? std::clamp(omniCorrosionProgress[particleId], 0.0, 1.0) : 0.0;
+}
+
+double Simulation::GetOmniCorrosionPassivation(int particleId) const
+{
+	if (particleId < 0 || particleId >= NPART || parts[particleId].type != PT_IRON)
+		return 0.0;
+	return IsFiniteDoubleBits(omniCorrosionPassivation[particleId])
+		? std::clamp(omniCorrosionPassivation[particleId], 0.0,
+			OmniCorrosion::MaximumPassivation) : 0.0;
+}
+
+void Simulation::ClearOmniCorrosionState(int particleId)
+{
+	if (particleId < 0 || particleId >= NPART)
+		return;
+	omniCorrosionProgress[particleId] = 0.0;
+	omniCorrosionPassivation[particleId] = 0.0;
+}
+
+void Simulation::SetOmniCorrosionState(int particleId, double progress, double passivation)
+{
+	if (particleId < 0 || particleId >= NPART || parts[particleId].type != PT_IRON ||
+		!IsFiniteDoubleBits(progress) || !IsFiniteDoubleBits(passivation))
+		return;
+	omniCorrosionProgress[particleId] = std::clamp(progress, 0.0, 1.0);
+	omniCorrosionPassivation[particleId] = std::clamp(
+		passivation, 0.0, OmniCorrosion::MaximumPassivation);
+}
+
+bool Simulation::UpdateOmniIronCorrosion(int particleId, int x, int y)
+{
+	if (!IsOmniAtmosphereActive() || !omniAtmosphere || particleId < 0 || particleId >= NPART ||
+		parts[particleId].type != PT_IRON || !InBounds(x, y))
+		return false;
+	omniCorrosionMetrics.candidateParticles++;
+
+	double liquidMoisture = 0.0;
+	double chlorideSeverity = 0.0;
+	bool protectedByZinc = parts[particleId].life > 0;
+	int exposedFaces = 0;
+	for (int ry = -1; ry <= 1; ++ry)
+	{
+		for (int rx = -1; rx <= 1; ++rx)
+		{
+			if ((!rx && !ry) || !InBounds(x + rx, y + ry))
+				continue;
+			const auto packed = pmap[y + ry][x + rx];
+			if (!packed)
+			{
+				exposedFaces++;
+				continue;
+			}
+			const int neighbour = ID(packed);
+			switch (TYP(packed))
+			{
+			case PT_ZINC:
+				protectedByZinc = true;
+				break;
+			case PT_WATR:
+			case PT_DSTW:
+				liquidMoisture = 1.0;
+				break;
+			case PT_SLTW:
+			{
+				liquidMoisture = 1.0;
+				const double solvent = GetOmniSolutionSolventMassKg(neighbour);
+				const double solute = GetOmniSolutionSoluteMassKg(neighbour) +
+					GetOmniSolutionNeutralSaltMassKg(neighbour);
+				const double fraction = OmniSolution::SoluteMassFraction(solvent, solute);
+				const double saturation = OmniSolution::SodiumChlorideSaturationMassFraction(
+					parts[neighbour].temp);
+				chlorideSeverity = std::max(chlorideSeverity,
+					saturation > 0.0 ? std::clamp(fraction / saturation, 0.0, 1.5) : 0.0);
+				break;
+			}
+			case PT_SALT:
+				chlorideSeverity = std::max(chlorideSeverity, 0.5);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	if (protectedByZinc)
+	{
+		omniCorrosionMetrics.protectedParticles++;
+		return true;
+	}
+
+	const int cellX = x / CELL;
+	const int cellY = y / CELL;
+	const auto primitive = omniAtmosphere->Primitive(cellX, cellY);
+	const double oxygenFactor = std::clamp(
+		omniAtmosphere->SpeciesPartialPressurePa(cellX, cellY, OMNI_SPECIES_O2) /
+			OmniCorrosion::ReferenceOxygenPartialPressurePa, 0.0, 2.0);
+	const double humidityMoisture = primitive.finite
+		? OmniCorrosion::HumidityMoistureFactor(primitive.relativeHumidity) : 0.0;
+	const double moistureFactor = std::max(liquidMoisture, humidityMoisture);
+	if (!(oxygenFactor > 0.0) || !(moistureFactor > 0.0))
+		return true;
+	omniCorrosionMetrics.wetParticles++;
+	omniCorrosionMetrics.atmosphereOxidizedParticles++;
+	if (chlorideSeverity > 0.0)
+		omniCorrosionMetrics.chlorideAcceleratedParticles++;
+
+	double passivation = GetOmniCorrosionPassivation(particleId);
+	if (chlorideSeverity > 0.0)
+		passivation = std::max(0.0, passivation - 0.01 * chlorideSeverity);
+	const double surfaceFactor = std::clamp(0.25 + 0.75 * (double(exposedFaces) / 8.0), 0.25, 1.0);
+	const double chlorideFactor = 1.0 + OmniCorrosion::ChlorideAcceleration * chlorideSeverity;
+	const double increment = OmniCorrosion::ProgressPerWetReferenceTick * oxygenFactor *
+		moistureFactor * OmniCorrosion::TemperatureFactor(parts[particleId].temp) *
+		surfaceFactor * chlorideFactor * (1.0 - passivation);
+	if (!(increment > 0.0) || !IsFiniteDoubleBits(increment))
+		return true;
+	const double progress = std::clamp(GetOmniCorrosionProgress(particleId) + increment, 0.0, 1.0);
+	if (chlorideSeverity <= 0.0)
+		passivation = std::min(OmniCorrosion::MaximumPassivation,
+			passivation + increment * OmniCorrosion::PassivationGrowthFraction);
+	SetOmniCorrosionState(particleId, progress, passivation);
+	omniCorrosionMetrics.progressAdded += increment;
+	omniCorrosionMetrics.maximumProgress = std::max(omniCorrosionMetrics.maximumProgress, progress);
+	omniCorrosionMetrics.maximumPassivation = std::max(
+		omniCorrosionMetrics.maximumPassivation, passivation);
+	if (progress >= 1.0)
+	{
+		omniCorrosionMetrics.convertedParticles++;
+		part_change_type(particleId, x, y, PT_BMTL);
+		parts[particleId].tmp = 20;
+	}
+	return true;
+}
+
 double Simulation::GetOmniCarbonParcelMassKg(int particleId) const
 {
 	if (particleId < 0 || particleId >= NPART || !IsOmniManagedCarbonType(parts[particleId].type) ||
@@ -5580,6 +5781,8 @@ void Simulation::BeforeSim(bool willUpdate)
 			omniAtmosphere->Step();
 			BeginOmniSolutionTick();
 			BeginOmniChemistryTick();
+			omniCorrosionMetrics = {};
+			omniCorrosionMetrics.activeTick = true;
 			ExportOmniAtmosphereToLegacyFields(*this);
 		}
 		else
@@ -5813,6 +6016,7 @@ void Simulation::AfterSim()
 		FinishOmniWaterCouplingTick();
 		FinishOmniSolutionTick();
 		FinishOmniChemistryTick();
+		omniCorrosionMetrics.activeTick = false;
 	}
 	debug_mostRecentlyUpdated = -1;
 	bool repairElementCounts = elementRecountAfterSim;

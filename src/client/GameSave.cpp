@@ -336,6 +336,10 @@ void GameSave::setSize(Vec2<int> newBlockSize)
 	omniSolutionSolventMassKg.clear();
 	omniSolutionSoluteMassKg.clear();
 	omniSolutionNeutralSaltMassKg.clear();
+	hasOmniCorrosionState = false;
+	omniCorrosionStateVersion = 0;
+	omniCorrosionProgress.clear();
+	omniCorrosionPassivation.clear();
 }
 
 std::pair<bool, std::vector<char>> GameSave::Serialise() const
@@ -377,6 +381,11 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 			omniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount) ||
 			omniSolutionNeutralSaltMassKg.size() != static_cast<size_t>(particlesCount)))
 		throw BuildException("invalid Omni solution state before transform");
+	if (hasOmniCorrosionState &&
+		(omniCorrosionStateVersion != OmniCorrosionStateVersion ||
+			omniCorrosionProgress.size() != static_cast<size_t>(particlesCount) ||
+			omniCorrosionPassivation.size() != static_cast<size_t>(particlesCount)))
+		throw BuildException("invalid Omni corrosion state before transform");
 	// undo translation by rotation
 	auto br  = transform * (blockSize * CELL - Vec2{ 1, 1 });
 	auto bbr = transform * (blockSize        - Vec2{ 1, 1 });
@@ -467,6 +476,11 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 				omniSolutionSolventMassKg[i] = 0.0;
 				omniSolutionSoluteMassKg[i] = 0.0;
 				omniSolutionNeutralSaltMassKg[i] = 0.0;
+			}
+			if (hasOmniCorrosionState && i < static_cast<int>(omniCorrosionProgress.size()))
+			{
+				omniCorrosionProgress[i] = 0.0;
+				omniCorrosionPassivation[i] = 0.0;
 			}
 			continue;
 		}
@@ -634,6 +648,8 @@ void GameSave::readOPS(const std::vector<char> &data)
 	std::vector<double> parsedOmniSolutionSolventMassKg;
 	std::vector<double> parsedOmniSolutionSoluteMassKg;
 	std::vector<double> parsedOmniSolutionNeutralSaltMassKg;
+	std::vector<double> parsedOmniCorrosionProgress;
+	std::vector<double> parsedOmniCorrosionPassivation;
 	unsigned partsCount = 0;
 	unsigned int savedVersion = inputData[4];
 	version = { savedVersion, 0 };
@@ -962,6 +978,33 @@ void GameSave::readOPS(const std::vector<char> &data)
 				throw ParseException(ParseException::Corrupt, "Invalid Omni solution mass");
 		}
 		omniSolutionStateVersion = stateVersion;
+	}
+	if (auto *corrosionNode = getIfType(b, "omniCorrosion", Bson::Type::objectValue))
+	{
+		int stateVersion = 0;
+		std::span<const unsigned char> progressData, passivationData;
+		if (!copyIfInt32(*corrosionNode, "stateVersion", stateVersion) ||
+			stateVersion != OmniCorrosionStateVersion)
+			throw ParseException(ParseException::WrongVersion, "Unsupported Omni corrosion state version");
+		if (!getAddressIfUser(*corrosionNode, "progress", progressData) ||
+			!getAddressIfUser(*corrosionNode, "passivation", passivationData) ||
+			progressData.size() % sizeof(double) != 0 ||
+			passivationData.size() != progressData.size())
+			throw ParseException(ParseException::Corrupt, "Invalid Omni corrosion state data");
+		parsedOmniCorrosionProgress.resize(progressData.size() / sizeof(double));
+		parsedOmniCorrosionPassivation.resize(parsedOmniCorrosionProgress.size());
+		size_t progressOffset = 0, passivationOffset = 0;
+		for (size_t index = 0; index < parsedOmniCorrosionProgress.size(); ++index)
+		{
+			if (!ReadDoubleLittleEndian(progressData, progressOffset,
+					parsedOmniCorrosionProgress[index]) ||
+				!ReadDoubleLittleEndian(passivationData, passivationOffset,
+					parsedOmniCorrosionPassivation[index]) ||
+				parsedOmniCorrosionProgress[index] < 0.0 || parsedOmniCorrosionProgress[index] > 1.0 ||
+				parsedOmniCorrosionPassivation[index] < 0.0 || parsedOmniCorrosionPassivation[index] > 1.0)
+				throw ParseException(ParseException::Corrupt, "Invalid Omni corrosion state");
+		}
+		omniCorrosionStateVersion = stateVersion;
 	}
 	copyIfBool(b, "waterEEnabled", waterEEnabled);
 	copyIfBool(b, "paused", paused);
@@ -1676,6 +1719,19 @@ void GameSave::readOPS(const std::vector<char> &data)
 		omniSolutionSoluteMassKg = std::move(parsedOmniSolutionSoluteMassKg);
 		omniSolutionNeutralSaltMassKg = std::move(parsedOmniSolutionNeutralSaltMassKg);
 		hasOmniSolutionState = true;
+	}
+	if (omniCorrosionStateVersion)
+	{
+		if (parsedOmniCorrosionProgress.size() != static_cast<size_t>(particlesCount) ||
+			parsedOmniCorrosionPassivation.size() != static_cast<size_t>(particlesCount))
+			throw ParseException(ParseException::Corrupt, "Omni corrosion count does not match particles");
+		for (int index = 0; index < particlesCount; ++index)
+			if ((parsedOmniCorrosionProgress[index] > 0.0 || parsedOmniCorrosionPassivation[index] > 0.0) &&
+				particles[index].type != PT_IRON)
+				throw ParseException(ParseException::Corrupt, "Omni corrosion state belongs to a non-iron particle");
+		omniCorrosionProgress = std::move(parsedOmniCorrosionProgress);
+		omniCorrosionPassivation = std::move(parsedOmniCorrosionPassivation);
+		hasOmniCorrosionState = true;
 	}
 
 	if (soapLinkData.data())
@@ -2545,6 +2601,8 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	std::vector<double> serialisedOmniSolutionSolventMassKg;
 	std::vector<double> serialisedOmniSolutionSoluteMassKg;
 	std::vector<double> serialisedOmniSolutionNeutralSaltMassKg;
+	std::vector<double> serialisedOmniCorrosionProgress;
+	std::vector<double> serialisedOmniCorrosionPassivation;
 	if (hasOmniWaterParcelState)
 	{
 		const bool currentWaterState = omniWaterParcelStateVersion == OmniWaterParcelStateVersion;
@@ -2582,6 +2640,15 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 		serialisedOmniSolutionSolventMassKg.reserve(omniSolutionSolventMassKg.size());
 		serialisedOmniSolutionSoluteMassKg.reserve(omniSolutionSoluteMassKg.size());
 		serialisedOmniSolutionNeutralSaltMassKg.reserve(omniSolutionNeutralSaltMassKg.size());
+	}
+	if (hasOmniCorrosionState)
+	{
+		if (omniCorrosionStateVersion != OmniCorrosionStateVersion ||
+			omniCorrosionProgress.size() != static_cast<size_t>(particlesCount) ||
+			omniCorrosionPassivation.size() != static_cast<size_t>(particlesCount))
+			throw BuildException("invalid Omni corrosion state payload");
+		serialisedOmniCorrosionProgress.reserve(omniCorrosionProgress.size());
+		serialisedOmniCorrosionPassivation.reserve(omniCorrosionPassivation.size());
 	}
 	std::fill(partsSaveIndex.data(), partsSaveIndex.data() + NPART, 0);
 	auto &sd = SimulationData::CRef();
@@ -2647,6 +2714,17 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 				serialisedOmniSolutionSolventMassKg.push_back(solventMassKg);
 				serialisedOmniSolutionSoluteMassKg.push_back(soluteMassKg);
 				serialisedOmniSolutionNeutralSaltMassKg.push_back(neutralSaltMassKg);
+			}
+			if (hasOmniCorrosionState)
+			{
+				const double progress = omniCorrosionProgress[i];
+				const double passivation = omniCorrosionPassivation[i];
+				if (!std::isfinite(progress) || !std::isfinite(passivation) ||
+					progress < 0.0 || progress > 1.0 || passivation < 0.0 || passivation > 1.0 ||
+					((progress > 0.0 || passivation > 0.0) && particles[i].type != PT_IRON))
+					throw BuildException("invalid Omni corrosion state");
+				serialisedOmniCorrosionProgress.push_back(progress);
+				serialisedOmniCorrosionPassivation.push_back(passivation);
 			}
 
 			auto part = particles[i];
@@ -3135,6 +3213,21 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 		solutionNode["soluteMassKg"] = std::move(soluteData);
 		if (omniSolutionStateVersion == OmniSolutionStateVersion)
 			solutionNode["neutralSaltMassKg"] = std::move(neutralSaltData);
+	}
+	if (hasOmniCorrosionState)
+	{
+		std::vector<unsigned char> progressData, passivationData;
+		progressData.reserve(serialisedOmniCorrosionProgress.size() * sizeof(double));
+		passivationData.reserve(serialisedOmniCorrosionPassivation.size() * sizeof(double));
+		for (double value : serialisedOmniCorrosionProgress)
+			AppendDoubleLittleEndian(progressData, value);
+		for (double value : serialisedOmniCorrosionPassivation)
+			AppendDoubleLittleEndian(passivationData, value);
+		auto &corrosionNode = (b["omniCorrosion"] = Bson::Type::objectValue);
+		corrosionNode["stateVersion"] = omniCorrosionStateVersion;
+		corrosionNode["layout"] = ByteString("particle_order_f64_le_progress_passivation_v1");
+		corrosionNode["progress"] = std::move(progressData);
+		corrosionNode["passivation"] = std::move(passivationData);
 	}
 	b["paused"] = paused;
 	b["gravityMode"] = gravityMode;

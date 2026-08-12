@@ -315,6 +315,26 @@ std::unique_ptr<SnapshotDelta> SnapshotDelta::FromSnapshots(const Snapshot &oldS
 	delta.extraOmniSolutionNeutralSaltMassKgNew.assign(
 		newSnap.OmniSolutionNeutralSaltMassKg.begin() + commonSolutionNeutralSaltSize,
 		newSnap.OmniSolutionNeutralSaltMassKg.end());
+	const auto commonCorrosionProgressSize = std::min(oldSnap.OmniCorrosionProgress.size(),
+		newSnap.OmniCorrosionProgress.size());
+	FillHunkVectorPtr(oldSnap.OmniCorrosionProgress.data(), newSnap.OmniCorrosionProgress.data(),
+		delta.commonOmniCorrosionProgress, commonCorrosionProgressSize);
+	delta.extraOmniCorrosionProgressOld.assign(
+		oldSnap.OmniCorrosionProgress.begin() + commonCorrosionProgressSize,
+		oldSnap.OmniCorrosionProgress.end());
+	delta.extraOmniCorrosionProgressNew.assign(
+		newSnap.OmniCorrosionProgress.begin() + commonCorrosionProgressSize,
+		newSnap.OmniCorrosionProgress.end());
+	const auto commonCorrosionPassivationSize = std::min(oldSnap.OmniCorrosionPassivation.size(),
+		newSnap.OmniCorrosionPassivation.size());
+	FillHunkVectorPtr(oldSnap.OmniCorrosionPassivation.data(), newSnap.OmniCorrosionPassivation.data(),
+		delta.commonOmniCorrosionPassivation, commonCorrosionPassivationSize);
+	delta.extraOmniCorrosionPassivationOld.assign(
+		oldSnap.OmniCorrosionPassivation.begin() + commonCorrosionPassivationSize,
+		oldSnap.OmniCorrosionPassivation.end());
+	delta.extraOmniCorrosionPassivationNew.assign(
+		newSnap.OmniCorrosionPassivation.begin() + commonCorrosionPassivationSize,
+		newSnap.OmniCorrosionPassivation.end());
 
 	return ptr;
 }
@@ -399,6 +419,20 @@ std::unique_ptr<Snapshot> SnapshotDelta::Forward(const Snapshot &oldSnap)
 		commonSolutionNeutralSaltSize + extraOmniSolutionNeutralSaltMassKgNew.size());
 	std::copy(extraOmniSolutionNeutralSaltMassKgNew.begin(), extraOmniSolutionNeutralSaltMassKgNew.end(),
 		newSnap.OmniSolutionNeutralSaltMassKg.begin() + commonSolutionNeutralSaltSize);
+	const auto commonCorrosionProgressSize = oldSnap.OmniCorrosionProgress.size() -
+		extraOmniCorrosionProgressOld.size();
+	ApplyHunkVectorPtr<false>(commonOmniCorrosionProgress, newSnap.OmniCorrosionProgress.data());
+	newSnap.OmniCorrosionProgress.resize(
+		commonCorrosionProgressSize + extraOmniCorrosionProgressNew.size());
+	std::copy(extraOmniCorrosionProgressNew.begin(), extraOmniCorrosionProgressNew.end(),
+		newSnap.OmniCorrosionProgress.begin() + commonCorrosionProgressSize);
+	const auto commonCorrosionPassivationSize = oldSnap.OmniCorrosionPassivation.size() -
+		extraOmniCorrosionPassivationOld.size();
+	ApplyHunkVectorPtr<false>(commonOmniCorrosionPassivation, newSnap.OmniCorrosionPassivation.data());
+	newSnap.OmniCorrosionPassivation.resize(
+		commonCorrosionPassivationSize + extraOmniCorrosionPassivationNew.size());
+	std::copy(extraOmniCorrosionPassivationNew.begin(), extraOmniCorrosionPassivationNew.end(),
+		newSnap.OmniCorrosionPassivation.begin() + commonCorrosionPassivationSize);
 
 	return ptr;
 }
@@ -483,6 +517,20 @@ std::unique_ptr<Snapshot> SnapshotDelta::Restore(const Snapshot &newSnap)
 		commonSolutionNeutralSaltSize + extraOmniSolutionNeutralSaltMassKgOld.size());
 	std::copy(extraOmniSolutionNeutralSaltMassKgOld.begin(), extraOmniSolutionNeutralSaltMassKgOld.end(),
 		oldSnap.OmniSolutionNeutralSaltMassKg.begin() + commonSolutionNeutralSaltSize);
+	const auto commonCorrosionProgressSize = newSnap.OmniCorrosionProgress.size() -
+		extraOmniCorrosionProgressNew.size();
+	ApplyHunkVectorPtr<true>(commonOmniCorrosionProgress, oldSnap.OmniCorrosionProgress.data());
+	oldSnap.OmniCorrosionProgress.resize(
+		commonCorrosionProgressSize + extraOmniCorrosionProgressOld.size());
+	std::copy(extraOmniCorrosionProgressOld.begin(), extraOmniCorrosionProgressOld.end(),
+		oldSnap.OmniCorrosionProgress.begin() + commonCorrosionProgressSize);
+	const auto commonCorrosionPassivationSize = newSnap.OmniCorrosionPassivation.size() -
+		extraOmniCorrosionPassivationNew.size();
+	ApplyHunkVectorPtr<true>(commonOmniCorrosionPassivation, oldSnap.OmniCorrosionPassivation.data());
+	oldSnap.OmniCorrosionPassivation.resize(
+		commonCorrosionPassivationSize + extraOmniCorrosionPassivationOld.size());
+	std::copy(extraOmniCorrosionPassivationOld.begin(), extraOmniCorrosionPassivationOld.end(),
+		oldSnap.OmniCorrosionPassivation.begin() + commonCorrosionPassivationSize);
 
 	return ptr;
 }

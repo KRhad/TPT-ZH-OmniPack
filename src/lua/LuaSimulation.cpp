@@ -1954,6 +1954,49 @@ static int omniAlloyComposition(lua_State *L)
 	return 1;
 }
 
+static int omniCorrosion(lua_State *L)
+{
+	auto *sim = GetLSI()->sim;
+	const auto metrics = sim->GetOmniCorrosionMetrics();
+	lua_newtable(L);
+	auto setBoolean = [L](char const *name, bool value) {
+		lua_pushboolean(L, value);
+		lua_setfield(L, -2, name);
+	};
+	auto setInteger = [L](char const *name, lua_Integer value) {
+		lua_pushinteger(L, value);
+		lua_setfield(L, -2, name);
+	};
+	auto setNumber = [L](char const *name, lua_Number value) {
+		lua_pushnumber(L, value);
+		lua_setfield(L, -2, name);
+	};
+	setBoolean("active", sim->IsOmniAtmosphereActive());
+	setBoolean("active_tick", metrics.activeTick);
+	setInteger("runtime_version", 1);
+	setInteger("candidate_particles", metrics.candidateParticles);
+	setInteger("wet_particles", metrics.wetParticles);
+	setInteger("chloride_accelerated_particles", metrics.chlorideAcceleratedParticles);
+	setInteger("atmosphere_oxidized_particles", metrics.atmosphereOxidizedParticles);
+	setInteger("protected_particles", metrics.protectedParticles);
+	setInteger("converted_particles", metrics.convertedParticles);
+	setNumber("progress_added", metrics.progressAdded);
+	setNumber("maximum_progress", metrics.maximumProgress);
+	setNumber("maximum_passivation", metrics.maximumPassivation);
+	if (lua_gettop(L) >= 1)
+	{
+		const int particleId = luaL_checkinteger(L, 1);
+		setInteger("particle_id", particleId);
+		setNumber("particle_progress", sim->GetOmniCorrosionProgress(particleId));
+		setNumber("particle_passivation", sim->GetOmniCorrosionPassivation(particleId));
+	}
+	lua_pushstring(L, "iron_aqueous_oxygen_process_v1");
+	lua_setfield(L, -2, "runtime_model");
+	lua_pushstring(L, "game_tuned_rate_physical_factor_ordering");
+	lua_setfield(L, -2, "rate_status");
+	return 1;
+}
+
 static int waterEqualization(lua_State *L)
 {
 	auto *lsi = GetLSI();
@@ -2793,6 +2836,7 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(omniChemistry),
 		LFUNC(omniSolution),
 		LFUNC(omniAlloyComposition),
+		LFUNC(omniCorrosion),
 		LFUNC(waterEqualization),
 		LFUNC(ambientAirTemp),
 		LFUNC(edgePressure),

@@ -135,6 +135,12 @@ public:
 	std::vector<double> omniSolutionSoluteMassKg;
 	std::vector<double> omniSolutionNeutralSaltMassKg;
 
+	static constexpr int OmniCorrosionStateVersion = 1;
+	bool hasOmniCorrosionState = false;
+	int omniCorrosionStateVersion = 0;
+	std::vector<double> omniCorrosionProgress;
+	std::vector<double> omniCorrosionPassivation;
+
 	//Simulation Options
 	bool waterEEnabled = false;
 	bool legacyEnable = false;

@@ -1,0 +1,47 @@
+{
+  "schema": "omnicore.corrosion-runtime",
+  "runtime_version": "1.0.9",
+  "model": "iron_aqueous_oxygen_process_v1",
+  "authoritative_state": ["corrosion_progress", "passivation_fraction"],
+  "inputs": [
+    "atmosphere_o2_partial_pressure",
+    "atmosphere_relative_humidity",
+    "adjacent_liquid_water",
+    "adjacent_nacl_solution_concentration",
+    "particle_temperature",
+    "surface_exposure",
+    "zinc_protection"
+  ],
+  "behavior": {
+    "dry_or_no_oxygen": "no_progress",
+    "chloride": "accelerates_and_disrupts_passivation",
+    "clean_wet_oxygen": "progress_with_bounded_passivation",
+    "zinc_contact": "pauses_iron_progress",
+    "completion": "IRON_to_BMTL"
+  },
+  "rate_policy": {
+    "status": "game_tuned_explicit",
+    "reference_progress_per_tick": 0.004,
+    "temperature_rule": "bounded_factor_doubles_per_20_k",
+    "not_a_claim": "not_a_measured_real_world_corrosion_rate"
+  },
+  "provenance": [
+    {
+      "source": "The Powder Toy upstream IRON behavior",
+      "use": "legacy contact set and Classic compatibility baseline",
+      "redistribution": "GPL-3.0-project-source"
+    },
+    {
+      "source": "existing OmniPack corrosion and passivation registry evidence",
+      "use": "qualitative moisture chloride oxygen and protective-film ordering",
+      "redistribution": "project_authored_summary"
+    }
+  ],
+  "limitations": [
+    "no_iron_or_oxide_parcel_mass_ownership",
+    "no_stoichiometric_atmosphere_oxygen_consumption_in_v1",
+    "BMTL_is_a_legacy_visual_material_endpoint",
+    "online_reference_refresh_external_503_auth_unavailable"
+  ],
+  "classic_mode": "legacy_behavior_unchanged"
+}

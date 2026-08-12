@@ -48,6 +48,11 @@ void Element::Element_IRON()
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	if (sim->IsOmniAtmosphereActive())
+	{
+		sim->UpdateOmniIronCorrosion(i, x, y);
+		return 0;
+	}
 	if (parts[i].life)
 		return 0;
 	auto tryBreak = [&]() {
