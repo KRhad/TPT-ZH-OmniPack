@@ -68,8 +68,8 @@ V1_0_7_REMAINING_SCIENTIFIC_MODE=YELLOW_SAME_RUNTIME_EQUATIONS_AS_ENHANCED
 | B-01 | MEDIUM | build provenance | MSYS2 Git first on PATH falsely marks CRLF checkout dirty and adds `+` VCS tag | enforce Windows Git first and assert status/tag | YELLOW, controlled |
 | B-02 | MEDIUM | build warning | GCC reports possible uninitialized `ByteString` optional path | isolate/reproduce and compare upstream before disposition | YELLOW |
 | B-03 | MEDIUM | evidence provenance | ledger builds both targets, checks 754 compile commands and re-hashes EXEs/tools/DLL inventory, but the executable does not cryptographically embed the source commit and direct DLL/Python-module attribution is incomplete | retain exact hashes and declared limits; require reproducible/embedded build identity before portable claims | YELLOW, declared |
-| S-01 | HIGH | SDL migration | 505 Lua SDL2 constants plus window/input/clipboard behavior | independent SDL3 phase and compatibility table | RED |
-| S-02 | HIGH | shader pipeline | no local dxc/glslc/validation/shadercross | isolated toolchain PoC and transitive license audit | RED |
+| S-01 | HIGH | SDL migration | Windows SDL3 migration and 505-constant compatibility table are complete; Linux/macOS runtime and wider visual interaction remain pending | retain SDL2 fallback and complete cross-platform runtime/visual matrix | YELLOW |
+| S-02 | HIGH | shader pipeline | DXIL/DXC and shadercross remain unavailable; local GLSL/SPIR-V path is now bounded | retain optional glslc build, validate SPIR-V, add DXIL/MSL paths only with platform evidence | YELLOW |
 
 ## Gate summary
 
@@ -96,7 +96,7 @@ PHYSICAL_CONSERVATION_LEDGER=RED
 SOURCE_SINK_CORRECTION_LEDGER=RED
 LOAD_BOUNDARY_FIELD_DIFF=GREEN
 LEGACY_CPU_VS_OMNI_CPU=RED
-OMNI_CPU_VS_OMNI_GPU=RED
+OMNI_CPU_VS_OMNI_GPU=BOUNDED_POC_GREEN_WINDOWS
 CONSERVATION_POSITIVITY_FINITE_LEDGER=RED
 FIXED_STEP_BENCHMARK_FOUNDATION=GREEN
 SUBSYSTEM_PROFILER_EXPORT=GREEN
@@ -108,8 +108,8 @@ PROCESS_VRAM_BASELINE=RED
 NUMERICAL_FOUNDATION=RED
 PHYSICAL_SCALE=RED
 ATMOSPHERE_IMPLEMENTATION=RED
-SDL3=RED
-GPU=RED
+SDL3=GREEN_WINDOWS_CROSS_PLATFORM_PENDING
+GPU=BOUNDED_POC_GREEN_WINDOWS_CROSS_PLATFORM_PENDING
 OMNICHEM=GREEN_BOUNDED_CARBON_OXIDATION_SUBSET_RED_GENERAL_MECHANISM
 MATERIAL_DATA_IMPORT=RED
 G0_UPSTREAM_BASELINE=RED

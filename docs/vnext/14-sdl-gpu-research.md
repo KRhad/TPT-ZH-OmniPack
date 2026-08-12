@@ -4,14 +4,15 @@
 
 ```text
 LOCAL_SDL=SDL2 2.30.9-tpt-libs
-LOCAL_SDL3=false
+LOCAL_SDL3=true
 LOCAL_SDL_GPU_PRODUCTION_CODE=false
+LOCAL_SDL_GPU_POC_CODE=true
 SDL3_STABLE=3.4.14
 SDL3_TAG_COMMIT=147a8ee32dbf9ac02f3794964490687b6bbda1bc
 SDL_SHADERCROSS_HEAD=e55cf5e31ced6f3d1be5cc6d0c50e99384f9f4ba
 DXC_AVAILABLE=false
-GLSLC_AVAILABLE=false
-SPIRV_VAL_AVAILABLE=false
+GLSLC_AVAILABLE=true
+SPIRV_VAL_AVAILABLE=true
 SHADERCROSS_AVAILABLE=false
 SDL3_CONFIG_AVAILABLE=false
 ```
@@ -66,10 +67,32 @@ CPU/GPU crossover; GPU is not assumed faster.
 ## Gate
 
 ```text
-SDL3_GATE=RED
-GPU_POC_GATE=RED
+SDL3_GATE=GREEN_WINDOWS_VALIDATED_CROSS_PLATFORM_CI_PENDING
+GPU_POC_GATE=GREEN_WINDOWS_VULKAN_SPIRV_DETERMINISTIC_CPU_COMPARE
 GPU_ATMOSPHERE_GATE=RED
 ```
 
-The red result reflects missing prerequisite phases and toolchain, not missing
-hardware.
+## 1.1.0 bounded implementation
+
+The 1.1.0 milestone adds an opt-in `--gpu-probe` command to the SDL3 desktop
+executable. It requests the Vulkan SDL_GPU backend, reports the selected device,
+driver and shader formats, and executes a 16-word `u32` storage-buffer kernel
+when the locally available SPIR-V artifact is present. Upload, dispatch, fence,
+readback and exact CPU comparison are part of the probe. The observed Windows
+result hash is `0x6218ce997ec92e93` on an NVIDIA GeForce RTX 5070 Ti Laptop GPU
+with driver 591.86.
+
+SDL2 builds report `gpu_supported=false`, `compute_poc_executed=false` and
+`fallback_cpu=true`. SDL3 builds without `glslc`, without a usable Vulkan
+device, or with a resource/pipeline/fence failure also return a successful
+diagnostic exit with an explicit `fallback_reason`; normal client startup is
+unchanged. The shader is compiled at build time and embedded in the executable;
+generated binaries and logs remain local build outputs.
+
+This is a capability and synchronization proof, not a production physics port.
+Particle allocation/movement, chemistry, Save, Lua, CUDA, device-loss recovery,
+Linux/macOS runtime, performance crossover and full atmosphere migration remain
+outside the 1.1.0 claim.
+
+The remaining red atmosphere gate reflects missing production migration,
+residency/crossover and device-loss evidence, not missing hardware.

@@ -71,6 +71,16 @@ namespace Platform
 
 	int InvokeMain(int argc, char *argv[]);
 
+	/**
+	 * Run the opt-in SDL_GPU capability and compute proof-of-concept probe.
+	 *
+	 * The probe owns its temporary SDL lifetime and never changes the normal
+	 * renderer or simulation path.  It returns zero for both a working GPU and
+	 * an expected CPU fallback so that it can be used as a diagnostic command
+	 * on machines without SDL_GPU support.
+	 */
+	int RunSDLGPUProbe();
+
 	std::optional<std::vector<String>> StackTrace();
 
 	void MarkPresentable();

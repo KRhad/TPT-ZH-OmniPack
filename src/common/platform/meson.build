@@ -2,6 +2,12 @@ common_files += files(
 	'Common.cpp',
 )
 
+# SDL_GPU is an opt-in diagnostic owned by the main executable.  Keeping the
+# implementation in powder_files avoids adding SDL_GPU symbols to the
+# headless renderer and font targets, while SDL2 builds compile the explicit
+# CPU-fallback branch.
+powder_files += files('SDLGPU.cpp')
+
 if get_option('use_bluescreen') == 'auto'
 	use_bluescreen = not is_debug
 else

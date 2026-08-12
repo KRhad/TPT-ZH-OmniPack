@@ -3,12 +3,12 @@
 ## Outcome
 
 ```text
-REPORT_DATE=2026-08-12
+REPORT_DATE=2026-08-13
 CURRENT_BRANCH=integration/omnicore-vnext
-CURRENT_VERSION=1.0.10
-CURRENT_VERSION_GATE=GREEN_WINDOWS_VALIDATED_CROSS_PLATFORM_CI_PENDING
-NEXT_VERSION=1.0.11
-NEXT_PHASE=SDL_GPU and CUDA acceleration after 1.0.10 milestone tag
+CURRENT_VERSION=1.1.0
+CURRENT_VERSION_GATE=GREEN_WINDOWS_SDLGPU_POC_CPU_FALLBACK_CROSS_PLATFORM_PENDING
+NEXT_VERSION=1.1.1
+NEXT_PHASE=GPU resource lifetime/device-loss and production migration only after CPU reference gate
 PROFILER_IMPLEMENTATION_HEAD=97d2fc2c175818a66636421526e4f562d4d1de01
 PROFILER_VALIDATED_EXECUTABLE_SHA256=EA2C8517771E615D6DFC86B9E3AFD5A77F0D49F8F0FE3F8635E6AF21D02B279D
 PROFILER_RUNTIME_AND_CONCURRENCY=GREEN
@@ -39,6 +39,23 @@ V1_0_10_CLIPBOARD=GREEN_WINDOWS_NATIVE_FORMAT_REGISTERED_ISOLATED
 V1_0_10_GUI=WINDOW_LIVENESS_GREEN_VISUAL_INTERACTION_NOT_TESTED
 V1_0_10_CROSS_PLATFORM=CI_SCRIPT_STATIC_GREEN_RUNTIME_PENDING_REMOTE_CI
 V1_0_10_BENCHMARK=RECORDED_OFF_121_207975_ON_132_741312_HASH_EQUAL_PERFORMANCE_GATE_NOT_EVALUATED
+V1_1_0_BASE_COMMIT=d73b51b0f17dfaa13e8336b0d227daada97703ec
+V1_1_0_IMPLEMENTATION_HEAD=dev-1.1.0
+V1_1_0_SCOPE=SDL_GPU_PROBE_AND_DETERMINISTIC_COMPUTE_POC_ONLY
+V1_1_0_SDLGPU_RUNTIME=GREEN_WINDOWS_VULKAN_SPIRV
+V1_1_0_GPU_DEVICE=NVIDIA_GEFORCE_RTX_5070_TI_LAPTOP_GPU_DRIVER_591_86
+V1_1_0_GPU_SHADER_FORMATS=SPIRV_0x2
+V1_1_0_COMPUTE=GREEN_UPLOAD_COMPUTE_DISPATCH_FENCE_READBACK
+V1_1_0_CPU_COMPARE=GREEN_16_WORDS_HASH_6218CE997EC92E93
+V1_1_0_SDL2_FALLBACK=GREEN_EXPLICIT_CPU_FALLBACK
+V1_1_0_SHADER_VALIDATION=GREEN_GLSLC_AND_SPIRV_VAL
+V1_1_0_DEVICE_LOSS=NOT_TESTED
+V1_1_0_CUDA=NOT_TESTED_NVCC_MISSING
+V1_1_0_CROSS_PLATFORM=NOT_TESTED_WINDOWS_HOST
+V1_1_0_PRODUCTION_SIMULATION_MIGRATION=FALSE
+V1_1_0_TESTS=GREEN_MESON_98_OF_98_SANITIZED_ENVIRONMENT
+V1_1_0_AUTO_STATIC=GREEN_SELECTED_SDL3_EXE_SHA256_BB572CA8BFCC4F3B9E08385BE9A0D65FF68156BC5A5313971CF2F2D076231893
+V1_1_0_SHADER_ARTIFACT=SPIRV_VAL_PASS_SHA256_954FDABE5B207450C85167171A74679F88E6BE43FFDA2B771FE4E079CFA0A5CB
 UPSTREAM_TAG_FETCH=YELLOW_LOCAL_V99_5_394_COLLISION_NOT_OVERWRITTEN
 UI_ROUTE_CONTRACT=GREEN_488_487_1
 I18N_STATIC=GREEN_1839_1839_0_ERRORS_38_WARNINGS
@@ -345,13 +362,13 @@ block G0.
 | Sub-agents | `true` | Worker slots were available; three requested read-only ledger audits exhausted service retries with 429 and contributed no evidence. Main Orchestrator independently reran clients, tests, artifact hashes and replay |
 | Multiple shells/tool calls | `true` | Independent PowerShell commands can run concurrently |
 | Git worktree | `true` | upstream/element worktrees remain isolated; formal load-boundary and all-tick-ledger runs used clean detached worktrees |
-| Compile project | `true` | final clean 1.0.1 rebuild passed; final app SHA-256 is `EA2C8517...2B279D` |
-| Run automated tests | `true` | final Meson suite `40/40`; Python discovery `342` passed with `2` declared skips |
+| Compile project | `true` | final 1.1.0 auto static build selected SDL3; EXE SHA-256 is `BB572CA8...6231893` |
+| Run automated tests | `true` | sanitized-environment Meson suite `98/98` passed, including SDL_GPU contract and SPIR-V validation |
 | GPU hardware | `true` | NVIDIA GeForce RTX 5070 Ti Laptop GPU, driver 591.86, reported 12,227 MiB, compute capability 12.0 |
 | SDL application process | `true` | isolated Lua/runtime clients execute; Chinese/English periodic, detail, scroll, long press, and search are visibly checked at 200% system DPI; 100/125/150% remains `not_tested` |
-| SDL3 / SDL_GPU runtime | `false` | repository is SDL2; no SDL3 build or GPU compute pipeline exists |
-| Shader toolchain | `false` | `dxc`, `glslc`, `spirv-val`, `shadercross`, and `sdl3-config` unavailable on PATH |
-| Collect process metrics | `true` | fixed-step runner records process CPU/RAM and final profiler off/on pairs; per-process VRAM is `not_tested_no_gpu_backend` |
+| SDL3 / SDL_GPU runtime | `true` for the bounded Windows probe | SDL3 3.4.14 Vulkan/SPIR-V device and compute proof pass; normal simulation/rendering remains CPU/SDL renderer |
+| Shader toolchain | `partial` | UCRT64 `glslc 2026.3` and SPIR-V Tools 2026.3 are validated; `dxc`, `shadercross` and `sdl3-config` remain unavailable |
+| Collect process metrics | `true` | fixed-step runner records process CPU/RAM; process VRAM and GPU crossover remain `not_tested` for the bounded PoC |
 | Accepted throughput benchmark | `true` | two generated scenes, two FP modes, clean commit/hash/settings/machine provenance |
 
 The Intel graphics adapter reports an error through WMI and two virtual adapters are

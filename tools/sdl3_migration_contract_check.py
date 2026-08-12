@@ -17,6 +17,8 @@ def main() -> int:
     platform = (root / "src/PowderToySDL.cpp").read_text(encoding="utf-8")
     clipboard = (root / "src/common/clipboard/Dynamic.cpp").read_text(encoding="utf-8")
     windows_clipboard = (root / "src/common/clipboard/Windows.cpp").read_text(encoding="utf-8")
+    gpu = (root / "src/common/platform/SDLGPU.cpp").read_text(encoding="utf-8")
+    gpu_shader = (root / "resources/omnicore/sdl_gpu_add.comp").read_text(encoding="utf-8")
     ci = (root / ".github/build.sh").read_text(encoding="utf-8")
 
     require(options, "choices: [ 'auto', 'sdl2', 'sdl3' ]", "dual backend option")
@@ -33,6 +35,16 @@ def main() -> int:
     require(platform, "SDL_free(text);", "SDL3 clipboard text ownership")
     require(clipboard, "SDL_GetCurrentVideoDriver", "SDL3 clipboard subsystem routing")
     require(windows_clipboard, "SDL_PROP_WINDOW_WIN32_HWND_POINTER", "SDL3 HWND property")
+    require(meson, "find_program('glslc', required: false)", "optional SDL_GPU shader compiler")
+    require(meson, "sdlgpu_compute_spirv", "embedded SDL_GPU shader target")
+    require(gpu, "SDL_CreateGPUDevice", "SDL_GPU device creation")
+    require(gpu, "SDL_BeginGPUComputePass", "SDL_GPU compute pass")
+    require(gpu, "SDL_SubmitGPUCommandBufferAndAcquireFence", "SDL_GPU fence submission")
+    require(gpu, "deterministic_compare", "CPU/GPU deterministic comparison")
+    require(gpu, "fallback_cpu", "CPU fallback contract")
+    require(gpu_shader, "layout(local_size_x = 64", "deterministic compute local size")
+    require(gpu_shader, "layout(std140, set = 0, binding = 0)", "read-only storage layout")
+    require(gpu_shader, "layout(std140, set = 1, binding = 0)", "read-write storage layout")
     require(ci, "SDL3_RELEASE=release-3.4.14", "pinned Linux SDL3 release")
     require(
         ci,
@@ -69,6 +81,7 @@ def main() -> int:
     print("sdl3_migration_contract_pass=true")
     print("desktop_default=sdl3")
     print("legacy_fallback=sdl2")
+    print("sdlgpu_probe_contract=pass")
     print("frozen_simulation_files=7")
     return 0
 

@@ -105,7 +105,7 @@ GCC emitted a `-Wmaybe-uninitialized` warning in the `ByteString`/`optional` pat
 | Source/sink and correction attribution | `not_evaluated` | no event ledger exists |
 | Internal/full-state finite and pressure positivity | `not_tested` | all-tick exported floats are not internal/full state or physical positivity |
 | Legacy CPU vs Omni CPU | `not_implemented` | no Omni solver exists |
-| Omni CPU vs Omni GPU | `not_implemented` | no GPU compute backend exists |
+| Omni CPU vs Omni GPU | `bounded_poc_only` | SDL_GPU probe compares a 16-word standalone kernel; no Omni simulation state is migrated |
 
 Formal throughput is 1,682.069895/1,655.224824 steps/s for empty and
 189.868348/189.808193 steps/s for mixed Legacy/Strict. Mixed starts from the same
@@ -152,7 +152,7 @@ SOURCE_SINK_CORRECTION_LEDGER=RED
 LOAD_BOUNDARY_FIELD_DIFF=GREEN
 CONSERVATION_POSITIVITY_FULL_STATE_FINITE_LEDGER=RED
 LEGACY_CPU_VS_OMNI_CPU=RED
-OMNI_CPU_VS_OMNI_GPU=RED
+OMNI_CPU_VS_OMNI_GPU=BOUNDED_POC_ONLY
 G0_UPSTREAM_BASELINE=RED
 ```
 

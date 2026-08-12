@@ -140,4 +140,6 @@ GATE=GREEN_WINDOWS_VALIDATED_CROSS_PLATFORM_CI_PENDING
 ```
 
 Rollback is the parent commit `697751876`. The next version may begin only after
-the focused 1.0.10 commit/tag exists. SDL_GPU and CUDA remain 1.0.11 work.
+the focused 1.0.10 commit/tag exists. SDL_GPU bounded compute is recorded in
+the separate 1.1.0 phase; CUDA and production simulation migration remain out
+of scope.

@@ -44,8 +44,9 @@ OmniAtmosphere state or solver will be integrated yet.
 | 6-10 | species, diffusion, convection, boundaries, coupling | BLOCKED |
 | 11-18 | humidity, OmniThermal, materials, offline tools, OmniChem, mixtures/corrosion | BLOCKED |
 | 19 | Particle access abstraction | planned; no AoS rewrite before audit |
-| 20 | SDL3 stable migration | RED / independent after simulation baselines |
-| 21-25 | SDL_GPU PoC and GPU/hybrid optimization | RED / CPU reference prerequisite |
+| 20 | SDL3 stable migration | GREEN on Windows; cross-platform runtime pending |
+| 21 | SDL_GPU bounded compute PoC | GREEN on Windows Vulkan/SPIR-V; SDL2 CPU fallback; device-loss and cross-platform pending |
+| 22-25 | GPU/hybrid production optimization | RED / CPU reference, residency and element arbitration prerequisites |
 | 26 | Scientific advanced systems | BLOCKED |
 
 ## Immediate executable work
@@ -119,7 +120,7 @@ the Main Orchestrator chooses adaptation timing.
 | Current upstream master? | `d768aeb89acad986bd252d7e904bf44bb374545f`, equal to stable at audit time. |
 | What is local OmniPack based on? | Common base `bff38ce6959...`; pre-vNext fork tip `fb72d5e8f`; stable is now merged into `f1320b48d`. |
 | Distance to stable/master? | Pre-adaptation: 181 local-only / 13 upstream-only. At the 1.0.5 entry base `13b24f49e`: 218 local-only / 0 upstream-only. |
-| SDL2? | Yes, `2.30.9-tpt-libs`; no SDL3 production code. |
+| SDL2? | Yes, `2.30.9-tpt-libs`; SDL3 3.4.14 is the supported desktop backend and SDL2 remains the explicit fallback. |
 | Current Air? | Existing coarse pressure/velocity/temperature solver with advection, smoothing, walls, fans, vorticity and convection approximations. |
 | `pv/vx/vy/hv`? | Dimensionless pressure-like field; two velocity-like fields; Kelvin-like ambient temperature, respectively. |
 | Real gas density/mass/composition/partial pressure? | All `false`. |

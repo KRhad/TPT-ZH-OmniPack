@@ -1,0 +1,28 @@
+#version 450
+
+// The first SDL_GPU proof keeps storage members in 16-byte-aligned uvec4
+// records. This makes the std140 contract explicit and leaves the layout
+// suitable for a later atmosphere-side buffer ABI review.
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(std140, set = 0, binding = 0) readonly buffer InputBuffer
+{
+    uvec4 values[4];
+} input_data;
+
+layout(std140, set = 1, binding = 0) buffer OutputBuffer
+{
+    uvec4 values[4];
+} output_data;
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= 16u)
+        return;
+
+    uint record = index / 4u;
+    uint lane = index % 4u;
+    uint value = input_data.values[record][lane];
+    output_data.values[record][lane] = value * 3u + 7u;
+}

@@ -240,6 +240,18 @@ else
 	project_cpp_args += [ cpp_compiler.get_argument_syntax() == 'msvc' ? '/DTPT_SDL3=0' : '-DTPT_SDL3=0' ]
 endif
 
+# SDL_GPU's first proof uses a checked-in GLSL source and an optional local
+# glslc compiler.  The compiler is deliberately a build-time convenience:
+# machines without it still get the SDL3 probe and an explicit CPU fallback.
+sdlgpu_shader_compiler = find_program('glslc', required: false)
+sdlgpu_shader_validator = find_program('spirv-val', required: false)
+sdlgpu_shader_available = use_sdl3 and sdlgpu_shader_compiler.found()
+if cpp_compiler.get_argument_syntax() == 'msvc'
+	project_cpp_args += [ '/DTPT_SDLGPU_SHADER_AVAILABLE=@0@'.format(sdlgpu_shader_available ? 1 : 0) ]
+else
+	project_cpp_args += [ '-DTPT_SDLGPU_SHADER_AVAILABLE=@0@'.format(sdlgpu_shader_available ? 1 : 0) ]
+endif
+
 fftw_dep = dependency('fftw3f', static: is_static)
 threads_dep = dependency('threads')
 if host_platform == 'emscripten'
@@ -507,6 +519,24 @@ project_export_dynamic = false
 
 embedded_files = []
 
+if sdlgpu_shader_available
+	sdlgpu_compute_spirv = custom_target(
+		'sdlgpu-compute-spirv',
+		input: files('resources/omnicore/sdl_gpu_add.comp'),
+		output: 'sdlgpu_compute.spv',
+		command: [
+			sdlgpu_shader_compiler,
+			'-fshader-stage=compute',
+			'-std=450',
+			'--target-env=vulkan1.0',
+			'-O',
+			'-o', '@OUTPUT@',
+			'@INPUT@',
+		],
+	)
+	embedded_files += [ [ 'sdlgpu_compute_spirv', sdlgpu_compute_spirv ] ]
+endif
+
 subdir('src')
 subdir('resources')
 
@@ -717,6 +747,20 @@ if get_option('build_tests')
 		args: [ files('tools/sdl3_migration_contract_check.py') ],
 		suite: 'static',
 	)
+	test(
+		'sdlgpu-probe-contract',
+		python3_prog,
+		args: [ files('tools/sdlgpu_probe_contract_check.py') ],
+		suite: 'static',
+	)
+	if sdlgpu_shader_available and sdlgpu_shader_validator.found()
+		test(
+			'sdlgpu-spirv-validation',
+			sdlgpu_shader_validator,
+			args: [ '--target-env', 'vulkan1.0', sdlgpu_compute_spirv ],
+			suite: 'static',
+		)
+	endif
 atmospherebench_cpp_args = strict_numerical_cpp_args
 
 atmospherebench = executable(

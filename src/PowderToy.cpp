@@ -37,6 +37,7 @@
 #endif
 #include <exception>
 #include <cstdlib>
+#include <cstring>
 
 void LoadWindowPosition()
 {
@@ -268,6 +269,15 @@ int main(int argc, char *argv[])
 
 int Main(int argc, char *argv[])
 {
+	// Keep the GPU proof opt-in and before the normal singleton/window setup.
+	// This makes the diagnostic safe on machines without a GPU backend and
+	// guarantees that a fallback probe cannot touch user preferences or saves.
+	for (int i = 1; i < argc; ++i)
+	{
+		if (std::strcmp(argv[i], "--gpu-probe") == 0 || std::strcmp(argv[i], "gpu-probe") == 0)
+			return Platform::RunSDLGPUProbe();
+	}
+
 	Platform::Atexit([]() {
 		SaveWindowPosition();
 		// Unregister dodgy error handlers so they don't try to show the blue screen when the window is closed
