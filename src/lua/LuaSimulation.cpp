@@ -1874,6 +1874,48 @@ static int omniChemistry(lua_State *L)
 	return 1;
 }
 
+static int omniSolution(lua_State *L)
+{
+	auto *sim = GetLSI()->sim;
+	const auto metrics = sim->GetOmniSolutionMetrics();
+	lua_newtable(L);
+	auto setBoolean = [L](char const *name, bool value) {
+		lua_pushboolean(L, value);
+		lua_setfield(L, -2, name);
+	};
+	auto setInteger = [L](char const *name, lua_Integer value) {
+		lua_pushinteger(L, value);
+		lua_setfield(L, -2, name);
+	};
+	auto setNumber = [L](char const *name, lua_Number value) {
+		lua_pushnumber(L, value);
+		lua_setfield(L, -2, name);
+	};
+	setBoolean("active", sim->IsOmniAtmosphereActive());
+	setBoolean("active_tick", metrics.activeTick);
+	setInteger("runtime_version", 1);
+	setInteger("dissolution_transactions", metrics.dissolutionTransactions);
+	setInteger("crystallisation_transactions", metrics.crystallisationTransactions);
+	setInteger("saturation_limited_transactions", metrics.saturationLimitedTransactions);
+	setInteger("rate_limited_transactions", metrics.rateLimitedTransactions);
+	setNumber("initial_solvent_mass_kg", metrics.initialSolventMassKg);
+	setNumber("final_solvent_mass_kg", metrics.finalSolventMassKg);
+	setNumber("initial_solute_mass_kg", metrics.initialSoluteMassKg);
+	setNumber("final_solute_mass_kg", metrics.finalSoluteMassKg);
+	setNumber("dissolved_mass_kg", metrics.dissolvedMassKg);
+	setNumber("crystallised_mass_kg", metrics.crystallisedMassKg);
+	setNumber("transferred_solvent_to_atmosphere_kg", metrics.transferredSolventToAtmosphereKg);
+	setNumber("external_solvent_source_kg", metrics.externalSolventSourceKg);
+	setNumber("external_solvent_sink_kg", metrics.externalSolventSinkKg);
+	setNumber("external_solute_source_kg", metrics.externalSoluteSourceKg);
+	setNumber("external_solute_sink_kg", metrics.externalSoluteSinkKg);
+	setNumber("solvent_mass_residual_kg", metrics.solventMassResidualKg);
+	setNumber("solute_mass_residual_kg", metrics.soluteMassResidualKg);
+	lua_pushstring(L, "aqueous_nacl_mass_fraction_v1");
+	lua_setfield(L, -2, "runtime_model");
+	return 1;
+}
+
 static int waterEqualization(lua_State *L)
 {
 	auto *lsi = GetLSI();
@@ -2711,6 +2753,7 @@ void LuaSimulation::Open(lua_State *L)
 		LFUNC(omniSimulationMode),
 		LFUNC(omniAtmosphere),
 		LFUNC(omniChemistry),
+		LFUNC(omniSolution),
 		LFUNC(waterEqualization),
 		LFUNC(ambientAirTemp),
 		LFUNC(edgePressure),

@@ -127,6 +127,12 @@ public:
 	int omniCarbonParcelStateVersion = 0;
 	std::vector<double> omniCarbonParcelMassKg;
 
+	static constexpr int OmniSolutionStateVersion = 1;
+	bool hasOmniSolutionState = false;
+	int omniSolutionStateVersion = 0;
+	std::vector<double> omniSolutionSolventMassKg;
+	std::vector<double> omniSolutionSoluteMassKg;
+
 	//Simulation Options
 	bool waterEEnabled = false;
 	bool legacyEnable = false;

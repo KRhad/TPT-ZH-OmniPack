@@ -57,6 +57,10 @@ struct SnapshotDelta
 		extraOmniWaterParcelSpecificEnthalpyJPerKgNew;
 	HunkVector<double> commonOmniCarbonParcelMassKg;
 	std::vector<double> extraOmniCarbonParcelMassKgOld, extraOmniCarbonParcelMassKgNew;
+	HunkVector<double> commonOmniSolutionSolventMassKg;
+	std::vector<double> extraOmniSolutionSolventMassKgOld, extraOmniSolutionSolventMassKgNew;
+	HunkVector<double> commonOmniSolutionSoluteMassKg;
+	std::vector<double> extraOmniSolutionSoluteMassKgOld, extraOmniSolutionSoluteMassKgNew;
 	SingleDiff<int> OmniSimulationMode;
 	SingleDiff<uint8_t> OmniAtmospherePersistenceStatus;
 

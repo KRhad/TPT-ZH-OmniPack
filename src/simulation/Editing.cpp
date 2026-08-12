@@ -55,6 +55,10 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
 			omniWaterParcelSpecificEnthalpyJPerKg.begin() + parts.active);
 		snap->OmniCarbonParcelMassKg.insert(snap->OmniCarbonParcelMassKg.begin(),
 			omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.begin() + parts.active);
+		snap->OmniSolutionSolventMassKg.insert(snap->OmniSolutionSolventMassKg.begin(),
+			omniSolutionSolventMassKg.begin(), omniSolutionSolventMassKg.begin() + parts.active);
+		snap->OmniSolutionSoluteMassKg.insert(snap->OmniSolutionSoluteMassKg.begin(),
+			omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.begin() + parts.active);
 	}
 	snap->OmniSimulationMode = omniSimulationMode;
 	snap->OmniAtmospherePersistenceStatus = static_cast<uint8_t>(omniAtmospherePersistenceStatus);
@@ -97,6 +101,8 @@ void Simulation::Restore(const Snapshot &snap)
 	std::fill(omniWaterParcelSpecificEnthalpyJPerKg.begin(),
 		omniWaterParcelSpecificEnthalpyJPerKg.end(), 0.0);
 	std::fill(omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.end(), 0.0);
+	std::fill(omniSolutionSolventMassKg.begin(), omniSolutionSolventMassKg.end(), 0.0);
+	std::fill(omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.end(), 0.0);
 	std::copy_n(
 		snap.OmniWaterParcelMassKg.begin(),
 		std::min(snap.OmniWaterParcelMassKg.size(), omniWaterParcelMassKg.size()),
@@ -109,6 +115,12 @@ void Simulation::Restore(const Snapshot &snap)
 	std::copy_n(snap.OmniCarbonParcelMassKg.begin(),
 		std::min(snap.OmniCarbonParcelMassKg.size(), omniCarbonParcelMassKg.size()),
 		omniCarbonParcelMassKg.begin());
+	std::copy_n(snap.OmniSolutionSolventMassKg.begin(),
+		std::min(snap.OmniSolutionSolventMassKg.size(), omniSolutionSolventMassKg.size()),
+		omniSolutionSolventMassKg.begin());
+	std::copy_n(snap.OmniSolutionSoluteMassKg.begin(),
+		std::min(snap.OmniSolutionSoluteMassKg.size(), omniSolutionSoluteMassKg.size()),
+		omniSolutionSoluteMassKg.begin());
 	omniWaterTransferRequests.clear();
 	omniWaterCouplingMetrics = {};
 	omniSimulationMode = snap.OmniSimulationMode >= OMNI_CLASSIC &&

@@ -289,6 +289,22 @@ std::unique_ptr<SnapshotDelta> SnapshotDelta::FromSnapshots(const Snapshot &oldS
 		newSnap.OmniCarbonParcelMassKg.size() - commonCarbonSize);
 	std::copy(newSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize,
 		newSnap.OmniCarbonParcelMassKg.end(), delta.extraOmniCarbonParcelMassKgNew.begin());
+	const auto commonSolutionSolventSize = std::min(oldSnap.OmniSolutionSolventMassKg.size(),
+		newSnap.OmniSolutionSolventMassKg.size());
+	FillHunkVectorPtr(oldSnap.OmniSolutionSolventMassKg.data(), newSnap.OmniSolutionSolventMassKg.data(),
+		delta.commonOmniSolutionSolventMassKg, commonSolutionSolventSize);
+	delta.extraOmniSolutionSolventMassKgOld.assign(oldSnap.OmniSolutionSolventMassKg.begin() + commonSolutionSolventSize,
+		oldSnap.OmniSolutionSolventMassKg.end());
+	delta.extraOmniSolutionSolventMassKgNew.assign(newSnap.OmniSolutionSolventMassKg.begin() + commonSolutionSolventSize,
+		newSnap.OmniSolutionSolventMassKg.end());
+	const auto commonSolutionSoluteSize = std::min(oldSnap.OmniSolutionSoluteMassKg.size(),
+		newSnap.OmniSolutionSoluteMassKg.size());
+	FillHunkVectorPtr(oldSnap.OmniSolutionSoluteMassKg.data(), newSnap.OmniSolutionSoluteMassKg.data(),
+		delta.commonOmniSolutionSoluteMassKg, commonSolutionSoluteSize);
+	delta.extraOmniSolutionSoluteMassKgOld.assign(oldSnap.OmniSolutionSoluteMassKg.begin() + commonSolutionSoluteSize,
+		oldSnap.OmniSolutionSoluteMassKg.end());
+	delta.extraOmniSolutionSoluteMassKgNew.assign(newSnap.OmniSolutionSoluteMassKg.begin() + commonSolutionSoluteSize,
+		newSnap.OmniSolutionSoluteMassKg.end());
 
 	return ptr;
 }
@@ -353,6 +369,18 @@ std::unique_ptr<Snapshot> SnapshotDelta::Forward(const Snapshot &oldSnap)
 		extraOmniCarbonParcelMassKgNew.size());
 	std::copy(extraOmniCarbonParcelMassKgNew.begin(), extraOmniCarbonParcelMassKgNew.end(),
 		newSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize);
+	const auto commonSolutionSolventSize = oldSnap.OmniSolutionSolventMassKg.size() -
+		extraOmniSolutionSolventMassKgOld.size();
+	ApplyHunkVectorPtr<false>(commonOmniSolutionSolventMassKg, newSnap.OmniSolutionSolventMassKg.data());
+	newSnap.OmniSolutionSolventMassKg.resize(commonSolutionSolventSize + extraOmniSolutionSolventMassKgNew.size());
+	std::copy(extraOmniSolutionSolventMassKgNew.begin(), extraOmniSolutionSolventMassKgNew.end(),
+		newSnap.OmniSolutionSolventMassKg.begin() + commonSolutionSolventSize);
+	const auto commonSolutionSoluteSize = oldSnap.OmniSolutionSoluteMassKg.size() -
+		extraOmniSolutionSoluteMassKgOld.size();
+	ApplyHunkVectorPtr<false>(commonOmniSolutionSoluteMassKg, newSnap.OmniSolutionSoluteMassKg.data());
+	newSnap.OmniSolutionSoluteMassKg.resize(commonSolutionSoluteSize + extraOmniSolutionSoluteMassKgNew.size());
+	std::copy(extraOmniSolutionSoluteMassKgNew.begin(), extraOmniSolutionSoluteMassKgNew.end(),
+		newSnap.OmniSolutionSoluteMassKg.begin() + commonSolutionSoluteSize);
 
 	return ptr;
 }
@@ -417,6 +445,18 @@ std::unique_ptr<Snapshot> SnapshotDelta::Restore(const Snapshot &newSnap)
 		extraOmniCarbonParcelMassKgOld.size());
 	std::copy(extraOmniCarbonParcelMassKgOld.begin(), extraOmniCarbonParcelMassKgOld.end(),
 		oldSnap.OmniCarbonParcelMassKg.begin() + commonCarbonSize);
+	const auto commonSolutionSolventSize = newSnap.OmniSolutionSolventMassKg.size() -
+		extraOmniSolutionSolventMassKgNew.size();
+	ApplyHunkVectorPtr<true>(commonOmniSolutionSolventMassKg, oldSnap.OmniSolutionSolventMassKg.data());
+	oldSnap.OmniSolutionSolventMassKg.resize(commonSolutionSolventSize + extraOmniSolutionSolventMassKgOld.size());
+	std::copy(extraOmniSolutionSolventMassKgOld.begin(), extraOmniSolutionSolventMassKgOld.end(),
+		oldSnap.OmniSolutionSolventMassKg.begin() + commonSolutionSolventSize);
+	const auto commonSolutionSoluteSize = newSnap.OmniSolutionSoluteMassKg.size() -
+		extraOmniSolutionSoluteMassKgNew.size();
+	ApplyHunkVectorPtr<true>(commonOmniSolutionSoluteMassKg, oldSnap.OmniSolutionSoluteMassKg.data());
+	oldSnap.OmniSolutionSoluteMassKg.resize(commonSolutionSoluteSize + extraOmniSolutionSoluteMassKgOld.size());
+	std::copy(extraOmniSolutionSoluteMassKgOld.begin(), extraOmniSolutionSoluteMassKgOld.end(),
+		oldSnap.OmniSolutionSoluteMassKg.begin() + commonSolutionSoluteSize);
 
 	return ptr;
 }

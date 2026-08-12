@@ -35,6 +35,8 @@ uint32_t Snapshot::Hash() const
 		takeVector(OmniWaterParcelMassKg);
 		takeVector(OmniWaterParcelSpecificEnthalpyJPerKg);
 		takeVector(OmniCarbonParcelMassKg);
+		takeVector(OmniSolutionSolventMassKg);
+		takeVector(OmniSolutionSoluteMassKg);
 	}
 	takeVector(Particles);
 	takeVector(GravMass);

@@ -1249,6 +1249,14 @@ omni_water_coupling_probe = executable(
 	override_options: target_options,
 )
 
+test(
+	'omni-solution-contract',
+	python3_prog,
+	args: [ files('tools/omni_solution_contract_check.py') ],
+	suite: 'static',
+	timeout: 60,
+)
+
 omni_combustion_probe = executable(
 	'omni_combustion_probe',
 	sources: [
@@ -1257,6 +1265,27 @@ omni_combustion_probe = executable(
 		files('src/client/User.cpp'),
 		files('src/graphics/Renderer.cpp'),
 		files('src/prefs/Prefs.cpp'),
+		files('src/simulation/gravity/Fft.cpp'),
+		vcs_tag_header,
+	],
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ threads_dep, fftw_dep, sta_libs['common'], sta_libs['simulation'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
+omni_solution_probe = executable(
+	'omni_solution_probe',
+	sources: [
+		files('tools/omni_solution_probe.cpp'),
+		files('src/client/GameSave.cpp'),
+		files('src/client/User.cpp'),
+		files('src/graphics/Renderer.cpp'),
+		files('src/prefs/Prefs.cpp'),
+		files('src/simulation/Editing.cpp'),
+		files('src/simulation/SnapshotDelta.cpp'),
 		files('src/simulation/gravity/Fft.cpp'),
 		vcs_tag_header,
 	],
@@ -1688,6 +1717,13 @@ test(
 test(
 	'omni-combustion-probe',
 	omni_combustion_probe,
+	suite: 'static',
+	timeout: 120,
+)
+
+test(
+	'omni-solution-probe',
+	omni_solution_probe,
 	suite: 'static',
 	timeout: 120,
 )

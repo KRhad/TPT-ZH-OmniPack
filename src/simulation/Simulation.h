@@ -331,6 +331,32 @@ public:
 		uint64_t rejectedTransactions = 0;
 	};
 
+	// Enhanced/Scientific NaCl solution ledger. Solvent ownership remains the
+	// existing Omni water parcel sidecar; this sidecar owns only the dissolved
+	// or crystallised NaCl mass and mirrors the solvent for validation.
+	struct OmniSolutionMetrics
+	{
+		bool activeTick = false;
+		double initialSolventMassKg = 0.0;
+		double finalSolventMassKg = 0.0;
+		double initialSoluteMassKg = 0.0;
+		double finalSoluteMassKg = 0.0;
+		double dissolvedMassKg = 0.0;
+		double crystallisedMassKg = 0.0;
+		double transferredSolventFromWaterKg = 0.0;
+		double transferredSolventToAtmosphereKg = 0.0;
+		double externalSolventSourceKg = 0.0;
+		double externalSolventSinkKg = 0.0;
+		double externalSoluteSourceKg = 0.0;
+		double externalSoluteSinkKg = 0.0;
+		double solventMassResidualKg = 0.0;
+		double soluteMassResidualKg = 0.0;
+		uint64_t dissolutionTransactions = 0;
+		uint64_t crystallisationTransactions = 0;
+		uint64_t saturationLimitedTransactions = 0;
+		uint64_t rateLimitedTransactions = 0;
+	};
+
 	// initialized very late >_>
 	int NUM_PARTS;
 	int sandcolour;
@@ -400,6 +426,7 @@ public:
 	OmniCorrectionLedgerMetrics GetOmniCorrectionLedgerMetrics() const;
 	OmniWaterCouplingMetrics GetOmniWaterCouplingMetrics() const { return omniWaterCouplingMetrics; }
 	OmniChemistryMetrics GetOmniChemistryMetrics() const { return omniChemistryMetrics; }
+	OmniSolutionMetrics GetOmniSolutionMetrics() const { return omniSolutionMetrics; }
 	double GetOmniWaterParcelMassKg(int particleId) const;
 	double GetOmniWaterParcelSpecificEnthalpyJPerKg(int particleId) const;
 	double TotalOmniParticleWaterMassKg() const;
@@ -408,6 +435,11 @@ public:
 	// Called by COAL/BCOL only in Enhanced/Scientific. Classic never enters
 	// this route and retains upstream combustion semantics.
 	bool UpdateOmniCarbonCombustion(int particleId, int x, int y);
+	// Enhanced/Scientific solution ownership boundary. Classic returns false and
+	// continues through the official Legacy element update path.
+	bool UpdateOmniSolutionParticle(int particleId, int x, int y);
+	double GetOmniSolutionSolventMassKg(int particleId) const;
+	double GetOmniSolutionSoluteMassKg(int particleId) const;
 
 	void SetEdgeMode(int newEdgeMode);
 	void SetDecoSpace(int newDecoSpace);
@@ -478,9 +510,13 @@ protected:
 	// not discarded between fixed simulation ticks.
 	std::array<double, NPART> omniWaterParcelSpecificEnthalpyJPerKg{};
 	std::array<double, NPART> omniCarbonParcelMassKg{};
+	std::array<double, NPART> omniSolutionSolventMassKg{};
+	std::array<double, NPART> omniSolutionSoluteMassKg{};
 	std::vector<OmniWaterTransferRequest> omniWaterTransferRequests;
 	OmniWaterCouplingMetrics omniWaterCouplingMetrics{};
 	OmniChemistryMetrics omniChemistryMetrics{};
+	OmniSolutionMetrics omniSolutionMetrics{};
+	bool omniSolutionInternalMutation = false;
 
 	bool QueueOmniWaterParticleCoupling(int particleId, int x, int y);
 	void BeginOmniWaterCouplingTick();
@@ -496,6 +532,14 @@ protected:
 	void ClearOmniCarbonParcelMass(int particleId, bool recordExternalSink = true);
 	void BeginOmniChemistryTick();
 	void FinishOmniChemistryTick();
+	void BeginOmniSolutionTick();
+	void FinishOmniSolutionTick();
+	void InitializeOmniSolutionState(int particleId, int type, bool directCreate);
+	void ClearOmniSolutionState(int particleId, bool recordExternalSink = true);
+	void SetOmniSolutionMassesKg(int particleId, double solventMassKg, double soluteMassKg,
+		bool recordLedgerAdjustment = true);
+	double TotalOmniSolutionSolventMassKg() const;
+	double TotalOmniSolutionSoluteMassKg() const;
 
 	enum class OmniLifecycleMutationKind : uint8_t
 	{

@@ -58,7 +58,7 @@ static int update(UPDATE_FUNC_ARGS)
 				auto r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if (TYP(r)==PT_SALT && sim->rng.chance(1, 50))
+				if (!sim->IsOmniAtmosphereActive() && TYP(r)==PT_SALT && sim->rng.chance(1, 50))
 				{
 					//@ WATR + SALT -> SLTW + SALT
 					sim->part_change_type(i,x,y,PT_SLTW);
@@ -82,7 +82,7 @@ static int update(UPDATE_FUNC_ARGS)
 						return 1;
 					}
 				}
-				else if (TYP(r)==PT_SLTW && sim->rng.chance(1, 2000))
+				else if (!sim->IsOmniAtmosphereActive() && TYP(r)==PT_SLTW && sim->rng.chance(1, 2000))
 				{
 					//@ WATR + SLTW -> 2xSLTW
 					sim->part_change_type(i,x,y,PT_SLTW);

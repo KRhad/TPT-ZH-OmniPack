@@ -1,0 +1,38 @@
+{
+  "schema": "omnicore.solution-runtime",
+  "version": 1,
+  "model": "aqueous_nacl_mass_fraction_v1",
+  "authoritative_state": [
+    "solvent_mass_kg",
+    "solute_mass_kg"
+  ],
+  "derived_state": [
+    "solute_mass_fraction",
+    "saturation_mass_fraction",
+    "supersaturation_mass_kg"
+  ],
+  "solute": {
+    "identifier": "NaCl",
+    "legacy_elements": ["SALT", "SLTW"],
+    "molar_mass_kg_per_mol": 0.05844277,
+    "molar_mass_source": "NIST Chemistry WebBook, sodium chloride, CAS 7647-14-5",
+    "molar_mass_redistribution": "numeric_reference_with_attribution"
+  },
+  "saturation": {
+    "equation": "mass_percent=26.218+0.0072*t_C+0.000106*t_C^2",
+    "runtime_temperature_range_k": [273.15, 373.15],
+    "source": "Potter, R. W.; Babcock, R. S.; Brown, D. L. (1977), Journal of Research of the U.S. Geological Survey 5(3)",
+    "source_url": "https://www.usgs.gov/publications/a-new-method-determining-solubility-salts-aqueous-solutions-elevated-temperatures",
+    "method": "published_fit_clamped_to_runtime_aqueous_range",
+    "confidence": "reference_fit",
+    "redistribution": "equation_and_attribution_only_no_database_dump"
+  },
+  "parcel_policy": {
+    "solid_solute_mass": "game_scaled_equal_to_default_water_parcel_mass",
+    "drawn_solution": "saturated_at_reference_temperature",
+    "dissolution_limit": "one_120th_default_solid_parcel_per_transaction",
+    "crystallisation_limit": "one_120th_default_solid_parcel_per_tick",
+    "status": "game_tuned_explicit"
+  },
+  "classic_mode": "legacy_behavior_unchanged"
+}

@@ -59,7 +59,7 @@ static int update(UPDATE_FUNC_ARGS)
 				{
 				case PT_SALT:
 					//@ SLTW + SALT -> 2xSLTW
-					if (sim->rng.chance(1, 2000))
+					if (!sim->IsOmniAtmosphereActive() && sim->rng.chance(1, 2000))
 						sim->part_change_type(ID(r),x+rx,y+ry,PT_SLTW);
 					break;
 				case PT_PLNT:

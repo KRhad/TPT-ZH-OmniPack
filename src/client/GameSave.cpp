@@ -331,6 +331,10 @@ void GameSave::setSize(Vec2<int> newBlockSize)
 	hasOmniCarbonParcelState = false;
 	omniCarbonParcelStateVersion = 0;
 	omniCarbonParcelMassKg.clear();
+	hasOmniSolutionState = false;
+	omniSolutionStateVersion = 0;
+	omniSolutionSolventMassKg.clear();
+	omniSolutionSoluteMassKg.clear();
 }
 
 std::pair<bool, std::vector<char>> GameSave::Serialise() const
@@ -365,6 +369,11 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 	{
 		throw BuildException("invalid Omni carbon parcel state before transform");
 	}
+	if (hasOmniSolutionState &&
+		(omniSolutionStateVersion != OmniSolutionStateVersion ||
+			omniSolutionSolventMassKg.size() != static_cast<size_t>(particlesCount) ||
+			omniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount)))
+		throw BuildException("invalid Omni solution state before transform");
 	// undo translation by rotation
 	auto br  = transform * (blockSize * CELL - Vec2{ 1, 1 });
 	auto bbr = transform * (blockSize        - Vec2{ 1, 1 });
@@ -450,6 +459,11 @@ void GameSave::Transform(Mat2<int> transform, Vec2<int> nudge)
 			}
 			if (hasOmniCarbonParcelState && i < static_cast<int>(omniCarbonParcelMassKg.size()))
 				omniCarbonParcelMassKg[i] = 0.0;
+			if (hasOmniSolutionState && i < static_cast<int>(omniSolutionSolventMassKg.size()))
+			{
+				omniSolutionSolventMassKg[i] = 0.0;
+				omniSolutionSoluteMassKg[i] = 0.0;
+			}
 			continue;
 		}
 		particles[i].x = newPos.X;
@@ -613,6 +627,8 @@ void GameSave::readOPS(const std::vector<char> &data)
 	std::span<const unsigned char> gravityData;
 	std::vector<double> parsedOmniWaterParcelMassKg;
 	std::vector<double> parsedOmniCarbonParcelMassKg;
+	std::vector<double> parsedOmniSolutionSolventMassKg;
+	std::vector<double> parsedOmniSolutionSoluteMassKg;
 	unsigned partsCount = 0;
 	unsigned int savedVersion = inputData[4];
 	version = { savedVersion, 0 };
@@ -906,6 +922,30 @@ void GameSave::readOPS(const std::vector<char> &data)
 				throw ParseException(ParseException::Corrupt, "Invalid Omni carbon parcel mass");
 		}
 		omniCarbonParcelStateVersion = stateVersion;
+	}
+	if (auto *solutionNode = getIfType(b, "omniSolutionParcels", Bson::Type::objectValue))
+	{
+		int stateVersion = 0;
+		if (!copyIfInt32(*solutionNode, "stateVersion", stateVersion) ||
+			stateVersion != OmniSolutionStateVersion)
+			throw ParseException(ParseException::WrongVersion, "Unsupported Omni solution state version");
+		std::span<const unsigned char> solventData, soluteData;
+		if (!getAddressIfUser(*solutionNode, "solventMassKg", solventData) ||
+			!getAddressIfUser(*solutionNode, "soluteMassKg", soluteData) ||
+			solventData.size() % sizeof(double) != 0 ||
+			soluteData.size() != solventData.size())
+			throw ParseException(ParseException::Corrupt, "Invalid Omni solution mass data");
+		parsedOmniSolutionSolventMassKg.resize(solventData.size() / sizeof(double));
+		parsedOmniSolutionSoluteMassKg.resize(soluteData.size() / sizeof(double));
+		size_t solventOffset = 0, soluteOffset = 0;
+		for (size_t index = 0; index < parsedOmniSolutionSolventMassKg.size(); ++index)
+		{
+			if (!ReadDoubleLittleEndian(solventData, solventOffset, parsedOmniSolutionSolventMassKg[index]) ||
+				!ReadDoubleLittleEndian(soluteData, soluteOffset, parsedOmniSolutionSoluteMassKg[index]) ||
+				parsedOmniSolutionSolventMassKg[index] < 0.0 || parsedOmniSolutionSoluteMassKg[index] < 0.0)
+				throw ParseException(ParseException::Corrupt, "Invalid Omni solution mass");
+		}
+		omniSolutionStateVersion = stateVersion;
 	}
 	copyIfBool(b, "waterEEnabled", waterEEnabled);
 	copyIfBool(b, "paused", paused);
@@ -1600,6 +1640,22 @@ void GameSave::readOPS(const std::vector<char> &data)
 		}
 		omniCarbonParcelMassKg = std::move(parsedOmniCarbonParcelMassKg);
 		hasOmniCarbonParcelState = true;
+	}
+	if (omniSolutionStateVersion)
+	{
+		if (parsedOmniSolutionSolventMassKg.size() != static_cast<size_t>(particlesCount) ||
+			parsedOmniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount))
+			throw ParseException(ParseException::Corrupt, "Omni solution count does not match particles");
+		for (int index = 0; index < particlesCount; ++index)
+		{
+			const auto type = particles[index].type;
+			if ((parsedOmniSolutionSolventMassKg[index] > 0.0 || parsedOmniSolutionSoluteMassKg[index] > 0.0) &&
+				type != PT_SALT && type != PT_SLTW)
+				throw ParseException(ParseException::Corrupt, "Omni solution mass belongs to a non-solution particle");
+		}
+		omniSolutionSolventMassKg = std::move(parsedOmniSolutionSolventMassKg);
+		omniSolutionSoluteMassKg = std::move(parsedOmniSolutionSoluteMassKg);
+		hasOmniSolutionState = true;
 	}
 
 	if (soapLinkData.data())
@@ -2466,6 +2522,8 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	std::vector<double> serialisedOmniWaterParcelMassKg;
 	std::vector<double> serialisedOmniWaterParcelSpecificEnthalpyJPerKg;
 	std::vector<double> serialisedOmniCarbonParcelMassKg;
+	std::vector<double> serialisedOmniSolutionSolventMassKg;
+	std::vector<double> serialisedOmniSolutionSoluteMassKg;
 	if (hasOmniWaterParcelState)
 	{
 		const bool currentWaterState = omniWaterParcelStateVersion == OmniWaterParcelStateVersion;
@@ -2491,6 +2549,15 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 			throw BuildException("invalid Omni carbon parcel state payload");
 		}
 		serialisedOmniCarbonParcelMassKg.reserve(omniCarbonParcelMassKg.size());
+	}
+	if (hasOmniSolutionState)
+	{
+		if (omniSolutionStateVersion != OmniSolutionStateVersion ||
+			omniSolutionSolventMassKg.size() != static_cast<size_t>(particlesCount) ||
+			omniSolutionSoluteMassKg.size() != static_cast<size_t>(particlesCount))
+			throw BuildException("invalid Omni solution state payload");
+		serialisedOmniSolutionSolventMassKg.reserve(omniSolutionSolventMassKg.size());
+		serialisedOmniSolutionSoluteMassKg.reserve(omniSolutionSoluteMassKg.size());
 	}
 	std::fill(partsSaveIndex.data(), partsSaveIndex.data() + NPART, 0);
 	auto &sd = SimulationData::CRef();
@@ -2540,6 +2607,18 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 					throw BuildException("invalid Omni carbon parcel mass");
 				}
 				serialisedOmniCarbonParcelMassKg.push_back(massKg);
+			}
+			if (hasOmniSolutionState)
+			{
+				const double solventMassKg = omniSolutionSolventMassKg[i];
+				const double soluteMassKg = omniSolutionSoluteMassKg[i];
+				if (!std::isfinite(solventMassKg) || !std::isfinite(soluteMassKg) ||
+					solventMassKg < 0.0 || soluteMassKg < 0.0 ||
+					((solventMassKg > 0.0 || soluteMassKg > 0.0) &&
+						particles[i].type != PT_SALT && particles[i].type != PT_SLTW))
+					throw BuildException("invalid Omni solution mass");
+				serialisedOmniSolutionSolventMassKg.push_back(solventMassKg);
+				serialisedOmniSolutionSoluteMassKg.push_back(soluteMassKg);
 			}
 
 			auto part = particles[i];
@@ -3006,6 +3085,21 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 		carbonNode["stateVersion"] = omniCarbonParcelStateVersion;
 		carbonNode["layout"] = ByteString("particle_order_f64_le_mass_kg_v1");
 		carbonNode["massKg"] = std::move(massData);
+	}
+	if (hasOmniSolutionState)
+	{
+		std::vector<unsigned char> solventData, soluteData;
+		solventData.reserve(serialisedOmniSolutionSolventMassKg.size() * sizeof(double));
+		soluteData.reserve(serialisedOmniSolutionSoluteMassKg.size() * sizeof(double));
+		for (double massKg : serialisedOmniSolutionSolventMassKg)
+			AppendDoubleLittleEndian(solventData, massKg);
+		for (double massKg : serialisedOmniSolutionSoluteMassKg)
+			AppendDoubleLittleEndian(soluteData, massKg);
+		auto &solutionNode = (b["omniSolutionParcels"] = Bson::Type::objectValue);
+		solutionNode["stateVersion"] = omniSolutionStateVersion;
+		solutionNode["layout"] = ByteString("particle_order_f64_le_solvent_mass_kg_solute_mass_kg_v1");
+		solutionNode["solventMassKg"] = std::move(solventData);
+		solutionNode["soluteMassKg"] = std::move(soluteData);
 	}
 	b["paused"] = paused;
 	b["gravityMode"] = gravityMode;

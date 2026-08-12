@@ -3,6 +3,7 @@
 #include "OmniAtmosphere.h"
 #include "OmniThermal.h"
 #include "OmniReactionRuntime.h"
+#include "OmniSolution.h"
 #include "ElementClasses.h"
 #include "TransitionConstants.h"
 #include "gravity/Gravity.h"
@@ -53,6 +54,11 @@ namespace
 	bool IsOmniManagedCarbonType(int type)
 	{
 		return type == PT_COAL || type == PT_BCOL;
+	}
+
+	bool IsOmniManagedSolutionType(int type)
+	{
+		return type == PT_SALT || type == PT_SLTW;
 	}
 
 	constexpr double CarbonMolarMassKgPerMol = 0.0120107;
@@ -361,6 +367,27 @@ void Simulation::Load(const GameSave *save, bool includePressure, Vec2<int> bloc
 		{
 			InitializeOmniCarbonParcelMass(i, tempPart.type);
 		}
+		if (save->hasOmniSolutionState)
+		{
+			if (save->omniSolutionStateVersion != GameSave::OmniSolutionStateVersion ||
+				save->omniSolutionSolventMassKg.size() != static_cast<size_t>(save->particlesCount) ||
+				save->omniSolutionSoluteMassKg.size() != static_cast<size_t>(save->particlesCount))
+				throw std::runtime_error("malformed Omni solution save payload");
+			omniSolutionSolventMassKg[i] = save->omniSolutionSolventMassKg[n];
+			omniSolutionSoluteMassKg[i] = save->omniSolutionSoluteMassKg[n];
+			if (!IsFiniteDoubleBits(omniSolutionSolventMassKg[i]) ||
+				!IsFiniteDoubleBits(omniSolutionSoluteMassKg[i]) ||
+				omniSolutionSolventMassKg[i] < 0.0 || omniSolutionSoluteMassKg[i] < 0.0 ||
+				((omniSolutionSolventMassKg[i] > 0.0 || omniSolutionSoluteMassKg[i] > 0.0) &&
+					tempPart.type != PT_SALT && tempPart.type != PT_SLTW))
+				throw std::runtime_error("invalid Omni solution save payload");
+		}
+		else
+		{
+			omniSolutionSolventMassKg[i] = 0.0;
+			omniSolutionSoluteMassKg[i] = 0.0;
+			InitializeOmniSolutionState(i, tempPart.type, false);
+		}
 
 
 		switch (parts[i].type)
@@ -625,6 +652,14 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
 		? GameSave::OmniCarbonParcelStateVersion : 0;
 	if (newSave->hasOmniCarbonParcelState)
 		newSave->omniCarbonParcelMassKg.reserve(NUM_PARTS);
+	newSave->hasOmniSolutionState = IsOmniAtmosphereActive();
+	newSave->omniSolutionStateVersion = newSave->hasOmniSolutionState
+		? GameSave::OmniSolutionStateVersion : 0;
+	if (newSave->hasOmniSolutionState)
+	{
+		newSave->omniSolutionSolventMassKg.reserve(NUM_PARTS);
+		newSave->omniSolutionSoluteMassKg.reserve(NUM_PARTS);
+	}
 
 	int storedParts = 0;
 	int elementCount[PT_NUM];
@@ -657,6 +692,11 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
 				}
 				if (newSave->hasOmniCarbonParcelState)
 					newSave->omniCarbonParcelMassKg.push_back(omniCarbonParcelMassKg[i]);
+				if (newSave->hasOmniSolutionState)
+				{
+					newSave->omniSolutionSolventMassKg.push_back(omniSolutionSolventMassKg[i]);
+					newSave->omniSolutionSoluteMassKg.push_back(omniSolutionSoluteMassKg[i]);
+				}
 				storedParts++;
 				elementCount[tempPart.type]++;
 
@@ -1130,6 +1170,18 @@ void Simulation::SetOmniSimulationMode(int newMode)
 	if (omniSimulationMode == newMode)
 		return;
 	omniSimulationMode = newMode;
+	if (newMode == OMNI_CLASSIC)
+	{
+		std::fill(omniSolutionSolventMassKg.begin(), omniSolutionSolventMassKg.end(), 0.0);
+		std::fill(omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.end(), 0.0);
+		omniSolutionMetrics = {};
+	}
+	else
+	{
+		for (int particleId = 0; particleId < parts.active; ++particleId)
+			if (parts[particleId].type && IsOmniManagedSolutionType(parts[particleId].type))
+				InitializeOmniSolutionState(particleId, parts[particleId].type, false);
+	}
 	if (!omniAtmosphere)
 		return;
 	if (newMode == OMNI_CLASSIC)
@@ -1403,9 +1455,12 @@ void Simulation::clear_sim(void)
 	std::fill(omniWaterParcelSpecificEnthalpyJPerKg.begin(),
 		omniWaterParcelSpecificEnthalpyJPerKg.end(), 0.0);
 	std::fill(omniCarbonParcelMassKg.begin(), omniCarbonParcelMassKg.end(), 0.0);
+	std::fill(omniSolutionSolventMassKg.begin(), omniSolutionSolventMassKg.end(), 0.0);
+	std::fill(omniSolutionSoluteMassKg.begin(), omniSolutionSoluteMassKg.end(), 0.0);
 	omniWaterTransferRequests.clear();
 	omniWaterCouplingMetrics = {};
 	omniChemistryMetrics = {};
+	omniSolutionMetrics = {};
 	NUM_PARTS = 0;
 	memset(pmap, 0, sizeof(pmap));
 	memset(fvx, 0, sizeof(fvx));
@@ -2167,6 +2222,7 @@ void Simulation::kill_part(int i)//kills particle number i
 	RecordOmniLifecycleMutation(t, PT_NONE, OmniLifecycleMutationKind::Kill);
 	ClearOmniWaterParcelMass(i);
 	ClearOmniCarbonParcelMass(i);
+	ClearOmniSolutionState(i, !omniSolutionInternalMutation);
 
 	parts.Free(i);
 	NUM_PARTS -= 1;
@@ -2231,6 +2287,15 @@ bool Simulation::part_change_type(int i, int x, int y, int t)
 	{
 		ClearOmniCarbonParcelMass(i);
 	}
+	if (IsOmniManagedSolutionType(t))
+	{
+		if (!IsOmniManagedSolutionType(oldType))
+			InitializeOmniSolutionState(i, t, !omniSolutionInternalMutation);
+	}
+	else if (IsOmniManagedSolutionType(oldType))
+	{
+		ClearOmniSolutionState(i, !omniSolutionInternalMutation);
+	}
 	RecordOmniLifecycleMutation(oldType, t, OmniLifecycleMutationKind::TypeChange);
 	if (elements[t].Properties & TYPE_ENERGY)
 	{
@@ -2255,6 +2320,8 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	double previousOmniCarbonMassKg = 0.0;
 	double previousOmniWaterMassKg = 0.0;
 	double previousOmniWaterSpecificEnthalpyJPerKg = 0.0;
+	double previousOmniSolutionSolventMassKg = 0.0;
+	double previousOmniSolutionSoluteMassKg = 0.0;
 
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
@@ -2362,6 +2429,13 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 			if (!IsOmniManagedCarbonType(t))
 				ClearOmniCarbonParcelMass(p);
 		}
+		if (IsOmniManagedSolutionType(oldType))
+		{
+			previousOmniSolutionSolventMassKg = omniSolutionSolventMassKg[p];
+			previousOmniSolutionSoluteMassKg = omniSolutionSoluteMassKg[p];
+			if (!IsOmniManagedSolutionType(t))
+				ClearOmniSolutionState(p, !omniSolutionInternalMutation);
+		}
 
 		if (elements[oldType].ChangeType)
 			(*(elements[oldType].ChangeType))(this, p, oldX, oldY, oldType, t);
@@ -2392,6 +2466,17 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	else
 	{
 		InitializeOmniCarbonParcelMass(i, t);
+	}
+	if (IsOmniManagedSolutionType(oldType) && IsOmniManagedSolutionType(t) &&
+		(previousOmniSolutionSolventMassKg > 0.0 || previousOmniSolutionSoluteMassKg > 0.0))
+	{
+		omniSolutionSolventMassKg[i] = previousOmniSolutionSolventMassKg;
+		omniSolutionSoluteMassKg[i] = previousOmniSolutionSoluteMassKg;
+	}
+	else
+	{
+		InitializeOmniSolutionState(i, t,
+			!IsOmniManagedSolutionType(oldType) && !omniSolutionInternalMutation);
 	}
 	if (oldType == PT_NONE)
 		RecordOmniLifecycleMutation(PT_NONE, t, OmniLifecycleMutationKind::Create);
@@ -2845,7 +2930,21 @@ void SimulationImpl::UpdateParticles(int start, int end)
 			t = parts[i].type;
 		}
 
-		//call the particle update function, if there is one
+		const bool omniSolutionHandled = UpdateOmniSolutionParticle(i, x, y);
+		if (!parts[i].type)
+			continue;
+		if (omniSolutionHandled)
+		{
+			// Enhanced solution state owns SALT/SLTW chemistry. Preserve the
+			// ordinary movement phase below, but do not run Legacy random
+			// dissolution/crystallisation a second time.
+			x = int(parts[i].x + 0.5f);
+			y = int(parts[i].y + 0.5f);
+		}
+
+		// Call the element update even when solution composition was handled.
+		// WATR/DSTW/SLTW guard only their salt-specific Legacy branches, while
+		// extinguishing, erosion, plant and special-element gameplay remains.
 		if (elements[t].Update)
 		{
 			if ((*(elements[t].Update))(this, i, x, y, neighbourhood.surround_space, neighbourhood.nt, parts, pmap))
@@ -2854,7 +2953,7 @@ void SimulationImpl::UpdateParticles(int start, int end)
 			y = int(parts[i].y+0.5f);
 		}
 
-		if(legacy_enable)//if heat sim is off
+		if (!omniSolutionHandled && legacy_enable)//if heat sim is off
 			Element::legacyUpdate(this, i,x,y,neighbourhood.surround_space,neighbourhood.nt, parts, pmap);
 
 		if (parts[i].type == PT_NONE)//if its dead, skip to next particle
@@ -2879,6 +2978,13 @@ bool SimulationImpl::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 	auto x = int(parts[i].x + 0.5f);
 	auto y = int(parts[i].y + 0.5f);
 	bool transitionOccurred = false;
+	if (IsOmniAtmosphereActive() && IsOmniManagedSolutionType(t))
+	{
+		// Composition, evaporation and crystallisation for SALT/SLTW are owned
+		// by UpdateOmniSolutionParticle in Enhanced/Scientific. This prevents
+		// the Legacy threshold transition from destroying authoritative masses.
+		return false;
+	}
 	if (QueueOmniWaterParticleCoupling(i, x, y))
 	{
 		// Managed water reconstructs enthalpy from the public temperature
@@ -4407,6 +4513,10 @@ double Simulation::TotalOmniParticleWaterMassKg() const
 	{
 		if (parts[particleId].type && IsOmniManagedWaterType(parts[particleId].type))
 			total += omniWaterParcelMassKg[particleId];
+		else if (parts[particleId].type == PT_SLTW)
+			total += GetOmniSolutionSolventMassKg(particleId);
+		else if (parts[particleId].type == PT_DSTW && IsOmniAtmosphereActive())
+			total += OmniPhysicalScale::DefaultWaterParcelMassKg;
 	}
 	return total;
 }
@@ -4422,6 +4532,14 @@ double Simulation::TotalOmniWaterCoupledEnergyJ() const
 		const double specificEnthalpy = OmniWaterParcelSpecificEnthalpy(particleId);
 		if (massKg > 0.0 && IsFiniteDoubleBits(specificEnthalpy))
 			total += massKg * specificEnthalpy;
+	}
+	for (int particleId = 0; particleId < parts.active; ++particleId)
+	{
+		if (parts[particleId].type != PT_SLTW)
+			continue;
+		const double massKg = GetOmniSolutionSolventMassKg(particleId);
+		if (massKg > 0.0)
+			total += massKg * OmniThermal::WaterSpecificEnthalpyJPerKg(parts[particleId].temp);
 	}
 	return total;
 }
@@ -4666,6 +4784,300 @@ void Simulation::FinishOmniWaterCouplingTick()
 		omniWaterCouplingMetrics.externalWaterEnergySinkJ -
 		omniWaterCouplingMetrics.externalWaterEnergySourceJ;
 	omniWaterCouplingMetrics.activeTick = false;
+}
+
+double Simulation::GetOmniSolutionSolventMassKg(int particleId) const
+{
+	if (particleId < 0 || particleId >= NPART || !IsOmniManagedSolutionType(parts[particleId].type))
+		return 0.0;
+	return IsFiniteDoubleBits(omniSolutionSolventMassKg[particleId]) &&
+		omniSolutionSolventMassKg[particleId] > 0.0 ? omniSolutionSolventMassKg[particleId] : 0.0;
+}
+
+double Simulation::GetOmniSolutionSoluteMassKg(int particleId) const
+{
+	if (particleId < 0 || particleId >= NPART || !IsOmniManagedSolutionType(parts[particleId].type))
+		return 0.0;
+	return IsFiniteDoubleBits(omniSolutionSoluteMassKg[particleId]) &&
+		omniSolutionSoluteMassKg[particleId] > 0.0 ? omniSolutionSoluteMassKg[particleId] : 0.0;
+}
+
+double Simulation::TotalOmniSolutionSolventMassKg() const
+{
+	double total = omniAtmosphere ?
+		omniAtmosphere->TotalSpeciesMassKg(OMNI_SPECIES_H2O) +
+		omniAtmosphere->TotalCondensedWaterMassKg() : 0.0;
+	for (int particleId = 0; particleId < parts.active; ++particleId)
+	{
+		if (!parts[particleId].type)
+			continue;
+		if (IsOmniManagedSolutionType(parts[particleId].type))
+			total += GetOmniSolutionSolventMassKg(particleId);
+		else if (IsOmniManagedWaterType(parts[particleId].type))
+			total += GetOmniWaterParcelMassKg(particleId);
+	}
+	return total;
+}
+
+double Simulation::TotalOmniSolutionSoluteMassKg() const
+{
+	double total = 0.0;
+	for (int particleId = 0; particleId < parts.active; ++particleId)
+		if (parts[particleId].type && IsOmniManagedSolutionType(parts[particleId].type))
+			total += GetOmniSolutionSoluteMassKg(particleId);
+	return total;
+}
+
+void Simulation::InitializeOmniSolutionState(int particleId, int type, bool directCreate)
+{
+	if (particleId < 0 || particleId >= NPART || !IsOmniAtmosphereActive() ||
+		!IsOmniManagedSolutionType(type))
+	{
+		if (particleId >= 0 && particleId < NPART)
+		{
+			omniSolutionSolventMassKg[particleId] = 0.0;
+			omniSolutionSoluteMassKg[particleId] = 0.0;
+		}
+		return;
+	}
+	if (omniSolutionSolventMassKg[particleId] > 0.0 || omniSolutionSoluteMassKg[particleId] > 0.0)
+		return;
+	if (type == PT_SALT)
+	{
+		omniSolutionSolventMassKg[particleId] = 0.0;
+		omniSolutionSoluteMassKg[particleId] = OmniSolution::DefaultSolidSoluteMassKg;
+	}
+	else
+	{
+		omniSolutionSolventMassKg[particleId] = OmniSolution::DefaultSolutionSolventMassKg;
+		omniSolutionSoluteMassKg[particleId] = OmniSolution::MaximumDissolvedSoluteKg(
+			omniSolutionSolventMassKg[particleId], parts[particleId].temp);
+	}
+	if (directCreate && omniSolutionMetrics.activeTick)
+	{
+		omniSolutionMetrics.externalSolventSourceKg += omniSolutionSolventMassKg[particleId];
+		omniSolutionMetrics.externalSoluteSourceKg += omniSolutionSoluteMassKg[particleId];
+	}
+}
+
+void Simulation::ClearOmniSolutionState(int particleId, bool recordExternalSink)
+{
+	if (particleId < 0 || particleId >= NPART)
+		return;
+	const double solvent = GetOmniSolutionSolventMassKg(particleId);
+	const double solute = GetOmniSolutionSoluteMassKg(particleId);
+	if (recordExternalSink && omniSolutionMetrics.activeTick)
+	{
+		omniSolutionMetrics.externalSolventSinkKg += solvent;
+		omniSolutionMetrics.externalSoluteSinkKg += solute;
+	}
+	omniSolutionSolventMassKg[particleId] = 0.0;
+	omniSolutionSoluteMassKg[particleId] = 0.0;
+}
+
+void Simulation::SetOmniSolutionMassesKg(int particleId, double solventMassKg, double soluteMassKg,
+	bool recordLedgerAdjustment)
+{
+	if (particleId < 0 || particleId >= NPART || !IsOmniManagedSolutionType(parts[particleId].type) ||
+		!IsFiniteDoubleBits(solventMassKg) || !IsFiniteDoubleBits(soluteMassKg) ||
+		solventMassKg < 0.0 || soluteMassKg < 0.0)
+		return;
+	const double oldSolvent = GetOmniSolutionSolventMassKg(particleId);
+	const double oldSolute = GetOmniSolutionSoluteMassKg(particleId);
+	omniSolutionSolventMassKg[particleId] = solventMassKg;
+	omniSolutionSoluteMassKg[particleId] = soluteMassKg;
+	if (recordLedgerAdjustment && omniSolutionMetrics.activeTick)
+	{
+		if (solventMassKg > oldSolvent)
+			omniSolutionMetrics.externalSolventSourceKg += solventMassKg - oldSolvent;
+		else
+			omniSolutionMetrics.externalSolventSinkKg += oldSolvent - solventMassKg;
+		if (soluteMassKg > oldSolute)
+			omniSolutionMetrics.externalSoluteSourceKg += soluteMassKg - oldSolute;
+		else
+			omniSolutionMetrics.externalSoluteSinkKg += oldSolute - soluteMassKg;
+	}
+}
+
+void Simulation::BeginOmniSolutionTick()
+{
+	omniSolutionMetrics = {};
+	if (!IsOmniAtmosphereActive())
+		return;
+	omniSolutionMetrics.activeTick = true;
+	omniSolutionMetrics.initialSolventMassKg = TotalOmniSolutionSolventMassKg();
+	omniSolutionMetrics.initialSoluteMassKg = TotalOmniSolutionSoluteMassKg();
+}
+
+void Simulation::FinishOmniSolutionTick()
+{
+	if (!omniSolutionMetrics.activeTick)
+		return;
+	omniSolutionMetrics.finalSolventMassKg = TotalOmniSolutionSolventMassKg();
+	omniSolutionMetrics.finalSoluteMassKg = TotalOmniSolutionSoluteMassKg();
+	omniSolutionMetrics.solventMassResidualKg = omniSolutionMetrics.finalSolventMassKg -
+		omniSolutionMetrics.initialSolventMassKg + omniSolutionMetrics.externalSolventSinkKg -
+		omniSolutionMetrics.externalSolventSourceKg;
+	omniSolutionMetrics.soluteMassResidualKg = omniSolutionMetrics.finalSoluteMassKg -
+		omniSolutionMetrics.initialSoluteMassKg + omniSolutionMetrics.externalSoluteSinkKg -
+		omniSolutionMetrics.externalSoluteSourceKg;
+	omniSolutionMetrics.activeTick = false;
+}
+
+bool Simulation::UpdateOmniSolutionParticle(int particleId, int x, int y)
+{
+	if (!IsOmniAtmosphereActive() || particleId < 0 || particleId >= NPART ||
+		!parts[particleId].type || !IsOmniManagedSolutionType(parts[particleId].type))
+		return false;
+	const int type = parts[particleId].type;
+	const double temperatureK = std::clamp(double(parts[particleId].temp), double(MIN_TEMP), double(MAX_TEMP));
+	auto neighbour = [&](int wantedType, int skip) -> int {
+		for (int rx = -1; rx <= 1; ++rx)
+			for (int ry = -1; ry <= 1; ++ry)
+			{
+				if ((!rx && !ry) || x + rx < 0 || y + ry < 0 || x + rx >= XRES || y + ry >= YRES)
+					continue;
+				const int packed = pmap[y + ry][x + rx];
+				if (packed && ID(packed) != skip && TYP(packed) == wantedType)
+					return ID(packed);
+			}
+		return -1;
+	};
+
+	if (type == PT_SALT)
+	{
+			const int water = neighbour(PT_WATR, particleId);
+			const int distilledWater = water < 0 ? neighbour(PT_DSTW, particleId) : -1;
+			const int solution = water < 0 && distilledWater < 0
+				? neighbour(PT_SLTW, particleId) : -1;
+			const int target = water >= 0 ? water : (distilledWater >= 0 ? distilledWater : solution);
+		if (target < 0)
+			return false;
+		const double available = GetOmniSolutionSoluteMassKg(particleId);
+		const bool pureWaterTarget = water >= 0 || distilledWater >= 0;
+		const double solvent = pureWaterTarget ?
+			(water >= 0 ? GetOmniWaterParcelMassKg(target) : OmniPhysicalScale::DefaultWaterParcelMassKg) :
+			GetOmniSolutionSolventMassKg(target);
+		const double dissolved = GetOmniSolutionSoluteMassKg(target);
+		const double capacity = std::max(OmniSolution::MaximumDissolvedSoluteKg(solvent, parts[target].temp) - dissolved, 0.0);
+		const double transfer = std::min({ available, capacity, OmniSolution::MaximumDissolutionMassPerTransactionKg });
+		if (!(transfer > 0.0))
+		{
+			if (omniSolutionMetrics.activeTick)
+				omniSolutionMetrics.saturationLimitedTransactions++;
+			return true;
+		}
+		if (pureWaterTarget)
+		{
+			const double waterMass = solvent;
+			// Transfer solvent ownership, rather than recording a Legacy water
+			// deletion followed by an unrelated solution source.
+			if (water >= 0)
+				ClearOmniWaterParcelMass(target, false);
+			omniSolutionInternalMutation = true;
+			part_change_type(target, int(parts[target].x + 0.5f), int(parts[target].y + 0.5f), PT_SLTW);
+			omniSolutionInternalMutation = false;
+			SetOmniSolutionMassesKg(target, waterMass, transfer, false);
+		}
+		else
+			SetOmniSolutionMassesKg(target, solvent, dissolved + transfer, false);
+		SetOmniSolutionMassesKg(particleId, 0.0, available - transfer, false);
+		if (omniSolutionMetrics.activeTick)
+		{
+			omniSolutionMetrics.dissolvedMassKg += transfer;
+			omniSolutionMetrics.dissolutionTransactions++;
+		}
+		if (GetOmniSolutionSoluteMassKg(particleId) <= 1.0e-15)
+		{
+			omniSolutionInternalMutation = true;
+			kill_part(particleId);
+			omniSolutionInternalMutation = false;
+		}
+		return true;
+	}
+	if (type == PT_SLTW)
+	{
+		double solvent = GetOmniSolutionSolventMassKg(particleId);
+		double solute = GetOmniSolutionSoluteMassKg(particleId);
+		if (omniAtmosphere && solvent > 0.0)
+		{
+			const int cellX = x / CELL, cellY = y / CELL;
+			const auto primitive = omniAtmosphere->Primitive(cellX, cellY);
+			if (primitive.finite)
+			{
+				const double requestedMassKg = OmniThermal::WaterEvaporationRequestMassKg(
+					solvent, temperatureK, primitive.relativeHumidity, primitive.pressure);
+				const double cellVolumeM3 = omniAtmosphere->Config().scale.cellVolumeM3();
+				const double referenceCellGasMassKg = omniAtmosphere->Config().referenceDensity * cellVolumeM3;
+				const double transferMassKg = std::min({ requestedMassKg, solvent,
+					referenceCellGasMassKg * 0.05 });
+				if (transferMassKg > 0.0)
+				{
+					const double liquidSpecificEnergy =
+						OmniThermal::WaterSpecificEnthalpyJPerKg(temperatureK);
+					const double particleEnergyJ = transferMassKg * liquidSpecificEnergy;
+					const double atmosphereBeforeJ = omniAtmosphere->TotalEnergyJ();
+					omniAtmosphere->AddSpeciesMassDensity(
+						cellX, cellY, OMNI_SPECIES_H2O, transferMassKg / cellVolumeM3);
+					const double automaticEnergyJ = omniAtmosphere->TotalEnergyJ() - atmosphereBeforeJ;
+					omniAtmosphere->AddEnergyDensity(
+						cellX, cellY, (particleEnergyJ - automaticEnergyJ) / cellVolumeM3);
+					solvent -= transferMassKg;
+					SetOmniSolutionMassesKg(particleId, solvent, solute, false);
+					omniSolutionMetrics.transferredSolventToAtmosphereKg += transferMassKg;
+					omniWaterCouplingMetrics.transferredToAtmosphereKg += transferMassKg;
+					omniWaterCouplingMetrics.particleEnergyRemovedJ += particleEnergyJ;
+					omniWaterCouplingMetrics.atmosphereEnergyAddedJ += particleEnergyJ;
+				}
+			}
+		}
+		const double capacity = OmniSolution::MaximumDissolvedSoluteKg(solvent, temperatureK);
+		if (solute > capacity + 1.0e-18)
+		{
+			const double transfer = std::min(solute - capacity, OmniSolution::MaximumCrystallisationMassPerTickKg);
+			int emptyX = -1, emptyY = -1;
+			for (int rx = -1; rx <= 1 && emptyX < 0; ++rx)
+				for (int ry = -1; ry <= 1; ++ry)
+				{
+					const int ex = x + rx, ey = y + ry;
+					if ((!rx && !ry) || ex < CELL || ey < CELL || ex >= XRES - CELL || ey >= YRES - CELL)
+						continue;
+					if (!pmap[ey][ex] && !photons[ey][ex] && !IsWallBlocking(ex, ey, PT_SALT))
+					{
+						emptyX = ex;
+						emptyY = ey;
+						break;
+					}
+				}
+			if (emptyX >= 0)
+			{
+				omniSolutionInternalMutation = true;
+				const int salt = create_part(-1, emptyX, emptyY, PT_SALT);
+				omniSolutionInternalMutation = false;
+				if (salt >= 0)
+				{
+					SetOmniSolutionMassesKg(salt, 0.0, transfer, false);
+					SetOmniSolutionMassesKg(particleId, solvent, solute - transfer, false);
+					if (omniSolutionMetrics.activeTick)
+					{
+						omniSolutionMetrics.crystallisedMassKg += transfer;
+						omniSolutionMetrics.crystallisationTransactions++;
+					}
+				}
+			}
+			else if (omniSolutionMetrics.activeTick)
+				omniSolutionMetrics.rateLimitedTransactions++;
+		}
+		if (solvent <= 1.0e-15 && solute > 0.0 && parts[particleId].type == PT_SLTW)
+		{
+			omniSolutionInternalMutation = true;
+			part_change_type(particleId, x, y, PT_SALT);
+			omniSolutionInternalMutation = false;
+			SetOmniSolutionMassesKg(particleId, 0.0, solute, false);
+		}
+		return true;
+	}
+	return false;
 }
 
 double Simulation::GetOmniCarbonParcelMassKg(int particleId) const
@@ -5020,6 +5432,7 @@ void Simulation::BeforeSim(bool willUpdate)
 			ImportLegacyAtmosphereSources(*this);
 			BeginOmniWaterCouplingTick();
 			omniAtmosphere->Step();
+			BeginOmniSolutionTick();
 			BeginOmniChemistryTick();
 			ExportOmniAtmosphereToLegacyFields(*this);
 		}
@@ -5252,6 +5665,7 @@ void Simulation::AfterSim()
 			ExportOmniAtmosphereToLegacyFields(*this);
 		}
 		FinishOmniWaterCouplingTick();
+		FinishOmniSolutionTick();
 		FinishOmniChemistryTick();
 	}
 	debug_mostRecentlyUpdated = -1;
