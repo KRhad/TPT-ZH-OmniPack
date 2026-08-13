@@ -46,7 +46,10 @@ if ($Channel -eq "stable" -and $AllowDirtyValidation) {
 
 $version = if ($Channel -eq "stable") { "1.1.0" } else { "1.1.0-rc1" }
 $kind = if ($Channel -eq "stable") { "release" } else { "release-candidate" }
-$sourceStatus = @(& git -C $sourceRoot status --porcelain=v1 --untracked-files=all)
+$sourceStatus = @(
+    & git -C $sourceRoot status --porcelain=v1 --untracked-files=all |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+)
 if ($sourceStatus.Count -ne 0 -and -not ($Channel -eq "rc" -and $AllowDirtyValidation)) {
     throw "RELEASE BLOCKED: source worktree is dirty; commit reviewed changes before a reproducible package"
 }
