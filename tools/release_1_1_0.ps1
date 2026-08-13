@@ -22,9 +22,17 @@ Get-ChildItem Env: | Where-Object {
 }
 
 $sourceRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
+$git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $msysBin = "C:\msys64\ucrt64\bin"
 $msysUsrBin = "C:\msys64\usr\bin"
-$env:PATH = "$msysBin;$msysUsrBin;" + $env:PATH
+# Keep the Git installation that resolved before adding MSYS2 to PATH at the
+# front.  Git for Windows applies the checkout's autocrlf configuration while
+# MSYS2 Git may omit its system config, which turns a clean CRLF checkout into
+# thousands of false working-tree changes.  Meson/Ninja/Python still resolve
+# from MSYS2, while every Git subprocess (including package_test_release.py)
+# uses this same native executable and config.
+$gitBin = (Get-Item -LiteralPath $git).Directory.FullName
+$env:PATH = "$gitBin;$msysBin;$msysUsrBin;" + $env:PATH
 $meson = Join-Path $msysBin "meson.exe"
 $ninja = Join-Path $msysBin "ninja.exe"
 $python = Join-Path $msysBin "python3.exe"
@@ -46,7 +54,6 @@ if ($Channel -eq "stable" -and $AllowDirtyValidation) {
 
 $version = if ($Channel -eq "stable") { "1.1.0" } else { "1.1.0-rc1" }
 $kind = if ($Channel -eq "stable") { "release" } else { "release-candidate" }
-$git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $statusLines = @(
     & $git -C $sourceRoot status --porcelain=v1 --untracked-files=all 2>$null |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
