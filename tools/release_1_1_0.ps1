@@ -139,62 +139,49 @@ try {
         }
     }
 
-	$packageDocuments = if ($Channel -eq "stable") {
-		@(
-			[pscustomobject]@{ Source = "docs/RELEASE_1.1.0_README.en.md"; Destination = "README.en.md" },
-			[pscustomobject]@{ Source = "docs/RELEASE_1.1.0_README.zh-CN.md"; Destination = "README.zh-CN.md" },
-			[pscustomobject]@{ Source = "docs/RELEASE_1.1.0_CHANGELOG.en.txt"; Destination = "CHANGELOG.en.txt" },
-			[pscustomobject]@{ Source = "docs/RELEASE_1.1.0_CHANGELOG.zh-CN.md"; Destination = "CHANGELOG.zh-CN.md" }
-		)
-	} else {
-		@(
-			[pscustomobject]@{ Source = "docs/RELEASE_1.1.0_RC.md"; Destination = "RELEASE-CANDIDATE.md" }
-		)
-	}
-	$archiveStem = "TPT-ZH-OmniPack-$version-Windows-x64-SDL3"
-	$packageRoot = Join-Path $validationDirectory $archiveStem
-	Remove-Item -LiteralPath $packageRoot -Force -Recurse -ErrorAction SilentlyContinue
-	New-Item -ItemType Directory -Force $packageRoot | Out-Null
-	Copy-Item -LiteralPath $releaseExe -Destination (Join-Path $packageRoot "tpt-zh-omnipack.exe")
-	Copy-Item -LiteralPath (Join-Path $sourceRoot "LICENSE") -Destination (Join-Path $packageRoot "LICENSE")
-	Copy-Item -LiteralPath (Join-Path $sourceRoot "docs/THIRD_PARTY_SOURCES.md") -Destination (Join-Path $packageRoot "SOURCE-AND-LICENSES.zh-CN.md")
-	Copy-Item -LiteralPath (Join-Path $sourceRoot "docs/AI_DISCLOSURE.md") -Destination (Join-Path $packageRoot "AI-DISCLOSURE.zh-CN.md")
-	New-Item -ItemType Directory -Force (Join-Path $packageRoot "THIRD-PARTY-LICENSES") | Out-Null
-	Copy-Item -LiteralPath (Join-Path $sourceRoot "docs/THIRD_PARTY_LICENSE_MANIFEST.csv") -Destination (Join-Path $packageRoot "THIRD-PARTY-LICENSES/THIRD-PARTY-MANIFEST.csv")
-	foreach ($document in $packageDocuments) {
-		Copy-Item -LiteralPath (Join-Path $sourceRoot $document.Source) -Destination (Join-Path $packageRoot $document.Destination)
-	}
-	$buildInfo = @(
-		"TPT-ZH OmniPack $version",
-		"Git commit: $((& git -C $sourceRoot rev-parse HEAD).Trim())",
-		"Build type: Release with detached DWARF symbols",
-		"SDL: 3.4.14",
-		"Platform: Windows x64",
-		"OmniCore: enabled",
-		"Atmosphere: enabled",
-		"Chemistry: enabled",
-		"Compute backend: SDL_GPU Vulkan optional; CPU fallback; D3D12 no DXIL shader; CUDA not implemented"
-	)
-	[IO.File]::WriteAllLines((Join-Path $packageRoot "BUILD-INFO.txt"), $buildInfo, [Text.UTF8Encoding]::new($false))
-	# The final validation file is written in finally.  Include its current
-	# machine-readable gate snapshot in the staged user package before archival.
-	[IO.File]::WriteAllLines((Join-Path $packageRoot "RELEASE-VALIDATION.txt"), @("Validation pending final archive", "Channel: $Channel"), [Text.UTF8Encoding]::new($false))
-	$manifestEntries = Get-ChildItem -LiteralPath $packageRoot -File -Recurse | Sort-Object FullName | ForEach-Object {
-		$relative = $_.FullName.Substring($packageRoot.Length).TrimStart('\\') -replace '\\','/'
-		"{0}  {1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash, $relative
-	}
-	[IO.File]::WriteAllLines((Join-Path $packageRoot "PACKAGE-MANIFEST.sha256"), $manifestEntries, [Text.UTF8Encoding]::new($false))
-	$archivePath = Join-Path $outputDirectory "$archiveStem.zip"
-	$symbolsArchivePath = Join-Path $outputDirectory "TPT-ZH-OmniPack-$version-Windows-x64-Symbols.zip"
-	Remove-Item -LiteralPath $archivePath, $symbolsArchivePath -Force -ErrorAction SilentlyContinue
-	Compress-Archive -LiteralPath $packageRoot -DestinationPath $archivePath -CompressionLevel Optimal
-	Compress-Archive -LiteralPath $symbolFile -DestinationPath $symbolsArchivePath -CompressionLevel Optimal
-	Get-FileHash -LiteralPath $archivePath -Algorithm SHA256 | ForEach-Object { "{0}  {1}" -f $_.Hash, [IO.Path]::GetFileName($archivePath) } | Set-Content -LiteralPath "$archivePath.sha256" -Encoding ascii
-	Get-FileHash -LiteralPath $symbolsArchivePath -Algorithm SHA256 | ForEach-Object { "{0}  {1}" -f $_.Hash, [IO.Path]::GetFileName($symbolsArchivePath) } | Set-Content -LiteralPath "$symbolsArchivePath.sha256" -Encoding ascii
-
-
-	$packageArgs = @(
-		(Join-Path $sourceRoot "tools\\package_test_release.py"),
+    $buildInfoPath = Join-Path $validationDirectory "BUILD-INFO.txt"
+    $validationPath = Join-Path $validationDirectory "RELEASE-VALIDATION.txt"
+    [IO.File]::WriteAllLines($buildInfoPath, @(
+        "TPT-ZH OmniPack $version",
+        "Git commit: $((& $git -C $sourceRoot rev-parse HEAD).Trim())",
+        "Build type: Release with detached DWARF symbols",
+        "SDL: 3.4.14",
+        "Platform: Windows x64",
+        "OmniCore: enabled",
+        "Atmosphere: enabled",
+        "Chemistry: enabled",
+        "Compute backend: SDL_GPU Vulkan optional; CPU fallback; D3D12 no DXIL shader; CUDA not implemented"
+    ), [Text.UTF8Encoding]::new($false))
+    $writeStagedValidation = {
+        [IO.File]::WriteAllLines($validationPath, @(
+            "TPT-ZH OmniPack $version Release Validation",
+            "",
+            "Commit: $((& $git -C $sourceRoot rev-parse HEAD).Trim())",
+            "Channel: $Channel",
+            "",
+            "Build: $($gate.Build)",
+            "Unit tests: $($gate.UnitTests)",
+            "AtmosphereBench: $($gate.AtmosphereBench)",
+            "Mass conservation: $($gate.MassConservation)",
+            "Official TPT save compatibility: $($gate.OfficialTPTSaveCompatibility)",
+            "OmniPack save reload: $($gate.OmniSaveReload)",
+            "SDL_GPU: $($gate.SDLGPU)",
+            "CPU fallback: $($gate.CPUFallback)",
+            "GPU numerical validation: $($gate.GPUNumericalValidation)",
+            "Windows clean machine: $($gate.WindowsCleanMachine)",
+            "SDL3 GUI: $($gate.SDL3GUI)",
+            "2-hour soak test: $($gate.Soak2Hours)",
+            "Release executable stripped: $($gate.ExecutableStripped)",
+            "Debug symbols separated: $($gate.DebugSymbolsSeparated)",
+            "Package manifest: $($gate.PackageManifest)",
+            "SHA256: $($gate.SHA256)",
+            "",
+            "FINAL STATUS: RC PACKAGE GENERATED - STABLE GATES REMAIN REQUIRED"
+        ), [Text.UTF8Encoding]::new($false))
+    }
+    & $writeStagedValidation
+    $packageArgs = @(
+        (Join-Path $sourceRoot "tools\\package_test_release.py"),
 		"--source-root", $sourceRoot,
 		"--executable", $releaseExe,
 		"--symbols", $symbolFile,
@@ -202,13 +189,18 @@ try {
 		"--version", $version,
 		"--kind", $kind,
 		"--objdump", $objdump,
-		"--strings", $strings
+        "--strings", $strings,
+        "--extra-member", $buildInfoPath, "BUILD-INFO.txt",
+        "--extra-member", $validationPath, "RELEASE-VALIDATION.txt"
 	)
 	if ($Channel -eq "rc" -and $AllowDirtyValidation) { $packageArgs += "--allow-dirty-validation" }
 	& $python @packageArgs
     if ($LASTEXITCODE -ne 0) { throw "package creation failed" }
     $gate.PackageManifest = "PASS"
     $gate.SHA256 = "PASS"
+    & $writeStagedValidation
+    & $python @packageArgs
+    if ($LASTEXITCODE -ne 0) { throw "final package creation failed" }
 } catch {
     $failure = $_.Exception.Message
 } finally {

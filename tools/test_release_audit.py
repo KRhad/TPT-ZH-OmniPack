@@ -46,6 +46,36 @@ NORMAL_DOCUMENTS = {
         )
     },
 }
+ONE_ONE_COMMON_DOCUMENTS = {
+    "LICENSE",
+    "SOURCE-AND-LICENSES.zh-CN.md",
+    "AI-DISCLOSURE.zh-CN.md",
+    "THIRD-PARTY-LICENSES/THIRD-PARTY-MANIFEST.csv",
+    "THIRD-PARTY-LICENSES/LIBRARIES/bzip2.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/fftw3f.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/jsoncpp.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/libcurl.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/libpng.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/lua5.1.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/lua5.2.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/luajit.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/mbedtls.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/nghttp2.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/sdl2.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/sdl3.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/LIBRARIES/zlib.LICENSE.txt",
+    "THIRD-PARTY-LICENSES/FUSION-PIXEL-FONT-OFL-1.1.txt",
+    "THIRD-PARTY-LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt",
+    "THIRD-PARTY-LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt",
+    "THIRD-PARTY-LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt",
+    "THIRD-PARTY-LICENSES/GNU-UNIFONT-OFL-1.1.txt",
+    "THIRD-PARTY-LICENSES/OPENSTAX-CHEMISTRY-CC-BY-4.0.txt",
+}
+ONE_ONE_RC_DOCUMENTS = ONE_ONE_COMMON_DOCUMENTS | {"RELEASE-CANDIDATE.md"}
+ONE_ONE_STABLE_DOCUMENTS = ONE_ONE_COMMON_DOCUMENTS | {
+    "README.en.md", "README.zh-CN.md", "CHANGELOG.en.txt", "CHANGELOG.zh-CN.md",
+}
+ONE_ONE_EXTRA_MEMBERS = {"BUILD-INFO.txt", "RELEASE-VALIDATION.txt", "PACKAGE-MANIFEST.sha256"}
 FINAL_DOCUMENTS = NORMAL_DOCUMENTS - {
     "TESTING.zh-CN.md",
     "FONT-AUDIT.md",
@@ -131,6 +161,18 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest().upper()
 
 
+def parse_package_manifest(data: bytes) -> dict[str, str]:
+    entries: dict[str, str] = {}
+    for raw in data.decode("utf-8").splitlines():
+        digest, separator, name = raw.partition("  ")
+        if not separator or not re.fullmatch(r"[0-9A-F]{64}", digest) or not name:
+            raise ValueError("package manifest line is invalid")
+        if name in entries:
+            raise ValueError(f"package manifest repeats member: {name}")
+        entries[name] = digest
+    return entries
+
+
 def parse_manifest(data: bytes) -> tuple[dict[str, str], dict[str, tuple[int, str]]]:
     fields: dict[str, str] = {}
     members: dict[str, tuple[int, str]] = {}
@@ -147,6 +189,11 @@ def parse_manifest(data: bytes) -> tuple[dict[str, str], dict[str, tuple[int, st
 
 
 def package_stems(version: str) -> tuple[str, str]:
+    if version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}:
+        return (
+            f"TPT-ZH-OmniPack-{version}-Windows-x64-SDL3",
+            f"TPT-ZH-OmniPack-{version}-Windows-x64-Symbols",
+        )
     return (
         f"TPT-ZH-OmniPack-{version}-Windows-x64",
         f"TPT-ZH-OmniPack-{version}-Symbols-Windows-x64",
@@ -166,7 +213,13 @@ def manifest_name(version: str) -> str:
 
 
 def expected_members(stem: str, kind: str, version: str) -> set[str]:
-    if kind in {"public-test", "release-candidate"}:
+    if kind == "debug-symbols":
+        files = {SYMBOL_NAME}
+    elif version == RELEASE_CANDIDATE_1_1_0_VERSION:
+        files = {EXECUTABLE_NAME, *ONE_ONE_RC_DOCUMENTS, *ONE_ONE_EXTRA_MEMBERS}
+    elif version == STABLE_VERSION:
+        files = {EXECUTABLE_NAME, *ONE_ONE_STABLE_DOCUMENTS, *ONE_ONE_EXTRA_MEMBERS}
+    elif kind in {"public-test", "release-candidate"}:
         files = {EXECUTABLE_NAME, *NORMAL_DOCUMENTS}
         if version == RELEASE_CANDIDATE_1_1_0_VERSION:
             files.add("RELEASE-CANDIDATE.md")
@@ -178,8 +231,6 @@ def expected_members(stem: str, kind: str, version: str) -> set[str]:
             *NORMAL_DOCUMENTS,
             *development_documents(version),
         }
-    elif kind == "debug-symbols":
-        files = {SYMBOL_NAME}
     else:
         return set()
     return {f"{stem}/{name}" for name in files | {manifest_name(version)}}
@@ -368,6 +419,26 @@ def audit_package(
                 data = archive.read(archive_name)
                 if len(data) != size or sha256_bytes(data) != digest:
                     errors.append(f"package manifest does not match member: {name}")
+            if (
+                not expect_symbols
+                and version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}
+            ):
+                package_manifest_name = f"{stem}/PACKAGE-MANIFEST.sha256"
+                try:
+                    package_manifest = parse_package_manifest(archive.read(package_manifest_name))
+                except ValueError as exc:
+                    errors.append(str(exc))
+                    package_manifest = {}
+                expected_package_members = {
+                    name.removeprefix(f"{stem}/")
+                    for name in actual - {archive_manifest_name, package_manifest_name}
+                }
+                if set(package_manifest) != expected_package_members:
+                    errors.append("package file manifest members do not match ZIP members")
+                for name, digest in package_manifest.items():
+                    archive_name = f"{stem}/{name}"
+                    if archive_name in actual and sha256_bytes(archive.read(archive_name)) != digest:
+                        errors.append(f"package file manifest does not match member: {name}")
             if not expect_symbols:
                 executable = archive.read(f"{stem}/{EXECUTABLE_NAME}")
                 if not executable.startswith(b"MZ"):
@@ -407,19 +478,20 @@ def audit_package(
                                     f"private test instructions are missing marker: {marker!r}"
                                 )
                 elif kind == "release-candidate":
-                    instructions = archive.read(
-                        f"{stem}/TESTING.zh-CN.md"
-                    ).decode("utf-8", errors="replace")
-                    for marker in RELEASE_CANDIDATE_MARKERS.get(version, ()):
-                        if marker not in instructions:
-                            errors.append(
-                                f"release candidate instructions are missing marker: {marker!r}"
-                            )
                     if version == RELEASE_CANDIDATE_1_1_0_VERSION:
                         rc_text = archive.read(f"{stem}/RELEASE-CANDIDATE.md").decode("utf-8", errors="replace")
                         for marker in RELEASE_CANDIDATE_1_1_0_MARKERS[version]:
                             if marker not in rc_text:
                                 errors.append(f"1.1.0 RC instructions are missing marker: {marker!r}")
+                    else:
+                        instructions = archive.read(
+                            f"{stem}/TESTING.zh-CN.md"
+                        ).decode("utf-8", errors="replace")
+                        for marker in RELEASE_CANDIDATE_MARKERS.get(version, ()):
+                            if marker not in instructions:
+                                errors.append(
+                                    f"release candidate instructions are missing marker: {marker!r}"
+                                )
     except (OSError, ValueError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
         errors.append(f"cannot read package: {exc}")
     return errors

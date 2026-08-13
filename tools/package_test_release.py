@@ -98,7 +98,7 @@ FINAL_DOCUMENTS = (
     *LIBRARY_LICENSE_DOCUMENTS,
     SDL3_LICENSE_DOCUMENT,
 )
-STABLE_DOCUMENTS = (
+LEGACY_STABLE_DOCUMENTS = (
     ("LICENSE", "LICENSE"),
     ("docs/RELEASE_1.1.0_README.en.md", "README.en.md"),
     ("docs/RELEASE_1.1.0_README.zh-CN.md", "README.zh-CN.md"),
@@ -116,6 +116,35 @@ STABLE_DOCUMENTS = (
     *LIBRARY_LICENSE_DOCUMENTS,
     SDL3_LICENSE_DOCUMENT,
 )
+ONE_ONE_COMMON_DOCUMENTS = (
+    ("LICENSE", "LICENSE"),
+    ("docs/THIRD_PARTY_SOURCES.md", "SOURCE-AND-LICENSES.zh-CN.md"),
+    ("docs/AI_DISCLOSURE.md", "AI-DISCLOSURE.zh-CN.md"),
+    (
+        "docs/THIRD_PARTY_LICENSE_MANIFEST.csv",
+        "THIRD-PARTY-LICENSES/THIRD-PARTY-MANIFEST.csv",
+    ),
+    *tuple(
+        (
+            source,
+            "THIRD-PARTY-LICENSES/" + destination.removeprefix("LICENSES/"),
+        )
+        for source, destination in DOCUMENTS
+        if destination.startswith("LICENSES/")
+        and source != "docs/THIRD_PARTY_LICENSE_MANIFEST.csv"
+    ),
+)
+ONE_ONE_RC_DOCUMENTS = ONE_ONE_COMMON_DOCUMENTS + (
+    ("docs/RELEASE_1.1.0_RC.md", "RELEASE-CANDIDATE.md"),
+)
+ONE_ONE_STABLE_DOCUMENTS = ONE_ONE_COMMON_DOCUMENTS + (
+    ("docs/RELEASE_1.1.0_README.en.md", "README.en.md"),
+    ("docs/RELEASE_1.1.0_README.zh-CN.md", "README.zh-CN.md"),
+    ("docs/RELEASE_1.1.0_CHANGELOG.en.txt", "CHANGELOG.en.txt"),
+    ("docs/RELEASE_1.1.0_CHANGELOG.zh-CN.md", "CHANGELOG.zh-CN.md"),
+)
+ONE_ONE_RELEASE_EXTRA_MEMBERS = frozenset({"BUILD-INFO.txt", "RELEASE-VALIDATION.txt"})
+ONE_ONE_PACKAGE_MANIFEST = "PACKAGE-MANIFEST.sha256"
 DEV_DOCUMENTS = (
     ("docs/TUTORIALS_0.2.json", "TUTORIALS-0.2.0.json"),
     ("examples/0.2.0/example-spec.json", "examples/0.2.0/example-spec.json"),
@@ -329,6 +358,11 @@ def validate_profile(version: str, kind: str, include_examples: bool) -> None:
 
 
 def package_stems(version: str) -> tuple[str, str]:
+    if version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}:
+        return (
+            f"TPT-ZH-OmniPack-{version}-Windows-x64-SDL3",
+            f"TPT-ZH-OmniPack-{version}-Windows-x64-Symbols",
+        )
     return (
         f"TPT-ZH-OmniPack-{version}-Windows-x64",
         f"TPT-ZH-OmniPack-{version}-Symbols-Windows-x64",
@@ -345,11 +379,11 @@ def development_documents(version: str) -> tuple[tuple[str, str], ...]:
 
 def package_documents(version: str) -> tuple[tuple[str, str], ...]:
     if version == STABLE_VERSION:
-        return STABLE_DOCUMENTS
+        return ONE_ONE_STABLE_DOCUMENTS
     if version == FINAL_VERSION:
         return FINAL_DOCUMENTS
     if version == RELEASE_CANDIDATE_1_1_0_VERSION:
-        return DOCUMENTS + (("docs/RELEASE_1.1.0_RC.md", "RELEASE-CANDIDATE.md"),)
+        return ONE_ONE_RC_DOCUMENTS
     if version not in VERSIONED_INSTRUCTIONS:
         return DOCUMENTS
     private_source, private_archive = VERSIONED_INSTRUCTIONS[version]
@@ -383,6 +417,7 @@ def validate_sources(
     version: str = VERSION,
     kind: str = "public-test",
     include_examples: bool = False,
+    extra_members: Sequence[tuple[str, Path]] = (),
 ) -> None:
     validate_profile(version, kind, include_examples)
     if executable.name != EXECUTABLE_NAME:
@@ -426,11 +461,42 @@ def validate_sources(
             source = source_root / source_name
             if not source.is_file() or source.stat().st_size == 0:
                 raise ValueError(f"required local-dev source is missing or empty: {source}")
+    extra_names: set[str] = set()
+    for archive_name, source in extra_members:
+        validate_member_name(archive_name)
+        if archive_name in extra_names:
+            raise ValueError(f"release package repeats an extra member: {archive_name}")
+        extra_names.add(archive_name)
+        if not source.is_file() or source.stat().st_size == 0:
+            raise ValueError(f"release package extra member is missing or empty: {source}")
+    if version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}:
+        if extra_names != ONE_ONE_RELEASE_EXTRA_MEMBERS:
+            raise ValueError(
+                "1.1.0 package extras must be exactly: "
+                + ", ".join(sorted(ONE_ONE_RELEASE_EXTRA_MEMBERS))
+            )
+    elif extra_names:
+        raise ValueError("only 1.1.0 release packages may include extra members")
+
+
+def file_bytes(source: Path | bytes) -> bytes:
+    return source if isinstance(source, bytes) else source.read_bytes()
+
+
+def package_file_manifest(members: Iterable[tuple[str, Path | bytes]]) -> bytes:
+    return ("\n".join(
+        f"{sha256_bytes(file_bytes(source))}  {name}"
+        for name, source in sorted(members)
+    ) + "\n").encode("utf-8")
+
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest().upper()
 
 
 def manifest(
     revision: str,
-    members: Iterable[tuple[str, Path]],
+    members: Iterable[tuple[str, Path | bytes]],
     build_epoch: int,
     kind: str,
     version: str = VERSION,
@@ -452,8 +518,9 @@ def manifest(
                 "source_untracked_files",
             )
         )
-    for name, path in members:
-        lines.append(f"member={name}|{path.stat().st_size}|{sha256(path)}")
+    for name, source in members:
+        data = file_bytes(source)
+        lines.append(f"member={name}|{len(data)}|{sha256_bytes(data)}")
     return "\n".join(lines) + "\n"
 
 
@@ -464,7 +531,7 @@ def manifest_name(version: str) -> str:
 def write_zip(
     path: Path,
     root: str,
-    files: Iterable[tuple[str, Path]],
+    files: Iterable[tuple[str, Path | bytes]],
     manifest_text: str,
     epoch: int,
     manifest_filename: str = "TEST-MANIFEST.txt",
@@ -475,7 +542,7 @@ def write_zip(
             info = zipfile.ZipInfo(f"{root}/{name}", date_time=timestamp)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o100644 << 16
-            archive.writestr(info, source.read_bytes())
+            archive.writestr(info, file_bytes(source))
         info = zipfile.ZipInfo(f"{root}/{manifest_filename}", date_time=timestamp)
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o100644 << 16
@@ -497,6 +564,7 @@ def build_package(
     kind: str = "public-test",
     include_examples: bool = False,
     source_provenance: dict[str, str] | None = None,
+    extra_members: Sequence[tuple[str, Path]] = (),
 ) -> tuple[Path, Path, Path, Path]:
     source_root = source_root.resolve()
     executable = executable.resolve()
@@ -509,6 +577,7 @@ def build_package(
         version=version,
         kind=kind,
         include_examples=include_examples,
+        extra_members=extra_members,
     )
     revision = git_revision(source_root)
     epoch = source_date_epoch()
@@ -518,9 +587,13 @@ def build_package(
         development_documents(version) if include_examples else ()
     )
     archive_manifest_name = manifest_name(version)
-    normal_files = [(EXECUTABLE_NAME, executable)] + [
+    normal_files: list[tuple[str, Path | bytes]] = [(EXECUTABLE_NAME, executable)] + [
         (name, source_root / source) for source, name in selected_documents
-    ]
+    ] + list(extra_members)
+    if version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}:
+        normal_files.append(
+            (ONE_ONE_PACKAGE_MANIFEST, package_file_manifest(normal_files))
+        )
     symbol_files = [(SYMBOL_NAME, symbols)]
     package_path = output_directory / f"{package_stem}.zip"
     symbols_path = output_directory / f"{symbol_package_stem}.zip"
@@ -581,6 +654,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--include-examples", action="store_true")
     parser.add_argument(
+        "--extra-member",
+        action="append",
+        nargs=2,
+        metavar=("SOURCE", "ARCHIVE_NAME"),
+        default=[],
+        help="Additional audited member; available only to the 1.1.0 release profiles.",
+    )
+    parser.add_argument(
         "--allow-dirty-validation",
         action="store_true",
         help=(
@@ -598,6 +679,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     source_root = args.source_root.resolve()
     output_directory = args.output_directory if args.output_directory.is_absolute() else source_root / args.output_directory
     try:
+        extra_members = [(archive_name, Path(source)) for source, archive_name in args.extra_member]
         source_provenance = None
         if args.allow_dirty_validation and args.kind != "release-candidate":
             raise ValueError(
@@ -642,6 +724,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             kind=args.kind,
             include_examples=args.include_examples,
             source_provenance=source_provenance,
+            extra_members=extra_members,
         )
     except (OSError, ValueError) as exc:
         print(f"test-release-package: ERROR {exc}", file=sys.stderr)

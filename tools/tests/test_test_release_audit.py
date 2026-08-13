@@ -68,6 +68,22 @@ class TestReleaseAuditTests(unittest.TestCase):
         (source / "docs" / "RELEASE_1.0.0_CHANGELOG.zh-CN.md").write_text(
             "Final Chinese changes\n", encoding="utf-8"
         )
+        (source / "docs" / "RELEASE_1.1.0_RC.md").write_text(
+            "1.1.0-rc1\n不是稳定版\nCUDA\nrelease_ready=false\n",
+            encoding="utf-8",
+        )
+        (source / "docs" / "RELEASE_1.1.0_README.en.md").write_text(
+            "1.1 final English readme\n", encoding="utf-8"
+        )
+        (source / "docs" / "RELEASE_1.1.0_README.zh-CN.md").write_text(
+            "1.1 final Chinese readme\n", encoding="utf-8"
+        )
+        (source / "docs" / "RELEASE_1.1.0_CHANGELOG.en.txt").write_text(
+            "1.1 final English changes\n", encoding="utf-8"
+        )
+        (source / "docs" / "RELEASE_1.1.0_CHANGELOG.zh-CN.md").write_text(
+            "1.1 final Chinese changes\n", encoding="utf-8"
+        )
         (source / "docs" / "THIRD_PARTY_LICENSE_MANIFEST.csv").write_text(
             "component,license\nfixture,MIT\n", encoding="utf-8"
         )
@@ -493,6 +509,51 @@ class TestReleaseAuditTests(unittest.TestCase):
                 self.assertEqual(fields["source_worktree_sha256"], "B" * 64)
                 self.assertEqual(fields["source_untracked_files"], "9")
                 self.assertFalse(any(name.endswith(".stm") for name in archive.namelist()))
+
+    def test_1_1_rc_package_has_one_audited_sdl3_archive(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            build_info = source / "BUILD-INFO.txt"
+            validation = source / "RELEASE-VALIDATION.txt"
+            build_info.write_text("SDL: 3.4.14\n", encoding="utf-8")
+            validation.write_text("FINAL STATUS: RC PACKAGE\n", encoding="utf-8")
+            extras = [
+                ("BUILD-INFO.txt", build_info),
+                ("RELEASE-VALIDATION.txt", validation),
+            ]
+            with mock.patch.object(
+                package_test_release, "git_revision", return_value="f" * 40
+            ):
+                package, _, symbols, _ = package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.RELEASE_CANDIDATE_1_1_0_VERSION,
+                    kind="release-candidate",
+                    source_provenance={
+                        "source_state": "clean",
+                        "source_worktree_sha256": "F" * 64,
+                        "source_untracked_files": "0",
+                    },
+                    extra_members=extras,
+                )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    package,
+                    version=package_test_release.RELEASE_CANDIDATE_1_1_0_VERSION,
+                    kind="release-candidate",
+                ),
+                [],
+            )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    symbols,
+                    True,
+                    version=package_test_release.RELEASE_CANDIDATE_1_1_0_VERSION,
+                ),
+                [],
+            )
 
     def test_final_release_omits_test_assets_and_uses_release_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
