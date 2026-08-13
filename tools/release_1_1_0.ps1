@@ -153,6 +153,11 @@ try {
         "Compute backend: SDL_GPU Vulkan optional; CPU fallback; D3D12 no DXIL shader; CUDA not implemented"
     ), [Text.UTF8Encoding]::new($false))
     $writeStagedValidation = {
+        $stagedFinalStatus = if ($Channel -eq "stable") {
+            "FINAL STATUS: READY FOR STABLE RELEASE"
+        } else {
+            "FINAL STATUS: RC PACKAGE GENERATED - STABLE GATES REMAIN REQUIRED"
+        }
         [IO.File]::WriteAllLines($validationPath, @(
             "TPT-ZH OmniPack $version Release Validation",
             "",
@@ -176,7 +181,7 @@ try {
             "Package manifest: $($gate.PackageManifest)",
             "SHA256: $($gate.SHA256)",
             "",
-            "FINAL STATUS: RC PACKAGE GENERATED - STABLE GATES REMAIN REQUIRED"
+            $stagedFinalStatus
         ), [Text.UTF8Encoding]::new($false))
     }
     & $writeStagedValidation
