@@ -46,7 +46,7 @@ if ($Channel -eq "stable" -and $AllowDirtyValidation) {
 
 $version = if ($Channel -eq "stable") { "1.1.0" } else { "1.1.0-rc1" }
 $kind = if ($Channel -eq "stable") { "release" } else { "release-candidate" }
-$git = (Get-Command git.exe -CommandType Application -ErrorAction Stop).Source
+$git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $null = & $git -C $sourceRoot diff --quiet --ignore-submodules --exit-code
 $trackedDirty = [bool]($LASTEXITCODE -ne 0)
 $null = & $git -C $sourceRoot diff --cached --quiet --ignore-submodules --exit-code
