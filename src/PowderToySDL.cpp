@@ -391,6 +391,15 @@ void SDLSetScreen()
 			Platform::Exit(-1);
 		}
 #if TPT_SDL3
+		// TPT's display buffer is packed as 0x00RRGGBB, so its high byte is
+		// deliberately zero rather than an opacity channel. SDL3 defaults an
+		// ARGB texture to alpha blending, which would make every pixel fully
+		// transparent and present a black window. Copy the framebuffer opaquely.
+		if (!SDL_SetTextureBlendMode(sdl_texture, SDL_BLENDMODE_NONE))
+		{
+			fprintf(stderr, "SDL_SetTextureBlendMode failed: %s\n", SDL_GetError());
+			Platform::Exit(-1);
+		}
 		SDL_SetTextureScaleMode(sdl_texture, newFrameOpsNorm.blurryScaling ? SDL_SCALEMODE_LINEAR : SDL_SCALEMODE_NEAREST);
 #endif
 		SDL_RaiseWindow(sdl_window);

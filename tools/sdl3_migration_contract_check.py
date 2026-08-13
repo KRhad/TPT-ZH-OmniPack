@@ -30,6 +30,11 @@ def main() -> int:
     require(compat, "# include <SDL3/SDL.h>", "SDL3 header")
     require(platform, "SDL_EVENT_WINDOW_DISPLAY_CHANGED", "SDL3 window event")
     require(platform, "SDL_SetRenderLogicalPresentation", "SDL3 logical rendering")
+    require(
+        platform,
+        "SDL_SetTextureBlendMode(sdl_texture, SDL_BLENDMODE_NONE)",
+        "opaque SDL3 framebuffer presentation",
+    )
     require(platform, "SDL_ConvertEventToRenderCoordinates", "SDL3 logical input coordinates")
     require(platform, "SDL_SetWindowFullscreenMode", "SDL3 fullscreen mode")
     require(platform, "SDL_free(text);", "SDL3 clipboard text ownership")

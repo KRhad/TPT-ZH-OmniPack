@@ -68,7 +68,7 @@ The complete sanitized-environment Meson suite passed `98/98`; the log audit
 found zero credential-like environment variable names. The final `auto`
 release configuration selected SDL3 and produced a statically linked Windows
 executable with SHA-256
-`BB572CA8BFCC4F3B9E08385BE9A0D65FF68156BC5A5313971CF2F2D076231893`.
+`321BAE590DB5766EED9BE375B61064DC8EAAE5C5466C5E46D5893BB44798D53B`.
 Its imports contain no SDL2, SDL3, GCC, libstdc++ or libwinpthread DLL. The
 validated SPIR-V artifact SHA-256 is
 `954FDABE5B207450C85167171A74679F88E6BE43FFDA2B771FE4E079CFA0A5CB`.

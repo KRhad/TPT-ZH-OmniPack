@@ -103,6 +103,14 @@ roundtrip, multi-monitor switching and fullscreen mode changes are
 `not_tested_computer_use_unavailable`. Process/window liveness is not claimed as
 visual QA.
 
+After the 1.1.0 milestone tag, direct user observation exposed a black SDL3
+window. The internal UI framebuffer was intact, but TPT pixels are packed as
+`0x00RRGGBB` while SDL3 defaulted the `ARGB8888` streaming texture to alpha
+blending. The zero high byte therefore made the complete frame transparent.
+The post-tag correction explicitly sets `SDL_BLENDMODE_NONE`. A local SDL3
+render/readback probe reproduced black output with `SDL_BLENDMODE_BLEND` and
+read back the expected `(255, 50, 20)` colour with `SDL_BLENDMODE_NONE`.
+
 ## Benchmark and memory
 
 Fixed-step `mixed-medium`, 30 warm-up steps, 120 measured steps per pass and
@@ -131,6 +139,7 @@ MESON_TESTS=GREEN
 SAVE_LUA_RUNTIME=GREEN
 SIMULATION_FREEZE=GREEN
 WINDOW_LIVENESS=GREEN
+FRAMEBUFFER_PRESENTATION=GREEN_POST_TAG_BLEND_NONE_READBACK_PASS
 NATIVE_CLIPBOARD_REGISTRATION=GREEN
 CROSS_PLATFORM_CI_SCRIPT=GREEN_STATIC_PINNED
 CROSS_PLATFORM_RUNTIME=NOT_TESTED_PENDING_CI
