@@ -47,13 +47,12 @@ if ($Channel -eq "stable" -and $AllowDirtyValidation) {
 $version = if ($Channel -eq "stable") { "1.1.0" } else { "1.1.0-rc1" }
 $kind = if ($Channel -eq "stable") { "release" } else { "release-candidate" }
 $git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
-$null = & $git -C $sourceRoot diff --quiet --ignore-submodules --exit-code
-$trackedDirty = [bool]($LASTEXITCODE -ne 0)
-$null = & $git -C $sourceRoot diff --cached --quiet --ignore-submodules --exit-code
-$stagedDirty = [bool]($LASTEXITCODE -ne 0)
-$untracked = @(& $git -C $sourceRoot ls-files --others --exclude-standard)
-$sourceDirty = $trackedDirty -or $stagedDirty -or ($untracked.Count -gt 0)
-Write-Verbose "release source=$sourceRoot tracked_dirty=$trackedDirty staged_dirty=$stagedDirty untracked=$($untracked.Count)"
+$statusLines = @(
+    & $git -C $sourceRoot status --porcelain=v1 --untracked-files=all 2>$null |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+)
+$sourceDirty = @($statusLines).Count -gt 0
+Write-Verbose "release source=$sourceRoot status_count=$(@($statusLines).Count)"
 if ($sourceDirty -and -not ($Channel -eq "rc" -and $AllowDirtyValidation)) {
     throw "RELEASE BLOCKED: source worktree is dirty; commit reviewed changes before a reproducible package"
 }
