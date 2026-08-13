@@ -1,6 +1,6 @@
 # 1.1.0-rc1 Windows x64 SDL3 Release Candidate
 
-This is an unsigned local release candidate, not a stable release.
+This is an unsigned local release candidate, not a stable release (不是稳定版).
 
 ## Implemented and verified automatically
 
