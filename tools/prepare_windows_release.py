@@ -70,7 +70,7 @@ def prepare(
     # the detached file name and CRC, not DWARF, so crash-symbol lookup remains
     # possible without bloating the user archive.
     run(
-        [objcopy, f"--add-gnu-debuglink={symbols.name}", str(executable)],
+        [objcopy, f"--add-gnu-debuglink={symbols.resolve()}", str(executable)],
         env=tool_environment,
     )
     if not symbols.is_file() or symbols.stat().st_size == 0:

@@ -138,7 +138,8 @@ try {
 			[pscustomobject]@{ Source = "docs/RELEASE_1.1.0_RC.md"; Destination = "RELEASE-CANDIDATE.md" }
 		)
 	}
-	$packageRoot = Join-Path $validationDirectory "package-root"
+	$archiveStem = "TPT-ZH-OmniPack-$version-Windows-x64-SDL3"
+	$packageRoot = Join-Path $validationDirectory $archiveStem
 	Remove-Item -LiteralPath $packageRoot -Force -Recurse -ErrorAction SilentlyContinue
 	New-Item -ItemType Directory -Force $packageRoot | Out-Null
 	Copy-Item -LiteralPath $releaseExe -Destination (Join-Path $packageRoot "tpt-zh-omnipack.exe")
@@ -170,7 +171,6 @@ try {
 		"{0}  {1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash, $relative
 	}
 	[IO.File]::WriteAllLines((Join-Path $packageRoot "PACKAGE-MANIFEST.sha256"), $manifestEntries, [Text.UTF8Encoding]::new($false))
-	$archiveStem = "TPT-ZH-OmniPack-$version-Windows-x64-SDL3"
 	$archivePath = Join-Path $outputDirectory "$archiveStem.zip"
 	$symbolsArchivePath = Join-Path $outputDirectory "TPT-ZH-OmniPack-$version-Windows-x64-Symbols.zip"
 	Remove-Item -LiteralPath $archivePath, $symbolsArchivePath -Force -ErrorAction SilentlyContinue
