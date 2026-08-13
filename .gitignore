@@ -46,6 +46,8 @@ screenshot_*
 !tools/runtime/*.lua
 !tools/mod_catalog/
 !tools/mod_catalog/*.py
+!docs/RELEASE_1.1.0_CHANGELOG.en.txt
+!resources/third_party/SDL3_ZLIB_LICENSE.txt
 
 # External repositories and raw Lua downloads are read-only research inputs.
 # Only curated metadata, patches and placeholder files are committed.

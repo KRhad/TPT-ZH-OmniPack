@@ -13,6 +13,7 @@
 #include "graphics/Graphics.h"
 #include "simulation/SaveRenderer.h"
 #include "simulation/SimulationData.h"
+#include "simulation/OmniCompute.h"
 #include "common/tpt-rand.h"
 #include "gui/game/Favorite.h"
 #include "gui/Style.h"
@@ -38,6 +39,21 @@
 #include <exception>
 #include <cstdlib>
 #include <cstring>
+
+namespace
+{
+void PrintStartupDiagnostics()
+{
+	std::cout << APPNAME << ' ' << RELEASE_LABEL << '\n';
+	std::cout << "Git commit: " << (VCS_TAG[0] ? VCS_TAG : "unknown") << '\n';
+	std::cout << "Build type: " << (DEBUG ? "Debug" : "Release") << '\n';
+	std::cout << "SDL: " << SDL_MAJOR_VERSION << '.' << SDL_MINOR_VERSION << '.' << SDL_MICRO_VERSION << '\n';
+	std::cout << "OmniCore: enabled\nAtmosphere: enabled\nChemistry: enabled\n";
+	const auto status = OmniCompute::GetStatus();
+	std::cout << "Compute backend: " << OmniCompute::BackendName(status.backend)
+		<< " (" << status.detail << ")\n";
+}
+}
 
 void LoadWindowPosition()
 {
@@ -276,9 +292,12 @@ int Main(int argc, char *argv[])
 	{
 		if (std::strcmp(argv[i], "--gpu-probe") == 0 || std::strcmp(argv[i], "gpu-probe") == 0)
 			return Platform::RunSDLGPUProbe();
+		if (std::strcmp(argv[i], "--gpu-validate") == 0 || std::strcmp(argv[i], "gpu-validate") == 0)
+			return Platform::RunSDLGPUValidation();
 	}
 
 	Platform::Atexit([]() {
+		Platform::ShutdownOmniCompute();
 		SaveWindowPosition();
 		// Unregister dodgy error handlers so they don't try to show the blue screen when the window is closed
 		for (auto *msg = signalMessages; msg->message; ++msg)
@@ -505,6 +524,8 @@ int Main(int argc, char *argv[])
 	}
 
 	SDLOpen();
+	Platform::InitializeOmniCompute();
+	PrintStartupDiagnostics();
 
 	if (Client::Ref().IsFirstRun() && FORCE_WINDOW_FRAME_OPS == forceWindowFrameOpsNone)
 	{

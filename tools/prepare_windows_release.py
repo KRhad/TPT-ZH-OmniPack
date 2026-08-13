@@ -66,6 +66,13 @@ def prepare(
         env=tool_environment,
     )
     run([strip, "--strip-debug", str(executable)], env=tool_environment)
+    # Keep a standard PE/GNU debug link in the release image.  It carries only
+    # the detached file name and CRC, not DWARF, so crash-symbol lookup remains
+    # possible without bloating the user archive.
+    run(
+        [objcopy, f"--add-gnu-debuglink={symbols.name}", str(executable)],
+        env=tool_environment,
+    )
     if not symbols.is_file() or symbols.stat().st_size == 0:
         raise ValueError("objcopy did not create detached debug symbols")
 
@@ -105,7 +112,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (OSError, ValueError) as exc:
         print(f"prepare-windows-release: ERROR {exc}", file=sys.stderr)
         return 1
-    print(f"prepare-windows-release: PASS executable={args.executable} symbols={args.symbols}")
+    print(
+        "prepare-windows-release: PASS "
+        f"executable={args.executable} symbols={args.symbols} debuglink={args.symbols.name}"
+    )
     return 0
 
 

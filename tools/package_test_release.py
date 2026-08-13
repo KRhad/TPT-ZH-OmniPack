@@ -25,6 +25,8 @@ PREVIOUS_PRIVATE_TEST_VERSION = "0.6.0-dev"
 PRIVATE_TEST_VERSION = "0.7.0-dev"
 RELEASE_CANDIDATE_VERSION = "1.0.0-rc9"
 FINAL_VERSION = "1.0.0"
+STABLE_VERSION = "1.1.0"
+RELEASE_CANDIDATE_1_1_0_VERSION = "1.1.0-rc1"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -53,6 +55,10 @@ LIBRARY_LICENSE_DOCUMENTS = tuple(
         "zlib",
     )
 )
+SDL3_LICENSE_DOCUMENT = (
+    "resources/third_party/SDL3_ZLIB_LICENSE.txt",
+    "LICENSES/LIBRARIES/sdl3.LICENSE.txt",
+)
 DOCUMENTS = (
     ("LICENSE", "LICENSE"),
     ("README.md", "README.en.md"),
@@ -72,6 +78,7 @@ DOCUMENTS = (
     ("resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt"),
     ("resources/third_party/OPENSTAX_CHEMISTRY_CC-BY-4.0.txt", "LICENSES/OPENSTAX-CHEMISTRY-CC-BY-4.0.txt"),
     *LIBRARY_LICENSE_DOCUMENTS,
+    SDL3_LICENSE_DOCUMENT,
 )
 FINAL_DOCUMENTS = (
     ("LICENSE", "LICENSE"),
@@ -89,6 +96,25 @@ FINAL_DOCUMENTS = (
     ("resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt"),
     ("resources/third_party/OPENSTAX_CHEMISTRY_CC-BY-4.0.txt", "LICENSES/OPENSTAX-CHEMISTRY-CC-BY-4.0.txt"),
     *LIBRARY_LICENSE_DOCUMENTS,
+    SDL3_LICENSE_DOCUMENT,
+)
+STABLE_DOCUMENTS = (
+    ("LICENSE", "LICENSE"),
+    ("docs/RELEASE_1.1.0_README.en.md", "README.en.md"),
+    ("docs/RELEASE_1.1.0_README.zh-CN.md", "README.zh-CN.md"),
+    ("docs/RELEASE_1.1.0_CHANGELOG.en.txt", "CHANGELOG.en.txt"),
+    ("docs/RELEASE_1.1.0_CHANGELOG.zh-CN.md", "CHANGELOG.zh-CN.md"),
+    ("docs/THIRD_PARTY_SOURCES.md", "SOURCE-AND-LICENSES.zh-CN.md"),
+    ("docs/AI_DISCLOSURE.md", "AI-DISCLOSURE.zh-CN.md"),
+    ("docs/THIRD_PARTY_LICENSE_MANIFEST.csv", "LICENSES/THIRD-PARTY-MANIFEST.csv"),
+    ("resources/third_party/GNU_UNIFONT_COPYING.txt", "LICENSES/GNU-UNIFONT-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_ARK_PIXEL_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_CUBIC_11_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt"),
+    ("resources/third_party/FUSION_PIXEL_FONT_GALMURI_OFL-1.1.txt", "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt"),
+    ("resources/third_party/OPENSTAX_CHEMISTRY_CC-BY-4.0.txt", "LICENSES/OPENSTAX-CHEMISTRY-CC-BY-4.0.txt"),
+    *LIBRARY_LICENSE_DOCUMENTS,
+    SDL3_LICENSE_DOCUMENT,
 )
 DEV_DOCUMENTS = (
     ("docs/TUTORIALS_0.2.json", "TUTORIALS-0.2.0.json"),
@@ -285,6 +311,8 @@ def validate_profile(version: str, kind: str, include_examples: bool) -> None:
         AUTOMATION_VERSION: ("local-dev", True),
         RELEASE_CANDIDATE_VERSION: ("release-candidate", False),
         FINAL_VERSION: ("release", False),
+        RELEASE_CANDIDATE_1_1_0_VERSION: ("release-candidate", False),
+        STABLE_VERSION: ("release", False),
         **{
             private_version: ("local-dev", False)
             for private_version in PRIVATE_TEST_INSTRUCTIONS
@@ -316,8 +344,12 @@ def development_documents(version: str) -> tuple[tuple[str, str], ...]:
 
 
 def package_documents(version: str) -> tuple[tuple[str, str], ...]:
+    if version == STABLE_VERSION:
+        return STABLE_DOCUMENTS
     if version == FINAL_VERSION:
         return FINAL_DOCUMENTS
+    if version == RELEASE_CANDIDATE_1_1_0_VERSION:
+        return DOCUMENTS + (("docs/RELEASE_1.1.0_RC.md", "RELEASE-CANDIDATE.md"),)
     if version not in VERSIONED_INSTRUCTIONS:
         return DOCUMENTS
     private_source, private_archive = VERSIONED_INSTRUCTIONS[version]
@@ -426,7 +458,7 @@ def manifest(
 
 
 def manifest_name(version: str) -> str:
-    return "MANIFEST.txt" if version == FINAL_VERSION else "TEST-MANIFEST.txt"
+    return "MANIFEST.txt" if version in {FINAL_VERSION, STABLE_VERSION} else "TEST-MANIFEST.txt"
 
 
 def write_zip(
@@ -537,6 +569,8 @@ def build_parser() -> argparse.ArgumentParser:
             AUTOMATION_VERSION,
             *VERSIONED_INSTRUCTIONS,
             FINAL_VERSION,
+            RELEASE_CANDIDATE_1_1_0_VERSION,
+            STABLE_VERSION,
         ),
         default=VERSION,
     )

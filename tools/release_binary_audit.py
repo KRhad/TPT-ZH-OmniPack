@@ -14,6 +14,7 @@ from typing import Sequence
 
 
 DEBUG_SECTION_RE = re.compile(r"\s\.debug(?:_|$)", re.IGNORECASE)
+GNU_DEBUGLINK_RE = re.compile(r"\s\.gnu_debuglink\s", re.IGNORECASE)
 PATH_MARKERS = ("C:\\Users\\", "/Users/", "\\build-", "/build-")
 SECURITY_MARKERS = ("DYNAMIC_BASE", "NX_COMPAT", "HIGH_ENTROPY_VA")
 DLL_CHARACTERISTICS_RE = re.compile(r"DllCharacteristics\s+([0-9A-Fa-f]+)")
@@ -43,7 +44,7 @@ def run(tool: str, *arguments: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run([tool, *arguments], check=False, capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
-def audit_executable(executable: Path, objdump: str | None, strings: str | None) -> list[str]:
+def audit_executable(executable: Path, objdump: str | None, strings: str | None, *, expect_debuglink: bool) -> list[str]:
     errors: list[str] = []
     if not executable.is_file():
         return [f"executable does not exist: {executable}"]
@@ -56,8 +57,12 @@ def audit_executable(executable: Path, objdump: str | None, strings: str | None)
     headers = run(objdump, "-h", str(executable))
     if headers.returncode:
         errors.append(f"objdump section scan failed: {headers.stderr.strip()}")
-    elif DEBUG_SECTION_RE.search(headers.stdout):
-        errors.append("release executable retains a .debug section")
+    else:
+        sections = [line for line in headers.stdout.splitlines() if not GNU_DEBUGLINK_RE.search(line)]
+        if DEBUG_SECTION_RE.search("\n".join(sections)):
+            errors.append("release executable retains a DWARF .debug section")
+        if expect_debuglink and not GNU_DEBUGLINK_RE.search(headers.stdout):
+            errors.append("release executable is missing its detached-symbol .gnu_debuglink")
     portable = run(objdump, "-p", str(executable))
     if portable.returncode:
         errors.append(f"objdump PE scan failed: {portable.stderr.strip()}")
@@ -85,7 +90,7 @@ def audit_executable(executable: Path, objdump: str | None, strings: str | None)
 
 
 def audit_pair(executable: Path, symbols: Path | None, objdump: str | None, strings: str | None) -> list[str]:
-    errors = audit_executable(executable, objdump, strings)
+    errors = audit_executable(executable, objdump, strings, expect_debuglink=symbols is not None)
     if symbols is not None:
         if not symbols.is_file():
             errors.append(f"debug symbols do not exist: {symbols}")

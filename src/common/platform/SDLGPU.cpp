@@ -1,10 +1,12 @@
 #include "Platform.h"
 #include "SDLCompat.h"
+#include "simulation/OmniCompute.h"
 
 #include <array>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <mutex>
 #include <sstream>
 #include <string>
 
@@ -16,6 +18,7 @@
 # include <SDL3/SDL_gpu.h>
 # if TPT_SDLGPU_SHADER_AVAILABLE
 #  include "sdlgpu_compute_spirv.h"
+#  include "sdlgpu_thermal_diffusion_spirv.h"
 # endif
 #endif
 
@@ -49,6 +52,220 @@ void PrintBool(const char *key, bool value)
 }
 
 #if TPT_SDL3 && TPT_SDLGPU_SHADER_AVAILABLE
+SDL_GPUDevice *productionDevice = nullptr;
+SDL_GPUComputePipeline *thermalDiffusionPipeline = nullptr;
+std::mutex productionMutex;
+
+struct alignas(16) ThermalCell
+{
+	float temperature = 0.0f;
+	float conductivity = 0.0f;
+	float blocked = 0.0f;
+	float reserved = 0.0f;
+};
+
+struct alignas(16) ThermalOutput
+{
+	float energyDelta = 0.0f;
+	float reserved0 = 0.0f;
+	float reserved1 = 0.0f;
+	float reserved2 = 0.0f;
+};
+
+struct alignas(16) ThermalParameters
+{
+	std::uint32_t width = 0;
+	std::uint32_t height = 0;
+	std::uint32_t periodic = 0;
+	std::uint32_t cellCount = 0;
+	float timestepOverCellLengthSquared = 0.0f;
+	float reserved0 = 0.0f;
+	float reserved1 = 0.0f;
+	float reserved2 = 0.0f;
+};
+
+void DestroyProductionCompute()
+{
+	std::scoped_lock lock(productionMutex);
+	OmniCompute::ResetBackend("SDL_GPU shutdown; CPU fallback");
+	if (productionDevice)
+	{
+		SDL_WaitForGPUIdle(productionDevice);
+		if (thermalDiffusionPipeline)
+			SDL_ReleaseGPUComputePipeline(productionDevice, thermalDiffusionPipeline);
+		thermalDiffusionPipeline = nullptr;
+		SDL_DestroyGPUDevice(productionDevice);
+		productionDevice = nullptr;
+	}
+}
+
+bool ExecuteThermalDiffusion(const OmniThermalDiffusionInput &input,
+	std::vector<float> &energyDelta, std::string &error)
+{
+	std::scoped_lock lock(productionMutex);
+	if (!productionDevice || !thermalDiffusionPipeline)
+	{
+		error = "production_gpu_not_initialized";
+		return false;
+	}
+	const auto cellCount = input.width * input.height;
+	if (!cellCount || input.width > UINT32_MAX || input.height > UINT32_MAX || cellCount > UINT32_MAX)
+	{
+		error = "production_gpu_grid_too_large";
+		return false;
+	}
+	std::vector<ThermalCell> upload(cellCount);
+	for (std::size_t index = 0; index < cellCount; ++index)
+	{
+		upload[index].temperature = input.temperature[index];
+		upload[index].conductivity = input.conductivity[index];
+		upload[index].blocked = input.blocked[index] ? 1.0f : 0.0f;
+	}
+	const auto uploadBytes = cellCount * sizeof(ThermalCell);
+	const auto outputBytes = cellCount * sizeof(ThermalOutput);
+	if (uploadBytes > UINT32_MAX || outputBytes > UINT32_MAX)
+	{
+		error = "production_gpu_buffer_too_large";
+		return false;
+	}
+	SDL_GPUBuffer *inputBuffer = nullptr;
+	SDL_GPUBuffer *outputBuffer = nullptr;
+	SDL_GPUTransferBuffer *uploadBuffer = nullptr;
+	SDL_GPUTransferBuffer *downloadBuffer = nullptr;
+	SDL_GPUFence *fence = nullptr;
+	SDL_GPUCommandBuffer *commandBuffer = nullptr;
+	bool commandActive = false;
+	bool downloadMapped = false;
+	auto cleanup = [&]() {
+		if (downloadMapped)
+			SDL_UnmapGPUTransferBuffer(productionDevice, downloadBuffer);
+		if (commandActive && commandBuffer)
+			SDL_CancelGPUCommandBuffer(commandBuffer);
+		if (fence)
+			SDL_ReleaseGPUFence(productionDevice, fence);
+		if (outputBuffer)
+			SDL_ReleaseGPUBuffer(productionDevice, outputBuffer);
+		if (inputBuffer)
+			SDL_ReleaseGPUBuffer(productionDevice, inputBuffer);
+		if (downloadBuffer)
+			SDL_ReleaseGPUTransferBuffer(productionDevice, downloadBuffer);
+		if (uploadBuffer)
+			SDL_ReleaseGPUTransferBuffer(productionDevice, uploadBuffer);
+	};
+	auto fail = [&](const char *stage) {
+		error = std::string(stage) + ':' + SDL_GetError();
+		cleanup();
+		return false;
+	};
+	const SDL_GPUBufferCreateInfo inputInfo{
+		SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ, static_cast<Uint32>(uploadBytes), 0,
+	};
+	const SDL_GPUBufferCreateInfo outputInfo{
+		SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE, static_cast<Uint32>(outputBytes), 0,
+	};
+	const SDL_GPUTransferBufferCreateInfo uploadInfo{
+		SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, static_cast<Uint32>(uploadBytes), 0,
+	};
+	const SDL_GPUTransferBufferCreateInfo downloadInfo{
+		SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, static_cast<Uint32>(outputBytes), 0,
+	};
+	inputBuffer = SDL_CreateGPUBuffer(productionDevice, &inputInfo);
+	if (!inputBuffer) return fail("create_thermal_input_buffer");
+	outputBuffer = SDL_CreateGPUBuffer(productionDevice, &outputInfo);
+	if (!outputBuffer) return fail("create_thermal_output_buffer");
+	uploadBuffer = SDL_CreateGPUTransferBuffer(productionDevice, &uploadInfo);
+	if (!uploadBuffer) return fail("create_thermal_upload_buffer");
+	downloadBuffer = SDL_CreateGPUTransferBuffer(productionDevice, &downloadInfo);
+	if (!downloadBuffer) return fail("create_thermal_download_buffer");
+	void *uploadMemory = SDL_MapGPUTransferBuffer(productionDevice, uploadBuffer, false);
+	if (!uploadMemory) return fail("map_thermal_upload_buffer");
+	std::memcpy(uploadMemory, upload.data(), uploadBytes);
+	SDL_UnmapGPUTransferBuffer(productionDevice, uploadBuffer);
+	commandBuffer = SDL_AcquireGPUCommandBuffer(productionDevice);
+	if (!commandBuffer) return fail("acquire_thermal_command_buffer");
+	commandActive = true;
+	auto *uploadPass = SDL_BeginGPUCopyPass(commandBuffer);
+	if (!uploadPass) return fail("begin_thermal_upload_pass");
+	const SDL_GPUTransferBufferLocation uploadLocation{ uploadBuffer, 0 };
+	const SDL_GPUBufferRegion inputRegion{ inputBuffer, 0, static_cast<Uint32>(uploadBytes) };
+	SDL_UploadToGPUBuffer(uploadPass, &uploadLocation, &inputRegion, false);
+	SDL_EndGPUCopyPass(uploadPass);
+	const ThermalParameters parameters{
+		static_cast<std::uint32_t>(input.width),
+		static_cast<std::uint32_t>(input.height),
+		input.periodic ? 1u : 0u,
+		static_cast<std::uint32_t>(cellCount),
+		input.timestepOverCellLengthSquared,
+	};
+	SDL_PushGPUComputeUniformData(commandBuffer, 0, &parameters, sizeof(parameters));
+	const SDL_GPUStorageBufferReadWriteBinding outputBinding{ outputBuffer, false, 0, 0, 0 };
+	auto *computePass = SDL_BeginGPUComputePass(commandBuffer, nullptr, 0, &outputBinding, 1);
+	if (!computePass) return fail("begin_thermal_compute_pass");
+	SDL_BindGPUComputePipeline(computePass, thermalDiffusionPipeline);
+	SDL_GPUBuffer *readonlyBuffers[] = { inputBuffer };
+	SDL_BindGPUComputeStorageBuffers(computePass, 0, readonlyBuffers, 1);
+	SDL_DispatchGPUCompute(computePass, static_cast<Uint32>((cellCount + 63) / 64), 1, 1);
+	SDL_EndGPUComputePass(computePass);
+	auto *downloadPass = SDL_BeginGPUCopyPass(commandBuffer);
+	if (!downloadPass) return fail("begin_thermal_download_pass");
+	const SDL_GPUBufferRegion outputRegion{ outputBuffer, 0, static_cast<Uint32>(outputBytes) };
+	const SDL_GPUTransferBufferLocation downloadLocation{ downloadBuffer, 0 };
+	SDL_DownloadFromGPUBuffer(downloadPass, &outputRegion, &downloadLocation);
+	SDL_EndGPUCopyPass(downloadPass);
+	fence = SDL_SubmitGPUCommandBufferAndAcquireFence(commandBuffer);
+	commandActive = false;
+	commandBuffer = nullptr;
+	if (!fence) return fail("submit_thermal_command_buffer");
+	SDL_GPUFence *fences[] = { fence };
+	if (!SDL_WaitForGPUFences(productionDevice, true, fences, 1))
+		return fail("wait_thermal_fence");
+	void *downloadMemory = SDL_MapGPUTransferBuffer(productionDevice, downloadBuffer, false);
+	if (!downloadMemory) return fail("map_thermal_download_buffer");
+	downloadMapped = true;
+	const auto *output = static_cast<const ThermalOutput *>(downloadMemory);
+	energyDelta.resize(cellCount);
+	for (std::size_t index = 0; index < cellCount; ++index)
+		energyDelta[index] = output[index].energyDelta;
+	SDL_UnmapGPUTransferBuffer(productionDevice, downloadBuffer);
+	downloadMapped = false;
+	cleanup();
+	return true;
+}
+
+bool InitializeProductionCompute(std::string &error)
+{
+	std::scoped_lock lock(productionMutex);
+	if (productionDevice && thermalDiffusionPipeline)
+		return true;
+	SDL_SetHint(SDL_HINT_GPU_DRIVER, "vulkan");
+	productionDevice = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
+	if (!productionDevice)
+	{
+		error = std::string("create_device:") + SDL_GetError();
+		return false;
+	}
+	const SDL_GPUComputePipelineCreateInfo pipelineInfo{
+		sdlgpu_thermal_diffusion_spirv.data.size(),
+		sdlgpu_thermal_diffusion_spirv.data.data(),
+		"main",
+		SDL_GPU_SHADERFORMAT_SPIRV,
+		0, 0, 1, 0, 1, 1,
+		64, 1, 1, 0,
+	};
+	thermalDiffusionPipeline = SDL_CreateGPUComputePipeline(productionDevice, &pipelineInfo);
+	if (!thermalDiffusionPipeline)
+	{
+		error = std::string("create_thermal_pipeline:") + SDL_GetError();
+		SDL_DestroyGPUDevice(productionDevice);
+		productionDevice = nullptr;
+		return false;
+	}
+	const auto *driver = SDL_GetGPUDeviceDriver(productionDevice);
+	OmniCompute::ConfigureBackend(OmniComputeBackend::SDL_GPU_Vulkan,
+		ExecuteThermalDiffusion, driver ? driver : "vulkan");
+	return true;
+}
+
 bool ExecuteComputeProof(SDL_GPUDevice *device, std::string &error, std::uint64_t &resultHash)
 {
 	std::array<std::uint32_t, kWordCount> input{};
@@ -245,6 +462,36 @@ bool ExecuteComputeProof(SDL_GPUDevice *device, std::string &error, std::uint64_
 
 namespace Platform
 {
+void InitializeOmniCompute()
+{
+#if TPT_SDL3 && TPT_SDLGPU_SHADER_AVAILABLE
+	std::string error;
+	if (!InitializeProductionCompute(error) || !OmniCompute::RunGPUValidation())
+	{
+		if (error.empty())
+			error = "thermal diffusion numerical validation failed";
+		DestroyProductionCompute();
+		std::cerr << "SDL_GPU initialization failed:\n" << error << "\n\nFallback: CPU\n";
+	}
+	else
+	{
+		std::cout << "Compute backend: " << OmniCompute::BackendName(OmniCompute::GetComputeBackend()) << '\n';
+	}
+#else
+	OmniCompute::ResetBackend("SDL_GPU production shader unavailable; CPU fallback");
+	std::cout << "Compute backend: CPU\n";
+#endif
+}
+
+void ShutdownOmniCompute()
+{
+#if TPT_SDL3 && TPT_SDLGPU_SHADER_AVAILABLE
+	DestroyProductionCompute();
+#else
+	OmniCompute::ResetBackend("CPU shutdown");
+#endif
+}
+
 int RunSDLGPUProbe()
 {
 	PrintValue("sdlgpu_probe_version", "1.1.0");
@@ -260,6 +507,9 @@ int RunSDLGPUProbe()
 	return 0;
 #else
 	PrintValue("sdl_backend", "SDL3");
+	PrintBool("production_thermal_diffusion_built", TPT_SDLGPU_SHADER_AVAILABLE != 0);
+	PrintBool("cuda_backend_available", false);
+	PrintValue("cuda_backend_status", "not_implemented_optional_future_backend");
 	// SDL_GPU chooses its backend before device creation.  Prefer Vulkan for
 	// this probe because the checked-in artifact is SPIR-V; normal rendering
 	// remains untouched and does not inherit this hint.
@@ -282,6 +532,17 @@ int RunSDLGPUProbe()
 		const char *driver = SDL_GetGPUDriver(i);
 		PrintValue((std::string("gpu_driver_") + std::to_string(i)).c_str(), driver ? driver : "");
 	}
+	bool hasD3D12 = false;
+	bool hasVulkan = false;
+	for (int i = 0; i < driverCount; ++i)
+	{
+		const char *driver = SDL_GetGPUDriver(i);
+		hasD3D12 = hasD3D12 || (driver && std::strcmp(driver, "direct3d12") == 0);
+		hasVulkan = hasVulkan || (driver && std::strcmp(driver, "vulkan") == 0);
+	}
+	PrintBool("sdlgpu_d3d12_driver_available", hasD3D12);
+	PrintValue("sdlgpu_d3d12_compute_status", "unsupported_no_dxil_compiler_or_shader");
+	PrintBool("sdlgpu_vulkan_driver_available", hasVulkan);
 
 	const bool supportsSpirv = SDL_GPUSupportsShaderFormats(SDL_GPU_SHADERFORMAT_SPIRV, "vulkan");
 	PrintBool("spirv_supported", supportsSpirv);
@@ -343,6 +604,41 @@ int RunSDLGPUProbe()
 	SDL_DestroyGPUDevice(device);
 	SDL_Quit();
 	return 0;
+#endif
+}
+
+int RunSDLGPUValidation()
+{
+	PrintValue("sdlgpu_validation_version", "1.1.0-rc1");
+#if !TPT_SDL3 || !TPT_SDLGPU_SHADER_AVAILABLE
+	PrintBool("gpu_validation_supported", false);
+	PrintBool("gpu_validation_passed", false);
+	PrintValue("gpu_validation_status", "unsupported_build_without_sdlgpu_spirv");
+	PrintValue("fallback", "CPU");
+	return 0;
+#else
+	if (!SDL_Init(SDL_INIT_VIDEO))
+	{
+		PrintBool("gpu_validation_supported", false);
+		PrintBool("gpu_validation_passed", false);
+		PrintValue("gpu_validation_status", std::string("SDL_Init:") + SDL_GetError());
+		PrintValue("fallback", "CPU");
+		return 0;
+	}
+	std::string error;
+	const bool initialized = InitializeProductionCompute(error);
+	const bool validated = initialized && OmniCompute::RunGPUValidation();
+	if (!validated && error.empty())
+		error = "thermal_diffusion_cpu_gpu_epsilon_validation_failed";
+	const auto status = OmniCompute::GetStatus();
+	PrintBool("gpu_validation_supported", initialized);
+	PrintValue("compute_backend", OmniCompute::BackendName(status.backend));
+	PrintBool("gpu_validation_passed", validated);
+	PrintValue("gpu_validation_status", validated ? "PASS" : error);
+	PrintValue("fallback", validated ? "not_used" : "CPU");
+	DestroyProductionCompute();
+	SDL_Quit();
+	return validated ? 0 : (initialized ? 1 : 0);
 #endif
 }
 }

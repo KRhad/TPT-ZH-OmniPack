@@ -14,6 +14,7 @@ def require(text: str, needle: str, label: str) -> None:
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     gpu = (root / "src/common/platform/SDLGPU.cpp").read_text(encoding="utf-8")
+    compute = (root / "src/simulation/OmniCompute.cpp").read_text(encoding="utf-8")
     shader = (root / "resources/omnicore/sdl_gpu_add.comp").read_text(encoding="utf-8")
     meson = (root / "meson.build").read_text(encoding="utf-8")
     platform = (root / "src/PowderToy.cpp").read_text(encoding="utf-8")
@@ -29,15 +30,27 @@ def main() -> int:
         ("SDL_DestroyGPUDevice", "device destruction"),
         ("fallback_reason", "fallback reason output"),
         ("deterministic_compare", "deterministic CPU comparison"),
+        ("InitializeProductionCompute", "production compute initialization"),
+        ("ExecuteThermalDiffusion", "production thermal diffusion executor"),
+        ("SDL_PushGPUComputeUniformData", "thermal diffusion uniform upload"),
+        ("RunGPUValidation", "production numerical validation"),
     ]:
         require(gpu, needle, label)
+    require(compute, "cpu_gpu_thermal_mismatch", "epsilon comparison failure")
+    require(compute, "ComputeThermalDiffusionReference", "CPU reference stencil")
 
     require(platform, '"--gpu-probe"', "opt-in command-line entry")
+    require(platform, '"--gpu-validate"', "production GPU validation entry")
     require(meson, "sdlgpu_shader_available", "optional shader build gate")
     require(meson, "--target-env=vulkan1.0", "deterministic Vulkan shader target")
     require(meson, "sdlgpu-spirv-validation", "SPIR-V validation test")
     require(shader, "layout(std140, set = 0, binding = 0)", "input std140 layout")
     require(shader, "layout(std140, set = 1, binding = 0)", "output std140 layout")
+    thermal_shader = (root / "resources/omnicore/sdl_gpu_thermal_diffusion.comp").read_text(encoding="utf-8")
+    require(thermal_shader, "layout(std430, set = 0, binding = 0)", "thermal input layout")
+    require(thermal_shader, "layout(std430, set = 1, binding = 0)", "thermal output layout")
+    require(thermal_shader, "layout(std140, set = 2, binding = 0)", "thermal parameter layout")
+    require(thermal_shader, "add_neighbour", "thermal stencil")
 
     local_size = re.search(r"local_size_x\s*=\s*(\d+)", shader)
     if not local_size or local_size.group(1) != "64":
@@ -46,6 +59,7 @@ def main() -> int:
     print("sdlgpu_probe_contract_pass=true")
     print("shader_layout=std140_input_output")
     print("fallback_contract=cpu")
+    print("production_thermal_diffusion_contract=true")
     print("device_loss_path=declared_not_tested")
     return 0
 

@@ -1,0 +1,5 @@
+1.1.0-rc1
+- Added a production SDL_GPU Vulkan thermal-diffusion stencil with CPU reference comparison and automatic fallback.
+- Added detached Windows DWARF symbols, PE audit, deterministic package manifests and SHA-256 workflow.
+- CUDA remains an unimplemented optional future backend.
+- Stable publication is blocked until clean-machine, GUI, official-save and two-hour-soak gates are evidenced.

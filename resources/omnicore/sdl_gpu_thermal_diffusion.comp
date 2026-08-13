@@ -1,0 +1,66 @@
+#version 450
+
+// Production OmniAtmosphere thermal-conduction stencil. Each cell is a vec4:
+// temperature K, conductivity W/(m*K), blocked flag, reserved. The output is
+// an energy-density delta in x; the other lanes remain zero for a stable ABI.
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, set = 0, binding = 0) readonly buffer InputBuffer
+{
+    vec4 cells[];
+} input_data;
+
+layout(std430, set = 1, binding = 0) buffer OutputBuffer
+{
+    vec4 values[];
+} output_data;
+
+layout(std140, set = 2, binding = 0) uniform Parameters
+{
+    uvec4 dimensions; // width, height, periodic, cell count
+    vec4 coefficients; // dt / cellLength^2, reserved...
+} params;
+
+void add_neighbour(uint cell, uint neighbour, inout float result)
+{
+    vec4 here = input_data.cells[cell];
+    vec4 there = input_data.cells[neighbour];
+    if (here.z > 0.5 || there.z > 0.5)
+        return;
+    float conductivity = 0.5 * (here.y + there.y);
+    result += params.coefficients.x * conductivity * (there.x - here.x);
+}
+
+void main()
+{
+    uint cell = gl_GlobalInvocationID.x;
+    uint width = params.dimensions.x;
+    uint height = params.dimensions.y;
+    uint cell_count = params.dimensions.w;
+    if (cell >= cell_count)
+        return;
+
+    uint x = cell % width;
+    uint y = cell / width;
+    bool periodic = params.dimensions.z != 0u;
+    float result = 0.0;
+
+    if (x > 0u)
+        add_neighbour(cell, cell - 1u, result);
+    else if (periodic)
+        add_neighbour(cell, y * width + width - 1u, result);
+    if (x + 1u < width)
+        add_neighbour(cell, cell + 1u, result);
+    else if (periodic)
+        add_neighbour(cell, y * width, result);
+    if (y > 0u)
+        add_neighbour(cell, cell - width, result);
+    else if (periodic)
+        add_neighbour(cell, (height - 1u) * width + x, result);
+    if (y + 1u < height)
+        add_neighbour(cell, cell + width, result);
+    else if (periodic)
+        add_neighbour(cell, x, result);
+
+    output_data.values[cell] = vec4(result, 0.0, 0.0, 0.0);
+}

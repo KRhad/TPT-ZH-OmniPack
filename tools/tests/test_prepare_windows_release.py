@@ -74,7 +74,8 @@ class PrepareWindowsReleaseTests(unittest.TestCase):
                     "strip",
                 )
 
-            self.assertEqual(run.call_count, 2)
+            self.assertEqual(run.call_count, 3)
+            self.assertIn("--add-gnu-debuglink=app.debug", run.call_args_list[2].args[0])
             self.assertEqual(executable.read_bytes(), raw_executable.read_bytes())
             self.assertEqual(symbols.read_bytes(), b"symbols")
 

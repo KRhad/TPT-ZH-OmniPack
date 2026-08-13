@@ -91,6 +91,7 @@ class TestReleaseAuditTests(unittest.TestCase):
             (library_licenses / f"{name}.LICENSE").write_text(
                 f"{name} license\n", encoding="utf-8"
             )
+        (third_party / "SDL3_ZLIB_LICENSE.txt").write_text("SDL3 license\n", encoding="utf-8")
         executable = source / "tpt-zh-omnipack.exe"
         release_labels = (
             package_test_release.VERSION,
@@ -100,6 +101,8 @@ class TestReleaseAuditTests(unittest.TestCase):
             package_test_release.PRIVATE_TEST_VERSION,
             package_test_release.RELEASE_CANDIDATE_VERSION,
             package_test_release.FINAL_VERSION,
+            package_test_release.RELEASE_CANDIDATE_1_1_0_VERSION,
+            package_test_release.STABLE_VERSION,
         )
         executable.write_bytes(
             b"MZ test executable\0"

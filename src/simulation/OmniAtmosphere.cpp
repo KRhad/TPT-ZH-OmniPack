@@ -1,4 +1,5 @@
 #include "OmniAtmosphere.h"
+#include "OmniCompute.h"
 #include "OmniThermal.h"
 
 #include <algorithm>
@@ -1372,6 +1373,39 @@ void OmniAtmosphere::DiffuseSpeciesAndHeat(double dt)
 				config.species[species].thermalConductivityWMK;
 		return result;
 	};
+	bool gpuThermalApplied = false;
+	if (config.thermalConduction && thermalGradient && OmniCompute::IsGPUAvailable())
+	{
+		std::vector<float> temperatures(state.size(), 0.0f);
+		std::vector<float> conductivities(state.size(), 0.0f);
+		for (std::size_t cell = 0; cell < state.size(); ++cell)
+		{
+			temperatures[cell] = static_cast<float>(Derive(cell, state[cell]).temperature);
+			conductivities[cell] = static_cast<float>(conductivity(cell));
+		}
+		const OmniThermalDiffusionInput input{
+			.width = config.width,
+			.height = config.height,
+			.periodic = config.boundary == OmniAtmosphereBoundary::Periodic,
+			.timestepOverCellLengthSquared = static_cast<float>(
+				dt / (config.scale.cellLengthM * config.scale.cellLengthM)),
+			.temperature = temperatures,
+			.conductivity = conductivities,
+			.blocked = blocked,
+		};
+		std::vector<float> energyDelta;
+		std::string error;
+		if (OmniCompute::RunThermalDiffusion(input, energyDelta, error))
+		{
+			for (std::size_t cell = 0; cell < state.size(); ++cell)
+				next[cell].totalEnergy += energyDelta[cell];
+			gpuThermalApplied = true;
+		}
+		else
+		{
+			OmniCompute::ResetBackend("runtime thermal diffusion fallback: " + error);
+		}
+	}
 	auto applyFace = [&](std::size_t left, std::size_t right) {
 		if (left == right || blocked[left] || blocked[right])
 			return;
@@ -1420,7 +1454,7 @@ void OmniAtmosphere::DiffuseSpeciesAndHeat(double dt)
 				speciesNext[SpeciesIndex(right, species)] += limited;
 			}
 		}
-		if (config.thermalConduction && thermalGradient)
+		if (config.thermalConduction && thermalGradient && !gpuThermalApplied)
 		{
 			const double k = 0.5 * (conductivity(left) + conductivity(right));
 			const double heatFlux = -k * (rightPrimitive.temperature - leftPrimitive.temperature) /

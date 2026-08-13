@@ -535,6 +535,21 @@ if sdlgpu_shader_available
 		],
 	)
 	embedded_files += [ [ 'sdlgpu_compute_spirv', sdlgpu_compute_spirv ] ]
+	sdlgpu_thermal_diffusion_spirv = custom_target(
+		'sdlgpu-thermal-diffusion-spirv',
+		input: files('resources/omnicore/sdl_gpu_thermal_diffusion.comp'),
+		output: 'sdlgpu_thermal_diffusion.spv',
+		command: [
+			sdlgpu_shader_compiler,
+			'-fshader-stage=compute',
+			'-std=450',
+			'--target-env=vulkan1.0',
+			'-O',
+			'-o', '@OUTPUT@',
+			'@INPUT@',
+		],
+	)
+	embedded_files += [ [ 'sdlgpu_thermal_diffusion_spirv', sdlgpu_thermal_diffusion_spirv ] ]
 endif
 
 subdir('src')
@@ -584,7 +599,11 @@ omni_atmosphere_reference = declare_dependency(
 	include_directories: project_inc,
 	link_with: static_library(
 		'omni-atmosphere-reference',
-		sources: files('src/simulation/OmniAtmosphere.cpp', 'src/simulation/OmniThermal.cpp'),
+		sources: files(
+			'src/simulation/OmniAtmosphere.cpp',
+			'src/simulation/OmniCompute.cpp',
+			'src/simulation/OmniThermal.cpp',
+		),
 		include_directories: project_inc,
 		cpp_args: strict_numerical_cpp_args,
 		override_options: target_options + [ 'b_lto=false' ],
@@ -758,6 +777,12 @@ if get_option('build_tests')
 			'sdlgpu-spirv-validation',
 			sdlgpu_shader_validator,
 			args: [ '--target-env', 'vulkan1.0', sdlgpu_compute_spirv ],
+			suite: 'static',
+		)
+		test(
+			'sdlgpu-thermal-diffusion-spirv-validation',
+			sdlgpu_shader_validator,
+			args: [ '--target-env', 'vulkan1.0', sdlgpu_thermal_diffusion_spirv ],
 			suite: 'static',
 		)
 	endif

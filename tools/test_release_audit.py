@@ -20,6 +20,8 @@ PREVIOUS_PRIVATE_TEST_VERSION = "0.6.0-dev"
 PRIVATE_TEST_VERSION = "0.7.0-dev"
 RELEASE_CANDIDATE_VERSION = "1.0.0-rc9"
 FINAL_VERSION = "1.0.0"
+STABLE_VERSION = "1.1.0"
+RELEASE_CANDIDATE_1_1_0_VERSION = "1.1.0-rc1"
 PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
@@ -34,6 +36,7 @@ NORMAL_DOCUMENTS = {
     "LICENSES/FUSION-PIXEL-FONT-ARK-PIXEL-OFL-1.1.txt",
     "LICENSES/FUSION-PIXEL-FONT-CUBIC-11-OFL-1.1.txt",
     "LICENSES/FUSION-PIXEL-FONT-GALMURI-OFL-1.1.txt",
+    "LICENSES/LIBRARIES/sdl3.LICENSE.txt",
     "LICENSES/OPENSTAX-CHEMISTRY-CC-BY-4.0.txt",
     *{
         f"LICENSES/LIBRARIES/{name}.LICENSE.txt"
@@ -112,6 +115,14 @@ RELEASE_CANDIDATE_MARKERS = {
         "未签名",
     ),
 }
+RELEASE_CANDIDATE_1_1_0_MARKERS = {
+    RELEASE_CANDIDATE_1_1_0_VERSION: (
+        RELEASE_CANDIDATE_1_1_0_VERSION,
+        "不是稳定版",
+        "CUDA",
+        "release_ready=false",
+    ),
+}
 FORBIDDEN_SUFFIXES = (".cps", ".stm", ".pref", ".lua", ".o", ".obj", ".pdb", ".dmp")
 PATH_MARKERS = (b"C:\\Users\\", b"/Users/", b"\\build-", b"/build-")
 
@@ -151,12 +162,14 @@ def development_documents(version: str) -> set[str]:
 
 
 def manifest_name(version: str) -> str:
-    return "MANIFEST.txt" if version == FINAL_VERSION else "TEST-MANIFEST.txt"
+    return "MANIFEST.txt" if version in {FINAL_VERSION, STABLE_VERSION} else "TEST-MANIFEST.txt"
 
 
 def expected_members(stem: str, kind: str, version: str) -> set[str]:
     if kind in {"public-test", "release-candidate"}:
         files = {EXECUTABLE_NAME, *NORMAL_DOCUMENTS}
+        if version == RELEASE_CANDIDATE_1_1_0_VERSION:
+            files.add("RELEASE-CANDIDATE.md")
     elif kind == "release":
         files = {EXECUTABLE_NAME, *FINAL_DOCUMENTS}
     elif kind == "local-dev":
@@ -280,6 +293,8 @@ def audit_package(
         },
         RELEASE_CANDIDATE_VERSION: "release-candidate",
         FINAL_VERSION: "release",
+        RELEASE_CANDIDATE_1_1_0_VERSION: "release-candidate",
+        STABLE_VERSION: "release",
     }
     if version not in profiles:
         return [f"unsupported package version: {version}"]
@@ -395,11 +410,16 @@ def audit_package(
                     instructions = archive.read(
                         f"{stem}/TESTING.zh-CN.md"
                     ).decode("utf-8", errors="replace")
-                    for marker in RELEASE_CANDIDATE_MARKERS[version]:
+                    for marker in RELEASE_CANDIDATE_MARKERS.get(version, ()):
                         if marker not in instructions:
                             errors.append(
                                 f"release candidate instructions are missing marker: {marker!r}"
                             )
+                    if version == RELEASE_CANDIDATE_1_1_0_VERSION:
+                        rc_text = archive.read(f"{stem}/RELEASE-CANDIDATE.md").decode("utf-8", errors="replace")
+                        for marker in RELEASE_CANDIDATE_1_1_0_MARKERS[version]:
+                            if marker not in rc_text:
+                                errors.append(f"1.1.0 RC instructions are missing marker: {marker!r}")
     except (OSError, ValueError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
         errors.append(f"cannot read package: {exc}")
     return errors
@@ -425,7 +445,10 @@ def build_parser() -> argparse.ArgumentParser:
             AUTOMATION_VERSION,
             *PRIVATE_TEST_MARKERS,
             *RELEASE_CANDIDATE_MARKERS,
+            RELEASE_CANDIDATE_1_1_0_VERSION,
             FINAL_VERSION,
+            RELEASE_CANDIDATE_1_1_0_VERSION,
+            STABLE_VERSION,
         ),
         default=VERSION,
     )
