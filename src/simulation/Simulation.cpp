@@ -203,8 +203,8 @@ namespace
 			float pGravY = 0;
 		};
 		void MovementPhase(int i, Neighbourhood neighbourhood);
-		Neighbourhood GetNeighbourhood(int i) const;
-		bool TransitionPhase(int i, const Neighbourhood &neighbourhood);
+		Neighbourhood GetNeighbourhood(int type, int x, int y) const;
+		bool TransitionPhase(int i, const Neighbourhood &neighbourhood, bool omniAtmosphereActive);
 
 		void UpdateParticles(int start, int end) final override;
 	};
@@ -2883,32 +2883,27 @@ std::unique_ptr<Simulation> Simulation::Factory()
 	return std::make_unique<SimulationImpl>();
 }
 
-SimulationImpl::Neighbourhood SimulationImpl::GetNeighbourhood(int i) const
+SimulationImpl::Neighbourhood SimulationImpl::GetNeighbourhood(int type, int x, int y) const
 {
-	auto t = parts[i].type;
-	auto x = int(parts[i].x + 0.5f);
-	auto y = int(parts[i].y + 0.5f);
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
 	Neighbourhood n;
-	auto j = 0;
-	for (auto nx=-1; nx<2; nx++)
+	n.surround = {
+		pmap[y-1][x-1], pmap[y][x-1], pmap[y+1][x-1],
+		pmap[y-1][x],                     pmap[y+1][x],
+		pmap[y-1][x+1], pmap[y][x+1], pmap[y+1][x+1],
+	};
+	for (auto r : n.surround)
 	{
-		for (auto ny=-1; ny<2; ny++)
-		{
-			if (nx||ny)
-			{
-				auto r = pmap[y+ny][x+nx];
-				n.surround[j] = r;
-				j++;
-				n.surround_space += (!TYP(r)); // count empty space
-				n.nt += (TYP(r)!=t); // count empty space and particles of different type
-			}
-		}
+		const auto neighbourType = TYP(r);
+		n.surround_space += !neighbourType; // count empty space
+		n.nt += neighbourType != type; // count empty space and particles of different type
 	}
-	if (!(elements[t].Properties & TYPE_SOLID) && (elements[t].Gravity || elements[t].NewtonianGravity))
+	if (!(elements[type].Properties & TYPE_SOLID) &&
+		(elements[type].Gravity || elements[type].NewtonianGravity))
 	{
-		GetGravityField(x, y, elements[t].Gravity, elements[t].NewtonianGravity, n.pGravX, n.pGravY);
+		GetGravityField(x, y, elements[type].Gravity, elements[type].NewtonianGravity,
+			n.pGravX, n.pGravY);
 	}
 	return n;
 }
@@ -2918,6 +2913,11 @@ void SimulationImpl::UpdateParticles(int start, int end)
 	//the main particle loop function, goes over all particles.
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
+	// Simulation mode can only change on the interface boundary, outside this
+	// particle-update phase.  Keep the Classic fast path out of the managed
+	// atmosphere/solution entry points: they otherwise immediately return false
+	// for every particle.
+	const bool omniAtmosphereActive = IsOmniAtmosphereActive();
 	for (auto i = start; i < end && i < parts.active; i++)
 	{
 		auto t = parts[i].type;
@@ -2936,52 +2936,57 @@ void SimulationImpl::UpdateParticles(int start, int end)
 			kill_part(i);
 			continue;
 		}
+		const auto cellX = x / CELL;
+		const auto cellY = y / CELL;
+		const auto wall = bmap[cellY][cellX];
+		const auto wallElectricity = emap[cellY][cellX];
 
 		// Kill a particle in a wall where it isn't supposed to go
-		if (bmap[y/CELL][x/CELL] &&
-		   (bmap[y/CELL][x/CELL]==WL_WALL ||
-		    bmap[y/CELL][x/CELL]==WL_WALLELEC ||
-		    bmap[y/CELL][x/CELL]==WL_ALLOWAIR ||
-		    (bmap[y/CELL][x/CELL]==WL_DESTROYALL) ||
-		    (bmap[y/CELL][x/CELL]==WL_ALLOWLIQUID && !(elements[t].Properties&TYPE_LIQUID)) ||
-		    (bmap[y/CELL][x/CELL]==WL_ALLOWPOWDER && !(elements[t].Properties&TYPE_PART)) ||
-		    (bmap[y/CELL][x/CELL]==WL_ALLOWGAS && !(elements[t].Properties&TYPE_GAS)) || //&& elements[t].Falldown!=0 && parts[i].type!=PT_FIRE && parts[i].type!=PT_SMKE && parts[i].type!=PT_CFLM) ||
-		            (bmap[y/CELL][x/CELL]==WL_ALLOWENERGY && !(elements[t].Properties&TYPE_ENERGY)) ||
-		    (bmap[y/CELL][x/CELL]==WL_EWALL && !emap[y/CELL][x/CELL])) && (t!=PT_STKM) && (t!=PT_STKM2) && (t!=PT_FIGH))
+		if (wall &&
+		   (wall==WL_WALL ||
+		    wall==WL_WALLELEC ||
+		    wall==WL_ALLOWAIR ||
+		    (wall==WL_DESTROYALL) ||
+		    (wall==WL_ALLOWLIQUID && !(elements[t].Properties&TYPE_LIQUID)) ||
+		    (wall==WL_ALLOWPOWDER && !(elements[t].Properties&TYPE_PART)) ||
+		    (wall==WL_ALLOWGAS && !(elements[t].Properties&TYPE_GAS)) || //&& elements[t].Falldown!=0 && parts[i].type!=PT_FIRE && parts[i].type!=PT_SMKE && parts[i].type!=PT_CFLM) ||
+		            (wall==WL_ALLOWENERGY && !(elements[t].Properties&TYPE_ENERGY)) ||
+		    (wall==WL_EWALL && !wallElectricity)) && (t!=PT_STKM) && (t!=PT_STKM2) && (t!=PT_FIGH))
 		{
 			kill_part(i);
 			continue;
 		}
 
 		// Make sure that STASIS'd particles don't tick.
-		if (bmap[y/CELL][x/CELL] == WL_STASIS && emap[y/CELL][x/CELL]<8) {
+		if (wall == WL_STASIS && wallElectricity<8) {
 			continue;
 		}
 
-		if (bmap[y/CELL][x/CELL]==WL_DETECT && emap[y/CELL][x/CELL]<8)
-			set_emap(x/CELL, y/CELL);
+		if (wall==WL_DETECT && wallElectricity<8)
+			set_emap(cellX, cellY);
 
 		// Managed Enhanced water uses an explicit deferred momentum/thermal
 		// coupling boundary. Do not also apply Legacy Air source writes.
-		if (!(IsOmniAtmosphereActive() && IsOmniManagedWaterType(t)))
+		const bool omniManagedWater = omniAtmosphereActive && IsOmniManagedWaterType(t);
+		if (!omniManagedWater)
 		{
-			vx[y/CELL][x/CELL] = vx[y/CELL][x/CELL]*elements[t].AirLoss + elements[t].AirDrag*parts[i].vx;
-			vy[y/CELL][x/CELL] = vy[y/CELL][x/CELL]*elements[t].AirLoss + elements[t].AirDrag*parts[i].vy;
+			vx[cellY][cellX] = vx[cellY][cellX]*elements[t].AirLoss + elements[t].AirDrag*parts[i].vx;
+			vy[cellY][cellX] = vy[cellY][cellX]*elements[t].AirLoss + elements[t].AirDrag*parts[i].vy;
 		}
-		if (elements[t].HotAir && !(IsOmniAtmosphereActive() && IsOmniManagedWaterType(t)))
+		if (elements[t].HotAir && !omniManagedWater)
 		{
 			if (t==PT_GAS||t==PT_NBLE)
 			{
-				if (pv[y/CELL][x/CELL]<3.5f)
-					pv[y/CELL][x/CELL] += 4.0f*elements[t].HotAir*(3.5f-pv[y/CELL][x/CELL]);
+				if (pv[cellY][cellX]<3.5f)
+					pv[cellY][cellX] += 4.0f*elements[t].HotAir*(3.5f-pv[cellY][cellX]);
 			}
 			else//add the hotair variable to the pressure map, like black hole, or white hole.
 			{
-				pv[y/CELL][x/CELL] += 4.0f*elements[t].HotAir;
+				pv[cellY][cellX] += 4.0f*elements[t].HotAir;
 			}
 		}
 
-		auto neighbourhood = GetNeighbourhood(i);
+		auto neighbourhood = GetNeighbourhood(t, x, y);
 
 		//velocity updates for the particle
 		if (t != PT_SPNG || !(parts[i].flags&FLAG_MOVABLE))
@@ -2990,8 +2995,8 @@ void SimulationImpl::UpdateParticles(int start, int end)
 			parts[i].vy *= elements[t].Loss;
 		}
 		//particle gets velocity from the vx and vy maps
-		parts[i].vx += elements[t].Advection*vx[y/CELL][x/CELL] + neighbourhood.pGravX;
-		parts[i].vy += elements[t].Advection*vy[y/CELL][x/CELL] + neighbourhood.pGravY;
+		parts[i].vx += elements[t].Advection*vx[cellY][cellX] + neighbourhood.pGravX;
+		parts[i].vy += elements[t].Advection*vy[cellY][cellX] + neighbourhood.pGravY;
 
 
 		if (elements[t].Diffusion)//the random diffusion that gasses have
@@ -3000,7 +3005,7 @@ void SimulationImpl::UpdateParticles(int start, int end)
 			parts[i].vy += elements[t].Diffusion*(2.0f*rng.uniform01()-1.0f);
 		}
 
-		auto transitionOccurred = TransitionPhase(i, neighbourhood);
+		auto transitionOccurred = TransitionPhase(i, neighbourhood, omniAtmosphereActive);
 		if (!parts[i].type)
 		{
 			continue;
@@ -3010,7 +3015,7 @@ void SimulationImpl::UpdateParticles(int start, int end)
 			t = parts[i].type;
 		}
 
-		const bool omniSolutionHandled = UpdateOmniSolutionParticle(i, x, y);
+		const bool omniSolutionHandled = omniAtmosphereActive && UpdateOmniSolutionParticle(i, x, y);
 		if (!parts[i].type)
 			continue;
 		if (omniSolutionHandled)
@@ -3049,7 +3054,8 @@ void SimulationImpl::UpdateParticles(int start, int end)
 	}
 }
 
-bool SimulationImpl::TransitionPhase(int i, const Neighbourhood &neighbourhood)
+bool SimulationImpl::TransitionPhase(
+	int i, const Neighbourhood &neighbourhood, bool omniAtmosphereActive)
 {
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
@@ -3058,14 +3064,14 @@ bool SimulationImpl::TransitionPhase(int i, const Neighbourhood &neighbourhood)
 	auto x = int(parts[i].x + 0.5f);
 	auto y = int(parts[i].y + 0.5f);
 	bool transitionOccurred = false;
-	if (IsOmniAtmosphereActive() && IsOmniManagedSolutionType(t))
+	if (omniAtmosphereActive && IsOmniManagedSolutionType(t))
 	{
 		// Composition, evaporation and crystallisation for SALT/SLTW are owned
 		// by UpdateOmniSolutionParticle in Enhanced/Scientific. This prevents
 		// the Legacy threshold transition from destroying authoritative masses.
 		return false;
 	}
-	if (QueueOmniWaterParticleCoupling(i, x, y))
+	if (omniAtmosphereActive && QueueOmniWaterParticleCoupling(i, x, y))
 	{
 		// Managed water reconstructs enthalpy from the public temperature
 		// projection and commits all gas/particle exchanges after iteration.
