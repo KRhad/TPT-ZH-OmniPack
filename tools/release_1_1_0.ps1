@@ -290,7 +290,7 @@ try {
     # still produce an auditable candidate so missing external evidence remains
     # visible without ever being relabeled as stable.
     if ($Channel -eq "stable" -and $blocked.Count -gt 0) {
-        foreach ($name in @("PackageManifest","PackageVerification","SymbolPackageVerification","WindowsPortableExtraction","WindowsCleanMachine","SHA256","ArtifactImmutability","EvidenceIntegrity","DocumentationConsistency")) {
+        foreach ($name in @("Soak2Hours","PackageManifest","PackageVerification","SymbolPackageVerification","WindowsPortableExtraction","WindowsCleanMachine","SHA256","ArtifactImmutability","EvidenceIntegrity","DocumentationConsistency")) {
             Set-NotTested $name "stable package was not created because pre-package mandatory gates are blocked"
         }
         throw "RELEASE BLOCKED: $($blocked -join ', ')"

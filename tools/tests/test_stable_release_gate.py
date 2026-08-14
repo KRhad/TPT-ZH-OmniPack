@@ -142,6 +142,7 @@ class StableReleaseGateTests(unittest.TestCase):
         self.assertIn('"-ExpectedArtifactSha256",$candidateSha256', script)
         self.assertIn('"ArtifactImmutability"', script)
         self.assertIn("Post-package gates must only read", script)
+        self.assertIn('foreach ($name in @("Soak2Hours","PackageManifest"', script)
         self.assertNotIn('Invoke-GateProcess "FinalPackage"', script)
         self.assertNotIn('Invoke-GateProcess "FinalPackageVerification"', script)
 
