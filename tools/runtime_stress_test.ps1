@@ -40,7 +40,7 @@ param(
 
     [string] $PackageZip,
 
-    [ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev", "1.0.0-rc9")]
+    [ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev", "1.0.0-rc9", "1.1.0-rc1", "1.1.0")]
     [string] $PackageVersion = "0.1.0-test",
 
     [string] $TemporaryDirectory = [System.IO.Path]::GetTempPath(),
@@ -53,6 +53,16 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+function Get-Sha256Hex {
+    param([Parameter(Mandatory = $true)][string] $Path)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $stream = [IO.File]::OpenRead($Path)
+        try {
+            return ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '').ToUpperInvariant()
+        } finally { $stream.Dispose() }
+    } finally { $sha.Dispose() }
+}
 if ($Smoke) {
     $WarmupSeconds = 0
     $SampleSeconds = 2
@@ -121,7 +131,7 @@ function Get-StampInfo {
     return [pscustomobject]@{
         Path = $path
         Length = $bytes.Length
-        Sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+        Sha256 = Get-Sha256Hex $path
     }
 }
 
@@ -137,10 +147,10 @@ function Get-PackageProvenance {
     $archive = [System.IO.Compression.ZipFile]::OpenRead($resolvedPackage)
     try {
         $manifestEntries = @(
-            $archive.Entries | Where-Object { $_.FullName -match '/TEST-MANIFEST\.txt$' }
+            $archive.Entries | Where-Object { $_.FullName -match '/(?:TEST-)?MANIFEST\.txt$' }
         )
         if ($manifestEntries.Count -ne 1) {
-            throw "Expected exactly one TEST-MANIFEST.txt in package, found $($manifestEntries.Count)"
+            throw "Expected exactly one TEST-MANIFEST.txt or MANIFEST.txt in package, found $($manifestEntries.Count)"
         }
         $reader = [System.IO.StreamReader]::new(
             $manifestEntries[0].Open(),
@@ -155,7 +165,7 @@ function Get-PackageProvenance {
         }
         $kindMatches = [regex]::Matches(
             $manifestText,
-            '(?m)^kind=(public-test|local-dev|release-candidate)\r?$'
+            '(?m)^kind=(public-test|local-dev|release-candidate|release)\r?$'
         )
         if ($kindMatches.Count -ne 1) {
             throw "Package manifest must contain one supported package kind"
@@ -208,7 +218,7 @@ function Get-PackageProvenance {
         $actualExecutable = Get-Item -LiteralPath $ExecutablePath
         $expectedLength = [int64]$executableMatches[0].Groups[1].Value
         $expectedHash = $executableMatches[0].Groups[2].Value
-        $actualHash = (Get-FileHash -LiteralPath $actualExecutable.FullName -Algorithm SHA256).Hash
+        $actualHash = Get-Sha256Hex $actualExecutable.FullName
         if ($actualExecutable.Length -ne $expectedLength) {
             throw "Package executable size does not match the selected executable"
         }
@@ -217,7 +227,7 @@ function Get-PackageProvenance {
         }
         return [pscustomobject]@{
             Revision = $revisionMatches[0].Groups[1].Value
-            Sha256 = (Get-FileHash -LiteralPath $resolvedPackage -Algorithm SHA256).Hash
+            Sha256 = Get-Sha256Hex $resolvedPackage
             Kind = $kindMatches[0].Groups[1].Value
             SourceState = $sourceState
             SourceWorktreeSha256 = $sourceWorktreeSha256
@@ -368,6 +378,7 @@ try {
     $machineId = $env:COMPUTERNAME + "-" + ([Convert]::ToHexString($machineHash).Substring(0, 12))
     $logicalCpuCount = [int][Environment]::ProcessorCount
     $elapsedSeconds = [Math]::Max(0.000001, ([DateTime]::UtcNow - $startedAt).TotalSeconds)
+    $endedAt = [DateTime]::UtcNow
     $averageCpu = [Math]::Round(
         100.0 * $process.TotalProcessorTime.TotalSeconds / $elapsedSeconds / $logicalCpuCount,
         6
@@ -407,7 +418,7 @@ try {
         version = $PackageVersion
         package_kind = $packageKind
         public_zip_sha256 = $publicZipSha256
-        exe_sha256 = (Get-FileHash -LiteralPath $resolvedExecutable -Algorithm SHA256).Hash
+        exe_sha256 = Get-Sha256Hex $resolvedExecutable
         input_ops_sha256 = $firstOps.Sha256
         output_ops_first_sha256 = $firstOps.Sha256
         output_ops_second_sha256 = $secondOps.Sha256
@@ -424,6 +435,9 @@ try {
         enabled_modules = "metallurgy,biology,chemistry,nuclear,electronics"
         performance_protection = "event-budgets-source-confirmed"
         random_seed = "11,12,13,14"
+        start_time_utc = $startedAt.ToString("o")
+        end_time_utc = $endedAt.ToString("o")
+        wall_clock_seconds = [Math]::Round(($endedAt - $startedAt).TotalSeconds, 6)
         warmup_seconds = [double]$lua.actual_warmup_seconds
         sample_seconds = [double]$lua.actual_sample_seconds
         initial_particles = [int]$lua.initial_particles
@@ -435,6 +449,10 @@ try {
         average_cpu_percent = $averageCpu
         peak_working_set_bytes = $peakWorkingSet
         peak_private_bytes = $peakPrivateBytes
+        initial_working_set_bytes = if ($cpuSeries.Count -gt 0) { [int64]$cpuSeries[0].working_set_bytes } else { 0 }
+        final_working_set_bytes = if ($cpuSeries.Count -gt 0) { [int64]$cpuSeries[$cpuSeries.Count - 1].working_set_bytes } else { 0 }
+        initial_private_bytes = if ($cpuSeries.Count -gt 0) { [int64]$cpuSeries[0].private_bytes } else { 0 }
+        final_private_bytes = if ($cpuSeries.Count -gt 0) { [int64]$cpuSeries[$cpuSeries.Count - 1].private_bytes } else { 0 }
         event_count_total = [int64]$lua.event_count_total
         event_count_peak_per_frame = [int64]$lua.event_count_peak_per_frame
         signal_count_total = [int64]$lua.signal_count_total
@@ -477,7 +495,7 @@ try {
     Write-Output "sample_id=$SampleId"
     Write-Output "long_run=$([bool]$LongRun)"
     Write-Output "smoke_run=$([bool]$Smoke)"
-    Write-Output "stress_gate=not_tested"
+    Write-Output "stress_gate=pending_independent_assessment"
     Write-Output "result_json=$jsonPath"
 }
 finally {

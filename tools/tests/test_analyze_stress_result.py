@@ -51,6 +51,7 @@ class AnalyzeStressResultTest(unittest.TestCase):
             "output_ops_second_sha256": digest(ops2),
             "warmup_seconds": 60.0 if long_run and not smoke else 0.0,
             "sample_seconds": 2.0 if smoke else (7200.0 if long_run else 30.0),
+            "wall_clock_seconds": 2.0 if smoke else (7200.0 if long_run else 30.0),
             "initial_particles": particles[0],
             "peak_particles": max(particles),
             "final_particles": particles[-1],

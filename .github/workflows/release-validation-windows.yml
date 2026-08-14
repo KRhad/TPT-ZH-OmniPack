@@ -1,0 +1,38 @@
+name: OmniPack 1.1.0 release validation
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["omnipack-v1.1.0*"]
+
+jobs:
+  windows-release-gate:
+    runs-on: windows-latest
+    timeout-minutes: 240
+    env:
+      OMNI_CLEAN_MACHINE: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install MSYS2 UCRT64 toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-python
+            mingw-w64-ucrt-x86_64-meson
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-glslc
+            mingw-w64-ucrt-x86_64-spirv-tools
+      - name: Run stable gate
+        shell: pwsh
+        run: .\tools\release_1_1_0.ps1 -Channel stable -BuildDirectory build-release-1.1.0 -OutputDirectory dist\1.1.0
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnipack-1.1.0-validation
+          path: dist/1.1.0/

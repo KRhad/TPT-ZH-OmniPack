@@ -115,12 +115,13 @@ class StressHarnessContractTest(unittest.TestCase):
 
     def test_stability_gate_runs_bind_the_package_manifest_and_executable(self) -> None:
         self.assertIn("PackageZip is required for stability gate runs", self.powershell)
-        self.assertIn("TEST-MANIFEST.txt", self.powershell)
+        self.assertIn("TEST-MANIFEST.txt or MANIFEST.txt", self.powershell)
+        self.assertIn("release-candidate|release", self.powershell)
         self.assertIn(
-            "kind=(public-test|local-dev|release-candidate)", self.powershell
+            "kind=(public-test|local-dev|release-candidate|release)", self.powershell
         )
         self.assertIn(
-            '[ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev", "1.0.0-rc9")]',
+            '[ValidateSet("0.1.0-test", "0.2.0-dev", "0.3.0-dev", "0.6.0-dev", "0.7.0-dev", "1.0.0-rc9", "1.1.0-rc1", "1.1.0")]',
             self.powershell,
         )
         self.assertIn("Package manifest version does not match", self.powershell)

@@ -28,4 +28,4 @@ TPT-ZH-OmniPack / 万象沙盘整合版在开发过程中使用了 OpenAI Codex 
 - 失败、跳过和外部阻塞；
 - 对应源码 commit。
 
-当前 `1.1.0-rc1` 发布加固包含自动 Release 构建、DWARF 独立 symbols、GNU debug link、PE 路径/安全审计和确定性 ZIP/哈希；SDL_GPU Vulkan 已用于 Enhanced OmniAtmosphere 温度扩散，并由 CPU reference 逐次校验，失败自动回退 CPU。D3D12 只报告驱动状态，未提供 DXIL compute；CUDA 尚未实现。官方 TPT 存档夹具、无开发环境的干净 Windows、最终 ZIP 的可信 GUI/DPI 交互和 7,200 秒长跑仍未完成，因此只能是 RC，不能标记 stable。
+当前 `1.1.0-rc1` 发布加固包含自动 Release 构建、结构化证据门禁、DWARF 独立 symbols、GNU debug link、PE 路径/安全审计和确定性 ZIP/哈希；SDL_GPU Vulkan 已用于 Enhanced OmniAtmosphere 温度扩散，并由 CPU reference 多尺寸逐次校验，失败自动回退 CPU。D3D12 只报告驱动状态，未提供 DXIL compute；CUDA 尚未实现（未来可选后端）。SDL3 GUI smoke 和便携包/PE 导入检查已自动化；官方 TPT 存档夹具与 7,200 秒长跑仍未完成，因此只能是 RC，不能标记 stable。

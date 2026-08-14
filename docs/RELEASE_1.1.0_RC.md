@@ -18,16 +18,20 @@ This is an unsigned local release candidate, not a stable release (不是稳定�
   PE imports/security flags/developer-path markers, and generates manifest and
   SHA-256 sidecars.
 
-## Stable-release blockers
+## Gate status and release boundary
 
-- `OfficialTPTSaveCompatibility=NOT TESTED`: no curated official save fixture
-  corpus has been supplied to run load -> simulate -> save -> reload.
-- `WindowsCleanMachine=NOT TESTED`: the current host is a development machine;
-  an isolated extraction must be verified on a Windows x64 machine without
-  MSYS2/MinGW/source-tree dependencies.
-- `SDL3GUI=NOT TESTED`: process liveness does not replace visible validation of
-  window, resize, fullscreen, input, clipboard, screenshot, shutdown/restart.
-- `Soak2Hours=NOT TESTED`: no 7,200-second complex-scene run with periodic
-  finite/conservation/memory checks has completed.
+Gate status is maintained in the machine-generated `RELEASE-VALIDATION.json`
+and its derived text report. This document intentionally contains no independent
+PASS/FAIL/NOT_TESTED table. The RC is not a stable release; the stable script
+remains fail-closed until every mandatory gate has current evidence, including a
+provenance-recorded official TPT corpus, a 7,200-second soak, and a true clean
+Windows validation environment.
 
-`release_ready=false`
+The candidate ZIP is generated once and then treated as immutable. Soak,
+portable extraction, clean-machine, and SHA-256 evidence must all bind that
+same archive hash. The validation snapshot embedded in the ZIP is explicitly
+`pre_package`; the complete post-package validation is distributed beside the
+ZIP as external evidence.
+
+The fail-closed official-save runner is `tools/official_save_compatibility.py`.
+CUDA is optional future work and is not included in 1.1.0.

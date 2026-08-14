@@ -293,7 +293,44 @@ int Main(int argc, char *argv[])
 		if (std::strcmp(argv[i], "--gpu-probe") == 0 || std::strcmp(argv[i], "gpu-probe") == 0)
 			return Platform::RunSDLGPUProbe();
 		if (std::strcmp(argv[i], "--gpu-validate") == 0 || std::strcmp(argv[i], "gpu-validate") == 0)
-			return Platform::RunSDLGPUValidation();
+		{
+			const char *jsonPath = nullptr;
+			bool forceFailure = false;
+			for (int arg = i + 1; arg < argc; ++arg)
+			{
+				if (std::strcmp(argv[arg], "--force-gpu-init-failure") == 0)
+					forceFailure = true;
+				else if (std::strncmp(argv[arg], "--gpu-validate-json=", 20) == 0)
+					jsonPath = argv[arg] + 20;
+				else if (std::strcmp(argv[arg], "--gpu-validate-json") == 0 && arg + 1 < argc)
+					jsonPath = argv[++arg];
+			}
+			return Platform::RunSDLGPUValidation(jsonPath, forceFailure);
+		}
+		if (std::strcmp(argv[i], "--cpu-fallback-validate") == 0)
+		{
+			const char *jsonPath = nullptr;
+			for (int arg = i + 1; arg < argc; ++arg)
+			{
+				if (std::strncmp(argv[arg], "--cpu-fallback-json=", 20) == 0)
+					jsonPath = argv[arg] + 20;
+				else if (std::strcmp(argv[arg], "--cpu-fallback-json") == 0 && arg + 1 < argc)
+					jsonPath = argv[++arg];
+			}
+			return Platform::RunCPUFallbackValidation(jsonPath);
+		}
+		if (std::strcmp(argv[i], "--gui-smoke-test") == 0)
+		{
+			const char *jsonPath = nullptr;
+			for (int arg = i + 1; arg < argc; ++arg)
+			{
+				if (std::strncmp(argv[arg], "--gui-smoke-json=", 18) == 0)
+					jsonPath = argv[arg] + 18;
+				else if (std::strcmp(argv[arg], "--gui-smoke-json") == 0 && arg + 1 < argc)
+					jsonPath = argv[++arg];
+			}
+			return Platform::RunSDL3GUISmokeTest(jsonPath);
+		}
 	}
 
 	Platform::Atexit([]() {

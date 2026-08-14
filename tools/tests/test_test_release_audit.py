@@ -515,11 +515,14 @@ class TestReleaseAuditTests(unittest.TestCase):
             source = self.make_source_root(Path(temporary))
             build_info = source / "BUILD-INFO.txt"
             validation = source / "RELEASE-VALIDATION.txt"
+            validation_json = source / "RELEASE-VALIDATION.json"
             build_info.write_text("SDL: 3.4.14\n", encoding="utf-8")
             validation.write_text("FINAL STATUS: RC PACKAGE\n", encoding="utf-8")
+            validation_json.write_text('{"status":"BLOCKED"}\n', encoding="utf-8")
             extras = [
                 ("BUILD-INFO.txt", build_info),
                 ("RELEASE-VALIDATION.txt", validation),
+                ("RELEASE-VALIDATION.json", validation_json),
             ]
             with mock.patch.object(
                 package_test_release, "git_revision", return_value="f" * 40

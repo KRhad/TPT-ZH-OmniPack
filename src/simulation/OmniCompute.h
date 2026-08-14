@@ -38,6 +38,9 @@ struct OmniComputeStatus
 	OmniComputeBackend backend = OmniComputeBackend::CPU;
 	bool available = false;
 	bool validationPassed = false;
+	double maxAbsoluteError = 0.0;
+	double maxRelativeError = 0.0;
+	std::size_t firstMismatchIndex = static_cast<std::size_t>(-1);
 	std::string detail = "CPU";
 };
 
@@ -58,5 +61,5 @@ namespace OmniCompute
 	bool RunThermalDiffusion(const OmniThermalDiffusionInput &input,
 		std::vector<float> &energyDelta, std::string &error,
 		float absoluteEpsilon = 1.0e-4f, float relativeEpsilon = 2.0e-5f);
-	bool RunGPUValidation();
+	bool RunGPUValidation(std::string *error = nullptr);
 }

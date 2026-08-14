@@ -552,6 +552,20 @@ if sdlgpu_shader_available
 	embedded_files += [ [ 'sdlgpu_thermal_diffusion_spirv', sdlgpu_thermal_diffusion_spirv ] ]
 endif
 
+# Windows MinGW release binaries must be portable on a clean machine.  Keep
+# the compiler runtimes inside the PE instead of requiring MSYS2 DLLs on PATH.
+if host_platform == 'windows' and host_libc in [ 'mingw', 'mingwclang' ]
+	if cpp_compiler.has_link_argument('-static-libgcc')
+		project_link_args += [ '-static-libgcc' ]
+	endif
+	if cpp_compiler.has_link_argument('-static-libstdc++')
+		project_link_args += [ '-static-libstdc++' ]
+	endif
+	if cpp_compiler.has_link_argument('-static')
+		project_link_args += [ '-static' ]
+	endif
+endif
+
 subdir('src')
 subdir('resources')
 
@@ -770,6 +784,12 @@ if get_option('build_tests')
 		'sdlgpu-probe-contract',
 		python3_prog,
 		args: [ files('tools/sdlgpu_probe_contract_check.py') ],
+		suite: 'static',
+	)
+	test(
+		'stable-release-gate-contract',
+		python3_prog,
+		args: [ files('tools/tests/test_stable_release_gate.py') ],
 		suite: 'static',
 	)
 	if sdlgpu_shader_available and sdlgpu_shader_validator.found()
@@ -1345,6 +1365,23 @@ omni_water_coupling_probe = executable(
 	cpp_args: project_cpp_args,
 	link_args: project_link_args,
 	dependencies: project_deps + [ threads_dep, fftw_dep, sta_libs['common'], sta_libs['simulation'] ],
+	link_depends: copied_dlls,
+	override_options: target_options,
+)
+
+official_save_roundtrip_probe = executable(
+	'official_save_roundtrip_probe',
+	sources: [
+		files('tools/official_save_roundtrip_probe.cpp'),
+		files('src/simulation/Editing.cpp', 'src/simulation/Snapshot.cpp', 'src/simulation/SnapshotDelta.cpp'),
+		files('src/client/GameSave.cpp'), files('src/client/User.cpp'),
+		files('src/graphics/Renderer.cpp'), files('src/prefs/Prefs.cpp'),
+		files('src/simulation/gravity/Fft.cpp'), vcs_tag_header,
+	],
+	include_directories: project_inc,
+	cpp_args: project_cpp_args,
+	link_args: project_link_args,
+	dependencies: project_deps + [ threads_dep, fftw_dep, sta_libs['common'], sta_libs['gui'], sta_libs['simulation'] ],
 	link_depends: copied_dlls,
 	override_options: target_options,
 )

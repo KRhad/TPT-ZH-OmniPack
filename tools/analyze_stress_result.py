@@ -36,6 +36,7 @@ REQUIRED_RESULT_FIELDS = {
     "roundtrip_pass",
     "long_run",
     "smoke_run",
+    "wall_clock_seconds",
 }
 
 FIXTURE_EXPECTATIONS = {
@@ -317,6 +318,9 @@ def analyze(directory: Path) -> dict[str, Any]:
             not bool(result["smoke_run"])
             and float(result["warmup_seconds"]) >= 60.0
             and float(result["sample_seconds"]) >= 7200.0
+            and isinstance(result.get("wall_clock_seconds"), (int, float))
+            and not isinstance(result.get("wall_clock_seconds"), bool)
+            and float(result["wall_clock_seconds"]) >= 7200.0
         )
         long_run_behavior_pass: bool | str = (
             long_run_evidence_complete is True
@@ -444,7 +448,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"gate={str(assessment['performance_gate_pass']).lower()} "
         f"output={output}"
     )
-    return 0
+    # Analysis validity and release-gate success are different facts.  A valid
+    # report whose measured gate is false must still block automation.
+    return 0 if assessment["performance_gate_pass"] is True else 2
 
 
 if __name__ == "__main__":

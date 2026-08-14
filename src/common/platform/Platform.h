@@ -78,7 +78,9 @@ namespace Platform
 
 	// Run the opt-in SDL_GPU capability/validation probe.
 	int RunSDLGPUProbe();
-	int RunSDLGPUValidation();
+	int RunSDLGPUValidation(const char *jsonPath = nullptr, bool forceInitializationFailure = false);
+	int RunCPUFallbackValidation(const char *jsonPath = nullptr);
+	int RunSDL3GUISmokeTest(const char *jsonPath = nullptr);
 
 	std::optional<std::vector<String>> StackTrace();
 

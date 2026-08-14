@@ -3,12 +3,16 @@
 #include "simulation/OmniCompute.h"
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <fstream>
+#include <filesystem>
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <iomanip>
 
 #ifndef TPT_SDLGPU_SHADER_AVAILABLE
 # define TPT_SDLGPU_SHADER_AVAILABLE 0
@@ -16,6 +20,8 @@
 
 #if TPT_SDL3
 # include <SDL3/SDL_gpu.h>
+# include <SDL3/SDL_render.h>
+# include <SDL3/SDL_surface.h>
 # if TPT_SDLGPU_SHADER_AVAILABLE
 #  include "sdlgpu_compute_spirv.h"
 #  include "sdlgpu_thermal_diffusion_spirv.h"
@@ -24,6 +30,108 @@
 
 namespace
 {
+constexpr int kGPUValidationPass = 0;
+constexpr int kGPUUnsupported = 10;
+constexpr int kSDLInitializationFailure = 11;
+constexpr int kGPUDeviceCreationFailure = 12;
+constexpr int kShaderUnavailable = 13;
+constexpr int kComputeDispatchFailure = 14;
+constexpr int kNumericalMismatch = 15;
+constexpr int kReadbackFailure = 16;
+constexpr int kGPUInternalFailure = 18;
+
+std::string JsonEscape(const char *value)
+{
+	std::string result;
+	for (const unsigned char ch : std::string(value ? value : ""))
+	{
+		switch (ch)
+		{
+		case '\\': result += "\\\\"; break;
+		case '"': result += "\\\""; break;
+		case '\n': result += "\\n"; break;
+		case '\r': result += "\\r"; break;
+		case '\t': result += "\\t"; break;
+		default:
+			if (ch >= 0x20)
+				result += static_cast<char>(ch);
+			break;
+		}
+	}
+	return result;
+}
+
+void WriteValidationJson(const char *path, bool passed, const char *backend,
+	const char *status, bool supported, bool fallback, double maxAbs = 0.0,
+	double maxRel = 0.0, std::size_t firstMismatch = static_cast<std::size_t>(-1))
+{
+	if (!path || !*path)
+		return;
+	std::ofstream output(path, std::ios::binary | std::ios::trunc);
+	if (!output)
+		return;
+	output << std::setprecision(17)
+		<< "{\n"
+		<< "  \"test\": \"gpu_validation\",\n"
+		<< "  \"passed\": " << (passed ? "true" : "false") << ",\n"
+		<< "  \"supported\": " << (supported ? "true" : "false") << ",\n"
+		<< "  \"fallback\": " << (fallback ? "true" : "false") << ",\n"
+		<< "  \"backend\": \"" << JsonEscape(backend ? backend : "unknown") << "\",\n"
+		<< "  \"status\": \"" << JsonEscape(status ? status : "unknown") << "\",\n"
+		<< "  \"max_abs_error\": " << maxAbs << ",\n"
+		<< "  \"max_rel_error\": " << maxRel << ",\n"
+		<< "  \"first_mismatch_index\": "
+		<< (firstMismatch == static_cast<std::size_t>(-1) ? -1 : static_cast<long long>(firstMismatch)) << "\n"
+		<< "}\n";
+}
+
+void WriteFallbackJson(const char *path, bool passed, const char *status)
+{
+	if (!path || !*path)
+		return;
+	std::ofstream output(path, std::ios::binary | std::ios::trunc);
+	if (!output)
+		return;
+	output << "{\n"
+		<< "  \"test\": \"cpu_fallback\",\n"
+		<< "  \"passed\": " << (passed ? "true" : "false") << ",\n"
+		<< "  \"backend\": \"CPU\",\n"
+		<< "  \"fallback\": true,\n"
+		<< "  \"status\": \"" << JsonEscape(status ? status : "unknown") << "\"\n"
+		<< "}\n";
+}
+
+void WriteSimpleJson(const char *path, const char *test, bool passed, const char *status,
+	const char *artifact = nullptr, bool window = false, bool frame = false,
+	bool resize = false, bool fullscreen = false, bool keyboard = false,
+	bool mouse = false, bool textInput = false, bool clipboard = false,
+	bool screenshot = false, bool shutdown = false, bool restart = false)
+{
+	if (!path || !*path)
+		return;
+	std::ofstream output(path, std::ios::binary | std::ios::trunc);
+	if (!output)
+		return;
+	output << "{\n  \"test\": \"" << JsonEscape(test) << "\",\n"
+		<< "  \"passed\": " << (passed ? "true" : "false") << ",\n"
+		<< "  \"status\": \"" << JsonEscape(status) << "\"";
+	if (artifact)
+		output << ",\n  \"artifact\": \"" << JsonEscape(artifact) << "\"";
+	if (std::strcmp(test, "sdl3_gui") == 0)
+		output << ",\n  \"window_created\": " << (window ? "true" : "false")
+			<< ",\n  \"frame_rendered\": " << (frame ? "true" : "false")
+			<< ",\n  \"resize\": " << (resize ? "true" : "false")
+			<< ",\n  \"fullscreen_toggle\": " << (fullscreen ? "true" : "false")
+			<< ",\n  \"keyboard\": " << (keyboard ? "true" : "false")
+			<< ",\n  \"mouse\": " << (mouse ? "true" : "false")
+			<< ",\n  \"text_input\": " << (textInput ? "true" : "false")
+			<< ",\n  \"clipboard\": " << (clipboard ? "true" : "false")
+			<< ",\n  \"screenshot_created\": " << (screenshot ? "true" : "false")
+			<< ",\n  \"clean_shutdown\": " << (shutdown ? "true" : "false")
+			<< ",\n  \"restart\": " << (restart ? "true" : "false");
+	output << "\n}\n";
+}
+
 constexpr std::size_t kWordCount = 16;
 constexpr std::size_t kBufferBytes = kWordCount * sizeof(std::uint32_t);
 
@@ -232,9 +340,15 @@ bool ExecuteThermalDiffusion(const OmniThermalDiffusionInput &input,
 	return true;
 }
 
-bool InitializeProductionCompute(std::string &error)
+bool InitializeProductionCompute(std::string &error, bool forceFailure = false)
 {
 	std::scoped_lock lock(productionMutex);
+	if (forceFailure)
+	{
+		error = "forced_initialization_failure";
+		OmniCompute::ResetBackend("forced GPU initialization failure; CPU fallback");
+		return false;
+	}
 	if (productionDevice && thermalDiffusionPipeline)
 		return true;
 	SDL_SetHint(SDL_HINT_GPU_DRIVER, "vulkan");
@@ -466,7 +580,7 @@ void InitializeOmniCompute()
 {
 #if TPT_SDL3 && TPT_SDLGPU_SHADER_AVAILABLE
 	std::string error;
-	if (!InitializeProductionCompute(error) || !OmniCompute::RunGPUValidation())
+	if (!InitializeProductionCompute(error) || !OmniCompute::RunGPUValidation(&error))
 	{
 		if (error.empty())
 			error = "thermal diffusion numerical validation failed";
@@ -607,7 +721,7 @@ int RunSDLGPUProbe()
 #endif
 }
 
-int RunSDLGPUValidation()
+int RunSDLGPUValidation(const char *jsonPath, bool forceInitializationFailure)
 {
 	PrintValue("sdlgpu_validation_version", "1.1.0-rc1");
 #if !TPT_SDL3 || !TPT_SDLGPU_SHADER_AVAILABLE
@@ -615,7 +729,8 @@ int RunSDLGPUValidation()
 	PrintBool("gpu_validation_passed", false);
 	PrintValue("gpu_validation_status", "unsupported_build_without_sdlgpu_spirv");
 	PrintValue("fallback", "CPU");
-	return 0;
+	WriteValidationJson(jsonPath, false, "CPU", "unsupported_build_without_sdlgpu_spirv", false, true);
+	return kShaderUnavailable;
 #else
 	if (!SDL_Init(SDL_INIT_VIDEO))
 	{
@@ -623,11 +738,12 @@ int RunSDLGPUValidation()
 		PrintBool("gpu_validation_passed", false);
 		PrintValue("gpu_validation_status", std::string("SDL_Init:") + SDL_GetError());
 		PrintValue("fallback", "CPU");
-		return 0;
+		WriteValidationJson(jsonPath, false, "CPU", SDL_GetError(), false, true);
+		return kSDLInitializationFailure;
 	}
 	std::string error;
-	const bool initialized = InitializeProductionCompute(error);
-	const bool validated = initialized && OmniCompute::RunGPUValidation();
+	const bool initialized = InitializeProductionCompute(error, forceInitializationFailure);
+	const bool validated = initialized && OmniCompute::RunGPUValidation(&error);
 	if (!validated && error.empty())
 		error = "thermal_diffusion_cpu_gpu_epsilon_validation_failed";
 	const auto status = OmniCompute::GetStatus();
@@ -636,9 +752,131 @@ int RunSDLGPUValidation()
 	PrintBool("gpu_validation_passed", validated);
 	PrintValue("gpu_validation_status", validated ? "PASS" : error);
 	PrintValue("fallback", validated ? "not_used" : "CPU");
+	WriteValidationJson(jsonPath, validated, OmniCompute::BackendName(status.backend),
+		validated ? "PASS" : error.c_str(), initialized, !validated,
+		status.maxAbsoluteError, status.maxRelativeError, status.firstMismatchIndex);
 	DestroyProductionCompute();
 	SDL_Quit();
-	return validated ? 0 : (initialized ? 1 : 0);
+	if (validated)
+		return kGPUValidationPass;
+	if (!initialized)
+		return kGPUDeviceCreationFailure;
+	return error.find("readback") != std::string::npos ? kReadbackFailure : kNumericalMismatch;
+#endif
+}
+
+int RunCPUFallbackValidation(const char *jsonPath)
+{
+	// This is intentionally a separate gate: forced GPU initialization failure
+	// must still leave the reference CPU stencil usable and finite.
+	std::string initializationError;
+#if TPT_SDL3 && TPT_SDLGPU_SHADER_AVAILABLE
+	const bool gpuInitialized = InitializeProductionCompute(initializationError, true);
+#else
+	const bool gpuInitialized = false;
+	initializationError = "forced_initialization_failure";
+	OmniCompute::ResetBackend("forced GPU initialization failure; CPU fallback");
+#endif
+	const std::vector<float> temperature{ 290.0f, 292.0f, 296.0f, 301.0f };
+	const std::vector<float> conductivity(temperature.size(), 0.02f);
+	const std::vector<unsigned char> blocked(temperature.size(), 0);
+	const OmniThermalDiffusionInput input{
+		.width = 2, .height = 2, .periodic = false,
+		.timestepOverCellLengthSquared = 0.25f,
+		.temperature = temperature, .conductivity = conductivity, .blocked = blocked,
+	};
+	const auto reference = OmniCompute::ComputeThermalDiffusionReference(input);
+	const bool ran = !gpuInitialized && initializationError == "forced_initialization_failure" &&
+		OmniCompute::GetComputeBackend() == OmniComputeBackend::CPU && !reference.empty();
+	for (float value : reference)
+		if (!std::isfinite(value))
+			return (WriteFallbackJson(jsonPath, false, "cpu_reference_nonfinite"), kGPUInternalFailure);
+	WriteFallbackJson(jsonPath, ran, ran ? "GPU_init_failed_CPU_reference_continues" : initializationError.c_str());
+	PrintBool("cpu_fallback_tested", true);
+	PrintBool("cpu_fallback_passed", ran);
+	PrintValue("fallback", "CPU");
+	return ran ? 0 : kGPUInternalFailure;
+}
+
+int RunSDL3GUISmokeTest(const char *jsonPath)
+{
+#if !TPT_SDL3
+		WriteSimpleJson(jsonPath, "sdl3_gui", false, "SDL3_not_built");
+	return 10;
+#else
+	const auto artifactPath = jsonPath && *jsonPath
+		? std::filesystem::path(jsonPath).parent_path() / "gui-smoke.bmp"
+		: std::filesystem::path("gui-smoke.bmp");
+	const auto artifact = artifactPath.string();
+	if (!SDL_Init(SDL_INIT_VIDEO))
+	{
+		WriteSimpleJson(jsonPath, "sdl3_gui", false, SDL_GetError());
+		return 11;
+	}
+	SDL_Window *window = SDL_CreateWindow("TPT-ZH OmniPack GUI Smoke", 320, 240, SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
+	if (!window)
+	{
+		const auto error = std::string(SDL_GetError());
+		SDL_Quit();
+		WriteSimpleJson(jsonPath, "sdl3_gui", false, error.c_str(), nullptr, true);
+		return 12;
+	}
+	SDL_Renderer *renderer = SDL_CreateRenderer(window, nullptr);
+	if (!renderer)
+	{
+		const auto error = std::string(SDL_GetError());
+		SDL_DestroyWindow(window);
+		SDL_Quit();
+		WriteSimpleJson(jsonPath, "sdl3_gui", false, error.c_str(), nullptr, true, false);
+		return 13;
+	}
+	bool ok = SDL_SetRenderDrawColor(renderer, 0x11, 0x72, 0xA9, 0xFF) &&
+		SDL_RenderClear(renderer) && SDL_RenderPresent(renderer);
+	const bool resize = SDL_SetWindowSize(window, 480, 360);
+	int resizedWidth = 0, resizedHeight = 0;
+	const bool resizeObserved = SDL_GetWindowSize(window, &resizedWidth, &resizedHeight) &&
+		resizedWidth == 480 && resizedHeight == 360;
+	const bool fullscreen = SDL_SetWindowFullscreen(window, true) && SDL_SetWindowFullscreen(window, false);
+	const bool textInput = SDL_StartTextInput(window) && SDL_StopTextInput(window);
+	const bool clipboard = SDL_SetClipboardText("omnipack-gui-smoke") &&
+		([]() { char *text = SDL_GetClipboardText(); const bool same = text && std::strcmp(text, "omnipack-gui-smoke") == 0; SDL_free(text); return same; })();
+	SDL_Event keyEvent{};
+	keyEvent.type = SDL_EVENT_KEY_DOWN;
+	keyEvent.key.key = SDLK_A;
+	keyEvent.key.down = true;
+	const bool keyboard = SDL_PushEvent(&keyEvent);
+	SDL_Event mouseEvent{};
+	mouseEvent.type = SDL_EVENT_MOUSE_MOTION;
+	mouseEvent.motion.x = 12.0f;
+	mouseEvent.motion.y = 13.0f;
+	const bool mouse = SDL_PushEvent(&mouseEvent);
+	SDL_PumpEvents();
+	const bool frameRendered = ok;
+	SDL_Surface *surface = ok ? SDL_RenderReadPixels(renderer, nullptr) : nullptr;
+	bool screenshotCreated = false;
+	if (surface)
+	{
+		screenshotCreated = SDL_SaveBMP(surface, artifact.c_str());
+		SDL_DestroySurface(surface);
+	}
+	else
+		screenshotCreated = false;
+	ok = frameRendered && resize && resizeObserved && fullscreen && textInput && clipboard && keyboard && mouse && screenshotCreated;
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	SDL_Quit();
+	bool restart = false;
+	if (ok && SDL_Init(SDL_INIT_VIDEO))
+	{
+		SDL_Window *second = SDL_CreateWindow("TPT-ZH OmniPack GUI Restart", 160, 120, SDL_WINDOW_HIDDEN);
+		restart = second != nullptr;
+		if (second)
+			SDL_DestroyWindow(second);
+		SDL_Quit();
+	}
+	ok = ok && restart;
+	WriteSimpleJson(jsonPath, "sdl3_gui", ok, "sdl_init_window_render_resize_fullscreen_input_clipboard_shutdown", artifact.c_str(), true, frameRendered, resize && resizeObserved, fullscreen, keyboard, mouse, textInput, clipboard, screenshotCreated, true, restart);
+	return ok ? 0 : 14;
 #endif
 }
 }

@@ -1,9 +1,12 @@
 #include "OmniCompute.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <mutex>
+#include <utility>
 
 namespace
 {
@@ -12,6 +15,9 @@ namespace
 		OmniComputeBackend backend = OmniComputeBackend::CPU;
 		OmniThermalDiffusionExecutor executor = nullptr;
 		bool validationPassed = false;
+		double maxAbsoluteError = 0.0;
+		double maxRelativeError = 0.0;
+		std::size_t firstMismatchIndex = static_cast<std::size_t>(-1);
 		std::string detail = "CPU";
 	};
 
@@ -68,6 +74,9 @@ OmniComputeStatus GetStatus()
 		.backend = computeState.backend,
 		.available = computeState.executor != nullptr && computeState.backend != OmniComputeBackend::CPU,
 		.validationPassed = computeState.validationPassed,
+		.maxAbsoluteError = computeState.maxAbsoluteError,
+		.maxRelativeError = computeState.maxRelativeError,
+		.firstMismatchIndex = computeState.firstMismatchIndex,
 		.detail = computeState.detail,
 	};
 }
@@ -78,6 +87,9 @@ void ConfigureBackend(OmniComputeBackend backend, OmniThermalDiffusionExecutor e
 	computeState.backend = executor ? backend : OmniComputeBackend::CPU;
 	computeState.executor = executor;
 	computeState.validationPassed = false;
+	computeState.maxAbsoluteError = 0.0;
+	computeState.maxRelativeError = 0.0;
+	computeState.firstMismatchIndex = static_cast<std::size_t>(-1);
 	computeState.detail = std::move(detail);
 }
 
@@ -170,8 +182,19 @@ bool RunThermalDiffusion(const OmniThermalDiffusionInput &input, std::vector<flo
 			return false;
 		}
 		const auto tolerance = absoluteEpsilon + relativeEpsilon * std::abs(reference[index]);
-		if (std::abs(candidate[index] - reference[index]) > tolerance)
+		const auto absoluteError = std::abs(static_cast<double>(candidate[index]) - reference[index]);
+		const auto relativeError = absoluteError / std::max(
+			static_cast<double>(absoluteEpsilon), std::abs(static_cast<double>(reference[index])));
 		{
+			std::scoped_lock lock(computeMutex);
+			computeState.maxAbsoluteError = std::max(computeState.maxAbsoluteError, absoluteError);
+			computeState.maxRelativeError = std::max(computeState.maxRelativeError, relativeError);
+		}
+		if (absoluteError > tolerance)
+		{
+			std::scoped_lock lock(computeMutex);
+			if (computeState.firstMismatchIndex == static_cast<std::size_t>(-1))
+				computeState.firstMismatchIndex = index;
 			error = "cpu_gpu_thermal_mismatch";
 			return false;
 		}
@@ -184,32 +207,75 @@ bool RunThermalDiffusion(const OmniThermalDiffusionInput &input, std::vector<flo
 	return true;
 }
 
-bool RunGPUValidation()
+bool RunGPUValidation(std::string *validationError)
 {
-	constexpr std::size_t width = 4;
-	constexpr std::size_t height = 3;
-	const std::vector<float> temperature{
-		290.0f, 292.0f, 296.0f, 301.0f,
-		288.0f, 293.0f, 297.0f, 303.0f,
-		286.0f, 291.0f, 299.0f, 305.0f,
+	constexpr std::uint32_t seed = 0x1A2B3C4Du;
+	constexpr std::array dimensions{
+		std::pair<std::size_t, std::size_t>{ 8, 8 },
+		std::pair<std::size_t, std::size_t>{ 31, 17 },
+		std::pair<std::size_t, std::size_t>{ 64, 64 },
+		std::pair<std::size_t, std::size_t>{ 127, 73 },
 	};
-	const std::vector<float> conductivity{
-		0.02f, 0.021f, 0.025f, 0.03f,
-		0.019f, 0.022f, 0.026f, 0.031f,
-		0.018f, 0.023f, 0.027f, 0.032f,
-	};
-	const std::vector<unsigned char> blocked(width * height, 0);
-	const OmniThermalDiffusionInput input{
-		.width = width,
-		.height = height,
-		.periodic = true,
-		.timestepOverCellLengthSquared = 0.25f,
-		.temperature = temperature,
-		.conductivity = conductivity,
-		.blocked = blocked,
-	};
-	std::vector<float> output;
-	std::string error;
-	return RunThermalDiffusion(input, output, error);
+	for (std::size_t pattern = 0; pattern < 5; ++pattern)
+	{
+		for (const auto [width, height] : dimensions)
+		{
+			const auto cellCount = width * height;
+			std::vector<float> temperature(cellCount, 300.0f);
+			std::vector<float> conductivity(cellCount, 0.025f);
+			std::vector<unsigned char> blocked(cellCount, 0);
+			std::uint32_t random = seed;
+			for (std::size_t index = 0; index < cellCount; ++index)
+			{
+				const auto x = index % width;
+				const auto y = index / width;
+				switch (pattern)
+				{
+				case 0: break;
+				case 1:
+					if (index == cellCount / 2)
+						temperature[index] = 1800.0f;
+					break;
+				case 2:
+					temperature[index] = 250.0f + 750.0f * static_cast<float>(x) /
+						static_cast<float>(std::max<std::size_t>(1, width - 1));
+					conductivity[index] = 0.005f + 0.05f * static_cast<float>(y) /
+						static_cast<float>(std::max<std::size_t>(1, height - 1));
+					break;
+				case 3:
+					random = random * 1664525u + 1013904223u;
+					temperature[index] = 100.0f + static_cast<float>(random & 0xFFFFu) * (1900.0f / 65535.0f);
+					random = random * 1664525u + 1013904223u;
+					conductivity[index] = 0.001f + static_cast<float>(random & 0xFFFFu) * (0.099f / 65535.0f);
+					blocked[index] = (random % 37u == 0u) ? 1u : 0u;
+					break;
+				case 4:
+					temperature[index] = (x == 0 || y == 0 || x + 1 == width || y + 1 == height) ? 5000.0f : 1.0f;
+					conductivity[index] = (index & 1u) ? 0.1f : 0.0001f;
+					break;
+				}
+			}
+			const OmniThermalDiffusionInput input{
+				.width = width,
+				.height = height,
+				.periodic = pattern != 4,
+				.timestepOverCellLengthSquared = pattern == 4 ? 0.01f : 0.25f,
+				.temperature = temperature,
+				.conductivity = conductivity,
+				.blocked = blocked,
+			};
+			std::vector<float> output;
+			std::string error;
+			if (!RunThermalDiffusion(input, output, error))
+			{
+				if (validationError)
+					*validationError = error;
+				return false;
+			}
+		}
+	}
+	if (validationError)
+		validationError->clear();
+	return true;
 }
 }
