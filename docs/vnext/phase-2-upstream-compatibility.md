@@ -1,5 +1,9 @@
 # 1.0.2 latest upstream compatibility refresh
 
+> Historical checkpoint: this document records the 2026-08-10 Phase 2 gate.
+> Current upstream references are maintained in `02-upstream-status.md`; as of
+> 2026-08-16 official `master` has advanced beyond the stable commit below.
+
 ## Outcome
 
 ```text

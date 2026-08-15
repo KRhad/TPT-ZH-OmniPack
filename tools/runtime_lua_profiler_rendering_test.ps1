@@ -40,6 +40,28 @@ if (-not $resolvedTestRoot.StartsWith($tempPrefix, [System.StringComparison]::Or
 
 $process = $null
 $passed = $false
+$resultValues = @{}
+
+function Read-ProfilerResultSnapshot {
+    param([Parameter(Mandatory = $true)][string] $Path)
+
+    $text = [string](Get-Content -LiteralPath $Path -Raw)
+    $values = @{}
+    foreach ($line in ($text -split "`r?`n")) {
+        if ($line -match '^([A-Za-z0-9_]+)=(.*)$') {
+            # A read can overlap the Lua heartbeat replacing RUNNING with the
+            # terminal report. Last-value-wins parsing keeps the final status
+            # authoritative if such a transient mixed snapshot is observed.
+            $values[$matches[1]] = $matches[2]
+        }
+    }
+    return [pscustomobject]@{
+        Text = $text
+        Values = $values
+        Status = [string]$values.OMNI_PROFILER_RENDERING_STATUS
+    }
+}
+
 try {
     New-Item -ItemType Directory -Path $resolvedTestRoot | Out-Null
     # A real but empty isolated profile prevents first-run modal UI without
@@ -72,23 +94,35 @@ try {
     do {
         Start-Sleep -Milliseconds 100
         if (Test-Path -LiteralPath $result -PathType Leaf) {
-            $resultText = [string](Get-Content -LiteralPath $result -Raw)
-            if ($resultText -match "(?m)^OMNI_PROFILER_RENDERING_STATUS=(PASS|FAIL)\r?$") {
-                break
+            $snapshot = Read-ProfilerResultSnapshot -Path $result
+            if ($snapshot.Status -in @("PASS", "FAIL")) {
+                # Do not act on a terminal line from a torn read while Lua is
+                # still rewriting the heartbeat file. Require an identical
+                # second snapshot before accepting its fields.
+                Start-Sleep -Milliseconds 50
+                $confirmed = Read-ProfilerResultSnapshot -Path $result
+                if (
+                    $confirmed.Status -in @("PASS", "FAIL") -and
+                    $confirmed.Text -ceq $snapshot.Text
+                ) {
+                    $resultText = $confirmed.Text
+                    $resultValues = $confirmed.Values
+                    break
+                }
             }
         }
         $process.Refresh()
     } while ([DateTime]::UtcNow -lt $deadline -and -not $process.HasExited)
 
     if (
-        $resultText -match "(?m)^OMNI_PROFILER_RENDERING_TICKS=([1-9][0-9]*)\r?$" -and
-        $resultText -match "(?m)^OMNI_PROFILER_RENDERING_TOGGLE_CYCLES=1\r?$" -and
-        $resultText -match "(?m)^OMNI_PROFILER_THREADED_RENDERING_OBSERVED=true\r?$" -and
-        $resultText -match "(?m)^OMNI_PROFILER_RENDERING_CALLS=([1-9][0-9]*)\r?$" -and
-        $resultText -match "(?m)^OMNI_PROFILER_RENDERING_COPY_CALLS=([1-9][0-9]*)\r?$" -and
-        $resultText -match "(?m)^OMNI_PROFILER_RENDERING_TOTAL_NS=([1-9][0-9]*)\r?$" -and
-        $resultText -match "(?m)^OMNI_PROFILER_RENDERING_COPY_TOTAL_NS=([1-9][0-9]*)\r?$" -and
-        $resultText -match "(?m)^OMNI_PROFILER_RENDERING_STATUS=PASS\r?$"
+        $resultValues.OMNI_PROFILER_RENDERING_TICKS -match '^[1-9][0-9]*$' -and
+        $resultValues.OMNI_PROFILER_RENDERING_TOGGLE_CYCLES -eq "1" -and
+        $resultValues.OMNI_PROFILER_THREADED_RENDERING_OBSERVED -eq "true" -and
+        $resultValues.OMNI_PROFILER_RENDERING_CALLS -match '^[1-9][0-9]*$' -and
+        $resultValues.OMNI_PROFILER_RENDERING_COPY_CALLS -match '^[1-9][0-9]*$' -and
+        $resultValues.OMNI_PROFILER_RENDERING_TOTAL_NS -match '^[1-9][0-9]*$' -and
+        $resultValues.OMNI_PROFILER_RENDERING_COPY_TOTAL_NS -match '^[1-9][0-9]*$' -and
+        $resultValues.OMNI_PROFILER_RENDERING_STATUS -eq "PASS"
     ) {
         $passed = $true
     }

@@ -1,7 +1,9 @@
 #include "Platform.h"
 #include "SDLCompat.h"
+#include "simulation/OmniAtmosphere.h"
 #include "simulation/OmniCompute.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -9,10 +11,12 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <iterator>
 #include <mutex>
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <vector>
 
 #ifndef TPT_SDLGPU_SHADER_AVAILABLE
 # define TPT_SDLGPU_SHADER_AVAILABLE 0
@@ -39,6 +43,156 @@ constexpr int kComputeDispatchFailure = 14;
 constexpr int kNumericalMismatch = 15;
 constexpr int kReadbackFailure = 16;
 constexpr int kGPUInternalFailure = 18;
+constexpr char kInjectedFallbackError[] = "injected_runtime_thermal_failure";
+
+int fallbackExecutorInvocations = 0;
+bool fallbackExecutorInputValid = false;
+
+bool InjectedFailingThermalExecutor(const OmniThermalDiffusionInput &input,
+	std::vector<float> &energyDelta, std::string &error)
+{
+	++fallbackExecutorInvocations;
+	const auto cellCount = input.width * input.height;
+	bool thermalGradient = false;
+	for (std::size_t index = 1; index < input.temperature.size(); ++index)
+		thermalGradient = thermalGradient || input.temperature[index] != input.temperature[0];
+	fallbackExecutorInputValid = input.width > 1 && input.height > 1 &&
+		cellCount == input.temperature.size() && cellCount == input.conductivity.size() &&
+		cellCount == input.blocked.size() &&
+		std::isfinite(input.timestepOverCellLengthSquared) &&
+		input.timestepOverCellLengthSquared > 0.0f && thermalGradient &&
+		std::all_of(input.temperature.begin(), input.temperature.end(),
+			[](float value) { return std::isfinite(value); }) &&
+		std::all_of(input.conductivity.begin(), input.conductivity.end(),
+			[](float value) { return std::isfinite(value) && value >= 0.0f; });
+	energyDelta.clear();
+	error = kInjectedFallbackError;
+	return false;
+}
+
+struct FallbackAtmosphereSnapshot
+{
+	std::vector<OmniAtmosphereConservative> cells;
+	std::vector<double> species;
+	std::vector<double> condensedWater;
+	uint64_t nonFiniteCells = 0;
+	double massResidualKg = 0.0;
+	double energyResidualJ = 0.0;
+};
+
+OmniAtmosphere MakeFallbackAtmosphere()
+{
+	OmniAtmosphereConfig config;
+	config.width = 5;
+	config.height = 4;
+	config.scale.timestepS = 1.0e-6;
+	config.maximumRuntimeSubsteps = 1;
+	config.boundary = OmniAtmosphereBoundary::Sealed;
+	config.execution = OmniAtmosphereExecution::RuntimeLowMach;
+	config.gravityY = 0.0;
+	config.speciesDiffusion = true;
+	config.thermalConduction = true;
+	config.waterPhaseEquilibrium = false;
+	OmniAtmosphere atmosphere(config);
+	atmosphere.ResetUniform(config.referenceDensity, config.referenceTemperature);
+	atmosphere.AddEnergyDensity(1, 1, 120000.0);
+	atmosphere.AddEnergyDensity(3, 2, -30000.0);
+	auto fractions = config.referenceMassFractions;
+	if (fractions.size() >= OMNI_COMMON_SPECIES_COUNT && fractions[OMNI_SPECIES_N2] > 0.02)
+	{
+		fractions[OMNI_SPECIES_N2] -= 0.02;
+		fractions[OMNI_SPECIES_CO2] += 0.02;
+		atmosphere.SetSpeciesMassFractions(2, 1, fractions);
+	}
+	return atmosphere;
+}
+
+FallbackAtmosphereSnapshot CaptureFallbackAtmosphere(const OmniAtmosphere &atmosphere)
+{
+	FallbackAtmosphereSnapshot snapshot;
+	snapshot.cells.reserve(atmosphere.CellCount());
+	snapshot.species.reserve(atmosphere.CellCount() * atmosphere.SpeciesCount());
+	snapshot.condensedWater.reserve(atmosphere.CellCount());
+	for (std::size_t y = 0; y < atmosphere.Height(); ++y)
+	{
+		for (std::size_t x = 0; x < atmosphere.Width(); ++x)
+		{
+			snapshot.cells.push_back(atmosphere.State(x, y));
+			for (std::size_t species = 0; species < atmosphere.SpeciesCount(); ++species)
+				snapshot.species.push_back(atmosphere.SpeciesMassDensity(x, y, species));
+			snapshot.condensedWater.push_back(atmosphere.Primitive(x, y).condensedWaterDensity);
+		}
+	}
+	snapshot.nonFiniteCells = atmosphere.NonFiniteStateCells();
+	snapshot.massResidualKg = atmosphere.Ledger().massResidualKg();
+	snapshot.energyResidualJ = atmosphere.Ledger().energyResidualJ();
+	return snapshot;
+}
+
+bool FallbackNearlyEqual(double left, double right, double absoluteTolerance = 1.0e-12,
+	double relativeTolerance = 1.0e-11)
+{
+	return std::isfinite(left) && std::isfinite(right) &&
+		std::abs(left - right) <= absoluteTolerance + relativeTolerance *
+			std::max(std::abs(left), std::abs(right));
+}
+
+bool SameFallbackAtmosphere(const FallbackAtmosphereSnapshot &left,
+	const FallbackAtmosphereSnapshot &right)
+{
+	if (left.cells.size() != right.cells.size() || left.species.size() != right.species.size() ||
+		left.condensedWater.size() != right.condensedWater.size())
+		return false;
+	for (std::size_t index = 0; index < left.cells.size(); ++index)
+	{
+		const auto &lhs = left.cells[index];
+		const auto &rhs = right.cells[index];
+		if (!FallbackNearlyEqual(lhs.density, rhs.density) ||
+			!FallbackNearlyEqual(lhs.momentumX, rhs.momentumX) ||
+			!FallbackNearlyEqual(lhs.momentumY, rhs.momentumY) ||
+			!FallbackNearlyEqual(lhs.totalEnergy, rhs.totalEnergy, 1.0e-9, 1.0e-11))
+			return false;
+	}
+	for (std::size_t index = 0; index < left.species.size(); ++index)
+		if (!FallbackNearlyEqual(left.species[index], right.species[index]))
+			return false;
+	for (std::size_t index = 0; index < left.condensedWater.size(); ++index)
+		if (!FallbackNearlyEqual(left.condensedWater[index], right.condensedWater[index]))
+			return false;
+	return true;
+}
+
+struct CPUFallbackValidationEvidence
+{
+	bool passed = false;
+	std::string reason = "unknown";
+	bool initializationFailureForced = false;
+	bool initializationBackendPrearmed = false;
+	bool initializationBackendResetToCPU = false;
+	bool initializationCPUPathExecuted = false;
+	bool initializationControlStateMatch = false;
+	bool runtimeFailureInjected = false;
+	int runtimeExecutorInvocations = 0;
+	bool runtimeExecutorInputValid = false;
+	bool runtimeFailureObserved = false;
+	bool productionAtmosphereStepExecuted = false;
+	bool sameStepCPUFallback = false;
+	bool backendResetToCPU = false;
+	bool backendAvailableAfterFailure = false;
+	bool cpuControlStateMatch = false;
+	bool stateChangedSameStep = false;
+	uint64_t controlNonFiniteCells = 0;
+	uint64_t initializationNonFiniteCells = 0;
+	uint64_t runtimeNonFiniteCells = 0;
+	bool massResidualFinite = false;
+	bool energyResidualFinite = false;
+	bool massResidualWithinTolerance = false;
+	bool energyResidualWithinTolerance = false;
+	double massResidualKg = 0.0;
+	double energyResidualJ = 0.0;
+	std::string runtimeFailureCode = kInjectedFallbackError;
+	std::string backendDetail;
+};
 
 std::string JsonEscape(const char *value)
 {
@@ -72,12 +226,15 @@ void WriteValidationJson(const char *path, bool passed, const char *backend,
 		return;
 	output << std::setprecision(17)
 		<< "{\n"
+		<< "  \"schema\": \"omnipack-release-evidence\",\n"
+		<< "  \"schema_version\": 1,\n"
 		<< "  \"test\": \"gpu_validation\",\n"
 		<< "  \"passed\": " << (passed ? "true" : "false") << ",\n"
+		<< "  \"status\": \"" << (passed ? "PASS" : "FAIL") << "\",\n"
 		<< "  \"supported\": " << (supported ? "true" : "false") << ",\n"
 		<< "  \"fallback\": " << (fallback ? "true" : "false") << ",\n"
 		<< "  \"backend\": \"" << JsonEscape(backend ? backend : "unknown") << "\",\n"
-		<< "  \"status\": \"" << JsonEscape(status ? status : "unknown") << "\",\n"
+		<< "  \"reason\": \"" << JsonEscape(status ? status : "unknown") << "\",\n"
 		<< "  \"max_abs_error\": " << maxAbs << ",\n"
 		<< "  \"max_rel_error\": " << maxRel << ",\n"
 		<< "  \"first_mismatch_index\": "
@@ -85,19 +242,58 @@ void WriteValidationJson(const char *path, bool passed, const char *backend,
 		<< "}\n";
 }
 
-void WriteFallbackJson(const char *path, bool passed, const char *status)
+void WriteFallbackJson(const char *path, const CPUFallbackValidationEvidence &evidence)
 {
 	if (!path || !*path)
 		return;
 	std::ofstream output(path, std::ios::binary | std::ios::trunc);
 	if (!output)
 		return;
+	auto writeNumber = [&](double value) {
+		if (std::isfinite(value))
+			output << std::setprecision(17) << value;
+		else
+			output << "null";
+	};
 	output << "{\n"
+		<< "  \"schema\": \"omnipack-release-evidence\",\n"
+		<< "  \"schema_version\": 1,\n"
 		<< "  \"test\": \"cpu_fallback\",\n"
-		<< "  \"passed\": " << (passed ? "true" : "false") << ",\n"
+		<< "  \"passed\": " << (evidence.passed ? "true" : "false") << ",\n"
+		<< "  \"status\": \"" << (evidence.passed ? "PASS" : "FAIL") << "\",\n"
 		<< "  \"backend\": \"CPU\",\n"
 		<< "  \"fallback\": true,\n"
-		<< "  \"status\": \"" << JsonEscape(status ? status : "unknown") << "\"\n"
+		<< "  \"reason\": \"" << JsonEscape(evidence.reason.c_str()) << "\",\n"
+		<< "  \"initialization_failure_forced\": " << (evidence.initializationFailureForced ? "true" : "false") << ",\n"
+		<< "  \"initialization_backend_prearmed\": " << (evidence.initializationBackendPrearmed ? "true" : "false") << ",\n"
+		<< "  \"initialization_backend_reset_to_cpu\": " << (evidence.initializationBackendResetToCPU ? "true" : "false") << ",\n"
+		<< "  \"initialization_cpu_path_executed\": " << (evidence.initializationCPUPathExecuted ? "true" : "false") << ",\n"
+		<< "  \"initialization_control_state_match\": " << (evidence.initializationControlStateMatch ? "true" : "false") << ",\n"
+		<< "  \"runtime_failure_injected\": " << (evidence.runtimeFailureInjected ? "true" : "false") << ",\n"
+		<< "  \"runtime_executor_invocations\": " << evidence.runtimeExecutorInvocations << ",\n"
+		<< "  \"runtime_executor_input_valid\": " << (evidence.runtimeExecutorInputValid ? "true" : "false") << ",\n"
+		<< "  \"runtime_failure_observed\": " << (evidence.runtimeFailureObserved ? "true" : "false") << ",\n"
+		<< "  \"production_atmosphere_step_executed\": " << (evidence.productionAtmosphereStepExecuted ? "true" : "false") << ",\n"
+		<< "  \"same_step_cpu_fallback\": " << (evidence.sameStepCPUFallback ? "true" : "false") << ",\n"
+		<< "  \"backend_reset_to_cpu\": " << (evidence.backendResetToCPU ? "true" : "false") << ",\n"
+		<< "  \"backend_available_after_failure\": " << (evidence.backendAvailableAfterFailure ? "true" : "false") << ",\n"
+		<< "  \"cpu_control_state_match\": " << (evidence.cpuControlStateMatch ? "true" : "false") << ",\n"
+		<< "  \"state_changed_same_step\": " << (evidence.stateChangedSameStep ? "true" : "false") << ",\n"
+		<< "  \"control_nonfinite_cells\": " << evidence.controlNonFiniteCells << ",\n"
+		<< "  \"initialization_nonfinite_cells\": " << evidence.initializationNonFiniteCells << ",\n"
+		<< "  \"runtime_nonfinite_cells\": " << evidence.runtimeNonFiniteCells << ",\n"
+		<< "  \"nonfinite_cells\": " << std::max({ evidence.controlNonFiniteCells,
+			evidence.initializationNonFiniteCells, evidence.runtimeNonFiniteCells }) << ",\n"
+		<< "  \"mass_residual_finite\": " << (evidence.massResidualFinite ? "true" : "false") << ",\n"
+		<< "  \"energy_residual_finite\": " << (evidence.energyResidualFinite ? "true" : "false") << ",\n"
+		<< "  \"mass_residual_within_tolerance\": " << (evidence.massResidualWithinTolerance ? "true" : "false") << ",\n"
+		<< "  \"energy_residual_within_tolerance\": " << (evidence.energyResidualWithinTolerance ? "true" : "false") << ",\n"
+		<< "  \"mass_residual_kg\": ";
+	writeNumber(evidence.massResidualKg);
+	output << ",\n  \"energy_residual_j\": ";
+	writeNumber(evidence.energyResidualJ);
+	output << ",\n  \"runtime_failure_code\": \"" << JsonEscape(evidence.runtimeFailureCode.c_str()) << "\",\n"
+		<< "  \"backend_detail\": \"" << JsonEscape(evidence.backendDetail.c_str()) << "\"\n"
 		<< "}\n";
 }
 
@@ -105,19 +301,28 @@ void WriteSimpleJson(const char *path, const char *test, bool passed, const char
 	const char *artifact = nullptr, bool window = false, bool frame = false,
 	bool resize = false, bool fullscreen = false, bool keyboard = false,
 	bool mouse = false, bool textInput = false, bool clipboard = false,
-	bool screenshot = false, bool shutdown = false, bool restart = false)
+	bool screenshot = false, bool shutdown = false, bool restart = false,
+	int screenshotWidth = 0, int screenshotHeight = 0, std::uintmax_t screenshotBytes = 0,
+	std::uintmax_t screenshotNonzeroPixels = 0, std::uintmax_t screenshotDistinctColors = 0)
 {
 	if (!path || !*path)
 		return;
 	std::ofstream output(path, std::ios::binary | std::ios::trunc);
 	if (!output)
 		return;
-	output << "{\n  \"test\": \"" << JsonEscape(test) << "\",\n"
+	output << "{\n  \"schema\": \"omnipack-release-evidence\",\n"
+		<< "  \"schema_version\": 1,\n"
+		<< "  \"test\": \"" << JsonEscape(test) << "\",\n"
 		<< "  \"passed\": " << (passed ? "true" : "false") << ",\n"
-		<< "  \"status\": \"" << JsonEscape(status) << "\"";
+		<< "  \"status\": \"" << (passed ? "PASS" : "FAIL") << "\",\n"
+		<< "  \"reason\": \"" << JsonEscape(status) << "\"";
 	if (artifact)
 		output << ",\n  \"artifact\": \"" << JsonEscape(artifact) << "\"";
 	if (std::strcmp(test, "sdl3_gui") == 0)
+	{
+		const auto screenshotPixelCount = screenshotWidth > 0 && screenshotHeight > 0
+			? static_cast<std::uintmax_t>(screenshotWidth) * static_cast<std::uintmax_t>(screenshotHeight)
+			: 0;
 		output << ",\n  \"window_created\": " << (window ? "true" : "false")
 			<< ",\n  \"frame_rendered\": " << (frame ? "true" : "false")
 			<< ",\n  \"resize\": " << (resize ? "true" : "false")
@@ -127,9 +332,122 @@ void WriteSimpleJson(const char *path, const char *test, bool passed, const char
 			<< ",\n  \"text_input\": " << (textInput ? "true" : "false")
 			<< ",\n  \"clipboard\": " << (clipboard ? "true" : "false")
 			<< ",\n  \"screenshot_created\": " << (screenshot ? "true" : "false")
+			<< ",\n  \"screenshot_width\": " << screenshotWidth
+			<< ",\n  \"screenshot_height\": " << screenshotHeight
+			<< ",\n  \"screenshot_bytes\": " << screenshotBytes
+			<< ",\n  \"screenshot_pixel_count\": " << screenshotPixelCount
+			<< ",\n  \"screenshot_nonzero_pixels\": " << screenshotNonzeroPixels
+			<< ",\n  \"screenshot_distinct_colors\": " << screenshotDistinctColors
 			<< ",\n  \"clean_shutdown\": " << (shutdown ? "true" : "false")
 			<< ",\n  \"restart\": " << (restart ? "true" : "false");
+	}
 	output << "\n}\n";
+}
+
+struct BmpContentMetrics
+{
+	bool valid = false;
+	int width = 0;
+	int height = 0;
+	std::uintmax_t bytes = 0;
+	std::uintmax_t nonzeroPixels = 0;
+	std::uintmax_t distinctColors = 0;
+};
+
+BmpContentMetrics InspectBmpContent(const std::filesystem::path &path)
+{
+	BmpContentMetrics metrics;
+	std::ifstream input(path, std::ios::binary);
+	if (!input)
+		return metrics;
+	std::vector<unsigned char> data(
+		(std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+	metrics.bytes = data.size();
+	if (data.size() < 54 || data[0] != 'B' || data[1] != 'M')
+		return metrics;
+	auto read16 = [&](std::size_t offset) {
+		return static_cast<std::uint16_t>(data[offset]) |
+			(static_cast<std::uint16_t>(data[offset + 1]) << 8);
+	};
+	auto read32 = [&](std::size_t offset) {
+		return static_cast<std::uint32_t>(data[offset]) |
+			(static_cast<std::uint32_t>(data[offset + 1]) << 8) |
+			(static_cast<std::uint32_t>(data[offset + 2]) << 16) |
+			(static_cast<std::uint32_t>(data[offset + 3]) << 24);
+	};
+	const auto pixelOffset = static_cast<std::uint64_t>(read32(10));
+	const auto rawWidth = static_cast<std::int32_t>(read32(18));
+	const auto rawHeight = static_cast<std::int32_t>(read32(22));
+	const auto bitsPerPixel = read16(28);
+	const auto compression = read32(30);
+	const bool bitfields = bitsPerPixel == 32 && compression == 3;
+	if (rawWidth <= 0 || rawHeight == 0 || rawHeight == INT32_MIN ||
+		(bitsPerPixel != 24 && bitsPerPixel != 32) || (compression != 0 && !bitfields))
+	{
+		return metrics;
+	}
+	std::uint32_t rgbMask = 0x00FFFFFFU;
+	if (bitfields)
+	{
+		if (data.size() < 66 || pixelOffset < 66)
+			return metrics;
+		const auto redMask = read32(54);
+		const auto greenMask = read32(58);
+		const auto blueMask = read32(62);
+		if (!redMask || !greenMask || !blueMask ||
+			(redMask & greenMask) || (redMask & blueMask) || (greenMask & blueMask))
+		{
+			return metrics;
+		}
+		rgbMask = redMask | greenMask | blueMask;
+	}
+	const auto width = static_cast<std::uint64_t>(rawWidth);
+	const auto height = static_cast<std::uint64_t>(rawHeight < 0 ? -rawHeight : rawHeight);
+	const auto bytesPerPixel = static_cast<std::uint64_t>(bitsPerPixel / 8);
+	if (width > UINT64_MAX / bitsPerPixel)
+		return metrics;
+	const auto rowBits = width * bitsPerPixel;
+	const auto rowStride = ((rowBits + 31) / 32) * 4;
+	if (!rowStride || height > (UINT64_MAX - pixelOffset) / rowStride)
+		return metrics;
+	const auto requiredBytes = pixelOffset + height * rowStride;
+	if (pixelOffset < 54 || requiredBytes > data.size())
+		return metrics;
+
+	bool haveFirstColor = false;
+	bool hasDifferentColor = false;
+	std::uint32_t firstColor = 0;
+	for (std::uint64_t y = 0; y < height; ++y)
+	{
+		const auto rowOffset = pixelOffset + y * rowStride;
+		for (std::uint64_t x = 0; x < width; ++x)
+		{
+			const auto offset = rowOffset + x * bytesPerPixel;
+			const auto packed = static_cast<std::uint32_t>(data[offset]) |
+				(static_cast<std::uint32_t>(data[offset + 1]) << 8) |
+				(static_cast<std::uint32_t>(data[offset + 2]) << 16) |
+				(bitsPerPixel == 32 ? static_cast<std::uint32_t>(data[offset + 3]) << 24 : 0U);
+			const auto color = bitfields ? packed & rgbMask : packed & 0x00FFFFFFU;
+			if (color != 0)
+				++metrics.nonzeroPixels;
+			if (!haveFirstColor)
+			{
+				haveFirstColor = true;
+				firstColor = color;
+			}
+			else if (color != firstColor)
+			{
+				hasDifferentColor = true;
+			}
+		}
+	}
+	metrics.width = rawWidth;
+	metrics.height = static_cast<int>(height);
+	metrics.distinctColors = haveFirstColor ? (hasDifferentColor ? 2 : 1) : 0;
+	const auto pixelCount = width * height;
+	metrics.valid = pixelCount > 0 && metrics.nonzeroPixels >= std::max<std::uint64_t>(1, pixelCount / 100) &&
+		metrics.distinctColors >= 2;
+	return metrics;
 }
 
 constexpr std::size_t kWordCount = 16;
@@ -767,8 +1085,20 @@ int RunSDLGPUValidation(const char *jsonPath, bool forceInitializationFailure)
 
 int RunCPUFallbackValidation(const char *jsonPath)
 {
-	// This is intentionally a separate gate: forced GPU initialization failure
-	// must still leave the reference CPU stencil usable and finite.
+	// This gate must execute the production OmniAtmosphere path.  A direct CPU
+	// stencil call is insufficient because it cannot prove that a failed GPU
+	// dispatch is observed and replaced during the same atmosphere step.
+	CPUFallbackValidationEvidence evidence;
+	OmniCompute::ResetBackend("CPU fallback validation control");
+	auto control = MakeFallbackAtmosphere();
+	control.Step();
+	const auto controlSnapshot = CaptureFallbackAtmosphere(control);
+	evidence.controlNonFiniteCells = controlSnapshot.nonFiniteCells;
+
+	OmniCompute::ConfigureBackend(OmniComputeBackend::SDL_GPU_Vulkan,
+		InjectedFailingThermalExecutor, "prearmed initialization fallback validation");
+	evidence.initializationBackendPrearmed = OmniCompute::IsGPUAvailable() &&
+		OmniCompute::GetComputeBackend() == OmniComputeBackend::SDL_GPU_Vulkan;
 	std::string initializationError;
 #if TPT_SDL3 && TPT_SDLGPU_SHADER_AVAILABLE
 	const bool gpuInitialized = InitializeProductionCompute(initializationError, true);
@@ -777,25 +1107,83 @@ int RunCPUFallbackValidation(const char *jsonPath)
 	initializationError = "forced_initialization_failure";
 	OmniCompute::ResetBackend("forced GPU initialization failure; CPU fallback");
 #endif
-	const std::vector<float> temperature{ 290.0f, 292.0f, 296.0f, 301.0f };
-	const std::vector<float> conductivity(temperature.size(), 0.02f);
-	const std::vector<unsigned char> blocked(temperature.size(), 0);
-	const OmniThermalDiffusionInput input{
-		.width = 2, .height = 2, .periodic = false,
-		.timestepOverCellLengthSquared = 0.25f,
-		.temperature = temperature, .conductivity = conductivity, .blocked = blocked,
-	};
-	const auto reference = OmniCompute::ComputeThermalDiffusionReference(input);
-	const bool ran = !gpuInitialized && initializationError == "forced_initialization_failure" &&
-		OmniCompute::GetComputeBackend() == OmniComputeBackend::CPU && !reference.empty();
-	for (float value : reference)
-		if (!std::isfinite(value))
-			return (WriteFallbackJson(jsonPath, false, "cpu_reference_nonfinite"), kGPUInternalFailure);
-	WriteFallbackJson(jsonPath, ran, ran ? "GPU_init_failed_CPU_reference_continues" : initializationError.c_str());
+	evidence.initializationFailureForced = !gpuInitialized &&
+		initializationError == "forced_initialization_failure";
+	const auto initializationStatus = OmniCompute::GetStatus();
+	evidence.initializationBackendResetToCPU = initializationStatus.backend == OmniComputeBackend::CPU &&
+		!initializationStatus.available;
+	auto initializationPath = MakeFallbackAtmosphere();
+	initializationPath.Step();
+	const auto initializationSnapshot = CaptureFallbackAtmosphere(initializationPath);
+	evidence.initializationNonFiniteCells = initializationSnapshot.nonFiniteCells;
+	evidence.initializationControlStateMatch = SameFallbackAtmosphere(
+		controlSnapshot, initializationSnapshot);
+	evidence.initializationCPUPathExecuted = evidence.initializationBackendPrearmed &&
+		evidence.initializationFailureForced && evidence.initializationBackendResetToCPU &&
+		evidence.initializationControlStateMatch &&
+		initializationSnapshot.nonFiniteCells == 0;
+
+	// Inject one deterministic executor failure after advertising a GPU backend.
+	// The production step must call it, observe its error, reset the backend, and
+	// continue with the CPU face transport before the step returns.
+	fallbackExecutorInvocations = 0;
+	fallbackExecutorInputValid = false;
+	OmniCompute::ConfigureBackend(OmniComputeBackend::SDL_GPU_Vulkan,
+		InjectedFailingThermalExecutor, "injected runtime fallback validation");
+	evidence.runtimeFailureInjected = OmniCompute::IsGPUAvailable() &&
+		OmniCompute::GetComputeBackend() == OmniComputeBackend::SDL_GPU_Vulkan;
+	auto runtime = MakeFallbackAtmosphere();
+	const auto runtimeBefore = CaptureFallbackAtmosphere(runtime);
+	runtime.Step();
+	evidence.productionAtmosphereStepExecuted = true;
+	const auto runtimeSnapshot = CaptureFallbackAtmosphere(runtime);
+	const auto runtimeStatus = OmniCompute::GetStatus();
+	evidence.runtimeExecutorInvocations = fallbackExecutorInvocations;
+	evidence.runtimeExecutorInputValid = fallbackExecutorInputValid;
+	evidence.runtimeFailureObserved = evidence.runtimeExecutorInvocations == 1 &&
+		evidence.runtimeExecutorInputValid && runtimeStatus.detail ==
+		std::string("runtime thermal diffusion fallback: ") + kInjectedFallbackError;
+	evidence.backendResetToCPU = runtimeStatus.backend == OmniComputeBackend::CPU &&
+		!runtimeStatus.available;
+	evidence.backendAvailableAfterFailure = runtimeStatus.available;
+	evidence.cpuControlStateMatch = SameFallbackAtmosphere(controlSnapshot, runtimeSnapshot);
+	evidence.stateChangedSameStep = !SameFallbackAtmosphere(runtimeBefore, runtimeSnapshot);
+	evidence.sameStepCPUFallback = evidence.productionAtmosphereStepExecuted &&
+		evidence.runtimeFailureObserved && evidence.backendResetToCPU &&
+		evidence.cpuControlStateMatch && evidence.stateChangedSameStep;
+	evidence.runtimeNonFiniteCells = runtimeSnapshot.nonFiniteCells;
+	evidence.massResidualKg = runtimeSnapshot.massResidualKg;
+	evidence.energyResidualJ = runtimeSnapshot.energyResidualJ;
+	evidence.massResidualFinite = std::isfinite(controlSnapshot.massResidualKg) &&
+		std::isfinite(initializationSnapshot.massResidualKg) &&
+		std::isfinite(runtimeSnapshot.massResidualKg);
+	evidence.energyResidualFinite = std::isfinite(controlSnapshot.energyResidualJ) &&
+		std::isfinite(initializationSnapshot.energyResidualJ) &&
+		std::isfinite(runtimeSnapshot.energyResidualJ);
+	evidence.massResidualWithinTolerance = evidence.massResidualFinite &&
+		std::abs(controlSnapshot.massResidualKg) <= 1.0e-12 &&
+		std::abs(initializationSnapshot.massResidualKg) <= 1.0e-12 &&
+		std::abs(runtimeSnapshot.massResidualKg) <= 1.0e-12;
+	evidence.energyResidualWithinTolerance = evidence.energyResidualFinite &&
+		std::abs(controlSnapshot.energyResidualJ) <= 1.0e-8 &&
+		std::abs(initializationSnapshot.energyResidualJ) <= 1.0e-8 &&
+		std::abs(runtimeSnapshot.energyResidualJ) <= 1.0e-8;
+	evidence.backendDetail = runtimeStatus.detail;
+	evidence.passed = evidence.initializationCPUPathExecuted &&
+		evidence.runtimeFailureInjected && evidence.sameStepCPUFallback &&
+		evidence.runtimeNonFiniteCells == 0 && evidence.controlNonFiniteCells == 0 &&
+		evidence.initializationNonFiniteCells == 0 && evidence.massResidualFinite &&
+		evidence.energyResidualFinite && evidence.massResidualWithinTolerance &&
+		evidence.energyResidualWithinTolerance;
+	evidence.reason = evidence.passed
+		? "production_runtime_failure_same_step_cpu_fallback"
+		: (initializationError.empty() ? "cpu_fallback_validation_failed" : initializationError);
+	OmniCompute::ResetBackend("CPU fallback validation complete");
+	WriteFallbackJson(jsonPath, evidence);
 	PrintBool("cpu_fallback_tested", true);
-	PrintBool("cpu_fallback_passed", ran);
+	PrintBool("cpu_fallback_passed", evidence.passed);
 	PrintValue("fallback", "CPU");
-	return ran ? 0 : kGPUInternalFailure;
+	return evidence.passed ? 0 : kGPUInternalFailure;
 }
 
 int RunSDL3GUISmokeTest(const char *jsonPath)
@@ -818,7 +1206,7 @@ int RunSDL3GUISmokeTest(const char *jsonPath)
 	{
 		const auto error = std::string(SDL_GetError());
 		SDL_Quit();
-		WriteSimpleJson(jsonPath, "sdl3_gui", false, error.c_str(), nullptr, true);
+		WriteSimpleJson(jsonPath, "sdl3_gui", false, error.c_str(), nullptr, false);
 		return 12;
 	}
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, nullptr);
@@ -830,52 +1218,113 @@ int RunSDL3GUISmokeTest(const char *jsonPath)
 		WriteSimpleJson(jsonPath, "sdl3_gui", false, error.c_str(), nullptr, true, false);
 		return 13;
 	}
-	bool ok = SDL_SetRenderDrawColor(renderer, 0x11, 0x72, 0xA9, 0xFF) &&
-		SDL_RenderClear(renderer) && SDL_RenderPresent(renderer);
-	const bool resize = SDL_SetWindowSize(window, 480, 360);
+	const bool resize = SDL_SetWindowSize(window, 480, 360) && SDL_SyncWindow(window);
 	int resizedWidth = 0, resizedHeight = 0;
 	const bool resizeObserved = SDL_GetWindowSize(window, &resizedWidth, &resizedHeight) &&
 		resizedWidth == 480 && resizedHeight == 360;
-	const bool fullscreen = SDL_SetWindowFullscreen(window, true) && SDL_SetWindowFullscreen(window, false);
-	const bool textInput = SDL_StartTextInput(window) && SDL_StopTextInput(window);
+	const bool fullscreenEntered = SDL_SetWindowFullscreen(window, true) && SDL_SyncWindow(window) &&
+		(SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) != 0;
+	const bool fullscreenExited = SDL_SetWindowFullscreen(window, false) && SDL_SyncWindow(window) &&
+		(SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) == 0;
+	const bool fullscreen = fullscreenEntered && fullscreenExited;
+	const bool textInputStarted = SDL_StartTextInput(window) && SDL_TextInputActive(window);
+	const bool textInputStopped = SDL_StopTextInput(window) && !SDL_TextInputActive(window);
+	const bool textInput = textInputStarted && textInputStopped;
 	const bool clipboard = SDL_SetClipboardText("omnipack-gui-smoke") &&
 		([]() { char *text = SDL_GetClipboardText(); const bool same = text && std::strcmp(text, "omnipack-gui-smoke") == 0; SDL_free(text); return same; })();
+	SDL_Event queuedEvent{};
+	while (SDL_PollEvent(&queuedEvent))
+	{
+	}
 	SDL_Event keyEvent{};
+	const SDL_WindowID windowId = SDL_GetWindowID(window);
 	keyEvent.type = SDL_EVENT_KEY_DOWN;
+	keyEvent.key.windowID = windowId;
 	keyEvent.key.key = SDLK_A;
 	keyEvent.key.down = true;
-	const bool keyboard = SDL_PushEvent(&keyEvent);
+	const bool keyQueued = SDL_PushEvent(&keyEvent);
 	SDL_Event mouseEvent{};
 	mouseEvent.type = SDL_EVENT_MOUSE_MOTION;
+	mouseEvent.motion.windowID = windowId;
 	mouseEvent.motion.x = 12.0f;
 	mouseEvent.motion.y = 13.0f;
-	const bool mouse = SDL_PushEvent(&mouseEvent);
-	SDL_PumpEvents();
-	const bool frameRendered = ok;
-	SDL_Surface *surface = ok ? SDL_RenderReadPixels(renderer, nullptr) : nullptr;
+	const bool mouseQueued = SDL_PushEvent(&mouseEvent);
+	bool keyboard = false;
+	bool mouse = false;
+	while (SDL_PollEvent(&queuedEvent))
+	{
+		if (queuedEvent.type == SDL_EVENT_KEY_DOWN && queuedEvent.key.windowID == windowId &&
+			queuedEvent.key.key == SDLK_A && queuedEvent.key.down)
+			keyboard = true;
+		if (queuedEvent.type == SDL_EVENT_MOUSE_MOTION && queuedEvent.motion.windowID == windowId &&
+			std::abs(queuedEvent.motion.x - 12.0f) < 0.01f &&
+			std::abs(queuedEvent.motion.y - 13.0f) < 0.01f)
+		{
+			mouse = true;
+		}
+	}
+	keyboard = keyQueued && keyboard;
+	mouse = mouseQueued && mouse;
+
+	const SDL_FRect marker{ 64.0f, 54.0f, 224.0f, 148.0f };
+	const bool frameDrawn = SDL_SetRenderDrawColor(renderer, 0x11, 0x72, 0xA9, 0xFF) &&
+		SDL_RenderClear(renderer) &&
+		SDL_SetRenderDrawColor(renderer, 0xE8, 0xD4, 0x3A, 0xFF) &&
+		SDL_RenderFillRect(renderer, &marker);
+	// SDL invalidates the render target contents after Present. Read back the
+	// completed two-colour frame first, then present those same renderer bytes.
+	SDL_Surface *surface = frameDrawn ? SDL_RenderReadPixels(renderer, nullptr) : nullptr;
 	bool screenshotCreated = false;
+	int screenshotWidth = 0;
+	int screenshotHeight = 0;
+	std::uintmax_t screenshotBytes = 0;
+	std::uintmax_t screenshotNonzeroPixels = 0;
+	std::uintmax_t screenshotDistinctColors = 0;
 	if (surface)
 	{
 		screenshotCreated = SDL_SaveBMP(surface, artifact.c_str());
 		SDL_DestroySurface(surface);
+		if (screenshotCreated)
+		{
+			const auto metrics = InspectBmpContent(artifactPath);
+			screenshotWidth = metrics.width;
+			screenshotHeight = metrics.height;
+			screenshotBytes = metrics.bytes;
+			screenshotNonzeroPixels = metrics.nonzeroPixels;
+			screenshotDistinctColors = metrics.distinctColors;
+			screenshotCreated = metrics.valid;
+		}
 	}
-	else
-		screenshotCreated = false;
-	ok = frameRendered && resize && resizeObserved && fullscreen && textInput && clipboard && keyboard && mouse && screenshotCreated;
+	const bool frameRendered = frameDrawn && SDL_RenderPresent(renderer);
+	bool ok = frameRendered && resize && resizeObserved && fullscreen && textInput && clipboard && keyboard && mouse && screenshotCreated;
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
+	const bool firstCleanShutdown = SDL_WasInit(SDL_INIT_VIDEO) == 0;
+	ok = ok && firstCleanShutdown;
 	bool restart = false;
+	bool restartCleanShutdown = false;
 	if (ok && SDL_Init(SDL_INIT_VIDEO))
 	{
 		SDL_Window *second = SDL_CreateWindow("TPT-ZH OmniPack GUI Restart", 160, 120, SDL_WINDOW_HIDDEN);
-		restart = second != nullptr;
+		SDL_Renderer *secondRenderer = second ? SDL_CreateRenderer(second, nullptr) : nullptr;
+		restart = secondRenderer && SDL_SetRenderDrawColor(secondRenderer, 0x23, 0x45, 0x67, 0xFF) &&
+			SDL_RenderClear(secondRenderer) && SDL_RenderPresent(secondRenderer);
+		if (secondRenderer)
+			SDL_DestroyRenderer(secondRenderer);
 		if (second)
 			SDL_DestroyWindow(second);
 		SDL_Quit();
+		restartCleanShutdown = SDL_WasInit(SDL_INIT_VIDEO) == 0;
 	}
-	ok = ok && restart;
-	WriteSimpleJson(jsonPath, "sdl3_gui", ok, "sdl_init_window_render_resize_fullscreen_input_clipboard_shutdown", artifact.c_str(), true, frameRendered, resize && resizeObserved, fullscreen, keyboard, mouse, textInput, clipboard, screenshotCreated, true, restart);
+	const bool cleanShutdown = firstCleanShutdown && restartCleanShutdown;
+	ok = ok && restart && restartCleanShutdown;
+	WriteSimpleJson(jsonPath, "sdl3_gui", ok,
+		"sdl_init_window_render_readback_present_resize_fullscreen_event_clipboard_shutdown",
+		artifact.c_str(), true, frameRendered, resize && resizeObserved, fullscreen,
+		keyboard, mouse, textInput, clipboard, screenshotCreated, cleanShutdown, restart,
+		screenshotWidth, screenshotHeight, screenshotBytes,
+		screenshotNonzeroPixels, screenshotDistinctColors);
 	return ok ? 0 : 14;
 #endif
 }

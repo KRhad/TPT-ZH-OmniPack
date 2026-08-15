@@ -67,8 +67,31 @@ class AnalyzeStressResultTest(unittest.TestCase):
             "roundtrip_pass": True,
             "long_run": long_run,
             "smoke_run": smoke,
+            "simulation_steps": 0,
+            "heartbeat_count": 0,
+            "heartbeat_interval_seconds": 30.0,
+            "maximum_heartbeat_gap_seconds": 0.0,
+            "stalls": 0,
+            "nan_count": 0,
+            "inf_count": 0,
+            "omni_atmosphere_active": False,
+            "atmosphere_mass_initial_kg": 0.0,
+            "atmosphere_mass_final_kg": 0.0,
+            "atmosphere_mass_min_kg": 0.0,
+            "atmosphere_mass_max_kg": 0.0,
+            "atmosphere_mass_residual_abs_max_kg": 0.0,
+            "species_mass_residual_abs_max_kg": 0.0,
+            "minimum_density_kg_m3": 0.0,
+            "maximum_density_kg_m3": 0.0,
+            "minimum_pressure_pa": 0.0,
+            "maximum_pressure_pa": 0.0,
+            "minimum_temperature_k": 0.0,
+            "maximum_temperature_k": 0.0,
         }
         if long_run:
+            duration = 2 if smoke else 7200
+            heartbeat_elapsed = [0.0, float(duration)] if smoke else [float(value) for value in range(0, 7201, 60)]
+            simulation_steps = [int(value * 60) for value in heartbeat_elapsed]
             result.update(
                 {
                     "long_run_save_load_cycles": 10,
@@ -77,8 +100,44 @@ class AnalyzeStressResultTest(unittest.TestCase):
                     "long_run_settings_recovery_pass": True,
                     "long_run_checkpoint_save_ms_total": 100.0,
                     "long_run_checkpoint_load_ms_total": 80.0,
+                    "simulation_steps": simulation_steps[-1],
+                    "heartbeat_count": len(heartbeat_elapsed),
+                    "maximum_heartbeat_gap_seconds": 2.0 if smoke else 60.0,
+                    "omni_atmosphere_active": True,
+                    "atmosphere_mass_initial_kg": 100.0,
+                    "atmosphere_mass_final_kg": 100.0,
+                    "atmosphere_mass_min_kg": 100.0,
+                    "atmosphere_mass_max_kg": 100.0,
+                    "minimum_density_kg_m3": 1.0,
+                    "maximum_density_kg_m3": 1.2,
+                    "minimum_pressure_pa": 90000.0,
+                    "maximum_pressure_pa": 110000.0,
+                    "minimum_temperature_k": 280.0,
+                    "maximum_temperature_k": 1200.0,
                 }
             )
+            with (directory / "soak-heartbeat.csv").open(
+                "w", encoding="utf-8", newline=""
+            ) as stream:
+                writer = csv.writer(stream, lineterminator="\n")
+                writer.writerow((
+                    "elapsed_seconds", "simulation_steps", "particle_count",
+                    "atmosphere_mass_kg", "atmosphere_mass_residual_kg",
+                    "species_mass_residual_abs_max_kg", "species_n2_mass_kg",
+                    "species_o2_mass_kg", "species_ar_mass_kg",
+                    "species_co2_mass_kg", "species_h2o_mass_kg",
+                    "condensed_water_mass_kg", "non_finite_cells",
+                    "state_non_finite_cells", "minimum_density_kg_m3",
+                    "maximum_density_kg_m3", "minimum_pressure_pa",
+                    "maximum_pressure_pa", "minimum_temperature_k",
+                    "maximum_temperature_k", "nan_count", "inf_count", "stalls",
+                ))
+                for elapsed, steps in zip(heartbeat_elapsed, simulation_steps):
+                    writer.writerow((
+                        elapsed, steps, particles[-1], 100.0, 0.0, 0.0,
+                        75.0, 23.0, 1.0, 1.0, 0.0, 0.0, 0, 0,
+                        1.0, 1.2, 90000.0, 110000.0, 280.0, 1200.0, 0, 0, 0,
+                    ))
         if complete_gate_evidence:
             result.update(
                 {
@@ -159,6 +218,33 @@ class AnalyzeStressResultTest(unittest.TestCase):
         self.assertTrue(value["event_evidence_complete"])
         self.assertTrue(value["scenario_behavior_pass"])
         self.assertTrue(value["performance_gate_pass"])
+
+    def test_long_run_assessment_is_canonical_release_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [100, 90, 80, 80, 80, 80, 80, 80],
+                complete_gate_evidence=True,
+                sample_id="S20-FULL-CATALOG",
+                fixture_type_count=487,
+                fixture_created_type_count=484,
+                fixture_visible_type_count=466,
+                long_run=True,
+            )
+            value = analysis.analyze(directory)
+        self.assertEqual(value["schema"], "omnipack-release-evidence")
+        self.assertEqual(value["schema_version"], 1)
+        self.assertEqual(value["test"], "soak_2h")
+        self.assertEqual(value["status"], "PASS")
+        self.assertTrue(value["passed"])
+        self.assertEqual(value["wall_clock_seconds"], 7200.0)
+        self.assertEqual(value["candidate_sha256"], "B" * 64)
+        self.assertEqual(value["heartbeat_count"], 121)
+        self.assertEqual(value["simulation_steps"], 432000)
+        self.assertEqual(value["nan_count"], 0)
+        self.assertEqual(value["inf_count"], 0)
+        self.assertEqual(value["stalls"], 0)
 
     def test_monotonic_tail_growth_is_reported(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -399,6 +485,60 @@ class AnalyzeStressResultTest(unittest.TestCase):
         self.assertFalse(value["long_run_duration_pass"])
         self.assertFalse(value["long_run_gate_pass"])
         self.assertFalse(value["performance_gate_pass"])
+
+    def test_nonfinite_numeric_series_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(directory, [100, 90, 80, 80])
+            path = directory / "process-series.csv"
+            text = path.read_text(encoding="utf-8")
+            path.write_text(text.replace("120000000", "NaN", 1), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "non-finite"):
+                analysis.analyze(directory)
+
+    def test_long_run_heartbeat_gap_is_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [500, 490, 480, 480, 480, 480, 480, 480],
+                complete_gate_evidence=True,
+                sample_id="S20-FULL-CATALOG",
+                fixture_type_count=487,
+                fixture_created_type_count=484,
+                fixture_visible_type_count=466,
+                long_run=True,
+            )
+            path = directory / "soak-heartbeat.csv"
+            with path.open(encoding="utf-8", newline="") as stream:
+                rows = list(csv.reader(stream))
+            del rows[2]
+            with path.open("w", encoding="utf-8", newline="") as stream:
+                csv.writer(stream, lineterminator="\n").writerows(rows)
+            value = analysis.analyze(directory)
+        self.assertFalse(value["heartbeat_timing_pass"])
+        self.assertFalse(value["long_run_gate_pass"])
+
+    def test_long_run_summary_cannot_hide_nonzero_nan_count(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.fixture(
+                directory,
+                [500, 490, 480, 480, 480, 480, 480, 480],
+                complete_gate_evidence=True,
+                sample_id="S20-FULL-CATALOG",
+                fixture_type_count=487,
+                fixture_created_type_count=484,
+                fixture_visible_type_count=466,
+                long_run=True,
+            )
+            result_path = directory / "result.json"
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            result["nan_count"] = 1
+            result_path.write_text(json.dumps(result), encoding="utf-8")
+            value = analysis.analyze(directory)
+        self.assertFalse(value["heartbeat_summary_match"])
+        self.assertFalse(value["long_run_gate_pass"])
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <string_view>
 
@@ -138,8 +139,19 @@ int main()
 			corrupted = true;
 			break;
 		}
-	if (!corrupted || malformed.Serialise().first)
+	const auto malformedBytes = malformed.Serialise();
+	if (!corrupted || malformedBytes.first || !malformedBytes.second.empty())
 		return Fail("out-of-range corrosion progress payload was not rejected");
+	GameSave nonfiniteProgress = parsed;
+	nonfiniteProgress.omniCorrosionProgress[0] = std::numeric_limits<double>::quiet_NaN();
+	const auto nonfiniteProgressBytes = nonfiniteProgress.Serialise();
+	if (nonfiniteProgressBytes.first || !nonfiniteProgressBytes.second.empty())
+		return Fail("NaN corrosion progress was not rejected before OPS serialization");
+	GameSave nonfinitePassivation = parsed;
+	nonfinitePassivation.omniCorrosionPassivation[0] = std::numeric_limits<double>::infinity();
+	const auto nonfinitePassivationBytes = nonfinitePassivation.Serialise();
+	if (nonfinitePassivationBytes.first || !nonfinitePassivationBytes.second.empty())
+		return Fail("infinite corrosion passivation was not rejected before OPS serialization");
 	auto restored = Simulation::Factory();
 	restored->SetOmniSimulationMode(parsed.omniSimulationMode);
 	restored->Load(&parsed, true, { 0, 0 });
@@ -152,6 +164,24 @@ int main()
 		}
 	if (restoredIron < 0 || std::abs(restored->GetOmniCorrosionProgress(restoredIron) - saveProgress) > 1.0e-15)
 		return Fail("corrosion state did not survive OPS round trip");
+
+	auto sparkedIron = Enhanced();
+	constexpr int sparkX = 300;
+	constexpr int sparkY = 160;
+	const int sparkIron = CreateIron(*sparkedIron, sparkX, sparkY);
+	if (sparkIron < 0)
+		return Fail("could not create SPRK(IRON) corrosion fixture");
+	constexpr double sparkProgress = 0.25;
+	constexpr double sparkPassivation = 0.125;
+	sparkedIron->SetOmniCorrosionState(sparkIron, sparkProgress, sparkPassivation);
+	if (sparkedIron->create_part(sparkIron, sparkX, sparkY, PT_SPRK) != sparkIron ||
+		sparkedIron->parts[sparkIron].type != PT_SPRK ||
+		sparkedIron->parts[sparkIron].ctype != PT_IRON ||
+		sparkedIron->GetOmniCorrosionProgress(sparkIron) != sparkProgress ||
+		sparkedIron->GetOmniCorrosionPassivation(sparkIron) != sparkPassivation)
+	{
+		return Fail("SPRK(IRON) detached the authoritative corrosion sidecar");
+	}
 
 	auto before = salted->CreateSnapshot();
 	salted->SetOmniCorrosionState(saltIron, saveProgress + 0.1,
@@ -202,6 +232,7 @@ int main()
 	std::cout << "wet_passivation=" << wetPassivation << '\n';
 	std::cout << "zinc_protected_progress=0\n";
 	std::cout << "ops_roundtrip_progress=" << saveProgress << '\n';
+	std::cout << "sprk_corrosion_sidecar_preserved=true\n";
 	std::cout << "classic_lo2_path=true\n";
 	return 0;
 }

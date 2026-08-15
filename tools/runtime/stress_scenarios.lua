@@ -1,6 +1,9 @@
 local CONFIG_FILE = "stress-scenario.config"
 local RESULT_FILE = "stress-lua.result"
 local FRAME_SERIES_FILE = "frame-series.csv"
+local ATMOSPHERE_SERIES_FILE = "soak-heartbeat.csv"
+local ATMOSPHERE_HEARTBEAT_SECONDS = 30.0
+local STALL_THRESHOLD_SECONDS = 60.0
 
 local function read_config()
     local file = assert(io.open(CONFIG_FILE, "rb"), "cannot open " .. CONFIG_FILE)
@@ -23,6 +26,7 @@ local sample_seconds = assert(tonumber(config.sample_seconds), "invalid sample_s
 local stride = assert(tonumber(config.fixture_stride), "invalid fixture_stride")
 local smoke_run = config.smoke_run == "true"
 local long_run = config.long_run == "true"
+local long_run_checkpoint_target = smoke_run and 1 or 10
 assert(warmup_seconds >= 0 and sample_seconds > 0, "invalid duration")
 assert(stride >= 3 and stride <= 24, "fixture_stride must be between 3 and 24")
 if long_run then
@@ -181,6 +185,13 @@ local function configure_simulation()
     sim.heatSim(true)
     sim.ensureDeterminism(true)
     sim.randomSeed(11, 12, 13, 14)
+    if long_run then
+        sim.edgeMode(sim.EDGE_SOLID)
+        sim.omniSimulationMode(sim.OMNI_ENHANCED)
+        local atmosphere = sim.omniAtmosphere()
+        assert(atmosphere.active and atmosphere.available,
+            "formal long run did not activate OmniAtmosphere")
+    end
 end
 
 local function make(type, x, y, properties)
@@ -777,7 +788,9 @@ local function timed_save()
     local stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
     local elapsed_ms = (socket.getTime() - started) * 1000.0
     assert(type(stamp) == "string" and stamp:match("^[0-9A-Fa-f]+$") and #stamp == 10,
-        "saveStamp did not return a ten-character stamp ID")
+        "saveStamp did not return a ten-character stamp ID: value="
+        .. tostring(stamp) .. ",particles=" .. tostring(particle_count())
+        .. ",omni_mode=" .. tostring(sim.omniSimulationMode()))
     return stamp, elapsed_ms
 end
 
@@ -808,6 +821,14 @@ local function write_success(data)
         "long_run", "long_run_save_load_cycles", "long_run_language_switches",
         "long_run_module_toggle_cycles", "long_run_settings_recovery_pass",
         "long_run_checkpoint_save_ms_total", "long_run_checkpoint_load_ms_total",
+        "simulation_steps", "heartbeat_count", "heartbeat_interval_seconds",
+        "maximum_heartbeat_gap_seconds", "stalls", "nan_count", "inf_count",
+        "omni_atmosphere_active", "atmosphere_mass_initial_kg",
+        "atmosphere_mass_final_kg", "atmosphere_mass_min_kg",
+        "atmosphere_mass_max_kg", "atmosphere_mass_residual_abs_max_kg",
+        "species_mass_residual_abs_max_kg", "minimum_density_kg_m3",
+        "maximum_density_kg_m3", "minimum_pressure_pa", "maximum_pressure_pa",
+        "minimum_temperature_k", "maximum_temperature_k",
     }) do
         result:write(key .. "=" .. tostring(data[key]) .. "\n")
     end
@@ -817,14 +838,167 @@ end
 local runtime = {
     callback_registered = false,
     series = nil,
+    atmosphere_series = nil,
     long_run_save_load_cycles = 0,
     long_run_language_switches = 0,
     long_run_module_toggle_cycles = 0,
     long_run_checkpoint_save_ms_total = 0.0,
     long_run_checkpoint_load_ms_total = 0.0,
     language_probes = {},
+    heartbeat_count = 0,
+    maximum_heartbeat_gap_seconds = 0.0,
+    last_heartbeat_elapsed = nil,
+    stalls = 0,
+    nan_count = 0,
+    inf_count = 0,
+    omni_atmosphere_active = false,
+    atmosphere_mass_initial_kg = 0.0,
+    atmosphere_mass_final_kg = 0.0,
+    atmosphere_mass_min_kg = 0.0,
+    atmosphere_mass_max_kg = 0.0,
+    atmosphere_mass_residual_abs_max_kg = 0.0,
+    species_mass_residual_abs_max_kg = 0.0,
+    minimum_density_kg_m3 = 0.0,
+    maximum_density_kg_m3 = 0.0,
+    minimum_pressure_pa = 0.0,
+    maximum_pressure_pa = 0.0,
+    minimum_temperature_k = 0.0,
+    maximum_temperature_k = 0.0,
 }
 local tick_callback
+
+local atmosphere_species = { "N2", "O2", "Ar", "CO2", "H2O" }
+
+local function checked_finite(value, label)
+    assert(type(value) == "number", label .. " is not numeric")
+    if value ~= value then
+        runtime.nan_count = runtime.nan_count + 1
+        error(label .. " is NaN")
+    end
+    if value == math.huge or value == -math.huge then
+        runtime.inf_count = runtime.inf_count + 1
+        error(label .. " is infinite")
+    end
+    return value
+end
+
+local function record_atmosphere_heartbeat(now, force)
+    if not long_run then
+        return
+    end
+    local elapsed = math.max(0.0, now - runtime.phase_started)
+    if not force and now < runtime.next_atmosphere_sample then
+        return
+    end
+    if force and runtime.last_heartbeat_elapsed
+        and elapsed - runtime.last_heartbeat_elapsed < 0.001 then
+        return
+    end
+    local atmosphere = sim.omniAtmosphere()
+    assert(atmosphere.active and atmosphere.available,
+        "OmniAtmosphere became inactive during formal long run")
+    runtime.omni_atmosphere_active = true
+    local mass = checked_finite(atmosphere.mass_kg, "atmosphere mass")
+    local condensed = checked_finite(
+        atmosphere.condensed_water_mass_kg, "condensed water mass")
+    local mass_residual = checked_finite(
+        atmosphere.mass_residual_kg, "atmosphere mass residual")
+    local minimum_density = checked_finite(
+        atmosphere.minimum_density_kg_m3, "minimum atmosphere density")
+    local maximum_density = checked_finite(
+        atmosphere.maximum_density_kg_m3, "maximum atmosphere density")
+    local minimum_pressure = checked_finite(
+        atmosphere.minimum_pressure_pa, "minimum atmosphere pressure")
+    local maximum_pressure = checked_finite(
+        atmosphere.maximum_pressure_pa, "maximum atmosphere pressure")
+    local minimum_temperature = checked_finite(
+        atmosphere.minimum_temperature_k, "minimum atmosphere temperature")
+    local maximum_temperature = checked_finite(
+        atmosphere.maximum_temperature_k, "maximum atmosphere temperature")
+    assert(mass >= 0.0 and condensed >= 0.0,
+        "atmosphere mass became negative")
+    assert(minimum_density > 0.0 and maximum_density >= minimum_density,
+        "atmosphere density range is invalid")
+    assert(minimum_pressure > 0.0 and maximum_pressure >= minimum_pressure,
+        "atmosphere pressure range is invalid")
+    assert(minimum_temperature > 0.0 and maximum_temperature >= minimum_temperature,
+        "atmosphere temperature range is invalid")
+    assert(atmosphere.non_finite_cells == 0
+        and atmosphere.state_non_finite_cells == 0,
+        "OmniAtmosphere reported non-finite state cells")
+
+    local species = {}
+    local species_total = 0.0
+    local species_residual_abs_max = 0.0
+    for _, name in ipairs(atmosphere_species) do
+        local value = checked_finite(
+            atmosphere.species_mass_kg[name], "species mass " .. name)
+        local residual = checked_finite(
+            atmosphere.species_mass_residual_kg[name],
+            "species mass residual " .. name)
+        assert(value >= 0.0, "species mass became negative: " .. name)
+        species[name] = value
+        species_total = species_total + value
+        species_residual_abs_max = math.max(
+            species_residual_abs_max, math.abs(residual))
+    end
+    assert(math.abs((species_total + condensed) - mass) <= 1.0e-8,
+        "atmosphere species masses no longer close to total mass")
+    assert(math.abs(mass_residual) <= 1.0e-8,
+        "atmosphere mass residual exceeded long-run tolerance")
+    assert(species_residual_abs_max <= 1.0e-8,
+        "atmosphere species residual exceeded long-run tolerance")
+
+    runtime.heartbeat_count = runtime.heartbeat_count + 1
+    if runtime.last_heartbeat_elapsed then
+        runtime.maximum_heartbeat_gap_seconds = math.max(
+            runtime.maximum_heartbeat_gap_seconds,
+            elapsed - runtime.last_heartbeat_elapsed)
+    end
+    runtime.last_heartbeat_elapsed = elapsed
+    runtime.atmosphere_mass_final_kg = mass
+    if runtime.heartbeat_count == 1 then
+        runtime.atmosphere_mass_initial_kg = mass
+        runtime.atmosphere_mass_min_kg = mass
+        runtime.atmosphere_mass_max_kg = mass
+        runtime.minimum_density_kg_m3 = minimum_density
+        runtime.maximum_density_kg_m3 = maximum_density
+        runtime.minimum_pressure_pa = minimum_pressure
+        runtime.maximum_pressure_pa = maximum_pressure
+        runtime.minimum_temperature_k = minimum_temperature
+        runtime.maximum_temperature_k = maximum_temperature
+    else
+        runtime.atmosphere_mass_min_kg = math.min(runtime.atmosphere_mass_min_kg, mass)
+        runtime.atmosphere_mass_max_kg = math.max(runtime.atmosphere_mass_max_kg, mass)
+        runtime.minimum_density_kg_m3 = math.min(
+            runtime.minimum_density_kg_m3, minimum_density)
+        runtime.maximum_density_kg_m3 = math.max(
+            runtime.maximum_density_kg_m3, maximum_density)
+        runtime.minimum_pressure_pa = math.min(
+            runtime.minimum_pressure_pa, minimum_pressure)
+        runtime.maximum_pressure_pa = math.max(
+            runtime.maximum_pressure_pa, maximum_pressure)
+        runtime.minimum_temperature_k = math.min(
+            runtime.minimum_temperature_k, minimum_temperature)
+        runtime.maximum_temperature_k = math.max(
+            runtime.maximum_temperature_k, maximum_temperature)
+    end
+    runtime.atmosphere_mass_residual_abs_max_kg = math.max(
+        runtime.atmosphere_mass_residual_abs_max_kg, math.abs(mass_residual))
+    runtime.species_mass_residual_abs_max_kg = math.max(
+        runtime.species_mass_residual_abs_max_kg, species_residual_abs_max)
+    runtime.atmosphere_series:write(string.format(
+        "%.6f,%d,%d,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%d,%d,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%d,%d,%d\n",
+        elapsed, runtime.sample_frames, particle_count(), mass, mass_residual,
+        species_residual_abs_max, species.N2, species.O2, species.Ar,
+        species.CO2, species.H2O, condensed, atmosphere.non_finite_cells,
+        atmosphere.state_non_finite_cells, minimum_density, maximum_density,
+        minimum_pressure, maximum_pressure, minimum_temperature,
+        maximum_temperature, runtime.nan_count, runtime.inf_count,
+        runtime.stalls))
+    runtime.atmosphere_series:flush()
+    runtime.next_atmosphere_sample = now + ATMOSPHERE_HEARTBEAT_SECONDS
+end
 
 local long_run_modules = {
     "metallurgy",
@@ -885,6 +1059,10 @@ local function write_failure(error_text)
         runtime.series:close()
         runtime.series = nil
     end
+    if runtime.atmosphere_series then
+        runtime.atmosphere_series:close()
+        runtime.atmosphere_series = nil
+    end
     if runtime.callback_registered and tick_callback then
         event.unregister(event.tick, tick_callback)
         runtime.callback_registered = false
@@ -907,9 +1085,16 @@ local function begin_sample(now)
     runtime.signal_count_total = 0
     runtime.signal_count_peak_per_frame = 0
     if long_run then
-        runtime.long_run_checkpoint_interval = sample_seconds / 10.0
+        runtime.long_run_checkpoint_interval =
+            sample_seconds / long_run_checkpoint_target
         runtime.next_long_run_checkpoint =
             now + runtime.long_run_checkpoint_interval
+        runtime.next_atmosphere_sample = now
+        runtime.atmosphere_series = assert(io.open(ATMOSPHERE_SERIES_FILE, "wb"))
+        runtime.atmosphere_series:write(
+            "elapsed_seconds,simulation_steps,particle_count,atmosphere_mass_kg,atmosphere_mass_residual_kg,species_mass_residual_abs_max_kg,species_n2_mass_kg,species_o2_mass_kg,species_ar_mass_kg,species_co2_mass_kg,species_h2o_mass_kg,condensed_water_mass_kg,non_finite_cells,state_non_finite_cells,minimum_density_kg_m3,maximum_density_kg_m3,minimum_pressure_pa,maximum_pressure_pa,minimum_temperature_k,maximum_temperature_k,nan_count,inf_count,stalls\n")
+        runtime.atmosphere_series:flush()
+        record_atmosphere_heartbeat(now, true)
     end
     runtime.series = assert(io.open(FRAME_SERIES_FILE, "wb"))
     runtime.series:write("elapsed_seconds,frames,particles\n")
@@ -929,6 +1114,11 @@ local function finish_sample(now)
         final_before_save))
     runtime.series:close()
     runtime.series = nil
+    if long_run then
+        record_atmosphere_heartbeat(now, true)
+        runtime.atmosphere_series:close()
+        runtime.atmosphere_series = nil
+    end
 
     assert(runtime.sample_frames > 0, "sample completed without simulation frames")
     if #runtime.sample_frame_times == 0 then
@@ -943,20 +1133,29 @@ local function finish_sample(now)
 
     local long_run_settings_recovery_pass = true
     if long_run then
-        assert(runtime.long_run_save_load_cycles == 10,
-            "long run did not complete ten OPS cycles")
-        assert(runtime.long_run_language_switches == 10,
-            "long run did not complete ten language switches")
-        assert(runtime.long_run_module_toggle_cycles == 10,
-            "long run did not complete ten module toggle cycles")
+        assert(runtime.long_run_save_load_cycles == long_run_checkpoint_target,
+            "long run did not complete the required OPS cycles")
+        assert(runtime.long_run_language_switches == long_run_checkpoint_target,
+            "long run did not complete the required language switches")
+        assert(runtime.long_run_module_toggle_cycles == long_run_checkpoint_target,
+            "long run did not complete the required module toggle cycles")
+        local restored_language = sim.omniLanguage(runtime.initial_language)
         local final_language = sim.omniLanguage()
-        long_run_settings_recovery_pass = final_language == runtime.initial_language
+        long_run_settings_recovery_pass =
+            restored_language == runtime.initial_language
+            and final_language == runtime.initial_language
         for _, module_name in ipairs(long_run_modules) do
             long_run_settings_recovery_pass = long_run_settings_recovery_pass
                 and sim.omniModuleEnabled(module_name) == true
         end
         assert(long_run_settings_recovery_pass,
             "long-run language or module settings were not restored")
+        assert(runtime.heartbeat_count >= math.floor(sample_elapsed / 60.0) + 1,
+            "formal long run did not persist heartbeats every 30-60 seconds")
+        assert(runtime.stalls == 0,
+            "formal long run observed a simulation stall")
+        assert(runtime.nan_count == 0 and runtime.inf_count == 0,
+            "formal long run observed non-finite diagnostics")
     end
 
     create_recovery_markers()
@@ -1054,6 +1253,40 @@ local function finish_sample(now)
             "%.6f", runtime.long_run_checkpoint_save_ms_total),
         long_run_checkpoint_load_ms_total = string.format(
             "%.6f", runtime.long_run_checkpoint_load_ms_total),
+        simulation_steps = runtime.sample_frames,
+        heartbeat_count = runtime.heartbeat_count,
+        heartbeat_interval_seconds = string.format(
+            "%.6f", ATMOSPHERE_HEARTBEAT_SECONDS),
+        maximum_heartbeat_gap_seconds = string.format(
+            "%.6f", runtime.maximum_heartbeat_gap_seconds),
+        stalls = runtime.stalls,
+        nan_count = runtime.nan_count,
+        inf_count = runtime.inf_count,
+        omni_atmosphere_active = tostring(runtime.omni_atmosphere_active),
+        atmosphere_mass_initial_kg = string.format(
+            "%.17g", runtime.atmosphere_mass_initial_kg),
+        atmosphere_mass_final_kg = string.format(
+            "%.17g", runtime.atmosphere_mass_final_kg),
+        atmosphere_mass_min_kg = string.format(
+            "%.17g", runtime.atmosphere_mass_min_kg),
+        atmosphere_mass_max_kg = string.format(
+            "%.17g", runtime.atmosphere_mass_max_kg),
+        atmosphere_mass_residual_abs_max_kg = string.format(
+            "%.17g", runtime.atmosphere_mass_residual_abs_max_kg),
+        species_mass_residual_abs_max_kg = string.format(
+            "%.17g", runtime.species_mass_residual_abs_max_kg),
+        minimum_density_kg_m3 = string.format(
+            "%.17g", runtime.minimum_density_kg_m3),
+        maximum_density_kg_m3 = string.format(
+            "%.17g", runtime.maximum_density_kg_m3),
+        minimum_pressure_pa = string.format(
+            "%.17g", runtime.minimum_pressure_pa),
+        maximum_pressure_pa = string.format(
+            "%.17g", runtime.maximum_pressure_pa),
+        minimum_temperature_k = string.format(
+            "%.17g", runtime.minimum_temperature_k),
+        maximum_temperature_k = string.format(
+            "%.17g", runtime.maximum_temperature_k),
     })
     os.exit(0)
 end
@@ -1071,9 +1304,12 @@ local function tick_once()
     end
 
     if runtime.phase == "sample" and runtime.last_frame_started then
-        runtime.sample_frame_times[#runtime.sample_frame_times + 1] = math.max(
-            frame_started - runtime.last_frame_started,
-            0.000000001)
+        local frame_gap = math.max(
+            frame_started - runtime.last_frame_started, 0.000000001)
+        runtime.sample_frame_times[#runtime.sample_frame_times + 1] = frame_gap
+        if long_run and frame_gap > STALL_THRESHOLD_SECONDS then
+            runtime.stalls = runtime.stalls + 1
+        end
     end
     if runtime.phase == "sample" then
         runtime.last_frame_started = frame_started
@@ -1095,13 +1331,14 @@ local function tick_once()
 
     local now = socket.getTime()
     if runtime.phase == "sample" and long_run then
-        while runtime.long_run_save_load_cycles < 10
+        while runtime.long_run_save_load_cycles < long_run_checkpoint_target
             and now >= runtime.next_long_run_checkpoint do
             run_long_run_checkpoint()
             runtime.next_long_run_checkpoint = runtime.next_long_run_checkpoint
                 + runtime.long_run_checkpoint_interval
             now = socket.getTime()
         end
+        record_atmosphere_heartbeat(now, false)
     end
     if now >= runtime.next_particle_sample then
         local particles = particle_count()

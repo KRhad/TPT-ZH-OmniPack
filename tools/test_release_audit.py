@@ -75,10 +75,11 @@ ONE_ONE_RC_DOCUMENTS = ONE_ONE_COMMON_DOCUMENTS | {"RELEASE-CANDIDATE.md"}
 ONE_ONE_STABLE_DOCUMENTS = ONE_ONE_COMMON_DOCUMENTS | {
     "README.en.md", "README.zh-CN.md", "CHANGELOG.en.txt", "CHANGELOG.zh-CN.md",
 }
-ONE_ONE_EXTRA_MEMBERS = {
+ONE_ONE_RC_EXTRA_MEMBERS = {
     "BUILD-INFO.txt", "RELEASE-VALIDATION.txt", "RELEASE-VALIDATION.json",
     "PACKAGE-MANIFEST.sha256",
 }
+ONE_ONE_STABLE_EXTRA_MEMBERS = {"BUILD-INFO.txt", "PACKAGE-MANIFEST.sha256"}
 FINAL_DOCUMENTS = NORMAL_DOCUMENTS - {
     "TESTING.zh-CN.md",
     "FONT-AUDIT.md",
@@ -177,27 +178,73 @@ def parse_package_manifest(data: bytes) -> dict[str, str]:
 def parse_manifest(data: bytes) -> tuple[dict[str, str], dict[str, tuple[int, str]]]:
     fields: dict[str, str] = {}
     members: dict[str, tuple[int, str]] = {}
-    for line in data.decode("utf-8").splitlines():
+    allowed_fields = {
+        "format", "kind", "version", "revision", "build_epoch",
+        "source_state", "source_worktree_sha256", "source_untracked_files",
+        "build_inputs_sha256", "build_inputs_ready",
+    }
+    try:
+        lines = data.decode("utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        raise ValueError("package manifest is not UTF-8") from exc
+    for line in lines:
+        if not line:
+            raise ValueError("package manifest contains a blank line")
         if line.startswith("member="):
-            name, size, digest = line.removeprefix("member=").split("|", 2)
+            parts = line.removeprefix("member=").split("|")
+            if len(parts) != 3:
+                raise ValueError("package manifest member line is invalid")
+            name, size, digest = parts
+            if (
+                not name
+                or name.startswith(("/", "\\"))
+                or "\\" in name
+                or ".." in name.split("/")
+                or not size.isdecimal()
+                or not re.fullmatch(r"[0-9A-F]{64}", digest)
+            ):
+                raise ValueError("package manifest member line is invalid")
             if name in members:
                 raise ValueError(f"duplicate manifest member: {name}")
             members[name] = (int(size), digest)
         elif "=" in line:
             key, value = line.split("=", 1)
+            if key not in allowed_fields or not value:
+                raise ValueError("package manifest field is invalid")
+            if key in fields:
+                raise ValueError(f"duplicate manifest field: {key}")
             fields[key] = value
+        else:
+            raise ValueError("package manifest line is invalid")
     return fields, members
 
 
-def package_stems(version: str) -> tuple[str, str]:
+def validate_artifact_stem(stem: str, label: str) -> str:
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", stem):
+        raise ValueError(f"invalid {label}: {stem!r}")
+    return stem
+
+
+def package_stems(
+    version: str,
+    artifact_stem: str | None = None,
+    symbol_artifact_stem: str | None = None,
+) -> tuple[str, str]:
     if version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}:
-        return (
+        defaults = (
             f"TPT-ZH-OmniPack-{version}-Windows-x64-SDL3",
             f"TPT-ZH-OmniPack-{version}-Windows-x64-Symbols",
         )
+    else:
+        defaults = (
+            f"TPT-ZH-OmniPack-{version}-Windows-x64",
+            f"TPT-ZH-OmniPack-{version}-Symbols-Windows-x64",
+        )
+    package_stem = artifact_stem or defaults[0]
+    symbol_stem = symbol_artifact_stem or defaults[1]
     return (
-        f"TPT-ZH-OmniPack-{version}-Windows-x64",
-        f"TPT-ZH-OmniPack-{version}-Symbols-Windows-x64",
+        validate_artifact_stem(package_stem, "artifact stem"),
+        validate_artifact_stem(symbol_stem, "symbol artifact stem"),
     )
 
 
@@ -217,9 +264,9 @@ def expected_members(stem: str, kind: str, version: str) -> set[str]:
     if kind == "debug-symbols":
         files = {SYMBOL_NAME}
     elif version == RELEASE_CANDIDATE_1_1_0_VERSION:
-        files = {EXECUTABLE_NAME, *ONE_ONE_RC_DOCUMENTS, *ONE_ONE_EXTRA_MEMBERS}
+        files = {EXECUTABLE_NAME, *ONE_ONE_RC_DOCUMENTS, *ONE_ONE_RC_EXTRA_MEMBERS}
     elif version == STABLE_VERSION:
-        files = {EXECUTABLE_NAME, *ONE_ONE_STABLE_DOCUMENTS, *ONE_ONE_EXTRA_MEMBERS}
+        files = {EXECUTABLE_NAME, *ONE_ONE_STABLE_DOCUMENTS, *ONE_ONE_STABLE_EXTRA_MEMBERS}
     elif kind in {"public-test", "release-candidate"}:
         files = {EXECUTABLE_NAME, *NORMAL_DOCUMENTS}
         if version == RELEASE_CANDIDATE_1_1_0_VERSION:
@@ -333,6 +380,8 @@ def audit_package(
     expect_symbols: bool = False,
     version: str = VERSION,
     kind: str | None = None,
+    artifact_stem: str | None = None,
+    symbol_artifact_stem: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
     profiles = {
@@ -356,7 +405,12 @@ def audit_package(
         kind = profiles[version]
     elif kind != profiles[version]:
         return [f"version {version} requires kind={profiles[version]}"]
-    package_stem, symbol_package_stem = package_stems(version)
+    try:
+        package_stem, symbol_package_stem = package_stems(
+            version, artifact_stem, symbol_artifact_stem
+        )
+    except ValueError as exc:
+        return [str(exc)]
     stem = symbol_package_stem if expect_symbols else package_stem
     if not package_path.is_file():
         return [f"package does not exist: {package_path}"]
@@ -407,6 +461,11 @@ def audit_package(
                     errors.append("clean package manifest reports untracked files")
             if kind == "release" and source_state != "clean":
                 errors.append("release package source state is not clean")
+            if version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}:
+                if not re.fullmatch(r"[0-9A-F]{64}", fields.get("build_inputs_sha256", "")):
+                    errors.append("package manifest build-input snapshot is invalid")
+                if fields.get("build_inputs_ready") != "true":
+                    errors.append("package manifest build inputs are not verified")
             expected_relative = {
                 name.removeprefix(f"{stem}/")
                 for name in expected - {archive_manifest_name}
@@ -528,6 +587,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--kind", choices=("public-test", "local-dev", "release-candidate", "release")
     )
+    parser.add_argument("--artifact-stem")
+    parser.add_argument("--symbol-artifact-stem")
     return parser
 
 
@@ -538,6 +599,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.symbols,
         version=args.version,
         kind=args.kind,
+        artifact_stem=args.artifact_stem,
+        symbol_artifact_stem=args.symbol_artifact_stem,
     ) + audit_hash_file(args.package)
     if errors:
         for error in errors:

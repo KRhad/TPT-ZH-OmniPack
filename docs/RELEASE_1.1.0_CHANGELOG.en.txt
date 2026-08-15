@@ -1,5 +1,7 @@
-1.1.0-rc1
+1.1.0
 - Added a production SDL_GPU Vulkan thermal-diffusion stencil with CPU reference comparison and automatic fallback.
 - Added detached Windows DWARF symbols, PE audit, deterministic package manifests and SHA-256 workflow.
 - CUDA remains an unimplemented optional future backend.
-- Stable publication is blocked until clean-machine, GUI, official-save and two-hour-soak gates are evidenced.
+- Added run-bound evidence schemas, upstream Git-object provenance, immutable staging candidates, independent runtime validation, and fail-closed final promotion.
+- Raised OmniAtmosphere OPS state to v3; historical v2 payloads are validated under their legacy contract, deterministically migrated to current floors, and rewritten only as v3.
+- Water/solution particle-to-gas mass and enthalpy coupling is covered; cross-phase parcel momentum and kinetic-energy transfer remains not implemented/not tested and is not claimed as conserved.

@@ -2,20 +2,103 @@ name: OmniPack 1.1.0 release validation
 
 on:
   workflow_dispatch:
-  push:
-    tags: ["omnipack-v1.1.0*"]
+    inputs:
+      confirm_stable:
+        description: "I am intentionally running the 1.1.0 stable gate"
+        required: true
+        type: boolean
+        default: false
+      official_corpus_run_id:
+        description: "Trusted workflow run containing the private omnipack-official-tpt-corpus artifact"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
-  windows-release-gate:
+  build-candidate:
     runs-on: windows-latest
     timeout-minutes: 240
-    env:
-      OMNI_CLEAN_MACHINE: "true"
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install MSYS2 UCRT64 toolchain
+      - name: Enforce an intentional stable invocation
+        shell: pwsh
+        env:
+          CONFIRM_STABLE: ${{ inputs.confirm_stable }}
+        run: |
+          if ($env:CONFIRM_STABLE -ne "true") {
+            throw "manual stable validation requires confirm_stable=true"
+          }
+      - name: Configure the authoritative upstream remote
+        shell: pwsh
+        run: |
+          $url = "https://github.com/The-Powder-Toy/The-Powder-Toy.git"
+          if (git remote get-url official 2>$null) {
+            git remote set-url official $url
+          } else {
+            git remote add official $url
+          }
+          if ((git remote get-url official).Trim() -ne $url) { throw "official remote URL is not authoritative" }
+      - name: Resolve private official corpus artifact run
+        id: corpus-run
+        shell: pwsh
+        env:
+          CORPUS_RUN_ID_INPUT: ${{ inputs.official_corpus_run_id }}
+          CORPUS_RUN_ID_DEFAULT: ${{ vars.OMNIPACK_OFFICIAL_CORPUS_RUN_ID }}
+        run: |
+          $runId = $env:CORPUS_RUN_ID_INPUT
+          if (-not $runId) { $runId = $env:CORPUS_RUN_ID_DEFAULT }
+          if ($runId -notmatch '^[0-9]+$') {
+            throw "a trusted official corpus artifact run id is required"
+          }
+          "run_id=$runId" >> $env:GITHUB_OUTPUT
+      - name: Verify official corpus producer run identity
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CORPUS_RUN_ID: ${{ steps.corpus-run.outputs.run_id }}
+          EXPECTED_WORKFLOW_ID: ${{ vars.OMNIPACK_OFFICIAL_CORPUS_WORKFLOW_ID }}
+        run: |
+          if ($env:EXPECTED_WORKFLOW_ID -notmatch '^[0-9]+$') {
+            throw "OMNIPACK_OFFICIAL_CORPUS_WORKFLOW_ID must identify the trusted corpus producer workflow"
+          }
+          $headers = @{
+            Authorization = "Bearer $env:GH_TOKEN"
+            Accept = "application/vnd.github+json"
+            "X-GitHub-Api-Version" = "2022-11-28"
+          }
+          $uri = "$env:GITHUB_API_URL/repos/$env:GITHUB_REPOSITORY/actions/runs/$env:CORPUS_RUN_ID"
+          $run = Invoke-RestMethod -Uri $uri -Headers $headers
+          if ([string]$run.id -ne $env:CORPUS_RUN_ID -or
+              [string]$run.workflow_id -ne $env:EXPECTED_WORKFLOW_ID -or
+              $run.status -ne "completed" -or $run.conclusion -ne "success" -or
+              $run.head_repository.full_name -ne $env:GITHUB_REPOSITORY -or
+              [string]$run.head_sha -notmatch '^[0-9a-f]{40}$') {
+            throw "official corpus artifact run is not a successful trusted same-repository producer run"
+          }
+      - name: Download private official corpus
+        uses: actions/download-artifact@v4
+        with:
+          name: omnipack-official-tpt-corpus
+          path: ${{ runner.temp }}/omnipack-official-corpus-input
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.corpus-run.outputs.run_id }}
+      - name: Validate injected corpus layout
+        shell: pwsh
+        run: |
+          $corpusRoot = Join-Path $env:RUNNER_TEMP "omnipack-official-corpus-input"
+          $manifests = @(Get-ChildItem -LiteralPath $corpusRoot -Filter provenance.json -Recurse -File)
+          if ($manifests.Count -ne 1) { throw "expected exactly one private official corpus provenance.json" }
+          $corpus = $manifests[0].Directory.FullName
+          $fixtures = @(Get-ChildItem $corpus -Recurse -File | Where-Object { $_.Extension -in '.cps','.stm' })
+          if ($fixtures.Count -eq 0) { throw "private official corpus contains no save fixtures" }
+          "OFFICIAL_SAVE_CORPUS=$corpus" >> $env:GITHUB_ENV
+      - name: Install MSYS2 UCRT64 build toolchain
         uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -27,12 +110,173 @@ jobs:
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-glslc
             mingw-w64-ucrt-x86_64-spirv-tools
-      - name: Run stable gate
+      - name: Build and validate staging candidate
         shell: pwsh
-        run: .\tools\release_1_1_0.ps1 -Channel stable -BuildDirectory build-release-1.1.0 -OutputDirectory dist\1.1.0
-      - name: Upload validation evidence
+        run: .\tools\release_1_1_0.ps1 -Channel stable -CandidateOnly -OfficialSaveCorpus $env:OFFICIAL_SAVE_CORPUS -BuildDirectory build-release-1.1.0 -OutputDirectory dist\1.1.0
+      - name: Prepare a current-run runtime-only transfer set
+        shell: pwsh
+        run: |
+          $dist = (Resolve-Path -LiteralPath "dist\1.1.0").Path
+          $validations = @(Get-ChildItem -LiteralPath $dist -Filter RELEASE-VALIDATION.json -Recurse -File)
+          if ($validations.Count -ne 1) { throw "expected exactly one current-run validation aggregate" }
+          $validation = $validations[0]
+          $metadata = Get-Content -LiteralPath $validation.FullName -Raw | ConvertFrom-Json
+          if ($metadata.run_id -notmatch '^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$') {
+            throw "current-run validation has an invalid run_id"
+          }
+          $candidate = Join-Path $dist "TPT-ZH-OmniPack-1.1.0-staging-$($metadata.run_id)-Windows-x64-SDL3.zip"
+          $symbols = Join-Path $dist "TPT-ZH-OmniPack-1.1.0-staging-$($metadata.run_id)-Windows-x64-Symbols.zip"
+          foreach ($path in @($candidate,"$candidate.sha256",$symbols,"$symbols.sha256")) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "current-run transfer input is absent: $path" }
+          }
+          $transfer = Join-Path $env:RUNNER_TEMP "omnipack-candidate-transfer"
+          if (Test-Path -LiteralPath $transfer) { throw "candidate transfer directory already exists" }
+          $validationTarget = Join-Path $transfer "release-validation\$($metadata.run_id)"
+          $validatorTarget = Join-Path $transfer "runtime-validator"
+          New-Item -ItemType Directory -Path $validationTarget,$validatorTarget | Out-Null
+          foreach ($path in @($candidate,"$candidate.sha256",$symbols,"$symbols.sha256")) {
+            Copy-Item -LiteralPath $path -Destination $transfer
+          }
+          Get-ChildItem -LiteralPath $validation.Directory.FullName -Force |
+            Copy-Item -Destination $validationTarget -Recurse -Force
+          Copy-Item -LiteralPath .\tools\test_clean_release.ps1 -Destination $validatorTarget
+      - name: Upload candidate and pre-final evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnipack-1.1.0-candidate-build
+          path: ${{ runner.temp }}/omnipack-candidate-transfer/
+
+  clean-runtime-validation:
+    needs: build-candidate
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download candidate artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: omnipack-1.1.0-candidate-build
+          path: runtime-input
+      - name: Validate exact candidate without source checkout or build toolchain setup
+        shell: pwsh
+        run: |
+          function Get-Sha256Hex {
+            param([Parameter(Mandatory = $true)][string] $Path)
+            $sha = [System.Security.Cryptography.SHA256]::Create()
+            try {
+              $stream = [IO.File]::OpenRead($Path)
+              try {
+                return ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '').ToUpperInvariant()
+              } finally { $stream.Dispose() }
+            } finally { $sha.Dispose() }
+          }
+          $validations = @(Get-ChildItem runtime-input -Filter RELEASE-VALIDATION.json -Recurse -File)
+          if ($validations.Count -ne 1) { throw "expected exactly one candidate validation aggregate" }
+          $validation = $validations[0]
+          $metadata = Get-Content -LiteralPath $validation.FullName -Raw | ConvertFrom-Json
+          $candidates = @(Get-ChildItem runtime-input -Filter "TPT-ZH-OmniPack-1.1.0-staging-$($metadata.run_id)-Windows-x64-SDL3.zip" -Recurse -File)
+          if ($candidates.Count -ne 1) { throw "expected exactly one candidate ZIP" }
+          $candidate = $candidates[0]
+          $sha = $metadata.candidate_sha256
+          if ($sha -notmatch '^[0-9A-F]{64}$') { throw "candidate SHA256 metadata is invalid" }
+          if ($metadata.commit -notmatch '^[0-9a-f]{40}$') { throw "candidate commit metadata is invalid" }
+          $runners = @(Get-ChildItem runtime-input -Filter test_clean_release.ps1 -Recurse -File)
+          if ($runners.Count -ne 1) { throw "expected exactly one runtime-only validator" }
+          $runner = $runners[0]
+          $validatorSha = Get-Sha256Hex $runner.FullName
+          & $runner.FullName -PackageZip $candidate.FullName -OutputJson "$PWD\windows-clean-machine.json" -RunId $metadata.run_id -GateName WindowsCleanMachine -ExpectedArtifactSha256 $sha -ExpectedValidatorSha256 $validatorSha
+          $clean = Get-Content -LiteralPath "$PWD\windows-clean-machine.json" -Raw | ConvertFrom-Json
+          if ($clean.status -ne "PASS" -or $clean.passed -ne $true -or
+              $clean.runtime_validator_sha256 -ne $validatorSha -or
+              $clean.validator_binding_checked -ne $true) {
+            throw "runtime validator did not produce SHA-bound clean-machine evidence"
+          }
+          $validatorDirectory = Join-Path $PWD "runtime-validator"
+          New-Item -ItemType Directory -Force -Path $validatorDirectory | Out-Null
+          $uploadedValidator = Join-Path $validatorDirectory "test_clean_release.ps1"
+          Copy-Item -LiteralPath $runner.FullName -Destination $uploadedValidator -Force
+          if ((Get-Sha256Hex $uploadedValidator) -ne $validatorSha) {
+            throw "uploaded runtime validator bytes changed"
+          }
+          $cleanEvidenceSha = Get-Sha256Hex "$PWD\windows-clean-machine.json"
+          $binding = [ordered]@{
+            schema = "omnipack-release-evidence"
+            schema_version = 1
+            test = "runtime_validator_binding"
+            run_id = $metadata.run_id
+            commit = $metadata.commit
+            status = "PASS"
+            passed = $true
+            candidate_filename = $candidate.Name
+            candidate_sha256 = $sha
+            runtime_validator_filename = "test_clean_release.ps1"
+            runtime_validator_sha256 = $validatorSha
+            clean_machine_evidence_filename = "windows-clean-machine.json"
+            clean_machine_evidence_sha256 = $cleanEvidenceSha
+            created_at = [DateTime]::UtcNow.ToString("o")
+          }
+          [IO.File]::WriteAllText(
+            "$PWD\runtime-validator-binding.json",
+            ($binding | ConvertTo-Json -Depth 4) + [Environment]::NewLine,
+            [Text.UTF8Encoding]::new($false)
+          )
+      - name: Upload independent runtime evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: omnipack-1.1.0-validation
-          path: dist/1.1.0/
+          name: omnipack-1.1.0-windows-clean-runtime
+          path: |
+            windows-clean-machine.json
+            windows_clean_machine.stdout.txt
+            windows_clean_machine.stderr.txt
+            windows_clean_machine.inner.json
+            runtime-validator-binding.json
+            runtime-validator/test_clean_release.ps1
+
+  finalize-release:
+    needs: [build-candidate, clean-runtime-validation]
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download staging candidate and current-run evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: omnipack-1.1.0-candidate-build
+          path: ${{ runner.temp }}/omnipack-finalize-input
+      - name: Download independent clean runtime evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: omnipack-1.1.0-windows-clean-runtime
+          path: ${{ runner.temp }}/omnipack-clean-input
+      - name: Audit, reject bypasses, and atomically promote
+        shell: pwsh
+        run: |
+          $finalizeInput = Join-Path $env:RUNNER_TEMP "omnipack-finalize-input"
+          $cleanInput = Join-Path $env:RUNNER_TEMP "omnipack-clean-input"
+          $output = Join-Path $env:RUNNER_TEMP "omnipack-final-release"
+          $validation = Get-ChildItem $finalizeInput -Filter RELEASE-VALIDATION.json -Recurse -File
+          if (@($validation).Count -ne 1) { throw "expected exactly one current-run validation aggregate" }
+          $metadata = Get-Content -LiteralPath $validation.FullName -Raw | ConvertFrom-Json
+          $candidate = Get-ChildItem $finalizeInput -Filter "TPT-ZH-OmniPack-1.1.0-staging-$($metadata.run_id)-Windows-x64-SDL3.zip" -Recurse -File
+          $symbols = Get-ChildItem $finalizeInput -Filter "TPT-ZH-OmniPack-1.1.0-staging-$($metadata.run_id)-Windows-x64-Symbols.zip" -Recurse -File
+          $clean = Get-ChildItem $cleanInput -Filter windows-clean-machine.json -Recurse -File
+          $binding = Get-ChildItem $cleanInput -Filter runtime-validator-binding.json -Recurse -File
+          $validator = Get-ChildItem $cleanInput -Filter test_clean_release.ps1 -Recurse -File
+          if (@($candidate).Count -ne 1 -or @($symbols).Count -ne 1 -or
+              @($clean).Count -ne 1 -or @($binding).Count -ne 1 -or
+              @($validator).Count -ne 1) {
+            throw "candidate, symbols, clean evidence, validator binding, or validator is ambiguous or missing"
+          }
+          python .\tools\finalize_release_1_1_0.py `
+            --validation-json $validation.FullName `
+            --candidate $candidate.FullName `
+            --symbols $symbols.FullName `
+            --clean-machine-evidence $clean.FullName `
+            --runtime-validator-binding $binding.FullName `
+            --runtime-validator $validator.FullName `
+            --output-directory $output
+      - name: Upload promoted stable artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnipack-1.1.0-stable
+          path: ${{ runner.temp }}/omnipack-final-release/

@@ -66,6 +66,7 @@ class GameSave
 	std::pair<bool, std::vector<char>> serialiseOPS() const;
 
 	void MapPalette();
+	void ValidateOmniParticleSidecars() const;
 
 public:
 	Vec2<int> blockSize = { 0, 0 };
@@ -102,9 +103,13 @@ public:
 	// Versioned OmniAtmosphere payload. This is independent of the Legacy
 	// pressure/velocity/ambient-heat planes and is only applied when the caller
 	// requests pressure/field state during load or region paste.
-	static constexpr int OmniAtmosphereStateVersion = 2;
+	static constexpr int OmniAtmosphereLegacyStateVersion = 2;
+	static constexpr int OmniAtmosphereStateVersion = 3;
 	bool hasOmniAtmosphereState = false;
 	int omniAtmosphereStateVersion = 0;
+	// Transient provenance: legacy v2 input is canonicalized to v3 during read.
+	// This flag is intentionally not serialized into the v3 payload.
+	bool omniAtmosphereMigratedFromLegacyV2 = false;
 	std::vector<ByteString> omniAtmosphereSpecies;
 	std::vector<double> omniAtmosphereSpeciesMassDensity;
 	std::vector<double> omniAtmosphereMomentumX;

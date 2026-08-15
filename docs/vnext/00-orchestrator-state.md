@@ -169,7 +169,7 @@ LOAD_BOUNDARY_CLOSURE_HEAD=a09c6d716
 REPORT_COMMIT=SELF
 WORKTREE_DIRTY_AT_REPORT_START=false
 UPSTREAM_STABLE_VERSION=100.1 build 400
-UPSTREAM_MASTER_COMMIT=d768aeb89acad986bd252d7e904bf44bb374545f
+UPSTREAM_MASTER_COMMIT=2e47966b84b0d2f1750af0f82643791803537ea5
 UPSTREAM_PHASE_RECHECK=GREEN
 LOCAL_HISTORICAL_TAG_COLLISION=YELLOW
 FIXED_STEP_BENCHMARK=GREEN
@@ -205,11 +205,15 @@ OFF/ON behavior are recorded in `phase-1-profiler-export.md`. The red gate block
 production OmniAtmosphere work; it does not prevent beginning the isolated 1.0.2
 upstream compatibility audit.
 
-The 1.0.2 refresh is also **GREEN**: the official download page, GitHub latest
-release, annotated `v100.1.400` tag and official `master` all resolve to the same
-`d768aeb89` commit. A branch-only official fetch passed and zero upstream commits
-exist after the local 100.1 merge. The rejected tag-inclusive fetch was limited to
-the unrelated historical `v99.5.394` collision and did not overwrite local data.
+The 1.0.2 refresh was **GREEN** at its 2026-08-10 checkpoint: the official
+download page, GitHub latest release, annotated `v100.1.400` tag and official
+`master` then resolved to the same `d768aeb89` commit. The current 2026-08-16
+refresh is recorded in `02-upstream-status.md`: the latest non-prerelease remains
+the `v100.1.400` tag at `d768aeb89`, while official `master` is now `2e47966b8`
+with one upstream-only post-release commit. The separately named `stable` branch
+is an unrelated legacy 2018 ref and is not the release baseline.
+The rejected tag-inclusive fetch was limited to the unrelated historical
+`v99.5.394` collision and did not overwrite local data.
 
 The 1.0.3 UI/material checkpoint is **YELLOW**, not a simulation phase. The
 pre-existing data-driven material organization passes a new route-policy contract,
@@ -235,8 +239,10 @@ consumer was introduced. Its rollback point is `477372373`.
 The following Phase 5 paragraphs are historical checkpoint evidence, not the
 current 1.0.6 authority. At the original scaffold, version 1.0.5 was
 **IN_PROGRESS** from base `13b24f49e`. The phase-entry upstream
-refresh confirms the official 100.1 stable tag and master remain `d768aeb89`; local
-is 218 ahead and zero behind. The isolated PhysicalScale contract, standalone
+refresh confirmed that the official 100.1 stable tag and master then remained
+`d768aeb89`; local was 218 ahead and zero behind at that historical checkpoint.
+The 2026-08-16 refresh supersedes only that current-ref statement: the stable tag
+is unchanged and `master` has one later commit. The isolated PhysicalScale contract, standalone
 strict-double AtmosphereBench scaffold and shared contracts are clean-validated.
 One first-order Rusanov candidate is now implemented only as isolated 1D periodic
 uniform, pressure-pulse, density-advection, contact-discontinuity, near-vacuum-expansion, sealed Sod and smooth-grid-refinement debug probes. Scale, time policy and
@@ -396,9 +402,10 @@ not precede Windows Git on this CRLF checkout: doing so transiently reports roug
 1,116 false dirty paths and contaminates the VCS tag with `+`. The validated command
 PATH begins with `E:/Git/cmd`, then UCRT64, then MSYS2 `usr/bin`.
 
-The Phase 1 recheck read the official download page and official Git refs:
-`v100.1.400` and `master` remain `d768aeb89`. `git fetch official --tags --prune`
-safely rejected replacement of the local historical `v99.5.394` tag (local object
+The Phase 1 recheck historically found `v100.1.400` and `master` at
+`d768aeb89`. The authoritative 2026-08-16 refresh now records the same stable tag,
+but `master=2e47966b8` with one post-release commit. A prior
+`git fetch official --tags --prune` safely rejected replacement of the local historical `v99.5.394` tag (local object
 `7fa5ccf6...`, official tag object `f40a5862...`). It was not overwritten and has
 no effect on the current 100.1 baseline; resolve that unrelated tag collision only
 with an explicit maintenance decision.

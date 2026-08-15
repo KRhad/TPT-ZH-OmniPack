@@ -1,4 +1,5 @@
 #include "client/GameSave.h"
+#include "prefs/GlobalPrefs.h"
 #include "simulation/ElementClasses.h"
 #include "simulation/ElementDefs.h"
 #include "simulation/OmniAtmosphere.h"
@@ -15,6 +16,39 @@
 
 namespace
 {
+class ReplacementProbeSimulation : public Simulation
+{
+public:
+	using Simulation::BeginOmniWaterCouplingTick;
+	using Simulation::FinishOmniWaterCouplingTick;
+	void UpdateParticles(int, int) override {}
+};
+
+class UpdateLifecycleProbeSimulation : public Simulation
+{
+public:
+	int createdWater = -1;
+	void UpdateParticles(int, int) override
+	{
+		if (createdWater < 0)
+			createdWater = create_part(-1, 320, 200, PT_WATR);
+	}
+};
+
+class UpdateDeleteProbeSimulation : public Simulation
+{
+public:
+	int waterToDelete = -1;
+	void UpdateParticles(int, int) override
+	{
+		if (waterToDelete >= 0)
+		{
+			kill_part(waterToDelete);
+			waterToDelete = -1;
+		}
+	}
+};
+
 int Fail(std::string_view message)
 {
 	std::cerr << "omni-water-coupling-probe: FAIL " << message << std::endl;
@@ -67,6 +101,7 @@ double RunPressureEvaporation(float legacyPressure, double &resolvedPressurePa)
 
 int main()
 {
+	GlobalPrefs globalPrefs;
 	SimulationData simulationData;
 
 	auto injection = EnhancedSimulation();
@@ -149,6 +184,168 @@ int main()
 		phase->GetOmniWaterCouplingMetrics().phaseTypeChanges != 2)
 	{
 		return Fail("managed water enthalpy projection did not freeze and melt correctly");
+	}
+
+	// WATR is conductive, and the legacy fast spark path temporarily wraps it
+	// as SPRK(WATR). The Omni parcel must remain attached to the underlying
+	// water through an OPS checkpoint and the later SPRK -> WATR restoration.
+	auto spark = EnhancedSimulation();
+	constexpr int sparkX = 300;
+	constexpr int sparkY = 200;
+	const int sparkWater = spark->create_part(-1, sparkX, sparkY, PT_WATR);
+	if (sparkWater < 0)
+		return Fail("could not create the sparked-water persistence fixture");
+	spark->parts[sparkWater].temp = 330.0f;
+	AdvanceOneTick(*spark);
+	if (spark->parts[sparkWater].type != PT_WATR)
+		return Fail("heated sparked-water fixture changed phase before the spark test");
+	const double sparkMassBefore = spark->GetOmniWaterParcelMassKg(sparkWater);
+	const double sparkEnthalpyBefore = spark->GetOmniWaterParcelSpecificEnthalpyJPerKg(sparkWater);
+	const int sparked = spark->create_part(-1, sparkX, sparkY, PT_SPRK);
+	if (sparked != sparkWater || spark->parts[sparkWater].type != PT_SPRK ||
+		spark->parts[sparkWater].ctype != PT_WATR ||
+		spark->GetOmniWaterParcelMassKg(sparkWater) != sparkMassBefore ||
+		spark->GetOmniWaterParcelSpecificEnthalpyJPerKg(sparkWater) != sparkEnthalpyBefore)
+	{
+		return Fail("SPRK fast path detached the underlying WATR parcel state");
+	}
+	auto sparkSave = spark->Save(true, RES.OriginRect());
+	if (!sparkSave)
+		return Fail("could not create the sparked-water OPS checkpoint");
+	const auto sparkSerialised = sparkSave->Serialise();
+	if (sparkSerialised.first || sparkSerialised.second.empty())
+		return Fail("SPRK(WATR) parcel state was rejected by OPS serialization");
+	GameSave parsedSpark(sparkSerialised.second);
+	auto restoredSpark = Simulation::Factory();
+	restoredSpark->SetOmniSimulationMode(parsedSpark.omniSimulationMode);
+	restoredSpark->Load(&parsedSpark, true, { 0, 0 });
+	int restoredSparkWater = -1;
+	for (int index = 0; index < restoredSpark->parts.active; ++index)
+	{
+		if (restoredSpark->parts[index].type == PT_SPRK &&
+			restoredSpark->parts[index].ctype == PT_WATR)
+		{
+			restoredSparkWater = index;
+			break;
+		}
+	}
+	if (restoredSparkWater < 0 ||
+		restoredSpark->GetOmniWaterParcelMassKg(restoredSparkWater) != sparkMassBefore ||
+		restoredSpark->GetOmniWaterParcelSpecificEnthalpyJPerKg(restoredSparkWater) !=
+			sparkEnthalpyBefore)
+	{
+		return Fail("SPRK(WATR) parcel state did not survive the OPS round trip");
+	}
+
+	// Exercise an existing-ID transition sequence.  The initial PT_SPRK call
+	// deliberately uses the legacy spark fast path; the following ICEI/WATR
+	// calls use the general replacement path.  This proves sidecar continuity
+	// across both paths, but does not claim that the generic t == PT_SPRK branch
+	// is reachable through this public call shape.
+	auto directReplacement = std::make_unique<ReplacementProbeSimulation>();
+	directReplacement->SetOmniSimulationMode(OMNI_ENHANCED);
+	constexpr int replaceX = 340;
+	constexpr int replaceY = 200;
+	const int replaceWater = directReplacement->create_part(-1, replaceX, replaceY, PT_WATR);
+	if (replaceWater < 0)
+		return Fail("could not create direct replacement fixture");
+	const double replaceMass = directReplacement->GetOmniWaterParcelMassKg(replaceWater);
+	const double replaceEnthalpy =
+		directReplacement->GetOmniWaterParcelSpecificEnthalpyJPerKg(replaceWater);
+	if (directReplacement->create_part(replaceWater, replaceX, replaceY, PT_SPRK) != replaceWater ||
+		directReplacement->parts[replaceWater].type != PT_SPRK ||
+		directReplacement->parts[replaceWater].ctype != PT_WATR)
+	{
+		return Fail("create_part existing-ID managed replacement detached WATR state");
+	}
+	if (directReplacement->create_part(replaceWater, replaceX, replaceY, PT_ICEI) != replaceWater ||
+		directReplacement->GetOmniWaterParcelMassKg(replaceWater) != replaceMass ||
+		directReplacement->GetOmniWaterParcelSpecificEnthalpyJPerKg(replaceWater) != replaceEnthalpy)
+		return Fail("create_part existing-ID WATR -> ICEI replacement detached WATR state");
+	const auto iceThermalState = OmniThermal::WaterFromSpecificEnthalpy(replaceEnthalpy);
+	if (!std::isfinite(iceThermalState.temperatureK) ||
+		std::abs(double(directReplacement->parts[replaceWater].temp) -
+			iceThermalState.temperatureK) > 1.0e-3)
+		return Fail("WATR -> ICEI replacement left public temperature inconsistent with enthalpy");
+	if (directReplacement->create_part(replaceWater, replaceX, replaceY, PT_WATR) != replaceWater ||
+		directReplacement->GetOmniWaterParcelMassKg(replaceWater) != replaceMass ||
+		directReplacement->GetOmniWaterParcelSpecificEnthalpyJPerKg(replaceWater) != replaceEnthalpy)
+		return Fail("create_part existing-ID ICEI -> WATR replacement detached WATR state");
+	directReplacement->BeginOmniWaterCouplingTick();
+	if (directReplacement->create_part(replaceWater, replaceX, replaceY, PT_DUST) != replaceWater)
+		return Fail("create_part existing-ID non-water replacement failed");
+	directReplacement->FinishOmniWaterCouplingTick();
+	const auto replacementMetrics = directReplacement->GetOmniWaterCouplingMetrics();
+	if (directReplacement->GetOmniWaterParcelMassKg(replaceWater) != 0.0 ||
+		directReplacement->GetOmniWaterParcelSpecificEnthalpyJPerKg(replaceWater) != 0.0 ||
+		std::abs(replacementMetrics.externalWaterMassSinkKg - replaceMass) > 1.0e-15 ||
+		std::abs(replacementMetrics.externalWaterEnergySinkJ - replaceMass * replaceEnthalpy) > 1.0e-9 ||
+		std::abs(replacementMetrics.waterMassResidualKg) > 1.0e-12 ||
+		std::abs(replacementMetrics.coupledEnergyResidualJ) > 1.0e-6)
+	{
+		return Fail("non-water replacement did not clear and reconcile the WATR sidecar sink");
+	}
+	restoredSpark->parts[restoredSparkWater].life = 0;
+	AdvanceOneTick(*restoredSpark);
+	const auto restoredThermalState = OmniThermal::WaterFromSpecificEnthalpy(sparkEnthalpyBefore);
+	if (restoredSpark->parts[restoredSparkWater].type != PT_WATR ||
+		restoredSpark->GetOmniWaterParcelMassKg(restoredSparkWater) != sparkMassBefore ||
+		restoredSpark->GetOmniWaterParcelSpecificEnthalpyJPerKg(restoredSparkWater) !=
+			sparkEnthalpyBefore ||
+		!std::isfinite(restoredThermalState.temperatureK) ||
+		std::abs(double(restoredSpark->parts[restoredSparkWater].temp) -
+			restoredThermalState.temperatureK) > 1.0e-3 ||
+		std::abs(restoredSpark->GetOmniWaterCouplingMetrics().waterMassResidualKg) > 1.0e-12 ||
+		std::abs(restoredSpark->GetOmniWaterCouplingMetrics().coupledEnergyResidualJ) > 1.0e-6)
+	{
+		return Fail("SPRK -> WATR restoration did not preserve parcel state, temperature, and balance");
+	}
+	AdvanceOneTick(*restoredSpark);
+	const auto postDesparkMetrics = restoredSpark->GetOmniWaterCouplingMetrics();
+	if (!std::isfinite(postDesparkMetrics.coupledEnergyResidualJ) ||
+		std::abs(postDesparkMetrics.coupledEnergyResidualJ) > 1.0e-6 ||
+		std::abs(postDesparkMetrics.waterMassResidualKg) > 1.0e-12)
+		return Fail("post-despark coupling imported unledgered water energy");
+
+	auto updateLifecycle = std::make_unique<UpdateLifecycleProbeSimulation>();
+	updateLifecycle->gravityMode = GRAV_OFF;
+	updateLifecycle->SetEdgeMode(EDGE_SOLID);
+	updateLifecycle->SetOmniSimulationMode(OMNI_ENHANCED);
+	AdvanceOneTick(*updateLifecycle);
+	const auto updateLifecycleMetrics = updateLifecycle->GetOmniWaterCouplingMetrics();
+	const double updateLifecycleMass = updateLifecycle->GetOmniWaterParcelMassKg(
+		updateLifecycle->createdWater);
+	if (updateLifecycle->createdWater < 0 || !(updateLifecycleMass > 0.0) ||
+		std::abs(updateLifecycleMetrics.externalWaterMassSourceKg - updateLifecycleMass) > 1.0e-15 ||
+		std::abs(updateLifecycleMetrics.waterMassResidualKg) > 1.0e-12 ||
+		std::abs(updateLifecycleMetrics.coupledEnergyResidualJ) > 1.0e-6)
+	{
+		std::cerr << "update_lifecycle_debug source=" << updateLifecycleMetrics.externalWaterMassSourceKg
+			<< " mass=" << updateLifecycleMass
+			<< " residual=" << updateLifecycleMetrics.waterMassResidualKg
+			<< " energy_residual=" << updateLifecycleMetrics.coupledEnergyResidualJ << '\n';
+		return Fail("water created during UpdateParticles was double-counted by AfterSim rebase");
+	}
+
+	auto updateDelete = std::make_unique<UpdateDeleteProbeSimulation>();
+	updateDelete->gravityMode = GRAV_OFF;
+	updateDelete->SetEdgeMode(EDGE_SOLID);
+	updateDelete->SetOmniSimulationMode(OMNI_ENHANCED);
+	updateDelete->waterToDelete = updateDelete->create_part(-1, 340, 200, PT_WATR);
+	if (updateDelete->waterToDelete < 0)
+		return Fail("could not create UpdateParticles deletion fixture");
+	const double updateDeleteMass = updateDelete->GetOmniWaterParcelMassKg(
+		updateDelete->waterToDelete);
+	const double updateDeleteEnergy = updateDeleteMass *
+		updateDelete->GetOmniWaterParcelSpecificEnthalpyJPerKg(updateDelete->waterToDelete);
+	AdvanceOneTick(*updateDelete);
+	const auto updateDeleteMetrics = updateDelete->GetOmniWaterCouplingMetrics();
+	if (std::abs(updateDeleteMetrics.externalWaterMassSinkKg - updateDeleteMass) > 1.0e-15 ||
+		std::abs(updateDeleteMetrics.externalWaterEnergySinkJ - updateDeleteEnergy) > 1.0e-9 ||
+		std::abs(updateDeleteMetrics.waterMassResidualKg) > 1.0e-12 ||
+		std::abs(updateDeleteMetrics.coupledEnergyResidualJ) > 1.0e-6)
+	{
+		return Fail("water deleted during UpdateParticles was double-counted by AfterSim rebase");
 	}
 
 	auto save = evaporation->Save(true, RES.OriginRect());
@@ -286,6 +483,9 @@ int main()
 	std::cout << "water_sidecar_ops_roundtrip=true\n";
 	std::cout << "water_sidecar_v1_migration=true\n";
 	std::cout << "water_lifecycle_type_change_replacement_delete=true\n";
+	std::cout << "water_existing_id_replacement_probe=true\n";
+	std::cout << "update_phase_water_creation_ledger_closed=true\n";
+	std::cout << "update_phase_water_deletion_ledger_closed=true\n";
 	std::cout << "long_run_steps=1000\n";
 	std::cout << "long_run_water_drift_kg=" << driftFinalWaterKg - driftInitialWaterKg << '\n';
 	std::cout << "long_run_max_energy_residual_j=" << maximumStepEnergyResidualJ << '\n';

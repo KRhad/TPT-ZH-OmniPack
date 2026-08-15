@@ -158,7 +158,17 @@ class OmniProfilerContractTest(unittest.TestCase):
         self.assertIn('(Join-Path $resolvedTestRoot "powder.pref")', self.rendering_runtime_wrapper)
         self.assertIn('"{}" + [Environment]::NewLine', self.rendering_runtime_wrapper)
         self.assertIn("OMNI_PROFILER_RENDERING_COPY_CALLS", self.rendering_runtime_wrapper)
-        self.assertIn("OMNI_PROFILER_THREADED_RENDERING_OBSERVED=true", self.rendering_runtime_wrapper)
+        self.assertIn(
+            '$resultValues.OMNI_PROFILER_THREADED_RENDERING_OBSERVED -eq "true"',
+            self.rendering_runtime_wrapper,
+        )
+        self.assertIn("function Read-ProfilerResultSnapshot", self.rendering_runtime_wrapper)
+        self.assertIn("$values[$matches[1]] = $matches[2]", self.rendering_runtime_wrapper)
+        self.assertIn("$confirmed.Text -ceq $snapshot.Text", self.rendering_runtime_wrapper)
+        self.assertIn(
+            '$resultValues.OMNI_PROFILER_RENDERING_STATUS -eq "PASS"',
+            self.rendering_runtime_wrapper,
+        )
 
     def test_renderer_spans_hold_a_safe_profiler_owner(self) -> None:
         self.assertIn("std::shared_ptr<FrameTime> frameTime", self.game_model_h)

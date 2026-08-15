@@ -151,6 +151,53 @@ int main()
 		return Fail("Classic unexpectedly entered the OmniReactionRuntime path");
 	}
 
+	auto modeSwitch = std::make_unique<ProbeSimulation>();
+	modeSwitch->gravityMode = GRAV_OFF;
+	modeSwitch->SetEdgeMode(EDGE_SOLID);
+	const int switchedWater = modeSwitch->create_part(-1, 280, 180, PT_WATR);
+	const int switchedCoal = modeSwitch->create_part(-1, 300, 180, PT_COAL);
+	if (switchedWater < 0 || switchedCoal < 0 ||
+		modeSwitch->GetOmniWaterParcelMassKg(switchedWater) != 0.0 ||
+		modeSwitch->GetOmniCarbonParcelMassKg(switchedCoal) != 0.0)
+	{
+		return Fail("Classic mode-switch fixtures unexpectedly owned Enhanced sidecars");
+	}
+	modeSwitch->SetOmniSimulationMode(OMNI_ENHANCED);
+	const double switchedWaterMass = modeSwitch->GetOmniWaterParcelMassKg(switchedWater);
+	const double switchedWaterEnthalpy =
+		modeSwitch->GetOmniWaterParcelSpecificEnthalpyJPerKg(switchedWater);
+	const double switchedCarbonMass = modeSwitch->GetOmniCarbonParcelMassKg(switchedCoal);
+	if (!(switchedWaterMass > 0.0) || !std::isfinite(switchedWaterEnthalpy) ||
+		!(switchedWaterEnthalpy > 0.0) || !(switchedCarbonMass > 0.0))
+	{
+		return Fail("Classic-to-Enhanced mode switch did not initialize water/carbon sidecars");
+	}
+	auto modeSwitchSave = modeSwitch->Save(true, RES.OriginRect());
+	if (!modeSwitchSave || !modeSwitchSave->hasOmniWaterParcelState ||
+		!modeSwitchSave->hasOmniCarbonParcelState)
+	{
+		return Fail("Classic-to-Enhanced pre-tick save omitted initialized sidecars");
+	}
+	AdvanceOneTick(*modeSwitch);
+	const auto modeSwitchChemistry = modeSwitch->GetOmniChemistryMetrics();
+	if (modeSwitchChemistry.committedTransactions != 0 ||
+		std::abs(modeSwitchChemistry.massResidualKg) > 1.0e-15 ||
+		std::abs(modeSwitchChemistry.totalMassBalanceResidualKg) > 1.0e-15)
+	{
+		return Fail("Classic-to-Enhanced first tick treated default carbon as an unexplained source");
+	}
+	const double preservedWaterMass = switchedWaterMass * 0.5;
+	const double preservedCarbonMass = switchedCarbonMass * 0.5;
+	modeSwitch->SetWaterParcelMassKg(switchedWater, preservedWaterMass);
+	modeSwitch->SetCarbonParcelMassKg(switchedCoal, preservedCarbonMass);
+	modeSwitch->SetOmniSimulationMode(OMNI_CLASSIC);
+	modeSwitch->SetOmniSimulationMode(OMNI_ENHANCED);
+	if (modeSwitch->GetOmniWaterParcelMassKg(switchedWater) != preservedWaterMass ||
+		modeSwitch->GetOmniCarbonParcelMassKg(switchedCoal) != preservedCarbonMass)
+	{
+		return Fail("Enhanced sidecars were reset across a Classic round trip");
+	}
+
 	auto lifecycle = std::make_unique<ProbeSimulation>();
 	lifecycle->SetOmniSimulationMode(OMNI_ENHANCED);
 	const int changedCoal = lifecycle->create_part(-1, 240, 180, PT_COAL);
@@ -262,6 +309,8 @@ int main()
 	std::cout << "energy_residual_j=" << normal.metrics.energyResidualJ << '\n';
 	std::cout << "carbon_mass_storage=dedicated_double_sidecar\n";
 	std::cout << "classic_reaction_transactions=0\n";
+	std::cout << "classic_to_enhanced_water_carbon_initialized=true\n";
+	std::cout << "classic_roundtrip_sidecars_preserved=true\n";
 	std::cout << "type_change_carbon_sink_kg=" << lifecycleMetrics.externalCarbonMassSinkKg << '\n';
 	std::cout << "replacement_carbon_sink_kg=" << replacementMetrics.externalCarbonMassSinkKg << '\n';
 	std::cout << "managed_replacement_mass_preserved=true\n";

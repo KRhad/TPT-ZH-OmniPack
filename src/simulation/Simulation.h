@@ -124,9 +124,10 @@ public:
 	{
 		ClassicNotApplicable,
 		FreshPreset,
-		LoadedV2,
+		LoadedV3,
 		MigratedLegacyProjection,
 		RegionStateOmitted,
+		MigratedV2ToV3,
 	};
 
 	GravityPtr grav;

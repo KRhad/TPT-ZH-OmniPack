@@ -19,7 +19,7 @@ local function test()
 
     local initial = sim.omniAtmosphere()
     assert(initial.active and initial.available, "Enhanced atmosphere is not active")
-    assert(initial.state_version == 2, "Enhanced atmosphere state version is not v2")
+    assert(initial.state_version == 3, "Enhanced atmosphere state version is not v3")
     assert(initial.state_serialization_supported == true,
         "Enhanced atmosphere does not advertise state serialization support")
     assert(initial.state_serialized == false and initial.serialization_status == "fresh_preset",

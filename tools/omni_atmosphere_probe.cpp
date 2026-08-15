@@ -1,9 +1,12 @@
 #include "simulation/OmniAtmosphere.h"
+#include "simulation/OmniThermal.h"
 
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <limits>
+#include <stdexcept>
 #include <string_view>
 
 namespace
@@ -50,6 +53,178 @@ int main()
 		uniform.Ledger().pressureFloorHits || uniform.Ledger().energyFloorHits)
 	{
 		return Fail("uniform ledger did not close");
+	}
+
+	OmniAtmosphere energyGuard(Config(8, 4));
+	const auto energyGuardBefore = energyGuard.State(3, 2);
+	const double energyGuardTotalBefore = energyGuard.TotalEnergyJ();
+	const double overdrawJ = energyGuard.AvailableThermalEnergyJ(3, 2) + 1.0;
+	bool overdrawRejected = false;
+	try
+	{
+		energyGuard.AddEnergyDensity(
+			3, 2, -overdrawJ / energyGuard.Config().scale.cellVolumeM3());
+	}
+	catch (const std::invalid_argument &)
+	{
+		overdrawRejected = true;
+	}
+	const auto energyGuardAfter = energyGuard.State(3, 2);
+	if (!overdrawRejected || energyGuardAfter.density != energyGuardBefore.density ||
+		energyGuardAfter.momentumX != energyGuardBefore.momentumX ||
+		energyGuardAfter.momentumY != energyGuardBefore.momentumY ||
+		energyGuardAfter.totalEnergy != energyGuardBefore.totalEnergy ||
+		energyGuard.TotalEnergyJ() != energyGuardTotalBefore)
+	{
+		return Fail("negative energy overdraw did not fail transactionally");
+	}
+
+	// At very low density the pressure floor, rather than the caller's nominal
+	// one-kelvin bound, is the tighter thermal-energy constraint.  Removing all
+	// reported available energy must land on (and never below) that floor.
+	OmniAtmosphere pressureEnergyGuard(Config(2, 2));
+	std::vector<double> pressureFloorSpecies(pressureEnergyGuard.SpeciesCount(), 0.0);
+	pressureFloorSpecies[OMNI_SPECIES_N2] = pressureEnergyGuard.Config().densityFloor;
+	if (!pressureEnergyGuard.RestoreSerializedCell(
+			0, 0, pressureFloorSpecies, 0.0, 0.0, 0.01, 0.0))
+	{
+		return Fail("could not construct the pressure-floor thermal-energy fixture");
+	}
+	const double pressureFloorAvailable = pressureEnergyGuard.AvailableThermalEnergyJ(0, 0, 1.0);
+	pressureEnergyGuard.AddEnergyDensity(
+		0, 0, -pressureFloorAvailable / pressureEnergyGuard.Config().scale.cellVolumeM3());
+	if (!pressureEnergyGuard.Primitive(0, 0).finite ||
+		pressureEnergyGuard.Primitive(0, 0).pressure + 1.0e-12 <
+			pressureEnergyGuard.Config().pressureFloor)
+	{
+		return Fail("available thermal energy allowed pressure to fall below its floor");
+	}
+
+	auto internalFloorConfig = Config(1, 1);
+	internalFloorConfig.internalEnergyFloor = 1.0e5;
+	OmniAtmosphere internalFloorGuard(internalFloorConfig);
+	std::vector<double> internalFloorSpecies(internalFloorGuard.SpeciesCount(), 0.0);
+	for (std::size_t species = 0; species < internalFloorSpecies.size(); ++species)
+		internalFloorSpecies[species] = internalFloorGuard.SpeciesMassDensity(0, 0, species);
+	const auto internalFloorBefore = internalFloorGuard.State(0, 0);
+	if (!OmniValidateSerializedAtmosphereCell(
+			internalFloorGuard.Config(), internalFloorSpecies,
+			internalFloorBefore.momentumX, internalFloorBefore.momentumY,
+			internalFloorBefore.totalEnergy,
+			internalFloorGuard.Primitive(0, 0).condensedWaterDensity, true))
+	{
+		return Fail("internal-energy-floor fixture was not initially serializable");
+	}
+	const double internalFloorAvailable = internalFloorGuard.AvailableThermalEnergyJ(0, 0, 1.0);
+	if (!(internalFloorAvailable > 0.0))
+		return Fail("internal-energy-floor fixture reported no removable energy");
+	internalFloorGuard.AddEnergyDensity(
+		0, 0, -0.999 * internalFloorAvailable /
+			internalFloorGuard.Config().scale.cellVolumeM3());
+	const auto internalFloorAfter = internalFloorGuard.State(0, 0);
+	if (!OmniValidateSerializedAtmosphereCell(
+			internalFloorGuard.Config(), internalFloorSpecies,
+			internalFloorAfter.momentumX, internalFloorAfter.momentumY,
+			internalFloorAfter.totalEnergy,
+			internalFloorGuard.Primitive(0, 0).condensedWaterDensity, true))
+	{
+		return Fail("available thermal energy crossed the serializable internal-energy floor");
+	}
+	const double internalFloorDeficientEnergy =
+		0.5 * internalFloorGuard.Config().internalEnergyFloor;
+	if (internalFloorGuard.RestoreSerializedCell(
+			0, 0, internalFloorSpecies, 0.0, 0.0,
+			internalFloorDeficientEnergy, 0.0))
+	{
+		return Fail("serialized restore accepted energy below internal-energy floor");
+	}
+
+	OmniAtmosphere positiveOverflowGuard(Config(2, 2));
+	const double hugeEnergyDensity = std::numeric_limits<double>::max() * 0.75;
+	positiveOverflowGuard.AddEnergyDensity(0, 0, hugeEnergyDensity);
+	const auto overflowBeforeRejectedSource = positiveOverflowGuard.State(0, 0);
+	bool positiveOverflowRejected = false;
+	try
+	{
+		positiveOverflowGuard.AddEnergyDensity(0, 0, hugeEnergyDensity);
+	}
+	catch (const std::invalid_argument &)
+	{
+		positiveOverflowRejected = true;
+	}
+	const auto overflowAfterRejectedSource = positiveOverflowGuard.State(0, 0);
+	if (!positiveOverflowRejected ||
+		overflowBeforeRejectedSource.totalEnergy != overflowAfterRejectedSource.totalEnergy ||
+		!std::isfinite(overflowAfterRejectedSource.totalEnergy))
+	{
+		return Fail("positive energy overflow was not rejected transactionally");
+	}
+
+	std::vector<double> latentDeficientSpecies(pressureEnergyGuard.SpeciesCount(), 0.0);
+	latentDeficientSpecies[OMNI_SPECIES_N2] = 1.0;
+	latentDeficientSpecies[OMNI_SPECIES_H2O] = 0.1;
+	const double latentDeficientPositiveEnergy =
+		0.5 * latentDeficientSpecies[OMNI_SPECIES_H2O] *
+		OmniThermal::LatentHeatVaporizationJPerKg;
+	if (OmniValidateSerializedAtmosphereCell(
+			pressureEnergyGuard.Config(), latentDeficientSpecies, 0.0, 0.0,
+			latentDeficientPositiveEnergy, 0.0, true) ||
+		pressureEnergyGuard.RestoreSerializedCell(
+			1, 0, latentDeficientSpecies, 0.0, 0.0,
+			latentDeficientPositiveEnergy, 0.0))
+	{
+		return Fail("positive but latent-energy-deficient serialized cell was accepted");
+	}
+
+	OmniAtmosphere latentGuard(Config(8, 4));
+	const auto latentBefore = latentGuard.State(3, 2);
+	const double latentWaterBefore = latentGuard.SpeciesMassDensity(3, 2, OMNI_SPECIES_H2O);
+	const double transferMassKg =
+		latentGuard.Config().referenceDensity * latentGuard.Config().scale.cellVolumeM3();
+	const auto &waterSpecies = latentGuard.SpeciesDefinition(OMNI_SPECIES_H2O);
+	const double automaticVaporEnergyJ = transferMassKg *
+		OmniThermal::WaterVaporSpecificEnergyJPerKg(
+			300.0, waterSpecies.specificHeatCpJKgK, waterSpecies.molarMassKgPerMol);
+	const double liquidEnergyJ =
+		transferMassKg * OmniThermal::WaterSpecificEnthalpyJPerKg(300.0);
+	std::vector<double> insufficientTransfer(latentGuard.SpeciesCount(), 0.0);
+	insufficientTransfer[OMNI_SPECIES_H2O] = transferMassKg;
+	if (latentGuard.ApplyReactionSpeciesTransfer(3, 2, insufficientTransfer,
+			liquidEnergyJ - automaticVaporEnergyJ, 0.0, 0.0) ||
+		latentGuard.State(3, 2).density != latentBefore.density ||
+		latentGuard.State(3, 2).totalEnergy != latentBefore.totalEnergy ||
+		latentGuard.SpeciesMassDensity(3, 2, OMNI_SPECIES_H2O) != latentWaterBefore)
+	{
+		return Fail("latent-energy-deficient species transfer did not fail transactionally");
+	}
+	OmniAtmosphereReactionTransfer rejectedTransfer;
+	rejectedTransfer.committed = true;
+	rejectedTransfer.gasMassDeltaKg = 1.0;
+	std::vector<double> wrongSizedTransfer(latentGuard.SpeciesCount() - 1, 0.0);
+	if (latentGuard.ApplyReactionSpeciesTransfer(
+			3, 2, wrongSizedTransfer, 0.0, 0.0, 0.0, &rejectedTransfer) ||
+		rejectedTransfer.committed || rejectedTransfer.gasMassDeltaKg != 0.0 ||
+		rejectedTransfer.totalEnergyDeltaJ != 0.0)
+	{
+		return Fail("rejected reaction transfer left stale caller result fields");
+	}
+
+	// A reaction transfer into the default dry reference atmosphere must arm
+	// water phase equilibrium.  At this loading the injected vapour is strongly
+	// supersaturated, so a reference step must create condensed water.
+	OmniAtmosphere reactionPhase(Config(8, 4));
+	std::vector<double> waterTransfer(reactionPhase.SpeciesCount(), 0.0);
+	waterTransfer[OMNI_SPECIES_H2O] =
+		0.25 * reactionPhase.Config().referenceDensity * reactionPhase.Config().scale.cellVolumeM3();
+	if (!reactionPhase.ApplyReactionSpeciesTransfer(3, 2, waterTransfer, 0.0, 0.0, 0.0) ||
+		reactionPhase.TotalCondensedWaterMassKg() != 0.0)
+	{
+		return Fail("could not construct dry-atmosphere reaction water transfer");
+	}
+	reactionPhase.StepReference(1.0e-6);
+	if (!(reactionPhase.TotalCondensedWaterMassKg() > 0.0))
+	{
+		return Fail("reaction water transfer did not activate phase equilibrium");
 	}
 
 	OmniAtmosphere heating(Config(32, 16));
@@ -287,6 +462,11 @@ int main()
 	std::cout << "near_vacuum_pressure_floor_hits=" << vacuum.Ledger().pressureFloorHits << '\n';
 	std::cout << "near_vacuum_energy_correction_j=" << vacuum.Ledger().numericalEnergyCorrectionJ << '\n';
 	std::cout << "near_vacuum_energy_residual_j=" << vacuum.Ledger().energyResidualJ() << '\n';
+	std::cout << "pressure_floor_available_thermal_energy_j=" << pressureFloorAvailable << '\n';
+	std::cout << "internal_energy_floor_available_thermal_energy_j=" << internalFloorAvailable << '\n';
+	std::cout << "positive_energy_overflow_rejected=true\n";
+	std::cout << "rejected_reaction_result_cleared=true\n";
+	std::cout << "serialized_latent_deficit_rejected=true\n";
 	std::cout << "leak_mass_before_kg=" << leakMassBefore << '\n';
 	std::cout << "leak_mass_after_kg=" << leakMassAfter << '\n';
 	std::cout << "runtime_grid_cells=" << runtime.CellCount() << '\n';

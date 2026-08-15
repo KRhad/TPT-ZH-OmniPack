@@ -7,6 +7,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 from typing import Any, Sequence
@@ -37,6 +38,26 @@ REQUIRED_RESULT_FIELDS = {
     "long_run",
     "smoke_run",
     "wall_clock_seconds",
+    "simulation_steps",
+    "heartbeat_count",
+    "heartbeat_interval_seconds",
+    "maximum_heartbeat_gap_seconds",
+    "stalls",
+    "nan_count",
+    "inf_count",
+    "omni_atmosphere_active",
+    "atmosphere_mass_initial_kg",
+    "atmosphere_mass_final_kg",
+    "atmosphere_mass_min_kg",
+    "atmosphere_mass_max_kg",
+    "atmosphere_mass_residual_abs_max_kg",
+    "species_mass_residual_abs_max_kg",
+    "minimum_density_kg_m3",
+    "maximum_density_kg_m3",
+    "minimum_pressure_pa",
+    "maximum_pressure_pa",
+    "minimum_temperature_k",
+    "maximum_temperature_k",
 }
 
 FIXTURE_EXPECTATIONS = {
@@ -74,9 +95,12 @@ def read_numeric_series(path: Path, fields: Sequence[str]) -> list[dict[str, flo
         rows: list[dict[str, float]] = []
         for row_number, row in enumerate(reader, start=2):
             try:
-                rows.append({field: float(row[field]) for field in fields})
+                parsed = {field: float(row[field]) for field in fields}
             except (TypeError, ValueError) as exc:
                 raise ValueError(f"{path.name}:{row_number}: invalid numeric value") from exc
+            if any(not math.isfinite(value) for value in parsed.values()):
+                raise ValueError(f"{path.name}:{row_number}: non-finite numeric value")
+            rows.append(parsed)
     if len(rows) < 2:
         raise ValueError(f"{path.name} needs at least two data rows")
     elapsed = [row[fields[0]] for row in rows]
@@ -301,6 +325,89 @@ def analyze(directory: Path) -> dict[str, Any]:
 
     long_run_requested = result["long_run"]
     if long_run_requested:
+        heartbeat_path = directory / "soak-heartbeat.csv"
+        if not heartbeat_path.is_file():
+            raise ValueError("missing artifact: soak-heartbeat.csv")
+        heartbeat_fields = (
+            "elapsed_seconds", "simulation_steps", "particle_count",
+            "atmosphere_mass_kg", "atmosphere_mass_residual_kg",
+            "species_mass_residual_abs_max_kg", "species_n2_mass_kg",
+            "species_o2_mass_kg", "species_ar_mass_kg",
+            "species_co2_mass_kg", "species_h2o_mass_kg",
+            "condensed_water_mass_kg", "non_finite_cells",
+            "state_non_finite_cells", "minimum_density_kg_m3",
+            "maximum_density_kg_m3", "minimum_pressure_pa",
+            "maximum_pressure_pa", "minimum_temperature_k",
+            "maximum_temperature_k", "nan_count", "inf_count", "stalls",
+        )
+        heartbeats = read_numeric_series(heartbeat_path, heartbeat_fields)
+        heartbeat_gaps = [
+            right["elapsed_seconds"] - left["elapsed_seconds"]
+            for left, right in zip(heartbeats, heartbeats[1:])
+        ]
+        maximum_heartbeat_gap = max(heartbeat_gaps, default=0.0)
+        heartbeat_count = len(heartbeats)
+        minimum_heartbeat_count = math.floor(float(result["sample_seconds"]) / 60.0) + 1
+        heartbeat_progress_pass = all(
+            right["simulation_steps"] > left["simulation_steps"]
+            for left, right in zip(heartbeats, heartbeats[1:])
+        )
+        heartbeat_timing_pass = (
+            heartbeats[0]["elapsed_seconds"] <= 1.0
+            and heartbeats[-1]["elapsed_seconds"] >= float(result["sample_seconds"]) - 0.1
+            and heartbeat_count >= minimum_heartbeat_count
+            and maximum_heartbeat_gap <= 60.001
+        )
+        finite_state_pass = all(
+            row["nan_count"] == 0
+            and row["inf_count"] == 0
+            and row["stalls"] == 0
+            and row["non_finite_cells"] == 0
+            and row["state_non_finite_cells"] == 0
+            for row in heartbeats
+        )
+        atmosphere_range_pass = all(
+            row["atmosphere_mass_kg"] >= 0.0
+            and row["condensed_water_mass_kg"] >= 0.0
+            and row["minimum_density_kg_m3"] > 0.0
+            and row["maximum_density_kg_m3"] >= row["minimum_density_kg_m3"]
+            and row["minimum_pressure_pa"] > 0.0
+            and row["maximum_pressure_pa"] >= row["minimum_pressure_pa"]
+            and row["minimum_temperature_k"] > 0.0
+            and row["maximum_temperature_k"] >= row["minimum_temperature_k"]
+            for row in heartbeats
+        )
+        atmosphere_mass_closure_pass = all(
+            abs(
+                row["species_n2_mass_kg"] + row["species_o2_mass_kg"]
+                + row["species_ar_mass_kg"] + row["species_co2_mass_kg"]
+                + row["species_h2o_mass_kg"] + row["condensed_water_mass_kg"]
+                - row["atmosphere_mass_kg"]
+            ) <= 1.0e-8
+            and abs(row["atmosphere_mass_residual_kg"]) <= 1.0e-8
+            and row["species_mass_residual_abs_max_kg"] <= 1.0e-8
+            for row in heartbeats
+        )
+        heartbeat_summary_match = (
+            result.get("omni_atmosphere_active") is True
+            and result.get("heartbeat_count") == heartbeat_count
+            and result.get("simulation_steps") == int(heartbeats[-1]["simulation_steps"])
+            and result.get("nan_count") == int(heartbeats[-1]["nan_count"])
+            and result.get("inf_count") == int(heartbeats[-1]["inf_count"])
+            and result.get("stalls") == int(heartbeats[-1]["stalls"])
+            and math.isclose(
+                float(result.get("maximum_heartbeat_gap_seconds", -1.0)),
+                maximum_heartbeat_gap, abs_tol=1.0e-3,
+            )
+        )
+        long_run_diagnostics_pass = (
+            heartbeat_progress_pass
+            and heartbeat_timing_pass
+            and finite_state_pass
+            and atmosphere_range_pass
+            and atmosphere_mass_closure_pass
+            and heartbeat_summary_match
+        )
         long_run_evidence_complete: bool | str = (
             result.get("sample_id") == "S20-FULL-CATALOG"
             and nonnegative_number(result.get("long_run_save_load_cycles"))
@@ -313,6 +420,12 @@ def analyze(directory: Path) -> dict[str, Any]:
             and nonnegative_number(
                 result.get("long_run_checkpoint_load_ms_total")
             )
+            and isinstance(result.get("omni_atmosphere_active"), bool)
+            and nonnegative_number(result.get("simulation_steps"))
+            and nonnegative_number(result.get("heartbeat_count"))
+            and nonnegative_number(result.get("stalls"))
+            and nonnegative_number(result.get("nan_count"))
+            and nonnegative_number(result.get("inf_count"))
         )
         long_run_duration_pass: bool | str = (
             not bool(result["smoke_run"])
@@ -328,6 +441,7 @@ def analyze(directory: Path) -> dict[str, Any]:
             and result.get("long_run_language_switches", 0) >= 10
             and result.get("long_run_module_toggle_cycles", 0) >= 10
             and result.get("long_run_settings_recovery_pass") is True
+            and long_run_diagnostics_pass
         )
         long_run_gate_pass: bool | str = (
             base_performance_gate_pass
@@ -335,6 +449,16 @@ def analyze(directory: Path) -> dict[str, Any]:
             and long_run_behavior_pass is True
         )
     else:
+        heartbeats = []
+        heartbeat_count = 0
+        maximum_heartbeat_gap = 0.0
+        heartbeat_progress_pass = "not_tested"
+        heartbeat_timing_pass = "not_tested"
+        finite_state_pass = "not_tested"
+        atmosphere_range_pass = "not_tested"
+        atmosphere_mass_closure_pass = "not_tested"
+        heartbeat_summary_match = "not_tested"
+        long_run_diagnostics_pass = "not_tested"
         long_run_evidence_complete = "not_tested"
         long_run_duration_pass = "not_tested"
         long_run_behavior_pass = "not_tested"
@@ -346,13 +470,44 @@ def analyze(directory: Path) -> dict[str, Any]:
     )
 
     return {
+        "schema": "omnipack-release-evidence",
+        "schema_version": 1,
+        "test": "soak_2h" if long_run_requested else "stress_result_analysis",
+        "status": "PASS" if performance_gate_pass else "FAIL",
+        "passed": performance_gate_pass,
         "assessment_schema_version": 1,
         "assessment_status": "PASS",
         "sample_id": result["sample_id"],
         "run_id": result["run_id"],
         "source_commit": result["source_commit"],
         "public_zip_sha256": result["public_zip_sha256"],
+        "candidate_sha256": result["public_zip_sha256"],
         "exe_sha256": result["exe_sha256"],
+        "wall_clock_seconds": result["wall_clock_seconds"],
+        "warmup_seconds": result["warmup_seconds"],
+        "sample_seconds": result["sample_seconds"],
+        "peak_working_set_bytes": result["peak_working_set_bytes"],
+        "peak_private_bytes": result["peak_private_bytes"],
+        "simulation_steps": result["simulation_steps"],
+        "heartbeat_count": heartbeat_count,
+        "heartbeat_interval_seconds": result["heartbeat_interval_seconds"],
+        "maximum_heartbeat_gap_seconds": maximum_heartbeat_gap,
+        "stalls": result["stalls"],
+        "nan_count": result["nan_count"],
+        "inf_count": result["inf_count"],
+        "omni_atmosphere_active": result["omni_atmosphere_active"],
+        "atmosphere_mass_initial_kg": result["atmosphere_mass_initial_kg"],
+        "atmosphere_mass_final_kg": result["atmosphere_mass_final_kg"],
+        "atmosphere_mass_min_kg": result["atmosphere_mass_min_kg"],
+        "atmosphere_mass_max_kg": result["atmosphere_mass_max_kg"],
+        "atmosphere_mass_residual_abs_max_kg": result["atmosphere_mass_residual_abs_max_kg"],
+        "species_mass_residual_abs_max_kg": result["species_mass_residual_abs_max_kg"],
+        "minimum_density_kg_m3": result["minimum_density_kg_m3"],
+        "maximum_density_kg_m3": result["maximum_density_kg_m3"],
+        "minimum_pressure_pa": result["minimum_pressure_pa"],
+        "maximum_pressure_pa": result["maximum_pressure_pa"],
+        "minimum_temperature_k": result["minimum_temperature_k"],
+        "maximum_temperature_k": result["maximum_temperature_k"],
         "result_json_sha256": sha256(result_path),
         "frame_samples": len(frames),
         "process_samples": len(processes),
@@ -405,6 +560,13 @@ def analyze(directory: Path) -> dict[str, Any]:
         "long_run_settings_recovery_pass": result.get(
             "long_run_settings_recovery_pass"
         ),
+        "heartbeat_progress_pass": heartbeat_progress_pass,
+        "heartbeat_timing_pass": heartbeat_timing_pass,
+        "finite_state_pass": finite_state_pass,
+        "atmosphere_range_pass": atmosphere_range_pass,
+        "atmosphere_mass_closure_pass": atmosphere_mass_closure_pass,
+        "heartbeat_summary_match": heartbeat_summary_match,
+        "long_run_diagnostics_pass": long_run_diagnostics_pass,
         "long_run_gate_pass": long_run_gate_pass,
         "performance_gate_pass": performance_gate_pass,
         "classification_note": (

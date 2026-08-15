@@ -8,8 +8,9 @@ BASE_COMMIT=3527beb7c4c153f44bede1779a9b311705a778d1
 STATUS=GREEN_POST_MILESTONE_CORRECTION_VALIDATED_WITH_1_0_8
 CLASSIC_DEFAULT=true
 PARTICLE_ABI_CHANGED=false
-ATMOSPHERE_STATE_VERSION=2
+ATMOSPHERE_STATE_VERSION=3
 WATER_PARCEL_STATE_VERSION=2
+CROSS_PHASE_WATER_SOLUTION_MOMENTUM=NOT_IMPLEMENTED_NOT_TESTED
 CHEMISTRY_DEFERRED_TO=1.0.8
 SDL3_GPU_CUDA_DEFERRED=true
 ```
@@ -70,12 +71,18 @@ behavior: their solution/aerosol composition cannot be represented as pure water
 without silently changing gameplay. Their ownership migration is deferred to the
 1.0.9 mixture/solution scope. Classic continues through the upstream path.
 
+Water and solution parcel transfers currently inject atmosphere mass with zero
+parcel velocity. Their mass and enthalpy ledgers are tested, but equal-and-opposite
+particle-to-gas momentum and parcel kinetic-energy transfer are not implemented or
+claimed. Carbon reaction transfers do carry the particle velocity; that narrower
+path must not be generalized into a whole cross-phase momentum-conservation claim.
+
 Visible fog droplet nucleation remains deferred: cell condensate is conserved
 and serialized, but is not yet converted into `FOG` particles.
 
 ## Persistence, compatibility and undo
 
-OPS `omniAtmosphere/stateVersion=2` stores cell-major little-endian f64 values:
+OPS `omniAtmosphere/stateVersion=3` stores cell-major little-endian f64 values:
 
 ```text
 five species partial densities
@@ -84,6 +91,13 @@ total energy
 condensed water density
 cell validity mask
 ```
+
+Version 3 makes the density, temperature, pressure, latent-energy and internal-
+energy floors part of the serialized contract. Historical version 2 payloads
+remain readable under their original weaker checks, are deterministically
+canonicalized during parse, and are only written back as version 3. Version 3
+validity masks are strictly binary; version 2 retains its historical nonzero-to-
+one normalization.
 
 OPS `omniWaterParcels/stateVersion=2` stores particle-order f64 parcel masses and
 specific enthalpies; version 1 mass-only saves remain readable and derive their

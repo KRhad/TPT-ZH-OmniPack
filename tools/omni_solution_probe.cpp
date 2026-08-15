@@ -1,6 +1,7 @@
 #include "client/GameSave.h"
 #include "prefs/GlobalPrefs.h"
 #include "simulation/ElementClasses.h"
+#include "simulation/OmniPhysicalScale.h"
 #include "simulation/OmniSolution.h"
 #include "simulation/Simulation.h"
 #include "simulation/SimulationData.h"
@@ -82,6 +83,28 @@ int main()
 		!(dissolutionMetrics.dissolvedMassKg < initialSaltKg))
 	{
 		return Fail("rate-limited dissolution did not conserve solvent and solute");
+	}
+
+	auto distilledDissolution = std::make_unique<ProbeSimulation>();
+	distilledDissolution->gravityMode = GRAV_OFF;
+	distilledDissolution->SetEdgeMode(EDGE_SOLID);
+	distilledDissolution->SetOmniSimulationMode(OMNI_ENHANCED);
+	const int distilledWater = distilledDissolution->create_part(-1, 220, 180, PT_DSTW);
+	const int distilledSalt = distilledDissolution->create_part(-1, 221, 180, PT_SALT);
+	if (distilledWater < 0 || distilledSalt < 0)
+		return Fail("could not create distilled-water dissolution fixture");
+	distilledDissolution->BeginOmniSolutionTick();
+	if (!distilledDissolution->UpdateOmniSolutionParticle(distilledSalt, 221, 180))
+		return Fail("DSTW+SALT did not execute the solution dissolution path");
+	distilledDissolution->FinishOmniSolutionTick();
+	const auto distilledMetrics = distilledDissolution->GetOmniSolutionMetrics();
+	if (distilledDissolution->parts[distilledWater].type != PT_SLTW ||
+		std::abs(distilledMetrics.transferredSolventFromWaterKg -
+			OmniPhysicalScale::DefaultWaterParcelMassKg) > 1.0e-15 ||
+		std::abs(distilledMetrics.solventMassResidualKg) > 1.0e-12 ||
+		std::abs(distilledMetrics.soluteMassResidualKg) > 1.0e-12)
+	{
+		return Fail("DSTW dissolution did not conserve and account its solvent mass");
 	}
 
 	auto evaporation = EnhancedSimulation();
@@ -256,7 +279,8 @@ int main()
 			corrupted = true;
 			break;
 		}
-	if (!corrupted || malformed.Serialise().first)
+	const auto malformedBytes = malformed.Serialise();
+	if (!corrupted || malformedBytes.first || !malformedBytes.second.empty())
 		return Fail("non-finite solution payload was not rejected");
 	GameSave negativeNeutralSalt = parsedNeutral;
 	corrupted = false;
@@ -267,7 +291,8 @@ int main()
 			corrupted = true;
 			break;
 		}
-	if (!corrupted || negativeNeutralSalt.Serialise().first)
+	const auto negativeNeutralSaltBytes = negativeNeutralSalt.Serialise();
+	if (!corrupted || negativeNeutralSaltBytes.first || !negativeNeutralSaltBytes.second.empty())
 		return Fail("negative neutral salt payload was not rejected");
 	auto restored = Simulation::Factory();
 	restored->SetOmniSimulationMode(parsed.omniSimulationMode);
@@ -283,6 +308,88 @@ int main()
 		std::abs(restored->GetOmniSolutionSolventMassKg(restoredSolution) - evaporationSolventAfter) > 1.0e-15 ||
 		std::abs(restored->GetOmniSolutionSoluteMassKg(restoredSolution) - evaporationSoluteAfter) > 1.0e-15)
 		return Fail("solution masses did not survive OPS round trip");
+
+	auto sparkedSolution = EnhancedSimulation();
+	constexpr int sparkX = 300;
+	constexpr int sparkY = 220;
+	const int sparkSolution = sparkedSolution->create_part(-1, sparkX, sparkY, PT_SLTW);
+	if (sparkSolution < 0)
+		return Fail("could not create SPRK(SLTW) sidecar fixture");
+	const double sparkSolvent = sparkedSolution->GetOmniSolutionSolventMassKg(sparkSolution);
+	const double sparkSolute = sparkedSolution->GetOmniSolutionSoluteMassKg(sparkSolution);
+	const double sparkNeutralSalt = sparkedSolution->GetOmniSolutionNeutralSaltMassKg(sparkSolution);
+	if (sparkedSolution->create_part(sparkSolution, sparkX, sparkY, PT_SPRK) != sparkSolution ||
+		sparkedSolution->parts[sparkSolution].type != PT_SPRK ||
+		sparkedSolution->parts[sparkSolution].ctype != PT_SLTW ||
+		sparkedSolution->GetOmniSolutionSolventMassKg(sparkSolution) != sparkSolvent ||
+		sparkedSolution->GetOmniSolutionSoluteMassKg(sparkSolution) != sparkSolute ||
+		sparkedSolution->GetOmniSolutionNeutralSaltMassKg(sparkSolution) != sparkNeutralSalt)
+	{
+		return Fail("SPRK(SLTW) detached the authoritative solution sidecar");
+	}
+
+	auto classicSpark = Simulation::Factory();
+	classicSpark->gravityMode = GRAV_OFF;
+	classicSpark->SetEdgeMode(EDGE_SOLID);
+	constexpr int classicSparkX = 340;
+	constexpr int classicSparkY = 220;
+	const int classicSparkSolution = classicSpark->create_part(
+		-1, classicSparkX, classicSparkY, PT_SLTW);
+	if (classicSparkSolution < 0 ||
+		classicSpark->GetOmniSolutionSolventMassKg(classicSparkSolution) != 0.0 ||
+		classicSpark->GetOmniSolutionSoluteMassKg(classicSparkSolution) != 0.0)
+	{
+		return Fail("Classic SPRK(SLTW) fixture did not start without Enhanced sidecars");
+	}
+	if (classicSpark->create_part(
+			classicSparkSolution, classicSparkX, classicSparkY, PT_SPRK) != classicSparkSolution ||
+		classicSpark->parts[classicSparkSolution].type != PT_SPRK ||
+		classicSpark->parts[classicSparkSolution].ctype != PT_SLTW)
+	{
+		return Fail("Classic SLTW could not enter the SPRK carrier state");
+	}
+	classicSpark->SetOmniSimulationMode(OMNI_ENHANCED);
+	const double classicSparkSolvent =
+		classicSpark->GetOmniSolutionSolventMassKg(classicSparkSolution);
+	const double classicSparkSolute =
+		classicSpark->GetOmniSolutionSoluteMassKg(classicSparkSolution);
+	if (!(classicSparkSolvent > 0.0) || !(classicSparkSolute > 0.0))
+		return Fail("Classic-to-Enhanced SPRK(SLTW) did not initialize solution sidecars");
+	for (int step = 0; step < 8 &&
+		classicSpark->parts[classicSparkSolution].type == PT_SPRK; ++step)
+	{
+		AdvanceOneTick(*classicSpark);
+	}
+	if (classicSpark->parts[classicSparkSolution].type != PT_SLTW ||
+		classicSpark->GetOmniSolutionSolventMassKg(classicSparkSolution) != classicSparkSolvent ||
+		classicSpark->GetOmniSolutionSoluteMassKg(classicSparkSolution) != classicSparkSolute)
+	{
+		return Fail("Classic-to-Enhanced SPRK(SLTW) despark lost solution sidecars");
+	}
+
+	auto sinkLedger = std::make_unique<ProbeSimulation>();
+	sinkLedger->gravityMode = GRAV_OFF;
+	sinkLedger->SetEdgeMode(EDGE_SOLID);
+	sinkLedger->SetOmniSimulationMode(OMNI_ENHANCED);
+	constexpr int sinkX = 380;
+	constexpr int sinkY = 220;
+	const int sinkSolution = sinkLedger->create_part(-1, sinkX, sinkY, PT_SLTW);
+	if (sinkSolution < 0)
+		return Fail("could not create solution lifecycle sink fixture");
+	const double sinkSolvent = sinkLedger->GetOmniSolutionSolventMassKg(sinkSolution);
+	const double sinkSolute = sinkLedger->GetOmniSolutionSoluteMassKg(sinkSolution) +
+		sinkLedger->GetOmniSolutionNeutralSaltMassKg(sinkSolution);
+	sinkLedger->BeginOmniSolutionTick();
+	if (sinkLedger->part_change_type(sinkSolution, sinkX, sinkY, PT_DUST))
+		return Fail("solution lifecycle sink fixture was unexpectedly killed");
+	sinkLedger->FinishOmniSolutionTick();
+	const auto sinkMetrics = sinkLedger->GetOmniSolutionMetrics();
+	if (std::abs(sinkMetrics.externalSolventSinkKg - sinkSolvent) > 1.0e-15 ||
+		std::abs(sinkMetrics.externalSoluteSinkKg - sinkSolute) > 1.0e-15 ||
+		std::abs(sinkMetrics.totalSolutionMassResidualKg) > 1.0e-12)
+	{
+		return Fail("solution type change did not account the removed sidecar mass as an external sink");
+	}
 
 	auto before = neutralisation->CreateSnapshot();
 	const double snapshotNeutralSaltBefore =
@@ -324,6 +431,7 @@ int main()
 
 	std::cout << "omni_solution_probe_pass=true\n";
 	std::cout << "dissolved_mass_kg=" << dissolutionMetrics.dissolvedMassKg << '\n';
+	std::cout << "distilled_water_dissolution_ledger_closed=true\n";
 	std::cout << "evaporated_solvent_mass_kg=" << evaporationMetrics.transferredSolventToAtmosphereKg << '\n';
 	std::cout << "concentration_before=" << concentrationBefore << '\n';
 	std::cout << "concentration_after=" << concentrationAfter << '\n';
@@ -337,6 +445,9 @@ int main()
 	std::cout << "neutralisation_energy_released_j=" << neutralMetrics.neutralisationEnergyReleasedJ << '\n';
 	std::cout << "total_solution_mass_residual_kg=" << neutralMetrics.totalSolutionMassResidualKg << '\n';
 	std::cout << "unequal_excess_base_retained=true\n";
+	std::cout << "sprk_solution_sidecar_preserved=true\n";
+	std::cout << "classic_to_enhanced_sprk_solution_sidecar_preserved=true\n";
+	std::cout << "solution_lifecycle_sink_accounted=true\n";
 	std::cout << "classic_solution_active=false\n";
 	return 0;
 }

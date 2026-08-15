@@ -148,7 +148,7 @@ void Simulation::Restore(const Snapshot &snap)
 	const auto persistence = static_cast<OmniAtmospherePersistenceStatus>(
 		snap.OmniAtmospherePersistenceStatus);
 	omniAtmospherePersistenceStatus = persistence >= OmniAtmospherePersistenceStatus::ClassicNotApplicable &&
-		persistence <= OmniAtmospherePersistenceStatus::RegionStateOmitted
+		persistence <= OmniAtmospherePersistenceStatus::MigratedV2ToV3
 		? persistence
 		: (omniSimulationMode == OMNI_CLASSIC
 			? OmniAtmospherePersistenceStatus::ClassicNotApplicable

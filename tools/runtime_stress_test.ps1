@@ -111,6 +111,26 @@ function Read-KeyValueFile {
     return $values
 }
 
+function ConvertTo-FiniteDouble {
+    param(
+        [Parameter(Mandatory = $true)][hashtable] $Values,
+        [Parameter(Mandatory = $true)][string] $Name
+    )
+    if (-not $Values.ContainsKey($Name)) {
+        throw "Stress Lua did not provide $Name"
+    }
+    $parsed = 0.0
+    if (-not [double]::TryParse(
+        [string]$Values[$Name],
+        [System.Globalization.NumberStyles]::Float,
+        [System.Globalization.CultureInfo]::InvariantCulture,
+        [ref]$parsed
+    ) -or [double]::IsNaN($parsed) -or [double]::IsInfinity($parsed)) {
+        throw "Stress Lua provided a non-finite or invalid $Name"
+    }
+    return [double]$parsed
+}
+
 function Get-StampInfo {
     param([Parameter(Mandatory = $true)][string] $Stamp)
     if ($Stamp -notmatch '^[0-9A-Fa-f]{10}$') {
@@ -297,8 +317,11 @@ try {
     $startInfo.WorkingDirectory = $testRoot
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true
-    $startInfo.ArgumentList.Add("ddir")
-    $startInfo.ArgumentList.Add($testRoot)
+    # Windows PowerShell 5.1 runs on .NET Framework, where ArgumentList is not
+    # available. The stress path is locally generated and cannot contain a
+    # literal quote, so a quoted Arguments string is deterministic here.
+    if ($testRoot.Contains('"')) { throw "Stress directory contains an unsafe quote" }
+    $startInfo.Arguments = '"ddir" "' + $testRoot + '"'
     foreach ($secretName in @("GITHUB_PAT_TOKEN", "GITHUB_TOKEN", "GH_TOKEN")) {
         [void]$startInfo.Environment.Remove($secretName)
     }
@@ -312,6 +335,8 @@ try {
     $peakWorkingSet = [int64]0
     $peakPrivateBytes = [int64]0
     $resultPath = Join-Path $testRoot "stress-lua.result"
+    $heartbeatPath = Join-Path $testRoot "soak-heartbeat.csv"
+    $lastHeartbeatUtc = $startedAt
     $deadline = $startedAt.AddSeconds($WarmupSeconds + $SampleSeconds + 180)
     do {
         Start-Sleep -Milliseconds 500
@@ -325,6 +350,17 @@ try {
                 working_set_bytes = [int64]$process.WorkingSet64
                 private_bytes = [int64]$process.PrivateMemorySize64
             })
+        }
+        if ($LongRun) {
+            $nowUtc = [DateTime]::UtcNow
+            if (Test-Path -LiteralPath $heartbeatPath -PathType Leaf) {
+                $lastHeartbeatUtc = (Get-Item -LiteralPath $heartbeatPath).LastWriteTimeUtc
+            }
+            if (($nowUtc - $lastHeartbeatUtc).TotalSeconds -gt 120.0) {
+                Stop-Process -Id $process.Id -Force
+                $process.WaitForExit()
+                throw "Stress client heartbeat stalled for more than 120 seconds; artifacts=$testRoot"
+            }
         }
     } while (-not $process.HasExited -and [DateTime]::UtcNow -lt $deadline)
 
@@ -347,7 +383,8 @@ try {
         "fixture_visible_type_count",
         "scenario_recovery_assertions",
         "long_run_save_load_cycles", "long_run_language_switches",
-        "long_run_module_toggle_cycles")) {
+        "long_run_module_toggle_cycles", "simulation_steps", "heartbeat_count",
+        "stalls", "nan_count", "inf_count")) {
         if (-not $lua.ContainsKey($field) -or $lua[$field] -notmatch '^\d+$') {
             throw "Stress Lua did not provide a nonnegative integer $field"
         }
@@ -357,13 +394,19 @@ try {
     }
     foreach ($field in @(
         "signal_stop_pass", "scenario_stop_pass", "scenario_recovery_pass",
-        "long_run", "long_run_settings_recovery_pass")) {
+        "long_run", "long_run_settings_recovery_pass", "omni_atmosphere_active")) {
         if (-not $lua.ContainsKey($field) -or $lua[$field] -notin @("true", "false")) {
             throw "Stress Lua did not provide a boolean $field"
         }
     }
     if ([System.Convert]::ToBoolean($lua.long_run) -ne [bool]$LongRun) {
         throw "Stress Lua long_run state does not match the requested mode"
+    }
+    if ($LongRun -and (
+        -not [System.Convert]::ToBoolean($lua.omni_atmosphere_active) -or
+        [int64]$lua.stalls -ne 0 -or [int64]$lua.nan_count -ne 0 -or
+        [int64]$lua.inf_count -ne 0)) {
+        throw "Formal long run did not close its OmniAtmosphere finite/stall diagnostics"
     }
 
     $firstOps = Get-StampInfo -Stamp $lua.first_stamp
@@ -374,8 +417,15 @@ try {
     $gpu = (Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name) -join "; "
     $machineMaterial = "$($env:COMPUTERNAME)|$($cpu.Name)|$($computer.TotalPhysicalMemory)"
     $machineBytes = [System.Text.Encoding]::UTF8.GetBytes($machineMaterial)
-    $machineHash = [System.Security.Cryptography.SHA256]::HashData($machineBytes)
-    $machineId = $env:COMPUTERNAME + "-" + ([Convert]::ToHexString($machineHash).Substring(0, 12))
+    $machineHasher = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $machineHash = $machineHasher.ComputeHash($machineBytes)
+    }
+    finally {
+        $machineHasher.Dispose()
+    }
+    $machineHashHex = ([BitConverter]::ToString($machineHash)).Replace('-', '')
+    $machineId = $env:COMPUTERNAME + "-" + $machineHashHex.Substring(0, 12)
     $logicalCpuCount = [int][Environment]::ProcessorCount
     $elapsedSeconds = [Math]::Max(0.000001, ([DateTime]::UtcNow - $startedAt).TotalSeconds)
     $endedAt = [DateTime]::UtcNow
@@ -402,6 +452,12 @@ try {
     New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
     Copy-Item -LiteralPath $resultPath -Destination (Join-Path $artifactDirectory "stress-lua.result")
     Copy-Item -LiteralPath (Join-Path $testRoot "frame-series.csv") -Destination (Join-Path $artifactDirectory "frame-series.csv")
+    if ($LongRun) {
+        if (-not (Test-Path -LiteralPath $heartbeatPath -PathType Leaf)) {
+            throw "Formal long run did not produce soak-heartbeat.csv"
+        }
+        Copy-Item -LiteralPath $heartbeatPath -Destination (Join-Path $artifactDirectory "soak-heartbeat.csv")
+    }
     Copy-Item -LiteralPath $firstOps.Path -Destination (Join-Path $artifactDirectory "input-first.stm")
     Copy-Item -LiteralPath $secondOps.Path -Destination (Join-Path $artifactDirectory "output-second.stm")
     $cpuSeries | Export-Csv -LiteralPath (Join-Path $artifactDirectory "process-series.csv") -NoTypeInformation -Encoding utf8
@@ -438,14 +494,14 @@ try {
         start_time_utc = $startedAt.ToString("o")
         end_time_utc = $endedAt.ToString("o")
         wall_clock_seconds = [Math]::Round(($endedAt - $startedAt).TotalSeconds, 6)
-        warmup_seconds = [double]$lua.actual_warmup_seconds
-        sample_seconds = [double]$lua.actual_sample_seconds
+        warmup_seconds = ConvertTo-FiniteDouble $lua "actual_warmup_seconds"
+        sample_seconds = ConvertTo-FiniteDouble $lua "actual_sample_seconds"
         initial_particles = [int]$lua.initial_particles
         peak_particles = [int]$lua.peak_particles
         final_particles = [int]$lua.final_particles
-        average_fps = [double]$lua.average_fps
-        one_percent_low_fps = [double]$lua.one_percent_low_fps
-        minimum_fps = [double]$lua.minimum_fps
+        average_fps = ConvertTo-FiniteDouble $lua "average_fps"
+        one_percent_low_fps = ConvertTo-FiniteDouble $lua "one_percent_low_fps"
+        minimum_fps = ConvertTo-FiniteDouble $lua "minimum_fps"
         average_cpu_percent = $averageCpu
         peak_working_set_bytes = $peakWorkingSet
         peak_private_bytes = $peakPrivateBytes
@@ -461,10 +517,10 @@ try {
         fixture_created_type_count = [int64]$lua.fixture_created_type_count
         fixture_visible_type_count = [int64]$lua.fixture_visible_type_count
         signal_stop_pass = [System.Convert]::ToBoolean($lua.signal_stop_pass)
-        save_time_first_ms = [double]$lua.save_time_first_ms
-        load_time_first_ms = [double]$lua.load_time_first_ms
-        save_time_second_ms = [double]$lua.save_time_second_ms
-        load_time_second_ms = [double]$lua.load_time_second_ms
+        save_time_first_ms = ConvertTo-FiniteDouble $lua "save_time_first_ms"
+        load_time_first_ms = ConvertTo-FiniteDouble $lua "load_time_first_ms"
+        save_time_second_ms = ConvertTo-FiniteDouble $lua "save_time_second_ms"
+        load_time_second_ms = ConvertTo-FiniteDouble $lua "load_time_second_ms"
         crashed = $false
         hung = $false
         unbounded_growth = "not_tested"
@@ -478,8 +534,28 @@ try {
         long_run_language_switches = [int64]$lua.long_run_language_switches
         long_run_module_toggle_cycles = [int64]$lua.long_run_module_toggle_cycles
         long_run_settings_recovery_pass = [System.Convert]::ToBoolean($lua.long_run_settings_recovery_pass)
-        long_run_checkpoint_save_ms_total = [double]$lua.long_run_checkpoint_save_ms_total
-        long_run_checkpoint_load_ms_total = [double]$lua.long_run_checkpoint_load_ms_total
+        long_run_checkpoint_save_ms_total = ConvertTo-FiniteDouble $lua "long_run_checkpoint_save_ms_total"
+        long_run_checkpoint_load_ms_total = ConvertTo-FiniteDouble $lua "long_run_checkpoint_load_ms_total"
+        simulation_steps = [int64]$lua.simulation_steps
+        heartbeat_count = [int64]$lua.heartbeat_count
+        heartbeat_interval_seconds = ConvertTo-FiniteDouble $lua "heartbeat_interval_seconds"
+        maximum_heartbeat_gap_seconds = ConvertTo-FiniteDouble $lua "maximum_heartbeat_gap_seconds"
+        stalls = [int64]$lua.stalls
+        nan_count = [int64]$lua.nan_count
+        inf_count = [int64]$lua.inf_count
+        omni_atmosphere_active = [System.Convert]::ToBoolean($lua.omni_atmosphere_active)
+        atmosphere_mass_initial_kg = ConvertTo-FiniteDouble $lua "atmosphere_mass_initial_kg"
+        atmosphere_mass_final_kg = ConvertTo-FiniteDouble $lua "atmosphere_mass_final_kg"
+        atmosphere_mass_min_kg = ConvertTo-FiniteDouble $lua "atmosphere_mass_min_kg"
+        atmosphere_mass_max_kg = ConvertTo-FiniteDouble $lua "atmosphere_mass_max_kg"
+        atmosphere_mass_residual_abs_max_kg = ConvertTo-FiniteDouble $lua "atmosphere_mass_residual_abs_max_kg"
+        species_mass_residual_abs_max_kg = ConvertTo-FiniteDouble $lua "species_mass_residual_abs_max_kg"
+        minimum_density_kg_m3 = ConvertTo-FiniteDouble $lua "minimum_density_kg_m3"
+        maximum_density_kg_m3 = ConvertTo-FiniteDouble $lua "maximum_density_kg_m3"
+        minimum_pressure_pa = ConvertTo-FiniteDouble $lua "minimum_pressure_pa"
+        maximum_pressure_pa = ConvertTo-FiniteDouble $lua "maximum_pressure_pa"
+        minimum_temperature_k = ConvertTo-FiniteDouble $lua "minimum_temperature_k"
+        maximum_temperature_k = ConvertTo-FiniteDouble $lua "maximum_temperature_k"
         smoke_run = [bool]$Smoke
         gate_result = if ($Smoke) { "not_tested" } else { "pending_independent_assessment" }
         notes = "Simulation FPS is measured as completed stress-loop sim.updateUpTo calls per wall-clock second. Long-run checkpoints perform ten additional same-process OPS cycles, bilingual state switches, and five-module disable/enable cycles. GUI frame presentation, display/DPI, and mathematical long-term boundedness are not inferred."

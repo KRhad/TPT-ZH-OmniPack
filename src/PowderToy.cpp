@@ -12,7 +12,11 @@
 #include "common/platform/Platform.h"
 #include "graphics/Graphics.h"
 #include "simulation/SaveRenderer.h"
+#include "simulation/ElementClasses.h"
+#include "simulation/OmniAtmosphere.h"
+#include "simulation/Simulation.h"
 #include "simulation/SimulationData.h"
+#include "simulation/Snapshot.h"
 #include "simulation/OmniCompute.h"
 #include "common/tpt-rand.h"
 #include "gui/game/Favorite.h"
@@ -27,8 +31,11 @@
 #include "Config.h"
 #include "common/Localization.h"
 #include "SimulationConfig.h"
+#include <algorithm>
 #include <optional>
 #include <climits>
+#include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <csignal>
 #include "common/platform/SDLCompat.h"
@@ -39,15 +46,624 @@
 #include <exception>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <string>
 
 namespace
 {
+struct PortableRuntimeEvidence
+{
+	std::string runId;
+	std::string candidateSha256;
+	bool launchPassed = false;
+	bool fixtureCreated = false;
+	bool initialSimulatePassed = false;
+	bool initialSavePassed = false;
+	bool initialParsePassed = false;
+	bool initialReloadPassed = false;
+	bool initialStateValidatePassed = false;
+	bool postStepSimulatePassed = false;
+	bool postStepFinitePassed = false;
+	bool postStepInventoryPassed = false;
+	bool postStepAtmospherePassed = false;
+	bool postStepSavePassed = false;
+	bool postStepParsePassed = false;
+	bool postStepReloadPassed = false;
+	bool postStepRoundtripPassed = false;
+	bool enhancedMode = false;
+	bool omniStatePresent = false;
+	bool waterSidecarRoundtrip = false;
+	bool runtimeCompletionReached = false;
+	int initialParticleCount = -1;
+	int postStepParticleCount = -1;
+	int finalParticleCount = -1;
+	long long atmosphereNonFiniteCells = -1;
+
+	bool SaveReloadPassed() const
+	{
+		return initialSavePassed && initialParsePassed && initialReloadPassed &&
+			postStepSavePassed && postStepParsePassed && postStepReloadPassed;
+	}
+
+	bool StateValidatePassed() const
+	{
+		return initialStateValidatePassed && postStepFinitePassed &&
+			postStepInventoryPassed && postStepAtmospherePassed &&
+			postStepRoundtripPassed;
+	}
+
+	bool Passed() const
+	{
+		return !runId.empty() && candidateSha256.size() == 64 && launchPassed &&
+			fixtureCreated && initialSimulatePassed &&
+			SaveReloadPassed() && StateValidatePassed() && postStepSimulatePassed &&
+			enhancedMode && omniStatePresent && waterSidecarRoundtrip &&
+			runtimeCompletionReached;
+	}
+};
+
+bool PortableFinite(float value)
+{
+	uint32_t bits = 0;
+	static_assert(sizeof(bits) == sizeof(value));
+	std::memcpy(&bits, &value, sizeof(bits));
+	return (bits & UINT32_C(0x7F800000)) != UINT32_C(0x7F800000);
+}
+
+bool PortableFinite(double value)
+{
+	uint64_t bits = 0;
+	static_assert(sizeof(bits) == sizeof(value));
+	std::memcpy(&bits, &value, sizeof(bits));
+	return (bits & UINT64_C(0x7FF0000000000000)) != UINT64_C(0x7FF0000000000000);
+}
+
+bool PortableNearlyEqual(double lhs, double rhs, double absoluteTolerance, double relativeTolerance)
+{
+	if (!PortableFinite(lhs) || !PortableFinite(rhs))
+		return false;
+	return std::abs(lhs - rhs) <= absoluteTolerance +
+		relativeTolerance * std::max(std::abs(lhs), std::abs(rhs));
+}
+
+int PortableLiveParticleCount(const Simulation &simulation)
+{
+	int count = 0;
+	for (int index = 0; index < simulation.parts.active; ++index)
+		if (simulation.parts[index].type)
+			++count;
+	return count;
+}
+
+bool PortableFixtureInventoryPresent(const Simulation &simulation)
+{
+	bool dustPresent = false;
+	bool waterPresent = false;
+	for (int index = 0; index < simulation.parts.active; ++index)
+	{
+		const auto &particle = simulation.parts[index];
+		if (!particle.type)
+			continue;
+		if (particle.type == PT_DUST)
+			dustPresent = true;
+		const int carrierType = particle.type == PT_SPRK ? particle.ctype : particle.type;
+		if ((carrierType == PT_WATR || carrierType == PT_ICEI || carrierType == PT_WTRV) &&
+			PortableFinite(simulation.GetOmniWaterParcelMassKg(index)) &&
+			simulation.GetOmniWaterParcelMassKg(index) > 0.0 &&
+			PortableFinite(simulation.GetOmniWaterParcelSpecificEnthalpyJPerKg(index)) &&
+			simulation.GetOmniWaterParcelSpecificEnthalpyJPerKg(index) > 0.0)
+		{
+			waterPresent = true;
+		}
+	}
+	return dustPresent && waterPresent;
+}
+
+bool PortableParticleStateFinite(const Simulation &simulation)
+{
+	if (simulation.parts.active < 0 || simulation.parts.active > NPART)
+		return false;
+	for (int index = 0; index < simulation.parts.active; ++index)
+	{
+		const auto &particle = simulation.parts[index];
+		if (!particle.type)
+			continue;
+		if (particle.type < 0 || particle.type >= PT_NUM ||
+			!PortableFinite(particle.x) || !PortableFinite(particle.y) ||
+			!PortableFinite(particle.vx) || !PortableFinite(particle.vy) ||
+			!PortableFinite(particle.temp))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool PortableAtmosphereStateFinite(const Simulation &simulation, long long &nonFiniteCells)
+{
+	nonFiniteCells = -1;
+	if (!simulation.IsOmniAtmosphereActive() || !simulation.omniAtmosphere)
+		return false;
+	nonFiniteCells = static_cast<long long>(simulation.omniAtmosphere->NonFiniteStateCells());
+	const auto minimumDensity = simulation.omniAtmosphere->MinimumDensity();
+	const auto maximumDensity = simulation.omniAtmosphere->MaximumDensity();
+	const auto minimumPressure = simulation.omniAtmosphere->MinimumPressure();
+	const auto maximumPressure = simulation.omniAtmosphere->MaximumPressure();
+	const auto minimumTemperature = simulation.omniAtmosphere->MinimumTemperature();
+	const auto maximumTemperature = simulation.omniAtmosphere->MaximumTemperature();
+	return nonFiniteCells == 0 && PortableFinite(minimumDensity) &&
+		PortableFinite(maximumDensity) && PortableFinite(minimumPressure) &&
+		PortableFinite(maximumPressure) && PortableFinite(minimumTemperature) &&
+		PortableFinite(maximumTemperature) && minimumDensity > 0.0 &&
+		minimumPressure > 0.0 && minimumTemperature > 0.0 &&
+		minimumDensity <= maximumDensity && minimumPressure <= maximumPressure &&
+		minimumTemperature <= maximumTemperature;
+}
+
+bool PortableGameSaveStateValid(const GameSave &save)
+{
+	if (save.missingElements || save.omniSimulationMode != OMNI_ENHANCED ||
+		!save.hasOmniAtmosphereState || !save.hasOmniWaterParcelState ||
+		save.omniAtmosphereStateVersion != GameSave::OmniAtmosphereStateVersion ||
+		save.omniWaterParcelStateVersion != GameSave::OmniWaterParcelStateVersion ||
+		(save.hasOmniCarbonParcelState &&
+			save.omniCarbonParcelStateVersion != GameSave::OmniCarbonParcelStateVersion) ||
+		(save.hasOmniSolutionState &&
+			save.omniSolutionStateVersion != GameSave::OmniSolutionStateVersion) ||
+		(save.hasOmniCorrosionState &&
+			save.omniCorrosionStateVersion != GameSave::OmniCorrosionStateVersion) ||
+		save.particlesCount <= 0 || save.particles.size() < static_cast<size_t>(save.particlesCount) ||
+		save.blockSize.X <= 0 || save.blockSize.Y <= 0 || save.omniAtmosphereSpecies.empty())
+	{
+		return false;
+	}
+	const auto cellCount = static_cast<size_t>(save.blockSize.X) * static_cast<size_t>(save.blockSize.Y);
+	const auto speciesCount = save.omniAtmosphereSpecies.size();
+	if (save.omniAtmosphereSpeciesMassDensity.size() != cellCount * speciesCount ||
+		save.omniAtmosphereMomentumX.size() != cellCount ||
+		save.omniAtmosphereMomentumY.size() != cellCount ||
+		save.omniAtmosphereTotalEnergy.size() != cellCount ||
+		save.omniAtmosphereCondensedWaterDensity.size() != cellCount ||
+		save.omniAtmosphereCellValid.size() != cellCount ||
+		save.omniWaterParcelMassKg.size() != static_cast<size_t>(save.particlesCount) ||
+		save.omniWaterParcelSpecificEnthalpyJPerKg.size() != static_cast<size_t>(save.particlesCount) ||
+		(save.hasOmniCarbonParcelState &&
+			save.omniCarbonParcelMassKg.size() != static_cast<size_t>(save.particlesCount)) ||
+		(save.hasOmniSolutionState &&
+			(save.omniSolutionSolventMassKg.size() != static_cast<size_t>(save.particlesCount) ||
+			 save.omniSolutionSoluteMassKg.size() != static_cast<size_t>(save.particlesCount) ||
+			 save.omniSolutionNeutralSaltMassKg.size() != static_cast<size_t>(save.particlesCount))) ||
+		(save.hasOmniCorrosionState &&
+			(save.omniCorrosionProgress.size() != static_cast<size_t>(save.particlesCount) ||
+			 save.omniCorrosionPassivation.size() != static_cast<size_t>(save.particlesCount))) ||
+		std::any_of(save.omniAtmosphereCellValid.begin(), save.omniAtmosphereCellValid.end(),
+			[](unsigned char value) { return value > 1; }))
+	{
+		return false;
+	}
+	for (int index = 0; index < save.particlesCount; ++index)
+	{
+		const auto &particle = save.particles[index];
+		if (particle.type <= 0 || particle.type >= PT_NUM ||
+			!PortableFinite(particle.x) || !PortableFinite(particle.y) ||
+			!PortableFinite(particle.vx) || !PortableFinite(particle.vy) ||
+			!PortableFinite(particle.temp))
+		{
+			return false;
+		}
+	}
+	const auto allFiniteNonNegative = [](const auto &values) {
+		return std::all_of(values.begin(), values.end(), [](double value) {
+			return PortableFinite(value) && value >= 0.0;
+		});
+	};
+	const auto validUnitInterval = [](const auto &values) {
+		return std::all_of(values.begin(), values.end(), [](double value) {
+			return PortableFinite(value) && value >= 0.0 && value <= 1.0;
+		});
+	};
+	return allFiniteNonNegative(save.omniAtmosphereSpeciesMassDensity) &&
+		allFiniteNonNegative(save.omniAtmosphereTotalEnergy) &&
+		allFiniteNonNegative(save.omniAtmosphereCondensedWaterDensity) &&
+		std::all_of(save.omniAtmosphereMomentumX.begin(), save.omniAtmosphereMomentumX.end(),
+			[](double value) { return PortableFinite(value); }) &&
+		std::all_of(save.omniAtmosphereMomentumY.begin(), save.omniAtmosphereMomentumY.end(),
+			[](double value) { return PortableFinite(value); }) &&
+		allFiniteNonNegative(save.omniWaterParcelMassKg) &&
+		allFiniteNonNegative(save.omniWaterParcelSpecificEnthalpyJPerKg) &&
+		(!save.hasOmniCarbonParcelState || allFiniteNonNegative(save.omniCarbonParcelMassKg)) &&
+		(!save.hasOmniSolutionState ||
+			(allFiniteNonNegative(save.omniSolutionSolventMassKg) &&
+			 allFiniteNonNegative(save.omniSolutionSoluteMassKg) &&
+			 allFiniteNonNegative(save.omniSolutionNeutralSaltMassKg))) &&
+		(!save.hasOmniCorrosionState ||
+			(validUnitInterval(save.omniCorrosionProgress) &&
+			 validUnitInterval(save.omniCorrosionPassivation)));
+}
+
+bool PortableSerializedOmniStateMatches(const GameSave &saved, const GameSave &parsed)
+{
+	if (!PortableGameSaveStateValid(saved) || !PortableGameSaveStateValid(parsed) ||
+		saved.particlesCount != parsed.particlesCount || saved.blockSize != parsed.blockSize ||
+		saved.omniSimulationMode != parsed.omniSimulationMode ||
+		saved.omniAtmosphereStateVersion != parsed.omniAtmosphereStateVersion ||
+		saved.omniAtmosphereSpecies != parsed.omniAtmosphereSpecies ||
+		saved.omniAtmosphereCellValid != parsed.omniAtmosphereCellValid ||
+		saved.omniWaterParcelStateVersion != parsed.omniWaterParcelStateVersion ||
+		saved.hasOmniCarbonParcelState != parsed.hasOmniCarbonParcelState ||
+		saved.omniCarbonParcelStateVersion != parsed.omniCarbonParcelStateVersion ||
+		saved.hasOmniSolutionState != parsed.hasOmniSolutionState ||
+		saved.omniSolutionStateVersion != parsed.omniSolutionStateVersion ||
+		saved.hasOmniCorrosionState != parsed.hasOmniCorrosionState ||
+		saved.omniCorrosionStateVersion != parsed.omniCorrosionStateVersion)
+	{
+		return false;
+	}
+	const auto equalDoubles = [](const auto &lhs, const auto &rhs, double absoluteTolerance) {
+		if (lhs.size() != rhs.size())
+			return false;
+		for (size_t index = 0; index < lhs.size(); ++index)
+			if (!PortableNearlyEqual(lhs[index], rhs[index], absoluteTolerance, 1.0e-9))
+				return false;
+		return true;
+	};
+	if (!equalDoubles(saved.omniAtmosphereSpeciesMassDensity,
+			parsed.omniAtmosphereSpeciesMassDensity, 1.0e-12) ||
+		!equalDoubles(saved.omniAtmosphereMomentumX, parsed.omniAtmosphereMomentumX, 1.0e-12) ||
+		!equalDoubles(saved.omniAtmosphereMomentumY, parsed.omniAtmosphereMomentumY, 1.0e-12) ||
+		!equalDoubles(saved.omniAtmosphereTotalEnergy, parsed.omniAtmosphereTotalEnergy, 1.0e-9) ||
+		!equalDoubles(saved.omniAtmosphereCondensedWaterDensity,
+			parsed.omniAtmosphereCondensedWaterDensity, 1.0e-12) ||
+		!equalDoubles(saved.omniWaterParcelMassKg, parsed.omniWaterParcelMassKg, 1.0e-15) ||
+		!equalDoubles(saved.omniWaterParcelSpecificEnthalpyJPerKg,
+			parsed.omniWaterParcelSpecificEnthalpyJPerKg, 1.0e-9) ||
+		(saved.hasOmniCarbonParcelState &&
+			!equalDoubles(saved.omniCarbonParcelMassKg, parsed.omniCarbonParcelMassKg, 1.0e-15)) ||
+		(saved.hasOmniSolutionState &&
+			(!equalDoubles(saved.omniSolutionSolventMassKg,
+				parsed.omniSolutionSolventMassKg, 1.0e-15) ||
+			 !equalDoubles(saved.omniSolutionSoluteMassKg,
+				parsed.omniSolutionSoluteMassKg, 1.0e-15) ||
+			 !equalDoubles(saved.omniSolutionNeutralSaltMassKg,
+				parsed.omniSolutionNeutralSaltMassKg, 1.0e-15))) ||
+		(saved.hasOmniCorrosionState &&
+			(!equalDoubles(saved.omniCorrosionProgress,
+				parsed.omniCorrosionProgress, 1.0e-12) ||
+			 !equalDoubles(saved.omniCorrosionPassivation,
+				parsed.omniCorrosionPassivation, 1.0e-12))))
+	{
+		return false;
+	}
+	for (int index = 0; index < saved.particlesCount; ++index)
+	{
+		const auto &lhs = saved.particles[index];
+		const auto &rhs = parsed.particles[index];
+		if (lhs.type != rhs.type || !PortableNearlyEqual(lhs.x, rhs.x, 0.500001, 0.0) ||
+			!PortableNearlyEqual(lhs.y, rhs.y, 0.500001, 0.0) ||
+			!PortableNearlyEqual(lhs.temp, rhs.temp, 0.500001, 0.0))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool PortableLoadedOmniStateMatches(const GameSave &parsed, const Simulation &simulation)
+{
+	if (!PortableGameSaveStateValid(parsed) || !simulation.IsOmniAtmosphereActive() ||
+		!simulation.omniAtmosphere || PortableLiveParticleCount(simulation) != parsed.particlesCount ||
+		parsed.omniAtmosphereSpecies.size() != simulation.omniAtmosphere->SpeciesCount() ||
+		parsed.omniAtmosphereCellValid.size() != simulation.omniAtmosphere->CellCount())
+	{
+		return false;
+	}
+	std::vector<int> loadedParticleIndices;
+	loadedParticleIndices.reserve(static_cast<size_t>(parsed.particlesCount));
+	for (int index = 0; index < simulation.parts.active; ++index)
+		if (simulation.parts[index].type)
+			loadedParticleIndices.push_back(index);
+	if (loadedParticleIndices.size() != static_cast<size_t>(parsed.particlesCount))
+		return false;
+	for (int index = 0; index < parsed.particlesCount; ++index)
+	{
+		const auto &expected = parsed.particles[index];
+		const auto loadedIndex = loadedParticleIndices[static_cast<size_t>(index)];
+		const auto &actual = simulation.parts[loadedIndex];
+		if (expected.type != actual.type || expected.life != actual.life ||
+			expected.ctype != actual.ctype || expected.tmp != actual.tmp ||
+			expected.tmp2 != actual.tmp2 || expected.tmp3 != actual.tmp3 ||
+			expected.tmp4 != actual.tmp4 || expected.flags != actual.flags ||
+			expected.dcolour != actual.dcolour ||
+			!PortableNearlyEqual(expected.x, actual.x, 0.500001, 0.0) ||
+			!PortableNearlyEqual(expected.y, actual.y, 0.500001, 0.0) ||
+			!PortableNearlyEqual(expected.vx, actual.vx, (1.0 / 16.0) + 1.0e-6, 0.0) ||
+			!PortableNearlyEqual(expected.vy, actual.vy, (1.0 / 16.0) + 1.0e-6, 0.0) ||
+			!PortableNearlyEqual(expected.temp, actual.temp, 0.500001, 0.0))
+		{
+			return false;
+		}
+		if (parsed.hasOmniWaterParcelState &&
+			(!PortableNearlyEqual(parsed.omniWaterParcelMassKg[index],
+				simulation.GetOmniWaterParcelMassKg(loadedIndex), 1.0e-15, 1.0e-9) ||
+			 !PortableNearlyEqual(parsed.omniWaterParcelSpecificEnthalpyJPerKg[index],
+				simulation.GetOmniWaterParcelSpecificEnthalpyJPerKg(loadedIndex), 1.0e-9, 1.0e-9)))
+		{
+			return false;
+		}
+		if (parsed.hasOmniCarbonParcelState &&
+			!PortableNearlyEqual(parsed.omniCarbonParcelMassKg[index],
+				simulation.GetOmniCarbonParcelMassKg(loadedIndex), 1.0e-15, 1.0e-9))
+		{
+			return false;
+		}
+		if (parsed.hasOmniSolutionState &&
+			(!PortableNearlyEqual(parsed.omniSolutionSolventMassKg[index],
+				simulation.GetOmniSolutionSolventMassKg(loadedIndex), 1.0e-15, 1.0e-9) ||
+			 !PortableNearlyEqual(parsed.omniSolutionSoluteMassKg[index],
+				simulation.GetOmniSolutionSoluteMassKg(loadedIndex), 1.0e-15, 1.0e-9) ||
+			 !PortableNearlyEqual(parsed.omniSolutionNeutralSaltMassKg[index],
+				simulation.GetOmniSolutionNeutralSaltMassKg(loadedIndex), 1.0e-15, 1.0e-9)))
+		{
+			return false;
+		}
+		if (parsed.hasOmniCorrosionState &&
+			(!PortableNearlyEqual(parsed.omniCorrosionProgress[index],
+				simulation.GetOmniCorrosionProgress(loadedIndex), 1.0e-12, 1.0e-9) ||
+			 !PortableNearlyEqual(parsed.omniCorrosionPassivation[index],
+				simulation.GetOmniCorrosionPassivation(loadedIndex), 1.0e-12, 1.0e-9)))
+		{
+			return false;
+		}
+	}
+	const auto speciesCount = simulation.omniAtmosphere->SpeciesCount();
+	for (size_t cell = 0; cell < simulation.omniAtmosphere->CellCount(); ++cell)
+	{
+		if (!parsed.omniAtmosphereCellValid[cell])
+			return false;
+		const auto x = cell % simulation.omniAtmosphere->Width();
+		const auto y = cell / simulation.omniAtmosphere->Width();
+		for (size_t species = 0; species < speciesCount; ++species)
+		{
+			const auto expected = parsed.omniAtmosphereSpeciesMassDensity[cell * speciesCount + species];
+			if (!PortableNearlyEqual(expected,
+				simulation.omniAtmosphere->SpeciesMassDensity(x, y, species), 1.0e-12, 1.0e-9))
+			{
+				return false;
+			}
+		}
+		const auto &state = simulation.omniAtmosphere->State(x, y);
+		const auto primitive = simulation.omniAtmosphere->Primitive(x, y);
+		if (!primitive.finite ||
+			!PortableNearlyEqual(parsed.omniAtmosphereMomentumX[cell], state.momentumX, 1.0e-12, 1.0e-9) ||
+			!PortableNearlyEqual(parsed.omniAtmosphereMomentumY[cell], state.momentumY, 1.0e-12, 1.0e-9) ||
+			!PortableNearlyEqual(parsed.omniAtmosphereTotalEnergy[cell], state.totalEnergy, 1.0e-9, 1.0e-9) ||
+			!PortableNearlyEqual(parsed.omniAtmosphereCondensedWaterDensity[cell],
+				primitive.condensedWaterDensity, 1.0e-12, 1.0e-9))
+		{
+			return false;
+		}
+	}
+	return PortableParticleStateFinite(simulation) && PortableFixtureInventoryPresent(simulation);
+}
+
+void PortableRuntimeStep(Simulation &simulation)
+{
+	simulation.BeforeSim(true);
+	simulation.UpdateParticles(0, simulation.parts.active);
+	simulation.AfterSim();
+}
+
+void WritePortableRuntimeJson(const char *path, const PortableRuntimeEvidence &evidence,
+	const char *reason)
+{
+	if (!path || !*path)
+		return;
+	std::ofstream output(path, std::ios::binary | std::ios::trunc);
+	if (!output)
+		return;
+	const auto passed = evidence.Passed();
+	const auto saveReloadPassed = evidence.SaveReloadPassed();
+	const auto stateValidatePassed = evidence.StateValidatePassed();
+	output << "{\n"
+		<< "  \"schema\": \"omnipack-release-evidence\",\n"
+		<< "  \"schema_version\": 1,\n"
+		<< "  \"payload_schema_version\": 2,\n"
+		<< "  \"test\": \"portable_runtime\",\n"
+		<< "  \"run_id\": \"" << evidence.runId << "\",\n"
+		<< "  \"candidate_sha256\": \"" << evidence.candidateSha256 << "\",\n"
+		<< "  \"status\": \"" << (passed ? "PASS" : "FAIL") << "\",\n"
+		<< "  \"passed\": " << (passed ? "true" : "false") << ",\n"
+		<< "  \"reason\": \"" << reason << "\",\n"
+		<< "  \"launch_passed\": " << (evidence.launchPassed ? "true" : "false") << ",\n"
+		<< "  \"fixture_created\": " << (evidence.fixtureCreated ? "true" : "false") << ",\n"
+		<< "  \"initial_simulate_passed\": " << (evidence.initialSimulatePassed ? "true" : "false") << ",\n"
+		<< "  \"initial_save_passed\": " << (evidence.initialSavePassed ? "true" : "false") << ",\n"
+		<< "  \"initial_parse_passed\": " << (evidence.initialParsePassed ? "true" : "false") << ",\n"
+		<< "  \"initial_reload_passed\": " << (evidence.initialReloadPassed ? "true" : "false") << ",\n"
+		<< "  \"initial_state_validate_passed\": " << (evidence.initialStateValidatePassed ? "true" : "false") << ",\n"
+		<< "  \"post_step_simulate_passed\": " << (evidence.postStepSimulatePassed ? "true" : "false") << ",\n"
+		<< "  \"post_step_finite_passed\": " << (evidence.postStepFinitePassed ? "true" : "false") << ",\n"
+		<< "  \"post_step_inventory_passed\": " << (evidence.postStepInventoryPassed ? "true" : "false") << ",\n"
+		<< "  \"post_step_atmosphere_passed\": " << (evidence.postStepAtmospherePassed ? "true" : "false") << ",\n"
+		<< "  \"post_step_save_passed\": " << (evidence.postStepSavePassed ? "true" : "false") << ",\n"
+		<< "  \"post_step_parse_passed\": " << (evidence.postStepParsePassed ? "true" : "false") << ",\n"
+		<< "  \"post_step_reload_passed\": " << (evidence.postStepReloadPassed ? "true" : "false") << ",\n"
+		<< "  \"post_step_roundtrip_passed\": " << (evidence.postStepRoundtripPassed ? "true" : "false") << ",\n"
+		<< "  \"save_reload_passed\": " << (saveReloadPassed ? "true" : "false") << ",\n"
+		<< "  \"state_validate_passed\": " << (stateValidatePassed ? "true" : "false") << ",\n"
+		<< "  \"enhanced_mode\": " << (evidence.enhancedMode ? "true" : "false") << ",\n"
+		<< "  \"omni_state_present\": " << (evidence.omniStatePresent ? "true" : "false") << ",\n"
+		<< "  \"water_sidecar_roundtrip\": " << (evidence.waterSidecarRoundtrip ? "true" : "false") << ",\n"
+		<< "  \"runtime_completion_reached\": " << (evidence.runtimeCompletionReached ? "true" : "false") << ",\n"
+		<< "  \"initial_particle_count\": " << evidence.initialParticleCount << ",\n"
+		<< "  \"post_step_particle_count\": " << evidence.postStepParticleCount << ",\n"
+		<< "  \"final_particle_count\": " << evidence.finalParticleCount << ",\n"
+		<< "  \"atmosphere_non_finite_cells\": " << evidence.atmosphereNonFiniteCells << "\n"
+		<< "}\n";
+}
+
+int RunPortableRuntimeValidation(const char *jsonPath, const char *runId,
+	const char *candidateSha256)
+{
+	PortableRuntimeEvidence evidence;
+	evidence.runId = runId ? runId : "";
+	evidence.candidateSha256 = candidateSha256 ? candidateSha256 : "";
+	try
+	{
+		if (evidence.runId.empty() || evidence.candidateSha256.size() != 64 ||
+			!std::all_of(evidence.candidateSha256.begin(), evidence.candidateSha256.end(), [](char value) {
+				return (value >= '0' && value <= '9') || (value >= 'A' && value <= 'F');
+			}))
+		{
+			throw std::runtime_error("runtime_identity_invalid");
+		}
+		// This validation path runs before the normal ExplicitSingletons setup.
+		// SimulationData construction reaches material initializers which consult
+		// GlobalPrefs, so provide the same dependency explicitly in headless mode.
+		GlobalPrefs globalPrefs;
+		SimulationData simulationData;
+		evidence.launchPassed = true;
+		auto simulation = Simulation::Factory();
+		simulation->SetOmniSimulationMode(OMNI_ENHANCED);
+		const int dust = simulation->create_part(-1, 32, 32, PT_DUST);
+		const int water = simulation->create_part(-1, 34, 32, PT_WATR);
+		if (dust < 0 || water < 0)
+			throw std::runtime_error("fixture_create_failed");
+		evidence.fixtureCreated = true;
+		simulation->parts[dust].temp = 421.0f;
+		simulation->parts[water].temp = 300.0f;
+		for (int step = 0; step < 8; ++step)
+			PortableRuntimeStep(*simulation);
+		evidence.initialSimulatePassed = true;
+		long long initialNonFiniteCells = -1;
+		if (!PortableParticleStateFinite(*simulation) ||
+			!PortableAtmosphereStateFinite(*simulation, initialNonFiniteCells) ||
+			!PortableFixtureInventoryPresent(*simulation))
+		{
+			throw std::runtime_error("initial_state_non_finite");
+		}
+		auto saved = simulation->Save(true, RES.OriginRect());
+		if (!saved || !saved->hasOmniAtmosphereState || !saved->hasOmniWaterParcelState ||
+			saved->omniSimulationMode != OMNI_ENHANCED ||
+			saved->particlesCount != PortableLiveParticleCount(*simulation) ||
+			!PortableGameSaveStateValid(*saved))
+			throw std::runtime_error("save_failed");
+		evidence.initialSavePassed = true;
+		evidence.initialParticleCount = saved->particlesCount;
+		auto serialised = saved->Serialise();
+		if (serialised.first || serialised.second.empty())
+			throw std::runtime_error("serialise_failed");
+		GameSave parsed(serialised.second);
+		if (!parsed.hasOmniAtmosphereState || !parsed.hasOmniWaterParcelState ||
+			parsed.omniSimulationMode != OMNI_ENHANCED ||
+			!PortableSerializedOmniStateMatches(*saved, parsed))
+			throw std::runtime_error("parsed_omni_state_invalid");
+		evidence.initialParsePassed = true;
+		int savedDust = -1;
+		int savedWater = -1;
+		for (int index = 0; index < parsed.particlesCount; ++index)
+		{
+			if (parsed.particles[index].type == PT_DUST)
+				savedDust = index;
+			if (index < static_cast<int>(parsed.omniWaterParcelMassKg.size()) &&
+				parsed.omniWaterParcelMassKg[index] > 0.0)
+				savedWater = index;
+		}
+		if (savedDust < 0 || savedWater < 0 ||
+			savedWater >= static_cast<int>(parsed.omniWaterParcelSpecificEnthalpyJPerKg.size()))
+			throw std::runtime_error("saved_omni_fixture_missing");
+		const auto expectedDust = parsed.particles[savedDust];
+		const auto expectedWater = parsed.particles[savedWater];
+		const double expectedWaterMass = parsed.omniWaterParcelMassKg[savedWater];
+		const double expectedWaterEnthalpy = parsed.omniWaterParcelSpecificEnthalpyJPerKg[savedWater];
+		auto reloaded = Simulation::Factory();
+		reloaded->SetOmniSimulationMode(parsed.omniSimulationMode);
+		reloaded->Load(&parsed, true, { 0, 0 });
+		if (!reloaded->IsOmniAtmosphereActive() || !reloaded->CreateSnapshot() ||
+			reloaded->parts.active <= std::max(savedDust, savedWater) ||
+			!PortableLoadedOmniStateMatches(parsed, *reloaded))
+			throw std::runtime_error("reload_state_invalid");
+		evidence.initialReloadPassed = true;
+		const auto &loadedDust = reloaded->parts[savedDust];
+		const auto &loadedWater = reloaded->parts[savedWater];
+		if (loadedDust.type != expectedDust.type || loadedDust.x != expectedDust.x ||
+			loadedDust.y != expectedDust.y || !PortableNearlyEqual(loadedDust.temp, expectedDust.temp, 0.001, 0.0) ||
+			loadedWater.type != expectedWater.type || loadedWater.x != expectedWater.x ||
+			loadedWater.y != expectedWater.y || !PortableNearlyEqual(loadedWater.temp, expectedWater.temp, 0.001, 0.0) ||
+			!PortableNearlyEqual(reloaded->GetOmniWaterParcelMassKg(savedWater), expectedWaterMass, 1.0e-15, 0.0) ||
+			!PortableNearlyEqual(reloaded->GetOmniWaterParcelSpecificEnthalpyJPerKg(savedWater),
+				expectedWaterEnthalpy, 1.0e-9, 0.0))
+			throw std::runtime_error("reload_state_mismatch");
+		evidence.initialStateValidatePassed = true;
+		evidence.enhancedMode = true;
+		evidence.omniStatePresent = true;
+		PortableRuntimeStep(*reloaded);
+		evidence.postStepSimulatePassed = true;
+		evidence.postStepParticleCount = PortableLiveParticleCount(*reloaded);
+		evidence.postStepFinitePassed = PortableParticleStateFinite(*reloaded);
+	evidence.postStepInventoryPassed =
+		evidence.postStepParticleCount == evidence.initialParticleCount &&
+		PortableFixtureInventoryPresent(*reloaded);
+		evidence.postStepAtmospherePassed =
+			PortableAtmosphereStateFinite(*reloaded, evidence.atmosphereNonFiniteCells);
+		if (!evidence.postStepFinitePassed || !evidence.postStepInventoryPassed ||
+			!evidence.postStepAtmospherePassed)
+		{
+			throw std::runtime_error("post_step_state_invalid");
+		}
+		auto postStepSaved = reloaded->Save(true, RES.OriginRect());
+		if (!postStepSaved || postStepSaved->particlesCount != evidence.postStepParticleCount ||
+			!PortableGameSaveStateValid(*postStepSaved))
+		{
+			throw std::runtime_error("post_step_save_failed");
+		}
+		evidence.postStepSavePassed = true;
+		auto postStepSerialised = postStepSaved->Serialise();
+		if (postStepSerialised.first || postStepSerialised.second.empty())
+			throw std::runtime_error("post_step_serialise_failed");
+		GameSave postStepParsed(postStepSerialised.second);
+		if (!PortableSerializedOmniStateMatches(*postStepSaved, postStepParsed))
+			throw std::runtime_error("post_step_parse_failed");
+		evidence.postStepParsePassed = true;
+		auto finalReloaded = Simulation::Factory();
+		finalReloaded->SetOmniSimulationMode(postStepParsed.omniSimulationMode);
+		finalReloaded->Load(&postStepParsed, true, { 0, 0 });
+		evidence.finalParticleCount = PortableLiveParticleCount(*finalReloaded);
+		long long finalNonFiniteCells = -1;
+		if (!PortableLoadedOmniStateMatches(postStepParsed, *finalReloaded) ||
+			!PortableFixtureInventoryPresent(*finalReloaded) ||
+			!PortableAtmosphereStateFinite(*finalReloaded, finalNonFiniteCells) ||
+			evidence.finalParticleCount != evidence.postStepParticleCount)
+		{
+			throw std::runtime_error("post_step_reload_failed");
+		}
+		evidence.postStepReloadPassed = true;
+		evidence.postStepRoundtripPassed = true;
+		evidence.waterSidecarRoundtrip = true;
+		evidence.runtimeCompletionReached = true;
+		WritePortableRuntimeJson(jsonPath, evidence, "load_simulate_save_reload_post_step_roundtrip_passed");
+		return 0;
+	}
+	catch (const std::exception &error)
+	{
+		WritePortableRuntimeJson(jsonPath, evidence, error.what());
+		std::cerr << "portable-runtime-validation: FAIL " << error.what() << '\n';
+		return 1;
+	}
+}
+
 void PrintStartupDiagnostics()
 {
 	std::cout << APPNAME << ' ' << RELEASE_LABEL << '\n';
 	std::cout << "Git commit: " << (VCS_TAG[0] ? VCS_TAG : "unknown") << '\n';
 	std::cout << "Build type: " << (DEBUG ? "Debug" : "Release") << '\n';
-	std::cout << "SDL: " << SDL_MAJOR_VERSION << '.' << SDL_MINOR_VERSION << '.' << SDL_MICRO_VERSION << '\n';
+	std::cout << "SDL: " << SDL_MAJOR_VERSION << '.' << SDL_MINOR_VERSION << '.'
+#if TPT_SDL3
+		<< SDL_MICRO_VERSION
+#else
+		<< SDL_PATCHLEVEL
+#endif
+		<< '\n';
 	std::cout << "OmniCore: enabled\nAtmosphere: enabled\nChemistry: enabled\n";
 	const auto status = OmniCompute::GetStatus();
 	std::cout << "Compute backend: " << OmniCompute::BackendName(status.backend)
@@ -319,13 +935,35 @@ int Main(int argc, char *argv[])
 			}
 			return Platform::RunCPUFallbackValidation(jsonPath);
 		}
+		if (std::strcmp(argv[i], "--portable-runtime-validate") == 0)
+		{
+			const char *jsonPath = nullptr;
+			const char *runId = nullptr;
+			const char *candidateSha256 = nullptr;
+			for (int arg = i + 1; arg < argc; ++arg)
+			{
+				if (std::strncmp(argv[arg], "--portable-runtime-json=", 24) == 0)
+					jsonPath = argv[arg] + 24;
+				else if (std::strcmp(argv[arg], "--portable-runtime-json") == 0 && arg + 1 < argc)
+					jsonPath = argv[++arg];
+				else if (std::strncmp(argv[arg], "--portable-runtime-run-id=", 26) == 0)
+					runId = argv[arg] + 26;
+				else if (std::strcmp(argv[arg], "--portable-runtime-run-id") == 0 && arg + 1 < argc)
+					runId = argv[++arg];
+				else if (std::strncmp(argv[arg], "--portable-runtime-candidate-sha256=", 36) == 0)
+					candidateSha256 = argv[arg] + 36;
+				else if (std::strcmp(argv[arg], "--portable-runtime-candidate-sha256") == 0 && arg + 1 < argc)
+					candidateSha256 = argv[++arg];
+			}
+			return RunPortableRuntimeValidation(jsonPath, runId, candidateSha256);
+		}
 		if (std::strcmp(argv[i], "--gui-smoke-test") == 0)
 		{
 			const char *jsonPath = nullptr;
 			for (int arg = i + 1; arg < argc; ++arg)
 			{
-				if (std::strncmp(argv[arg], "--gui-smoke-json=", 18) == 0)
-					jsonPath = argv[arg] + 18;
+				if (std::strncmp(argv[arg], "--gui-smoke-json=", 17) == 0)
+					jsonPath = argv[arg] + 17;
 				else if (std::strcmp(argv[arg], "--gui-smoke-json") == 0 && arg + 1 < argc)
 					jsonPath = argv[++arg];
 			}

@@ -3,7 +3,9 @@
 #include "OmniThermal.h"
 
 #include <algorithm>
+#include <bit>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <stdexcept>
 
@@ -13,7 +15,11 @@ constexpr double UniversalGasConstant = 8.31446261815324;
 
 bool Finite(double value)
 {
-	return std::isfinite(value);
+	// Keep serialized-state validation sound under fast-math callers too.  A
+	// floating-point comparison or std::isfinite can be optimized away when a
+	// translation unit is built with finite-only assumptions.
+	return (std::bit_cast<uint64_t>(value) & UINT64_C(0x7FF0000000000000)) !=
+		UINT64_C(0x7FF0000000000000);
 }
 
 double Square(double value)
@@ -86,6 +92,303 @@ double MixtureCp(
 		result += fractions[i] * species[i].specificHeatCpJKgK;
 	return result;
 }
+
+bool ValidateSerializedAtmosphereCell(
+	const OmniAtmosphereConfig &config,
+	std::span<const double> speciesMassDensity,
+	double momentumX,
+	double momentumY,
+	double totalEnergy,
+	double condensedWaterMassDensity,
+	bool cellMarkedValid)
+{
+	if (speciesMassDensity.size() != config.species.size() ||
+		!Finite(momentumX) || !Finite(momentumY) || !Finite(totalEnergy) ||
+		totalEnergy < 0.0 || !Finite(condensedWaterMassDensity) ||
+		condensedWaterMassDensity < 0.0 || config.species.size() <= OMNI_SPECIES_H2O ||
+		!Finite(config.pressureFloor) || config.pressureFloor <= 0.0 ||
+		!Finite(config.internalEnergyFloor) || config.internalEnergyFloor <= 0.0 ||
+		!Finite(config.densityFloor) || config.densityFloor <= 0.0)
+	{
+		return false;
+	}
+
+	double density = 0.0;
+	double heatCapacityDensity = condensedWaterMassDensity * OmniThermal::LiquidSpecificHeatJKgK;
+	double gasConstantDensity = 0.0;
+	double waterDensity = 0.0;
+	for (std::size_t species = 0; species < speciesMassDensity.size(); ++species)
+	{
+		const double value = speciesMassDensity[species];
+		if (!Finite(value) || value < 0.0)
+			return false;
+		density += value;
+		heatCapacityDensity += value * SpeciesCv(config.species[species]);
+		gasConstantDensity += value * SpeciesGasConstant(config.species[species]);
+		if (species == OMNI_SPECIES_H2O)
+			waterDensity = value;
+	}
+	if (!Finite(density) || !Finite(heatCapacityDensity) || !Finite(gasConstantDensity) ||
+		!Finite(waterDensity))
+	{
+		return false;
+	}
+	// Invalid-mask cells are allowed to carry a finite, non-negative placeholder
+	// payload, but no physical state is accepted until the mask marks it valid.
+	if (!cellMarkedValid)
+		return true;
+	if (!(density >= config.densityFloor) || !(heatCapacityDensity > 0.0) ||
+		!(gasConstantDensity > 0.0))
+	{
+		return false;
+	}
+	const double kinetic = 0.5 * (Square(momentumX) + Square(momentumY)) / density;
+	const double latentEnergyDensity = waterDensity * OmniThermal::LatentHeatVaporizationJPerKg;
+	if (!Finite(kinetic) || !Finite(latentEnergyDensity))
+		return false;
+	const double minimumTemperatureK = std::max(
+		1.0, config.pressureFloor / gasConstantDensity);
+	const double requiredSensibleEnergyDensity = std::max(
+		config.internalEnergyFloor, heatCapacityDensity * minimumTemperatureK);
+	const double requiredTotalEnergy = kinetic + latentEnergyDensity + requiredSensibleEnergyDensity;
+	if (!Finite(minimumTemperatureK) || !Finite(requiredSensibleEnergyDensity) ||
+		!Finite(requiredTotalEnergy) || totalEnergy < requiredTotalEnergy)
+	{
+		return false;
+	}
+	const double temperature =
+		(totalEnergy - kinetic - latentEnergyDensity) / heatCapacityDensity;
+	const double pressure = temperature * gasConstantDensity;
+	return Finite(temperature) && temperature >= minimumTemperatureK &&
+		Finite(pressure) && pressure >= config.pressureFloor;
+}
+
+bool ValidateLegacySerializedAtmosphereCellV2(
+	const OmniAtmosphereConfig &config,
+	std::span<const double> speciesMassDensity,
+	double momentumX,
+	double momentumY,
+	double totalEnergy,
+	double condensedWaterMassDensity,
+	bool cellMarkedValid)
+{
+	if (speciesMassDensity.size() != config.species.size() ||
+		config.species.size() <= OMNI_SPECIES_H2O ||
+		!Finite(momentumX) || !Finite(momentumY) || !Finite(totalEnergy) ||
+		!Finite(condensedWaterMassDensity) || condensedWaterMassDensity < 0.0)
+	{
+		return false;
+	}
+	double density = 0.0;
+	for (double value : speciesMassDensity)
+	{
+		if (!Finite(value) || value < 0.0)
+			return false;
+		density += value;
+	}
+	if (!Finite(density))
+		return false;
+	// v2 only required positive gas density and positive total energy for a
+	// cell marked valid. Invalid-mask cells intentionally carried placeholders.
+	return !cellMarkedValid || (density > 0.0 && totalEnergy > 0.0);
+}
+
+bool ComputeSerializedAtmosphereRequiredEnergy(
+	const OmniAtmosphereConfig &config,
+	std::span<const double> speciesMassDensity,
+	double momentumX,
+	double momentumY,
+	double condensedWaterMassDensity,
+	double &requiredTotalEnergy)
+{
+	if (speciesMassDensity.size() != config.species.size() ||
+		config.species.size() <= OMNI_SPECIES_H2O ||
+		!Finite(momentumX) || !Finite(momentumY) ||
+		!Finite(condensedWaterMassDensity) || condensedWaterMassDensity < 0.0 ||
+		!Finite(config.pressureFloor) || config.pressureFloor <= 0.0 ||
+		!Finite(config.internalEnergyFloor) || config.internalEnergyFloor <= 0.0 ||
+		!Finite(config.densityFloor) || config.densityFloor <= 0.0)
+	{
+		return false;
+	}
+	double density = 0.0;
+	double heatCapacityDensity = condensedWaterMassDensity * OmniThermal::LiquidSpecificHeatJKgK;
+	double gasConstantDensity = 0.0;
+	double waterDensity = 0.0;
+	for (std::size_t species = 0; species < speciesMassDensity.size(); ++species)
+	{
+		const double value = speciesMassDensity[species];
+		if (!Finite(value) || value < 0.0)
+			return false;
+		density += value;
+		heatCapacityDensity += value * SpeciesCv(config.species[species]);
+		gasConstantDensity += value * SpeciesGasConstant(config.species[species]);
+		if (species == OMNI_SPECIES_H2O)
+			waterDensity = value;
+	}
+	if (!Finite(density) || density < config.densityFloor ||
+		!Finite(heatCapacityDensity) || !(heatCapacityDensity > 0.0) ||
+		!Finite(gasConstantDensity) || !(gasConstantDensity > 0.0) ||
+		!Finite(waterDensity))
+	{
+		return false;
+	}
+	const double kinetic = 0.5 * (Square(momentumX) + Square(momentumY)) / density;
+	const double latentEnergyDensity =
+		waterDensity * OmniThermal::LatentHeatVaporizationJPerKg;
+	const double minimumTemperatureK = std::max(
+		1.0, config.pressureFloor / gasConstantDensity);
+	const double requiredSensibleEnergyDensity = std::max(
+		config.internalEnergyFloor, heatCapacityDensity * minimumTemperatureK);
+	requiredTotalEnergy = kinetic + latentEnergyDensity + requiredSensibleEnergyDensity;
+	return Finite(kinetic) && Finite(latentEnergyDensity) &&
+		Finite(minimumTemperatureK) && Finite(requiredSensibleEnergyDensity) &&
+		Finite(requiredTotalEnergy);
+}
+
+double SumSpeciesMassDensity(std::span<const double> speciesMassDensity)
+{
+	double result = 0.0;
+	for (double value : speciesMassDensity)
+		result += value;
+	return result;
+}
+}
+
+bool OmniValidateSerializedAtmosphereCell(
+	const OmniAtmosphereConfig &config,
+	std::span<const double> speciesMassDensity,
+	double momentumX,
+	double momentumY,
+	double totalEnergy,
+	double condensedWaterMassDensity,
+	bool cellMarkedValid)
+{
+	return ValidateSerializedAtmosphereCell(
+		config, speciesMassDensity, momentumX, momentumY, totalEnergy,
+		condensedWaterMassDensity, cellMarkedValid);
+}
+
+bool OmniMigrateLegacySerializedAtmosphereCellV2(
+	const OmniAtmosphereConfig &config,
+	std::span<double> speciesMassDensity,
+	double momentumX,
+	double momentumY,
+	double &totalEnergy,
+	double condensedWaterMassDensity,
+	bool cellMarkedValid,
+	OmniSerializedAtmosphereCellMigration *migration)
+{
+	if (migration)
+		*migration = {};
+	if (!ValidateLegacySerializedAtmosphereCellV2(
+			config, std::span<const double>(speciesMassDensity.data(), speciesMassDensity.size()),
+			momentumX, momentumY, totalEnergy, condensedWaterMassDensity, cellMarkedValid))
+	{
+		return false;
+	}
+
+	// Work in temporaries so a failed migration cannot leave a half-updated cell.
+	std::vector<double> canonical(speciesMassDensity.begin(), speciesMassDensity.end());
+	double canonicalEnergy = totalEnergy;
+	bool densityAdjusted = false;
+	bool energyAdjusted = false;
+	if (!cellMarkedValid)
+	{
+		// v2 permitted negative placeholder energy for invalid-mask cells; v3's
+		// numeric contract is non-negative even when the cell is not physical.
+		if (canonicalEnergy < 0.0)
+		{
+			canonicalEnergy = 0.0;
+			energyAdjusted = true;
+		}
+	}
+	else
+	{
+		const double density = SumSpeciesMassDensity(
+			std::span<const double>(canonical.data(), canonical.size()));
+		if (!Finite(density) || !(density > 0.0))
+			return false;
+		if (density < config.densityFloor)
+		{
+			for (double &value : canonical)
+			{
+				// Divide first so even a positive subnormal v2 density can be
+				// migrated without overflowing an intermediate scale factor.
+				value = (value / density) * config.densityFloor;
+				if (!Finite(value) || value < 0.0)
+					return false;
+			}
+			// Correct the deterministic residual on the largest channel. This
+			// keeps the composition stable while guaranteeing the density floor is
+			// reached despite floating-point summation roundoff.
+			std::size_t correctionIndex = 0;
+			for (std::size_t index = 1; index < canonical.size(); ++index)
+			{
+				if (canonical[index] > canonical[correctionIndex])
+					correctionIndex = index;
+			}
+			const double scaledDensity = SumSpeciesMassDensity(
+				std::span<const double>(canonical.data(), canonical.size()));
+			const double corrected = canonical[correctionIndex] +
+				(config.densityFloor - scaledDensity);
+			if (!Finite(corrected) || corrected < 0.0)
+				return false;
+			canonical[correctionIndex] = corrected;
+			for (int attempt = 0; attempt < 8 &&
+				SumSpeciesMassDensity(std::span<const double>(canonical.data(), canonical.size())) <
+					config.densityFloor; ++attempt)
+			{
+				canonical[correctionIndex] = std::nextafter(
+					canonical[correctionIndex], std::numeric_limits<double>::infinity());
+			}
+			if (SumSpeciesMassDensity(std::span<const double>(canonical.data(), canonical.size())) <
+				config.densityFloor)
+			{
+				return false;
+			}
+			densityAdjusted = true;
+		}
+		double requiredTotalEnergy = 0.0;
+		if (!ComputeSerializedAtmosphereRequiredEnergy(
+			config, std::span<const double>(canonical.data(), canonical.size()),
+			momentumX, momentumY, condensedWaterMassDensity, requiredTotalEnergy))
+		{
+			return false;
+		}
+		if (canonicalEnergy < requiredTotalEnergy)
+		{
+			canonicalEnergy = requiredTotalEnergy;
+			energyAdjusted = true;
+		}
+	}
+	auto canonicalIsValid = [&] {
+		return OmniValidateSerializedAtmosphereCell(
+			config, std::span<const double>(canonical.data(), canonical.size()),
+			momentumX, momentumY, canonicalEnergy, condensedWaterMassDensity,
+			cellMarkedValid);
+	};
+	// Exact required-energy arithmetic may round down after a large kinetic or
+	// latent term is subtracted again by the strict validator. Raise by at most
+	// a handful of representable steps; any structural failure still rejects.
+	for (int attempt = 0; cellMarkedValid && attempt < 8 && !canonicalIsValid(); ++attempt)
+	{
+		canonicalEnergy = std::nextafter(
+			canonicalEnergy, std::numeric_limits<double>::infinity());
+		energyAdjusted = true;
+	}
+	if (!canonicalIsValid())
+	{
+		return false;
+	}
+	std::copy(canonical.begin(), canonical.end(), speciesMassDensity.begin());
+	totalEnergy = canonicalEnergy;
+	if (migration)
+	{
+		migration->densityAdjusted = densityAdjusted;
+		migration->energyAdjusted = energyAdjusted;
+	}
+	return true;
 }
 
 std::vector<OmniAtmosphereSpeciesDefinition> OmniDefaultAtmosphereSpecies()
@@ -251,12 +554,63 @@ bool OmniAtmosphere::IsBlocked(std::size_t x, std::size_t y) const
 	return blocked[Index(x, y)] != 0;
 }
 
+double OmniAtmosphere::AvailableThermalEnergyJ(
+	std::size_t x, std::size_t y, double minimumTemperatureK) const
+{
+	if (x >= config.width || y >= config.height || !Finite(minimumTemperatureK) ||
+		minimumTemperatureK <= 0.0)
+	{
+		throw std::invalid_argument("invalid OmniAtmosphere thermal-energy query");
+	}
+	const auto index = Index(x, y);
+	const auto &cell = state[index];
+	if (!Finite(cell.density) || !Finite(cell.momentumX) || !Finite(cell.momentumY) ||
+		!Finite(cell.totalEnergy) || !(cell.density > 0.0))
+		return 0.0;
+	const double kinetic = 0.5 * (Square(cell.momentumX) + Square(cell.momentumY)) / cell.density;
+	double heatCapacityDensity = condensedWaterDensity[index] * OmniThermal::LiquidSpecificHeatJKgK;
+	double gasConstantDensity = 0.0;
+	for (std::size_t species = 0; species < config.species.size(); ++species)
+	{
+		heatCapacityDensity += speciesState[SpeciesIndex(index, species)] * SpeciesCv(config.species[species]);
+		gasConstantDensity += speciesState[SpeciesIndex(index, species)] * SpeciesGasConstant(config.species[species]);
+	}
+	const double latentEnergyDensity =
+		speciesState[SpeciesIndex(index, OMNI_SPECIES_H2O)] * OmniThermal::LatentHeatVaporizationJPerKg;
+	const double physicalMinimumTemperatureK = std::max(
+		minimumTemperatureK,
+		config.pressureFloor / std::max(gasConstantDensity, 1.0e-300));
+	const double requiredSensibleEnergyDensity = std::max(
+		config.internalEnergyFloor, heatCapacityDensity * physicalMinimumTemperatureK);
+	const double minimumEnergyDensity = kinetic + latentEnergyDensity +
+		requiredSensibleEnergyDensity;
+	if (!Finite(kinetic) || !Finite(heatCapacityDensity) || !(heatCapacityDensity > 0.0) ||
+		!Finite(gasConstantDensity) || !(gasConstantDensity > 0.0) ||
+		!Finite(physicalMinimumTemperatureK) || !Finite(latentEnergyDensity) ||
+		!Finite(requiredSensibleEnergyDensity) ||
+		!Finite(minimumEnergyDensity))
+		return 0.0;
+	return std::max((cell.totalEnergy - minimumEnergyDensity) * config.scale.cellVolumeM3(), 0.0);
+}
+
 void OmniAtmosphere::AddEnergyDensity(std::size_t x, std::size_t y, double joulesPerM3)
 {
 	if (x >= config.width || y >= config.height || !Finite(joulesPerM3))
 		throw std::invalid_argument("invalid OmniAtmosphere energy source");
-	state[Index(x, y)].totalEnergy += joulesPerM3;
-	pendingSourceEnergyJ += joulesPerM3 * config.scale.cellVolumeM3();
+	const auto index = Index(x, y);
+	const double volume = config.scale.cellVolumeM3();
+	const double energyJ = joulesPerM3 * volume;
+	const double nextTotalEnergy = state[index].totalEnergy + joulesPerM3;
+	const double nextPendingSourceEnergyJ = pendingSourceEnergyJ + energyJ;
+	if (!Finite(energyJ) || !Finite(nextTotalEnergy) || !Finite(nextPendingSourceEnergyJ))
+		throw std::invalid_argument("OmniAtmosphere energy source would create a non-finite state");
+	if (joulesPerM3 < 0.0 &&
+		-energyJ > AvailableThermalEnergyJ(x, y) + 1.0e-15)
+	{
+		throw std::invalid_argument("OmniAtmosphere energy source exceeds available thermal energy");
+	}
+	state[index].totalEnergy = nextTotalEnergy;
+	pendingSourceEnergyJ = nextPendingSourceEnergyJ;
 	pendingEvent = true;
 	transportActive = true;
 }
@@ -319,6 +673,8 @@ bool OmniAtmosphere::ApplyReactionSpeciesTransfer(
 	OmniAtmosphereReactionTransfer *result)
 {
 	OmniAtmosphereReactionTransfer transfer{};
+	if (result)
+		*result = transfer;
 	if (x >= config.width || y >= config.height || speciesMassDeltaKg.size() != config.species.size() ||
 		!Finite(chemicalEnergyJ) || !Finite(parcelVelocityX) || !Finite(parcelVelocityY))
 		return false;
@@ -336,12 +692,14 @@ bool OmniAtmosphere::ApplyReactionSpeciesTransfer(
 		return false;
 	double totalMassDelta = 0.0;
 	double sensibleEnergy = 0.0;
+	std::vector<double> nextSpeciesMassDensity(config.species.size(), 0.0);
 	for (std::size_t species = 0; species < config.species.size(); ++species)
 	{
 		const double deltaDensity = speciesMassDeltaKg[species] / volume;
 		const double nextDensity = speciesState[SpeciesIndex(cell, species)] + deltaDensity;
 		if (!Finite(nextDensity) || nextDensity < 0.0)
 			return false;
+		nextSpeciesMassDensity[species] = nextDensity;
 		totalMassDelta += speciesMassDeltaKg[species];
 		sensibleEnergy += speciesMassDeltaKg[species] *
 			(SpeciesCv(config.species[species]) * primitive.temperature +
@@ -360,11 +718,28 @@ bool OmniAtmosphere::ApplyReactionSpeciesTransfer(
 	const double nextTotalEnergy = state[cell].totalEnergy + totalEnergyDelta / volume;
 	const double nextKineticEnergy = 0.5 *
 		(Square(nextMomentumX) + Square(nextMomentumY)) / nextDensity;
-	const double requiredInternalEnergy = std::max(
-		config.internalEnergyFloor, config.pressureFloor / (config.gamma - 1.0));
+	double nextHeatCapacityDensity =
+		condensedWaterDensity[cell] * OmniThermal::LiquidSpecificHeatJKgK;
+	double nextGasConstantDensity = 0.0;
+	for (std::size_t species = 0; species < config.species.size(); ++species)
+	{
+		nextHeatCapacityDensity += nextSpeciesMassDensity[species] * SpeciesCv(config.species[species]);
+		nextGasConstantDensity += nextSpeciesMassDensity[species] * SpeciesGasConstant(config.species[species]);
+	}
+	const double nextLatentEnergyDensity =
+		nextSpeciesMassDensity[OMNI_SPECIES_H2O] * OmniThermal::LatentHeatVaporizationJPerKg;
+	const double minimumTemperatureK = std::max(
+		1.0, config.pressureFloor / std::max(nextGasConstantDensity, 1.0e-300));
+	const double requiredSensibleEnergyDensity = std::max(
+		config.internalEnergyFloor, nextHeatCapacityDensity * minimumTemperatureK);
+	const double requiredTotalEnergy =
+		nextKineticEnergy + nextLatentEnergyDensity + requiredSensibleEnergyDensity;
 	if (!Finite(sourceMomentumX) || !Finite(sourceMomentumY) || !Finite(totalEnergyDelta) ||
 		!Finite(nextMomentumX) || !Finite(nextMomentumY) || !Finite(nextTotalEnergy) ||
-		!Finite(nextKineticEnergy) || nextTotalEnergy - nextKineticEnergy < requiredInternalEnergy)
+		!Finite(nextKineticEnergy) || !Finite(nextHeatCapacityDensity) ||
+		!(nextHeatCapacityDensity > 0.0) || !Finite(nextGasConstantDensity) ||
+		!(nextGasConstantDensity > 0.0) || !Finite(nextLatentEnergyDensity) ||
+		!Finite(requiredTotalEnergy) || nextTotalEnergy < requiredTotalEnergy)
 		return false;
 	for (std::size_t species = 0; species < config.species.size(); ++species)
 	{
@@ -372,6 +747,13 @@ bool OmniAtmosphere::ApplyReactionSpeciesTransfer(
 		speciesState[SpeciesIndex(cell, species)] += deltaDensity;
 		pendingSourceSpeciesMassKg[species] += speciesMassDeltaKg[species];
 	}
+	// Reaction transfers are also external water injections/withdrawals.  Keep
+	// the phase-equilibrium pass armed when a transfer introduces H2O into a
+	// previously dry atmosphere (the legacy AddSpeciesMassDensity path did
+	// this implicitly).
+	if (OMNI_SPECIES_H2O < nextSpeciesMassDensity.size() &&
+		nextSpeciesMassDensity[OMNI_SPECIES_H2O] > 0.0)
+		phaseActive = true;
 	state[cell].density = nextDensity;
 	state[cell].momentumX = nextMomentumX;
 	state[cell].momentumY = nextMomentumY;
@@ -456,21 +838,16 @@ bool OmniAtmosphere::RestoreSerializedCell(
 	double totalEnergy,
 	double condensedWaterMassDensity)
 {
-	if (x >= config.width || y >= config.height || speciesMassDensity.size() != config.species.size() ||
-		!Finite(momentumX) || !Finite(momentumY) || !Finite(totalEnergy) || !(totalEnergy > 0.0) ||
-		!Finite(condensedWaterMassDensity) || condensedWaterMassDensity < 0.0)
+	if (x >= config.width || y >= config.height ||
+		!OmniValidateSerializedAtmosphereCell(
+			config, speciesMassDensity, momentumX, momentumY, totalEnergy,
+			condensedWaterMassDensity, true))
 	{
 		return false;
 	}
 	double density = 0.0;
 	for (double value : speciesMassDensity)
-	{
-		if (!Finite(value) || value < 0.0)
-			return false;
 		density += value;
-	}
-	if (!(density > 0.0))
-		return false;
 	const auto cell = Index(x, y);
 	const auto oldState = state[cell];
 	const double oldCondensed = condensedWaterDensity[cell];
@@ -482,15 +859,6 @@ bool OmniAtmosphere::RestoreSerializedCell(
 	}
 	condensedWaterDensity[cell] = condensedWaterMassDensity;
 	state[cell] = { density, momentumX, momentumY, totalEnergy };
-	const auto primitive = Derive(cell, state[cell]);
-	if (!primitive.finite || primitive.pressure < config.pressureFloor)
-	{
-		state[cell] = oldState;
-		condensedWaterDensity[cell] = oldCondensed;
-		for (std::size_t species = 0; species < config.species.size(); ++species)
-			speciesState[SpeciesIndex(cell, species)] = oldSpecies[species];
-		return false;
-	}
 	const double volume = config.scale.cellVolumeM3();
 	pendingSourceMassKg +=
 		((density + condensedWaterMassDensity) - (oldState.density + oldCondensed)) * volume;
@@ -504,6 +872,49 @@ bool OmniAtmosphere::RestoreSerializedCell(
 	phaseActive = phaseActive || condensedWaterMassDensity > 0.0 ||
 		speciesMassDensity[OMNI_SPECIES_H2O] > 0.0;
 	return true;
+}
+
+OmniAtmosphereRegionRestoreToken OmniAtmosphere::BeginRegionStateRestore() const
+{
+	return {
+		pendingSourceMassKg,
+		pendingSourceMomentumX,
+		pendingSourceMomentumY,
+		pendingSourceEnergyJ,
+		pendingSourceSpeciesMassKg,
+	};
+}
+
+void OmniAtmosphere::FinalizeRegionStateRestore(
+	const OmniAtmosphereRegionRestoreToken &token,
+	std::span<const std::size_t> restoredCells)
+{
+	if (restoredCells.empty())
+		return;
+	if (token.pendingSourceSpeciesMassKg.size() != pendingSourceSpeciesMassKg.size())
+		throw std::invalid_argument("invalid OmniAtmosphere region restore token");
+	for (const auto cell : restoredCells)
+	{
+		if (cell >= state.size())
+			throw std::out_of_range("OmniAtmosphere region restore cell");
+		next[cell] = state[cell];
+		condensedWaterNext[cell] = condensedWaterDensity[cell];
+		for (std::size_t species = 0; species < config.species.size(); ++species)
+			speciesNext[SpeciesIndex(cell, species)] = speciesState[SpeciesIndex(cell, species)];
+	}
+	pendingSourceMassKg = token.pendingSourceMassKg;
+	pendingSourceMomentumX = token.pendingSourceMomentumX;
+	pendingSourceMomentumY = token.pendingSourceMomentumY;
+	pendingSourceEnergyJ = token.pendingSourceEnergyJ;
+	pendingSourceSpeciesMassKg = token.pendingSourceSpeciesMassKg;
+	pendingEvent = true;
+	compressibleActive = true;
+	transportActive = true;
+	phaseActive = false;
+	for (double value : condensedWaterDensity)
+		phaseActive = phaseActive || value > 0.0;
+	for (std::size_t cell = 0; cell < state.size() && !phaseActive; ++cell)
+		phaseActive = phaseActive || speciesState[SpeciesIndex(cell, OMNI_SPECIES_H2O)] > 0.0;
 }
 
 void OmniAtmosphere::FinalizeStateRestore()
@@ -1838,16 +2249,94 @@ double OmniAtmosphere::MinimumDensity() const
 {
 	double minimum = std::numeric_limits<double>::infinity();
 	for (const auto &cell : state)
+	{
+		if (!Finite(cell.density))
+			return std::numeric_limits<double>::quiet_NaN();
 		minimum = std::min(minimum, cell.density);
+	}
 	return minimum;
+}
+
+double OmniAtmosphere::MaximumDensity() const
+{
+	double maximum = -std::numeric_limits<double>::infinity();
+	for (const auto &cell : state)
+	{
+		if (!Finite(cell.density))
+			return std::numeric_limits<double>::quiet_NaN();
+		maximum = std::max(maximum, cell.density);
+	}
+	return maximum;
 }
 
 double OmniAtmosphere::MinimumPressure() const
 {
 	double minimum = std::numeric_limits<double>::infinity();
 	for (std::size_t index = 0; index < state.size(); ++index)
-		minimum = std::min(minimum, Derive(index, state[index]).pressure);
+	{
+		const auto primitive = Derive(index, state[index]);
+		if (!primitive.finite)
+			return std::numeric_limits<double>::quiet_NaN();
+		minimum = std::min(minimum, primitive.pressure);
+	}
 	return minimum;
+}
+
+double OmniAtmosphere::MaximumPressure() const
+{
+	double maximum = -std::numeric_limits<double>::infinity();
+	for (std::size_t index = 0; index < state.size(); ++index)
+	{
+		const auto primitive = Derive(index, state[index]);
+		if (!primitive.finite)
+			return std::numeric_limits<double>::quiet_NaN();
+		maximum = std::max(maximum, primitive.pressure);
+	}
+	return maximum;
+}
+
+double OmniAtmosphere::MinimumTemperature() const
+{
+	double minimum = std::numeric_limits<double>::infinity();
+	for (std::size_t index = 0; index < state.size(); ++index)
+	{
+		const auto primitive = Derive(index, state[index]);
+		if (!primitive.finite)
+			return std::numeric_limits<double>::quiet_NaN();
+		minimum = std::min(minimum, primitive.temperature);
+	}
+	return minimum;
+}
+
+double OmniAtmosphere::MaximumTemperature() const
+{
+	double maximum = -std::numeric_limits<double>::infinity();
+	for (std::size_t index = 0; index < state.size(); ++index)
+	{
+		const auto primitive = Derive(index, state[index]);
+		if (!primitive.finite)
+			return std::numeric_limits<double>::quiet_NaN();
+		maximum = std::max(maximum, primitive.temperature);
+	}
+	return maximum;
+}
+
+uint64_t OmniAtmosphere::NonFiniteStateCells() const
+{
+	uint64_t count = 0;
+	for (std::size_t cell = 0; cell < state.size(); ++cell)
+	{
+		bool valid = Derive(cell, state[cell]).finite &&
+			Finite(condensedWaterDensity[cell]) && condensedWaterDensity[cell] >= 0.0;
+		for (std::size_t species = 0; valid && species < config.species.size(); ++species)
+		{
+			const double density = speciesState[SpeciesIndex(cell, species)];
+			valid = Finite(density) && density >= 0.0;
+		}
+		if (!valid)
+			++count;
+	}
+	return count;
 }
 
 float OmniAtmosphere::LegacyPressure(std::size_t x, std::size_t y) const

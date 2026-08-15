@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <vector>
 
 #include "OmniPhysicalScale.h"
@@ -123,6 +124,40 @@ struct OmniAtmospherePrimitive
 	bool finite = false;
 };
 
+// Validate one serialized conservative cell before it can enter or leave an
+// OPS payload.  Numeric validity is always required; when cellMarkedValid is
+// true the complete mixture EOS/latent-energy/pressure-floor feasibility is
+// required as well.  Keeping this contract here makes GameSave and runtime
+// restore use exactly the same physical acceptance rule.
+bool OmniValidateSerializedAtmosphereCell(
+	const OmniAtmosphereConfig &config,
+	std::span<const double> speciesMassDensity,
+	double momentumX,
+	double momentumY,
+	double totalEnergy,
+	double condensedWaterMassDensity,
+	bool cellMarkedValid = true);
+
+struct OmniSerializedAtmosphereCellMigration
+{
+	bool densityAdjusted = false;
+	bool energyAdjusted = false;
+};
+
+// State version 2 used a weaker physical contract. Parse it using that exact
+// legacy contract, then atomically canonicalize the cell to the strict current
+// contract before it can enter GameSave or Simulation state. On failure neither
+// speciesMassDensity nor totalEnergy is modified.
+bool OmniMigrateLegacySerializedAtmosphereCellV2(
+	const OmniAtmosphereConfig &config,
+	std::span<double> speciesMassDensity,
+	double momentumX,
+	double momentumY,
+	double &totalEnergy,
+	double condensedWaterMassDensity,
+	bool cellMarkedValid = true,
+	OmniSerializedAtmosphereCellMigration *migration = nullptr);
+
 // A caller-owned condensed parcel may react with atmosphere species. This
 // explicit transaction is the only 1.0.8 path that may change multiple gas
 // channels and chemical energy in one commit. Species deltas are kilograms,
@@ -215,6 +250,17 @@ struct OmniAtmosphereLedger
 	}
 };
 
+// Region save/stamp restores replace authoritative cells, but must not erase
+// unrelated sources that were queued earlier in the same simulation tick.
+struct OmniAtmosphereRegionRestoreToken
+{
+	double pendingSourceMassKg = 0.0;
+	double pendingSourceMomentumX = 0.0;
+	double pendingSourceMomentumY = 0.0;
+	double pendingSourceEnergyJ = 0.0;
+	std::vector<double> pendingSourceSpeciesMassKg;
+};
+
 class OmniAtmosphere
 {
 public:
@@ -235,6 +281,8 @@ public:
 	void SetBlocked(std::size_t x, std::size_t y, bool blocked);
 	bool IsBlocked(std::size_t x, std::size_t y) const;
 
+	double AvailableThermalEnergyJ(std::size_t x, std::size_t y,
+		double minimumTemperatureK = 1.0) const;
 	void AddEnergyDensity(std::size_t x, std::size_t y, double joulesPerM3);
 	void AddMassDensity(std::size_t x, std::size_t y, double kilogramsPerM3);
 	void AddSpeciesMassDensity(std::size_t x, std::size_t y, std::size_t species, double kilogramsPerM3);
@@ -246,7 +294,13 @@ public:
 	void SetCondensedWaterDensity(std::size_t x, std::size_t y, double kilogramsPerM3);
 	bool RestoreSerializedCell(std::size_t x, std::size_t y, const std::vector<double> &speciesMassDensity,
 		double momentumX, double momentumY, double totalEnergy, double condensedWaterMassDensity);
-	// Completes a whole-grid undo/save restore after RestoreSerializedCell calls.
+	OmniAtmosphereRegionRestoreToken BeginRegionStateRestore() const;
+	// Completes a save/stamp region restore without turning the replacement into
+	// an external source and without discarding sources queued outside it.
+	void FinalizeRegionStateRestore(
+		const OmniAtmosphereRegionRestoreToken &token,
+		std::span<const std::size_t> restoredCells);
+	// Completes a true whole-grid undo restore after RestoreSerializedCell calls.
 	// The restored values become the new authoritative baseline rather than an
 	// unexplained numerical/source correction on the next ledgered step.
 	void FinalizeStateRestore();
@@ -276,7 +330,12 @@ public:
 	double TotalMomentumY() const;
 	double TotalEnergyJ() const;
 	double MinimumDensity() const;
+	double MaximumDensity() const;
 	double MinimumPressure() const;
+	double MaximumPressure() const;
+	double MinimumTemperature() const;
+	double MaximumTemperature() const;
+	uint64_t NonFiniteStateCells() const;
 
 	// Export is a deliberately explicit projection for Legacy renderer/script
 	// consumers. Legacy pv/vx/vy are not SI-authoritative fields.

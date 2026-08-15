@@ -538,6 +538,8 @@ class TestReleaseAuditTests(unittest.TestCase):
                         "source_state": "clean",
                         "source_worktree_sha256": "F" * 64,
                         "source_untracked_files": "0",
+                        "build_inputs_sha256": "E" * 64,
+                        "build_inputs_ready": "true",
                     },
                     extra_members=extras,
                 )
@@ -556,6 +558,89 @@ class TestReleaseAuditTests(unittest.TestCase):
                     version=package_test_release.RELEASE_CANDIDATE_1_1_0_VERSION,
                 ),
                 [],
+            )
+
+    def test_stable_profile_can_build_and_audit_staging_named_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            build_info = source / "BUILD-INFO.txt"
+            validation = source / "RELEASE-VALIDATION.txt"
+            validation_json = source / "RELEASE-VALIDATION.json"
+            build_info.write_text("Channel: stable\n", encoding="utf-8")
+            validation.write_text("FINAL STATUS: CANDIDATE\n", encoding="utf-8")
+            validation_json.write_text('{"status":"CANDIDATE"}\n', encoding="utf-8")
+            run_id = "20260816T000000Z-1234abcd"
+            artifact_stem = f"TPT-ZH-OmniPack-1.1.0-staging-{run_id}-Windows-x64-SDL3"
+            symbol_stem = f"TPT-ZH-OmniPack-1.1.0-staging-{run_id}-Windows-x64-Symbols"
+            with mock.patch.object(
+                package_test_release, "git_revision", return_value="a" * 40
+            ):
+                package, _, symbols, _ = package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.STABLE_VERSION,
+                    kind="release",
+                    source_provenance={
+                        "source_state": "clean",
+                        "source_worktree_sha256": "A" * 64,
+                        "source_untracked_files": "0",
+                        "build_inputs_sha256": "B" * 64,
+                        "build_inputs_ready": "true",
+                    },
+                    extra_members=[("BUILD-INFO.txt", build_info)],
+                    artifact_stem=artifact_stem,
+                    symbol_artifact_stem=symbol_stem,
+                )
+            self.assertEqual(package.name, artifact_stem + ".zip")
+            self.assertEqual(symbols.name, symbol_stem + ".zip")
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    package,
+                    version=package_test_release.STABLE_VERSION,
+                    kind="release",
+                    artifact_stem=artifact_stem,
+                    symbol_artifact_stem=symbol_stem,
+                ),
+                [],
+            )
+            self.assertEqual(
+                test_release_audit.audit_package(
+                    symbols,
+                    True,
+                    version=package_test_release.STABLE_VERSION,
+                    artifact_stem=artifact_stem,
+                    symbol_artifact_stem=symbol_stem,
+                ),
+                [],
+            )
+
+    def test_artifact_stem_rejects_paths(self) -> None:
+        with self.assertRaises(ValueError):
+            package_test_release.package_stems("1.1.0", "..\\escape", None)
+        self.assertTrue(
+            test_release_audit.audit_package(
+                Path("absent.zip"),
+                version="1.1.0",
+                artifact_stem="../escape",
+            )
+        )
+
+    def test_stable_profile_cannot_emit_stable_names_without_finalizer(self) -> None:
+        with self.assertRaisesRegex(ValueError, "run-bound staging"):
+            package_test_release.package_stems("1.1.0")
+        with self.assertRaisesRegex(ValueError, "matching staging names"):
+            package_test_release.package_stems(
+                "1.1.0",
+                "TPT-ZH-OmniPack-1.1.0-Windows-x64-SDL3",
+                "TPT-ZH-OmniPack-1.1.0-Windows-x64-Symbols",
+            )
+        with self.assertRaisesRegex(ValueError, "matching staging names"):
+            package_test_release.package_stems(
+                "1.1.0",
+                "TPT-ZH-OmniPack-1.1.0-staging-20260816T000000Z-1234abcd-Windows-x64-SDL3",
+                "TPT-ZH-OmniPack-1.1.0-staging-20260816T000000Z-deadbeef-Windows-x64-Symbols",
             )
 
     def test_final_release_omits_test_assets_and_uses_release_manifest(self) -> None:
@@ -607,15 +692,20 @@ class TestReleaseAuditTests(unittest.TestCase):
             (source / "new.txt").write_bytes(b"untracked\ncontent\n")
 
             def git_result(args, **_kwargs):
-                if "diff" in args:
-                    self.assertIn("--name-only", args)
-                    self.assertIn("--ignore-space-at-eol", args)
+                if "status" in args:
+                    self.assertIn("--porcelain=v1", args)
+                    return mock.Mock(
+                        returncode=0,
+                        stdout=b" M tracked.txt\n?? new.txt\n",
+                        stderr=b"",
+                    )
+                self.assertIn("ls-files", args)
+                if "--others" not in args:
                     return mock.Mock(
                         returncode=0,
                         stdout=b"tracked.txt\0deleted.txt\0",
                         stderr=b"",
                     )
-                self.assertIn("ls-files", args)
                 return mock.Mock(
                     returncode=0, stdout=b"new.txt\0", stderr=b""
                 )

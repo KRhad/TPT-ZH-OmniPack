@@ -1717,15 +1717,20 @@ static int omniAtmosphere(lua_State *L)
 		lua_pushstring(L, value);
 		lua_setfield(L, -2, name);
 	};
-	setInteger("state_version", 2);
+	setInteger("state_version", GameSave::OmniAtmosphereStateVersion);
 	setInteger("mode", sim->GetOmniSimulationMode());
 	setBoolean("active", sim->IsOmniAtmosphereActive());
 	const auto persistenceStatus = sim->omniAtmospherePersistenceStatus;
-	setBoolean("state_serialized", persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::LoadedV2);
+	setBoolean("state_serialized",
+		persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::LoadedV3 ||
+		persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::MigratedV2ToV3);
+	setBoolean("state_migrated_from_legacy_v2",
+		persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::MigratedV2ToV3);
 	setBoolean("state_serialization_supported", true);
 	setBoolean("migration_degraded",
 		persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::MigratedLegacyProjection ||
-		persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::RegionStateOmitted);
+		persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::RegionStateOmitted ||
+		persistenceStatus == Simulation::OmniAtmospherePersistenceStatus::MigratedV2ToV3);
 	setString("serialization_status", sim->GetOmniAtmospherePersistenceStatus());
 	if (!atmosphere)
 	{
@@ -1739,7 +1744,12 @@ static int omniAtmosphere(lua_State *L)
 	setNumber("condensed_water_mass_kg", atmosphere->TotalCondensedWaterMassKg());
 	setNumber("energy_j", atmosphere->TotalEnergyJ());
 	setNumber("minimum_density_kg_m3", atmosphere->MinimumDensity());
+	setNumber("maximum_density_kg_m3", atmosphere->MaximumDensity());
 	setNumber("minimum_pressure_pa", atmosphere->MinimumPressure());
+	setNumber("maximum_pressure_pa", atmosphere->MaximumPressure());
+	setNumber("minimum_temperature_k", atmosphere->MinimumTemperature());
+	setNumber("maximum_temperature_k", atmosphere->MaximumTemperature());
+	setInteger("state_non_finite_cells", atmosphere->NonFiniteStateCells());
 	const auto &ledger = atmosphere->Ledger();
 	setInteger("substeps", ledger.substeps);
 	setNumber("requested_timestep_s", ledger.requestedTimestepS);

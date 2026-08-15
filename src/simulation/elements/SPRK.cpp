@@ -88,7 +88,6 @@ static int update(UPDATE_FUNC_ARGS)
 			parts[i].temp = R_TEMP + 273.15f;
 		if (ct<=0 || ct>=PT_NUM || !elements[parts[i].ctype].Enabled)
 			ct = PT_METL;
-		parts[i].ctype = PT_NONE;
 		parts[i].life = 4;
 		if (ct == PT_WATR)
 			parts[i].life = 64;
@@ -104,6 +103,7 @@ static int update(UPDATE_FUNC_ARGS)
 
 		if (sim->part_change_type(i,x,y,ct))
 			return 1;
+		parts[i].ctype = PT_NONE;
 		return 0;
 	}
 	//Some functions of SPRK based on ctype (what it is on)

@@ -1,5 +1,9 @@
 # 1.0.5 PhysicalScale and AtmosphereBench scaffold
 
+> Historical checkpoint: upstream hashes and ahead/behind counts in this file
+> describe the Phase 5 entry state. See `02-upstream-status.md` for the current
+> release-audit upstream references.
+
 ## Outcome
 
 ```text

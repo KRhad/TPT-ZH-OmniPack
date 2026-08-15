@@ -65,8 +65,10 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn('gate_result = if ($Smoke) { "not_tested" }', self.powershell)
 
     def test_runtime_isolated_and_secrets_removed(self) -> None:
-        self.assertIn('$startInfo.ArgumentList.Add("ddir")', self.powershell)
-        self.assertIn('$startInfo.ArgumentList.Add($testRoot)', self.powershell)
+        self.assertIn('$startInfo.Arguments = \'"ddir" "\' + $testRoot + \'"\'', self.powershell)
+        self.assertNotIn('$startInfo.ArgumentList.Add', self.powershell)
+        self.assertNotIn("SHA256]::HashData", self.powershell)
+        self.assertNotIn("[Convert]::ToHexString", self.powershell)
         for name in ("GITHUB_PAT_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"):
             self.assertIn(name, self.powershell)
         self.assertIn('(Join-Path $testRoot "powder.pref")', self.powershell)
@@ -93,7 +95,10 @@ class StressHarnessContractTest(unittest.TestCase):
             self.assertIn(field, self.lua)
             self.assertIn(field, self.powershell)
         self.assertIn("local function run_long_run_checkpoint()", self.lua)
-        self.assertIn("runtime.long_run_save_load_cycles < 10", self.lua)
+        self.assertIn("local long_run_checkpoint_target = smoke_run and 1 or 10", self.lua)
+        self.assertIn(
+            "runtime.long_run_save_load_cycles < long_run_checkpoint_target", self.lua
+        )
         self.assertIn("sim.omniLanguage(target_language)", self.lua)
         self.assertIn("sim.omniModuleEnabled(module_name, false)", self.lua)
         self.assertIn("sim.omniModuleEnabled(module_name, true)", self.lua)
@@ -102,10 +107,36 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn("RefreshOmniContentSettings()", self.lua_simulation)
         self.assertIn("Localization::Ref().SetLanguageIndex", self.lua_simulation)
 
+    def test_long_run_activates_and_samples_real_omni_atmosphere(self) -> None:
+        self.assertIn("sim.omniSimulationMode(sim.OMNI_ENHANCED)", self.lua)
+        self.assertIn("formal long run did not activate OmniAtmosphere", self.lua)
+        self.assertIn("sim.omniAtmosphere()", self.lua)
+        self.assertIn("ATMOSPHERE_HEARTBEAT_SECONDS = 30.0", self.lua)
+        self.assertIn("soak-heartbeat.csv", self.lua)
+        for field in (
+            "atmosphere_mass_kg", "species_mass_residual_abs_max_kg",
+            "non_finite_cells", "state_non_finite_cells",
+            "minimum_pressure_pa", "maximum_pressure_pa",
+            "minimum_temperature_k", "maximum_temperature_k",
+            "nan_count", "inf_count", "stalls",
+        ):
+            self.assertIn(field, self.lua)
+        self.assertIn("heartbeat stalled for more than 120 seconds", self.powershell)
+        self.assertIn("ConvertTo-FiniteDouble", self.powershell)
+        for marker in (
+            'setNumber("maximum_density_kg_m3"',
+            'setNumber("maximum_pressure_pa"',
+            'setNumber("minimum_temperature_k"',
+            'setNumber("maximum_temperature_k"',
+            'setInteger("state_non_finite_cells"',
+        ):
+            self.assertIn(marker, self.lua_simulation)
+
     def test_required_raw_series_and_ops_evidence_are_persisted(self) -> None:
         for filename in (
             "frame-series.csv",
             "process-series.csv",
+            "soak-heartbeat.csv",
             "input-first.stm",
             "output-second.stm",
             "result.json",

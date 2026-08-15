@@ -18,6 +18,12 @@ from typing import Iterable, Sequence
 import zipfile
 
 
+TOOLS_DIRECTORY = Path(__file__).resolve().parent
+if str(TOOLS_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIRECTORY))
+from source_snapshot import snapshot as full_worktree_snapshot
+
+
 VERSION = "0.1.0-test"
 DEV_VERSION = "0.2.0-dev"
 AUTOMATION_VERSION = "0.3.0-dev"
@@ -34,6 +40,10 @@ SYMBOL_NAME = "tpt-zh-omnipack.debug"
 PREBUILT_LICENSE_ROOT = (
     "subprojects/tpt-libs-prebuilt-x86_64-windows-mingw-static-release-"
     "v20251019131007/licenses"
+)
+RELEASE_BUILD_INPUT_WRAPS = (
+    "subprojects/tpt-libs-prebuilt-x86_64-windows-mingw-static-release-"
+    "v20251019131007.wrap",
 )
 LIBRARY_LICENSE_DOCUMENTS = tuple(
     (
@@ -143,9 +153,10 @@ ONE_ONE_STABLE_DOCUMENTS = ONE_ONE_COMMON_DOCUMENTS + (
     ("docs/RELEASE_1.1.0_CHANGELOG.en.txt", "CHANGELOG.en.txt"),
     ("docs/RELEASE_1.1.0_CHANGELOG.zh-CN.md", "CHANGELOG.zh-CN.md"),
 )
-ONE_ONE_RELEASE_EXTRA_MEMBERS = frozenset({
+ONE_ONE_RC_RELEASE_EXTRA_MEMBERS = frozenset({
     "BUILD-INFO.txt", "RELEASE-VALIDATION.txt", "RELEASE-VALIDATION.json",
 })
+ONE_ONE_STABLE_RELEASE_EXTRA_MEMBERS = frozenset({"BUILD-INFO.txt"})
 ONE_ONE_PACKAGE_MANIFEST = "PACKAGE-MANIFEST.sha256"
 DEV_DOCUMENTS = (
     ("docs/TUTORIALS_0.2.json", "TUTORIALS-0.2.0.json"),
@@ -251,69 +262,17 @@ def git_revision(source_root: Path) -> str:
     return revision
 
 
-def git_worktree_provenance(source_root: Path) -> dict[str, str]:
-    """Hash real changed files without depending on Git's patch formatting.
-
-    Windows Git and MSYS2 Git can emit different ``git diff --binary`` bytes for
-    the same CRLF checkout.  Git therefore only selects paths here, with
-    line-ending-only changes ignored.  The snapshot itself hashes the actual
-    working-tree bytes in a stable path order.
-    """
-    changed = subprocess.run(
-        [
-            "git", "diff", "--name-only", "-z", "--no-renames",
-            "--ignore-space-at-eol", "--no-ext-diff", "HEAD", "--", ".",
-        ],
-        cwd=source_root,
-        check=False,
-        capture_output=True,
-    )
-    if changed.returncode:
-        raise ValueError(
-            "cannot determine tracked working-tree changes: "
-            + changed.stderr.decode("utf-8", errors="replace").strip()
-        )
-    untracked = subprocess.run(
-        ["git", "ls-files", "--others", "--exclude-standard", "-z", "--", "."],
-        cwd=source_root,
-        check=False,
-        capture_output=True,
-    )
-    if untracked.returncode:
-        raise ValueError(
-            "cannot determine untracked working-tree files: "
-            + untracked.stderr.decode("utf-8", errors="replace").strip()
-        )
-    tracked_paths = sorted(
-        path.decode("utf-8", errors="strict")
-        for path in changed.stdout.split(b"\0")
-        if path
-    )
-    untracked_paths = sorted(
-        path.decode("utf-8", errors="strict")
-        for path in untracked.stdout.split(b"\0")
-        if path
-    )
-    digest = hashlib.sha256()
-    digest.update(b"TPT-ZH-OmniPack worktree snapshot v2\0")
-    for kind, relative in (
-        *(("tracked", path) for path in tracked_paths),
-        *(("untracked", path) for path in untracked_paths),
-    ):
-        encoded = relative.encode("utf-8")
-        path = source_root / relative
-        exists = path.is_file()
-        data = path.read_bytes() if exists else b""
-        digest.update(b"T" if kind == "tracked" else b"U")
-        digest.update(len(encoded).to_bytes(4, "big"))
-        digest.update(encoded)
-        digest.update(b"F" if exists else b"D")
-        digest.update(len(data).to_bytes(8, "big"))
-        digest.update(data)
+def git_worktree_provenance(
+    source_root: Path, required_wraps: Sequence[str] = (),
+) -> dict[str, str]:
+    """Return the full byte snapshot also recorded by the release driver."""
+    value = full_worktree_snapshot(source_root, required_wraps)
     return {
-        "source_state": "dirty" if tracked_paths or untracked_paths else "clean",
-        "source_worktree_sha256": digest.hexdigest().upper(),
-        "source_untracked_files": str(len(untracked_paths)),
+        "source_state": str(value["source_state"]),
+        "source_worktree_sha256": str(value["source_worktree_sha256"]),
+        "source_untracked_files": str(value["source_untracked_files"]),
+        "build_inputs_sha256": str(value["build_inputs_sha256"]),
+        "build_inputs_ready": str(bool(value["build_inputs_ready"])).lower(),
     }
 
 
@@ -359,15 +318,57 @@ def validate_profile(version: str, kind: str, include_examples: bool) -> None:
         )
 
 
-def package_stems(version: str) -> tuple[str, str]:
-    if version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}:
-        return (
+def validate_artifact_stem(stem: str, label: str) -> str:
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", stem):
+        raise ValueError(f"invalid {label}: {stem!r}")
+    return stem
+
+
+def package_stems(
+    version: str,
+    artifact_stem: str | None = None,
+    symbol_artifact_stem: str | None = None,
+) -> tuple[str, str]:
+    if version == STABLE_VERSION:
+        if artifact_stem is None or symbol_artifact_stem is None:
+            raise ValueError(
+                "stable packaging requires explicit run-bound staging artifact stems; "
+                "only the finalizer may create stable filenames"
+            )
+        candidate_match = re.fullmatch(
+            r"TPT-ZH-OmniPack-1\.1\.0-staging-"
+            r"([0-9]{8}T[0-9]{6}Z-[0-9a-f]{8})-Windows-x64-SDL3",
+            artifact_stem,
+        )
+        symbols_match = re.fullmatch(
+            r"TPT-ZH-OmniPack-1\.1\.0-staging-"
+            r"([0-9]{8}T[0-9]{6}Z-[0-9a-f]{8})-Windows-x64-Symbols",
+            symbol_artifact_stem,
+        )
+        if (
+            candidate_match is None
+            or symbols_match is None
+            or candidate_match.group(1) != symbols_match.group(1)
+        ):
+            raise ValueError(
+                "stable package stems must be matching staging names bound to one RUN_ID"
+            )
+        defaults = (artifact_stem, symbol_artifact_stem)
+    elif version == RELEASE_CANDIDATE_1_1_0_VERSION:
+        defaults = (
             f"TPT-ZH-OmniPack-{version}-Windows-x64-SDL3",
             f"TPT-ZH-OmniPack-{version}-Windows-x64-Symbols",
         )
+    else:
+        defaults = (
+            f"TPT-ZH-OmniPack-{version}-Windows-x64",
+            f"TPT-ZH-OmniPack-{version}-Symbols-Windows-x64",
+        )
+    package_stem = artifact_stem or defaults[0]
+    symbol_stem = symbol_artifact_stem or defaults[1]
     return (
-        f"TPT-ZH-OmniPack-{version}-Windows-x64",
-        f"TPT-ZH-OmniPack-{version}-Symbols-Windows-x64",
+        validate_artifact_stem(package_stem, "artifact stem"),
+        validate_artifact_stem(symbol_stem, "symbol artifact stem"),
     )
 
 
@@ -472,10 +473,15 @@ def validate_sources(
         if not source.is_file() or source.stat().st_size == 0:
             raise ValueError(f"release package extra member is missing or empty: {source}")
     if version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}:
-        if extra_names != ONE_ONE_RELEASE_EXTRA_MEMBERS:
+        required_extras = (
+            ONE_ONE_STABLE_RELEASE_EXTRA_MEMBERS
+            if version == STABLE_VERSION
+            else ONE_ONE_RC_RELEASE_EXTRA_MEMBERS
+        )
+        if extra_names != required_extras:
             raise ValueError(
                 "1.1.0 package extras must be exactly: "
-                + ", ".join(sorted(ONE_ONE_RELEASE_EXTRA_MEMBERS))
+                + ", ".join(sorted(required_extras))
             )
     elif extra_names:
         raise ValueError("only 1.1.0 release packages may include extra members")
@@ -512,13 +518,17 @@ def manifest(
         f"build_epoch={build_epoch}",
     ]
     if source_provenance is not None:
+        provenance_fields = (
+            "source_state",
+            "source_worktree_sha256",
+            "source_untracked_files",
+            "build_inputs_sha256",
+            "build_inputs_ready",
+        )
         lines.extend(
             f"{key}={source_provenance[key]}"
-            for key in (
-                "source_state",
-                "source_worktree_sha256",
-                "source_untracked_files",
-            )
+            for key in provenance_fields
+            if key in source_provenance
         )
     for name, source in members:
         data = file_bytes(source)
@@ -567,6 +577,8 @@ def build_package(
     include_examples: bool = False,
     source_provenance: dict[str, str] | None = None,
     extra_members: Sequence[tuple[str, Path]] = (),
+    artifact_stem: str | None = None,
+    symbol_artifact_stem: str | None = None,
 ) -> tuple[Path, Path, Path, Path]:
     source_root = source_root.resolve()
     executable = executable.resolve()
@@ -584,7 +596,9 @@ def build_package(
     revision = git_revision(source_root)
     epoch = source_date_epoch()
     output_directory.mkdir(parents=True, exist_ok=True)
-    package_stem, symbol_package_stem = package_stems(version)
+    package_stem, symbol_package_stem = package_stems(
+        version, artifact_stem, symbol_artifact_stem
+    )
     selected_documents = package_documents(version) + (
         development_documents(version) if include_examples else ()
     )
@@ -656,6 +670,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--include-examples", action="store_true")
     parser.add_argument(
+        "--artifact-stem",
+        help="Override the ZIP filename and root directory stem without changing the embedded version.",
+    )
+    parser.add_argument(
+        "--symbol-artifact-stem",
+        help="Override the symbol ZIP filename and root directory stem without changing the embedded version.",
+    )
+    parser.add_argument(
         "--extra-member",
         action="append",
         nargs=2,
@@ -673,6 +695,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--objdump", help="Path to objdump for mandatory PE auditing.")
     parser.add_argument("--strings", help="Path to strings for mandatory path auditing.")
+    parser.add_argument(
+        "--expected-source-snapshot",
+        help="Require the package manifest source_worktree_sha256 to match this full byte snapshot.",
+    )
+    parser.add_argument(
+        "--expected-build-inputs-snapshot",
+        help="Require the package manifest build_inputs_sha256 to match verified wrap/archive/extracted bytes.",
+    )
     return parser
 
 
@@ -688,7 +718,32 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "--allow-dirty-validation is only valid for release-candidate packages"
             )
         if args.kind in {"release-candidate", "release"}:
-            source_provenance = git_worktree_provenance(source_root)
+            required_wraps = (
+                RELEASE_BUILD_INPUT_WRAPS
+                if args.version in {RELEASE_CANDIDATE_1_1_0_VERSION, STABLE_VERSION}
+                else ()
+            )
+            source_provenance = git_worktree_provenance(source_root, required_wraps)
+            if required_wraps and source_provenance["build_inputs_ready"] != "true":
+                raise ValueError("required release build inputs are absent, modified, or unverified")
+            if args.expected_source_snapshot:
+                expected_snapshot = args.expected_source_snapshot.upper()
+                if not re.fullmatch(r"[0-9A-F]{64}", expected_snapshot):
+                    raise ValueError("expected source snapshot must be an uppercase SHA-256")
+                if source_provenance["source_worktree_sha256"] != expected_snapshot:
+                    raise ValueError(
+                        "source snapshot changed before packaging: "
+                        f"expected {expected_snapshot}, observed {source_provenance['source_worktree_sha256']}"
+                    )
+            if args.expected_build_inputs_snapshot:
+                expected_build_inputs = args.expected_build_inputs_snapshot.upper()
+                if not re.fullmatch(r"[0-9A-F]{64}", expected_build_inputs):
+                    raise ValueError("expected build-input snapshot must be an uppercase SHA-256")
+                if source_provenance["build_inputs_sha256"] != expected_build_inputs:
+                    raise ValueError(
+                        "build inputs changed before packaging: "
+                        f"expected {expected_build_inputs}, observed {source_provenance['build_inputs_sha256']}"
+                    )
             if (
                 source_provenance["source_state"] == "dirty"
                 and (
@@ -727,6 +782,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             include_examples=args.include_examples,
             source_provenance=source_provenance,
             extra_members=extra_members,
+            artifact_stem=args.artifact_stem,
+            symbol_artifact_stem=args.symbol_artifact_stem,
         )
     except (OSError, ValueError) as exc:
         print(f"test-release-package: ERROR {exc}", file=sys.stderr)

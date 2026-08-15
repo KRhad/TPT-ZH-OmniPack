@@ -1,31 +1,37 @@
 #!/usr/bin/env python3
-"""Fail-closed inventory and round-trip contract for official TPT save corpus."""
+"""Run real OmniPack load/simulate/save/reload over a provenance-verified corpus."""
 
 from __future__ import annotations
 
 import argparse
-from datetime import date
 import hashlib
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import subprocess
-import sys
 from typing import Sequence
 
 
-MANIFEST_SCHEMA = "omnipack-official-tpt-save-corpus-v1"
 OFFICIAL_REPOSITORY = "https://github.com/The-Powder-Toy/The-Powder-Toy"
-ALLOWED_REDISTRIBUTION = {
-    "local_only_not_for_redistribution",
-    "redistribution_permitted",
-}
-SHA256_RE = re.compile(r"^[0-9A-Fa-f]{64}$")
-REVISION_RE = re.compile(r"^[0-9A-Fa-f]{40}$")
+SHA256_RE = re.compile(r"^[0-9A-F]{64}$")
+REVISION_RE = re.compile(r"^[0-9a-fA-F]{40}$")
+
+
+def safe_fixture_path(raw: object) -> str | None:
+    if not isinstance(raw, str) or "\\" in raw:
+        return None
+    path = PurePosixPath(raw)
+    if path.is_absolute() or ".." in path.parts or ":" in raw or path.suffix.lower() not in {".cps", ".stm"}:
+        return None
+    return str(path)
 
 
 def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest().upper()
 
 
 def write(path: Path, value: dict[str, object]) -> None:
@@ -33,176 +39,174 @@ def write(path: Path, value: dict[str, object]) -> None:
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def result(
-    output: Path,
-    *,
-    status: str,
-    reason: str,
-    files_tested: int = 0,
-    files_failed: int = 0,
-    **extra: object,
-) -> int:
-    write(output, {
+def stdout_integer(stdout: str, name: str) -> int | None:
+    matches = re.findall(rf"(?m)^{re.escape(name)}=([0-9]+)\s*$", stdout)
+    return int(matches[0]) if len(matches) == 1 else None
+
+
+def result(run_id: str, commit: str, status: str, reason: str, **extra: object) -> dict[str, object]:
+    return {
+        "schema": "omnipack-release-evidence",
+        "schema_version": 1,
         "test": "official_tpt_save_compatibility",
-        "passed": status == "PASS",
+        "run_id": run_id,
+        "commit": commit,
         "status": status,
+        "passed": status == "PASS",
         "reason": reason,
-        "files_tested": files_tested,
-        "files_failed": files_failed,
+        "files_total": 0,
+        "files_passed": 0,
+        "files_failed": 0,
+        "files": [],
         **extra,
-    })
-    return 0 if status == "PASS" else (2 if status == "NOT_TESTED" else 1)
-
-
-def validate_manifest(
-    corpus: Path,
-    manifest_path: Path,
-    fixtures: list[Path],
-) -> tuple[dict[str, object] | None, str | None]:
-    try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        return None, f"provenance manifest is unreadable or invalid JSON: {type(exc).__name__}"
-    if not isinstance(manifest, dict):
-        return None, "provenance manifest root must be an object"
-    if manifest.get("schema") != MANIFEST_SCHEMA:
-        return None, f"provenance manifest schema must be {MANIFEST_SCHEMA}"
-    corpus_id = manifest.get("corpus_id")
-    if not isinstance(corpus_id, str) or not corpus_id.strip():
-        return None, "provenance manifest corpus_id must be non-empty"
-    if manifest.get("source_repository") != OFFICIAL_REPOSITORY:
-        return None, "provenance source_repository is not the official TPT repository"
-    revision = manifest.get("source_revision")
-    if not isinstance(revision, str) or not REVISION_RE.fullmatch(revision):
-        return None, "provenance source_revision must be a full 40-character Git commit"
-    retrieved_at = manifest.get("retrieved_at")
-    try:
-        retrieved_date = date.fromisoformat(retrieved_at) if isinstance(retrieved_at, str) else None
-    except ValueError:
-        retrieved_date = None
-    if retrieved_date is None or retrieved_date > date.today():
-        return None, "provenance retrieved_at must be a non-future ISO date"
-    redistribution = manifest.get("redistribution")
-    if not isinstance(redistribution, dict):
-        return None, "provenance redistribution must be an object"
-    redistribution_status = redistribution.get("status")
-    if redistribution_status not in ALLOWED_REDISTRIBUTION:
-        return None, "provenance redistribution status is absent or unsupported"
-    if not isinstance(redistribution.get("basis"), str) or not redistribution["basis"].strip():
-        return None, "provenance redistribution basis must be non-empty"
-    rows = manifest.get("files")
-    if not isinstance(rows, list) or not rows:
-        return None, "provenance files must be a non-empty array"
-
-    expected: dict[str, str] = {}
-    revision_lower = revision.lower()
-    allowed_locator_prefixes = (
-        f"{OFFICIAL_REPOSITORY.lower()}/blob/{revision_lower}/",
-        f"https://raw.githubusercontent.com/The-Powder-Toy/The-Powder-Toy/{revision_lower}/",
-    )
-    allowed_locator_prefixes = tuple(prefix.lower() for prefix in allowed_locator_prefixes)
-    for row in rows:
-        if not isinstance(row, dict):
-            return None, "each provenance file entry must be an object"
-        relative = row.get("path")
-        digest = row.get("sha256")
-        locator = row.get("source_locator")
-        if not isinstance(relative, str):
-            return None, "each provenance file path must be a string"
-        relative_path = Path(relative)
-        normalized = relative.replace("\\", "/")
-        if (
-            relative_path.is_absolute()
-            or ".." in relative_path.parts
-            or normalized.startswith("/")
-            or relative_path.suffix.lower() not in {".cps", ".stm"}
-            or normalized in expected
-        ):
-            return None, f"unsafe, duplicate, or unsupported provenance path: {relative}"
-        if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
-            return None, f"invalid SHA-256 for provenance path: {relative}"
-        if not isinstance(locator, str) or not locator.lower().startswith(allowed_locator_prefixes):
-            return None, f"source locator is not bound to the recorded official revision: {relative}"
-        expected[normalized] = digest.upper()
-
-    actual = {
-        str(path.relative_to(corpus)).replace("\\", "/"): sha256(path)
-        for path in fixtures
     }
-    if set(actual) != set(expected):
-        return None, "provenance file inventory does not exactly match the corpus"
-    for relative, digest in actual.items():
-        if expected[relative] != digest:
-            return None, f"provenance SHA-256 mismatch: {relative}"
-    return manifest, None
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--corpus", type=Path, required=True)
-    parser.add_argument("--provenance-manifest", type=Path, required=True)
+    parser.add_argument("--provenance-evidence", type=Path, required=True)
     parser.add_argument("--probe", type=Path, required=True)
+    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--commit", required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
-    fixtures = sorted(
-        path for path in args.corpus.glob("**/*")
-        if path.is_file() and path.suffix.lower() in {".cps", ".stm"}
-    ) if args.corpus.is_dir() else []
-    if not fixtures:
-        return result(args.output, status="NOT_TESTED", reason="official TPT save corpus is absent")
-    if not args.provenance_manifest.is_file():
-        return result(
-            args.output,
-            status="NOT_TESTED",
-            reason="official TPT save provenance manifest is absent",
-            files_failed=len(fixtures),
-            provenance_valid=False,
-        )
-    manifest, manifest_error = validate_manifest(args.corpus, args.provenance_manifest, fixtures)
-    if manifest_error or manifest is None:
-        return result(
-            args.output,
-            status="FAIL",
-            reason=manifest_error or "official TPT save provenance validation failed",
-            files_failed=len(fixtures),
-            provenance_valid=False,
-            provenance_manifest_sha256=sha256(args.provenance_manifest),
-        )
+    if not args.provenance_evidence.is_file():
+        document = result(args.run_id, args.commit, "NOT_TESTED", "official provenance evidence is absent")
+        write(args.output, document)
+        return 2
+    try:
+        provenance = json.loads(args.provenance_evidence.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        document = result(args.run_id, args.commit, "FAIL", "official provenance evidence is invalid")
+        write(args.output, document)
+        return 1
+    if not isinstance(provenance, dict) or any((
+        provenance.get("schema") != "omnipack-release-evidence",
+        provenance.get("schema_version") != 1,
+        provenance.get("test") != "official_tpt_provenance",
+        provenance.get("run_id") != args.run_id,
+        provenance.get("commit") != args.commit,
+        provenance.get("status") != "PASS",
+        provenance.get("passed") is not True,
+        provenance.get("revision_exists") is not True,
+        provenance.get("revision_reachable_from_official_remote") is not True,
+        provenance.get("files_failed") != 0,
+        provenance.get("repository") != OFFICIAL_REPOSITORY,
+        not isinstance(provenance.get("revision"), str),
+        not REVISION_RE.fullmatch(str(provenance.get("revision", ""))),
+    )):
+        document = result(args.run_id, args.commit, "NOT_TESTED", "official provenance gate is not PASS")
+        write(args.output, document)
+        return 2
+    rows = provenance.get("files")
+    if not isinstance(rows, list) or not rows:
+        document = result(args.run_id, args.commit, "FAIL", "official provenance file inventory is empty")
+        write(args.output, document)
+        return 1
+    if provenance.get("files_total") != len(rows) or provenance.get("files_verified") != len(rows):
+        document = result(args.run_id, args.commit, "FAIL", "official provenance inventory counts are inconsistent")
+        write(args.output, document)
+        return 1
     if not args.probe.is_file():
-        return result(
-            args.output,
-            status="FAIL",
-            reason="compatibility probe is absent",
-            files_failed=len(fixtures),
-            provenance_valid=True,
-            provenance_manifest_sha256=sha256(args.provenance_manifest),
-        )
+        document = result(args.run_id, args.commit, "FAIL", "compatibility probe is absent", files_total=len(rows), files_failed=len(rows))
+        write(args.output, document)
+        return 1
+    probe_sha256 = sha256(args.probe)
     records: list[dict[str, object]] = []
     failed = 0
-    for fixture in fixtures:
-        completed = subprocess.run(
-            [str(args.probe), str(fixture)], check=False,
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
+    required_markers = {
+        "load": "official_save_load_pass=true",
+        "missing_elements_zero": "official_save_missing_elements_zero=true",
+        "initial_load_state_validate": "official_save_initial_load_state_validate_pass=true",
+        "simulate": "official_save_simulate_pass=true",
+        "save": "official_save_save_pass=true",
+        "reload": "official_save_reload_pass=true",
+        "state_validate": "official_save_state_validate_pass=true",
+        "negative_block_map": "official_save_negative_block_map_rejected=true",
+        "negative_legacy_field": "official_save_negative_legacy_field_rejected=true",
+        "negative_sign": "official_save_negative_sign_rejected=true",
+        "negative_validity_mask": "official_save_negative_validity_mask_rejected=true",
+        "negative_deterministic_frame": "official_save_negative_deterministic_frame_rejected=true",
+        "negative_simulation_option": "official_save_negative_simulation_option_rejected=true",
+        "negative_codec_roundtrip": "official_save_negative_codec_roundtrip_rejected=true",
+    }
+    seen_paths: set[str] = set()
+    for row in rows:
+        path = safe_fixture_path(row.get("path")) if isinstance(row, dict) else None
+        fixture = args.corpus / Path(path) if path else args.corpus / "invalid"
+        phases = {name: False for name in required_markers}
+        exit_code = -1
+        fixture_sha = None
+        hash_binding_passed = False
+        input_particles = None
+        initial_loaded_particles = None
+        output_particles = None
+        initial_particle_inventory = False
+        if path and path not in seen_paths and row.get("match") is True and fixture.is_file() and not fixture.is_symlink():
+            try:
+                fixture.resolve().relative_to(args.corpus.resolve())
+                fixture_sha = sha256(fixture)
+            except (OSError, ValueError):
+                fixture_sha = None
+            upstream_sha = row.get("upstream_sha256")
+            manifest_sha = row.get("manifest_sha256")
+            recorded_fixture_sha = row.get("fixture_sha256")
+            hash_binding_passed = (
+                isinstance(upstream_sha, str) and SHA256_RE.fullmatch(upstream_sha) is not None
+                and upstream_sha == manifest_sha == recorded_fixture_sha == fixture_sha
+            )
+        if path:
+            seen_paths.add(path)
+        if hash_binding_passed:
+            completed = subprocess.run(
+                [str(args.probe), str(fixture)], check=False,
+                capture_output=True, text=True, encoding="utf-8", errors="replace",
+            )
+            exit_code = completed.returncode
+            phases = {name: marker in completed.stdout for name, marker in required_markers.items()}
+            input_particles = stdout_integer(completed.stdout, "input_particles")
+            initial_loaded_particles = stdout_integer(completed.stdout, "initial_loaded_particles")
+            output_particles = stdout_integer(completed.stdout, "output_particles")
+            initial_particle_inventory = (
+                input_particles is not None
+                and initial_loaded_particles == input_particles
+                and output_particles is not None
+            )
+        passed = (
+            hash_binding_passed
+            and exit_code == 0
+            and all(phases.values())
+            and initial_particle_inventory
         )
-        passed = completed.returncode == 0 and "official_save_roundtrip_pass=true" in completed.stdout
         failed += 0 if passed else 1
         records.append({
-            "file": str(fixture.relative_to(args.corpus)).replace("\\", "/"),
-            "sha256": sha256(fixture), "passed": passed,
-            "exit_code": completed.returncode,
+            "path": path, "fixture_sha256": fixture_sha,
+            "probe_sha256": probe_sha256,
+            "provenance_hash_binding_passed": hash_binding_passed,
+            **phases,
+            "input_particles": input_particles,
+            "initial_loaded_particles": initial_loaded_particles,
+            "output_particles": output_particles,
+            "initial_particle_inventory": initial_particle_inventory,
+            "passed": passed,
+            "exit_code": exit_code,
         })
-    write(args.output, {
-        "test": "official_tpt_save_compatibility", "passed": failed == 0,
-        "status": "PASS" if failed == 0 else "FAIL",
-        "reason": "all provenance-bound saves completed load, simulate, save, and reload" if failed == 0 else "one or more provenance-bound saves failed round-trip validation",
-        "provenance_valid": True,
-        "provenance_manifest": args.provenance_manifest.name,
-        "provenance_manifest_sha256": sha256(args.provenance_manifest),
-        "source_repository": manifest["source_repository"],
-        "source_revision": manifest["source_revision"],
-        "redistribution_status": manifest["redistribution"]["status"],
-        "files_tested": len(fixtures), "files_failed": failed, "files": records,
-    })
+    status = "PASS" if failed == 0 else "FAIL"
+    document = result(
+        args.run_id,
+        args.commit,
+        status,
+        "all official saves passed real load/simulate/save/reload" if failed == 0 else "one or more official saves failed real compatibility phases",
+        source_repository=provenance.get("repository"),
+        source_revision=provenance.get("revision"),
+        probe_sha256=probe_sha256,
+        files_total=len(records),
+        files_passed=len(records) - failed,
+        files_failed=failed,
+        files=records,
+    )
+    write(args.output, document)
     return 0 if failed == 0 else 1
 
 
