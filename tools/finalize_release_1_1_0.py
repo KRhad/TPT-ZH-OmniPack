@@ -462,13 +462,55 @@ def run_negative_suite(
         "--candidate", str(candidate), "--symbols", str(symbols),
         "--artifact-stem", artifact_stem, "--symbol-artifact-stem", symbol_artifact_stem,
         "--run-id", str(validation["run_id"]), "--commit", str(validation["commit"]),
-        "--candidate-sha256", str(validation["candidate_sha256"]), "--output", str(raw),
+        "--candidate-sha256", str(validation["candidate_sha256"]),
+        "--package-version", "1.1.0", "--package-kind", "release",
+        "--output", str(raw),
     ], check=False, capture_output=True, text=True)
     result = read_json(raw) if raw.is_file() else {}
     passed = completed.returncode == 0 and result.get("status") == "PASS" and result.get("passed") is True and result.get("attacks_total", 0) == result.get("attacks_rejected", -1)
     set_gate(validation, root, "NegativeGateSuite", "negative_gate_suite", "PASS" if passed else "FAIL", raw, "all bypass attempts were rejected" if passed else "one or more bypass attempts were not rejected", candidate_sha256=str(validation["candidate_sha256"]), started_at=started)
     if not passed:
         raise ValueError("negative gate suite failed: " + completed.stderr.strip())
+
+
+def reset_candidate_promotion_gate(
+    validation: dict[str, object], root: Path, *, candidate_sha256: str
+) -> None:
+    """Clear retry-era promotion evidence before the pre-promotion audit.
+
+    A failed post-publish attempt is rolled back, but its raw gate documents
+    can remain in the run directory.  Every retry must start with an explicit
+    NOT_TESTED CandidatePromotion record so stale PASS bytes cannot satisfy a
+    later aggregate or get copied into the final evidence bundle.
+    """
+    raw = root / "candidate-promotion.json"
+    cleanup_paths = (
+        raw,
+        root / "bound-candidatepromotion.json",
+        root / "gate-candidatepromotion.json",
+    )
+    for path in cleanup_paths:
+        path.unlink(missing_ok=True)
+        path.with_suffix(path.suffix + ".sha256").unlink(missing_ok=True)
+    started = now()
+    finished = now()
+    write_json(raw, {
+        "schema": SCHEMA, "schema_version": SCHEMA_VERSION,
+        "test": "candidate_promotion", "gate_name": "CandidatePromotion",
+        "run_id": validation["run_id"], "commit": validation["commit"],
+        "status": "NOT_TESTED", "passed": False,
+        "candidate_sha256": candidate_sha256,
+        "symbols_sha256": validation.get("symbols_sha256"),
+        "symbols_member_sha256": validation.get("symbols_member_sha256"),
+        "gate_started_at": started, "gate_finished_at": finished,
+        "reason": "stable promotion has not started",
+    })
+    set_gate(
+        validation, root, "CandidatePromotion", "candidate_promotion",
+        "NOT_TESTED", raw, "stable promotion has not started",
+        candidate_sha256=candidate_sha256, started_at=started,
+        finished_at=finished,
+    )
 
 
 def refresh_artifact_immutability(
@@ -866,6 +908,20 @@ def main() -> int:
         validate_checkout_identity(commit)
         run_negative_suite(validation, root, candidate, symbols, artifact_stem, symbol_stem)
         refresh_artifact_immutability(validation, root, candidate)
+        reset_candidate_promotion_gate(
+            validation, root, candidate_sha256=expected_sha,
+        )
+        stable_names_absent_before_pre_promotion_gate = not output.exists()
+        stale_transactions = tuple(
+            output.parent.glob(f".{output.name}.promotion-{run_id}-*")
+        ) if output.parent.exists() else ()
+        if not stable_names_absent_before_pre_promotion_gate:
+            raise ValueError(f"promotion output already exists before pre-promotion gate: {output}")
+        if stale_transactions:
+            raise ValueError(
+                "same-run promotion transaction already exists before pre-promotion gate: "
+                + ", ".join(path.name for path in stale_transactions)
+            )
         validation["status"] = validation["final_status"] = "FINAL AUDIT BEFORE PROMOTION"
         validation["blocking_items"] = []
         run_audit(validation, root, validation_json, validation_text, build_info, candidate, symbols)
@@ -874,6 +930,7 @@ def main() -> int:
             raise ValueError("pre-promotion mandatory gates are blocked: " + ", ".join(pre_blockers))
         if sha256(candidate) != expected_sha:
             raise ValueError("candidate changed during finalization")
+        pre_promotion_gate_finished_at = now()
 
         output.parent.mkdir(parents=True, exist_ok=True)
         if output.exists():
@@ -897,119 +954,18 @@ def main() -> int:
         stable = transaction / "TPT-ZH-OmniPack-1.1.0-Windows-x64-SDL3.zip"
         stable_symbols = transaction / "TPT-ZH-OmniPack-1.1.0-Windows-x64-Symbols.zip"
         evidence_bundle = transaction / "TPT-ZH-OmniPack-1.1.0-Validation-Evidence.zip"
+        stable_name_creation_started_at = now()
+        if stable_name_creation_started_at < pre_promotion_gate_finished_at:
+            raise ValueError("promotion timing clock moved backwards")
 
-        # Stable-named copies may exist only inside this unpublished,
-        # lock-owned transaction.  Their bytes are established before the
-        # CandidatePromotion gate is allowed to pass.
+        # Stable-named copies first exist only inside this unpublished,
+        # lock-owned transaction. CandidatePromotion is intentionally absent
+        # from the aggregate until the directory has actually been published
+        # and the published bytes have passed their post-publish audits.
         copy_verified(candidate, stable, expected_sha)
         copy_verified(symbols, stable_symbols, expected_symbols_sha)
-
-        # CandidatePromotion is a preflight identity gate. Stable-named files
-        # are prepared only inside an unpublished, lock-owned transaction
-        # directory. The complete set becomes visible through one directory
-        # rename after every audit, hash, sidecar, and marker is durable.
-        promotion_raw = root / "candidate-promotion.json"
-        write_json(promotion_raw, {
-            "schema": SCHEMA, "schema_version": SCHEMA_VERSION, "test": "candidate_promotion",
-            "run_id": run_id, "commit": commit, "status": "PASS", "passed": True,
-            "candidate_filename": artifact_stem + ".zip", "candidate_sha256": expected_sha,
-            "stable_filename": stable.name, "stable_sha256_expected": expected_sha,
-            "symbols_candidate_filename": symbol_stem + ".zip", "symbols_sha256": expected_symbols_sha,
-            "stable_symbols_filename": stable_symbols.name,
-            "stable_symbols_sha256_expected": expected_symbols_sha,
-            "symbols_member_sha256": expected_symbols_member_sha,
-            "promotion_phase": "prepared_for_atomic_directory_publish",
-            "stable_copy_prepared": True,
-            "stable_sha256_observed": sha256(stable),
-            "stable_symbols_copy_prepared": True,
-            "stable_symbols_sha256_observed": sha256(stable_symbols),
-            "byte_for_byte_identity": True, "atomic_rename_only": True,
-            "atomic_directory_publish": True,
-            "exclusive_output_lock_acquired": True,
-            "promotion_complete_marker_required": True,
-            "stable_names_absent_before_final_audit": True,
-            "gate_started_at": now(), "gate_finished_at": now(),
-        })
-        set_gate(validation, root, "CandidatePromotion", "candidate_promotion", "PASS", promotion_raw,
-                 "staging identity is ready for atomic promotion", candidate_sha256=expected_sha)
-        validation["status"] = validation["final_status"] = "FINAL AUDIT BEFORE PROMOTION"
-        validation["blocking_items"] = []
-        run_audit(validation, root, validation_json, validation_text, build_info, candidate, symbols)
-        pre_blockers = blockers(validation, MANDATORY_GATES + SUPPLEMENTAL_GATES)
-        if pre_blockers:
-            raise ValueError("pre-promotion mandatory gates are blocked: " + ", ".join(pre_blockers))
-        if sha256(candidate) != expected_sha or sha256(symbols) != expected_symbols_sha:
-            raise ValueError("candidate or symbols changed after final audit")
-
-        # Build a self-contained final evidence snapshot privately. The source
-        # run aggregate remains explicitly pre-promotion until the complete
-        # stable directory is atomically published.
-        bundle_source = transaction / ".validation-source"
-        shutil.copytree(root, bundle_source)
-        bundle_validation_json = bundle_source / validation_json.name
-        bundle_validation_text = bundle_source / validation_text.name
-        bundle_build_info = bundle_source / build_info.name
-        bundle_validation = read_json(bundle_validation_json)
-        bundle_validation["status"] = bundle_validation["final_status"] = "READY FOR 1.1.0 STABLE"
-        bundle_validation["blocking_items"] = []
-        run_audit(
-            bundle_validation, bundle_source, bundle_validation_json,
-            bundle_validation_text, bundle_build_info, stable, stable_symbols,
-            candidate_artifact=candidate, symbols_artifact=symbols,
-        )
-        final_blockers = blockers(bundle_validation, MANDATORY_GATES + SUPPLEMENTAL_GATES)
-        if final_blockers:
-            raise ValueError("final mandatory gates are blocked: " + ", ".join(final_blockers))
-        write_json(bundle_source / "run-metadata.json", {
-            "schema": SCHEMA, "schema_version": SCHEMA_VERSION, "test": "run_metadata",
-            "run_id": run_id, "commit": commit, "candidate_sha256": expected_sha,
-            "stable_filename": stable.name, "stable_sha256_expected": expected_sha,
-            "symbols_filename": stable_symbols.name, "symbols_sha256": expected_symbols_sha,
-            "symbols_member_sha256": expected_symbols_member_sha,
-            "final_status": "READY FOR 1.1.0 STABLE",
-            "publication_model": "exclusive-lock-atomic-directory-publish",
-            "publication_state": "transaction_prepared_for_atomic_publish",
-        })
-
-        create_evidence_bundle(bundle_source, evidence_bundle)
-        bundle_audit = audit_frozen_evidence_bundle(
-            evidence_bundle,
-            package=stable,
-            symbols_package=stable_symbols,
-            candidate_artifact=candidate,
-            symbols_artifact=symbols,
-            run_id=run_id,
-            commit=commit,
-            candidate_sha256=expected_sha,
-            symbols_sha256=expected_symbols_sha,
-            symbols_member_sha256=expected_symbols_member_sha,
-        )
-        published_validation_json = transaction / "RELEASE-VALIDATION.json"
-        published_validation_text = transaction / "RELEASE-VALIDATION.txt"
-        published_build_info = transaction / "BUILD-INFO.txt"
-        copy_verified(
-            bundle_validation_json, published_validation_json,
-            sha256(bundle_validation_json),
-        )
-        copy_verified(
-            bundle_validation_text, published_validation_text,
-            sha256(bundle_validation_text),
-        )
-        copy_verified(
-            bundle_build_info, published_build_info,
-            sha256(bundle_build_info),
-        )
-        published_documents = (
-            published_validation_json, published_validation_text, published_build_info,
-        )
         write_sidecar(stable)
         write_sidecar(stable_symbols)
-        write_sidecar(evidence_bundle)
-        for document in published_documents:
-            write_sidecar(document)
-        evidence_sha = validate_bundle_audit_identity(
-            bundle_audit, evidence_bundle, phase="private"
-        )
         prepared_marker = transaction / "PROMOTION-PREPARED.json"
         write_json(prepared_marker, {
             "schema": SCHEMA, "schema_version": SCHEMA_VERSION,
@@ -1020,31 +976,30 @@ def main() -> int:
             "release_filename": stable.name, "release_sha256": expected_sha,
             "symbols_filename": stable_symbols.name, "symbols_sha256": expected_symbols_sha,
             "symbols_member_sha256": expected_symbols_member_sha,
-            "evidence_filename": evidence_bundle.name, "evidence_sha256": evidence_sha,
-            "validation_filename": published_validation_json.name,
-            "validation_sha256": sha256(published_validation_json),
-            "validation_text_filename": published_validation_text.name,
-            "validation_text_sha256": sha256(published_validation_text),
-            "build_info_filename": published_build_info.name,
-            "build_info_sha256": sha256(published_build_info),
-            "evidence_bundle_audit_passed": bundle_audit["passed"],
-            "evidence_bundle_members_total": bundle_audit["members_total"],
+            "candidate_promotion_gate_status": "NOT_YET_COMPLETED",
+            "pre_promotion_gate_finished_at": pre_promotion_gate_finished_at,
+            "stable_name_creation_started_at": stable_name_creation_started_at,
+            "pre_promotion_gate_passed": True,
+            "stable_names_absent_before_pre_promotion_gate": stable_names_absent_before_pre_promotion_gate,
             "prepared_at": now(),
         })
         write_sidecar(prepared_marker)
         if sha256(stable) != expected_sha or sha256(stable_symbols) != expected_symbols_sha:
             raise ValueError("promotion transaction changed artifact bytes")
-        validate_published_document_set(
-            bundle=evidence_bundle,
-            documents=published_documents,
-            marker=read_json(prepared_marker),
-        )
-        shutil.rmtree(bundle_source)
+        if package_audit.audit_package(
+            stable, False, version="1.1.0", kind="release",
+            artifact_stem=artifact_stem, symbol_artifact_stem=symbol_stem,
+        ):
+            raise ValueError("prepared stable package manifest audit failed")
+        if package_audit.audit_package(
+            stable_symbols, True, version="1.1.0",
+            artifact_stem=artifact_stem, symbol_artifact_stem=symbol_stem,
+        ):
+            raise ValueError("prepared stable symbols manifest audit failed")
 
         # This is the only directory publication operation.  The published
-        # directory initially carries an explicit PREPARED marker; consumers
-        # must not accept it until the post-publish audits create the separate
-        # PROMOTION-COMPLETE marker.
+        # directory initially carries an explicit PREPARED marker; no READY
+        # aggregate or CandidatePromotion PASS exists yet.
         if output.exists():
             raise ValueError(f"promotion output appeared before atomic publish: {output}")
         transaction.rename(output)
@@ -1055,10 +1010,8 @@ def main() -> int:
         stable_symbols = output / stable_symbols.name
         evidence_bundle = output / evidence_bundle.name
         prepared_marker = output / prepared_marker.name
-        published_documents = tuple(output / document.name for document in published_documents)
         validate_sidecar(stable)
         validate_sidecar(stable_symbols)
-        validate_sidecar(evidence_bundle)
         validate_sidecar(prepared_marker)
         published_marker = read_json(prepared_marker)
         if (
@@ -1067,34 +1020,13 @@ def main() -> int:
             or published_marker.get("transaction_prepared") is not True
             or published_marker.get("release_sha256") != sha256(stable)
             or published_marker.get("symbols_sha256") != sha256(stable_symbols)
-            or published_marker.get("evidence_sha256") != sha256(evidence_bundle)
-            or published_marker.get("evidence_bundle_audit_passed") is not True
+            or published_marker.get("candidate_promotion_gate_status") != "NOT_YET_COMPLETED"
+            or published_marker.get("pre_promotion_gate_finished_at") != pre_promotion_gate_finished_at
+            or published_marker.get("stable_name_creation_started_at") != stable_name_creation_started_at
+            or published_marker.get("pre_promotion_gate_passed") is not True
+            or published_marker.get("stable_names_absent_before_pre_promotion_gate") is not True
         ):
             raise ValueError("published prepared marker does not bind the stable artifact set")
-        validate_published_document_set(
-            bundle=evidence_bundle,
-            documents=published_documents,
-            marker=published_marker,
-        )
-        # Re-audit the bytes after the atomic directory rename.  The archive
-        # was already audited while private, but this pass proves that the
-        # published directory still contains the exact frozen bundle and the
-        # exact staging identities it records.
-        published_bundle_audit = audit_frozen_evidence_bundle(
-            evidence_bundle,
-            package=stable,
-            symbols_package=stable_symbols,
-            candidate_artifact=candidate,
-            symbols_artifact=symbols,
-            run_id=run_id,
-            commit=commit,
-            candidate_sha256=expected_sha,
-            symbols_sha256=expected_symbols_sha,
-            symbols_member_sha256=expected_symbols_member_sha,
-        )
-        validate_bundle_audit_identity(
-            published_bundle_audit, evidence_bundle, phase="published"
-        )
         if package_audit.audit_package(
             stable, False, version="1.1.0", kind="release",
             artifact_stem=artifact_stem, symbol_artifact_stem=symbol_stem,
@@ -1105,31 +1037,81 @@ def main() -> int:
             artifact_stem=artifact_stem, symbol_artifact_stem=symbol_stem,
         ):
             raise ValueError("published stable symbols manifest audit failed")
-
-        # Recompute every externally visible identity after the first
-        # post-publish semantic/package audit pass. This catches a document or
-        # sidecar modified by those callbacks before the completion audit.
-        for artifact in (stable, stable_symbols, evidence_bundle, prepared_marker):
+        for artifact in (stable, stable_symbols, prepared_marker):
             validate_sidecar(artifact)
         published_marker = read_json(prepared_marker)
-        validate_published_document_set(
-            bundle=evidence_bundle,
-            documents=published_documents,
-            marker=published_marker,
-        )
         if (
             published_marker.get("release_sha256") != sha256(stable)
             or published_marker.get("symbols_sha256") != sha256(stable_symbols)
-            or published_marker.get("evidence_sha256") != sha256(evidence_bundle)
         ):
             raise ValueError("post-publish prepared identities changed during audit")
 
-        # The post-publish audit above is an external callback that reads the
-        # bundle.  Re-run the semantic audit after every callback and identity
-        # recheck, immediately before creating the authoritative COMPLETE
-        # marker.  Otherwise a concurrently replaced bundle plus re-forged
-        # sidecar/PREPARED marker could make the finalizer bless bytes that were
-        # never semantically audited.
+        # CandidatePromotion becomes PASS only now: the directory rename has
+        # happened, the published package bytes are unchanged, and both
+        # published package audits passed. The final aggregate and evidence
+        # bundle are built from this completed-state gate truth.
+        promotion_raw = root / "candidate-promotion.json"
+        write_json(promotion_raw, {
+            "schema": SCHEMA, "schema_version": SCHEMA_VERSION, "test": "candidate_promotion",
+            "run_id": run_id, "commit": commit, "status": "PASS", "passed": True,
+            "candidate_filename": artifact_stem + ".zip", "candidate_sha256": expected_sha,
+            "stable_filename": stable.name, "stable_sha256_expected": expected_sha,
+            "symbols_candidate_filename": symbol_stem + ".zip", "symbols_sha256": expected_symbols_sha,
+            "stable_symbols_filename": stable_symbols.name,
+            "stable_symbols_sha256_expected": expected_symbols_sha,
+            "symbols_member_sha256": expected_symbols_member_sha,
+            "promotion_phase": "published_and_reaudited",
+            "publication_state": "published_and_reaudited",
+            "transaction_complete": True,
+            "post_publish_audit_passed": True,
+            "stable_copy_published": True,
+            "stable_sha256_observed": sha256(stable),
+            "stable_symbols_copy_published": True,
+            "stable_symbols_sha256_observed": sha256(stable_symbols),
+            "byte_for_byte_identity": True, "atomic_rename_only": True,
+            "atomic_directory_publish": True,
+            "exclusive_output_lock_acquired": True,
+            "promotion_complete_marker_required": True,
+            "stable_names_absent_before_final_audit": True,
+            "pre_promotion_gate_finished_at": pre_promotion_gate_finished_at,
+            "stable_name_creation_started_at": stable_name_creation_started_at,
+            "pre_promotion_gate_passed": True,
+            "stable_names_absent_before_pre_promotion_gate": stable_names_absent_before_pre_promotion_gate,
+            "gate_started_at": now(), "gate_finished_at": now(),
+        })
+        set_gate(
+            validation, root, "CandidatePromotion", "candidate_promotion", "PASS",
+            promotion_raw, "published stable bytes passed post-publish audit",
+            candidate_sha256=expected_sha,
+        )
+        validation["status"] = validation["final_status"] = "READY FOR 1.1.0 STABLE"
+        validation["blocking_items"] = []
+        run_audit(
+            validation, root, validation_json, validation_text, build_info,
+            stable, stable_symbols,
+            candidate_artifact=candidate, symbols_artifact=symbols,
+        )
+        final_blockers = blockers(validation, MANDATORY_GATES + SUPPLEMENTAL_GATES)
+        if final_blockers:
+            raise ValueError("final mandatory gates are blocked: " + ", ".join(final_blockers))
+        if (
+            sha256(candidate) != expected_sha or sha256(stable) != expected_sha
+            or sha256(symbols) != expected_symbols_sha
+            or sha256(stable_symbols) != expected_symbols_sha
+        ):
+            raise ValueError("published artifact identity changed before evidence freeze")
+
+        write_json(root / "run-metadata.json", {
+            "schema": SCHEMA, "schema_version": SCHEMA_VERSION, "test": "run_metadata",
+            "run_id": run_id, "commit": commit, "candidate_sha256": expected_sha,
+            "stable_filename": stable.name, "stable_sha256_expected": expected_sha,
+            "symbols_filename": stable_symbols.name, "symbols_sha256": expected_symbols_sha,
+            "symbols_member_sha256": expected_symbols_member_sha,
+            "final_status": "READY FOR 1.1.0 STABLE",
+            "publication_model": "exclusive-lock-atomic-directory-publish",
+            "publication_state": "published_and_reaudited",
+        })
+        create_evidence_bundle(root, evidence_bundle)
         completion_bundle_audit = audit_frozen_evidence_bundle(
             evidence_bundle,
             package=stable,
@@ -1145,18 +1127,24 @@ def main() -> int:
         completion_evidence_sha = validate_bundle_audit_identity(
             completion_bundle_audit, evidence_bundle, phase="completion"
         )
+        published_validation_json = output / "RELEASE-VALIDATION.json"
+        published_validation_text = output / "RELEASE-VALIDATION.txt"
+        published_build_info = output / "BUILD-INFO.txt"
+        copy_verified(validation_json, published_validation_json, sha256(validation_json))
+        copy_verified(validation_text, published_validation_text, sha256(validation_text))
+        copy_verified(build_info, published_build_info, sha256(build_info))
+        published_documents = (
+            published_validation_json, published_validation_text, published_build_info,
+        )
+        write_sidecar(evidence_bundle)
+        for document in published_documents:
+            write_sidecar(document)
         for artifact in (stable, stable_symbols, evidence_bundle, prepared_marker):
             validate_sidecar(artifact)
         published_marker = read_json(prepared_marker)
-        validate_published_document_set(
-            bundle=evidence_bundle,
-            documents=published_documents,
-            marker=published_marker,
-        )
         if (
             published_marker.get("release_sha256") != sha256(stable)
             or published_marker.get("symbols_sha256") != sha256(stable_symbols)
-            or published_marker.get("evidence_sha256") != completion_evidence_sha
         ):
             raise ValueError("published identities changed during completion audit")
 

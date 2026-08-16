@@ -148,34 +148,54 @@ class StableReleaseGateTests(unittest.TestCase):
         self.assertIn("+refs/tags/*:refs/remotes/official/tags/*", calls[0])
 
     def test_official_git_fetch_does_not_import_real_upstream_tags_locally(self) -> None:
+        # Use native Git for Windows for this Windows file:// transport test.
+        # MSYS Git rewrites native temporary paths and has produced intermittent
+        # fetch failures when Meson launches this test alongside other jobs.
+        git_candidates = (
+            Path(r"E:\Git\cmd\git.exe"),
+            Path(r"C:\Program Files\Git\cmd\git.exe"),
+        )
+        git_executable = next(
+            (str(candidate) for candidate in git_candidates if candidate.is_file()),
+            shutil.which("git.exe") or shutil.which("git"),
+        )
+        self.assertIsNotNone(git_executable)
+
         def git(repository: Path, *args: str) -> subprocess.CompletedProcess[str]:
             return subprocess.run(
-                ["git", "-C", str(repository), *args],
+                [str(git_executable), "-C", str(repository), *args],
                 check=True, capture_output=True, text=True,
             )
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
+            upstream_worktree = root / "official-source-worktree"
             upstream = root / "official-source.git"
             repository = root / "integration"
-            upstream.mkdir()
+            upstream_worktree.mkdir()
             repository.mkdir()
 
-            git(upstream, "init")
-            git(upstream, "config", "user.name", "OmniPack Test")
-            git(upstream, "config", "user.email", "omnipack-test@example.invalid")
-            (upstream / "official.cps").write_bytes(b"official-save-object")
-            git(upstream, "add", "official.cps")
-            git(upstream, "commit", "-m", "official fixture")
-            commit = git(upstream, "rev-parse", "HEAD").stdout.strip()
-            git(upstream, "tag", "-a", "official-v1", "-m", "official-v1")
+            git(upstream_worktree, "init")
+            git(upstream_worktree, "config", "user.name", "OmniPack Test")
+            git(upstream_worktree, "config", "user.email", "omnipack-test@example.invalid")
+            (upstream_worktree / "official.cps").write_bytes(b"official-save-object")
+            git(upstream_worktree, "add", "official.cps")
+            git(upstream_worktree, "commit", "-m", "official fixture")
+            commit = git(upstream_worktree, "rev-parse", "HEAD").stdout.strip()
+            git(upstream_worktree, "tag", "-a", "official-v1", "-m", "official-v1")
+            subprocess.run(
+                [str(git_executable), "clone", "--bare", str(upstream_worktree), str(upstream)],
+                check=True, capture_output=True, text=True,
+            )
 
             git(repository, "init")
             upstream_base = upstream.with_suffix("")
             with mock.patch.object(
                 official_provenance, "OFFICIAL_REPOSITORY", upstream_base.as_uri()
             ):
-                official_provenance.GitUpstream(repository, "git", "official").fetch()
+                official_provenance.GitUpstream(
+                    repository, str(git_executable), "official"
+                ).fetch()
 
             local_tags = git(
                 repository, "for-each-ref", "--format=%(refname)", "refs/tags"
@@ -254,6 +274,7 @@ class StableReleaseGateTests(unittest.TestCase):
         )
         self.assertIn('expected_candidate_name = f"{args.artifact_stem}.zip"', negative)
         self.assertIn('expected_symbols_name = f"{args.symbol_artifact_stem}.zip"', negative)
+        self.assertIn('"--package-version",$version,"--package-kind",$kind', script)
         negative_main = negative.split("def main() -> int:", 1)[1]
         self.assertNotIn(
             'TPT-ZH-OmniPack-1.1.0-staging-{RUN_ID}-Windows-x64-SDL3.zip',
@@ -776,6 +797,54 @@ class StableReleaseGateTests(unittest.TestCase):
             release_finalizer.remove_owned_lock(lock, run_id)
             self.assertFalse(lock.exists())
 
+    def test_finalizer_resets_stale_promotion_before_stable_names_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            run_id = "20260814T041500Z-8f31c1c7"
+            validation = {
+                "run_id": run_id,
+                "commit": "a" * 40,
+                "candidate_sha256": "A" * 64,
+                "symbols_sha256": "B" * 64,
+                "symbols_member_sha256": "C" * 64,
+                "gates": {
+                    "CandidatePromotion": {"Status": "PASS"},
+                },
+            }
+            for name in (
+                "candidate-promotion.json",
+                "bound-candidatepromotion.json",
+                "gate-candidatepromotion.json",
+            ):
+                (root / name).write_text(
+                    '{"status":"PASS","passed":true}\n', encoding="utf-8"
+                )
+
+            release_finalizer.reset_candidate_promotion_gate(
+                validation, root, candidate_sha256="A" * 64,
+            )
+
+            raw = json.loads(
+                (root / "candidate-promotion.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(raw["status"], "NOT_TESTED")
+            self.assertFalse(raw["passed"])
+            self.assertEqual(
+                validation["gates"]["CandidatePromotion"]["Status"],
+                "NOT_TESTED",
+            )
+
+        source = (ROOT / "tools/finalize_release_1_1_0.py").read_text(
+            encoding="utf-8"
+        ).split("def main() -> int:", 1)[1]
+        reset = source.index("reset_candidate_promotion_gate(")
+        pre_audit = source.index("run_audit(validation", reset)
+        pre_blockers = source.index("pre_blockers = blockers", pre_audit)
+        stable_copy = source.index("copy_verified(candidate, stable", pre_blockers)
+        self.assertLess(reset, pre_audit)
+        self.assertLess(pre_audit, pre_blockers)
+        self.assertLess(pre_blockers, stable_copy)
+
     def test_finalizer_never_removes_a_transaction_it_did_not_create(self) -> None:
         source = (ROOT / "tools/finalize_release_1_1_0.py").read_text(encoding="utf-8")
         mkdir = source.index("transaction.mkdir()")
@@ -935,11 +1004,23 @@ class StableReleaseGateTests(unittest.TestCase):
             self.assertTrue(marker["transaction_complete"])
             self.assertEqual(marker["run_id"], run_id)
             self.assertTrue(marker["evidence_bundle_audit_passed"])
-            self.assertEqual(frozen_audit.call_count, 3)
+            self.assertEqual(frozen_audit.call_count, 1)
             self.assertFalse((output.parent / f".{output.name}.promotion.lock").exists())
             self.assertTrue(candidate.exists())
             self.assertTrue(symbols.exists())
-            self.assertNotEqual(json.loads(validation_json.read_text(encoding="utf-8"))["final_status"], "READY FOR 1.1.0 STABLE")
+            source_validation = json.loads(validation_json.read_text(encoding="utf-8"))
+            self.assertEqual(source_validation["final_status"], "READY FOR 1.1.0 STABLE")
+            self.assertEqual(
+                source_validation["gates"]["CandidatePromotion"]["Status"],
+                "PASS",
+            )
+            promotion = json.loads(
+                (validation_json.parent / "candidate-promotion.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(promotion["promotion_phase"], "published_and_reaudited")
+            self.assertTrue(promotion["transaction_complete"])
 
             attacked_output = root / "attacked-release"
             attacked_argv = [
@@ -955,7 +1036,7 @@ class StableReleaseGateTests(unittest.TestCase):
             def tampering_frozen_audit(bundle, **_arguments):
                 attack_calls["count"] += 1
                 audited_sha256 = release_finalizer.sha256(bundle)
-                if attack_calls["count"] == 3:
+                if attack_calls["count"] == 1:
                     with zipfile.ZipFile(bundle) as archive:
                         members = [(info, archive.read(info.filename)) for info in archive.infolist()]
                     target = next(info.filename for info, _ in members if info.filename == "candidate-promotion.json")
@@ -997,7 +1078,7 @@ class StableReleaseGateTests(unittest.TestCase):
                  redirect_stdout(io.StringIO()), redirect_stderr(attack_stderr):
                 self.assertEqual(release_finalizer.main(), 1)
 
-            self.assertEqual(attack_calls["count"], 3)
+            self.assertEqual(attack_calls["count"], 1)
             self.assertEqual(attack_calls["member"], "candidate-promotion.json")
             self.assertIn("changed after the completion semantic audit", attack_stderr.getvalue())
             self.assertFalse(attacked_output.exists())
@@ -1262,13 +1343,52 @@ class StableReleaseGateTests(unittest.TestCase):
             candidate.write_bytes(b"candidate")
             symbols.write_bytes(b"symbols")
 
-            attacks, baseline_passed, details = release_negative_suite.promotion_attacks(
+            attacks, baselines, details = release_negative_suite.promotion_attacks(
                 root, candidate, symbols
             )
 
-            self.assertTrue(baseline_passed, details)
+            self.assertTrue(all(baselines.values()), (baselines, details))
+            self.assertTrue(baselines["promotion_current_input_identity"])
+            self.assertTrue(baselines["promotion_current_staging_input_identity"])
+            self.assertTrue(baselines["promotion_staging_input_identity_schema"])
+            self.assertTrue(baselines["promotion_prepared_fixture_identity"])
+            self.assertTrue(baselines["promotion_completed_stable_fixture_identity"])
             self.assertTrue(attacks)
             self.assertTrue(all(attacks.values()), attacks)
+
+    def test_negative_suite_promotion_separates_rc_prepared_and_stable_identities(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            candidate = root / release_negative_suite.RC_CANDIDATE_FILENAME
+            symbols = root / release_negative_suite.RC_SYMBOLS_FILENAME
+            candidate.write_bytes(b"rc candidate")
+            symbols.write_bytes(b"rc symbols")
+
+            attacks, baselines, details = release_negative_suite.promotion_attacks(
+                root, candidate, symbols
+            )
+
+            self.assertEqual(details, [])
+            self.assertTrue(all(baselines.values()), baselines)
+            self.assertTrue(baselines["promotion_rc_input_identity_schema"])
+            self.assertTrue(baselines["promotion_current_input_identity"])
+            self.assertTrue(baselines["promotion_current_rc_input_identity"])
+            self.assertTrue(baselines["promotion_prepared_fixture_identity"])
+            self.assertTrue(baselines["promotion_completed_stable_fixture_identity"])
+            self.assertTrue(all(attacks.values()), attacks)
+
+            # A stable-named output is not a valid pre-promotion input.  This
+            # prevents a completed promotion identity from being reused as a
+            # current RC/staging candidate baseline.
+            stable = root / release_negative_suite.STABLE_FILENAME
+            stable_symbols = root / release_negative_suite.STABLE_SYMBOLS_FILENAME
+            stable.write_bytes(b"stable")
+            stable_symbols.write_bytes(b"stable symbols")
+            _, stable_baselines, stable_details = release_negative_suite.promotion_attacks(
+                root / "stable-attempt", stable, stable_symbols
+            )
+            self.assertFalse(stable_baselines["promotion_current_input_identity"])
+            self.assertTrue(any("stable names are post-promotion output only" in item for item in stable_details))
 
     def test_negative_suite_manifest_attack_starts_from_valid_packages(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1324,7 +1444,9 @@ class StableReleaseGateTests(unittest.TestCase):
                 "--artifact-stem", candidate.stem,
                 "--symbol-artifact-stem", symbols.stem,
                 "--run-id", run_id, "--commit", "a" * 40,
-                "--candidate-sha256", "A" * 64, "--output", str(output),
+                "--candidate-sha256", "A" * 64,
+                "--package-version", "1.1.0", "--package-kind", "release",
+                "--output", str(output),
             ]
             with mock.patch.object(sys, "argv", argv), mock.patch.multiple(
                 release_negative_suite,
@@ -1409,10 +1531,13 @@ class StableReleaseGateTests(unittest.TestCase):
                 "stable_symbols_filename": "TPT-ZH-OmniPack-1.1.0-Windows-x64-Symbols.zip",
                 "stable_symbols_sha256_expected": symbols_sha,
                 "symbols_member_sha256": "C" * 64,
-                "promotion_phase": "prepared_for_atomic_directory_publish",
-                "stable_copy_prepared": True,
+                "promotion_phase": "published_and_reaudited",
+                "publication_state": "published_and_reaudited",
+                "transaction_complete": True,
+                "post_publish_audit_passed": True,
+                "stable_copy_published": True,
                 "stable_sha256_observed": candidate_sha,
-                "stable_symbols_copy_prepared": True,
+                "stable_symbols_copy_published": True,
                 "stable_symbols_sha256_observed": symbols_sha,
                 "byte_for_byte_identity": True,
                 "atomic_rename_only": True,
@@ -1420,6 +1545,10 @@ class StableReleaseGateTests(unittest.TestCase):
                 "exclusive_output_lock_acquired": True,
                 "promotion_complete_marker_required": True,
                 "stable_names_absent_before_final_audit": True,
+                "pre_promotion_gate_finished_at": "2000-01-01T00:00:00+00:00",
+                "stable_name_creation_started_at": "2000-01-01T00:00:01+00:00",
+                "pre_promotion_gate_passed": True,
+                "stable_names_absent_before_pre_promotion_gate": True,
             }
             self.assertEqual(
                 release_validation_audit.validate_raw_semantics(
@@ -1441,6 +1570,9 @@ class StableReleaseGateTests(unittest.TestCase):
                 "exclusive_output_lock_acquired": False,
                 "promotion_complete_marker_required": False,
                 "stable_names_absent_before_final_audit": False,
+                "promotion_phase": "prepared_for_atomic_directory_publish",
+                "transaction_complete": False,
+                "stable_name_creation_started_at": "1999-12-31T23:59:59+00:00",
             }
             for field, value in mutations.items():
                 with self.subTest(field=field):

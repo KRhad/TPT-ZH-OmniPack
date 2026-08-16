@@ -2,6 +2,7 @@
 #include "prefs/GlobalPrefs.h"
 #include "simulation/Air.h"
 #include "simulation/ElementClasses.h"
+#include "simulation/MenuSection.h"
 #include "simulation/Simulation.h"
 #include "simulation/SimulationData.h"
 #include "simulation/Snapshot.h"
@@ -21,6 +22,89 @@
 
 namespace
 {
+struct CoverageMetrics
+{
+	std::size_t inputBytes = 0;
+	int particles = 0;
+	int powders = 0;
+	int solids = 0;
+	int liquids = 0;
+	int gases = 0;
+	int temperatureSignals = 0;
+	int pressureCells = 0;
+	int velocitySignals = 0;
+	int wallCells = 0;
+	int fanCells = 0;
+	int electronicsParticles = 0;
+	int lifeParticles = 0;
+	int signs = 0;
+	int decoratedParticles = 0;
+	int legacyState = 0;
+	int largerSave = 0;
+};
+
+CoverageMetrics MeasureCoverage(const GameSave &save, const std::vector<char> &bytes)
+{
+	CoverageMetrics metrics;
+	metrics.inputBytes = bytes.size();
+	metrics.particles = save.particlesCount;
+	metrics.signs = static_cast<int>(save.signs.size());
+	const auto &elements = GetElements();
+	for (int index = 0; index < save.particlesCount; ++index)
+	{
+		const auto &particle = save.particles[index];
+		if (particle.type <= 0 || particle.type >= static_cast<int>(elements.size()))
+			continue;
+		const auto &element = elements[particle.type];
+		metrics.powders += (element.Properties & TYPE_PART) ? 1 : 0;
+		metrics.solids += (element.Properties & TYPE_SOLID) ? 1 : 0;
+		metrics.liquids += (element.Properties & TYPE_LIQUID) ? 1 : 0;
+		metrics.gases += (element.Properties & TYPE_GAS) ? 1 : 0;
+		metrics.temperatureSignals += std::isfinite(particle.temp) &&
+			std::abs(particle.temp - (R_TEMP + 273.15f)) >= 1.0f ? 1 : 0;
+		metrics.velocitySignals += std::isfinite(particle.vx) && std::isfinite(particle.vy) &&
+			(std::abs(particle.vx) > 1.0e-6f || std::abs(particle.vy) > 1.0e-6f) ? 1 : 0;
+		metrics.electronicsParticles +=
+			(element.MenuSection == SC_ELEC || element.MenuSection == SC_POWERED ||
+			 element.MenuSection == SC_SENSOR) ? 1 : 0;
+		metrics.lifeParticles += particle.type == PT_LIFE ? 1 : 0;
+		metrics.decoratedParticles += particle.type != PT_LIFE &&
+			(particle.dcolour & UINT32_C(0xFF000000)) ? 1 : 0;
+	}
+	if (save.hasPressure)
+	{
+		for (auto value : save.pressure.Base)
+			metrics.pressureCells += std::isfinite(value) && std::abs(value) > 1.0e-6f ? 1 : 0;
+		for (auto value : save.velocityX.Base)
+			metrics.velocitySignals += std::isfinite(value) && std::abs(value) > 1.0e-6f ? 1 : 0;
+		for (auto value : save.velocityY.Base)
+			metrics.velocitySignals += std::isfinite(value) && std::abs(value) > 1.0e-6f ? 1 : 0;
+	}
+	if (save.hasAmbientHeat)
+		for (auto value : save.ambientHeat.Base)
+			metrics.temperatureSignals += std::isfinite(value) &&
+				std::abs(value - save.ambientAirTemp) >= 1.0f ? 1 : 0;
+	for (std::size_t index = 0; index < save.blockMap.Base.size(); ++index)
+	{
+		const auto wall = save.blockMap.Base[index];
+		if (wall == WL_FAN)
+		{
+			const auto vx = index < save.fanVelX.Base.size() ? save.fanVelX.Base[index] : 0.0f;
+			const auto vy = index < save.fanVelY.Base.size() ? save.fanVelY.Base[index] : 0.0f;
+			metrics.fanCells += std::isfinite(vx) && std::isfinite(vy) &&
+				(std::abs(vx) > 1.0e-6f || std::abs(vy) > 1.0e-6f) ? 1 : 0;
+		}
+		else if (wall != 0)
+			++metrics.wallCells;
+	}
+	const bool legacyHeader = bytes.size() >= 3 &&
+		((bytes[0] == 'P' && bytes[1] == 'S' && bytes[2] == 'v') ||
+		 (bytes[0] == 'f' && bytes[1] == 'u' && bytes[2] == 'C'));
+	metrics.legacyState = legacyHeader || save.version[0] < 100 || save.legacyEnable ? 1 : 0;
+	metrics.largerSave = bytes.size() >= 10000 ? 1 : 0;
+	return metrics;
+}
+
 void Advance(Simulation &simulation)
 {
 	simulation.BeforeSim(true);
@@ -698,6 +782,7 @@ int main(int argc, char **argv)
 		GlobalPrefs globalPrefs;
 		SimulationData simulationData;
 		GameSave source(bytes);
+		const auto coverage = MeasureCoverage(source, bytes);
 		if (source.missingElements)
 			throw std::runtime_error("official save contains unavailable or unmapped elements");
 		auto simulation = Simulation::Factory();
@@ -767,7 +852,24 @@ int main(int argc, char **argv)
 			<< "ambient_heat=" << (parsed.hasAmbientHeat ? "true" : "false") << '\n'
 			<< "omni_mode=" << parsed.omniSimulationMode << '\n'
 			<< "omni_atmosphere_state=" << (parsed.hasOmniAtmosphereState ? "true" : "false") << '\n'
-			<< "omni_validity_cells=" << parsed.omniAtmosphereCellValid.size() << '\n';
+			<< "omni_validity_cells=" << parsed.omniAtmosphereCellValid.size() << '\n'
+			<< "coverage_input_bytes=" << coverage.inputBytes << '\n'
+			<< "coverage_particles=" << coverage.particles << '\n'
+			<< "coverage_powders=" << coverage.powders << '\n'
+			<< "coverage_solids=" << coverage.solids << '\n'
+			<< "coverage_liquids=" << coverage.liquids << '\n'
+			<< "coverage_gases=" << coverage.gases << '\n'
+			<< "coverage_temperature_signals=" << coverage.temperatureSignals << '\n'
+			<< "coverage_pressure_cells=" << coverage.pressureCells << '\n'
+			<< "coverage_velocity_signals=" << coverage.velocitySignals << '\n'
+			<< "coverage_wall_cells=" << coverage.wallCells << '\n'
+			<< "coverage_fan_cells=" << coverage.fanCells << '\n'
+			<< "coverage_electronics_particles=" << coverage.electronicsParticles << '\n'
+			<< "coverage_life_particles=" << coverage.lifeParticles << '\n'
+			<< "coverage_signs=" << coverage.signs << '\n'
+			<< "coverage_decorated_particles=" << coverage.decoratedParticles << '\n'
+			<< "coverage_legacy_state=" << coverage.legacyState << '\n'
+			<< "coverage_larger_save=" << coverage.largerSave << '\n';
 		return 0;
 	}
 	catch (const std::exception &error)

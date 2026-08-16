@@ -15,6 +15,45 @@ from typing import Sequence
 OFFICIAL_REPOSITORY = "https://github.com/The-Powder-Toy/The-Powder-Toy"
 SHA256_RE = re.compile(r"^[0-9A-F]{64}$")
 REVISION_RE = re.compile(r"^[0-9a-fA-F]{40}$")
+COVERAGE_CONTRACT = "official-tpt-save-coverage-v1"
+COVERAGE_REQUIRED = (
+    "basic_particles", "powders", "solids", "liquids", "gases",
+    "temperature", "pressure", "velocity", "walls", "fans",
+    "electronics", "life", "signs", "decoration", "legacy_states",
+    "larger_save",
+)
+COVERAGE_METRICS = (
+    "input_bytes", "particles", "powders", "solids", "liquids", "gases",
+    "temperature_signals", "pressure_cells", "velocity_signals",
+    "wall_cells", "fan_cells", "electronics_particles", "life_particles",
+    "signs", "decorated_particles", "legacy_state", "larger_save",
+)
+
+
+def coverage_categories(metrics: dict[str, int]) -> set[str]:
+    mapping = {
+        "basic_particles": "particles", "powders": "powders",
+        "solids": "solids", "liquids": "liquids", "gases": "gases",
+        "temperature": "temperature_signals", "pressure": "pressure_cells",
+        "velocity": "velocity_signals", "walls": "wall_cells",
+        "fans": "fan_cells", "electronics": "electronics_particles",
+        "life": "life_particles", "signs": "signs",
+        "decoration": "decorated_particles", "legacy_states": "legacy_state",
+    }
+    categories = {category for category, metric in mapping.items() if metrics.get(metric, 0) > 0}
+    if metrics.get("input_bytes", 0) >= 10000:
+        categories.add("larger_save")
+    return categories
+
+
+def coverage_metrics_are_valid(metrics: dict[str, int]) -> bool:
+    return (
+        set(metrics) == set(COVERAGE_METRICS)
+        and all(isinstance(value, int) and not isinstance(value, bool) and value >= 0 for value in metrics.values())
+        and metrics.get("legacy_state") in {0, 1}
+        and metrics.get("larger_save") in {0, 1}
+        and metrics.get("larger_save") == int(metrics.get("input_bytes", 0) >= 10000)
+    )
 
 
 def safe_fixture_path(raw: object) -> str | None:
@@ -58,6 +97,11 @@ def result(run_id: str, commit: str, status: str, reason: str, **extra: object) 
         "files_passed": 0,
         "files_failed": 0,
         "files": [],
+        "coverage_contract": COVERAGE_CONTRACT,
+        "coverage_required": list(COVERAGE_REQUIRED),
+        "coverage_observed": [],
+        "coverage_missing": list(COVERAGE_REQUIRED),
+        "coverage_passed": False,
         **extra,
     }
 
@@ -115,6 +159,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     probe_sha256 = sha256(args.probe)
     records: list[dict[str, object]] = []
     failed = 0
+    observed_coverage: set[str] = set()
     required_markers = {
         "load": "official_save_load_pass=true",
         "missing_elements_zero": "official_save_missing_elements_zero=true",
@@ -143,6 +188,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         initial_loaded_particles = None
         output_particles = None
         initial_particle_inventory = False
+        coverage_metrics: dict[str, int] = {}
+        coverage_metrics_valid = False
+        file_coverage: set[str] = set()
         if path and path not in seen_paths and row.get("match") is True and fixture.is_file() and not fixture.is_symlink():
             try:
                 fixture.resolve().relative_to(args.corpus.resolve())
@@ -168,6 +216,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             input_particles = stdout_integer(completed.stdout, "input_particles")
             initial_loaded_particles = stdout_integer(completed.stdout, "initial_loaded_particles")
             output_particles = stdout_integer(completed.stdout, "output_particles")
+            parsed_metrics = {
+                name: stdout_integer(completed.stdout, "coverage_" + name)
+                for name in COVERAGE_METRICS
+            }
+            coverage_metrics_valid = all(value is not None for value in parsed_metrics.values())
+            if coverage_metrics_valid:
+                coverage_metrics = {
+                    name: int(value) for name, value in parsed_metrics.items()
+                    if isinstance(value, int)
+                }
+                coverage_metrics_valid = coverage_metrics_are_valid(coverage_metrics)
+            if coverage_metrics_valid:
+                file_coverage = coverage_categories(coverage_metrics)
+                observed_coverage.update(file_coverage)
             initial_particle_inventory = (
                 input_particles is not None
                 and initial_loaded_particles == input_particles
@@ -178,6 +240,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             and exit_code == 0
             and all(phases.values())
             and initial_particle_inventory
+            and coverage_metrics_valid
         )
         failed += 0 if passed else 1
         records.append({
@@ -189,15 +252,26 @@ def main(argv: Sequence[str] | None = None) -> int:
             "initial_loaded_particles": initial_loaded_particles,
             "output_particles": output_particles,
             "initial_particle_inventory": initial_particle_inventory,
+            "coverage_metrics": coverage_metrics,
+            "coverage_categories": sorted(file_coverage),
+            "coverage_metrics_valid": coverage_metrics_valid,
             "passed": passed,
             "exit_code": exit_code,
         })
-    status = "PASS" if failed == 0 else "FAIL"
+    missing_coverage = sorted(set(COVERAGE_REQUIRED).difference(observed_coverage))
+    coverage_passed = not missing_coverage
+    status = "PASS" if failed == 0 and coverage_passed else "FAIL"
+    if failed:
+        reason = "one or more official saves failed real compatibility phases"
+    elif not coverage_passed:
+        reason = "official save corpus is compatible but required runtime coverage is incomplete"
+    else:
+        reason = "all official saves passed real load/simulate/save/reload and coverage"
     document = result(
         args.run_id,
         args.commit,
         status,
-        "all official saves passed real load/simulate/save/reload" if failed == 0 else "one or more official saves failed real compatibility phases",
+        reason,
         source_repository=provenance.get("repository"),
         source_revision=provenance.get("revision"),
         probe_sha256=probe_sha256,
@@ -205,6 +279,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         files_passed=len(records) - failed,
         files_failed=failed,
         files=records,
+        coverage_contract=COVERAGE_CONTRACT,
+        coverage_required=list(COVERAGE_REQUIRED),
+        coverage_observed=sorted(observed_coverage),
+        coverage_missing=missing_coverage,
+        coverage_passed=coverage_passed,
     )
     write(args.output, document)
     return 0 if failed == 0 else 1

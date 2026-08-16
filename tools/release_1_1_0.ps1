@@ -769,7 +769,7 @@ try {
     $officialOk = Invoke-GateProcess "OfficialTPTSaveCompatibility" $python $officialArgs $officialEvidence -TimeoutSeconds 1200 -ExitTwoIsNotTested -Validate {
         if (-not (Test-Path $officialEvidence)) { return $false }
         $r = Get-Content $officialEvidence -Raw | ConvertFrom-Json
-        return ($r.schema -eq "omnipack-release-evidence" -and $r.schema_version -eq 1 -and $r.test -eq "official_tpt_save_compatibility" -and $r.run_id -eq $runId -and $r.commit -eq $commitAtStart -and $r.status -eq "PASS" -and $r.passed -eq $true -and $r.files_total -gt 0 -and $r.files_passed -eq $r.files_total -and $r.files_failed -eq 0)
+        return ($r.schema -eq "omnipack-release-evidence" -and $r.schema_version -eq 1 -and $r.test -eq "official_tpt_save_compatibility" -and $r.run_id -eq $runId -and $r.commit -eq $commitAtStart -and $r.status -eq "PASS" -and $r.passed -eq $true -and $r.files_total -gt 0 -and $r.files_passed -eq $r.files_total -and $r.files_failed -eq 0 -and $r.coverage_contract -eq "official-tpt-save-coverage-v1" -and $r.coverage_passed -eq $true -and @($r.coverage_missing).Count -eq 0)
     }
     $results["OfficialTPTSaveCompatibility"].Command = "official_save_compatibility.py --corpus <provenance-verified-official-corpus> --probe <fresh-build-probe>"
     $prePackageMandatory = @("SourceTreeClean","Configure","Build","UnitTests","AtmosphereBench","MassConservation","OmniSaveRoundtrip","OfficialTPTCorpusProvenance","OfficialTPTSaveCompatibility","SDL3Runtime","GPUNumericalValidation","CPUFallbackValidation","ReleaseBinaryStripped","DebugSymbolsSeparated")
@@ -865,7 +865,9 @@ try {
             "--candidate",$releaseZip,"--symbols",$symbolsZip,
             "--artifact-stem",$artifactStem,"--symbol-artifact-stem",$symbolArtifactStem,
             "--run-id",$runId,"--commit",$commitAtStart,
-            "--candidate-sha256",$candidateSha256,"--output",$negativeEvidence
+            "--candidate-sha256",$candidateSha256,
+            "--package-version",$version,"--package-kind",$kind,
+            "--output",$negativeEvidence
         ) $negativeEvidence -TimeoutSeconds 1200 -Validate {
             if (-not (Test-Path -LiteralPath $negativeEvidence -PathType Leaf)) { return $false }
             $r = Get-Content -LiteralPath $negativeEvidence -Raw | ConvertFrom-Json

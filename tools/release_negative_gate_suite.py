@@ -43,6 +43,29 @@ CANDIDATE = "B" * 64
 SYMBOLS = "C" * 64
 SYMBOL_MEMBER = "D" * 64
 
+RC_CANDIDATE_FILENAME = "TPT-ZH-OmniPack-1.1.0-rc1-Windows-x64-SDL3.zip"
+RC_SYMBOLS_FILENAME = "TPT-ZH-OmniPack-1.1.0-rc1-Windows-x64-Symbols.zip"
+STABLE_FILENAME = "TPT-ZH-OmniPack-1.1.0-Windows-x64-SDL3.zip"
+STABLE_SYMBOLS_FILENAME = "TPT-ZH-OmniPack-1.1.0-Windows-x64-Symbols.zip"
+
+
+def staging_candidate_filename() -> str:
+    return f"TPT-ZH-OmniPack-1.1.0-staging-{RUN_ID}-Windows-x64-SDL3.zip"
+
+
+def staging_symbols_filename() -> str:
+    return f"TPT-ZH-OmniPack-1.1.0-staging-{RUN_ID}-Windows-x64-Symbols.zip"
+
+
+def promotion_input_kind(candidate: Path, symbols: Path) -> str | None:
+    """Classify a pre-promotion pair without treating stable names as input."""
+    pair = (candidate.name, symbols.name)
+    if pair == (RC_CANDIDATE_FILENAME, RC_SYMBOLS_FILENAME):
+        return "rc"
+    if pair == (staging_candidate_filename(), staging_symbols_filename()):
+        return "staging"
+    return None
+
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest().upper()
@@ -561,6 +584,7 @@ def official_compatibility_case(
     compatibility_status: str = "PASS",
     compatibility_passed: bool = True,
     compatibility_row_overrides: dict[str, object] | None = None,
+    compatibility_overrides: dict[str, object] | None = None,
 ) -> tuple[bool, bool]:
     revision = "c" * 40
     fixture_sha = "1" * 64
@@ -585,6 +609,15 @@ def official_compatibility_case(
             "fixture_sha256": fixture_sha,
         }],
     }
+    coverage_metrics = {
+        "input_bytes": 10000, "particles": 1, "powders": 1, "solids": 1,
+        "liquids": 1, "gases": 1, "temperature_signals": 1,
+        "pressure_cells": 1, "velocity_signals": 1, "wall_cells": 1,
+        "fan_cells": 1, "electronics_particles": 1, "life_particles": 1,
+        "signs": 1, "decorated_particles": 1, "legacy_state": 1,
+        "larger_save": 1,
+    }
+    coverage_categories = sorted(audit.official_coverage_categories(coverage_metrics) or ())
     compatibility_raw = {
         "schema": audit.EVIDENCE_SCHEMA,
         "schema_version": audit.EVIDENCE_SCHEMA_VERSION,
@@ -613,9 +646,18 @@ def official_compatibility_case(
             "negative_deterministic_frame": True,
             "negative_simulation_option": True,
             "negative_codec_roundtrip": True,
+            "coverage_metrics": coverage_metrics,
+            "coverage_categories": coverage_categories,
+            "coverage_metrics_valid": True,
         }],
+        "coverage_contract": audit.OFFICIAL_COVERAGE_CONTRACT,
+        "coverage_required": list(audit.OFFICIAL_COVERAGE_REQUIRED),
+        "coverage_observed": coverage_categories,
+        "coverage_missing": [],
+        "coverage_passed": True,
     }
     compatibility_raw["files"][0].update(compatibility_row_overrides or {})
+    compatibility_raw.update(compatibility_overrides or {})
     gates: dict[str, dict[str, object]] = {}
     for gate_name, test, raw, prefix in (
         ("OfficialTPTCorpusProvenance", "official_tpt_provenance", provenance_raw, "provenance"),
@@ -755,18 +797,106 @@ def provenance_attacks(root: Path) -> tuple[dict[str, bool], bool, list[str]]:
 
 def promotion_attacks(
     root: Path, candidate: Path | None, symbols: Path | None
-) -> tuple[dict[str, bool], bool, list[str]]:
+) -> tuple[dict[str, bool], dict[str, bool], list[str]]:
+    attack_names = (
+        "promotion_wrong_candidate_filename", "promotion_wrong_symbols_candidate_filename",
+        "promotion_wrong_stable_filename", "promotion_wrong_stable_sha256",
+        "promotion_wrong_stable_symbols_filename", "promotion_wrong_stable_symbols_sha256",
+        "promotion_byte_identity_false", "promotion_atomic_rename_false",
+        "promotion_atomic_directory_false", "promotion_lock_false",
+        "promotion_marker_false", "promotion_stable_target_preexists",
+        "promotion_prepared_only", "promotion_transaction_incomplete",
+        "promotion_stable_before_pre_gate",
+    )
+    baselines = {
+        "promotion_rc_input_identity_schema": promotion_input_kind(
+            Path(RC_CANDIDATE_FILENAME), Path(RC_SYMBOLS_FILENAME)
+        ) == "rc",
+        "promotion_staging_input_identity_schema": promotion_input_kind(
+            Path(staging_candidate_filename()), Path(staging_symbols_filename())
+        ) == "staging",
+        "promotion_current_input_identity": False,
+        "promotion_prepared_fixture_identity": False,
+        "promotion_completed_stable_fixture_identity": False,
+    }
     if candidate is None or symbols is None or not candidate.is_file() or not symbols.is_file():
-        return ({name: False for name in (
-            "promotion_wrong_candidate_filename", "promotion_wrong_symbols_candidate_filename",
-            "promotion_wrong_stable_filename", "promotion_wrong_stable_sha256",
-            "promotion_wrong_stable_symbols_filename", "promotion_wrong_stable_symbols_sha256",
-            "promotion_byte_identity_false", "promotion_atomic_rename_false",
-            "promotion_atomic_directory_false", "promotion_lock_false",
-            "promotion_marker_false", "promotion_stable_target_preexists",
-        )}, False, ["promotion positive baseline artifacts are absent"])
+        return ({name: False for name in attack_names}, baselines,
+                ["promotion positive baseline artifacts are absent"])
+
+    input_kind = promotion_input_kind(candidate, symbols)
+    baselines["promotion_current_input_identity"] = input_kind in {"rc", "staging"}
+    if not baselines["promotion_current_input_identity"]:
+        return (
+            {name: False for name in attack_names},
+            baselines,
+            [
+                "promotion input must be an exact RC pair or the current-run "
+                "staging pair; stable names are post-promotion output only"
+            ],
+        )
+    baselines[f"promotion_current_{input_kind}_input_identity"] = True
+
     candidate_sha = digest(candidate)
     symbols_sha = digest(symbols)
+
+    # The negative suite runs before promotion, including for RC validation.
+    # Keep the current input identity separate from a synthetic completed
+    # promotion.  The latter is a real PREPARED -> published directory
+    # transaction, with stable-named bytes created only in that fixture.
+    promotion_root = root / "promotion-positive-baseline"
+    promotion_root.mkdir()
+    promotion_candidate = promotion_root / staging_candidate_filename()
+    promotion_symbols = promotion_root / staging_symbols_filename()
+    shutil.copyfile(candidate, promotion_candidate)
+    shutil.copyfile(symbols, promotion_symbols)
+
+    transaction = promotion_root / ".stable-promotion-prepared"
+    published = promotion_root / "published-stable"
+    transaction.mkdir()
+    prepared_stable = transaction / STABLE_FILENAME
+    prepared_symbols = transaction / STABLE_SYMBOLS_FILENAME
+    shutil.copyfile(promotion_candidate, prepared_stable)
+    shutil.copyfile(promotion_symbols, prepared_symbols)
+    prepared_marker = transaction / "PROMOTION-PREPARED.json"
+    prepared_value = {
+        "schema": audit.EVIDENCE_SCHEMA,
+        "schema_version": audit.EVIDENCE_SCHEMA_VERSION,
+        "test": "candidate_promotion_prepared",
+        "status": "PREPARED",
+        "passed": False,
+        "run_id": RUN_ID,
+        "commit": COMMIT,
+        "publication_model": "exclusive-lock-atomic-directory-publish",
+        "transaction_prepared": True,
+        "release_filename": STABLE_FILENAME,
+        "release_sha256": candidate_sha,
+        "symbols_filename": STABLE_SYMBOLS_FILENAME,
+        "symbols_sha256": symbols_sha,
+        "symbols_member_sha256": SYMBOL_MEMBER,
+        "candidate_promotion_gate_status": "NOT_YET_COMPLETED",
+        "source_identity_kind": input_kind,
+    }
+    write_json(prepared_marker, prepared_value)
+    baselines["promotion_prepared_fixture_identity"] = all((
+        not published.exists(),
+        prepared_value["status"] == "PREPARED",
+        prepared_value["passed"] is False,
+        prepared_value["transaction_prepared"] is True,
+        prepared_value["candidate_promotion_gate_status"] == "NOT_YET_COMPLETED",
+        digest(prepared_stable) == candidate_sha,
+        digest(prepared_symbols) == symbols_sha,
+    ))
+    prepared_errors = audit.validate_raw_semantics(
+        "CandidatePromotion", prepared_value, root=root,
+        candidate_sha256=candidate_sha,
+        candidate_path=promotion_candidate, symbols_path=promotion_symbols,
+    )
+
+    # Same-filesystem rename models the only publication operation.  Re-audit
+    # the published stable bytes before constructing the completed raw record.
+    transaction.rename(published)
+    stable = published / STABLE_FILENAME
+    stable_symbols = published / STABLE_SYMBOLS_FILENAME
     base = {
         "schema": audit.EVIDENCE_SCHEMA,
         "schema_version": audit.EVIDENCE_SCHEMA_VERSION,
@@ -775,19 +905,22 @@ def promotion_attacks(
         "commit": COMMIT,
         "status": "PASS",
         "passed": True,
-        "candidate_filename": f"TPT-ZH-OmniPack-1.1.0-staging-{RUN_ID}-Windows-x64-SDL3.zip",
+        "candidate_filename": promotion_candidate.name,
         "candidate_sha256": candidate_sha,
-        "stable_filename": "TPT-ZH-OmniPack-1.1.0-Windows-x64-SDL3.zip",
+        "stable_filename": stable.name,
         "stable_sha256_expected": candidate_sha,
-        "symbols_candidate_filename": f"TPT-ZH-OmniPack-1.1.0-staging-{RUN_ID}-Windows-x64-Symbols.zip",
+        "symbols_candidate_filename": promotion_symbols.name,
         "symbols_sha256": symbols_sha,
-        "stable_symbols_filename": "TPT-ZH-OmniPack-1.1.0-Windows-x64-Symbols.zip",
+        "stable_symbols_filename": stable_symbols.name,
         "stable_symbols_sha256_expected": symbols_sha,
         "symbols_member_sha256": SYMBOL_MEMBER,
-        "promotion_phase": "prepared_for_atomic_directory_publish",
-        "stable_copy_prepared": True,
+        "promotion_phase": "published_and_reaudited",
+        "publication_state": "published_and_reaudited",
+        "transaction_complete": True,
+        "post_publish_audit_passed": True,
+        "stable_copy_published": True,
         "stable_sha256_observed": candidate_sha,
-        "stable_symbols_copy_prepared": True,
+        "stable_symbols_copy_published": True,
         "stable_symbols_sha256_observed": symbols_sha,
         "byte_for_byte_identity": True,
         "atomic_rename_only": True,
@@ -795,6 +928,10 @@ def promotion_attacks(
         "exclusive_output_lock_acquired": True,
         "promotion_complete_marker_required": True,
         "stable_names_absent_before_final_audit": True,
+        "pre_promotion_gate_finished_at": "2000-01-01T00:00:00+00:00",
+        "stable_name_creation_started_at": "2000-01-01T00:00:01+00:00",
+        "pre_promotion_gate_passed": True,
+        "stable_names_absent_before_pre_promotion_gate": True,
         "gate_started_at": "2000-01-01T00:00:00+00:00",
         "gate_finished_at": "2000-01-01T00:00:01+00:00",
     }
@@ -811,19 +948,40 @@ def promotion_attacks(
         "promotion_lock_false": ("exclusive_output_lock_acquired", False),
         "promotion_marker_false": ("promotion_complete_marker_required", False),
         "promotion_stable_target_preexists": ("stable_names_absent_before_final_audit", False),
+        "promotion_transaction_incomplete": ("transaction_complete", False),
+        "promotion_stable_before_pre_gate": (
+            "stable_name_creation_started_at", "1999-12-31T23:59:59+00:00"
+        ),
     }
     baseline_errors = audit.validate_raw_semantics(
         "CandidatePromotion", base, root=root,
         candidate_sha256=candidate_sha,
-        candidate_path=candidate, symbols_path=symbols,
+        candidate_path=promotion_candidate, symbols_path=promotion_symbols,
     )
-    if baseline_errors:
-        return (
-            {name: False for name in mutations},
-            False,
-            [f"promotion positive baseline: {error}" for error in baseline_errors],
+    baselines["promotion_completed_stable_fixture_identity"] = (
+        not baseline_errors
+        and published.is_dir()
+        and not transaction.exists()
+        and digest(stable) == candidate_sha
+        and digest(stable_symbols) == symbols_sha
+    )
+    if not all(baselines.values()):
+        baseline_details = [
+            f"promotion positive baseline rejected: {name}"
+            for name, passed in baselines.items() if not passed
+        ]
+        baseline_details.extend(
+            f"promotion published stable baseline: {error}"
+            for error in baseline_errors
         )
-    results: dict[str, bool] = {}
+        return (
+            {name: False for name in attack_names},
+            baselines,
+            baseline_details,
+        )
+    results: dict[str, bool] = {
+        "promotion_prepared_only": bool(prepared_errors),
+    }
     for name, (field, value) in mutations.items():
         raw = dict(base)
         raw[field] = value
@@ -833,10 +991,10 @@ def promotion_attacks(
         errors = audit.validate_raw_semantics(
             "CandidatePromotion", raw, root=root,
             candidate_sha256=candidate_sha,
-            candidate_path=candidate, symbols_path=symbols,
+            candidate_path=promotion_candidate, symbols_path=promotion_symbols,
         )
         results[name] = bool(errors)
-    return results, True, []
+    return results, baselines, []
 
 
 def corrupt_manifest(candidate: Path, destination: Path) -> None:
@@ -918,7 +1076,37 @@ def semantic_positive_baselines(
             "negative_deterministic_frame": True,
             "negative_simulation_option": True,
             "negative_codec_roundtrip": True,
+            # Keep the positive fixture bound to the same runtime coverage
+            # contract as a real compatibility report.  This baseline is
+            # intentionally synthetic, but it must still be semantically
+            # complete so the negative attacks start from a valid package.
+            "coverage_metrics": {
+                "input_bytes": 10000,
+                "particles": 1,
+                "powders": 1,
+                "solids": 1,
+                "liquids": 1,
+                "gases": 1,
+                "temperature_signals": 1,
+                "pressure_cells": 1,
+                "velocity_signals": 1,
+                "wall_cells": 1,
+                "fan_cells": 1,
+                "electronics_particles": 1,
+                "life_particles": 1,
+                "signs": 1,
+                "decorated_particles": 1,
+                "legacy_state": 1,
+                "larger_save": 1,
+            },
+            "coverage_categories": sorted(audit.OFFICIAL_COVERAGE_REQUIRED),
+            "coverage_metrics_valid": True,
         }],
+        "coverage_contract": audit.OFFICIAL_COVERAGE_CONTRACT,
+        "coverage_required": list(audit.OFFICIAL_COVERAGE_REQUIRED),
+        "coverage_observed": sorted(audit.OFFICIAL_COVERAGE_REQUIRED),
+        "coverage_missing": [],
+        "coverage_passed": True,
     }
     compatibility_errors = audit.validate_raw_semantics(
         "OfficialTPTSaveCompatibility",
@@ -1041,7 +1229,8 @@ def semantic_positive_baselines(
 
 
 def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
-        symbol_artifact_stem: str | None) -> tuple[dict[str, bool], dict[str, bool], list[str]]:
+        symbol_artifact_stem: str | None, package_version: str = "1.1.0",
+        package_kind: str = "release") -> tuple[dict[str, bool], dict[str, bool], list[str]]:
     results: dict[str, bool] = {}
     baselines: dict[str, bool] = {}
     details: list[str] = []
@@ -1107,6 +1296,57 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
             },
         )
         results["official_initial_load_particle_loss"] = not semantic
+
+        narrow_metrics = {
+            "input_bytes": 9999, "particles": 1, "powders": 0, "solids": 0,
+            "liquids": 0, "gases": 0, "temperature_signals": 0,
+            "pressure_cells": 0, "velocity_signals": 0, "wall_cells": 0,
+            "fan_cells": 0, "electronics_particles": 0, "life_particles": 0,
+            "signs": 0, "decorated_particles": 0, "legacy_state": 0,
+            "larger_save": 0,
+        }
+        narrow_categories = ["basic_particles"]
+        narrow_missing = sorted(
+            set(audit.OFFICIAL_COVERAGE_REQUIRED).difference(narrow_categories)
+        )
+        narrow_row = {
+            "coverage_metrics": narrow_metrics,
+            "coverage_categories": narrow_categories,
+            "coverage_metrics_valid": True,
+        }
+        _, semantic = official_compatibility_case(
+            root,
+            compatibility_row_overrides=narrow_row,
+            compatibility_overrides={
+                "manifest_claimed_coverage": list(audit.OFFICIAL_COVERAGE_REQUIRED),
+                "coverage_observed": narrow_categories,
+                "coverage_missing": narrow_missing,
+                "coverage_passed": False,
+            },
+        )
+        results["official_manifest_coverage_spoof"] = not semantic
+
+        _, semantic = official_compatibility_case(
+            root,
+            compatibility_row_overrides=narrow_row,
+            compatibility_overrides={
+                "coverage_observed": list(audit.OFFICIAL_COVERAGE_REQUIRED),
+                "coverage_missing": [],
+                "coverage_passed": True,
+            },
+        )
+        results["official_runtime_coverage_summary_spoof"] = not semantic
+
+        _, semantic = official_compatibility_case(
+            root,
+            compatibility_row_overrides=narrow_row,
+            compatibility_overrides={
+                "coverage_observed": narrow_categories,
+                "coverage_missing": narrow_missing,
+                "coverage_passed": False,
+            },
+        )
+        results["official_missing_required_coverage"] = not semantic
 
         _, semantic = semantic_case(
             root, "Build", "build", stream_raw,
@@ -1567,11 +1807,11 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
         results.update(provenance_results)
         baselines["official_provenance"] = provenance_baseline
         details.extend(provenance_details)
-        promotion_results, promotion_baseline, promotion_details = promotion_attacks(
+        promotion_results, promotion_baselines, promotion_details = promotion_attacks(
             root, candidate, symbols
         )
         results.update(promotion_results)
-        baselines["candidate_promotion"] = promotion_baseline
+        baselines.update(promotion_baselines)
         details.extend(promotion_details)
 
         ready_gates = {
@@ -1646,12 +1886,12 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
         if (candidate and candidate.is_file() and symbols and symbols.is_file()
                 and artifact_stem and symbol_artifact_stem):
             candidate_baseline_errors = package_audit.audit_package(
-                candidate, version="1.1.0", kind="release",
+                candidate, version=package_version, kind=package_kind,
                 artifact_stem=artifact_stem,
                 symbol_artifact_stem=symbol_artifact_stem,
             )
             symbol_baseline_errors = package_audit.audit_package(
-                symbols, True, version="1.1.0",
+                symbols, True, version=package_version,
                 artifact_stem=artifact_stem,
                 symbol_artifact_stem=symbol_artifact_stem,
             )
@@ -1674,7 +1914,7 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
                 corrupt = root / "corrupt.zip"
                 corrupt_manifest(candidate, corrupt)
                 errors = package_audit.audit_package(
-                    corrupt, version="1.1.0", kind="release",
+                    corrupt, version=package_version, kind=package_kind,
                     artifact_stem=artifact_stem,
                     symbol_artifact_stem=symbol_artifact_stem,
                 )
@@ -1682,7 +1922,7 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
 
                 missing_symbols = root / "missing-symbols.zip"
                 errors = package_audit.audit_package(
-                    missing_symbols, True, version="1.1.0",
+                    missing_symbols, True, version=package_version,
                     artifact_stem=artifact_stem,
                     symbol_artifact_stem=symbol_artifact_stem,
                 )
@@ -1705,6 +1945,12 @@ def main() -> int:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--commit", required=True)
     parser.add_argument("--candidate-sha256", required=True)
+    parser.add_argument(
+        "--package-version", choices=("1.1.0-rc1", "1.1.0"), required=True
+    )
+    parser.add_argument(
+        "--package-kind", choices=("release-candidate", "release"), required=True
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     global RUN_ID, COMMIT, CANDIDATE
@@ -1716,6 +1962,14 @@ def main() -> int:
             raise ValueError("commit is invalid")
         if audit.SHA256_RE.fullmatch(CANDIDATE) is None:
             raise ValueError("candidate SHA256 is invalid")
+        expected_kind = {
+            "1.1.0-rc1": "release-candidate",
+            "1.1.0": "release",
+        }[args.package_version]
+        if args.package_kind != expected_kind:
+            raise ValueError(
+                f"package version {args.package_version} requires kind={expected_kind}"
+            )
         if not args.candidate.is_file() or not args.symbols.is_file():
             raise ValueError("candidate or symbols archive is absent")
         if any(part in args.artifact_stem for part in ("/", "\\", "..")):
@@ -1731,7 +1985,8 @@ def main() -> int:
             raise ValueError("candidate SHA256 argument does not match candidate bytes")
 
         results, baselines, details = run(
-            args.candidate, args.symbols, args.artifact_stem, args.symbol_artifact_stem
+            args.candidate, args.symbols, args.artifact_stem,
+            args.symbol_artifact_stem, args.package_version, args.package_kind,
         )
         missing = sorted(audit.REQUIRED_NEGATIVE_ATTACKS.difference(results))
         failed = sorted(name for name, rejected in results.items() if not rejected)

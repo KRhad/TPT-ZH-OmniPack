@@ -41,6 +41,44 @@ CPU_FALLBACK_TRUE_FIELDS = (
 OFFICIAL_REPOSITORY = "https://github.com/The-Powder-Toy/The-Powder-Toy"
 SHA256_RE = re.compile(r"^[0-9A-F]{64}$")
 REVISION_RE = re.compile(r"^[0-9a-fA-F]{40}$")
+OFFICIAL_COVERAGE_CONTRACT = "official-tpt-save-coverage-v1"
+OFFICIAL_COVERAGE_REQUIRED = (
+    "basic_particles", "powders", "solids", "liquids", "gases",
+    "temperature", "pressure", "velocity", "walls", "fans",
+    "electronics", "life", "signs", "decoration", "legacy_states",
+    "larger_save",
+)
+OFFICIAL_COVERAGE_METRIC_MAP = {
+    "basic_particles": "particles", "powders": "powders",
+    "solids": "solids", "liquids": "liquids", "gases": "gases",
+    "temperature": "temperature_signals", "pressure": "pressure_cells",
+    "velocity": "velocity_signals", "walls": "wall_cells",
+    "fans": "fan_cells", "electronics": "electronics_particles",
+    "life": "life_particles", "signs": "signs",
+    "decoration": "decorated_particles", "legacy_states": "legacy_state",
+    "larger_save": "larger_save",
+}
+OFFICIAL_COVERAGE_METRICS = tuple(
+    {"input_bytes", *OFFICIAL_COVERAGE_METRIC_MAP.values()}
+)
+
+
+def official_coverage_categories(metrics: object) -> set[str] | None:
+    if not isinstance(metrics, dict) or set(metrics) != set(OFFICIAL_COVERAGE_METRICS):
+        return None
+    if any(not isinstance(value, int) or isinstance(value, bool) or value < 0 for value in metrics.values()):
+        return None
+    if metrics.get("legacy_state") not in {0, 1} or metrics.get("larger_save") not in {0, 1}:
+        return None
+    if metrics.get("larger_save") != int(metrics.get("input_bytes", 0) >= 10000):
+        return None
+    categories = {
+        category for category, metric in OFFICIAL_COVERAGE_METRIC_MAP.items()
+        if metrics[metric] > 0 and category != "larger_save"
+    }
+    if metrics["input_bytes"] >= 10000:
+        categories.add("larger_save")
+    return categories
 EXPECTED_TEST_NAMES = {
     "SourceTreeClean": "source_tree_clean",
     "SourceSnapshotImmutability": "source_snapshot_immutability",
@@ -166,6 +204,9 @@ REQUIRED_NEGATIVE_ATTACKS = {
     "wrong_official_locator",
     "wrong_official_repository",
     "official_initial_load_particle_loss",
+    "official_manifest_coverage_spoof",
+    "official_runtime_coverage_summary_spoof",
+    "official_missing_required_coverage",
     "promotion_wrong_candidate_filename",
     "promotion_wrong_symbols_candidate_filename",
     "promotion_wrong_stable_filename",
@@ -178,6 +219,9 @@ REQUIRED_NEGATIVE_ATTACKS = {
     "promotion_lock_false",
     "promotion_marker_false",
     "promotion_stable_target_preexists",
+    "promotion_prepared_only",
+    "promotion_transaction_incomplete",
+    "promotion_stable_before_pre_gate",
     "stable_packager_direct_stable_name",
     "build_inputs_aggregate_mismatch",
     "ready_missing_release_documents",
@@ -876,6 +920,22 @@ def validate_raw_semantics(
                 "negative_validity_mask", "negative_deterministic_frame",
                 "negative_simulation_option", "negative_codec_roundtrip",
             )
+            row_categories: list[set[str]] = []
+            row_contract_invalid = False
+            for row in rows:
+                categories = official_coverage_categories(
+                    row.get("coverage_metrics") if isinstance(row, dict) else None
+                )
+                if (
+                    categories is None
+                    or row.get("coverage_metrics_valid") is not True
+                    or row.get("coverage_categories") != sorted(categories)
+                ):
+                    row_contract_invalid = True
+                    categories = set()
+                row_categories.append(categories)
+            recomputed_observed = sorted(set().union(*row_categories)) if row_categories else []
+            recomputed_missing = sorted(set(OFFICIAL_COVERAGE_REQUIRED).difference(recomputed_observed))
             if any(
                 not isinstance(row, dict)
                 or not isinstance(row.get("path"), str)
@@ -896,6 +956,18 @@ def validate_raw_semantics(
                 errors.append("official compatibility contains a failed hash binding or runtime phase")
             elif len({row.get("path") for row in rows}) != total:
                 errors.append("official compatibility contains duplicate file paths")
+            if row_contract_invalid:
+                errors.append("official compatibility coverage metrics or per-file categories are invalid")
+            if raw.get("coverage_contract") != OFFICIAL_COVERAGE_CONTRACT:
+                errors.append("official compatibility coverage contract is invalid")
+            if raw.get("coverage_required") != list(OFFICIAL_COVERAGE_REQUIRED):
+                errors.append("official compatibility required coverage set is invalid")
+            if raw.get("coverage_observed") != recomputed_observed:
+                errors.append("official compatibility observed coverage summary is not derived from probe metrics")
+            if raw.get("coverage_missing") != recomputed_missing:
+                errors.append("official compatibility missing coverage summary is not derived from probe metrics")
+            if raw.get("coverage_passed") is not (not recomputed_missing) or recomputed_missing:
+                errors.append("official compatibility does not cover every mandatory save category")
     elif gate_name == "GPUNumericalValidation":
         if (
             raw.get("schema") != EVIDENCE_SCHEMA
@@ -1054,12 +1126,18 @@ def validate_raw_semantics(
             errors.append("promotion stable symbols filename is invalid")
         if raw.get("stable_symbols_sha256_expected") != raw.get("symbols_sha256"):
             errors.append("promotion stable symbols identity does not match the symbols candidate")
-        if raw.get("promotion_phase") != "prepared_for_atomic_directory_publish":
-            errors.append("promotion evidence is not in the atomic publish preparation phase")
-        if raw.get("stable_copy_prepared") is not True or raw.get("stable_sha256_observed") != candidate_sha256:
-            errors.append("promotion evidence does not bind the prepared stable candidate bytes")
-        if raw.get("stable_symbols_copy_prepared") is not True or raw.get("stable_symbols_sha256_observed") != raw.get("symbols_sha256"):
-            errors.append("promotion evidence does not bind the prepared stable symbols bytes")
+        if raw.get("promotion_phase") != "published_and_reaudited":
+            errors.append("promotion evidence is not in the completed publication phase")
+        if raw.get("publication_state") != "published_and_reaudited":
+            errors.append("promotion publication state is not completed")
+        if raw.get("transaction_complete") is not True:
+            errors.append("promotion transaction is not complete")
+        if raw.get("post_publish_audit_passed") is not True:
+            errors.append("promotion post-publish audit did not pass")
+        if raw.get("stable_copy_published") is not True or raw.get("stable_sha256_observed") != candidate_sha256:
+            errors.append("promotion evidence does not bind the published stable candidate bytes")
+        if raw.get("stable_symbols_copy_published") is not True or raw.get("stable_symbols_sha256_observed") != raw.get("symbols_sha256"):
+            errors.append("promotion evidence does not bind the published stable symbols bytes")
         for field in (
             "byte_for_byte_identity", "atomic_rename_only",
             "atomic_directory_publish", "exclusive_output_lock_acquired",
@@ -1068,6 +1146,16 @@ def validate_raw_semantics(
         ):
             if raw.get(field) is not True:
                 errors.append(f"promotion invariant is not proven: {field}")
+        pre_gate_finished = parse_timestamp(raw.get("pre_promotion_gate_finished_at"))
+        stable_name_created = parse_timestamp(raw.get("stable_name_creation_started_at"))
+        if pre_gate_finished is None or stable_name_created is None:
+            errors.append("promotion timing evidence is absent or invalid")
+        elif stable_name_created < pre_gate_finished:
+            errors.append("stable artifact names were created before the pre-promotion gate finished")
+        if raw.get("pre_promotion_gate_passed") is not True:
+            errors.append("promotion evidence does not prove the pre-promotion gate passed")
+        if raw.get("stable_names_absent_before_pre_promotion_gate") is not True:
+            errors.append("promotion evidence does not prove stable names were absent before the pre-promotion gate")
         if candidate_path is None or not candidate_path.is_file():
             errors.append("promotion evidence is not bound to an actual staging candidate")
         else:

@@ -504,7 +504,6 @@ def check_runtime_contract(root: Path, errors: list[str]) -> None:
         'source_tree_state = $sourceTreeState',
         'return "dirty_probe"',
         "Dirty-probe automation artifacts cannot be used as gate evidence",
-        "Automation verifier executable does not match the generator executable",
         "OMNI_AUTOMATION_STOP_EVENT_DELTA",
         "OMNI_AUTOMATION_PEAK_EVENTS_PER_FRAME",
         "OMNI_AUTOMATION_SCENARIO_PASS",

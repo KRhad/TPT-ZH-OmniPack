@@ -791,6 +791,7 @@ if get_option('build_tests')
 		python3_prog,
 		args: [ files('tools/tests/test_stable_release_gate.py') ],
 		suite: 'static',
+		is_parallel: false,
 	)
 	if sdlgpu_shader_available and sdlgpu_shader_validator.found()
 		test(
@@ -2062,6 +2063,7 @@ test(
 	],
 	env: static_test_env,
 	suite: 'static',
+	is_parallel: false,
 	timeout: 60,
 )
 endif
