@@ -641,6 +641,36 @@ class StableReleaseGateTests(unittest.TestCase):
             self.assertIn("symbols bytes do not match aggregate", stderr.getvalue())
             self.assertFalse((output / "TPT-ZH-OmniPack-1.1.0-Windows-x64-Symbols.zip").exists())
 
+    def test_finalizer_rejects_rc_without_rewriting_foreign_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            validation = root / "RELEASE-VALIDATION.json"
+            validation.write_text(json.dumps({
+                "schema": "omnipack-release-validation", "schema_version": 1,
+                "version": "1.1.0-rc1", "channel": "rc",
+                "run_id": "20260814T041500Z-8f31c1c7", "commit": "a" * 40,
+                "status": "RC VALIDATION COMPLETE - STABLE BLOCKED",
+                "final_status": "RC VALIDATION COMPLETE - STABLE BLOCKED",
+                "blocking_items": ["Soak2Hours"], "gates": {},
+            }, sort_keys=True), encoding="utf-8")
+            original = validation.read_bytes()
+            output = root / "stable-output"
+            argv = [
+                "finalize_release_1_1_0.py", "--validation-json", str(validation),
+                "--candidate", str(root / "rc.zip"),
+                "--symbols", str(root / "rc-symbols.zip"),
+                "--clean-machine-evidence", str(root / "clean.json"),
+                "--runtime-validator-binding", str(root / "binding.json"),
+                "--runtime-validator", str(root / "validator.ps1"),
+                "--output-directory", str(output),
+            ]
+            stderr = io.StringIO()
+            with mock.patch.object(sys, "argv", argv), redirect_stderr(stderr):
+                self.assertEqual(release_finalizer.main(), 1)
+            self.assertIn("accepts only a 1.1.0 stable staging run", stderr.getvalue())
+            self.assertEqual(validation.read_bytes(), original)
+            self.assertFalse(output.exists())
+
     def test_finalizer_rejects_development_checkout_clean_claim(self) -> None:
         evidence = {
             "schema": "omnipack-release-evidence", "schema_version": 1,

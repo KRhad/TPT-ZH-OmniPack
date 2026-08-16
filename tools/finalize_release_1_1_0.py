@@ -787,6 +787,7 @@ def main() -> int:
     transaction_owned = False
     lock_path: Path | None = None
     lock_acquired = False
+    rewrite_failure_aggregate = False
     try:
         validation = read_json(validation_json)
         if validation.get("schema") != "omnipack-release-validation" or validation.get("schema_version") != 1:
@@ -818,6 +819,10 @@ def main() -> int:
         symbol_stem = f"TPT-ZH-OmniPack-1.1.0-staging-{run_id}-Windows-x64-Symbols"
         if candidate.name != artifact_stem + ".zip" or symbols.name != symbol_stem + ".zip":
             raise ValueError("candidate filenames are not bound to this run_id")
+        # From this point the input is unambiguously this finalizer's stable
+        # staging aggregate.  Earlier schema/channel/name rejections must leave
+        # foreign or RC evidence byte-for-byte untouched.
+        rewrite_failure_aggregate = True
         if sha256(candidate) != expected_sha:
             raise ValueError("candidate bytes do not match aggregate candidate_sha256")
         if sha256(symbols) != expected_symbols_sha:
@@ -1234,14 +1239,15 @@ def main() -> int:
         if lock_path and lock_acquired and not rollback_failed:
             remove_owned_lock(lock_path, str(validation.get("run_id", "")))
             lock_acquired = False
-        try:
-            validation = read_json(validation_json)
-            validation["status"] = validation["final_status"] = "NOT READY FOR 1.1.0 STABLE"
-            validation["blocking_items"] = [str(exc)]
-            write_json(validation_json, validation)
-            write_validation_text(validation, validation_text)
-        except Exception:
-            pass
+        if rewrite_failure_aggregate:
+            try:
+                validation = read_json(validation_json)
+                validation["status"] = validation["final_status"] = "NOT READY FOR 1.1.0 STABLE"
+                validation["blocking_items"] = [str(exc)]
+                write_json(validation_json, validation)
+                write_validation_text(validation, validation_text)
+            except Exception:
+                pass
         print(f"finalize-release: ERROR {exc}", file=sys.stderr)
         return 1
 
