@@ -200,6 +200,13 @@ function Get-GitHead {
     return $head
 }
 
+function Get-SourceTreeState {
+    $status = @(& git -C $sourceRoot status --porcelain)
+    if ($LASTEXITCODE -ne 0) { throw "Cannot inspect source tree state" }
+    if ($status.Count -eq 0) { return "clean" }
+    return "dirty"
+}
+
 function Generate-Examples {
     $generated = @()
     $ordinal = 1
@@ -261,6 +268,16 @@ function Verify-Examples {
     $manifestExamples = @($manifest.examples)
     if ($manifestExamples.Count -ne 7) { throw "Manifest must contain 7 examples" }
     if (@($manifest.tutorial_ids).Count -ne 8) { throw "Manifest must contain 8 tutorial IDs" }
+    if ([string]$manifest.source_commit -notmatch '^[0-9a-f]{40}$') {
+        throw "Manifest generation source commit is invalid"
+    }
+    if ([string]$manifest.generator_exe_sha256 -notmatch '^[0-9A-F]{64}$') {
+        throw "Manifest generator executable SHA256 is invalid"
+    }
+    $verificationSourceTreeState = Get-SourceTreeState
+    if ($verificationSourceTreeState -ne "clean") {
+        throw "Tutorial verification evidence requires a clean source tree"
+    }
     $results = @()
     foreach ($challenge in $challengeRows) {
         $entry = $manifestExamples | Where-Object { $_.id -eq $challenge.example_id }
@@ -284,7 +301,11 @@ function Verify-Examples {
     $report = [ordered]@{
         schema_version = 1
         source_commit = Get-GitHead
+        verification_source_tree_state = $verificationSourceTreeState
         executable_sha256 = (Get-FileHash -LiteralPath $resolvedExecutable -Algorithm SHA256).Hash
+        manifest_sha256 = (Get-FileHash -LiteralPath $manifestPath -Algorithm SHA256).Hash
+        generation_source_commit = [string]$manifest.source_commit
+        generator_exe_sha256 = [string]$manifest.generator_exe_sha256
         example_count = $manifestExamples.Count
         tutorial_count = $results.Count
         pass_count = @($results | Where-Object { $_.status -eq "PASS" }).Count

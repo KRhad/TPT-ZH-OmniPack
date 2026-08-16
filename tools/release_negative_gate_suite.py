@@ -1718,12 +1718,12 @@ def main() -> int:
             raise ValueError("candidate SHA256 is invalid")
         if not args.candidate.is_file() or not args.symbols.is_file():
             raise ValueError("candidate or symbols archive is absent")
-        expected_candidate_name = (
-            f"TPT-ZH-OmniPack-1.1.0-staging-{RUN_ID}-Windows-x64-SDL3.zip"
-        )
-        expected_symbols_name = (
-            f"TPT-ZH-OmniPack-1.1.0-staging-{RUN_ID}-Windows-x64-Symbols.zip"
-        )
+        if any(part in args.artifact_stem for part in ("/", "\\", "..")):
+            raise ValueError("candidate artifact stem is unsafe")
+        if any(part in args.symbol_artifact_stem for part in ("/", "\\", "..")):
+            raise ValueError("symbols artifact stem is unsafe")
+        expected_candidate_name = f"{args.artifact_stem}.zip"
+        expected_symbols_name = f"{args.symbol_artifact_stem}.zip"
         if args.candidate.name != expected_candidate_name or args.symbols.name != expected_symbols_name:
             raise ValueError("candidate or symbols filename is not bound to run_id")
         observed_candidate_sha256 = digest(args.candidate)

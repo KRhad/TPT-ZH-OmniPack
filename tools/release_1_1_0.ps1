@@ -451,6 +451,10 @@ function Set-NotTested {
     param([string]$Name,[string]$Reason)
     $evidence = Join-Path $validationDirectory ($Name.ToLowerInvariant() + ".json")
     $started = [DateTime]::UtcNow.ToString("o")
+    # File timestamp APIs can trail UtcNow by a fraction of a millisecond on
+    # Windows.  Keep the producer write unambiguously after gate start so the
+    # stale-evidence audit remains strict without false negatives.
+    Start-Sleep -Milliseconds 2
     Write-ResultJson $evidence ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test=$gateTestNames[$Name];gate_name=$Name;run_id=$runId;commit=$commitAtStart;candidate_sha256=$currentCandidateSha256;symbols_sha256=$currentSymbolsSha256;symbols_member_sha256=$currentSymbolsMemberSha256;gate_started_at=$started;gate_finished_at=([DateTime]::UtcNow.ToString("o"));passed=$false;status="NOT_TESTED";reason=$Reason})
     Set-Gate $Name "NOT_TESTED" "not executed" -1 $evidence $Reason $started ([DateTime]::UtcNow.ToString("o"))
 }
@@ -829,9 +833,12 @@ try {
         $symbolAuditOk = Invoke-GateProcess "SymbolPackageVerification" $python @((Join-Path $sourceRoot "tools\test_release_audit.py"),$symbolsZip,"--symbols","--version",$version,"--artifact-stem",$artifactStem,"--symbol-artifact-stem",$symbolArtifactStem) (Join-Path $validationDirectory "symbol-package-verification") -TimeoutSeconds 300
         $cleanEvidence = Join-Path $validationDirectory "windows-clean-machine.json"
         $cleanMessage = "independent runtime-only Windows job evidence must be imported by the finalizer"
-        Write-ResultJson $cleanEvidence ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test="windows_clean_machine";run_id=$runId;passed=$false;status="NOT_TESTED";reason=$cleanMessage;candidate_filename=[IO.Path]::GetFileName($releaseZip);candidate_sha256=$candidateSha256;source_checkout_used=$null;candidate_extracted_to_fresh_directory=$false;launch_passed=$false;save_reload_passed=$false;clean_shutdown=$false})
-        Set-Gate "WindowsCleanMachine" "NOT_TESTED" "independent runtime-only job" 2 $cleanEvidence $cleanMessage
+        $cleanStarted = [DateTime]::UtcNow.ToString("o")
+        $cleanFinished = [DateTime]::UtcNow.ToString("o")
+        Write-ResultJson $cleanEvidence ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test="windows_clean_machine";gate_name="WindowsCleanMachine";run_id=$runId;commit=$commitAtStart;passed=$false;status="NOT_TESTED";reason=$cleanMessage;candidate_filename=[IO.Path]::GetFileName($releaseZip);candidate_sha256=$candidateSha256;symbols_sha256=$symbolArchiveSha256;symbols_member_sha256=$currentSymbolsMemberSha256;gate_started_at=$cleanStarted;gate_finished_at=$cleanFinished;source_checkout_used=$null;candidate_extracted_to_fresh_directory=$false;launch_passed=$false;save_reload_passed=$false;clean_shutdown=$false})
+        Set-Gate "WindowsCleanMachine" "NOT_TESTED" "independent runtime-only job" 2 $cleanEvidence $cleanMessage $cleanStarted $cleanFinished
         $hashEvidence = Join-Path $validationDirectory "sha256.json"
+        $hashStarted = [DateTime]::UtcNow.ToString("o")
         $sidecars = @("$releaseZip.sha256","$symbolsZip.sha256")
         $hashesPass = $auditOk -and $symbolAuditOk -and @($sidecars | Where-Object { -not (Test-Path $_ -PathType Leaf) }).Count -eq 0
         $hashRecords = @()
@@ -846,23 +853,44 @@ try {
             if ((Get-Content -LiteralPath $sidecar -Raw).Trim() -ne $expectedLine) { $sidecarMatch = $false }
         }
         $hashesPass = $hashesPass -and $sidecarMatch
-        Write-ResultJson $hashEvidence ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test="candidate_sha256";run_id=$runId;commit=$commitAtStart;candidate_sha256=$candidateSha256;symbols_sha256=$symbolArchiveSha256;status=if($hashesPass){"PASS"}else{"FAIL"};passed=$hashesPass;sidecars_match=$sidecarMatch;files=$hashRecords})
+        $hashFinished = [DateTime]::UtcNow.ToString("o")
+        Write-ResultJson $hashEvidence ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test="candidate_sha256";gate_name="CandidateSHA256";run_id=$runId;commit=$commitAtStart;candidate_sha256=$candidateSha256;symbols_sha256=$symbolArchiveSha256;symbols_member_sha256=$currentSymbolsMemberSha256;gate_started_at=$hashStarted;gate_finished_at=$hashFinished;status=if($hashesPass){"PASS"}else{"FAIL"};passed=$hashesPass;sidecars_match=$sidecarMatch;files=$hashRecords})
         $hashStatus = if($hashesPass){"PASS"}else{"FAIL"}
         $hashExit = if($hashesPass){0}else{1}
         $hashMessage = if($hashesPass){"both ZIPs and sidecars verified"}else{"ZIP or SHA256 verification failed"}
-        Set-Gate "CandidateSHA256" $hashStatus "independent ZIP audit and SHA256 recomputation" $hashExit $hashEvidence $hashMessage
+        Set-Gate "CandidateSHA256" $hashStatus "independent ZIP audit and SHA256 recomputation" $hashExit $hashEvidence $hashMessage $hashStarted $hashFinished
+        $negativeEvidence = Join-Path $validationDirectory "negative-gate-tests.json"
+        Invoke-GateProcess "NegativeGateSuite" $python @(
+            (Join-Path $sourceRoot "tools\release_negative_gate_suite.py"),
+            "--candidate",$releaseZip,"--symbols",$symbolsZip,
+            "--artifact-stem",$artifactStem,"--symbol-artifact-stem",$symbolArtifactStem,
+            "--run-id",$runId,"--commit",$commitAtStart,
+            "--candidate-sha256",$candidateSha256,"--output",$negativeEvidence
+        ) $negativeEvidence -TimeoutSeconds 1200 -Validate {
+            if (-not (Test-Path -LiteralPath $negativeEvidence -PathType Leaf)) { return $false }
+            $r = Get-Content -LiteralPath $negativeEvidence -Raw | ConvertFrom-Json
+            return ($r.schema -eq "omnipack-release-evidence" -and $r.schema_version -eq 1 -and
+                $r.test -eq "negative_gate_suite" -and $r.run_id -eq $runId -and
+                $r.commit -eq $commitAtStart -and $r.candidate_sha256 -eq $candidateSha256 -and
+                $r.status -eq "PASS" -and $r.passed -eq $true -and
+                $r.baselines_total -eq $r.baselines_passed -and @($r.baselines_failed).Count -eq 0 -and
+                $r.attacks_total -eq $r.attacks_rejected -and @($r.attacks_failed).Count -eq 0)
+        } | Out-Null
         $immutableEvidence = Join-Path $validationDirectory "artifact-immutability.json"
+        $immutableStarted = [DateTime]::UtcNow.ToString("o")
         $candidateSha256After = Get-Sha256Hex $releaseZip
         $artifactImmutable = $candidateSha256After -eq $candidateSha256
-        Write-ResultJson $immutableEvidence ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test="artifact_immutability";run_id=$runId;commit=$commitAtStart;candidate_sha256=$candidateSha256;symbols_sha256=$symbolArchiveSha256;status=if($artifactImmutable){"PASS"}else{"FAIL"};passed=$artifactImmutable;before_sha256=$candidateSha256;after_sha256=$candidateSha256After})
-        Set-Gate "ArtifactImmutability" $(if($artifactImmutable){"PASS"}else{"FAIL"}) "recompute final candidate SHA256 after all package consumers" $(if($artifactImmutable){0}else{1}) $immutableEvidence $(if($artifactImmutable){"all post-package gates consumed one immutable ZIP"}else{"candidate ZIP changed during post-package validation"})
+        $immutableFinished = [DateTime]::UtcNow.ToString("o")
+        Write-ResultJson $immutableEvidence ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test="artifact_immutability";gate_name="ArtifactImmutability";run_id=$runId;commit=$commitAtStart;candidate_sha256=$candidateSha256;symbols_sha256=$symbolArchiveSha256;symbols_member_sha256=$currentSymbolsMemberSha256;gate_started_at=$immutableStarted;gate_finished_at=$immutableFinished;status=if($artifactImmutable){"PASS"}else{"FAIL"};passed=$artifactImmutable;before_sha256=$candidateSha256;after_sha256=$candidateSha256After})
+        Set-Gate "ArtifactImmutability" $(if($artifactImmutable){"PASS"}else{"FAIL"}) "recompute final candidate SHA256 after all package consumers" $(if($artifactImmutable){0}else{1}) $immutableEvidence $(if($artifactImmutable){"all post-package gates consumed one immutable ZIP"}else{"candidate ZIP changed during post-package validation"}) $immutableStarted $immutableFinished
     } else {
         Set-Gate "CandidateSHA256" "FAIL" "not run because package creation failed" -1 (Join-Path $validationDirectory "sha256.json") "package unavailable"
+        Set-NotTested "NegativeGateSuite" "package was not created"
         Set-NotTested "ArtifactImmutability" "package was not created"
         Set-NotTested "SDL3GUI" "package was not created"
     }
     Set-SourceSnapshotImmutabilityGate | Out-Null
-    $allMandatory = $prePackageMandatory + @("SourceSnapshotImmutability","SDL3GUI","WindowsPortableExtraction","Soak2Hours","PackageManifest","PackageVerification","SymbolPackageVerification","CandidateSHA256","ArtifactImmutability","WindowsCleanMachine","EvidenceSemanticIntegrity","EvidenceHashIntegrity","DocumentationConsistency")
+    $allMandatory = $prePackageMandatory + @("SourceSnapshotImmutability","SDL3GUI","WindowsPortableExtraction","Soak2Hours","PackageManifest","PackageVerification","SymbolPackageVerification","CandidateSHA256","ArtifactImmutability","WindowsCleanMachine","EvidenceSemanticIntegrity","EvidenceHashIntegrity","DocumentationConsistency","NegativeGateSuite")
     $finalBlocked = @($allMandatory | Where-Object { -not $results.Contains($_) -or $results[$_].Status -ne "PASS" })
     $auditInputStatus = if ($finalBlocked.Count -eq 0) { "READY FOR 1.1.0 STABLE" } else { "RC VALIDATION COMPLETE - STABLE BLOCKED" }
     Write-AggregateValidation $validationJson $validationTxt $auditInputStatus $finalBlocked

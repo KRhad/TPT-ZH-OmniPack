@@ -80,7 +80,7 @@ class GitUpstream:
         # local remote alias: a concurrent config change between repository_url
         # validation and this call must not redirect provenance objects.
         self._run(
-            "fetch", "--prune", OFFICIAL_REPOSITORY + ".git",
+            "fetch", "--prune", "--no-tags", OFFICIAL_REPOSITORY + ".git",
             "+refs/heads/*:refs/remotes/" + self.remote + "/*",
             "+refs/tags/*:refs/remotes/" + self.remote + "/tags/*",
         )

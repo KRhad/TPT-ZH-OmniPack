@@ -160,26 +160,31 @@ class TestReleaseAuditTests(unittest.TestCase):
             (source / "tpt-zh-omnipack.exe").read_bytes()
         ).hexdigest().upper()
         source_commit = "b" * 40
+        verification_commit = "d" * 40
+        generator_executable_hash = "1" * 64
         (source / "docs" / "TUTORIALS_0.2.json").write_text(
             "{}\n", encoding="utf-8"
         )
         (examples / "example-spec.json").write_text("{}\n", encoding="utf-8")
-        (examples / "manifest.json").write_text(
-            json.dumps(
-                {
-                    "content_version": package_test_release.DEV_VERSION,
-                    "source_commit": source_commit,
-                    "generator_exe_sha256": executable_hash,
-                    "examples": rows,
-                }
-            ),
+        manifest_path = examples / "manifest.json"
+        manifest_path.write_text(
+            json.dumps({
+                "content_version": package_test_release.DEV_VERSION,
+                "source_commit": source_commit,
+                "generator_exe_sha256": generator_executable_hash,
+                "examples": rows,
+            }),
             encoding="utf-8",
         )
         (examples / "tutorials-runtime-report.json").write_text(
             json.dumps(
                 {
-                    "source_commit": source_commit,
+                    "source_commit": verification_commit,
+                    "verification_source_tree_state": "clean",
                     "executable_sha256": executable_hash,
+                    "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest().upper(),
+                    "generation_source_commit": source_commit,
+                    "generator_exe_sha256": generator_executable_hash,
                     "pass_count": 8,
                 }
             ),
@@ -223,25 +228,30 @@ class TestReleaseAuditTests(unittest.TestCase):
             (source / "tpt-zh-omnipack.exe").read_bytes()
         ).hexdigest().upper()
         source_commit = "c" * 40
-        (examples / "manifest.json").write_text(
-            json.dumps(
-                {
-                    "content_version": package_test_release.AUTOMATION_VERSION,
-                    "source_commit": source_commit,
-                    "source_tree_state": "clean",
-                    "generator_exe_sha256": executable_hash,
-                    "challenge_ids": [f"A{index:02d}" for index in range(1, 7)],
-                    "scenarios": rows,
-                }
-            ),
+        verification_commit = "e" * 40
+        generator_executable_hash = "2" * 64
+        manifest_path = examples / "manifest.json"
+        manifest_path.write_text(
+            json.dumps({
+                "content_version": package_test_release.AUTOMATION_VERSION,
+                "source_commit": source_commit,
+                "source_tree_state": "clean",
+                "generator_exe_sha256": generator_executable_hash,
+                "challenge_ids": [f"A{index:02d}" for index in range(1, 7)],
+                "scenarios": rows,
+            }),
             encoding="utf-8",
         )
         (examples / "runtime-report.json").write_text(
             json.dumps(
                 {
-                    "source_commit": source_commit,
+                    "source_commit": verification_commit,
                     "source_tree_state": "clean",
+                    "verification_source_tree_state": "clean",
                     "executable_sha256": executable_hash,
+                    "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest().upper(),
+                    "generation_source_commit": source_commit,
+                    "generator_exe_sha256": generator_executable_hash,
                     "scenario_pass_count": 9,
                     "challenge_pass_count": 6,
                     "stop_event_delta_total": 0,
@@ -378,6 +388,33 @@ class TestReleaseAuditTests(unittest.TestCase):
                 ),
                 [],
             )
+
+    def test_runtime_reports_must_bind_the_packaged_historical_manifests(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = self.make_source_root(Path(temporary))
+            self.add_automation_sources(source)
+            report_path = source / "examples" / "0.3.0" / "runtime-report.json"
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            report["manifest_sha256"] = "0" * 64
+            report_path.write_text(json.dumps(report), encoding="utf-8")
+            with mock.patch.object(
+                package_test_release, "git_revision", return_value="a" * 40
+            ):
+                package, _, _, _ = package_test_release.build_package(
+                    source,
+                    source / "tpt-zh-omnipack.exe",
+                    source / "tpt-zh-omnipack.debug",
+                    source / "dist",
+                    version=package_test_release.AUTOMATION_VERSION,
+                    kind="local-dev",
+                    include_examples=True,
+                )
+            errors = test_release_audit.audit_package(
+                package,
+                version=package_test_release.AUTOMATION_VERSION,
+                kind="local-dev",
+            )
+            self.assertTrue(any("not bound to the packaged manifest" in error for error in errors))
 
     def test_private_content_packages_use_versioned_instructions_without_stale_examples(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

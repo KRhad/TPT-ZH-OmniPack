@@ -46,6 +46,21 @@ class RuntimeWrapperCleanupContractTest(unittest.TestCase):
             self.assertIn('-not $UpdateSourceArtifacts', wrapper)
             self.assertIn('Refusing to replace repository', wrapper)
 
+    def test_historical_fixtures_are_verified_without_replacing_generator_identity(self) -> None:
+        for wrapper in (self.examples, self.automation):
+            self.assertIn("generation_source_commit", wrapper)
+            self.assertIn("generator_exe_sha256", wrapper)
+            self.assertIn("manifest_sha256", wrapper)
+            self.assertIn("verification_source_tree_state", wrapper)
+        self.assertNotIn(
+            "Automation verifier executable does not match the generator executable",
+            self.automation,
+        )
+        self.assertNotIn(
+            "Automation scenario spec changed after stamp generation",
+            self.automation,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

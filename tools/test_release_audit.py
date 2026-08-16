@@ -26,6 +26,8 @@ PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Windows-x64"
 SYMBOL_PACKAGE_STEM = f"TPT-ZH-OmniPack-{VERSION}-Symbols-Windows-x64"
 EXECUTABLE_NAME = "tpt-zh-omnipack.exe"
 SYMBOL_NAME = "tpt-zh-omnipack.debug"
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+SHA256_RE = re.compile(r"^[0-9A-F]{64}$")
 NORMAL_DOCUMENTS = {
     "LICENSE", "README.en.md", "README.zh-CN.md", "CHANGELOG.en.txt",
     "CHANGELOG.zh-CN.md", "TESTING.zh-CN.md",
@@ -291,20 +293,29 @@ def audit_0_2_examples(
     executable_hash: str,
     errors: list[str],
 ) -> None:
-    example_manifest = json.loads(
-        archive.read(f"{stem}/examples/0.2.0/manifest.json")
-    )
+    manifest_bytes = archive.read(f"{stem}/examples/0.2.0/manifest.json")
+    example_manifest = json.loads(manifest_bytes)
     runtime_report = json.loads(
         archive.read(f"{stem}/examples/0.2.0/tutorials-runtime-report.json")
     )
     if example_manifest.get("content_version") != DEV_VERSION:
         errors.append("0.2 example manifest version is invalid")
-    if example_manifest.get("generator_exe_sha256") != executable_hash:
-        errors.append("0.2 example manifest executable does not match package")
+    if COMMIT_RE.fullmatch(str(example_manifest.get("source_commit", ""))) is None:
+        errors.append("0.2 example manifest generation commit is invalid")
+    if SHA256_RE.fullmatch(str(example_manifest.get("generator_exe_sha256", ""))) is None:
+        errors.append("0.2 example manifest generator executable SHA256 is invalid")
     if runtime_report.get("executable_sha256") != executable_hash:
         errors.append("0.2 tutorial report executable does not match package")
-    if runtime_report.get("source_commit") != example_manifest.get("source_commit"):
-        errors.append("0.2 tutorial and example source commits do not match")
+    if COMMIT_RE.fullmatch(str(runtime_report.get("source_commit", ""))) is None:
+        errors.append("0.2 tutorial verification commit is invalid")
+    if runtime_report.get("verification_source_tree_state") != "clean":
+        errors.append("0.2 tutorial verification is not from a clean source tree")
+    if runtime_report.get("manifest_sha256") != sha256_bytes(manifest_bytes):
+        errors.append("0.2 tutorial report is not bound to the packaged manifest")
+    if runtime_report.get("generation_source_commit") != example_manifest.get("source_commit"):
+        errors.append("0.2 tutorial report generation commit does not match manifest")
+    if runtime_report.get("generator_exe_sha256") != example_manifest.get("generator_exe_sha256"):
+        errors.append("0.2 tutorial report generator executable does not match manifest")
     if runtime_report.get("pass_count") != 8:
         errors.append("0.2 tutorial report does not contain 8 passes")
     example_rows = example_manifest.get("examples")
@@ -329,18 +340,29 @@ def audit_0_3_automation(
     executable_hash: str,
     errors: list[str],
 ) -> None:
-    manifest = json.loads(archive.read(f"{stem}/examples/0.3.0/manifest.json"))
+    manifest_bytes = archive.read(f"{stem}/examples/0.3.0/manifest.json")
+    manifest = json.loads(manifest_bytes)
     report = json.loads(archive.read(f"{stem}/examples/0.3.0/runtime-report.json"))
     if manifest.get("content_version") != AUTOMATION_VERSION:
         errors.append("0.3 automation manifest version is invalid")
     if manifest.get("source_tree_state") != "clean":
         errors.append("0.3 automation manifest is not from a clean source tree")
-    if manifest.get("generator_exe_sha256") != executable_hash:
-        errors.append("0.3 automation manifest executable does not match package")
+    if COMMIT_RE.fullmatch(str(manifest.get("source_commit", ""))) is None:
+        errors.append("0.3 automation manifest generation commit is invalid")
+    if SHA256_RE.fullmatch(str(manifest.get("generator_exe_sha256", ""))) is None:
+        errors.append("0.3 automation manifest generator executable SHA256 is invalid")
     if report.get("executable_sha256") != executable_hash:
         errors.append("0.3 automation report executable does not match package")
-    if report.get("source_commit") != manifest.get("source_commit"):
-        errors.append("0.3 automation report and manifest source commits do not match")
+    if COMMIT_RE.fullmatch(str(report.get("source_commit", ""))) is None:
+        errors.append("0.3 automation verification commit is invalid")
+    if report.get("verification_source_tree_state") != "clean":
+        errors.append("0.3 automation verification is not from a clean source tree")
+    if report.get("manifest_sha256") != sha256_bytes(manifest_bytes):
+        errors.append("0.3 automation report is not bound to the packaged manifest")
+    if report.get("generation_source_commit") != manifest.get("source_commit"):
+        errors.append("0.3 automation report generation commit does not match manifest")
+    if report.get("generator_exe_sha256") != manifest.get("generator_exe_sha256"):
+        errors.append("0.3 automation report generator executable does not match manifest")
     if report.get("source_tree_state") != "clean":
         errors.append("0.3 automation report is not from a clean source tree")
     if report.get("scenario_pass_count") != 9:

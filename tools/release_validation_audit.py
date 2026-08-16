@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 import json
 import math
@@ -15,6 +15,7 @@ import zipfile
 
 EVIDENCE_SCHEMA = "omnipack-release-evidence"
 EVIDENCE_SCHEMA_VERSION = 1
+FILESYSTEM_TIMESTAMP_TOLERANCE = timedelta(milliseconds=1)
 PORTABLE_RUNTIME_PAYLOAD_SCHEMA_VERSION = 2
 PORTABLE_RUNTIME_TRUE_FIELDS = (
     "launch_passed", "fixture_created", "initial_simulate_passed",
@@ -1154,7 +1155,7 @@ def validate_gate_evidence(
         errors.append("source evidence hash mismatch")
     elif started is not None:
         source_time = datetime.fromtimestamp(source_path.stat().st_mtime, tz=started.tzinfo)
-        if source_time < started:
+        if source_time + FILESYSTEM_TIMESTAMP_TOLERANCE < started:
             errors.append("source evidence predates gate start")
 
     if source_path is not None and source_path.suffix.lower() != ".json":

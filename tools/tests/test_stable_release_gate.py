@@ -140,11 +140,51 @@ class StableReleaseGateTests(unittest.TestCase):
         upstream._run = lambda *args, **kwargs: calls.append(args)  # type: ignore[method-assign]
         upstream.fetch()
         self.assertEqual(len(calls), 1)
+        self.assertIn("--no-tags", calls[0])
         self.assertNotIn("--tags", calls[0])
         self.assertIn(official_provenance.OFFICIAL_REPOSITORY + ".git", calls[0])
         self.assertNotIn("official", calls[0][:3])
         self.assertIn("+refs/heads/*:refs/remotes/official/*", calls[0])
         self.assertIn("+refs/tags/*:refs/remotes/official/tags/*", calls[0])
+
+    def test_official_git_fetch_does_not_import_real_upstream_tags_locally(self) -> None:
+        def git(repository: Path, *args: str) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                ["git", "-C", str(repository), *args],
+                check=True, capture_output=True, text=True,
+            )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            upstream = root / "official-source.git"
+            repository = root / "integration"
+            upstream.mkdir()
+            repository.mkdir()
+
+            git(upstream, "init")
+            git(upstream, "config", "user.name", "OmniPack Test")
+            git(upstream, "config", "user.email", "omnipack-test@example.invalid")
+            (upstream / "official.cps").write_bytes(b"official-save-object")
+            git(upstream, "add", "official.cps")
+            git(upstream, "commit", "-m", "official fixture")
+            commit = git(upstream, "rev-parse", "HEAD").stdout.strip()
+            git(upstream, "tag", "-a", "official-v1", "-m", "official-v1")
+
+            git(repository, "init")
+            upstream_base = upstream.with_suffix("")
+            with mock.patch.object(
+                official_provenance, "OFFICIAL_REPOSITORY", upstream_base.as_uri()
+            ):
+                official_provenance.GitUpstream(repository, "git", "official").fetch()
+
+            local_tags = git(
+                repository, "for-each-ref", "--format=%(refname)", "refs/tags"
+            ).stdout.splitlines()
+            self.assertEqual(local_tags, [])
+            fetched_tag = git(
+                repository, "rev-parse", "refs/remotes/official/tags/official-v1^{}"
+            ).stdout.strip()
+            self.assertEqual(fetched_tag, commit)
 
     def test_official_provenance_attack_matrix_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -202,6 +242,23 @@ class StableReleaseGateTests(unittest.TestCase):
         self.assertIn('"--provenance-evidence"', script)
         self.assertIn('"OfficialTPTCorpusProvenance"', script)
         self.assertIn('"Channel: $Channel"', script)
+        self.assertIn('Invoke-GateProcess "NegativeGateSuite"', script)
+        self.assertIn('"DocumentationConsistency","NegativeGateSuite"', script)
+        self.assertIn('gate_name="CandidateSHA256"', script)
+        self.assertIn('gate_name="ArtifactImmutability"', script)
+        self.assertIn('gate_name="WindowsCleanMachine"', script)
+        self.assertIn('symbols_member_sha256=$currentSymbolsMemberSha256', script)
+
+        negative = (ROOT / "tools/release_negative_gate_suite.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('expected_candidate_name = f"{args.artifact_stem}.zip"', negative)
+        self.assertIn('expected_symbols_name = f"{args.symbol_artifact_stem}.zip"', negative)
+        negative_main = negative.split("def main() -> int:", 1)[1]
+        self.assertNotIn(
+            'TPT-ZH-OmniPack-1.1.0-staging-{RUN_ID}-Windows-x64-SDL3.zip',
+            negative_main,
+        )
 
     def test_gpu_validation_unsupported_cannot_exit_zero(self) -> None:
         source = (ROOT / "src/common/platform/SDLGPU.cpp").read_text(encoding="utf-8")
