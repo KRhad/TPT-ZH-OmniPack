@@ -1,7 +1,11 @@
 {
   "schema_version": 1,
-  "source_commit": "bbe660c20fe2733c5ad08447e1f6033c2ba3eaab",
-  "executable_sha256": "D29529F60DB6CC546F022199BE70B76F991BA3D075824956843D255EB4AB51C6",
+  "source_commit": "cf0b8a0da2a2609192f78c2539f2acde0f39cd2d",
+  "verification_source_tree_state": "clean",
+  "executable_sha256": "A5052FC55367D2D1E1A7E3B6B8786463EA6D3ADA9F9AEA5F9D9A7F6270D401DC",
+  "manifest_sha256": "B6E8FA6FF59926A46055514EFDB02467A9FB73E3C5A81CA26E2BF81B58C6EB07",
+  "generation_source_commit": "49f42be8654e62f5180bc7ad848c7435e46f72a6",
+  "generator_exe_sha256": "04398AE78304FCAAC42011FB0F6665B32BA9BF558F5FCA8D05FD30A70F3DF4B7",
   "example_count": 7,
   "tutorial_count": 8,
   "pass_count": 8,
