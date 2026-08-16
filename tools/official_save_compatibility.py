@@ -13,6 +13,8 @@ from typing import Sequence
 
 
 OFFICIAL_REPOSITORY = "https://github.com/The-Powder-Toy/The-Powder-Toy"
+OFFICIAL_TPT_BENCH_REPOSITORY = "https://github.com/The-Powder-Toy/tpt-bench"
+OFFICIAL_WEB_API_ORIGIN = "https://powdertoy.co.uk"
 SHA256_RE = re.compile(r"^[0-9A-F]{64}$")
 REVISION_RE = re.compile(r"^[0-9a-fA-F]{40}$")
 COVERAGE_CONTRACT = "official-tpt-save-coverage-v1"
@@ -106,6 +108,48 @@ def result(run_id: str, commit: str, status: str, reason: str, **extra: object) 
     }
 
 
+def provenance_identity_is_valid(provenance: dict[str, object]) -> bool:
+    """Accept v1 Git-only evidence or the explicit v2 mixed-source contract."""
+    common_invalid = (
+        provenance.get("schema") != "omnipack-release-evidence",
+        provenance.get("schema_version") != 1,
+        provenance.get("test") != "official_tpt_provenance",
+        provenance.get("status") != "PASS",
+        provenance.get("passed") is not True,
+        provenance.get("revision_exists") is not True,
+        provenance.get("revision_reachable_from_official_remote") is not True,
+        provenance.get("files_failed") != 0,
+    )
+    if any(common_invalid):
+        return False
+    if provenance.get("provenance_schema") == "omnipack-official-tpt-save-corpus-v2":
+        repositories = provenance.get("source_repositories")
+        rows = provenance.get("repositories")
+        if not isinstance(repositories, list) or not repositories:
+            return False
+        if not isinstance(rows, list) or not rows:
+            return False
+        # v2 must retain at least one real Git object; website rows are an
+        # explicitly separate source kind and never satisfy this requirement.
+        git_rows = [
+            row for row in rows
+            if isinstance(row, dict) and row.get("source_kind") == "github_git"
+        ]
+        return bool(git_rows) and all(
+            row.get("repository") in {OFFICIAL_REPOSITORY, OFFICIAL_TPT_BENCH_REPOSITORY}
+            and isinstance(row.get("revision"), str)
+            and REVISION_RE.fullmatch(str(row.get("revision"))) is not None
+            and row.get("revision_exists") is True
+            and row.get("revision_reachable_from_official_remote") is True
+            for row in git_rows
+        )
+    return (
+        provenance.get("repository") == OFFICIAL_REPOSITORY
+        and isinstance(provenance.get("revision"), str)
+        and REVISION_RE.fullmatch(str(provenance.get("revision", ""))) is not None
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--corpus", type=Path, required=True)
@@ -126,19 +170,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         write(args.output, document)
         return 1
     if not isinstance(provenance, dict) or any((
-        provenance.get("schema") != "omnipack-release-evidence",
-        provenance.get("schema_version") != 1,
-        provenance.get("test") != "official_tpt_provenance",
         provenance.get("run_id") != args.run_id,
         provenance.get("commit") != args.commit,
-        provenance.get("status") != "PASS",
-        provenance.get("passed") is not True,
-        provenance.get("revision_exists") is not True,
-        provenance.get("revision_reachable_from_official_remote") is not True,
-        provenance.get("files_failed") != 0,
-        provenance.get("repository") != OFFICIAL_REPOSITORY,
-        not isinstance(provenance.get("revision"), str),
-        not REVISION_RE.fullmatch(str(provenance.get("revision", ""))),
+        not provenance_identity_is_valid(provenance),
     )):
         document = result(args.run_id, args.commit, "NOT_TESTED", "official provenance gate is not PASS")
         write(args.output, document)
@@ -245,6 +279,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         failed += 0 if passed else 1
         records.append({
             "path": path, "fixture_sha256": fixture_sha,
+            "source_kind": row.get("source_kind", "github_git"),
+            "source_repository": row.get("source_repository", provenance.get("repository")),
+            "source_revision": row.get("source_revision", provenance.get("revision")),
+            "source_path": row.get("source_path"),
+            "source_locator": row.get("source_locator"),
+            "content_locator": row.get("content_locator"),
+            "source_date": row.get("source_date"),
+            "save_id": row.get("save_id"),
+            "source_metadata": row.get("metadata"),
             "probe_sha256": probe_sha256,
             "provenance_hash_binding_passed": hash_binding_passed,
             **phases,
@@ -274,6 +317,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         reason,
         source_repository=provenance.get("repository"),
         source_revision=provenance.get("revision"),
+        provenance_schema=provenance.get("provenance_schema", "omnipack-official-tpt-save-corpus-v1"),
+        source_repositories=provenance.get("source_repositories", [provenance.get("repository")]),
+        source_kinds=sorted({
+            str(row.get("source_kind", "github_git"))
+            for row in records if isinstance(row, dict)
+        }),
         probe_sha256=probe_sha256,
         files_total=len(records),
         files_passed=len(records) - failed,

@@ -247,6 +247,226 @@ class StableReleaseGateTests(unittest.TestCase):
                     self.assertFalse(result["passed"])
                     self.assertEqual(result["status"], "FAIL")
 
+    def make_v2_provenance_case(
+        self, root: Path
+    ) -> tuple[Path, dict[str, object], str, bytes, str, bytes, dict[str, object]]:
+        corpus = root / "corpus"
+        git_path = "git/dust.cps"
+        web_path = "web/maintainer.cps"
+        git_bytes = b"official-benchmark-git-object"
+        web_bytes = b"official-hosted-maintainer-save"
+        (corpus / "git").mkdir(parents=True)
+        (corpus / "web").mkdir(parents=True)
+        (corpus / git_path).write_bytes(git_bytes)
+        (corpus / web_path).write_bytes(web_bytes)
+        revision = "a" * 40
+        save_id = 1249335
+        metadata = {
+            "id": save_id,
+            "username": "jacob1",
+            "elevation": "Mod",
+            "published": True,
+            "date": 1738891791,
+            "date_created": 1372986719,
+            "is_banned": False,
+        }
+        manifest = {
+            "schema": official_provenance.MANIFEST_SCHEMA_V2,
+            "corpus_id": "v2-test-corpus",
+            "retrieved_at": "2026-08-16",
+            "redistribution": {
+                "status": "local_only_not_for_redistribution",
+                "basis": "official sources with no broad redistribution licence",
+            },
+            "files": [
+                {
+                    "path": git_path,
+                    "source_kind": "github_git",
+                    "source_repository": official_provenance.OFFICIAL_TPT_BENCH_REPOSITORY,
+                    "source_revision": revision,
+                    "source_path": "suites/screenfuls/dust.cps",
+                    "source_locator": (
+                        "https://raw.githubusercontent.com/The-Powder-Toy/tpt-bench/"
+                        f"{revision}/suites/screenfuls/dust.cps"
+                    ),
+                    "sha256": hashlib.sha256(git_bytes).hexdigest(),
+                },
+                {
+                    "path": web_path,
+                    "source_kind": "official_web_save",
+                    "source_repository": official_provenance.OFFICIAL_WEB_API_ORIGIN,
+                    "source_date": metadata["date"],
+                    "save_id": save_id,
+                    "source_locator": f"{official_provenance.OFFICIAL_WEB_API_ORIGIN}/Browse/View.json?ID={save_id}",
+                    "content_locator": f"{official_provenance.OFFICIAL_WEB_STATIC_ORIGIN}/{save_id}.cps",
+                    "metadata": metadata,
+                    "sha256": hashlib.sha256(web_bytes).hexdigest(),
+                },
+            ],
+        }
+        return corpus, manifest, git_path, git_bytes, web_path, web_bytes, metadata
+
+    def test_official_v2_provenance_separates_git_and_maintainer_web_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            corpus, manifest, _, git_bytes, _, web_bytes, metadata = self.make_v2_provenance_case(root)
+            git_upstream = FakeUpstream(blobs={"suites/screenfuls/dust.cps": git_bytes})
+
+            def fetch(url: str, *, accept: str) -> bytes:
+                del accept
+                if "View.json" in url:
+                    server = {
+                        "ID": metadata["id"], "Username": metadata["username"],
+                        "Elevation": metadata["elevation"], "Published": metadata["published"],
+                        "Date": metadata["date"], "DateCreated": metadata["date_created"],
+                        "IsBanned": metadata["is_banned"],
+                    }
+                    return json.dumps(server).encode("utf-8")
+                return web_bytes
+
+            with mock.patch.object(official_provenance, "GitUpstream", return_value=git_upstream), \
+                 mock.patch.object(official_provenance, "fetch_exact_https", side_effect=fetch):
+                result = official_provenance.validate_provenance_v2(
+                    corpus, manifest, root, "git", "official",
+                    run_id="20260816T140000Z-a1b2c3d4", commit="b" * 40,
+                )
+            self.assertTrue(result["passed"])
+            self.assertEqual(result["files_verified"], 2)
+            self.assertEqual(
+                {row["source_kind"] for row in result["files"]},
+                {"github_git", "official_web_save"},
+            )
+            self.assertEqual(
+                release_validation_audit.validate_raw_semantics(
+                    "OfficialTPTCorpusProvenance", result, root=root,
+                    candidate_sha256=None,
+                ),
+                [],
+            )
+
+    def test_official_v2_provenance_attack_matrix_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            corpus, base, _, git_bytes, _, web_bytes, metadata = self.make_v2_provenance_case(root)
+
+            def fetch(url: str, *, accept: str) -> bytes:
+                del accept
+                if "View.json" in url:
+                    return json.dumps({
+                        "ID": metadata["id"], "Username": metadata["username"],
+                        "Elevation": metadata["elevation"], "Published": metadata["published"],
+                        "Date": metadata["date"], "DateCreated": metadata["date_created"],
+                        "IsBanned": metadata["is_banned"],
+                    }).encode("utf-8")
+                return web_bytes
+
+            attacks: list[tuple[str, dict[str, object], FakeUpstream, object]] = []
+            fake_revision = json.loads(json.dumps(base))
+            fake_revision["files"][0]["source_revision"] = "0" * 40
+            fake_revision["files"][0]["source_locator"] = (
+                "https://raw.githubusercontent.com/The-Powder-Toy/tpt-bench/"
+                + "0" * 40 + "/suites/screenfuls/dust.cps"
+            )
+            attacks.append(("fake Git revision", fake_revision, FakeUpstream(exists=False), fetch))
+
+            wrong_repository = json.loads(json.dumps(base))
+            wrong_repository["files"][0]["source_repository"] = "https://example.invalid/fake"
+            attacks.append(("wrong Git repository", wrong_repository, FakeUpstream(), fetch))
+
+            wrong_web_locator = json.loads(json.dumps(base))
+            wrong_web_locator["files"][1]["content_locator"] = "https://example.invalid/save.cps"
+            attacks.append(("wrong web locator", wrong_web_locator, FakeUpstream(blobs={"suites/screenfuls/dust.cps": git_bytes}), fetch))
+
+            wrong_web_author = json.loads(json.dumps(base))
+            wrong_web_author["files"][1]["metadata"]["username"] = "random-user"
+            attacks.append(("non-maintainer author", wrong_web_author, FakeUpstream(blobs={"suites/screenfuls/dust.cps": git_bytes}), fetch))
+
+            def modified_content(url: str, *, accept: str) -> bytes:
+                if "View.json" in url:
+                    return fetch(url, accept=accept)
+                return b"modified-web-save"
+
+            attacks.append(("modified web bytes", json.loads(json.dumps(base)), FakeUpstream(blobs={"suites/screenfuls/dust.cps": git_bytes}), modified_content))
+
+            website_only = json.loads(json.dumps(base))
+            website_only["files"] = website_only["files"][1:]
+            (corpus / "git" / "dust.cps").unlink()
+            attacks.append(("website only", website_only, FakeUpstream(), fetch))
+
+            for label, manifest, upstream, web_fetch in attacks:
+                with self.subTest(label=label):
+                    if label != "website only" and not (corpus / "git" / "dust.cps").exists():
+                        (corpus / "git" / "dust.cps").write_bytes(git_bytes)
+                    if label == "website only" and (corpus / "git" / "dust.cps").exists():
+                        (corpus / "git" / "dust.cps").unlink()
+                    with mock.patch.object(official_provenance, "GitUpstream", return_value=upstream), \
+                         mock.patch.object(official_provenance, "fetch_exact_https", side_effect=web_fetch):
+                        result = official_provenance.validate_provenance_v2(
+                            corpus, manifest, root, "git", "official",
+                            run_id="20260816T140000Z-a1b2c3d4", commit="b" * 40,
+                        )
+                    self.assertFalse(result["passed"], label)
+                    self.assertEqual(result["status"], "FAIL", label)
+
+    def test_official_v2_semantic_audit_rejects_forged_web_metadata(self) -> None:
+        raw = {
+            "schema": "omnipack-release-evidence",
+            "schema_version": 1,
+            "test": "official_tpt_provenance",
+            "status": "PASS",
+            "passed": True,
+            "provenance_schema": official_provenance.MANIFEST_SCHEMA_V2,
+            "source_repositories": [
+                official_provenance.OFFICIAL_TPT_BENCH_REPOSITORY,
+                official_provenance.OFFICIAL_WEB_API_ORIGIN,
+            ],
+            "repositories": [{
+                "source_kind": "github_git",
+                "repository": official_provenance.OFFICIAL_TPT_BENCH_REPOSITORY,
+                "revision": "a" * 40,
+                "revision_exists": True,
+                "revision_reachable_from_official_remote": True,
+            }, {
+                "source_kind": "official_web_save",
+                "repository": official_provenance.OFFICIAL_WEB_API_ORIGIN,
+                "save_id": 1249335,
+                "source_date": 1738891791,
+                "metadata_verified": True,
+                "content_hash_verified": True,
+            }],
+            "revision_exists": True,
+            "revision_reachable_from_official_remote": True,
+            "files_total": 2,
+            "files_verified": 2,
+            "files_failed": 0,
+            "files": [{
+                "path": "git/dust.cps", "source_kind": "github_git",
+                "source_repository": official_provenance.OFFICIAL_TPT_BENCH_REPOSITORY,
+                "source_revision": "a" * 40,
+                "source_path": "suites/screenfuls/dust.cps",
+                "source_locator": "https://raw.githubusercontent.com/The-Powder-Toy/tpt-bench/" + "a" * 40 + "/suites/screenfuls/dust.cps",
+                "match": True, "upstream_sha256": "A" * 64,
+                "manifest_sha256": "A" * 64, "fixture_sha256": "A" * 64,
+            }, {
+                "path": "web/maintainer.cps", "source_kind": "official_web_save",
+                "source_repository": official_provenance.OFFICIAL_WEB_API_ORIGIN,
+                "source_date": 1738891791, "save_id": 1249335,
+                "source_locator": "https://powdertoy.co.uk/Browse/View.json?ID=1249335",
+                "content_locator": "https://static.powdertoy.co.uk/1249335.cps",
+                "metadata": {
+                    "id": 1249335, "username": "not-a-maintainer", "elevation": "Mod",
+                    "published": True, "date": 1738891791,
+                    "date_created": 1372986719, "is_banned": False,
+                },
+                "match": True, "upstream_sha256": "B" * 64,
+                "manifest_sha256": "B" * 64, "fixture_sha256": "B" * 64,
+            }],
+        }
+        errors = release_validation_audit.validate_raw_semantics(
+            "OfficialTPTCorpusProvenance", raw, root=Path.cwd(), candidate_sha256=None,
+        )
+        self.assertTrue(any("maintainer" in error for error in errors))
+
     def test_release_script_is_fail_closed_and_evidence_bound(self) -> None:
         script = (ROOT / "tools/release_1_1_0.ps1").read_text(encoding="utf-8")
         self.assertIn("Start-Process", script)

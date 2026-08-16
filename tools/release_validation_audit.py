@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import hashlib
 import json
 import math
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import zipfile
 
@@ -39,6 +39,16 @@ CPU_FALLBACK_TRUE_FIELDS = (
     "mass_residual_within_tolerance", "energy_residual_within_tolerance",
 )
 OFFICIAL_REPOSITORY = "https://github.com/The-Powder-Toy/The-Powder-Toy"
+OFFICIAL_TPT_BENCH_REPOSITORY = "https://github.com/The-Powder-Toy/tpt-bench"
+OFFICIAL_WEB_API_ORIGIN = "https://powdertoy.co.uk"
+OFFICIAL_WEB_STATIC_ORIGIN = "https://static.powdertoy.co.uk"
+OFFICIAL_MAINTAINERS = {"jacob1", "Simon"}
+OFFICIAL_WEB_SAVE_ALLOWLIST = {
+    1249335: {"username": "jacob1", "date": 1738891791, "date_created": 1372986719},
+    284: {"username": "Simon", "date": 1276381701, "date_created": 1276381701},
+    1101197: {"username": "jacob1", "date": 1427430299, "date_created": 1361045969},
+}
+OFFICIAL_PROVENANCE_V2 = "omnipack-official-tpt-save-corpus-v2"
 SHA256_RE = re.compile(r"^[0-9A-F]{64}$")
 REVISION_RE = re.compile(r"^[0-9a-fA-F]{40}$")
 OFFICIAL_COVERAGE_CONTRACT = "official-tpt-save-coverage-v1"
@@ -79,6 +89,127 @@ def official_coverage_categories(metrics: object) -> set[str] | None:
     if metrics["input_bytes"] >= 10000:
         categories.add("larger_save")
     return categories
+
+
+def official_provenance_identity_errors(raw: dict[str, object]) -> list[str]:
+    """Validate v1 Git-only or v2 explicitly separated official identities."""
+    errors: list[str] = []
+    if raw.get("provenance_schema") == OFFICIAL_PROVENANCE_V2:
+        repositories = raw.get("source_repositories")
+        records = raw.get("repositories")
+        if not isinstance(repositories, list) or not repositories:
+            errors.append("v2 official provenance source repository list is missing")
+        elif any(item not in {OFFICIAL_REPOSITORY, OFFICIAL_TPT_BENCH_REPOSITORY, OFFICIAL_WEB_API_ORIGIN} for item in repositories):
+            errors.append("v2 official provenance source repository list contains an untrusted origin")
+        if not isinstance(records, list) or not records:
+            errors.append("v2 official provenance repository records are missing")
+        git_records = [
+            record for record in records or []
+            if isinstance(record, dict) and record.get("source_kind") == "github_git"
+        ]
+        if not git_records:
+            errors.append("v2 official provenance has no Git-object source")
+        for record in git_records:
+            if (
+                record.get("repository") not in {OFFICIAL_REPOSITORY, OFFICIAL_TPT_BENCH_REPOSITORY}
+                or not isinstance(record.get("revision"), str)
+                or REVISION_RE.fullmatch(str(record.get("revision"))) is None
+                or record.get("revision_exists") is not True
+                or record.get("revision_reachable_from_official_remote") is not True
+            ):
+                errors.append("v2 official provenance contains an invalid Git repository record")
+        web_records = [
+            record for record in records or []
+            if isinstance(record, dict) and record.get("source_kind") == "official_web_save"
+        ]
+        for record in web_records:
+            save_id = record.get("save_id")
+            allowlisted = OFFICIAL_WEB_SAVE_ALLOWLIST.get(save_id) if isinstance(save_id, int) else None
+            if (
+                record.get("repository") != OFFICIAL_WEB_API_ORIGIN
+                or allowlisted is None
+                or record.get("source_date") != allowlisted["date"]
+                or record.get("metadata_verified") is not True
+                or record.get("content_hash_verified") is not True
+            ):
+                errors.append("v2 official provenance contains an invalid web-source record")
+        if raw.get("revision_exists") is not True or raw.get("revision_reachable_from_official_remote") is not True:
+            errors.append("v2 official provenance aggregate Git reachability is not PASS")
+        return errors
+    if raw.get("repository") != OFFICIAL_REPOSITORY:
+        errors.append("official provenance repository identity is invalid")
+    if not isinstance(raw.get("revision"), str) or not REVISION_RE.fullmatch(str(raw.get("revision", ""))):
+        errors.append("official provenance revision identity is invalid")
+    if raw.get("revision_exists") is not True or raw.get("revision_reachable_from_official_remote") is not True:
+        errors.append("official provenance revision is absent or not reachable from the official remote")
+    return errors
+
+
+def official_provenance_v2_row_errors(row: object) -> list[str]:
+    """Re-check v2 locator and maintainer metadata semantics from raw evidence."""
+    if not isinstance(row, dict):
+        return ["v2 official provenance row is not an object"]
+    errors: list[str] = []
+    kind = row.get("source_kind")
+    path = row.get("path")
+    if not isinstance(path, str) or "\\" in path or not path.lower().endswith((".cps", ".stm")):
+        errors.append("v2 official provenance fixture path is invalid")
+    elif PurePosixPath(path).is_absolute() or ".." in PurePosixPath(path).parts:
+        errors.append("v2 official provenance fixture path escapes corpus")
+    if kind == "github_git":
+        repository = row.get("source_repository")
+        revision = row.get("source_revision")
+        source_path = row.get("source_path")
+        locator = row.get("source_locator")
+        if repository not in {OFFICIAL_REPOSITORY, OFFICIAL_TPT_BENCH_REPOSITORY}:
+            errors.append("v2 Git provenance repository is not allowlisted")
+        if not isinstance(revision, str) or REVISION_RE.fullmatch(revision) is None:
+            errors.append("v2 Git provenance revision is invalid")
+        if not isinstance(source_path, str) or "\\" in source_path or ".." in PurePosixPath(source_path).parts:
+            errors.append("v2 Git provenance source path is invalid")
+        expected = {
+            f"{repository}/blob/{revision}/{source_path}",
+            f"https://raw.githubusercontent.com/{str(repository).removeprefix('https://github.com/')}/{revision}/{source_path}",
+        }
+        if locator not in expected:
+            errors.append("v2 Git provenance locator does not bind the source path")
+    elif kind == "official_web_save":
+        save_id = row.get("save_id")
+        source_date = row.get("source_date")
+        metadata = row.get("metadata")
+        if row.get("source_repository") != OFFICIAL_WEB_API_ORIGIN:
+            errors.append("v2 web provenance API origin is invalid")
+        if not isinstance(save_id, int) or isinstance(save_id, bool) or save_id <= 0:
+            errors.append("v2 web provenance save ID is invalid")
+        if not isinstance(source_date, int) or isinstance(source_date, bool):
+            errors.append("v2 web provenance date is invalid")
+        allowlisted = OFFICIAL_WEB_SAVE_ALLOWLIST.get(save_id)
+        if allowlisted is None:
+            errors.append("v2 web provenance save ID is not allowlisted")
+        elif source_date != allowlisted["date"]:
+            errors.append("v2 web provenance date is not the pinned maintainer-save date")
+        if row.get("source_locator") != f"{OFFICIAL_WEB_API_ORIGIN}/Browse/View.json?ID={save_id}":
+            errors.append("v2 web provenance API locator is not exact")
+        suffix = PurePosixPath(path).suffix.lower() if isinstance(path, str) else ".cps"
+        if row.get("content_locator") != f"{OFFICIAL_WEB_STATIC_ORIGIN}/{save_id}{suffix}":
+            errors.append("v2 web provenance content locator is not exact")
+        if not isinstance(metadata, dict):
+            errors.append("v2 web provenance metadata is missing")
+        else:
+            if metadata.get("id") != save_id or metadata.get("date") != source_date:
+                errors.append("v2 web provenance metadata ID/date mismatch")
+            if metadata.get("username") not in OFFICIAL_MAINTAINERS:
+                errors.append("v2 web provenance author is not an allowlisted maintainer")
+            if allowlisted is not None and (
+                metadata.get("username") != allowlisted["username"]
+                or metadata.get("date_created") != allowlisted["date_created"]
+            ):
+                errors.append("v2 web provenance metadata does not match the pinned maintainer save")
+            if metadata.get("elevation") != "Mod" or metadata.get("published") is not True or metadata.get("is_banned") is not False:
+                errors.append("v2 web provenance metadata does not prove a published maintainer save")
+    else:
+        errors.append("v2 official provenance source kind is invalid")
+    return errors
 EXPECTED_TEST_NAMES = {
     "SourceTreeClean": "source_tree_clean",
     "SourceSnapshotImmutability": "source_snapshot_immutability",
@@ -882,32 +1013,41 @@ def validate_raw_semantics(
         if any(raw.get(field) is not True for field in ready_fields):
             errors.append("one or more release build-input checkpoints are not verified")
     elif gate_name == "OfficialTPTCorpusProvenance":
-        if raw.get("revision_exists") is not True or raw.get("revision_reachable_from_official_remote") is not True:
-            errors.append("official provenance revision is absent or not reachable from the official remote")
+        errors.extend(official_provenance_identity_errors(raw))
         rows = raw.get("files")
         total = raw.get("files_total")
-        if raw.get("repository") != OFFICIAL_REPOSITORY or not isinstance(raw.get("revision"), str) or not REVISION_RE.fullmatch(str(raw.get("revision", ""))):
-            errors.append("official provenance repository or revision identity is invalid")
         if not isinstance(rows, list) or not isinstance(total, int) or total <= 0 or len(rows) != total or raw.get("files_verified") != total or raw.get("files_failed") != 0:
             errors.append("official provenance did not verify every file")
-        elif any(
-            not isinstance(row, dict)
-            or not isinstance(row.get("path"), str)
-            or row.get("match") is not True
-            or not isinstance(row.get("upstream_sha256"), str)
-            or SHA256_RE.fullmatch(str(row.get("upstream_sha256", ""))) is None
-            or row.get("upstream_sha256") != row.get("manifest_sha256")
-            or row.get("upstream_sha256") != row.get("fixture_sha256")
-            for row in rows
-        ):
-            errors.append("official provenance contains an unverified or hash-inconsistent file row")
-        elif len({row.get("path") for row in rows}) != total:
-            errors.append("official provenance contains duplicate file paths")
+        else:
+            if any(
+                not isinstance(row, dict)
+                or not isinstance(row.get("path"), str)
+                or row.get("match") is not True
+                or not isinstance(row.get("upstream_sha256"), str)
+                or SHA256_RE.fullmatch(str(row.get("upstream_sha256", ""))) is None
+                or row.get("upstream_sha256") != row.get("manifest_sha256")
+                or row.get("upstream_sha256") != row.get("fixture_sha256")
+                or (
+                    raw.get("provenance_schema") == OFFICIAL_PROVENANCE_V2
+                    and row.get("source_kind") not in {"github_git", "official_web_save"}
+                )
+                for row in rows
+            ):
+                errors.append("official provenance contains an unverified or hash-inconsistent file row")
+            if raw.get("provenance_schema") == OFFICIAL_PROVENANCE_V2:
+                for row in rows:
+                    errors.extend(official_provenance_v2_row_errors(row))
+            if len({row.get("path") for row in rows if isinstance(row, dict)}) != total:
+                errors.append("official provenance contains duplicate file paths")
     elif gate_name == "OfficialTPTSaveCompatibility":
         total = raw.get("files_total")
         rows = raw.get("files")
         probe_sha256 = raw.get("probe_sha256")
-        if raw.get("source_repository") != OFFICIAL_REPOSITORY or not isinstance(raw.get("source_revision"), str) or not REVISION_RE.fullmatch(str(raw.get("source_revision", ""))):
+        if raw.get("provenance_schema") == OFFICIAL_PROVENANCE_V2:
+            repositories = raw.get("source_repositories")
+            if not isinstance(repositories, list) or not repositories or not all(isinstance(item, str) for item in repositories):
+                errors.append("v2 official compatibility source identity is invalid")
+        elif raw.get("source_repository") != OFFICIAL_REPOSITORY or not isinstance(raw.get("source_revision"), str) or not REVISION_RE.fullmatch(str(raw.get("source_revision", ""))):
             errors.append("official compatibility source identity is invalid")
         if not isinstance(probe_sha256, str) or SHA256_RE.fullmatch(probe_sha256) is None:
             errors.append("official compatibility probe identity is invalid")
@@ -934,6 +1074,10 @@ def validate_raw_semantics(
                     row_contract_invalid = True
                     categories = set()
                 row_categories.append(categories)
+                if raw.get("provenance_schema") == OFFICIAL_PROVENANCE_V2 and isinstance(row, dict):
+                    compatibility_identity = dict(row)
+                    compatibility_identity["metadata"] = row.get("source_metadata")
+                    errors.extend(official_provenance_v2_row_errors(compatibility_identity))
             recomputed_observed = sorted(set().union(*row_categories)) if row_categories else []
             recomputed_missing = sorted(set(OFFICIAL_COVERAGE_REQUIRED).difference(recomputed_observed))
             if any(
@@ -1442,7 +1586,14 @@ def validate_official_corpus_binding(
     compatibility_raw = gate_raw_document(validation, root, "OfficialTPTSaveCompatibility")
     if provenance_raw is None or compatibility_raw is None:
         return ["official provenance or compatibility raw evidence is unavailable"]
-    if (
+    if provenance_raw.get("provenance_schema") == OFFICIAL_PROVENANCE_V2 or compatibility_raw.get("provenance_schema") == OFFICIAL_PROVENANCE_V2:
+        if (
+            provenance_raw.get("provenance_schema") != OFFICIAL_PROVENANCE_V2
+            or compatibility_raw.get("provenance_schema") != OFFICIAL_PROVENANCE_V2
+            or provenance_raw.get("source_repositories") != compatibility_raw.get("source_repositories")
+        ):
+            return ["official compatibility v2 source repositories disagree with provenance"]
+    elif (
         provenance_raw.get("repository") != compatibility_raw.get("source_repository")
         or provenance_raw.get("revision") != compatibility_raw.get("source_revision")
     ):
@@ -1452,12 +1603,18 @@ def validate_official_corpus_binding(
     if not isinstance(provenance_rows, list) or not isinstance(compatibility_rows, list):
         return ["official corpus binding file inventories are absent"]
     proven = {
-        row.get("path"): row.get("fixture_sha256")
+        (
+            row.get("path"), row.get("source_kind"), row.get("source_repository"),
+            row.get("source_revision"), row.get("source_date"), row.get("save_id")
+        ): row.get("fixture_sha256")
         for row in provenance_rows
         if isinstance(row, dict)
     }
     exercised = {
-        row.get("path"): row.get("fixture_sha256")
+        (
+            row.get("path"), row.get("source_kind"), row.get("source_repository"),
+            row.get("source_revision"), row.get("source_date"), row.get("save_id")
+        ): row.get("fixture_sha256")
         for row in compatibility_rows
         if isinstance(row, dict)
     }
