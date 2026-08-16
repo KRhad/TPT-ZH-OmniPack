@@ -1857,6 +1857,88 @@ class StableReleaseGateTests(unittest.TestCase):
             self.assertFalse(result["passed"])
             self.assertFalse(result["files"][0]["negative_codec_roundtrip"])
 
+    def test_official_compatibility_fails_closed_on_incomplete_coverage(self) -> None:
+        """A file-complete run must still fail when the coverage contract is incomplete."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            corpus = root / "corpus"
+            corpus.mkdir()
+            fixture = corpus / "official.cps"
+            fixture.write_bytes(b"official-upstream-bytes")
+            digest = hashlib.sha256(fixture.read_bytes()).hexdigest().upper()
+            provenance_path = root / "provenance.json"
+            provenance_path.write_text(json.dumps({
+                "schema": "omnipack-release-evidence", "schema_version": 1,
+                "test": "official_tpt_provenance",
+                "run_id": "20260814T041500Z-8f31c1c7", "commit": "a" * 40,
+                "status": "PASS", "passed": True,
+                "repository": official_provenance.OFFICIAL_REPOSITORY,
+                "revision": "b" * 40, "revision_exists": True,
+                "revision_reachable_from_official_remote": True,
+                "files_total": 1, "files_verified": 1, "files_failed": 0,
+                "files": [{
+                    "path": "official.cps", "match": True,
+                    "upstream_sha256": digest,
+                    "manifest_sha256": digest,
+                    "fixture_sha256": digest,
+                }],
+            }), encoding="utf-8")
+            probe = root / "probe.exe"
+            probe.write_bytes(b"synthetic probe identity")
+            output = root / "compatibility.json"
+            phase_markers = "\n".join((
+                "official_save_load_pass=true",
+                "official_save_missing_elements_zero=true",
+                "official_save_initial_load_state_validate_pass=true",
+                "official_save_simulate_pass=true",
+                "official_save_save_pass=true",
+                "official_save_reload_pass=true",
+                "official_save_state_validate_pass=true",
+                "official_save_negative_block_map_rejected=true",
+                "official_save_negative_legacy_field_rejected=true",
+                "official_save_negative_sign_rejected=true",
+                "official_save_negative_validity_mask_rejected=true",
+                "official_save_negative_deterministic_frame_rejected=true",
+                "official_save_negative_simulation_option_rejected=true",
+                "official_save_negative_codec_roundtrip_rejected=true",
+                "input_particles=1",
+                "initial_loaded_particles=1",
+                "output_particles=1",
+                "coverage_input_bytes=10000",
+                "coverage_particles=1",
+                "coverage_powders=1",
+                "coverage_solids=1",
+                "coverage_liquids=0",
+                "coverage_gases=1",
+                "coverage_temperature_signals=1",
+                "coverage_pressure_cells=1",
+                "coverage_velocity_signals=1",
+                "coverage_wall_cells=1",
+                "coverage_fan_cells=1",
+                "coverage_electronics_particles=1",
+                "coverage_life_particles=1",
+                "coverage_signs=1",
+                "coverage_decorated_particles=1",
+                "coverage_legacy_state=1",
+                "coverage_larger_save=1",
+            ))
+            completed = subprocess.CompletedProcess(
+                [str(probe), str(fixture)], 0, phase_markers, ""
+            )
+            with mock.patch.object(official_compatibility.subprocess, "run", return_value=completed):
+                exit_code = official_compatibility.main([
+                    "--corpus", str(corpus), "--provenance-evidence", str(provenance_path),
+                    "--probe", str(probe), "--run-id", "20260814T041500Z-8f31c1c7",
+                    "--commit", "a" * 40, "--output", str(output),
+                ])
+            self.assertEqual(exit_code, 1)
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["status"], "FAIL")
+            self.assertFalse(result["passed"])
+            self.assertEqual(result["files_failed"], 0)
+            self.assertFalse(result["coverage_passed"])
+            self.assertIn("liquids", result["coverage_missing"])
+
     def test_soak_summary_cannot_hide_nonfinite_or_stall_counts(self) -> None:
         raw = {
             "wall_clock_seconds": 7200.0,

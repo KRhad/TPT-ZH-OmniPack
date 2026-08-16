@@ -286,7 +286,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         coverage_passed=coverage_passed,
     )
     write(args.output, document)
-    return 0 if failed == 0 else 1
+    # The aggregate coverage contract is part of the gate result.  A corpus
+    # whose individual files pass but which misses a required category is a
+    # FAIL and must never exit zero merely because files_failed == 0.
+    return 0 if status == "PASS" else 1
 
 
 if __name__ == "__main__":
