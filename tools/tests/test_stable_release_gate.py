@@ -489,6 +489,39 @@ class StableReleaseGateTests(unittest.TestCase):
         self.assertIn('gate_name="WindowsCleanMachine"', script)
         self.assertIn('symbols_member_sha256=$currentSymbolsMemberSha256', script)
 
+    def test_soak_raw_evidence_has_gate_identity_and_timestamps(self) -> None:
+        script = (ROOT / "tools/release_1_1_0.ps1").read_text(encoding="utf-8")
+        soak = script.split("function Invoke-SoakGate", 1)[1].split(
+            "function Invoke-ValidationAuditor", 1
+        )[0]
+        self.assertIn(
+            '-NotePropertyName gate_name -NotePropertyValue "Soak2Hours"',
+            soak,
+        )
+        self.assertIn(
+            "-NotePropertyName gate_started_at -NotePropertyValue $startedAt",
+            soak,
+        )
+        self.assertIn(
+            "-NotePropertyName gate_finished_at -NotePropertyValue $finishedAt",
+            soak,
+        )
+        self.assertIn('gate_name="Soak2Hours"', soak)
+        self.assertIn("gate_started_at=$startedAt", soak)
+        self.assertIn("gate_finished_at=$finishedAt", soak)
+        self.assertIn("analyzer_candidate_sha256", soak)
+        self.assertIn("observed_candidate_sha256", soak)
+        self.assertIn("release_binding_passed", soak)
+        self.assertIn("artifact_run_id", soak)
+        self.assertIn("result_json", soak)
+        self.assertIn("resultJsonSha256", soak)
+        self.assertIn("resultJson.run_id", soak)
+        self.assertIn('$soakDirectory) {', soak)
+        self.assertIn('throw "fresh soak output directory already exists"', soak)
+        self.assertIn("Test-ExactJsonInteger $candidateExecutables.Count 1", soak)
+        self.assertNotIn("$r.candidate_extracted_to_fresh_directory", soak)
+        self.assertEqual(soak.count('$finishedAt = [DateTime]::UtcNow.ToString("o")'), 2)
+
         negative = (ROOT / "tools/release_negative_gate_suite.py").read_text(
             encoding="utf-8"
         )
@@ -500,6 +533,31 @@ class StableReleaseGateTests(unittest.TestCase):
             'TPT-ZH-OmniPack-1.1.0-staging-{RUN_ID}-Windows-x64-SDL3.zip',
             negative_main,
         )
+
+    def test_soak_exact_integer_helper_rejects_json_floats(self) -> None:
+        powershell = shutil.which("powershell.exe") or shutil.which("pwsh")
+        if not powershell:
+            self.skipTest("PowerShell is unavailable")
+        script = (ROOT / "tools/release_1_1_0.ps1").read_text(encoding="utf-8")
+        helper = "function Test-ExactJsonInteger" + script.split(
+            "function Test-ExactJsonInteger", 1
+        )[1].split("function ConvertTo-FiniteJsonNumber", 1)[0]
+        probe = helper + r'''
+$integer = ConvertFrom-Json '1'
+$float = ConvertFrom-Json '1.0'
+$scientific = ConvertFrom-Json '1e0'
+if ((Test-ExactJsonInteger $integer 1) -and
+    (Test-ExactJsonInteger ([int32]1) 1) -and
+    -not (Test-ExactJsonInteger $float 1) -and
+    -not (Test-ExactJsonInteger $scientific 1) -and
+    -not (Test-ExactJsonInteger $true 1) -and
+    -not (Test-ExactJsonInteger '1' 1)) { exit 0 }
+exit 1
+'''
+        completed = subprocess.run(
+            [powershell, "-NoProfile", "-Command", probe], check=False
+        )
+        self.assertEqual(completed.returncode, 0)
 
     def test_gpu_validation_unsupported_cannot_exit_zero(self) -> None:
         source = (ROOT / "src/common/platform/SDLGPU.cpp").read_text(encoding="utf-8")
@@ -1760,6 +1818,33 @@ class StableReleaseGateTests(unittest.TestCase):
         )
         self.assertTrue(any("attack matrix" in error for error in errors))
 
+    def test_negative_suite_rejects_boolean_baseline_counts(self) -> None:
+        attacks = {
+            name: True for name in release_validation_audit.REQUIRED_NEGATIVE_ATTACKS
+        }
+        raw = {
+            "status": "PASS", "passed": True,
+            "candidate_sha256": "B" * 64,
+            "candidate_sha256_observed": "B" * 64,
+            "baselines_total": True, "baselines_passed": True,
+            "baselines_failed": [], "baselines": {"valid": True},
+            "attacks_total": len(attacks), "attacks_rejected": len(attacks),
+            "attacks_failed": [], "attacks": attacks,
+        }
+        errors = release_validation_audit.validate_raw_semantics(
+            "NegativeGateSuite", raw, root=Path.cwd(),
+            candidate_sha256="B" * 64,
+        )
+        self.assertTrue(any("positive baselines" in error for error in errors))
+
+    def test_official_compatibility_rejects_boolean_exit_code(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            hash_ok, semantic_ok = release_negative_suite.official_compatibility_case(
+                Path(temporary), compatibility_row_overrides={"exit_code": False},
+            )
+        self.assertTrue(hash_ok)
+        self.assertFalse(semantic_ok)
+
     def test_candidate_promotion_requires_all_identity_invariants(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -2400,6 +2485,103 @@ class StableReleaseGateTests(unittest.TestCase):
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertTrue(result["evidence_hash_integrity"])
             self.assertFalse(result["evidence_semantic_integrity"])
+
+    def test_evidence_schema_version_rejects_json_boolean_type_confusion(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            raw = root / "raw.json"
+            raw.write_text(json.dumps({
+                "schema": release_validation_audit.EVIDENCE_SCHEMA,
+                "schema_version": True,
+                "test": "build", "gate_name": "Build",
+                "run_id": "20260814T041500Z-8f31c1c7",
+                "commit": "a" * 40, "status": "PASS", "passed": True,
+                "gate_started_at": "2000-01-01T00:00:00+00:00",
+                "gate_finished_at": "2000-01-01T00:00:01+00:00",
+                "exit_code": 0,
+            }) + "\n", encoding="utf-8")
+            envelope = {
+                "schema": release_validation_audit.EVIDENCE_SCHEMA,
+                "schema_version": release_validation_audit.EVIDENCE_SCHEMA_VERSION,
+                "test": "build", "gate_name": "Build",
+                "run_id": "20260814T041500Z-8f31c1c7",
+                "commit": "a" * 40, "status": "PASS", "passed": True,
+                "exit_code": 0,
+                "gate_started_at": "2000-01-01T00:00:00+00:00",
+                "gate_finished_at": "2000-01-01T00:00:01+00:00",
+                "source_evidence": raw.name,
+                "source_evidence_sha256": hashlib.sha256(raw.read_bytes()).hexdigest().upper(),
+            }
+            errors = release_validation_audit.validate_gate_evidence(
+                "Build", {"Status": "PASS"}, envelope,
+                root=root, run_id=envelope["run_id"], commit=envelope["commit"],
+                candidate_sha256="B" * 64, symbols_sha256="C" * 64,
+                symbols_member_sha256="D" * 64,
+            )
+        self.assertTrue(any("schema_version" in error for error in errors))
+
+    def test_evidence_rejects_future_and_raw_envelope_timestamp_attacks(self) -> None:
+        future = release_validation_audit.parse_timestamp("2099-01-01T00:00:00Z")
+        future_errors = release_validation_audit.timestamp_interval_errors(
+            future, future, label="evidence gate",
+        )
+        self.assertTrue(any("future" in error for error in future_errors))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            raw = root / "raw.json"
+            raw.write_text(json.dumps({
+                "schema": release_validation_audit.EVIDENCE_SCHEMA,
+                "schema_version": release_validation_audit.EVIDENCE_SCHEMA_VERSION,
+                "test": "build", "gate_name": "Build",
+                "run_id": "20260814T041500Z-8f31c1c7", "commit": "a" * 40,
+                "status": "PASS", "passed": True, "exit_code": 0,
+                "gate_started_at": "1999-01-01T00:00:00Z",
+                "gate_finished_at": "2026-08-14T00:00:30Z",
+            }) + "\n", encoding="utf-8")
+            stdout = root / "stdout.txt"
+            stderr = root / "stderr.txt"
+            stdout.write_text("ok\n", encoding="utf-8")
+            stderr.write_text("", encoding="utf-8")
+            value = json.loads(raw.read_text(encoding="utf-8"))
+            value.update({
+                "stdout": stdout.name,
+                "stdout_sha256": hashlib.sha256(stdout.read_bytes()).hexdigest().upper(),
+                "stderr": stderr.name,
+                "stderr_sha256": hashlib.sha256(stderr.read_bytes()).hexdigest().upper(),
+            })
+            raw.write_text(json.dumps(value) + "\n", encoding="utf-8")
+            envelope = {
+                "schema": release_validation_audit.EVIDENCE_SCHEMA,
+                "schema_version": release_validation_audit.EVIDENCE_SCHEMA_VERSION,
+                "test": "build", "gate_name": "Build",
+                "run_id": value["run_id"], "commit": value["commit"],
+                "status": "PASS", "passed": True, "exit_code": 0,
+                "gate_started_at": "2026-08-14T00:00:00Z",
+                "gate_finished_at": "2026-08-14T00:01:00Z",
+                "source_evidence": raw.name,
+                "source_evidence_sha256": hashlib.sha256(raw.read_bytes()).hexdigest().upper(),
+            }
+            errors = release_validation_audit.validate_gate_evidence(
+                "Build", {"Status": "PASS"}, envelope, root=root,
+                run_id=value["run_id"], commit=value["commit"],
+                candidate_sha256="B" * 64, symbols_sha256="C" * 64,
+                symbols_member_sha256="D" * 64,
+            )
+        self.assertTrue(any("starts before its gate envelope" in error for error in errors))
+
+    def test_official_compatibility_rejects_boolean_file_counts(self) -> None:
+        raw = {
+            "source_repository": release_validation_audit.OFFICIAL_REPOSITORY,
+            "source_revision": "c" * 40, "probe_sha256": "D" * 64,
+            "files_total": True, "files_passed": True,
+            "files_failed": False, "files": [{}],
+        }
+        errors = release_validation_audit.validate_raw_semantics(
+            "OfficialTPTSaveCompatibility", raw,
+            root=ROOT, candidate_sha256="B" * 64,
+        )
+        self.assertTrue(any("did not pass every" in error for error in errors))
 
     def test_source_snapshot_semantic_change_is_rejected(self) -> None:
         raw = {

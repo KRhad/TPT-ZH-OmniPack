@@ -866,6 +866,12 @@ std::unique_ptr<GameSave> Simulation::Save(bool includePressure, Rect<int> partR
 	}
 	if (includePressure && IsOmniAtmosphereActive() && omniAtmosphere)
 	{
+		if (!omniAtmosphere->EnsureSerializableRegion(
+				static_cast<std::size_t>(blockP.X),
+				static_cast<std::size_t>(blockP.Y),
+				static_cast<std::size_t>(newSave->blockSize.X),
+				static_cast<std::size_t>(newSave->blockSize.Y)))
+			return nullptr;
 		const size_t cellCount = size_t(newSave->blockSize.X) * size_t(newSave->blockSize.Y);
 		newSave->hasOmniAtmosphereState = true;
 		newSave->omniAtmosphereStateVersion = GameSave::OmniAtmosphereStateVersion;

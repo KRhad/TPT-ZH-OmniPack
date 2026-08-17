@@ -63,20 +63,26 @@ def main() -> int:
     require(ci, "brew install binutils sdl3", "macOS SDL3 package")
     require(ci, 'mingw-w64-"$variant"-sdl3', "Windows SDL3 package")
 
+    # Freeze Git-canonical source bytes rather than the checkout's newline
+    # representation.  The previous hashes encoded a particular mixture of
+    # CRLF and LF lines, so touching and restoring an otherwise byte-identical
+    # source hunk could fail this contract on Windows while the Git blob was
+    # unchanged.
     frozen = [
-        ("src/simulation/Simulation.cpp", "DE946A34F1A75935DCB69ED260F5DE2F0AAA4F60526BD554EA79D01B02769ED0"),
-        ("src/simulation/Simulation.h", "AD3C80616FCF942D61D4A59A5B9AE2DA8FB340C0E16457D02E7A117108DF6DAF"),
-        ("src/simulation/Air.cpp", "E831BC481268415052B9258832AA73013A9E010EEB963A75B93FBF4F28248E7E"),
-        ("src/simulation/Air.h", "4A9162225067573956FAE5557F9B3FC27AC50F1A5B7E7D0183D9499D50364AF2"),
-        ("src/simulation/Particle.h", "F04F77B2711E99C3CDF82F56682A5DC7BD248157040D4CC142DBFE6449C0297F"),
-        ("src/client/GameSave.cpp", "3E4D21FAD939FB33EC0096827CABE947C640D21F01E0DA6529D15C093FD427F3"),
-        ("src/client/GameSave.h", "A6A1ED3AC88ED4C24AC7E2B5CA6EB1B5EC5373454DED743B276078CCC576AC5B"),
+        ("src/simulation/Simulation.cpp", "AC7ABE90F0A200F1DE2180427413D919D775C02B861A6B406A246402C5459D16"),
+        ("src/simulation/Simulation.h", "C7209AD8129C7C79E3CC3D91245E758570B3196E1C7E183FFD17734C2F8B40E1"),
+        ("src/simulation/Air.cpp", "58DE79839CF8B0264B6BE5ECB8193D1EAD32224806C9191466F4BBD1EE627084"),
+        ("src/simulation/Air.h", "31E86BDC91325A72487CAA486751BA6E66CE60CFDED3C0EAB4967AC9FF7E7953"),
+        ("src/simulation/Particle.h", "BA10AE0F045790CEECB92F3DF362527017F60B490957CAFD630EED0F60F73A03"),
+        ("src/client/GameSave.cpp", "7620DA07C77CC80AB5A99AED0F85DCC259C97CCD9232E1F0555C2892368572B3"),
+        ("src/client/GameSave.h", "A90A34B743094CE5BE74E3725C868C08F682236FB1ED33BF119406F44B404873"),
     ]
     for relative, expected_sha256 in frozen:
         path = root / relative
         if not path.is_file():
             raise AssertionError(f"missing frozen simulation source: {relative}")
-        actual_sha256 = hashlib.sha256(path.read_bytes()).hexdigest().upper()
+        canonical_bytes = path.read_bytes().replace(b"\r\n", b"\n")
+        actual_sha256 = hashlib.sha256(canonical_bytes).hexdigest().upper()
         if actual_sha256 != expected_sha256:
             raise AssertionError(
                 f"frozen simulation source changed: {relative} "

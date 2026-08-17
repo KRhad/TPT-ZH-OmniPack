@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import importlib.util
 import json
@@ -37,7 +37,10 @@ package_audit = load("negative_test_release_audit", TOOLS / "test_release_audit.
 packager = load("negative_package_test_release", TOOLS / "package_test_release.py")
 finalizer = load("negative_release_finalizer", TOOLS / "finalize_release_1_1_0.py")
 
-RUN_ID = "20260814T041500Z-8f31c1c7"
+RUN_ID = (
+    (datetime.now(timezone.utc) - timedelta(hours=3)).strftime("%Y%m%dT%H%M%SZ")
+    + "-8f31c1c7"
+)
 COMMIT = "a" * 40
 CANDIDATE = "B" * 64
 SYMBOLS = "C" * 64
@@ -47,6 +50,19 @@ RC_CANDIDATE_FILENAME = "TPT-ZH-OmniPack-1.1.0-rc1-Windows-x64-SDL3.zip"
 RC_SYMBOLS_FILENAME = "TPT-ZH-OmniPack-1.1.0-rc1-Windows-x64-Symbols.zip"
 STABLE_FILENAME = "TPT-ZH-OmniPack-1.1.0-Windows-x64-SDL3.zip"
 STABLE_SYMBOLS_FILENAME = "TPT-ZH-OmniPack-1.1.0-Windows-x64-Symbols.zip"
+
+
+def current_evidence_interval() -> tuple[str, str]:
+    """Return a bounded interval that contains files written by this fixture."""
+    now = datetime.now(timezone.utc)
+    return (
+        (now - timedelta(seconds=1)).isoformat(),
+        (now + timedelta(seconds=1)).isoformat(),
+    )
+
+
+def run_id_for(moment: datetime, suffix: str) -> str:
+    return moment.strftime("%Y%m%dT%H%M%SZ") + "-" + suffix
 
 
 def staging_candidate_filename() -> str:
@@ -166,10 +182,25 @@ def cpu_fallback_payload(
 def soak_payload(
     candidate_executable_sha256: str,
     *,
+    root: Path,
     overrides: dict[str, object] | None = None,
 ) -> dict[str, object]:
+    result_finished_dt = datetime.now(timezone.utc) - timedelta(seconds=1)
+    result_started_dt = result_finished_dt - timedelta(seconds=7200)
+    result_started = result_started_dt.isoformat()
+    result_finished = result_finished_dt.isoformat()
+    harness_run_id = run_id_for(result_started_dt, "1234abcd")
     value: dict[str, object] = {
         "status": "PASS", "passed": True,
+        "release_binding_passed": True, "analysis_exit_code": 0,
+        "analyzer_schema": audit.EVIDENCE_SCHEMA,
+        "analyzer_schema_version": audit.EVIDENCE_SCHEMA_VERSION,
+        "analyzer_test": "soak_2h", "analyzer_status": "PASS",
+        "analyzer_passed": True,
+        "harness_run_id": harness_run_id,
+        "artifact_run_id": harness_run_id,
+        "analyzer_candidate_sha256": CANDIDATE,
+        "observed_candidate_sha256": CANDIDATE,
         "sample_id": "S20-FULL-CATALOG", "long_run_requested": True,
         "wall_clock_seconds": 7200.0, "warmup_seconds": 60.0,
         "sample_seconds": 7200.0, "heartbeat_interval_seconds": 60.0,
@@ -219,11 +250,59 @@ def soak_payload(
         "minimum_density_kg_m3": 1.0, "maximum_density_kg_m3": 1.0,
         "minimum_pressure_pa": 100000.0, "maximum_pressure_pa": 100000.0,
         "minimum_temperature_k": 293.15, "maximum_temperature_k": 293.15,
-        "result_json_sha256": "8" * 64,
         "input_ops": {"bytes": 128, "sha256": "6" * 64},
         "output_ops": {"bytes": 256, "sha256": "7" * 64},
+        # Keep the synthetic positive fixture's declared gate envelope equal
+        # to the analyzer interval.  The real release driver records these
+        # producer-owned timestamps around the same execution; a fixture that
+        # creates two independent "now +/- 1s" intervals can race and look
+        # stale even though its identity/hash bindings are valid.
+        "gate_started_at": result_started,
+        "gate_finished_at": result_finished,
     }
     value.update(overrides or {})
+    result_directory = (
+        root / "soak" / "NEGATIVE-HOST-0123" / "S20-FULL-CATALOG"
+        / str(value["harness_run_id"])
+    )
+    result_directory.mkdir(parents=True, exist_ok=True)
+    result_path = result_directory / "result.json"
+    write_json(result_path, {
+        "schema_version": 1,
+        "sample_id": value["sample_id"],
+        "run_id": value["harness_run_id"],
+        "source_commit": value["source_commit"],
+        "public_zip_sha256": value["public_zip_sha256"],
+        "exe_sha256": value["exe_sha256"],
+        "wall_clock_seconds": value["wall_clock_seconds"],
+        "warmup_seconds": value["warmup_seconds"],
+        "sample_seconds": value["sample_seconds"],
+        "start_time_utc": result_started,
+        "end_time_utc": result_finished,
+        "simulation_steps": value["simulation_steps"],
+        "nan_count": value["nan_count"],
+        "inf_count": value["inf_count"],
+        "stalls": value["stalls"],
+        "omni_atmosphere_active": value["omni_atmosphere_active"],
+        "long_run": True,
+        "smoke_run": False,
+    })
+    value["result_json"] = result_path.relative_to(root).as_posix()
+    value["result_json_sha256"] = digest(result_path)
+    analyzer_path = root / "soak-analyzer.json"
+    analyzer_value = dict(value)
+    analyzer_value.update(
+        schema=audit.EVIDENCE_SCHEMA,
+        schema_version=audit.EVIDENCE_SCHEMA_VERSION,
+        test="soak_2h",
+        status="PASS",
+        passed=True,
+    )
+    analyzer_value["run_id"] = value["harness_run_id"]
+    analyzer_value["candidate_sha256"] = CANDIDATE
+    write_json(analyzer_path, analyzer_value)
+    value["analyzer_evidence"] = analyzer_path.name
+    value["analyzer_evidence_sha256"] = digest(analyzer_path)
     return value
 
 
@@ -302,8 +381,20 @@ def semantic_case(
     decorate_raw: bool = True,
     candidate_path: Path | None = None,
     symbols_path: Path | None = None,
+    gate_started_at: str | None = None,
+    gate_finished_at: str | None = None,
 ) -> tuple[bool, bool]:
     raw = dict(raw)
+    if gate_started_at is None or gate_finished_at is None:
+        raw_started = raw.get("gate_started_at")
+        raw_finished = raw.get("gate_finished_at")
+        if isinstance(raw_started, str) and isinstance(raw_finished, str):
+            gate_started_at = gate_started_at or raw_started
+            gate_finished_at = gate_finished_at or raw_finished
+        else:
+            current_started, current_finished = current_evidence_interval()
+            gate_started_at = gate_started_at or current_started
+            gate_finished_at = gate_finished_at or current_finished
     if evidence_run_id is None:
         evidence_run_id = RUN_ID
     if evidence_candidate is None and gate_name in audit.CANDIDATE_BOUND_GATES:
@@ -319,8 +410,8 @@ def semantic_case(
         if gate_name in audit.SYMBOL_BOUND_GATES:
             raw.setdefault("symbols_sha256", SYMBOLS)
             raw.setdefault("symbols_member_sha256", SYMBOL_MEMBER)
-        raw.setdefault("gate_started_at", "2000-01-01T00:00:00+00:00")
-        raw.setdefault("gate_finished_at", "2000-01-01T00:00:01+00:00")
+        raw.setdefault("gate_started_at", gate_started_at)
+        raw.setdefault("gate_finished_at", gate_finished_at)
     raw_path = root / "raw.json"
     write_json(raw_path, raw)
     evidence = {
@@ -336,8 +427,8 @@ def semantic_case(
         "candidate_sha256": evidence_candidate,
         "symbols_sha256": SYMBOLS if gate_name in audit.SYMBOL_BOUND_GATES else None,
         "symbols_member_sha256": SYMBOL_MEMBER if gate_name in audit.SYMBOL_BOUND_GATES else None,
-        "gate_started_at": "2000-01-01T00:00:00+00:00",
-        "gate_finished_at": "2000-01-01T00:00:01+00:00",
+        "gate_started_at": gate_started_at,
+        "gate_finished_at": gate_finished_at,
         "source_evidence": raw_path.name,
         "source_evidence_sha256": digest(raw_path),
     }
@@ -372,6 +463,7 @@ def trusted_adapter_case(
     producer_overrides: dict[str, object] | None = None,
     adapter_overrides: dict[str, object] | None = None,
 ) -> tuple[bool, bool]:
+    started, finished = current_evidence_interval()
     producer = root / "adapter-producer.json"
     producer_value: dict[str, object] = {
         "schema": audit.EVIDENCE_SCHEMA,
@@ -397,8 +489,8 @@ def trusted_adapter_case(
         "run_id": RUN_ID,
         "commit": COMMIT,
         "candidate_sha256": None,
-        "gate_started_at": "2000-01-01T00:00:00+00:00",
-        "gate_finished_at": "2000-01-01T00:00:01+00:00",
+        "gate_started_at": started,
+        "gate_finished_at": finished,
         "identity_binding": "trusted_release_driver_fresh_process_adapter",
         "producer_evidence": producer.name,
         "producer_evidence_sha256": producer_hash or digest(producer),
@@ -417,8 +509,8 @@ def trusted_adapter_case(
         "passed": True,
         "exit_code": 0,
         "candidate_sha256": None,
-        "gate_started_at": "2000-01-01T00:00:00+00:00",
-        "gate_finished_at": "2000-01-01T00:00:01+00:00",
+        "gate_started_at": started,
+        "gate_finished_at": finished,
         "source_evidence": adapter.name,
         "source_evidence_sha256": digest(adapter),
     })
@@ -452,6 +544,7 @@ def clean_machine_adapter_case(
     omit_binding_metadata: bool = False,
     replace_validator_after_binding: bool = False,
 ) -> tuple[bool, bool]:
+    started, finished = current_evidence_interval()
     evidence_candidate = evidence_candidate or CANDIDATE
     stdout = root / "windows_clean_machine.stdout.txt"
     stderr = root / "windows_clean_machine.stderr.txt"
@@ -492,8 +585,8 @@ def clean_machine_adapter_case(
         "runtime_stderr_sha256": digest(stderr),
         "runtime_inner_evidence": inner.name,
         "runtime_inner_evidence_sha256": digest(inner),
-        "gate_started_at": "2000-01-01T00:00:00+00:00",
-        "gate_finished_at": "2000-01-01T00:00:01+00:00",
+        "gate_started_at": started,
+        "gate_finished_at": finished,
     }
     producer_value.update(portable_runtime_outer(candidate, candidate_sha256=evidence_candidate))
     producer_value.update(producer_overrides or {})
@@ -513,7 +606,7 @@ def clean_machine_adapter_case(
         "runtime_validator_sha256": validator_sha,
         "clean_machine_evidence_filename": producer.name,
         "clean_machine_evidence_sha256": digest(producer),
-        "created_at": "2000-01-01T00:00:02+00:00",
+        "created_at": finished,
     }
     binding_value.update(binding_overrides or {})
     binding = root / "runtime-validator-binding.json"
@@ -524,8 +617,8 @@ def clean_machine_adapter_case(
         "run_id": RUN_ID,
         "commit": COMMIT,
         "candidate_sha256": evidence_candidate,
-        "gate_started_at": "2000-01-01T00:00:00+00:00",
-        "gate_finished_at": "2000-01-01T00:00:01+00:00",
+        "gate_started_at": started,
+        "gate_finished_at": finished,
         "identity_binding": "trusted_finalizer_import_adapter",
         "producer_evidence": producer.name,
         "producer_evidence_sha256": digest(producer),
@@ -553,8 +646,8 @@ def clean_machine_adapter_case(
         "passed": True,
         "exit_code": 0,
         "candidate_sha256": evidence_candidate,
-        "gate_started_at": "2000-01-01T00:00:00+00:00",
-        "gate_finished_at": "2000-01-01T00:00:01+00:00",
+        "gate_started_at": started,
+        "gate_finished_at": finished,
         "source_evidence": adapter.name,
         "source_evidence_sha256": digest(adapter),
     })
@@ -588,8 +681,7 @@ def official_compatibility_case(
 ) -> tuple[bool, bool]:
     revision = "c" * 40
     fixture_sha = "1" * 64
-    started = "2000-01-01T00:00:00+00:00"
-    finished = "2000-01-01T00:00:01+00:00"
+    started, finished = current_evidence_interval()
     provenance_raw = {
         "schema": audit.EVIDENCE_SCHEMA,
         "schema_version": audit.EVIDENCE_SCHEMA_VERSION,
@@ -1172,7 +1264,7 @@ def semantic_positive_baselines(
     )
 
     candidate_executable_sha = candidate_executable_digest(candidate)
-    soak = soak_payload(candidate_executable_sha)
+    soak = soak_payload(candidate_executable_sha, root=root)
     check("soak_2h", "Soak2Hours", "soak_2h", soak, candidate_bound=True)
 
     screenshot = root / "baseline-gui.bmp"
@@ -1288,6 +1380,21 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
         )
         results["aggregate_pass_with_failed_evidence"] = not semantic
 
+        boolean_schema = dict(stream_raw)
+        boolean_schema["schema_version"] = True
+        _, semantic = semantic_case(root, "Build", "build", boolean_schema)
+        results["boolean_schema_version"] = not semantic
+
+        _, semantic = official_compatibility_case(
+            root,
+            compatibility_overrides={
+                "files_total": True,
+                "files_passed": True,
+                "files_failed": False,
+            },
+        )
+        results["official_boolean_count_confusion"] = not semantic
+
         _, semantic = official_compatibility_case(
             root,
             compatibility_row_overrides={
@@ -1353,6 +1460,34 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
             evidence_run_id="19990101T000000Z-deadbeef",
         )
         results["stale_previous_run_evidence"] = not semantic
+
+        stale_raw = dict(stream_raw)
+        stale_raw["run_id"] = "19990101T000000Z-deadbeef"
+        _, semantic = semantic_case(root, "Build", "build", stale_raw)
+        results["stale_raw_previous_run_evidence"] = not semantic
+
+        _, semantic = semantic_case(
+            root, "Build", "build", stream_raw,
+            gate_started_at="2099-01-01T00:00:00+00:00",
+            gate_finished_at="2099-01-01T00:00:01+00:00",
+        )
+        results["future_gate_timestamp"] = not semantic
+
+        raw_interval = dict(stream_raw)
+        raw_interval["gate_started_at"] = "1999-01-01T00:00:00+00:00"
+        raw_interval["gate_finished_at"] = "2099-01-01T00:00:00+00:00"
+        _, semantic = semantic_case(root, "Build", "build", raw_interval)
+        results["raw_timestamp_outside_envelope"] = not semantic
+
+        wrong_commit = dict(stream_raw)
+        wrong_commit["commit"] = "f" * 40
+        _, semantic = semantic_case(root, "Build", "build", wrong_commit)
+        results["wrong_commit_evidence"] = not semantic
+
+        wrong_test = dict(stream_raw)
+        wrong_test["test"] = "configure"
+        _, semantic = semantic_case(root, "Build", "build", wrong_test)
+        results["wrong_test_type_evidence"] = not semantic
 
         _, semantic = semantic_case(
             root, "Build", "build", stream_raw,
@@ -1595,6 +1730,7 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
         candidate_executable_sha = candidate_executable_digest(candidate)
         short_soak = soak_payload(
             candidate_executable_sha,
+            root=root,
             overrides={"wall_clock_seconds": 60.0, "simulation_steps": 1},
         )
         _, semantic = semantic_case(
@@ -1605,6 +1741,7 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
 
         nonfinite_soak = soak_payload(
             candidate_executable_sha,
+            root=root,
             overrides={"wall_clock_seconds": float("nan")},
         )
         _, semantic = semantic_case(
@@ -1615,6 +1752,7 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
 
         memory_soak = soak_payload(
             candidate_executable_sha,
+            root=root,
             overrides={"memory_leak_suspected": True},
         )
         _, semantic = semantic_case(
@@ -1625,6 +1763,7 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
 
         residual_soak = soak_payload(
             candidate_executable_sha,
+            root=root,
             overrides={"species_mass_residual_abs_max_kg": 1.0},
         )
         _, semantic = semantic_case(
@@ -1633,38 +1772,174 @@ def run(candidate: Path | None, symbols: Path | None, artifact_stem: str | None,
         )
         results["soak_mass_residual_out_of_bounds"] = not semantic
 
-        soak_identity = dict(short_soak)
-        soak_identity["wall_clock_seconds"] = 7200
-        soak_identity["simulation_steps"] = 1000
-        soak_identity["public_zip_sha256"] = "E" * 64
-        soak_identity["source_commit"] = COMMIT
+        soak_identity = soak_payload(
+            candidate_executable_sha,
+            root=root,
+            overrides={"public_zip_sha256": "E" * 64},
+        )
         _, semantic = semantic_case(
             root, "Soak2Hours", "soak_2h", soak_identity,
             evidence_candidate=CANDIDATE, candidate_path=candidate,
         )
         results["soak_wrong_public_zip"] = not semantic
-        soak_identity["public_zip_sha256"] = CANDIDATE
-        soak_identity["source_commit"] = "f" * 40
+        soak_identity = soak_payload(
+            candidate_executable_sha,
+            root=root,
+            overrides={"source_commit": "f" * 40},
+        )
         _, semantic = semantic_case(
             root, "Soak2Hours", "soak_2h", soak_identity,
             evidence_candidate=CANDIDATE, candidate_path=candidate,
         )
         results["soak_wrong_source_commit"] = not semantic
 
-        soak_source = dict(short_soak)
-        soak_source["wall_clock_seconds"] = 7200
-        soak_source["simulation_steps"] = 1000
-        soak_source["executable_source"] = "workspace_executable"
+        missing_release_binding = soak_payload(
+            candidate_executable_sha,
+            root=root,
+            overrides={"release_binding_passed": False},
+        )
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", missing_release_binding,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_missing_release_binding"] = not semantic
+
+        harness_run_mismatch = soak_payload(
+            candidate_executable_sha,
+            root=root,
+            overrides={"artifact_run_id": "20000101T000002Z-deadbeef"},
+        )
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", harness_run_mismatch,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_harness_run_mismatch"] = not semantic
+
+        analyzer_failure = soak_payload(
+            candidate_executable_sha,
+            root=root,
+            overrides={
+                "analysis_exit_code": 2,
+                "analyzer_status": "FAIL",
+                "analyzer_passed": False,
+            },
+        )
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", analyzer_failure,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_analyzer_failure_relabelled_pass"] = not semantic
+
+        missing_result = soak_payload(candidate_executable_sha, root=root)
+        (root / str(missing_result["result_json"])).unlink()
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", missing_result,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_result_json_missing"] = not semantic
+
+        changed_result = soak_payload(candidate_executable_sha, root=root)
+        changed_result_path = root / str(changed_result["result_json"])
+        changed_result_path.write_bytes(changed_result_path.read_bytes() + b" ")
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", changed_result,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_result_json_hash_mismatch"] = not semantic
+
+        wrong_result_run = soak_payload(candidate_executable_sha, root=root)
+        wrong_result_run_path = root / str(wrong_result_run["result_json"])
+        wrong_result_run_value = json.loads(
+            wrong_result_run_path.read_text(encoding="utf-8")
+        )
+        wrong_result_run_value["run_id"] = "20000101T000002Z-deadbeef"
+        write_json(wrong_result_run_path, wrong_result_run_value)
+        wrong_result_run["result_json_sha256"] = digest(wrong_result_run_path)
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", wrong_result_run,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_result_json_run_mismatch"] = not semantic
+
+        stale_result = soak_payload(candidate_executable_sha, root=root)
+        stale_result_path = root / str(stale_result["result_json"])
+        stale_result_value = json.loads(stale_result_path.read_text(encoding="utf-8"))
+        stale_result_value["start_time_utc"] = "1999-01-01T00:00:00+00:00"
+        stale_result_value["end_time_utc"] = "1999-01-01T02:00:00+00:00"
+        write_json(stale_result_path, stale_result_value)
+        stale_result["result_json_sha256"] = digest(stale_result_path)
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", stale_result,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_result_json_stale"] = not semantic
+
+        duration_mismatch = soak_payload(candidate_executable_sha, root=root)
+        duration_mismatch_path = root / str(duration_mismatch["result_json"])
+        duration_mismatch_value = json.loads(
+            duration_mismatch_path.read_text(encoding="utf-8")
+        )
+        duration_mismatch_value["start_time_utc"] = duration_mismatch_value["end_time_utc"]
+        write_json(duration_mismatch_path, duration_mismatch_value)
+        duration_mismatch["result_json_sha256"] = digest(duration_mismatch_path)
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", duration_mismatch,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_timestamp_duration_mismatch"] = not semantic
+
+        type_confusion = soak_payload(candidate_executable_sha, root=root)
+        type_confusion["wall_clock_seconds"] = "7200"
+        type_confusion_path = root / str(type_confusion["result_json"])
+        type_confusion_value = json.loads(type_confusion_path.read_text(encoding="utf-8"))
+        type_confusion_value["wall_clock_seconds"] = "7200"
+        write_json(type_confusion_path, type_confusion_value)
+        type_confusion["result_json_sha256"] = digest(type_confusion_path)
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", type_confusion,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_wall_clock_type_confusion"] = not semantic
+
+        relocated = soak_payload(candidate_executable_sha, root=root)
+        relocated_original = root / str(relocated["result_json"])
+        relocated_path = root / "unrelated-soak-tree" / str(
+            relocated["harness_run_id"]
+        ) / "result.json"
+        relocated_path.parent.mkdir(parents=True, exist_ok=True)
+        relocated_path.write_bytes(relocated_original.read_bytes())
+        relocated["result_json"] = relocated_path.relative_to(root).as_posix()
+        relocated["result_json_sha256"] = digest(relocated_path)
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", relocated,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_result_path_relocated"] = not semantic
+
+        stale_release_id = soak_payload(candidate_executable_sha, root=root)
+        stale_release_id["run_id"] = "20000101T000000Z-8f31c1c7"
+        _, semantic = semantic_case(
+            root, "Soak2Hours", "soak_2h", stale_release_id,
+            evidence_candidate=CANDIDATE, candidate_path=candidate,
+        )
+        results["soak_release_run_timestamp_mismatch"] = not semantic
+
+        soak_source = soak_payload(
+            candidate_executable_sha,
+            root=root,
+            overrides={"executable_source": "workspace_executable"},
+        )
         _, semantic = semantic_case(
             root, "Soak2Hours", "soak_2h", soak_source,
             evidence_candidate=CANDIDATE, candidate_path=candidate,
         )
         results["soak_not_from_candidate_zip"] = not semantic
 
-        soak_executable = dict(short_soak)
-        soak_executable["wall_clock_seconds"] = 7200
-        soak_executable["simulation_steps"] = 1000
-        soak_executable["exe_sha256"] = "0" * 64
+        soak_executable = soak_payload(
+            candidate_executable_sha,
+            root=root,
+            overrides={"exe_sha256": "0" * 64},
+        )
         _, semantic = semantic_case(
             root, "Soak2Hours", "soak_2h", soak_executable,
             evidence_candidate=CANDIDATE, candidate_path=candidate,

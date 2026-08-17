@@ -1737,6 +1737,8 @@ static int omniAtmosphere(lua_State *L)
 		setBoolean("available", false);
 		return 1;
 	}
+	// This table is a release-health observation boundary. Keep it read-only so
+	// a heartbeat cannot repair an invalid state before reporting it.
 	setBoolean("available", true);
 	setInteger("width", atmosphere->Width());
 	setInteger("height", atmosphere->Height());

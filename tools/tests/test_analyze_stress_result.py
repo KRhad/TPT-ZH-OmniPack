@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from datetime import datetime, timedelta, timezone
 import hashlib
 import importlib.util
 import json
@@ -40,6 +41,9 @@ class AnalyzeStressResultTest(unittest.TestCase):
         ops2 = b"OPS1" + b"\0" * 8 + b"BZh" + b"output"
         (directory / "input-first.stm").write_bytes(ops1)
         (directory / "output-second.stm").write_bytes(ops2)
+        wall_clock = 2.0 if smoke else (7200.0 if long_run else 30.0)
+        finished_at = datetime.now(timezone.utc)
+        started_at = finished_at - timedelta(seconds=wall_clock)
         result = {
             "schema_version": 1,
             "sample_id": sample_id,
@@ -51,7 +55,9 @@ class AnalyzeStressResultTest(unittest.TestCase):
             "output_ops_second_sha256": digest(ops2),
             "warmup_seconds": 60.0 if long_run and not smoke else 0.0,
             "sample_seconds": 2.0 if smoke else (7200.0 if long_run else 30.0),
-            "wall_clock_seconds": 2.0 if smoke else (7200.0 if long_run else 30.0),
+            "wall_clock_seconds": wall_clock,
+            "start_time_utc": started_at.isoformat(),
+            "end_time_utc": finished_at.isoformat(),
             "initial_particles": particles[0],
             "peak_particles": max(particles),
             "final_particles": particles[-1],

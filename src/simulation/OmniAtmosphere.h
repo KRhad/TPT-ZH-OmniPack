@@ -336,6 +336,16 @@ public:
 	double MinimumTemperature() const;
 	double MaximumTemperature() const;
 	uint64_t NonFiniteStateCells() const;
+	// Apply any finite mixture/latent-energy floor correction that may have
+	// been introduced by an external legacy projection or coupled module after
+	// the authoritative solver step. Corrections are accounted as pending
+	// sources for the next solver ledger.
+	bool EnsureSerializableState();
+	// Regional saves validate and, at most, round-off-canonicalize only the cells
+	// that will actually be serialized. Unrelated atmosphere cells are neither
+	// scanned nor mutated by a partial pressure save.
+	bool EnsureSerializableRegion(
+		std::size_t x, std::size_t y, std::size_t width, std::size_t height);
 
 	// Export is a deliberately explicit projection for Legacy renderer/script
 	// consumers. Legacy pv/vx/vy are not SI-authoritative fields.
@@ -384,8 +394,11 @@ private:
 	Flux RusanovFlux(std::size_t leftCell, std::size_t rightCell, const OmniAtmosphereConservative &left, const OmniAtmosphereConservative &right, bool xDirection, bool acoustic) const;
 	void AdvanceOnce(double dt, bool acoustic);
 	void DiffuseSpeciesAndHeat(double dt);
+	double TransportStableTimestep(bool assumeGradient = false) const;
 	void ApplyGravity(double dt);
 	void EquilibrateWaterPhase();
+	bool ApplySerializableEnergyFloor(std::size_t cell, bool recordLedgerCorrection);
+	void ApplySerializableEnergyFloors(bool recordLedgerCorrection = true);
 	void ApplyFloors(OmniAtmosphereConservative &value, bool recordCorrection = true);
 	void NormalizeSpecies(std::size_t cell, double targetDensity, bool recordCorrection = true);
 	double SpeciesFlux(std::size_t species, std::size_t leftCell, std::size_t rightCell,

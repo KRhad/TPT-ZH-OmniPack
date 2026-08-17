@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import math
@@ -15,7 +15,19 @@ import zipfile
 
 EVIDENCE_SCHEMA = "omnipack-release-evidence"
 EVIDENCE_SCHEMA_VERSION = 1
-FILESYSTEM_TIMESTAMP_TOLERANCE = timedelta(milliseconds=1)
+# Evidence timestamps are producer-owned JSON fields. Do not use filesystem
+# mtimes for provenance: artifact upload/download, archive extraction, and
+# byte-for-byte copying can legitimately rewrite or quantise them. Freshness
+# is bound by the unique run ID, declared execution interval, and hashed
+# source/candidate identities instead.
+EVIDENCE_TIMESTAMP_TOLERANCE = timedelta(seconds=2)
+EVIDENCE_CLOCK_SKEW_TOLERANCE = timedelta(minutes=5)
+RELEASE_RUN_MAX_AGE = timedelta(hours=24)
+SOAK_MIN_WALL_CLOCK_SECONDS = 7200.0
+SOAK_WALL_CLOCK_TOLERANCE_SECONDS = 2.0
+RUN_ID_RE = re.compile(
+    r"^(?P<timestamp>[0-9]{8}T[0-9]{6}Z)-(?P<nonce>[0-9a-f]{8})$"
+)
 PORTABLE_RUNTIME_PAYLOAD_SCHEMA_VERSION = 2
 PORTABLE_RUNTIME_TRUE_FIELDS = (
     "launch_passed", "fixture_created", "initial_simulate_passed",
@@ -282,7 +294,14 @@ STABLE_MANDATORY_GATES = {
 REQUIRED_NEGATIVE_ATTACKS = {
     "aggregate_pass_with_not_tested_evidence",
     "aggregate_pass_with_failed_evidence",
+    "boolean_schema_version",
+    "official_boolean_count_confusion",
     "stale_previous_run_evidence",
+    "stale_raw_previous_run_evidence",
+    "future_gate_timestamp",
+    "raw_timestamp_outside_envelope",
+    "wrong_commit_evidence",
+    "wrong_test_type_evidence",
     "raw_evidence_identity_missing",
     "meta_gate_missing_evidence",
     "generic_pass_with_nonzero_exit",
@@ -311,6 +330,17 @@ REQUIRED_NEGATIVE_ATTACKS = {
     "soak_mass_residual_out_of_bounds",
     "soak_wrong_public_zip",
     "soak_wrong_source_commit",
+    "soak_missing_release_binding",
+    "soak_harness_run_mismatch",
+    "soak_analyzer_failure_relabelled_pass",
+    "soak_result_json_missing",
+    "soak_result_json_hash_mismatch",
+    "soak_result_json_run_mismatch",
+    "soak_result_json_stale",
+    "soak_timestamp_duration_mismatch",
+    "soak_wall_clock_type_confusion",
+    "soak_result_path_relocated",
+    "soak_release_run_timestamp_mismatch",
     "soak_not_from_candidate_zip",
     "soak_wrong_executable_sha",
     "gui_missing_screenshot",
@@ -417,14 +447,93 @@ def parse_timestamp(value: object) -> datetime | None:
     if not isinstance(value, str):
         return None
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return None
+    return parsed if parsed.tzinfo is not None and parsed.utcoffset() is not None else None
+
+
+def parse_run_id_timestamp(value: object) -> datetime | None:
+    """Decode the UTC timestamp prefix carried by a release/harness run ID."""
+    if not isinstance(value, str):
+        return None
+    match = RUN_ID_RE.fullmatch(value)
+    if match is None:
+        return None
+    try:
+        return datetime.strptime(
+            match.group("timestamp"), "%Y%m%dT%H%M%SZ"
+        ).replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def run_id_interval_errors(
+    run_id: object,
+    started: datetime | None,
+    finished: datetime | None,
+    *,
+    label: str,
+    maximum_start_delay: timedelta,
+) -> list[str]:
+    """Bind a timestamped run ID to the producer interval it names."""
+    stamp = parse_run_id_timestamp(run_id)
+    if stamp is None or started is None or finished is None:
+        return [f"{label} run ID timestamp is absent or invalid"]
+    errors: list[str] = []
+    if stamp - started > EVIDENCE_TIMESTAMP_TOLERANCE:
+        errors.append(f"{label} run ID timestamp is after producer start")
+    if started - stamp > maximum_start_delay:
+        errors.append(f"{label} run ID timestamp is too old for producer start")
+    if stamp - finished > EVIDENCE_TIMESTAMP_TOLERANCE:
+        errors.append(f"{label} run ID timestamp is after producer finish")
+    return errors
+
+
+def finite_json_number(value: object) -> float | None:
+    """Return a finite JSON number, rejecting strings, booleans and overflow."""
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return None
+    try:
+        converted = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return converted if math.isfinite(converted) else None
+
+
+def timestamp_interval_errors(
+    started: datetime | None,
+    finished: datetime | None,
+    *,
+    label: str,
+) -> list[str]:
+    """Validate a producer interval without trusting an unbounded clock claim."""
+    errors: list[str] = []
+    if started is None or finished is None or finished < started:
+        return [f"{label} timestamps are absent or invalid"]
+    now = datetime.now(timezone.utc)
+    if started > now + EVIDENCE_CLOCK_SKEW_TOLERANCE:
+        errors.append(f"{label} start timestamp is implausibly in the future")
+    if finished > now + EVIDENCE_CLOCK_SKEW_TOLERANCE:
+        errors.append(f"{label} finish timestamp is implausibly in the future")
+    return errors
 
 
 def is_exact_int(value: object, expected: int) -> bool:
     """Return true only for an actual JSON integer, never a bool."""
     return isinstance(value, int) and not isinstance(value, bool) and value == expected
+
+
+def is_json_int(value: object) -> bool:
+    """Return true only for a JSON integer (``true`` is not integer ``1``).
+
+    Python deliberately considers ``bool`` a subclass of ``int``.  Release
+    evidence is JSON, however, and a producer claiming ``schema_version: true``
+    or ``files_total: true`` must not be accepted as if it had emitted the
+    required integer.  Keep this check in one place so every evidence parser
+    uses the same fail-closed type boundary.
+    """
+    return isinstance(value, int) and not isinstance(value, bool)
 
 
 def json_semantically_equal(left: object, right: object) -> bool:
@@ -521,7 +630,7 @@ def validate_portable_runtime_contract(
     root: Path, raw: dict[str, object], candidate_sha256: object
 ) -> list[str]:
     errors: list[str] = []
-    if raw.get("runtime_payload_schema_version") != PORTABLE_RUNTIME_PAYLOAD_SCHEMA_VERSION:
+    if not is_exact_int(raw.get("runtime_payload_schema_version"), PORTABLE_RUNTIME_PAYLOAD_SCHEMA_VERSION):
         errors.append("portable runtime payload schema version is invalid")
     if raw.get("candidate_source_markers_checked") is not True:
         errors.append("portable runtime candidate source-marker scan was not completed")
@@ -576,7 +685,7 @@ def validate_portable_runtime_contract(
         "passed": True,
     }
     for field, expected in expected_identity.items():
-        if inner.get(field) != expected:
+        if not json_semantically_equal(inner.get(field), expected):
             errors.append(f"portable runtime inner evidence has invalid {field}")
     for field in PORTABLE_RUNTIME_TRUE_FIELDS:
         if inner.get(field) is not True:
@@ -770,7 +879,7 @@ def validate_raw_semantics(
                         "clean_machine_evidence_sha256": producer_hash,
                     }
                     for key, expected in expected_binding.items():
-                        if binding_value.get(key) != expected:
+                        if not json_semantically_equal(binding_value.get(key), expected):
                             errors.append(
                                 f"clean runtime validator binding has invalid {key}"
                             )
@@ -788,24 +897,186 @@ def validate_raw_semantics(
     elif gate_name == "Soak2Hours":
         def finite_metric(name: str, *, minimum: float | None = None,
                           maximum: float | None = None) -> float | None:
-            value = raw.get(name)
+            value = finite_json_number(raw.get(name))
             if (
-                not isinstance(value, (int, float))
-                or isinstance(value, bool)
-                or not math.isfinite(value)
+                value is None
                 or (minimum is not None and value < minimum)
                 or (maximum is not None and value > maximum)
             ):
                 errors.append(f"soak metric {name} is absent, non-finite, or outside its bound")
                 return None
-            return float(value)
+            return value
 
-        try:
-            duration = float(raw.get("wall_clock_seconds", 0))
-        except (TypeError, ValueError):
-            duration = 0
-        if not math.isfinite(duration) or duration < 7200.0:
+        duration = finite_json_number(raw.get("wall_clock_seconds"))
+        if duration is None or duration < SOAK_MIN_WALL_CLOCK_SECONDS:
             errors.append("soak wall clock is shorter than 7200 seconds")
+        if raw.get("release_binding_passed") is not True:
+            errors.append("soak release-run identity binding did not pass")
+        harness_run_id = raw.get("harness_run_id")
+        artifact_run_id = raw.get("artifact_run_id")
+        if (
+            not isinstance(harness_run_id, str)
+            or re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}", harness_run_id) is None
+            or artifact_run_id != harness_run_id
+        ):
+            errors.append("soak harness run identity is absent or does not match its fresh artifact directory")
+        result_path = confined_file(root, raw.get("result_json"))
+        result_hash = raw.get("result_json_sha256")
+        result_value: dict[str, object] | None = None
+        canonical_result_path = False
+        if result_path is not None:
+            try:
+                relative_parts = result_path.relative_to(root.resolve()).parts
+            except ValueError:
+                relative_parts = ()
+            canonical_result_path = (
+                len(relative_parts) == 5
+                and relative_parts[0] == "soak"
+                and bool(relative_parts[1])
+                and relative_parts[2] == "S20-FULL-CATALOG"
+                and relative_parts[3] == artifact_run_id
+                and relative_parts[4] == "result.json"
+            )
+        if (
+            result_path is None
+            or not canonical_result_path
+        ):
+            errors.append(
+                "soak result.json is missing or not in the canonical "
+                "soak/<machine>/S20-FULL-CATALOG/<run_id>/result.json path"
+            )
+        elif (
+            not isinstance(result_hash, str)
+            or SHA256_RE.fullmatch(result_hash) is None
+            or sha256(result_path) != result_hash
+        ):
+            errors.append("soak result.json bytes do not match the analyzer hash binding")
+        else:
+            try:
+                parsed_result = json.loads(result_path.read_text(encoding="utf-8-sig"))
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                errors.append("soak result.json is not valid JSON")
+            else:
+                if not isinstance(parsed_result, dict):
+                    errors.append("soak result.json root is not an object")
+                else:
+                    result_value = parsed_result
+        if result_value is not None:
+            if not is_exact_int(result_value.get("schema_version"), 1):
+                errors.append("soak result.json schema_version is invalid")
+            if result_value.get("run_id") != harness_run_id:
+                errors.append("soak result.json run_id does not match the harness/artifact run")
+            if result_value.get("long_run") is not True or result_value.get("smoke_run") is not False:
+                errors.append("soak result.json is not a formal long-run execution")
+            result_started = parse_timestamp(result_value.get("start_time_utc"))
+            result_finished = parse_timestamp(result_value.get("end_time_utc"))
+            gate_started = parse_timestamp(raw.get("gate_started_at"))
+            gate_finished = parse_timestamp(raw.get("gate_finished_at"))
+            errors.extend(run_id_interval_errors(
+                raw.get("run_id"), gate_started, gate_finished,
+                label="soak release", maximum_start_delay=RELEASE_RUN_MAX_AGE,
+            ))
+            errors.extend(run_id_interval_errors(
+                harness_run_id, result_started, result_finished,
+                label="soak harness",
+                maximum_start_delay=EVIDENCE_CLOCK_SKEW_TOLERANCE,
+            ))
+            if (
+                result_started is None
+                or result_finished is None
+                or gate_started is None
+                or gate_finished is None
+                or result_finished < result_started
+                or result_started < gate_started
+                or result_finished > gate_finished
+            ):
+                errors.append("soak result.json execution timestamps are outside the current release gate")
+            for field in (
+                "sample_id", "source_commit", "public_zip_sha256", "exe_sha256",
+                "wall_clock_seconds", "warmup_seconds", "sample_seconds",
+                "simulation_steps", "nan_count", "inf_count", "stalls",
+                "omni_atmosphere_active",
+            ):
+                if not json_semantically_equal(result_value.get(field), raw.get(field)):
+                    errors.append(f"soak analyzer summary disagrees with result.json field: {field}")
+            if result_value.get("source_commit") != commit:
+                errors.append("soak result.json source commit does not match the aggregate")
+            if result_value.get("public_zip_sha256") != candidate_sha256:
+                errors.append("soak result.json candidate identity does not match the aggregate")
+            result_duration = finite_json_number(result_value.get("wall_clock_seconds"))
+            if result_duration is None or result_duration < SOAK_MIN_WALL_CLOCK_SECONDS:
+                errors.append("soak result.json wall clock is shorter than 7200 seconds")
+            if result_started is not None and result_finished is not None:
+                elapsed_seconds = (result_finished - result_started).total_seconds()
+                if elapsed_seconds < SOAK_MIN_WALL_CLOCK_SECONDS:
+                    errors.append("soak result.json timestamps span less than 7200 seconds")
+                if (
+                    result_duration is not None
+                    and abs(result_duration - elapsed_seconds)
+                    > SOAK_WALL_CLOCK_TOLERANCE_SECONDS
+                ):
+                    errors.append(
+                        "soak result.json wall clock does not match its execution timestamps"
+                    )
+        analyzer_path = confined_file(root, raw.get("analyzer_evidence"))
+        analyzer_hash = raw.get("analyzer_evidence_sha256")
+        analyzer_value: dict[str, object] | None = None
+        if (
+            analyzer_path is None
+            or analyzer_path.name != "soak-analyzer.json"
+            or not isinstance(analyzer_hash, str)
+            or SHA256_RE.fullmatch(analyzer_hash) is None
+            or sha256(analyzer_path) != analyzer_hash
+        ):
+            errors.append("soak independent analyzer evidence is missing or stale")
+        else:
+            try:
+                parsed_analyzer = json.loads(
+                    analyzer_path.read_text(encoding="utf-8-sig")
+                )
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                errors.append("soak independent analyzer evidence is not valid JSON")
+            else:
+                if not isinstance(parsed_analyzer, dict):
+                    errors.append("soak independent analyzer evidence root is not an object")
+                else:
+                    analyzer_value = parsed_analyzer
+        if analyzer_value is not None:
+            expected_analyzer_identity = {
+                "schema": EVIDENCE_SCHEMA,
+                "schema_version": EVIDENCE_SCHEMA_VERSION,
+                "test": "soak_2h",
+                "status": "PASS",
+                "passed": True,
+                "run_id": harness_run_id,
+                "candidate_sha256": candidate_sha256,
+            }
+            for key, expected in expected_analyzer_identity.items():
+                if not json_semantically_equal(analyzer_value.get(key), expected):
+                    errors.append(f"soak independent analyzer {key} is inconsistent")
+            for key, producer_value in analyzer_value.items():
+                if key in {
+                    "schema", "schema_version", "test", "status", "passed",
+                    "run_id", "candidate_sha256",
+                }:
+                    continue
+                if key not in raw or not json_semantically_equal(raw.get(key), producer_value):
+                    errors.append(f"soak driver changed analyzer-owned field: {key}")
+        if not is_exact_int(raw.get("analysis_exit_code"), 0):
+            errors.append("soak independent analyzer did not exit successfully")
+        if (
+            raw.get("analyzer_schema") != EVIDENCE_SCHEMA
+            or not is_exact_int(raw.get("analyzer_schema_version"), EVIDENCE_SCHEMA_VERSION)
+            or raw.get("analyzer_test") != "soak_2h"
+            or raw.get("analyzer_status") != "PASS"
+            or raw.get("analyzer_passed") is not True
+        ):
+            errors.append("soak analyzer schema or result is not a genuine PASS")
+        if (
+            raw.get("observed_candidate_sha256") != candidate_sha256
+            or raw.get("analyzer_candidate_sha256") != candidate_sha256
+        ):
+            errors.append("soak observed/analyzer candidate identity does not match current candidate")
         if raw.get("sample_id") != "S20-FULL-CATALOG" or raw.get("long_run_requested") is not True:
             errors.append("soak did not run the mandatory S20 long-run scenario")
         for field in (
@@ -830,7 +1101,10 @@ def validate_raw_semantics(
             errors.append("soak long-run or performance gate did not pass")
         if raw.get("omni_atmosphere_active") is not True:
             errors.append("soak did not execute with OmniAtmosphere active")
-        if any(raw.get(field) != 0 for field in ("nan_count", "inf_count", "stalls")):
+        if any(
+            not is_exact_int(raw.get(field), 0)
+            for field in ("nan_count", "inf_count", "stalls")
+        ):
             errors.append("soak reported non-finite values or simulation stalls")
         if raw.get("public_zip_sha256") != candidate_sha256:
             errors.append("soak public ZIP hash does not match current candidate")
@@ -924,9 +1198,6 @@ def validate_raw_semantics(
         ):
             if lower is not None and upper is not None and (lower <= 0.0 or upper < lower):
                 errors.append(f"soak {label} range is invalid")
-        result_hash = raw.get("result_json_sha256")
-        if not isinstance(result_hash, str) or SHA256_RE.fullmatch(result_hash) is None:
-            errors.append("soak source result JSON hash is absent or invalid")
         for field in ("input_ops", "output_ops"):
             value = raw.get(field)
             if (
@@ -988,7 +1259,7 @@ def validate_raw_semantics(
             raw.get("tracked_files_before_package"), raw.get("tracked_files_after_package"),
             raw.get("tracked_files_end"),
         ]
-        if any(not isinstance(value, int) or value <= 0 for value in counts):
+        if any(not is_json_int(value) or value <= 0 for value in counts):
             errors.append("source tracked-file snapshot counts are absent or invalid")
         build_inputs = [
             raw.get("build_inputs_hash_after_configure"),
@@ -1016,7 +1287,15 @@ def validate_raw_semantics(
         errors.extend(official_provenance_identity_errors(raw))
         rows = raw.get("files")
         total = raw.get("files_total")
-        if not isinstance(rows, list) or not isinstance(total, int) or total <= 0 or len(rows) != total or raw.get("files_verified") != total or raw.get("files_failed") != 0:
+        if (
+            not isinstance(rows, list)
+            or not is_json_int(total)
+            or total <= 0
+            or len(rows) != total
+            or not is_json_int(raw.get("files_verified"))
+            or raw.get("files_verified") != total
+            or not is_exact_int(raw.get("files_failed"), 0)
+        ):
             errors.append("official provenance did not verify every file")
         else:
             if any(
@@ -1051,7 +1330,15 @@ def validate_raw_semantics(
             errors.append("official compatibility source identity is invalid")
         if not isinstance(probe_sha256, str) or SHA256_RE.fullmatch(probe_sha256) is None:
             errors.append("official compatibility probe identity is invalid")
-        if not isinstance(rows, list) or not isinstance(total, int) or total <= 0 or len(rows) != total or raw.get("files_passed") != total or raw.get("files_failed") != 0:
+        if (
+            not isinstance(rows, list)
+            or not is_json_int(total)
+            or total <= 0
+            or len(rows) != total
+            or not is_json_int(raw.get("files_passed"))
+            or raw.get("files_passed") != total
+            or not is_exact_int(raw.get("files_failed"), 0)
+        ):
             errors.append("official compatibility did not pass every provenance-verified save")
         else:
             phases = (
@@ -1088,12 +1375,12 @@ def validate_raw_semantics(
                 or SHA256_RE.fullmatch(str(row.get("fixture_sha256", ""))) is None
                 or row.get("probe_sha256") != probe_sha256
                 or row.get("passed") is not True
-                or row.get("exit_code") != 0
+                or not is_exact_int(row.get("exit_code"), 0)
                 or row.get("initial_particle_inventory") is not True
-                or not isinstance(row.get("input_particles"), int)
-                or not isinstance(row.get("initial_loaded_particles"), int)
+                or not is_json_int(row.get("input_particles"))
+                or not is_json_int(row.get("initial_loaded_particles"))
                 or row.get("initial_loaded_particles") != row.get("input_particles")
-                or not isinstance(row.get("output_particles"), int)
+                or not is_json_int(row.get("output_particles"))
                 or any(row.get(phase) is not True for phase in phases)
                 for row in rows
             ):
@@ -1115,7 +1402,7 @@ def validate_raw_semantics(
     elif gate_name == "GPUNumericalValidation":
         if (
             raw.get("schema") != EVIDENCE_SCHEMA
-            or raw.get("schema_version") != EVIDENCE_SCHEMA_VERSION
+            or not is_exact_int(raw.get("schema_version"), EVIDENCE_SCHEMA_VERSION)
             or raw.get("test") != "gpu_validation"
             or raw.get("status") != "PASS"
             or raw.get("passed") is not True
@@ -1144,7 +1431,7 @@ def validate_raw_semantics(
         )
         if (
             raw.get("schema") != EVIDENCE_SCHEMA
-            or raw.get("schema_version") != EVIDENCE_SCHEMA_VERSION
+            or not is_exact_int(raw.get("schema_version"), EVIDENCE_SCHEMA_VERSION)
             or raw.get("test") != "cpu_fallback"
             or raw.get("status") != "PASS"
             or raw.get("passed") is not True
@@ -1225,8 +1512,9 @@ def validate_raw_semantics(
         baselines = raw.get("baselines")
         baseline_failed = raw.get("baselines_failed")
         if (
-            not isinstance(baseline_total, int)
+            not is_json_int(baseline_total)
             or baseline_total <= 0
+            or not is_json_int(baseline_passed)
             or baseline_passed != baseline_total
             or not isinstance(baselines, dict)
             or len(baselines) != baseline_total
@@ -1238,7 +1526,12 @@ def validate_raw_semantics(
         rejected = raw.get("attacks_rejected")
         attacks = raw.get("attacks")
         failed = raw.get("attacks_failed")
-        if not isinstance(total, int) or total <= 0 or rejected != total:
+        if (
+            not is_json_int(total)
+            or total <= 0
+            or not is_json_int(rejected)
+            or rejected != total
+        ):
             errors.append("negative gate suite did not reject every attack")
         if not isinstance(attacks, dict) or len(attacks) != total or any(value is not True for value in attacks.values()):
             errors.append("negative gate suite attack matrix is incomplete or contains a bypass")
@@ -1340,7 +1633,7 @@ def validate_gate_evidence(
         errors.append("gate has no registered evidence schema")
     if evidence.get("schema") != EVIDENCE_SCHEMA:
         errors.append("evidence schema is invalid")
-    if evidence.get("schema_version") != EVIDENCE_SCHEMA_VERSION:
+    if not is_exact_int(evidence.get("schema_version"), EVIDENCE_SCHEMA_VERSION):
         errors.append("evidence schema_version is invalid")
     if evidence.get("test") != expected_test:
         errors.append("evidence test type does not match gate")
@@ -1376,8 +1669,7 @@ def validate_gate_evidence(
             errors.append("evidence symbols_member_sha256 does not match current symbol member")
     started = parse_timestamp(evidence.get("gate_started_at"))
     finished = parse_timestamp(evidence.get("gate_finished_at"))
-    if started is None or finished is None or finished < started:
-        errors.append("evidence gate timestamps are absent or invalid")
+    errors.extend(timestamp_interval_errors(started, finished, label="evidence gate"))
 
     source_path = confined_file(root, evidence.get("source_evidence"))
     source_hash = evidence.get("source_evidence_sha256")
@@ -1385,11 +1677,6 @@ def validate_gate_evidence(
         errors.append("source evidence is absent or outside current run")
     elif not isinstance(source_hash, str) or sha256(source_path) != source_hash:
         errors.append("source evidence hash mismatch")
-    elif started is not None:
-        source_time = datetime.fromtimestamp(source_path.stat().st_mtime, tz=started.tzinfo)
-        if source_time + FILESYSTEM_TIMESTAMP_TOLERANCE < started:
-            errors.append("source evidence predates gate start")
-
     if source_path is not None and source_path.suffix.lower() != ".json":
         errors.append("source evidence must be a JSON evidence document")
     if source_path is not None and source_path.suffix.lower() == ".json":
@@ -1416,7 +1703,7 @@ def validate_gate_evidence(
                     "passed": gate_status == "PASS",
                 }
                 for key, expected in expected_raw.items():
-                    if raw.get(key) != expected:
+                    if not json_semantically_equal(raw.get(key), expected):
                         errors.append(f"source evidence {key} does not match current gate")
                 raw_candidate = raw.get("candidate_sha256")
                 if gate_name in CANDIDATE_BOUND_GATES:
@@ -1434,8 +1721,21 @@ def validate_gate_evidence(
                     errors.append("source evidence symbols_sha256 is stale")
                 raw_started = parse_timestamp(raw.get("gate_started_at"))
                 raw_finished = parse_timestamp(raw.get("gate_finished_at"))
-                if raw_started is None or raw_finished is None or raw_finished < raw_started:
-                    errors.append("source evidence timestamps are absent or invalid")
+                errors.extend(timestamp_interval_errors(
+                    raw_started, raw_finished, label="source evidence",
+                ))
+                if (
+                    started is not None
+                    and raw_started is not None
+                    and started - raw_started > EVIDENCE_TIMESTAMP_TOLERANCE
+                ):
+                    errors.append("source evidence starts before its gate envelope")
+                if (
+                    finished is not None
+                    and raw_finished is not None
+                    and raw_finished - finished > EVIDENCE_TIMESTAMP_TOLERANCE
+                ):
+                    errors.append("source evidence finishes after its gate envelope")
                 binding = raw.get("identity_binding")
                 if binding in TRUSTED_ADAPTER_BINDINGS:
                     producer = confined_file(root, raw.get("producer_evidence"))
@@ -1463,7 +1763,7 @@ def validate_gate_evidence(
                                 ("status", gate_status),
                                 ("passed", gate_status == "PASS"),
                             ):
-                                if producer_raw.get(key) != expected:
+                                if not json_semantically_equal(producer_raw.get(key), expected):
                                     errors.append(f"trusted driver adapter producer {key} is inconsistent")
                             for key, expected in (
                                 ("gate_name", gate_name),
@@ -1524,10 +1824,6 @@ def validate_gate_evidence(
                                     f"trusted driver adapter producer semantic error: {error}"
                                     for error in producer_errors
                                 )
-                        if raw_started is not None:
-                            producer_time = datetime.fromtimestamp(producer.stat().st_mtime, tz=raw_started.tzinfo)
-                            if producer_time < raw_started:
-                                errors.append("trusted driver adapter producer evidence predates gate start")
                 elif binding is not None or "producer_evidence" in raw or "producer_evidence_sha256" in raw:
                     errors.append("source evidence uses an unrecognized producer adapter")
                 if gate_name in META_GATES or gate_status == "PASS":
@@ -1753,7 +2049,7 @@ def audit_docs(
 ) -> tuple[bool, list[str]]:
     errors: list[str] = []
     gates = validation.get("gates", {})
-    if validation.get("schema") != "omnipack-release-validation" or validation.get("schema_version") != 1:
+    if validation.get("schema") != "omnipack-release-validation" or not is_exact_int(validation.get("schema_version"), 1):
         errors.append("validation aggregate schema is invalid")
     if validation.get("channel") != channel:
         errors.append("validation channel disagrees with requested audit channel")
@@ -1869,7 +2165,10 @@ def main() -> int:
         }
         write(args.output, result)
         return 0 if passed else 1
-    except (OSError, ValueError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
+    except (
+        OSError, ValueError, OverflowError, json.JSONDecodeError,
+        zipfile.BadZipFile,
+    ) as exc:
         write(args.output, {
             "schema": EVIDENCE_SCHEMA,
             "schema_version": EVIDENCE_SCHEMA_VERSION,

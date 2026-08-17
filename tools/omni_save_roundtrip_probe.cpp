@@ -100,6 +100,13 @@ void AppendProbeDoubleLittleEndian(std::vector<unsigned char> &target, double va
 		target.push_back(static_cast<unsigned char>((bits >> shift) & UINT64_C(0xFF)));
 }
 
+bool IsNaNBits(double value)
+{
+	const auto bits = std::bit_cast<std::uint64_t>(value);
+	return (bits & UINT64_C(0x7FF0000000000000)) == UINT64_C(0x7FF0000000000000) &&
+		(bits & UINT64_C(0x000FFFFFFFFFFFFF)) != 0;
+}
+
 std::vector<char> MakeLegacyAtmosphereOps(
 	const std::vector<char> &base,
 	const std::vector<double> &species,
@@ -646,6 +653,70 @@ int Run()
 		return Fail("includePressure=false modified target atmosphere state");
 	}
 
+	const auto smallRegion = RectSized(
+		Vec2<int>{ 0, 0 }, Vec2<int>{ CELL * 2, CELL * 2 });
+	auto corruptSaveBoundary = Simulation::Factory();
+	corruptSaveBoundary->SetOmniSimulationMode(OMNI_ENHANCED);
+	auto &corruptLiveState = const_cast<OmniAtmosphereConservative &>(
+		corruptSaveBoundary->omniAtmosphere->State(0, 0));
+	const double corruptEnergyBefore = corruptLiveState.totalEnergy;
+	corruptLiveState.density = std::numeric_limits<double>::quiet_NaN();
+	auto pressureFreeCorruptSave = corruptSaveBoundary->Save(false, smallRegion);
+	if (!pressureFreeCorruptSave || pressureFreeCorruptSave->hasOmniAtmosphereState ||
+		!IsNaNBits(corruptSaveBoundary->omniAtmosphere->State(0, 0).density) ||
+		corruptSaveBoundary->omniAtmosphere->State(0, 0).totalEnergy != corruptEnergyBefore)
+	{
+		std::cerr << "pressure-free corrupt values: save=" << bool(pressureFreeCorruptSave)
+			<< " payload=" << (pressureFreeCorruptSave ? pressureFreeCorruptSave->hasOmniAtmosphereState : false)
+			<< " density=" << corruptSaveBoundary->omniAtmosphere->State(0, 0).density
+			<< " energy_before=" << corruptEnergyBefore
+			<< " energy_after=" << corruptSaveBoundary->omniAtmosphere->State(0, 0).totalEnergy
+			<< '\n';
+		return Fail("pressure-free save inspected or modified corrupt atmosphere state");
+	}
+	if (corruptSaveBoundary->Save(true, smallRegion) ||
+		!IsNaNBits(corruptSaveBoundary->omniAtmosphere->State(0, 0).density) ||
+		corruptSaveBoundary->omniAtmosphere->State(0, 0).totalEnergy != corruptEnergyBefore)
+	{
+		return Fail("pressure save did not reject corrupt live atmosphere transactionally");
+	}
+
+	auto regionalSaveBoundary = Simulation::Factory();
+	regionalSaveBoundary->SetOmniSimulationMode(OMNI_ENHANCED);
+	constexpr std::size_t outsideX = 8;
+	constexpr std::size_t outsideY = 8;
+	regionalSaveBoundary->omniAtmosphere->SetCondensedWaterDensity(
+		outsideX, outsideY, 1000.0);
+	std::vector<double> outsideSpecies(
+		regionalSaveBoundary->omniAtmosphere->SpeciesCount(), 0.0);
+	for (std::size_t species = 0; species < outsideSpecies.size(); ++species)
+	{
+		outsideSpecies[species] = regionalSaveBoundary->omniAtmosphere->SpeciesMassDensity(
+			outsideX, outsideY, species);
+	}
+	const auto outsideState = regionalSaveBoundary->omniAtmosphere->State(outsideX, outsideY);
+	double outsideCanonicalEnergy = 1.0;
+	if (!OmniMigrateLegacySerializedAtmosphereCellV2(
+			regionalSaveBoundary->omniAtmosphere->Config(), outsideSpecies,
+			outsideState.momentumX, outsideState.momentumY, outsideCanonicalEnergy,
+			regionalSaveBoundary->omniAtmosphere->Primitive(
+				outsideX, outsideY).condensedWaterDensity, true))
+	{
+		return Fail("could not construct regional save side-effect fixture");
+	}
+	auto &outsideMutableState = const_cast<OmniAtmosphereConservative &>(
+		regionalSaveBoundary->omniAtmosphere->State(outsideX, outsideY));
+	outsideMutableState.totalEnergy = std::nextafter(
+		outsideCanonicalEnergy, -std::numeric_limits<double>::infinity());
+	const double outsideEnergyBeforeRegionalSave = outsideMutableState.totalEnergy;
+	auto regionalPressureSave = regionalSaveBoundary->Save(true, smallRegion);
+	if (!regionalPressureSave || !regionalPressureSave->hasOmniAtmosphereState ||
+		regionalSaveBoundary->omniAtmosphere->State(
+			outsideX, outsideY).totalEnergy != outsideEnergyBeforeRegionalSave)
+	{
+		return Fail("regional pressure save modified an unrelated atmosphere cell");
+	}
+
 	GameSave legacy(Vec2<int>{ 1, 1 });
 	legacy.omniSimulationMode = OMNI_ENHANCED;
 	legacy.hasPressure = true;
@@ -828,6 +899,9 @@ int Run()
 	std::cout << "classic_snapshot_hash_compatible=true\n";
 	std::cout << "classic_payload_omitted=true\n";
 	std::cout << "region_state_omitted=true\n";
+	std::cout << "pressure_save_corrupt_state_rejected=true\n";
+	std::cout << "pressure_free_save_state_untouched=true\n";
+	std::cout << "regional_pressure_save_nonlocal_side_effect=false\n";
 	std::cout << "legacy_projection_migration=true\n";
 	std::cout << "transform_momentum=true\n";
 	std::cout << "transform_water_enthalpy_alignment=true\n";

@@ -215,7 +215,7 @@ def validate_runtime_validator_binding(
     errors = [
         f"{key}={binding.get(key)!r}, expected {expected!r}"
         for key, expected in exact.items()
-        if binding.get(key) != expected
+        if not auditor.json_semantically_equal(binding.get(key), expected)
     ]
     if not binding.get("created_at"):
         errors.append("created_at is absent")
@@ -265,7 +265,11 @@ def validate_clean_evidence(
         "clean_shutdown": True,
     }
     exact.update({field: True for field in auditor.PORTABLE_RUNTIME_TRUE_FIELDS})
-    errors = [f"{key}={value.get(key)!r}, expected {expected!r}" for key, expected in exact.items() if value.get(key) != expected]
+    errors = [
+        f"{key}={value.get(key)!r}, expected {expected!r}"
+        for key, expected in exact.items()
+        if not auditor.json_semantically_equal(value.get(key), expected)
+    ]
     if not value.get("gate_started_at") or not value.get("gate_finished_at"):
         errors.append("gate timestamps are absent")
     tools = value.get("development_tools_detected")
@@ -326,7 +330,7 @@ def set_gate(
         ("schema", SCHEMA), ("schema_version", SCHEMA_VERSION),
         ("test", expected_test), ("status", status), ("passed", status == "PASS"),
     ):
-        if raw.get(key) != expected:
+        if not auditor.json_semantically_equal(raw.get(key), expected):
             raise ValueError(f"raw evidence for {name} has inconsistent {key}")
     identity = {
         "gate_name": name,
@@ -790,7 +794,10 @@ def main() -> int:
     rewrite_failure_aggregate = False
     try:
         validation = read_json(validation_json)
-        if validation.get("schema") != "omnipack-release-validation" or validation.get("schema_version") != 1:
+        if (
+            validation.get("schema") != "omnipack-release-validation"
+            or not auditor.is_exact_int(validation.get("schema_version"), 1)
+        ):
             raise ValueError("aggregate schema is invalid")
         if validation.get("version") != "1.1.0" or validation.get("channel") != "stable":
             raise ValueError("finalizer accepts only a 1.1.0 stable staging run")

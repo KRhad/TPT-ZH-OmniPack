@@ -17,6 +17,15 @@ $msysBin = "C:\msys64\ucrt64\bin"
 $msysUsrBin = "C:\msys64\usr\bin"
 $gitBin = (Get-Item -LiteralPath $git).Directory.FullName
 $env:PATH = "$gitBin;$msysBin;$msysUsrBin;" + $env:PATH
+# Release evidence must never capture credential-shaped parent environment
+# variables in Meson/PowerShell diagnostics.  Scope this scrub to the current
+# process; it does not alter the user's persisted environment.
+foreach ($environmentName in @([Environment]::GetEnvironmentVariables("Process").Keys)) {
+    if ([string]$environmentName -match '(?i)(TOKEN|SECRET|PASSWORD|PASSWD|API[_-]?KEY|PAT)$') {
+        [Environment]::SetEnvironmentVariable([string]$environmentName, $null, "Process")
+        Remove-Item -LiteralPath ("Env:" + [string]$environmentName) -ErrorAction SilentlyContinue
+    }
+}
 $meson = Join-Path $msysBin "meson.exe"
 $ninja = Join-Path $msysBin "ninja.exe"
 $python = Join-Path $msysBin "python3.exe"
@@ -512,9 +521,45 @@ function Set-SourceSnapshotImmutabilityGate {
     Set-Gate "SourceSnapshotImmutability" $(if($passed){"PASS"}else{"FAIL"}) "git identity/status and full content snapshot comparison" $(if($passed){0}else{1}) $evidence $(if($passed){"source snapshot remained unchanged at every checkpoint"}else{"source snapshot changed or a required checkpoint is missing"})
     return $passed
 }
+function Test-ExactJsonString {
+    param([object]$Value,[string]$Expected)
+    return ($Value -is [string] -and $Value -ceq $Expected)
+}
+function Test-ExactJsonBoolean {
+    param([object]$Value,[bool]$Expected)
+    return ($Value -is [bool] -and [bool]$Value -eq $Expected)
+}
+function Test-ExactJsonInteger {
+    param([object]$Value,[long]$Expected)
+    if ($null -eq $Value) { return $false }
+    $typeCode = [Type]::GetTypeCode($Value.GetType())
+    if ($typeCode -notin @(
+        [TypeCode]::SByte, [TypeCode]::Byte,
+        [TypeCode]::Int16, [TypeCode]::UInt16,
+        [TypeCode]::Int32, [TypeCode]::UInt32,
+        [TypeCode]::Int64, [TypeCode]::UInt64
+    )) { return $false }
+    try { return [long]$Value -eq $Expected } catch { return $false }
+}
+function ConvertTo-FiniteJsonNumber {
+    param([object]$Value)
+    if ($Value -is [bool] -or $Value -is [string] -or $null -eq $Value) { return $null }
+    try {
+        $number = [double]$Value
+        if ([double]::IsNaN($number) -or [double]::IsInfinity($number)) { return $null }
+        return $number
+    } catch { return $null }
+}
+function ConvertTo-JsonTimestamp {
+    param([object]$Value)
+    if (-not ($Value -is [string])) { return $null }
+    try { return [DateTimeOffset]::Parse($Value, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind) } catch { return $null }
+}
 function Invoke-SoakGate {
     param([string]$Executable,[string]$PackageZip)
     $soakDirectory = Join-Path $validationDirectory "soak"
+    $assessment = Join-Path $validationDirectory "soak-2h.json"
+    $analyzerAssessment = Join-Path $validationDirectory "soak-analyzer.json"
     $soakCandidateRoot = [IO.Path]::GetFullPath((Join-Path $validationDirectory "soak-candidate-extracted"))
     $validationPrefix = [IO.Path]::GetFullPath($validationDirectory).TrimEnd('\') + '\'
     if (-not $soakCandidateRoot.StartsWith($validationPrefix, [StringComparison]::OrdinalIgnoreCase)) {
@@ -524,11 +569,14 @@ function Invoke-SoakGate {
     $soakStdout = Join-Path $validationDirectory "soak-harness.stdout.txt"
     $soakStderr = Join-Path $validationDirectory "soak-harness.stderr.txt"
     $soakCommand = "runtime_stress_test.ps1 -LongRun -SampleId S20-FULL-CATALOG -PackageZip <current-candidate>"
-    foreach ($target in @($soakStdout,$soakStderr,(Join-Path $validationDirectory "soak-2h.json"))) {
+    foreach ($target in @($soakStdout,$soakStderr,$assessment,$analyzerAssessment)) {
         if (Test-Path -LiteralPath $target -PathType Leaf) { Remove-Item -LiteralPath $target -Force }
     }
     $startedAt = [DateTime]::UtcNow.ToString("o")
     try {
+        if (Test-Path -LiteralPath $soakDirectory) {
+            throw "fresh soak output directory already exists"
+        }
         if (Test-Path -LiteralPath $soakCandidateRoot) {
             throw "fresh soak candidate extraction directory already exists"
         }
@@ -547,34 +595,128 @@ function Invoke-SoakGate {
         & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $soakHarness -Executable $candidateExecutable -SampleId S20-FULL-CATALOG -LongRun -PackageZip $PackageZip -PackageVersion $version -OutputDirectory $soakDirectory *> $soakStdout
         $harnessExit = $LASTEXITCODE
         if ($harnessExit -ne 0) { throw "soak harness exit=$harnessExit" }
-        $resultPath = Get-ChildItem $soakDirectory -Filter result.json -Recurse | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1 -ExpandProperty FullName
-        if (-not $resultPath) { throw "soak result.json is absent" }
+        $resultPaths = @(Get-ChildItem $soakDirectory -Filter result.json -Recurse -File)
+        if ($resultPaths.Count -ne 1) {
+            throw "soak must produce exactly one result.json, found $($resultPaths.Count)"
+        }
+        $resultPath = $resultPaths[0].FullName
+        $resultPath = [IO.Path]::GetFullPath($resultPath)
+        if (-not $resultPath.StartsWith($validationPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "soak result.json is outside the current validation directory"
+        }
+        $resultRelativePath = Get-RelativeEvidencePath $resultPath
+        $resultJsonSha256 = Get-Sha256Hex $resultPath
+        $resultJson = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
         $artifactDirectory = Split-Path $resultPath -Parent
-        $assessment = Join-Path $validationDirectory "soak-2h.json"
-        & $python (Join-Path $sourceRoot "tools\analyze_stress_result.py") $artifactDirectory --output $assessment *> $soakStderr
+        & $python (Join-Path $sourceRoot "tools\analyze_stress_result.py") $artifactDirectory --output $analyzerAssessment *> $soakStderr
         $analysisExit = $LASTEXITCODE
-        $r = if (Test-Path $assessment) { Get-Content $assessment -Raw | ConvertFrom-Json } else { $null }
+        $r = if (Test-Path $analyzerAssessment) { Get-Content $analyzerAssessment -Raw | ConvertFrom-Json } else { $null }
+        $analyzerEvidenceHash = if (Test-Path $analyzerAssessment) { Get-Sha256Hex $analyzerAssessment } else { $null }
         $candidateHash = Get-Sha256Hex $PackageZip
+        $finishedAt = [DateTime]::UtcNow.ToString("o")
         if ($r) {
-            $r | Add-Member -NotePropertyName harness_run_id -NotePropertyValue $r.run_id -Force
-            $r.run_id = $runId
+            $analyzerSchema = $r.schema
+            $analyzerSchemaVersion = $r.schema_version
+            $analyzerTest = $r.test
+            $analyzerStatus = $r.status
+            $analyzerPassed = $r.passed
+            $analyzerRunId = [string]$r.run_id
+            $analyzerCandidateSha256 = [string]$r.candidate_sha256
+            $artifactRunId = Split-Path $artifactDirectory -Leaf
+            $relativeParts = @($resultRelativePath -split '[\\/]')
+            $canonicalPathPass = $relativeParts.Count -eq 5 -and
+                $relativeParts[0] -ceq "soak" -and
+                $relativeParts[1].Length -gt 0 -and
+                $relativeParts[2] -ceq "S20-FULL-CATALOG" -and
+                $relativeParts[3] -ceq $artifactRunId -and
+                $relativeParts[4] -ceq "result.json"
+            $resultStarted = ConvertTo-JsonTimestamp $resultJson.start_time_utc
+            $resultFinished = ConvertTo-JsonTimestamp $resultJson.end_time_utc
+            $gateStarted = ConvertTo-JsonTimestamp $startedAt
+            $gateFinished = ConvertTo-JsonTimestamp $finishedAt
+            $declaredDuration = ConvertTo-FiniteJsonNumber $resultJson.wall_clock_seconds
+            $elapsedDuration = if ($resultStarted -and $resultFinished) { ($resultFinished - $resultStarted).TotalSeconds } else { $null }
+            $timestampPass = $resultStarted -and $resultFinished -and $gateStarted -and $gateFinished -and
+                $resultFinished -ge $resultStarted -and $resultStarted -ge $gateStarted -and
+                $resultFinished -le $gateFinished -and $elapsedDuration -ge 7200.0 -and
+                $declaredDuration -ne $null -and [Math]::Abs($declaredDuration - $elapsedDuration) -le 2.0
+            $passed = (Test-ExactJsonInteger $analysisExit 0) -and
+                (Test-ExactJsonString $r.schema "omnipack-release-evidence") -and
+                (Test-ExactJsonInteger $r.schema_version 1) -and
+                (Test-ExactJsonString $r.test "soak_2h") -and
+                (Test-ExactJsonString $r.status "PASS") -and
+                (Test-ExactJsonBoolean $r.passed $true) -and
+                ($analyzerRunId -cmatch '^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$') -and
+                ($analyzerRunId -ceq $artifactRunId) -and
+                (Test-ExactJsonString $resultJson.run_id $artifactRunId) -and
+                (Test-ExactJsonInteger $resultJson.schema_version 1) -and
+                (Test-ExactJsonString $resultJson.sample_id "S20-FULL-CATALOG") -and
+                (Test-ExactJsonString $resultJson.source_commit $commitAtStart) -and
+                (Test-ExactJsonString $resultJson.public_zip_sha256 $candidateHash) -and
+                (Test-ExactJsonString $resultJson.exe_sha256 $candidateExecutableSha256) -and
+                ($resultJsonSha256 -ceq [string]$r.result_json_sha256) -and
+                ($candidateHash -ceq $currentCandidateSha256) -and
+                ($analyzerCandidateSha256 -ceq $candidateHash) -and
+                (Test-ExactJsonString $r.source_commit $commitAtStart) -and
+                (Test-ExactJsonBoolean $r.long_run_gate_pass $true) -and
+                (Test-ExactJsonBoolean $r.performance_gate_pass $true) -and
+                (Test-ExactJsonString $r.public_zip_sha256 $candidateHash) -and
+                $canonicalPathPass -and $timestampPass -and
+                (Test-ExactJsonBoolean $resultJson.long_run $true) -and
+                (Test-ExactJsonBoolean $resultJson.smoke_run $false) -and
+                (Test-ExactJsonInteger $candidateExecutables.Count 1) -and
+                ($candidateExecutableSha256 -ceq $buildExecutableSha256) -and
+                (Test-ExactJsonString $r.exe_sha256 $candidateExecutableSha256)
+            $soakStatus = if($passed){"PASS"}else{"FAIL"}
+            $soakMessage = if($passed){"7200-second wall-clock soak passed against current candidate ZIP"}else{"soak analyzer, release run, or artifact identity binding failed"}
+            # Preserve the analyzer-owned identity before binding this fresh
+            # result to the release run.  A failed release binding remains a
+            # self-consistent FAIL document; it must not leave a PASS raw
+            # document behind an aggregate FAIL gate.
+            $r | Add-Member -NotePropertyName analyzer_schema -NotePropertyValue $analyzerSchema -Force
+            $r | Add-Member -NotePropertyName analyzer_schema_version -NotePropertyValue $analyzerSchemaVersion -Force
+            $r | Add-Member -NotePropertyName analyzer_test -NotePropertyValue $analyzerTest -Force
+            $r | Add-Member -NotePropertyName analyzer_status -NotePropertyValue $analyzerStatus -Force
+            $r | Add-Member -NotePropertyName analyzer_passed -NotePropertyValue $analyzerPassed -Force
+            $r | Add-Member -NotePropertyName analyzer_evidence -NotePropertyValue (Get-RelativeEvidencePath $analyzerAssessment) -Force
+            $r | Add-Member -NotePropertyName analyzer_evidence_sha256 -NotePropertyValue $analyzerEvidenceHash -Force
+            $r | Add-Member -NotePropertyName analysis_exit_code -NotePropertyValue $analysisExit -Force
+            $r | Add-Member -NotePropertyName schema -NotePropertyValue "omnipack-release-evidence" -Force
+            $r | Add-Member -NotePropertyName schema_version -NotePropertyValue 1 -Force
+            $r | Add-Member -NotePropertyName test -NotePropertyValue "soak_2h" -Force
+            $r | Add-Member -NotePropertyName gate_name -NotePropertyValue "Soak2Hours" -Force
+            $r | Add-Member -NotePropertyName harness_run_id -NotePropertyValue $analyzerRunId -Force
+            $r | Add-Member -NotePropertyName artifact_run_id -NotePropertyValue $artifactRunId -Force
+            $r | Add-Member -NotePropertyName result_json -NotePropertyValue $resultRelativePath -Force
+            $r | Add-Member -NotePropertyName run_id -NotePropertyValue $runId -Force
             $r | Add-Member -NotePropertyName commit -NotePropertyValue $commitAtStart -Force
-            $r.candidate_sha256 = $candidateHash
+            $r | Add-Member -NotePropertyName gate_started_at -NotePropertyValue $startedAt -Force
+            $r | Add-Member -NotePropertyName gate_finished_at -NotePropertyValue $finishedAt -Force
+            $r | Add-Member -NotePropertyName candidate_sha256 -NotePropertyValue $currentCandidateSha256 -Force
+            $r | Add-Member -NotePropertyName analyzer_candidate_sha256 -NotePropertyValue $analyzerCandidateSha256 -Force
+            $r | Add-Member -NotePropertyName observed_candidate_sha256 -NotePropertyValue $candidateHash -Force
+            $r | Add-Member -NotePropertyName release_binding_passed -NotePropertyValue ([bool]$passed) -Force
+            $r | Add-Member -NotePropertyName status -NotePropertyValue $soakStatus -Force
+            $r | Add-Member -NotePropertyName passed -NotePropertyValue ([bool]$passed) -Force
+            $r | Add-Member -NotePropertyName release_binding_reason -NotePropertyValue $soakMessage -Force
             $r | Add-Member -NotePropertyName candidate_extracted_to_fresh_directory -NotePropertyValue $true -Force
             $r | Add-Member -NotePropertyName candidate_target_executable_count -NotePropertyValue $candidateExecutables.Count -Force
             $r | Add-Member -NotePropertyName executable_source -NotePropertyValue "candidate_zip" -Force
             $r | Add-Member -NotePropertyName candidate_executable_sha256 -NotePropertyValue $candidateExecutableSha256 -Force
             $r | Add-Member -NotePropertyName build_executable_sha256 -NotePropertyValue $buildExecutableSha256 -Force
             [IO.File]::WriteAllText($assessment, ($r | ConvertTo-Json -Depth 12) + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+        } else {
+            $passed = $false
+            $soakStatus = "FAIL"
+            $soakMessage = "soak analyzer did not produce readable JSON evidence"
+            Write-ResultJson $assessment ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test="soak_2h";gate_name="Soak2Hours";run_id=$runId;commit=$commitAtStart;candidate_sha256=$currentCandidateSha256;observed_candidate_sha256=$candidateHash;gate_started_at=$startedAt;gate_finished_at=$finishedAt;analysis_exit_code=$analysisExit;release_binding_passed=$false;passed=$false;status="FAIL";reason=$soakMessage})
         }
-        $passed = $analysisExit -eq 0 -and $r -and $r.schema -eq "omnipack-release-evidence" -and $r.schema_version -eq 1 -and $r.test -eq "soak_2h" -and $r.status -eq "PASS" -and $r.passed -eq $true -and $r.source_commit -eq $commitAtStart -and $r.long_run_gate_pass -eq $true -and $r.performance_gate_pass -eq $true -and $r.public_zip_sha256 -eq $candidateHash -and [double]$r.wall_clock_seconds -ge 7200.0 -and $r.candidate_extracted_to_fresh_directory -eq $true -and $r.candidate_target_executable_count -eq 1 -and $r.executable_source -eq "candidate_zip" -and $r.candidate_executable_sha256 -eq $candidateExecutableSha256 -and $r.build_executable_sha256 -eq $candidateExecutableSha256 -and $r.exe_sha256 -eq $candidateExecutableSha256
-        $soakStatus = if($passed){"PASS"}else{"FAIL"}
-        $soakMessage = if($passed){"7200-second wall-clock soak passed against current candidate ZIP"}else{"soak evidence failed or artifact SHA does not match current candidate"}
-        Set-Gate "Soak2Hours" $soakStatus $soakCommand $analysisExit $assessment $soakMessage $startedAt ([DateTime]::UtcNow.ToString("o"))
+        $gateExit = if ($passed) { 0 } elseif ($analysisExit -ne 0) { $analysisExit } else { 1 }
+        Set-Gate "Soak2Hours" $soakStatus $soakCommand $gateExit $assessment $soakMessage $startedAt $finishedAt
     } catch {
-        $evidence = Join-Path $validationDirectory "soak-2h.json"
-        Write-ResultJson $evidence ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test="soak_2h";run_id=$runId;commit=$commitAtStart;candidate_sha256=$currentCandidateSha256;passed=$false;status="FAIL";reason=$_.Exception.Message})
-        Set-Gate "Soak2Hours" "FAIL" $soakCommand -1 $evidence $_.Exception.Message $startedAt ([DateTime]::UtcNow.ToString("o"))
+        $finishedAt = [DateTime]::UtcNow.ToString("o")
+        Write-ResultJson $assessment ([ordered]@{schema="omnipack-release-evidence";schema_version=1;test="soak_2h";gate_name="Soak2Hours";run_id=$runId;commit=$commitAtStart;candidate_sha256=$currentCandidateSha256;gate_started_at=$startedAt;gate_finished_at=$finishedAt;analysis_exit_code=-1;release_binding_passed=$false;passed=$false;status="FAIL";reason=$_.Exception.Message})
+        Set-Gate "Soak2Hours" "FAIL" $soakCommand -1 $assessment $_.Exception.Message $startedAt $finishedAt
     } finally {
         if (Test-Path -LiteralPath $soakCandidateRoot) {
             Remove-Item -LiteralPath $soakCandidateRoot -Recurse -Force

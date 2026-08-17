@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from datetime import datetime
 import hashlib
 import json
 import math
@@ -37,6 +38,8 @@ REQUIRED_RESULT_FIELDS = {
     "roundtrip_pass",
     "long_run",
     "smoke_run",
+    "start_time_utc",
+    "end_time_utc",
     "wall_clock_seconds",
     "simulation_steps",
     "heartbeat_count",
@@ -171,6 +174,35 @@ def analyze(directory: Path) -> dict[str, Any]:
         raise ValueError(f"result.json lacks fields: {', '.join(missing)}")
     if not isinstance(result["long_run"], bool):
         raise ValueError("result.json long_run must be a boolean")
+    try:
+        started_at = datetime.fromisoformat(
+            str(result["start_time_utc"]).replace("Z", "+00:00")
+        )
+        finished_at = datetime.fromisoformat(
+            str(result["end_time_utc"]).replace("Z", "+00:00")
+        )
+    except (TypeError, ValueError) as exc:
+        raise ValueError("result.json execution timestamps are invalid") from exc
+    if (
+        started_at.tzinfo is None
+        or finished_at.tzinfo is None
+        or started_at.utcoffset() is None
+        or finished_at.utcoffset() is None
+        or finished_at < started_at
+    ):
+        raise ValueError("result.json execution timestamps are invalid")
+    elapsed_seconds = (finished_at - started_at).total_seconds()
+    if (
+        not isinstance(result["wall_clock_seconds"], (int, float))
+        or isinstance(result["wall_clock_seconds"], bool)
+    ):
+        raise ValueError("result.json wall_clock_seconds is invalid")
+    try:
+        declared_wall_clock = float(result["wall_clock_seconds"])
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("result.json wall_clock_seconds is invalid") from exc
+    if not math.isfinite(declared_wall_clock) or abs(declared_wall_clock - elapsed_seconds) > 2.0:
+        raise ValueError("result.json wall_clock_seconds does not match execution timestamps")
     frames = read_numeric_series(
         frame_path,
         ("elapsed_seconds", "frames", "particles"),
@@ -479,6 +511,8 @@ def analyze(directory: Path) -> dict[str, Any]:
         "assessment_status": "PASS",
         "sample_id": result["sample_id"],
         "run_id": result["run_id"],
+        "start_time_utc": result["start_time_utc"],
+        "end_time_utc": result["end_time_utc"],
         "source_commit": result["source_commit"],
         "public_zip_sha256": result["public_zip_sha256"],
         "candidate_sha256": result["public_zip_sha256"],

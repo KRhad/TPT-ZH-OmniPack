@@ -66,11 +66,20 @@ class StressHarnessContractTest(unittest.TestCase):
 
     def test_runtime_isolated_and_secrets_removed(self) -> None:
         self.assertIn('$startInfo.Arguments = \'"ddir" "\' + $testRoot + \'"\'', self.powershell)
+        self.assertIn("$startInfo.RedirectStandardOutput = $true", self.powershell)
+        self.assertIn("$startInfo.RedirectStandardError = $true", self.powershell)
+        self.assertIn("ReadToEndAsync()", self.powershell)
+        self.assertIn('process.stdout.txt', self.powershell)
+        self.assertIn('process.stderr.txt', self.powershell)
+        self.assertIn("@($startInfo.Environment.Keys)", self.powershell)
+        self.assertIn(
+            "(?i)(TOKEN|SECRET|PASSWORD|PASSWD|API[_-]?KEY|PAT)$",
+            self.powershell,
+        )
+        self.assertIn("$startInfo.Environment.Remove($environmentName)", self.powershell)
         self.assertNotIn('$startInfo.ArgumentList.Add', self.powershell)
         self.assertNotIn("SHA256]::HashData", self.powershell)
         self.assertNotIn("[Convert]::ToHexString", self.powershell)
-        for name in ("GITHUB_PAT_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"):
-            self.assertIn(name, self.powershell)
         self.assertIn('(Join-Path $testRoot "powder.pref")', self.powershell)
         self.assertIn('"{}" + [Environment]::NewLine', self.powershell)
         self.assertNotIn("AppData", self.powershell)
@@ -107,9 +116,33 @@ class StressHarnessContractTest(unittest.TestCase):
         self.assertIn("RefreshOmniContentSettings()", self.lua_simulation)
         self.assertIn("Localization::Ref().SetLanguageIndex", self.lua_simulation)
 
+    def test_recovery_markers_clear_exact_occupied_pixels_and_rebase_count(self) -> None:
+        self.assertIn('while type(occupant) == "number" do', self.lua)
+        self.assertIn("sim.partKill(occupant)", self.lua)
+        self.assertIn("local cleared_particle_count = 0", self.lua)
+        self.assertIn(
+            "local recovery_marker_baseline = create_recovery_markers()", self.lua
+        )
+        self.assertIn(
+            "local expected_recovered_particles = recovery_marker_baseline + #recovery_markers",
+            self.lua,
+        )
+
     def test_long_run_activates_and_samples_real_omni_atmosphere(self) -> None:
         self.assertIn("sim.omniSimulationMode(sim.OMNI_ENHANCED)", self.lua)
         self.assertIn("formal long run did not activate OmniAtmosphere", self.lua)
+        self.assertIn(
+            '"OmniAtmosphere state was invalid before checkpoint save"', self.lua
+        )
+        timed_save = self.lua.split("local function timed_save()", 1)[1].split(
+            "local function timed_load", 1
+        )[0]
+        self.assertLess(
+            timed_save.index("sim.omniAtmosphere()"),
+            timed_save.index("sim.saveStamp("),
+        )
+        self.assertIn("atmosphere.non_finite_cells == 0", timed_save)
+        self.assertIn("atmosphere.state_non_finite_cells == 0", timed_save)
         self.assertIn("sim.omniAtmosphere()", self.lua)
         self.assertIn("ATMOSPHERE_HEARTBEAT_SECONDS = 30.0", self.lua)
         self.assertIn("soak-heartbeat.csv", self.lua)

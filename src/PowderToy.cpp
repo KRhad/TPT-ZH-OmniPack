@@ -542,6 +542,11 @@ int RunPortableRuntimeValidation(const char *jsonPath, const char *runId,
 		{
 			throw std::runtime_error("initial_state_non_finite");
 		}
+		// Validate the raw post-step state above before applying the bounded
+		// serialization-boundary repair used by the actual save operation.
+		if (simulation->IsOmniAtmosphereActive() && simulation->omniAtmosphere &&
+			!simulation->omniAtmosphere->EnsureSerializableState())
+			throw std::runtime_error("initial_state_not_serializable");
 		auto saved = simulation->Save(true, RES.OriginRect());
 		if (!saved || !saved->hasOmniAtmosphereState || !saved->hasOmniWaterParcelState ||
 			saved->omniSimulationMode != OMNI_ENHANCED ||
@@ -611,6 +616,9 @@ int RunPortableRuntimeValidation(const char *jsonPath, const char *runId,
 		{
 			throw std::runtime_error("post_step_state_invalid");
 		}
+		if (reloaded->IsOmniAtmosphereActive() && reloaded->omniAtmosphere &&
+			!reloaded->omniAtmosphere->EnsureSerializableState())
+			throw std::runtime_error("post_step_state_not_serializable");
 		auto postStepSaved = reloaded->Save(true, RES.OriginRect());
 		if (!postStepSaved || postStepSaved->particlesCount != evidence.postStepParticleCount ||
 			!PortableGameSaveStateValid(*postStepSaved))

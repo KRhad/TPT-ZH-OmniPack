@@ -381,6 +381,20 @@ local recovery_markers = {
 }
 
 local function create_recovery_markers()
+    -- Dense/long-running scenarios can drift an unrelated particle onto a
+    -- marker coordinate. Clear only the five exact test pixels, then bind the
+    -- expected round-trip count to the post-clear baseline.
+    for _, marker in ipairs(recovery_markers) do
+        local occupant = sim.partID(marker.x, marker.y)
+        while type(occupant) == "number" do
+            sim.partKill(occupant)
+            occupant = sim.partID(marker.x, marker.y)
+        end
+    end
+    local cleared_particle_count = 0
+    for _ in sim.parts() do
+        cleared_particle_count = cleared_particle_count + 1
+    end
     for _, marker in ipairs(recovery_markers) do
         local particle = assert(make(
             marker.particle_type, marker.x, marker.y, marker.properties),
@@ -388,6 +402,7 @@ local function create_recovery_markers()
         assert(sim.partID(marker.x, marker.y) == particle,
             "recovery marker is not addressable: " .. marker.name)
     end
+    return cleared_particle_count
 end
 
 local function verify_recovery_markers()
@@ -784,6 +799,15 @@ local function particle_count()
 end
 
 local function timed_save()
+    -- Observe the authoritative state before saveStamp reaches the explicit
+    -- serialization-boundary canonicalizer.  A checkpoint must never turn an
+    -- invalid post-step state into an apparently healthy later heartbeat.
+    local atmosphere = sim.omniAtmosphere()
+    if atmosphere.available and atmosphere.active then
+        assert(atmosphere.non_finite_cells == 0
+            and atmosphere.state_non_finite_cells == 0,
+            "OmniAtmosphere state was invalid before checkpoint save")
+    end
     local started = socket.getTime()
     local stamp = sim.saveStamp(0, 0, sim.XRES - 1, sim.YRES - 1, 1)
     local elapsed_ms = (socket.getTime() - started) * 1000.0
@@ -1158,8 +1182,8 @@ local function finish_sample(now)
             "formal long run observed non-finite diagnostics")
     end
 
-    create_recovery_markers()
-    local expected_recovered_particles = final_before_save + #recovery_markers
+    local recovery_marker_baseline = create_recovery_markers()
+    local expected_recovered_particles = recovery_marker_baseline + #recovery_markers
     local second_stamp, save_time_second_ms = timed_save()
     local load_time_second_ms = timed_load(second_stamp)
     local after_second_load = particle_count()

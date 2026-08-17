@@ -317,20 +317,31 @@ try {
     $startInfo.WorkingDirectory = $testRoot
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
     # Windows PowerShell 5.1 runs on .NET Framework, where ArgumentList is not
     # available. The stress path is locally generated and cannot contain a
     # literal quote, so a quoted Arguments string is deterministic here.
     if ($testRoot.Contains('"')) { throw "Stress directory contains an unsafe quote" }
     $startInfo.Arguments = '"ddir" "' + $testRoot + '"'
-    foreach ($secretName in @("GITHUB_PAT_TOKEN", "GITHUB_TOKEN", "GH_TOKEN")) {
-        [void]$startInfo.Environment.Remove($secretName)
+    foreach ($environmentName in @($startInfo.Environment.Keys)) {
+        if ($environmentName -match '(?i)(TOKEN|SECRET|PASSWORD|PASSWD|API[_-]?KEY|PAT)$') {
+            [void]$startInfo.Environment.Remove($environmentName)
+        }
     }
 
     $startedAt = [DateTime]::UtcNow
+    $stdoutPath = Join-Path $testRoot "process.stdout.txt"
+    $stderrPath = Join-Path $testRoot "process.stderr.txt"
     $process = [System.Diagnostics.Process]::Start($startInfo)
     if (-not $process) {
         throw "Failed to start the stress client"
     }
+    # Drain both pipes while the client runs. Waiting until exit would let a
+    # verbose native diagnostic fill a Windows pipe and deadlock the stress
+    # loop; the tasks also preserve the first native serialization failure.
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
     $cpuSeries = [System.Collections.Generic.List[object]]::new()
     $peakWorkingSet = [int64]0
     $peakPrivateBytes = [int64]0
@@ -450,8 +461,12 @@ try {
     }
     $artifactDirectory = Join-Path $artifactBase (Join-Path $machineId (Join-Path $SampleId $runId))
     New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
+    [IO.File]::WriteAllText($stdoutPath, $stdoutTask.Result, [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($stderrPath, $stderrTask.Result, [Text.UTF8Encoding]::new($false))
     Copy-Item -LiteralPath $resultPath -Destination (Join-Path $artifactDirectory "stress-lua.result")
     Copy-Item -LiteralPath (Join-Path $testRoot "frame-series.csv") -Destination (Join-Path $artifactDirectory "frame-series.csv")
+    Copy-Item -LiteralPath $stdoutPath -Destination (Join-Path $artifactDirectory "process.stdout.txt")
+    Copy-Item -LiteralPath $stderrPath -Destination (Join-Path $artifactDirectory "process.stderr.txt")
     if ($LongRun) {
         if (-not (Test-Path -LiteralPath $heartbeatPath -PathType Leaf)) {
             throw "Formal long run did not produce soak-heartbeat.csv"
@@ -575,6 +590,24 @@ try {
     Write-Output "result_json=$jsonPath"
 }
 finally {
+    if ($process) {
+        try {
+            if (-not $process.HasExited) {
+                $process.Kill()
+                $process.WaitForExit()
+            }
+            if ($stdoutTask) {
+                [IO.File]::WriteAllText($stdoutPath, $stdoutTask.Result, [Text.UTF8Encoding]::new($false))
+            }
+            if ($stderrTask) {
+                [IO.File]::WriteAllText($stderrPath, $stderrTask.Result, [Text.UTF8Encoding]::new($false))
+            }
+        }
+        catch {
+            # Preserve the original harness/client failure; stream capture is
+            # diagnostic evidence and must not replace its exit reason.
+        }
+    }
     if ($completed -and -not $KeepArtifacts -and (Test-Path -LiteralPath $testRoot)) {
         Remove-Item -LiteralPath $testRoot -Recurse -Force
     }
