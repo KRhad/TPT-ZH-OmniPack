@@ -267,20 +267,20 @@ void GameController::Install()
 {
 	if constexpr (CAN_INSTALL)
 	{
-		new ConfirmPrompt("Install " + String(APPNAME), "Do you wish to install " + String(APPNAME) + " on this computer?\nThis allows you to open save files and saves directly from the website.", { [] {
+		new ConfirmPrompt("安装 " + String(APPNAME), "是否要在此电脑上安装 " + String(APPNAME) + "？\n安装后可直接打开本地存档文件和网站中的存档。", { [] {
 			if (Platform::Install())
 			{
-				new InformationMessage("Success", "Installation completed", false);
+				new InformationMessage("成功", "安装完成", false);
 			}
 			else
 			{
-				new ErrorMessage("Could not install", "The installation did not complete due to an error");
+				new ErrorMessage("无法安装", "由于错误，安装未完成");
 			}
 		} });
 	}
 	else
 	{
-		new InformationMessage("No installation necessary", "You don't need to install " + String(APPNAME) + " on this platform", false);
+		new InformationMessage("无需安装", "此平台无需安装 " + String(APPNAME) + "。", false);
 	}
 }
 
@@ -481,12 +481,12 @@ ByteString GameController::StampRegion(ui::Point point1, ui::Point point2, bool 
 		newSave->paused = gameModel->GetPaused();
 		ByteString stampName = Client::Ref().AddStamp(std::move(newSave));
 		if (stampName.length() == 0)
-			new ErrorMessage("Could not create stamp", "Error serializing save file");
+			new ErrorMessage("无法创建图章", "序列化存档文件失败");
 		return stampName;
 	}
 	else
 	{
-		new ErrorMessage("Could not create stamp", "Error generating save file");
+		new ErrorMessage("无法创建图章", "生成存档文件失败");
 		return "";
 	}
 }
@@ -826,16 +826,16 @@ void GameController::SwitchGravity()
 	switch (gameModel->GetSimulation()->gravityMode)
 	{
 	case GRAV_VERTICAL:
-		gameModel->SetInfoTip("Gravity: Vertical");
+		gameModel->SetInfoTip("重力：垂直");
 		break;
 	case GRAV_OFF:
-		gameModel->SetInfoTip("Gravity: Off");
+		gameModel->SetInfoTip("重力：关闭");
 		break;
 	case GRAV_RADIAL:
-		gameModel->SetInfoTip("Gravity: Radial");
+		gameModel->SetInfoTip("重力：径向");
 		break;
 	case GRAV_CUSTOM:
-		gameModel->SetInfoTip("Gravity: Custom");
+		gameModel->SetInfoTip("重力：自定义");
 		break;
 	}
 }
@@ -847,19 +847,19 @@ void GameController::SwitchAir()
 	switch (gameModel->GetSimulation()->air->airMode)
 	{
 	case AIR_ON:
-		gameModel->SetInfoTip("Air: On");
+		gameModel->SetInfoTip("空气：开启");
 		break;
 	case AIR_PRESSUREOFF:
-		gameModel->SetInfoTip("Air: Pressure Off");
+		gameModel->SetInfoTip("空气：压力关闭");
 		break;
 	case AIR_VELOCITYOFF:
-		gameModel->SetInfoTip("Air: Velocity Off");
+		gameModel->SetInfoTip("空气：速度关闭");
 		break;
 	case AIR_OFF:
-		gameModel->SetInfoTip("Air: Off");
+		gameModel->SetInfoTip("空气：关闭");
 		break;
 	case AIR_NOUPDATE:
-		gameModel->SetInfoTip("Air: No Update");
+		gameModel->SetInfoTip("空气：停止更新");
 		break;
 	}
 }
@@ -1097,13 +1097,13 @@ void GameController::SetEdgeMode(int edgeMode)
 	switch (edgeMode)
 	{
 		case EDGE_VOID:
-			gameModel->SetInfoTip("Edge Mode: Void");
+			gameModel->SetInfoTip("边缘模式：虚空");
 			break;
 		case EDGE_SOLID:
-			gameModel->SetInfoTip("Edge Mode: Solid");
+			gameModel->SetInfoTip("边缘模式：实心");
 			break;
 		case EDGE_LOOP:
-			gameModel->SetInfoTip("Edge Mode: Loop");
+			gameModel->SetInfoTip("边缘模式：循环");
 			break;
 	}
 }
@@ -1235,7 +1235,7 @@ void GameController::OpenSearch(String searchText)
 				}
 				catch(GameModelException & ex)
 				{
-					new ErrorMessage("Cannot open save", ByteString(ex.what()).FromUtf8());
+					new ErrorMessage("无法打开存档", ByteString(ex.what()).FromUtf8());
 				}
 			}
 		});
@@ -1250,7 +1250,7 @@ void GameController::OpenLocalSaveWindow(bool asCurrent)
 	auto gameSave = sim->Save(gameModel->GetIncludePressure() != gameView->ShiftBehaviour(), RES.OriginRect());
 	if(!gameSave)
 	{
-		new ErrorMessage("Error", "Unable to build save.");
+		new ErrorMessage("错误", "无法生成存档。");
 	}
 	else
 	{
@@ -1287,11 +1287,11 @@ void GameController::OpenLocalSaveWindow(bool asCurrent)
 			tempSave->SetGameSave(std::move(gameSave));
 			gameModel->SetSaveFile(std::move(tempSave), gameView->ShiftBehaviour());
 			if (saveData.size() == 0)
-				new ErrorMessage("Error", "Unable to serialize game data.");
+				new ErrorMessage("错误", "无法序列化游戏数据。");
 			else if (!Platform::WriteFile(saveData, gameModel->GetSaveFile()->GetName()))
-				new ErrorMessage("Error", "Unable to write save file.");
+				new ErrorMessage("错误", "无法写入存档文件。");
 			else
-				gameModel->SetInfoTip("Saved Successfully");
+				gameModel->SetInfoTip("保存成功");
 		}
 	}
 }
@@ -1318,7 +1318,7 @@ void GameController::OpenSaveDone()
 		}
 		catch(GameModelException & ex)
 		{
-			new ErrorMessage("Cannot open save", ByteString(ex.what()).FromUtf8());
+			new ErrorMessage("无法打开存档", ByteString(ex.what()).FromUtf8());
 		}
 	}
 }
@@ -1401,7 +1401,7 @@ void GameController::OpenTags()
 	}
 	else
 	{
-		new ErrorMessage("Error", "No save open");
+		new ErrorMessage("错误", "未打开存档");
 	}
 }
 
@@ -1412,7 +1412,7 @@ void GameController::OpenStamps()
 		if (file)
 		{
 			if (file->GetError().length())
-				new ErrorMessage("Error loading stamp", file->GetError());
+				new ErrorMessage("加载图章失败", file->GetError());
 			else if (localBrowser->GetMoveToFront())
 				Client::Ref().MoveStampToFront(file->GetDisplayName().ToUtf8());
 			LoadStamp(file->TakeGameSave());
@@ -1460,7 +1460,7 @@ void GameController::OpenSaveWindow()
 		auto gameSave = sim->Save(gameModel->GetIncludePressure() != gameView->ShiftBehaviour(), RES.OriginRect());
 		if(!gameSave)
 		{
-			new ErrorMessage("Error", "Unable to build save.");
+			new ErrorMessage("错误", "无法生成存档。");
 		}
 		else
 		{
@@ -1490,7 +1490,7 @@ void GameController::OpenSaveWindow()
 	}
 	else
 	{
-		new ErrorMessage("Error", "You need to login to upload saves.");
+		new ErrorMessage("错误", "请先登录再上传存档。");
 	}
 }
 
@@ -1503,7 +1503,7 @@ void GameController::SaveAsCurrent()
 		auto gameSave = sim->Save(gameModel->GetIncludePressure() != gameView->ShiftBehaviour(), RES.OriginRect());
 		if(!gameSave)
 		{
-			new ErrorMessage("Error", "Unable to build save.");
+			new ErrorMessage("错误", "无法生成存档。");
 		}
 		else
 		{
@@ -1529,7 +1529,7 @@ void GameController::SaveAsCurrent()
 	}
 	else
 	{
-		new ErrorMessage("Error", "You need to login to upload saves.");
+		new ErrorMessage("错误", "请先登录再上传存档。");
 	}
 }
 
@@ -1650,62 +1650,62 @@ void GameController::NotifyUpdateAvailable(Client * sender)
 			auto optinfo = Client::Ref().GetUpdateInfo();
 			if (!optinfo.has_value())
 			{
-				std::cerr << "odd, the update has disappeared" << std::endl;
+				std::cerr << "更新信息已失效" << std::endl;
 				return;
 			}
 			UpdateInfo info = optinfo.value();
 			StringBuilder updateMessage;
 			if (Platform::CanUpdate())
 			{
-				updateMessage << "Are you sure you want to run the updater? Please save any changes before updating.\n\nCurrent version:\n ";
+				updateMessage << "您确定要运行更新程序吗？请在更新前保存所有更改。\n\n当前版本：\n ";
 			}
 			else
 			{
-				updateMessage << "Click \"Continue\" to download the latest version from our website.\n\nCurrent version:\n ";
+				updateMessage << "点击\"继续\"从我们的网站下载最新版本。\n\n当前版本：\n ";
 			}
 
 			if constexpr (MOD)
 			{
-				updateMessage << "Mod " << MOD_ID << " ";
+				updateMessage << "模组 " << MOD_ID << " ";
 			}
 			if constexpr (SNAPSHOT)
 			{
-				updateMessage << "Snapshot " << APP_VERSION.build;
+				updateMessage << "快照版 " << APP_VERSION.build;
 			}
 			else if constexpr (BETA)
 			{
-				updateMessage << DISPLAY_VERSION[0] << "." << DISPLAY_VERSION[1] << " Beta, Build " << APP_VERSION.build;
+				updateMessage << DISPLAY_VERSION[0] << "." << DISPLAY_VERSION[1] << " 测试版，构建 " << APP_VERSION.build;
 			}
 			else
 			{
-				updateMessage << DISPLAY_VERSION[0] << "." << DISPLAY_VERSION[1] << " Stable, Build " << APP_VERSION.build;
+				updateMessage << DISPLAY_VERSION[0] << "." << DISPLAY_VERSION[1] << " 稳定，构建 " << APP_VERSION.build;
 			}
 
-			updateMessage << "\nNew version:\n ";
+			updateMessage << "\n新版本：\n ";
 			if (info.channel == UpdateInfo::channelBeta)
 			{
-				updateMessage << info.major << "." << info.minor << " Beta, Build " << info.build;
+				updateMessage << info.major << "." << info.minor << " 测试版，构建 " << info.build;
 			}
 			else if (info.channel == UpdateInfo::channelSnapshot)
 			{
 				if constexpr (MOD)
 				{
-					updateMessage << "Mod version " << info.build;
+					updateMessage << "模组版本 " << info.build;
 				}
 				else
 				{
-					updateMessage << "Snapshot " << info.build;
+					updateMessage << "快照版 " << info.build;
 				}
 			}
 			else if(info.channel == UpdateInfo::channelStable)
 			{
-				updateMessage << info.major << "." << info.minor << " Stable, Build " << info.build;
+				updateMessage << info.major << "." << info.minor << " 稳定，构建 " << info.build;
 			}
 
 			if (info.changeLog.length())
-				updateMessage << "\n\nChangelog:\n" << info.changeLog;
+				updateMessage << "\n\n更改日志：\n" << info.changeLog;
 
-			new ConfirmPrompt("Run Updater", updateMessage.Build(), { [this, info] { c->RunUpdater(info); } });
+			new ConfirmPrompt("运行更新程序", updateMessage.Build(), { [this, info] { c->RunUpdater(info); } });
 		}
 	};
 
@@ -1719,18 +1719,18 @@ void GameController::NotifyUpdateAvailable(Client * sender)
 		case UpdateInfo::channelSnapshot:
 			if constexpr (MOD)
 			{
-				gameModel->AddNotification(new UpdateNotification(this, "A new mod update is available - click here to update"));
+				gameModel->AddNotification(new UpdateNotification(this, "有新的模组更新可用 - 单击此处进行更新"));
 			}
 			else
 			{
-				gameModel->AddNotification(new UpdateNotification(this, "A new snapshot is available - click here to update"));
+				gameModel->AddNotification(new UpdateNotification(this, "有新的快照可用 - 单击此处更新"));
 			}
 			break;
 		case UpdateInfo::channelStable:
-			gameModel->AddNotification(new UpdateNotification(this, "A new version is available - click here to update"));
+			gameModel->AddNotification(new UpdateNotification(this, "有新版本可用 - 单击此处更新"));
 			break;
 		case UpdateInfo::channelBeta:
-			gameModel->AddNotification(new UpdateNotification(this, "A new beta is available - click here to update"));
+			gameModel->AddNotification(new UpdateNotification(this, "新的测试版已推出 - 单击此处进行更新"));
 			break;
 	}
 }

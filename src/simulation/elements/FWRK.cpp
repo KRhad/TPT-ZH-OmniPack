@@ -30,7 +30,7 @@ void Element::Element_FWRK()
 	Weight = 97;
 
 	HeatConduct = 100;
-	Description = "Original version of fireworks, activated by heat/neutrons.";
+	Description = "烟花的原始版本，由热/中子激活。";
 
 	Properties = TYPE_PART|PROP_LIFE_DEC;
 	CarriesTypeIn = 1U << FIELD_CTYPE;

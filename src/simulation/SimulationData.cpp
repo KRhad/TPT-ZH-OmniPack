@@ -51,25 +51,25 @@ static std::vector<wall_type> LoadWalls()
 {
 	return
 	std::vector<wall_type>{
-		{0x808080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("ERASE"),           "DEFAULT_WL_ERASE",  String("Erases walls.")},
-		{0xC0C0C0_rgb, 0x101010_rgb, 0, Renderer::WallIcon, String("CONDUCTIVE WALL"), "DEFAULT_WL_CNDTW",  String("Blocks everything. Conductive.")},
-		{0x808080_rgb, 0x808080_rgb, 0, Renderer::WallIcon, String("EWALL"),           "DEFAULT_WL_EWALL",  String("E-Wall. Becomes transparent when electricity is connected.")},
-		{0xFF8080_rgb, 0xFF2008_rgb, 1, Renderer::WallIcon, String("DETECTOR"),        "DEFAULT_WL_DTECT",  String("Detector. Generates electricity when a particle is inside.")},
-		{0x808080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("STREAMLINE"),      "DEFAULT_WL_STRM",   String("Streamline. Creates a line that follows air movement.")},
-		{0x8080FF_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("FAN"),             "DEFAULT_WL_FAN",    String("Fan. Accelerates air. Use the line tool to set direction and strength.")},
-		{0xC0C0C0_rgb, 0x101010_rgb, 2, Renderer::WallIcon, String("LIQUID WALL"),     "DEFAULT_WL_LIQD",   String("Allows liquids, blocks all other particles. Conductive.")},
-		{0x808080_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("ABSORB WALL"),     "DEFAULT_WL_ABSRB",  String("Absorbs particles but lets air currents through.")},
-		{0x808080_rgb, 0x000000_rgb, 3, Renderer::WallIcon, String("WALL"),            "DEFAULT_WL_WALL",   String("Basic wall, blocks everything.")},
-		{0x3C3C3C_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("AIRONLY WALL"),    "DEFAULT_WL_AIR",    String("Allows air, but blocks all particles.")},
-		{0x575757_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("POWDER WALL"),     "DEFAULT_WL_POWDR",  String("Allows powders, blocks all other particles.")},
-		{0xFFFF22_rgb, 0x101010_rgb, 2, Renderer::WallIcon, String("CONDUCTOR"),       "DEFAULT_WL_CNDTR",  String("Conductor. Allows all particles to pass through and conducts electricity.")},
-		{0x242424_rgb, 0x101010_rgb, 0, Renderer::WallIcon, String("EHOLE"),           "DEFAULT_WL_EHOLE",  String("E-Hole. absorbs particles, releases them when powered.")},
-		{0x579777_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("GAS WALL"),        "DEFAULT_WL_GAS",    String("Allows gases, blocks all other particles.")},
-		{0xFFEE00_rgb, 0xAA9900_rgb, 4, Renderer::WallIcon, String("GRAVITY WALL"),    "DEFAULT_WL_GRVTY",  String("Gravity wall. Newtonian Gravity has no effect inside a box drawn with this.")},
-		{0xFFAA00_rgb, 0xAA5500_rgb, 4, Renderer::WallIcon, String("ENERGY WALL"),     "DEFAULT_WL_ENRGY",  String("Allows energy particles, blocks all other particles.")},
-		{0xDCDCDC_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("AIRBLOCK WALL"),   "DEFAULT_WL_NOAIR",  String("Allows all particles, but blocks air.")},
-		{0x808080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("ERASEALL"),        "DEFAULT_WL_ERASEA", String("Erases walls, particles, and signs.")},
-		{0x800080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("STASIS WALL"),     "DEFAULT_WL_STASIS", String("Freezes particles inside the wall in place until powered.")},
+		{0x808080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("ERASE"),           "DEFAULT_WL_ERASE",  String("擦除墙体。")},
+		{0xC0C0C0_rgb, 0x101010_rgb, 0, Renderer::WallIcon, String("CONDUCTIVE WALL"), "DEFAULT_WL_CNDTW",  String("阻挡所有物质，并可导电。")},
+		{0x808080_rgb, 0x808080_rgb, 0, Renderer::WallIcon, String("EWALL"),           "DEFAULT_WL_EWALL",  String("电子墙。通电时允许粒子通过。")},
+		{0xFF8080_rgb, 0xFF2008_rgb, 1, Renderer::WallIcon, String("DETECTOR"),        "DEFAULT_WL_DTECT",  String("探测墙。内部出现粒子时产生电流。")},
+		{0x808080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("STREAMLINE"),      "DEFAULT_WL_STRM",   String("流线。绘制一条跟随空气运动的轨迹。")},
+		{0x8080FF_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("FAN"),             "DEFAULT_WL_FAN",    String("风扇。推动空气；用直线工具设置方向和强度。")},
+		{0xC0C0C0_rgb, 0x101010_rgb, 2, Renderer::WallIcon, String("LIQUID WALL"),     "DEFAULT_WL_LIQD",   String("仅允许液体通过，并可导电。")},
+		{0x808080_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("ABSORB WALL"),     "DEFAULT_WL_ABSRB",  String("吸收粒子，但允许气流通过。")},
+		{0x808080_rgb, 0x000000_rgb, 3, Renderer::WallIcon, String("WALL"),            "DEFAULT_WL_WALL",   String("基础墙体，阻挡所有物质。")},
+		{0x3C3C3C_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("AIRONLY WALL"),    "DEFAULT_WL_AIR",    String("允许空气通过，但阻挡所有粒子。")},
+		{0x575757_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("POWDER WALL"),     "DEFAULT_WL_POWDR",  String("仅允许粉末通过。")},
+		{0xFFFF22_rgb, 0x101010_rgb, 2, Renderer::WallIcon, String("CONDUCTOR"),       "DEFAULT_WL_CNDTR",  String("导电墙。允许所有粒子通过，并可导电。")},
+		{0x242424_rgb, 0x101010_rgb, 0, Renderer::WallIcon, String("EHOLE"),           "DEFAULT_WL_EHOLE",  String("电子洞。吸收粒子，通电时将其释放。")},
+		{0x579777_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("GAS WALL"),        "DEFAULT_WL_GAS",    String("仅允许气体通过。")},
+		{0xFFEE00_rgb, 0xAA9900_rgb, 4, Renderer::WallIcon, String("GRAVITY WALL"),    "DEFAULT_WL_GRVTY",  String("重力墙。由它围成的区域不受牛顿引力影响。")},
+		{0xFFAA00_rgb, 0xAA5500_rgb, 4, Renderer::WallIcon, String("ENERGY WALL"),     "DEFAULT_WL_ENRGY",  String("仅允许能量粒子通过。")},
+		{0xDCDCDC_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("AIRBLOCK WALL"),   "DEFAULT_WL_NOAIR",  String("允许所有粒子通过，但阻挡空气。")},
+		{0x808080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("ERASEALL"),        "DEFAULT_WL_ERASEA", String("擦除墙体、粒子和标牌。")},
+		{0x800080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("STASIS WALL"),     "DEFAULT_WL_STASIS", String("固定墙内的粒子；通电时解除固定。")},
 	};
 }
 
@@ -77,22 +77,22 @@ static std::vector<menu_section> LoadMenus()
 {
 	return
 	std::vector<menu_section>{
-		{0xE041, String("Walls"), 0, 1},
-		{0xE042, String("Electronics"), 0, 1},
-		{0xE056, String("Powered Materials"), 0, 1},
-		{0xE019, String("Sensors"), 0, 1},
-		{0xE062, String("Force"), 0, 1},
-		{0xE043, String("Explosives"), 0, 1},
-		{0xE045, String("Gases"), 0, 1},
-		{0xE044, String("Liquids"), 0, 1},
-		{0xE050, String("Powders"), 0, 1},
-		{0xE051, String("Solids"), 0, 1},
-		{0xE046, String("Radioactive"), 0, 1},
-		{0xE04C, String("Special"), 0, 1},
-		{0xE052, String("Game Of Life"), 0, 1},
-		{0xE057, String("Tools"), 0, 1},
-		{0xE067, String("Favorites"), 0, 1},
-		{0xE064, String("Decoration tools"), 0, 1},
+		{0xE041, String("墙体"), 0, 1},
+		{0xE042, String("电子"), 0, 1},
+		{0xE056, String("可控材料"), 0, 1},
+		{0xE019, String("传感器"), 0, 1},
+		{0xE062, String("力"), 0, 1},
+		{0xE043, String("爆炸物"), 0, 1},
+		{0xE045, String("气体"), 0, 1},
+		{0xE044, String("液体"), 0, 1},
+		{0xE050, String("粉末"), 0, 1},
+		{0xE051, String("固体"), 0, 1},
+		{0xE046, String("核能"), 0, 1},
+		{0xE04C, String("特殊"), 0, 1},
+		{0xE052, String("生命游戏"), 0, 1},
+		{0xE057, String("工具"), 0, 1},
+		{0xE067, String("收藏"), 0, 1},
+		{0xE064, String("装饰工具"), 0, 1},
 	};
 }
 
@@ -269,7 +269,7 @@ String SimulationData::ElementResolve(int type, int ctype) const
 	}
 	else if (type >= 0 && type < PT_NUM)
 		return elements[type].Name;
-	return "Empty";
+	return "空";
 }
 
 String SimulationData::BasicParticleInfo(Particle const &sample_part) const
@@ -280,17 +280,17 @@ String SimulationData::BasicParticleInfo(Particle const &sample_part) const
 	int storedCtype = sample_part.tmp4;
 	if (type == PT_LAVA && IsElement(ctype))
 	{
-		sampleInfo << "Molten " << ElementResolve(ctype, -1);
+		sampleInfo << "熔融" << ElementResolve(ctype, -1);
 	}
 	else if ((type == PT_PIPE || type == PT_PPIP) && IsElement(ctype))
 	{
 		if (ctype == PT_LAVA && IsElement(storedCtype))
 		{
-			sampleInfo << ElementResolve(type, -1) << " with molten " << ElementResolve(storedCtype, -1);
+			sampleInfo << ElementResolve(type, -1) << "，内含熔融" << ElementResolve(storedCtype, -1);
 		}
 		else
 		{
-			sampleInfo << ElementResolve(type, -1) << " with " << ElementResolve(ctype, storedCtype);
+			sampleInfo << ElementResolve(type, -1) << "，内含 " << ElementResolve(ctype, storedCtype);
 		}
 	}
 	else

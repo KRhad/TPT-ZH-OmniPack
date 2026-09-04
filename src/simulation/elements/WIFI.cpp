@@ -30,7 +30,7 @@ void Element::Element_WIFI()
 	Weight = 100;
 
 	HeatConduct = 0;
-	Description = "Wireless transmitter, transfers spark to any other wifi on the same temperature channel.";
+	Description = "无线发射器，将火花传输到同一温度通道上的任何其他 WiFi。";
 
 	Properties = TYPE_SOLID;
 

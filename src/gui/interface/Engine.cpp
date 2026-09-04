@@ -59,7 +59,7 @@ void Engine::ConfirmExit()
 	if (!confirmingExit)
 	{
 		confirmingExit = true;
-		new ConfirmPrompt("You are about to quit", "Are you sure you want to exit the game?", { [] {
+		new ConfirmPrompt("你即将退出", "您确定要退出游戏吗？", { [] {
 			ui::Engine::Ref().Exit();
 		}, [this] {
 			confirmingExit = false;

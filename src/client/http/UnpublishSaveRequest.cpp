@@ -16,4 +16,3 @@ namespace http
 		APIRequest::Finish();
 	}
 }
-

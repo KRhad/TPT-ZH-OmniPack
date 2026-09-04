@@ -30,7 +30,7 @@ void Element::Element_FRAY()
 
 	DefaultProperties.temp = 20.0f + 273.15f;
 	HeatConduct = 0;
-	Description = "Force Emitter. Pushes or pulls objects based on its temperature. Use like ARAY.";
+	Description = "力场发射器。按自身温度推拉物体；用法与 ARAY 类似。";
 
 	Properties = TYPE_SOLID;
 

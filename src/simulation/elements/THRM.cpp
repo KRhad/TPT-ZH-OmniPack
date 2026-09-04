@@ -27,7 +27,7 @@ void Element::Element_THRM()
 	Weight = 90;
 
 	HeatConduct = 211;
-	Description = "Thermite. Burns into extremely hot molten metal.";
+	Description = "铝热剂。燃烧成极热的熔融金属。";
 
 	Properties = TYPE_PART;
 

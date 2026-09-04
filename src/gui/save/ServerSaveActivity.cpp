@@ -70,13 +70,13 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	AddComponent(titleLabel);
 	CheckName(save->GetName()); //set titleLabel text
 
-	ui::Label * previewLabel = new ui::Label(ui::Point((Size.X/2)+4, 5), ui::Point((Size.X/2)-8, 16), "Preview:");
+	ui::Label * previewLabel = new ui::Label(ui::Point((Size.X/2)+4, 5), ui::Point((Size.X/2)-8, 16), "预览：");
 	previewLabel->SetTextColour(style::Colour::InformationTitle);
 	previewLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	previewLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(previewLabel);
 
-	nameField = new ui::Textbox(ui::Point(8, 25), ui::Point((Size.X/2)-16, 16), save->GetName(), "[save name]");
+	nameField = new ui::Textbox(ui::Point(8, 25), ui::Point((Size.X/2)-16, 16), save->GetName(), "[存档名称]");
 	nameField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	nameField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	nameField->SetActionCallback({ [this] { CheckName(nameField->GetText()); } });
@@ -84,14 +84,14 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	AddComponent(nameField);
 	FocusComponent(nameField);
 
-	descriptionField = new ui::Textbox(ui::Point(8, 65), ui::Point((Size.X/2)-16, Size.Y-(65+16+4)), save->GetDescription(), "[save description]");
+	descriptionField = new ui::Textbox(ui::Point(8, 65), ui::Point((Size.X/2)-16, Size.Y-(65+16+4)), save->GetDescription(), "[存档说明]");
 	descriptionField->SetMultiline(true);
 	descriptionField->SetLimit(254);
 	descriptionField->Appearance.VerticalAlign = ui::Appearance::AlignTop;
 	descriptionField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(descriptionField);
 
-	publishedCheckbox = new ui::Checkbox(ui::Point(8, 45), ui::Point((Size.X/2)-80, 16), "Publish", "");
+	publishedCheckbox = new ui::Checkbox(ui::Point(8, 45), ui::Point((Size.X/2)-80, 16), "发布", "");
 	auto user = Client::Ref().GetAuthUser();
 	if (!(user && user->Username == save->GetUserName()))
 	{
@@ -105,11 +105,11 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	}
 	AddComponent(publishedCheckbox);
 
-	pausedCheckbox = new ui::Checkbox(ui::Point(160, 45), ui::Point(55, 16), "Paused", "");
+	pausedCheckbox = new ui::Checkbox(ui::Point(160, 45), ui::Point(55, 16), "已暂停", "");
 	pausedCheckbox->SetChecked(save->GetGameSave()->paused);
 	AddComponent(pausedCheckbox);
 
-	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point((Size.X/2)-75, 16), "Cancel");
+	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point((Size.X/2)-75, 16), "取消");
 	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	cancelButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	cancelButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
@@ -119,7 +119,7 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	AddComponent(cancelButton);
 	SetCancelButton(cancelButton);
 
-	ui::Button * okayButton = new ui::Button(ui::Point((Size.X/2)-76, Size.Y-16), ui::Point(76, 16), "Save");
+	ui::Button * okayButton = new ui::Button(ui::Point((Size.X/2)-76, Size.Y-16), ui::Point(76, 16), "保存");
 	okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	okayButton->Appearance.TextInactive = style::Colour::InformationTitle;
@@ -129,7 +129,7 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	AddComponent(okayButton);
 	SetOkayButton(okayButton);
 
-	ui::Button * PublishingInfoButton = new ui::Button(ui::Point((Size.X*3/4)-75, Size.Y-42), ui::Point(150, 16), "Publishing Info");
+	ui::Button * PublishingInfoButton = new ui::Button(ui::Point((Size.X*3/4)-75, Size.Y-42), ui::Point(150, 16), "发布说明");
 	PublishingInfoButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 	PublishingInfoButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	PublishingInfoButton->Appearance.TextInactive = style::Colour::InformationTitle;
@@ -138,7 +138,7 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	} });
 	AddComponent(PublishingInfoButton);
 
-	ui::Button * RulesButton = new ui::Button(ui::Point((Size.X*3/4)-75, Size.Y-22), ui::Point(150, 16), "Save Uploading Rules");
+	ui::Button * RulesButton = new ui::Button(ui::Point((Size.X*3/4)-75, Size.Y-22), ui::Point(150, 16), "存档上传规则");
 	RulesButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 	RulesButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	RulesButton->Appearance.TextInactive = style::Colour::InformationTitle;
@@ -161,7 +161,7 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, bool s
 	onUploaded(onUploaded_),
 	saveUploadTask(nullptr)
 {
-	ui::Label * titleLabel = new ui::Label(ui::Point(0, 0), Size, "Saving to server...");
+	ui::Label * titleLabel = new ui::Label(ui::Point(0, 0), Size, "正在保存到服务器……");
 	titleLabel->SetTextColour(style::Colour::InformationTitle);
 	titleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 	titleLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
@@ -179,7 +179,7 @@ void ServerSaveActivity::NotifyDone(Task * task)
 	if(!task->GetSuccess())
 	{
 		Exit();
-		new ErrorMessage("Error", task->GetError());
+		new ErrorMessage("错误", task->GetError());
 	}
 	else
 	{
@@ -195,13 +195,13 @@ void ServerSaveActivity::Save()
 {
 	if (!nameField->GetText().length())
 	{
-		new ErrorMessage("Error", "You must specify a save name.");
+		new ErrorMessage("错误", "必须填写存档名称。");
 		return;
 	}
 	auto user = Client::Ref().GetAuthUser();
 	if (!(user && user->Username == save->GetUserName()) && publishedCheckbox->GetChecked())
 	{
-		new ConfirmPrompt("Publish", "This save was created by " + save->GetUserName().FromUtf8() + ", you're about to publish this under your own name; If you haven't been given permission by the author to do so, please uncheck the publish box, otherwise continue", { [this] {
+		new ConfirmPrompt("发布", "此存档的作者是 " + save->GetUserName().FromUtf8() + "；你即将以自己的名义发布它。若未获得原作者许可，请取消勾选“发布”；否则可继续。", { [this] {
 			saveUpload();
 		} });
 	}
@@ -257,103 +257,103 @@ void ServerSaveActivity::Exit()
 void ServerSaveActivity::ShowPublishingInfo()
 {
 	String info =
-		"In The Powder Toy, one can save simulations to their account in two privacy levels: Published and unpublished. You can choose which one by checking or unchecking the 'publish' checkbox. Saves are unpublished by default, so if you do not check publish nobody will be able to see your saves.\n"
+		"在 The Powder Toy 中，在线存档分为“已发布”和“未发布”两种可见级别，可通过“发布”复选框选择。新存档默认不发布；不勾选时，其他人不会在存档列表中看到它。\n"
 		"\n"
-		"\btPublished saves\bw will appear on the 'By Date' feed and will be seen by many people. These saves also contribute to your Average Score, which is displayed publicly on your profile page on the website. Publish saves that you want people to see so they can comment and vote on.\n"
-		"\btUnpublished saves\bw will not be shown on the 'By Date' feed. These will not contribute to your Average Score. They are not completely private though, as anyone who knows the save id will be able to view it. You can give the save id out to show specific people the save but not allow just everyone to see it.\n"
+		"\bt已发布的存档\bw会出现在“按日期”列表中，其他用户可以查看、评论和评分；评分也会计入网站个人资料中公开显示的平均评分。\n"
+		"\bt未发布的存档\bw不会出现在“按日期”列表中，也不计入平均评分。但它并非完全私密：知道存档 ID 的人仍可查看，因此可以只把 ID 分享给指定的人。\n"
 		"\n"
-		"To quickly resave a save, open it and click the left side of the split resave button to \bt'Reupload the current simulation'\bw. If you want to change the description or change the published status, you can click the right side to \bt'Modify simulation properties'\bw. Note that you can't change the name of saves; this will create an entirely new save with no comments, votes, or tags; separate from the original.\n"
-		"You may want to publish an unpublished save after it is finished, or to unpublish some currently published ones. You can do this by opening the save, selecting the 'Modify simulation properties' button, and changing the published status there. You can also \btunpublish or delete saves\bw by selecting them in the 'my own' section of the browser and clicking either one of the buttons that appear on bottom.\n"
-		"If a save is under a week old and gains popularity fast, it will be automatically placed on the \btfront page\bw. Only published saves will be able to get here. Moderators can also choose to promote any save onto the front page, but this happens rarely. They can also demote any save from the front page that breaks a rule or they feel doesn't belong.\n"
-		"Once you make a save, you can resave it as many times as you want. A short previous \btsave history\bw is saved, just right click any save in the save browser and select 'View History' to view it. This is useful for when you accidentally save something you didn't mean to and want to go back to the old version.\n"
+		"要快速更新存档，请打开它并点击分栏保存按钮左侧的\bt“重新上传当前模拟”\bw。若要修改说明或发布状态，请点击右侧的\bt“修改模拟属性”\bw。存档名称无法修改；改名会创建一个与原存档分离、没有评论、评分或标签的新存档。\n"
+		"完成作品后，可以打开存档并选择“修改模拟属性”来发布原本未发布的存档，或取消发布。也可在存档浏览器的“我的作品”分类中选中存档，再使用底部按钮\bt取消发布或删除\bw。\n"
+		"发布不足一周且人气快速上升的存档会自动进入\bt首页\bw。只有已发布存档有此机会；管理员也可将存档推荐到首页，或将违规、不适合首页的存档移出。\n"
+		"创建存档后可以反复更新，系统会保留一小段\bt历史版本\bw。在存档浏览器中右键单击存档并选择“查看历史”即可查看；误保存时可借此返回旧版本。\n"
 		;
 
-	new InformationMessage("Publishing Info", info, true);
+	new InformationMessage("发布说明", info, true);
 }
 
 void ServerSaveActivity::ShowRules()
 {
 	String rules =
-		"\boSection S: Social and Community Rules\n"
-		"\bwThere are a few rules you should follow while interacting with the community. These rules are enforced by staff members and any issues related to violations of these rules may be brought to our attention by users. This section applies to saves uploaded, comments area, forums, and other areas of the community.\n"
+		"\boS 部分：社交和社区规则\n"
+		"\bw与社区互动时应遵循一些规则。这些规则由工作人员执行，任何与违反这些规则相关的问题都可能会由用户提请我们注意。本部分适用于保存上传、评论区、论坛、社区其他区域。\n"
 		"\n"
-		"\bt1. Try to use proper grammar.\bw English is the official community language, but use is not required in regional or cultural groups. If you cannot write English well, we advise that you use Google Translate.\n"
-		"\bt2. Do not spam.\bw There's not a one size fits all definition here, but the idea is usually obvious. In addition, the following are seen as spam and may be hidden or deleted:\n"
-		   "- Posting multiple threads on the same subject. Try to combine threads on game feedback or suggestions into one thread.\n"
-		   "- Bumping an old thread by replying. This is what we call 'necro' or 'necroing'. The content of the thread may be stale (fixing issues, ideas, etc). We recommend posting a new thread for an updated or more current response.\n"
-		   "- Posting on a thread with '+1' or other short replies. There's no need to constantly bump a thread and make finding replies difficult. Replies are great for constructive feedback, while the '+1' button is to show your support for the content.\n"
-		   "- Comments that are excessively long or gibberish. Making comments such as repeating the same letter or have little to no intended purpose, fall under this rule. Comments that are in a different language are exempt.\n"
-		   "- Excessive formatting. UPPERCASE, Bold, and italics can be nice with moderate use, but please do not use them throughout the entire post.\n"
-		"\bt3. Keep swearing to a minimum.\bw Comments or saves containing swearing are at risk of being deleted. This also includes swearing in other languages.\n"
-		"\bt4. Refrain from uploading sexually explicit, offensive, or other inappropriate materials.\bw\n"
-		   "- These include, but are not limited to: sex, drugs, racism, excessive politics, or anything that offends or insults a group of people.\n"
-		   "- Reference to these topics in other languages is also prohibited. Do not attempt to bypass this rule.\n"
-		   "- Posting URLs or images that violate this rule is prohibited. This includes links or text in your profile information.\n"
-		"\bt5. Do not advertise third-party games, sites, or other places not related to The Powder Toy.\bw\n"
-		   "- Mainly this rule is intended to prevent people going through and advertising their own games and products.\n"
-		   "- Unauthorized or unofficial community gathering places, such as Discord, are prohibited.\n"
-		"\bt6. Trolling is not allowed.\bw As with some rules, there's no clear definition. Users who repeatedly troll are far more likely to be banned and receive longer bans than others.\n"
-		"\bt7. Do not impersonate anyone.\bw Registering accounts with names intentionally similar to other users in our community or other online communities is prohibited.\n"
-		"\bt8. Do not post about moderator decisions or issues.\bw If there is a problem regarding a ban on your account or content removal, please contact a moderator through the messages system. Otherwise, discussion about moderator actions should be avoided.\n"
-		"\bt9. Avoid backseat moderating.\bw Moderators are the ones who make the decisions. Users should refrain from threatening bans or possible results from breaking a rule. If there is a possible issue or you are unsure, we recommend reporting the issue through the 'Report' button or via the messaging system on the website.\n"
-		"\bt10. Condoning of breaking common laws is prohibited.\bw The jurisdiction of which country's laws applies is not clear, but there are some common ones to know. These include, but not limited to:\n"
-		   "- Piracy of software, music, bagels, etc.\n"
-		   "- Hacking / Stealing accounts\n"
-		   "- Theft / Fraud\n"
-		"\bt11. Do not stalk or harass any user.\bw This has been a growing problem in recent years by different methods, but generally these include:\n"
-		   "- 'Doxing' user(s) to find where they live or their real identity\n"
-		   "- Constantly messaging a user when they wish to refrain from any contact\n"
-		   "- Mass downvoting saves\n"
-		   "- Posting rude or unnecessary comments on someone's content (saves, forum threads, etc)\n"
-		   "- Coercing a group of users to 'target' a user\n"
-		   "- Personal arguments or hatred. This could be arguing in the comments or making hate saves\n"
-		   "- Discrimination, in general, of people. This could be religious, ethnic, etc.\n"
+		"\bt1。尝试使用正确的语法。\bw 英语是官方社区语言，但在区域或文化群体中不要求使用。如果您英文写得不好，我们建议您使用谷歌翻译。\n"
+		"\bt2。不要发送垃圾邮件。\bw 这里没有一个一刀切的定义，但这个想法通常是显而易见的。此外，以下内容被视为垃圾邮件，可能会被隐藏或删除：\n"
+		   "- 在同一主题上发布多个主题。尝试将游戏反馈或建议的线程合并为一个线程。\n"
+		   "- 通过回复来顶撞旧线程。这就是我们所说的“死灵”或“死灵”。线程的内容可能已经过时（解决问题、想法等）。我们建议发布一个新线程以获取更新或更新的响应。\n"
+		   "- 在主题上发布“+1”或其他简短回复。没有必要不断地碰撞话题并使寻找回复变得困难。回复非常适合提供建设性反馈，而“+1”按钮则表示您对内容的支持。\n"
+		   "- 评论过长或乱码。诸如重复同一封信或几乎没有预期目的之类的评论都属于此规则的范围。使用不同语言的评论除外。\n"
+		   "- 过度格式化。 UPPERCASE，粗体和斜体适度使用会很好，但请不要在整个帖子中使用它们。\n"
+		"\bt3。尽量减少脏话。\bw 包含脏话的评论或保存有被删除的风险。这还包括用其他语言说脏话。\n"
+		"\bt4。请勿上传露骨、攻击性或其他不当材料。\bw\n"
+		   "- 这些包括但不限于：性、毒品、种族主义、过度政治或任何冒犯或侮辱一群人的内容。\n"
+		   "- 也禁止以其他语言引用这些主题。请勿尝试绕过此规则。\n"
+		   "- 禁止发布违反此规则的 URL 或图像。这包括您的个人资料信息中的链接或文本。\n"
+		"\bt5。请勿在与 The Powder Toy 无关的第三方游戏、网站或其他地方做广告。\bw\n"
+		   "- 该规则主要是为了防止人们浏览和宣传自己的游戏和产品。\n"
+		   "- 禁止未经授权或非官方的社区聚会场所，例如Discord。\n"
+		"\bt6。不允许进行拖钓。\bw 与某些规则一样，没有明确的定义。反复恶搞的用户比其他人更有可能被封禁，并且收到的封禁时间也更长。\n"
+		"\bt7。请勿冒充任何人。\bw 禁止故意使用与我们社区或其他在线社区中其他用户相似的名称注册帐户。\n"
+		"\bt8。请勿发布有关版主决定或问题的帖子。\bw 如果存在有关帐户被禁止或内容删除的问题，请通过消息系统联系版主。否则，应避免讨论主持人的行为。\n"
+		"\bt9。避免后座调节。\bw 调节者是做出决定的人。用户应避免威胁禁止或违反规则可能造成的后果。如果存在可能的问题或您不确定，我们建议通过“报告”按钮或通过网站上的消息系统报告问题。\n"
+		"\bt10。禁止纵容违反共同法律的行为。\bw 哪个国家的法律适用的管辖权尚不清楚，但有一些共同的法律可以了解。这些包括但不限于：\n"
+		   "- 软件、音乐、百吉饼等盗版\n"
+		   "- 黑客/窃取帐户\n"
+		   "- 盗窃/欺诈\n"
+		"\bt11。请勿跟踪或骚扰任何用户。\bw 近年来，通过不同的方法，这个问题已成为一个日益严重的问题，但通常包括：\n"
+		   "- “人肉搜索”用户以查找他们的居住地或真实身份\n"
+		   "- 当用户希望避免任何联系时不断向用户发送消息\n"
+		   "- 大量否决可节省\n"
+		   "- 对某人的内容（保存、论坛主题等）发表粗鲁或不必要的评论\n"
+		   "- 强迫一组用户“瞄准”某个用户\n"
+		   "- 个人争论或仇恨。这可能是在评论中争论或进行仇恨保存\n"
+		   "- 一般而言，对人的歧视。这可能是宗教、种族等。\n"
 		"\n"
-		"\boSection G: In-Game Rules\n"
-		"\bwThis section of the rules is focused on in-game actions. Though, Section S also applies in-game, the following rules are more specialized to in-game community interaction.\n"
-		"\bt1. Don't claim other people's work.\bw This could be simply re-uploading another user's or utilizing large sections of saves. Derivative works are allowed, with proper usage. Should you utilize someone's work, by default you must credit the author. Unless the author has explicitly noted different usage terms, this is the standard policy. Derivative works are characterized by innovative usage and originality percentage (ie. how much is original versus someone's work?). Stolen saves will be unpublished or disabled.\n"
-		"\bt2. Self-voting or vote fraud is not allowed.\bw This is defined as making multiple accounts to vote on your own saves or the saves of others. We enforce this rule strictly, therefore, you must understand that there are very few successful ban appeals. Please ensure you and other accounts are not voting from the same household. All alternate accounts will be permanently banned, the main account will be temporarily banned and any affected saves will be disabaled.\n"
-		"\bt3. Asking for votes of any kind is frowned upon.\bw Saves which do this will be unpublished until the issue is fixed. Examples of such that are under this rules are:\n"
-		   "- Signs that may hint at voting up or down. The signature green arrow or asking for votes goes under this rule.\n"
-		   "- Gimmicks that ask for votes. These might be a total number of votes in exchange for something, like '100 votes and I'll make a better version'. This is what we define as vote farming. Any type of vote farming is not allowed.\n"
-		   "- Asking for votes in return for usage of a save or for any other reason is prohibited.\n"
-		"\bt4. Do not spam.\bw As mentioned earlier, there are no standards for what counts as spam. Here are some examples that may qualify as spamming:\n"
-		   "- Uploading or re-uploading similar saves within a short amount of time. Don't try to circumvent the system to have your saves seen/voted by people. This includes uploading 'junk' or 'blank' saves with little to no purpose. These saves will be unpublished.\n"
-		   "- Uploading text-only saves. These may be announcements or looking for help of sorts. We have the forums and comments area available for many purposes these text-only saves would serve. These saves will be removed from front page.\n"
-		   "- Uploading art saves is not strictly prohibited, but may result in a front-page demotion. We like to see usage of the variety of elements in a creative manner. Lack of these factors (such as in deco-only saves) will typically result in a front-page demotion\n"
-		"\bt5. Refrain from uploading sexually explicit or other inappropriate materials. These saves will be deleted and will lead to a ban.\bw\n"
-		   "- These include, but are not limited to: sex, drugs, racism, excessive politics, or anything that offends or insults a group of people.\n"
-		   "- Don't try to circumvent this rule. Anything that intentionally refers to these concepts/ideas by direct or indirect means falls under this rule.\n"
-		   "- Reference to these topics in other languages is also prohibited. Do not attempt to bypass this rule.\n"
-		   "- Posting URLs or images that violate this rule is prohibited. This includes links or text in your profile information.\n"
-		"\bt6. Image plotting is strictly prohibited.\bw This includes usage of scripting or any third-party tools to plot or create a save for you. Saves using CGI will be deleted and you may receive a ban.\n"
-		"\bt7. Keep logos and signs to a minimum.\bw These saves may be removed from front page. Items that this rule restricts are:\n"
-		   "- Excessive logos placed\n"
-		   "- Signs without intended purpose\n"
-		   "- Fake update or notifications signs\n"
-		   "- Linking other saves that have no related purposes\n"
-		"\bt8. Do not place offtopic or inappropriate tags.\bw Tags are only there to improve search results. They should generally only be one word descriptions of the save. Sentences or subjective tags may be deleted. Inappropriate or offensive tags will likely get you banned.\n"
-		"\bt9. Intentional lag inducing or crashing saves are prohibited.\bw If the majority of users are writing about the save causing crashes or lag, then the save will fall under this rule. These saves will be removed from front page or disabled.\n"
-		"\bt10. Do not misuse the reporting system.\bw Sending in report reasons such as 'bad save' or gibberish wastes our time. Unless the issue pertains to a possible rule violation or community issue, please refrain from sending a report. If you think the save violates or poses a community issue, send a report anyway! Bans will never happen if you are reporting a save in good faith.\n"
-		"\bt11. Do not ask for saves to be demoted or removed from the front-page.\bw Unless the save violates any rules, it will stay on the front-page. There is no exception to this rule for art saves, please do not report art either.\n"
+		"\boG部分：游戏规则\n"
+		"\bw这部分规则重点关注游戏中的动作。虽然S节也适用于游戏中，但以下规则更专门用于游戏中的社区互动。\n"
+		"\bt1。请勿夺取他人的作品。\bw 这可能只是重新上传其他用户的作品或利用大部分保存内容。在正确使用的情况下，允许衍生作品。如果您使用某人的作品，默认情况下您必须注明作者。除非作者明确指出不同的使用条款，否则这是标准政策。衍生作品的特点是创新用法和原创性百分比（即原创性与某人的作品相比有多少？）。被盗的保存将被取消发布或禁用。\n"
+		"\bt2。不允许自行投票或投票欺诈。\bw 定义为使用多个帐户对自己的保存或他人的保存进行投票。我们严格执行这条规则，因此，您必须明白，成功的禁令上诉很少。请确保您和其他帐户不是来自同一家庭投票。所有备用帐户将被永久禁止，主帐户将被暂时禁止，任何受影响的保存都将被禁用。\n"
+		"\bt3。要求任何形式的投票都是不被允许的。\bw 这样做的保存将不会发布，直到问题得到解决。符合此规则的示例有：\n"
+		   "- 可能暗示投票赞成或反对的迹象。签名绿色箭头或要求投票属于此规则。\n"
+		   "- 要求投票的噱头。这些可能是交换某些东西的总票数，例如“100 票，我会制作一个更好的版本”。这就是我们定义的投票耕作。不允许任何类型的投票耕作。\n"
+		   "- 禁止以使用保存或任何其他理由索取选票。\n"
+		"\bt4。请勿发送垃圾邮件。\bw 如前所述，对于垃圾邮件的定义并没有标准。以下是一些可能属于垃圾邮件的示例：\n"
+		   "- 在短时间内上传或重新上传类似的保存。不要试图绕过系统让人们看到/投票你的保存。这包括毫无目的地上传“垃圾”或“空白”保存。这些保存将被取消发布。\n"
+		   "- 上传纯文本保存。这些可能是公告或寻求帮助之类的。我们的论坛和评论区可用于多种用途，这些纯文本保存可以满足多种目的。这些保存将从首页删除。\n"
+		   "- 上传艺术保存并不严格禁止，但可能会导致首页降级。我们希望看到以创造性的方式使用各种元素。缺乏这些因素（例如仅装饰保存）通常会导致首页降级\n"
+		"\bt5。避免上传露骨的色情或其他不适当的材料。这些保存将被删除并导致封禁。\bw\n"
+		   "- 这些包括但不限于：性、毒品、种族主义、过度政治或任何冒犯或侮辱一群人的内容。\n"
+		   "- 不要试图规避这条规则。任何通过直接或间接方式有意引用这些概念/想法的事物都属于此规则的范围。\n"
+		   "- 也禁止以其他语言引用这些主题。请勿尝试绕过此规则。\n"
+		   "- 禁止发布违反此规则的 URL 或图像。这包括您的个人资料信息中的链接或文本。\n"
+		"\bt6。严格禁止绘制图像。\bw 这包括使用脚本或任何第三方工具为您绘制或创建保存。使用 CGI 进行的保存将被删除，您可能会收到禁令。\n"
+		"\bt7。将徽标和标志保持在最低限度。\bw 这些保存可能会从首页删除。此规则限制的项目有：\n"
+		   "- 放置过多标志\n"
+		   "- 无预期用途的标志\n"
+		   "- 虚假更新或通知标志\n"
+		   "- 链接其他没有相关目的的保存\n"
+		"\bt8。不要放置偏离主题或不适当的标签。\bw 标签仅用于改善搜索结果。它们通常应该只是保存的一个单词描述。句子或主观标签可能会被删除。不适当或令人反感的标签可能会让您被禁止。\n"
+		"\bt9。故意导致延迟或崩溃的保存是被禁止的。\bw 如果大多数用户都在写有关导致崩溃或延迟的保存，那么该保存将属于此规则。这些保存将从首页删除或禁用。\n"
+		"\bt10。不要滥用报告系统。\bw 发送诸如“保存错误”或乱码之类的报告原因会浪费我们的时间。除非问题涉及可能的违规行为或社区问题，否则请不要发送报告。如果您认为保存违规或造成社区问题，请发送报告！如果您善意地报告保存，则永远不会发生封禁。\n"
+		"\bt11。不要要求将存档降级或从首页删除。\bw 除非存档违反任何规则，否则它将保留在首页。对于艺术保存来说，这条规则没有例外，也请不要报告艺术。\n"
 		"\n"
-		"\boSection R: Other\n"
-		"\bwModerators may interpret these rules as they see fit. Not all rules are equal, some are enforced less than others. Moderators make the final decision on what is and isn't against the rules, but we have made our best effort here to cover all unwanted behavior here. Notice will be posted in this thread whenever the rules are updated.\n"
+		"\boR段：其他\n"
+		"\bw主持人可以按照他们认为合适的方式解释这些规则。并非所有规则都是平等的，有些规则的执行力度比其他规则要少。版主对哪些内容违反规则、哪些内容不违反规则做出最终决定，但我们已尽最大努力涵盖此处的所有不良行为。每当规则更新时都会在此帖子中发布通知。\n"
 		"\n"
-		"Violation of these rules may result in removal of posts / comments, unpublishing or disabling saves, removing saves from front page, or in more extreme cases, a temporary or permanent ban. There are various manual and automated measures in place to enforce these rules. The severity and resulting decisions may not be consistent between moderators.\n"
+		"违反这些规则可能会导致删除帖子/评论、取消发布或禁用保存、从首页删除保存，或者在更极端的情况下，导致临时或永久禁令。有各种手动和自动措施来执行这些规则。主持人之间的严重性和由此产生的决定可能不一致。\n"
 		"\n"
-		"If you have any questions about what is and isn't against the rules, feel free to contact a moderator.";
+		"如果您对哪些内容违反规则、哪些内容不违反规则有任何疑问，请随时联系版主。";
 
-	new InformationMessage("Save Uploading Rules", rules, true);
+	new InformationMessage("存档上传规则", rules, true);
 }
 
 void ServerSaveActivity::CheckName(String newname)
 {
 	auto user = Client::Ref().GetAuthUser();
 	if (newname.length() && newname == save->GetName() && user && save->GetUserName() == user->Username)
-		titleLabel->SetText("Modify simulation properties:");
+		titleLabel->SetText("修改模拟属性：");
 	else
-		titleLabel->SetText("Upload new simulation:");
+		titleLabel->SetText("上传新模拟：");
 }
 
 void ServerSaveActivity::OnTick()
@@ -383,7 +383,7 @@ void ServerSaveActivity::OnTick()
 		}
 		catch (const http::RequestError &ex)
 		{
-			new ErrorMessage("Error", "Upload failed with error:\n" + ByteString(ex.what()).FromUtf8());
+			new ErrorMessage("错误", "上传失败：\n" + ByteString(ex.what()).FromUtf8());
 		}
 		uploadSaveRequest.reset();
 	}

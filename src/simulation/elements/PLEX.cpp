@@ -28,7 +28,7 @@ void Element::Element_PLEX()
 	Weight = 100;
 
 	HeatConduct = 88;
-	Description = "Solid pressure sensitive explosive.";
+	Description = "固体压敏炸药。";
 
 	Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
 

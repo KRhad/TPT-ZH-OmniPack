@@ -28,7 +28,7 @@ void Element::Element_WHOL()
 
 	DefaultProperties.temp = R_TEMP - 16.0f + 273.15f;
 	HeatConduct = 255;
-	Description = "Air vent, creates pressure and pushes other particles away.";
+	Description = "排气口。产生正压并推开其他粒子。";
 
 	Properties = TYPE_SOLID;
 

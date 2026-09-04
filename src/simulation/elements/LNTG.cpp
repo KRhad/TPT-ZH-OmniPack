@@ -28,7 +28,7 @@ void Element::Element_LNTG()
 
 	DefaultProperties.temp = 70.15f;
 	HeatConduct = 70;
-	Description = "Liquid Nitrogen. Very cold, disappears whenever it touches anything warmer.";
+	Description = "液氮。非常冷，一接触到温暖的东西就会消失。";
 
 	Properties = TYPE_LIQUID;
 

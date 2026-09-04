@@ -1724,14 +1724,14 @@ static int addCustomGol(lua_State *L)
 	unsigned int color2 = luaL_checkinteger(L, 4);
 
 	if (nameString.empty() || !ValidateGOLName(nameString))
-		return luaL_error(L, "Invalid name provided");
+		return luaL_error(L, "提供的名称无效");
 	if (rule == -1)
-		return luaL_error(L, "Invalid rule provided");
+		return luaL_error(L, "提供的规则无效");
 	if (sd.GetCustomGOLByRule(rule))
-		return luaL_error(L, "This Custom GoL rule already exists");
+		return luaL_error(L, "此自定义 GOL 规则已存在");
 
 	if (!lsi->gameModel->AddCustomGol(ruleString, nameString, RGB::Unpack(color1), RGB::Unpack(color2)))
-		return luaL_error(L, "Duplicate name, cannot add");
+		return luaL_error(L, "名称重复，无法添加");
 	return 0;
 }
 

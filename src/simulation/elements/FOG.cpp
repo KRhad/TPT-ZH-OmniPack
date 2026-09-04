@@ -30,7 +30,7 @@ void Element::Element_FOG()
 
 	DefaultProperties.temp = 243.15f;
 	HeatConduct = 100;
-	Description = "Fog, created when an electric current is passed through RIME.";
+	Description = "雾，当电流通过 RIME 时产生。";
 
 	Properties = TYPE_GAS|PROP_LIFE_DEC;
 	CarriesTypeIn = 1U << FIELD_CTYPE;

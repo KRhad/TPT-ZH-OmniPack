@@ -27,7 +27,7 @@
 #include <set>
 
 Client::Client():
-	messageOfTheDay("The message of the day and notifications have not yet been fetched, you can enable this in Settings"),
+	messageOfTheDay("尚未获取每日消息和通知，可在“设置”中启用。"),
 	usingAltUpdateServer(false),
 	updateAvailable(false)
 {
@@ -112,7 +112,7 @@ void Client::BeginStartupRequest()
 	serverNotifications.clear();
 	startupRequestError.reset();
 	startupRequestStatus = StartupRequestStatus::inProgress;
-	messageOfTheDay = "Fetching the message of the day...";
+	messageOfTheDay = "正在获取每日消息……";
 	versionCheckRequest = std::make_unique<http::StartupRequest>(false);
 	versionCheckRequest->Start();
 	if constexpr (USE_UPDATESERVER)
@@ -131,7 +131,7 @@ void Client::Tick()
 	{
 		if (versionCheckRequest->StatusCode() == 618)
 		{
-			AddServerNotification({ "Failed to load SSL certificates", ByteString::Build(SERVER, "/FAQ.html") });
+			AddServerNotification({ "无法加载 SSL 证书", ByteString::Build(SERVER, "/FAQ.html") });
 		}
 		try
 		{
@@ -156,7 +156,7 @@ void Client::Tick()
 			if (!usingAltUpdateServer)
 			{
 				startupRequestError = ex.what();
-				SetMessageOfTheDay(ByteString::Build("Error while fetching MotD: ", ex.what()).FromUtf8());
+				SetMessageOfTheDay(ByteString::Build("获取每日消息时出错：", ex.what()).FromUtf8());
 			}
 		}
 		versionCheckRequest.reset();
@@ -177,7 +177,7 @@ void Client::Tick()
 		catch (const http::RequestError &ex)
 		{
 			startupRequestError = ex.what();
-			SetMessageOfTheDay(ByteString::Build("Error while checking for updates: ", ex.what()).FromUtf8());
+			SetMessageOfTheDay(ByteString::Build("检查更新时出错：", ex.what()).FromUtf8());
 		}
 		alternateVersionCheckRequest.reset();
 	}
@@ -321,13 +321,13 @@ void Client::RenameStamp(ByteString stampID, ByteString newName)
 
 	if (Platform::FileExists(newPath))
 	{
-		new ErrorMessage("Error renaming stamp", "A stamp with this name already exists.");
+		new ErrorMessage("图章重命名失败", "已存在同名图章。");
 		return;
 	}
 
 	if (!Platform::RenameFile(oldPath, newPath, false))
 	{
-		new ErrorMessage("Error renaming stamp", "Could not rename the stamp.");
+		new ErrorMessage("图章重命名失败", "无法重命名图章。");
 		return;
 	}
 
@@ -561,8 +561,8 @@ String Client::DoMigration(ByteString fromDir, ByteString toDir)
 
 	if (stamps.empty() && saves.empty() && scripts.empty() && downloadedScripts.empty() && screenshots.empty() && !hasAutorun && !hasPref)
 	{
-		logFile << "Nothing to migrate.";
-		return "Nothing to migrate. This button is used to migrate data from pre-96.0 TPT installations to the shared directory";
+		logFile << "没有需要迁移的数据。";
+		return "没有需要迁移的数据。此按钮用于把 TPT 96.0 之前版本的数据迁移到共享目录。";
 	}
 
 	StringBuilder result;
@@ -641,7 +641,7 @@ String Client::DoMigration(ByteString fromDir, ByteString toDir)
 		migrateList(scripts, "scripts", "Scripts");
 	if (!hasScriptinfo && !downloadedScripts.empty())
 	{
-		migrateList(downloadedScripts, "scripts/downloaded", "Downloaded scripts");
+		migrateList(downloadedScripts, "scripts/downloaded", "已下载脚本");
 		migrateFile("scripts/downloaded/scriptinfo");
 	}
 	if (!screenshots.empty())
@@ -666,7 +666,7 @@ String Client::DoMigration(ByteString fromDir, ByteString toDir)
 
 	RescanStamps();
 
-	logFile << std::endl << std::endl << "Migration complete. Results: " << result.Build().ToUtf8();
+	logFile << std::endl << std::endl << "迁移完成。结果：" << result.Build().ToUtf8();
 	logFile.close();
 
 	return result.Build();

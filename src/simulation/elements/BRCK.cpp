@@ -29,7 +29,7 @@ void Element::Element_BRCK()
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "Brick, breakable building material.";
+	Description = "砖，易碎的建筑材料。";
 
 	Properties = TYPE_SOLID|PROP_HOT_GLOW;
 

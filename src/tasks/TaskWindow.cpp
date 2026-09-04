@@ -49,7 +49,7 @@ void TaskWindow::NotifyStatus(Task * task)
 
 void TaskWindow::NotifyError(Task * task)
 {
-	new ErrorMessage("Error", task->GetError());
+	new ErrorMessage("错误", task->GetError());
 	done = true;
 }
 
@@ -72,7 +72,7 @@ void TaskWindow::NotifyProgress(Task * task)
 	if(progress>-1)
 		progressStatus = String::Build(progress, "%");
 	else
-		progressStatus = "Please wait...";
+		progressStatus = "请稍候……";
 	progressBar->SetProgress(progress);
 	progressBar->SetStatus(progressStatus);
 }

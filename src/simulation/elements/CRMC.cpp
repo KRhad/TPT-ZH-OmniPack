@@ -31,7 +31,7 @@ void Element::Element_CRMC()
 	Weight = 100;
 
 	HeatConduct = 35;
-	Description = "Ceramic. Gets stronger under pressure.";
+	Description = "陶瓷。在压力下变得更强。";
 
 	Properties = TYPE_SOLID | PROP_NEUTPASS;
 

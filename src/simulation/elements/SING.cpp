@@ -30,7 +30,7 @@ void Element::Element_SING()
 	Weight = 86;
 
 	HeatConduct = 70;
-	Description = "Singularity. Creates huge amounts of negative pressure and destroys everything.";
+	Description = "奇点。产生巨大的负压，摧毁一切。";
 
 	Properties = TYPE_PART|PROP_LIFE_DEC;
 

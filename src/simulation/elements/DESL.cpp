@@ -27,7 +27,7 @@ void Element::Element_DESL()
 	Weight = 15;
 
 	HeatConduct = 42;
-	Description = "Liquid diesel. Explodes under high pressure and temperatures.";
+	Description = "液体柴油。在高压和高温下会爆炸。";
 
 	Properties = TYPE_LIQUID;
 

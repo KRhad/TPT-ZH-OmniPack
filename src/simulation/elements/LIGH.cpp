@@ -34,7 +34,7 @@ void Element::Element_LIGH()
 	Weight = 100;
 
 	HeatConduct = 0;
-	Description = "Lightning. Change the brush size to set the size of the lightning.";
+	Description = "闪电。更改画笔大小以设置闪电的大小。";
 
 	Properties = TYPE_SOLID;
 

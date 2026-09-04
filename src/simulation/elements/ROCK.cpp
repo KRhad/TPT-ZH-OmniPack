@@ -30,7 +30,7 @@ void Element::Element_ROCK()
 	Weight = 100;
 
 	HeatConduct = 200;
-	Description = "Solid, melts into various elements.";
+	Description = "固体，融化成各种元素。";
 
 	Properties = TYPE_SOLID | PROP_HOT_GLOW;
 

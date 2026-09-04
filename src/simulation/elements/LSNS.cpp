@@ -30,7 +30,7 @@ void Element::Element_LSNS()
 
 	DefaultProperties.temp = 4.0f + 273.15f;
 	HeatConduct = 0;
-	Description = "Life sensor, creates a spark when there's a nearby particle with a life higher than its temperature.";
+	Description = "生命传感器，当附近存在生命高于其温度的粒子时会产生火花。";
 
 	Properties = TYPE_SOLID;
 

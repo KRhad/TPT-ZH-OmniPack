@@ -28,7 +28,7 @@ void Element::Element_BIZR()
 	Weight = 30;
 
 	HeatConduct = 29;
-	Description = "Bizarre... contradicts the normal state changes. Paints other elements with its deco color.";
+	Description = "诡异……与正常的状态变化相矛盾。用其装饰色绘制其他元素。";
 
 	Properties = TYPE_LIQUID;
 

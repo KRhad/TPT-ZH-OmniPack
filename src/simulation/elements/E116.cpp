@@ -27,7 +27,7 @@ void Element::Element_E116()
 	Weight = 85;
 
 	HeatConduct = 70;
-	Description = "A failed shared velocity test.";
+	Description = "一次失败的共享速度测试。";
 
 	Properties = TYPE_PART;
 

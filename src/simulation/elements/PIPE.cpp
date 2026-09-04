@@ -34,7 +34,7 @@ void Element::Element_PIPE()
 
 	DefaultProperties.temp = 295.15f;
 	HeatConduct = 251;
-	Description = "PIPE, moves particles around. Once the BRCK generates, erase some for the exit. Then the PIPE generates and is usable.";
+	Description = "管道，用于传送粒子。BRCK 外壳生成后擦除一部分作为出口，PIPE 随后会生成并可投入使用。";
 
 	Properties = TYPE_SOLID | PROP_LIFE_DEC;
 	CarriesTypeIn = 1U << FIELD_CTYPE;

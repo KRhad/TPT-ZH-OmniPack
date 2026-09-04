@@ -208,14 +208,14 @@ void Window::DoDraw()
 
 		auto invPos = Size - (focusedComponent_->Position + focusedComponent_->Size);
 		String posText = String::Build(
-			"Position: L ", focusedComponent_->Position.X,
-			", R ", invPos.X,
-			", T: ", focusedComponent_->Position.Y,
-			", B: ", invPos.Y
+			"位置：左 ", focusedComponent_->Position.X,
+			"，右 ", invPos.X,
+			"，上：", focusedComponent_->Position.Y,
+			"，下：", invPos.Y
 		);
 		String sizeText = String::Build(
-			"Size: ", focusedComponent_->Size.X,
-			", ", focusedComponent_->Size.Y
+			"尺寸：", focusedComponent_->Size.X,
+			"，", focusedComponent_->Size.Y
 		);
 
 		auto pos = focusedComponent_->Position + Position + Vec2(focusedComponent_->Size.X + 5, 0);

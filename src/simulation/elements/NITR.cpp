@@ -28,7 +28,7 @@ void Element::Element_NITR()
 	Weight = 23;
 
 	HeatConduct = 50;
-	Description = "Nitroglycerin. Pressure sensitive explosive. Mix with CLST to make TNT.";
+	Description = "硝酸甘油。压敏炸药。与CLST混合制成TNT。";
 
 	Properties = TYPE_LIQUID;
 

@@ -217,24 +217,24 @@ void GameSave::Expand(const std::vector<char> &data)
 		else if(data[0] == 'O' && data[1] == 'P' && data[2] == 'S')
 		{
 			if (data[3] != '1')
-				throw ParseException(ParseException::WrongVersion, "Save format from newer version");
+				throw ParseException(ParseException::WrongVersion, "存档格式来自较新版本");
 			readOPS(data);
 		}
 		else
 		{
 			std::cerr << "Got Magic number '" << data[0] << data[1] << data[2] << "'" << std::endl;
-			throw ParseException(ParseException::Corrupt, "Invalid save format");
+			throw ParseException(ParseException::Corrupt, "存档格式无效");
 		}
 		MapPalette();
 	}
 	else
 	{
-		throw ParseException(ParseException::Corrupt, "No data");
+		throw ParseException(ParseException::Corrupt, "没有数据");
 	}
 	}
 	catch (const std::bad_alloc &)
 	{
-		throw ParseException(ParseException::Corrupt, "Cannot allocate memory");
+		throw ParseException(ParseException::Corrupt, "无法分配内存");
 	}
 }
 
@@ -269,7 +269,7 @@ std::pair<bool, std::vector<char>> GameSave::Serialise() const
 	}
 	catch (const std::bad_alloc &)
 	{
-		std::cout << "Save error, out of memory" << std::endl;
+		std::cout << "存档处理失败：内存不足" << std::endl;
 	}
 	catch (BuildException & e)
 	{
@@ -486,7 +486,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 		{
 			if (node->GetType() != type)
 			{
-				std::cerr << "Wrong type for " << key << std::endl;
+				std::cerr << "类型错误：" << key << std::endl;
 				return nullptr;
 			}
 			return node;
@@ -499,7 +499,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 			auto &user = node->As<Bson::User>();
 			if (user.size() != sizeof(into))
 			{
-				std::cerr << "Wrong size for " << key << std::endl;
+				std::cerr << "大小错误：" << key << std::endl;
 				return false;
 			}
 			memcpy(&into, user.data(), sizeof(into));
@@ -560,14 +560,14 @@ void GameSave::readOPS(const std::vector<char> &data)
 
 	//Incompatible cell size
 	if (inputData[5] != CELL)
-		throw ParseException(ParseException::InvalidDimensions, "Incorrect CELL size");
+		throw ParseException(ParseException::InvalidDimensions, "CELL 尺寸不正确");
 
 	if (!RectBetween({ 0, 0 }, CELLS).Contains(blockS))
-		throw ParseException(ParseException::InvalidDimensions, "Save is of invalid size");
+		throw ParseException(ParseException::InvalidDimensions, "存档尺寸无效");
 
 	//Too large/off screen
 	if (!RectBetween({ 0, 0 }, CELLS).Contains(blockP + blockS))
-		throw ParseException(ParseException::InvalidDimensions, "Save extends beyond canvas");
+		throw ParseException(ParseException::InvalidDimensions, "存档内容超出画布范围");
 
 	setSize(blockS);
 
@@ -579,15 +579,15 @@ void GameSave::readOPS(const std::vector<char> &data)
 
 	//Check for overflows, don't load saves larger than 200MB
 	if (toAlloc > 209715200 || !toAlloc)
-		throw ParseException(ParseException::InvalidDimensions, "Save data too large, refusing");
+		throw ParseException(ParseException::InvalidDimensions, "存档数据过大，已拒绝加载");
 
 	{
 		std::vector<char> bsonData;
 		switch (auto status = BZ2WDecompress(bsonData, std::span(reinterpret_cast<const char *>(inputData.data() + 12), inputData.size() - 12), toAlloc))
 		{
 		case BZ2WDecompressOk: break;
-		case BZ2WDecompressNomem: throw ParseException(ParseException::Corrupt, "Cannot allocate memory");
-		default: throw ParseException(ParseException::Corrupt, String::Build("Cannot decompress: status ", int(status)));
+		case BZ2WDecompressNomem: throw ParseException(ParseException::Corrupt, "无法分配内存");
+		default: throw ParseException(ParseException::Corrupt, String::Build("无法解压，状态码：", int(status)));
 		}
 
 		try
@@ -596,7 +596,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 		}
 		catch (const Bson::ParseError &ex)
 		{
-			throw ParseException(ParseException::Corrupt, "BSON error when parsing save: " + ByteString(ex.what()).FromUtf8());
+			throw ParseException(ParseException::Corrupt, "解析存档时出现 BSON 错误：" + ByteString(ex.what()).FromUtf8());
 		}
 	}
 
@@ -647,7 +647,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 	copyIfFloat(b, "edgeVelocityY", edgeVelocityY);
 	copyIfFloat(b, "vorticityCoeff", vorticityCoeff);
 
-	// Before 99.0 the default is "legacy", from 99.0 the default is "Boussinesq"
+	// Before 99.0 the default is "legacy", from 99.0 the default is "布辛涅斯克近似"
 	if (version >= Version(99, 0))
 		convectionMode = AIRC_BOUSSINESQ;
 	copyIfInt32(b, "convectionMode", convectionMode);
@@ -749,7 +749,7 @@ void GameSave::readOPS(const std::vector<char> &data)
 		}
 		if (effectiveVersion < minimumVersion)
 		{
-			String errorMessage = String::Build("Save from a newer version: Requires version ", minimumVersion[0], ".", minimumVersion[1]);
+			String errorMessage = String::Build("存档来自较新版本，需要版本 ", minimumVersion[0], ".", minimumVersion[1]);
 			throw ParseException(ParseException::WrongVersion, errorMessage);
 		}
 		else if (ALLOW_FAKE_NEWER_VERSION && currentVersion < minimumVersion)
@@ -1342,14 +1342,14 @@ void GameSave::readPSv(const std::vector<char> &dataVec)
 	//This creates a problem for old clients, that display and "corrupt" error instead of a "newer version" error
 
 	if (dataLength<16)
-		throw ParseException(ParseException::Corrupt, "No save data");
+		throw ParseException(ParseException::Corrupt, "没有存档数据");
 	if (!(saveData[2]==0x43 && saveData[1]==0x75 && saveData[0]==0x66) && !(saveData[2]==0x76 && saveData[1]==0x53 && saveData[0]==0x50))
-		throw ParseException(ParseException::Corrupt, "Unknown format");
+		throw ParseException(ParseException::Corrupt, "未知格式");
 	if (saveData[2]==0x76 && saveData[1]==0x53 && saveData[0]==0x50) {
 		new_format = 1;
 	}
 	if (saveData[4]>97) // this used to respect currentVersion but no valid PSv will ever have a version > 97 so it's ok to hardcode
-		throw ParseException(ParseException::WrongVersion, "Save from newer version");
+		throw ParseException(ParseException::WrongVersion, "较新版本的存档");
 	version = { saveData[4], 0 };
 	auto ver = version[0];
 
@@ -1382,21 +1382,21 @@ void GameSave::readPSv(const std::vector<char> &dataVec)
 	blockP = blockP.Clamp(blockS.OriginRect());
 
 	if (saveData[5]!=CELL || blockP.X+blockS.X>XCELLS || blockP.Y+blockS.Y>YCELLS)
-		throw ParseException(ParseException::InvalidDimensions, "Save too large");
+		throw ParseException(ParseException::InvalidDimensions, "存档过大");
 	int size = (unsigned)saveData[8];
 	size |= ((unsigned)saveData[9])<<8;
 	size |= ((unsigned)saveData[10])<<16;
 	size |= ((unsigned)saveData[11])<<24;
 
 	if (size > 209715200 || !size)
-		throw ParseException(ParseException::InvalidDimensions, "Save data too large");
+		throw ParseException(ParseException::InvalidDimensions, "存档数据过大");
 
 	std::vector<char> bsonData;
 	switch (auto status = BZ2WDecompress(bsonData, std::span(reinterpret_cast<const char *>(saveData + 12), dataLength - 12), size))
 	{
 	case BZ2WDecompressOk: break;
-	case BZ2WDecompressNomem: throw ParseException(ParseException::Corrupt, "Cannot allocate memory");
-	default: throw ParseException(ParseException::Corrupt, String::Build("Cannot decompress: status ", int(status)));
+	case BZ2WDecompressNomem: throw ParseException(ParseException::Corrupt, "无法分配内存");
+	default: throw ParseException(ParseException::Corrupt, String::Build("无法解压，状态码：", int(status)));
 	}
 
 	setSize(blockS);
@@ -1409,7 +1409,7 @@ void GameSave::readPSv(const std::vector<char> &dataVec)
 	}
 
 	if (dataLength < blockS.X*blockS.Y)
-		throw ParseException(ParseException::Corrupt, "Save data corrupt (missing data)");
+		throw ParseException(ParseException::Corrupt, "存档数据损坏（数据缺失）");
 
 	// normalize coordinates
 	auto partS = blockS * CELL;
@@ -2702,8 +2702,8 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 	switch (auto status = BZ2WCompress(outputData, finalData))
 	{
 	case BZ2WCompressOk: break;
-	case BZ2WCompressNomem: throw BuildException(String::Build("Save error, out of memory"));
-	default: throw BuildException(String::Build("Cannot compress: status ", int(status)));
+	case BZ2WCompressNomem: throw BuildException(String::Build("存档处理失败：内存不足"));
+	default: throw BuildException(String::Build("无法压缩，状态码：", int(status)));
 	}
 	auto compressedSize = int(outputData.size());
 

@@ -86,10 +86,10 @@ void LargeScreenDialog()
 {
 	StringBuilder message;
 	auto scale = ui::Engine::Ref().windowFrameOps.scale;
-	message << "Switching to " << scale << "x size mode since your screen was determined to be large enough: ";
-	message << desktopWidth << "x" << desktopHeight << " detected, " << WINDOWW * scale << "x" << WINDOWH * scale << " required";
-	message << "\nTo undo this, hit Cancel. You can change this in settings at any time.";
-	new ConfirmPrompt("Large screen detected", message.Build(), { nullptr, []() {
+	message << "检测到屏幕尺寸足够大，将切换到 " << scale << " 倍界面：";
+	message << desktopWidth << "x" << desktopHeight << "（检测到），需要 " << WINDOWW * scale << "x" << WINDOWH * scale << "。";
+	message << "\n 要撤消此操作，请点击“取消”。您可以随时在设置中更改此设置。";
+	new ConfirmPrompt("检测到大屏幕", message.Build(), { nullptr, []() {
 		GlobalPrefs::Ref().Set("Scale", 1);
 		ui::Engine::Ref().windowFrameOps.scale = 1;
 	} });
@@ -110,13 +110,13 @@ static void BlueScreen(String detailMessage, std::optional<std::vector<String>> 
 	Platform::RenameFile(crashLogPath, crashPrevLogPath, true);
 
 	StringBuilder crashInfo;
-	crashInfo << "ERROR - Details: " << detailMessage << "\n";
-	crashInfo << "An unrecoverable fault has occurred, please report it by visiting the website below\n\n  " << SERVER << "\n\n";
-	crashInfo << "An attempt will be made to save all of this information to " << crashLogPath.FromUtf8() << " in your data folder.\n";
-	crashInfo << "Please attach this file to your report.\n\n";
-	crashInfo << "Version: " << VersionInfo().FromUtf8() << "\n";
-	crashInfo << "Tag: " << VCS_TAG << "\n";
-	crashInfo << "Date: " << format::UnixtimeToDate(time(nullptr), "%Y-%m-%dT%H:%M:%SZ", false).FromUtf8() << "\n";
+	crashInfo << "错误——详细信息：" << detailMessage << "\n";
+	crashInfo << "程序发生无法恢复的故障，请访问以下网站报告：\n\n  " << SERVER << "\n\n";
+	crashInfo << "程序将尝试把以上信息保存到 " << crashLogPath.FromUtf8() << "（位于数据文件夹中）。\n";
+	crashInfo << "报告问题时请附上此文件。\n\n";
+	crashInfo << "版本：" << VersionInfo().FromUtf8() << "\n";
+	crashInfo << "标签：" << VCS_TAG << "\n";
+	crashInfo << "日期：" << format::UnixtimeToDate(time(nullptr), "%Y-%m-%dT%H:%M:%SZ", false).FromUtf8() << "\n";
 	if (stackTrace)
 	{
 		crashInfo << "Stack trace; Main is at 0x" << Format::Hex() << intptr_t(Main) << ":\n";
@@ -127,7 +127,7 @@ static void BlueScreen(String detailMessage, std::optional<std::vector<String>> 
 	}
 	else
 	{
-		crashInfo << "Stack trace not available\n";
+		crashInfo << "无法获取堆栈跟踪\n";
 	}
 	String errorText = crashInfo.Build();
 	constexpr auto width = 440;
@@ -169,15 +169,15 @@ static struct
 	const char *message;
 } signalMessages[] = {
 	{ SIGSEGV, "Memory read/write error" },
-	{ SIGFPE, "Floating point exception" },
-	{ SIGILL, "Program execution exception" },
-	{ SIGABRT, "Unexpected program abort" },
+	{ SIGFPE, "浮点运算异常" },
+	{ SIGILL, "程序执行异常" },
+	{ SIGABRT, "程序意外中止" },
 	{ 0, nullptr },
 };
 
 static void SigHandler(int signal)
 {
-	const char *message = "Unknown signal";
+	const char *message = "未知信号";
 	for (auto *msg = signalMessages; msg->message; ++msg)
 	{
 		if (msg->sig == signal)
@@ -202,7 +202,7 @@ static void TerminateHandler()
 	}
 	catch (const std::exception &e)
 	{
-		err = "unhandled exception: " + ByteString(e.what());
+		err = "未处理的异常：" + ByteString(e.what());
 	}
 	catch (...)
 	{
@@ -516,7 +516,7 @@ int Main(int argc, char *argv[])
 				std::vector<char> gameSaveData;
 				if (!Platform::ReadFile(gameSaveData, openArg.value()))
 				{
-					new ErrorMessage("Error", "Could not read file");
+					new ErrorMessage("错误", "无法读取文件");
 				}
 				else
 				{
@@ -529,12 +529,12 @@ int Main(int argc, char *argv[])
 			}
 			catch (std::exception & e)
 			{
-				new ErrorMessage("Error", "Could not open save file:\n" + ByteString(e.what()).FromUtf8()) ;
+				new ErrorMessage("错误", "无法打开存档文件：\n" + ByteString(e.what()).FromUtf8()) ;
 			}
 		}
 		else
 		{
-			new ErrorMessage("Error", "Could not open file");
+			new ErrorMessage("错误", "无法打开文件");
 		}
 	}
 
@@ -543,7 +543,7 @@ int Main(int argc, char *argv[])
 	{
 		engine.g->Clear();
 		engine.g->DrawRect(RectSized(engine.g->Size() / 2 - Vec2(100, 25), Vec2(200, 50)), 0xB4B4B4_rgb);
-		String loadingText = "Loading save...";
+		String loadingText = "正在加载存档……";
 		engine.g->BlendText(engine.g->Size() / 2 - Vec2((Graphics::TextSize(loadingText).X - 1) / 2, 5), loadingText, style::Colour::InformationTitle);
 
 		blit(engine.g->Data());
@@ -553,14 +553,14 @@ int Main(int argc, char *argv[])
 			if (ByteString::Split split = ptsaveArg.value().SplitBy(':'))
 			{
 				if (split.Before() != "ptsave")
-					throw std::runtime_error("Not a ptsave link");
+					throw std::runtime_error("不是有效的 ptsave 链接");
 				saveIdPart = split.After().SplitBy('#').Before();
 			}
 			else
-				throw std::runtime_error("Invalid save link");
+				throw std::runtime_error("存档链接无效");
 
 			if (!saveIdPart.size())
-				throw std::runtime_error("No Save ID");
+				throw std::runtime_error("缺少存档 ID");
 			if constexpr (DEBUG)
 			{
 				std::cout << "Got Ptsave: id: " << saveIdPart << std::endl;
@@ -577,7 +577,7 @@ int Main(int argc, char *argv[])
 		}
 		catch (std::exception & e)
 		{
-			new ErrorMessage("Error", ByteString(e.what()).FromUtf8());
+			new ErrorMessage("错误", ByteString(e.what()).FromUtf8());
 			Platform::MarkPresentable();
 		}
 	}

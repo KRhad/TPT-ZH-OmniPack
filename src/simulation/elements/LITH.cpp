@@ -30,7 +30,7 @@ void Element::Element_LITH()
 	Weight = 17;
 
 	HeatConduct = 70;
-	Description = "Lithium. Reactive element that explodes on contact with water.";
+	Description = "锂。与水接触会爆炸的反应元素。";
 
 	Properties = TYPE_PART | PROP_LIFE_DEC;
 

@@ -7,7 +7,7 @@ void SimTool::Tool_COOL()
 	Identifier = "DEFAULT_TOOL_COOL";
 	Name = "COOL";
 	Colour = 0x00DDFF_rgb;
-	Description = "Cools the targeted element.";
+	Description = "冷却目标元素。";
 	Perform = &perform;
 }
 

@@ -27,7 +27,7 @@ void Element::Element_INWR()
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "Insulated wire. Only conducts to PSCN, NSCN, WIFI, and SWCH.";
+	Description = "绝缘导线。仅与 PSCN、NSCN、WIFI 和 SWCH 导电。";
 
 	Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

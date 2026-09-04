@@ -27,7 +27,7 @@ void Element::Element_SAND()
 	Weight = 90;
 
 	HeatConduct = 150;
-	Description = "Sand, Heavy particles. Melts into glass.";
+	Description = "沙子、重颗粒。融化成玻璃。";
 
 	Properties = TYPE_PART;
 

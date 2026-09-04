@@ -65,19 +65,19 @@ public:
 		auto * tempSeparator = new ui::Separator(ui::Point(0, 22), ui::Point(Size.X, 1));
 		AddComponent(tempSeparator);
 
-		labelValues = new ui::Label(ui::Point(0, (radius * 5 / 2) + 37), ui::Point(Size.X, 16), String::Build(Format::Precision(1), "X:", x, " Y:", y, " Total:", std::hypot(x, y)));
+		labelValues = new ui::Label(ui::Point(0, (radius * 5 / 2) + 37), ui::Point(Size.X, 16), String::Build(Format::Precision(1), "X：", x, " Y：", y, " 总计：", std::hypot(x, y)));
 		labelValues->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 		labelValues->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		AddComponent(labelValues);
 
 		direction->SetValues(x, y);
 		direction->SetUpdateCallback([this](float x, float y) {
-			labelValues->SetText(String::Build(Format::Precision(1), "X:", x, " Y:", y, " Total:", std::hypot(x, y)));
+			labelValues->SetText(String::Build(Format::Precision(1), "X：", x, " Y：", y, " 总计：", std::hypot(x, y)));
 		});
 		direction->SetSnapPoints(5, 5, 2);
 		AddComponent(direction);
 
-		ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y - 17), ui::Point(Size.X, 17), "OK");
+		ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y - 17), ui::Point(Size.X, 17), "确定");
 		okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 		okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		okayButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
@@ -114,7 +114,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	};
 	
 	{
-		auto *label = new ui::Label(ui::Point(4, 1), ui::Point(Size.X-8, 22), "Settings");
+		auto *label = new ui::Label(ui::Point(4, 1), ui::Point(Size.X-8, 22), "设置");
 		label->SetTextColour(style::Colour::InformationTitle);
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
@@ -226,7 +226,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		if (addPreview)
 		{
 			textbox->Size.X -= 20;
-			preview = new ui::Button(ui::Point(Size.X-31, currentY), ui::Point(16, 16), "", "Preview");
+			preview = new ui::Button(ui::Point(Size.X-31, currentY), ui::Point(16, 16), "", "预览");
 			scrollPanel->AddChild(preview);
 		}
 		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-105, 16), info);
@@ -237,101 +237,101 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		return std::make_pair(textbox, preview);
 	};
 
-	heatSimulation = addCheckbox(0, "Heat simulation \bgIntroduced in version 34", "Can cause odd behaviour when disabled", [this] {
+	heatSimulation = addCheckbox(0, "热量模拟 \bg- 版本 34 引入", "禁用时可能会导致奇怪的行为", [this] {
 		c->SetHeatSimulation(heatSimulation->GetChecked());
 	});
-	newtonianGravity = addCheckbox(0, "Newtonian gravity \bgIntroduced in version 48", "May cause poor performance on older computers", [this] {
+	newtonianGravity = addCheckbox(0, "牛顿引力 \bg- 版本 48 引入", "可能会导致旧计算机性能不佳", [this] {
 		c->SetNewtonianGravity(newtonianGravity->GetChecked());
 	});
-	ambientHeatSimulation = addCheckbox(0, "Ambient heat simulation \bgIntroduced in version 50", "Can cause odd / broken behaviour with many saves", [this] {
+	ambientHeatSimulation = addCheckbox(0, "环境热量模拟 \bg- 版本 50 引入", "可能导致许多存档表现异常或损坏", [this] {
 		c->SetAmbientHeatSimulation(ambientHeatSimulation->GetChecked());
 	});
-	waterEqualisation = addCheckbox(0, "Water equalisation \bgIntroduced in version 61", "May cause poor performance with a lot of water", [this] {
+	waterEqualisation = addCheckbox(0, "水量均衡 \bg- 版本 61 引入", "大量水可能会导致性能不佳", [this] {
 		c->SetWaterEqualisation(waterEqualisation->GetChecked());
 	});
-	airMode = addDropDown("Air simulation mode", {
-		{ "On", AIR_ON },
-		{ "Pressure off", AIR_PRESSUREOFF },
-		{ "Velocity off", AIR_VELOCITYOFF },
-		{ "Off", AIR_OFF },
-		{ "No update", AIR_NOUPDATE },
+	airMode = addDropDown("空气模拟模式", {
+		{ "开", AIR_ON },
+		{ "压力：关闭", AIR_PRESSUREOFF },
+		{ "速度：关闭", AIR_VELOCITYOFF },
+		{ "关", AIR_OFF },
+		{ "不更新", AIR_NOUPDATE },
 	}, [this] {
 		c->SetAirMode(airMode->GetOption().second);
 	});
-	std::tie(ambientAirTemp, ambientAirTempPreview) = addTextboxWithPreview("Ambient air temperature", true, [this](String value, bool defocus) {
+	std::tie(ambientAirTemp, ambientAirTempPreview) = addTextboxWithPreview("环境空气温度", true, [this](String value, bool defocus) {
 		UpdateAirTemp(value, defocus);
 	});
-	std::tie(edgePressure, edgePressurePreview) = addTextboxWithPreview("Ambient air pressure", true, [this](String value, bool defocus) {
+	std::tie(edgePressure, edgePressurePreview) = addTextboxWithPreview("环境气压", true, [this](String value, bool defocus) {
 		UpdateEdgePressure(value, defocus);
 	});
 	{
-		edgeVelocityChange = new ui::Button(ui::Point(Size.X-95, currentY), ui::Point(80, 16), "Change");
+		edgeVelocityChange = new ui::Button(ui::Point(Size.X-95, currentY), ui::Point(80, 16), "更改");
 		scrollPanel->AddChild(edgeVelocityChange);
 		edgeVelocityChange->SetActionCallback({ [this] {
-			new DirectionSelector(ui::Point(-1, -1), 0.05f, 40, edgeVelocityX, edgeVelocityY, "Ambient air velocity", [this](float x, float y) {
+			new DirectionSelector(ui::Point(-1, -1), 0.05f, 40, edgeVelocityX, edgeVelocityY, "环境空气流速", [this](float x, float y) {
 				c->SetEdgeVelocityX(x);
 				c->SetEdgeVelocityY(y);
 			});
 		} });
-		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-96, 16), "Ambient air velocity");
+		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-96, 16), "环境空气流速");
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		scrollPanel->AddChild(label);
 		currentY+=20;
 	}
-	vorticityCoeff = addTextboxWithPreview("Vorticity confinement", false, [this](String value, bool defocus) {
+	vorticityCoeff = addTextboxWithPreview("涡度限制", false, [this](String value, bool defocus) {
 		UpdateVorticityCoeff(value, defocus);
 	}).first;
-	convectionMode = addDropDown("Air heat convection mode", {
-		{ "None", AIRC_NONE },
-		{ "Legacy", AIRC_LEGACY },
-		{ "Boussinesq", AIRC_BOUSSINESQ },
+	convectionMode = addDropDown("空气热对流方式", {
+		{ "无", AIRC_NONE },
+		{ "旧版", AIRC_LEGACY },
+		{ "布辛涅斯克近似", AIRC_BOUSSINESQ },
 	}, [this] {
 		c->SetConvectionMode(convectionMode->GetOption().second);
 	});
-	gravityMode = addDropDown("Gravity simulation mode", {
-		{ "Vertical", GRAV_VERTICAL },
-		{ "Off", GRAV_OFF },
-		{ "Radial", GRAV_RADIAL },
-		{ "Custom", GRAV_CUSTOM },
+	gravityMode = addDropDown("重力模拟模式", {
+		{ "垂直", GRAV_VERTICAL },
+		{ "关", GRAV_OFF },
+		{ "径向", GRAV_RADIAL },
+		{ "自定义", GRAV_CUSTOM },
 	}, [this] {
 		c->SetGravityMode(gravityMode->GetOption().second);
 		if (gravityMode->GetOption().second == 3)
 		{
-			new DirectionSelector(ui::Point(-1, -1), 0.05f, 40, customGravityX, customGravityY, "Custom Gravity", [this](float x, float y) {
+			new DirectionSelector(ui::Point(-1, -1), 0.05f, 40, customGravityX, customGravityY, "自定义重力", [this](float x, float y) {
 				c->SetCustomGravityX(x);
 				c->SetCustomGravityY(y);
 			});
 		}
 	});
-	edgeMode = addDropDown("Edge mode", {
-		{ "Void", EDGE_VOID },
-		{ "Solid", EDGE_SOLID },
-		{ "Loop", EDGE_LOOP },
+	edgeMode = addDropDown("边界模式", {
+		{ "虚空", EDGE_VOID },
+		{ "固体", EDGE_SOLID },
+		{ "循环", EDGE_LOOP },
 	}, [this] {
 		c->SetEdgeMode(edgeMode->GetOption().second);
 	});
-	temperatureScale = addDropDown("Temperature scale", {
-		{ "Kelvin", TEMPSCALE_KELVIN },
-		{ "Celsius", TEMPSCALE_CELSIUS },
-		{ "Fahrenheit", TEMPSCALE_FAHRENHEIT },
+	temperatureScale = addDropDown("温标", {
+		{ "开尔文", TEMPSCALE_KELVIN },
+		{ "摄氏度", TEMPSCALE_CELSIUS },
+		{ "华氏度", TEMPSCALE_FAHRENHEIT },
 	}, [this] {
 		c->SetTemperatureScale(TempScale(temperatureScale->GetOption().second));
 	});
 	addSeparator();
-	std::tie(fpsLimit, fpsLimitText) = addLimitDropDown("Simulation framerate cap", {
-		{ "Exact", fpsLimitDropdownExact },
-		{ "Uncapped", fpsLimitDropdownUncapped },
+	std::tie(fpsLimit, fpsLimitText) = addLimitDropDown("模拟帧率上限", {
+		{ "精确值", fpsLimitDropdownExact },
+		{ "不限制", fpsLimitDropdownUncapped },
 	}, [this](bool defocus) {
 		UpdateFpsLimit(defocus);
 	});
-	std::tie(drawLimit, drawLimitText) = addLimitDropDown("Rendering framerate cap", {
-		{ "Exact", drawLimitDropdownExact },
-		{ "Follow display", drawLimitDropdownFollowDisplay },
+	std::tie(drawLimit, drawLimitText) = addLimitDropDown("渲染帧率上限", {
+		{ "精确值", drawLimitDropdownExact },
+		{ "跟随显示器刷新率", drawLimitDropdownFollowDisplay },
 	}, [this](bool defocus) {
 		UpdateDrawLimit(defocus);
 	});
-	addButtonWithLabel("Reset", " - Set both limits to sane defaults", [this]{
+	addButtonWithLabel("重置", " - 将两个上限设为合理默认值", [this]{
 		c->SetFpsLimit(DefaultFpsLimit);
 		c->SetDrawLimit(DefaultDrawLimit);
 	});
@@ -355,62 +355,62 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		while (desktopWidth >= GetGraphics()->Size().X * scaleIndex && desktopHeight >= GetGraphics()->Size().Y * scaleIndex);
 		if (!currentScaleValid)
 		{
-			options.push_back({ "current", currentScale });
+			options.push_back({ "当前", currentScale });
 		}
-		scale = addDropDown("Window scale factor for larger screens", options, [this] {
+		scale = addDropDown("大屏幕的窗口比例因子", options, [this] {
 			c->SetScale(scale->GetOption().second);
 		});
 	}
 	if (FORCE_WINDOW_FRAME_OPS == forceWindowFrameOpsNone)
 	{
-		resizable = addCheckbox(0, "Resizable \bg- allow resizing and maximizing window", "", [this] {
+		resizable = addCheckbox(0, "可调整窗口大小 \bg- 允许缩放和最大化", "", [this] {
 			c->SetResizable(resizable->GetChecked());
 		});
-		fullscreen = addCheckbox(0, "Fullscreen \bg- fill the entire screen", "", [this] {
+		fullscreen = addCheckbox(0, "全屏 \bg- 填满整个屏幕", "", [this] {
 			c->SetFullscreen(fullscreen->GetChecked());
 		});
-		changeResolution = addCheckbox(1, "Set optimal screen resolution", "", [this] {
+		changeResolution = addCheckbox(1, "设置最佳屏幕分辨率", "", [this] {
 			c->SetChangeResolution(changeResolution->GetChecked());
 		});
-		forceIntegerScaling = addCheckbox(1, "Force integer scaling \bg- less blurry", "", [this] {
+		forceIntegerScaling = addCheckbox(1, "整数倍缩放 \bg- 更清晰", "", [this] {
 			c->SetForceIntegerScaling(forceIntegerScaling->GetChecked());
 		});
 	}
-	blurryScaling = addCheckbox(0, "Blurry scaling \bg- more blurry, better on very big screens", "", [this] {
+	blurryScaling = addCheckbox(0, "平滑缩放 \bg- 画面较模糊，适合超大屏幕", "", [this] {
 		c->SetBlurryScaling(blurryScaling->GetChecked());
 	});
 	addSeparator();
 	if (ALLOW_QUIT)
 	{
-		fastquit = addCheckbox(0, "Fast quit", "Always exit completely when hitting close", [this] {
+		fastquit = addCheckbox(0, "快速退出", "关闭时始终完全退出", [this] {
 			c->SetFastQuit(fastquit->GetChecked());
 		});
-		globalQuit = addCheckbox(0, "Global quit shortcut", "Ctrl+q works everywhere", [this] {
+		globalQuit = addCheckbox(0, "全局退出快捷键", "Ctrl+Q 在任何界面均可退出", [this] {
 			c->SetGlobalQuit(globalQuit->GetChecked());
 		});
 	}
-	showAvatars = addCheckbox(0, "Show avatars", "Disable if you have a slow connection", [this] {
+	showAvatars = addCheckbox(0, "显示头像", "如果连接速度较慢，请禁用", [this] {
 		c->SetShowAvatars(showAvatars->GetChecked());
 	});
-	momentumScroll = addCheckbox(0, "Momentum (old) scrolling", "Accelerating instead of step scroll", [this] {
+	momentumScroll = addCheckbox(0, "惯性（旧式）滚动", "连续加速滚动", [this] {
 		c->SetMomentumScroll(momentumScroll->GetChecked());
 	});
-	mouseClickRequired = addCheckbox(0, "Sticky categories", "Switch between categories by clicking", [this] {
+	mouseClickRequired = addCheckbox(0, "点击锁定分类", "单击即可切换分类", [this] {
 		c->SetMouseClickrequired(mouseClickRequired->GetChecked());
 	});
-	includePressure = addCheckbox(0, "Include pressure", "When saving, copying, stamping, etc.", [this] {
+	includePressure = addCheckbox(0, "包括压力", "保存、复制、制作图章等操作时", [this] {
 		c->SetIncludePressure(includePressure->GetChecked());
 	});
-	perfectCircle = addCheckbox(0, "Perfect circle brush", "Better circle brush, without incorrect points on edges", [this] {
+	perfectCircle = addCheckbox(0, "精确圆形笔刷", "更好的圆形画笔，边缘没有错误的点", [this] {
 		c->SetPerfectCircle(perfectCircle->GetChecked());
 	});
-	graveExitsConsole = addCheckbox(0, "Key under Esc exits console", "Disable if that key is 0 on your keyboard", [this] {
+	graveExitsConsole = addCheckbox(0, "按 Esc 下方的反引号键退出控制台", "如果键盘上该键为 0，则禁用", [this] {
 		c->SetGraveExitsConsole(graveExitsConsole->GetChecked());
 	});
 	if constexpr (PLATFORM_CLIPBOARD)
 	{
 		auto indent = 0;
-		nativeClipoard = addCheckbox(indent, "Use platform clipboard", "Allows copying and pasting across TPT instances", [this] {
+		nativeClipoard = addCheckbox(indent, "使用平台剪贴板", "允许跨 TPT 实例复制和粘贴", [this] {
 			c->SetNativeClipoard(nativeClipoard->GetChecked());
 		});
 		currentY -= 4; // temporarily undo the currentY += 4 at the end of addCheckbox
@@ -420,14 +420,14 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		}
 		currentY += 4; // and then undo the undo
 	}
-	threadedRendering = addCheckbox(0, "Separate rendering thread", "May increase framerate when fancy effects are in use", [this] {
+	threadedRendering = addCheckbox(0, "独立渲染线程", "使用奇特效果时可能会提高帧速率", [this] {
 		c->SetThreadedRendering(threadedRendering->GetChecked());
 	});
-	decoSpace = addDropDown("Colour space used by decoration tools", {
+	decoSpace = addDropDown("装饰工具使用的色彩空间", {
 		{ "sRGB", DECOSPACE_SRGB },
-		{ "Linear", DECOSPACE_LINEAR },
-		{ "Gamma 2.2", DECOSPACE_GAMMA22 },
-		{ "Gamma 1.8", DECOSPACE_GAMMA18 },
+		{ "线性", DECOSPACE_LINEAR },
+		{ "伽马 2.2", DECOSPACE_GAMMA22 },
+		{ "伽马 1.8", DECOSPACE_GAMMA18 },
 	}, [this] {
 		c->SetDecoSpace(decoSpace->GetOption().second);
 	});
@@ -435,7 +435,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	currentY += 4;
 	if constexpr (ALLOW_DATA_FOLDER)
 	{
-		auto *dataFolderButton = new ui::Button(ui::Point(10, currentY), ui::Point(90, 16), "Open data folder");
+		auto *dataFolderButton = new ui::Button(ui::Point(10, currentY), ui::Point(90, 16), "打开数据文件夹");
 		dataFolderButton->SetActionCallback({ [] {
 			ByteString cwd = Platform::GetCwd();
 			if (!cwd.empty())
@@ -444,31 +444,31 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 			}
 			else
 			{
-				std::cerr << "Cannot open data folder: Platform::GetCwd(...) failed" << std::endl;
+				std::cerr << "无法打开数据文件夹：获取当前目录失败" << std::endl;
 			}
 		} });
 		scrollPanel->AddChild(dataFolderButton);
 		if constexpr (SHARED_DATA_FOLDER)
 		{
-			auto *migrationButton = new ui::Button(ui::Point(Size.X - 178, currentY), ui::Point(163, 16), "Migrate to shared data directory");
+			auto *migrationButton = new ui::Button(ui::Point(Size.X - 178, currentY), ui::Point(163, 16), "迁移到共享数据目录");
 			migrationButton->SetActionCallback({ [] {
 				ByteString from = Platform::originalCwd;
 				ByteString to = Platform::sharedCwd;
-				new ConfirmPrompt("Do Migration?", "This will migrate all stamps, saves, and scripts from\n\bt" + from.FromUtf8() + "\bw\nto the shared data directory at\n\bt" + to.FromUtf8() + "\bw\n\n" + "Files that already exist will not be overwritten.", { [from, to]() {
+				new ConfirmPrompt("迁移数据？", "将从以下位置迁移所有图章、存档和脚本：\n\bt" + from.FromUtf8() + "\bw\n到以下共享数据目录：\n\bt" + to.FromUtf8() + "\bw\n\n" + "已经存在的文件不会被覆盖。", { [from, to]() {
 					String ret = Client::Ref().DoMigration(from, to);
-					new InformationMessage("Migration Complete", ret, false);
+					new InformationMessage("迁移完成", ret, false);
 				} });
 			} });
 			scrollPanel->AddChild(migrationButton);
 		}
 		currentY += 26;
 	}
-	String autoStartupRequestNote = "Done once at startup";
+	String autoStartupRequestNote = "启动时完成一次";
 	if (!IGNORE_UPDATES)
 	{
-		autoStartupRequestNote += ", also checks for updates";
+		autoStartupRequestNote += "，还检查更新";
 	}
-	autoStartupRequest = addCheckbox(0, "Fetch the message of the day and notifications", autoStartupRequestNote, [this] {
+	autoStartupRequest = addCheckbox(0, "获取每日消息和通知", autoStartupRequestNote, [this] {
 		auto checked = autoStartupRequest->GetChecked();
 		if (checked)
 		{
@@ -476,21 +476,21 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		}
 		c->SetAutoStartupRequest(checked);
 	});
-	startupRequestStatus = addButtonWithLabel("Fetch them now", "", []{
+	startupRequestStatus = addButtonWithLabel("立即获取", "", []{
 		Client::Ref().BeginStartupRequest();
 	});
 	UpdateStartupRequestStatus();
-	redirectStd = addCheckbox(0, "Save errors and other messages to a file", "Developers may ask for this when trying to fix problems", [this] {
+	redirectStd = addCheckbox(0, "把错误及其他消息写入文件", "开发人员在尝试解决问题时可能会提出此要求", [this] {
 		c->SetRedirectStd(redirectStd->GetChecked());
 	});
 	addSeparator();
-	addButtonWithLabel("Credits", " - Find out who contributed to TPT", []{
+	addButtonWithLabel("制作人员", " - 查看 TPT 的贡献者", []{
 		auto *credits = new Credits();
 		ui::Engine::Ref().ShowWindow(credits);
 	});
 
 	{
-		ui::Button *ok = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X, 16), "OK");
+		ui::Button *ok = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X, 16), "确定");
 		ok->SetActionCallback({ [this] {
 			c->Exit();
 		} });
@@ -558,15 +558,15 @@ void OptionsView::UpdateStartupRequestStatus()
 	switch (Client::Ref().GetStartupRequestStatus())
 	{
 	case Client::StartupRequestStatus::notYetDone:
-		startupRequestStatus->SetText("\bg - Not yet fetched");
+		startupRequestStatus->SetText("\bg - 尚未获取");
 		break;
 
 	case Client::StartupRequestStatus::inProgress:
-		startupRequestStatus->SetText("\bg - In progress...");
+		startupRequestStatus->SetText("\bg - 进行中……");
 		break;
 
 	case Client::StartupRequestStatus::succeeded:
-		startupRequestStatus->SetText(String::Build("\bg - OK, ", Client::Ref().GetServerNotifications().size(), " notifications fetched"));
+		startupRequestStatus->SetText(String::Build("\bg - 已获取 ", Client::Ref().GetServerNotifications().size(), " 条通知"));
 		break;
 
 	case Client::StartupRequestStatus::failed:
@@ -576,7 +576,7 @@ void OptionsView::UpdateStartupRequestStatus()
 			{
 				error = "???";
 			}
-			startupRequestStatus->SetText("\bg - Failed: " + error->FromUtf8());
+			startupRequestStatus->SetText("\bg - 失败： " + error->FromUtf8());
 		}
 		break;
 	}

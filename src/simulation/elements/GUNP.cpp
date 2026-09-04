@@ -27,7 +27,7 @@ void Element::Element_GUNP()
 	Weight = 85;
 
 	HeatConduct = 97;
-	Description = "Gunpowder. Light dust, explodes on contact with fire or spark.";
+	Description = "火药。轻尘，接触火或火花会爆炸。";
 
 	Properties = TYPE_PART;
 

@@ -31,7 +31,7 @@ void Element::Element_FILT()
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "Filter. Changes color of PHOT and BIZR. Color depends on temperature.";
+	Description = "滤镜。改变 PHOT 和 BIZR 的颜色，具体颜色取决于温度。";
 
 	Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_NOAMBHEAT | PROP_LIFE_DEC;
 

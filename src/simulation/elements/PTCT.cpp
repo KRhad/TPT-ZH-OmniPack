@@ -29,7 +29,7 @@ void Element::Element_PTCT()
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "PTC Thermistor. Conducts with PSCN and NSCN, but only when cooled below 100C.";
+	Description = "PTC 热敏电阻。与 PSCN 和 NSCN 导电，但仅在冷却至 100C 以下时有效。";
 
 	Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

@@ -29,7 +29,7 @@ void Element::Element_TSNS()
 	Weight = 100;
 
 	HeatConduct = 0;
-	Description = "Temperature sensor, creates a spark when there's a nearby particle with a greater temperature.";
+	Description = "温度传感器，当附近有温度较高的粒子时会产生火花。";
 
 	Properties = TYPE_SOLID;
 

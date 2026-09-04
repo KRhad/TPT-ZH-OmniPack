@@ -29,7 +29,7 @@ void Element::Element_O2()
 	Weight = 1;
 
 	HeatConduct = 70;
-	Description = "Oxygen gas. Ignites easily.";
+	Description = "氧气。容易助燃。";
 
 	Properties = TYPE_GAS;
 

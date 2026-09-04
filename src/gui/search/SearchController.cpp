@@ -255,11 +255,8 @@ void SearchController::ClearSelection()
 void SearchController::RemoveSelected()
 {
 	StringBuilder desc;
-	desc << "Are you sure you want to delete " << searchModel->GetSelected().size() << " save";
-	if(searchModel->GetSelected().size()>1)
-		desc << "s";
-	desc << "?";
-	new ConfirmPrompt("Delete saves", desc.Build(), { [this] {
+	desc << "确定要删除 " << searchModel->GetSelected().size() << " 个存档吗？";
+	new ConfirmPrompt("删除存档", desc.Build(), { [this] {
 		removeSelectedC();
 	} });
 }
@@ -276,7 +273,7 @@ void SearchController::removeSelectedC()
 		{
 			for (size_t i = 0; i < saves.size(); i++)
 			{
-				notifyStatus(String::Build("Deleting save [", saves[i], "] ..."));
+				notifyStatus(String::Build("正在删除存档 [", saves[i], "]……"));
 				auto deleteSaveRequest = std::make_unique<http::DeleteSaveRequest>(saves[i]);
 				deleteSaveRequest->Start();
 				deleteSaveRequest->Wait();
@@ -286,7 +283,7 @@ void SearchController::removeSelectedC()
 				}
 				catch (const http::RequestError &ex)
 				{
-					notifyError(String::Build("Failed to delete [", saves[i], "]: ", ByteString(ex.what()).FromAscii()));
+					notifyError(String::Build("删除失败 [", saves[i], "]：", ByteString(ex.what()).FromAscii()));
 					c->Refresh();
 					return false;
 				}
@@ -298,7 +295,7 @@ void SearchController::removeSelectedC()
 	};
 
 	std::vector<int> selected = searchModel->GetSelected();
-	new TaskWindow("Removing saves", new RemoveSavesTask(selected, this));
+	new TaskWindow("正在删除存档", new RemoveSavesTask(selected, this));
 	ClearSelection();
 	searchModel->UpdateSaveList(searchModel->GetPageNum(), searchModel->GetLastQuery());
 }
@@ -306,11 +303,8 @@ void SearchController::removeSelectedC()
 void SearchController::UnpublishSelected(bool publish)
 {
 	StringBuilder desc;
-	desc << "Are you sure you want to " << (publish ? String("publish ") : String("unpublish ")) << searchModel->GetSelected().size() << " save";
-	if (searchModel->GetSelected().size() > 1)
-		desc << "s";
-	desc << "?";
-	new ConfirmPrompt(publish ? String("Publish Saves") : String("Unpublish Saves"), desc.Build(), { [this, publish] {
+	desc << "确定要" << (publish ? String("发布 ") : String("取消发布 ")) << searchModel->GetSelected().size() << " 个存档吗？";
+	new ConfirmPrompt(publish ? String("发布存档") : String("取消发布存档"), desc.Build(), { [this, publish] {
 		unpublishSelectedC(publish);
 	} });
 }
@@ -327,7 +321,7 @@ void SearchController::unpublishSelectedC(bool publish)
 
 		void PublishSave(int saveID)
 		{
-			notifyStatus(String::Build("Publishing save [", saveID, "]"));
+			notifyStatus(String::Build("正在发布存档 [", saveID, "]"));
 			auto publishSaveRequest = std::make_unique<http::PublishSaveRequest>(saveID);
 			publishSaveRequest->Start();
 			publishSaveRequest->Wait();
@@ -336,7 +330,7 @@ void SearchController::unpublishSelectedC(bool publish)
 
 		void UnpublishSave(int saveID)
 		{
-			notifyStatus(String::Build("Unpublishing save [", saveID, "]"));
+			notifyStatus(String::Build("正在取消发布存档 [", saveID, "]"));
 			auto unpublishSaveRequest = std::make_unique<http::UnpublishSaveRequest>(saveID);
 			unpublishSaveRequest->Start();
 			unpublishSaveRequest->Wait();
@@ -362,11 +356,11 @@ void SearchController::unpublishSelectedC(bool publish)
 				{
 					if (publish) // uses html page so error message will be spam
 					{
-						notifyError(String::Build("Failed to publish [", saves[i], "], is this save yours?"));
+						notifyError(String::Build("发布失败 [", saves[i], "]，这是你的存档吗？"));
 					}
 					else
 					{
-						notifyError(String::Build("Failed to unpublish [", saves[i], "]: ", ByteString(ex.what()).FromAscii()));
+						notifyError(String::Build("取消发布失败 [", saves[i], "]：", ByteString(ex.what()).FromAscii()));
 					}
 					c->Refresh();
 					return false;
@@ -379,7 +373,7 @@ void SearchController::unpublishSelectedC(bool publish)
 	};
 
 	std::vector<int> selected = searchModel->GetSelected();
-	new TaskWindow(publish ? String("Publishing Saves") : String("Unpublishing Saves"), new UnpublishSavesTask(selected, this, publish));
+	new TaskWindow(publish ? String("正在发布存档") : String("正在取消发布存档"), new UnpublishSavesTask(selected, this, publish));
 }
 
 void SearchController::FavouriteSelected()
@@ -394,7 +388,7 @@ void SearchController::FavouriteSelected()
 		{
 			for (size_t i = 0; i < saves.size(); i++)
 			{
-				notifyStatus(String::Build("Favouring save [", saves[i], "]"));
+				notifyStatus(String::Build("正在收藏存档 [", saves[i], "]"));
 				auto favouriteSaveRequest = std::make_unique<http::FavouriteSaveRequest>(saves[i], true);
 				favouriteSaveRequest->Start();
 				favouriteSaveRequest->Wait();
@@ -404,7 +398,7 @@ void SearchController::FavouriteSelected()
 				}
 				catch (const http::RequestError &ex)
 				{
-					notifyError(String::Build("Failed to favourite [", saves[i], "]: ", ByteString(ex.what()).FromAscii()));
+					notifyError(String::Build("收藏失败 [", saves[i], "]：", ByteString(ex.what()).FromAscii()));
 					c->Refresh();
 					return false;
 				}
@@ -425,7 +419,7 @@ void SearchController::FavouriteSelected()
 		{
 			for (size_t i = 0; i < saves.size(); i++)
 			{
-				notifyStatus(String::Build("Unfavouring save [", saves[i], "]"));
+				notifyStatus(String::Build("正在取消收藏存档 [", saves[i], "]"));
 				auto unfavouriteSaveRequest = std::make_unique<http::FavouriteSaveRequest>(saves[i], false);
 				unfavouriteSaveRequest->Start();
 				unfavouriteSaveRequest->Wait();
@@ -435,7 +429,7 @@ void SearchController::FavouriteSelected()
 				}
 				catch (const http::RequestError &ex)
 				{
-					notifyError(String::Build("Failed to unfavourite [", saves[i], "]: ", ByteString(ex.what()).FromAscii()));
+					notifyError(String::Build("取消收藏失败 [", saves[i], "]：", ByteString(ex.what()).FromAscii()));
 					c->Refresh();
 					return false;
 				}
@@ -448,8 +442,8 @@ void SearchController::FavouriteSelected()
 
 	std::vector<int> selected = searchModel->GetSelected();
 	if (!searchModel->GetShowFavourite())
-		new TaskWindow("Favouring saves", new FavouriteSavesTask(selected, this));
+		new TaskWindow("正在收藏存档", new FavouriteSavesTask(selected, this));
 	else
-		new TaskWindow("Unfavouring saves", new UnfavouriteSavesTask(selected, this));
+		new TaskWindow("正在取消收藏存档", new UnfavouriteSavesTask(selected, this));
 	ClearSelection();
 }

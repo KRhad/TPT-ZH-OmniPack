@@ -93,7 +93,7 @@ ColourPickerActivity::ColourPickerActivity(ui::Colour initialColour, OnPicked on
 	hexValue = new::ui::Label(ui::Point(150, Size.Y-23), ui::Point(53, 17), "0xFFFFFFFF");
 	AddComponent(hexValue);
 
-	ui::Button * doneButton = new ui::Button(ui::Point(Size.X-45, Size.Y-23), ui::Point(40, 17), "Done");
+	ui::Button * doneButton = new ui::Button(ui::Point(Size.X-45, Size.Y-23), ui::Point(40, 17), "完成");
 	doneButton->SetActionCallback({ [this] {
 		int Red, Green, Blue;
 		Red = rValue->GetText().ToNumber<int>(true);

@@ -464,4 +464,3 @@ void OptionsModel::notifySettingsChanged()
 
 OptionsModel::~OptionsModel() {
 }
-

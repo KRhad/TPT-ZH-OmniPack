@@ -22,12 +22,12 @@ void Element::Element_SAWD()
 	Flammable = 10;
 	Explosive = 0;
 	Meltable = 0;
-       	Hardness = 29;
+	Hardness = 29;
 
 	Weight = 18;
 
 	HeatConduct = 70;
-	Description = "Sawdust. Floats on water.";
+	Description = "锯末。漂浮在水面上。";
 
 	Properties = TYPE_PART | PROP_NEUTPASS;
 

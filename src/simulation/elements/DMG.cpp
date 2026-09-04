@@ -31,7 +31,7 @@ void Element::Element_DMG()
 
 	DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	HeatConduct = 29;
-	Description = "Generates damaging pressure and breaks any elements it hits.";
+	Description = "产生破坏性压力，并击碎碰到的元素。";
 
 	Properties = TYPE_PART|PROP_SPARKSETTLE;
 

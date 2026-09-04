@@ -28,7 +28,7 @@ void Element::Element_RFRG()
 	Weight = 1;
 
 	HeatConduct = 3;
-	Description = "Refrigerant. Heats up and liquefies under pressure.";
+	Description = "制冷剂。在压力下加热并液化。";
 
 	Properties = TYPE_GAS|PROP_DEADLY;
 

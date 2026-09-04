@@ -30,7 +30,7 @@ void Element::Element_NONE()
 	Weight = 100;
 
 	HeatConduct = 0;
-	Description = "Erases particles.";
+	Description = "擦除颗粒。";
 
 	Properties = 0;
 

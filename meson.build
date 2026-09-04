@@ -407,7 +407,11 @@ elif host_platform == 'android'
 	# android doesn't ship libc++_shared.so, so we might as well link it statically;
 	# the alternative would be to grab libc++_shared.so from the NDK and ship it with
 	# the app alongside libpowder.so, and possibly add it to SDL's list of libraries to load
-	project_link_args += [ '-static-libstdc++' ]
+	project_link_args += [
+		'-static-libstdc++',
+		'-Wl,-z,max-page-size=16384',
+		'-Wl,-z,common-page-size=16384',
+	]
 	project_cpp_args += args_ccomp_android
 endif
 

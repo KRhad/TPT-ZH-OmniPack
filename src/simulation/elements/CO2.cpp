@@ -29,7 +29,7 @@ void Element::Element_CO2()
 	Weight = 1;
 
 	HeatConduct = 88;
-	Description = "Carbon Dioxide. Heavy gas, drifts downwards. Carbonates water and turns to dry ice when cold.";
+	Description = "二氧化碳。重气体，向下飘移。使水碳酸化并在寒冷时变成干冰。";
 
 	Properties = TYPE_GAS;
 

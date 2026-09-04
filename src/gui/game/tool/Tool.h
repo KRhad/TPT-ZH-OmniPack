@@ -20,7 +20,7 @@ public:
 
 	int ToolID = 0;
 	String Name = "NULL";
-	String Description = "NULL Tool, does NOTHING";
+	String Description = "空工具，不执行任何操作";
 	ByteString Identifier = "DEFAULT_TOOL_INVALID";
 	RGB Colour = 0xFFFFFF_rgb;
 	bool Blocky = false;

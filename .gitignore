@@ -5,6 +5,8 @@
 *.out
 *.sh
 *.py
+!apply_zh_cn.py
+!generate_cjk_font.py
 *.png
 *.ppm
 *.swp

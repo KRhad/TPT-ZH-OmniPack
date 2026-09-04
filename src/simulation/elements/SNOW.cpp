@@ -31,7 +31,7 @@ void Element::Element_SNOW()
 
 	DefaultProperties.temp = R_TEMP - 30.0f + 273.15f;
 	HeatConduct = 46;
-	Description = "Light particles. Created when ICE breaks under pressure.";
+	Description = "雪。ICE 受压破碎时形成的轻质粒子。";
 
 	Properties = TYPE_PART|PROP_NEUTPASS;
 	CarriesTypeIn = 1U << FIELD_CTYPE;

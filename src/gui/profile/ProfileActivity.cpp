@@ -22,7 +22,7 @@ ProfileActivity::ProfileActivity(ByteString username) :
 	auto user = Client::Ref().GetAuthUser();
 	editable = user && user->Username == username;
 
-	ui::Button * closeButton = new ui::Button(ui::Point(0, Size.Y-15), ui::Point(Size.X, 15), "Close");
+	ui::Button * closeButton = new ui::Button(ui::Point(0, Size.Y-15), ui::Point(Size.X, 15), "关闭");
 	closeButton->SetActionCallback({ [this] {
 		Exit();
 	} });
@@ -30,12 +30,12 @@ ProfileActivity::ProfileActivity(ByteString username) :
 	{
 		closeButton->Size.X = (Size.X/2)+1;
 
-		ui::Button * saveButton = new ui::Button(ui::Point(Size.X/2, Size.Y-15), ui::Point(Size.X/2, 15), "Save");
+		ui::Button * saveButton = new ui::Button(ui::Point(Size.X/2, Size.Y-15), ui::Point(Size.X/2, 15), "保存");
 		saveButton->SetActionCallback({ [this, saveButton] {
 			if (!loading && !saving && editable)
 			{
 				saveButton->Enabled = false;
-				saveButton->SetText("Saving...");
+				saveButton->SetText("正在保存……");
 				saving = true;
 				info.location = location->GetText();
 				info.biography = bio->GetText();
@@ -59,11 +59,11 @@ void ProfileActivity::setUserInfo(UserInfo newInfo)
 	info = newInfo;
 
 	if (!info.biography.length() && !editable)
-		info.biography = "\bgNot Provided";
+		info.biography = "\bg未提供";
 	if (!info.location.length() && !editable)
-		info.location = "\bgNot Provided";
+		info.location = "\bg未提供";
 	if (!info.website.length())
-		info.website = "\bgNot Provided";
+		info.website = "\bg未提供";
 
 	// everything is on a large scroll panel
 	scrollPanel = new ui::ScrollPanel(ui::Point(1, 1), ui::Point(Size.X-2, Size.Y-16));
@@ -82,7 +82,7 @@ void ProfileActivity::setUserInfo(UserInfo newInfo)
 	// edit avatar button
 	if (editable)
 	{
-		ui::Button * editAvatar = new ui::Button(ui::Point(Size.X - (40 + 16 + 75), currentY), ui::Point(75, 15), "Edit Avatar");
+		ui::Button * editAvatar = new ui::Button(ui::Point(Size.X - (40 + 16 + 75), currentY), ui::Point(75, 15), "更换头像");
 		editAvatar->SetActionCallback({ [] {
 			Platform::OpenURI(ByteString::Build(SERVER, "/Profile/Avatar.html"));
 		} });
@@ -91,19 +91,19 @@ void ProfileActivity::setUserInfo(UserInfo newInfo)
 	currentY += 23;
 
 	// age
-	ui::Label * ageTitle = new ui::Label(ui::Point(4, currentY), ui::Point(23, 15), "Age:");
+	ui::Label * ageTitle = new ui::Label(ui::Point(4, currentY), ui::Point(23, 15), "年龄：");
 	ageTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	ageTitle->SetTextColour(ui::Colour(180, 180, 180));
 	scrollPanel->AddChild(ageTitle);
 
 	// can't figure out how to tell a null from a 0 in the json library we use
-	ui::Label *age = new ui::Label(ui::Point(5+ageTitle->Size.X, currentY), ui::Point(Size.X-ageTitle->Size.X-56, 15), info.age ? String::Build(info.age) : "\bgNot Provided");
+	ui::Label *age = new ui::Label(ui::Point(5+ageTitle->Size.X, currentY), ui::Point(Size.X-ageTitle->Size.X-56, 15), info.age ? String::Build(info.age) : "\bg未提供");
 	age->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	scrollPanel->AddChild(age);
 	currentY += 2+age->Size.Y;
 
 	// location
-	ui::Label * locationTitle = new ui::Label(ui::Point(4, currentY), ui::Point(45, 15), "Location:");
+	ui::Label * locationTitle = new ui::Label(ui::Point(4, currentY), ui::Point(45, 15), "地区：");
 	locationTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	locationTitle->SetTextColour(ui::Colour(180, 180, 180));
 	scrollPanel->AddChild(locationTitle);
@@ -122,7 +122,7 @@ void ProfileActivity::setUserInfo(UserInfo newInfo)
 	currentY += 2+location->Size.Y;
 
 	// website
-	ui::Label * websiteTitle = new ui::Label(ui::Point(1, currentY), ui::Point(42, 15), "Website:");
+	ui::Label * websiteTitle = new ui::Label(ui::Point(1, currentY), ui::Point(42, 15), "网站：");
 	websiteTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	websiteTitle->SetTextColour(ui::Colour(180, 180, 180));
 	scrollPanel->AddChild(websiteTitle);
@@ -133,14 +133,14 @@ void ProfileActivity::setUserInfo(UserInfo newInfo)
 	currentY += 2+website->Size.Y;
 
 	// saves
-	ui::Label * savesTitle = new ui::Label(ui::Point(4, currentY), ui::Point(35, 15), "Saves:");
+	ui::Label * savesTitle = new ui::Label(ui::Point(4, currentY), ui::Point(35, 15), "存档数：");
 	savesTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	savesTitle->SetTextColour(ui::Colour(180, 180, 180));
 	scrollPanel->AddChild(savesTitle);
 	currentY += savesTitle->Size.Y;
 
 		// saves count
-		ui::Label * saveCountTitle = new ui::Label(ui::Point(12, currentY), ui::Point(32, 15), "Count:");
+		ui::Label * saveCountTitle = new ui::Label(ui::Point(12, currentY), ui::Point(32, 15), "总数：");
 		saveCountTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		saveCountTitle->SetTextColour(ui::Colour(180, 180, 180));
 		scrollPanel->AddChild(saveCountTitle);
@@ -151,7 +151,7 @@ void ProfileActivity::setUserInfo(UserInfo newInfo)
 		currentY += savesCount->Size.Y;
 
 		// average score
-		ui::Label * averageScoreTitle = new ui::Label(ui::Point(12, currentY), ui::Point(72, 15), "Average Score:");
+		ui::Label * averageScoreTitle = new ui::Label(ui::Point(12, currentY), ui::Point(72, 15), "平均评分：");
 		averageScoreTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		averageScoreTitle->SetTextColour(ui::Colour(180, 180, 180));
 		scrollPanel->AddChild(averageScoreTitle);
@@ -162,7 +162,7 @@ void ProfileActivity::setUserInfo(UserInfo newInfo)
 		currentY += averageScore->Size.Y;
 
 		// highest score
-		ui::Label * highestScoreTitle = new ui::Label(ui::Point(12, currentY), ui::Point(71, 15), "Highest Score:");
+		ui::Label * highestScoreTitle = new ui::Label(ui::Point(12, currentY), ui::Point(71, 15), "最高评分：");
 		highestScoreTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		highestScoreTitle->SetTextColour(ui::Colour(180, 180, 180));
 		scrollPanel->AddChild(highestScoreTitle);
@@ -173,7 +173,7 @@ void ProfileActivity::setUserInfo(UserInfo newInfo)
 		currentY += 2+highestScore->Size.Y;
 
 	// biograhy
-	ui::Label * bioTitle = new ui::Label(ui::Point(4, currentY), ui::Point(50, 15), "Biography:");
+	ui::Label * bioTitle = new ui::Label(ui::Point(4, currentY), ui::Point(50, 15), "个人简介：");
 	bioTitle->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	bioTitle->SetTextColour(ui::Colour(180, 180, 180));
 	scrollPanel->AddChild(bioTitle);
@@ -202,7 +202,7 @@ void ProfileActivity::OnTick()
 {
 	if (doError)
 	{
-		new ErrorMessage("Error", doErrorMessage, { [this]() {
+		new ErrorMessage("错误", doErrorMessage, { [this]() {
 			Exit();
 		} });
 	}
@@ -217,7 +217,7 @@ void ProfileActivity::OnTick()
 		catch (const http::RequestError &ex)
 		{
 			doError = true;
-			doErrorMessage = "Could not save user info: " + ByteString(ex.what()).FromUtf8();
+			doErrorMessage = "无法保存用户资料：" + ByteString(ex.what()).FromUtf8();
 		}
 		saveUserInfoRequest.reset();
 	}
@@ -232,7 +232,7 @@ void ProfileActivity::OnTick()
 		catch (const http::RequestError &ex)
 		{
 			doError = true;
-			doErrorMessage = "Could not load user info: " + ByteString(ex.what()).FromUtf8();
+			doErrorMessage = "无法加载用户资料：" + ByteString(ex.what()).FromUtf8();
 		}
 		getUserInfoRequest.reset();
 	}

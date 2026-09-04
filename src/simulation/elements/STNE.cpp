@@ -27,7 +27,7 @@ void Element::Element_STNE()
 	Weight = 90;
 
 	HeatConduct = 150;
-	Description = "Stone. Heavy particles, meltable.";
+	Description = "石头。重颗粒，易熔。";
 
 	Properties = TYPE_PART;
 

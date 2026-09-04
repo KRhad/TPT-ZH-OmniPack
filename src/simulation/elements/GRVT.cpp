@@ -31,7 +31,7 @@ void Element::Element_GRVT()
 	Weight = -1;
 
 	HeatConduct = 61;
-	Description = "Gravitons. Create Newtonian Gravity.";
+	Description = "引力子。创建牛顿引力。";
 
 	Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

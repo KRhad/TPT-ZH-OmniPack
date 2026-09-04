@@ -31,7 +31,7 @@ void Element::Element_EMP()
 	Weight = 100;
 
 	HeatConduct = 121;
-	Description = "Electromagnetic pulse. Breaks activated electronics.";
+	Description = "电磁脉冲。损坏激活的电子设备。";
 
 	Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

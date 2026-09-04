@@ -31,7 +31,7 @@ void Element::Element_VRSS()
 
 	DefaultProperties.temp = R_TEMP + 273.15f;
 	HeatConduct = 251;
-	Description = "Solid Virus. Turns everything it touches into virus.";
+	Description = "固体病毒。将接触到的一切都变成病毒。";
 
 	Properties = TYPE_SOLID|PROP_DEADLY;
 	CarriesTypeIn = 1U << FIELD_TMP2;

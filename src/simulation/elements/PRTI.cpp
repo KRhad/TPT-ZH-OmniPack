@@ -34,7 +34,7 @@ void Element::Element_PRTI()
 	Weight = 100;
 
 	HeatConduct = 0;
-	Description = "Portal IN. Particles go in here. Also has temperature dependent channels. (same as WIFI)";
+	Description = "入口传送门。粒子从这里进入；通道随温度变化（与 WIFI 相同）。";
 
 	Properties = TYPE_SOLID;
 

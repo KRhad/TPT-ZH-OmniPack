@@ -33,6 +33,7 @@ if tpt_arch == 'x86_64':
 	android_arch = 'x86_64'
 
 sha_packaged_name = 'libpowder.so'
+sha_apk_path       = '/'.join(('lib', android_arch, sha_packaged_name))
 
 manifest_path  = os.path.join(build_dir, manifest_xml)
 sha_path       = os.path.join(build_dir, sha_name)
@@ -41,6 +42,10 @@ private_dir    = os.path.join(build_dir, private_name)
 arch_dir       = os.path.join(private_dir, 'lib', android_arch)
 sha_lib_path   = os.path.join(arch_dir, sha_packaged_name)
 flat_dir       = os.path.join(private_dir, 'flat')
+resource_paths = [
+	path if os.path.isabs(path) else os.path.normpath(os.path.join(build_dir, path))
+	for path in resources
+]
 
 if os.path.exists(arch_dir):
 	shutil.rmtree(arch_dir)
@@ -57,7 +62,7 @@ if subprocess.run([
 	aapt2,
 	'compile',
 	'-o', os.path.join(private_dir, 'flat'),
-	*resources,
+	*resource_paths,
 ], cwd = build_dir).returncode:
 	sys.exit(1)
 
@@ -81,7 +86,7 @@ if subprocess.run([
 	aapt,
 	'add',
 	unaligned_path,
-	os.path.join('lib', android_arch, sha_packaged_name),
+	sha_apk_path,
 ], cwd = private_dir).returncode:
 	sys.exit(1)
 

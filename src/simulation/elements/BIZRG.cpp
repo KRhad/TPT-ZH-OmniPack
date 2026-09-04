@@ -29,7 +29,7 @@ void Element::Element_BIZRG()
 
 	DefaultProperties.temp = R_TEMP - 200.0f + 273.15f;
 	HeatConduct = 42;
-	Description = "Bizarre gas.";
+	Description = "奇异气体。";
 
 	Properties = TYPE_GAS;
 

@@ -30,7 +30,7 @@ void Element::Element_ANAR()
 	Weight = 85;
 
 	HeatConduct = 70;
-	Description = "Anti-air. Very light gravity-defying dust. Burns cold instead of hot.";
+	Description = "反空气尘。极轻、反重力；燃烧时吸热而不是放热。";
 
 	Properties = TYPE_PART;
 
