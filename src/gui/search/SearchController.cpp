@@ -384,8 +384,9 @@ void SearchController::FavouriteSelected()
 	class FavouriteSavesTask : public Task
 	{
 		std::vector<int> saves;
+		SearchController *c;
 	public:
-		FavouriteSavesTask(std::vector<int> saves_) { saves = saves_; }
+		FavouriteSavesTask(std::vector<int> saves_, SearchController *c_) { saves = saves_; c = c_; }
 		bool doWork() override
 		{
 			for (size_t i = 0; i < saves.size(); i++)
@@ -400,11 +401,17 @@ void SearchController::FavouriteSelected()
 				}
 				catch (const http::RequestError &ex)
 				{
+<<<<<<< HEAD
 					notifyError(String::Build(Localization::Ref().Tr("search.error_favourite_failed"), saves[i], Localization::Ref().Tr("search.error_favourite_failed_suffix"), ByteString(ex.what()).FromAscii()));
+=======
+					notifyError(String::Build("Failed to favourite [", saves[i], "]: ", ByteString(ex.what()).FromAscii()));
+					c->Refresh();
+>>>>>>> official-local/master
 					return false;
 				}
 				notifyProgress((i + 1) * 100 / saves.size());
 			}
+			c->Refresh();
 			return true;
 		}
 	};
@@ -412,8 +419,9 @@ void SearchController::FavouriteSelected()
 	class UnfavouriteSavesTask : public Task
 	{
 		std::vector<int> saves;
+		SearchController *c;
 	public:
-		UnfavouriteSavesTask(std::vector<int> saves_) { saves = saves_; }
+		UnfavouriteSavesTask(std::vector<int> saves_, SearchController *c_) { saves = saves_; c = c_; }
 		bool doWork() override
 		{
 			for (size_t i = 0; i < saves.size(); i++)
@@ -428,19 +436,31 @@ void SearchController::FavouriteSelected()
 				}
 				catch (const http::RequestError &ex)
 				{
+<<<<<<< HEAD
 					notifyError(String::Build(Localization::Ref().Tr("search.error_unfavourite_failed"), saves[i], Localization::Ref().Tr("search.error_unfavourite_failed_suffix"), ByteString(ex.what()).FromAscii()));
+=======
+					notifyError(String::Build("Failed to unfavourite [", saves[i], "]: ", ByteString(ex.what()).FromAscii()));
+					c->Refresh();
+>>>>>>> official-local/master
 					return false;
 				}
 				notifyProgress((i + 1) * 100 / saves.size());
 			}
+			c->Refresh();
 			return true;
 		}
 	};
 
 	std::vector<int> selected = searchModel->GetSelected();
 	if (!searchModel->GetShowFavourite())
+<<<<<<< HEAD
 		new TaskWindow(Localization::Ref().Tr("search.task_favouring"), new FavouriteSavesTask(selected));
 	else
 		new TaskWindow(Localization::Ref().Tr("search.task_unfavouring"), new UnfavouriteSavesTask(selected));
+=======
+		new TaskWindow("Favouring saves", new FavouriteSavesTask(selected, this));
+	else
+		new TaskWindow("Unfavouring saves", new UnfavouriteSavesTask(selected, this));
+>>>>>>> official-local/master
 	ClearSelection();
 }

@@ -257,14 +257,26 @@ void Renderer::render_parts()
 	auto &parts = sim->parts;
 	if (gridSize)//draws the grid
 	{
-		for (ny=0; ny<YRES; ny++)
-			for (nx=0; nx<XRES; nx++)
-			{
-				if (ny%(4*gridSize) == 0)
-					BlendPixel({ nx, ny }, 0x646464_rgb .WithAlpha(80));
-				if (nx%(4*gridSize) == 0 && ny%(4*gridSize) != 0)
-					BlendPixel({ nx, ny }, 0x646464_rgb .WithAlpha(80));
-			}
+		int gs4 = gridSize*4;
+		if (gs4 > 0) // prevent a division by 0
+		{
+			for (ny=0; ny<YRES; ny++)
+				for (nx=0; nx<XRES; nx++)
+				{
+					if (gridCheckerboard)
+					{
+						if ((nx/gs4 + ny/gs4)%2)
+							BlendPixel({ nx, ny }, 0x646464_rgb .WithAlpha(80));
+					}
+					else
+					{
+						if (ny%gs4 == 0)
+							BlendPixel({ nx, ny }, 0x646464_rgb .WithAlpha(80));
+						if (nx%gs4 == 0 && ny%gs4 != 0)
+							BlendPixel({ nx, ny }, 0x646464_rgb .WithAlpha(80));
+					}
+				}
+		}
 	}
 	stats.foundParticles = 0;
 	for(i = 0; i < sim->parts.active; i++) {
@@ -1402,6 +1414,12 @@ const std::vector<RenderPreset> Renderer::renderModePresets = {
 		HdispLimitAuto{},
 		HdispLimitAuto{},
 	},
+	{
+		"Vorticity Display",
+		RENDER_EFFE | RENDER_BASC,
+		DISPLAY_AIRW,
+		0,
+	},
 };
 
 void Renderer::AdjustHdispLimit()
@@ -1446,6 +1464,17 @@ void Renderer::AdjustHdispLimit()
 				visit(p * CELL, hv[p.Y][p.X]);
 			}
 		}
+
+		// min and max will shrink towards new limits slowly, to prevent rapid flashes (but they still expand immediately)
+		float maxGap = stats.hdispLimitMax - autoHdispLimitMax;
+		autoHdispLimitMax = std::max(autoHdispLimitMax, stats.hdispLimitMax - maxGap * 0.05f);
+		float minGap = autoHdispLimitMin - stats.hdispLimitMin;
+		autoHdispLimitMin = std::min(autoHdispLimitMin, stats.hdispLimitMin + minGap * 0.05f);
+
+		// Ensure a 1C gap between min and max to handle odd effects and flashing when there's miniscule temperature gaps
+		autoHdispLimitMax = std::min(MAX_TEMP, std::max(autoHdispLimitMax, autoHdispLimitMin + 1));
+		autoHdispLimitMin = std::max(MIN_TEMP, std::min(autoHdispLimitMin, autoHdispLimitMax - 1));
+
 	}
 	stats.hdispLimitMin = autoHdispLimitMin;
 	stats.hdispLimitMax = autoHdispLimitMax;
