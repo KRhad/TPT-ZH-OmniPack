@@ -4,6 +4,7 @@
 #include "Window.h"
 #include "common/Localization.h"
 #include "common/platform/Platform.h"
+#include "common/platform/StressExitTrace.h"
 #include "graphics/Graphics.h"
 #include "gui/dialogues/ConfirmPrompt.h"
 #include <cmath>
@@ -47,12 +48,16 @@ void Engine::Begin()
 {
 	//engine is now ready
 	running_ = true;
+	OmniStressExitTrace::Log("ui::Engine::Begin running=%d", int(running_));
 }
 
 void Engine::Exit()
 {
+	OmniStressExitTrace::Log("ui::Engine::Exit entry running=%d", int(running_));
 	onClose();
+	OmniStressExitTrace::Log("ui::Engine::Exit onClose returned");
 	running_ = false;
+	OmniStressExitTrace::Log("ui::Engine::Exit running=false");
 }
 
 void Engine::ConfirmExit()
@@ -61,6 +66,7 @@ void Engine::ConfirmExit()
 	{
 		confirmingExit = true;
 		new ConfirmPrompt(Localization::Ref().Tr("engine.confirm_quit_title"), Localization::Ref().Tr("engine.confirm_quit_message"), { [] {
+			OmniStressExitTrace::Log("ui::Engine::ConfirmExit accepted");
 			ui::Engine::Ref().Exit();
 		}, [this] {
 			confirmingExit = false;

@@ -15,6 +15,7 @@
 #include <iostream>
 #include <cstdint>
 #include "common/platform/SDLCompat.h"
+#include "common/platform/StressExitTrace.h"
 
 extern unsigned char *font_data;
 extern unsigned int *font_ptrs;
@@ -566,7 +567,10 @@ void FontEditor::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctr
 		case SDL_SCANCODE_ESCAPE:
 		case SDL_SCANCODE_Q:
 			if(savedButton->GetToggleState())
+			{
+				OmniStressExitTrace::Log("FontEditor direct Engine::Exit");
 				ui::Engine::Ref().Exit();
+			}
 			else
 				ui::Engine::Ref().ConfirmExit();
 			break;

@@ -1,6 +1,7 @@
 #include "LuaScriptInterface.h"
 #include "client/http/Request.h"
 #include "common/platform/Platform.h"
+#include "common/platform/StressExitTrace.h"
 #include "common/tpt-rand.h"
 #include "compat_lua.h"
 #include "gui/game/GameController.h"
@@ -22,7 +23,9 @@ static int atPanic(lua_State *L)
 
 static int osExit(lua_State *L)
 {
-	Platform::Exit(luaL_optinteger(L, 1, 0));
+	const auto code = luaL_optinteger(L, 1, 0);
+	OmniStressExitTrace::Log("Lua os.exit code=%lld", static_cast<long long>(code));
+	Platform::Exit(static_cast<int>(code));
 	return 0;
 }
 

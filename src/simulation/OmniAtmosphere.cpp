@@ -994,6 +994,35 @@ void OmniAtmosphere::ImportLegacyProjection(std::size_t x, std::size_t y, OmniAt
 			pendingSourceSpeciesMassKg[species] += (nextDensity - density) * volume;
 			density = nextDensity;
 		}
+		// The per-channel rescale is exact only in infinite precision, so the
+		// channels can re-sum one ULP below value.density. When ApplyFloors has
+		// just clamped that density onto the floor, the sum lands below the floor
+		// and OPS v3 rejects the cell on every later step -- nothing downstream
+		// repairs it, because this projection runs outside the solver step. Close
+		// the residual on the largest channel and book it as source mass, which
+		// is this function's external-normalization contract.
+		double speciesSum = 0.0;
+		std::size_t largest = 0;
+		for (std::size_t species = 0; species < config.species.size(); ++species)
+		{
+			const double channel = speciesState[SpeciesIndex(index, species)];
+			speciesSum += channel;
+			if (channel > speciesState[SpeciesIndex(index, largest)])
+				largest = species;
+		}
+		if (Finite(speciesSum) && speciesSum < value.density)
+		{
+			auto &channel = speciesState[SpeciesIndex(index, largest)];
+			const double before = channel;
+			const double corrected = channel + (value.density - speciesSum);
+			if (Finite(corrected) && corrected >= 0.0)
+				channel = corrected;
+			for (int attempt = 0; attempt < 8 &&
+				speciesSum + (channel - before) < value.density; ++attempt)
+				channel = std::nextafter(
+					channel, std::numeric_limits<double>::infinity());
+			pendingSourceSpeciesMassKg[largest] += (channel - before) * volume;
+		}
 	}
 	else
 	{
@@ -1647,18 +1676,7 @@ void OmniAtmosphere::AdvanceOnce(double dt, bool acoustic)
 			value.density = speciesSum;
 			ApplyFloors(value);
 			if (value.density != speciesSum)
-			{
-				const double scale = speciesSum > 0.0 ? value.density / speciesSum : 0.0;
-				for (std::size_t species = 0; species < config.species.size(); ++species)
-				{
-					auto &density = speciesNext[SpeciesIndex(index, species)];
-					const double old = density;
-					density = speciesSum > 0.0
-						? density * scale
-						: value.density * config.referenceMassFractions[species];
-					ledger.numericalSpeciesCorrectionKg[species] += (density - old) * config.scale.cellVolumeM3();
-				}
-			}
+				RescaleSpeciesToDensity(speciesNext, index, value.density);
 			next[index] = value;
 		}
 	}
@@ -1717,18 +1735,124 @@ void OmniAtmosphere::NormalizeSpecies(std::size_t cell, double targetDensity, bo
 {
 	if (cell >= state.size() || !Finite(targetDensity) || targetDensity < 0.0)
 		throw std::invalid_argument("invalid OmniAtmosphere species normalization");
+	RescaleSpeciesToDensity(speciesState, cell, targetDensity, recordCorrection);
+}
+
+void OmniAtmosphere::RescaleSpeciesToDensity(
+	std::vector<double> &speciesArray,
+	std::size_t cell,
+	double targetDensity,
+	bool recordCorrection)
+{
 	double sum = 0.0;
 	for (std::size_t species = 0; species < config.species.size(); ++species)
-		sum += std::max(0.0, speciesState[SpeciesIndex(cell, species)]);
+		sum += std::max(0.0, speciesArray[SpeciesIndex(cell, species)]);
+	std::size_t largest = 0;
 	for (std::size_t species = 0; species < config.species.size(); ++species)
 	{
-		auto &density = speciesState[SpeciesIndex(cell, species)];
+		auto &density = speciesArray[SpeciesIndex(cell, species)];
 		const double old = density;
 		density = sum > 0.0
 			? std::max(0.0, density) * targetDensity / sum
 			: targetDensity * config.referenceMassFractions[species];
 		if (recordCorrection && species < ledger.numericalSpeciesCorrectionKg.size())
 			ledger.numericalSpeciesCorrectionKg[species] += (density - old) * config.scale.cellVolumeM3();
+		if (density > speciesArray[SpeciesIndex(cell, largest)])
+			largest = species;
+	}
+	// The rescale above is exact only in infinite precision: re-summing the
+	// scaled channels can land one ULP below targetDensity.  A cell clamped to
+	// the density floor then fails the OPS v3 serializable predicate on every
+	// later step, which stalls long runs instead of reporting a physical fault.
+	// Correct the deterministic residual on the largest channel and close any
+	// remaining roundoff, matching the guarantee the legacy v2 migration already
+	// applies at the serialization boundary.
+	if (!(targetDensity > 0.0))
+		return;
+	const auto currentSum = [&]() {
+		double total = 0.0;
+		for (std::size_t species = 0; species < config.species.size(); ++species)
+			total += speciesArray[SpeciesIndex(cell, species)];
+		return total;
+	};
+	auto &correction = speciesArray[SpeciesIndex(cell, largest)];
+	const double before = correction;
+	const double corrected = correction + (targetDensity - currentSum());
+	if (Finite(corrected) && corrected >= 0.0)
+		correction = corrected;
+	for (int attempt = 0; attempt < 8 && currentSum() < targetDensity; ++attempt)
+		correction = std::nextafter(correction, std::numeric_limits<double>::infinity());
+	if (recordCorrection && largest < ledger.numericalSpeciesCorrectionKg.size())
+		ledger.numericalSpeciesCorrectionKg[largest] += (correction - before) * config.scale.cellVolumeM3();
+}
+
+void OmniAtmosphere::RepairSpeciesFloorOnDryChannel(std::size_t cell, double knownSum)
+{
+	if (cell >= state.size() || !(config.densityFloor > 0.0))
+		return;
+	if (!Finite(knownSum) || knownSum >= config.densityFloor)
+		return;
+	if (!(state[cell].density >= config.densityFloor))
+		return;
+	// Bound the repair to the same eight-step roundoff window the serialization
+	// boundary already allows. A larger shortfall is genuine state loss: leave it
+	// invalid so the runtime heartbeat and the OPS gate still report it.
+	double repairableBound = config.densityFloor;
+	for (int step = 0; step < 8; ++step)
+		repairableBound = std::nextafter(repairableBound, 0.0);
+	if (!(knownSum >= repairableBound))
+		return;
+	std::size_t target = config.species.size();
+	for (std::size_t species = 0; species < config.species.size(); ++species)
+	{
+		if (species == OMNI_SPECIES_H2O)
+			continue;
+		if (target == config.species.size() ||
+			speciesState[SpeciesIndex(cell, species)] >
+				speciesState[SpeciesIndex(cell, target)])
+			target = species;
+	}
+	if (target == config.species.size())
+		return;
+	auto &channel = speciesState[SpeciesIndex(cell, target)];
+	const double before = channel;
+	const double corrected = channel + (config.densityFloor - knownSum);
+	if (Finite(corrected) && corrected >= 0.0)
+		channel = corrected;
+	for (int attempt = 0; attempt < 8 &&
+		knownSum + (channel - before) < config.densityFloor; ++attempt)
+		channel = std::nextafter(channel, std::numeric_limits<double>::infinity());
+	if (target < ledger.numericalSpeciesCorrectionKg.size())
+		ledger.numericalSpeciesCorrectionKg[target] +=
+			(channel - before) * config.scale.cellVolumeM3();
+}
+
+void OmniAtmosphere::ReportFirstFloorInvariantViolation(const char *pass)
+{
+	static int reported = 0;
+	if (reported >= 5 || !(config.densityFloor > 0.0))
+		return;
+	for (std::size_t cell = 0; cell < state.size(); ++cell)
+	{
+		if (!(state[cell].density >= config.densityFloor))
+			continue;
+		double sum = 0.0;
+		for (std::size_t species = 0; species < config.species.size(); ++species)
+			sum += speciesState[SpeciesIndex(cell, species)];
+		if (!Finite(sum) || sum >= config.densityFloor)
+			continue;
+		++reported;
+		std::fprintf(stderr,
+			"FLOORDIAG pass=%s cell=%zu x=%zu y=%zu blocked=%d "
+			"density=%.17g species_sum=%.17g floor=%.17g",
+			pass, cell, cell % config.width, cell / config.width,
+			int(blocked[cell]), state[cell].density, sum, config.densityFloor);
+		for (std::size_t species = 0; species < config.species.size(); ++species)
+			std::fprintf(stderr, " s%zu=%.17g", species,
+				speciesState[SpeciesIndex(cell, species)]);
+		std::fprintf(stderr, "\n");
+		std::fflush(stderr);
+		return;
 	}
 }
 
@@ -2141,6 +2265,8 @@ void OmniAtmosphere::DiffuseSpeciesAndHeat(double dt)
 		}
 		next[cell].density = sum;
 		ApplyFloors(next[cell]);
+		if (next[cell].density != sum)
+			RescaleSpeciesToDensity(speciesNext, cell, next[cell].density);
 	}
 	state.swap(next);
 	speciesState.swap(speciesNext);
@@ -2245,6 +2371,14 @@ void OmniAtmosphere::EquilibrateWaterPhase()
 			ledger.sourceSpeciesMassKg[OMNI_SPECIES_H2O] += mass;
 			ledger.sourceMomentumX += (state[cell].momentumX - oldMomentumX) * volume;
 			ledger.sourceMomentumY += (state[cell].momentumY - oldMomentumY) * volume;
+			// state density was advanced by an independent floating-point add, so
+			// a cell sitting on the density floor can finish the substep with its
+			// species channels totalling one ULP less. Phase equilibrium is the
+			// last pass to touch species state, so nothing downstream repairs the
+			// gap and the cell stays permanently unserializable. Close it on the
+			// largest dry channel: the solved vapour/condensed partition stays
+			// bit-exact, so the equilibrium this pass just established holds.
+			RepairSpeciesFloorOnDryChannel(cell, dryGasDensity + targetVapour);
 		}
 
 	}
@@ -2553,10 +2687,15 @@ void OmniAtmosphere::Step()
 			AdvanceOnce(substep, acoustic);
 			transportActive = true;
 		}
+		ReportFirstFloorInvariantViolation("AdvanceOnce");
 		DiffuseSpeciesAndHeat(substep);
+		ReportFirstFloorInvariantViolation("DiffuseSpeciesAndHeat");
 		ApplyGravity(substep);
+		ReportFirstFloorInvariantViolation("ApplyGravity");
 		ApplySerializableEnergyFloors();
+		ReportFirstFloorInvariantViolation("ApplySerializableEnergyFloors");
 		EquilibrateWaterPhase();
+		ReportFirstFloorInvariantViolation("EquilibrateWaterPhase");
 	}
 	pendingEvent = false;
 	compressibleActive = config.execution == OmniAtmosphereExecution::RuntimeLowMach &&
@@ -2622,10 +2761,15 @@ void OmniAtmosphere::StepReference(double timestepS)
 	for (std::size_t index = 0; index < substeps; ++index)
 	{
 		AdvanceOnce(substep, true);
+		ReportFirstFloorInvariantViolation("AdvanceOnce/acoustic");
 		DiffuseSpeciesAndHeat(substep);
+		ReportFirstFloorInvariantViolation("DiffuseSpeciesAndHeat/acoustic");
 		ApplyGravity(substep);
+		ReportFirstFloorInvariantViolation("ApplyGravity/acoustic");
 		ApplySerializableEnergyFloors();
+		ReportFirstFloorInvariantViolation("ApplySerializableEnergyFloors/acoustic");
 		EquilibrateWaterPhase();
+		ReportFirstFloorInvariantViolation("EquilibrateWaterPhase/acoustic");
 	}
 	pendingEvent = false;
 	compressibleActive = CompressibleFeaturesPresent();

@@ -5,6 +5,7 @@
 #include "gui/interface/Engine.h"
 #include "graphics/Graphics.h"
 #include "common/platform/Platform.h"
+#include "common/platform/StressExitTrace.h"
 #include "common/clipboard/Clipboard.h"
 #include "FrameSchedule.h"
 #include <iostream>
@@ -212,6 +213,7 @@ void SDLOpen()
 
 void SDLClose()
 {
+	OmniStressExitTrace::Log("SDLClose begin");
 	if (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_OPENGL)
 	{
 		// * nvidia-460 egl registers callbacks with x11 that end up being called
@@ -224,6 +226,7 @@ void SDLClose()
 		SDL_GL_UnloadLibrary();
 	}
 	SDL_Quit();
+	OmniStressExitTrace::Log("SDLClose end");
 }
 
 void SDLSetScreen()
@@ -428,6 +431,30 @@ void SDLSetScreen()
 static void EventProcess(const SDL_Event &sourceEvent)
 {
 	auto &engine = ui::Engine::Ref();
+	const bool runningBefore = engine.Running();
+	const auto rawEventType = sourceEvent.type;
+#if TPT_SDL3
+	if (rawEventType == SDL_EVENT_QUIT)
+	{
+		OmniStressExitTrace::Log("SDL raw quit event type=%u",
+			static_cast<unsigned>(rawEventType));
+	}
+	else if (rawEventType == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+	{
+		OmniStressExitTrace::Log("SDL raw window close event type=%u window_id=%u",
+			static_cast<unsigned>(rawEventType),
+			static_cast<unsigned>(sourceEvent.window.windowID));
+	}
+#else
+	if (rawEventType == SDL_QUIT ||
+		(rawEventType == SDL_WINDOWEVENT && sourceEvent.window.event == SDL_WINDOWEVENT_CLOSE))
+	{
+		OmniStressExitTrace::Log("SDL raw event type=%u window_event=%u window_id=%u",
+			static_cast<unsigned>(rawEventType),
+			static_cast<unsigned>(sourceEvent.window.event),
+			static_cast<unsigned>(sourceEvent.window.windowID));
+	}
+#endif
 #if TPT_SDL3
 	auto event = sourceEvent;
 	if (!SDL_ConvertEventToRenderCoordinates(sdl_renderer, &event))
@@ -444,11 +471,29 @@ static void EventProcess(const SDL_Event &sourceEvent)
 #else
 	case SDL_QUIT:
 #endif
-		if (ALLOW_QUIT && (engine.GetFastQuit() || engine.CloseWindow()))
+	{
+		bool fastQuit = false;
+		int closeResult = 0;
+		bool shouldExit = false;
+		if (ALLOW_QUIT)
 		{
-			engine.Exit();
+			fastQuit = engine.GetFastQuit();
+			if (fastQuit)
+				shouldExit = true;
+			else
+			{
+				closeResult = engine.CloseWindow();
+				shouldExit = closeResult != 0;
+			}
 		}
+		OmniStressExitTrace::Log(
+			"SDL quit allow=%d fast_quit=%d close_result=%d should_exit=%d running_before=%d",
+			int(bool(ALLOW_QUIT)), int(fastQuit), closeResult, int(shouldExit), int(runningBefore));
+		if (shouldExit)
+			engine.Exit();
+		OmniStressExitTrace::Log("SDL quit handled running_after=%d", int(engine.Running()));
 		break;
+	}
 #if TPT_SDL3
 	case SDL_EVENT_KEY_DOWN:
 #else
@@ -617,12 +662,24 @@ static void EventProcess(const SDL_Event &sourceEvent)
 #endif
 			UpdateRefreshRate();
 			break;
+#if TPT_SDL3
+	case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+		OmniStressExitTrace::Log("SDL window close requested observed");
+		break;
+#else
+		case SDL_WINDOWEVENT_CLOSE:
+			OmniStressExitTrace::Log("SDL window close requested observed");
+			break;
+#endif
 #if !TPT_SDL3
 		}
 		break;
 	}
 #endif
 	}
+	if (runningBefore && !engine.Running())
+		OmniStressExitTrace::Log("SDL event transitioned Engine::Running to false type=%u",
+			static_cast<unsigned>(rawEventType));
 }
 
 std::optional<uint64_t> EngineProcess()

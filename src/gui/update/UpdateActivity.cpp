@@ -3,6 +3,7 @@
 #include "prefs/GlobalPrefs.h"
 #include "common/Localization.h"
 #include "common/platform/Platform.h"
+#include "common/platform/StressExitTrace.h"
 #include "tasks/Task.h"
 #include "tasks/TaskWindow.h"
 #include "gui/dialogues/ConfirmPrompt.h"
@@ -132,6 +133,7 @@ void UpdateActivity::NotifyDone(Task * sender)
 
 void UpdateActivity::Exit()
 {
+	OmniStressExitTrace::Log("UpdateActivity::Exit");
 	updateWindow->Exit();
 	ui::Engine::Ref().Exit();
 	delete this;

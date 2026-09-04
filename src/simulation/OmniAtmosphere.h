@@ -401,6 +401,13 @@ private:
 	void ApplySerializableEnergyFloors(bool recordLedgerCorrection = true);
 	void ApplyFloors(OmniAtmosphereConservative &value, bool recordCorrection = true);
 	void NormalizeSpecies(std::size_t cell, double targetDensity, bool recordCorrection = true);
+	void RescaleSpeciesToDensity(std::vector<double> &speciesArray, std::size_t cell,
+		double targetDensity, bool recordCorrection = true);
+	void RepairSpeciesFloorOnDryChannel(std::size_t cell, double knownSum);
+	// Diagnostic only: reports the first cell whose species channels total below
+	// the density floor while state density sits on or above it, naming the pass
+	// that left it that way.
+	void ReportFirstFloorInvariantViolation(const char *pass);
 	double SpeciesFlux(std::size_t species, std::size_t leftCell, std::size_t rightCell,
 		const OmniAtmosphereConservative &left, const OmniAtmosphereConservative &right,
 		bool xDirection, bool acoustic) const;

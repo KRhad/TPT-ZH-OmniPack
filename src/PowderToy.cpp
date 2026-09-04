@@ -10,6 +10,7 @@
 #include "client/http/GetSaveRequest.h"
 #include "client/http/GetSaveDataRequest.h"
 #include "common/platform/Platform.h"
+#include "common/platform/StressExitTrace.h"
 #include "graphics/Graphics.h"
 #include "simulation/SaveRenderer.h"
 #include "simulation/ElementClasses.h"
@@ -904,7 +905,10 @@ static std::unique_ptr<ExplicitSingletons> explicitSingletons;
 int main(int argc, char *argv[])
 {
 	Platform::SetupCrt();
-	return Platform::InvokeMain(argc, argv);
+	OmniStressExitTrace::Log("main entered");
+	const auto code = Platform::InvokeMain(argc, argv);
+	OmniStressExitTrace::Log("main InvokeMain returned code=%d", code);
+	return code;
 }
 
 int Main(int argc, char *argv[])
@@ -980,6 +984,7 @@ int Main(int argc, char *argv[])
 	}
 
 	Platform::Atexit([]() {
+		OmniStressExitTrace::Log("main atexit cleanup begin");
 		Platform::ShutdownOmniCompute();
 		SaveWindowPosition();
 		// Unregister dodgy error handlers so they don't try to show the blue screen when the window is closed
@@ -989,6 +994,7 @@ int Main(int argc, char *argv[])
 		}
 		SDLClose();
 		explicitSingletons.reset();
+		OmniStressExitTrace::Log("main atexit cleanup end");
 	});
 	explicitSingletons = std::make_unique<ExplicitSingletons>();
 
@@ -1327,7 +1333,9 @@ int Main(int argc, char *argv[])
 		Platform::MarkPresentable();
 	}
 
+	OmniStressExitTrace::Log("Main before MainLoop");
 	MainLoop();
+	OmniStressExitTrace::Log("Main after MainLoop; requesting exit");
 
 	Platform::Exit(0);
 	return 0;

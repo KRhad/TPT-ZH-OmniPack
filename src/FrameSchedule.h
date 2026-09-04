@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 class FrameSchedule
 {
@@ -26,11 +28,16 @@ public:
 
 	uint64_t Arm(float fps)
 	{
+		if (!std::isfinite(fps) || fps <= 0.0f)
+			return 0;
 		auto oldNowNs = startNs;
-		auto timeBlockDurationNs = uint64_t(std::clamp(1e9f / fps, 1.f, 1e9f));
+		auto timeBlockDurationNs = uint64_t(std::clamp(1e9 / static_cast<double>(fps), 1.0, 1e9));
 		auto oldStartTimeBlock = oldStartNs / timeBlockDurationNs;
-		auto startTimeBlock = oldStartTimeBlock + 1U;
-		startNs = std::max(startNs, startTimeBlock * timeBlockDurationNs);
+		auto startTimeBlock = oldStartTimeBlock == std::numeric_limits<uint64_t>::max()
+			? oldStartTimeBlock : oldStartTimeBlock + 1U;
+		auto nextStartNs = startTimeBlock > std::numeric_limits<uint64_t>::max() / timeBlockDurationNs
+		? std::numeric_limits<uint64_t>::max() : startTimeBlock * timeBlockDurationNs;
+		startNs = std::max(startNs, nextStartNs);
 		return startNs - oldNowNs;
 	}
 

@@ -10,6 +10,7 @@
 #include "gui/game/GameModel.h"
 #include "gui/interface/Engine.h"
 #include "common/Assert.h"
+#include "common/platform/StressExitTrace.h"
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
@@ -649,6 +650,7 @@ AnyType CommandInterface::tptS_reset(std::deque<String> * words)
 
 AnyType CommandInterface::tptS_quit(std::deque<String> * words)
 {
+	OmniStressExitTrace::Log("CommandInterface tpt.quit");
 	ui::Engine::Ref().Exit();
 
 	return NumberType(0);
