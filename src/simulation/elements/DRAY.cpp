@@ -189,7 +189,7 @@ void DRAY_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Duplicator ray. Replicates a line of particles in front of it.";
+	elem->Description = "复制射线。复制前方粒子。";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

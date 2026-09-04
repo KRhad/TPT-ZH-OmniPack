@@ -237,7 +237,7 @@ void PROT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 61;
 	elem->Latent = 0;
-	elem->Description = "Protons. Transfer heat to materials, and remove sparks.";
+	elem->Description = "质子。向材料传热并消除火花。";
 
 	elem->Properties = TYPE_ENERGY;
 

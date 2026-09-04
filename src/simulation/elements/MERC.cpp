@@ -125,7 +125,7 @@ void MERC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Mercury. Volume changes with temperature, Conductive.";
+	elem->Description = "汞。随温胀缩，导电。";
 
 	elem->Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_NEUTABSORB|PROP_LIFE_DEC;
 

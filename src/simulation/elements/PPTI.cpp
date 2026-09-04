@@ -61,7 +61,7 @@ void PPTI_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Powered Portal IN, can be turned on/off.";
+	elem->Description = "可控传送门入口。可开关。";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

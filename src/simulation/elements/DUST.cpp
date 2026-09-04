@@ -44,7 +44,7 @@ void DUST_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Very light dust. Flammable.";
+	elem->Description = "极轻粉尘。易燃。";
 
 	elem->Properties = TYPE_PART;
 

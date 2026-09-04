@@ -53,7 +53,7 @@ void TESC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Tesla coil! Creates lightning when sparked.";
+	elem->Description = "特斯拉线圈！通电时产生闪电。";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 

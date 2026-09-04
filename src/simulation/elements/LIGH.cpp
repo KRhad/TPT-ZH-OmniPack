@@ -400,7 +400,7 @@ void LIGH_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "More realistic lightning. Set pen size to set the size of the lightning.";
+	elem->Description = "更真实的闪电。用画笔大小控制闪电尺寸。";
 
 	elem->Properties = TYPE_SOLID;
 

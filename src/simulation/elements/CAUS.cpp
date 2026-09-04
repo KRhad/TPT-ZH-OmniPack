@@ -91,7 +91,7 @@ void CAUS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Caustic Gas, acts like ACID.";
+	elem->Description = "腐蚀性气体。作用类似酸。";
 
 	elem->Properties = TYPE_GAS|PROP_DEADLY;
 

@@ -59,7 +59,7 @@ void ISZS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 140.00f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Solid form of ISOZ, slowly decays into PHOT.";
+	elem->Description = "固态ISOZ，缓慢衰变为PHOT。";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS;
 

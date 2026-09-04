@@ -17,7 +17,9 @@
 # include <time.h>
 #endif
 
+#ifndef NOHTTP
 void SetupCurlEasyCiphers(CURL *easy);
+#endif
 
 namespace LuaTCPSocket
 {

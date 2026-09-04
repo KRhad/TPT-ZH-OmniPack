@@ -43,7 +43,7 @@ void DYST_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Dead Yeast.";
+	elem->Description = "死酵母。";
 
 	elem->Properties = TYPE_PART;
 

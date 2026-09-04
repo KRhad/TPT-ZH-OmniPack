@@ -73,7 +73,7 @@ void BRMT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 211;
 	elem->Latent = 0;
-	elem->Description = "Broken metal. Created when iron rusts or when metals break from pressure.";
+	elem->Description = "铁锈蚀或金属受压断裂形成的破损金属。";
 
 	elem->Properties = TYPE_PART|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

@@ -52,7 +52,7 @@ void NWHL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 186;
 	elem->Latent = 0;
-	elem->Description = "White hole, pushes away other particles with gravity. (Requires Newtonian gravity)";
+	elem->Description = "白洞。以重力推开粒子。需牛顿引力。";
 
 	elem->Properties = TYPE_SOLID;
 

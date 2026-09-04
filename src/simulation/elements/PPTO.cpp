@@ -61,7 +61,7 @@ void PPTO_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Powered Portal OUT, can be turned on/off.";
+	elem->Description = "可控传送门出口。可开关。";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

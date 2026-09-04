@@ -96,7 +96,7 @@ void PSNS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 4.0f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Pressure sensor, creates a spark when the pressure is greater than its temperature.";
+	elem->Description = "压力传感器。压力高于温度时产火花。";
 
 	elem->Properties = TYPE_SOLID;
 

@@ -83,7 +83,7 @@ void IGNT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Ignition cord. Burns slowly with fire and sparks.";
+	elem->Description = "引信。缓慢燃烧并产生火花。";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_SPARKSETTLE | PROP_LIFE_KILL;
 

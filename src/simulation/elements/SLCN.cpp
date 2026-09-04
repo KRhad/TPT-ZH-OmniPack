@@ -134,7 +134,7 @@ void SLCN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Powdered Silicon. A key ingredient in producing multiple materials.";
+	elem->Description = "硅粉，多种材料生产的关键原料。";
 
 	elem->Properties = TYPE_PART | PROP_CONDUCTS | PROP_HOT_GLOW | PROP_LIFE_DEC;
 

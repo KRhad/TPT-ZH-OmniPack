@@ -149,7 +149,7 @@ void CBNW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 7500;
-	elem->Description = "Carbonated water. Slowly releases CO2.";
+	elem->Description = "碳酸水。缓慢释放二氧化碳。";
 
 	elem->Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_NEUTPENETRATE;
 

@@ -58,7 +58,7 @@ void VRSG_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 522.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Gas Virus. Turns everything it touches into virus.";
+	elem->Description = "气态病毒，接触物转化为病毒";
 
 	elem->Properties = TYPE_GAS;
 	elem->CarriesTypeIn = 1U << FIELD_TMP2;

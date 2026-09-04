@@ -117,7 +117,7 @@ void STOR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Storage. Captures and stores a single particle. Releases when charged with PSCN, also passes to PIPE.";
+	elem->Description = "储存器。捕获单粒子，PSCN释放，可传PIPE。";
 
 	elem->Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);

@@ -60,7 +60,7 @@ void BREL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 211;
 	elem->Latent = 0;
-	elem->Description = "Broken electronics. Formed from EMP blasts, and when constantly sparked while under pressure, turns to EXOT.";
+	elem->Description = "EMP损毁的电子元件，受压持续通电变EXOT。";
 
 	elem->Properties = TYPE_PART|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 

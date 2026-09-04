@@ -50,7 +50,7 @@ void PVOD_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Powered VOID. When activated, destroys entering particles.";
+	elem->Description = "有源虚空。激活时吞没粒子。";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

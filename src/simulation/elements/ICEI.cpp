@@ -75,7 +75,7 @@ void ICEI_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 50.0f + 273.15f;
 	elem->HeatConduct = 46;
 	elem->Latent = 1095;
-	elem->Description = "Crushes under pressure. Cools down air.";
+	elem->Description = "受压破碎。冷却空气。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC|PROP_NEUTPASS;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE);

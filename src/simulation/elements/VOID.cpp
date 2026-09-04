@@ -43,7 +43,7 @@ void VOID_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Hole, will drain away any particles.";
+	elem->Description = "洞，可排走任何粒子。";
 
 	elem->Properties = TYPE_SOLID;
 

@@ -58,7 +58,7 @@ void BRCK_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Brick, breakable building material.";
+	elem->Description = "砖。易碎建材。";
 
 	elem->Properties = TYPE_SOLID|PROP_HOT_GLOW;
 

@@ -74,7 +74,7 @@ void RSSS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 130;
 	elem->Latent = 0;
-	elem->Description = "Solidified resist. Blocks pressure and insulates electricity. Liquefies on contact with neutrons.";
+	elem->Description = "固态电阻，阻隔压力并绝缘电流，遇中子液化。";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);

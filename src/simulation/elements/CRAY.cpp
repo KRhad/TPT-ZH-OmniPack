@@ -173,7 +173,7 @@ void CRAY_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Particle Ray Emitter. Creates a beam of particles set by its ctype, with a range set by tmp.";
+	elem->Description = "按ctype发射粒子束、tmp控制射程的射线发射器。";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

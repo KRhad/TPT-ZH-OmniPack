@@ -85,7 +85,7 @@ void BOYL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 2.0f + 273.15f;
 	elem->HeatConduct = 42;
 	elem->Latent = 0;
-	elem->Description = "Boyle, variable pressure gas. Expands when heated.";
+	elem->Description = "波义耳气。受热膨胀。";
 
 	elem->Properties = TYPE_GAS;
 

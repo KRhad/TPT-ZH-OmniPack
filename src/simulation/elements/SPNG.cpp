@@ -199,7 +199,7 @@ void SPNG_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Sponge, absorbs water. Is a moving solid.";
+	elem->Description = "海绵。吸水。运动固体。";
 
 	elem->Properties = TYPE_SOLID;
 

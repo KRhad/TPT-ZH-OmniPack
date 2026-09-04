@@ -48,7 +48,7 @@ void PPIP_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 295.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Powered version of pipe";
+	elem->Description = "电控版管道";
 
 	elem->Properties = TYPE_SOLID | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

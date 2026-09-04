@@ -44,7 +44,7 @@ void INDI_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Indestructible Insulator.";
+	elem->Description = "不可摧毁的绝缘体。";
 
 	elem->Properties = TYPE_SOLID|PROP_INDESTRUCTIBLE;
 

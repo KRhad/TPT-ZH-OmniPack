@@ -43,7 +43,7 @@ void METL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 919;
-	elem->Description = "Metal, the basic conductor. Meltable.";
+	elem->Description = "金属，基础导体，可熔化。";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 

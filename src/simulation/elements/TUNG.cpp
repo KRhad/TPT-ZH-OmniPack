@@ -127,7 +127,7 @@ void TUNG_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Tungsten. Brittle metal with a very high melting point.";
+	elem->Description = "钨。脆性金属，熔点极高。";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

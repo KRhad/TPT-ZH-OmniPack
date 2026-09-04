@@ -43,7 +43,7 @@ void INWR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Insulated wire. Only conducts to PSCN, NSCN, WIFI, and SWCH.";
+	elem->Description = "绝缘线。仅与PSCN、NSCN、WIFI、SWCH导电。";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

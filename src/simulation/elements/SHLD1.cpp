@@ -78,7 +78,7 @@ void SHLD1_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Shield. Grows around spark, broken by pressure.";
+	elem->Description = "护盾。围绕火花生长，受压破裂。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

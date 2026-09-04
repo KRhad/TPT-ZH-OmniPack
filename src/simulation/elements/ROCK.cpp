@@ -66,7 +66,7 @@ void ROCK_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 100;
 
 	elem->HeatConduct = 200;
-	elem->Description = "Solid, melts into various elements.";
+	elem->Description = "固体，受热熔化为多种元素。";
 
 	elem->Properties = TYPE_SOLID | PROP_HOT_GLOW;
 

@@ -404,7 +404,7 @@ void PSTN_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 10.0f+ 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Piston, pushes particles. PSCN extends, NSCN retracts.";
+	elem->Description = "活塞，推挤粒子。PSCN伸长，NSCN收缩。";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

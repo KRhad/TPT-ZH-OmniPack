@@ -43,7 +43,7 @@ void NONE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Erases particles.";
+	elem->Description = "擦除粒子。";
 
 	elem->Properties = 0;
 

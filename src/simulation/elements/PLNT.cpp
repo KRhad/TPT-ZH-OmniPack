@@ -419,7 +419,7 @@ void PLNT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 65;
 	elem->Latent = 0;
-	elem->Description = "Plant, drinks water and grows.";
+	elem->Description = "植物。吸水生长。";
 
 	elem->Properties = TYPE_SOLID|PROP_NEUTPENETRATE|PROP_LIFE_DEC;
 

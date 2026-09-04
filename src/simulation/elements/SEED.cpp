@@ -286,7 +286,7 @@ void SEED_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 32;
 	elem->Latent = 0;
-	elem->Description = "Seeds. Put on sand and add water to grow a tree.";
+	elem->Description = "种子。放沙上加水可长成树。";
 
 	elem->Properties = TYPE_PART | PROP_NEUTPASS;
 

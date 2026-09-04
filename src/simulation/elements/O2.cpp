@@ -117,7 +117,7 @@ void O2_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Oxygen gas. Ignites easily.";
+	elem->Description = "氧气。易燃。";
 
 	elem->Properties = TYPE_GAS;
 

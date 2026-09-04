@@ -173,7 +173,7 @@ void QRTZ_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 3;
 	elem->Latent = 0;
-	elem->Description = "Quartz, breakable mineral. Conducts but becomes brittle when cold. Scatters photons.";
+	elem->Description = "石英。导电矿物。低温变脆。散射光子。";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_HOT_GLOW | PROP_LIFE_DEC;
 

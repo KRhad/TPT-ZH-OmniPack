@@ -119,7 +119,7 @@ void DTEC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Detector, creates a spark when something with its ctype is nearby.";
+	elem->Description = "探测器。附近存在ctype目标时产生火花。";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

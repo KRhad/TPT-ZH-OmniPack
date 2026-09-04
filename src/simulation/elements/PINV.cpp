@@ -57,7 +57,7 @@ void PINV_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Powered invisible,invisible to particles while activated.";
+	elem->Description = "有源隐形。激活时对粒子不可见。";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS | PROP_PHOTPASS | PROP_POWERED | PROP_INDESTRUCTIBLE;
 

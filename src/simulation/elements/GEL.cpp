@@ -166,7 +166,7 @@ void GEL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "A liquid with variable viscosity and heat conductivity. Absorbs water.";
+	elem->Description = "可变黏度与导热性的液体，能吸收水分。";
 
 	elem->Properties = TYPE_LIQUID|PROP_LIFE_DEC|PROP_NEUTPENETRATE;
 

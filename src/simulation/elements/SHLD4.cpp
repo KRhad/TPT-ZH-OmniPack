@@ -80,7 +80,7 @@ void SHLD4_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Shield lvl 4.";
+	elem->Description = "护盾四级。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

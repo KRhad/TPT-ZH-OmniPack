@@ -73,7 +73,7 @@ void BTRY_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Battery. Generates infinite electricity.";
+	elem->Description = "电池。产生无限电力。";
 
 	elem->Properties = TYPE_SOLID;
 

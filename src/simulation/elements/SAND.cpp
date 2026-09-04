@@ -43,7 +43,7 @@ void SAND_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Sand, Heavy particles. Melts into glass.";
+	elem->Description = "沙。重颗粒。熔化为玻璃。";
 
 	elem->Properties = TYPE_PART;
 

@@ -157,7 +157,7 @@ void FILT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Filter. Changes color of PHOT and BIZR. Color depends on temperature.";
+	elem->Description = "滤镜。按温度变色。";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_NOAMBHEAT | PROP_LIFE_DEC;
 

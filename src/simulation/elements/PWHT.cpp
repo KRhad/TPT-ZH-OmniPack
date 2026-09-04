@@ -132,7 +132,7 @@ void PWHT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Powered Heater. Flood fill heats particles to its temp. Use only one.";
+	elem->Description = "电控加热器，泛洪加热粒子至其温度，限用一个。";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

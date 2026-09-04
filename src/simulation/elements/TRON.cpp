@@ -266,7 +266,7 @@ void TRON_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 0.0f;
 	elem->HeatConduct = 40;
 	elem->Latent = 0;
-	elem->Description = "Smart particles, Travels in straight lines and avoids obstacles. Grows with time.";
+	elem->Description = "智能粒子，直线运动并避障，随时间增长";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC|PROP_LIFE_KILL;
 

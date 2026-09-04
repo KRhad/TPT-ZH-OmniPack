@@ -116,7 +116,7 @@ void WIRE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 250;
 	elem->Latent = 0;
-	elem->Description = "WireWorld wires, conducts based on a set of GOL-like rules.";
+	elem->Description = "导线。按类生命游戏规则导电。";
 
 	elem->Properties = TYPE_SOLID;
 

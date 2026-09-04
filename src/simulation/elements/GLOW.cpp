@@ -104,7 +104,7 @@ void GLOW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 20.0f + 273.15f;
 	elem->HeatConduct = 44;
 	elem->Latent = 0;
-	elem->Description = "Glow, Glows under pressure.";
+	elem->Description = "辉光。受压时发光。";
 
 	elem->Properties = TYPE_LIQUID | PROP_PHOTPASS | PROP_LIFE_DEC;
 

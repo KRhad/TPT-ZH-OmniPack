@@ -113,7 +113,7 @@ void BIZR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Bizarre... contradicts the normal state changes. Paints other elements with its deco color.";
+	elem->Description = "奇异物质。反常态。以装饰色涂抹其他元素。";
 
 	elem->Properties = TYPE_LIQUID;
 

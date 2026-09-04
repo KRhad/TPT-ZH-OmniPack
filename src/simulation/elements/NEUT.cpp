@@ -287,7 +287,7 @@ void NEUT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 4.0f + 273.15f;
 	elem->HeatConduct = 60;
 	elem->Latent = 0;
-	elem->Description = "Neutrons. Interact with matter in odd ways.";
+	elem->Description = "中子。与物质以奇特方式作用。";
 
 	elem->Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

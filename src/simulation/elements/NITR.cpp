@@ -44,7 +44,7 @@ void NITR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 50;
 	elem->Latent = 0;
-	elem->Description = "Nitroglycerin. Pressure sensitive explosive. Mix with CLST to make TNT.";
+	elem->Description = "硝化甘油。压敏炸药，混合CLST制TNT。";
 
 	elem->Properties = TYPE_LIQUID;
 

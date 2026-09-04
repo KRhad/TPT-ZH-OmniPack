@@ -133,7 +133,7 @@ void H2_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Hydrogen. Combusts with OXYG to make WATR. Undergoes fusion at high temperature and pressure.";
+	elem->Description = "氢气。与氧燃烧生成水。高温高压下聚变。";
 
 	elem->Properties = TYPE_GAS | PROP_PHOTPASS;
 

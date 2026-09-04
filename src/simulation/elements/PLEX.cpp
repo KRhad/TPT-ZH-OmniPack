@@ -44,7 +44,7 @@ void PLEX_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Solid pressure sensitive explosive.";
+	elem->Description = "固态压敏炸药";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
 

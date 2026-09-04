@@ -106,7 +106,7 @@ void LOVE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 373.0f;
 	elem->HeatConduct = 40;
 	elem->Latent = 0;
-	elem->Description = "Love...";
+	elem->Description = "爱…";
 
 	elem->Properties = TYPE_SOLID;
 

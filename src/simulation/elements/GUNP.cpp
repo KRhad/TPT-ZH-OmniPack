@@ -43,7 +43,7 @@ void GUNP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 97;
 	elem->Latent = 0;
-	elem->Description = "Gunpowder. Light dust, explodes on contact with fire or spark.";
+	elem->Description = "火药。轻粉尘，遇火或火花爆炸。";
 
 	elem->Properties = TYPE_PART;
 

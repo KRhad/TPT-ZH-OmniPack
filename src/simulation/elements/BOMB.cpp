@@ -108,7 +108,7 @@ void BOMB_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Bomb. Explodes and destroys all surrounding particles when it touches something.";
+	elem->Description = "炸弹。接触即爆并摧毁周围粒子。";
 
 	elem->Properties = TYPE_PART|PROP_SPARKSETTLE;
 

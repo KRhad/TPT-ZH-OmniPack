@@ -267,7 +267,7 @@ void PTNM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 100;
 
 	elem->HeatConduct = 251;
-	elem->Description = "Platinum. Catalyzes certain reactions.";
+	elem->Description = "铂。催化特定反应。";
 
 	elem->Properties = TYPE_SOLID | PROP_CONDUCTS | PROP_LIFE_DEC | PROP_HOT_GLOW | PROP_SPARKSETTLE;
 

@@ -65,7 +65,7 @@ void GPMP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Gravity pump. Changes gravity to its temp when activated. (use HEAT/COOL)";
+	elem->Description = "重力泵。激活后依温度改变重力。";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

@@ -166,7 +166,7 @@ void VSNS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->DefaultProperties.temp = 4.0f + 273.15f;
 	elem->HeatConduct = 0;
-	elem->Description = "Velocity sensor, creates a spark when there's a nearby particle with velocity higher than its temperature.";
+	elem->Description = "速度传感器。近处粒子速度超温则生火。";
 
 	elem->Properties = TYPE_SOLID;
 

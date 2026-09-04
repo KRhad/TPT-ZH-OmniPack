@@ -94,7 +94,7 @@ void BCOL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Broken Coal. Heavy particles, burns slowly.";
+	elem->Description = "碎煤。重颗粒，缓慢燃烧。";
 
 	elem->Properties = TYPE_PART;
 

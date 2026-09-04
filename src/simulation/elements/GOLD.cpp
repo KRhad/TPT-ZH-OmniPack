@@ -108,7 +108,7 @@ void GOLD_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Corrosion resistant metal, will reverse corrosion of iron. Excellent conductor.";
+	elem->Description = "耐蚀金属。可逆铁锈。良导体。";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_HOT_GLOW|PROP_LIFE_DEC|PROP_NEUTPASS;
 

@@ -119,7 +119,7 @@ void LIFE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 9000.0f;
 	elem->HeatConduct = 40;
 	elem->Latent = 0;
-	elem->Description = "Game Of Life: Begin 3/Stay 23";
+	elem->Description = "生命游戏：3生23存。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE;
 

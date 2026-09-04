@@ -78,7 +78,7 @@ void GBMB_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Gravity bomb. Sticks to the first object it touches then produces a strong gravity push.";
+	elem->Description = "重力炸弹。附着首触物并强推。";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

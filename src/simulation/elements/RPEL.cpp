@@ -70,7 +70,7 @@ void RPEL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 20.0f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Repels or attracts particles based on its temperature.";
+	elem->Description = "根据温度排斥或吸引粒子。";
 
 	elem->Properties = TYPE_SOLID;
 

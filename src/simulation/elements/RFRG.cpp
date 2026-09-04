@@ -61,7 +61,7 @@ void RFRG_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 1;
 
 	elem->HeatConduct = 3;
-	elem->Description = "Refrigerant. Heats up and liquefies under pressure.";
+	elem->Description = "制冷剂。受压升温液化。";
 
 	elem->Properties = TYPE_GAS|PROP_DEADLY;
 

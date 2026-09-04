@@ -61,7 +61,7 @@ void SMKE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 320.0f + 273.15f;
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Smoke, created by fire.";
+	elem->Description = "烟。由火产生。";
 
 	elem->Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

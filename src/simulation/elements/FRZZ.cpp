@@ -64,7 +64,7 @@ void FRZZ_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 253.15f;
 	elem->HeatConduct = 46;
 	elem->Latent = 0;
-	elem->Description = "Freeze powder. When melted, forms ice that always cools. Spreads with regular water.";
+	elem->Description = "冷冻粉。熔化后形成持续冷却的冰，可随普通水扩散。";
 
 	elem->Properties = TYPE_PART;
 

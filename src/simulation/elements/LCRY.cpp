@@ -135,7 +135,7 @@ void LCRY_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Liquid Crystal. Changes colour when charged. (PSCN Charges, NSCN Discharges)";
+	elem->Description = "液晶。通电时变色。(PSCN充电，NSCN放电)";
 
 	elem->Properties = TYPE_SOLID;
 

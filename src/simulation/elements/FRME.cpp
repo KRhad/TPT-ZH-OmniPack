@@ -53,7 +53,7 @@ void FRME_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Frame, can be used with pistons to push many particles.";
+	elem->Description = "框架。可与活塞配合推动大量粒子。";
 
 	elem->Properties = TYPE_SOLID;
 

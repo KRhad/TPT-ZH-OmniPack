@@ -129,7 +129,7 @@ void WIFI_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Wireless transmitter, transfers spark to any other wifi on the same temperature channel.";
+	elem->Description = "无线发射器。同温频道火花传至其他WiFi。";
 
 	elem->Properties = TYPE_SOLID;
 

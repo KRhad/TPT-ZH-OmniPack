@@ -688,7 +688,7 @@ void PIPE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 295.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "PIPE, moves particles around. Once the BRCK generates, erase some for the exit. Then the PIPE generates and is usable.";
+	elem->Description = "管道，输送粒子；生成砖块后擦除出口使用";
 
 	elem->Properties = TYPE_SOLID | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

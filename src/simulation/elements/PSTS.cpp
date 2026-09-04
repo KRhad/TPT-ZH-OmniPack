@@ -44,7 +44,7 @@ void PSTS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Solid form of PSTE.";
+	elem->Description = "PSTE的固态形式。";
 
 	elem->Properties = TYPE_SOLID;
 

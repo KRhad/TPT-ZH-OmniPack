@@ -47,7 +47,7 @@ void BIZRS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 300.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Bizarre solid.";
+	elem->Description = "奇异固体。";
 
 	elem->Properties = TYPE_SOLID;
 

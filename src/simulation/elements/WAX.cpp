@@ -43,7 +43,7 @@ void WAX_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 44;
 	elem->Latent = 0;
-	elem->Description = "Flammable, melts at moderately high temperatures.";
+	elem->Description = "易燃，在中高温下熔化";
 
 	elem->Properties = TYPE_SOLID;
 

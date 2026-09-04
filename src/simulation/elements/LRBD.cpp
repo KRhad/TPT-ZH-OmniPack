@@ -44,7 +44,7 @@ void LRBD_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 45.0f + 273.15f;
 	elem->HeatConduct = 170;
 	elem->Latent = 0;
-	elem->Description = "Liquid Rubidium.";
+	elem->Description = "液态铷。";
 
 	elem->Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

@@ -44,7 +44,7 @@ void NICE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 35.0f;
 	elem->HeatConduct = 46;
 	elem->Latent = 0;
-	elem->Description = "Nitrogen Ice. Very cold, will melt into LN2 when heated only slightly.";
+	elem->Description = "氮冰。极冷，微热即熔为液氮。";
 
 	elem->Properties = TYPE_SOLID;
 

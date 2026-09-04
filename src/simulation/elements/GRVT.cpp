@@ -84,7 +84,7 @@ void GRVT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 61;
 	elem->Latent = 0;
-	elem->Description = "Gravitons. Create Newtonian Gravity.";
+	elem->Description = "引力子。产生牛顿引力。";
 
 	elem->Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

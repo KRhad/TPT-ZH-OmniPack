@@ -151,7 +151,7 @@ void DEUT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Deuterium oxide. Gets more concentrated when cold, explodes with neutrons or protons.";
+	elem->Description = "重水。遇冷浓缩，与中子或质子接触爆炸。";
 
 	elem->Properties = TYPE_LIQUID|PROP_NEUTPASS;
 

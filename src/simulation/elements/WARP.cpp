@@ -91,7 +91,7 @@ void WARP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Displaces other elements. Completely invisible.";
+	elem->Description = "置换其他元素。完全隐形。";
 
 	elem->Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL;
 

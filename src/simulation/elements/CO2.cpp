@@ -106,7 +106,7 @@ void CO2_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Carbon Dioxide. Heavy gas, drifts downwards. Carbonates water and turns to dry ice when cold.";
+	elem->Description = "二氧化碳。重气下沉，碳化水，低温成干冰。";
 
 	elem->Properties = TYPE_GAS;
 

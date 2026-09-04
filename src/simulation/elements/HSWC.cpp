@@ -72,7 +72,7 @@ void HSWC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Heat switch. Conducts heat only when activated.";
+	elem->Description = "热开关。仅激活时导热。";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

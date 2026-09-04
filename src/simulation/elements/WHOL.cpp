@@ -44,7 +44,7 @@ void WHOL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 16.0f + 273.15f;
 	elem->HeatConduct = 255;
 	elem->Latent = 0;
-	elem->Description = "Air vent, creates pressure and pushes other particles away.";
+	elem->Description = "排气口。产生压力并推开粒子。";
 
 	elem->Properties = TYPE_SOLID;
 

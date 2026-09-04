@@ -88,7 +88,7 @@ void GLAS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Glass. Meltable. Shatters under pressure, and refracts photons.";
+	elem->Description = "玻璃。可熔化。受压碎裂并折射光子。";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS | PROP_PHOTPASS | PROP_HOT_GLOW | PROP_SPARKSETTLE;
 

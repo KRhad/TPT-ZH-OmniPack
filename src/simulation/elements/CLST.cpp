@@ -98,7 +98,7 @@ void CLST_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Clay dust. Produces paste when mixed with water.";
+	elem->Description = "粘土尘。与水混合成浆。";
 
 	elem->Properties = TYPE_PART;
 

@@ -87,7 +87,7 @@ void AMTR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Anti-Matter, destroys a majority of particles.";
+	elem->Description = "反物质。摧毁大多数粒子。";
 
 	elem->Properties = TYPE_GAS;
 

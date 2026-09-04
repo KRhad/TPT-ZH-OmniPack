@@ -266,7 +266,7 @@ void LITH_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 17;
 
 	elem->HeatConduct = 70;
-	elem->Description = "Lithium. Reactive element that explodes on contact with water.";
+	elem->Description = "锂。遇水爆炸。";
 
 	elem->Properties = TYPE_PART | PROP_LIFE_DEC;
 

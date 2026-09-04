@@ -64,7 +64,7 @@ void ANAR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Anti-air. Very light gravity-defying dust. Burns cold instead of hot.";
+	elem->Description = "反空气。极轻抗重力粉末。冷燃。";
 
 	elem->Properties = TYPE_PART;
 

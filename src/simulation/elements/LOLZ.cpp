@@ -106,7 +106,7 @@ void LOLZ_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 373.0f;
 	elem->HeatConduct = 40;
 	elem->Latent = 0;
-	elem->Description = "Lolz";
+	elem->Description = "笑点";
 
 	elem->Properties = TYPE_SOLID;
 

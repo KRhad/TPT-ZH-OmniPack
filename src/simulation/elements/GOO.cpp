@@ -58,7 +58,7 @@ void GOO_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 75;
 	elem->Latent = 0;
-	elem->Description = "Deforms and disappears under pressure.";
+	elem->Description = "受压变形消失。";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

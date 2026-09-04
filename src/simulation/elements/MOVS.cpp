@@ -154,7 +154,7 @@ void MOVS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 273.15f;
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Moving solid. Acts like a bouncy ball.";
+	elem->Description = "运动固体，如弹力球。";
 
 	elem->Properties = TYPE_PART;
 

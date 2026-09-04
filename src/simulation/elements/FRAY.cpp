@@ -80,7 +80,7 @@ void FRAY_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 20.0f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Force Emitter. Pushes or pulls objects based on it's temperature. Use like ARAY.";
+	elem->Description = "力发射器。随温度推拉物体，用法同ARAY。";
 
 	elem->Properties = TYPE_SOLID;
 

@@ -112,7 +112,7 @@ void DMG_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Generates damaging pressure and breaks any elements it hits.";
+	elem->Description = "破坏性压力。击碎元素。";
 
 	elem->Properties = TYPE_PART|PROP_SPARKSETTLE;
 

@@ -149,7 +149,7 @@ void ACID_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 34;
 	elem->Latent = 0;
-	elem->Description = "Dissolves almost everything.";
+	elem->Description = "几乎溶解一切。";
 
 	elem->Properties = TYPE_LIQUID|PROP_DEADLY;
 

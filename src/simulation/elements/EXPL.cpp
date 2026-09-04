@@ -67,7 +67,7 @@ void EXPL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Explosion, causes everything it touches to explode.";
+	elem->Description = "爆炸。使一切爆炸。";
 
 	elem->Properties = TYPE_PART|PROP_SPARKSETTLE|PROP_INDESTRUCTIBLE;
 

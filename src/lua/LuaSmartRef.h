@@ -21,6 +21,11 @@ public:
 		return ref;
 	}
 
+	inline operator lua_Integer() const
+	{
+		return (lua_Integer)ref;
+	}
+
 	inline operator bool() const
 	{
 		return ref != LUA_REFNIL;

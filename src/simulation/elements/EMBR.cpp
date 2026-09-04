@@ -131,7 +131,7 @@ void EMBR_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 500.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Sparks. Formed by explosions.";
+	elem->Description = "火花。爆炸产生。";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC|PROP_LIFE_KILL|PROP_SPARKSETTLE;
 

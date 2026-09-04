@@ -242,7 +242,7 @@ void VIBR_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Vibranium. Stores energy and releases it in violent explosions.";
+	elem->Description = "振金。储能后剧烈爆炸。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

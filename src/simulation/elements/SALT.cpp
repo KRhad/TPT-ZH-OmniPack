@@ -43,7 +43,7 @@ void SALT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 110;
 	elem->Latent = 0;
-	elem->Description = "Salt, dissolves in water.";
+	elem->Description = "盐。溶于水。";
 
 	elem->Properties = TYPE_PART;
 

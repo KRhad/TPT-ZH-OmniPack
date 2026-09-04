@@ -44,7 +44,7 @@ void RFGL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 10;
 
 	elem->HeatConduct = 3;
-	elem->Description = "Liquid refrigerant.";
+	elem->Description = "液态制冷剂。";
 
 	elem->Properties = TYPE_LIQUID|PROP_DEADLY;
 

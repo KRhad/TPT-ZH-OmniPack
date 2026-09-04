@@ -52,7 +52,7 @@ void VRSS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Solid Virus. Turns everything it touches into virus.";
+	elem->Description = "固态病毒，接触物转化为病毒";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_TMP2;

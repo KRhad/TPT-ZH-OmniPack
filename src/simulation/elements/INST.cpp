@@ -157,7 +157,7 @@ void INST_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Instantly conducts, PSCN to charge, NSCN to take.";
+	elem->Description = "瞬时导电。PSCN充电，NSCN放电。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

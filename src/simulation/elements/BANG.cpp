@@ -115,7 +115,7 @@ void BANG_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "TNT, explodes all at once.";
+	elem->Description = "三硝基甲苯，瞬间爆炸。";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
 

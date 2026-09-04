@@ -43,7 +43,7 @@ void SAWD_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 18;
 
 	elem->HeatConduct = 70;
-	elem->Description = "Sawdust. Floats on water.";
+	elem->Description = "锯末。浮于水面。";
 
 	elem->Properties = TYPE_PART | PROP_NEUTPASS;
 

@@ -122,7 +122,7 @@ void FIRW_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Fireworks! Colorful, set off by fire.";
+	elem->Description = "烟花。遇火点燃。";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC;
 

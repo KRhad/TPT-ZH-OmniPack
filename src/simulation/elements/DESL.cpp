@@ -43,7 +43,7 @@ void DESL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 42;
 	elem->Latent = 0;
-	elem->Description = "Liquid diesel. Explodes under high pressure and temperatures.";
+	elem->Description = "液态柴油。高压高温爆炸。";
 
 	elem->Properties = TYPE_LIQUID;
 

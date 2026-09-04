@@ -81,7 +81,7 @@ void FSEP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Fuse Powder. Burns slowly like FUSE.";
+	elem->Description = "导火索粉。像FUSE一样缓慢燃烧。";
 
 	elem->Properties = TYPE_PART;
 

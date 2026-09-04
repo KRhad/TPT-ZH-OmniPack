@@ -44,7 +44,7 @@ void PSTE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Colloid, Hardens under pressure.";
+	elem->Description = "胶体。受压硬化。";
 
 	elem->Properties = TYPE_LIQUID;
 

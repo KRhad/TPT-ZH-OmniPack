@@ -61,7 +61,7 @@ bool ToolTip::DrawToolTip()
 	if (alpha > 0)
 	{
 		if (ID == INFOTIP || ID == ELEMENTTIP)
-			drawtext_outline(vid_buf, location.X, location.Y, tip.c_str(), 255, 255, 255, std::min(alpha, 255), 0, 0, 0, std::min(alpha, 255));
+			drawtext_outline(vid_buf, location.X, location.Y, tip.c_str(), 255, 215, 0, std::min(alpha, 255), 0, 0, 0, std::min(alpha, 255));
 		else
 			drawtext(vid_buf, location.X, location.Y, tip.c_str(), 255, 255, 255, std::min(alpha, 255));
 		alpha -= 5;

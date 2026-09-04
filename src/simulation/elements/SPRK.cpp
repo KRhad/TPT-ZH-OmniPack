@@ -422,7 +422,7 @@ void SPRK_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Electricity. The basis of all electronics in TPT, travels along conductive elements.";
+	elem->Description = "电，TPT电子学基础，沿导体传播。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

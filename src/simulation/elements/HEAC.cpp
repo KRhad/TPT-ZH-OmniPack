@@ -177,7 +177,7 @@ void HEAC_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 100;
 
 	elem->HeatConduct = 251;
-	elem->Description = "Rapid heat conductor.";
+	elem->Description = "快速导热体。";
 
 	elem->Properties = TYPE_SOLID;
 

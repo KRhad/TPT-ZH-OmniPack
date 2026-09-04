@@ -43,7 +43,7 @@ void RAZR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 50;
 	elem->Latent = 0;
-	elem->Description = "Heavy silver particles, displaces everything.";
+	elem->Description = "重银粒子，置换万物。";
 
 	elem->Properties = TYPE_PART|PROP_DEADLY;
 

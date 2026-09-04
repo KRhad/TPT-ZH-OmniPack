@@ -124,7 +124,7 @@ void COAL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 200;
 	elem->Latent = 0;
-	elem->Description = "Coal, Burns very slowly. Gets red when hot.";
+	elem->Description = "煤。燃烧很慢，受热变红。";
 
 	elem->Properties = TYPE_SOLID;
 

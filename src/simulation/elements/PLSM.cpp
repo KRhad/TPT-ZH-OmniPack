@@ -70,7 +70,7 @@ void PLSM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = MAX_TEMP;
 	elem->HeatConduct = 5;
 	elem->Latent = 0;
-	elem->Description = "Plasma, extremely hot.";
+	elem->Description = "等离子体。极热。";
 
 	elem->Properties = TYPE_GAS | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

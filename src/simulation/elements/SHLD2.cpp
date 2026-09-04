@@ -83,7 +83,7 @@ void SHLD2_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Shield lvl 2.";
+	elem->Description = "护盾2级。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

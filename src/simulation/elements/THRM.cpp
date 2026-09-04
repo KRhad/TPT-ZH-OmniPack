@@ -43,7 +43,7 @@ void THRM_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 211;
 	elem->Latent = 0;
-	elem->Description = "Thermite. Burns into extremely hot molten metal.";
+	elem->Description = "铝热剂，燃烧成极热熔融金属";
 
 	elem->Properties = TYPE_PART;
 

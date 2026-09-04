@@ -43,7 +43,7 @@ void BGLA_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Broken Glass, heavy particles formed when glass breaks under pressure. Meltable. Bagels.";
+	elem->Description = "碎玻璃，受压破裂形成的重颗粒。可熔化。百吉饼。";
 
 	elem->Properties = TYPE_PART | PROP_PHOTPASS | PROP_NEUTPASS | PROP_HOT_GLOW;
 

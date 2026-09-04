@@ -54,7 +54,7 @@ void PLUT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 4.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Plutonium. Heavy, fissile particles. Generates neutrons under pressure.";
+	elem->Description = "钚。重可裂变粒子，受压产生中子。";
 
 	elem->Properties = TYPE_PART|PROP_NEUTPASS|PROP_RADIOACTIVE;
 

@@ -239,7 +239,7 @@ void BASE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->HeatConduct = 31;
 	elem->HeatCapacity = 1.5f;
 	elem->Latent = 0;
-	elem->Description = "Corrosive liquid. Rusts conductive solids, neutralizes acid.";
+	elem->Description = "腐蚀液体。锈蚀导电固体，中和酸。";
 
 	elem->Properties = TYPE_LIQUID|PROP_DEADLY;
 

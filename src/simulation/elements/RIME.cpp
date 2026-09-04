@@ -76,7 +76,7 @@ void RIME_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = -30.0f + 273.15f;
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Solid, created when steam cools rapidly and goes through deposition, skipping the liquid phase.";
+	elem->Description = "固体，蒸汽急冷凝华而成，跳过液相。";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

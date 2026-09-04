@@ -91,7 +91,7 @@ void RSST_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 20.0f + 273.15f;
 	elem->HeatConduct = 55;
 	elem->Latent = 0;
-	elem->Description = "Resist. Solidifies on contact with photons, is destroyed by electrons and spark.";
+	elem->Description = "阻光材料。遇光子固化，电子与火花可破坏。";
 
 	elem->Properties = TYPE_LIQUID | PROP_PHOTPASS | PROP_CONDUCTS | PROP_LIFE_DEC | PROP_NEUTPASS;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);

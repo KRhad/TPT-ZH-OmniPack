@@ -44,7 +44,7 @@ void BHOL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 70.0f + 273.15f;
 	elem->HeatConduct = 255;
 	elem->Latent = 0;
-	elem->Description = "Vacuum, sucks in other particles and heats up.";
+	elem->Description = "真空。吸入粒子并升温。";
 
 	elem->Properties = TYPE_SOLID;
 

@@ -52,7 +52,7 @@ void NBHL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 186;
 	elem->Latent = 0;
-	elem->Description = "Black hole, sucks in particles using gravity. (Requires Newtonian gravity)";
+	elem->Description = "黑洞，引力吸粒子。";
 
 	elem->Properties = TYPE_SOLID;
 

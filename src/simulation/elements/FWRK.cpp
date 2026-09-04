@@ -110,7 +110,7 @@ void FWRK_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Original version of fireworks, activated by heat/neutrons.";
+	elem->Description = "原始烟花。受热/中子激活。";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

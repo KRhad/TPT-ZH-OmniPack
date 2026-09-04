@@ -85,7 +85,7 @@ void VINE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 65;
 	elem->Latent = 0;
-	elem->Description = "Vine, can grow along WOOD.";
+	elem->Description = "藤蔓。沿木材生长。";
 
 	elem->Properties = TYPE_SOLID;
 

@@ -136,7 +136,7 @@ void PBCN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Powered breakable clone.";
+	elem->Description = "有源易碎克隆。";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_BREAKABLECLONE | PROP_POWERED | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

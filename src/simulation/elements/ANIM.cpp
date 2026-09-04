@@ -110,7 +110,7 @@ void ANIM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.tmp = 1;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Animated Liquid Crystal. Can show multiple frames, use left/right in the deco editor.";
+	elem->Description = "动画液晶。可显示多帧，在装饰编辑器中用左右键。";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

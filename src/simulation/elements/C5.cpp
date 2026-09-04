@@ -114,7 +114,7 @@ void C5_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Cold explosive, set off by anything cold.";
+	elem->Description = "冷炸药。遇冷即爆。";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_NEUTPENETRATE | PROP_LIFE_DEC;
 

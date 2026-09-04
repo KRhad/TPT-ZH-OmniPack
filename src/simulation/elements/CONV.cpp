@@ -87,7 +87,7 @@ void CONV_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Converter. Converts everything into whatever it first touches.";
+	elem->Description = "转换器。将一切转化为首次接触物。";
 
 	elem->Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);

@@ -63,7 +63,7 @@ void BUTN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Button. Can be sparked just by clicking on it, but only when turned on.";
+	elem->Description = "开启后点击即可通电的按钮。";
 
 	elem->Properties = TYPE_SOLID | PROP_POWERED;
 

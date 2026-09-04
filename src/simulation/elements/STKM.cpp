@@ -798,7 +798,7 @@ void STKM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 14.6f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Stickman. Don't kill him! Control with the arrow keys.";
+	elem->Description = "火柴人。别杀他！用方向键控制。";
 
 	elem->Properties = PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

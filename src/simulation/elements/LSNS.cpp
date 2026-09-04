@@ -151,7 +151,7 @@ void LSNS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
  	elem->DefaultProperties.temp = 4.0f + 273.15f;
  	elem->HeatConduct = 0;
- 	elem->Description = "Life sensor, creates a spark when there's a nearby particle with a life higher than its temperature.";
+ 	elem->Description = "生命传感器。附近粒子寿命高于其温则放电。";
 
  	elem->Properties = TYPE_SOLID;
 

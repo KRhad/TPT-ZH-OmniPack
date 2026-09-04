@@ -401,7 +401,7 @@ void FIRE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 400.0f + 273.15f;
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Ignites flammable materials. Heats air.";
+	elem->Description = "点燃可燃物。加热空气。";
 
 	elem->Properties = TYPE_GAS | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

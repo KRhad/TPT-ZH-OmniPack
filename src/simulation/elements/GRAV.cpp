@@ -108,7 +108,7 @@ void GRAV_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Very light dust. Changes colour based on velocity.";
+	elem->Description = "极轻粉尘。随速度变色。";
 
 	elem->Properties = TYPE_PART | PROP_LIFE_DEC;
 

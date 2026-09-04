@@ -51,7 +51,7 @@ void PQRT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 3;
 	elem->Latent = 0;
-	elem->Description = "Powdered quartz, broken form of QRTZ.";
+	elem->Description = "石英粉末，QRTZ破碎形态";
 
 	elem->Properties = TYPE_PART | PROP_PHOTPASS | PROP_HOT_GLOW;
 

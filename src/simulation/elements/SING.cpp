@@ -147,7 +147,7 @@ void SING_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Singularity. Creates huge amounts of negative pressure and destroys everything.";
+	elem->Description = "奇点。产生巨大负压并摧毁一切。";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC;
 

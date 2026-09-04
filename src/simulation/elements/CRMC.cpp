@@ -68,7 +68,7 @@ void CRMC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 35;
 	elem->Latent = 0;
-	elem->Description = "Ceramic. Gets stronger under pressure.";
+	elem->Description = "陶瓷。受压增强。";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS;
 

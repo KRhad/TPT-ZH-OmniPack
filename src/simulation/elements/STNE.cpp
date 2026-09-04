@@ -43,7 +43,7 @@ void STNE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Stone. Heavy particles, meltable.";
+	elem->Description = "石头。重颗粒，可熔化。";
 
 	elem->Properties = TYPE_PART;
 

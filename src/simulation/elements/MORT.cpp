@@ -50,7 +50,7 @@ void MORT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 4.0f + 273.15f;
 	elem->HeatConduct = 60;
 	elem->Latent = 0;
-	elem->Description = "Steam Train.";
+	elem->Description = "蒸汽火车。";
 
 	elem->Properties = TYPE_GAS;
 

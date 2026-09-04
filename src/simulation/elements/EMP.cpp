@@ -220,7 +220,7 @@ void EMP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 121;
 	elem->Latent = 0;
-	elem->Description = "Electromagnetic pulse. Breaks activated electronics.";
+	elem->Description = "电磁脉冲。破坏电子设备。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

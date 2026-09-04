@@ -162,7 +162,7 @@ void LDTC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Linear detector. Scans in 8 directions for particles with its ctype and creates a spark on the opposite side.";
+	elem->Description = "线性探测器。八向扫描同类粒子，对侧放电。";
 
 	elem->Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

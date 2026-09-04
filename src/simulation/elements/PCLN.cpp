@@ -128,7 +128,7 @@ void PCLN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Powered clone. When activated, duplicates any particles it touches.";
+	elem->Description = "有源克隆。激活时复制接触粒子。";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_CLONE | PROP_POWERED | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

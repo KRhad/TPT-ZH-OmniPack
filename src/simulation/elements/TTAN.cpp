@@ -71,7 +71,7 @@ void TTAN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Titanium. Higher melting temperature than most other metals, blocks all air pressure.";
+	elem->Description = "钛，熔点高于多数金属，可隔绝气压";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_HOT_GLOW|PROP_LIFE_DEC;
 

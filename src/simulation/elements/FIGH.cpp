@@ -177,7 +177,7 @@ void FIGH_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 14.6f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Fighter. Tries to kill stickmen. You must first give it an element to kill him with.";
+	elem->Description = "战士。攻击火柴人。";
 
 	elem->Properties = PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

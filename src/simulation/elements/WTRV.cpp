@@ -65,7 +65,7 @@ void WTRV_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 100.0f + 273.15f;
 	elem->HeatConduct = 48;
 	elem->Latent = 0;
-	elem->Description = "Steam. Produced from hot water.";
+	elem->Description = "蒸汽。由热水产生。";
 
 	elem->Properties = TYPE_GAS;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;
