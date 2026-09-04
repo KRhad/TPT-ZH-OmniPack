@@ -44,7 +44,8 @@ void BHOL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 70.0f + 273.15f;
 	elem->HeatConduct = 255;
 	elem->Latent = 0;
-	elem->Description = "Vacuum, sucks in other particles and heats up.";
+	elem->Description = "真空。吸入其他粒子并升温。";
+	elem->DetailedDescription = "描述：会产生负压，吸收物质之后会发热，可以被 BOMB 和 DEST 摧毁。\n导热率：255\n初始温度：92℃/365.15K";
 
 	elem->Properties = TYPE_SOLID;
 

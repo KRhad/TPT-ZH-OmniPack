@@ -157,7 +157,8 @@ void INST_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Instantly conducts, PSCN to charge, NSCN to take.";
+	elem->Description = "瞬间导电；由 PSCN 送入电流、NSCN 导出电流。";
+	elem->DetailedDescription = "描述：导电速度和导电墙相同，只能通过 P 型硅(PSCN)输入电脉冲，N 型硅(NSCN) 和 GOLD 输出电脉冲。PPIP检测到附近被激发的 INST 时会反转方向，而 CRAY 和 ARAY 在被 INST 激发时，发出的射线会穿透一切。与导电墙性质类似不会被高压破坏，也不能熔融。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

@@ -43,7 +43,8 @@ void CNCT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Concrete. Can stack on itself or ROCK, collapses with pressure.";
+	elem->Description = "混凝土。可堆叠在自身或 ROCK 上，受压会坍塌。";
+	elem->DetailedDescription = "描述：重粉末，比石粉坚固且更难熔化。和其他粉末不同，它是刚性的，可以竖直堆积而不会倒下。任何东西都不能通过 CNCT，包括 DEST。\n产生：CNCT 可以通过将熔化的 ROCK 置于 25 P 到 50 P 之间的压力下来创建(1/25000 几率)。\n熔点：849.85℃/1123K\n导热率：100\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_HOT_GLOW;
 

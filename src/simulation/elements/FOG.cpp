@@ -75,7 +75,8 @@ void FOG_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 243.15f;
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Fog, created when an electric current is passed through RIME.";
+	elem->Description = "雾，当电流通过 RIME 时产生。";
+	elem->DetailedDescription = "描述：雾，原为隐藏元素，88.1 版本后可以直接制造，升温时(到达 100℃/373.15K)会变成水蒸气(WTRV)。\n制取方法：波义尔气(BOYL)和水(WATR)或者氧气(OXYG)混合时能产生雾(FOG)。霜(RIME)受到电脉冲刺激会形成雾(FOG)，但此方法制取的雾(FOG)会在 100 帧以后重新变成霜(RIME)。\n导热率：100\n初始温度：-30℃/243.15K";
 
 	elem->Properties = TYPE_GAS|PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

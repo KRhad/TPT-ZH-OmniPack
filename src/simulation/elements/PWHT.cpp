@@ -132,7 +132,8 @@ void PWHT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Powered Heater. Flood fill heats particles to its temp. Use only one.";
+	elem->Description = "可控加热器，以填充方式把粒子加热到自身温度。只需使用一个。";
+	elem->DetailedDescription = "描述：可控洪泛属性写入器，默认用自身温度一次性修改紧贴其上方、彼此连通的整片粒子；PSCN 开启，NSCN 关闭。它不是逐点传热，因此一个 PWHT 就能瞬间处理大面积连通区域。\n参数：Ctype=0 写入温度；1=Life，2=Ctype，3=Type，4=Tmp，5=Tmp2，6=Vy，7=Vx，8=X，9=Y，10=装饰色，11=Flags，12=Tmp3，13=Tmp4。写入浮点属性时数值取 PWHT 温度；普通整数属性取 PWHT 的 Tmp；装饰色取 PWHT 自身装饰色。\n放置限制：PWHT 正上方和正下方不能紧邻另一个 PWHT。修改 Type、坐标或标志等底层属性可能破坏结构，应先在副本中测试。\n导热率：0\n初始状态：Life=10(开启)；初始温度 22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

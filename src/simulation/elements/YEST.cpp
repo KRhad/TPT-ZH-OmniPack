@@ -64,7 +64,8 @@ void YEST_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Yeast, grows when warm (~37C).";
+	elem->Description = "酵母在温暖（~37C）时生长。";
+	elem->DetailedDescription = "描述：酵母，在特定温度范围(29.85℃/303K~43.85℃/317K,不包括边界值)会繁殖。被中子(NEUT)轰击或者温度太高(99.85℃/373K 以上)会死掉变成菌尸(DYST)。菌尸在更高温度(199.85℃/473K 以上)下会变成尘埃(DUST)。在任何温度下，酵母(YEST)触碰到菌尸(DYST)都会死亡。\n元素参数：菌尸(DYST)可以燃烧 20 帧(暂停时修改火焰温度即可点燃)\n导热率：70/70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

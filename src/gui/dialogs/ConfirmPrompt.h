@@ -14,7 +14,7 @@ class ConfirmPrompt : public ui::Window
 	ConfirmCallback callback;
 
 public:
-	ConfirmPrompt(std::string title, std::string message, std::string OK = "OK", std::string cancel = "Cancel");
+	ConfirmPrompt(std::string title, std::string message, std::string OK = "确定", std::string cancel = "取消");
 
 	void SetCallback(ConfirmCallback callback) { this->callback = callback; }
 

@@ -43,7 +43,8 @@ void THRM_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 211;
 	elem->Latent = 0;
-	elem->Description = "Thermite. Burns into extremely hot molten metal.";
+	elem->Description = "铝热剂。燃烧成极热的熔融金属。";
+	elem->DetailedDescription = "描述：铝热剂(THRM)只能由 FIRE、PLSM、LAVA 或 LIFE 点燃，燃烧时可达到约 3000℃。反应后的熔融铝热产物冷却会生成脆金属(BMTL)。THRM 密度较大，会沉入大多数液体和部分粉末。\n产生：将金属粉(BRMT)与电渣(BREL)一起加热到 250℃/523.15K 以上。\n导热率：211\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

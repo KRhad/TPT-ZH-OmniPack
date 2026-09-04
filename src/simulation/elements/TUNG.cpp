@@ -127,7 +127,8 @@ void TUNG_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Tungsten. Brittle metal with a very high melting point.";
+	elem->Description = "钨。脆性金属，熔点非常高。";
+	elem->DetailedDescription = "描述：脆性金属，具有很高的熔点，但不耐压，通电后温度会不断上升至3324℃，同时白热化，可以用于加热或者制作灯泡。\n制取：把金属粉(BRMT)加热至 1000℃会变成钨(TUNG)(旧版本是熔化)。\n压力极限：当前后压强改变>1 P 时碎裂成金属粉(BRMT)。\n熔点：3421.85℃/3695K\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

@@ -177,7 +177,8 @@ void HEAC_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 100;
 
 	elem->HeatConduct = 251;
-	elem->Description = "Rapid heat conductor.";
+	elem->Description = "快速热导体。";
+	elem->DetailedDescription = "描述：HEAC 一般不会熔化，不受压力影响。导热速度比任何其他材料都快。融化 HEAC 的唯一方法是在其上使用 LIGH，当 LIGH 击中 HEAC 时，HEAC 才会融化。当温度低于~1650℃时，它会变回固体形式。\n导热率：255\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

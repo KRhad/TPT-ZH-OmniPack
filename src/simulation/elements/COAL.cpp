@@ -124,7 +124,8 @@ void COAL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 200;
 	elem->Latent = 0;
-	elem->Description = "Coal, Burns very slowly. Gets red when hot.";
+	elem->Description = "煤，燃烧得很慢。热时会变红。";
+	elem->DetailedDescription = "描述：煤，可以用 FIRE、PLSM、LAVA 点燃，会缓慢燃烧。加热时会慢慢白热化，停止加热后会自身冷却变为浅灰色。这个性质在煤粉(BCOL)中也同样存在。被中子轰击时会变成木材(WOOD)，会吸收光子。在4.31 P 以上压力下会碎裂变成煤粉(BCOL)。\n元素参数：Life 小于 100 时燃烧，Tmp 小于 40 时碎裂。\n压力极限：4.31 P\n导热率：200\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

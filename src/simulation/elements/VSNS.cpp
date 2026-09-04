@@ -166,7 +166,8 @@ void VSNS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->DefaultProperties.temp = 4.0f + 273.15f;
 	elem->HeatConduct = 0;
-	elem->Description = "Velocity sensor, creates a spark when there's a nearby particle with velocity higher than its temperature.";
+	elem->Description = "速度传感器，当附近有速度高于其温度的粒子时会产生火花。";
+	elem->DetailedDescription = "描述：当速度高于传感器温度的粒子在附近时，速度传感器会生成 SPRK。将温度与总速度(Vx 和 Vy 组合)进行比较，以确定 VSNS 是否会触发。设置 Tmp2 来确定检测半径(以正方形的形状)。默认值为 2，最大值为 25。VSNS 可以在其检测范围内检测附近粒子的速度，将其传输到相邻的 FILT 或 FILT 线。\n元素参数：\nTmp=1 数据复制，将附近粒子的速度数据复制到 FILT(会占用第 29 位)\nTmp=2 侦测模式，当附近有一个速度低于其温度的粒子时，VSNS 会产生电脉冲\nTmp=3 数据读取，读取存储在 FILT 中的速度并将其复制到附近的粒子。仅保留速度的数据，而不保留方向数据，可以在不改变运动方向的情况下调整它们的速度。Tmp2 设定检测的范围. (对于所有 VSNS 仅作用于非固体粒子。)\n导热率：0\n初始温度：4.00℃/277.15K";
 
 	elem->Properties = TYPE_SOLID;
 

@@ -66,7 +66,8 @@ void ROCK_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 100;
 
 	elem->HeatConduct = 200;
-	elem->Description = "Solid, melts into various elements.";
+	elem->Description = "固体，融化成各种元素。";
+	elem->DetailedDescription = "描述：岩石(ROCK)是坚固固体，可作为混凝土(CNCT)的地基；CNCT 堆在 ROCK 上时不会从边缘滑落。ROCK 耐酸(ACID)、耐破坏炸药(DEST)，但仍会被高速水流缓慢侵蚀：水与周围速度差大于 0.5 时，每帧约有 1/1000 概率把 ROCK 变成 SAND(33%)或 STNE(67%)。\n熔融反应：多数反应只发生在熔融 ROCK 上。压力至少 25 P 时，每帧约有 1/12500 概率转化：\n25-50 P：BRMT 50%，CNCT 50%。\n50-73 P：QRTZ。\n73-75 P：GOLD 12.5%，QRTZ 87.5%。\n75-100 P 且温度至少 4726.85℃：TTAN 20%，IRON 80%。\n100 P 以上且温度至少 4726.85℃：另有 20% 概率生成放射性熔融物，分布为 URAN 20%、PLUT 16%、TUNG 64%。\n导热率：200\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_HOT_GLOW;
 

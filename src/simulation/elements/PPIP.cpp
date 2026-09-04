@@ -48,7 +48,8 @@ void PPIP_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 295.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Powered version of pipe";
+	elem->Description = "通电控制的管道。";
+	elem->DetailedDescription = "描述：动力管(PIPE)的可控形式，利用 P 型硅(PSCN)激活时其中的物质将会运输，用 N 型硅(NSCN)则会停止其中物质的运输，用超导线(INST)会使物质向反方向运输。当激活时，周围包裹的砖块(BRCK)会发出蓝光。其他使用方法请参考动力管(PIPE)。PPIP 是少数使用 Pavg0 和 Pavg1 的元素之一。Pavg1 用于存储 BIZR/S/G 或 PHOT的颜色\n导热率：0\n初始温度：0.00℃/273.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

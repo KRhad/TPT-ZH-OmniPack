@@ -61,7 +61,8 @@ void SMKE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 320.0f + 273.15f;
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Smoke, created by fire.";
+	elem->Description = "烟，由火产生。";
+	elem->DetailedDescription = "描述：火焰冷却到较低温度时会产生烟。可以燃烧。烟接触较热物质时会产生轻微压力。烟可以被植物(PLNT)吸收产生氧气(OXYG)。\n燃点：351.85℃/625K\n导热率：88\n初始温度：342.00℃/615.15K";
 
 	elem->Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

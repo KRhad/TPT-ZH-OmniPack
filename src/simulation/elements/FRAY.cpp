@@ -80,7 +80,8 @@ void FRAY_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 20.0f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Force Emitter. Pushes or pulls objects based on it's temperature. Use like ARAY.";
+	elem->Description = "力发射器，根据温度推拉物体。用法类似 ARAY。";
+	elem->DetailedDescription = "描述：动力射线发射器(FRAY)通电后沿电流方向寻找可移动粒子并施加速度，方向判定与 ARAY 相同。目标温度高于 FRAY 时会被吸引，低于 FRAY 时会被推开；也能影响光子、中子等能量粒子。\n控制：FRAY 不导热，但可用升温笔(HEAT)和降温笔(COOL)设置自身温度，从而改变作用方向和强度。\n元素参数：Tmp 表示一次最多处理的粒子数；Tmp=0 时最多处理 10 个粒子。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

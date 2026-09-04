@@ -30,6 +30,7 @@ protected:
 	unsigned int numClicks, clickPosition;
 	bool autosizeX, autosizeY;
 	bool noCutoff;
+	bool selectable;
 	bool passwordMask = false;
 	Icon icon = IconNone;
 
@@ -48,6 +49,8 @@ public:
 	std::string GetText();
 	bool IsMultiline() { return multiline; }
 	void SelectAll();
+	void SetSelectable(bool selectable_);
+	bool IsSelectable() { return selectable; }
 	bool IsMasked() { return passwordMask; }
 	void SetMasked(bool masked) { this->passwordMask = masked; }
 	Icon GetIcon() { return icon; }

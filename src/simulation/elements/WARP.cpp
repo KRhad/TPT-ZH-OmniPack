@@ -91,7 +91,8 @@ void WARP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Displaces other elements. Completely invisible.";
+	elem->Description = "挤开其他元素，完全不可见。";
+	elem->DetailedDescription = "描述：不可见的气体，传送时会产生 ELEC。会随机将接触到的物质传送出去(除了 DMND、STKM/STK2、CLNE/BCLN/PCLN)，运动方式和中子(NEUT)类似，存在时间很短只有几秒钟。当用足够的 ELEC 轰击时，EXOT会产生 WARP，这将产生非常大的温度和压力。与 NEUT 或 PROT 混合时可产生无限的聚变反应。\n导热率：100\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL;
 

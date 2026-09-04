@@ -5,6 +5,7 @@
 #include "font.h"
 #include "common/Format.h"
 #include "common/tpt-minmax.h"
+#include "graphics/ZhFontReader.h"
 
 namespace gfx
 {
@@ -356,8 +357,23 @@ void VideoBuffer::FillCircle(int x, int y, int rx, int ry, int r, int g, int b, 
 	}
 }
 
-int VideoBuffer::DrawChar(int x, int y, unsigned char c, int r, int g, int b, int a, bool modifiedColor)
+int VideoBuffer::DrawChar(int x, int y, uint32_t c, int r, int g, int b, int a, bool modifiedColor)
 {
+	if (c > 0xFFU)
+	{
+		ZhFontReader glyph(c);
+		int glyphWidth = glyph.GetWidth();
+		for (int j = 0; j < ZH_FONT_H; ++j)
+			for (int i = 0; i < glyphWidth; ++i)
+				if (x + i >= 0 && y + j >= 0 && x + i < width && y + j < height)
+				{
+					int coverage = glyph.NextPixel();
+					DrawPixel(x + i, y + j, r, g, b, coverage * a / 3);
+				}
+				else
+					glyph.NextPixel();
+		return x + glyphWidth;
+	}
 	int bn = 0, ba = 0;
 	unsigned char *rp = font_data + font_ptrs[c];
 	signed char w = *(rp++);
@@ -395,7 +411,7 @@ int VideoBuffer::DrawChar(int x, int y, unsigned char c, int r, int g, int b, in
 	return x + w;
 }
 
-int VideoBuffer::DrawChar(int x, int y, unsigned char c, ARGBColour color, bool modifiedColor)
+int VideoBuffer::DrawChar(int x, int y, uint32_t c, ARGBColour color, bool modifiedColor)
 {
 	return DrawChar(x, y, c, COLR(color), COLG(color), COLB(color), COLA(color), modifiedColor);
 }
@@ -410,6 +426,9 @@ int VideoBuffer::DrawString(int x, int y, const std::string &s, int r, int g, in
 	for (size_t i = 0; i < s.length(); i++)
 	{
 		char c = s[i];
+		uint32_t codepoint = static_cast<unsigned char>(c);
+		size_t decodedLength = 1;
+		bool convertedIcon = false;
 		switch (c)
 		{
 		case '\r':
@@ -505,25 +524,34 @@ int VideoBuffer::DrawString(int x, int y, const std::string &s, int r, int g, in
 			if (convertedC != 0)
 			{
 				c = convertedC;
+				codepoint = static_cast<unsigned char>(convertedC);
 				i += 2;
+				convertedIcon = true;
 			}
 		}
 		default:
+			if (!convertedIcon)
+			{
+				DecodedUtf8 decoded = DecodeUtf8(s.data() + i, s.length() - i);
+				codepoint = decoded.codepoint;
+				decodedLength = decoded.length;
+			}
 			int oldX = x;
-			x = DrawChar(x, y, c, r, g, b, a, modifiedColor);
-			if (didNewline && c == ' ')
+			x = DrawChar(x, y, codepoint, r, g, b, a, modifiedColor);
+			if (didNewline && codepoint == ' ')
 			{
 				x = oldX;
 			}
 			else if (highlight)
 			{
-				FillRect(oldX, y-2, font_data[font_ptrs[(unsigned char)c]], FONT_H+2, 0, 0, 255, 127);
+				FillRect(oldX, y-2, x - oldX, FONT_H+2, 0, 0, 255, 127);
 			}
 			if (underline)
 			{
 				DrawLine(oldX, y + FONT_H, x - 1, y + FONT_H, r, g, b, a);
 			}
 			didNewline = false;
+			i += decodedLength - 1;
 		}
 	}
 	return x;
@@ -543,6 +571,12 @@ signed char VideoBuffer::CharSize(unsigned char c)
 	return (font_data[font_ptr+1]&0x40) ? 0 : font_data[font_ptr];
 }
 
+// static method that returns the width of one decoded Unicode codepoint
+int VideoBuffer::CodepointSize(uint32_t codepoint)
+{
+	return codepoint > 0xFFU ? ZhFontReader(codepoint).GetWidth() : CharSize(static_cast<unsigned char>(codepoint));
+}
+
 // static method that returns the width and height of a string
 Point VideoBuffer::TextSize(std::string s)
 {
@@ -552,6 +586,9 @@ Point VideoBuffer::TextSize(std::string s)
 	for (size_t i = 0; i < s.length(); i++)
 	{
 		char c = s[i];
+		uint32_t codepoint = static_cast<unsigned char>(c);
+		size_t decodedLength = 1;
+		bool convertedIcon = false;
 		switch (c)
 		{
 		case '\n':
@@ -581,11 +618,20 @@ Point VideoBuffer::TextSize(std::string s)
 			if (convertedC != 0)
 			{
 				c = convertedC;
+				codepoint = static_cast<unsigned char>(convertedC);
 				i += 2;
+				convertedIcon = true;
 			}
 		}
 		default:
-			x += CharSize(static_cast<unsigned char>(c));
+			if (!convertedIcon)
+			{
+				DecodedUtf8 decoded = DecodeUtf8(s.data() + i, s.length() - i);
+				codepoint = decoded.codepoint;
+				decodedLength = decoded.length;
+			}
+			x += CodepointSize(codepoint);
+			i += decodedLength - 1;
 		}
 	}
 	if (x > width)

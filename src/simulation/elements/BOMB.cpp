@@ -108,7 +108,8 @@ void BOMB_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Bomb. Explodes and destroys all surrounding particles when it touches something.";
+	elem->Description = "炸弹。当它接触到某物时会爆炸并摧毁周围的所有粒子。";
+	elem->DetailedDescription = "描述：当它接触到除 DMND、任何类型的克隆或任何类型的墙以外的任何其他粒子时会爆炸。当BOMB 爆炸时，8 像素半径内的所有粒子都被 9725.85℃ 的 EMBR(钻石、克隆等除外)替换，并产生压力。爆炸发生后，这种EMBR“弹片”在爆炸温度下弹出，造成损坏。然而，弹片的导电性随着其 Life 值而迅速下降，过一段时间就会不复存在。\n导热率：29/29\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_SPARKSETTLE;
 

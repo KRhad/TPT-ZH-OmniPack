@@ -96,7 +96,8 @@ void PSNS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 4.0f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Pressure sensor, creates a spark when the pressure is greater than its temperature.";
+	elem->Description = "压力传感器，当压力大于其温度时会产生火花。";
+	elem->DetailedDescription = "描述：不导热，可以用升温/降温笔(HEAT/COOL)来改变自身温度，当压力大于其温度值时，压力传感器会发出电脉冲给周围的导电体(水 WATR、盐水 SLTW、热敏电阻 NTCT&PTCT、绝缘线 INWR)。当 Tmp 设置为 1 时，它可以将其压力数据传输到 FILT(会占用第 29 位)。当 Tmp 被设定为 2，PSNS 将把电脉冲传给检测范围内的比它压力低的物质。\n导热率：0\n初始温度：4.00℃/277.15K";
 
 	elem->Properties = TYPE_SOLID;
 

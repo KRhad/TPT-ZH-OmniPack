@@ -61,7 +61,8 @@ void PPTI_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Powered Portal IN, can be turned on/off.";
+	elem->Description = "可通电开关的入口传送门。";
+	elem->DetailedDescription = "描述：可控传送门入口，是 PRTI 的通电版本。PSCN 开启相连区域，NSCN 关闭；开启时产生轻微负压，把接触的物质、能量粒子和电脉冲存入对应频道，等待出口释放。\n频道：频道由温度决定，只有温度对应的 PPTI/PRTI 与 PPTO/PRTO 才互通。入口表面积越大，吸收速度越高；频道暂时没有出口时可保存有限数量的粒子。\n限制：关闭时不执行入口传送；不导热。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

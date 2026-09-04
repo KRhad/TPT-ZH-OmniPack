@@ -45,7 +45,8 @@ void NTCT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "NTC Thermistor. Conducts with PSCN and NSCN, but only when heated above 100C.";
+	elem->Description = "NTC 热敏电阻。与 PSCN 和 NSCN 导电，但仅在加热至 100C 以上时有效。";
+	elem->DetailedDescription = "描述：半导体，只有超过 100℃时才导电，如果与 METL 相连，则会将自身加热至 200℃。停止持续加热会自动冷却(2.5℃/帧)到 22℃，可以用于给特定物质降温。能够熔化。可以通过 PSCN/NSCN 输入/输出电脉冲，当一个像素的 NTCT 周围 3×3 的范围内有通电的金属(METL)时温度自动上升至 199.85℃。\n熔点：1413.85℃/1687K，变成熔融 NTCT\n导热率：251\n初始温度：22℃/295.15K。";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

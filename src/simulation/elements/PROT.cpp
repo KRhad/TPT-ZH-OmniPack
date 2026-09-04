@@ -237,7 +237,8 @@ void PROT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 61;
 	elem->Latent = 0;
-	elem->Description = "Protons. Transfer heat to materials, and remove sparks.";
+	elem->Description = "质子。将热量传递给材料，并消除火花。";
+	elem->DetailedDescription = "描述：质子(PROT)不能穿透 INSL、VOID/PVOD、DMND、VIBR、墙等屏障，并会清除碰到的电脉冲。离开其他物质内部后会缓慢衰减，通常约 680 帧消失。\n温度作用：温度超过 500℃时可引爆爆炸物。进入不导热材料时，若质子更热，会把该材料加热到自身温度，例如 CRAY、PRTI、PRTO。对 WIFI：质子高于 200℃时使频道温度升高 1000℃；100℃至 200℃升高 100℃；-100℃至 0℃降低 100℃；-200℃至 -100℃降低 1000℃。\n质子对撞：只有运动方向几乎相反的两个质子才算对撞，产物由两者速度平方和决定：\n大于 4250→SING；大于 275→PLUT；大于 170→URAN；大于 100→PLSM；大于 40→OXYG；大于 20→CO2；大于 10→NBLE；不超过 10 时不反应。\n其他反应：PROT+ELEC→HYGN；PROT+INVS→NEUT；PROT+LCRY→PHOT；PROT+POLO→PLUT；与 DEUT 反应可产生更多质子；碰到 EXOT 会持续使其降温并最终生成 CFLM。\n导热率：61\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_ENERGY;
 

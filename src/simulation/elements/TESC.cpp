@@ -53,7 +53,8 @@ void TESC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Tesla coil! Creates lightning when sparked.";
+	elem->Description = "特斯拉线圈！激发时产生闪电。";
+	elem->DetailedDescription = "描述：通电可以产生闪电(LIGH，高温，可以穿透一切，产生较大的压力并使一些导电材料产生电脉冲)。将它做成线圈状，如下图可以效果最大化。如果制作 1 像素宽的 TESC 串，当被激活时它就会开始冷却。\n元素参数：Tmp 值可用于设定闪电的长度和生成概率\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 

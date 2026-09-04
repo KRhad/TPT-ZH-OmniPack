@@ -35,20 +35,20 @@ typedef struct toolType toolType;
 
 static toolType toolTypes[] =
 {
-	{"HEAT", "DEFAULT_TOOL_HEAT",   COLPACK(0xFFBB00), "Heats the targeted element."},
-	{"COOL", "DEFAULT_TOOL_COOL",   COLPACK(0x00BBFF), "Cools the targeted element."},
-	{"AIR",  "DEFAULT_TOOL_AIR",    COLPACK(0xFFFFFF), "Air, creates airflow and pressure."},
-	{"VAC",  "DEFAULT_TOOL_VAC",    COLPACK(0x303030), "Vacuum, reduces air pressure."},
-	{"PGRV", "DEFAULT_TOOL_PGRV",   COLPACK(0xCCCCFF), "Creates a short-lasting gravity well."},
-	{"NGRV", "DEFAULT_TOOL_NGRV",   COLPACK(0xAACCFF), "Creates a short-lasting negative gravity well."},
-	{"MIX",  "DEFAULT_TOOL_MIX",    COLPACK(0xFFD090), "Mixes particles around randomly."},
-	{"CYCL", "DEFAULT_TOOL_CYCL",   COLPACK(0x132F5B), "Cyclone, produces swirling air currents."},
-	{"AMBM", "DEFAULT_TOOL_AMBM",   COLPACK(0x00DDFF), "Decreases ambient air temperature."},
-	{"AMBP", "DEFAULT_TOOL_AMBP",   COLPACK(0xFFDD00), "Increases ambient air temperature."},
-	{"WIND", "DEFAULT_TOOL_WIND",   COLPACK(0x404040), "Creates air movement."},
-	{"PROP", "DEFAULT_UI_PROPERTY", COLPACK(0xFFAA00), "Property drawing tool."},
-	{"SIGN", "DEFAULT_UI_SIGN",     COLPACK(0x808080), "Sign. Displays text. Click on a sign to edit it or anywhere else to place a new one."},
-	{"CUST", "DEFAULT_UI_ADDLIFE",  COLPACK(0xFEA900), "Add a new custom GOL type. (Use ctrl+shift+rightclick to remove them)"}
+	{"HEAT", "DEFAULT_TOOL_HEAT",   COLPACK(0xFFBB00), "加热目标元素。"},
+	{"COOL", "DEFAULT_TOOL_COOL",   COLPACK(0x00BBFF), "冷却目标元素。"},
+	{"AIR",  "DEFAULT_TOOL_AIR",    COLPACK(0xFFFFFF), "空气，产生气流和压力。"},
+	{"VAC",  "DEFAULT_TOOL_VAC",    COLPACK(0x303030), "真空，降低气压。"},
+	{"PGRV", "DEFAULT_TOOL_PGRV",   COLPACK(0xCCCCFF), "创建一个短暂的重力井。"},
+	{"NGRV", "DEFAULT_TOOL_NGRV",   COLPACK(0xAACCFF), "创建一个短暂的负重力井。"},
+	{"MIX",  "DEFAULT_TOOL_MIX",    COLPACK(0xFFD090), "随机混合附近的粒子。"},
+	{"CYCL", "DEFAULT_TOOL_CYCL",   COLPACK(0x132F5B), "气旋，产生旋转气流。"},
+	{"AMBM", "DEFAULT_TOOL_AMBM",   COLPACK(0x00DDFF), "降低环境空气温度。"},
+	{"AMBP", "DEFAULT_TOOL_AMBP",   COLPACK(0xFFDD00), "增加环境空气温度。"},
+	{"WIND", "DEFAULT_TOOL_WIND",   COLPACK(0x404040), "产生空气流动。"},
+	{"PROP", "DEFAULT_UI_PROPERTY", COLPACK(0xFFAA00), "属性绘制工具。"},
+	{"SIGN", "DEFAULT_UI_SIGN",     COLPACK(0x808080), "标志。显示文本。单击标志进行编辑，或单击其他位置放置新标志。"},
+	{"CUST", "DEFAULT_UI_ADDLIFE",  COLPACK(0xFEA900), "添加新的自定义 GOL 类型。 （使用ctrl+shift+右键删除它们）"}
 };
 
 #define DECO_DRAW		0
@@ -73,15 +73,15 @@ typedef struct decoType decoType;
 
 static decoType decoTypes[] =
 {
-	{"SET", "DEFAULT_DECOR_SET",	COLPACK(0xFF0000), "Draw decoration."},
-	{"CLR", "DEFAULT_DECOR_CLR",	COLPACK(0x000000), "Erase decoration."},
-	{"ADD", "DEFAULT_DECOR_ADD",	COLPACK(0x323232), "Color blending: Add."},
-	{"SUB", "DEFAULT_DECOR_SUB",	COLPACK(0x323232), "Color blending: Subtract."},
-	{"MUL", "DEFAULT_DECOR_MUL",	COLPACK(0x323232), "Color blending: Multiply."},
-	{"DIV", "DEFAULT_DECOR_DIV",	COLPACK(0x323232), "Color blending: Divide."},
-	{"SMDG", "DEFAULT_DECOR_SMDG",	COLPACK(0x00FF00), "Smudge tool, blends surrounding deco together."},
-	{"LIGH", "DEFAULT_DECOR_LIGH",	COLPACK(0xDDDDDD), "Lighten deco color."},
-	{"DARK", "DEFAULT_DECOR_DARK",	COLPACK(0x111111), "Darken deco color."}
+	{"SET", "DEFAULT_DECOR_SET",	COLPACK(0xFF0000), "绘制装饰。"},
+	{"CLR", "DEFAULT_DECOR_CLR",	COLPACK(0x000000), "擦除装饰。"},
+	{"ADD", "DEFAULT_DECOR_ADD",	COLPACK(0x323232), "颜色混合：相加。"},
+	{"SUB", "DEFAULT_DECOR_SUB",	COLPACK(0x323232), "颜色混合：相减。"},
+	{"MUL", "DEFAULT_DECOR_MUL",	COLPACK(0x323232), "颜色混合：相乘。"},
+	{"DIV", "DEFAULT_DECOR_DIV",	COLPACK(0x323232), "颜色混合：相除。"},
+	{"SMDG", "DEFAULT_DECOR_SMDG",	COLPACK(0x00FF00), "涂抹工具，将周围的装饰混合在一起。"},
+	{"LIGH", "DEFAULT_DECOR_LIGH",	COLPACK(0xDDDDDD), "提亮装饰颜色。"},
+	{"DARK", "DEFAULT_DECOR_DARK",	COLPACK(0x111111), "压暗装饰颜色。"}
 };
 
 struct decoPreset
@@ -94,14 +94,14 @@ typedef struct decoPreset decoPreset;
 
 const decoPreset colorlist[] =
 {
-	{COLPACK(0xFF0000), "DEFAULT_DECOR_PRESET_RED", "Red"},
-	{COLPACK(0x00FF00), "DEFAULT_DECOR_PRESET_GREEN", "Green"},
-	{COLPACK(0x0000FF), "DEFAULT_DECOR_PRESET_BLUE", "Blue"},
-	{COLPACK(0xFFFF00), "DEFAULT_DECOR_PRESET_YELLOW", "Yellow"},
-	{COLPACK(0xFF00FF), "DEFAULT_DECOR_PRESET_PINK", "Pink"},
-	{COLPACK(0x00FFFF), "DEFAULT_DECOR_PRESET_CYAN", "Cyan"},
-	{COLPACK(0xFFFFFF), "DEFAULT_DECOR_PRESET_WHITE", "White"},
-	{COLPACK(0x000000), "DEFAULT_DECOR_PRESET_BLACK", "Black"},
+	{COLPACK(0xFF0000), "DEFAULT_DECOR_PRESET_RED", "红色"},
+	{COLPACK(0x00FF00), "DEFAULT_DECOR_PRESET_GREEN", "绿色"},
+	{COLPACK(0x0000FF), "DEFAULT_DECOR_PRESET_BLUE", "蓝色"},
+	{COLPACK(0xFFFF00), "DEFAULT_DECOR_PRESET_YELLOW", "黄色"},
+	{COLPACK(0xFF00FF), "DEFAULT_DECOR_PRESET_PINK", "粉色"},
+	{COLPACK(0x00FFFF), "DEFAULT_DECOR_PRESET_CYAN", "青色"},
+	{COLPACK(0xFFFFFF), "DEFAULT_DECOR_PRESET_WHITE", "白色"},
+	{COLPACK(0x000000), "DEFAULT_DECOR_PRESET_BLACK", "黑色"},
 };
 #define NUM_COLOR_PRESETS 8
 

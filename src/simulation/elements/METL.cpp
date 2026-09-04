@@ -43,7 +43,8 @@ void METL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 919;
-	elem->Description = "Metal, the basic conductor. Meltable.";
+	elem->Description = "金属，基本导体。可熔化。";
+	elem->DetailedDescription = "描述：基础金属导体(METL)，可传导电脉冲并熔化。SPRK 通过时会把它加热到约 300℃并产生少量压力；达到熔点后变成 Ctype=METL 的熔岩(LAVA)，冷却后重新凝固为 METL。\n制取：把熔融铁(IRON)倒在煤(COAL)或煤粉(BCOL)上，再冷却即可得到 METL。\n熔点：999.85℃/1273K\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 

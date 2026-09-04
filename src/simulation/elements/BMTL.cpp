@@ -70,7 +70,8 @@ void BMTL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Breakable metal. Common conductive building material, can melt and break under pressure.";
+	elem->Description = "可破坏金属。常用导电建材，受压会破碎，也可熔化。";
+	elem->DetailedDescription = "描述：可以破坏的金属。在压力大于 2.5 P 的情况下破坏，高温下熔化。在电脉冲通过时会升温。经常用作可破坏建筑的建筑材料。仅能允许一半的光子(PHOT)通过。Tmp 值为 1 的 BMTL 会慢慢变成 BRMT。这种类型的BMTL 是在 IRON 生锈时形成的。THRM 燃烧时会产生熔化的 THRM，然后冷却成 BMTL。如果 BRMT 熔化并冷却，它将再次形成 BMTL。接触它的所有光子中有一半会通过，另一半会反射出去。液态 BMTL 也在聚变的最后一步产生：9000℃ 温度、250 压力和高牛顿重力下的氧气。\n熔点：999.85℃/1273K\n压力极限：1 P\n制取方法：氧气(OXYG)+最高的温度、压力+引力。\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 

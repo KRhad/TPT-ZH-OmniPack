@@ -71,7 +71,8 @@ void TTAN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Titanium. Higher melting temperature than most other metals, blocks all air pressure.";
+	elem->Description = "钛。熔点高于大多数金属，并能完全阻挡气压。";
+	elem->DetailedDescription = "描述：金属固体，坚固的材料。熔点很高，能导电。中子(NEUT)通过时会被吸收 5%(每一帧)。通电时允许压力通过，未通电时不传导任何压力，不论任何厚度都可以阻隔压力。如果熔融的 TTAN 与 EXOT 混合，它会变成熔融的 VIBR，可以冷却形成 VIBR。\n熔点：1667.85℃/1941K\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_HOT_GLOW|PROP_LIFE_DEC;
 

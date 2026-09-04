@@ -47,7 +47,8 @@ void SNOW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 30.0f + 273.15f;
 	elem->HeatConduct = 46;
 	elem->Latent = 1095;
-	elem->Description = "Light particles. Created when ICE breaks under pressure.";
+	elem->Description = "雪。ICE 受压破碎时形成的轻质粒子。";
+	elem->DetailedDescription = "描述：轻粉末，冰(ICE)在压力下破坏形成雪，加热后变成水(WATR)。可以使中子(NEUT)减速。\n熔点：-0.15℃/273K\n产生：可以压力下通过冷却 WATR、DSTW、BUBW 或 SLTW 来产生雪，对 ICE 施加压力也可产生雪。\n反应：雪会在 0℃ 融化成它 Ctype 值的元素 (即使该元素不是一种水，可以用此特性来制作奇点炸弹)，除了SLTW，它会在-21.1℃ 融化。\n导热率：46\n初始温度：-8.00℃/265.15K";
 
 	elem->Properties = TYPE_PART|PROP_NEUTPASS;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

@@ -798,7 +798,8 @@ void STKM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 14.6f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Stickman. Don't kill him! Control with the arrow keys.";
+	elem->Description = "火柴人。别杀他！用方向键控制。";
+	elem->DetailedDescription = "描述：受重力和压力影响，使用方向键来控制其运动，可以在水下呼吸，受到压力、高温、放射性物质等各种危险的东西会损失生命值，吃(走近)植物(PLNT)可以恢复生命值，修改 Life 值可以修改生命值上限，以下\n能力：\n复制：火柴人可以复制他的头碰到的物质，当碰到一个特定物质(或墙)时，他的头会改变颜色，此时按方向键↓，火柴人就会吐出该种物质。\n使用电子产品：当火柴人的头碰到金属时，按方向键↓可以给金属一个电脉冲，这样就可以使用电子产品了。\n火箭鞋：当火柴人碰到重力墙时，会拥有火箭鞋(喷出高温的等离子体 PLSM)，同样用方向键控制，碰到电锁体(E-Hole)时会恢复原状。\n导热率：0/0\n燃点：346.85℃/620K\n初始温度：36.6℃/309.75K";
 
 	elem->Properties = PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

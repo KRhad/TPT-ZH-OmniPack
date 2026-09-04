@@ -59,7 +59,8 @@ void ETRD_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Electrode. Creates plasma arcs with electricity. (Use sparingly)";
+	elem->Description = "电极。用电产生等离子弧。 （谨慎使用）";
+	elem->DetailedDescription = "描述：一旦通电，会在相邻两个电极之间产生等离子体(PLSM，9000℃+)，每次持续20 帧，如果用的太多会停不下来。\n其他：墙不会干扰等离子体的产生，不过有可能会隔开；如果两个电极之间有绝缘体(INSL)阻隔则不会产生等离子体。\n元素参数：Life 值为产生等离子体的持续时间(需要同时修改两边的电极)。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

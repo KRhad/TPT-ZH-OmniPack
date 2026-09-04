@@ -419,7 +419,8 @@ void PLNT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 65;
 	elem->Latent = 0;
-	elem->Description = "Plant, drinks water and grows.";
+	elem->Description = "植物。吸水并生长。";
+	elem->DetailedDescription = "描述：植物，吸收水分生长。低温时变成蓝色。可燃物。在中子(NEUT)轰击下变成木材(WOOD)。盐水(SLTW)会破坏植物。可以吸收二氧化碳(CO2)或者烟(SMKE)并产生氧气，以模拟光合作用。火柴人(STKM/STK2)可以吃(走近)植物来增加(5 点)生命值。Tmp 值为 1 的 PLNT 会沿着 WOOD 生长。\n燃点：299.85℃/573K\n导热率：65\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_NEUTPENETRATE|PROP_LIFE_DEC;
 

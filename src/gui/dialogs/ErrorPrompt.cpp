@@ -11,7 +11,7 @@ ErrorPrompt::ErrorPrompt(std::string message, std::string dismiss):
 #else
 	int buttonHeight = 25;
 #endif
-	Label *titleLabel = new Label(Point(5, 3), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Error");
+	Label *titleLabel = new Label(Point(5, 3), Point(Label::AUTOSIZE, Label::AUTOSIZE), "错误");
 	titleLabel->SetColor(COLRGB(255, 64, 32));
 	this->AddComponent(titleLabel);
 

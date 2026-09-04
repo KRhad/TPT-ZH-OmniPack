@@ -154,7 +154,8 @@ void MOVS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 273.15f;
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Moving solid. Acts like a bouncy ball.";
+	elem->Description = "可移动固体，行为类似弹力球。";
+	elem->DetailedDescription = "描述：移动固体，游戏内显示为 BALL。相连粒子组成一个可整体平移、碰撞和旋转的刚体，碰到墙、普通固体或另一组 BALL 时会反弹；开启“移动固体旋转”后，碰撞还会改变角速度。\n限制：最多同时建立 255 组移动固体，同一像素不能新建一组。控制中心丢失后，剩余粒子会逐渐瓦解；中心承受超过约±10 P 的压力会被摧毁，整体在约±25 P 的压力下也会消失。\n性质：重力 0.1，重量 85，硬度 30。\n导热率：70\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

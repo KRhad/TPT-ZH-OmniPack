@@ -84,7 +84,8 @@ void CLNE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Clone. Duplicates any particles it touches.";
+	elem->Description = "克隆。复制它接触到的任何粒子。";
+	elem->DetailedDescription = "描述：可以复制它第一个触碰到的物质，并将其记录到Ctype 值内。可以被 SING 和 VIRS 摧毁。它可以记住最后碰触到的物质并保存在图章/存档中。光子可以穿过所有类型的 CLNE 和 BCLN。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_CLONE | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

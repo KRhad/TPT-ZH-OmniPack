@@ -28,7 +28,7 @@ GravityWindow::GravityWindow(float scale, int radius, float x, float y, std::str
 
 	std::stringstream gravityText;
 	gravityText.precision(1);
-	gravityText << std::fixed << "X:" << x << " Y:" << y << " Total:" << std::hypot(x, y);
+	gravityText << std::fixed << "X:" << x << " Y:" << y << " 总计：" << std::hypot(x, y);
 	Point labelPos = Point((size.X - gfx::VideoBuffer::TextSize(gravityText.str()).X) / 2, (radius * 5 / 2) + 29);
 	labelValues = new Label(labelPos, Point(size.X, 16), gravityText.str());
 	AddComponent(labelValues);
@@ -37,7 +37,7 @@ GravityWindow::GravityWindow(float scale, int radius, float x, float y, std::str
 	directionSelector->SetUpdateCallback([this, radius](float x, float y) {
 		std::stringstream gravityText;
 		gravityText.precision(1);
-		gravityText << std::fixed << "X:" << x << " Y:" << y << " Total:" << std::hypot(x, y);
+		gravityText << std::fixed << "X:" << x << " Y:" << y << " 总计：" << std::hypot(x, y);
 		Point labelPos = Point((size.X - gfx::VideoBuffer::TextSize(gravityText.str()).X) / 2, (radius * 5 / 2) + 29);
 		labelValues->SetPosition(labelPos);
 		labelValues->SetText(gravityText.str());
@@ -45,7 +45,7 @@ GravityWindow::GravityWindow(float scale, int radius, float x, float y, std::str
 	directionSelector->SetSnapPoints(5, 5, 2);
 	AddComponent(directionSelector);
 
-	Button *okButton = new Button(Point(0, size.Y - buttonHeight), Point(size.X, buttonHeight), "OK");
+	Button *okButton = new Button(Point(0, size.Y - buttonHeight), Point(size.X, buttonHeight), "确定");
 	okButton->SetCallback([this](int mb) {
 		this->callback(directionSelector->GetXValue(), directionSelector->GetYValue());
 	});

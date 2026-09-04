@@ -167,7 +167,7 @@ PowderToy::PowderToy():
 #ifdef TOUCHUI
 	openBrowserButton->SetState(Button::HOLD);
 #endif
-	openBrowserButton->SetTooltip(new ToolTip("Find & open a simulation", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	openBrowserButton->SetTooltip(new ToolTip("查找并打开模拟", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(openBrowserButton);
 
 	reloadButton = new Button(openBrowserButton->Right(Point(1, 0)), Point(minWidth > 17 ? minWidth : 17, ySize), "\x91");
@@ -176,32 +176,32 @@ PowderToy::PowderToy():
 #ifdef TOUCHUI
 	reloadButton->SetState(Button::HOLD);
 #endif
-	reloadButton->SetTooltip(new ToolTip("Reload the simulation \bg(ctrl+r)", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	reloadButton->SetTooltip(new ToolTip("重新加载模拟 \bg(Ctrl+R)", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(reloadButton);
 
-	saveButton = new Button(reloadButton->Right(Point(1, 0)), Point(minWidth > 151 ? minWidth : 151, ySize), "\x82 [untitled simulation]");
+	saveButton = new Button(reloadButton->Right(Point(1, 0)), Point(minWidth > 151 ? minWidth : 151, ySize), "\x82 [未命名模拟]");
 	saveButton->SetAlign(Button::LEFT);
 	saveButton->SetCallback([&](int mb) { this->DoSaveBtn(mb); });
 #ifdef TOUCHUI
 	saveButton->SetState(Button::HOLD);
 #endif
-	saveButton->SetTooltip(new ToolTip("Upload a new simulation", Point(minWidth > 16 ? minWidth : 16, YRES-24), TOOLTIP, tooltipAlpha));
+	saveButton->SetTooltip(new ToolTip("上传新模拟", Point(minWidth > 16 ? minWidth : 16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(saveButton);
 
 #ifdef TOUCHUI
 	upvoteButton = new Button(saveButton->Right(Point(1, 0)), Point(minWidth > 40 ? minWidth: 40, ySize), "\xCB");
 #else
-	upvoteButton = new Button(saveButton->Right(Point(1, 0)), Point(minWidth > 40 ? minWidth: 40, ySize), "\xCB Vote");
+	upvoteButton = new Button(saveButton->Right(Point(1, 0)), Point(minWidth > 40 ? minWidth: 40, ySize), "\xCB 投票");
 #endif
 	upvoteButton->SetColor(COLRGB(0, 187, 18));
 	upvoteButton->SetCallback([&](int mb) { this->DoVoteBtn(true); });
-	upvoteButton->SetTooltip(new ToolTip("Like this save", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	upvoteButton->SetTooltip(new ToolTip("赞这个存档", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(upvoteButton);
 
 	downvoteButton = new Button(upvoteButton->Right(Point(0, 0)), Point(minWidth > 16 ? minWidth : 16, ySize), "\xCA");
 	downvoteButton->SetColor(COLRGB(187, 40, 0));
 	downvoteButton->SetCallback([&](int mb) { this->DoVoteBtn(false); });
-	downvoteButton->SetTooltip(new ToolTip("Disike this save", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	downvoteButton->SetTooltip(new ToolTip("不喜欢此存档", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(downvoteButton);
 
 
@@ -209,81 +209,81 @@ PowderToy::PowderToy():
 	Point size = Point(minWidth > 15 ? minWidth : 15, ySize);
 	pauseButton = new Button(Point(XRES+BARSIZE-size.X-xOffset, openBrowserButton->GetPosition().Y), size, "\x90");
 	pauseButton->SetCallback([&](int mb) { this->TogglePauseBtn(); });
-	pauseButton->SetTooltip(new ToolTip("Pause the simulation \bg(space)", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	pauseButton->SetTooltip(new ToolTip("暂停模拟 \bg(空格)", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(pauseButton);
 
 	size = Point(minWidth > 17 ? minWidth : 17, ySize);
 	renderOptionsButton = new Button(pauseButton->Left(Point(size.X+1, 0)), size, "\xD8");
 	renderOptionsButton->SetCallback([&](int mb) { this->RenderOptionsBtn(); });
-	renderOptionsButton->SetTooltip(new ToolTip("Renderer options", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	renderOptionsButton->SetTooltip(new ToolTip("渲染设置", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(renderOptionsButton);
 
 	size = Point(minWidth > 95 ? minWidth : 95, ySize);
-	loginButton = new Button(renderOptionsButton->Left(Point(size.X+1, 0)), size, "\x84 [sign in]");
+	loginButton = new Button(renderOptionsButton->Left(Point(size.X+1, 0)), size, "\x84 [登录]");
 	loginButton->SetAlign(Button::LEFT);
 	loginButton->SetCallback([&](int mb) { this->LoginBtn(); });
-	loginButton->SetTooltip(new ToolTip("Sign into the Simulation Server", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	loginButton->SetTooltip(new ToolTip("登录模拟服务器", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(loginButton);
 
 	size = Point(minWidth > 17 ? minWidth : 17, ySize);
 	clearSimButton = new Button(loginButton->Left(Point(size.X+1, 0)), size, "\x92");
 	clearSimButton->SetCallback([](int mb) { NewSim(); });
-	clearSimButton->SetTooltip(new ToolTip("Erase all particles and walls", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	clearSimButton->SetTooltip(new ToolTip("清除所有粒子和墙体", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(clearSimButton);
 
 	size = Point(minWidth > 15 ? minWidth : 15, ySize);
 	optionsButton = new Button(clearSimButton->Left(Point(size.X+1, 0)), size, "\xCF");
 	optionsButton->SetCallback([&](int mb) { this->OpenOptionsBtn(); });
-	optionsButton->SetTooltip(new ToolTip("Simulation options", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	optionsButton->SetTooltip(new ToolTip("模拟设置", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(optionsButton);
 
 	size = Point(minWidth > 15 ? minWidth : 15, ySize);
 	reportBugButton = new Button(optionsButton->Left(Point(size.X+1, 0)), size, "\xE7");
 	reportBugButton->SetCallback([&](int mb) { this->ReportBugBtn(); });
-	reportBugButton->SetTooltip(new ToolTip("Report bugs and feedback to jacob1", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	reportBugButton->SetTooltip(new ToolTip("向 jacob1 报告问题和反馈", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(reportBugButton);
 
 	Point tagsPos = downvoteButton->Right(Point(1, 0));
 #ifdef TOUCHUI
 	openTagsButton = new Button(tagsPos, Point((reportBugButton->Left(Point(1, 0))-tagsPos).X, ySize), "\x83");
 #else
-	openTagsButton = new Button(tagsPos, Point((reportBugButton->Left(Point(1, 0))-tagsPos).X, ySize), "\x83 [no tags set]");
+	openTagsButton = new Button(tagsPos, Point((reportBugButton->Left(Point(1, 0))-tagsPos).X, ySize), "\x83 [未设置标签]");
 	openTagsButton->SetAlign(Button::LEFT);
 #endif
 	openTagsButton->SetCallback([&](int mb) { this->OpenTagsBtn(); });
-	openTagsButton->SetTooltip(new ToolTip("Add simulation tags", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
+	openTagsButton->SetTooltip(new ToolTip("添加模拟标签", Point(16, YRES-24), TOOLTIP, tooltipAlpha));
 	AddComponent(openTagsButton);
 
 #ifdef TOUCHUI
 	eraseButton = new Button(Point(XRES+1, 0), Point(BARSIZE-1, 25), "\xE8");
 	eraseButton->SetState(Button::HOLD);
 	eraseButton->SetCallback([&](int mb) { this->ToggleEraseBtn(mb == 3); });
-	eraseButton->SetTooltip(GetQTip("Swap to erase tool (hold to clear the sim)", eraseButton->GetPosition().Y+10));
+	eraseButton->SetTooltip(GetQTip("切换到擦除工具（长按清空模拟）", eraseButton->GetPosition().Y+10));
 	AddComponent(eraseButton);
 
 	openConsoleButton = new Button(eraseButton->Below(Point(0, 1)), Point(BARSIZE-1, 25), "\xE9");
 	openConsoleButton->SetState(Button::HOLD);
 	openConsoleButton->SetCallback([&](int mb) { this->OpenConsoleBtn(mb == 3); });
 
-	openConsoleButton->SetTooltip(GetQTip("Open console (hold to show on screen keyboard)", openConsoleButton->GetPosition().Y+10));
+	openConsoleButton->SetTooltip(GetQTip("打开控制台（长按显示屏幕键盘）", openConsoleButton->GetPosition().Y+10));
 	AddComponent(openConsoleButton);
 
 	settingsButton = new Button(openConsoleButton->Below(Point(0, 1)), Point(BARSIZE-1, 25), "\xEB");
 	settingsButton->SetState(Button::HOLD);
 	settingsButton->SetCallback([&](int mb) { this->ToggleSettingBtn(mb == 3); });
-	settingsButton->SetTooltip(GetQTip("Toggle Decorations (hold to open options)", settingsButton->GetPosition().Y+10));
+	settingsButton->SetTooltip(GetQTip("切换装饰层（长按打开设置）", settingsButton->GetPosition().Y+10));
 	AddComponent(settingsButton);
 
 	zoomButton = new Button(settingsButton->Below(Point(0, 1)), Point(BARSIZE-1, 25), "\xEC");
 	zoomButton->SetState(Button::HOLD);
 	zoomButton->SetCallback([&](int mb) { this->StartZoomBtn(mb == 3); });
-	zoomButton->SetTooltip(GetQTip("Start placing the zoom window", zoomButton->GetPosition().Y+10));
+	zoomButton->SetTooltip(GetQTip("开始放置缩放窗口", zoomButton->GetPosition().Y+10));
 	AddComponent(zoomButton);
 
 	stampButton = new Button(zoomButton->Below(Point(0, 1)), Point(BARSIZE-1, 25), "\xEA");
 	stampButton->SetState(Button::HOLD);
 	stampButton->SetCallback([&](int mb) { this->SaveStampBtn(mb == 3); });
-	stampButton->SetTooltip(GetQTip("Save a stamp (hold to load a stamp)", stampButton->GetPosition().Y+10));
+	stampButton->SetTooltip(GetQTip("保存图章（长按加载图章）", stampButton->GetPosition().Y+10));
 	AddComponent(stampButton);
 #endif
 }
@@ -313,7 +313,7 @@ void PowderToy::OpenBrowserBtn(unsigned char b)
 		voteDownload->Cancel();
 		voteDownload = NULL;
 		svf_myvote = 0;
-		SetInfoTip("Error: a previous vote may not have gone through");
+		SetInfoTip("错误：上一次投票可能未成功提交");
 	}
 #ifdef TOUCHUI
 	if (ctrlHeld || b != 1)
@@ -365,21 +365,21 @@ void PowderToy::DoSaveBtn(unsigned char b)
 				{
 					authors = save->authors;
 #ifndef TOUCHUI
-					SetInfoTip("Created local save. Hold ctrl and click open to access the local save browser");
+					SetInfoTip("已创建本地存档。按住 Ctrl 并点击打开按钮可进入本地存档浏览器");
 #else
-					SetInfoTip("Created local save. Hold down the open button to access the local save browser");
+					SetInfoTip("已创建本地存档。长按打开按钮可进入本地存档浏览器");
 #endif
 				}
 			}
 			else if (DoLocalSave(svf_filename, save, true))
-				SetInfoTip("Error writing local save");
+				SetInfoTip("写入本地存档失败");
 			else
-				SetInfoTip("Updated successfully");
+				SetInfoTip("更新成功");
 		}
 		catch (BuildException & e)
 		{
 			clear_save_info();
-			Engine::Ref().ShowWindow(new ErrorPrompt("Error creating save: " + std::string(e.what())));
+			Engine::Ref().ShowWindow(new ErrorPrompt("创建存档失败：" + std::string(e.what())));
 		}
 	}
 	// Online save
@@ -415,19 +415,19 @@ void PowderToy::DoSaveBtn(unsigned char b)
 			if (success)
 			{
 				if (isQuickSave)
-					SetInfoTip("Saved successfully");
+					SetInfoTip("保存成功");
 				else
-					copytext_ui(vid_buf, "Save ID", "Saved successfully!", svf_id);
+					copytext_ui(vid_buf, "存档 ID", "保存成功！", svf_id);
 				save->authors["id"] = Format::StringToNumber<int>(svf_id);
 				authors = save->authors;
 			}
 			else
-				SetInfoTip("Error saving");
+				SetInfoTip("保存失败");
 		}
 		catch (BuildException & e)
 		{
 			clear_save_info();
-			Engine::Ref().ShowWindow(new ErrorPrompt("Error creating save: " + std::string(e.what())));
+			Engine::Ref().ShowWindow(new ErrorPrompt("创建存档失败：" + std::string(e.what())));
 		}
 	}
 	delete save;
@@ -437,7 +437,7 @@ void PowderToy::DoVoteBtn(bool up)
 {
 	if (voteDownload != NULL)
 	{
-		SetInfoTip("Error: could not vote");
+		SetInfoTip("错误：无法投票");
 		return;
 	}
 	bool isReset = (up && svf_myvote == 1) || (!up && svf_myvote == -1);
@@ -551,7 +551,7 @@ void PowderToy::ToggleEraseBtn(bool alt)
 	if (alt)
 	{
 		NewSim();
-		SetInfoTip("Cleared the simulation");
+		SetInfoTip("已清空模拟");
 	}
 	else
 	{
@@ -560,13 +560,13 @@ void PowderToy::ToggleEraseBtn(bool alt)
 		{
 			activeTools[0] = activeTools[1];
 			activeTools[1] = erase;
-			SetInfoTip("Erase tool deselected");
+			SetInfoTip("已取消擦除工具");
 		}
 		else
 		{
 			activeTools[1] = activeTools[0];
 			activeTools[0] = erase;
-			SetInfoTip("Erase tool selected");
+			SetInfoTip("已选择擦除工具");
 		}
 	}
 }
@@ -590,9 +590,9 @@ void PowderToy::ToggleSettingBtn(bool alt)
 	{
 		decorations_enable = !decorations_enable;
 		if (decorations_enable)
-			SetInfoTip("Decorations enabled");
+			SetInfoTip("装饰层已开启");
 		else
-			SetInfoTip("Decorations disabled");
+			SetInfoTip("装饰层已关闭");
 	}
 }
 
@@ -658,12 +658,12 @@ void PowderToy::SaveStampBtn(bool alt)
 void PowderToy::ConfirmUpdate(std::string changelog, std::string file)
 {
 #ifdef ANDROID
-	std::string title = "\bwDo you want to update TPT?";
+	std::string title = "\bw是否更新 TPT？";
 #else
 	std::string title = "\bwDo you want to update Jacob1's Mod?";
 #endif
 
-	auto prompt = new ConfirmPrompt(title, changelog, "\btUpdate");
+	auto prompt = new ConfirmPrompt(title, changelog, "\bt更新");
 	prompt->SetCallback({ [file](bool confirmed) {
 		if (confirmed)
 		{
@@ -676,7 +676,7 @@ void PowderToy::ConfirmUpdate(std::string changelog, std::string file)
 					Engine::Ref().Shutdown();
 				else
 				{
-					ErrorPrompt *error = new ErrorPrompt("Update failed - try downloading a new version.");
+					ErrorPrompt *error = new ErrorPrompt("更新失败 - 尝试下载新版本。");
 					Engine::Ref().ShowWindow(error);
 				}
 			});
@@ -878,7 +878,7 @@ void PowderToy::ReloadSave()
 	}
 	catch (ParseException & e)
 	{
-		Engine::Ref().ShowWindow(new InfoPrompt("Error reloading save", e.what()));
+		Engine::Ref().ShowWindow(new InfoPrompt("重新加载存档失败", e.what()));
 	}
 }
 
@@ -939,7 +939,7 @@ void PowderToy::TranslateSave(Point point)
 	catch (BuildException & e)
 	{
 		ResetStampState();
-		SetInfoTip("Exception while translating stamp: " + std::string(e.what()));
+		SetInfoTip("转换图章版本时发生异常：" + std::string(e.what()));
 	}
 }
 
@@ -960,7 +960,7 @@ void PowderToy::TransformSave(int a, int b, int c, int d)
 	catch (BuildException & e)
 	{
 		ResetStampState();
-		SetInfoTip("Exception while transforming stamp: " + std::string(e.what()));
+		SetInfoTip("变换图章时发生异常：" + std::string(e.what()));
 	}
 }
 
@@ -999,7 +999,7 @@ Button * PowderToy::AddNotification(std::string message, std::function<void(int)
 std::string PowderToy::GetMotd()
 {
 	if (starcatcherMotd.empty() && vanillaMotd.empty())
-		return "Links: \bt{a:https://powdertoy.co.uk|Powder Toy main page}\bg, \bt{a:https://powdertoy.co.uk/Discussions/Categories/Index.html|Forums}\bg, \bt{a:https://github.com/The-Powder-Toy/The-Powder-Toy|Official TPT github}\bg, \bt{a:https://github.com/jacob1/The-Powder-Toy/tree/c++|Jacob1\'s Mod github}";
+		return "链接：\bt{a:https://powdertoy.co.uk|Powder Toy 主页}\bg，\bt{a:https://powdertoy.co.uk/Discussions/Categories/Index.html|论坛}\bg，\bt{a:https://github.com/The-Powder-Toy/The-Powder-Toy|TPT 官方 GitHub}\bg，\bt{a:https://github.com/jacob1/The-Powder-Toy/tree/c++|Jacob1 模组 GitHub}";
 
 	if (starcatcherMotd.empty())
 		return vanillaMotd;
@@ -1093,18 +1093,18 @@ void PowderToy::OnTick(uint32_t ticks)
 				if (buildnum > MOBILE_BUILD)
 				{
 					std::stringstream changelogStream;
-					changelogStream << "\bbYour version: " << MOBILE_MAJOR << "." << MOBILE_MINOR << " (" << MOBILE_BUILD << ")\nNew version: " << major << "." << minor << " (" << buildnum << ")\n\n\bwChangeLog:\n";
+	changelogStream << "\bb当前版本：" << MOBILE_MAJOR << "." << MOBILE_MINOR << "（" << MOBILE_BUILD << "）\n新版本：" << major << "." << minor << "（" << buildnum << "）\n\n\bw更新日志：\n";
 #else
 				std::string file = UPDATESCHEME UPDATESERVER + stable["File"].asString();
 				if (buildnum > MOD_BUILD_VERSION)
 				{
 					std::stringstream changelogStream;
-					changelogStream << "\bbYour version: " << MOD_VERSION << "." << MOD_MINOR_VERSION << " (" << MOD_BUILD_VERSION << ")\nNew version: " << major << "." << minor << " (" << buildnum << ")\n\n\bwChangeLog:\n";
+	changelogStream << "\bb当前版本：" << MOD_VERSION << "." << MOD_MINOR_VERSION << "（" << MOD_BUILD_VERSION << "）\n新版本：" << major << "." << minor << "（" << buildnum << "）\n\n\bw更新日志：\n";
 #endif
 					changelogStream << changelog;
 					std::string changelogText = changelogStream.str();
 
-					AddNotification("A new version is available - click here!", [this, changelogText, file](int mb) {
+					AddNotification("有新版本可用，点击查看！", [this, changelogText, file](int mb) {
 						if (mb == 1)
 							this->ConfirmUpdate(changelogText, file);
 					});
@@ -1125,7 +1125,7 @@ void PowderToy::OnTick(uint32_t ticks)
 			}
 			catch (std::exception &e)
 			{
-				SetInfoTip("Error, the update server returned invalid data");
+				SetInfoTip("错误：更新服务器返回了无效数据");
 				UpdateToolTip("", Point(16, 20), INTROTIP, 0);
 			}
 		}
@@ -1201,9 +1201,9 @@ void PowderToy::OnTick(uint32_t ticks)
 		if (ParseServerReturn(result, status, false))
 			svf_myvote = 0;
 		else if (svf_myvote == 0)
-			SetInfoTip("Cleared Vote");
+			SetInfoTip("已清除投票");
 		else
-			SetInfoTip("Voted Successfully");
+			SetInfoTip("投票成功");
 		voteDownload = NULL;
 	}
 
@@ -1222,7 +1222,7 @@ void PowderToy::OnTick(uint32_t ticks)
 			Point cursor = AdjustCoordinates(Point(mouseX, mouseY));
 			int signID = InsideSign(sim, cursor.X, cursor.Y, true);
 			if (signID == -1 && signs.size() >= MAXSIGNS)
-				SetInfoTip("Sign limit reached");
+				SetInfoTip("已达到标牌数量上限");
 			else
 				Engine::Ref().ShowWindow(new CreateSign(signID, cursor));
 		}
@@ -1237,11 +1237,11 @@ void PowderToy::OnTick(uint32_t ticks)
 	{
 		int scale = Engine::Ref().GetScale();
 		std::stringstream message;
-		message << "Switching to " << scale << "x size mode since your screen was determined to be large enough: ";
-		message << screenWidth << "x" << screenHeight << " detected, " << VIDXRES * scale << "x" << VIDYRES * scale << " required";
-		message << "\nTo undo this, hit Cancel. You can change this in settings at any time.";
+		message << "检测到屏幕尺寸足够大，将切换到 " << scale << " 倍界面：";
+		message << screenWidth << "x" << screenHeight << "（检测到），需要 " << VIDXRES * scale << "x" << VIDYRES * scale << "（所需）";
+		message << "\n 要撤消此操作，请点击'取消'。您可以随时在设置中更改此设置。";
 
-		auto prompt = new ConfirmPrompt("Large screen detected", message.str());
+		auto prompt = new ConfirmPrompt("检测到大屏幕", message.str());
 		prompt->SetCallback({ [](bool confirmed) {
 			if (!confirmed)
 				Engine::Ref().SetScale(1);
@@ -1274,17 +1274,17 @@ void PowderToy::OnTick(uint32_t ticks)
 		else if (svf_open)
 			saveButtonText += svf_name;
 		else
-			saveButtonText += "[save to disk]";
+			saveButtonText += "[保存到本机]";
 
 		// button tooltip
 		if (svf_fileopen && mouse.X <= saveButton->GetPosition().X+18)
-			saveButtonTip = "Overwrite the open simulation on your hard drive.";
+			saveButtonTip = "覆盖当前打开的本地模拟存档。";
 		else
 		{
 			if (!svf_login)
-				saveButtonTip = "Save the simulation to your hard drive. Login to save online.";
+				saveButtonTip = "将模拟保存到本地磁盘；登录后可保存到服务器。";
 			else
-				saveButtonTip = "Save the simulation to your hard drive";
+				saveButtonTip = "将模拟保存到本机";
 		}
 	}
 	else
@@ -1293,18 +1293,18 @@ void PowderToy::OnTick(uint32_t ticks)
 		if (svf_open)
 			saveButtonText += svf_name;
 		else
-			saveButtonText += "[untitled simulation]";
+			saveButtonText += "[未命名模拟]";
 
 		// button tooltip
 		if (svf_open && svf_own)
 		{
 			if (mouse.X <= saveButton->GetPosition().X+18)
-				saveButtonTip = "Re-upload the current simulation";
+				saveButtonTip = "重新上传当前模拟";
 			else
-				saveButtonTip = "Modify simulation properties";
+				saveButtonTip = "修改模拟属性";
 		}
 		else
-			saveButtonTip = "Upload a new simulation";
+			saveButtonTip = "上传新模拟";
 	}
 	saveButton->SetText(saveButtonText);
 	saveButton->SetTooltipText(saveButtonTip);
@@ -1316,19 +1316,19 @@ void PowderToy::OnTick(uint32_t ticks)
 	int alphaLevel = votesAllowed ? ui::Style::HighlightAlphaHover : ui::Style::HighlightAlpha;
 	upvoteButton->SetBackgroundColor(svf_myvote == 1 ? COLMODALPHA(upvoteButton->GetColor(), alphaLevel) : 0);
 	downvoteButton->SetBackgroundColor(svf_myvote == -1 ? COLMODALPHA(downvoteButton->GetColor(), alphaLevel) : 0);
-	upvoteButton->SetTooltipText("Like this save");
-	downvoteButton->SetTooltipText("Dislike this save");
+	upvoteButton->SetTooltipText("赞这个存档");
+	downvoteButton->SetTooltipText("踩这个存档");
 
 #ifndef TOUCHUI
 	if (svf_tags[0])
 		openTagsButton->SetText("\x83 " + std::string(svf_tags));
 	else
-		openTagsButton->SetText("\x83 [no tags set]");
+		openTagsButton->SetText("\x83 [未设置标签]");
 	openTagsButton->SetEnabled(svf_open);
 	if (svf_own)
-		openTagsButton->SetTooltipText("Add and remove simulation tags");
+		openTagsButton->SetTooltipText("添加或移除模拟标签");
 	else
-		openTagsButton->SetTooltipText("Add simulation tags");
+		openTagsButton->SetTooltipText("添加模拟标签");
 #endif
 
 	// set login button text, key turns green or red depending on whether session check succeeded
@@ -1340,56 +1340,56 @@ void PowderToy::OnTick(uint32_t ticks)
 		{
 			loginButtonText = "\x0F\x01\xFF\x01\x84\x0E " + std::string(svf_user);
 			if (mouse.X <= loginButton->GetPosition().X+18)
-				loginButtonTip = "View and edit your profile";
+				loginButtonTip = "查看并编辑个人资料";
 			else if (svf_mod && mouse.X >= loginButton->Right(Point(-15, 0)).X)
-				loginButtonTip = "You're a moderator";
+				loginButtonTip = "你是版主";
 			else if (svf_admin && mouse.X >= loginButton->Right(Point(-15, 0)).X)
-				loginButtonTip = "Annuit C\245ptis";
+		loginButtonTip = "天佑所为";
 			else
-				loginButtonTip = "Sign into the simulation server under a new name";
+				loginButtonTip = "使用其他名称登录模拟服务器";
 		}
 		else if (loginFinished == -1)
 		{
 			loginButtonText = "\x0F\xFF\x01\x01\x84\x0E " + std::string(svf_user);
-			loginButtonTip = "Could not validate login";
+			loginButtonTip = "无法验证登录状态";
 		}
 		else
 		{
 			loginButtonText = "\x84 " + std::string(svf_user);
-			loginButtonTip = "Waiting for login server ...";
+			loginButtonTip = "正在等待登录服务器...";
 		}
 	}
 	else
 	{
 		if (loginFinished == -1)
-			loginButtonText = "\x0F\xFF\x01\x01\x84\x0E [sign in]";
+			loginButtonText = "\x0F\xFF\x01\x01\x84\x0E [登录]";
 		else
-			loginButtonText = "\x84 [sign in]";
-		loginButtonTip = "Sign into the Simulation Server";
+			loginButtonText = "\x84 [登录]";
+		loginButtonTip = "登录模拟服务器";
 	}
 	loginButton->SetText(loginButtonText);
 	loginButton->SetTooltipText(loginButtonTip);
 
 	pauseButton->SetState(sys_pause ? Button::INVERTED : Button::NORMAL);
 	if (sys_pause)
-		pauseButton->SetTooltipText("Resume the simulation \bg(space)");
+		pauseButton->SetTooltipText("继续模拟 \bg(空格)");
 	else
-		pauseButton->SetTooltipText("Pause the simulation \bg(space)");
+		pauseButton->SetTooltipText("暂停模拟 \bg(空格)");
 
 	if (placingZoomTouch)
-		UpdateToolTip("\x0F\xEF\xEF\020Tap any location to place a zoom window (volume keys to resize, click zoom button to cancel)", Point(16, YRES-24), TOOLTIP, 255);
+		UpdateToolTip("\x0F\xEF\xEF\020轻触任意位置放置缩放窗口（音量键调整大小，点击缩放按钮取消）", Point(16, YRES-24), TOOLTIP, 255);
 #ifdef TOUCHUI
 	if (state == SAVE || state == COPY)
-		UpdateToolTip("\x0F\xEF\xEF\020Click-and-drag to specify a rectangle to copy (click save button to cancel)", Point(16, YRES-24), TOOLTIP, 255);
+		UpdateToolTip("\x0F\xEF\xEF\020拖动选取要复制的矩形区域（点击保存按钮取消）", Point(16, YRES-24), TOOLTIP, 255);
 	else if (state == CUT)
-		UpdateToolTip("\x0F\xEF\xEF\020Click-and-drag to specify a rectangle to copy and then cut (click save button to cancel)", Point(16, YRES-24), TOOLTIP, 255);
+		UpdateToolTip("\x0F\xEF\xEF\020拖动选取要复制并剪切的矩形区域（点击保存按钮取消）", Point(16, YRES-24), TOOLTIP, 255);
 	else if (state == LOAD)
-		UpdateToolTip("\x0F\xEF\xEF\020Drag the stamp around to move it, and tap it to place. Tap or drag outside the stamp to shift and rotate.", Point(16, YRES-24), TOOLTIP, 255);
+		UpdateToolTip("\x0F\xEF\xEF\020拖动图章可移动，轻触图章可放置；在图章外轻触或拖动可平移和旋转。", Point(16, YRES-24), TOOLTIP, 255);
 #else
 	if (state == SAVE || state == COPY)
-		UpdateToolTip("\x0F\xEF\xEF\020Click-and-drag to specify a rectangle to copy (right click = cancel)", Point(16, YRES-24), TOOLTIP, 255);
+		UpdateToolTip("\x0F\xEF\xEF\020拖动选取要复制的矩形区域（右键取消）", Point(16, YRES-24), TOOLTIP, 255);
 	else if (state == CUT)
-		UpdateToolTip("\x0F\xEF\xEF\020Click-and-drag to specify a rectangle to copy and then cut (right click = cancel)", Point(16, YRES-24), TOOLTIP, 255);
+		UpdateToolTip("\x0F\xEF\xEF\020拖动选取要复制并剪切的矩形区域（右键取消）", Point(16, YRES-24), TOOLTIP, 255);
 #endif
 	if (insideRenderOptions && this->Subwindows.size() == 0)
 	{
@@ -1723,13 +1723,13 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 			auto saveLoadData = sim->LoadSave(realLoadPos.X, realLoadPos.Y, stampData, 0, !shiftHeld);
 #ifdef LUACONSOLE
 			if (saveLoadData.isMissingElements())
-				luacon_log("Paste content has missing custom elements");
+				luacon_log("粘贴内容缺少自定义元素");
 #endif
 			MergeStampAuthorInfo(saveLoadData.authors);
 		}
 		catch (ParseException & e)
 		{
-			Engine::Ref().ShowWindow(new InfoPrompt("Error loading save", e.what()));
+			Engine::Ref().ShowWindow(new InfoPrompt("加载存档失败", e.what()));
 		}
 
 		ResetStampState();
@@ -1783,7 +1783,7 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 				{
 					delete clipboardData;
 					clipboardData = NULL;
-					Engine::Ref().ShowWindow(new ErrorPrompt("Error building save: " + std::string(e.what())));
+					Engine::Ref().ShowWindow(new ErrorPrompt("生成存档失败：" + std::string(e.what())));
 				}
 				break;
 			}
@@ -1807,7 +1807,7 @@ void PowderToy::OnMouseUp(int x, int y, unsigned char button)
 				{
 					delete clipboardData;
 					clipboardData = NULL;
-					Engine::Ref().ShowWindow(new ErrorPrompt("Error building save: " + std::string(e.what())));
+					Engine::Ref().ShowWindow(new ErrorPrompt("生成存档失败：" + std::string(e.what())));
 					break;
 				}
 				SnapshotHistory::TakeSnapshot(sim);
@@ -1937,7 +1937,7 @@ bool PowderToy::BeforeKeyPress(int key, int scan, bool repeat, bool shift, bool 
 	if (ctrl && !ctrlHeld)
 	{
 		ctrlHeld = true;
-		openBrowserButton->SetTooltipText("Open a simulation from your hard drive \bg(ctrl+o)");
+		openBrowserButton->SetTooltipText("从本机打开模拟 \bg(Ctrl+O)");
 		UpdateToolStrength();
 	}
 	if (shift && !shiftHeld)
@@ -2019,7 +2019,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			break;
 		}
 
-		auto prompt = new ConfirmPrompt("You are about to quit", "Are you sure you want to exit the game?", "Quit");
+		auto prompt = new ConfirmPrompt("你即将退出", "您确定要退出游戏吗？", "退出");
 		prompt->SetCallback({ [this](bool confirmed) {
 			if (confirmed)
 			{
@@ -2090,16 +2090,16 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			default:
 				sim->gravityMode = GRAV_VERTICAL;
 			case GRAV_VERTICAL:
-				toolTip = "Gravity: Vertical";
+				toolTip = "重力：垂直";
 				break;
 			case GRAV_OFF:
-				toolTip = "Gravity: Off";
+				toolTip = "重力：关闭";
 				break;
 			case GRAV_RADIAL:
-				toolTip = "Gravity: Radial";
+				toolTip = "重力：径向";
 				break;
 			case GRAV_CUSTOM:
-				toolTip = "Gravity: Custom";
+				toolTip = "重力：自定义";
 				break;
 			}
 			UpdateToolTip(toolTip, Point(XCNTR - gfx::VideoBuffer::TextSize(toolTip.c_str()).X / 2, YCNTR - 10), INFOTIP, 255);
@@ -2116,13 +2116,13 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			default:
 				sim->edgeMode = EDGE_VOID;
 			case EDGE_VOID:
-				toolTip = "Edge Mode: Void";
+				toolTip = "边缘模式：虚空";
 				break;
 			case EDGE_SOLID:
-				toolTip = "Edge Mode: Solid";
+				toolTip = "边缘模式：实心";
 				break;
 			case EDGE_LOOP:
-				toolTip = "Edge Mode: Loop";
+				toolTip = "边缘模式：循环";
 				break;
 			}
 			UpdateToolTip(toolTip, Point(XCNTR - gfx::VideoBuffer::TextSize(toolTip.c_str()).X / 2, YCNTR - 10), INFOTIP, 255);
@@ -2159,19 +2159,19 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			default:
 				sim->air->airMode = AIR_ON;
 			case AIR_ON:
-				toolTip = "Air: On";
+				toolTip = "空气：开启";
 				break;
 			case AIR_PRESSUREOFF:
-				toolTip = "Air: Pressure Off";
+				toolTip = "空气：压力关闭";
 				break;
 			case AIR_VELOCITYOFF:
-				toolTip = "Air: Velocity Off";
+				toolTip = "空气：速度关闭";
 				break;
 			case AIR_OFF:
-				toolTip = "Air: Off";
+				toolTip = "空气：关闭";
 				break;
 			case AIR_NOUPDATE:
-				toolTip = "Air: No Update";
+				toolTip = "空气：停止更新";
 				break;
 			}
 			UpdateToolTip(toolTip, Point(XCNTR - gfx::VideoBuffer::TextSize(toolTip.c_str()).X / 2, YCNTR - 10), INFOTIP, 255);
@@ -2186,9 +2186,9 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		{
 			aheat_enable = !aheat_enable;
 			if (aheat_enable)
-				SetInfoTip("Ambient Heat: On");
+				SetInfoTip("环境热：开");
 			else
-				SetInfoTip("Ambient Heat: Off");
+				SetInfoTip("环境热：关闭");
 		}
 		break;
 	case SDL_SCANCODE_I:
@@ -2204,18 +2204,18 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		}
 		else
 		{
-			auto prompt = new ConfirmPrompt("Install Powder Toy", "You are about to install The Powder Toy", "Install");
+			auto prompt = new ConfirmPrompt("安装 Powder Toy", "即将安装 The Powder Toy", "安装");
 			prompt->SetCallback({ [](bool wasConfirmed) {
 				if (wasConfirmed)
 				{
 					if (Platform::RegisterExtension())
 					{
-						InfoPrompt *info = new InfoPrompt("Install Success", "Powder Toy has been installed!");
+						InfoPrompt *info = new InfoPrompt("安装成功", "Powder Toy 已安装！");
 						Engine::Ref().ShowWindow(info);
 					}
 					else
 					{
-						ErrorPrompt *error = new ErrorPrompt("Install failed - You may not have permission or you may be on a platform that does not support installation");
+						ErrorPrompt *error = new ErrorPrompt("安装失败：可能没有权限，或当前平台不支持安装");
 						Engine::Ref().ShowWindow(error);
 					}
 				}
@@ -2235,8 +2235,8 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		{
 			old_menu = !old_menu;
 			if (old_menu)
-				UpdateToolTip("Experimental old menu activated, press 'o' to turn off",
-						Point(XCNTR - gfx::VideoBuffer::TextSize("Experimental old menu activated, press 'o' to turn off").X / 2, YCNTR - 10), INFOTIP, 500);
+				UpdateToolTip("实验性旧菜单已启用，按 O 关闭",
+						Point(XCNTR - gfx::VideoBuffer::TextSize("实验性旧菜单已启用，按 O 关闭").X / 2, YCNTR - 10), INFOTIP, 500);
 		}
 #endif
 		break;
@@ -2249,9 +2249,9 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		}
 	case SDL_SCANCODE_F2:
 		if (Renderer::Ref().TakeScreenshot(ctrlHeld, 0).length())
-			SetInfoTip("Saved screenshot");
+			SetInfoTip("截图已保存");
 		else
-			SetInfoTip("Error saving screenshot");
+			SetInfoTip("截图保存失败");
 		break;
 	case SDL_SCANCODE_LEFTBRACKET:
 		AdjustCursorSize(-1, true);
@@ -2263,7 +2263,7 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		if (ctrlHeld && (svf_mod || svf_admin))
 		{
 			std::string authorString = authors.toStyledString();
-			InfoPrompt *info = new InfoPrompt("Save authorship info", authorString);
+			InfoPrompt *info = new InfoPrompt("保存作者信息", authorString);
 			Engine::Ref().ShowWindow(info);
 		}
 		break;
@@ -2473,9 +2473,9 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 		{
 			decorations_enable = !decorations_enable;
 			if (decorations_enable)
-				SetInfoTip("Decorations layer: On");
+				SetInfoTip("装饰层：开");
 			else
-				SetInfoTip("Decorations layer: Off");
+				SetInfoTip("装饰层：关");
 		}
 		else if (active_menu == SC_DECO)
 		{
@@ -2509,12 +2509,12 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			if (sim->grav->IsEnabled())
 			{
 				sim->grav->StopAsync();
-				SetInfoTip("Newtonian Gravity: Off");
+				SetInfoTip("牛顿引力：关闭");
 			}
 			else
 			{
 				sim->grav->StartAsync();
-				SetInfoTip("Newtonian Gravity: On");
+				SetInfoTip("牛顿引力：开");
 			}
 		}
 		break;
@@ -2568,9 +2568,9 @@ void PowderToy::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl
 			{
 				heatmode = (heatmode == 1) ? 0 : 1;
 				if (heatmode)
-					SetInfoTip("Dynamic heat mode: On");
+					SetInfoTip("动态热量模式：开");
 				else
-					SetInfoTip("Dynamic heat mode: Off");
+					SetInfoTip("动态热量模式：关");
 			}
 		}
 		break;
@@ -2657,7 +2657,7 @@ bool PowderToy::BeforeKeyRelease(int key, int scan, bool repeat, bool shift, boo
 	if (!ctrl && ctrlHeld)
 	{
 		ctrlHeld = false;
-		openBrowserButton->SetTooltipText("Find & open a simulation");
+		openBrowserButton->SetTooltipText("查找并打开模拟");
 		UpdateToolStrength();
 	}
 	if (!shift && shiftHeld)
@@ -2733,7 +2733,7 @@ bool PowderToy::BeforeTextInput(const char *text)
 void PowderToy::OnDefocus()
 {
 	ctrlHeld = shiftHeld = altHeld = false;
-	openBrowserButton->SetTooltipText("Find & open a simulation");
+	openBrowserButton->SetTooltipText("查找并打开模拟");
 	lastMouseDown = heldKey = heldScan = 0; // temporary
 	ResetStampState();
 	UpdateDrawMode();
@@ -2757,7 +2757,7 @@ void PowderToy::OnFileDrop(const char *filename)
 	int len = strlen(filename);
 	if (len < 4 || (strcmp(filename + (len - 4), ".cps") && strcmp(filename + (len - 4), ".stm")))
 	{
-		Engine::Ref().ShowWindow(new ErrorPrompt("Dropped file is not a TPT save file. Must have a .cps or .stm extension"));
+		Engine::Ref().ShowWindow(new ErrorPrompt("拖入的文件不是 TPT 存档，扩展名必须为 .cps 或 .stm"));
 		return;
 	}
 
@@ -2772,7 +2772,7 @@ void PowderToy::OnFileDrop(const char *filename)
 	}
 	catch (ParseException &e)
 	{
-		Engine::Ref().ShowWindow(new ErrorPrompt("Error loading save: " + std::string(e.what())));
+		Engine::Ref().ShowWindow(new ErrorPrompt("加载存档失败：" + std::string(e.what())));
 	}
 
 	delete save;

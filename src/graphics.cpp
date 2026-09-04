@@ -40,6 +40,7 @@
 #include "game/Menus.h"
 #include "game/Sign.h"
 #include "graphics/Renderer.h"
+#include "graphics/ZhFontReader.h"
 #include "interface/Engine.h"
 #include "lua/LuaSmartRef.h"
 #include "simulation/Simulation.h"
@@ -547,8 +548,28 @@ void drawpixel(pixel *vid, int x, int y, int r, int g, int b, int a)
 #endif
 }
 
+static int codepointwidth(uint32_t codepoint)
+{
+	if (codepoint > 0xFFU)
+		return ZhFontReader(codepoint).GetWidth();
+	short font_ptr = font_ptrs[static_cast<unsigned char>(codepoint)];
+	return (font_data[font_ptr + 1] & 0x40) ? 0 : font_data[font_ptr];
+}
+
 int drawchar(pixel *vid, int x, int y, int c, int r, int g, int b, int a)
 {
+	if (c > 0xFF)
+	{
+		ZhFontReader glyph(static_cast<uint32_t>(c));
+		int width = glyph.GetWidth();
+		for (int j = 0; j < ZH_FONT_H; ++j)
+			for (int i = 0; i < width; ++i)
+			{
+				int coverage = glyph.NextPixel();
+				drawpixel(vid, x + i, y + j, r, g, b, coverage * a / 3);
+			}
+		return x + width;
+	}
 	int bn = 0, ba = 0;
 	unsigned char *rp = font_data + font_ptrs[c];
 	signed char w = *(rp++);
@@ -581,6 +602,18 @@ int drawchar(pixel *vid, int x, int y, int c, int r, int g, int b, int a)
 
 int addchar(pixel *vid, int x, int y, int c, int r, int g, int b, int a)
 {
+	if (c > 0xFF)
+	{
+		ZhFontReader glyph(static_cast<uint32_t>(c));
+		int width = glyph.GetWidth();
+		for (int j = 0; j < ZH_FONT_H; ++j)
+			for (int i = 0; i < width; ++i)
+			{
+				int coverage = glyph.NextPixel();
+				addpixel(vid, x + i, y + j, r, g, b, coverage * a / 3);
+			}
+		return x + width;
+	}
 	int bn = 0, ba = 0;
 	unsigned char *rp = font_data + font_ptrs[c];
 	signed char w = *(rp++);
@@ -708,6 +741,7 @@ int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a
 		}
 		else
 		{
+			DecodedUtf8 decoded { static_cast<unsigned char>(c), 1 };
 			if (c == '\xEE')
 			{
 				char convertedC = Format::ConvertFontIcon(s, 0);
@@ -716,17 +750,28 @@ int drawtext(pixel *vid, int x, int y, const char *s, int r, int g, int b, int a
 					c = convertedC;
 					s += 2;
 				}
+				else
+				{
+					decoded = DecodeUtf8(s);
+				}
 			}
+			else
+			{
+				decoded = DecodeUtf8(s);
+			}
+			uint32_t codepoint = decoded.length == 1 ? static_cast<unsigned char>(c) : decoded.codepoint;
+			int width = codepointwidth(codepoint);
 			if (highlight)
 			{
-				fillrect(vid, x-1, y-3, font_data[font_ptrs[(unsigned char)c]]+1, FONT_H+3, 0, 0, 255, 127);
+				fillrect(vid, x-1, y-3, width+1, FONT_H+3, 0, 0, 255, 127);
 			}
-			int newX = drawchar(vid, x, y, (unsigned char)c, r, g, b, a);
+			int newX = drawchar(vid, x, y, static_cast<int>(codepoint), r, g, b, a);
 			if (underline)
 			{
 				blend_line(vid, x, y + FONT_H, newX - 1, y + FONT_H, r, g, b, a);
 			}
 			x = newX;
+			s += decoded.length - 1;
 		}
 	}
 	return x;
@@ -760,9 +805,11 @@ int drawhighlight(pixel *vid, int x, int y, const char *s)
 		}
 		else
 		{
-			int width = font_data[font_ptrs[(int)(*(unsigned char *)s)]];
+			DecodedUtf8 decoded = DecodeUtf8(s);
+			int width = codepointwidth(decoded.codepoint);
 			fillrect(vid, x-1, y-3, width+1, FONT_H+3, 0, 0, 255, 127);
 			x += width;
+			s += decoded.length - 1;
 		}
 	}
 	return x;
@@ -890,7 +937,6 @@ int drawtextwrap(pixel *vid, int x, int y, int w, int h, const char *s, int r, i
 			}
 			else
 			{
-
 				if (x-cw>=w)
 				{
 					x = sx;
@@ -901,14 +947,17 @@ int drawtextwrap(pixel *vid, int x, int y, int w, int h, const char *s, int r, i
 				}
 				if ((h > 0 && rh > h) || (h < 0 && rh > YRES+MENUSIZE-110)) // the second part is hacky, since this will only be used for comments anyway
 					goto textwrapend;
+				DecodedUtf8 decoded = DecodeUtf8(s);
 				int newX;
 				if (rh + h < 0)
-					newX = drawchar(vid, x, y, *(unsigned char *)s, 0, 0, 0, 0);
+					newX = drawchar(vid, x, y, static_cast<int>(decoded.codepoint), 0, 0, 0, 0);
 				else
-					newX = drawchar(vid, x, y, *(unsigned char *)s, r, g, b, a);
+					newX = drawchar(vid, x, y, static_cast<int>(decoded.codepoint), r, g, b, a);
 				if (underline)
 					blend_line(vid, x, y + FONT_H, newX - 1, y + FONT_H, r, g, b, a);
-				x = newX;
+					x = newX;
+				s += decoded.length - 1;
+				wordlen -= static_cast<int>(decoded.length) - 1;
 			}
 		}
 	}
@@ -964,7 +1013,8 @@ int drawhighlightwrap(pixel *vid, int x, int y, int w, int h, const char *s, int
 			}
 			else
 			{
-				int width = font_data[font_ptrs[(int)(*(unsigned char *)s)]];
+				DecodedUtf8 decoded = DecodeUtf8(s);
+				int width = codepointwidth(decoded.codepoint);
 				if (x-cw>=w)
 				{
 					x = sx;
@@ -978,10 +1028,12 @@ int drawhighlightwrap(pixel *vid, int x, int y, int w, int h, const char *s, int
 				}
 				if ((h > 0 && rh > h) || (h < 0 && rh > YRES+MENUSIZE-110)) // the second part is hacky, since this will only be used for comments anyway
 					goto highlightwrapend;
-				if (num >= highlightstart && num < highlightstart + highlightlength && rh + h >= 0)
+				if (num < highlightstart + highlightlength && num + static_cast<int>(decoded.length) > highlightstart && rh + h >= 0)
 					fillrect(vid, x-1, y-3, width+1, FONT_H+3, 0, 0, 255, 127);
 				x += width;
-				num++;
+				num += static_cast<int>(decoded.length);
+				s += decoded.length - 1;
+				wordlen -= static_cast<int>(decoded.length) - 1;
 			}
 		}
 	}
@@ -1109,31 +1161,38 @@ int charwidth(unsigned char c)
 int textwidth(const char *s)
 {
 	int x = 0, maxX = 0;
-	for (; *s; s++)
+	while (*s)
+	{
 		if (*s == '\n')
 		{
 			x = 0;
+			++s;
 		}
 		else if (*s == '\x0F')
 		{
-			s += 3;
+			s += (s[1] && s[2] && s[3]) ? 4 : 1;
 		}
 		else if (*s == '\x0E')
 		{
+			++s;
 		}
 		else if (*s == '\x01')
 		{
+			++s;
 		}
 		else if (*s == '\b')
 		{
-			s++;
+			s += s[1] ? 2 : 1;
 		}
 		else
 		{
-			x += charwidth(*s);
+			DecodedUtf8 decoded = DecodeUtf8(s);
+			x += codepointwidth(decoded.codepoint);
 			if (x > maxX)
 				maxX = x;
+			s += decoded.length;
 		}
+	}
 	return maxX-1;
 }
 
@@ -1141,11 +1200,13 @@ int drawtextmax(pixel *vid, int x, int y, int w, const char *s, int r, int g, in
 {
 	int i;
 	w += x-5;
-	for (; *s; s++)
+	while (*s)
 	{
-		if (x+charwidth(*s)>=w && x+textwidth(s)>=w+5)
+		DecodedUtf8 decoded = DecodeUtf8(s);
+		if (x+codepointwidth(decoded.codepoint)>=w && x+textwidth(s)>=w+5)
 			break;
-		x = drawchar(vid, x, y, *(unsigned char *)s, r, g, b, a);
+		x = drawchar(vid, x, y, static_cast<int>(decoded.codepoint), r, g, b, a);
+		s += decoded.length;
 	}
 	if (*s)
 		for (i=0; i<3; i++)
@@ -1156,30 +1217,43 @@ int drawtextmax(pixel *vid, int x, int y, int w, const char *s, int r, int g, in
 int textnwidth(char *s, int n)
 {
 	int x = 0;
-	for (; *s; s++)
+	while (*s && n > 0)
 	{
-		if (!n)
-			break;
 		if (*s == '\x0F')
 		{
-			s += 3;
-			n = std::min(1,n-3);
+			int length = (s[1] && s[2] && s[3]) ? 4 : 1;
+			if (n < length)
+				break;
+			s += length;
+			n -= length;
 		}
 		else if (*s == '\x0E')
 		{
+			++s;
+			--n;
 		}
 		else if (*s == '\x01')
 		{
+			++s;
+			--n;
 		}
 		else if (*s == '\b')
 		{
-			s++;
-			if (n > 1)
-				n--;
+			int length = s[1] ? 2 : 1;
+			if (n < length)
+				break;
+			s += length;
+			n -= length;
 		}
 		else
-			x += charwidth(*s);
-		n--;
+		{
+			DecodedUtf8 decoded = DecodeUtf8(s);
+			if (static_cast<size_t>(n) < decoded.length)
+				break;
+			x += codepointwidth(decoded.codepoint);
+			s += decoded.length;
+			n -= static_cast<int>(decoded.length);
+		}
 	}
 	return x-1;
 }
@@ -1199,34 +1273,59 @@ void textnpos(char *s, int n, int w, int *cx, int *cy)
 		}
 		for (; *s && --wordlen>=-1; s++)
 		{
-			if (!n) {
+			if (!n)
+			{
 				break;
 			}
 			if (*s == '\n')
 			{
 				x = 0;
 				y += FONT_H+2;
+				--n;
 				continue;
 			}
 			else if (*s == '\x0F')
 			{
+				if (n < 4 || !s[1] || !s[2] || !s[3])
+				{
+					n = 0;
+					break;
+				}
 				s += 3;
-				n = std::min(1,n-3);
+				n -= 4;
+				wordlen -= 3;
+				continue;
 			}
-			else if (*s == '\x0E')
+			else if (*s == '\x0E' || *s == '\x01')
 			{
-			}
-			else if (*s == '\x01')
-			{
+				--n;
+				continue;
 			}
 			else if (*s == '\b')
 			{
+				if (n < 2 || !s[1])
+				{
+					n = 0;
+					break;
+				}
 				s++;
-				if (n > 1)
-					n--;
+				n -= 2;
+				--wordlen;
+				continue;
 			}
 			else
-				x += charwidth(*s);
+			{
+				DecodedUtf8 decoded = DecodeUtf8(s);
+				if (static_cast<size_t>(n) < decoded.length)
+				{
+					n = 0;
+					break;
+				}
+				x += codepointwidth(decoded.codepoint);
+				s += decoded.length - 1;
+				wordlen -= static_cast<int>(decoded.length) - 1;
+				n -= static_cast<int>(decoded.length);
+			}
 			if (x>=w)
 			{
 				x = 0;
@@ -1234,7 +1333,6 @@ void textnpos(char *s, int n, int w, int *cx, int *cy)
 				if (*(s+1)==' ')
 					x -= charwidth(' ');
 			}
-			n--;
 		}
 	}
 	*cx = x-1;
@@ -1243,34 +1341,42 @@ void textnpos(char *s, int n, int w, int *cx, int *cy)
 
 int textwidthx(char *s, int w)
 {
-	int x=0,n=0,cw;
-	for (; *s; s++)
+	int x=0,n=0;
+	while (*s)
 	{
 		if (*s == '\x0F')
 		{
-			s += 4;
-			n += 4;
-			if (!*s)
-				break;
+			int length = (s[1] && s[2] && s[3]) ? 4 : 1;
+			s += length;
+			n += length;
+			continue;
 		}
 		else if (*s == '\x0E')
 		{
+			++s;
+			++n;
+			continue;
 		}
 		else if (*s == '\x01')
 		{
+			++s;
+			++n;
+			continue;
 		}
 		else if (*s == '\b')
 		{
-			s+=2;
-			n+=2;
-			if (!*s)
-				break;
+			int length = s[1] ? 2 : 1;
+			s += length;
+			n += length;
+			continue;
 		}
-		cw = charwidth(*s);
+		DecodedUtf8 decoded = DecodeUtf8(s);
+		int cw = codepointwidth(decoded.codepoint);
 		if (x+(cw/2) >= w)
 			break;
 		x += cw;
-		n++;
+		s += decoded.length;
+		n += static_cast<int>(decoded.length);
 	}
 	return n;
 }
@@ -1284,28 +1390,35 @@ void textsize(char * s, int *width, int *height)
 		return;
 	}
 
-	for (; *s; s++)
+	while (*s)
 	{
 		if (*s == '\n')
 		{
 			cWidth = 0;
 			cHeight += FONT_H+2;
+			++s;
 		}
 		else if (*s == '\x0F')
 		{
-			if(!s[1] || !s[2] || !s[1]) break;
-			s+=3;
+			if(!s[1] || !s[2] || !s[3]) break;
+			s += 4;
 		}
 		else if (*s == '\b')
 		{
 			if(!s[1]) break;
-			s++;
+			s += 2;
+		}
+		else if (*s == '\x0E' || *s == '\x01' || *s == '\x02')
+		{
+			++s;
 		}
 		else
 		{
-			cWidth += charwidth(*s);
+			DecodedUtf8 decoded = DecodeUtf8(s);
+			cWidth += codepointwidth(decoded.codepoint);
 			if (cWidth>lWidth)
 				lWidth = cWidth;
+			s += decoded.length;
 		}
 	}
 	*width = lWidth;
@@ -1329,39 +1442,46 @@ int textposxy(char *s, int width, int w, int h)
 			{
 				x = 0;
 				y += FONT_H+2;
+				++n;
 				continue;
 			}
 			else if (*s == '\x0F')
 			{
-				s += 4;
-				n += 4;
-				if (!*s)
+				if (!s[1] || !s[2] || !s[3])
 					return n;
+				s += 3;
+				n += 4;
+				wordlen -= 3;
+				continue;
 			}
-			else if (*s == '\x0E')
+			else if (*s == '\x0E' || *s == '\x01')
 			{
-			}
-			else if (*s == '\x01')
-			{
+				++n;
+				continue;
 			}
 			else if (*s == '\b')
 			{
-				s+=2;
-				n+=2;
-				if (!*s)
-					break;
+				if (!s[1])
+					return n;
+				++s;
+				n += 2;
+				--wordlen;
+				continue;
 			}
-			cw = charwidth(*s);
+			DecodedUtf8 decoded = DecodeUtf8(s);
+			cw = codepointwidth(decoded.codepoint);
 			if ((x+(cw/2) >= w && y+6 >= h)||(y+6 >= h+FONT_H+2))
-				return n++;
+				return n;
 			x += cw;
+			s += decoded.length - 1;
+			wordlen -= static_cast<int>(decoded.length) - 1;
+			n += static_cast<int>(decoded.length);
 			if (x>=width) {
 				x = 0;
 				y += FONT_H+2;
 				if (*(s+1)==' ')
 					x -= charwidth(' ');
 			}
-			n++;
 		}
 	}
 	return n;
@@ -1410,8 +1530,11 @@ int textwrapheight(char *s, int width)
 					if (*s==' ')
 						continue;
 				}
-				cw = charwidth(*s);
+				DecodedUtf8 decoded = DecodeUtf8(s);
+				cw = codepointwidth(decoded.codepoint);
 				x += cw;
+				s += decoded.length - 1;
+				wordlen -= static_cast<int>(decoded.length) - 1;
 			}
 		}
 	}

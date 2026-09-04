@@ -61,7 +61,8 @@ void RFRG_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 1;
 
 	elem->HeatConduct = 3;
-	elem->Description = "Refrigerant. Heats up and liquefies under pressure.";
+	elem->Description = "制冷剂。在压力下加热并液化。";
+	elem->DetailedDescription = "描述：一种淡蓝色气体，在 2 P 或更大压力下液化时加热，在 2 或更低压力下蒸发时冷却。它可以被中子分裂成 CAUS 和 GAS。不能点燃。\n产生：NEUT+RFGL 会产生 CAUS 和 GAS CAUS+GAS(>3.0 P)会产生 RFGL\n导热率：3\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_GAS|PROP_DEADLY;
 

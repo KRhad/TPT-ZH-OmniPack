@@ -91,7 +91,8 @@ void RSST_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 20.0f + 273.15f;
 	elem->HeatConduct = 55;
 	elem->Latent = 0;
-	elem->Description = "Resist. Solidifies on contact with photons, is destroyed by electrons and spark.";
+	elem->Description = "抗性材料。接触光子时固化，会被电子和火花破坏。";
+	elem->DetailedDescription = "描述：液态抗性材料，能导电，并允许光子和中子穿过。光子与 RSST 占据同一像素时会被吸收并使其固化：Ctype 有效则转为指定元素，否则默认变成 RSSS；Tmp 可继续指定目标元素的 Ctype。\n破坏：电子(ELEC)与 RSST 同像素时两者一起消失；SPRK 可在 RSST 中传播，但一个电火花周期结束后该 RSST 会消失。\n合成：RSST+GUNP→FIRW；RSST+BCOL→FSEP(Life=50)。邻近 CLNE/PCLN 时读取 Ctype，邻近 BCLN/PBCN 时读取 Tmp。\n导热率：55\n初始温度：42℃/315.15K";
 
 	elem->Properties = TYPE_LIQUID | PROP_PHOTPASS | PROP_CONDUCTS | PROP_LIFE_DEC | PROP_NEUTPASS;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);

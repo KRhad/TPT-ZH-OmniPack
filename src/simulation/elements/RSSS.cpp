@@ -74,7 +74,8 @@ void RSSS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 130;
 	elem->Latent = 0;
-	elem->Description = "Solidified resist. Blocks pressure and insulates electricity. Liquefies on contact with neutrons.";
+	elem->Description = "固化抗性材料。阻挡压力并绝缘；接触中子时液化。";
+	elem->DetailedDescription = "描述：固态抗性材料。它像 TTAN 一样阻挡空气和压力传播，并在电路判定中像 INSL 一样隔断 SPRK；同时允许中子进入，不会主动导电。\n转化：中子与 RSSS 占据同一像素时会被吸收，并把 RSSS 液化。若 Ctype 有效，就转为 Ctype 指定元素；否则默认转为液态 RSST。若目标元素能携带 Ctype，则可用 Tmp 指定其 Ctype。\n参数获取：邻近 CLNE/PCLN 时复制其 Ctype；邻近 BCLN/PBCN 时把其 Ctype 复制到 Tmp。GRVT 进入 RSSS 后每帧有 1/5 概率被吸收。\n导热率：130\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);

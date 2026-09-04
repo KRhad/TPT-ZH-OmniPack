@@ -75,7 +75,8 @@ void ICEI_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 50.0f + 273.15f;
 	elem->HeatConduct = 46;
 	elem->Latent = 1095;
-	elem->Description = "Crushes under pressure. Cools down air.";
+	elem->Description = "在压力下破碎。冷却空气。";
+	elem->DetailedDescription = "描述：固体，冷冻的水，在压力下会破碎变成雪(SNOW)。可以熔化。可以使中子(NEUT)减速。它的 Ctype 值决定了它会融化成什么。例如，Ctype 值为 SLTW 的 ICE 在融化时会变成 SLTW。\n熔点：0℃/273.15K\n压力极限：0.8 P\n导热率：46\n初始温度：-28.00℃/245.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC|PROP_NEUTPASS;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE);

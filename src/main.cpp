@@ -259,7 +259,7 @@ void tab_save(int num)
 	}
 	catch (BuildException & e)
 	{
-		ErrorPrompt * error = new ErrorPrompt("Could not create tab: " + std::string(e.what()));
+		ErrorPrompt * error = new ErrorPrompt("无法创建标签页：" + std::string(e.what()));
 		Engine::Ref().ShowWindow(error);
 		delete tab;
 		return;
@@ -286,7 +286,7 @@ void tab_save(int num)
 	else if (strlen(svf_filename))
 		sprintf(tabNames[num-1], "%s", svf_filename);
 	else
-		sprintf(tabNames[num-1], "Untitled Simulation %i", num);
+		sprintf(tabNames[num-1], "未命名模拟 %i", num);
 	
 	//set the tab's thumbnail
 	if (tabThumbnails[num-1])
@@ -323,7 +323,7 @@ int tab_load(int tabNum, bool del, bool showException)
 		catch (ParseException & e)
 		{
 			if (showException)
-				Engine::Ref().ShowWindow(new InfoPrompt("Error loading save", e.what()));
+				Engine::Ref().ShowWindow(new InfoPrompt("加载存档失败", e.what()));
 			else
 				std::cout << "Error loading tab: " << e.what() << std::endl;
 		}
@@ -464,7 +464,7 @@ int main(int argc, char *argv[])
 		if (parsestate>0)
 		{
 			//return 0;
-			info_box(vid_buf, "Save file invalid or from newer version");
+			info_box(vid_buf, "存档无效或来自更高版本");
 		}
 
 		//Save PTi images
@@ -523,16 +523,16 @@ void SigHandler(int sig)
 	switch (sig)
 	{
 	case SIGSEGV:
-		BlueScreen("Memory read/write error");
+		BlueScreen("内存读写错误");
 		break;
 	case SIGFPE:
-		BlueScreen("Floating point exception");
+		BlueScreen("浮点运算异常");
 		break;
 	case SIGILL:
-		BlueScreen("Program execution exception");
+		BlueScreen("程序执行异常");
 		break;
 	case SIGABRT:
-		BlueScreen("Unexpected program abort");
+		BlueScreen("程序意外中止");
 		break;
 	}
 }
@@ -852,7 +852,7 @@ int main(int argc, char *argv[])
 	luacon_openstickmancontrol();
 	for (int i = 0; i < 10; i++)
 	{
-		sprintf(tabNames[i], "Untitled Simulation %i", i+1);
+		sprintf(tabNames[i], "未命名模拟 %i", i+1);
 		tabThumbnails[i] = NULL;
 	}
 	if (tab_load(1, true, false))
@@ -886,7 +886,7 @@ int main(int argc, char *argv[])
 	}
 	catch (std::exception& e)
 	{
-		BlueScreen(("Unhandled c++ exception: " + std::string(e.what())).c_str());
+		BlueScreen(("未处理的 C++ 异常：" + std::string(e.what())).c_str());
 	}
 #else
 	MainLoop();
@@ -1062,7 +1062,7 @@ int main_loop_temp(int b, int bq, int sdl_key, int scan, int x, int y, bool shif
 			}
 			catch (ParseException & e)
 			{
-				Engine::Ref().ShowWindow(new ErrorPrompt("Unable to open save file: " + std::string(e.what())));
+				Engine::Ref().ShowWindow(new ErrorPrompt("无法打开存档文件：" + std::string(e.what())));
 			}
 			delete saveDataOpen;
 			saveDataOpen = NULL;
@@ -1179,11 +1179,11 @@ int main_loop_temp(int b, int bq, int sdl_key, int scan, int x, int y, bool shif
 
 		if (update_flag)
 		{
-			info_box(vid_buf, "Finalizing update...");
+			info_box(vid_buf, "正在完成更新...");
 			if (update_finish())
-				Engine::Ref().ShowWindow(new ErrorPrompt("Update failed - try downloading a new version."));
+				Engine::Ref().ShowWindow(new ErrorPrompt("更新失败 - 尝试下载新版本。"));
 			else
-				Engine::Ref().ShowWindow(new InfoPrompt("Update success", "You have successfully updated Jacob1's Mod!"));
+				Engine::Ref().ShowWindow(new InfoPrompt("更新成功", "Jacob1 模组已成功更新！"));
 			update_flag = 0;
 		}
 
@@ -1196,13 +1196,13 @@ int main_loop_temp(int b, int bq, int sdl_key, int scan, int x, int y, bool shif
 				switch (signs[signID].GetType())
 				{
 				case Sign::SaveLink:
-					tooltip << "Go to save ID:" << signs[signID].GetLinkText();
+					tooltip << "转到存档 ID：" << signs[signID].GetLinkText();
 					break;
 				case Sign::ThreadLink:
-					tooltip << "Open forum thread " << signs[signID].GetLinkText() << " in browser";
+					tooltip << "论坛主题 " << signs[signID].GetLinkText() << "（浏览器打开）";
 					break;
 				case Sign::SearchLink:
-					tooltip << "Search for " << signs[signID].GetLinkText();
+					tooltip << "搜索 " << signs[signID].GetLinkText();
 					break;
 				default:
 					break;

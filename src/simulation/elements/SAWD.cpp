@@ -43,7 +43,8 @@ void SAWD_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 18;
 
 	elem->HeatConduct = 70;
-	elem->Description = "Sawdust. Floats on water.";
+	elem->Description = "锯末。漂浮在水面上。";
+	elem->DetailedDescription = "描述：一种非常轻的粉末，可以漂浮在水面上。它是在高速粒子撞击 WOOD 时产生的。NEUT 撞击 BCOL 时也会产生 SAWD。所有其他粉末都漂浮在上面，可以分层。\n导热率：70\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_PART | PROP_NEUTPASS;
 

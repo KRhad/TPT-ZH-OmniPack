@@ -83,7 +83,8 @@ void IGNT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Ignition cord. Burns slowly with fire and sparks.";
+	elem->Description = "点火线。伴随火焰和火花缓慢燃烧。";
+	elem->DetailedDescription = "燃点：399.85℃/673K\n描述：电脉冲或者明火或者达到燃烧点都能点燃它，能缓慢燃烧，在水中也可以燃烧。通过改变其Life 值可以改变它的燃烧速度。Life 值越高燃烧时间越长。中子(NEUT)可以穿过导火索但会使导火索朝中子来源方向运动。\n导热率：88\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE | PROP_SPARKSETTLE | PROP_LIFE_KILL;
 

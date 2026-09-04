@@ -400,7 +400,8 @@ void LIGH_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "More realistic lightning. Set pen size to set the size of the lightning.";
+	elem->Description = "更真实的闪电。画笔大小决定闪电的尺寸。";
+	elem->DetailedDescription = "描述：仿真的闪电，改变笔刷大小可以调整闪电大小和威力，可以穿过墙。96.2 版本以后 LIGH 持续时间变得更长。\n参数设定：\nTmp 闪电的角度(逆时针旋转，单位：度)\nTmp2=-1 删除碰到的物质\nTmp2=0 变成极小的电火花(此时闪电只会局限于周围 4×4 的范围)\nTmp2=1 弯曲的闪电\nTmp2=2 产生大量分叉的闪电\nTmp2=3 传递电脉冲并造成破坏(此时闪电只会局限于周围 4×4 的范围)\nTmp2=4 初始模式\n导热率：0\n初始温度：与笔刷大小有关，最小时为-273.15℃/0K，最大为 7976.85℃/8250K";
 
 	elem->Properties = TYPE_SOLID;
 

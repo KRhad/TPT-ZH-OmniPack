@@ -57,7 +57,8 @@ void PINV_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Powered invisible,invisible to particles while activated.";
+	elem->Description = "可控隐形材料，激活时对粒子不可见。";
+	elem->DetailedDescription = "描述：可控隐形材料。PSCN 开启整片 PINV，NSCN 关闭；开启状态(Life≥10)允许普通粒子进入并穿过，关闭时成为不可破坏的固体屏障。开启时颜色变为半透明紫色。\n穿透：中子和光子可穿过 PINV。普通粒子穿过时可以与 PINV 占据同一像素，内部粒子由专用槽保存；关闭后不再允许新的普通粒子进入。\n特性：不导热，不会因普通压力或温度发生相变。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS | PROP_PHOTPASS | PROP_POWERED | PROP_INDESTRUCTIBLE;
 

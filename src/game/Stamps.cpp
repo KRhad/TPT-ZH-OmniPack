@@ -179,7 +179,7 @@ void Stamps::Rescan()
 	bool succ = WriteStampsJson();
 	succ = WriteStampsDef() || succ;
 	if (!succ)
-		Engine::Ref().ShowWindow(new ErrorPrompt("Could not write stamps.json and stamps.def"));
+	Engine::Ref().ShowWindow(new ErrorPrompt("无法写入 stamps.json 和 stamps.def"));
 
 	// Re-init everything
 	Free();
@@ -255,7 +255,7 @@ std::string Stamps::Generate(Simulation * sim, int x, int y, int w, int h, bool 
 	}
 	catch (BuildException & e)
 	{
-		ErrorPrompt *error = new ErrorPrompt("Error building stamp: " + std::string(e.what()));
+	ErrorPrompt *error = new ErrorPrompt("生成图章失败：" + std::string(e.what()));
 		Engine::Ref().ShowWindow(error);
 		delete save;
 

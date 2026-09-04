@@ -110,7 +110,8 @@ void ANIM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.tmp = 1;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Animated Liquid Crystal. Can show multiple frames, use left/right in the deco editor.";
+	elem->Description = "动态液晶，可显示多帧；在装饰编辑器中使用左/右切换。";
+	elem->DetailedDescription = "描述：动画液晶，每个粒子都能为多个动画帧保存独立装饰色；即使关闭普通装饰显示，也会用当前帧颜色绘制。可用动画工具新增、复制、切换或删除帧，再用装饰工具逐帧作画。\n控制：PSCN 电脉冲开始自动播放，NSCN 停止并复位。Life=10 时播放；Tmp2 是当前帧，Ctype 是最后一帧编号。温度的摄氏数值用作换帧间隔，例如 22℃约每 22 帧换一次；0℃及以下会每帧前进。\n限制：无效或缺失的帧数据会使对应粒子消失；大量动画液晶会增加存档和内存占用。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

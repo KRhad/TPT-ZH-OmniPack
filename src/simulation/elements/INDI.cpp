@@ -44,7 +44,8 @@ void INDI_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Indestructible Insulator.";
+	elem->Description = "不可破坏的绝缘体。";
+	elem->DetailedDescription = "描述：不可破坏绝缘体，常态下不导电、不导热，也不受普通燃烧、腐蚀和爆炸破坏，适合永久电路隔离和极端环境容器。\n相变：压力高于 10 P 时会变成损坏电子元件(BREL)；温度达到 999.85℃/1273K 时变为 LAVA。因此“不可破坏”不等于无视这两项明确的压力和温度转化。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_INDESTRUCTIBLE;
 

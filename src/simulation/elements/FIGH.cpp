@@ -177,7 +177,8 @@ void FIGH_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 14.6f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Fighter. Tries to kill stickmen. You must first give it an element to kill him with.";
+	elem->Description = "战士。会尝试杀死火柴人；需要先赋予它一种攻击元素。";
+	elem->DetailedDescription = "描述：电脑控制的小人，会通过喷东西来杀死火柴人(STKM)，其它身体属性和火柴人是相同的，最多可以制造100个打手。\n燃点：346.85℃/620K\n导热率：0\n初始温度：36.6℃/309.75K";
 
 	elem->Properties = PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

@@ -43,7 +43,8 @@ void SALT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 110;
 	elem->Latent = 0;
-	elem->Description = "Salt, dissolves in water.";
+	elem->Description = "盐，溶于水。";
+	elem->DetailedDescription = "描述：能溶于水(WATR)形成盐水(SLTW)，较高温度下能熔化，能腐蚀铁(IRON)变成脆金属(BMTL)和金属粉(BRMT)。\n反应：可以将 WATR 和 DSTW 变成 SLTW，同时慢慢溶解。将 IRON 转换为 BMTL 然后是 BRMT，除非 GOLD 就在附近以将其还原。SALT 也会慢慢溶解在 SLTW 中，这两者都会破坏 PLNT。\n凝胶(SPNG)和海绵(GEL)从盐水中吸收水分，平均每四个盐水(SLTW)颗粒产生一个盐(SALT)。\n熔点：899.85℃/1173K\n导热率：110\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

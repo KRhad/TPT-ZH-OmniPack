@@ -99,7 +99,8 @@ void DEST_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "More destructive Bomb, can break through virtually anything.";
+	elem->Description = "更具破坏性的炸弹，几乎可以突破任何东西。";
+	elem->DetailedDescription = "描述：升级版炸药(BOMB)，只有钻石(DMND)、复制体(CLNE)、可破坏复制体(BCLN)、可控复制体(PCLN)、可控可破坏复制体(PBCN)和墙(Wall)等与其直接接触可以不触发爆炸。产生高温高压，和重水(DEUT)或钚(PLUT)接触会触发其裂变反应。\n元素参数：当高爆炸药被触发后，Life 值会变为 37 并随帧数而减少，减至0 是高爆炸药消失，通过修改其Life 值可以修改其爆炸的持续时间。\n导热率：150\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

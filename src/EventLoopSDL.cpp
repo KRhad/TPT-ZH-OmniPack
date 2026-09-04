@@ -359,11 +359,11 @@ int EventProcess(SDL_Event event, ui::Window * eventHandler)
 			// Two separate quit dialogs ... remove some day
 			if (inOldInterface)
 			{
-				wasConfirmed = confirm_ui(vid_buf, "You are about to quit", "Are you sure you want to quit?", "Quit");
+				wasConfirmed = confirm_ui(vid_buf, "你即将退出", "确定要退出吗？", "退出");
 			}
 			else
 			{
-				auto prompt = new ConfirmPrompt("You are about to quit", "Are you sure you want to quit?", "Quit");
+				auto prompt = new ConfirmPrompt("你即将退出", "确定要退出吗？", "退出");
 				prompt->SetCallback({ [&wasConfirmed](bool confirmed) {
 					wasConfirmed = confirmed;
 				} });
@@ -590,15 +590,15 @@ void BlueScreen(const char * detailMessage)
 {
 	//std::string errorDetails = "Details: " + std::string(detailMessage);
 	SDL_Event event;
-	const char * errorHelp = "An unrecoverable fault has occurred, please report this to jacob1:\n"
+	const char * errorHelp = "发生了无法恢复的错误，请向 jacob1 报告：\n"
 		" https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=11117\n"
-		" OR the built in bug reporter.\n\n"
-		"Note: TPT will now restart and reload your work";
+		" 或使用内置问题报告器。\n\n"
+		"注意：TPT 现在将重启并重新加载当前作品";
 	int positionX = (XRES+BARSIZE)/2-textwidth(errorHelp)/2-50, positionY = (YRES+MENUSIZE)/2-100;
 
 	fillrect(vid_buf, -1, -1, XRES+BARSIZE+1, YRES+MENUSIZE+1, 17, 114, 169, 210);
 
-	drawtext(vid_buf, positionX, positionY, "ERROR", 255, 255, 255, 255);
+	drawtext(vid_buf, positionX, positionY, "错误", 255, 255, 255, 255);
 	drawtext(vid_buf, positionX, positionY + 14, detailMessage, 255, 255, 255, 255);
 	drawtext(vid_buf, positionX, positionY  + 28, errorHelp, 255, 255, 255, 255);
 
@@ -688,7 +688,7 @@ void BlueScreen(const char * detailMessage)
 			else
 				gameLost = true;
 
-			sprintf(scoreString, "Score: %i", score);
+			sprintf(scoreString, "得分：%i", score);
 			drawtext(vid_buf, XRES-BARSIZE-50, 10, scoreString, 255, 255, 255, 255);
 			for (std::vector<Point>::iterator iter = food.begin(); iter != food.end(); ++iter)
 			{

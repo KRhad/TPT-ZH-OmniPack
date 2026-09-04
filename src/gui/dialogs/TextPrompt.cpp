@@ -26,7 +26,7 @@ TextPrompt::TextPrompt(std::string title, std::string prompt, std::string text, 
 
 	this->Resize(Point(CENTERED, CENTERED), Point(250, promptLabel->GetSize().Y + inputTextbox->GetSize().Y + 24 + buttonHeight));
 
-	Button *okButton = new Button(Point(0, this->size.Y - buttonHeight), Point(this->size.X, buttonHeight), "OK");
+	Button *okButton = new Button(Point(0, this->size.Y - buttonHeight), Point(this->size.X, buttonHeight), "确定");
 	okButton->SetTextColor(COLRGB(140, 140, 255));
 	okButton->SetConfirmButton(true);
 	this->AddComponent(okButton);

@@ -43,7 +43,8 @@ void RBDM_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 240;
 	elem->Latent = 0;
-	elem->Description = "Rubidium. Explosive, especially on contact with water. Low melting point.";
+	elem->Description = "铷。爆炸，特别是与水接触时。熔点低。";
+	elem->DetailedDescription = "熔点：38.85℃/312K\n描述：低熔点，遇水爆炸，可与水(WATR)、蒸馏水(DSTW)、盐水(SLTW)、苏打水(BUBW)、酸(ACID)、火焰(FIRE)反应，可以导电而不爆炸。在 38.85℃熔化成液态铷。\n导热率：240\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

@@ -162,7 +162,8 @@ void LDTC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Linear detector. Scans in 8 directions for particles with its ctype and creates a spark on the opposite side.";
+	elem->Description = "线性探测器。在 8 个方向上扫描具有 ctype 的粒子，并在相反的一侧产生火花。";
+	elem->DetailedDescription = "描述：从 8 个方向(上、下、左、右、四个 45 度对角线)检测粒子，并在相反方向激发导体。它检测到的粒子由其 Ctype 值设置。如果未设置 Ctype 值，它可以检测任何粒子。请注意，粒子必须与要检测的导体和 LDTC 成一直线(因此得名线性检测器)。LDTC 的 Tmp 值决定了它的范围(它可以检测到多远的粒子)。范围并不局限于 25。LDTC 的 Life 值决定了它在扫描前会跳过多少个像素。例如，如果它的 Life 值是 10，它的 Tmp 是 15，它会跳过 10 个像素，开始扫描 15 个像素，然后停止。跟 DTEC 一样可以把 FILT 和 BRAY 的 Ctype 值，复制到相反方向的 FILT 上。\n注意：一旦找到粒子，LDTC 将停止扫描，无论该粒子是否与其 Ctype 匹配。除非它的 Life 值设置为>1，否则在它周围放置导体会妨碍它的功能。这可以通过改变元素参数来改变，如下所示。\n元素参数：\nTmp 设定检测的范围：\nTmp 2=1 反转模式(所有不是 Ctype 值的元素会激发 LDTC)\nTmp 2=2 忽略能量粒子\nTmp 2=4 忽略颜色(不区分颜色)\nTmp 2=8 扫描粒子后方的物体(如果没有设定该值,LDTC 将不会检测隐藏在粒子后方的粒子)\nLife：会跳过多少像素，才开始扫描\n导热率：0\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

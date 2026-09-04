@@ -43,7 +43,8 @@ void INSL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Insulator. Blocks heat, electricity, and radiation.";
+	elem->Description = "绝缘体。阻挡热、电和辐射。";
+	elem->DetailedDescription = "描述：绝缘体，既不吸收，也不释放热量给其它元素。这意味着，它可用于保护对热量敏感的元素。一个像素宽，即可起作用。但是绝缘体易燃，需要注意。绝缘体可用于阻止电脉冲，在间距小于2 个像素的导线和导体间流动。(相邻接触或间隔 1 个像素，电子都可以流动)这样，将 1 个像素宽的导线，置于绝缘体之间，将阻隔电子流动。易燃(不能碰到明火和熔融物)，谨慎使用。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

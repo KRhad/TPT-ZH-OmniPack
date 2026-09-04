@@ -266,7 +266,8 @@ void LITH_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 17;
 
 	elem->HeatConduct = 70;
-	elem->Description = "Lithium. Reactive element that explodes on contact with water.";
+	elem->Description = "锂。与水接触会爆炸的反应元素。";
+	elem->DetailedDescription = "描述：与水接触会发生爆炸。它吸收 CO2，然后可以转化为 GLAS。与水接触时，它会加热自身并将水变成氢气。在 1000K 时它会爆炸。纯净时可用于制造电池。\n元素参数：\n氢化(Tmp)：\n当 LITH 每接触 WATR，SLTW，DSTW，BUBW 或 WTRV 时它的氢化值会增加 1 时。如果锂在 166.85℃以上与它们会产生爆炸。否则它会将它们转化为 HYGN 并释放热量。当锂内含有电时，产生的反应和热量都会更加剧烈。氢化值存储在 Tmp 值中。\n碳酸化(Tmp2)：\n当 LITH 接触到 CO2 时，每吸收一个 CO2 粒子，其碳酸化值增加 1。碳化值存储在 Tmp2 值中锂电池：当锂足够纯(氢化因子+碳酸化因子<5)时，可作为可充电电池使用。锂通过 PSCN 充电,通过 NSCN 放电。电荷值存储在 Ctype 中，并会将该值平均给与周围的 LITH 粒子。\n杂质：LITH 的杂质由氢化和碳酸化值的总和决定。当杂质达到最大值 10 时，它将停止与 CO2 和水反应(除非它已经燃烧)。\n爆炸：在爆炸阶段，LITH 会启动倒数计时器并释放 FIRE 粒子。如果 LITH 在这种状态下与 OXYG 接触，它会将 OXYG 和自身变成 PLSM，并产生一定的压力。当爆炸计时器结束时，它会变成 LAVA。如果碳酸化值大于3，它将变成熔融的 GLAS，而不是熔融的 LITH。如果它与 FIRE 接触同时它的温度大于 166.85℃，氢化值小于 6 时，LITH 就会爆炸。\n反应：ACID 会把 LITH 变成 HYGN，而不是摧毁它。\n初始温度：22.00℃/295.15K\n导热率：70";
 
 	elem->Properties = TYPE_PART | PROP_LIFE_DEC;
 

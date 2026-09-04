@@ -108,7 +108,7 @@ const BuiltinGOL builtinGol[NGOL] = {
 	//   * the ruleset constants below look 20-bit, but rulesets actually consist of 21
 	//     bits of data; bit 20 just happens to not be set for any of the built-in types,
 	//     as none of them have 10 or more states
-	{ "GOL",  GT_GOL , 0x0080C, COLPACK(0x0CAC00), COLPACK(0x0CAC00), NGT_GOL,  "Game Of Life: Begin 3/Stay 23" },
+	{ "GOL",  GT_GOL , 0x0080C, COLPACK(0x0CAC00), COLPACK(0x0CAC00), NGT_GOL,  "康威生命游戏：出生 3 / 存活 23（B3/S23）" },
 	{ "HLIF", GT_HLIF, 0x0480C, COLPACK(0xFF0000), COLPACK(0xFF0000), NGT_HLIF, "High Life: B36/S23" },
 	{ "ASIM", GT_ASIM, 0x038F0, COLPACK(0x0000FF), COLPACK(0x0000FF), NGT_ASIM, "Assimilation: B345/S4567" },
 	{ "2X2",  GT_2x2 , 0x04826, COLPACK(0xFFFF00), COLPACK(0xFFFF00), NGT_2x2,  "2X2: B36/S125" },

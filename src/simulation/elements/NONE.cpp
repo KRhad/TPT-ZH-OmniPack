@@ -43,7 +43,8 @@ void NONE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Erases particles.";
+	elem->Description = "擦除颗粒。";
+	elem->DetailedDescription = "描述：所有 HUD 显示为“Empty”的地方都是这种元素，用于模拟气压、温度等。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = 0;
 

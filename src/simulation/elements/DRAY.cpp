@@ -189,7 +189,8 @@ void DRAY_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Duplicator ray. Replicates a line of particles in front of it.";
+	elem->Description = "复制射线。复制其前面的一行粒子。";
+	elem->DetailedDescription = "描述：又称复制射线发射器，当由 P 型硅(PSCN)激活时，会将沿电流方向对前方的所有粒子(不论种类是否相同)都复制一份，如果中途有阻碍则会直接删除挡路的粒子并继续复制。当由 INWR 激活时，不会进行对角复制。\n元素参数：\nTmp：设定复制序列的最小长度，如果这个值小于复印机面前的粒子长度，则复制不会发生。\nTmp2：设定新物质与旧物质之间的空隙，复制产生的新物质序列将会与原来的物质隔开一定距离。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

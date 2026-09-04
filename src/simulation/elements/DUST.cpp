@@ -44,7 +44,8 @@ void DUST_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Very light dust. Flammable.";
+	elem->Description = "非常轻的灰尘。易燃。";
+	elem->DetailedDescription = "描述：轻粉末，难燃烧且火焰微弱。火柴人(STKM)一开始就能产生尘埃。用 NEUT 轰击时，DUST 会变 FWRK。燃烧时，它会产生 FIRE，Life 值在 185 到 255 之间时变成 SMKE。DUST 是启动 TPT 时默认选择的粒子。这是因为它的元素 ID 为 1。默认情况下，火柴人也会默认发射 DUST。\n产生：可以通过加热 DYST 或者用 NEUT 轰击 GUN 产生。\n元素参数：点燃后默认燃烧 10 帧，修改 Life 值可以改变其燃烧时间\n导热率：70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

@@ -285,7 +285,7 @@ static float Mix(float a, float b, float f)
 
 void Air::UpdateAir()
 {
-	// "No Update"
+	// "暂停更新"
 	if (airMode == AIR_NOUPDATE)
 		return;
 
@@ -498,16 +498,16 @@ void Air::UpdateAir()
 			default:
 			case AIR_ON:
 				break;
-			// "Pressure off"
+			// "压力：关闭"
 			case AIR_PRESSUREOFF:
 				dp = 0.0f;
 				break;
-			// "Velocity off"
+			// "速度：关闭"
 			case AIR_VELOCITYOFF:
 				dx = 0.0f;
 				dy = 0.0f;
 				break;
-			// "Off"
+			// "关"
 			case AIR_OFF:
 				dx = 0.0f;
 				dy = 0.0f;

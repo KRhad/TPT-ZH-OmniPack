@@ -173,7 +173,8 @@ void CRAY_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Particle Ray Emitter. Creates a beam of particles set by its ctype, with a range set by tmp.";
+	elem->Description = "粒子射线发射器。创建由其 ctype 设置的粒子束，其范围由 tmp 设置。";
+	elem->DetailedDescription = "描述：当 CRAY 从与粒子直接相邻(接触)的任何一侧(包括对角线)发出 SPRK 时，它将向相反方向发射粒子束。其属性取决于引发它的导体、温度、Tmp、Tmp2、Ctype 和 Life 的组合。Ctype 设置 CRAY 产生的粒子的类型。Ctype 为 0(默认)意味着它将其 Ctype 设置为接触它的第一个粒子的类型，包括导体。Temp 设置产生的粒子的温度。Life 设置产生的粒子的寿命。Tmp 设置射线的长度。当 CRAY 激活时，产生 Tmp 值长的射线。Tmp2 设置产生的射线与发射端之间间隔的距离。\n性质：\n被 NSCN 所激活的 CRAY 的性质有\n1.射线(即创造元素)可以穿过滤镜，但不能穿过其他元素。被 INST 所激活的 CRAY 性质有\n1.射线不仅能穿过滤镜还能穿过其他元素。被 INWR 所激活的 CRAY 性质有\n1.射线不仅能穿过滤镜还能穿过其他元素。\n2.能发射 SPRK 使在其直线 Tmp2 格后的其 Tmp 值个的导体通电。被 PSCN 所激活的 CRAY 特性有\n1.删除在在其直线上的 Tmp2 格后的其(Tmp2+Tmp)格前的元素，并将原来是空缺的格子用编号为其Ctype 的元素填充。\n2.不能删除 FILT，DMND。\n3.会被 DMND 所阻挡。被 PSCN 所激活的 CRAY(Ctype 为 SPRK)特性有\n1.删除在在其直线上的 Tmp2 格后的其 Tmp 值个元素。\n2.不能删除 FILT，DMND。\n3.会被 DMND 所阻挡。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

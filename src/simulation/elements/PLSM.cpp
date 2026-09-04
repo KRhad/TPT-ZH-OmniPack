@@ -70,7 +70,8 @@ void PLSM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = MAX_TEMP;
 	elem->HeatConduct = 5;
 	elem->Latent = 0;
-	elem->Description = "Plasma, extremely hot.";
+	elem->Description = "等离子体，非常热。";
+	elem->DetailedDescription = "描述：炽热的气体，9725.85℃，从 10000℃ 开始。它具有与 FIRE 相似的特性，可以燃烧东西并引爆炸药。\n存在时间(Life)：200 以内随机。由于它的热量，它会间接引爆 FUSE、FSEP 和 FWRK 之类的东西。\n产生：可以通过将 FIRE 加热到 2499.85℃ 以上或 BTRY 加热到 1999.85℃ 以上来产生等离子体。激活 ETRD 时，在它和最近的其他 ETRD 之间将产生等离子体。此外，通过激发 NBLE，它会在大约 175 帧内电离并变成等离子体。关闭 FUSE 和 FSEP 将产生等离子体。INSL 与 DEST 接触时将变成等离子。INSL 也可以在高温下熔化并变成等离子体\n导热率：5\n初始温度：9725.85℃/9999K";
 
 	elem->Properties = TYPE_GAS | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

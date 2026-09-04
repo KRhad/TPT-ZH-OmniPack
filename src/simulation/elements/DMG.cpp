@@ -112,7 +112,8 @@ void DMG_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Generates damaging pressure and breaks any elements it hits.";
+	elem->Description = "产生破坏性压力，并击碎碰到的元素。";
+	elem->DetailedDescription = "描述：对碰到它的物质表面产生一个破坏性的压力(除了钻石 DMND)。(可产生大于通过笔施加的压力极限 256)\n导热率：29\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_SPARKSETTLE;
 

@@ -108,7 +108,8 @@ void GOLD_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Corrosion resistant metal, will reverse corrosion of iron. Excellent conductor.";
+	elem->Description = "耐腐蚀金属，可逆转铁的锈蚀；导电性能极佳。";
+	elem->DetailedDescription = "描述：金属，十分牢固，具有高熔点，抗腐蚀(但通电时会受到酸的腐蚀)，可以保护铁(IRON)免受腐蚀。和钛(TTAN)一样，当中子(NEUT)通过时会损失大约 1/7。具有良好的导电性，比一般导体导电速度快50%(只有超导线 INST 和电极 ETRD 比它快)，并允许电脉冲(SPRK)跨越 3 格像素的空隙传导，可以通过 INSL 和其他材料。\n熔点：1063.85℃/1337K\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_HOT_GLOW|PROP_LIFE_DEC|PROP_NEUTPASS;
 

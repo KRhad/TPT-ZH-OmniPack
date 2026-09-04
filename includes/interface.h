@@ -42,12 +42,12 @@ typedef struct quick_option quick_option;
 const quick_option quickmenu[] =
 {
 	{"T", "Show tabs \bg(t)", QM_TOGGLE, &show_tabs},
-	{"G", "Draw gravity grid \bg(ctrl+g)", QM_TOGGLE, &drawgrav_enable},
-	{"D", "Show decorations \bg(ctrl+b)", QM_TOGGLE, &decorations_enable},
-	{"N", "Newtonian gravity \bg(n)", QM_TOGGLE, nullptr},
-	{"A", "Ambient heat \bg(u)", QM_TOGGLE, &aheat_enable},
-	{"P", "Sand effect", QM_TOGGLE, &pretty_powder},
-	{"C", "Show Console \bg(~)", QM_TOGGLE, &console_mode},
+	{"G", "显示引力网格 \bg(Ctrl+G)", QM_TOGGLE, &drawgrav_enable},
+	{"D", "显示装饰层 \bg(Ctrl+B)", QM_TOGGLE, &decorations_enable},
+	{"N", "牛顿引力 \bg(N)", QM_TOGGLE, nullptr},
+	{"A", "环境热量 \bg(u)", QM_TOGGLE, &aheat_enable},
+	{"P", "沙粒效果", QM_TOGGLE, &pretty_powder},
+	{"C", "显示控制台 \bg(~)", QM_TOGGLE, &console_mode},
 	{nullptr}
 };
 
@@ -313,4 +313,3 @@ void clear_save_info();
 void MissingElementsPrompt(SaveLoadData saveLoadData);
 
 #endif
-

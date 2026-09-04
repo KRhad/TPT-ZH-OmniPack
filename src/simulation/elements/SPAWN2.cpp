@@ -65,7 +65,8 @@ void SPAWN2_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "STK2 spawn point.";
+	elem->Description = "STK2 生成点。";
+	elem->DetailedDescription = "描述：用 WASD 控制，其余和火柴人(STKM)相同。\n导热率：0\n初始温度：36.6℃/309.75K";
 
 	elem->Properties = TYPE_SOLID;
 

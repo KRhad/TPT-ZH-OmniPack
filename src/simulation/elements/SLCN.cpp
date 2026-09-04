@@ -134,7 +134,8 @@ void SLCN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Powdered Silicon. A key ingredient in producing multiple materials.";
+	elem->Description = "硅粉。生产多种材料的关键成分。";
+	elem->DetailedDescription = "描述：硅是一种非常闪亮的粉末，它像黄金一样导电。当熔融时，它可以用于各种反应以产生其他元素。熔化的 STNE 与 COAL 或 BCOL 混合时，会以 1/60 的几率变成熔化的 SLCN。\n反应：熔融 SLCN 与 OXYG 混合时，会产生各种其他熔融元素。它有 1/3 的几率变成 SAND，有 1/3 的几率变成STNE。最后的 1/3 将根据温度变成两个元素之一，如果 SLCN 小于 7446.3℃，它将产生熔融 CLST，否则将产生熔融 PQRT。熔融 SLCN 也与熔融 METL 或 BMTL 反应。SLCN 变成熔融的 NSCN，其他反应物会变成熔融的 PSCN。\n导热率：100\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_PART | PROP_CONDUCTS | PROP_HOT_GLOW | PROP_LIFE_DEC;
 

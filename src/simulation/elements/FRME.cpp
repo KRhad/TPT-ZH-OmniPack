@@ -53,7 +53,8 @@ void FRME_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Frame, can be used with pistons to push many particles.";
+	elem->Description = "框架，可以与活塞一起使用来推动许多颗粒。";
+	elem->DetailedDescription = "描述：用于增加活塞一次性推动物质的数量，至少需要1 像素厚度，最多能向一个方向延长15 像素，用活塞(PSTN)推动其中一个像素就可以推动和收回整个支架(以及支架上方的物质)。如果某一个像素的支架被挡住(比如墙)，那么整个支架都不会移动,任何被 FRME 捕获的粒子都会阻止整个事物缩回。确保保持框架后面的路径畅通。\n注意事项：只有位于活塞上方第一层的支架能起作用，第二层之后的支架是不起支撑作用的(也就是说你不能建造一个树杈状的支架并整体移动它)。同时，如果你使用了两个以上的活塞来推动支架，那么在收回时它们会互相挡住。令 Tmp=1 可以使支架变为“非粘性”，也就是说此时支架被推出后就不能被收回。\n导热率：0\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

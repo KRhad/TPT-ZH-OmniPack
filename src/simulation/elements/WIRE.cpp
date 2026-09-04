@@ -116,7 +116,8 @@ void WIRE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 250;
 	elem->Latent = 0;
-	elem->Description = "WireWorld wires, conducts based on a set of GOL-like rules.";
+	elem->Description = "WireWorld 导线，按一套类似 GOL 的规则导电。";
+	elem->DetailedDescription = "描述：WWLD 是一种基于另一个名为 WireWorld 的游戏的固体导电元素。WWLD 不会因压力而熔化或破裂。WWLD 接受来自 PSCN 的 SPRK 并提供给 NSCN。WWLD 的工作原理与 GOL 相同，应用简单的数学规则会导致四种不同状态的生成；空、电子头(蓝色)、电子尾(白色)和导体(橙色)。\n它遵循的规则是：\n空→空电子头→电子尾电子尾→导体如果恰好一两个相邻单元是电子头，则导体→电子头，否则仍为导体。(请注意，一个“单元格”是一个像素)\n导热率：250\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

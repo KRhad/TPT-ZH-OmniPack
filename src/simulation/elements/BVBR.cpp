@@ -47,7 +47,8 @@ void BVBR_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 273.15f;
 	elem->HeatConduct = 164;
 	elem->Latent = 0;
-	elem->Description = "Broken vibranium.";
+	elem->Description = "破碎的振金。";
+	elem->DetailedDescription = "描述：具有和振金相似的性质，只不过是粉末状的。与 VIBR 不同，它可以被BOMB 破坏，并且它允许一些PROT像其他元素一样穿过它。\n导热率：164\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC;
 

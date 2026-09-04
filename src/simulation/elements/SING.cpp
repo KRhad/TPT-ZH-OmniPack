@@ -147,7 +147,8 @@ void SING_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Singularity. Creates huge amounts of negative pressure and destroys everything.";
+	elem->Description = "奇点。产生巨大的负压，摧毁一切。";
+	elem->DetailedDescription = "描述：会产生超低压的粉末，可以破坏其它物质，本质上是粉末状的黑洞。吃下过多的物质之后，奇点会爆炸，\n产生中子(NEUT)和电子(ELEC)。使用控制台可以立即使奇点爆炸，关闭空气压力也会导致奇点直接消失。Tmp 值越高威力越高，可与 SNOW 堆叠做奇点炸弹。\n导热率：70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC;
 

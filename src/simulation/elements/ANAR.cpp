@@ -64,7 +64,8 @@ void ANAR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Anti-air. Very light gravity-defying dust. Burns cold instead of hot.";
+	elem->Description = "反空气尘。极轻、反重力；燃烧时吸热而不是放热。";
+	elem->DetailedDescription = "描述：十分轻的粉尘，它遵循相反的引力/压力/速度定律，遇到冷焰(CFLM)时燃烧，其过程会使压力降低\n0.5 P。ANAR 还可以使振金(VIBR)变成振金粉(BVBR)。ANAR 具有负的空气阻力和平流，使其对压力和重力场产生相反的影响。例如，ANAR 被拉入白洞(WHOL)和推开黑洞(BHOL)。ANAR 会被白洞摧毁，就像任何其他粒子被黑洞摧毁一样。ANAR 本质上是防 DUST 的。它会“上升”穿过大多数粒子，除了 DUST，SAWD，GRAV，CNCT，GUN，它们会在边缘之外阻挡它。\n导热率：70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

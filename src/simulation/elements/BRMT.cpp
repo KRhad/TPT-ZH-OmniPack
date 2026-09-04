@@ -73,7 +73,8 @@ void BRMT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 211;
 	elem->Latent = 0;
-	elem->Description = "Broken metal. Created when iron rusts or when metals break from pressure.";
+	elem->Description = "金属碎片。由铁锈蚀或金属受压破裂形成。";
+	elem->DetailedDescription = "描述：重粉末，能导电。如果脆金属(BMTL)熔化后缓慢冷却就会形成金属粉。在电脉冲(SPRK)通过时会升温。被腐蚀的铁(IRON)或者脆金属也能形成金属粉。另一种方式是将脆金属暴露在高压下使之碎裂。在>250℃ 下与 BREL结合时形成铝热剂 THRM，燃烧铝热剂能形成熔融态的脆金属(熔融 BMTL)。\n导热率：211\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

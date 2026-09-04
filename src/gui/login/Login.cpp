@@ -21,12 +21,12 @@ Login::Login(LoginCallback callback):
 #endif
 	std::string originalUsername = svf_login ? svf_user : "";
 
-	Label *titleLabel = new Label(Point(5, 3), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Server login");
+	Label *titleLabel = new Label(Point(5, 3), Point(Label::AUTOSIZE, Label::AUTOSIZE), "服务器登录");
 	titleLabel->SetColor(COLRGB(140, 140, 255));
 	this->AddComponent(titleLabel);
 
 	usernameTextbox = new Textbox(titleLabel->Below({ 3, 3 }), { size.X - 16, Textbox::AUTOSIZE }, originalUsername);
-	usernameTextbox->SetPlaceholder("[username]");
+	usernameTextbox->SetPlaceholder("[用户名]");
 	usernameTextbox->SetIcon(IconUsername);
 	usernameTextbox->SetCallback([originalUsername, this](){
 		UpdateSignInButton(originalUsername);
@@ -34,7 +34,7 @@ Login::Login(LoginCallback callback):
 	this->AddComponent(usernameTextbox);
 
 	passwordTextbox = new Textbox(usernameTextbox->Below({ 0, 4 }), { size.X - 16, Textbox::AUTOSIZE }, "");
-	passwordTextbox->SetPlaceholder("[password]");
+	passwordTextbox->SetPlaceholder("[密码]");
 	passwordTextbox->SetMasked(true);
 	passwordTextbox->SetIcon(IconPassword);
 	passwordTextbox->SetCallback([originalUsername, this](){
@@ -42,7 +42,7 @@ Login::Login(LoginCallback callback):
 	});
 	this->AddComponent(passwordTextbox);
 
-	signInButton = new Button(Point(0, this->size.Y - 15), Point(this->size.X / 2 + 1, buttonHeight), "Sign In");
+	signInButton = new Button(Point(0, this->size.Y - buttonHeight), Point(this->size.X / 2 + 1, buttonHeight), "登录");
 	UpdateSignInButton(originalUsername);
 	signInButton->SetCallback([&](int mb) {
 		isLogin ? DoLogin() : DoLogout();
@@ -51,13 +51,13 @@ Login::Login(LoginCallback callback):
 	});
 	this->AddComponent(signInButton);
 
-	closeButton = new Button(Point(this->size.X / 2, this->size.Y - 15), Point(this->size.X / 2 + 1, buttonHeight), "Close");
+	closeButton = new Button(Point(this->size.X / 2, this->size.Y - buttonHeight), Point(this->size.X / 2 + 1, buttonHeight), "关闭");
 	closeButton->SetCloseButton(true);
 	this->AddComponent(closeButton);
 
 	std::string defaultMessage = svf_login ?
-		"To manage your account (avatar, password, username, or delete it), \bt{a:https://powdertoy.co.uk/Profile.html|Use the website}" :
-		"If you don't have an account, \bt{a:https://powdertoy.co.uk/Register.html|Register Here}";
+		"若要管理头像、密码、用户名或删除账号，请\bt{a:https://powdertoy.co.uk/Profile.html|前往网站}" :
+		"没有账号？\bt{a:https://powdertoy.co.uk/Register.html|在此注册}";
 	messageLabel = new RichLabel(passwordTextbox->Below({ -3, 3 }), { size.X - 10, Label::AUTOSIZE }, "", true);
 	SetMessage(defaultMessage);
 	this->AddComponent(messageLabel);
@@ -69,7 +69,7 @@ void Login::UpdateSignInButton(std::string originalUsername)
 	if (closeTimer)
 		return;
 	isLogin = !svf_login || originalUsername != usernameTextbox->GetText();
-	signInButton->SetText(isLogin ? "Sign In" : "Sign Out");
+	signInButton->SetText(isLogin ? "登录" : "退出登录");
 	signInButton->SetEnabled(!isLogin || (!usernameTextbox->GetText().empty() && !passwordTextbox->GetText().empty()));
 }
 
@@ -82,12 +82,12 @@ void Login::DoLogin()
 
 	if (user.empty() || pass.empty())
 	{
-		SetMessage("Please enter a username and password");
+		SetMessage("请输入用户名和密码");
 		return;
 	}
 	if (user.find('@') != user.npos)
 	{
-		SetMessage("Use your Powder Toy account to login, not your email. If you don't have a Powder Toy account, you can create one on \bt{a:https://powdertoy.co.uk/Register.html|the website}");
+		SetMessage("请使用 Powder Toy 账号而非邮箱登录。没有账号可在\bt{a:https://powdertoy.co.uk/Register.html|网站上注册}");
 		return;
 	}
 
@@ -140,12 +140,12 @@ void Login::DoLogin()
 		svf_login = 1;
 		save_presets();
 
-		SetMessage("Successfully logged in");
+		SetMessage("登录成功");
 		autoClose = true;
 	}
 	else
 	{
-		SetMessage("Couldn't read login response");
+		SetMessage("无法读取登录响应");
 	}
 }
 
@@ -162,7 +162,7 @@ void Login::DoLogout()
 	if (!error.empty())
 		SetMessage(error);
 	else
-		SetMessage("Successfully logged out");
+		SetMessage("已退出登录");
 	autoClose = true;
 }
 
@@ -183,8 +183,8 @@ void Login::SetMessage(std::string message)
 	messageLabel->SetText(message);
 	int newHeight = messageLabel->GetPosition().Y + messageLabel->GetSize().Y + signInButton->GetSize().Y + 3;
 	this->Resize(position, { size.X, newHeight });
-	signInButton->SetPosition({ signInButton->GetPosition().X, newHeight - 15 });
-	closeButton->SetPosition({ closeButton->GetPosition().X, newHeight - 15 });
+	signInButton->SetPosition({ signInButton->GetPosition().X, newHeight - signInButton->GetSize().Y });
+	closeButton->SetPosition({ closeButton->GetPosition().X, newHeight - closeButton->GetSize().Y });
 }
 
 void Login::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)

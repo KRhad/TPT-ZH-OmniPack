@@ -81,7 +81,8 @@ void FSEP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Fuse Powder. Burns slowly like FUSE.";
+	elem->Description = "引信粉。像 FUSE 一样缓慢燃烧。";
+	elem->DetailedDescription = "描述：燃烧缓慢，需要较高温度才能点燃，比如使用等离子体(PLSM)或者电脉冲(SPRK)。燃烧时温度很高(3000+℃)，因此燃烧时火焰是等离子体。\n燃点：400℃/673.15K\n导热率：70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

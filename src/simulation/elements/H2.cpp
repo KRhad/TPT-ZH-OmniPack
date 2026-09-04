@@ -133,7 +133,8 @@ void H2_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Hydrogen. Combusts with OXYG to make WATR. Undergoes fusion at high temperature and pressure.";
+	elem->Description = "氢气。与 OXYG 燃烧生成 WATR；在高温高压下发生聚变。";
+	elem->DetailedDescription = "描述：氢气(HYGN)可被火焰(FIRE)点燃，并与氧气(OXYG)燃烧生成水蒸气(WTRV)。它自身不产生气压，因此在低温下可接触石英(QRTZ)而不使石英因压力破碎。\n与柴油的反应：HYGN 压力大于 8 P 且接触 DESL 时，两者分别转化为 OIL 和 WATR。DESL 在压力超过 5 P 时会先变成 FIRE，因此需要迅速完成反应，或用 TTAN 隔绝 DESL 所受压力，只给 HYGN 加压。\n聚变：约 2000℃、50 P 时，HYGN 可聚变为惰性气体(NBLE)，同时产生 PLSM、NEUT、黄色 PHOT，以及 1 至 2 个 NBLE；另有 10% 概率产生 ELEC。反应会释放约 50 P 压力并把温度提高到约 4000℃。\n产生：NEUT+ELEC→HYGN。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_GAS | PROP_PHOTPASS;
 

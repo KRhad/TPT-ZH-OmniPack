@@ -43,7 +43,8 @@ void VOID_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Hole, will drain away any particles.";
+	elem->Description = "虚空。会消除进入的任何粒子。";
+	elem->DetailedDescription = "描述：可以吸收物质(除固体，即使被活塞推入)并产生少量压力。可设置 Ctype 值来选择吸收哪种物质。TPT 的默认边界实际上就是这种物质。可以用复制体(CLNE)与虚空或黑洞(BHOL)相结合来制作一个温度控制器。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

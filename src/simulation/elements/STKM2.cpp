@@ -78,7 +78,8 @@ void STKM2_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 14.6f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "second stickman. Don't kill him! Control with wasd.";
+	elem->Description = "第二个火柴人。别杀死他！使用 WASD 控制。";
+	elem->DetailedDescription = "描述：用 WASD 控制，其余和火柴人(STKM)相同。\n导热率：0\n初始温度：36.6℃/309.75K";
 
 	elem->Properties = PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

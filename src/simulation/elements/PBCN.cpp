@@ -136,7 +136,8 @@ void PBCN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Powered breakable clone.";
+	elem->Description = "可控可破坏克隆。";
+	elem->DetailedDescription = "描述：激活时和可破坏复制体(BCLN)相同，复制与之相接触的物质，但可以被破坏。用P 型硅(PSCN)激活，N 型硅(NSCN)关闭。\n压力极限：5 P\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_BREAKABLECLONE | PROP_POWERED | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

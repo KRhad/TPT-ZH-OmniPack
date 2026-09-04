@@ -239,7 +239,8 @@ void BASE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->HeatConduct = 31;
 	elem->HeatCapacity = 1.5f;
 	elem->Latent = 0;
-	elem->Description = "Corrosive liquid. Rusts conductive solids, neutralizes acid.";
+	elem->Description = "腐蚀性液体。使导电固体生锈，中和酸。";
+	elem->DetailedDescription = "描述：碱性腐蚀液体，Life 表示浓度，范围 1～100，默认 76；相邻 BASE 会交换浓度。颜色随浓度改变。它会腐蚀低硬度材料，并把多数导电固体氧化成可破坏金属(BMTL)，反应时消耗自身浓度。\n稀释与相变：WATR、DSTW、BUBW 会稀释并分出新的 BASE。低于 0℃－Life/4 的温度时冻结成 Ctype=BASE 的 ICE；压力低于 10 P 且温度高于 120℃时，稀溶液会缓慢蒸发成 BOYL，或因失水而提高浓度。\n主要反应：浓度不低于酸时，BASE+ACID→SLTW×2；BASE+CAUS→SLTW，并消耗 CAUS。浓度≥70 时 BASE+OIL→SOAP；BASE+GOO→GEL；BASE+BCOL→GUNP。压力≥10 P 时与熔融 ROCK 有小概率生成 MERC。温度高于 50℃时，中子还可能把 BASE 转为 LRBD。\n限制：SALT、SLTW、BOYL、MERC、BMTL、BRMT、SOAP、复制体，以及由 BASE 形成的冰雪等不会被普通腐蚀逻辑处理。\n导热率：31；热容量：1.5\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_DEADLY;
 

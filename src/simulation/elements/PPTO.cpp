@@ -61,7 +61,8 @@ void PPTO_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Powered Portal OUT, can be turned on/off.";
+	elem->Description = "可通电开关的出口传送门。";
+	elem->DetailedDescription = "描述：可控传送门出口，是 PRTO 的通电版本。PSCN 开启相连区域，NSCN 关闭；开启时从温度对应的频道释放 PPTI/PRTI 收集的物质、能量粒子和电脉冲，并产生轻微正压。\n频道：必须与入口保持相同温度才能互通。出口周围需要有空位；出口面积越大，可同时释放的粒子越多。没有可用粒子或没有空间时会等待。\n限制：关闭时不释放频道内容；不导热。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

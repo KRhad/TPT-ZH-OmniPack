@@ -688,7 +688,8 @@ void PIPE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 295.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "PIPE, moves particles around. Once the BRCK generates, erase some for the exit. Then the PIPE generates and is usable.";
+	elem->Description = "管道，用于传送粒子。BRCK 外壳生成后擦除一部分作为出口，PIPE 随后会生成并可投入使用。";
+	elem->DetailedDescription = "描述：动力管(PIPE)可沿固定方向运输物质，放置后会在周围自动生成一圈砖块(BRCK)。管内粒子仍保留真实类型与 Ctype；例如“熔融 PSCN”在类型上仍是 LAVA。\n使用方法：放置 PIPE 后，先擦除预定出口处的 BRCK，让管道开始形成；完全形成后再擦除入口端 BRCK。成形完成后可以移除其余 BRCK，换成其他材料。可用于运输系统或单向门。\n压力极限：10 P，超过后变成金属粉(BRMT)。\n导热率：0\n初始温度：0℃/273.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

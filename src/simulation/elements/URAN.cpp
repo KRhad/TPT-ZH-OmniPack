@@ -61,7 +61,8 @@ void URAN_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 30.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Uranium. Heavy particles. Generates heat under pressure.";
+	elem->Description = "铀。重颗粒。在压力下产生热量。";
+	elem->DetailedDescription = "描述：核反应的副产品，在压力下会快速上升温度(指数关系)，在低压或没有压力时会缓慢冷却。现实中的核反应堆利用铀产生热量和蒸汽，蒸汽用于旋转涡轮机并凝结成水，涡轮机的速度在发电机中提供动力。由于产生蒸汽压力的反应增加了加热。压力引起的热量变化率以指数方式确定，256 P 的压力下温度每帧增加 83.01℃。\n导热率：251\n初始温度：52.00℃/325.15K";
 
 	elem->Properties = TYPE_PART | PROP_RADIOACTIVE;
 

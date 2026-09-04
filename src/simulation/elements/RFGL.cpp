@@ -44,7 +44,8 @@ void RFGL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 10;
 
 	elem->HeatConduct = 3;
-	elem->Description = "Liquid refrigerant.";
+	elem->Description = "液体制冷剂。";
+	elem->DetailedDescription = "描述：液态制冷剂，是 RFRG 在较高压力下形成的液相。压力低于 2 P 时转回气态 RFRG；气态 RFRG 压力升到 2 P 时凝结为 RFGL，由此可构成压缩—膨胀制冷循环。\n热力过程：RFRG 会按新旧绝对压力比例改变温度，近似公式为 T新=T旧×(P新+257)/(P旧+257)：压缩升温、膨胀降温。RFGL/RFRG 导热很慢，便于把温差带到换热端。\n反应：中子撞击气态 RFRG 时，等概率转成 GAS 或 CAUS。RFGL 和 RFRG 都具有致命属性，火柴人应避免接触。\n导热率：3\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_DEADLY;
 

@@ -91,7 +91,8 @@ void CAUS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Caustic Gas, acts like ACID.";
+	elem->Description = "腐蚀性气体，作用类似于 ACID。";
+	elem->DetailedDescription = "描述：酸性气体，性质和酸(ACID)相似，能腐蚀几乎所有物质并产生热量。除非反应产生的热量激活或点燃所述爆炸物，否则它不会触发爆炸物。与 ACID 不同的是，CAUS 不会燃烧，它会溶解粒子，直到其 Life 值达到 50，然后它就会消失。当它生成时，它的 Life 值为 75，每吸收一个粒子 Life 值就会减少 1。与水蒸气 (WTRV)接触时，有 0.4% 的机会产生酸气(CAUS)。\n产生：CAUS+GAS(大于 3 P 压力)产生 RFRG\n导热率：70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_GAS|PROP_DEADLY;
 

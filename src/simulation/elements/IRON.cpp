@@ -83,7 +83,8 @@ void IRON_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Rusts with salt, can be used for electrolysis of WATR.";
+	elem->Description = "铁。接触盐会生锈，可用于电解 WATR。";
+	elem->DetailedDescription = "描述：铁(IRON)会被盐(SALT)、盐水(SLTW)、氧气(OXYG)、水(WATR)和液氧(LOXY)腐蚀，并逐步转化为脆金属(BMTL)，可用于电解水相关装置。\n腐蚀过程：IRON 长时间接触上述物质后先变成 BMTL，继续暴露会变成金属粉(BRMT)，表示进一步锈蚀。附近放置 GOLD 可逆转并阻止这一过程。\n熔点：1413.85℃/1687K\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_HOT_GLOW;
 

@@ -151,7 +151,8 @@ void DEUT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Deuterium oxide. Gets more concentrated when cold, explodes with neutrons or protons.";
+	elem->Description = "重水。低温时浓度提高；与中子或质子反应会爆炸。";
+	elem->DetailedDescription = "描述：热胀冷缩，受热时膨胀颜色变暗，受冷时收缩颜色变浅。DEUT 压缩的体积与其 Life 值成反比，而 Life 值又与温度成反比。只能通过中子(NEUT)、闪电(LIGH/THDR)或高爆炸药(DEST)激发，会产生大量的中子和高压。受热时最多可以膨胀 6000 倍，在负压下不能进行裂变反应。电子(ELEC)能使重水降温直到绝对零度，也可以通过施加引力来压缩重水。\n制取：荧光液(GLOW)+水(WATR)=重水(DEUT)\n元素参数：Life 值代表压缩程度，数值越大，压缩程度越高\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_NEUTPASS;
 

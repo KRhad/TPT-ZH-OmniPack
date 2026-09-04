@@ -84,7 +84,8 @@ void GRVT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 61;
 	elem->Latent = 0;
-	elem->Description = "Gravitons. Create Newtonian Gravity.";
+	elem->Description = "引力子。创建牛顿引力。";
+	elem->DetailedDescription = "描述：玻色子之一，会在周围产生额外的引力场。GRVT 可以穿过大多数材料，类似于PROT。但它不会改变不导热的材料的温度。\n计算公式：周围产生的引力场=0.2*Tmp 值，Tmp 值初始为 7\n导热率：61\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

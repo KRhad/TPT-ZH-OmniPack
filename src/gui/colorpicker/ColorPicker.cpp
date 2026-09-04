@@ -86,7 +86,7 @@ ColorPicker::ColorPicker(ARGBColour initialColor, std::function<void (int)> call
 	vSlider->SetCallback(colourChangeSlider);
 	this->AddComponent(vSlider);
 
-	Button * doneButton = new Button(Point(size.X - 45, size.Y - 23), Point(40, 17), "Done");
+	Button * doneButton = new Button(Point(size.X - 45, size.Y - 23), Point(40, 17), "完成");
 	doneButton->SetCallback({ [this] (int mb) {
 		if (this->callback)
 		{

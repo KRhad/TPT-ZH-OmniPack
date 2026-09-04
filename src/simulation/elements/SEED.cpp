@@ -286,7 +286,8 @@ void SEED_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 32;
 	elem->Latent = 0;
-	elem->Description = "Seeds. Put on sand and add water to grow a tree.";
+	elem->Description = "种子。放上沙子并加水来种植一棵树。";
+	elem->DetailedDescription = "描述：带遗传参数的种子。它需要处在 5～70℃、重力下方紧贴 SAND、上方有空位，并储存超过 3 份水；条件连续维持约 200 帧后变成 PLNT，最初枝条长度随储水量增加。\n吸水：WATR 最多把储水提高到 31；DEUT 可提高到 255；DSTW 和 BUBW 只在储水低于 3 时少量吸收。SLTW 有害，会消耗一份储水。超出适温范围会清空储水并重置发芽计时。\n遗传：两个尚未杂交且有水的相邻 SEED 每帧有 1/10 概率杂交，后代交换颜色、分枝和生长阶段基因；中子命中时会随机翻转一项基因。\n特殊转化：温度高于 46.85℃/320K 且压力超过 50 P 时，每帧有 1/150 概率变成 MWAX；达到 400℃/673.15K 时直接燃烧成 FIRE。\n导热率：32\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_PART | PROP_NEUTPASS;
 

@@ -11,11 +11,11 @@ UpdateProgress::UpdateProgress(std::string uri, std::string username, std::funct
 	ui::Window(Point(CENTERED, CENTERED), Point(242, 62)),
 	callback(callback)
 {
-	Label *titleLabel = new Label(Point(5, 3), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Please wait");
+	Label *titleLabel = new Label(Point(5, 3), Point(Label::AUTOSIZE, Label::AUTOSIZE), "请稍候");
 	titleLabel->SetColor(COLRGB(100, 100, 255));
 	this->AddComponent(titleLabel);
 
-	Label *messageLabel = new Label(titleLabel->Below(Point(0, 0)), Point(240, Label::AUTOSIZE), "Downloading update...");
+	Label *messageLabel = new Label(titleLabel->Below(Point(0, 0)), Point(240, Label::AUTOSIZE), "正在下载更新...");
 	this->AddComponent(messageLabel);
 
 	progress = new ProgressBar(Point(0, size.Y - 16), Point(242, 16));
@@ -53,14 +53,14 @@ void UpdateProgress::OnTick(uint32_t ticks)
 		}
 		if (data.length() < 16)
 		{
-			ShowError("Server did not return data");
+			ShowError("服务器未返回数据");
 			return;
 		}
 
 		// BuTT format, blame Skylark
 		if (data[0] != 0x42 || data[1] != 0x75 || data[2] != 0x54 || data[3] != 0x54)
 		{
-			ShowError("Invalid update format");
+			ShowError("更新格式无效");
 			return;
 		}
 
@@ -73,7 +73,7 @@ void UpdateProgress::OnTick(uint32_t ticks)
 		int bzStatus = BZ2_bzBuffToBuffDecompress(updateBuf, (unsigned *)&ulen, (char*)data.substr(8).c_str(), data.length()-8, 0, 0);
 		if (bzStatus)
 		{
-			ShowError("Decompression failure: " + Format::NumberToString<int>(bzStatus));
+			ShowError("解压失败：" + Format::NumberToString<int>(bzStatus));
 			delete[] updateBuf;
 			return;
 		}

@@ -110,7 +110,8 @@ void FWRK_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Original version of fireworks, activated by heat/neutrons.";
+	elem->Description = "烟花的原始版本，由热/中子激活。";
+	elem->DetailedDescription = "燃点：126.85℃/400K\n描述：由中子(NEUT)或者达到燃点时激发，比烟花(FIRW)升的更高，但火焰苍白。用中子或热量(200℃)爆炸。跳得比 FIRW 高，有奇怪的轨迹和苍白的余烬。热时爆炸(温度约 7000℃ 以上)。\n产生：尘埃(DUST)在中子(NEUT)轰击下可以转变为传统烟花(FWRK)。\n导热率：100\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

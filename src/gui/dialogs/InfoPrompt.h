@@ -13,7 +13,7 @@ class InfoPrompt : public ui::Window
 	DismissCallback callback;
 
 public:
-	InfoPrompt(std::string title, std::string message, std::string OK = "OK", bool large = false);
+	InfoPrompt(std::string title, std::string message, std::string OK = "确定", bool large = false);
 
 	void SetCallback(DismissCallback callback) { this->callback = callback; }
 

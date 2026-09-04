@@ -173,7 +173,8 @@ void QRTZ_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 3;
 	elem->Latent = 0;
-	elem->Description = "Quartz, breakable mineral. Conducts but becomes brittle when cold. Scatters photons.";
+	elem->Description = "石英，易碎矿物。可以导电，但冷时会变脆。散射光子。";
+	elem->DetailedDescription = "描述：接近绝对零度时会变得很脆并碎裂成石英砂(PQRT)，允许一部分光子(PHOT)通过并散射掉另一部分。高温时缓慢熔化。遇到盐水(SLTW)时会缓慢生长，修改 Ctype 值可以改变其生长速度。在压力下能够导电。QRTZ 的阴影由其 Tmp2 值控制。通过放置它生成的默认值是 0-10，其中 0 表示相当深的蓝色，而 10 表示接近白色。当熔融的 QRTZ 和熔融的 CLST 混合时会变成熔融的 CRMC。\n熔点：2300℃/2573.15K\n元素参数：生长速度由 Ctype 值决定，Ctype 值越高生长越快\n导热率：3\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_HOT_GLOW | PROP_LIFE_DEC;
 

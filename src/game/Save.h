@@ -68,7 +68,7 @@ public:
 		SaveException(message)
 	{
 #ifdef DEBUG
-		std::cout << "Error building save: " << message << std::endl;
+		std::cout << "生成存档失败：" << message << std::endl;
 #endif
 	}
 };

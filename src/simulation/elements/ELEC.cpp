@@ -152,7 +152,8 @@ void ELEC_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 200.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Electrons. Sparks electronics, reacts with NEUT and WATR.";
+	elem->Description = "电子。可使电子元件产生火花，并与 NEUT 和 WATR 反应。";
+	elem->DetailedDescription = "描述：一种能量粒子，有和中子(NEUT)相似的运动方式，但是速度不会渐渐变慢。电子会给触碰到的导电物质一个电脉冲。和中子(NEUT)接触会形成氢气。电子也可以用于电解水。电子撞击荧光液(GLOW)后会转变成光子(PHOT)，而撞击重水(DEUT)会使其压缩。\n存活时间(Life)：680 帧\n导热率：251\n初始温度：222.00℃/295.15K";
 
 	elem->Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

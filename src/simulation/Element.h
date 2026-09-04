@@ -77,6 +77,7 @@ public:
 	// Latent value is in TPT imaginary units - 750/226*enthalpy value of the material
 	unsigned int Latent;
 	std::string Description;
+	std::string DetailedDescription;
 
 	unsigned int Properties;
 	unsigned int CarriesTypeIn;

@@ -52,7 +52,8 @@ void NBHL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 186;
 	elem->Latent = 0;
-	elem->Description = "Black hole, sucks in particles using gravity. (Requires Newtonian gravity)";
+	elem->Description = "黑洞，利用重力吸入粒子。 （需要牛顿引力）";
+	elem->DetailedDescription = "描述：使用需开启牛顿万有引力，产生引力吸入物质并升温。可以用控制台制造大量物质(>225)压缩在同一点上制得。\n元素参数：改变黑洞的 Tmp 值可以改变其引力值，公式为引力=Tmp*0.001，引力值至少为 0.1 P，最多为 51.2 P。\n导热率：186\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

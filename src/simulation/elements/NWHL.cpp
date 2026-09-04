@@ -52,7 +52,8 @@ void NWHL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 186;
 	elem->Latent = 0;
-	elem->Description = "White hole, pushes away other particles with gravity. (Requires Newtonian gravity)";
+	elem->Description = "白洞，用重力推开其他粒子。 （需要牛顿引力）";
+	elem->DetailedDescription = "描述：使用需开启牛顿万有引力，产生斥力排斥物质。\n元素参数：修改白洞的 Tmp 值可以改变其斥力值，公式为斥力=Tmp*0.001，斥力值至少为 0.1 P，最多为 51.2 P。\n导热率：186\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

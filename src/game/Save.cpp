@@ -413,10 +413,10 @@ void Save::ParseSave()
 		return;
 
 	if (!saveData)
-		throw ParseException("Save data doesn't exist");
+		throw ParseException("存档数据不存在");
 
 	if (saveSize < 12)
-		throw ParseException("Save too small");
+		throw ParseException("存档数据过小");
 
 	if ((saveData[0] == 0x66 && saveData[1] == 0x75 && saveData[2] == 0x43) || (saveData[0] == 0x50 && saveData[1] == 0x53 && saveData[2] == 0x76))
 	{
@@ -425,12 +425,12 @@ void Save::ParseSave()
 	else if (saveData[0] == 'O' && saveData[1] == 'P' && saveData[2] == 'S')
 	{
 		if (saveData[3] != '1')
-			throw ParseException("Save format from newer version");
+			throw ParseException("存档格式来自较新版本");
 		ParseSaveOPS();
 	}
 	else
 	{
-		throw ParseException("Invalid save format");
+		throw ParseException("存档格式无效");
 	}
 	expanded = true;
 }
@@ -537,16 +537,16 @@ void Save::ParseSaveOPS()
 	// Incompatible cell size
 	if (saveData[5] != CELL)
 	{
-		throw ParseException("Incorrect CELL size");
+		throw ParseException("CELL 尺寸不正确");
 	}
 
 	if (blockW <= 0 || blockH <= 0)
-		throw ParseException("Save too small");
+		throw ParseException("存档数据过小");
 
 	// Too large/off screen
 	if (blockX+blockW > XRES/CELL || blockY+blockH > YRES/CELL)
 	{
-		throw ParseException("Save too large");
+		throw ParseException("存档过大");
 	}
 
 	SetSize(blockW, blockH);
@@ -560,13 +560,13 @@ void Save::ParseSaveOPS()
 	unsigned int toAlloc = bsonDataLen + 1;
 	if (toAlloc > 209715200 || !toAlloc)
 	{
-		throw ParseException("Save data too large");
+		throw ParseException("存档数据过大");
 	}
 
 	bsonData = (unsigned char*)malloc(bsonDataLen+1);
 	if (!bsonData)
 	{
-		throw ParseException("Could not allocate memory");
+		throw ParseException("无法分配内存");
 	}
 	// Make sure bsonData is null terminated, since all string functions need null terminated strings
 	// (bson_iterator_key returns a pointer into bsonData, which is then used with strcmp)
@@ -575,10 +575,10 @@ void Save::ParseSaveOPS()
 	int bz2ret;
 	if ((bz2ret = BZ2_bzBuffToBuffDecompress((char*)bsonData, (unsigned*)(&bsonDataLen), (char*)saveData+12, saveSize-12, 0, 0)) != BZ_OK)
 	{
-		throw ParseException("Unable to decompress (ret " + Format::NumberToString<int>(bz2ret) + ")");
+		throw ParseException("无法解压（返回值 " + Format::NumberToString<int>(bz2ret) + ")");
 	}
 
-	set_bson_err_handler([](const char* err) { throw ParseException("BSON error when parsing save: " + std::string(err)); });
+	set_bson_err_handler([](const char* err) { throw ParseException("解析存档时出现 BSON 错误：" + std::string(err)); });
 	bson_init_data_size(&b, (char*)bsonData, bsonDataLen);
 	bson_iterator_init(&iter, &b);
 	while (bson_iterator_next(&iter))
@@ -772,7 +772,7 @@ void Save::ParseSaveOPS()
 				if (major > FAKE_SAVE_VERSION || (major == FAKE_SAVE_VERSION && minor > FAKE_MINOR_VER))
 				{
 					std::stringstream errorMessage;
-					errorMessage << "Save from a newer version: Requires version " << major << "." << minor;
+					errorMessage << "存档来自较新版本，需要版本 " << major << "." << minor;
 					if (loadIncompatibleSaves)
 						logMessages.push_back(errorMessage.str());
 					else
@@ -928,7 +928,7 @@ void Save::ParseSaveOPS()
 	{
 		unsigned int j = 0;
 		if (blockW * blockH > wallDataLen)
-			throw ParseException("Not enough wall data");
+			throw ParseException("墙体数据不足");
 		for (unsigned int x = 0; x < blockW; x++)
 		{
 			for (unsigned int y = 0; y < blockH; y++)
@@ -959,7 +959,7 @@ void Save::ParseSaveOPS()
 		unsigned int j = 0;
 		unsigned int i, i2;
 		if (blockW * blockH > pressDataLen)
-			throw ParseException("Not enough pressure data");
+			throw ParseException("压力数据不足");
 		hasPressure = true;
 		for (unsigned int x = 0; x < blockW; x++)
 		{
@@ -978,7 +978,7 @@ void Save::ParseSaveOPS()
 		unsigned int j = 0;
 		unsigned int i, i2;
 		if (blockW * blockH > vxDataLen)
-			throw ParseException("Not enough vx data");
+			throw ParseException("X 方向速度数据不足");
 		for (unsigned int x = 0; x < blockW; x++)
 		{
 			for (unsigned int y = 0; y < blockH; y++)
@@ -996,7 +996,7 @@ void Save::ParseSaveOPS()
 		unsigned int j = 0;
 		unsigned int i, i2;
 		if (blockW * blockH > vyDataLen)
-			throw ParseException("Not enough vy data");
+			throw ParseException("Y 方向速度数据不足");
 		for (unsigned int x = 0; x < blockW; x++)
 		{
 			for (unsigned int y = 0; y < blockH; y++)
@@ -1013,7 +1013,7 @@ void Save::ParseSaveOPS()
 	{
 		unsigned int tempTemp, j = 0;
 		if (blockW * blockH > ambientDataLen)
-			throw ParseException("Not enough ambient heat data");
+			throw ParseException("环境热量数据不足");
 		hasAmbientHeat = true;
 		for (unsigned int x = 0; x < blockW; x++)
 		{
@@ -1032,7 +1032,7 @@ void Save::ParseSaveOPS()
 		int newIndex = 0, tempTemp;
 		int posCount, posTotal, partsPosDataIndex = 0;
 		if (fullW * fullH * 3 > partsPosDataLen)
-			throw ParseException("Not enough particle position data");
+			throw ParseException("粒子位置数据不足");
 		unsigned int i = 0, x, y;
 		for (unsigned int saved_y = 0; saved_y < fullH; saved_y++)
 		{
@@ -1048,16 +1048,16 @@ void Save::ParseSaveOPS()
 				{
 					// i+3 because we have 4 bytes of required fields (type (1), descriptor (2), temp (1))
 					if (i+3 >= partsDataLen)
-						throw ParseException("Ran past particle data buffer");
+						throw ParseException("越过粒子数据缓冲区");
 					x = saved_x + fullX;
 					y = saved_y + fullY;
 					unsigned int fieldDescriptor = (unsigned int)(partsData[i+1]);
 					fieldDescriptor |= (unsigned int)(partsData[i+2]) << 8;
 					if (x >= XRES || y >= YRES)
-						throw ParseException("Particle out of range");
+						throw ParseException("粒子超出范围");
 
 					if (newIndex < 0 || newIndex >= NPART)
-						throw ParseException("Too many particles");
+						throw ParseException("粒子数量过多");
 
 					// Clear the particle, ready for our new properties
 					memset(&(particles[newIndex]), 0, sizeof(particle));
@@ -1093,7 +1093,7 @@ void Save::ParseSaveOPS()
 					if (fieldDescriptor & 0x8000)
 					{
 						if (i >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading third byte of field descriptor");
+							throw ParseException("读取字段描述符的第三个字节时越过粒子数据缓冲区");
 						fieldDescriptor |= (unsigned int)(partsData[i++]) << 16;
 					}
 
@@ -1101,13 +1101,13 @@ void Save::ParseSaveOPS()
 					if (fieldDescriptor & 0x02)
 					{
 						if (i >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading life");
+							throw ParseException("读取 Life 时越过粒子数据缓冲区");
 						particles[newIndex].life = partsData[i++];
 						// Read 2nd byte
 						if (fieldDescriptor & 0x04)
 						{
 							if (i >= partsDataLen)
-								throw ParseException("Ran past particle data buffer while loading life");
+								throw ParseException("读取 Life 时越过粒子数据缓冲区");
 							particles[newIndex].life |= (((unsigned)partsData[i++]) << 8);
 						}
 					}
@@ -1116,19 +1116,19 @@ void Save::ParseSaveOPS()
 					if (fieldDescriptor & 0x08)
 					{
 						if (i >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading tmp");
+							throw ParseException("读取 Tmp 时越过粒子数据缓冲区");
 						particles[newIndex].tmp = partsData[i++];
 						// Read 2nd byte
 						if (fieldDescriptor & 0x10)
 						{
 							if (i >= partsDataLen)
-								throw ParseException("Ran past particle data buffer while loading tmp");
+								throw ParseException("读取 Tmp 时越过粒子数据缓冲区");
 							particles[newIndex].tmp |= (((unsigned)partsData[i++]) << 8);
 							// Read 3rd and 4th bytes
 							if (fieldDescriptor & 0x1000)
 							{
 								if (i+1 >= partsDataLen)
-									throw ParseException("Ran past particle data buffer while loading tmp");
+									throw ParseException("读取 Tmp 时越过粒子数据缓冲区");
 								particles[newIndex].tmp |= (((unsigned)partsData[i++]) << 24);
 								particles[newIndex].tmp |= (((unsigned)partsData[i++]) << 16);
 							}
@@ -1139,13 +1139,13 @@ void Save::ParseSaveOPS()
 					if (fieldDescriptor & 0x20)
 					{
 						if (i >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading ctype");
+							throw ParseException("读取 Ctype 时越过粒子数据缓冲区");
 						particles[newIndex].ctype = partsData[i++];
 						// Read additional bytes
 						if (fieldDescriptor & 0x200)
 						{
 							if (i+2 >= partsDataLen)
-								throw ParseException("Ran past particle data buffer while loading ctype");
+								throw ParseException("读取 Ctype 时越过粒子数据缓冲区");
 							particles[newIndex].ctype |= (((unsigned)partsData[i++]) << 24);
 							particles[newIndex].ctype |= (((unsigned)partsData[i++]) << 16);
 							particles[newIndex].ctype |= (((unsigned)partsData[i++]) << 8);
@@ -1156,7 +1156,7 @@ void Save::ParseSaveOPS()
 					if (fieldDescriptor & 0x40)
 					{
 						if (i+3 >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading deco");
+							throw ParseException("读取装饰数据时越过粒子数据缓冲区");
 						unsigned char alpha = partsData[i++];
 						unsigned char red = partsData[i++];
 						unsigned char green = partsData[i++];
@@ -1168,7 +1168,7 @@ void Save::ParseSaveOPS()
 					if (fieldDescriptor & 0x80)
 					{
 						if (i >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading vx");
+							throw ParseException("读取 Vx 时越过粒子数据缓冲区");
 						particles[newIndex].vx = (partsData[i++]-127.0f)/16.0f;
 					}
 					
@@ -1176,7 +1176,7 @@ void Save::ParseSaveOPS()
 					if (fieldDescriptor & 0x100)
 					{
 						if (i >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading vy");
+							throw ParseException("读取 Vy 时越过粒子数据缓冲区");
 						particles[newIndex].vy = (partsData[i++]-127.0f)/16.0f;
 					}
 
@@ -1184,13 +1184,13 @@ void Save::ParseSaveOPS()
 					if (fieldDescriptor & 0x400)
 					{
 						if (i >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading tmp2");
+							throw ParseException("读取 Tmp2 时越过粒子数据缓冲区");
 						particles[newIndex].tmp2 = partsData[i++];
 						// Read 2nd byte
 						if (fieldDescriptor & 0x800)
 						{
 							if (i >= partsDataLen)
-								throw ParseException("Ran past particle data buffer while loading tmp2");
+								throw ParseException("读取 Tmp2 时越过粒子数据缓冲区");
 							particles[newIndex].tmp2 |= (((unsigned)partsData[i++]) << 8);
 						}
 					}
@@ -1199,9 +1199,9 @@ void Save::ParseSaveOPS()
 					if (fieldDescriptor & 0x2000)
 					{
 						if (i+3 >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading tmp3/tmp4");
+							throw ParseException("读取 Tmp3/Tmp4 时越过粒子数据缓冲区");
 						if (fieldDescriptor & 0x10000 && i+7 >= partsDataLen)
-							throw ParseException("Ran past particle data buffer while loading high halves of tmp3/tmp4");
+							throw ParseException("读取 Tmp3/Tmp4 高位时越过粒子数据缓冲区");
 
 						unsigned int tmp34  = (unsigned int)partsData[i + 0];
 						tmp34 |= (unsigned int)partsData[i + 1] << 8;
@@ -1231,7 +1231,7 @@ void Save::ParseSaveOPS()
 						if (fieldDescriptor & 0x4000)
 						{
 							if (i >= partsDataLen)
-								throw ParseException("Ran past particle data buffer while loading flags");
+								throw ParseException("读取标志时越过粒子数据缓冲区");
 							particles[newIndex].flags = partsData[i++];
 						}
 					}
@@ -1363,7 +1363,7 @@ void Save::ParseSaveOPS()
 			}
 		}
 		if (i != partsDataLen)
-			throw ParseException("Didn't reach end of particle data buffer");
+			throw ParseException("未能读取到粒子数据缓冲区末尾");
 
 #ifndef NOMOD
 		if (movsData)
@@ -1390,7 +1390,7 @@ void Save::ParseSaveOPS()
 					int animLen = animData[animDataPos++];
 					data.first = animLen;
 					if (animDataPos+4*(animLen+1) > animDataLen)
-						throw ParseException("Ran past particle data buffer while loading animation data");
+						throw ParseException("读取动画数据时越过粒子数据缓冲区");
 
 					for (int j = 0; j <= animLen; j++)
 					{
@@ -1434,10 +1434,10 @@ void Save::ParseSaveOPS()
 	}
 
 	if (androidCreatedVersion)
-		adminLogMessages.push_back("Made in android build version " + Format::NumberToString<int>(androidCreatedVersion));
+		adminLogMessages.push_back("创建于 Android 构建版本 " + Format::NumberToString<int>(androidCreatedVersion));
 
 	if (modCreatedVersion && !androidCreatedVersion)
-		adminLogMessages.push_back("Made in jacob1's mod version " + Format::NumberToString<int>(modCreatedVersion));
+		adminLogMessages.push_back("创建于 Jacob1 模组版本 " + Format::NumberToString<int>(modCreatedVersion));
 }
 
 void Save::ParseSavePSv()
@@ -1449,14 +1449,14 @@ void Save::ParseSavePSv()
 	//This creates a problem for old clients, that display and "corrupt" error instead of a "newer version" error
 
 	if (saveSize < 16)
-		throw ParseException("No save data");
+		throw ParseException("没有存档数据");
 	if (!(saveData[2] == 0x43 && saveData[1] == 0x75 && saveData[0] == 0x66) && !(saveData[2] == 0x76 && saveData[1] == 0x53 && saveData[0] == 0x50))
-		throw ParseException("Unknown format");
+		throw ParseException("未知格式");
 	if (saveData[2] == 0x76 && saveData[1] == 0x53 && saveData[0] == 0x50)
 		new_format = true;
 	int ver = saveData[4];
 	if ((ver > SAVE_VERSION && ver < 200) || (ver < 237 && ver > 200+MOD_SAVE_VERSION))
-		throw ParseException("Save from a newer version");
+		throw ParseException("存档来自更高版本");
 	if (ver == 240)
 	{
 		ver = 65;
@@ -1489,27 +1489,27 @@ void Save::ParseSavePSv()
 	SetSize(bw, bh);
 
 	if (saveData[5] != CELL || bw > XRES/CELL || bh > YRES/CELL)
-		throw ParseException("Save too large");
+		throw ParseException("存档过大");
 	int size = (unsigned)saveData[8];
 	size |= ((unsigned)saveData[9])<<8;
 	size |= ((unsigned)saveData[10])<<16;
 	size |= ((unsigned)saveData[11])<<24;
 	if (size > 209715200 || !size)
-		throw ParseException("Save data too large");
+		throw ParseException("存档数据过大");
 
 	auto dataPtr = std::unique_ptr<unsigned char[]>(new unsigned char[size]);
 	unsigned char *data = dataPtr.get();
 	if (!data)
-		throw ParseException("Cannot allocate memory");
+		throw ParseException("无法分配内存");
 
 	int bz2ret;
 	if ((bz2ret = BZ2_bzBuffToBuffDecompress((char *)data, (unsigned *)&size, (char *)(saveData+12), saveSize-12, 0, 0)) != BZ_OK)
 	{
-		throw BuildException("Could not compress (ret " + Format::NumberToString<int>(bz2ret) + ")");
+		throw BuildException("无法压缩（返回值 " + Format::NumberToString<int>(bz2ret) + ")");
 	}
 
 	if (size < bw*bh)
-		throw ParseException("Save data corrupt (missing data)");
+		throw ParseException("存档数据损坏（数据缺失）");
 
 	// normalize coordinates
 	int w  = bw *CELL;
@@ -1519,7 +1519,7 @@ void Save::ParseSavePSv()
 	int *particleIDMap = particleIDMapPtr.get();
 	std::fill(&particleIDMap[0], &particleIDMap[XRES*YRES], 0);
 	if (!particleIDMap)
-		throw ParseException("Cannot allocate memory");
+		throw ParseException("无法分配内存");
 
 	if (ver < 34)
 	{
@@ -1589,7 +1589,7 @@ void Save::ParseSavePSv()
 			if (data[y*bw+x]==4 || (ver>=44 && data[y*bw+x] == O_WL_FAN))
 			{
 				if (pos >= size)
-					throw ParseException("Ran past fanVelX data buffer");
+					throw ParseException("越过风扇 X 速度数据缓冲区");
 				fanVelX[y][x] = (data[pos++]-127.0f)/64.0f;
 			}
 	for (int y = 0; y < bh; y++)
@@ -1597,7 +1597,7 @@ void Save::ParseSavePSv()
 			if (data[y*bw+x]==4 || (ver>=44 && data[y*bw+x] == O_WL_FAN))
 			{
 				if (pos >= size)
-					throw ParseException("Ran past fanVelY data buffer");
+					throw ParseException("越过风扇 Y 速度数据缓冲区");
 				fanVelY[y][x] = (data[pos++]-127.0f)/64.0f;
 			}
 
@@ -1608,7 +1608,7 @@ void Save::ParseSavePSv()
 		for (int x = 0; x < w; x++)
 		{
 			if (pos >= size)
-				throw ParseException("Ran past particle data buffer");
+				throw ParseException("越过粒子数据缓冲区");
 			int type = data[pos++];
 			if (type >= PT_NUM)
 			{
@@ -1656,7 +1656,7 @@ void Save::ParseSavePSv()
 		{
 			i--;
 			if (pos+1 >= size)
-				throw ParseException("Ran past velocity data buffer");
+				throw ParseException("越过速度数据缓冲区");
 			if (i > 0 && i < NPART)
 			{
 				particles[i].vx = (data[pos++]-127.0f)/16.0f;
@@ -1674,7 +1674,7 @@ void Save::ParseSavePSv()
 			if (ver >= 44)
 			{
 				if (pos >= size)
-					throw ParseException("Ran past .life data buffer");
+					throw ParseException("越过 Life 数据缓冲区");
 				if (i > 0 && i <= NPART)
 				{
 					int life = (data[pos++])<<8;
@@ -1687,7 +1687,7 @@ void Save::ParseSavePSv()
 			else
 			{
 				if (pos >= size)
-					throw ParseException("Ran past .life data buffer");
+					throw ParseException("越过 Life 数据缓冲区");
 				if (i > 0 && i <= NPART)
 					particles[i-1].life = data[pos++]*4;
 				else
@@ -1703,7 +1703,7 @@ void Save::ParseSavePSv()
 			if (i)
 			{
 				if (pos >= size)
-					throw ParseException("Ran past .tmp data buffer");
+					throw ParseException("越过 Tmp 数据缓冲区");
 				if (i > 0 && i <= NPART)
 				{
 					int tmp = (data[pos++])<<8;
@@ -1735,7 +1735,7 @@ void Save::ParseSavePSv()
 			if (i && (type == PT_PBCN || (type == PT_TRON && ver >= 77)))
 			{
 				if (pos >= size)
-					throw ParseException("Ran past .tmp2 data buffer");
+					throw ParseException("越过 Tmp2 数据缓冲区");
 				if (i > 0 && i <= NPART)
 				{
 					particles[i-1].tmp2 = data[pos++];
@@ -1754,7 +1754,7 @@ void Save::ParseSavePSv()
 			if (ver >= 49)
 			{
 				if (pos >= size)
-					throw ParseException("Ran past alpha deco data buffer");
+					throw ParseException("越过装饰透明度数据缓冲区");
 				if (i > 0 && i <= NPART)
 					particles[i-1].dcolour = (data[pos++]<<24);
 				else
@@ -1771,7 +1771,7 @@ void Save::ParseSavePSv()
 			if (ver >= 49)
 			{
 				if (pos >= size)
-					throw ParseException("Ran past red deco data buffer");
+					throw ParseException("越过装饰红色通道数据缓冲区");
 				if (i > 0 && i <= NPART)
 					particles[i-1].dcolour |= (data[pos++]<<16);
 				else
@@ -1788,7 +1788,7 @@ void Save::ParseSavePSv()
 			if (ver >= 49)
 			{
 				if (pos >= size)
-					throw ParseException("Ran past green deco data buffer");
+					throw ParseException("越过装饰绿色通道数据缓冲区");
 				if (i > 0 && i <= NPART)
 					particles[i-1].dcolour |= (data[pos++]<<8);
 				else
@@ -1805,7 +1805,7 @@ void Save::ParseSavePSv()
 			if (ver >= 49)
 			{
 				if (pos >= size)
-					throw ParseException("Ran past blue deco data buffer");
+					throw ParseException("越过装饰蓝色通道数据缓冲区");
 				if (i > 0 && i <= NPART)
 					particles[i-1].dcolour |= data[pos++];
 				else
@@ -1821,7 +1821,7 @@ void Save::ParseSavePSv()
 			if (ver >= 34 && !legacy_beta)
 			{
 				if (pos >= size)
-					throw ParseException("Ran past .temp data buffer");
+					throw ParseException("越过温度数据缓冲区");
 				if (i >= 0 && i <= NPART)
 				{
 					if (ver >= 42)
@@ -1868,7 +1868,7 @@ void Save::ParseSavePSv()
 		if (i && (type==PT_CLNE || (type==PT_PCLN && ver>=43) || (type==PT_BCLN && ver>=44) || (type==PT_SPRK && ver>=21) || (type==PT_LAVA && ver>=34) || (type==PT_PIPE && ver>=43) || (type==PT_LIFE && ver>=51) || (type==PT_PBCN && ver>=52) || (type==PT_WIRE && ver>=55) || (type==PT_STOR && ver>=59) || (type==PT_CONV && ver>=60)))
 		{
 			if (pos >= size)
-				throw ParseException("Ran past .ctype data buffer");
+				throw ParseException("越过 Ctype 数据缓冲区");
 			if (i > 0 && i <= NPART)
 				particles[i-1].ctype = data[pos++];
 			else
@@ -2024,7 +2024,7 @@ void Save::ParseSavePSv()
 	for (int i = 0; i < signLen; i++)
 	{
 		if (pos+6 > size)
-			throw ParseException("Ran past sign data buffer");
+			throw ParseException("越过标牌数据缓冲区");
 
 		if (signs.size() >= MAXSIGNS)
 		{
@@ -2046,7 +2046,7 @@ void Save::ParseSavePSv()
 
 			int textSize = data[pos++];
 			if (pos+textSize > size)
-				throw ParseException("Ran past sign data buffer");
+				throw ParseException("越过标牌数据缓冲区");
 
 			char temp[256];
 			memcpy(temp, data+pos, textSize);
@@ -2060,7 +2060,7 @@ void Save::ParseSavePSv()
 	if (modCreatedVersion >= 3)
 	{
 		if (pos >= size)
-			throw ParseException("Ran past mod settings data buffer");
+			throw ParseException("越过模组设置数据缓冲区");
 		decorationsEnable = (data[pos++])&0x01;
 		aheatEnable = (data[pos]>>1)&0x01;
 		hudEnable = (data[pos]>>2)&0x01;
@@ -2099,7 +2099,7 @@ void Save::BuildSave()
 	auto ambientData = std::unique_ptr<unsigned char[]>(new unsigned char[blockWidth*blockHeight*2]);
 	std::fill(&ambientData[0], &ambientData[blockWidth*blockHeight*2], 0);
 	if (!wallData || !fanData || !pressData || !vxData || !vyData || !ambientData)
-		throw BuildException("Save error, out of memory (blockmaps)");
+		throw BuildException("存档错误：内存不足（块映射）");
 
 	auto &possiblyCarriesType = particle::PossiblyCarriesType();
 	auto &properties = particle::GetProperties();
@@ -2169,7 +2169,7 @@ void Save::BuildSave()
 	auto partsPosCount = std::unique_ptr<unsigned[]>(new unsigned[fullW*fullH]);
 	auto partsPosLink = std::unique_ptr<unsigned[]>(new unsigned[NPART]);
 	if (!partsPosFirstMap || !partsPosLastMap || !partsPosCount || !partsPosLink)
-		throw BuildException("Save error, out of memory  (partmaps)");
+		throw BuildException("存档错误：内存不足（粒子映射）");
 	std::fill(&partsPosFirstMap[0], &partsPosFirstMap[fullW*fullH], 0);
 	std::fill(&partsPosLastMap[0], &partsPosLastMap[fullW*fullH], 0);
 	std::fill(&partsPosCount[0], &partsPosCount[fullW*fullH], 0);
@@ -2201,7 +2201,7 @@ void Save::BuildSave()
 	auto partsPosData = std::unique_ptr<unsigned char[]>(new unsigned char[fullW*fullH*3]);
 	unsigned int partsPosDataLen = 0;
 	if (!partsPosData)
-		throw BuildException("Save error, out of memory (partposdata)");
+		throw BuildException("存档错误：内存不足（粒子位置数据）");
 	for (int y = 0; y < fullH; y++)
 	{
 		for (int x = 0; x < fullW; x++)
@@ -2232,7 +2232,7 @@ void Save::BuildSave()
 	auto partsSaveIndex = std::unique_ptr<unsigned[]>(new unsigned[NPART]);
 	unsigned int partsCount = 0;
 	if (!partsData || !partsSaveIndex)
-		throw BuildException("Save error, out of memory (partsdata)");
+		throw BuildException("存档错误：内存不足（粒子数据）");
 	std::fill(&partsSaveIndex[0], &partsSaveIndex[NPART], 0);
 	for (int y = 0; y < fullH; y++)
 	{
@@ -2539,7 +2539,7 @@ void Save::BuildSave()
 	{
 		movsData = new unsigned char[MOVSdata.size()*2];
 		if (!movsData)
-			throw BuildException("Save error, out of memory (BALL)");
+			throw BuildException("存档错误：内存不足（BALL）");
 		movsDataPtr = std::move(std::unique_ptr<unsigned char[]>(movsData));
 		for (MOVSdataItem movs : MOVSdata)
 		{
@@ -2558,7 +2558,7 @@ void Save::BuildSave()
 
 		animData = new unsigned char[ANIMsize];
 		if (!animData)
-			throw BuildException("Save error, out of memory (ANIM)");
+			throw BuildException("存档错误：内存不足（ANIM）");
 		animDataPtr = std::move(std::unique_ptr<unsigned char[]>(animData));
 		
 		for (ANIMdataItem anim : ANIMdata)
@@ -2582,7 +2582,7 @@ void Save::BuildSave()
 	{
 		soapLinkData = new unsigned char[3*soapCount];
 		if (!soapLinkData)
-			throw BuildException("Save error, out of memory (SOAP)");
+			throw BuildException("存档错误：内存不足（SOAP）");
 		soapLinkDataPtr = std::move(std::unique_ptr<unsigned char[]>(soapLinkData));
 		
 		// Iterate through particles in the same order that they were saved
@@ -2638,7 +2638,7 @@ void Save::BuildSave()
 	// Use unique_ptr with a custom deleter to ensure that bson_destroy is called even when an exception is thrown
 	std::unique_ptr<bson, decltype(bson_deleter)> b_ptr(&b, bson_deleter);
 
-	set_bson_err_handler([](const char* err) { throw BuildException("BSON error when building save: " + std::string(err)); });
+	set_bson_err_handler([](const char* err) { throw BuildException("生成存档时发生 BSON 错误：" + std::string(err)); });
 	bson_init(&b);
 	bson_append_start_object(&b, "origin");
 	bson_append_int(&b, "majorVersion", SAVE_VERSION);
@@ -2837,7 +2837,7 @@ void Save::BuildSave()
 		bson_append_finish_object(&b);
 	}
 	if (bson_finish(&b) == BSON_ERROR)
-		throw BuildException("Error building bson data");
+		throw BuildException("生成 BSON 数据失败");
 	//bson_print(&b);
 
 	// Mark save as incompatible with latest release
@@ -2848,7 +2848,7 @@ void Save::BuildSave()
 	unsigned int finalDataLen = bson_size(&b);
 	auto outputData = std::unique_ptr<unsigned char[]>(new unsigned char[finalDataLen*2+12]);
 	if (!outputData)
-		throw BuildException("Save error, out of memory (finalData): " + Format::NumberToString<unsigned int>(finalDataLen*2+12));
+		throw BuildException("存档错误：最终数据内存不足：" + Format::NumberToString<unsigned int>(finalDataLen*2+12));
 
 	outputData[0] = 'O';
 	outputData[1] = 'P';
@@ -2866,7 +2866,7 @@ void Save::BuildSave()
 	unsigned int compressedSize = finalDataLen*2, bz2ret;
 	if ((bz2ret = BZ2_bzBuffToBuffCompress((char*)(outputData.get()+12), &compressedSize, (char*)finalData, bson_size(&b), 9, 0, 0)) != BZ_OK)
 	{
-		throw BuildException("Save error, could not compress (ret " + Format::NumberToString<int>(bz2ret) + ")");
+		throw BuildException("存档错误：无法压缩（返回值 " + Format::NumberToString<int>(bz2ret) + ")");
 	}
 
 	saveSize = compressedSize + 12;

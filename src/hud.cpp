@@ -105,15 +105,15 @@ void SetRightHudText(Simulation * sim, int x, int y)
 				}
 				else if (currentHud[13] && underType == PT_LAVA && sim->IsElement(parts[underID].ctype))
 				{
-					nametext << "Molten " << ElementResolve(sim, parts[underID].ctype, 0);
+					nametext << "熔融" << ElementResolve(sim, parts[underID].ctype, 0);
 				}
 				else if (currentHud[50] && currentHud[11] && underType == PT_FILT)
 				{
-					const char* filtModes[] = { "set color", "AND", "OR", "subtract color", "red shift", "blue shift", "no effect", "XOR", "NOT", "PHOT scatter", "variable red shift", "variable blue shift" };
+					const char* filtModes[] = { "设置颜色", "AND", "OR", "减去颜色", "红移", "蓝移", "无效果", "XOR", "NOT", "PHOT 散射", "可变红移", "可变蓝移" };
 					if (parts[underID].tmp >= 0 && parts[underID].tmp <= 11)
 						nametext << "FILT (" << filtModes[parts[underID].tmp] << ")";
 					else
-						nametext << "FILT (unknown mode)";
+						nametext << "FILT（未知模式）";
 				}
 				else if (currentHud[54] && currentHud[11] && (underType == PT_SEED || (underType == PT_PLNT && parts[underID].ctype)))
 				{
@@ -163,9 +163,9 @@ void SetRightHudText(Simulation * sim, int x, int y)
 			else if (currentHud[11])
 			{
 				if (parts[underID].ctype > 0 && parts[underID].ctype < PT_NUM)
-					nametext << "Ctype: " << ElementResolve(sim, parts[underID].ctype, 0);
+					nametext << "Ctype：" << ElementResolve(sim, parts[underID].ctype, 0);
 				else if (currentHud[12])
-					nametext << "Ctype: " << parts[underID].ctype;
+					nametext << "Ctype：" << parts[underID].ctype;
 			}
 			else if (wl && currentHud[48])
 			{
@@ -177,37 +177,37 @@ void SetRightHudText(Simulation * sim, int x, int y)
 			if (currentHud[14])
 			{
 				std::string tempStr = Format::TemperatureToString(parts[underID].temp, sim->temperatureScale, currentHud[18]);
-				sprintf(tempstring,"Temp: %s, ", tempStr.c_str());
+				sprintf(tempstring,"温度：%s，", tempStr.c_str());
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[15] && (!currentHud[14] || sim->temperatureScale != 1))
 			{
 				std::string tempStr = Format::TemperatureToString(parts[underID].temp, 1, currentHud[18]);
-				sprintf(tempstring,"Temp: %s, ", tempStr.c_str());
+				sprintf(tempstring,"温度：%s，", tempStr.c_str());
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[16] && (!currentHud[14] || sim->temperatureScale != 2))
 			{
 				std::string tempStr = Format::TemperatureToString(parts[underID].temp, 2, currentHud[18]);
-				sprintf(tempstring,"Temp: %s, ", tempStr.c_str());
+				sprintf(tempstring,"温度：%s，", tempStr.c_str());
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[17] && (!currentHud[14] || sim->temperatureScale != 0))
 			{
 				std::string tempStr = Format::TemperatureToString(parts[underID].temp, 0, currentHud[18]);
-				sprintf(tempstring,"Temp: %s, ", tempStr.c_str());
+				sprintf(tempstring,"温度：%s，", tempStr.c_str());
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[19])
 			{
-				sprintf(tempstring,"Life: %d, ",parts[underID].life);
+				sprintf(tempstring,"寿命：%d，",parts[underID].life);
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[20])
 			{
 				if (underType != PT_RFRG && underType != PT_RFGL && underType != PT_LIFE)
 				{
-					sprintf(tempstring,"Tmp: %d, ",parts[underID].tmp);
+				sprintf(tempstring,"Tmp：%d，",parts[underID].tmp);
 					strappend(heattext,tempstring);
 				}
 			}
@@ -217,17 +217,17 @@ void SetRightHudText(Simulation * sim, int x, int y)
 					 underType == PT_DTEC || underType == PT_LSNS || underType == PT_PSTN || underType == PT_LDTC || underType == PT_VSNS|| underType == PT_LITH ||
 					 underType == PT_CONV || underType == PT_ETRD)))
 			{
-				sprintf(tempstring,"Tmp2: %d, ",parts[underID].tmp2);
+				sprintf(tempstring,"Tmp2：%d，",parts[underID].tmp2);
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[46])
 			{
-				sprintf(tempstring,"Dcolor: 0x%.8X, ",parts[underID].dcolour);
+				sprintf(tempstring,"装饰色：0x%.8X，",parts[underID].dcolour);
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[47])
 			{
-				sprintf(tempstring,"Flags: 0x%.8X, ",parts[underID].flags);
+				sprintf(tempstring,"标志：0x%.8X，",parts[underID].flags);
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[22])
@@ -237,12 +237,12 @@ void SetRightHudText(Simulation * sim, int x, int y)
 			}
 			if (currentHud[24])
 			{
-				sprintf(tempstring,"Vx: %0.*f, Vy: %0.*f, ",currentHud[25],parts[underID].vx,currentHud[25],parts[underID].vy);
+				sprintf(tempstring,"Vx：%0.*f，Vy：%0.*f，",currentHud[25],parts[underID].vx,currentHud[25],parts[underID].vy);
 				strappend(heattext,tempstring);
 			}
 			if (currentHud[51])
 			{
-				sprintf(tempstring,"tmp3: %d, tmp4: %d, ",parts[underID].tmp3,parts[underID].tmp4);
+				sprintf(tempstring,"Tmp3：%d，Tmp4：%d，",parts[underID].tmp3,parts[underID].tmp4);
 				strappend(heattext,tempstring);
 			}
 #ifndef NOMOD
@@ -257,15 +257,23 @@ void SetRightHudText(Simulation * sim, int x, int y)
 		else
 		{
 			if (currentHud[10])
-				sprintf(heattext,"Empty, ");
+				sprintf(heattext,"空白，");
 		}
 		if (currentHud[26])
 		{
-			sprintf(tempstring,"Pressure: %0.*f, ",currentHud[27],sim->air->pv[y/CELL][x/CELL]);
+			sprintf(tempstring,"压力：%0.*f，",currentHud[27],sim->air->pv[y/CELL][x/CELL]);
 			strappend(heattext,tempstring);
 		}
-		if (strlen(heattext) > 1)
-			heattext[strlen(heattext)-2] = '\0'; // delete comma and space at end
+		// Chinese HUD fields end with the UTF-8 full-width comma (EF BC 8C).
+		// The original English code removed two bytes for ", ", which left an
+		// invalid UTF-8 byte behind and rendered as a circled-plus glyph.
+		size_t heattextLength = strlen(heattext);
+		if (heattextLength >= 3 && !memcmp(heattext + heattextLength - 3, "\xEF\xBC\x8C", 3))
+			heattext[heattextLength - 3] = '\0';
+		else if (heattextLength >= 2 && heattext[heattextLength - 2] == ',' && heattext[heattextLength - 1] == ' ')
+			heattext[heattextLength - 2] = '\0';
+		else if (heattextLength >= 1 && heattext[heattextLength - 1] == ',')
+			heattext[heattextLength - 1] = '\0';
 
 		if (currentHud[28] && cr)
 		{
@@ -282,27 +290,27 @@ void SetRightHudText(Simulation * sim, int x, int y)
 		}
 		if (currentHud[30] && sim->grav->IsEnabled() && sim->grav->gravp[((y/CELL)*(XRES/CELL))+(x/CELL)])
 		{
-			sprintf(tempstring,"GX: %0.*f GY: %0.*f ", currentHud[31], sim->grav->gravx[((y/CELL)*(XRES/CELL))+(x/CELL)], currentHud[31], sim->grav->gravy[((y/CELL)*(XRES/CELL))+(x/CELL)]);
+			sprintf(tempstring,"GX：%0.*f GY：%0.*f ", currentHud[31], sim->grav->gravx[((y/CELL)*(XRES/CELL))+(x/CELL)], currentHud[31], sim->grav->gravy[((y/CELL)*(XRES/CELL))+(x/CELL)]);
 			strappend(coordtext,tempstring);
 		}
 		if (currentHud[34] && aheat_enable)
 		{
-			sprintf(tempstring,"A.Heat: %0.*f K ",currentHud[35],sim->air->hv[y/CELL][x/CELL]);
+			sprintf(tempstring,"环境热量：%0.*f K ",currentHud[35],sim->air->hv[y/CELL][x/CELL]);
 			strappend(coordtext,tempstring);
 		}
 		if (currentHud[32])
 		{
-			sprintf(tempstring,"Pressure: %0.*f ",currentHud[33],sim->air->pv[y/CELL][x/CELL]);
+			sprintf(tempstring,"压力：%0.*f ",currentHud[33],sim->air->pv[y/CELL][x/CELL]);
 			strappend(coordtext,tempstring);
 		}
 		if (currentHud[43])
 		{
-			sprintf(tempstring,"VX: %0.*f VY: %0.*f ",currentHud[44],sim->air->vx[y/CELL][x/CELL],currentHud[44],sim->air->vy[y/CELL][x/CELL]);
+			sprintf(tempstring,"VX：%0.*f VY：%0.*f ",currentHud[44],sim->air->vx[y/CELL][x/CELL],currentHud[44],sim->air->vy[y/CELL][x/CELL]);
 			strappend(coordtext,tempstring);
 		}
 		if (currentHud[52])
 		{
-			sprintf(tempstring,"emap: %d",emap[y/CELL][x/CELL]);
+			sprintf(tempstring,"电图：%d",emap[y/CELL][x/CELL]);
 			strappend(coordtext,tempstring);
 		}
 		if (strlen(coordtext) > 0 && coordtext[strlen(coordtext)-1] == ' ')
@@ -311,7 +319,7 @@ void SetRightHudText(Simulation * sim, int x, int y)
 	else
 	{
 		if (currentHud[10])
-			sprintf(heattext, "Empty");
+			sprintf(heattext, "空");
 		if (currentHud[29])
 			sprintf(coordtext, "X:%d Y:%d", x, y);
 	}
@@ -321,18 +329,18 @@ void SetLeftHudText(Simulation * sim, float FPSB2)
 {
 #ifdef BETA
 	if (currentHud[0] && currentHud[1])
-		sprintf(uitext, "Version %d Beta %d (%d) ", SAVE_VERSION, MINOR_VERSION, BUILD_NUM);
+		sprintf(uitext, "版本 %d 测试版 %d（%d） ", SAVE_VERSION, MINOR_VERSION, BUILD_NUM);
 	else if (currentHud[0] && !currentHud[1])
-		sprintf(uitext, "Version %d Beta %d ", SAVE_VERSION, MINOR_VERSION);
+		sprintf(uitext, "版本 %d 测试版 %d ", SAVE_VERSION, MINOR_VERSION);
 	else if (!currentHud[0] && currentHud[1])
-		sprintf(uitext, "Beta Build %d ", BUILD_NUM);
+		sprintf(uitext, "测试构建 %d ", BUILD_NUM);
 #else
 	if (currentHud[0] && currentHud[1])
-		sprintf(uitext, "Version %d.%d (%d) ", SAVE_VERSION, MINOR_VERSION, BUILD_NUM);
+		sprintf(uitext, "版本 %d.%d（%d） ", SAVE_VERSION, MINOR_VERSION, BUILD_NUM);
 	else if (currentHud[0] && !currentHud[1])
-		sprintf(uitext, "Version %d.%d ", SAVE_VERSION, MINOR_VERSION);
+		sprintf(uitext, "版本 %d.%d ", SAVE_VERSION, MINOR_VERSION);
 	else if (!currentHud[0] && currentHud[1])
-		sprintf(uitext, "Build %d ", BUILD_NUM);
+		sprintf(uitext, "构建 %d ", BUILD_NUM);
 #endif
 	else
 		uitext[0] = '\0';
@@ -353,64 +361,64 @@ void SetLeftHudText(Simulation * sim, float FPSB2)
 	}
 	if (currentHud[2])
 	{
-		sprintf(tempstring,"FPS:%0.*f ",currentHud[3],FPSB2);
+		sprintf(tempstring,"帧率：%0.*f ",currentHud[3],FPSB2);
 		strappend(uitext,tempstring);
 	}
 	if (currentHud[4])
 	{
 		if (finding & ~0x8)
-			sprintf(tempstring,"Parts: %d/%d ", foundParticles, NUM_PARTS);
+			sprintf(tempstring,"粒子：%d/%d ", foundParticles, NUM_PARTS);
 		else
-			sprintf(tempstring,"Parts: %d ", NUM_PARTS);
+			sprintf(tempstring,"粒子：%d ", NUM_PARTS);
 		strappend(uitext,tempstring);
 	}
 	if (currentHud[5])
 	{
-		sprintf(tempstring,"Generation:%d ", static_cast<LIFE_ElementDataContainer&>(*sim->elementData[PT_LIFE]).golGeneration);
+		sprintf(tempstring,"世代：%d ", static_cast<LIFE_ElementDataContainer&>(*sim->elementData[PT_LIFE]).golGeneration);
 		strappend(uitext,tempstring);
 	}
 	if (currentHud[6])
 	{
-		sprintf(tempstring,"Gravity:%d ", sim->gravityMode);
+		sprintf(tempstring,"引力：%d ", sim->gravityMode);
 		strappend(uitext,tempstring);
 	}
 	if (currentHud[7])
 	{
-		sprintf(tempstring,"Air:%d ", luaSim->air->airMode);
+		sprintf(tempstring,"空气：%d ", luaSim->air->airMode);
 		strappend(uitext,tempstring);
 	}
 	if (currentHud[39])
 	{
 		GetTimeString(currentTime-totalafktime-afktime, timeinfotext, 2);
-		sprintf(tempstring,"Time Played: %s ", timeinfotext);
+		sprintf(tempstring,"本次时长：%s ", timeinfotext);
 		strappend(uitext,tempstring);
 	}
 	if (currentHud[40])
 	{
 		GetTimeString(totaltime+currentTime-totalafktime-afktime, timeinfotext, 1);
-		sprintf(tempstring,"Total Time Played: %s ", timeinfotext);
+		sprintf(tempstring,"总时长：%s ", timeinfotext);
 		strappend(uitext,tempstring);
 	}
 	if (currentHud[41] && frames)
 	{
-		sprintf(tempstring,"Average FPS: %0.*f ", currentHud[42], totalfps/frames);
+		sprintf(tempstring,"平均帧率：%0.*f ", currentHud[42], totalfps/frames);
 		strappend(uitext,tempstring);
 	}
 	if (REPLACE_MODE && currentHud[8])
-		strappend(uitext, "[REPLACE MODE] ");
+		strappend(uitext, "[替换模式] ");
 	if (SPECIFIC_DELETE && currentHud[8])
-		strappend(uitext, "[SPECIFIC DELETE] ");
+		strappend(uitext, "[指定删除] ");
 	if ((finding & ~0x8) && currentHud[8])
-		strappend(uitext, "[FIND] ");
+		strappend(uitext, "[查找] ");
 	if (GRID_MODE && currentHud[9])
 	{
-		sprintf(tempstring, "[GRID: %d] ", GRID_MODE);
+		sprintf(tempstring, "[网格：%d] ", GRID_MODE);
 		strappend(uitext, tempstring);
 	}
 #ifndef NOMOD
 	if (active_menu == SC_DECO && frameNum)
 	{
-		sprintf(tempstring,"[Frame %i/%i] ",frameNum, static_cast<ANIM_ElementDataContainer&>(*sim->elementData[PT_ANIM]).GetMaxFrames());
+		sprintf(tempstring,"[帧 %i/%i] ",frameNum, static_cast<ANIM_ElementDataContainer&>(*sim->elementData[PT_ANIM]).GetMaxFrames());
 		strappend(uitext, tempstring);
 		frameNum = 0;
 	}
@@ -541,40 +549,40 @@ void DrawRecordsInfo(Simulation * sim)
 		}
 
 	GetTimeString(currentTime-totalafktime-afktime, timeinfotext, 0);
-	sprintf(infotext,"Time Played: %s", timeinfotext);
+	sprintf(infotext,"本次时长：%s", timeinfotext);
 	fillrect(vid_buf, 12, ytop-4, textwidth(infotext)+8, 15, 0, 0, 0, 140);
 	drawtext(vid_buf, 16, ytop, infotext, 255, 255, 255, 200);
 	GetTimeString(totaltime+currentTime-totalafktime-afktime, timeinfotext, 0);
-	sprintf(infotext,"Total Time Played: %s", timeinfotext);
+	sprintf(infotext,"总游戏时长：%s", timeinfotext);
 	fillrect(vid_buf, 12, ytop+10, textwidth(infotext)+8, 15, 0, 0, 0, 140);
 	drawtext(vid_buf, 16, ytop+14, infotext, 255, 255, 255, 200);
 	GetTimeString(totalafktime+afktime+prevafktime, timeinfotext, 0);
-	sprintf(infotext,"Total AFK Time: %s", timeinfotext);
+	sprintf(infotext,"总离开时长：%s", timeinfotext);
 	fillrect(vid_buf, 12, ytop+24, textwidth(infotext)+8, 15, 0, 0, 0, 140);
 	drawtext(vid_buf, 16, ytop+28, infotext, 255, 255, 255, 200);
 	if (frames)
 	{
-		sprintf(infotext,"Average FPS: %f", totalfps/frames);
+		sprintf(infotext,"平均帧率：%f", totalfps/frames);
 		fillrect(vid_buf, 12, ytop+38, textwidth(infotext)+8, 15, 0, 0, 0, 140);
 		drawtext(vid_buf, 16, ytop+42, infotext, 255, 255, 255, 200);
 	}
-	sprintf(infotext,"Number of Times Played: %i", timesplayed);
+	sprintf(infotext,"启动次数：%i", timesplayed);
 	fillrect(vid_buf, 12, ytop+52, textwidth(infotext)+8, 15, 0, 0, 0, 140);
 	drawtext(vid_buf, 16, ytop+56, infotext, 255, 255, 255, 200);
 	if (timesplayed)
 	{
 		GetTimeString((totaltime+currentTime-totalafktime-afktime)/timesplayed, timeinfotext, 0);
-		sprintf(infotext,"Average Time Played: %s", timeinfotext);
+		sprintf(infotext,"平均游戏时长：%s", timeinfotext);
 		fillrect(vid_buf, 12, ytop+66, textwidth(infotext)+8, 15, 0, 0, 0, 140);
 		drawtext(vid_buf, 16, ytop+70, infotext, 255, 255, 255, 200);
 	}
 	if (num_parts)
 	{
-		sprintf(infotext,"Average Temp: %f C", totaltemp/num_parts-273.15f);
+		sprintf(infotext,"平均温度：%f C", totaltemp/num_parts-273.15f);
 		fillrect(vid_buf, 12, ytop+80, textwidth(infotext)+8, 15, 0, 0, 0, 140);
 		drawtext(vid_buf, 16, ytop+84, infotext, 255, 255, 255, 200);
 	}
-	sprintf(infotext,"Average Pressure: %f", totalpressure/(XRES*YRES/CELL/CELL));
+	sprintf(infotext,"平均压力：%f", totalpressure/(XRES*YRES/CELL/CELL));
 	fillrect(vid_buf, 12, ytop+94, textwidth(infotext)+8, 15, 0, 0, 0, 140);
 	drawtext(vid_buf, 16, ytop+98, infotext, 255, 255, 255, 200);
 	if (num_parts)
@@ -584,7 +592,7 @@ void DrawRecordsInfo(Simulation * sim)
 		else if (((ElementTool*)activeTools[0])->GetID() > 0)
 			sprintf(infotext,"%%%s: %f", sim->elements[activeTools[0]->GetID()].Name.c_str(),(float)totalselected/num_parts*100);
 		else
-			sprintf(infotext,"%%Empty: %f", (float)totalselected/XRES/YRES*100);
+		sprintf(infotext,"空白比例：%f%%", (float)totalselected/XRES/YRES*100);
 		fillrect(vid_buf, 12, ytop+108, textwidth(infotext)+8, 15, 0, 0, 0, 140);
 		drawtext(vid_buf, 16, ytop+112, infotext, 255, 255, 255, 200);
 	}
@@ -630,9 +638,9 @@ void GetTimeString(int currtime, char *string, int length)
 	currtime = currtime%1000;
 	milliseconds = currtime;
 	if (length == 0)
-		sprintf(string,"%i year%s, %i day%s, %i hour%s, %i minute%s, %i second%s, %i millisecond%s",years,(years == 1)?"":"s",days,(days == 1)?"":"s",hours,(hours == 1)?"":"s",minutes,(minutes == 1)?"":"s",seconds,(seconds == 1)?"":"s",milliseconds,(milliseconds == 1)?"":"s");
+		sprintf(string,"%i年 %i天 %i小时 %i分钟 %i秒 %i毫秒",years,days,hours,minutes,seconds,milliseconds);
 	else if (length == 1)
-		sprintf(string,"%i hour%s, %i minute%s, %i second%s",hours,(hours == 1)?"":"s",minutes,(minutes == 1)?"":"s",seconds,(seconds == 1)?"":"s");
+		sprintf(string,"%i小时 %i分钟 %i秒",hours,minutes,seconds);
 	else if (length == 2)
-		sprintf(string,"%i minute%s, %i second%s",minutes,(minutes == 1)?"":"s",seconds,(seconds == 1)?"":"s");
+		sprintf(string,"%i分钟 %i秒",minutes,seconds);
 }

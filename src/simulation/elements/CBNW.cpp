@@ -149,7 +149,8 @@ void CBNW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 7500;
-	elem->Description = "Carbonated water. Slowly releases CO2.";
+	elem->Description = "碳酸水。慢慢释放CO2。";
+	elem->DetailedDescription = "描述：和其他物质接触时会释放出二氧化碳(CO2)并产生压力。\n产生：BUBW 会慢慢产生 CO2，会产生 0.5 P 的压力，随着压力的增加，产生的 CO2 减少。如果在密闭容器中，压力大于 3 P 时二氧化碳将停止产生。每一帧，BUBW 变化的几率是 4000 分之一。\nBUBW 在两种情况下几乎会立即爆炸：当它被任何粉末接触时，以及当它低于-5 P 压力时。每个粒子在爆炸时会释放 0.2 P 的压力。当它接触固体(不是 DMND 或 GLAS)时会产生更多的 CO2。对于附近的每个固体，它有 1/40000 的概率产生 CO2，并随之释放 0.2 P 的压力。BUBW 创建的所有 CO2 的 Ctype 值为 5，以将其标识为是由它创建的。\n沸点：99.85℃/373.0K\n凝固点：0℃/273.15K\n导热率：29\n初始温度：20.00℃/293.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_LIFE_DEC|PROP_NEUTPENETRATE;
 

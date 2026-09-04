@@ -119,7 +119,8 @@ void LIFE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 9000.0f;
 	elem->HeatConduct = 40;
 	elem->Latent = 0;
-	elem->Description = "Game Of Life: Begin 3/Stay 23";
+	elem->Description = "生命游戏：出生 3 / 存活 23。";
+	elem->DetailedDescription = "基本规则：\n每一帧系统都将检查每个细胞，分为两种情况：\n1.如果一个细胞周围有两到三个活细胞，那么系统判定下一帧这个细胞还可以继续存在\n2.如果一个空白细胞周围有三个活细胞，那么系统判定下一帧这个空白细胞将变成活细胞当细胞随每一帧过去但形态不再变化时称为“稳定”状态。有一些细胞可以穿越整个屏幕而不以任何方式“爆发”，称其为“滑翔机”。以下的元素本质上都是生命游戏，但使用不同的规则。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE;
 

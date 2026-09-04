@@ -51,7 +51,8 @@ void PQRT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 3;
 	elem->Latent = 0;
-	elem->Description = "Powdered quartz, broken form of QRTZ.";
+	elem->Description = "石英粉，QRTZ 的破碎形式。";
+	elem->DetailedDescription = "描述：石英砂，可以熔化。QRTZ 的破碎形式。可以通过从底部缓慢加热来熔炼回石英。如果放入 SLTW，可以将其转换 QRTZ。\n反应：DMG + QRTZ → PQRT\nCLST( 熔融) + PQRT(熔融) → 2×CRMC(熔融)\n熔点：2300℃/2573.15K\n导热率：3\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART | PROP_PHOTPASS | PROP_HOT_GLOW;
 

@@ -70,7 +70,8 @@ void LAVA_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 1500.0f + 273.15f;
 	elem->HeatConduct = 60;
 	elem->Latent = 0;
-	elem->Description = "Molten lava. Ignites flammable materials. Generated when metals and other materials melt, solidifies when cold.";
+	elem->Description = "熔岩。点燃易燃材料。金属和其他材料熔化时生成，冷时凝固。";
+	elem->DetailedDescription = "描述：熔岩(LAVA)表示各种材料的熔融状态，外观相同，但 Ctype 记录原材料。冷却后通常恢复为 Ctype 对应的固体；核反应也可能生成熔融物。\nHUD 显示：尚未生成过的组合会显示为“熔融+材料名”。即使名称没有明确写出“熔岩”，粒子类型仍是 LAVA。用控制台改变 Ctype 可以制造熔融火柴人、熔融水等特殊组合，但这些组合不一定具有正常相变行为。\n高温可熔融物：除 BTRY、INST、WWLD 外的大多数电子元件；除 SNOW、BREL、ANAR、GRAV、FRZZ、BCOL、FSEP、YEST、DUST 外的大多数粉末；以及 BMTL、GLAS 等固体。\n导热率：60\n初始温度：1522℃/1795.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

@@ -43,7 +43,8 @@ void RAZR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 50;
 	elem->Latent = 0;
-	elem->Description = "Heavy silver particles, displaces everything.";
+	elem->Description = "沉重的银色粒子，会挤开一切。";
+	elem->DetailedDescription = "描述：极重的银色致命粉末，重力和惯性都很强。移动时能挤开或穿过绝大多数可移动材料，尤其可穿过 CNCT 和 GEL，因此常用来切割、压碎或快速清理粉末与液体。\n性质：重力 1.5，重量 500；不燃烧、不熔化，也没有普通高低温或高低压相变。它仍会被不能移动的墙体和特殊不可破坏结构阻挡。\n导热率：50\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_DEADLY;
 

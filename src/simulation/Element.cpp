@@ -47,6 +47,7 @@ Element::Element():
 	HeatCapacity(1.0f),
 	Latent(0),
 	Description("No Description."),
+	DetailedDescription(""),
 	Properties(TYPE_SOLID),
 	CarriesTypeIn(0),
 	LowPressureTransitionThreshold(IPL),

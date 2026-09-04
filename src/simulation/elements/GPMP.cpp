@@ -65,7 +65,8 @@ void GPMP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Gravity pump. Changes gravity to its temp when activated. (use HEAT/COOL)";
+	elem->Description = "引力泵。激活后按自身温度改变重力（使用 HEAT/COOL 调节）。";
+	elem->DetailedDescription = "描述：不导热，使用需开启牛顿万有引力(热键“N”)，激活时改变其万有引力为自身温度值，可以使用升温/降温笔(HEAT/COOL)来改变自身温度。温度升高会使自身引力增加，吸引其他粒子，反之亦然。用 P 型硅(PSCN)激活，N 型硅(NSCN)关闭。从 91.0snapshot21 开始，光子(PHOT)通过未通电的引力泵(GPMP)会转变成引力子(GRVT)，生成引力子的Tmp 值取决于引力泵的温度值。仅在菜单中启用牛顿重力时才有效。\n导热率：0\n初始温度：0.00℃/273.15K\n温度范围：-256~256℃";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

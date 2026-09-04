@@ -88,7 +88,8 @@ void GLAS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Glass. Meltable. Shatters under pressure, and refracts photons.";
+	elem->Description = "玻璃。可熔化。在压力下破碎并折射光子。";
+	elem->DetailedDescription = "描述：固体，当压力变化>0.25P时会破碎，可以熔化。光子(PHOT)可以通过玻璃并分散成不同波长的光。\n玻璃不能被酸(ACID/CAUS)腐蚀。中子(NEUT)通过玻璃时会产生单色光子(PHOT)。电子(ELEC)与玻璃接触时会生成无害的火花(EMBR)。如果通过了足够数量的 NEUT，GLAS 会增加 NEUT 的数量。GLAS 可以通过盐水浸泡进行化学强化，最大差异可达 3.91。强度由 Life 值控制，Life 值小于 16 不提供额外强度，而 Life 值最大为 28080 (只能通过控制台或属性笔增加)。\n熔点：1699.85℃/1973K\n导热率：150\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS | PROP_PHOTPASS | PROP_HOT_GLOW | PROP_SPARKSETTLE;
 

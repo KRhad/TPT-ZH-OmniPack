@@ -88,7 +88,7 @@ static int mathRandom(lua_State *l)
 	}
 	if (upper < lower)
 	{
-		luaL_error(l, "interval is empty");
+	luaL_error(l, "间隔不能为空");
 	}
 	if (lower >= INT32_MIN && upper <= INT32_MAX)
 	{
@@ -398,7 +398,7 @@ void lua_hook(lua_State *L, lua_Debug *ar)
 	if (ar->event == LUA_HOOKCOUNT && int(Platform::GetTime() - luaExecutionStart) > luaHookTimeout)
 	{
 		bool wasConfirmed = false;
-		auto prompt = new ConfirmPrompt("Infinite Loop", "The Lua code might have an infinite loop. Press OK to stop it", "OK");
+	auto prompt = new ConfirmPrompt("无限循环", "Lua 代码可能陷入无限循环。点击'确定'将其停止。", "确定");
 		prompt->SetCallback({ [&wasConfirmed](bool confirmed) {
 			wasConfirmed = confirmed;
 		} });
@@ -407,7 +407,7 @@ void lua_hook(lua_State *L, lua_Debug *ar)
 
 		if (!wasConfirmed)
 			return;
-		luaL_error(l,"Error: Infinite loop");
+	luaL_error(l,"错误：无限循环");
 		luaExecutionStart = Platform::GetTime();
 	}
 }
@@ -513,7 +513,7 @@ bool luaCtypeDrawWrapper(CTYPEDRAW_FUNC_ARGS)
 		lua_pushinteger(l, v);
 		if (tpt_lua_pcall(l, 3, 1, 0))
 		{
-			luacon_log("In ctype draw: " + luacon_geterror());
+	luacon_log("执行 ctype 绘制时出错：" + luacon_geterror());
 			lua_pop(l, 1);
 		}
 		else
@@ -538,7 +538,7 @@ void luaCreateWrapper(ELEMENT_CREATE_FUNC_ARGS)
 		lua_pushinteger(l, v);
 		if (tpt_lua_pcall(l, 5, 0, 0))
 		{
-			luacon_log("In create func: " + luacon_geterror());
+	luacon_log("执行创建函数时出错：" + luacon_geterror());
 			lua_pop(l, 1);
 		}
 	}
@@ -556,7 +556,7 @@ bool luaCreateAllowedWrapper(ELEMENT_CREATE_ALLOWED_FUNC_ARGS)
 		lua_pushinteger(l, t);
 		if (tpt_lua_pcall(l, 4, 1, 0))
 		{
-			luacon_log("In create allowed: " + luacon_geterror());
+	luacon_log("检查是否允许创建时出错：" + luacon_geterror());
 			lua_pop(l, 1);
 		}
 		else
@@ -581,7 +581,7 @@ void luaChangeTypeWrapper(ELEMENT_CHANGETYPE_FUNC_ARGS)
 		lua_pushinteger(l, to);
 		if (tpt_lua_pcall(l, 5, 0, 0))
 		{
-			luacon_log("In change type: " + luacon_geterror());
+	luacon_log("更改类型时出错：" + luacon_geterror());
 			lua_pop(l, 1);
 		}
 	}
@@ -590,7 +590,7 @@ void luaChangeTypeWrapper(ELEMENT_CHANGETYPE_FUNC_ARGS)
 std::string luacon_geterror()
 {
 	luaL_tostring(l, -1);
-	std::string err = tpt_lua_optString(l, -1, "failed to execute");
+	std::string err = tpt_lua_optString(l, -1, "执行失败");
 	lua_pop(l, 1);
 	return err;
 }
@@ -713,7 +713,7 @@ int getScriptInner(lua_State *l, int scriptID, std::string filename, int runScri
 	if (confirmPrompt)
 	{
 		bool wasConfirmed = false;
-		auto prompt = new ConfirmPrompt("Do you want to install script?", url.str().c_str(), "Install");
+	auto prompt = new ConfirmPrompt("是否安装此脚本？", url.str().c_str(), "安装");
 		prompt->SetCallback({ [&wasConfirmed](bool confirmed) {
 			wasConfirmed = confirmed;
 		} });
@@ -727,7 +727,7 @@ int getScriptInner(lua_State *l, int scriptID, std::string filename, int runScri
 	std::string scriptData = Request::Simple(url.str(), &ret);
 	if (scriptData.empty())
 	{
-		return luaL_error(l, "Server did not return data");
+		return luaL_error(l, "服务器未返回数据");
 	}
 	if (ret != 200)
 	{
@@ -736,7 +736,7 @@ int getScriptInner(lua_State *l, int scriptID, std::string filename, int runScri
 
 	if (scriptData.find("Invalid script ID") != scriptData.npos)
 	{
-		return luaL_error(l, "Invalid Script ID");
+		return luaL_error(l, "脚本 ID 无效");
 	}
 
 	FILE *outputfile = fopen(filename.c_str(), "r");
@@ -747,7 +747,7 @@ int getScriptInner(lua_State *l, int scriptID, std::string filename, int runScri
 		if (confirmPrompt)
 		{
 			bool wasConfirmed = false;
-			auto prompt = new ConfirmPrompt("File already exists, overwrite?", filename.c_str(), "Overwrite");
+	auto prompt = new ConfirmPrompt("文件已存在，是否覆盖？", filename.c_str(), "覆盖");
 			prompt->SetCallback({ [&wasConfirmed](bool confirmed) {
 				wasConfirmed = confirmed;
 			} });
@@ -761,7 +761,7 @@ int getScriptInner(lua_State *l, int scriptID, std::string filename, int runScri
 	outputfile = fopen(filename.c_str(), "wb");
 	if (!outputfile)
 	{
-		return luaL_error(l, "Unable to write to file");
+		return luaL_error(l, "无法写入文件");
 	}
 
 	fputs(scriptData.c_str(), outputfile);
@@ -782,7 +782,7 @@ int tpt_screenshot(lua_State* l)
 	int captureUI = luaL_optint(l, 1, 0);
 	int fileType = luaL_optint(l, 2, 0);
 	if (fileType < 0 || fileType > 2)
-		return luaL_error(l, "Invalid screenshot format");
+		return luaL_error(l, "截图格式无效");
 	std::string filename = Renderer::Ref().TakeScreenshot(captureUI, fileType);
 	tpt_lua_pushString(l, filename);
 	return 1;
@@ -826,7 +826,7 @@ int tpt_fpsCap(lua_State* l)
 	}
 	float fpscap = luaL_checknumber(l, 1);
 	if (fpscap < 2.0f)
-		return luaL_error(l, "fps cap too small");
+		return luaL_error(l, "帧率上限过小");
 	Engine::Ref().SetFpsLimit(fpscap);
 	return 0;
 }
@@ -841,7 +841,7 @@ int tpt_drawCap(lua_State* l)
 	}
 	int drawcap = luaL_checkint(l, 1);
 	if (drawcap < 0)
-		return luaL_error(l, "draw cap too small");
+		return luaL_error(l, "绘制上限过小");
 	Engine::Ref().SetDrawingFrequency(drawcap);
 	return 0;
 }
@@ -903,7 +903,7 @@ int tpt_maxframes(lua_State* l)
 	if (maxFrames > 0 && maxFrames <= 256)
 		static_cast<ANIM_ElementDataContainer&>(*luaSim->elementData[PT_ANIM]).SetMaxFrames(maxFrames);
 	else
-		return luaL_error(l, "must be between 1 and 256");
+		return luaL_error(l, "数值必须在 1 到 256 之间");
 	static_cast<ANIM_ElementDataContainer&>(*luaSim->elementData[PT_ANIM]).Simulation_Cleared(luaSim);
 	return 0;
 }
@@ -916,13 +916,13 @@ int tpt_indestructible(lua_State* l)
 	{
 		el = luaL_optint(l, 1, 0);
 		if (el<0 || el>=PT_NUM)
-			return luaL_error(l, "Unrecognised element number '%d'", el);
+		return luaL_error(l, "无法识别元素编号'%d'", el);
 	}
 	else
 	{
 		std::string name = tpt_lua_optString(l, 1, "dust");
 		if (!console_parse_type(name.c_str(), &el, NULL, luaSim))
-			return luaL_error(l, "Unrecognised element '%s'", name.c_str());
+		return luaL_error(l, "无法识别元素'%s'", name.c_str());
 	}
 	ind = luaL_optint(l, 2, 1);
 	if (ind)
@@ -945,7 +945,7 @@ int tpt_oldmenu(lua_State *l)
 		return 1;
 	}
 #ifdef TOUCHUI
-	return luaL_error(l, "Old menu not supported when using the touch interface");
+		return luaL_error(l, "触控界面不支持旧式菜单");
 #else
 	int oldmenu = luaL_checkint(l, 1);
 	old_menu = oldmenu;
@@ -960,13 +960,13 @@ void ReadLuaCode()
 {
 	if (!Platform::FileExists("luacode.txt"))
 	{
-		Engine::Ref().ShowWindow(new ErrorPrompt("Place some code in luacode.txt"));
+	Engine::Ref().ShowWindow(new ErrorPrompt("请先在 luacode.txt 中填写代码"));
 		return;
 	}
 	char* code = (char*)file_load("luacode.txt", &LuaCodeLen);
 	if (!code)
 	{
-		Engine::Ref().ShowWindow(new ErrorPrompt("Error reading luacode.txt"));
+	Engine::Ref().ShowWindow(new ErrorPrompt("读取 luacode.txt 失败"));
 		return;
 	}
 	if (LuaCode)
@@ -977,7 +977,7 @@ void ReadLuaCode()
 	// lua bytecode starts with byte 27, don't allow since can't be read and can do strange things
 	if (code[0] == '\x1b')
 	{
-		Engine::Ref().ShowWindow(new ErrorPrompt("Lua bytecode detected"));
+	Engine::Ref().ShowWindow(new ErrorPrompt("检测到 Lua 字节码"));
 		return;
 	}
 	LuaCode = code;
@@ -992,13 +992,13 @@ void ConfirmRunEmbeddedLuaCode()
 		ranLuaCode = true;
 		if (!previewCode)
 		{
-			Engine::Ref().ShowWindow(new ErrorPrompt("Could not write code to newluacode.txt"));
+	Engine::Ref().ShowWindow(new ErrorPrompt("无法将代码写入 newluacode.txt"));
 			return;
 		}
 		fwrite(LuaCode, LuaCodeLen, 1, previewCode);
 		fclose(previewCode);
 
-		auto prompt = new ConfirmPrompt("Lua Code", "Run the lua code in newluacode.txt?", "Run");
+	auto prompt = new ConfirmPrompt("Lua 代码", "是否运行 newluacode.txt 中的 Lua 代码？", "运行");
 		prompt->SetCallback({ [](bool confirmed) {
 			if (confirmed)
 				RunEmbeddedLuaCode();
@@ -1012,7 +1012,7 @@ void RunEmbeddedLuaCode()
 	// lua bytecode starts with byte 27, don't allow since can't be read and can do strange things
 	if (LuaCode[0] == '\x1b')
 	{
-		Engine::Ref().ShowWindow(new ErrorPrompt("Lua bytecode detected"));
+	Engine::Ref().ShowWindow(new ErrorPrompt("检测到 Lua 字节码"));
 		free(LuaCode);
 		LuaCode = NULL;
 		return;

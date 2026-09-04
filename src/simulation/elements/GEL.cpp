@@ -166,7 +166,8 @@ void GEL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "A liquid with variable viscosity and heat conductivity. Absorbs water.";
+	elem->Description = "具有可变粘度和导热率的液体。吸收水分。";
+	elem->DetailedDescription = "描述：能够吸收水分，之后颜色会变深、变得不那么粘稠而且导热系数会增加。当碰到海绵(SPNG)时，水会从胶体中移动到海绵里。碰到浆糊(PSTE)时，水会从浆糊中转移到胶体中，浆糊会变成粘土砂(CLST)。有气体接触胶体表面时，胶体会无序的扩散到气体中，可用于气体的干燥。\n导热率：29\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_LIFE_DEC|PROP_NEUTPENETRATE;
 

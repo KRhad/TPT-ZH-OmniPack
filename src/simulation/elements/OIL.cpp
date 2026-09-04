@@ -43,7 +43,8 @@ void OIL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 42;
 	elem->Latent = 0;
-	elem->Description = "Flammable, turns into GAS at low pressure or high temperature.";
+	elem->Description = "易燃，低压或高温时变成GAS。";
+	elem->DetailedDescription = "描述：液体，易燃，较低压力/加热下会变成石油气(GAS)。如果用中子(NEUT)照射硝酸甘油，会转化为油。如果在任何压力≤-166.51 下，任何温度的油都会自发蒸发成气体。这种变化会在每个粒子的位置产生+0.50的压力。\n沸点：59.85℃/333K\n导热率：42\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_NEUTPASS;
 

@@ -63,7 +63,8 @@ void BUTN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Button. Can be sparked just by clicking on it, but only when turned on.";
+	elem->Description = "按钮。开启时可直接点击产生电火花。";
+	elem->DetailedDescription = "描述：可通电的触发按钮。PSCN 使相连的 BUTN 开启，NSCN 关闭；开启时呈青色发光状态，并一直保持到收到关闭信号。\n用法：按钮开启后，在它上面绘制任意非 BUTN 元素，或让普通导体的电脉冲接触它，BUTN 会向电路输出一次 SPRK。适合在触屏上制作需要人工点击/绘制触发的电路。\n绝缘：INSL 和 RSSS 可阻隔按钮信号。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_POWERED;
 

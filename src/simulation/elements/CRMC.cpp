@@ -68,7 +68,8 @@ void CRMC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 35;
 	elem->Latent = 0;
-	elem->Description = "Ceramic. Gets stronger under pressure.";
+	elem->Description = "陶瓷。在压力下变得更强。";
+	elem->DetailedDescription = "描述：固体，受压时熔点会增加。允许中子(NEUT)、引力子(GRVT)以及质子(PROT)通过，且对 ACID 免疫。在一定的负压下(≤-30 P)会转变成粘土砂(CLST)。通过对 5 个位置(包括本身在内每个方向延伸两个像素)压力取平均值。\n制取方法：熔融的石英(QRTZ)+熔融的粘土砂(CLST)。\n熔点：0 P，2614.00℃/2887.15K，压力每升高 1 P 熔点升高 10℃，255 P 下熔点为 5164℃。\n导热率：35\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS;
 

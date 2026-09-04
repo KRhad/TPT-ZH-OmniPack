@@ -43,7 +43,8 @@ void STNE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Stone. Heavy particles, meltable.";
+	elem->Description = "石头。重颗粒，易熔。";
+	elem->DetailedDescription = "描述：石头(STNE)是重粉末，加热后熔化为 LAVA。\n产生：冷却 LAVA，或对砖块(BRCK)施加足够压力。\n反应：ROCK 与 WATR 反应可生成 STNE。熔融 SLCN 与 OXYG 反应时有 1/3 概率生成 STNE，同时还会在 SAND、CLST/PQRT 等产物之间分配。\n熔点：709.85℃/983K\n导热率：150\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

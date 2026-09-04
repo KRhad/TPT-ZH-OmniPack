@@ -52,7 +52,7 @@ int console_parse_type(const char *txt, int *element, char *err, Simulation *sim
 	else if (!strcasecmp(txt, "EXPL") && !explUnlocked)
 	{
 		if (err)
-			strcpy(err, "Particle type not recognized");
+	strcpy(err, "无法识别粒子类型");
 		return 0;
 	}
 	for (int j = 1; j < PT_NUM; j++)
@@ -70,7 +70,7 @@ int console_parse_type(const char *txt, int *element, char *err, Simulation *sim
 		if (err) strcpy(err,"");
 		return 1;
 	}
-	if (err) strcpy(err, "Particle type not recognized");
+	if (err) strcpy(err, "无法识别粒子类型");
 	return 0;
 }
 //takes a string and compares it to wall names, and puts it's value into *wall.
@@ -92,7 +92,7 @@ int console_parse_coords(const char *txt, int *x, int *y, char *err)
 	int nx = -1, ny = -1;
 	if (sscanf(txt,"%d,%d",&nx,&ny)!=2 || nx<0 || nx>=XRES || ny<0 || ny>=YRES)
 	{
-		if (err) strcpy(err,"Invalid coordinates");
+	if (err) strcpy(err,"坐标无效");
 		return 0;
 	}
 	*x = nx;
@@ -142,7 +142,7 @@ int console_parse_partref(const char *txt, int *which, char *err)
 		if (err) strcpy(err,"");
 		return 1;
 	}
-	if (err && strcmp(err,"")==0) strcpy(err,"Particle does not exist");
+	if (err && strcmp(err,"")==0) strcpy(err,"粒子不存在");
 	return 0;
 }
 
@@ -174,9 +174,9 @@ bool console_parse_hex(char *txt, int *val, char *err)
 			if (err)
 			{
 				if (base == 10)
-					strcpy(err, "Invalid number");
+					strcpy(err, "无效的数字");
 				else
-					strcpy(err, "Invalid hexadecimal number");
+	strcpy(err, "十六进制数无效");
 			}
 			return false;
 		}
@@ -284,12 +284,12 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, s
 				}
 				else
 				{
-					sprintf(console_error, "%s does not exist", console3);
+	sprintf(console_error, "%s 不存在", console3);
 				}
 			}
 			else
 			{
-				sprintf(console_error, "Scripts are not enabled");
+	sprintf(console_error, "脚本功能未启用");
 			}
 			
 		}
@@ -324,7 +324,7 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, s
 			        && console_parse_coords(console4, &nx, &ny, console_error))
 				{
 					if (!j)
-						strcpy(console_error, "Cannot create particle with type NONE");
+	strcpy(console_error, "无法创建 NONE 类型粒子");
 					else
 					{
 						int v = -1;
@@ -334,7 +334,7 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, s
 							j = TYP(j);
 						}
 						if (sim->part_create(-1, nx, ny, j, v) < 0)
-							strcpy(console_error, "Could not create particle");
+	strcpy(console_error, "无法创建粒子");
 					}
 				}
 			}
@@ -492,7 +492,7 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, s
 									parts[i].temp = f;
 							}
 						else
-							strcpy(console_error, "Invalid temperature");
+	strcpy(console_error, "温度无效");
 					}
 					else if (console_parse_type(console4, &j, console_error, sim))
 					{
@@ -504,7 +504,7 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, s
 									parts[i].temp= f;
 							}
 						else
-							strcpy(console_error, "Invalid temperature");
+	strcpy(console_error, "温度无效");
 					}
 					else
 					{
@@ -514,7 +514,7 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, s
 							if (f >= 0)
 								parts[i].temp = f;
 							else
-								strcpy(console_error, "Invalid temperature");
+	strcpy(console_error, "温度无效");
 						}
 					}
 				}
@@ -848,10 +848,10 @@ int process_command_old(Simulation * sim, pixel *vid_buf, const char *command, s
 					}
 				}
 				else
-					strcpy(console_error, "Invalid property");
+	strcpy(console_error, "属性无效");
 			}
 			else
-				strcpy(console_error, "Invalid Command");
+	strcpy(console_error, "命令无效");
 	}
 	*result = console_error;
 	return 1;

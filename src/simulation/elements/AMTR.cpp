@@ -87,7 +87,8 @@ void AMTR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Anti-Matter, destroys a majority of particles.";
+	elem->Description = "反物质。可湮灭大多数粒子。";
+	elem->DetailedDescription = "描述：可以破坏大多数物质并产生低压和光子，受到微弱的重力影响。除AMTR、DMND、CLNE、PCLN、VOID、VACU、BHOL、PRTI、PRTO、所有能量粒子不可破坏。\n元素参数：Life 值代表反应次数，初始值为 0 每与另一个粒子发生反应(包括产生光子)时，Life 值增加 1，当 Life值到达 4 时便会消失。\n导热率：70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_GAS;
 

@@ -91,7 +91,8 @@ void NBLE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 2.0f + 273.15f;
 	elem->HeatConduct = 106;
 	elem->Latent = 0;
-	elem->Description = "Noble Gas. Ionizes into plasma when sparked. Diffuses.";
+	elem->Description = "稀有气体。激发时电离成等离子体。扩散。";
+	elem->DetailedDescription = "描述：通电后能电离成等离子体(PLSM)，但只有1600℃左右，不断通电能增大其温度。冷却后等离子体将变回惰性气体。NBLE 也是核聚变过程的第二阶段。\n聚变：高温(大于 5000℃)高压(100 P)下，惰性气体将聚变产生等离子体(PLSM)、一份中子(NEUT)、一份光子(PHOT)(红色)、一份二氧化碳(CO2)、1/25 会产生一分量电子(ELEC)。同时聚变会产生50 P 的压力和 9000℃的高温。\n导热率：106\n初始温度：24.00℃/297.15K";
 
 	elem->Properties = TYPE_GAS|PROP_CONDUCTS|PROP_LIFE_DEC;
 

@@ -115,7 +115,8 @@ void BANG_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "TNT, explodes all at once.";
+	elem->Description = "TNT，一下子爆炸。";
+	elem->DetailedDescription = "爆炸点：399.85℃/673K\n描述：与 C-4 塑胶炸弹(C-4)相似，但产生更多的压力和较少的火焰。爆炸时产生的高热(1000+℃)足以融化金属(METL)。它只能用明火点燃。爆炸时会产生类似炸药(BOMB)爆炸时的火花(EMBR)。TNT 是唯一一种在点燃时立即爆炸的炸药。\n导热率：88\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
 

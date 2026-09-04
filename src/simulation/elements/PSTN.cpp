@@ -404,7 +404,8 @@ void PSTN_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 10.0f+ 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Piston, pushes particles. PSCN extends, NSCN retracts.";
+	elem->Description = "活塞，用于推动粒子。PSCN 使其伸出，NSCN 使其缩回。";
+	elem->DetailedDescription = "描述：PSTN 至少需要 2 像素才能起作用，当用 PSCN 激活时，PSTN 会变长，碰到物质后它不会停止而是继续推动物质以上升，使用 NSCN 激活可以使它缩回(不仅是 NSCN 可以收回 PSTN，还有 INST、TTAN 等)。通过使用 FRME 可以一次性推动更多物质。\n移动距离：随温度或 PSTN 长度设置。PSTN 每次激活时伸出或缩回的像素数取决于激活位置与发射端之间的距离-1。该距离也可以通过改变 PSTN 颗粒的温度来设置。0℃ 以上每升高 10 度(四舍五入到最接近的 10 度)，移动量就会增加 1 个像素，这是 PSTN 中所有粒子的总和。活塞最多可推动 29 个 FRME 像素，两侧最多 14 个FRME。激活位置发射端之间的距离为 2 伸出像素为 1激活位置发射端之间的距离为 4 伸出像素为 3\n移动的粒子数：用 Tmp 值设置。默认值(0)允许 PSTN 最多推送 30 个像素。如果 Tmp 为 1 或更大，PSTN 可以推送 X 个像素，其中 X 等于当前的 Tmp 值。\n最大延伸长度：用 Tmp2 值设置。默认值(0)允许 PSTN 扩展到 255 像素。如果 Tmp2 大于零，则最大扩展长度为 Tmp2 值。当您需要 PSTN 扩展到比其默认值 255 更远的地方，或者您需要它在任何给定长度处停止时，这会很有用。\n阻塞元素：用 Ctype 设置。例如，如果 PSTN 的 Ctype 是 DMND，当延伸的 PSTN 与 DMND 接触时，PSTN 将停止延伸，并且如果 PSTN 被收回，则不会收回 DMND。如果您不希望 PSTN 推动或拉动某些类型的元素，或者您希望 PSTN 简单地停在某个位置，这会很有用。它不只适用于 DMND，任何给定的 Ctype 都适用。(PSTN 的温度可以叠加，但属性不能)\n导热率：0\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

@@ -98,7 +98,8 @@ void CLST_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Clay dust. Produces paste when mixed with water.";
+	elem->Description = "黏土粉尘。与水混合会形成糊状物。";
+	elem->DetailedDescription = "描述：和水结合时产生浆糊(PSTE)。它能自然的结合在一起，温度越低越牢固，在大约-70℃时冻结，顶部就像混凝土一样牢固。CLST 与 NITR 混合时会产生 TNT。\n产生：CLST 可以通过将 CRMC 置于低于-30 P 的压力下来创建。\nPSTE + GEL → CLST + GEL\nPSTE + SPNG → CLST + SPNG\n3×SLCN(熔融) + 3×OXYG → SAND + STNE +CLST/PQRT\n反应：WATR + CLST → PSTS\nCLST(熔融) + PQRT(熔融)/QRTZ(熔融) → 2×CRMC(熔融)\nNITR + CLST → TNT\n熔点：982.85℃/1256K\n导热率：70\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

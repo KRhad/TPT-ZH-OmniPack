@@ -129,7 +129,8 @@ void WIFI_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Wireless transmitter, transfers spark to any other wifi on the same temperature channel.";
+	elem->Description = "无线发射器，将火花传输到同一温度通道上的任何其他 WiFi。";
+	elem->DetailedDescription = "描述：能无线转移电脉冲，可使用大多数导电物质输入电脉冲(除了 N 型硅)，只能由N 型硅(NSCN)、绝缘线(INWR)\n或 P 型硅(PSCN)输出电脉冲。不导热。在高压下会损坏。89.0 版本后传导电脉冲时会延迟一帧。\n频道：\nWi-Fi 有 101 个频道可以使用，频道之间互不干扰，最后一个频道是单独的，从-273.15—— -200.01。Wi-Fi只会和相同频道的 Wi-Fi 传输电脉冲。相邻频道之间相隔100℃(会变颜色)。在调试模式(Debug，热键“D”)下，相同频道的 WIFI 之间会出现连接线。\n可以使用升温笔/降温笔(HEAT/COOL)来调整 Wi-Fi 的频道。设置WIFI 频道最简单的方法是使用 PROP。只需将 WIFI 的温度更改为频道乘以 100。例如，要获得频道 47，您将温度设置为4700。实际频道显示在 Tmp 值中，以便更容易查看。\n压力极限：15 P，会碎裂成金属粉(BRMT)\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

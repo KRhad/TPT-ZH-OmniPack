@@ -135,7 +135,8 @@ void LCRY_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Liquid Crystal. Changes colour when charged. (PSCN Charges, NSCN Discharges)";
+	elem->Description = "液晶。充电时会改变颜色。 （PSCN 充电，NSCN 放电）";
+	elem->DetailedDescription = "描述：液晶，激活时改变颜色。用P 型硅(PSCN)激活，N 型硅(NSCN)关闭。激活时允许光子(PHOT)缓慢通过，极高温度(999.85℃/1273K)下会变成碎玻璃(BGLA)。激活后，部分通过它的质子(PROT)会被转变为光子(PHOT)。\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

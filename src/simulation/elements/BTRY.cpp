@@ -73,7 +73,8 @@ void BTRY_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Battery. Generates infinite electricity.";
+	elem->Description = "电池。产生无限电力。";
+	elem->DetailedDescription = "描述：固体，能提供稳定的电脉冲给导电元素(除液体)，到达沸点以后升华变成等离子体(PLSM)。\n沸点：1999.85℃/2273K\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

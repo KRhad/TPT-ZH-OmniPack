@@ -102,7 +102,8 @@ void DLAY_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 4.0f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Conducts with temperature-dependent delay. (use HEAT/COOL).";
+	elem->Description = "延迟导体，延迟时间随温度变化（使用 HEAT/COOL 调节）。";
+	elem->DetailedDescription = "描述：当电脉冲通过延时计时会延迟 X 帧，X 等于延时计的温度，不导热，可以使用升温笔(HEAT)和降温笔(COOL)来改变温度，最低为 1℃。DLAY 可以在大量使用时正常工作，但是 PSCN 和 NSCN 之间必须有两个像素的间隙，否则电脉冲会跳过 1 个像素的间隙，并且会出现两个电脉冲，这在某些情况下很有用。\n过程描述：\n电脉冲输入(PSCN) Life 值变为当前温度，颜色变亮每过一帧，Life–1，直到 Life=0，颜色变暗电脉冲输出(NSCN)\n导热率：0\n初始温度：4.00℃/277.15K";
 
 	elem->Properties = TYPE_SOLID;
 

@@ -50,7 +50,8 @@ void PTCT_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "PTC Thermistor. Conducts with PSCN and NSCN, but only when cooled below 100C.";
+	elem->Description = "PTC 热敏电阻。与 PSCN 和 NSCN 导电，但仅在冷却至 100C 以下时有效。";
+	elem->DetailedDescription = "描述：半导体，只有低于100℃时才导电，也能自动冷却(2.5℃/帧)到 22℃左右，可以熔化。可以通过PSCN/NSCN输入/输出电脉冲，当一个像素的 PTCT 周围 3×3 的范围内有通电的金属(METL)时温度自动上升至 199.85℃。\n熔点：1414℃/1687.15K 时变成熔融 PTCT\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

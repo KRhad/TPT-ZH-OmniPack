@@ -117,7 +117,8 @@ void STOR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Storage. Captures and stores a single particle. Releases when charged with PSCN, also passes to PIPE.";
+	elem->Description = "储存体。捕获并保存一个粒子；用 PSCN 通电时释放，也可传给 PIPE。";
+	elem->DetailedDescription = "描述：固体，吸收一个像素的与之接触的物质，修改它的Ctype 值可以使它吸收特定的物质，用 P 型硅(PSCN)或\nA 射线发射器(ARAY)的射线激活后释放，也可以传递给动力管(PIPE)。\n91.0beta 后，堆栈也可以将物质传递给传送门入口(PRTI)。\n元素参数：\nTmp=被吸收元素的 type 值\nTemp=被吸收元素的 Temp 值\nTmp2=被吸收元素的 Life 值\nPavg[0]=被吸收元素的 Tmp 值\nPavg[1]=被吸收元素的 Ctype 值\n导热率：0\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);

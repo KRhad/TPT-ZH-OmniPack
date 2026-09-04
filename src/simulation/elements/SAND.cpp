@@ -43,7 +43,8 @@ void SAND_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Sand, Heavy particles. Melts into glass.";
+	elem->Description = "沙子、重颗粒。融化成玻璃。";
+	elem->DetailedDescription = "描述：重粉末，熔化后冷却能形成玻璃(GLAS)。\n反应：3×SLCN(熔融) + 3×OXYG → SAND + STNE +CLST/PQRT\n3×ROCK + 3×WATR → SAND +2×STNE +3×WATR\n熔点：1699.85℃/1973K\n导热率：150\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

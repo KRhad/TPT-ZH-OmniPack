@@ -242,7 +242,8 @@ void VIBR_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Vibranium. Stores energy and releases it in violent explosions.";
+	elem->Description = "振金。储存能量，并以猛烈爆炸的形式释放。";
+	elem->DetailedDescription = "描述：振金(VIBR)可吸收并储存热量、压力和能量粒子。能量增加时颜色由深绿逐渐变亮；达到极限后发出绿光并快速白色闪烁，向所有直接相连的导体输出 SPRK、释放热量，并在约 750 帧后爆炸。BOMB 不会直接摧毁 VIBR，只会少量增加其 Tmp。\n能量换算：温度每偏离 0℃约 3℃增加 1 Tmp，并被限制在约 -2.5℃到 2.5℃；正压每 1 P 增加 7 Tmp，负压每 1 P 增加 2 Tmp，压力会被拉回 0 P 附近；每吸收 20 个能量粒子(包括 GRVT)增加 1 Tmp。\n产生：把 EXOT 与熔融 TTAN 混合可得到熔融 VIBR；清除剩余 EXOT 后冷却即可凝固为 VIBR。\n其他反应：接触 EXOT 会转化为 EXOT；接触 ANAR 会变成振金粉(BVBR)并产生负压；达到能量极限时用冷焰(CFLM)灼烧会短暂变蓝，之后恢复。\n元素参数：Tmp 表示已吸收的能量总量。\n导热率：251\n初始温度：0℃/273.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

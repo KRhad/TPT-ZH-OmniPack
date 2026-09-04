@@ -13,7 +13,7 @@ class ErrorPrompt : public ui::Window
 	DismissCallback callback;
 
 public:
-	ErrorPrompt(std::string message, std::string dismiss = "Dismiss");
+	ErrorPrompt(std::string message, std::string dismiss = "忽略");
 
 	void SetCallback(DismissCallback callback) { this->callback = callback; }
 	void OnExit(ui::DeleteReason deleteReason) override;

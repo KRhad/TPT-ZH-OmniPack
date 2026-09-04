@@ -44,7 +44,8 @@ void GAS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 2.0f + 273.15f;
 	elem->HeatConduct = 42;
 	elem->Latent = 0;
-	elem->Description = "Diffuses quickly and is flammable. Liquefies into OIL under pressure.";
+	elem->Description = "迅速扩散且易燃。在压力下液化成OIL。";
+	elem->DetailedDescription = "描述：易燃气体,当其温度低于 60 摄氏度和处于或高于+6 P 压力时，GAS 将转变回 OIL。PTNM 在 2 P 和 200℃时接触 GAS 会使其变成 INSL。\n燃点：299.85℃/573K\n液化压力：6 P\n产生：中子轰击石油(OIL)或柴油(DESL)。在低压/加热下石油会变成石油气。\n导热率：42\n初始温度：24.00℃/297.15K";
 
 	elem->Properties = TYPE_GAS|PROP_NEUTPASS;
 

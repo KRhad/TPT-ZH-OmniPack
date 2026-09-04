@@ -44,7 +44,8 @@ void MWAX_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 28.0f + 273.15f;
 	elem->HeatConduct = 44;
 	elem->Latent = 0;
-	elem->Description = "Liquid Wax. Hardens into WAX at 45 degrees.";
+	elem->Description = "液体蜡。 45度时硬化成WAX。";
+	elem->DetailedDescription = "描述：融化的蜡(WAX)，可以燃烧，45℃时凝固成蜡(WAX)。蜡油不是非常易燃，除非在高温(673K 以上)下会导致蜡油立即点燃。\n燃点：399.85℃/673K\n凝固点：44.85℃/318K\n导热率：44\n初始温度：50.00℃/323.15K";
 
 	elem->Properties = TYPE_LIQUID;
 

@@ -44,7 +44,8 @@ void LNTG_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 70.15f;
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Liquid Nitrogen. Very cold, disappears whenever it touches anything warmer.";
+	elem->Description = "液氮。非常冷，一接触到温暖的东西就会消失。";
+	elem->DetailedDescription = "描述：液氮，遇到比它热的物质后会消失并产生压力。LN2 和 NICE(氮冰)通常用作冷却机制，因为LN2 在任何温度下都会消失。\n沸点：-196.15℃/77.0K(消失)\n凝固点：-210.15℃/63K\n导热率：70\n初始温度：-205.00℃/68.15K";
 
 	elem->Properties = TYPE_LIQUID;
 

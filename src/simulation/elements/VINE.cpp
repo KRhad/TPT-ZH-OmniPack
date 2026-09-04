@@ -85,7 +85,8 @@ void VINE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 65;
 	elem->Latent = 0;
-	elem->Description = "Vine, can grow along WOOD.";
+	elem->Description = "藤蔓，可以沿着WOOD生长。";
+	elem->DetailedDescription = "描述：藤蔓，吸水生长，中心部分是植物(PLNT)，暴露在中子(NEUT)下会变成木材(WOOD)并向中子方向生长。藤蔓以一种半随机方式生长，形状有点像草。\n燃点：299.85℃/573K\n导热率：65\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

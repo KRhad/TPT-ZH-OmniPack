@@ -44,7 +44,8 @@ void NSCN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "N-Type Silicon, Will not transfer current to P-Type Silicon. Disables powered materials.";
+	elem->Description = "N 型硅。不会向 P 型硅传导电流；可关闭可控材料。";
+	elem->DetailedDescription = "描述：只要满足目标材料的条件(如果存在)，例如具有正确温度的 NTCT，NSCN 就会传导到大多数导体。但不会向 P 型硅(PSCN)传递电脉冲(即电脉冲只能从 PSCN 单向传导到 NSCN)，可以熔化，可以与PSCN 结合形成 PN 结使用。用于关闭一些可控材料和制作二极管。NSCN 还用作 WIFI 的仅输出材料，INST 的输出，以及关闭 SWCH\n熔点：1413.85℃/1687.15K，变成 LAVA(NSCN)\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

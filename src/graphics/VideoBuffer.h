@@ -2,6 +2,7 @@
 #define VIDEOBUFFER_H
 
 #include <string>
+#include <cstdint>
 #include "ARGBColour.h"
 #include "Pixel.h"
 #include "common/Point.h"
@@ -41,11 +42,12 @@ public:
 	void DrawCircle(int x, int y, int rx, int ry, int r, int g, int b, int a);
 	void FillCircle(int x, int y, int rx, int ry, int r, int g, int b, int a);
 
-	int DrawChar(int x, int y, unsigned char c, int r, int g, int b, int a, bool modifiedColor = false);
-	int DrawChar(int x, int y, unsigned char c, ARGBColour color, bool modifiedColor = false);
+	int DrawChar(int x, int y, uint32_t c, int r, int g, int b, int a, bool modifiedColor = false);
+	int DrawChar(int x, int y, uint32_t c, ARGBColour color, bool modifiedColor = false);
 	int DrawString(int x, int y, const std::string &s, int r, int g, int b, int a);
 	int DrawString(int x, int y, const std::string &s, ARGBColour color);
 	static signed char CharSize(unsigned char c);
+	static int CodepointSize(uint32_t codepoint);
 	static Point TextSize(std::string s);
 
 	void DrawImage(pixel *image, int x, int y, int w, int h, int a=255);

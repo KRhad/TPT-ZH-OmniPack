@@ -133,7 +133,8 @@ void TSNS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Temperature sensor, creates a spark when there's a nearby particle with a greater temperature.";
+	elem->Description = "温度传感器，当附近有温度较高的粒子时会产生火花。";
+	elem->DetailedDescription = "描述：不导热，可以用升温/降温笔(HEAT/COOL)来改变自身温度，当周围(2×2)有温度比它高的物质时，温度传感器会发出电脉冲给周围的导电体(水 WATR、盐水SLTW、热敏电阻NTCT&PTCT、绝缘线INWR)。您可以设置Tmp2属性来更改它检测温度的半径(以正方形的形状)。最大半径为 25。当 Tmp 设置为 1 时，它可以将其温度数据传输到 FILT(会占用第 29 位)。当 Tmp 被设定为 2，TSNS 将把电脉冲传给检测范围内的比它温度低的物质。\n导热率：0\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

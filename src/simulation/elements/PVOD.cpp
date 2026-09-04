@@ -50,7 +50,8 @@ void PVOD_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Powered VOID. When activated, destroys entering particles.";
+	elem->Description = "可控虚空。激活后会消除进入的粒子。";
+	elem->DetailedDescription = "描述：固体，一旦激活就如同虚空(VOID)一样，吸收一切物质。用P 型硅(PSCN)激活，N 型硅(NSCN)关闭。Tmp值为 0 时会只吸收 Ctype 值代表的物质，Tmp 值为 1 时则不吸收 Ctype 代表的物质。\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

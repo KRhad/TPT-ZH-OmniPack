@@ -85,7 +85,8 @@ void PUMP_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Pressure pump. Changes pressure to its temp when activated. (use HEAT/COOL).";
+	elem->Description = "压力泵。激活后将压力更改为其温度。 （使用HEAT/COOL）。";
+	elem->DetailedDescription = "描述：不导热，激活时改变使周围压力值变为自身温度值，自身温度可用升温/降温笔(HEAT/COOL)控制。用 P 型硅(PSCN)激活，N 型硅(NSCN)关闭。当 TMP 设置为 1 时，可以从 FILT 接收数据并相应地改变周围的压力。此功能可与压力传感器(PSNS)结合使用。\n导热率：0\n初始温度：0.00℃/273.15K\n温度范围：-256~256℃";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

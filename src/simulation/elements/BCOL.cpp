@@ -94,7 +94,8 @@ void BCOL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Broken Coal. Heavy particles, burns slowly.";
+	elem->Description = "碎煤。颗粒重，燃烧缓慢。";
+	elem->DetailedDescription = "描述：重粉末，只能用明火点燃，缓慢燃烧。被中子(NEUT)撞击时有概率变成锯末(SAWD)。\n产生：BCOL 是由 WOOD 在低压(小于-10)和高温(大于 499.85℃)下生产的。\n导热率：150\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

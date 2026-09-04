@@ -287,7 +287,8 @@ void NEUT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 4.0f + 273.15f;
 	elem->HeatConduct = 60;
 	elem->Latent = 0;
-	elem->Description = "Neutrons. Interact with matter in odd ways.";
+	elem->Description = "中子。以奇怪的方式与物质相互作用。";
+	elem->DetailedDescription = "描述：中子(NEUT)不受普通重力影响，但会受牛顿引力场作用。它可由钚(PLUT)或重水(DEUT)裂变产生；SNOW 和 ICE 会使其减速，GOLD 会吸收少量中子，TTAN 在反射时吸收约 5%，MERC 会完全吸收接触的中子。\n主要反应：\nPLUT、DEUT：触发裂变。\nGUNP→DUST；PLNT→WOOD；DUST→FWRK。\nNITR→GAS；C-4→GOO；WATR→DSTW；ACID→ISOZ。\nDESL→GAS；YEST→DYST；COAL→WOOD；BCOL→SAWD。\nRFRG→CAUS 或 GAS。\n存在时间(Life)：随机值，不超过约 1000 帧。\n导热率：60\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

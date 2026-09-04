@@ -58,7 +58,8 @@ void BRCK_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Brick, breakable building material.";
+	elem->Description = "砖，易碎的建筑材料。";
+	elem->DetailedDescription = "描述：可破坏的建筑材料。是石粉的固体形式，不能导电，可以熔化。在压力大于8.8 P 时会碎裂成石粉(STNE)。\n元素参数：修改其 Tmp 值为 1 可以制得像可控动力管(PPIP)那样的蓝光砖块。\n制取方法：浆糊(PSTE)加热至 480℃/753.15K 可以转化成砖块。\n压力极限：8.8 P\n熔点：949.85℃/1223K\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_HOT_GLOW;
 

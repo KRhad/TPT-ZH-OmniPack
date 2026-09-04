@@ -151,7 +151,8 @@ void LSNS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
  	elem->DefaultProperties.temp = 4.0f + 273.15f;
  	elem->HeatConduct = 0;
- 	elem->Description = "Life sensor, creates a spark when there's a nearby particle with a life higher than its temperature.";
+	elem->Description = "生命传感器，当附近存在生命高于其温度的粒子时会产生火花。";
+	elem->DetailedDescription = "描述：生命探测器，当其周围元素 Life 值高于传感器温度时，产生电流。生命探测器，是不可熔化、不可破碎的元件，当有比它 Life 值更高的粒子在它附近时，它会产生电流。\nTmp 参数：\nTmp=1 进入序列化模式,将周围的粒子的 Life 值数据(会占用第 29 位)，复制到 FILT(会占用第 29 位)\nTmp=2 反转模式，当周围的粒子 Life 值，高于它的温度时 LSNS 产生电流\nTmp=3 反序列化，设置周围的粒子的 Life 值用途：LSNS 在 DEUT 的压缩处理过程中中非常有用。DEUT 的 Life 值，会在加热或冷却时发生变化，这时它的压缩程序，可以用这个元素来衡量。它也可以用来检测 VIBR 是否接近于爆炸。\n导热率：0\n初始温度：4.00℃/277.15K";
 
  	elem->Properties = TYPE_SOLID;
 

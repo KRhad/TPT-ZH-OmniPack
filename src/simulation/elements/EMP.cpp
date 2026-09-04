@@ -220,7 +220,8 @@ void EMP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 121;
 	elem->Latent = 0;
-	elem->Description = "Electromagnetic pulse. Breaks activated electronics.";
+	elem->Description = "电磁脉冲。损坏激活的电子设备。";
+	elem->DetailedDescription = "描述：EMP 会随机摧毁所有正在工作(通电)的电子产品。有几率使受到EMP 影响的 Wi-Fi(WIFI)的频道改变。同样的，延时计(DLAY)的延时时间也可能被随机改变。A 射线发射器(ARAY)、开关(SWCH)、金属(METL)、脆金属(BMTL)、\nWi-Fi(WIFI)等可能会发热或损坏。“普通”导体(METL、TTAN、IRON、RBDM、BMTL、TUNG、加压 QRTZ)和 INWR不受 EMP 影响。\n(注：EMP 是全屏幕有效的)\n元素参数：恢复时间(Life)默认为 220 帧。\n导热率：121\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

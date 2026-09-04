@@ -46,7 +46,8 @@ void ISOZ_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Isotope-Z. Radioactive liquid. Decays into photons when touching PHOT or under negative pressure.";
+	elem->Description = "Z 同位素，放射性液体。接触光子或处于负压时衰变为光子。";
+	elem->DetailedDescription = "描述：放射性液体，可以被光子(PHOT)或负压激发，会释放出更多的光子。\n凝固点：-113.15℃/160K\n制取方法：酸(ACID)被中子(NEUT)轰击后会形成同位素-Z\n导热率：29\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID | PROP_NEUTPENETRATE | PROP_PHOTPASS;
 

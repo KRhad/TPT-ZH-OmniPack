@@ -70,7 +70,8 @@ void RPEL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 20.0f + 273.15f;
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Repels or attracts particles based on its temperature.";
+	elem->Description = "根据其温度排斥或吸引颗粒。";
+	elem->DetailedDescription = "描述：无需通电，和动力射线发射器(FRAY)一样，根据温度来吸引或推开物质，有效范围为 20 像素。如果 RPEL设置了 Ctype 值，它只会影响该类型的粒子。\n速度计算公式：温度(℃)/10=Vx=Vy\n元素参数：从 54.0 版本开始，Ctype 值记录被反射的物质种类\n导热率：0\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

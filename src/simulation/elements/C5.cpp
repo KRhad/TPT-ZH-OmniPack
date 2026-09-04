@@ -114,7 +114,8 @@ void C5_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Cold explosive, set off by anything cold.";
+	elem->Description = "冷爆炸物，被任何冷的东西引爆。";
+	elem->DetailedDescription = "描述：在压力、冷焰(CFLM)、液氧(LOXY)、液氮(LN2)、冷焰(CFLM)、智能微粒(TRON)，以及其他温度低于-174℃的液体接触时爆炸。对压力不敏感。对 PHOT 是透明的，通过的光线会变成蓝色的。\n导热率：88\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_NEUTPENETRATE | PROP_LIFE_DEC;
 

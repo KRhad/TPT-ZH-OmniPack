@@ -109,7 +109,8 @@ void DSTW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 23;
 	elem->Latent = 7500;
-	elem->Description = "Distilled water, does not conduct electricity.";
+	elem->Description = "蒸馏水，不导电。";
+	elem->DetailedDescription = "描述：不导电的理论纯水，由水蒸气冷凝或中子轰击水(WATR)获得，DSTW 具有与 WATR 相同的沸点和冰点。植物(PLNT)不能吸收这种水且不会导致铁生锈。DSTW 可以被 BUBW 和 WATR 污染成 WATR。当通电时会发生电解(分离成 HHO)。\n沸点：99.85℃/373.0K\n凝固点：0℃/273.15K\n导热率：23\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID | PROP_NEUTPASS | PROP_PHOTPASS;
 

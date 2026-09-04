@@ -108,7 +108,8 @@ void GRAV_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Very light dust. Changes colour based on velocity.";
+	elem->Description = "非常轻的灰尘。根据速度改变颜色。";
+	elem->DetailedDescription = "描述：十分轻的粉末，几乎无视重力，随着速度改变颜色。接触火焰(FIRE)时燃烧。\n导热率：70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART | PROP_LIFE_DEC;
 

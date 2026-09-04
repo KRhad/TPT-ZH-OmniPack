@@ -227,7 +227,8 @@ void EXOT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 250;
 	elem->Latent = 0;
-	elem->Description = "Exotic matter. Explodes with excess exposure to electrons. Has many other odd reactions.";
+	elem->Description = "奇异的物质。过多接触电子会爆炸。还有许多其他奇怪的反应。";
+	elem->DetailedDescription = "描述：奇异物质(EXOT)是一种特殊液体，具有类似岩浆(LAVA)的密度和压力特性，也有部分冰(ICE)的性质。冷却后会凝固，并以常温状态一半的速度闪烁。未受电子激发时，低于常温会产生负压，高于常温会逐渐释放正压；受到大量电子冲击时可能猛烈爆炸。\n产生：让电渣(BREL)持续通电，在最大压力下加热至 9000℃以上。\n与电子的反应：ELEC 会使 EXOT 发出彩虹色光并产生压力，压力强度与电子撞击数量有关。当环境压力与 EXOT 内部压力相等时停止增压。电子撞击累计超过 Tmp2+1000 后，EXOT 会转化为具有极高温度和压力的迁跃粉(WARP)。\n与中子的反应：NEUT 会使 EXOT 快速褪色但保留闪烁；中子过多时，EXOT 会复制与其直接接触的物质，光子、中子、电子和墙除外。\n元素参数：Tmp 控制闪烁循环；Tmp2 表示最大辐射承受量。\n导热率：250\n初始温度：20℃/293.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_NEUTPASS;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

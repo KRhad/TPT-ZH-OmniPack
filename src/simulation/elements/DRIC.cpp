@@ -44,7 +44,8 @@ void DRIC_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 172.65f;
 	elem->HeatConduct = 2;
 	elem->Latent = 0;
-	elem->Description = "Dry Ice, formed when CO2 is cooled.";
+	elem->Description = "干冰，CO2冷却时形成。";
+	elem->DetailedDescription = "描述：干冰，当二氧化碳(CO2)温度为-78.5℃以下时形成。当 DRIC 被加热到-80℃以上时，即使在高温下，也需要一段时间才能重新变成 CO2。\n升华点：-77.5℃/195.65K\n导热率：2\n初始温度：-100.50℃/172.65K";
 
 	elem->Properties = TYPE_SOLID;
 

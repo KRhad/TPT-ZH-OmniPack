@@ -43,7 +43,8 @@ void WAX_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 44;
 	elem->Latent = 0;
-	elem->Description = "Flammable, melts at moderately high temperatures.";
+	elem->Description = "易燃，在中等高温下熔化。";
+	elem->DetailedDescription = "描述：蜡，加热会融化。反射中子(NEUT)，在光子(PHOT)的照射作用下会融化。可燃。\n熔点：45.85℃/319K\n导热率：44\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

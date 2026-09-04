@@ -44,7 +44,8 @@ void LO2_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 80.0f;
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Liquid Oxygen. Very cold. Reacts with fire.";
+	elem->Description = "液态氧。很冷。与火发生反应。";
+	elem->DetailedDescription = "描述：点燃时产生 2000℃/1726.85K 的等离子体(PLSM)，升温时转变成氧气(OXYG)。\n沸点：-183.05℃/90.1K\n导热率：70\n初始温度：-193.15℃/80K";
 
 	elem->Properties = TYPE_LIQUID;
 

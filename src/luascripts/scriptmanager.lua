@@ -55,8 +55,8 @@ if not evt then
 end
 
 
-if not socket then error("TPT version not supported") end
-if MANAGER then error("manager is already running") end
+if not socket then error("当前 TPT 版本不受支持") end
+if MANAGER then error("脚本管理器已在运行") end
 
 local scriptversion = 19
 MANAGER = {["version"] = "3.17", ["scriptversion"] = scriptversion, ["hidden"] = true}
@@ -156,7 +156,7 @@ local function readScriptInfo(list)
 			end
 		end
 		if not t.ID then
-			print("Skipping invalid script in script list")
+			print("已跳过脚本列表中的无效脚本")
 		else
 			scriptlist[t.ID] = t
 		end
@@ -194,7 +194,7 @@ local function save_last()
 		f:close()
 		fs.move(TPT_LUA_PATH..PATH_SEP.."autorunsettings.txt.tmp", TPT_LUA_PATH..PATH_SEP.."autorunsettings.txt", true)
 	else
-		MANAGER.print("Couldn't save autorunsettings.txt")
+		MANAGER.print("无法保存 autorunsettings.txt")
 	end
 
 	save_dir()
@@ -614,7 +614,7 @@ new_button = function(x,y,w,h,splitx,f,f2,text,localscript)
 	b.t=ui_text.newscroll(text,x+24,y+2,splitx-24)
 	b.clicked=false
 	b.selected=false
-	b.checkbut=ui_checkbox.up_button(x+splitx+9,y,33,9,ui_button.scriptcheck,"Update")
+	b.checkbut=ui_checkbox.up_button(x+splitx+9,y,33,9,ui_button.scriptcheck,"更新")
 	b.drawbox=false
 	b:setbackground(127,127,127,100)
 	b:drawadd(function(self)
@@ -623,9 +623,9 @@ new_button = function(x,y,w,h,splitx,f,f2,text,localscript)
 		if tpt.mousey >= self.y and tpt.mousey < self.y2 then
 			if tpt.mousex >= self.x and tpt.mousex < self.x+8 then
 				if self.localscript then
-					tooltip:settooltip("delete this script")
+					tooltip:settooltip("删除此脚本")
 				else
-					tooltip:settooltip("view script in browser")
+					tooltip:settooltip("在浏览器中查看脚本")
 				end
 			elseif tpt.mousex>=self.x and tpt.mousex<self.x2 then
 				local script
@@ -635,12 +635,12 @@ new_button = function(x,y,w,h,splitx,f,f2,text,localscript)
 					script = localscripts[self.ID]
 				end
 				if script then
-					tooltip:settooltip(script["name"].." by "..script["author"].."\n\n"..script["description"])
+					tooltip:settooltip(script["name"].."，作者："..script["author"].."\n\n"..script["description"])
 				end
 				self.drawbackground = true
 			elseif tpt.mousex >= self.x2 then
 				if tpt.mousex < self.x2+9 and self.running then
-					tooltip:settooltip(online and "downloaded" or "running")
+					tooltip:settooltip(online and "已下载" or "运行中")
 				elseif tpt.mousex >= self.x2+9 and tpt.mousex < self.x2+43 and self.checkbut.canupdate and onlinescripts[self.ID] and onlinescripts[self.ID]["changelog"] then
 					tooltip:settooltip(onlinescripts[self.ID]["changelog"])
 				end
@@ -726,8 +726,8 @@ new = function(x,y,w,h)
 		return but
 	end
 	box:drawadd(function (self)
-		tpt.drawtext(self.x+24,self.y+2,"Files in "..TPT_LUA_PATH.." folder")
-		tpt.drawtext(self.splitx+11,self.y+2,"Update")
+		tpt.drawtext(self.x+24,self.y+2,TPT_LUA_PATH.." 文件夹中的文件")
+		tpt.drawtext(self.splitx+11,self.y+2,"更新")
 		for i,line in ipairs(self.lines) do
 			line:draw()
 		end
@@ -872,7 +872,7 @@ end
 -- Gets script info table for a script, or all scripts if nil is used as id. Data is fetched from the server.
 -- Returns table as argument to callback function once info download finishes, or nil and http status code if download / parsing failed
 function MANAGER.scriptinfo(id, callback)
-	if not callback then error("Callback function argument is required") end
+	if not callback then error("必须提供回调函数参数") end
 
 	local url = "https://starcatcher.us/scripts/main.lua"
 	if id then
@@ -918,11 +918,11 @@ end
 local active_downloads = {}
 function download_file(url, cb)
 	if not http then
-		MANAGER.print("TPT 95.0 or greater required to use http api", 255, 0, 0)
+		MANAGER.print("使用 HTTP API 需要 TPT 95.0 或更高版本", 255, 0, 0)
 		return false
 	end
 	if not cb then
-		MANAGER.print("Callback function required for async download", 255, 0, 0)
+		MANAGER.print("异步下载必须提供回调函数", 255, 0, 0)
 		return false
 	end
 	local req = http.get(url)
@@ -947,14 +947,14 @@ local function process_downloads()
 			active_downloads[k] = nil
 			local body, status_code = req:finish()
 			if status_code and status_code ~= 200 then
-				MANAGER.print("http download failed with status code " .. status_code, 255, 0, 0)
+				MANAGER.print("HTTP 下载失败，状态码：" .. status_code, 255, 0, 0)
 			end
 			cb(body, status_code)
 		end
 
 		if socket.gettime() > timeout_after then
 			active_downloads[k] = nil
-			MANAGER.print("http download timed out ", 255, 0, 0)
+			MANAGER.print("HTTP 下载超时", 255, 0, 0)
 			req:cancel()
 			cb(nil, 408)
 		end
@@ -971,7 +971,7 @@ local function download_script(ID, location, cb)
 			fs.move(location .. ".tmp", location, true)
 			cb(true, status_code)
 		else
-			MANAGER.print("Got http status " .. status_code .. " while downloading script", 255, 0, 0)
+			MANAGER.print("下载脚本时收到 HTTP 状态码：" .. status_code, 255, 0, 0)
 			cb(false, status_code)
 		end
 	end)
@@ -988,12 +988,12 @@ local function do_restart(skip_save)
 	if OS == "WIN32" or OS == "WIN64" then
 		os.execute("TASKKILL /IM \""..EXE_NAME.."\" /F &&START .\\\""..EXE_NAME.."\"")
 	elseif OS == "OSX" then
-		MANAGER.print("Can't restart on OS X when using game versions less than 91.0, please manually close and reopen The Powder Toy")
+		MANAGER.print("91.0 之前的 OS X 版本无法自动重启，请手动关闭并重新打开 The Powder Toy")
 		return
 	else
 		os.execute("killall -s KILL \""..EXE_NAME.."\" && ./\""..EXE_NAME.."\"")
 	end
-	MANAGER.print("Restart failed, do you have the exe name right?",255,0,0)
+	MANAGER.print("重启失败，请检查程序文件名是否正确。",255,0,0)
 end
 local function open_link(url)
 	if platform then
@@ -1011,17 +1011,17 @@ local function step()
 		tpt.fillrect(-1,-1,gfx.WIDTH,gfx.HEIGHT,0,0,0,150)
 	end
 	mainwindow:draw()
-	tpt.drawtext(280,140,"Console Output:")
+	tpt.drawtext(280,140,"控制台输出：")
 	if requiresrestart then
-		tpt.drawtext(280,88,"Disabling a script requires a restart for effect!",255,50,50)
+		tpt.drawtext(280,88,"禁用脚本后需要重启才能生效！",255,50,50)
 	end
-	tpt.drawtext(55,55,"Click a script to toggle, hit DONE when finished")
-	tpt.drawtext(474,55,"Script Manager v"..MANAGER.version)--479 for simple versions
+	tpt.drawtext(55,55,"点击脚本切换状态，完成后点击'完成'")
+	tpt.drawtext(474,55,"脚本管理器 v"..MANAGER.version)--479 for simple versions
 	tooltip:draw()
 
 	if online_req and online then
-		local textwidth = tpt.textwidth("Loading ...")
-		tpt.drawtext(mainwindow.checkbox.x + (mainwindow.checkbox.w - textwidth) / 2, mainwindow.checkbox.y + (mainwindow.checkbox.h - 6) / 2, "Loading ...")
+		local textwidth = tpt.textwidth("正在加载...")
+		tpt.drawtext(mainwindow.checkbox.x + (mainwindow.checkbox.w - textwidth) / 2, mainwindow.checkbox.y + (mainwindow.checkbox.h - 6) / 2, "正在加载...")
 	end
 end
 local function mouseclick(mousex,mousey,button,event,wheel)
@@ -1085,10 +1085,10 @@ local function reload_action()
 		count_local_scripts()
 	end
 	if num_files == 0 then
-		MANAGER.print("No scripts found in '"..TPT_LUA_PATH.."' folder",255,255,0)
+		MANAGER.print("'"..TPT_LUA_PATH.."' 文件夹中未找到脚本",255,255,0)
 		fs.makeDirectory(TPT_LUA_PATH)
 	else
-		MANAGER.print("Reloaded file list, found "..num_files.." scripts")
+		MANAGER.print("文件列表已刷新，共找到 "..num_files.." 个脚本")
 	end
 end
 --button functions on click
@@ -1096,7 +1096,7 @@ function ui_button.reloadpressed(self)
 	if not online then
 		reload_action()
 	else
-		beginInput("Script filtering", "Enter search terms to filter by", function(filter)
+		beginInput("筛选脚本", "输入要筛选的搜索词", function(filter)
 			search_terms = {}
 			for match in filter:gmatch("%w+") do
 				table.insert(search_terms, match)
@@ -1114,12 +1114,12 @@ function ui_button.consoleclear(self)
 	mainwindow.menuconsole:clear()
 end
 function ui_button.changedir(self)
-	beginInput("Change search directory", "Enter the folder where your scripts and settings are (requires restart)", TPT_LUA_PATH, TPT_LUA_PATH, function(new)
+	beginInput("更改搜索目录", "输入脚本和设置所在文件夹（需要重启）", TPT_LUA_PATH, TPT_LUA_PATH, function(new)
 		local last = TPT_LUA_PATH
 		if new and new~=last and new~="" then
 			save_last()
 
-			MANAGER.print("Directory changed to "..new,255,255,0)
+			MANAGER.print("目录已更改为 "..new,255,255,0)
 			TPT_LUA_PATH = new
 
 			save_dir()
@@ -1137,7 +1137,7 @@ function ui_button.uploadscript(self)
 end
 local lastpaused
 function ui_button.sidepressed(self)
-	if TPTMP and TPTMP.chatHidden == false then print("minimize TPTMP before opening the manager") return end
+	if TPTMP and TPTMP.chatHidden == false then print("打开脚本管理器前请先最小化 TPTMP") return end
 	MANAGER.hidden = not MANAGER.hidden
 	ui_button.localview()
 	if not MANAGER.hidden then
@@ -1164,7 +1164,7 @@ function ui_button.donepressed(self)
 						print(err)
 						but.selected = false
 					else
-						MANAGER.print("Started "..filepath)
+						MANAGER.print("已启动 "..filepath)
 						running[filepath] = true
 					end
 				end
@@ -1200,7 +1200,7 @@ function ui_button.downloadpressed(self)
 						localscripts[but.ID]["path"] = displayName
 						dofile(name)
 
-						MANAGER.print("Downloaded and started "..but.t.text)
+						MANAGER.print("已下载并启动 "..but.t.text)
 						running[displayName] = true
 					end)
 					if not status then
@@ -1215,12 +1215,12 @@ function ui_button.downloadpressed(self)
 				remaining_downloads = remaining_downloads - 1
 				if remaining_downloads == 0 then
 					save_last()
-					print("Finished downloading and installing scripts")
+					print("脚本下载和安装已完成")
 					if not any_failed then
 						MANAGER.hidden = true
 						ui_button.localview()
 					else
-						print("Some scripts failed, see manager log")
+						print("部分脚本失败，请查看管理器日志")
 					end
 				end
 			end)
@@ -1244,7 +1244,7 @@ function ui_button.delete(self)
 		load_filenames()
 		gen_buttons()
 	end
-	beginConfirm("Delete File", "Delete "..self.t.text.."?", cb)
+	beginConfirm("删除文件", "确定删除 "..self.t.text.." 吗？", cb)
 end
 function ui_button.viewonline(self)
 	open_link("https://starcatcher.us/scripts?view="..self.ID)
@@ -1268,7 +1268,7 @@ function ui_button.scriptcheck(self)
 			do_restart()
 		else
 			save_last()
-			MANAGER.print("Updated "..onlinescripts[self.ID]["name"])
+			MANAGER.print("已更新 "..onlinescripts[self.ID]["name"])
 		end
 	end)
 end
@@ -1284,41 +1284,41 @@ function ui_button.localview(self)
 	if online then
 		online = false
 		gen_buttons()
-		donebutton.t.text = "DONE"
+		donebutton.t.text = "完成"
 		donebutton.w = 29 donebutton.x2 = donebutton.x + donebutton.w
 		donebutton.f = ui_button.donepressed
-		uploadscriptbutton.t.text = icons["folder"].." Script Folder"
-		reloadbutton.t.text = "RELOAD"
+		uploadscriptbutton.t.text = icons["folder"].." 脚本目录"
+		reloadbutton.t.text = "刷新"
 	end
 end
 function ui_button.onlineview(self)
 	if not online then
 		online = true
 		gen_buttons()
-		donebutton.t.text = "DOWNLOAD"
+		donebutton.t.text = "下载"
 		donebutton.w = 55 donebutton.x2 = donebutton.x + donebutton.w
 		donebutton.f = ui_button.downloadpressed
-		uploadscriptbutton.t.text = "Upload Script"
-		reloadbutton.t.text = "FILTER"
+		uploadscriptbutton.t.text = "上传脚本"
+		reloadbutton.t.text = "筛选"
 		search_terms = {}
 	end
 end
 --add buttons to window
-donebutton = ui_button.new(55,339,29,10,ui_button.donepressed,"DONE")
+donebutton = ui_button.new(55,339,29,10,ui_button.donepressed,"完成")
 mainwindow:add(donebutton)
-mainwindow:add(ui_button.new(134,339,40,10,ui_button.sidepressed,"CANCEL"))
+mainwindow:add(ui_button.new(134,339,40,10,ui_button.sidepressed,"取消"))
 --mainwindow:add(ui_button.new(152,339,29,10,ui_button.selectnone,"NONE"))
 local nonebutton = ui_button.new(62,81,8,8,ui_button.selectnone,"")
 nonebutton.drawbox = true
 mainwindow:add(nonebutton)
-mainwindow:add(ui_button.new(538,339,33,10,ui_button.consoleclear,"CLEAR"))
-reloadbutton = mainwindow:add(ui_button.new(278,67,39,10,ui_button.reloadpressed,"RELOAD"), "reload")
-mainwindow:add(ui_button.new(378,67,51,10,ui_button.changedir,"Change dir"))
-uploadscriptbutton = mainwindow:add(ui_button.new(478,67,79,10,ui_button.uploadscript, icons["folder"].." Script Folder"))
-local tempbutton = ui_button.new(60, 65, 30, 10, ui_button.localview, "Local")
+mainwindow:add(ui_button.new(538,339,33,10,ui_button.consoleclear,"清除"))
+reloadbutton = mainwindow:add(ui_button.new(278,67,39,10,ui_button.reloadpressed,"刷新"), "reload")
+mainwindow:add(ui_button.new(378,67,51,10,ui_button.changedir,"换目录"))
+uploadscriptbutton = mainwindow:add(ui_button.new(478,67,79,10,ui_button.uploadscript, icons["folder"].." 脚本目录"))
+local tempbutton = ui_button.new(60, 65, 30, 10, ui_button.localview, "本地")
 tempbutton.drawbox = true
 mainwindow:add(tempbutton)
-tempbutton = ui_button.new(100, 65, 35, 10, ui_button.onlineview, "Online")
+tempbutton = ui_button.new(100, 65, 35, 10, ui_button.onlineview, "在线")
 tempbutton.drawbox = true
 mainwindow:add(tempbutton)
 local ypos = 134
@@ -1362,7 +1362,7 @@ function count_local_scripts()
 end
 local function gen_buttons_online()
 	if not http then
-		MANAGER.print("TPT 95.0 or greater required to use the online tab", 255, 0, 0)
+		MANAGER.print("使用在线标签页需要 TPT 95.0 或更高版本", 255, 0, 0)
 		return
 	end
 
@@ -1391,7 +1391,7 @@ local function check_online_req_status()
 		local list, status_code = online_req:finish()
 		online_req = nil
 		if status_code ~= 200 then
-			MANAGER.print("script list download failed with status code " .. status_code, 255, 0, 0)
+			MANAGER.print("脚本列表下载失败，状态码：" .. status_code, 255, 0, 0)
 			return
 		end
 
@@ -1429,17 +1429,17 @@ local function check_update_req_status()
 		local updateinfo, status_code = script_manager_update_req:finish()
 		script_manager_update_req = nil
 		if status_code ~= 200 then
-			MANAGER.print("self update check failed with status code " .. status_code, 255, 0, 0)
+			MANAGER.print("自更新检查失败，状态码：" .. status_code, 255, 0, 0)
 			return
 		end
 
 		updatetable = readScriptInfo(updateinfo)
 		if not updatetable[1] then return end
 		if tonumber(updatetable[1].version) > scriptversion then
-			local updatebutton = ui_button.new(278,127,40,10,ui_button.doupdate,"UPDATE")
+			local updatebutton = ui_button.new(278,127,40,10,ui_button.doupdate,"更新")
 			updatebutton.t:setcolor(25,255,25)
 			mainwindow:add(updatebutton)
-			MANAGER.print("A script manager update is available! Click UPDATE",25,255,55)
+			MANAGER.print("脚本管理器有可用更新！请点击'更新'",25,255,55)
 			MANAGER.print(updatetable[1].changelog,25,255,55)
 		end
 	end
@@ -1484,5 +1484,5 @@ for prev,v in pairs(running) do
 end
 save_last()
 if started~="" then
-	MANAGER.print("Auto started"..started)
+	MANAGER.print("已自动启动"..started)
 end

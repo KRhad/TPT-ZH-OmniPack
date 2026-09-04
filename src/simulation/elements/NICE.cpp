@@ -44,7 +44,8 @@ void NICE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 35.0f;
 	elem->HeatConduct = 46;
 	elem->Latent = 0;
-	elem->Description = "Nitrogen Ice. Very cold, will melt into LN2 when heated only slightly.";
+	elem->Description = "氮冰。非常冷，稍微加热就会融化成LN2。";
+	elem->DetailedDescription = "描述：氮的固体形式。熔化后变成 LN2，当过度加热时，LN2 又会消失。对于 NICE 来说大多数材料的温度都足够高，可以将其熔化成液体形式，并且大概率使液体沸腾。\n熔点：-210.05℃/63.1K\n导热率：46\n初始温度：-238.15℃/35K";
 
 	elem->Properties = TYPE_SOLID;
 

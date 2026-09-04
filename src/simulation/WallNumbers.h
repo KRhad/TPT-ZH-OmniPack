@@ -59,29 +59,29 @@ typedef struct wallType wallType;
 
 const wallType wallTypes[] =
 {
-	{"ERASE",           "DEFAULT_WL_ERASE", COLPACK(0x808080), COLPACK(0x000000), -1, "Erases walls."},
-	{"CONDUCTIVE WALL", "DEFAULT_WL_CNDTW", COLPACK(0xC0C0C0), COLPACK(0x101010), 0,  "Blocks everything. Conductive."},
-	{"EWALL",           "DEFAULT_WL_EWALL", COLPACK(0x808080), COLPACK(0x808080), 0,  "E-Wall. Becomes transparent when electricity is connected."},
-	{"DETECTOR",        "DEFAULT_WL_DTECT", COLPACK(0xFF8080), COLPACK(0xFF2008), 1,  "Detector. Generates electricity when a particle is inside."},
-	{"STREAMLINE",      "DEFAULT_WL_STRM",  COLPACK(0x808080), COLPACK(0x000000), 0,  "Streamline. Creates a line that follows air movement."},
+	{"ERASE",           "DEFAULT_WL_ERASE", COLPACK(0x808080), COLPACK(0x000000), -1, "擦除墙体。"},
+	{"CONDUCTIVE WALL", "DEFAULT_WL_CNDTW", COLPACK(0xC0C0C0), COLPACK(0x101010), 0,  "阻挡所有物质，并可导电。"},
+	{"EWALL",           "DEFAULT_WL_EWALL", COLPACK(0x808080), COLPACK(0x808080), 0,  "电子墙。通电时允许粒子通过。"},
+	{"DETECTOR",        "DEFAULT_WL_DTECT", COLPACK(0xFF8080), COLPACK(0xFF2008), 1,  "探测墙。内部出现粒子时产生电流。"},
+	{"STREAMLINE",      "DEFAULT_WL_STRM",  COLPACK(0x808080), COLPACK(0x000000), 0,  "流线。绘制一条跟随空气运动的轨迹。"},
 #ifndef TOUCHUI
-	{"FAN",             "DEFAULT_WL_FAN",   COLPACK(0x8080FF), COLPACK(0x000000), 1,  "Fan. Accelerates air. Use the line tool to set direction and strength."},
+	{"FAN",             "DEFAULT_WL_FAN",   COLPACK(0x8080FF), COLPACK(0x000000), 1,  "风扇。推动空气；用直线工具设置方向和强度。"},
 #else
-	{"FAN",             "DEFAULT_WL_FAN",   COLPACK(0x8080FF), COLPACK(0x000000), 1,  "Fan. Accelerates air. Fan acceleration cannot be set on Android."},
+	{"FAN",             "DEFAULT_WL_FAN",   COLPACK(0x8080FF), COLPACK(0x000000), 1,  "风扇。推动空气；Android 版无法设置风力。"},
 #endif
-	{"LIQUID WALL",     "DEFAULT_WL_LIQD",  COLPACK(0xC0C0C0), COLPACK(0x101010), 2,  "Allows liquids, blocks all other particles. Conductive."},
-	{"ABSORB WALL",     "DEFAULT_WL_ABSRB", COLPACK(0x808080), COLPACK(0x000000), 1,  "Absorbs particles but lets air currents through."},
-	{"WALL",            "DEFAULT_WL_WALL",  COLPACK(0x808080), COLPACK(0x000000), 3,  "Basic wall, blocks everything."},
-	{"AIRONLY WALL",    "DEFAULT_WL_AIR",   COLPACK(0x3C3C3C), COLPACK(0x000000), 1,  "Allows air, but blocks all particles."},
-	{"POWDER WALL",     "DEFAULT_WL_POWDR", COLPACK(0x575757), COLPACK(0x000000), 1,  "Allows powders, blocks all other particles."},
-	{"CONDUCTOR",       "DEFAULT_WL_CNDTR", COLPACK(0xFFFF22), COLPACK(0x101010), 2,  "Conductor. Allows all particles to pass through and conducts electricity."},
-	{"EHOLE",           "DEFAULT_WL_EHOLE", COLPACK(0x242424), COLPACK(0x101010), 0,  "E-Hole. absorbs particles, releases them when powered."},
-	{"GAS WALL",        "DEFAULT_WL_GAS",   COLPACK(0x579777), COLPACK(0x000000), 1,  "Allows gases, blocks all other particles."},
-	{"GRAVITY WALL",    "DEFAULT_WL_GRVTY", COLPACK(0xFFEE00), COLPACK(0xAA9900), 4,  "Gravity wall. Newtonian Gravity has no effect inside a box drawn with this."},
-	{"ENERGY WALL",     "DEFAULT_WL_ENRGY", COLPACK(0xFFAA00), COLPACK(0xAA5500), 4,  "Allows energy particles, blocks all other particles."},
-	{"AIRBLOCK WALL",   "DEFAULT_WL_NOAIR", COLPACK(0xDCDCDC), COLPACK(0x000000), 1,  "Allows all particles, but blocks air."},
-	{"ERASEALL",        "DEFAULT_WL_ERASEA",COLPACK(0x808080), COLPACK(0x000000), -1, "Erases walls, particles, and signs."},
-	{"STASIS WALL",     "DEFAULT_WL_STASIS",COLPACK(0x800080), COLPACK(0x000000), 0,  "Freezes particles inside the wall in place until powered"},
+	{"LIQUID WALL",     "DEFAULT_WL_LIQD",  COLPACK(0xC0C0C0), COLPACK(0x101010), 2,  "仅允许液体通过，并可导电。"},
+	{"ABSORB WALL",     "DEFAULT_WL_ABSRB", COLPACK(0x808080), COLPACK(0x000000), 1,  "吸收粒子，但允许气流通过。"},
+	{"WALL",            "DEFAULT_WL_WALL",  COLPACK(0x808080), COLPACK(0x000000), 3,  "基础墙体，阻挡所有物质。"},
+	{"AIRONLY WALL",    "DEFAULT_WL_AIR",   COLPACK(0x3C3C3C), COLPACK(0x000000), 1,  "允许空气通过，但阻挡所有粒子。"},
+	{"POWDER WALL",     "DEFAULT_WL_POWDR", COLPACK(0x575757), COLPACK(0x000000), 1,  "仅允许粉末通过。"},
+	{"CONDUCTOR",       "DEFAULT_WL_CNDTR", COLPACK(0xFFFF22), COLPACK(0x101010), 2,  "导电墙。允许所有粒子通过，并可导电。"},
+	{"EHOLE",           "DEFAULT_WL_EHOLE", COLPACK(0x242424), COLPACK(0x101010), 0,  "电子洞。吸收粒子，通电时将其释放。"},
+	{"GAS WALL",        "DEFAULT_WL_GAS",   COLPACK(0x579777), COLPACK(0x000000), 1,  "仅允许气体通过。"},
+	{"GRAVITY WALL",    "DEFAULT_WL_GRVTY", COLPACK(0xFFEE00), COLPACK(0xAA9900), 4,  "重力墙。由它围成的区域不受牛顿引力影响。"},
+	{"ENERGY WALL",     "DEFAULT_WL_ENRGY", COLPACK(0xFFAA00), COLPACK(0xAA5500), 4,  "仅允许能量粒子通过。"},
+	{"AIRBLOCK WALL",   "DEFAULT_WL_NOAIR", COLPACK(0xDCDCDC), COLPACK(0x000000), 1,  "允许所有粒子通过，但阻挡空气。"},
+	{"ERASEALL",        "DEFAULT_WL_ERASEA",COLPACK(0x808080), COLPACK(0x000000), -1, "擦除墙体、粒子和标牌。"},
+	{"STASIS WALL",     "DEFAULT_WL_STASIS",COLPACK(0x800080), COLPACK(0x000000), 0,  "冻结墙内粒子；通电后解除冻结。"},
 };
 
 #endif

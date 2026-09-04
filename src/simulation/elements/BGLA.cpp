@@ -43,7 +43,8 @@ void BGLA_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 150;
 	elem->Latent = 0;
-	elem->Description = "Broken Glass, heavy particles formed when glass breaks under pressure. Meltable. Bagels.";
+	elem->Description = "碎玻璃。玻璃受压破碎后形成的重质粒子；可熔化。还有贝果。";
+	elem->DetailedDescription = "描述：碎玻璃，熔化后能重新变回玻璃(GLAS)。光子(PHOT)无法通过。\n熔点：1699.85℃/1973K\n制取方法：给玻璃(GLAS)加压或者加热液晶(LCRY)可以得到碎玻璃。玻璃(GLAS)被 DMG 破坏时也会产生碎玻璃。\n导热率：150\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART | PROP_PHOTPASS | PROP_NEUTPASS | PROP_HOT_GLOW;
 

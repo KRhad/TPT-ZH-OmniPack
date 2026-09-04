@@ -58,7 +58,8 @@ void GOO_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 75;
 	elem->Latent = 0;
-	elem->Description = "Deforms and disappears under pressure.";
+	elem->Description = "在压力下变形并消失。";
+	elem->DetailedDescription = "描述：固体，在压力下会变形消失。中子(NEUT)同样可以使粘土轻微变形。\n压力极限：1 P\n导热率：75\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

@@ -65,7 +65,8 @@ void WTRV_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 100.0f + 273.15f;
 	elem->HeatConduct = 48;
 	elem->Latent = 0;
-	elem->Description = "Steam. Produced from hot water.";
+	elem->Description = "蒸汽。由热水产生。";
+	elem->DetailedDescription = "描述：水蒸气，水加热到 100℃以上或者盐水加热到 109.86℃以上时产生。当水快速大量沸腾时，蒸汽会产生非常高的压力。WTRV 通过加压或冷却冷凝为 DSTW。水蒸气遇到酸(ACID)会变成酸气(CAUS)。如果 WTRV 承受≤-49.93 P 的压力，它会凝华，形成RIME，这是冰的另一种形式。当RIME 通电时，它会变成FOG。\n液化点：371℃/97.85K\n导热率：48\n初始温度：122.00℃/295.15K";
 
 	elem->Properties = TYPE_GAS;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

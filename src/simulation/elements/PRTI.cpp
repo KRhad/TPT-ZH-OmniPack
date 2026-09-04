@@ -149,7 +149,8 @@ void PRTI_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Portal IN. Particles go in here. Also has temperature dependent channels. (same as WIFI)";
+	elem->Description = "入口传送门。粒子从这里进入；通道随温度变化（与 WIFI 相同）。";
+	elem->DetailedDescription = "描述：可以传送物质和电脉冲，和 Wi-Fi(WIFI)相似，通过改变自身温度可以产生不同频道，产生一个负压，从这里进入的物质将被传送至传送门出口(PRTO)，如果暂时没有传送门出口，它可以先储存一部分物质。其表面积越大，传送速度越快。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

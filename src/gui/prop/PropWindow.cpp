@@ -29,7 +29,7 @@ PropWindow::PropWindow():
 #endif
 	propTool = dynamic_cast<PropTool*>(GetToolFromIdentifier("DEFAULT_UI_PROPERTY"));
 
-	Label *editPropertyLabel = new Label(Point(5, 3), Point(Label::AUTOSIZE, Label::AUTOSIZE), "Edit Property:");
+	Label *editPropertyLabel = new Label(Point(5, 3), Point(Label::AUTOSIZE, Label::AUTOSIZE), "编辑属性：");
 	editPropertyLabel->SetColor(COLRGB(140, 140, 255));
 	this->AddComponent(editPropertyLabel);
 
@@ -51,7 +51,7 @@ PropWindow::PropWindow():
 	FocusComponent(valueTextbox);
 #endif
 
-	Button *okButton = new Button(Point(0, this->size.Y - buttonHeight), Point(this->size.X, buttonHeight), "OK");
+	Button *okButton = new Button(Point(0, this->size.Y - buttonHeight), Point(this->size.X, buttonHeight), "确定");
 	okButton->SetCloseButton(true);
 	okButton->SetCallback([&](int) {
 		this->UpdatePropTool(true);
@@ -228,7 +228,7 @@ bool PropWindow::ParseValue(std::string value, bool showError)
 		if (ret)
 			tempValue = propValue;
 		else if (showError)
-			Engine::Ref().ShowWindow(new ErrorPrompt("Invalid floating point number"));
+			Engine::Ref().ShowWindow(new ErrorPrompt("无效的浮点数"));
 		return ret;
 	}
 
@@ -301,9 +301,9 @@ bool PropWindow::ParseValue(std::string value, bool showError)
 	if (showError)
 	{
 		if (properties[selectedProperty].Type == StructProperty::ParticleType)
-			Engine::Ref().ShowWindow(new ErrorPrompt("Invalid element name"));
+			Engine::Ref().ShowWindow(new ErrorPrompt("无效的元素名称"));
 		else
-			Engine::Ref().ShowWindow(new ErrorPrompt("Invalid number"));
+			Engine::Ref().ShowWindow(new ErrorPrompt("无效的数字"));
 	}
 	return false;
 }

@@ -43,7 +43,8 @@ void GUNP_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 97;
 	elem->Latent = 0;
-	elem->Description = "Gunpowder. Light dust, explodes on contact with fire or spark.";
+	elem->Description = "火药。轻尘，接触火或火花会爆炸。";
+	elem->DetailedDescription = "爆炸点：399.85℃/673K\n描述：以粉末形式爆炸，温度到达爆炸点时爆炸, 也可以被明火或电脉冲引爆。与 ACID 反应会爆炸，被 NEUT照射后会变成 DUST。\n导热率：97\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

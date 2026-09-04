@@ -180,7 +180,7 @@ std::string Sign::GetDisplayText(Simulation * sim, bool *v95) const
 				if (part)
 					displayTextStream << sim->ElementResolve(part->type, part->ctype);
 				else if (displayTextStream.str().empty())
-					displayTextStream << "Empty";
+					displayTextStream << "空";
 				else
 					displayTextStream << "empty";
 				if (v95)
@@ -198,7 +198,7 @@ std::string Sign::GetDisplayText(Simulation * sim, bool *v95) const
 						displayTextStream << ctype;
 				}
 				else if (displayTextStream.str().empty())
-					displayTextStream << "Empty";
+					displayTextStream << "空";
 				else
 					displayTextStream << "empty";
 				if (v95)

@@ -76,7 +76,8 @@ void RIME_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = -30.0f + 273.15f;
 	elem->HeatConduct = 100;
 	elem->Latent = 0;
-	elem->Description = "Solid, created when steam cools rapidly and goes through deposition, skipping the liquid phase.";
+	elem->Description = "霜。蒸汽快速冷却、跳过液态直接凝华时形成。";
+	elem->DetailedDescription = "描述：霜，可以通电升华成雾(FOG)。0 摄氏度或更高温度时会变回 WATR，或在某些压力下变回 WTRV。\n熔点：0℃/273.15K\n制取方法：如果水蒸气快速冷却凝华就有可能形成霜(RIME)。\n导热率：100\n初始温度：-30℃/243.15K";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

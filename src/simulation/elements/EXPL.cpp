@@ -67,7 +67,8 @@ void EXPL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Explosion, causes everything it touches to explode.";
+	elem->Description = "爆炸，会使接触到的一切发生爆炸。";
+	elem->DetailedDescription = "描述：连锁爆炸粒子，是会移动的高亮粉末。它检查周围 3×3 范围，并给所有非不可破坏、非 EMBR 的相邻粒子设置爆炸标记，使这些粒子按各自的爆炸规则被摧毁或引爆。\n特性：EXPL 自身具有不可破坏属性，不靠燃烧或倒计时工作，因此一小团即可沿可破坏材料持续传播爆炸；不可破坏材料能阻止传播。它不会把余烬(EMBR)标记为爆炸。\n导热率：29\n初始温度：20℃/293.15K";
 
 	elem->Properties = TYPE_PART|PROP_SPARKSETTLE|PROP_INDESTRUCTIBLE;
 

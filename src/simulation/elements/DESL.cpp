@@ -43,7 +43,8 @@ void DESL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 42;
 	elem->Latent = 0;
-	elem->Description = "Liquid diesel. Explodes under high pressure and temperatures.";
+	elem->Description = "液体柴油。在高压和高温下会爆炸。";
+	elem->DetailedDescription = "描述：可燃液体，密度比水小，具有和硝化甘油一样的性质，但可以稳定燃烧而不爆炸。温度达到燃点或压力超过极限时自发燃烧。\n反应：HYGN(压力>8 P)+DESL(压力≤5 P)→WATR+OIL(非常困难，因为 DESL 在压力高于 5 P 时会爆炸)\nNEUT+DESL→NEUT+GAS\n燃点：61.85℃/335K\n压力极限：5 P\n导热率：42\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID;
 

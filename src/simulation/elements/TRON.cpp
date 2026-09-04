@@ -266,7 +266,8 @@ void TRON_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 0.0f;
 	elem->HeatConduct = 40;
 	elem->Latent = 0;
-	elem->Description = "Smart particles, Travels in straight lines and avoids obstacles. Grows with time.";
+	elem->Description = "智能粒子。沿直线移动并避开障碍，会随时间生长。";
+	elem->DetailedDescription = "描述：绝对零度的粒子，会智能躲避障碍，随时间流逝尾巴会变长，可用于降温。\n元素参数：颜色由 Tmp 值决定\n导热率：40\n初始温度：-273.15℃/0K";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC|PROP_LIFE_KILL;
 

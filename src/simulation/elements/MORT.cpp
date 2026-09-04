@@ -50,7 +50,8 @@ void MORT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 4.0f + 273.15f;
 	elem->HeatConduct = 60;
 	elem->Latent = 0;
-	elem->Description = "Steam Train.";
+	elem->Description = "蒸汽火车。";
+	elem->DetailedDescription = "描述：以玩家名字命名的元素。会释放烟雾并缓慢的飘落下来。可以通过控制台创建。只能被炸弹(BOMB)、反物质(AMTR)和奇点(SING)摧毁。\n导热率：60\n初始温度：-8.00℃/265.15K";
 
 	elem->Properties = TYPE_GAS;
 

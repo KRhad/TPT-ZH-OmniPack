@@ -199,7 +199,8 @@ void SPNG_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Sponge, absorbs water. Is a moving solid.";
+	elem->Description = "海绵，可吸收水，是一种可移动固体。";
+	elem->DetailedDescription = "描述：可以从多种元素中(水 WATR、盐水 SLTW、蒸馏水 DSTW、寒水 FRZW、苏打水 BUBW、胶体 PSTE)吸水，吸水之后颜色变暗。暴露在明火下或温度达到燃点时燃烧。高压下或灼烧时会释放出吸收的水。当海绵吸收盐水时，它可能会析出盐。当吸收 BUBW 时，它会释放 CO2。当吸收 PSTE 时，PSTE 会变成 CLST。\n燃点：2456.85℃/2730K\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

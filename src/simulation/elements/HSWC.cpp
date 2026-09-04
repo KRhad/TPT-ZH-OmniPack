@@ -72,7 +72,8 @@ void HSWC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Heat switch. Conducts heat only when activated.";
+	elem->Description = "热开关。仅在激活时传导热量。";
+	elem->DetailedDescription = "描述：当激活时才可以导热，不可摧毁。用 P 型硅(PSCN)激活，N 型硅(NSCN)关闭。HSWC 可以从 FILT 接收数据。它将这些序列化的数据转化为热量，这使得HSWC 在加热高级用户方面非常有用。此功能还可用于使用TSNS传输数据。HSWC 不受高温和压力的影响。\n导热率：激活后=251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

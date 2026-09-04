@@ -104,7 +104,8 @@ void GLOW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 20.0f + 273.15f;
 	elem->HeatConduct = 44;
 	elem->Latent = 0;
-	elem->Description = "Glow, Glows under pressure.";
+	elem->Description = "荧光液。受压时发光。";
+	elem->DetailedDescription = "描述：荧光液，状态、压力或温度变化时改变颜色，与水混合产生重水(DEUT)。光子(PHOT)接触到它会增殖。可以使电子(ELEC)变成光子(PHOT)，但仅限于 GLOW 内部。\n颜色表：\n颜色状态灰色正常蓝色移动中亮红色高温深绿/深蓝低温翠绿低压黄色高温高压亮粉高温低压暗一些的翠绿低温高压深蓝低温低压\n导热率：44\n初始温度：42.00℃/315.15K";
 
 	elem->Properties = TYPE_LIQUID | PROP_PHOTPASS | PROP_LIFE_DEC;
 

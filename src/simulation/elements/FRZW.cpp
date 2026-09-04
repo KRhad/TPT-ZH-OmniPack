@@ -67,7 +67,8 @@ void FRZW_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 120.0f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Freeze water. Hybrid liquid formed when Freeze powder melts.";
+	elem->Description = "冷冻水。冷冻粉熔化后形成的混合液体。";
+	elem->DetailedDescription = "描述：寒尘(FRZZ)溶于水形成，能自身不断降温直到绝对零度，同时将更多的水变成寒水。\n凝固点：-220.15℃/53K\n导热率：29\n初始温度：-154.15℃";
 
 	elem->Properties = TYPE_LIQUID|PROP_LIFE_DEC;
 

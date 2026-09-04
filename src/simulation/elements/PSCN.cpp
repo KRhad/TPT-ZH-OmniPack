@@ -44,7 +44,8 @@ void PSCN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "P-Type Silicon, Will transfer current to any conductor. Enables powered materials.";
+	elem->Description = "P 型硅。可向任何导体传导电流；可开启可控材料。";
+	elem->DetailedDescription = "描述：可以电脉冲传导给任何导体，可以熔化。P 型硅与 N 型硅(NSCN)紧贴可以形成一个简单的太阳能电池板，有光子撞击 P 型硅的时候会产生电脉冲。另外，P 型硅也可以用来激活一些动力材料和制作二极管。1 个像素厚的 P 型硅层，铺在 N 型硅表面，可制成简易的太阳能电池板。通常用于激活动力材料或二极管。\n熔点：1413.85℃/1687.15K，变成 LAVA(PSCN)\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

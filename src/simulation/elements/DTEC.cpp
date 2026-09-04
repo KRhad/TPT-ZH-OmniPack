@@ -119,7 +119,8 @@ void DTEC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Detector, creates a spark when something with its ctype is nearby.";
+	elem->Description = "探测器，当具有其 ctype 的物体在附近时会产生火花。";
+	elem->DetailedDescription = "描述：和使用复制体(CLNE)的方法基本一致，放置好探测器后，将需要探测的物质与之直接接触就能设置它的Ctype 值为这个物质的 Type 值，之后每当有相同的物质与之接触时都能产生一个电脉冲，可以由金属或导电体输出(导电墙不行)。是探测墙的缩小化替代品。DTEC 还可以在其 Tmp2 范围内检测 BRAY 和 PHOT 的 Ctype 并将其传输到相邻的 FILT。\n元素参数：Tmp2=侦测范围，最大 25 像素\n导热率：0\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

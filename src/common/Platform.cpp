@@ -840,8 +840,8 @@ std::string DoMigration(std::string fromDir, std::string toDir)
 
 	if (stamps.empty() && saves.empty() && scripts.empty() && downloadedScripts.empty() && screenshots.empty() && !hasAutorun && !hasScriptManager && !hasPref)
 	{
-		logFile << "Nothing to migrate.";
-		return "Nothing to migrate. This button is used to migrate data from pre-96.0 TPT installations to the shared directory";
+		logFile << "没有需要迁移的数据。";
+		return "没有需要迁移的数据。此按钮用于把 TPT 96.0 之前版本的数据迁移到共享目录。";
 	}
 
 	std::stringstream result;
@@ -915,12 +915,12 @@ std::string DoMigration(std::string fromDir, std::string toDir)
 	DeleteFile(fromDir + "stamps/stamps.def");
 	DeleteFile(fromDir + "stamps/stamps.json");
 	migrateList(stamps, "stamps", "Stamps");
-	migrateList(saves, "Saves", "Saves");
+	migrateList(saves, "Saves", "存档");
 	if (!scripts.empty())
 		migrateList(scripts, "scripts", "Scripts");
 	if (!hasScriptinfo && !downloadedScripts.empty())
 	{
-		migrateList(downloadedScripts, "scripts/downloaded", "Downloaded scripts");
+		migrateList(downloadedScripts, "scripts/downloaded", "已下载脚本");
 		migrateFile("scripts/downloaded/scriptinfo");
 	}
 	if (!screenshots.empty())
@@ -948,7 +948,7 @@ std::string DoMigration(std::string fromDir, std::string toDir)
 	if (stamps.size())
 		Stamps::Ref().Rescan();
 
-	logFile << std::endl << std::endl << "Migration complete. Results: " << result.str();
+	logFile << std::endl << std::endl << "迁移完成。结果：" << result.str();
 	logFile.close();
 
 	return result.str();

@@ -85,7 +85,8 @@ void BOYL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 2.0f + 273.15f;
 	elem->HeatConduct = 42;
 	elem->Latent = 0;
-	elem->Description = "Boyle, variable pressure gas. Expands when heated.";
+	elem->Description = "波义耳，可变压力气体。受热时膨胀。";
+	elem->DetailedDescription = "描述：不可燃气体，热胀冷缩。也可用于核反应堆，在容器内放入铀(URAN)和波义尔气，铀会在压力下产生大量热，而热量又使波义尔气膨胀产生更高压力，因此这个反应就能一直进行下去。波义耳气和氧气(OXYG)反应能生成水(WATR)，和水反应能生成雾(FOG)。\n导热率：42\n初始温度：24.00℃/297.15K";
 
 	elem->Properties = TYPE_GAS;
 

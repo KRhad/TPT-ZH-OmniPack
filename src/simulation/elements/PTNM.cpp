@@ -267,7 +267,8 @@ void PTNM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->Weight = 100;
 
 	elem->HeatConduct = 251;
-	elem->Description = "Platinum. Catalyzes certain reactions.";
+	elem->Description = "铂。可催化某些反应。";
+	elem->DetailedDescription = "描述：铂(PTNM)可催化多种反应，导电速度与 GOLD 相近，但熔点更高，可在高温电路中代替 GOLD。反应物必须直接接触 PTNM。\n直接催化：ISZS/ISOZ→PLUT+PHOT；WTRV+BCOL→OIL；SHLD 接触 PTNM 后立即进入下一防护层级。\n温压催化：下列反应按二次概率曲线发生，0℃及以下概率为 0%，1500℃时达到 100%。压力超过 2 P 且温度超过 200℃时，GAS→INSL 并升温 60℃；压力超过 50 P 且温度超过 1000℃时，BREL→EXOT 并降温 30℃；SMKE→CO2。\n氢反应：HYGN+DESL→OIL+WATR；HYGN+OXYG→DSTW+SPRK，升温 5℃并激活 PTNM。两个 HYGN 在 500℃以上时，每帧约有 1/1000 概率发生冷聚变，生成 NBLE、NEUT、PHOT，并有 1/10 概率额外生成 ELEC，同时产生约 1000℃高温和 10 P 压力。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_CONDUCTS | PROP_LIFE_DEC | PROP_HOT_GLOW | PROP_SPARKSETTLE;
 

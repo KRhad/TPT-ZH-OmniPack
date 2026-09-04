@@ -106,7 +106,8 @@ void LOVE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 373.0f;
 	elem->HeatConduct = 40;
 	elem->Latent = 0;
-	elem->Description = "Love...";
+	elem->Description = "爱...";
+	elem->DetailedDescription = "描述：爱心形状，同样是类似于彩蛋的东西。\n导热率：40\n初始温度：99.85℃/373K";
 
 	elem->Properties = TYPE_SOLID;
 

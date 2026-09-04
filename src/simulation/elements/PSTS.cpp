@@ -44,7 +44,8 @@ void PSTS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Solid form of PSTE.";
+	elem->Description = "PSTE 的固体形式。";
+	elem->DetailedDescription = "描述：胶体，在压力下变硬。高温下变成砖块(BRCK)。可以通过混合水(WATR)和粘土(CLST)来制造浆糊。\n烧制温度：473.85℃/747K\n压力极限：0.5 P，变为固体浆糊(PSTS)。\n导热率：29/29\n初始温度：20.00℃/293.15K";
 
 	elem->Properties = TYPE_SOLID;
 

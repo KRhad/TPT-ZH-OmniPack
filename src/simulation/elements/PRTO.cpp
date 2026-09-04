@@ -207,7 +207,8 @@ void PRTO_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Portal OUT. Particles come out here. Also has temperature dependent channels. (same as WIFI)";
+	elem->Description = "出口传送门。粒子从这里出来；通道随温度变化（与 WIFI 相同）。";
+	elem->DetailedDescription = "描述：和传送门入口(PRTI)配套，物质从这里出来，形成正压力。\n导热率：0\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

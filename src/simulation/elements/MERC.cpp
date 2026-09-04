@@ -125,7 +125,8 @@ void MERC_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Mercury. Volume changes with temperature, Conductive.";
+	elem->Description = "汞。体积随温度变化，且可导电。";
+	elem->DetailedDescription = "描述：液体，体积随温度变化，可以导电。水银是TPT 里最重的液体，甚至可以让尘埃(DUST)浮起来。不可摧毁，不能燃烧，不会蒸发。它对火柴人(STKM)没有毒性。某些元素(例如 BOMB)可以造成破坏。\n元素参数：Tmp 值过高时会增大自身体积。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_NEUTABSORB|PROP_LIFE_DEC;
 

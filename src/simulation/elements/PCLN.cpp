@@ -128,7 +128,8 @@ void PCLN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Powered clone. When activated, duplicates any particles it touches.";
+	elem->Description = "可控克隆。激活后复制所接触的粒子。";
+	elem->DetailedDescription = "描述：激活时变得和复制体(CLNE)一样，可以复制与之接触的物质。用 P 型硅(PSCN)激活，N 型硅(NSCN)关闭。也可以通过修改 Ctype 值来改变复制的物质种类。它以不同的方式克隆光子，它会在每一帧的每一侧放置一个，以确保激光束可以保持恒定。\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_CLONE | PROP_POWERED | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

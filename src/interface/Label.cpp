@@ -7,6 +7,7 @@
 #include "common/Format.h"
 #include "common/tpt-math.h"
 #include "graphics/VideoBuffer.h"
+#include "graphics/ZhFontReader.h"
 #include "interface/Engine.h"
 
 // TODO: Put label in ui namespace and remove this
@@ -28,7 +29,8 @@ Label::Label(Point position_, Point size_, std::string text_, bool multiline_, b
 	lastClick(0),
 	numClicks(0),
 	clickPosition(0),
-	noCutoff(noCutoff)
+	noCutoff(noCutoff),
+	selectable(true)
 {
 	autosizeX = (size.X == AUTOSIZE);
 	autosizeY = (size.Y == AUTOSIZE);
@@ -72,8 +74,21 @@ void Label::CopySelection()
 
 void Label::SelectAll()
 {
+	if (!selectable)
+		return;
 	cursorStart = 0;
 	cursor = clickPosition = text.length();
+}
+
+void Label::SetSelectable(bool selectable_)
+{
+	selectable = selectable_;
+	if (!selectable)
+	{
+		isClicked = false;
+		cursorStart = cursor;
+		numClicks = 0;
+	}
 }
 
 void Label::FindWordPosition(unsigned int position, unsigned int *cursorStart, unsigned int *cursorEnd, const char* spaces)
@@ -176,6 +191,7 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 		for (; --wordlen>=-1 && i < text.length(); i++)
 		{
 			char c = passwordMask ? 0x8D : text[i];
+			bool convertedIcon = false;
 			switch (c)
 			{
 			case '\n':
@@ -213,12 +229,22 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 				{
 					c = convertedC;
 					i += 2;
+					convertedIcon = true;
 				}
 			}
 			default:
+				uint32_t codepoint = static_cast<unsigned char>(c);
+				size_t decodedLength = 1;
+				if (!passwordMask && !convertedIcon)
+				{
+					DecodedUtf8 decoded = DecodeUtf8(text.data() + i, text.length() - i);
+					codepoint = decoded.codepoint;
+					decodedLength = decoded.length;
+				}
 				bool hasCharacter = posX != 0;
 				//normal character, add to the current width and check if it's too long
-				posX += gfx::VideoBuffer::CharSize(c);
+				posX += gfx::VideoBuffer::CodepointSize(codepoint);
+				bool wrapped = false;
 				if (hasCharacter && !autosizeX && posX+4 >= size.X && !noCutoff)
 				{
 					if (multiline)
@@ -240,6 +266,7 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 						wordlen++;
 						posX = 0;
 						posY += 12;
+						wrapped = true;
 					}
 					else
 					{
@@ -252,6 +279,14 @@ void Label::UpdateDisplayText(bool updateCursor, bool firstClick)
 				//update cursor position
 				if (!updatedCursor)
 					updatedCursor = CheckPlaceCursor(updateCursor, i+(posX==0), posX, posY);
+				// The string is UTF-8: consume the complete codepoint at once. If a
+				// wrap was just inserted, leave i at the inserted CR so the original
+				// character is measured again on the next visual line.
+				if (!wrapped && decodedLength > 1)
+				{
+					i += decodedLength - 1;
+					wordlen -= decodedLength - 1;
+				}
 				break;
 			}
 		}
@@ -319,6 +354,8 @@ void Label::MoveCursor(unsigned int *cursor, int amount)
 
 void Label::OnMouseDown(int x, int y, unsigned char button)
 {
+	if (!selectable)
+		return;
 	if (button == 1)
 	{
 		numClicks++;
@@ -335,6 +372,11 @@ void Label::OnMouseDown(int x, int y, unsigned char button)
 
 void Label::OnMouseUp(int x, int y, unsigned char button)
 {
+	if (!selectable)
+	{
+		isClicked = false;
+		return;
+	}
 	if (IsFocused() && isClicked && button == 1)
 	{
 		cursorX = x;
@@ -351,6 +393,8 @@ void Label::OnDefocus()
 
 void Label::OnMouseMoved(int x, int y, Point difference)
 {
+	if (!selectable)
+		return;
 	if (IsFocused() && isClicked)
 	{
 		cursorX = x;
@@ -361,6 +405,8 @@ void Label::OnMouseMoved(int x, int y, Point difference)
 
 void Label::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
 {
+	if (!selectable)
+		return;
 	if (ctrl)
 	{
 		switch (scan)
@@ -467,7 +513,7 @@ void Label::OnDraw(gfx::VideoBuffer* vid)
 		std::string mootext = text;
 		if (passwordMask)
 			mootext = std::string(text.length(), 0x8D);
-		if (cursor != cursorStart || numClicks > 1)
+		if (selectable && (cursor != cursorStart || numClicks > 1))
 		{
 			mootext.insert(cursorStart, "\x01");
 			mootext.insert(cursor+(cursor > cursorStart), "\x01");

@@ -71,7 +71,8 @@ void INVIS_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 164;
 	elem->Latent = 0;
-	elem->Description = "Invisible under pressure, allowing particles through.";
+	elem->Description = "在压力下不可见，允许颗粒通过。";
+	elem->DetailedDescription = "描述：当施加压力时对粒子隐形，使物质通过。在不施加压力时，光子(PHOT)可以通过它并变成中子(NEUT)，在4 P 左右时隐形。\n元素参数：Tmp=1 时隐形；Tmp=0 时还原\n导热率：164\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPASS | PROP_PHOTPASS;
 

@@ -122,7 +122,8 @@ void FIRW_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Fireworks! Colorful, set off by fire.";
+	elem->Description = "烟花！色彩缤纷，被火点燃。";
+	elem->DetailedDescription = "描述：用明火点燃后，烟花会升高并爆炸，产生高温(6000℃-9000℃) 和七彩的余烬(EMBR)中爆炸。\n元素参数：Tmp=2 时引爆\n导热率：70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC;
 

@@ -76,7 +76,8 @@ void DCEL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Decelerator, slows down nearby elements.";
+	elem->Description = "减速器，减慢附近元素的速度。";
+	elem->DetailedDescription = "描述：和加速器(ACEL)相反，但是只能减速能量粒子(光子 PHOT、中子 NEUT、电子 ELEC 等)通过修改 Life 值可以改变减速程度。最大值为 100。将 Life 设置为 100 时会使所有粒子立即停止。默认情况下，它将使粒子减速91%。\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

@@ -44,7 +44,8 @@ void PLEX_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Solid pressure sensitive explosive.";
+	elem->Description = "固体压敏炸药。";
+	elem->DetailedDescription = "爆炸点：399.85℃/673K\n描述：压力敏感型炸药，暴露在高压(3 P 左右)下、电脉冲或者达到爆炸点都可以引发爆炸。暴露在中子\n(NEUT)下会变成粘土(GOO)。\n导热率：88\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
 

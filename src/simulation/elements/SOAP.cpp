@@ -304,7 +304,8 @@ void SOAP_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Soap. Creates bubbles, washes off deco color, and cures virus.";
+	elem->Description = "肥皂。产生气泡、洗去装饰色彩并治愈病毒。";
+	elem->DetailedDescription = "描述：0.5 P 时产生肥皂泡，可以洗去染色。肥皂泡在-25℃/248.15K 时会凝固。可用于治愈病毒(VIRS)的感染，使其变为原来的物质或直接消失。肥皂会在较低温度下结冰。\n导热率：29\n初始温度：20.00℃/293.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_NEUTPENETRATE|PROP_LIFE_DEC;
 

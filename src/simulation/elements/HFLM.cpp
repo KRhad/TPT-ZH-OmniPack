@@ -68,7 +68,8 @@ void HFLM_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 0.0f;
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Sub-zero flame.";
+	elem->Description = "低于零度的火焰。";
+	elem->DetailedDescription = "描述：绝对零度(-273.15℃/0K)的火焰，可以引爆 C-5 低温炸弹(C-5)和 ANAR，但不会点燃其他元素。\n导热率：88\n初始温度：-273.15℃/0K";
 
 	elem->Properties = TYPE_GAS|PROP_LIFE_DEC|PROP_LIFE_KILL;
 

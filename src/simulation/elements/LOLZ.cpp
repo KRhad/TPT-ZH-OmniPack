@@ -106,7 +106,8 @@ void LOLZ_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 373.0f;
 	elem->HeatConduct = 40;
 	elem->Latent = 0;
-	elem->Description = "Lolz";
+	elem->Description = "洛兹";
+	elem->DetailedDescription = "描述：请不要怀疑，这货就是来搞笑的。\n导热率：40\n初始温度：99.85℃/373.0K";
 
 	elem->Properties = TYPE_SOLID;
 

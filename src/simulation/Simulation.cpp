@@ -1241,7 +1241,7 @@ std::string Simulation::ElementResolve(int type, int ctype) const
 	}
 	else if (type >= 0 && type < PT_NUM)
 		return elements[type].Name;
-	return "Empty";
+	return "空";
 }
 
 char Simulation::GetEdgeMode()

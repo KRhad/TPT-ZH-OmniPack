@@ -117,7 +117,8 @@ void O2_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "Oxygen gas. Ignites easily.";
+	elem->Description = "氧气。容易助燃。";
+	elem->DetailedDescription = "描述：氧气(OXYG)是高度助燃的气体，可被 FIRE 点燃；低温或压力超过 100 P 时会液化成液氧(LOXY)。植物(PLNT)吸收 SMKE 或 CO2 时可产生 OXYG，用于模拟光合作用。OXYG 与 BOYL 反应会产生 WTRV 和约 4 P 压力。\n聚变：在极强牛顿重力、9700℃以上高温及 250 P 以上压力下，OXYG 会聚变为熔融脆金属(BMTL)，并各产生一个 PHOT、PLSM 和 GRVT。\n液化点：-183.15℃/90K\n导热率：70\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_GAS;
 

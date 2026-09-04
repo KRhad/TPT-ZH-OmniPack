@@ -43,7 +43,8 @@ void DMND_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 186;
 	elem->Latent = 0;
-	elem->Description = "Diamond. Indestructible.";
+	elem->Description = "钻石。坚不可摧。";
+	elem->DetailedDescription = "描述：固体，不导电，不可摧毁。只有当它被推离屏幕、位于吸收固体的墙内或被 DRAY 的另一个元素覆盖时，它才会被破坏。\n导热率：186\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_INDESTRUCTIBLE;
 

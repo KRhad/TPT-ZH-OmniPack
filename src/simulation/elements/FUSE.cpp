@@ -89,7 +89,8 @@ void FUSE_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 200;
 	elem->Latent = 0;
-	elem->Description = "Burns slowly. Ignites at very high temperatures or when sparked.";
+	elem->Description = "慢慢燃烧。在非常高的温度下或遇到火花时会点燃。";
+	elem->DetailedDescription = "描述：高温下或通电能缓慢燃烧，燃烧温度 4000-6000℃左右，在 2.71 P 下碎裂成导火索粉尘(FSEP)\n元素参数：Tmp 小于 40 时碎裂\n燃点：700℃/973.15K\n导热率：200\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

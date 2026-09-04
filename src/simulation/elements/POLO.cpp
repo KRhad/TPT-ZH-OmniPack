@@ -114,7 +114,8 @@ void POLO_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->DefaultProperties.temp = 388.15f; 
 	elem->HeatConduct = 251;
-	elem->Description = "Polonium, highly radioactive. Decays into NEUT and heats up.";
+	elem->Description = "钋，高放射性。衰变成 NEUT 并升温。";
+	elem->DetailedDescription = "描述：钋，高放射性。衰变成 NEUT 并升温。钋除了随着时间的推移固有的热量增加外，还会以恒定的速率产生高温中子。暴露于中子会增加其 Tmp 值，在 5 时变为贫化钋。贫化钋呈灰色。耗尽的钋不会释放中子，但会继续释放热量，最高温度为 115.01℃。如果钋的 Tmp 低于默认值，它会产生更长的中子。将 Tmp 设置为-50将使钋产生很长时间的 NEUT，因为它会在耗尽之前释放 55 个中子。鉴于钋对质子不透明，钋在暴露于质子时会变成钚，但这可能比预期花费的时间更长。\n导热率：251\n初始温度：115℃/388.15K";
 
 	elem->Properties = TYPE_PART|PROP_NEUTPASS|PROP_RADIOACTIVE|PROP_LIFE_DEC|PROP_DEADLY;
 

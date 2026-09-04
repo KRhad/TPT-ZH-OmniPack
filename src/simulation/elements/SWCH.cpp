@@ -75,7 +75,8 @@ void SWCH_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Switch. Only conducts when switched on. (PSCN switches on, NSCN switches off)";
+	elem->Description = "开关。仅在开启时导电（PSCN 开启，NSCN 关闭）。";
+	elem->DetailedDescription = "描述：从 PSCN 导入电时，开关可导电。从NSCN 导入电时，开关不可导电。SWCH 关闭时，是暗绿色，开启时，是绿色。通过装饰功能，开关可制作实用的电灯泡。它导电的速度，与从哪儿导入电有关，这是一个粒子顺序的话题。在开始导电时，它的导电速度就保存下来，从左上角导入，则它的导电速度更快，其它方向导入，则偏慢一些。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_POWERED;
 

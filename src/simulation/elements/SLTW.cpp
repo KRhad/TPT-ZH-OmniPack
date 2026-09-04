@@ -89,7 +89,8 @@ void SLTW_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 75;
 	elem->Latent = 7500;
-	elem->Description = "Saltwater, conducts electricity, difficult to freeze.";
+	elem->Description = "盐水，导电，不易结冰。";
+	elem->DetailedDescription = "描述：盐(SALT)+水(WATR)的产物，能更快的导电(比 WATR 快)，具有更高沸点和更低的凝固点，沸腾后产生水蒸气(WTRV)+盐(SALT)。同时它还会使植物(PLNT)死亡和使石英(QRTZ)缓慢生长。SLTW 在 T ≥ 109.86 + 2 P。承受任何压力的 SLTW 在 ≤ -20.01 摄氏度时会变成 ICE (Ctype SLTW) 或 SNOW，如果压力< 0.8 P 则变成 ICE (Ctype SLTW)，如果压力≥ 0.8 P 时会变成 SNOW。\n沸点：109.85℃/383K\n凝固点：-21.1℃/252.05K\n导热率：75\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID | PROP_PHOTPASS | PROP_CONDUCTS | PROP_LIFE_DEC | PROP_NEUTPENETRATE;
 

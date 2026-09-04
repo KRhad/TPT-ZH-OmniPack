@@ -77,7 +77,8 @@ void WOOD_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 164;
 	elem->Latent = 0;
-	elem->Description = "Wood, flammable.";
+	elem->Description = "木头，易燃。";
+	elem->DetailedDescription = "描述：固体，可燃物，允许中子(NEUT)通过。以一般速度燃烧。在高温下，WOOD 会变暗，直到变成煤黑色，然后燃烧。另一方面，如果低于冰点，木材会变成冰蓝色。烧焦的木材(超过 176.85℃)永远无法恢复并恢复其正常颜色。NEUT 可以穿过木材，同时使木材变形。当 VINE 放在 WOOD 旁边时，VINE 将在 WOOD 上生长，直到所有可以到达的木材都被 PLNT/VINE 覆盖。NEUT 穿过 PLNT 时会将其变 WOOD。当高速粒子撞击 WOOD 时，它会变成 SAWD。木材在低压(-10 P)和高温(499.85℃)下会变成 BCOL\n燃点：599.85℃/873K\n导热率：164\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NEUTPENETRATE;
 

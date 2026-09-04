@@ -401,7 +401,8 @@ void FIRE_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 400.0f + 273.15f;
 	elem->HeatConduct = 88;
 	elem->Latent = 0;
-	elem->Description = "Ignites flammable materials. Heats air.";
+	elem->Description = "点燃易燃材料。加热空气。";
+	elem->DetailedDescription = "描述：明火，用于点燃或加热，火焰本身温度升高至一定程度(2499.85℃/2773k左右)会变成等离子体(PLSM)。当火焰温度低于 351.85℃/625K 时会产生烟(SMKE)。WATR、DSTW、SLTW、BUBW 或 CO2 可以用来灭火。\n存在时间(Life)：100-200 之间随机\n元素参数：Tmp=3 时燃烧产生蒸馏水(DSTW)\n导热率：88\n初始温度：422.00℃/295.15K";
 
 	elem->Properties = TYPE_GAS | PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

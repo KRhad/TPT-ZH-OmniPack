@@ -87,7 +87,8 @@ void CONV_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Converter. Converts everything into whatever it first touches.";
+	elem->Description = "转换器。把一切转化为它最先接触的元素。";
+	elem->DetailedDescription = "描述：固体，可以转换它接触到的物质的 Type 值为它自身的 Ctype 值，使用方法类似复制体(CLNE)。可以通过Tmp 值可设定待转化原料物质。当 Tmp2 值为 1 时，只会转换 Tmp 以外的元素。例如，如果 CONV(WATR)的Tmp 为 CNCT，Tmp2 为 1，它会将除 CNCT 之外的所有内容都转换为 WATR。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = (1U << FIELD_CTYPE) | (1U << FIELD_TMP);

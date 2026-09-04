@@ -1,4 +1,5 @@
 #include "ToolTip.h"
+#include "font.h"
 #include "graphics.h"
 #include "common/tpt-minmax.h"
 
@@ -60,7 +61,30 @@ bool ToolTip::DrawToolTip()
 {
 	if (alpha > 0)
 	{
-		if (ID == INFOTIP || ID == ELEMENTTIP)
+		if (ID == ELEMENTTIP)
+		{
+			int visibleAlpha = std::min(alpha, 255);
+			fillrect(vid_buf, 4, YRES - 32, XRES + BARSIZE - 8, 29, 0, 0, 0, visibleAlpha * 3 / 4);
+			drawrect(vid_buf, 4, YRES - 32, XRES + BARSIZE - 8, 29, 96, 96, 96, visibleAlpha / 2);
+			drawtextwrap(vid_buf, location.X, location.Y, XRES + BARSIZE - 16, 26, tip.c_str(), 255, 255, 255, visibleAlpha);
+		}
+		else if (ID == ELEMENTLONGTIP)
+		{
+			int visibleAlpha = std::min(alpha, 255);
+			int contentWidth = XRES + BARSIZE - 16;
+			int measuredHeight = textwrapheight(const_cast<char *>(tip.c_str()), contentWidth);
+			int contentHeight = std::min(measuredHeight, (FONT_H + 2) * 7);
+			int footerHeight = FONT_H + 7;
+			int boxHeight = contentHeight + footerHeight + 9;
+			int boxY = YRES - boxHeight - 3;
+
+			fillrect(vid_buf, 4, boxY, XRES + BARSIZE - 8, boxHeight, 0, 0, 0, visibleAlpha * 7 / 8);
+			drawrect(vid_buf, 4, boxY, XRES + BARSIZE - 8, boxHeight, 96, 96, 96, visibleAlpha / 2);
+			drawtextwrap(vid_buf, 8, boxY + 5, contentWidth, contentHeight, tip.c_str(), 255, 255, 255, visibleAlpha);
+			fillrect(vid_buf, 8, boxY + contentHeight + 7, XRES + BARSIZE - 17, 1, 80, 80, 80, visibleAlpha / 2);
+			drawtext(vid_buf, 8, boxY + contentHeight + 11, "再次点击已选元素，打开完整说明（上下拖动阅读）", 255, 216, 32, visibleAlpha);
+		}
+		else if (ID == INFOTIP)
 			drawtext_outline(vid_buf, location.X, location.Y, tip.c_str(), 255, 255, 255, std::min(alpha, 255), 0, 0, 0, std::min(alpha, 255));
 		else
 			drawtext(vid_buf, location.X, location.Y, tip.c_str(), 255, 255, 255, std::min(alpha, 255));

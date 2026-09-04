@@ -44,7 +44,8 @@ void LRBD_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 45.0f + 273.15f;
 	elem->HeatConduct = 170;
 	elem->Latent = 0;
-	elem->Description = "Liquid Rubidium.";
+	elem->Description = "液体铷。";
+	elem->DetailedDescription = "凝固点：37.85℃/311K\n描述：液态铷，压力越大，爆炸点越低，其他性质和固态铷一样爆炸点：0 P 时，687.85℃/961K\n导热率：170\n初始温度：67.00℃/340.15K";
 
 	elem->Properties = TYPE_LIQUID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

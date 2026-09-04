@@ -44,7 +44,8 @@ void WHOL_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 16.0f + 273.15f;
 	elem->HeatConduct = 255;
 	elem->Latent = 0;
-	elem->Description = "Air vent, creates pressure and pushes other particles away.";
+	elem->Description = "排气口。产生正压并推开其他粒子。";
+	elem->DetailedDescription = "描述：固体，产生气压，可以被 BOMB 和 DEST 摧毁。\n导热率：255\n初始温度：6℃/279.15K";
 
 	elem->Properties = TYPE_SOLID;
 

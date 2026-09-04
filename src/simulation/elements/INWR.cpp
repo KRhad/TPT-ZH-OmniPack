@@ -43,7 +43,8 @@ void INWR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Insulated wire. Only conducts to PSCN, NSCN, WIFI, and SWCH.";
+	elem->Description = "绝缘导线。仅与 PSCN、NSCN、WIFI 和 SWCH 导电。";
+	elem->DetailedDescription = "描述：只能在 P 型硅(PSCN)与 N 型硅(NSCN)之间传递电脉冲(双向)，可以熔化。INWR 比大多数其他元素具有更多受限制的 SPRK 传导规则，因此是“绝缘的”。INWR 执行 SPRK 往返的元素只有 5 个：\n双向传导：INWR、PSCN、NSCN。\n单向输出：INWR 可向 SWCH、WIFI 传导，但不会从它们接收。\n特点：INWR 对于 BRAY 射线是透明的，射线可以直接通过而不是被阻挡。这允许 BRAY 光束相互交叉—— BRAY光束通常会阻挡穿过它的其他白色 BRAY 光束，除非光束穿过的空间包含对 BRAY 透明的粒子。其他一些元素对 BRAY 也是透明的，例如 FILT 和 ARAY，但大多数都阻挡了 BRAY。INWR 不会被任何穿过它的 BRAY 光束激发(大多数导体在被 BRAY 击中时会被激发)。\n用途：可用于电子产品以允许为 SPRK 创建“交叉点”，因为 INWR 不会与大多数其他电子元件进行传导或传导。对 BRAY 的透明性意味着 INWR 可用作打印机中的 ROM(由 ARAY 读取)以存储图像和解码器。当反复通电时，INWR 会迅速冷却到 22℃，这在限制温度或需要快速冷却时非常有用。\n熔点：1413.85℃/1687K，变成 LAVA(INWR)\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_CONDUCTS|PROP_LIFE_DEC;
 

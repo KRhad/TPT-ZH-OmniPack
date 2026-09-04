@@ -95,7 +95,8 @@ void WATR_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 7500;
-	elem->Description = "Water. Conducts electricity, freezes, and extinguishes fires.";
+	elem->Description = "水。导电，可结冰，并能灭火。";
+	elem->DetailedDescription = "描述：普通水(WATR)可以导电。蒸馏水(DSTW)接触多数杂质后会变成 WATR；植物(PLNT)能吸收它生长。NEUT 穿过水时会逐步把 WATR 转成 DSTW，同时自身减速并可能被吸收。\n沸点：99.85℃/373K\n凝固点：0℃/273.15K\n相变：温度达到 99.86℃+2×压力时变成 WTRV 并增加约 0.5 P；温度不高于 -0.01℃时，压力至少 0.8 P 生成 SNOW，否则生成 Ctype=WATR 的 ICE。\n产生：BOYL+OXYG→WATR；低压 HYGN+DESL→WATR+OIL；BUBW 放置一段时间后→WATR+CO2；SPNG 可释放已吸收的 WATR；RIME 在 0℃以上→WATR。\n电与爆炸：SPRK 可在 WATR 中缓慢传导。WATR 可熄灭普通 FIRE；接触 LRBD/RBDM 时生成 WTRV 和高温 FIRE。\n与气体和液体：CO2→BUBW；BOYL→FOG；DSTW 会被污染成 WATR；与 SLTW 混合得到更多 SLTW；与 GLOW 逐步生成 DEUT；与 FRZW 接触会转为 FRZW；GEL、SPNG 可吸水并增加相应储水参数。\n与粉末和固体：SALT→SLTW；FRZZ→FRZW；CLST→PSTE；PLNT 吸收后生长；IRON 被水腐蚀为 BMTL。\n与辐射：NEUT 使 WATR→DSTW 并减速；ELEC 作用后生成 HYGN 和 OXYG，同时电子被反射。\n导热率：29\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID | PROP_PHOTPASS | PROP_CONDUCTS | PROP_LIFE_DEC | PROP_NEUTPASS;
 

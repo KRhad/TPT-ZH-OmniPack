@@ -60,7 +60,7 @@ std::string Renderer::TakeScreenshot(bool includeUI, int format)
 		screenshotIndex = 1;
 	}
 	std::string date = Format::UnixtimeToDate(screenshotTime, "%Y-%m-%d %H.%M.%S");
-	std::string filename = "screenshot " + date + suffix + fileExtension;
+	std::string filename = "截图 " + date + suffix + fileExtension;
 
 	try
 	{
@@ -146,37 +146,37 @@ void Renderer::InitRenderPresets()
 
 	renderPresets[CM_VEL].renderMode |= RENDER_EFFE;
 	renderPresets[CM_VEL].displayMode = DISPLAY_AIRV;
-	renderPresets[CM_VEL].tooltip = "Velocity Display";
+	renderPresets[CM_VEL].tooltip = "速度显示";
 
 	renderPresets[CM_PRESS].renderMode |= RENDER_EFFE;
 	renderPresets[CM_PRESS].displayMode = DISPLAY_AIRP;
-	renderPresets[CM_PRESS].tooltip = "Pressure Display";
+	renderPresets[CM_PRESS].tooltip = "压力显示";
 
 	renderPresets[CM_PERS].renderMode |= RENDER_EFFE;
 	renderPresets[CM_PERS].displayMode = DISPLAY_PERS;
-	renderPresets[CM_PERS].tooltip = "Persistent Display";
+	renderPresets[CM_PERS].tooltip = "持续显示";
 
 	renderPresets[CM_FIRE].renderMode |= RENDER_FIRE | RENDER_SPRK | RENDER_EFFE;
-	renderPresets[CM_FIRE].tooltip = "Fire Display";
+	renderPresets[CM_FIRE].tooltip = "火焰显示";
 
 	renderPresets[CM_BLOB].renderMode |= RENDER_FIRE | RENDER_SPRK | RENDER_EFFE | RENDER_BLOB;
-	renderPresets[CM_BLOB].tooltip = "Blob Display";
+	renderPresets[CM_BLOB].tooltip = "团状显示";
 
 	renderPresets[CM_HEAT].displayMode = DISPLAY_AIRH;
 	renderPresets[CM_HEAT].colorMode = COLOR_HEAT;
-	renderPresets[CM_HEAT].tooltip = "Heat Display";
+	renderPresets[CM_HEAT].tooltip = "温度显示";
 
 	renderPresets[CM_FANCY].renderMode |= RENDER_FIRE | RENDER_SPRK | RENDER_GLOW | RENDER_BLUR | RENDER_EFFE;
 	renderPresets[CM_FANCY].displayMode = DISPLAY_WARP;
-	renderPresets[CM_FANCY].tooltip = "Fancy Display";
+	renderPresets[CM_FANCY].tooltip = "炫彩显示";
 
-	renderPresets[CM_NOTHING].tooltip = "Nothing Display";
+	renderPresets[CM_NOTHING].tooltip = "无特效显示";
 
 	renderPresets[CM_GRAD].colorMode = COLOR_GRAD;
-	renderPresets[CM_GRAD].tooltip = "Heat Gradient Display";
+	renderPresets[CM_GRAD].tooltip = "热梯度显示";
 
 	renderPresets[CM_LIFE].colorMode = COLOR_LIFE;
-	renderPresets[CM_LIFE].tooltip = "Life Gradient Display";
+	renderPresets[CM_LIFE].tooltip = "寿命梯度显示";
 
 	renderPresets[CM_CRACK].renderMode |= RENDER_EFFE;
 	renderPresets[CM_CRACK].displayMode = DISPLAY_AIRC;

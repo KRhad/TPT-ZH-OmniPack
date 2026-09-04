@@ -92,7 +92,8 @@ void THDR_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 9000.0f + 273.15f;
 	elem->HeatConduct = 1;
 	elem->Latent = 0;
-	elem->Description = "Lightning! Very hot, inflicts damage upon most materials, and transfers current to metals.";
+	elem->Description = "闪电！非常热，会对大多数材料造成损坏，并将电流传输到金属。";
+	elem->DetailedDescription = "描述：球状闪电(THDR)是温度约 9000℃的带电类液体粒子，运动不受空气压力影响。接触物质时会产生约 256 P 的强烈压力冲击波，并把高温传给非金属或刚结束 SPRK、暂时不能导电的金属。\n用途：可提供启动聚变所需的瞬时压力和热量，例如与 HYGN 配合。但其导热率极低，不适合持续加热。\n导热率：1\n初始温度：9000℃/9273.15K";
 
 	elem->Properties = TYPE_PART;
 

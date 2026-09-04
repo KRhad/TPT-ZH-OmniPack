@@ -104,7 +104,8 @@ void BRAY_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Ray Point. Rays create points when they collide.";
+	elem->Description = "射线点。射线碰撞时会产生点。";
+	elem->DetailedDescription = "导热率：0\n初始温度：22℃/295.15K\n其他：在 69 版本之后，ARAY 不再导热，其产生的 B 射线(BRAY)温度将会是 ARAY 的温度。这一特性被用来制作恒温器。\n染色：射线(BRAY)经过滤镜时会以设定好的染色方式染色。\n描述：可以从所有电导体，甚至 SWCH 接收 SPRK。能射出 B 射线(BRAY)，可以从任意导电物质中接受电脉冲，之后会沿着电脉冲的方向发射射线，多个射线相撞会产生固体B 射线(会慢慢消失)。与其他电子设备不同，ARAY必须从与其直接接触的像素接收 SPRK。\n其他模式：\n由 P 型硅(PSCN)输入电脉冲时会产生另一种不能导电的射线，会清除其他的 BRAY，并很快消失。\n由超导线(INST)输入电脉冲时产生的射线具有穿透性，可以穿透多个导电材料。来自 ARAY 的 BRAY 也可以具有不同的属性，具体取决于用于激发它的内容。如果设置了 ARAY 的 Life，则生成的 BRAY 将使用 ARAY 的 Life。BRAY 是 ARAY 被任何导体激活所产生的。它的颜色由 30 位色谱上的颜色之间的比率决定。它可以容纳 30位数字，并且默认情况下(除非它是由 PSCN 创建的)，所有 30 位都设置为白色。您可以使用 FILT 将该值设置为不同的值或对其执行按位运算。BRAY 元素在创建后迅速消失，Life 为 30 帧。与中子和光子不同，BRAY 穿过所有壁元素，除非碰到一个不透明的粒子。如果 BRAY 击中导体，例如 METL，则该元素会产生 SPRK。BRAY 也可以通过 ARAY。如果两条 BRAY 线发生碰撞，它们会在该点创建一个“实心”BRAY，该点将缓慢消失，Life 为 1020。“实心”BRAY的独特之处在于它也是透明的。因此，虽然 BRAY 通常不透明，但当它们创建“实体”BRAY时它会变得透明。任何穿过“固体”BRAY的白色 BRAY 都会将 BRAY 的 Life 恢复到 1020。用 PSCN 激活 ARAY 将创建一个棕色 BRAY。棕色 BRAY 类似于白色 BRAY，但不会激活导体，也不与 FILT 相互作用。它甚至没有波长。它还会擦除任何活动的白色 BRAY，在与自身碰撞时不会创建“实体”版本。透明元件BRAY 可以穿过的元件。透明元素包括“固体”BRAY、FILT、STOR、ARAY、INWR 和激活的 SWCH。INWR 比较特殊，BRAY 可以穿过 INWR 而且不会被激活。BRAY 与 SWCH BRAY 可以通过打开的 SWCH。如果 SWCH 关闭，则可以使用与其直接相邻的两个棕色 BRAY(与两条棕色BRAY 交点的位置)来打开它。如果 SWCH 处于开启状态，情况也是如此。";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC|PROP_LIFE_KILL;
 

@@ -52,7 +52,8 @@ void VRSS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Solid Virus. Turns everything it touches into virus.";
+	elem->Description = "固体病毒。将接触到的一切都变成病毒。";
+	elem->DetailedDescription = "描述：89.0 版本后加入，会将其碰触到的所有物质变成病毒(VIRS)，一段时间后会自己死亡。肥皂(SOAP)可以治愈病毒(VIRS)并使物质恢复。质子(PROT)可以使病毒(VIRS)不会自动死亡。只能被等离子体(PLSM)点燃。不受 VIRS 影响的元素是能量类型元素引力子(GRVT)、PROT、电子(ELEC)、光子(PHOT)、中子(NEUT)、奇点\n(SING)、反物质(AMTR)和钻石 (DMND)。VIRS 是少数对 LOLZ 和 LOVE 产生有趣效果的元素之一。如果 VIRS 触及其中之一，则 VIRS 将被“克隆”，因为 VIRS 将 LOVE/LOLZ 的一个像素更改为更多 VIRS，但随后LOVE/LOLZ 会重组，将VIRS 推开。最终，VIRS 会同时腐蚀所有的 LOVE/LOLZ，否则 VIRS 将被完全推开并停止被克隆。\n沸点：399.85℃/673K 变成病毒气(VRSG)\n凝固点：31.85℃/305K 变成病毒块(VRSS)\n元素参数：Tmp2=感染物质的 Type 值\n导热率：251/251/251\n初始温度：72.00℃/345.15K";
 
 	elem->Properties = TYPE_SOLID;
 	elem->CarriesTypeIn = 1U << FIELD_TMP2;

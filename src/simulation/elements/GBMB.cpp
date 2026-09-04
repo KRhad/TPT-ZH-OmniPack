@@ -78,7 +78,8 @@ void GBMB_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	elem->HeatConduct = 29;
 	elem->Latent = 0;
-	elem->Description = "Gravity bomb. Sticks to the first object it touches then produces a strong gravity push.";
+	elem->Description = "引力炸弹。黏在最先接触的物体上，随后产生强大斥力。";
+	elem->DetailedDescription = "描述：引力炸弹是一种非常独特的“炸药”。它是游戏中唯一在引爆时不会产生热效应的炸药(DMG 某些情况下除外)。它在爆发出强烈的正重力(拉力效应)，然后是负重力(推力效应)。这些力足以破坏一些脆性固体，例如GLAS和 BMTL。GBMB 离其他粒子越近，效果越强，但它仍然对整个屏幕产生影响，但离它越远的东西就越少。重力冲击波可以影响能量类粒子在屏幕上的路径。\n爆炸过程：碰触物质后 Life 值变为 60，发光并附着在物质上，产生引力(20)Life 值降至 20 以下时，瞬间改变周围引力值为-80。\n导热率：251\n初始温度：20.00℃/292.15K";
 
 	elem->Properties = TYPE_PART|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 

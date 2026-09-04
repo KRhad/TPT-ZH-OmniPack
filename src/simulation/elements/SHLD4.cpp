@@ -80,7 +80,8 @@ void SHLD4_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 0;
 	elem->Latent = 0;
-	elem->Description = "Shield lvl 4.";
+	elem->Description = "护盾4级。";
+	elem->DetailedDescription = "描述：通电时，会自动生长出保护膜，从内到外依次是 SHD4、SHD3、SHD2、SHLD。除 SHLD 外的所有类型都将用下面的级别填充周围的空白空间。例如，SHD3 将用 SHD2 包围自己。分解压力分别为：40/25/15/7 P。不导电，不导热。\n导热率：0/0/0/0\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 

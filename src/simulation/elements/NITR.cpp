@@ -44,7 +44,8 @@ void NITR_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 50;
 	elem->Latent = 0;
-	elem->Description = "Nitroglycerin. Pressure sensitive explosive. Mix with CLST to make TNT.";
+	elem->Description = "硝酸甘油。压敏炸药。与CLST混合制成TNT。";
+	elem->DetailedDescription = "燃点：399.85℃/673K\n描述：炸药，压力下(3 P 左右)、电脉冲、明火都可以引起爆炸。爆炸点与压力有关，压力越小爆炸点越低。\n暴露在中子下产生石油气(GAS)和柴油(DESL)。可以与粘土砂(CLST)混合形成三硝基甲苯(TNT)。如果用 NEUT 照射会转化为 OIL。\n导热率：50\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_LIQUID;
 

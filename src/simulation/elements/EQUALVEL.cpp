@@ -43,7 +43,8 @@ void EQUALVEL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 70;
 	elem->Latent = 0;
-	elem->Description = "A failed shared velocity test.";
+	elem->Description = "一次失败的共享速度测试。";
+	elem->DetailedDescription = "描述：一个失败的实验品，现在是一种难以破坏的粉末，可以通过控制台或属性笔创建。\n导热率：70\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_PART;
 

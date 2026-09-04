@@ -59,7 +59,8 @@ void ISZS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 140.00f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Solid form of ISOZ, slowly decays into PHOT.";
+	elem->Description = "ISOZ的固体形式，慢慢衰变成PHOT。";
+	elem->DetailedDescription = "描述：会随时间流逝慢慢衰减成光子(PHOT)，负压会加快衰变速度，和钚(PLUT)的性质相反。可以熔化成液态，这通常会在衰变过程中发生，或者可以通过加热手动完成。\n熔点：26.85℃/300K\n导热率：251\n初始温度：-133.15℃/140K";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS;
 

@@ -964,7 +964,7 @@ void ui_copytext_draw(pixel *vid_buf, ui_copytext *ed)
 		else
 			i = 100;
 		g = 255;
-		drawtext(vid_buf, (ed->x+(ed->width/2))-(textwidth("Click the box below to copy the save ID")/2), ed->y-12, "Click the box below to copy the save ID", 255, 255, 255, 255-i);
+		drawtext(vid_buf, (ed->x+(ed->width/2))-(textwidth("点击下方文本框复制存档 ID")/2), ed->y-12, "点击下方文本框复制存档 ID", 255, 255, 255, 255-i);
 	}
 	else
 	{
@@ -973,7 +973,7 @@ void ui_copytext_draw(pixel *vid_buf, ui_copytext *ed)
 			g = 230;
 		else
 			g = 190;
-		drawtext(vid_buf, (ed->x+(ed->width/2))-(textwidth("Copied!")/2), ed->y-12, "Copied!", 255, 255, 255, 255-i);
+		drawtext(vid_buf, (ed->x+(ed->width/2))-(textwidth("已复制！")/2), ed->y-12, "已复制！", 255, 255, 255, 255-i);
 	}
 
 	drawrect(vid_buf, ed->x, ed->y, ed->width, ed->height, g, 255, g, 255-i);
@@ -1131,11 +1131,11 @@ void error_ui(pixel *vid_buf, int err, std::string txt)
 		clearrect(vid_buf, x0-1, y0-1, 243, 51+textheight);
 		drawrect(vid_buf, x0, y0, 240, 48+textheight, 192, 192, 192, 255);
 		if (err)
-			drawtext(vid_buf, x0+8, y0+8, "HTTP error:", 255, 64, 32, 255);
+			drawtext(vid_buf, x0+8, y0+8, "HTTP 错误：", 255, 64, 32, 255);
 		else
-			drawtext(vid_buf, x0+8, y0+8, "Error:", 255, 64, 32, 255);
+			drawtext(vid_buf, x0+8, y0+8, "错误：", 255, 64, 32, 255);
 		drawtextwrap(vid_buf, x0+8, y0+26, 224, 0, msg, 255, 255, 255, 255);
-		drawtext(vid_buf, x0+5, y0+textheight+37, "Dismiss", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+5, y0+textheight+37, "忽略", 255, 255, 255, 255);
 		drawrect(vid_buf, x0, y0+textheight+32, 240, 16, 192, 192, 192, 255);
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
 
@@ -1191,7 +1191,7 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 	ui_edit ed;
 	ui_edit_init(&ed, x0+12, y0+30, windowWidth - 20, 14);
 	ed.autoCorrect = 0;
-	strcpy(ed.def, "[element name]");
+	strcpy(ed.def, "[元素名称]");
 
 	std::string toolTip = "";
 	int toolTipAlpha = 0;
@@ -1206,7 +1206,7 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 		clearrect(vid_buf, x0-1, y0-1, windowWidth+3, windowHeight+3);
 		drawrect(vid_buf, x0, y0, windowWidth, windowHeight, 192, 192, 192, 255);
 		
-		drawtext(vid_buf, x0+8, y0+8, "\xE6 Element Search", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+8, y0+8, "\xE6 元素搜索", 255, 255, 255, 255);
 
 		drawrect(vid_buf, ed.x-4, ed.y-5, ed.w+4, 16, 192, 192, 192, 255);
 		ui_edit_draw(vid_buf, &ed);
@@ -1218,7 +1218,7 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 		toolx = 0;
 		tooly = 0;
 		
-		drawtext(vid_buf, xoff+toolx+4, yoff+tooly+3, "Matches:", 255, 255, 255, 180);
+		drawtext(vid_buf, xoff+toolx+4, yoff+tooly+3, "匹配项：", 255, 255, 255, 180);
 		draw_line(vid_buf, xoff+toolx+2, yoff+tooly+14, xoff+toolx+5+(ed.w-16), yoff+tooly+14, 180, 180, 180, XRES+BARSIZE);
 		tooly += 17;
 		
@@ -1284,7 +1284,7 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 		
 		if(tooly<windowHeight-((ed.y-5)+20))
 		{
-			drawtext(vid_buf, xoff+toolx+4, yoff+tooly+3, "Related:", 255, 255, 255, 180);
+			drawtext(vid_buf, xoff+toolx+4, yoff+tooly+3, "相关项：", 255, 255, 255, 180);
 			draw_line(vid_buf, xoff+toolx+2, yoff+tooly+14, xoff+toolx+5+(ed.w-16), yoff+tooly+14, 180, 180, 180, XRES+BARSIZE);
 			tooly += 17;
 			
@@ -1389,7 +1389,7 @@ void element_search_ui(pixel *vid_buf, Tool ** selectedLeft, Tool ** selectedRig
 		else if (toolTipAlpha > 0)
 			toolTipAlpha--;
 		
-		drawtext(vid_buf, x0+5, y0+windowHeight-12, "Dismiss", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+5, y0+windowHeight-12, "忽略", 255, 255, 255, 255);
 		drawrect(vid_buf, x0, y0+windowHeight-16, windowWidth, 16, 192, 192, 192, 255);
 		fillrect(vid_buf, -1, YRES-12, XRES + 1, 12, 0, 0, 0, 255);
 		if (toolTipAlpha)
@@ -1495,7 +1495,7 @@ char *input_ui(pixel *vid_buf, const char *title, const char *prompt, const char
 		ui_edit_draw(vid_buf, &ed);
 		ui_edit_process(mx, my, b, bq, &ed);
 
-		drawtext(vid_buf, x0+5, y0+ysize-11, "OK", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+5, y0+ysize-11, "确定", 255, 255, 255, 255);
 		drawrect(vid_buf, x0, y0+ysize-16, xsize, 16, 192, 192, 192, 255);
 
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
@@ -1543,7 +1543,7 @@ void info_ui(pixel *vid_buf, std::string top, std::string txt)
 		drawrect(vid_buf, x0, y0, 240, 60, 192, 192, 192, 255);
 		drawtext(vid_buf, x0+8, y0+8, top.c_str(), 160, 160, 255, 255);
 		drawtext(vid_buf, x0+8, y0+26, txt.c_str(), 255, 255, 255, 255);
-		drawtext(vid_buf, x0+5, y0+49, "OK", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+5, y0+49, "确定", 255, 255, 255, 255);
 		drawrect(vid_buf, x0, y0+44, 240, 16, 192, 192, 192, 255);
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
 
@@ -1631,7 +1631,7 @@ void copytext_ui(pixel *vid_buf, const char *top, const char *txt, const char *c
 		ui_copytext_draw(vid_buf, &ed);
 		ui_copytext_process(mx, my, b, bq, &ed);
 
-		drawtext(vid_buf, x0+5, y0+ysize-11, "OK", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+5, y0+ysize-11, "确定", 255, 255, 255, 255);
 		drawrect(vid_buf, x0, y0+ysize-16, xsize, 16, 192, 192, 192, 255);
 
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
@@ -1680,7 +1680,7 @@ bool confirm_ui(pixel *vid_buf, const char *top, const char *msg, const char *bt
 		drawrect(vid_buf, x0, y0, 240, 48+textheight, 192, 192, 192, 255);
 		drawtext(vid_buf, x0+8, y0+8, top, 255, 216, 32, 255);
 		drawtextwrap(vid_buf, x0+8, y0+26, 224, 0, msg, 255, 255, 255, 255);
-		drawtext(vid_buf, x0+5, y0+textheight+37, "Cancel", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+5, y0+textheight+37, "取消", 255, 255, 255, 255);
 		drawtext(vid_buf, x0+165, y0+textheight+37, btn, 255, 216, 32, 255);
 		drawrect(vid_buf, x0, y0+textheight+32, 160, 16, 192, 192, 192, 255);
 		drawrect(vid_buf, x0+160, y0+textheight+32, 80, 16, 192, 192, 192, 255);
@@ -1751,9 +1751,9 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 		if (!numStamps)
 		{
 #ifndef TOUCHUI
-			drawtext(vid_buf, (XRES-textwidth("Use 's' to save stamps"))/2, YRES/2-6, "Use 's' to save stamps", 255, 255, 255, 255);
+			drawtext(vid_buf, (XRES-textwidth("按 S 保存图章"))/2, YRES/2-6, "按 S 保存图章", 255, 255, 255, 255);
 #else
-			drawtext(vid_buf, (XRES-textwidth("You haven't created any stamps yet"))/2, YRES/2-6, "You haven't created any stamps yet", 255, 255, 255, 255);
+			drawtext(vid_buf, (XRES-textwidth("尚未创建任何图章"))/2, YRES/2-6, "尚未创建任何图章", 255, 255, 255, 255);
 #endif
 		}
 		for (j=0; j<GRID_Y; j++)
@@ -1774,7 +1774,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 					}
 					else
 					{
-						drawtext(vid_buf, gx+8, gy+((YRES/GRID_S)/2)-4, "Error loading stamp", 255, 255, 255, 255);
+						drawtext(vid_buf, gx+8, gy+((YRES/GRID_S)/2)-4, "加载图章失败", 255, 255, 255, 255);
 					}
 
 					bool isSelected = toDelete.find(k) != toDelete.end();
@@ -1820,11 +1820,11 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 		if (toDelete.size())
 		{
 			drawrect(vid_buf,(XRES/2)-19,YRES+MENUSIZE-18,37,16,255,255,255,255);
-			drawtext(vid_buf, (XRES/2)-14, YRES+MENUSIZE-14, "Delete", 255, 255, 255, 255);
+			drawtext(vid_buf, (XRES/2)-14, YRES+MENUSIZE-14, "删除", 255, 255, 255, 255);
 			if (b == 1 && bq == 0 && mx > (XRES/2)-20 && mx < (XRES/2)+19 && my > YRES+MENUSIZE-19 && my < YRES+MENUSIZE-1)
 			{
-				sprintf(page_info, "%d stamp%s", (int)toDelete.size(), (toDelete.size() == 1)?"":"s");
-				if (confirm_ui(vid_buf, "Do you want to delete?", page_info, "Delete"))
+				sprintf(page_info, "%d 个图章", (int)toDelete.size());
+				if (confirm_ui(vid_buf, "确定要删除吗？", page_info, "删除"))
 				{
 					for (unsigned int del : toDelete)
 						Stamps::Ref().Delete(del);
@@ -1836,7 +1836,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 		}
 		else
 		{
-			sprintf(page_info, "Page %d of %d", stamp_page+1, page_count);
+			sprintf(page_info, "第 %d 页，共 %d 页", stamp_page+1, page_count);
 
 			drawtext(vid_buf, (XRES/2)-(textwidth(page_info)/2), YRES+MENUSIZE-14, page_info, 255, 255, 255, 255);
 		}
@@ -1851,7 +1851,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 			drawtext(vid_buf, XRES-15, YRES+MENUSIZE-14, "\x95", 255, 255, 255, 255);
 			drawrect(vid_buf, XRES-18, YRES+MENUSIZE-18, 16, 16, 255, 255, 255, 255);
 		}
-		drawtext(vid_buf, XRES-60, YRES+MENUSIZE-14, "Rescan", 255, 255, 255, 255);
+		drawtext(vid_buf, XRES-60, YRES+MENUSIZE-14, "重新扫描", 255, 255, 255, 255);
 		drawrect(vid_buf, XRES-65, YRES+MENUSIZE-18, 40, 16, 255, 255, 255, 255);
 
 		if (b==1 && bq==0 && d!=-1)
@@ -1864,7 +1864,7 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 				else
 					toDelete.erase(existing);
 			}
-			else if (!toDelete.size() && confirm_ui(vid_buf, "Do you want to delete?", Stamps::Ref().GetStamp(d).name.c_str(), "Delete"))
+			else if (!toDelete.size() && confirm_ui(vid_buf, "确定要删除吗？", Stamps::Ref().GetStamp(d).name.c_str(), "删除"))
 			{
 				Stamps::Ref().Delete(d);
 				numStamps = Stamps::Ref().GetNumStamps();
@@ -1874,9 +1874,9 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 
 		if (b == 1 && bq == 0 && rnm != -1)
 		{
-			char *newName = input_ui(vid_buf, "Rename stamp", ("Rename stamp \"" + Stamps::Ref().GetStamp(rnm).name + "\"").c_str(), "", "");
+			char *newName = input_ui(vid_buf, "重命名图章", ("重命名图章'" + Stamps::Ref().GetStamp(rnm).name + "'").c_str(), "", "");
 			if (strlen(newName) && !Stamps::Ref().Rename(rnm, newName))
-				error_ui(vid_buf, 0, "Couldn't rename, stamp with that name already exists");
+				error_ui(vid_buf, 0, "无法重命名：已存在同名图章");
 		}
 
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
@@ -1905,9 +1905,9 @@ int stamp_ui(pixel *vid_buf, int *reorder)
 			}
 			sdl_wheel = 0;
 		}
-		if (b && !bq && mx >= XRES-65 && mx <= XRES-25 && my >= YRES+MENUSIZE-18 && my < YRES+MENUSIZE-2 && confirm_ui(vid_buf, "Rescan stamps?", "Rescanning stamps will find all stamps in your stamps/ directory and overwrite stamps.json and stamps.def", "OK"))
+	if (b && !bq && mx >= XRES-65 && mx <= XRES-25 && my >= YRES+MENUSIZE-18 && my < YRES+MENUSIZE-2 && confirm_ui(vid_buf, "重新扫描图章？", "将查找 stamps/ 目录中的全部图章，并覆盖 stamps.json 和 stamps.def", "确定"))
 		{
-			info_box(vid_buf, "Rescanning ...");
+			info_box(vid_buf, "正在重新扫描...");
 			Stamps::Ref().Rescan();
 			Stamps::Ref().WaitForThumbs(false);
 			stamp_page = 0;
@@ -1946,7 +1946,7 @@ void tag_list_ui(pixel *vid_buf)
 
 	ui_edit ed;
 	ui_edit_init(&ed, x0+25, y0+221, 158, 14);
-	strcpy(ed.def, "[new tag]");
+	strcpy(ed.def, "[新标签]");
 	ed.focus = 0;
 
 	while (!sdl_poll())
@@ -1965,7 +1965,7 @@ void tag_list_ui(pixel *vid_buf)
 
 		drawrect(vid_buf, x0, y0, 192, 256, 192, 192, 192, 255);
 		clearrect(vid_buf, x0+1, y0+1, 191, 255);
-		drawtext(vid_buf, x0+8, y0+8, "Manage tags:    \bgTags are only to \nbe used to improve search results", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+8, y0+8, "管理标签：\bg标签仅用于\n改善搜索结果", 255, 255, 255, 255);
 		p = svf_tags;
 		s = svf_tags[0] ? ' ' : 0;
 		y = 36 + y0;
@@ -2013,9 +2013,9 @@ void tag_list_ui(pixel *vid_buf)
 					}
 				}
 				if (vp)
-					drawtext(vid_buf, x0+d+48+textwidth(p), y, " - voted!", 48, 192, 48, 255);
+					drawtext(vid_buf, x0+d+48+textwidth(p), y, " - 已赞成！", 48, 192, 48, 255);
 				if (vn)
-					drawtext(vid_buf, x0+d+48+textwidth(p), y, " - voted.", 192, 64, 32, 255);
+					drawtext(vid_buf, x0+d+48+textwidth(p), y, " - 已反对。", 192, 64, 32, 255);
 			}
 			drawtext(vid_buf, x0+d+48, y, p, 192, 192, 192, 255);
 			*q = s;
@@ -2027,7 +2027,7 @@ void tag_list_ui(pixel *vid_buf)
 		drawtext(vid_buf, x0+12, y0+221, "\xEF", 255, 255, 255, 255);
 		drawrect(vid_buf, x0+8, y0+216, 176, 16, 192, 192, 192, 255);
 		ui_edit_draw(vid_buf, &ed);
-		drawtext(vid_buf, x0+5, y0+245, "Close", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+5, y0+245, "关闭", 255, 255, 255, 255);
 		drawrect(vid_buf, x0, y0+240, 192, 16, 192, 192, 192, 255);
 		sdl_blit(0, 0, (XRES+BARSIZE), YRES+MENUSIZE, vid_buf, (XRES+BARSIZE));
 
@@ -2073,7 +2073,7 @@ void tag_list_ui(pixel *vid_buf)
 			}
 			else
 			{
-				error_ui(vid_buf, 0, "Not Authenticated");
+				error_ui(vid_buf, 0, "尚未登录");
 				break;
 			}
 		}
@@ -2124,12 +2124,12 @@ int save_name_ui(pixel *vid_buf)
 	}
 
 	ui_edit_init(&ed, x0+25, y0+25, 208, 14);
-	strcpy(ed.def, "[simulation name]");
+	strcpy(ed.def, "[模拟名称]");
 	ed.cursor = ed.cursorstart = strlen(svf_name);
 	strcpy(ed.str, svf_name);
 
 	ui_edit_init(&ed2, x0+13, y0+45, 220, 115);
-	strcpy(ed2.def, "[simulation description]");
+	strcpy(ed2.def, "[模拟说明]");
 	ed2.focus = 0;
 	ed2.cursor = ed2.cursorstart = strlen(svf_description);
 	ed2.multiline = 1;
@@ -2166,9 +2166,9 @@ int save_name_ui(pixel *vid_buf)
 		drawrect(vid_buf, x0, y0, 470, 110+YRES/4, 192, 192, 192, 255); // rectangle around entire thing
 		clearrect(vid_buf, x0+1, y0+1, 469, 109+YRES/4);
 		if (strcmp(svf_name, ed.str) || !svf_own)
-			drawtext(vid_buf, x0+8, y0+8, "Upload new simulation:", 255, 255, 255, 255);
+			drawtext(vid_buf, x0+8, y0+8, "上传新模拟：", 255, 255, 255, 255);
 		else
-			drawtext(vid_buf, x0+8, y0+8, "Modify simulation properties:", 255, 255, 255, 255);
+			drawtext(vid_buf, x0+8, y0+8, "修改模拟属性：", 255, 255, 255, 255);
 		drawtext(vid_buf, x0+9, y0+25, "\x82", 192, 192, 192, 255);
 		drawrect(vid_buf, x0+8, y0+20, 226, 16, 192, 192, 192, 255); //rectangle around title box
 
@@ -2184,17 +2184,17 @@ int save_name_ui(pixel *vid_buf)
 		if (!can_publish)
 		{
 			drawtext(vid_buf, x0+247, y0+180, "\xE4", 255, 255, 0, 255);
-			drawtext(vid_buf, x0+263, y0+182, "Warning: uses mod elements, cannot publish", 192, 192, 192, 255);
+			drawtext(vid_buf, x0+263, y0+182, "警告：使用了模组元素，无法发布", 192, 192, 192, 255);
 		}
 #endif
 
 		ui_checkbox_draw(vid_buf, &cbPublish);
-		drawtext(vid_buf, cbPublish.x+19, cbPublish.y+3, "Publish?", 192, 192, 192, 255);
+		drawtext(vid_buf, cbPublish.x+19, cbPublish.y+3, "发布？", 192, 192, 192, 255);
 
 		ui_checkbox_draw(vid_buf, &cbPaused);
-		drawtext(vid_buf, cbPaused.x+19, cbPaused.y+3, "Paused?", 192, 192, 192, 255);
+		drawtext(vid_buf, cbPaused.x+19, cbPaused.y+3, "已暂停？", 192, 192, 192, 255);
 
-		drawtext(vid_buf, x0+5, y0+99+YRES/4, "Save simulation", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+5, y0+99+YRES/4, "保存模拟", 255, 255, 255, 255);
 		drawrect(vid_buf, x0, y0+94+YRES/4, 242, 16, 192, 192, 192, 255);
 
 		draw_line(vid_buf, x0+242, y0, x0+242, y0+110+YRES/4, 150, 150, 150, XRES+BARSIZE);
@@ -2202,10 +2202,10 @@ int save_name_ui(pixel *vid_buf)
 		if (svf_id[0])
 		{
 			//Save ID text and copybox
-			idtxtwidth = textwidth("Current save ID: ");
+			idtxtwidth = textwidth("当前存档 ID：");
 			idtxtwidth += ctb.width;
-			ctb.x = textwidth("Current save ID: ")+(XRES+BARSIZE-idtxtwidth)/2;
-			drawtext(vid_buf, (XRES+BARSIZE-idtxtwidth)/2, YRES+MENUSIZE-15, "Current save ID: ", 255, 255, 255, 255);
+			ctb.x = textwidth("当前存档 ID：")+(XRES+BARSIZE-idtxtwidth)/2;
+			drawtext(vid_buf, (XRES+BARSIZE-idtxtwidth)/2, YRES+MENUSIZE-15, "当前存档 ID：", 255, 255, 255, 255);
 
 			ui_copytext_draw(vid_buf, &ctb);
 			ui_copytext_process(mx, my, b, bq, &ctb);
@@ -2231,11 +2231,10 @@ int save_name_ui(pixel *vid_buf)
 			bool cont = true;
 			if (cbPublish.checked && strlen(svf_author) && strcmp(svf_user, svf_author))
 			{
-				std::string message = "This save was created by ";
+				std::string message = "此存档的作者是 ";
 				message += svf_author;
-				message += ", you're about to publish this under your own name. If you haven't been given permission "
-				           "by the author to do so, please uncheck the publish box, otherwise continue";
-				cont = confirm_ui(vid_buf, "Publish", message.c_str(), "Continue");
+			message += "，你将以自己的名义发布它。若未获得原作者许可，请取消勾选发布；否则可以继续。";
+				cont = confirm_ui(vid_buf, "发布", message.c_str(), "Continue");
 			}
 			if (cont)
 			{
@@ -2368,7 +2367,7 @@ void menu_ui_v2(pixel *vid_buf, int i)
 		drawrect(vid_buf, menuStartPosition-5, someStrangeYValue+1, 1, FONT_H+2, 0, 0, 0, 255);
 		drawchar(vid_buf, menuStartPosition+1, /*(12*i)+2*/((YRES/numMenus)*i)+((YRES/numMenus)/2)+5, menuSections[i]->icon, 255, 255, 255, 255);
 		if (i) //if not in walls
-			drawtext(vid_buf, 12, 12, "\bgPress 'o' to return to the original menu", 255, 255, 255, 255);
+			drawtext(vid_buf, 12, 12, "\bg按 O 返回原菜单", 255, 255, 255, 255);
 		
 		Tool *over = menu_draw(mx, my, b, bq, active_menu);
 		if (over)
@@ -2413,21 +2412,44 @@ void menu_ui_v2(pixel *vid_buf, int i)
 Tool *originalOver = NULL;
 int originalmx = 0, currentScroll = 0;
 bool draggingMenu = false;
+unsigned int menuPressStarted = 0;
+bool menuLongPressHandled = false;
 #endif
 void menu_ui_v3(pixel *vid_buf, int i, int b, int bq, int mx, int my)
 {
 	Tool* over = menu_draw(mx, my, b, bq, i);
 	if (over)
 	{
-		menu_draw_text(over, YRES-9);
 #ifdef TOUCHUI
 		if (b && !bq)
+		{
 			originalOver = over;
-		else if (!b && bq && over == originalOver)
+			menuPressStarted = GetTicks();
+			menuLongPressHandled = false;
+		}
+		else if (b && over == originalOver && !menuLongPressHandled &&
+			over->GetType() == ELEMENT_TOOL && GetTicks() - menuPressStarted >= 600)
+		{
+			int elementID = static_cast<ElementTool *>(over)->GetID();
+			auto &element = globalSim->elements[elementID];
+			auto *info = new InfoPrompt("元素说明：" + over->GetName(), element.DetailedDescription, "返回游戏", true);
+			Engine::Ref().ShowWindow(info);
+			Platform::Vibrate(30);
+			menuLongPressHandled = true;
+		}
+		else if (!b && bq && over == originalOver && !menuLongPressHandled)
+		{
+			menu_draw_text(over, YRES-9);
 			menu_select_element(bq, over);
+		}
 		else if (!b && !bq)
+		{
 			originalOver = NULL;
+			menuPressStarted = 0;
+			menuLongPressHandled = false;
+		}
 #else
+		menu_draw_text(over, YRES-9);
 		if (b && !bq)
 			menu_select_element(b, over);
 #endif
@@ -2648,7 +2670,7 @@ void menu_draw_text(Tool* over, int y)
 			toolTip << over->GetDescription();
 		else
 		{
-			toolTip << over->GetDescription() << currentHud[toolID-HUD_REALSTART] << " decimal places";
+			toolTip << over->GetDescription() << currentHud[toolID-HUD_REALSTART] << " 位小数";
 		}
 	}
 	else if (over->GetType() == FAV_MENU_BUTTON)
@@ -2657,25 +2679,25 @@ void menu_draw_text(Tool* over, int y)
 		if (toolID == FAV_ROTATE)
 		{
 			if (globalSim->msRotation)
-				toolTip << "on";
+				toolTip << "开";
 			else
-				toolTip << "off";
+				toolTip << "关";
 		}
 		if (toolID == FAV_HEAT)
 		{
 			if (!heatmode)
-				toolTip << "normal: -273.15C - 9725.85C";
+				toolTip << "正常：-273.15C 至 9725.85C";
 			else if (heatmode == 1)
-				toolTip << "automatic: " << lowesttemp-273 << "C - " << highesttemp-273 << "C";
+				toolTip << "自动：" << lowesttemp-273 << "C 至 " << highesttemp-273 << "C";
 			else
-				toolTip << "manual: " << lowesttemp-273 << "C - " << highesttemp-273 << "C";
+				toolTip << "手动：" << lowesttemp-273 << "C 至 " << highesttemp-273 << "C";
 		}
 		else if (toolID == FAV_FIND2)
 		{
 			if (finding &0x8)
-				toolTip << "on";
+				toolTip << "开";
 			else
-				toolTip << "off";
+				toolTip << "关";
 		}
 		else if (toolID == FAV_DATE)
 		{
@@ -2686,9 +2708,19 @@ void menu_draw_text(Tool* over, int y)
 		}
 	}
 	else
+	{
 		toolTip << over->GetDescription();
+		if (over->GetType() == ELEMENT_TOOL)
+			toolTip << " （长按打开完整说明）";
+	}
 	if (toolTip.str().size())
-		UpdateToolTip(toolTip.str(), Point(XRES - textwidth(toolTip.str().c_str()) - BARSIZE, y), ELEMENTTIP, -1);
+	{
+#ifdef TOUCHUI
+		UpdateToolTip(toolTip.str(), Point(8, YRES - 29), ELEMENTTIP, 600);
+#else
+		UpdateToolTip(toolTip.str(), Point(8, YRES - 29), ELEMENTTIP, -1);
+#endif
+	}
 }
 
 void do_select(int toolIndex, Tool *selected)
@@ -2731,7 +2763,7 @@ void menu_select_element(int b, Tool* over)
 #ifdef LUACONSOLE
 				ReadLuaCode();
 #else
-				auto *errorMsg = new ErrorPrompt("Lua console not enabled");
+				auto *errorMsg = new ErrorPrompt("Lua 控制台未启用");
 				Engine::Ref().ShowWindow(errorMsg);
 #endif
 			else if (toolID == FAV_CUSTOMHUD)
@@ -2788,7 +2820,7 @@ void menu_select_element(int b, Tool* over)
 				sprintf(hud_curr,"%i",currentHud[toolID-HUD_REALSTART]);
 				if (hud_menu[toolID].name.find("#") != hud_menu[toolID].name.npos)
 				{
-					auto *prompt = new TextPrompt(hud_menu[toolID].name, "Enter number of decimal places", hud_curr, "");
+			auto *prompt = new TextPrompt(hud_menu[toolID].name, "请输入小数位数", hud_curr, "");
 					prompt->SetCallback({ [toolID](std::optional<std::string> text) {
 						if (text)
 						{
@@ -2799,7 +2831,7 @@ void menu_select_element(int b, Tool* over)
 							}
 							else
 							{
-								auto *errorMsg = new ErrorPrompt("# of Decimal places must be between 0 and 10");
+								auto *errorMsg = new ErrorPrompt("小数位数必须在 0 到 10 之间");
 								Engine::Ref().ShowWindow(errorMsg);
 							}
 						}
@@ -2847,7 +2879,7 @@ void menu_select_element(int b, Tool* over)
 			{
 				auto *cgol = static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).GetCustomGOLByRule(toolID);
 				int cgolRule = cgol->rule;
-				auto *confirmPrompt = new ConfirmPrompt("Remove custom GOL type", "Do you want to remove " + cgol->nameString + "?");
+			auto *confirmPrompt = new ConfirmPrompt("删除自定义 GOL 类型", "确定要删除 " + cgol->nameString + " 吗？");
 				confirmPrompt->SetCallback({ [cgolRule](bool b) {
 					if (b)
 					{
@@ -2878,13 +2910,13 @@ void menu_select_element(int b, Tool* over)
 			if (toolID == FAV_HEAT)
 			{
 				heatmode = 2;
-				auto *lowestPrompt = new TextPrompt("Manual Heat Display", "Enter a Minimum Temperature in Celcius", "", "");
+				auto *lowestPrompt = new TextPrompt("手动热量显示", "请输入最低温度（摄氏度）", "", "");
 				lowestPrompt->SetCallback({ [](std::optional<std::string> lowestText) {
 					if (lowestText) {
 						int deseriedLowestTemp = Format::StringToNumber<int>(*lowestText) + 273;
 
 						// Beautiful nesting
-						auto *highestPrompt = new TextPrompt("Manual Heat Display", "Enter a Maximum Temperature in Celcius", "", "");
+						auto *highestPrompt = new TextPrompt("手动热量显示", "请输入最高温度（摄氏度）", "", "");
 						Engine::Ref().ShowWindow(highestPrompt);
 						highestPrompt->SetCallback({ [deseriedLowestTemp](std::optional<std::string> highestText) {
 							if (highestText) {
@@ -2925,7 +2957,7 @@ void menu_select_element(int b, Tool* over)
 				auto *cgol = static_cast<LIFE_ElementDataContainer&>(*globalSim->elementData[PT_LIFE]).GetCustomGOLByRule(toolID);
 				int cgolRule = cgol->rule;
 
-				auto prompt = new ConfirmPrompt("Remove custom GOL type", "Are you sure you want to remove " + cgol->nameString + "?");
+				auto prompt = new ConfirmPrompt("删除自定义 GOL 类型", "确定要移除 " + cgol->nameString + "?");
 				prompt->SetCallback({ [cgolRule](bool confirmed) {
 					if (confirmed)
 					{
@@ -3036,7 +3068,7 @@ void QuickoptionsMenu(pixel *vid_buf, int b, int bq, int x, int y)
 				if (i == 0)
 					toolTip = quickmenu[i].name;
 				else if (i == num_tabs + 1)
-					toolTip = "Add tab \bg(ctrl+n)";
+					toolTip = "添加标签页 \bg(Ctrl+N)";
 				else if (tab_num == i)
 				{
 					if (strlen(svf_name))
@@ -3044,7 +3076,7 @@ void QuickoptionsMenu(pixel *vid_buf, int b, int bq, int x, int y)
 					else if (strlen(svf_filename))
 						toolTip = svf_filename;
 					else
-						toolTip = "Untitled Simulation (current)";
+						toolTip = "未命名模拟（当前）";
 				}
 				else
 					toolTip = tabNames[i-1];
@@ -3209,8 +3241,8 @@ int search_ui(pixel *vid_buf)
 	int tp, last_p1_extra=0, next_p1_extra=0;
 	int num_selected = 0, num_published_selected = 0, num_unpublished_selected = 0;
 	bool own_selected = true;
-	std::string selection_buttons[4] = {"Delete", "Unpublish", "Favorite", "Clear Selection"};
-	std::string last_date_range = "All";
+	std::string selection_buttons[4] = {"删除", "取消发布", "收藏", "清除选择"};
+	std::string last_date_range = "全部";
 #ifdef TOUCHUI
 	const int xOffset = 10;
 	int initialOffset = 0;
@@ -3278,19 +3310,19 @@ int search_ui(pixel *vid_buf)
 	strcpy(dateRange.def, "");
 	dateRange.count = 5;
 	dateRange.items = {
-	    "All",
-	    "Day",
-	    "Week",
-	    "Month",
-	    "Year",
+	    "全部",
+	    "日",
+	    "周",
+	    "月",
+	    "年",
 	};
 	strcpy(dateRange.str, dateRange.items[dateRange.selected].c_str());
 
 	ui_edit_init(&ed, 65+xOffset, 13, XRES-240, 14);
 #ifdef TOUCHUI
-	strcpy(ed.def, "[search terms], click search icon for help");
+	strcpy(ed.def, "[搜索] 点击图标查看帮助");
 #else
-	strcpy(ed.def, "[search terms], press F1 for help");
+	strcpy(ed.def, "[搜索] 按 F1 查看帮助");
 #endif
 	ed.cursor = ed.cursorstart = strlen(search_expr);
 	strncpy(ed.str, search_expr, 256);
@@ -3347,7 +3379,7 @@ int search_ui(pixel *vid_buf)
 			}
 		}
 
-		drawtext(vid_buf, 11+xOffset, 13, "Search:", 192, 192, 192, 255);
+		drawtext(vid_buf, 11+xOffset, 13, "搜索：", 192, 192, 192, 255);
 		if (!saveListDownload || saveListDownload->CheckStarted())
 			drawtext(vid_buf, 51+xOffset, 11, "\x8E", 192, 160, 32, 255);
 		else
@@ -3361,21 +3393,21 @@ int search_ui(pixel *vid_buf)
 			drawrect(vid_buf, XRES-64+16+xOffset, 8, 56, 16, 96, 96, 96, 255);
 			drawtext(vid_buf, XRES-61+16+xOffset, 11, "\x94", 96, 80, 16, 255);
 			drawtext(vid_buf, XRES-61+16+xOffset, 11, "\x93", 128, 128, 128, 255);
-			drawtext(vid_buf, XRES-46+16+xOffset, 13, "My Own", 128, 128, 128, 255);
+			drawtext(vid_buf, XRES-46+16+xOffset, 13, "我的作品", 128, 128, 128, 255);
 		}
 		else if (search_own)
 		{
 			fillrect(vid_buf, XRES-65+16+xOffset, 7, 58, 18, 255, 255, 255, 255);
 			drawtext(vid_buf, XRES-61+16+xOffset, 11, "\x94", 192, 160, 64, 255);
 			drawtext(vid_buf, XRES-61+16+xOffset, 11, "\x93", 32, 32, 32, 255);
-			drawtext(vid_buf, XRES-46+16+xOffset, 13, "My Own", 0, 0, 0, 255);
+			drawtext(vid_buf, XRES-46+16+xOffset, 13, "我的作品", 0, 0, 0, 255);
 		}
 		else
 		{
 			drawrect(vid_buf, XRES-64+16+xOffset, 8, 56, 16, 192, 192, 192, 255);
 			drawtext(vid_buf, XRES-61+16+xOffset, 11, "\x94", 192, 160, 32, 255);
 			drawtext(vid_buf, XRES-61+16+xOffset, 11, "\x93", 255, 255, 255, 255);
-			drawtext(vid_buf, XRES-46+16+xOffset, 13, "My Own", 255, 255, 255, 255);
+			drawtext(vid_buf, XRES-46+16+xOffset, 13, "我的作品", 255, 255, 255, 255);
 		}
 
 		if(!svf_login)
@@ -3399,7 +3431,7 @@ int search_ui(pixel *vid_buf)
 		{
 			fillrect(vid_buf, XRES-130+16+xOffset, 7, 62, 18, 255, 255, 255, 255);
 			drawtext(vid_buf, XRES-126+16+xOffset, 11, "\xA6", 32, 32, 32, 255);
-			drawtext(vid_buf, XRES-111+16+xOffset, 13, "By date", 0, 0, 0, 255);
+			drawtext(vid_buf, XRES-111+16+xOffset, 13, "按日期", 0, 0, 0, 255);
 		}
 		else
 		{
@@ -3407,7 +3439,7 @@ int search_ui(pixel *vid_buf)
 			drawtext(vid_buf, XRES-126+16+xOffset, 11, "\xA9", 144, 48, 32, 255);
 			drawtext(vid_buf, XRES-126+16+xOffset, 11, "\xA8", 32, 144, 32, 255);
 			drawtext(vid_buf, XRES-126+16+xOffset, 11, "\xA7", 255, 255, 255, 255);
-			drawtext(vid_buf, XRES-111+16+xOffset, 13, "By votes", 255, 255, 255, 255);
+			drawtext(vid_buf, XRES-111+16+xOffset, 13, "按评分", 255, 255, 255, 255);
 		}
 
 		ui_list_draw(vid_buf, &dateRange);
@@ -3421,9 +3453,9 @@ int search_ui(pixel *vid_buf)
 			{
 				auto text = selection_buttons[i];
 				if (i == 1 && num_published_selected == 0)
-					text = "Publish";
+					text = "发布";
 				if (i == 2 && search_fav)
-					text = "Unfavorite";
+					text = "取消收藏";
 				auto text_size = textwidth(text.c_str());
 
 				int col = own_selected || i >= 2 ? 255 : 120;
@@ -3438,8 +3470,8 @@ int search_ui(pixel *vid_buf)
 				ui_edit_draw(vid_buf, &page_num_ed);
 				drawrect(vid_buf, page_num_ed.x - 3, page_num_ed.y - 5, page_num_ed.w + 3, page_num_ed.h, 192, 192, 192, 255);
 
-				drawtext(vid_buf, page_num_ed.x - textwidth("Page "), page_num_ed.y, "Page", 255, 255, 255, 255);
-				drawtext(vid_buf, page_num_ed.x + page_num_ed.w + 3, page_num_ed.y, ("of " + Format::NumberToString<int>(page_count)).c_str(), 255, 255, 255, 255);
+				drawtext(vid_buf, page_num_ed.x - textwidth("第 "), page_num_ed.y, "页", 255, 255, 255, 255);
+				drawtext(vid_buf, page_num_ed.x + page_num_ed.w + 3, page_num_ed.y, ("共 " + Format::NumberToString<int>(page_count)).c_str(), 255, 255, 255, 255);
 			}
 		}
 
@@ -3447,7 +3479,7 @@ int search_ui(pixel *vid_buf)
 		bool page_buttons_enabled = true;
 		if (search_page)
 		{
-			drawtext(vid_buf, 4+xOffset, YRES+MENUSIZE-15, "\x96 Prev", 255, 255, 255, 255);
+			drawtext(vid_buf, 4+xOffset, YRES+MENUSIZE-15, "\x96 上一页", 255, 255, 255, 255);
 			drawrect(vid_buf, 1+xOffset, YRES+MENUSIZE-19, 42, 16, 255, 255, 255, 255);
 		}
 		else if (isFrontPage)
@@ -3460,7 +3492,7 @@ int search_ui(pixel *vid_buf)
 		}
 		if (search_page + 1 < page_count)
 		{
-			drawtext(vid_buf, XRES-24+xOffset, YRES+MENUSIZE-15, "Next \x95", 255, 255, 255, 255);
+			drawtext(vid_buf, XRES-24+xOffset, YRES+MENUSIZE-15, "下一页 \x95", 255, 255, 255, 255);
 			drawrect(vid_buf, XRES-27+xOffset, YRES+MENUSIZE-19, 42, 16, 255, 255, 255, 255);
 		}
 #else
@@ -3510,7 +3542,7 @@ int search_ui(pixel *vid_buf)
 			ui_richtext_process(mx, my, b, bq, &motd);
 			ui_richtext_draw(vid_buf, &motd);
 			//Popular tags
-			drawtext(vid_buf, (XRES-textwidth("Popular tags:"))/2+xOffset+touchOffset, 49, "Popular tags:", 255, 192, 64, 255);
+			drawtext(vid_buf, (XRES-textwidth("热门标签："))/2+xOffset+touchOffset, 49, "热门标签：", 255, 192, 64, 255);
 			for (gj=0; gj<((GRID_Y-GRID_P)*YRES)/(GRID_Y*14); gj++)
 				for (gi=0; gi<(GRID_X+1); gi++)
 				{
@@ -3761,17 +3793,17 @@ int search_ui(pixel *vid_buf)
 		if ((saveListDownload && saveListDownload->CheckStarted()) || (tagListDownload && tagListDownload->CheckStarted()))
 		{
 			fillrect(vid_buf, 0, 26, XRES+BARSIZE, YRES+MENUSIZE-26, 0, 0, 0, 150);
-			drawtext(vid_buf, (XRES+BARSIZE-textwidth("Loading ..."))/2, (YRES+MENUSIZE)/2, "Loading ...", 255, 255, 255, 255);
+			drawtext(vid_buf, (XRES+BARSIZE-textwidth("正在加载..."))/2, (YRES+MENUSIZE)/2, "正在加载...", 255, 255, 255, 255);
 		}
 		else if (searchFailureCode != -1)
 		{
-			std::string errorMsg = "\boHTTP Error " + Format::NumberToString<int>(searchFailureCode) + ": " + Request::GetStatusCodeDesc(searchFailureCode);
+			std::string errorMsg = "\boHTTP 错误 " + Format::NumberToString<int>(searchFailureCode) + "：" + Request::GetStatusCodeDesc(searchFailureCode);
 			fillrect(vid_buf, 0, 30, XRES+BARSIZE, YRES+MENUSIZE-30, 0, 0, 0, 150);
 			drawtext(vid_buf, (XRES+BARSIZE-textwidth(errorMsg.c_str()))/2, (YRES+MENUSIZE)/2, errorMsg.c_str(), 255, 255, 255, 255);
 		}
 		else if (!search_ids[0])
 		{
-			std::string errorMsg = "\boNo saves found";
+			std::string errorMsg = "\bo未找到存档";
 			fillrect(vid_buf, 0, 30, XRES+BARSIZE, YRES+MENUSIZE-30, 0, 0, 0, 150);
 			drawtext(vid_buf, (XRES+BARSIZE-textwidth(errorMsg.c_str()))/2, (YRES+MENUSIZE)/2, errorMsg.c_str(), 255, 255, 255, 255);
 		}
@@ -3874,7 +3906,7 @@ int search_ui(pixel *vid_buf)
 			else if (dp!=-1)
 			{
 				if (search_fav){
-					if(confirm_ui(vid_buf, "Remove from favorites?", search_names[dp], "Remove")){
+		if(confirm_ui(vid_buf, "从收藏中移除？", search_names[dp], "移除")){
 						execute_unfav(vid_buf, search_ids[dp]);
 						if (last)
 						{
@@ -3883,11 +3915,11 @@ int search_ui(pixel *vid_buf)
 						}
 					}
 				} else {
-					if (confirm_ui(vid_buf, "Do you want to delete?", search_names[dp], "Delete"))
+					if (confirm_ui(vid_buf, "确定要删除吗？", search_names[dp], "删除"))
 					{
 						if (!execute_delete(vid_buf, search_ids[dp]))
 						{
-							info_ui(vid_buf, "Success", "Save permanently deleted");
+							info_ui(vid_buf, "成功", "存档已永久删除");
 						}
 						if (last)
 						{
@@ -3972,44 +4004,34 @@ int search_ui(pixel *vid_buf)
 						}
 						break;
 					}
-					auto s = num_selected == 1 ? "" : "s";
 					std::string top_message;
 					std::stringstream body;
 					switch (i)
 					{
 					case 0:
-						top_message = "Delete Saves";
-						body << "Are you sure you want to delete " << num_selected << " save" << s << "?";
+						top_message = "删除存档";
+						body << "确定要删除 " << num_selected << " 个存档吗？";
 						break;
 					case 1:
-						s = (num_published_selected ? num_published_selected : num_unpublished_selected) == 1 ? "" : "s";
-						top_message = num_published_selected ? "Unpublish Saves" : "Publish Saves";
-						body << "Are you sure you want to ";
-						body << (num_published_selected ? "unpublish" : "publish");
-						body << " " << (num_published_selected ? num_published_selected : num_unpublished_selected);
-						body << " save" << s << "?";
+						top_message = num_published_selected ? "取消发布存档" : "发布存档";
+						body << "确定要" << (num_published_selected ? "取消发布 " : "发布 ");
+						body << (num_published_selected ? num_published_selected : num_unpublished_selected) << " 个存档吗？";
 						if (num_published_selected && num_unpublished_selected)
-						{
-							s = num_unpublished_selected == 1 ? "" : "s";
-							body << " (" << num_unpublished_selected << " save" << s << " already unpublished)";
-						}
+							body << "（另有 " << num_unpublished_selected << " 个存档尚未发布）";
 						break;
 					case 2:
-						top_message = "Favorite Saves";
-						body << "Are you sure you want to ";
-						body << (search_fav ? "remove" : "add");
-						body << " " << num_selected << " save" << s << " ";
-						body << (search_fav ? "from" : "to");
-						body << " your favorites?";
+						top_message = "收藏存档";
+						body << "确定要" << (search_fav ? "取消收藏 " : "收藏 ");
+						body << num_selected << " 个存档吗？";
 						break;
 					}
-					bool confirmed = confirm_ui(vid_buf, top_message.c_str(), body.str().c_str(), "Confirm");
+					bool confirmed = confirm_ui(vid_buf, top_message.c_str(), body.str().c_str(), "确认");
 					if (confirmed)
 					{
 						pixel *backup_vid_buf = (pixel *)malloc(((YRES+MENUSIZE)*(XRES+BARSIZE))*PIXELSIZE);
 						if (!backup_vid_buf)
 						{
-							error_ui(vid_buf, 0, "Failed to perform action, cannot allocate memory");
+							error_ui(vid_buf, 0, "操作失败：无法分配内存");
 						}
 						else
 						{
@@ -4028,11 +4050,11 @@ int search_ui(pixel *vid_buf)
 								switch (i)
 								{
 								case 0:
-									info_message << "Deleting";
+									info_message << "正在删除";
 									break;
 								case 1:
 									if (num_published_selected)
-										info_message << "Unpublishing";
+										info_message << "正在取消发布";
 									else
 										info_message << "Publishing";
 									break;
@@ -4043,7 +4065,7 @@ int search_ui(pixel *vid_buf)
 										info_message << "Favoriting";
 									break;
 								}
-								info_message << " save id:" << search_ids[pos] << " (" << search_names[pos] << ")";
+								info_message << "，存档 ID：" << search_ids[pos] << "（" << search_names[pos] << "）";
 
 								info_box(vid_buf, info_message.str().c_str());
 								bool ret;
@@ -4144,7 +4166,7 @@ int search_ui(pixel *vid_buf)
 			last_p1_extra = next_p1_extra;
 			last_date_range = dateRange.str;
 
-			bool byVotes = !search_own && !search_date && !search_fav && !*last && !strcmp(dateRange.str, "All");
+			bool byVotes = !search_own && !search_date && !search_fav && !*last && !strcmp(dateRange.str, "全部");
 			isNextSearchFrontPage = search_page == 0 && byVotes;
 			if (byVotes)
 			{
@@ -4180,7 +4202,7 @@ int search_ui(pixel *vid_buf)
 			int status;
 			std::string resultsStr = saveListDownload->Finish(&status);
 			const char *results = resultsStr.c_str();
-			bool byVotes = !(search_own || search_date || search_fav || (last && strlen(last)) || strcmp(dateRange.str, "All"));
+			bool byVotes = !(search_own || search_date || search_fav || (last && strlen(last)) || strcmp(dateRange.str, "全部"));
 			isFrontPage = isNextSearchFrontPage;
 			p1_extra = next_p1_extra;
 			touchOffset = 0;
@@ -4324,32 +4346,32 @@ finish:
 void show_search_help()
 {
 	std::string info =
-		"Type in the search bar to begin automatically searching save titles and tags. Search terms are ORed together.\n"
+		"在搜索框输入内容即可自动搜索存档标题和标签；多个关键词按 OR 组合。\n"
 		"\n"
-		"Sorting: click the \bt\"By Votes\"\bw / \bt\"By Date\"\bw buttons to change the order saves are displayed in\n"
-		"Categories: If you're logged in, use \bt\"My Own\"\bw to view only your own saves, or click the Star icon to view your favorited saves\n"
-		"Date Range: Click the dropdown to the right of the search box to select the date range for your search\n"
+		"排序：点击 \bt\"按评分\"\bw / \bt\"按日期\"\bw 切换存档显示顺序。\n"
+		"分类：登录后可点击 \bt\"我的作品\"\bw 只看自己的存档，或点击星形图标查看收藏。\n"
+		"日期范围：点击搜索框右侧的下拉菜单选择搜索时间范围。\n"
 		"\n"
-		"Special search terms:\n"
-		"\btid:#######\bw - search by save id\n"
-		"\bthistory:#######\bw - see previous versions for a save id\n"
-		"\btuser:XXXXXX\bw - search for saves by a specific user\n"
-		"\btbefore:YYYY-MM-DD\bw - all saves originally created before a certain date. Month and Day portions are both optional\n"
-		"\btafter:YYYY-MM-DD\bw - all saves originally created after a certain date. Month and Day portions are both optional\n"
+		"特殊搜索词：\n"
+		"\btid:#######\bw - 按存档 ID 搜索\n"
+		"\bthistory:#######\bw - 查看指定存档 ID 的历史版本\n"
+		"\btuser:XXXXXX\bw - 搜索指定用户的存档\n"
+		"\btbefore:YYYY-MM-DD\bw - 查找在指定日期前创建的存档；月和日均可省略\n"
+		"\btafter:YYYY-MM-DD\bw - 查找在指定日期后创建的存档；月和日均可省略\n"
 		"\n"
-		"Advanced search:\n"
-		"Start a search with \bt~\bw to do an advanced search. This search works across save titles, descriptions, usernames, and tags, rather than only save titles and tags."
-		" It also concatenates search terms with AND instead of OR.\n"
-		"Use \bt|\bw to OR together search terms, for example \bg~bomb | nuke | explosive\bw\n"
-		"Use \bt!\bw to negate terms, for example \bg~city !destroyable !desert\bw\n"
-		"Use \bt\"\bw to create multi-word search terms, for example \bg~\"power plant\" uran | plut | polo\bw\n"
-		"Use \bt@title\bw to limit search to only save titles, for example \bg~@title subframe\bw\n"
-		"Use \bt@description\bw to limit search to only save descriptions, for example \bg~@description \"No description provided\"\bw\n"
-		"Use \bt@user\bw to limit search to only specific users, for example \bg~@user 117n00b | Catelite | Fluttershy @title laser\bw\n"
-		"Use \bt@tags\bw to limit search to just save tags, for example \bg~@tags resistcup @title printer | @description spider before:2024-06\bw\n"
-		"Parenthesis can be used to further complicate your searches. For example: \bg~(@user MG99 @description complete) | (@user goglesq @tags tutorial)\bw"
+		"高级搜索：\n"
+		"以 \bt~\bw 开头可使用高级搜索；它会同时搜索存档标题、说明、用户名和标签。"
+		" 它还会用 AND 而不是 OR 连接搜索词。\n"
+		"使用 \bt|\bw 表示'或'，例如 \bg~bomb | nuke | explosive\bw\n"
+		"使用 \bt!\bw 排除关键词，例如 \bg~city !destroyable !desert\bw\n"
+		"使用 \bt\"\bw 创建多词关键词，例如 \bg~\"power plant\" uran | plut | polo\bw\n"
+		"使用 \bt@title\bw 仅搜索存档标题，例如 \bg~@title subframe\bw\n"
+		"使用 \bt@description\bw 仅搜索存档说明，例如 \bg~@description \"No description provided\"\bw\n"
+		"使用 \bt@user\bw 限定作者，例如 \bg~@user 117n00b | Catelite | Fluttershy @title laser\bw\n"
+		"使用 \bt@tags\bw 仅搜索标签，例如 \bg~@tags resistcup @title printer | @description spider before:2024-06\bw\n"
+		"括号可组合复杂查询。例如：\bg~(@user MG99 @description complete) | (@user goglesq @tags tutorial)\bw"
 		;
-	auto *prompt = new InfoPrompt("Search Help", info, "OK", true);
+	auto *prompt = new InfoPrompt("搜索帮助", info, "确定", true);
 	Engine::Ref().ShowWindow(prompt);
 	MainLoop(true);
 }
@@ -4360,19 +4382,19 @@ int report_ui(pixel* vid_buf, char *save_id, bool bug)
 	ui_edit ed;
 	const char *message;
 	if (bug)
-		message = "Report bugs and feedback here. Do not suggest new elements or features, or report bugs with downloaded scripts.";
+		message = "请在此报告问题和反馈。请勿建议新元素或功能，也不要报告下载脚本的问题。";
 	else
-		message = "Things to consider when reporting:\n"\
-				  "\bw1) \bgWhen reporting stolen saves, please include the ID of the original save.\n"
-				  "\bw2) \bgDo not ask for saves to be removed from front page unless they break the rules.\n"
-				  "\bw3) \bgYou may report saves for comments and tags too (including your own saves)";
+		message = "提交举报前请注意：\n"\
+				  "\bw1) \bg举报被盗存档时，请附上原存档 ID。\n"
+				  "\bw2) \bg除非违反规则，否则请勿要求从首页移除存档。\n"
+				  "\bw3) \bg也可以举报存档中的评论和标签（包括自己的存档）。";
 	messageHeight = (int)(textwrapheight((char*)message, XRES+BARSIZE-410)/2);
 
 	ui_edit_init(&ed, 209, 159+messageHeight, (XRES+BARSIZE-400)-18, (YRES+MENUSIZE-300)-36);
 	if (bug)
-		strcpy(ed.def, "Feedback");
+		strcpy(ed.def, "反馈");
 	else
-		strcpy(ed.def, "Report details");
+		strcpy(ed.def, "报告详情");
 	ed.focus = 0;
 	ed.multiline = 1;
 
@@ -4397,13 +4419,13 @@ int report_ui(pixel* vid_buf, char *save_id, bool bug)
 
 
 		drawrect(vid_buf, 200, (YRES+MENUSIZE-150)-18+messageHeight, 50, 18, 255, 255, 255, 255);
-		drawtext(vid_buf, 213, (YRES+MENUSIZE-150)-13+messageHeight, "Cancel", 255, 255, 255, 255);
+		drawtext(vid_buf, 213, (YRES+MENUSIZE-150)-13+messageHeight, "取消", 255, 255, 255, 255);
 
 		drawrect(vid_buf, (XRES+BARSIZE-400)+150, (YRES+MENUSIZE-150)-18+messageHeight, 50, 18, 255, 255, 255, 255);
 		if (bug)
-			drawtext(vid_buf, (XRES+BARSIZE-400)+163, (YRES+MENUSIZE-150)-13+messageHeight, "Send", 255, 255, 255, 255);
+			drawtext(vid_buf, (XRES+BARSIZE-400)+163, (YRES+MENUSIZE-150)-13+messageHeight, "发送", 255, 255, 255, 255);
 		else
-			drawtext(vid_buf, (XRES+BARSIZE-400)+163, (YRES+MENUSIZE-150)-13+messageHeight, "Report", 255, 255, 255, 255);
+			drawtext(vid_buf, (XRES+BARSIZE-400)+163, (YRES+MENUSIZE-150)-13+messageHeight, "举报", 255, 255, 255, 255);
 		if (mx>(XRES+BARSIZE-400)+150 && my>(YRES+MENUSIZE-150)-18+messageHeight && mx<(XRES+BARSIZE-400)+200 && my<(YRES+MENUSIZE-150)+messageHeight)
 		{
 			if (b)
@@ -4420,9 +4442,9 @@ int report_ui(pixel* vid_buf, char *save_id, bool bug)
 				if (!ret)
 				{
 					if (bug)
-						info_ui(vid_buf, "Success", "Feedback has been sent");
+						info_ui(vid_buf, "成功", "反馈已发送");
 					else
-						info_ui(vid_buf, "Success", "This save has been reported");
+						info_ui(vid_buf, "成功", "已举报此存档");
 					return 1;
 				}
 				else
@@ -4616,10 +4638,10 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 	drawrect(vid_buf, 50, 50, XRES+BARSIZE-100, YRES+MENUSIZE-100, 255, 255, 255, 255);
 	drawrect(vid_buf, 50, 50, (XRES/2)+1, (YRES/2)+1, 255, 255, 255, 155);
 	drawrect(vid_buf, 50+(XRES/2)+1, 50, XRES+BARSIZE-100-((XRES/2)+1), YRES+MENUSIZE-100, 155, 155, 155, 255);
-	drawtext(vid_buf, 50+(XRES/4)-textwidth("Loading...")/2, 50+(YRES/4), "Loading...", 255, 255, 255, 128);
+	drawtext(vid_buf, 50+(XRES/4)-textwidth("正在加载...")/2, 50+(YRES/4), "正在加载...", 255, 255, 255, 128);
 
 	ui_edit_init(&ed, 57+(XRES/2)+1, YRES+MENUSIZE-83, XRES+BARSIZE-114-((XRES/2)+1), 14);
-	strcpy(ed.def, "Add comment");
+	strcpy(ed.def, "添加评论");
 #ifndef TOUCHUI
 	ed.focus = svf_login?1:0;
 #endif
@@ -4749,7 +4771,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				{
 					if (data.empty())
 					{
-						error_ui(vid_buf, 0, "Save data is empty (may be corrupt)");
+						error_ui(vid_buf, 0, "存档数据为空（可能已损坏）");
 						openable = 0;
 						if (queue_open || instant_open)
 							break;
@@ -4776,12 +4798,12 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 					sprintf(viewcountbuffer, "%d", info->downloadcount);
 					if (info_ready == 0)
 					{
-						error_ui(vid_buf, 0, "Save info not found");
+						error_ui(vid_buf, 0, "未找到存档信息");
 						break;
 					}
 					else if (info_ready < 0)
 					{
-						error_ui(vid_buf, 0, "Failed to parse save info");
+						error_ui(vid_buf, 0, "解析存档信息失败");
 						break;
 					}
 					else if (!fake404save && !strlen(info->author))
@@ -4792,13 +4814,13 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 						if (info->createdDateStr) free(info->updatedDateStr);
 						if (info->description) free(info->description);
 						if (info->tags) free(info->tags);
-						info->name = mystrdup("Save doesn't exist");
+						info->name = mystrdup("存档不存在");
 						info->author = mystrdup("FourOhFour");
 						info->createdDate = 0;
 						info->updatedDate = 0;
-						info->createdDateStr = mystrdup("December 2010");
-						info->updatedDateStr = mystrdup("December 2010");
-						info->description = mystrdup("I DUNNO LOL");
+	info->createdDateStr = mystrdup("2010 年 12 月");
+	info->updatedDateStr = mystrdup("2010 年 12 月");
+	info->description = mystrdup("暂无说明");
 						info->tags = mystrdup("");
 
 						if (saveDataDownload)
@@ -4836,7 +4858,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				pixel *full_thumb;
 				if (thumb_data_full.empty())
 				{
-					//error_ui(vid_buf, 0, "Save data is empty (may be corrupt)");
+					//error_ui(vid_buf, 0, "存档数据为空（可能已损坏）");
 					//break;
 				}
 				else
@@ -4918,31 +4940,31 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 			if (info_ready && !hasdrawninfo) {
 				//Render all the save information
 
-				int authorWidth = textwidth("Author: ");
-				int dateWidth = textwidth("Date ");
-				int mainWidth = textwidth(info->author) + textwidth("Created: ") + textwidth(info->updatedDateStr) + 12;
-				int viewCounterWidth = textwidth(viewcountbuffer) + textwidth("Views:") + 4;
+				int authorWidth = textwidth("作者：");
+	int dateWidth = textwidth("日期 ");
+				int mainWidth = textwidth(info->author) + textwidth("创建于：") + textwidth(info->updatedDateStr) + 12;
+				int viewCounterWidth = textwidth(viewcountbuffer) + textwidth("浏览：") + 4;
 				int minimumSpace = (XRES/2) - 12 - mainWidth - viewCounterWidth;
 
 				drawtext(vid_buf, 60, (YRES/2)+60, info->name, 255, 255, 255, 255);
 				cix = 56;
 				if (minimumSpace - authorWidth > 0)
-					cix = drawtext(vid_buf, cix+4, (YRES/2)+72, "Author:", 255, 255, 255, 155);
+					cix = drawtext(vid_buf, cix+4, (YRES/2)+72, "作者：", 255, 255, 255, 155);
 				cix = drawtext(vid_buf, cix+4, (YRES/2)+72, info->author, 255, 255, 255, 255);
 
 				// determine string based on if this save has history, and available text width
 				std::string dateStr;
 				if (info->updatedDate > info->createdDate)
-					dateStr = "Updated:";
+					dateStr = "更新于：";
 				else
-					dateStr = "Created:";
+					dateStr = "创建于：";
 				if (minimumSpace - authorWidth - dateWidth > 0)
-					dateStr = "Date " + dateStr;
+	dateStr = "日期 " + dateStr;
 				cix = drawtext(vid_buf, cix+4, (YRES/2)+72, dateStr.c_str(), 255, 255, 255, 155);
 				cix = drawtext(vid_buf, cix+4, (YRES/2)+72, info->updatedDateStr, 255, 255, 255, 255);
 
 				if(info->downloadcount){
-					drawtext(vid_buf, 48+(XRES/2)-textwidth(viewcountbuffer)-textwidth("Views:")-4, (YRES/2)+72, "Views:", 255, 255, 255, 155);
+					drawtext(vid_buf, 48+(XRES/2)-textwidth(viewcountbuffer)-textwidth("浏览：")-4, (YRES/2)+72, "浏览：", 255, 255, 255, 155);
 					drawtext(vid_buf, 48+(XRES/2)-textwidth(viewcountbuffer), (YRES/2)+72, viewcountbuffer, 255, 255, 255, 255);
 				}
 				drawtextwrap(vid_buf, 62, (YRES/2)+86, (XRES/2)-24, 0, info->description, 255, 255, 255, 200);
@@ -5126,7 +5148,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				if (!commentNum)
 					commentNum = info->loaded_comment_count;
 				char pageText[128];
-				sprintf(pageText, "Page %i of %i", commentNum/20+1, info->comment_count/20+1);
+				sprintf(pageText, "第 %i 页，共 %i 页", commentNum/20+1, info->comment_count/20+1);
 				drawtext(vid_buf, XRES+BARSIZE-190, YRES+MENUSIZE-43, pageText, 255, 255, 255, 255);
 
 				//memcpy(old_vid, vid_buf, ((XRES+BARSIZE)*(YRES+MENUSIZE))*PIXELSIZE);
@@ -5145,7 +5167,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				ed.y = YRES+MENUSIZE-71-ui_edit_draw(vid_buf, &ed);
 
 				drawrect(vid_buf, XRES+BARSIZE-100, YRES+MENUSIZE-68, 50, 18, 255, 255, 255, 255);
-				drawtext(vid_buf, XRES+BARSIZE-90, YRES+MENUSIZE-63, "Submit", 255, 255, 255, 255);
+				drawtext(vid_buf, XRES+BARSIZE-90, YRES+MENUSIZE-63, "提交", 255, 255, 255, 255);
 
 				if (commentLen != strlen(ed.str))
 				{
@@ -5155,7 +5177,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 					{
 						if (!commentWarningShown)
 						{
-							commentWarning = "Do not ask for votes";
+							commentWarning = "请勿索要评分";
 							commentWarningShown = true;
 						}
 					}
@@ -5164,9 +5186,9 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 						if (!commentWarningShown)
 						{
 							if (rand()%2)
-								commentWarning = "Stolen? Report the save instead";
+								commentWarning = "发现盗用？请直接举报存档";
 							else
-								commentWarning = "Please report stolen saves";
+								commentWarning = "请举报盗用的存档";
 							commentWarningShown = true;
 						}
 					}
@@ -5175,9 +5197,9 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 						if (!commentWarningShown)
 						{
 							if (rand()%2)
-								commentWarning = "Please do not swear";
+								commentWarning = "请勿使用脏话";
 							else
-								commentWarning = "Bad language may be deleted";
+								commentWarning = "含不当用语的内容可能被删除";
 							commentWarningShown = true;
 						}
 					}
@@ -5195,42 +5217,42 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 			}
 
 			//Save ID text and copybox
-			cix = textwidth("Save ID: ");
+			cix = textwidth("存档 ID：");
 			cix += ctb.width;
-			ctb.x = textwidth("Save ID: ")+(XRES+BARSIZE-cix)/2;
+			ctb.x = textwidth("存档 ID：")+(XRES+BARSIZE-cix)/2;
 			//ctb.x =
-			drawtext(vid_buf, (XRES+BARSIZE-cix)/2, YRES+MENUSIZE-15, "Save ID: ", 255, 255, 255, 255);
+			drawtext(vid_buf, (XRES+BARSIZE-cix)/2, YRES+MENUSIZE-15, "存档 ID：", 255, 255, 255, 255);
 			ui_copytext_draw(vid_buf, &ctb);
 			ui_copytext_process(mx, my, b, bq, &ctb);
 
 			//Open Button
 			bc = openable?255:150;
 			drawrect(vid_buf, 50, YRES+MENUSIZE-68, 50, 18, 255, 255, 255, bc);
-			drawtext(vid_buf, 73, YRES+MENUSIZE-63, "Open", 255, 255, 255, bc);
+			drawtext(vid_buf, 73, YRES+MENUSIZE-63, "打开", 255, 255, 255, bc);
 			drawtext(vid_buf, 56, YRES+MENUSIZE-62, "\x81", 255, 255, 255, bc);
 			//Fav Button
 			bc = svf_login && !fake404save ? 255 : 150;
 			drawrect(vid_buf, 100, YRES+MENUSIZE-68, 50, 18, 255, 255, 255, bc);
 			if(info->myfav && svf_login){
-				drawtext(vid_buf, 122, YRES+MENUSIZE-63, "Unfav.", 255, 230, 230, bc);
+				drawtext(vid_buf, 122, YRES+MENUSIZE-63, "取消收藏", 255, 230, 230, bc);
 			} else {
-				drawtext(vid_buf, 122, YRES+MENUSIZE-63, "Fav.", 255, 255, 255, bc);
+				drawtext(vid_buf, 122, YRES+MENUSIZE-63, "收藏", 255, 255, 255, bc);
 			}
 			drawtext(vid_buf, 107, YRES+MENUSIZE-64, "\xCC", 255, 255, 255, bc);
 			//Report Button
 			bc = (svf_login && info_ready && !fake404save) ? 255 : 150;
 			drawrect(vid_buf, 150, YRES+MENUSIZE-68, 50, 18, 255, 255, 255, bc);
-			drawtext(vid_buf, 168, YRES+MENUSIZE-63, "Report", 255, 255, 255, bc);
+			drawtext(vid_buf, 168, YRES+MENUSIZE-63, "举报", 255, 255, 255, bc);
 			drawtext(vid_buf, 155, YRES+MENUSIZE-64, "\xE4", 255, 255, 255, bc);
 			//Delete Button
 			bc = authoritah && !fake404save ? 255 : 150;
 			drawrect(vid_buf, 200, YRES+MENUSIZE-68, 50, 18, 255, 255, 255, bc);
-			drawtext(vid_buf, 218, YRES+MENUSIZE-63, "Delete", 255, 255, 255, bc);
+			drawtext(vid_buf, 218, YRES+MENUSIZE-63, "删除", 255, 255, 255, bc);
 			drawtext(vid_buf, 207, YRES+MENUSIZE-63, "\xAA", 255, 255, 255, bc);
 			//Open in browser button
 			bc = !fake404save ? 255 : 150;
 			drawrect(vid_buf, 250, YRES+MENUSIZE-68, 107, 18, 255, 255, 255, bc);
-			drawtext(vid_buf, 273, YRES+MENUSIZE-63, "Open in Browser", 255, 255, 255, bc);
+			drawtext(vid_buf, 273, YRES+MENUSIZE-63, "在浏览器中打开", 255, 255, 255, bc);
 			drawtext(vid_buf, 257, YRES+MENUSIZE-62, "\x81", 255, 255, 255, bc);
 
 			//Open Button
@@ -5251,12 +5273,12 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 					//Button Clicked
 					if(info->myfav){
 						fillrect(vid_buf, -1, -1, XRES+BARSIZE, YRES+MENUSIZE, 0, 0, 0, 192);
-						info_box(vid_buf, "Removing from favourites...");
+						info_box(vid_buf, "正在取消收藏...");
 						execute_unfav(vid_buf, save_id);
 						info->myfav = 0;
 					} else {
 						fillrect(vid_buf, -1, -1, XRES+BARSIZE, YRES+MENUSIZE, 0, 0, 0, 192);
-						info_box(vid_buf, "Adding to favourites...");
+						info_box(vid_buf, "正在加入收藏...");
 						execute_fav(vid_buf, save_id);
 						info->myfav = 1;
 					}
@@ -5278,12 +5300,12 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				fillrect(vid_buf, 200, YRES+MENUSIZE-68, 50, 18, 255, 255, 255, 40);
 				if (!b && bq) {
 					//Button Clicked
-					if (confirm_ui(vid_buf, "Are you sure you wish to delete this?", "You will not be able recover it.", "Delete")) {
+					if (confirm_ui(vid_buf, "确定要删除吗？", "删除后无法恢复。", "删除")) {
 						fillrect(vid_buf, -1, -1, XRES+BARSIZE, YRES+MENUSIZE, 0, 0, 0, 192);
-						info_box(vid_buf, "Deleting...");
+						info_box(vid_buf, "正在删除...");
 						if (!execute_delete(vid_buf, save_id)) {
 							retval = 0;
-							info_ui(vid_buf, "Success", "Save permanently deleted");
+							info_ui(vid_buf, "成功", "存档已永久删除");
 							break;
 						}
 					}
@@ -5307,7 +5329,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				{
 					//Button Clicked
 					fillrect(vid_buf, -1, -1, XRES+BARSIZE+1, YRES+MENUSIZE+1, 0, 0, 0, 192);
-					info_box(vid_buf, "Submitting Comment...");
+					info_box(vid_buf, "正在提交评论...");
 					if (!execute_submit(vid_buf, save_id, ed.str))
 					{
 						std::stringstream uri;
@@ -5422,9 +5444,9 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 			clearrect(vid_buf, 52, (YRES/2)+38, (XRES)/2-1, 13);
 			fillrect(vid_buf, 51, (YRES/2)+38, (int)((((float)XRES-2)/2.0f)*((float)downloadDone/(float)downloadTotal)), 12, 255, 200, 0, 255);
 			if(((float)downloadDone/(float)downloadTotal)>0.5f)
-				drawtext(vid_buf, 51+(((XRES/2)-textwidth("Downloading"))/2), (YRES/2)+40, "Downloading", 0, 0, 0, 255);
+				drawtext(vid_buf, 51+(((XRES/2)-textwidth("正在下载"))/2), (YRES/2)+40, "正在下载", 0, 0, 0, 255);
 			else
-				drawtext(vid_buf, 51+(((XRES/2)-textwidth("Downloading"))/2), (YRES/2)+40, "Downloading", 255, 255, 255, 255);
+				drawtext(vid_buf, 51+(((XRES/2)-textwidth("正在下载"))/2), (YRES/2)+40, "正在下载", 255, 255, 255, 255);
 		}
 
 		//User opened the save, wait until we've got all the data first...
@@ -5485,7 +5507,7 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 				{
 					queue_open = 0;
 
-					error_ui(vid_buf, 0, std::string("An error occurred when parsing the save: ") + e.what());
+					error_ui(vid_buf, 0, std::string("解析存档时发生错误：") + e.what());
 					if (instant_open)
 						break;
 					openable = 0;
@@ -5496,12 +5518,12 @@ int open_ui(pixel *vid_buf, char *save_id, char *save_date, int instant_open)
 			else
 			{
 				fillrect(vid_buf, -1, -1, XRES+BARSIZE, YRES+MENUSIZE, 0, 0, 0, 190);
-				drawtext(vid_buf, 50+(XRES/4)-textwidth("Loading...")/2, 50+(YRES/4), "Loading...", 255, 255, 255, 128);
+				drawtext(vid_buf, 50+(XRES/4)-textwidth("正在加载...")/2, 50+(YRES/4), "正在加载...", 255, 255, 255, 128);
 			}
 		}
 		if ((!info_ready || !data_ready) && openable)
 		{
-			info_box(vid_buf, "Loading");
+			info_box(vid_buf, "正在加载");
 		}
 
 
@@ -5652,17 +5674,17 @@ Request * search_saves(int start, int count, std::string query, std::string sort
 	urlStream << SCHEME << SERVER << "/Browse.json?Start=" << start << "&Count=" << count;
 
 
-	if (dateRange != "All")
+	if (dateRange != "全部")
 	{
 		time_t currTime = time(NULL);
 
-		if (dateRange == "Day")
+		if (dateRange == "日")
 			currTime -= 60*60*24; // One day
-		else if (dateRange == "Week")
+		else if (dateRange == "周")
 			currTime -= 60*60*24*7; // One week
-		else if (dateRange == "Month")
+		else if (dateRange == "月")
 			currTime -= 60*60*24*31; // One month
-		else if (dateRange == "Year")
+		else if (dateRange == "年")
 			currTime -= 60*60*24*365; // One year
 
 		tm currentTimeData = *localtime(&currTime);
@@ -5829,7 +5851,7 @@ int execute_tagop(pixel *vid_buf, const char *op, char *tag)
 	}
 	if (result.empty())
 	{
-		error_ui(vid_buf, 0, "Could not add tag");
+		error_ui(vid_buf, 0, "无法添加标签");
 		return 1;
 	}
 	if (result.find("OK", 0, 2) == result.npos)
@@ -5863,7 +5885,7 @@ int execute_save(pixel *vid_buf, Save *save)
 
 	if (save->fromNewerVersion && svf_publish)
 	{
-		error_ui(vid_buf, 0, "Cannot publish save, incompatible with latest release version.");
+		error_ui(vid_buf, 0, "无法发布：存档与最新正式版不兼容。");
 		return 1;
 	}
 
@@ -5880,7 +5902,7 @@ int execute_save(pixel *vid_buf, Save *save)
 	if (result.find("OK", 0, 2) == result.npos)
 	{
 		if (result.empty())
-			result = mystrdup("Could not save - no reply from server");
+			result = mystrdup("保存失败：服务器未响应");
 		error_ui(vid_buf, 0, result);
 		return 1;
 	}
@@ -5893,7 +5915,7 @@ int execute_save(pixel *vid_buf, Save *save)
 
 	if (!svf_id[0])
 	{
-		error_ui(vid_buf, 0, "No ID supplied by server");
+		error_ui(vid_buf, 0, "服务器未提供 ID");
 		return 1;
 	}
 
@@ -5918,14 +5940,14 @@ bool ParseServerReturn(std::string result, const int status, bool json, std::str
 	// no server response, return "Malformed Response"
 	if (status == 200 && !result.size())
 	{
-		error = "HTTP Error 603: " + Request::GetStatusCodeDesc(603);
+			error = "HTTP 错误 603：" + Request::GetStatusCodeDesc(603);
 		return true;
 	}
 	if (status == 302)
 		return true;
 	if (status != 200)
 	{
-		error = "HTTP Error " + Format::NumberToString(status) + ": " + Request::GetStatusCodeDesc(status);
+			error = "HTTP 错误 " + Format::NumberToString(status) + "：" + Request::GetStatusCodeDesc(status);
 		return true;
 	}
 
@@ -5945,7 +5967,7 @@ bool ParseServerReturn(std::string result, const int status, bool json, std::str
 			int status = root.get("Status", 1).asInt();
 			if (status != 1)
 			{
-				std::string err = root.get("Error", "Unspecified Error").asString();
+				std::string err = root.get("Error", "未指定错误").asString();
 				error = err;
 				return true;
 			}
@@ -5957,10 +5979,10 @@ bool ParseServerReturn(std::string result, const int status, bool json, std::str
 			{
 				std::string errorCode = result.substr(7);
 				int errorStatus = Format::StringToNumber<int>(errorCode);
-				error = "HTTP Error " + errorCode + ": " + Request::GetStatusCodeDesc(errorStatus);
+				error = "HTTP 错误 " + errorCode + "：" + Request::GetStatusCodeDesc(errorStatus);
 				return true;
 			}
-			error = "Could not read response: " + std::string(e.what());
+			error = "无法读取响应：" + std::string(e.what());
 			return true;
 		}
 	}
@@ -6176,7 +6198,7 @@ void decoration_editor(pixel *vid_buf, int b, int bq, int mx, int my)
 
 		drawrect(vid_buf, window_offset_x + onleft_button_offset_x +1, 2 +255+6, 12, 12, 255, 255, 255, 255);
 		drawrect(vid_buf, window_offset_x + 230, 2 +255+6, 26, 12, 255, 255, 255, 255);
-		drawtext(vid_buf, window_offset_x + 232, 2 +255+9, "Clear", 255, 255, 255, 255);
+		drawtext(vid_buf, window_offset_x + 232, 2 +255+9, "清除", 255, 255, 255, 255);
 		ui_edit_draw(vid_buf, &box_R);
 		ui_edit_draw(vid_buf, &box_G);
 		ui_edit_draw(vid_buf, &box_B);
@@ -6339,7 +6361,7 @@ void decoration_editor(pixel *vid_buf, int b, int bq, int mx, int my)
 		//clear button
 		if (b && !bq && mx >= window_offset_x+230 && my >= 2+255+6 && mx <= window_offset_x + 230+26 && my <= 2+255+5+13)
 		{
-			auto prompt = new ConfirmPrompt("Reset Decoration Layer", "Do you really want to erase everything?", "Erase");
+			auto prompt = new ConfirmPrompt("重置装饰层", "确定要擦除全部装饰吗？", "擦除");
 			prompt->SetCallback({ [](bool confirmed) {
 				if (confirmed)
 					for (int i = 0; i < NPART; i++)
@@ -6352,7 +6374,7 @@ void decoration_editor(pixel *vid_buf, int b, int bq, int mx, int my)
 			char hex[32];
 			sprintf(hex,"0x%.8X",(currA<<24)+(currR<<16)+(currG<<8)+currB);
 			Engine::Ref().ClipboardPush(hex);
-			the_game->SetInfoTip("Copied to clipboard");
+			the_game->SetInfoTip("已复制到剪贴板");
 		}
 		deco_disablestuff = 1;
 	}
@@ -6567,7 +6589,7 @@ int save_filename_ui(pixel *vid_buf, Save *save)
 	}
 
 	ui_edit_init(&ed, x0+11, y0+25, xsize-20, 0);
-	strcpy(ed.def, "[filename]");
+	strcpy(ed.def, "[文件名]");
 	ed.nx = 0;
 	
 	if (svf_fileopen)
@@ -6600,7 +6622,7 @@ int save_filename_ui(pixel *vid_buf, Save *save)
 
 		clearrect(vid_buf, x0-1, y0-1, xsize+3, ysize+3);
 		drawrect(vid_buf, x0, y0, xsize, ysize, 192, 192, 192, 255);
-		drawtext(vid_buf, x0+8, y0+8, "Filename:", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+8, y0+8, "文件名：", 255, 255, 255, 255);
 		drawrect(vid_buf, x0+8, y0+20, xsize-16, 16, 255, 255, 255, 180);
 		if(saveImg!=NULL)
 		{
@@ -6610,7 +6632,7 @@ int save_filename_ui(pixel *vid_buf, Save *save)
 		
 		drawrect(vid_buf, x0, y0+ysize-16, xsize, 16, 192, 192, 192, 255);
 		fillrect(vid_buf, x0, y0+ysize-16, xsize, 16, 170, 170, 192, (int)ca);
-		drawtext(vid_buf, x0+8, y0+ysize-12, "Save", 255, 255, 255, 255);
+		drawtext(vid_buf, x0+8, y0+ysize-12, "保存", 255, 255, 255, 255);
 
 		ui_edit_draw(vid_buf, &ed);
 		if (strlen(ed.str) || ed.focus)
@@ -6633,12 +6655,12 @@ int save_filename_ui(pixel *vid_buf, Save *save)
 				ret = DoLocalSave(ed.str, save);
 				if (ret == -1)
 				{
-					if (confirm_ui(vid_buf, "A save with that name already exists.", ed.str, "Overwrite"))
+					if (confirm_ui(vid_buf, "已存在同名存档。", ed.str, "覆盖"))
 						ret = DoLocalSave(ed.str, save, true);
 				}
 				if (ret == -2)
 				{
-					error_ui(vid_buf, 0, "Unable to write to save file.");
+					error_ui(vid_buf, 0, "无法写入存档文件。");
 				}
 				break;
 			}
@@ -6696,7 +6718,7 @@ void catalogue_ui(pixel * vid_buf)
 		return;
 
 	ui_edit_init(&ed, x0+11, y0+29, xsize-20, 0);
-	strcpy(ed.def, "[search]");
+	strcpy(ed.def, "[搜索]");
 #ifdef TOUCHUI
 	ed.focus = 0;
 #else
@@ -6718,11 +6740,11 @@ void catalogue_ui(pixel * vid_buf)
 	{
 		bq = b;
 		b = mouse_get_state(&mx, &my);
-		sprintf(savetext, "Found %d save%s", rescount, rescount==1?"":"s");
+		sprintf(savetext, "找到 %d 个存档%s", rescount, rescount==1?"":"s");
 		clearrect(vid_buf, x0-1, y0-1, xsize+3, ysize+3);
 		clearrect(vid_buf2, x0-1, y0-1, xsize+3, ysize+3);
 		drawrect(vid_buf, x0, y0, xsize, ysize, 192, 192, 192, 255);
-		drawtext(vid_buf, x0+8, y0+8, "Saves", 255, 216, 32, 255);
+		drawtext(vid_buf, x0+8, y0+8, "存档", 255, 216, 32, 255);
 		drawtext(vid_buf, x0+xsize-8-textwidth(savetext), y0+8, savetext, 255, 216, 32, 255);
 		drawrect(vid_buf, x0+8, y0+24, xsize-16, 16, 255, 255, 255, 180);
 		if(strcmp(ed.str, last)){
@@ -6861,14 +6883,14 @@ void catalogue_ui(pixel * vid_buf)
 							}
 							catch (ParseException & e)
 							{
-								error_ui(vid_buf, 0, std::string("Unable to load save: ") + e.what());
+								error_ui(vid_buf, 0, std::string("无法加载存档：") + e.what());
 							}
 							free(data);
 							delete localSave;
 							if (success)
 								goto openfin;
 						} else {
-							error_ui(vid_buf, 0, "Unable to read save file");
+							error_ui(vid_buf, 0, "无法读取存档文件");
 						}
 					}
 					cactive = 1;
@@ -6905,7 +6927,7 @@ void catalogue_ui(pixel * vid_buf)
 					drawtext(vid_buf2, listxc+((XRES/CATALOGUE_S)/2-textwidth(csave->name)/2), listyc+YRES/CATALOGUE_S+3, csave->name, 240, 240, 255, 180);
 				if (mx>=listxc+XRES/GRID_S-4 && mx<=listxc+XRES/GRID_S+6 && my>=listyc-6 && my<=listyc+4)
 				{
-					if (!touchDragged && !b && bq && confirm_ui(vid_buf, "Do you want to delete?", csave->name, "Delete"))
+					if (!touchDragged && !b && bq && confirm_ui(vid_buf, "确定要删除吗？", csave->name, "删除"))
 					{
 						remove(csave->filename);
 						if(saves!=NULL) free_saveslist(saves);
@@ -6931,7 +6953,7 @@ void catalogue_ui(pixel * vid_buf)
 			}
 			imageoncycle = 0;
 		} else {
-			drawtext(vid_buf2, x0+(xsize/2)-(textwidth("No saves found")/2), y0+(ysize/2)+20, "No saves found", 255, 255, 255, 180);
+			drawtext(vid_buf2, x0+(xsize/2)-(textwidth("未找到存档")/2), y0+(ysize/2)+20, "未找到存档", 255, 255, 255, 180);
 		}
 		ui_edit_draw(vid_buf, &ed);
 		ui_edit_process(mx, my, b, bq, &ed);
@@ -6992,9 +7014,9 @@ void MissingElementsPrompt(SaveLoadData saveLoadData)
 	{
 		std::stringstream ss;
 #ifndef ANDROID
-		ss << "This save uses custom elements that are not currently available.";
+		ss << "此存档使用了当前不可用的自定义元素。";
 #else
-		ss << "This save uses custom elements that are not currently available. Make sure that you use the mod and/or have all the scripts the save requires to fully load";
+		ss << "此存档使用了当前不可用的自定义元素。请确认已安装对应模组及存档所需的全部脚本。";
 #endif
 		for (auto &[ identifier, id ] : saveLoadData.identifiers)
 		{
@@ -7004,13 +7026,13 @@ void MissingElementsPrompt(SaveLoadData saveLoadData)
 
 		if (remainingIds.size())
 		{
-			ss << "\n\nA list of element IDs of missing custom elements with no identifier associated follows. This can only be fixed by the author of the save.\n";
+			ss << "\n\n以下是没有关联标识符的缺失自定义元素 ID；只有存档作者才能修复。\n";
 			for (auto id : remainingIds)
 			{
 				ss << "\n - " << id;
 			}
 		}
 
-		Engine::Ref().ShowWindow(new InfoPrompt("Missing custom elements", ss.str()));
+		Engine::Ref().ShowWindow(new InfoPrompt("缺少自定义元素", ss.str()));
 	}
 }

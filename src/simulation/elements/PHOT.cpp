@@ -180,7 +180,8 @@ void PHOT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 900.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Photons. Refract through glass, and different elements change its color. Can ignite flammable materials.";
+	elem->Description = "光子。透过玻璃折射，不同的元素会改变其颜色。能点燃易燃材料。";
+	elem->DetailedDescription = "描述：沿直线传播，不受重力影响，受牛顿万有引力影响。可以被反射，或散射。用于点燃物质或传递热量。经过滤镜(FILT)，撞击带电脉冲的锂(LITH) 时会改变颜色，经过棱镜时会色散。透过非隐形状态下的虚无(INVS)时会转变成中子(NEUT)。透过奇特气体/液体/固体(BIZG/BIZR/BIZS)时会转换成电子(ELEC)。\n注：不同元素反射 PHOT 值可查阅附录。\n反应：光子(PHOT)+氢气(HYGN)=质子(PROT)+电子(ELEC)\n存在时间(Life)：680 帧\n导热率：251\n初始温度：922.00℃/295.15K";
 
 	elem->Properties = TYPE_ENERGY | PROP_PHOTPASS | PROP_LIFE_DEC | PROP_LIFE_KILL_DEC;
 

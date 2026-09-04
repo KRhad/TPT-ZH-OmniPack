@@ -54,7 +54,8 @@ void PLUT_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 4.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Plutonium. Heavy, fissile particles. Generates neutrons under pressure.";
+	elem->Description = "钚。重的裂变粒子。在压力下产生中子。";
+	elem->DetailedDescription = "描述：裂变，在高压下、被闪电击中或大量的中子(NEUT)轰击时更不稳定。反应产物是铀(URAN)、中子(NEUT)、熔融态的钚(熔融 PLUT)，并带来最高的温度和少量的火焰。如果压力低于-2 P，PLUT 将不会与中子反应。冷却之后将会形成石粉(STNE)。会杀死火柴人(STKM)。当被白光照射时，PLUT 将大部分反射为绿光，光谱中带有微小的黄线和蓝线。\n导热率：251\n初始温度：26.00℃/299.15K";
 
 	elem->Properties = TYPE_PART|PROP_NEUTPASS|PROP_RADIOACTIVE;
 

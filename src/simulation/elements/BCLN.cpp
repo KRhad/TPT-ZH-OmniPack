@@ -93,7 +93,8 @@ void BCLN_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Breakable Clone.";
+	elem->Description = "可破坏的克隆体。";
+	elem->DetailedDescription = "描述：在较大压力(不论是正压还是负压)下会消失的复制体(就像粘土 GOO 一样)。\n导热率：251\n初始温度：22℃/295.15K";
 
 	elem->Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_LIFE_DEC | PROP_LIFE_KILL_DEC | PROP_BREAKABLECLONE | PROP_NOCTYPEDRAW;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

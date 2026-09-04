@@ -422,7 +422,8 @@ void SPRK_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Electricity. The basis of all electronics in TPT, travels along conductive elements.";
+	elem->Description = "电流。TPT 中所有电子元件的基础，会沿导电元素传播。";
+	elem->DetailedDescription = "描述：所有电子设备的基础。电脉冲不能单独放置(并不是一个真实的粒子)，你需要将其放在导体上。电子在多数导体中，每 8 帧移动一次，前 4 帧是激发状态，后 4 帧抑制状态，然后可接收新电子。水和GOLD 是例外。电子在导体中流动，会产生热量。两段导体之间空隙不超过一个像素时，电脉冲可以跳过空隙继续传播，在大多数情况下，INSL 绝缘体会阻碍电子的流动。两个导体之间，只要存在绝缘体，电子将无法通过。在绝缘体中，某些元素也不会被激发，但是个别元素(如 PSTN)是例外。某些元素，有特别的规则限制，其电流可导向哪些导体。参见各个元素\n初始温度：22℃/295.15K\n导热率：251";
 
 	elem->Properties = TYPE_SOLID|PROP_LIFE_DEC;
 	elem->CarriesTypeIn = 1U << FIELD_CTYPE;

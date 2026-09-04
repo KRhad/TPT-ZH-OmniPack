@@ -97,7 +97,8 @@ void ACEL_init_element(ELEMENT_INIT_FUNC_ARGS)
 
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Accelerator, speeds up nearby elements.";
+	elem->Description = "加速器，加速附近的元素。";
+	elem->DetailedDescription = "描述：可以加速物质(除了固体)，有效范围 1 个像素，默认状态下能加速粒子 10%的速度，通过修改 Life 值可以改变加速程度。将直行或列靠在一起(1 像素间隙)并在它们之间放置一个粒子。粒子将在它移动的方向上加速。此外，加速器不会克服重力。\n元素参数：Life 值(0-1000)非零时，加速程度从 0.01%-10%范围内改变，负值时为减速，Life=0 时默认加速 10%\n导热率：251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

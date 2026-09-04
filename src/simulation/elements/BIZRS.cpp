@@ -47,7 +47,8 @@ void BIZRS_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = R_TEMP + 300.0f + 273.15f;
 	elem->HeatConduct = 251;
 	elem->Latent = 0;
-	elem->Description = "Bizarre solid.";
+	elem->Description = "奇异固体。";
+	elem->DetailedDescription = "描述：与一般物理规律相反的液体，高温时凝固，低温时汽化，用颜色工具改变它的颜色后，它将把其他与之相遇的物质染成它的颜色。同时，它还能将光子(PHOT)转换成电子(ELEC)。\n沸点：-173.15℃/100K\n凝固点：126.85℃/400K\n导热率：29/42/251\n初始温度：22.00℃/295.15K";
 
 	elem->Properties = TYPE_SOLID;
 

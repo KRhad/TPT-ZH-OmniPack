@@ -64,7 +64,8 @@ void FRZZ_init_element(ELEMENT_INIT_FUNC_ARGS)
 	elem->DefaultProperties.temp = 253.15f;
 	elem->HeatConduct = 46;
 	elem->Latent = 0;
-	elem->Description = "Freeze powder. When melted, forms ice that always cools. Spreads with regular water.";
+	elem->Description = "冷冻粉。熔化后形成会持续降温的冰，并可随普通水扩散。";
+	elem->DetailedDescription = "描述：轻粉末，很冷，能立即冻住水。能将水(WATR)转变成寒水(FRZW)，温度低于-223.15℃/50K 时变为可以自动降温的冰(ICE)，当温度高于零度时变成寒水。寒水能将其他水变成寒水。\n熔点：0℃/273.15K\n转变温度：-223.15℃/50K\n压力极限：1.8 P，变为雪(SNOW)\n导热率：46\n初始温度：-20℃/253.15K";
 
 	elem->Properties = TYPE_PART;
 

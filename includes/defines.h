@@ -45,8 +45,8 @@
 #define MOD_BUILD_VERSION 173 //For update checks
 
 #define MOBILE_MAJOR 1
-#define MOBILE_MINOR 22
-#define MOBILE_BUILD 129
+#define MOBILE_MINOR 23
+#define MOBILE_BUILD 134
 
 #define IDENT_VERSION "G" //Change this if you're not Simon! It should be a single letter
 

@@ -33,7 +33,7 @@ RenderModesUI::RenderModesUI():
 	InitializeButtons();
 
 #ifdef TOUCHUI
-	swapButton = new Button(Point(0, 0), Point(40, MENUSIZE), "Adv.");
+	swapButton = new Button(Point(0, 0), Point(40, MENUSIZE), "高级");
 	swapButton->SetCallback([&](int mb) { this->SwapInterface(); });
 	this->AddComponent(swapButton);
 #endif
@@ -48,7 +48,7 @@ void RenderModesUI::SwapInterface()
 			this->RemoveComponent(*iter);
 		buttons.clear();
 		InitializeCheckboxes();
-		swapButton->SetText("Simple");
+		swapButton->SetText("简易");
 	}
 	else
 	{
@@ -62,7 +62,7 @@ void RenderModesUI::SwapInterface()
 		displayCheckboxes.clear();
 		colorCheckboxes.clear();
 		InitializeButtons();
-		swapButton->SetText("Adv.");
+		swapButton->SetText("高级");
 	}
 	interfaceSwap = !interfaceSwap;
 #endif
@@ -170,85 +170,85 @@ void RenderModesUI::InitializeCheckboxes()
 
 	Checkbox *effectsCheckbox = new Checkbox(pos, size, "\xE1");
 	InitializeRenderCheckbox(effectsCheckbox, RENDER_EFFE);
-	SetCheckboxToolTip(effectsCheckbox, "Adds Special flare effects to some elements");
+	SetCheckboxToolTip(effectsCheckbox, "为某些元素添加特殊耀斑效果");
 
 	Checkbox *glowCheckbox = new Checkbox(CheckboxPos(effectsCheckbox, NULL), size, "\xDF");
 	InitializeRenderCheckbox(glowCheckbox, RENDER_GLOW);
-	SetCheckboxToolTip(glowCheckbox, "Glow effect on some elements");
+	SetCheckboxToolTip(glowCheckbox, "某些元素的发光效果");
 
 	Checkbox *fireCheckbox = new Checkbox(CheckboxPos(glowCheckbox, effectsCheckbox), size, "\x9B");
 	InitializeRenderCheckbox(fireCheckbox, RENDER_FIRE);
-	SetCheckboxToolTip(fireCheckbox, "Fire effect for gasses");
+	SetCheckboxToolTip(fireCheckbox, "气体火焰效果");
 
 	Checkbox *blurCheckbox = new Checkbox(CheckboxPos(fireCheckbox, glowCheckbox), size, "\xC4");
 	InitializeRenderCheckbox(blurCheckbox, RENDER_BLUR);
-	SetCheckboxToolTip(blurCheckbox, "Blur effect for liquids");
+	SetCheckboxToolTip(blurCheckbox, "液体的模糊效果");
 
 	Checkbox *basicCheckbox = new Checkbox(CheckboxPos(blurCheckbox, fireCheckbox), size, "\xDB");
 	InitializeRenderCheckbox(basicCheckbox, RENDER_BASC);
-	SetCheckboxToolTip(basicCheckbox, "Basic rendering, without this, most things will be invisible");
+	SetCheckboxToolTip(basicCheckbox, "基础渲染；关闭后大多数内容将不可见");
 
 	Checkbox *blobCheckbox = new Checkbox(CheckboxPos(basicCheckbox, blurCheckbox), size, "\xBF");
 	InitializeRenderCheckbox(blobCheckbox, RENDER_BLOB);
-	SetCheckboxToolTip(blobCheckbox, "Makes everything be drawn like a blob");
+	SetCheckboxToolTip(blobCheckbox, "将所有内容绘制成团状");
 
 	Checkbox *sparkCheckbox = new Checkbox(CheckboxPos(blobCheckbox, basicCheckbox), size, "\xDF");
 	InitializeRenderCheckbox(sparkCheckbox, RENDER_SPRK);
-	SetCheckboxToolTip(sparkCheckbox, "Glow effect on sparks");
+	SetCheckboxToolTip(sparkCheckbox, "火花的发光效果");
 
 	Checkbox *noneCheckbox = new Checkbox(CheckboxPos(sparkCheckbox, blobCheckbox), size, "\xDB");
 	InitializeRenderCheckbox(noneCheckbox, RENDER_NONE);
-	SetCheckboxToolTip(noneCheckbox, "Even more basic rendering - only elements and stickmen are rendered");
+	SetCheckboxToolTip(noneCheckbox, "极简渲染：仅显示元素和火柴人");
 
 	line1Pos = noneCheckbox->Right(Point(4, 0)).X;
 
 	Checkbox *crackerCheckbox = new Checkbox(Point(line1Pos+6, sparkCheckbox->GetPosition().Y), size, "\xD4");
 	InitializeDisplayCheckbox(crackerCheckbox, DISPLAY_AIRC);
-	SetCheckboxToolTip(crackerCheckbox, "Displays pressure as red and blue, and velocity as white");
+	SetCheckboxToolTip(crackerCheckbox, "将压力显示为红色和蓝色，将速度显示为白色");
 
 	Checkbox *airPressureCheckbox = new Checkbox(CheckboxPos(crackerCheckbox, NULL), size, "\x99");
 	InitializeDisplayCheckbox(airPressureCheckbox, DISPLAY_AIRP);
-	SetCheckboxToolTip(airPressureCheckbox, "Displays pressure, red is positive and blue is negative");
+	SetCheckboxToolTip(airPressureCheckbox, "显示压力，红色为正，蓝色为负");
 
 	Checkbox *airVelocityCheckbox = new Checkbox(CheckboxPos(airPressureCheckbox, crackerCheckbox), size, "\x98");
 	InitializeDisplayCheckbox(airVelocityCheckbox, DISPLAY_AIRV);
-	SetCheckboxToolTip(airVelocityCheckbox, "Displays velocity and positive pressure: up/down adds blue, right/left adds red, still pressure adds green");
+	SetCheckboxToolTip(airVelocityCheckbox, "显示速度和正压力：上/下添加蓝色，右/左添加红色，静止压力添加绿色");
 
 	Checkbox *airHeatCheckbox = new Checkbox(CheckboxPos(airVelocityCheckbox, airPressureCheckbox), size, "\xBD");
 	InitializeDisplayCheckbox(airHeatCheckbox, DISPLAY_AIRH);
-	SetCheckboxToolTip(airHeatCheckbox, "Displays the temperature of the air like heat display does");
+	SetCheckboxToolTip(airHeatCheckbox, "像热量显示器一样显示空气温度");
 
 	Checkbox *vorticityCheckbox = new Checkbox(CheckboxPos(airHeatCheckbox, airVelocityCheckbox), size, "\x0F\xA6\x4D\x79\xD4");
 	InitializeDisplayCheckbox(vorticityCheckbox, DISPLAY_AIRW);
-	SetCheckboxToolTip(vorticityCheckbox, "Displays vorticity, red is clockwise and blue is anticlockwise");
+	SetCheckboxToolTip(vorticityCheckbox, "显示涡量，红色为顺时针，蓝色为逆时针");
 
 	line2Pos = vorticityCheckbox->Right(Point(4, 0)).X;
 
 	Checkbox *warpCheckbox = new Checkbox(Point(line2Pos+6, vorticityCheckbox->GetPosition().Y), size, "\xDE");
 	InitializeDisplayCheckbox(warpCheckbox, DISPLAY_WARP);
-	SetCheckboxToolTip(warpCheckbox, "Gravity lensing, Newtonian Gravity bends light with this on");
+	SetCheckboxToolTip(warpCheckbox, "重力透镜，牛顿重力使光线弯曲");
 
 	Checkbox *persistentCheckbox = new Checkbox(CheckboxPos(warpCheckbox, nullptr), size, "\x9A");
 	InitializeDisplayCheckbox(persistentCheckbox, DISPLAY_PERS);
-	SetCheckboxToolTip(persistentCheckbox, "Element paths persist on the screen for a while");
+	SetCheckboxToolTip(persistentCheckbox, "元素路径在屏幕上保留一段时间");
 
 	line3Pos = persistentCheckbox->Right(Point(4, 0)).X;
 
 	Checkbox *basic2Checkbox = new Checkbox(Point(line3Pos+6, warpCheckbox->GetPosition().Y), size, "\xDB");
 	InitializeColorCheckbox(basic2Checkbox, COLOR_BASC);
-	SetCheckboxToolTip(basic2Checkbox, "No special effects at all for anything, overrides all other options and deco");
+	SetCheckboxToolTip(basic2Checkbox, "任何东西都没有特殊效果，覆盖所有其他选项和装饰");
 
 	Checkbox *lifeCheckbox = new Checkbox(CheckboxPos(basic2Checkbox, NULL), size, "\xE0");
 	InitializeColorCheckbox(lifeCheckbox, COLOR_LIFE);
-	SetCheckboxToolTip(lifeCheckbox, "Displays the life value of elements in greyscale gradients");
+	SetCheckboxToolTip(lifeCheckbox, "以灰度渐变方式显示元素的生命值");
 
 	Checkbox *heatCheckbox = new Checkbox(CheckboxPos(lifeCheckbox, basic2Checkbox), size, "\xBD");
 	InitializeColorCheckbox(heatCheckbox, COLOR_HEAT);
-	SetCheckboxToolTip(heatCheckbox, "Displays temperatures of the elements, dark blue is coldest, pink is hottest");
+	SetCheckboxToolTip(heatCheckbox, "显示元素的温度，深蓝色最冷，粉色最热");
 
 	Checkbox *heatGradientCheckbox = new Checkbox(CheckboxPos(heatCheckbox, lifeCheckbox), size, "\xD3");
 	InitializeColorCheckbox(heatGradientCheckbox, COLOR_GRAD);
-	SetCheckboxToolTip(heatGradientCheckbox, "Changes colors of elements slightly to show heat diffusing through them");
+	SetCheckboxToolTip(heatGradientCheckbox, "稍微改变元素的颜色以显示通过它们扩散的热量");
 }
 
 
@@ -297,51 +297,51 @@ void RenderModesUI::InitializeButtons()
 #endif
 
 	Button *velocityButton = new Button(pos, size, "\x98");
-	SetButtonToolTip(velocityButton, "Velocity display mode preset");
+	SetButtonToolTip(velocityButton, "速度显示模式预设");
 	InitializeButton(velocityButton, CM_VEL);
 
 	Button *pressureButton = new Button(ButtonPos(velocityButton, NULL), size, "\x99");
-	SetButtonToolTip(pressureButton, "Pressure display mode preset");
+	SetButtonToolTip(pressureButton, "压力显示模式预设");
 	InitializeButton(pressureButton, CM_PRESS);
 
 	Button *persistentButton = new Button(ButtonPos(pressureButton, velocityButton), size, "\x9A");
-	SetButtonToolTip(persistentButton, "Persistent display mode preset");
+	SetButtonToolTip(persistentButton, "残影显示模式预设");
 	InitializeButton(persistentButton, CM_PERS);
 
 	Button *fireButton = new Button(ButtonPos(persistentButton, pressureButton), size, "\x9B");
-	SetButtonToolTip(fireButton, "Fire display mode preset");
+	SetButtonToolTip(fireButton, "火焰显示模式预设");
 	InitializeButton(fireButton, CM_FIRE);
 
 	Button *blobButton = new Button(ButtonPos(fireButton, persistentButton),size, "\xBF");
-	SetButtonToolTip(blobButton, "Blob display mode preset");
+	SetButtonToolTip(blobButton, "团状显示模式预设");
 	InitializeButton(blobButton, CM_BLOB);
 
 	Button *heatButton = new Button(ButtonPos(blobButton, fireButton), size, "\xBD");
-	SetButtonToolTip(heatButton, "Heat display mode preset");
+	SetButtonToolTip(heatButton, "温度显示模式预设");
 	InitializeButton(heatButton, CM_HEAT);
 
 	Button *fancyButton = new Button(ButtonPos(heatButton, blobButton), size, "\xC4");
-	SetButtonToolTip(fancyButton, "Fancy display mode preset");
+	SetButtonToolTip(fancyButton, "炫彩显示模式预设");
 	InitializeButton(fancyButton, CM_FANCY);
 
 	Button *nothingButton = new Button(ButtonPos(fancyButton, heatButton), size, "\xDB");
-	SetButtonToolTip(nothingButton, "Nothing display mode preset");
+	SetButtonToolTip(nothingButton, "无特效显示模式预设");
 	InitializeButton(nothingButton, CM_NOTHING);
 
 	Button *heatGradientButton = new Button(ButtonPos(nothingButton, fancyButton), size, "\xD3");
-	SetButtonToolTip(heatGradientButton, "Heat gradient display mode preset");
+	SetButtonToolTip(heatGradientButton, "热梯度显示模式预设");
 	InitializeButton(heatGradientButton, CM_GRAD);
 
 	Button *alternateVelocityButton = new Button(ButtonPos(heatGradientButton, nothingButton), size, "\xD4");
-	SetButtonToolTip(alternateVelocityButton, "Alternate Velocity display mode preset");
+	SetButtonToolTip(alternateVelocityButton, "备用速度显示预设");
 	InitializeButton(alternateVelocityButton, CM_CRACK);
 
 	Button *lifeButton = new Button(ButtonPos(alternateVelocityButton, heatGradientButton), size, "\xE0");
-	SetButtonToolTip(lifeButton, "Life display mode preset");
+	SetButtonToolTip(lifeButton, "寿命显示模式预设");
 	InitializeButton(lifeButton, CM_LIFE);
 
 	Button *vortButton = new Button(ButtonPos(lifeButton, alternateVelocityButton), size, "\x0F\xA6\x4D\x79\xD4");
-	SetButtonToolTip(vortButton, "Vorticity display mode preset");
+	SetButtonToolTip(vortButton, "涡量显示预设");
 	InitializeButton(vortButton, CM_VORT);
 }
 
