@@ -1,0 +1,29 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 35
+
+    namespace "uk.co.powdertoy.tpt.zhcn"
+
+    defaultConfig {
+        applicationId "net.olofson.ballfield"
+        minSdkVersion 16 // Must match version numbers in project/AndroidManifestTemplate.xml
+        targetSdkVersion 35
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), '../proguard-local.cfg', '../proguard.cfg'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    dependencies { compile 'com.google.android.gms:play-services-games:11.4.0' } // ==GOOGLEPLAYGAMESERVICES==
+    dependencies { compile 'com.google.android.gms:play-services-drive:11.4.0' } // ==GOOGLEPLAYGAMESERVICES==
+    dependencies { implementation 'androidx.core:core:1.12.0' }
+}
+
